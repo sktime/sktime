@@ -15,71 +15,75 @@ class STLForecaster(BaseForecaster):
 
     The STLForecaster applies the following algorithm, also see [1]_.
 
-    In `fit`:
+    In ``fit``:
 
-    1. Use `statsmodels` `STL` [2]_ to decompose the given series `y` into
-       the three components: `trend`, `season` and `residuals`.
-    2. Fit clones of `forecaster_trend` to `trend`, `forecaster_seasonal` to `season`,
-       and `forecaster_resid` to `residuals`, using `y`, `X`, `fh` from `fit`.
+    1. Use ``statsmodels`` ``STL`` [2]_ to decompose the given series ``y`` into
+       the three components: ``trend``, ``season`` and ``residuals``.
+    2. Fit clones of ``forecaster_trend`` to ``trend``, ``forecaster_seasonal`` to
+    ``season``,
+       and ``forecaster_resid`` to ``residuals``, using ``y``, ``X``, ``fh`` from
+       ``fit``.
        The forecasters are fitted as clones, stored in the attributes
-       `forecaster_trend_`, `forecaster_seasonal_`, `forecaster_resid_`.
+       ``forecaster_trend_``, ``forecaster_seasonal_``, ``forecaster_resid_``.
 
-    In `predict`, forecasts as follows:
+    In ``predict``, forecasts as follows:
 
-    1. Obtain forecasts `y_pred_trend` from `forecaster_trend_`,
-       `y_pred_seasonal` from `forecaster_seasonal_`, and
-       `y_pred_residual` from `forecaster_resid_`, using `X`, `fh`, from `predict`.
-    2. Recompose `y_pred` as `y_pred = y_pred_trend + y_pred_seasonal + y_pred_residual`
-    3. Return `y_pred`
+    1. Obtain forecasts ``y_pred_trend`` from ``forecaster_trend_``,
+       ``y_pred_seasonal`` from ``forecaster_seasonal_``, and
+       ``y_pred_residual`` from ``forecaster_resid_``, using ``X``, ``fh``, from
+       ``predict``.
+    2. Recompose ``y_pred`` as ``y_pred = y_pred_trend + y_pred_seasonal +
+    y_pred_residual``
+    3. Return ``y_pred``
 
-        `update` refits entirely, i.e., behaves as `fit` on all data seen so far.
+        ``update`` refits entirely, i.e., behaves as ``fit`` on all data seen so far.
 
     Parameters
     ----------
-    sp : int, optional, default=2. Passed to `statsmodels` `STL`.
-        Length of the seasonal period passed to `statsmodels` `STL`.
+    sp : int, optional, default=2. Passed to ``statsmodels`` ``STL``.
+        Length of the seasonal period passed to ``statsmodels`` ``STL``.
         (forecaster_seasonal, forecaster_resid) that are None. The
         default forecaster_trend does not get sp as trend is independent
         to seasonality.
-    seasonal : int, optional., default=7. Passed to `statsmodels` `STL`.
+    seasonal : int, optional., default=7. Passed to ``statsmodels`` ``STL``.
         Length of the seasonal smoother. Must be an odd integer >=3, and should
         normally be >= 7 (default).
-    trend : {int, None}, optional, default=None. Passed to `statsmodels` `STL`.
+    trend : {int, None}, optional, default=None. Passed to ``statsmodels`` ``STL``.
         Length of the trend smoother. Must be an odd integer. If not provided
         uses the smallest odd integer greater than
         1.5 * period / (1 - 1.5 / seasonal), following the suggestion in
         the original implementation.
-    low_pass : {int, None}, optional, default=None. Passed to `statsmodels` `STL`.
+    low_pass : {int, None}, optional, default=None. Passed to ``statsmodels`` ``STL``.
         Length of the low-pass filter. Must be an odd integer >=3. If not
         provided, uses the smallest odd integer > period.
-    seasonal_deg : int, optional, default=1. Passed to `statsmodels` `STL`.
+    seasonal_deg : int, optional, default=1. Passed to ``statsmodels`` ``STL``.
         Degree of seasonal LOESS. 0 (constant) or 1 (constant and trend).
-    trend_deg : int, optional, default=1. Passed to `statsmodels` `STL`.
+    trend_deg : int, optional, default=1. Passed to ``statsmodels`` ``STL``.
         Degree of trend LOESS. 0 (constant) or 1 (constant and trend).
-    low_pass_deg : int, optional, default=1. Passed to `statsmodels` `STL`.
+    low_pass_deg : int, optional, default=1. Passed to ``statsmodels`` ``STL``.
         Degree of low pass LOESS. 0 (constant) or 1 (constant and trend).
-    robust : bool, optional, default=False. Passed to `statsmodels` `STL`.
+    robust : bool, optional, default=False. Passed to ``statsmodels`` ``STL``.
         Flag indicating whether to use a weighted version that is robust to
         some forms of outliers.
-    seasonal_jump : int, optional, default=1. Passed to `statsmodels` `STL`.
+    seasonal_jump : int, optional, default=1. Passed to ``statsmodels`` ``STL``.
         Positive integer determining the linear interpolation step. If larger
         than 1, the LOESS is used every seasonal_jump points and linear
         interpolation is between fitted points. Higher values reduce
         estimation time.
-    trend_jump : int, optional, default=1. Passed to `statsmodels` `STL`.
+    trend_jump : int, optional, default=1. Passed to ``statsmodels`` ``STL``.
         Positive integer determining the linear interpolation step. If larger
         than 1, the LOESS is used every trend_jump points and values between
         the two are linearly interpolated. Higher values reduce estimation
         time.
-    low_pass_jump : int, optional, default=1. Passed to `statsmodels` `STL`.
+    low_pass_jump : int, optional, default=1. Passed to ``statsmodels`` ``STL``.
         Positive integer determining the linear interpolation step. If larger
         than 1, the LOESS is used every low_pass_jump points and values between
         the two are linearly interpolated. Higher values reduce estimation
         time.
-    inner_iter: int or None, optional, default=None. Passed to `statsmodels` `STL`.
+    inner_iter: int or None, optional, default=None. Passed to ``statsmodels`` ``STL``.
         Number of iterations to perform in the inner loop. If not provided uses 2 if
         robust is True, or 5 if not. This param goes into STL.fit() from statsmodels.
-    outer_iter: int or None, optional, default=None. Passed to `statsmodels` `STL`.
+    outer_iter: int or None, optional, default=None. Passed to ``statsmodels`` ``STL``.
         Number of iterations to perform in the outer loop. If not provided uses 15 if
         robust is True, or 0 if not. This param goes into STL.fit() from statsmodels.
     forecaster_trend : sktime forecaster, optional
@@ -331,15 +335,16 @@ class STLForecaster(BaseForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.forecasting.naive import NaiveForecaster
 

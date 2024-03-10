@@ -27,9 +27,9 @@ class PolynomialTrendForecaster(BaseForecaster):
 
     In ``fit``, for input time series :math:`(v_i, p(t_i)), i = 1, \dots, T`,
     where :math:`v_i` are values, :math:`t_i` are time stamps,
-    and :math:`p` is the polynomial feature transform with degree `degree`,
-    and with/without intercept depending on `with_intercept`,
-    fits an `sklearn` model :math:`v_i = f(p(t_i)) + \epsilon_i`, where :math:`f` is
+    and :math:`p` is the polynomial feature transform with degree ``degree``,
+    and with/without intercept depending on ``with_intercept``,
+    fits an ``sklearn`` model :math:`v_i = f(p(t_i)) + \epsilon_i`, where :math:`f` is
     the model fitted when ``regressor.fit`` is passed ``X`` = vector of :math:`p(t_i)`,
     and ``y`` = vector of :math:`v_i`.
 
@@ -38,9 +38,9 @@ class PolynomialTrendForecaster(BaseForecaster):
     and :math:`p` is the same polynomial feature transform as above.
 
     Default for ``regressor`` is linear regression = ``sklearn`` ``LinearRegression``,
-    with default parameters. Default for `degree` is 1.
+    with default parameters. Default for ``degree`` is 1.
 
-    If time stamps are `pd.DatetimeIndex`, fitted coefficients are in units
+    If time stamps are ``pd.DatetimeIndex``, fitted coefficients are in units
     of days since start of 1970. If time stamps are ``pd.PeriodIndex``,
     coefficients are in units of (full) periods since start of 1970.
 
@@ -159,15 +159,16 @@ class PolynomialTrendForecaster(BaseForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sklearn.ensemble import RandomForestRegressor
 

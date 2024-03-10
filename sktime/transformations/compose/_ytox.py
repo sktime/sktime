@@ -30,48 +30,42 @@ class YtoX(BaseTransformer):
     --------
     Use case: creating exogenous data from index, if no exogenous data is available.
 
-    >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.compose import ForecastingPipeline
-    >>> from sktime.transformations.compose import YtoX
     >>> from sktime.transformations.series.fourier import FourierFeatures
-    >>> from sktime.forecasting.fbprophet import Prophet
+    >>> from sktime.transformations.series.ytox import YtoX  # doctest: +SKIP
+    >>> from sktime.forecasting.compose import ForecastingPipeline  # doctest: +SKIP
+    >>> from sktime.forecasting.arima import ARIMA  # doctest: +SKIP
     >>>
-    >>> # data with no exogenous features
-    >>> y = load_airline()
+    >>> # create a pipeline with Fourier features and ARIMA
+    >>> ARIMA = ARIMA(order=(1, 1, 1))  # doctest: +SKIP
     >>>
-    >>> # create the pipeline
     >>> pipe = ForecastingPipeline(
     ...     [
     ...         YtoX(),
     ...         FourierFeatures(sp_list=[24, 24 * 7], fourier_terms_list=[10, 5]),
-    ...         Prophet(),
+    ...         ARIMA,
     ...     ]
     ... )  # doctest: +SKIP
-    >>>
-    >>> # fit and forecast next value
-    >>> pred = pipe.fit_predict(y, fh=[1, 2, 3, 4, 5])  # doctest: +SKIP
 
     Use case: using lagged endogenous variables as exogeneous data.
 
     >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.sarimax import SARIMAX
     >>> from sktime.transformations.compose import YtoX
     >>> from sktime.transformations.series.impute import Imputer
     >>> from sktime.transformations.series.lag import Lag
-    >>> from sktime.forecasting.sarimax import SARIMAX
     >>>
     >>> # data with no exogenous features
     >>> y = load_airline()
     >>>
     >>> # create the pipeline
     >>> lagged_y_trafo = YtoX() * Lag(1, index_out="original") * Imputer()
-    >>>
     >>> # we need to specify index_out="original" as otherwise ARIMA gets 1 and 2 ahead
     >>> # use laggged_y_trafo to generate X
     >>> forecaster = lagged_y_trafo ** SARIMAX()  # doctest: +SKIP
     >>>
     >>> # fit and forecast next value
-    >>> forecaster.fit(y, fh=[1, 2, 3, 4, 5])  # doctest: +SKIP
-    >>> pred = forecaster.predict()  # doctest: +SKIP
+    >>> forecaster.fit(y_train, fh=[1])  # doctest: +SKIP
+    >>> forecaster.predict()  # doctest: +SKIP
     """
 
     _tags = {

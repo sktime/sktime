@@ -102,7 +102,7 @@ def load_UCR_UEA_dataset(
         Exception is raised if the data cannot be stored in the requested type.
     extract_path : str, optional (default=None)
         the path to look for the data. If no path is provided, the function
-        looks in `sktime/datasets/data/`. If a path is given, it can be absolute,
+        looks in ``sktime/datasets/data/``. If a path is given, it can be absolute,
         e.g. C:/Temp or relative, e.g. Temp or ./Temp.
 
     Returns
@@ -150,7 +150,7 @@ def load_tecator(split=None, return_X_y=True, return_type=None):
 
     Returns
     -------
-    X: sktime data container, following mtype specification `return_type`
+    X: sktime data container, following mtype specification ``return_type``
         The time series data for the problem, with n instances
     y: 1D numpy array of length n, only returned if return_X_y if True
         The target values for each time series instance in X
@@ -213,7 +213,7 @@ def load_plaid(split=None, return_X_y=True, return_type=None):
 
     Returns
     -------
-    X: sktime data container, following mtype specification `return_type`
+    X: sktime data container, following mtype specification ``return_type``
         The time series data for the problem, with n instances
     y: 1D numpy array of length n, only returned if return_X_y if True
         The class labels for each time series instance in X
@@ -253,7 +253,7 @@ def load_gunpoint(split=None, return_X_y=True, return_type=None):
 
     Returns
     -------
-    X: sktime data container, following mtype specification `return_type`
+    X: sktime data container, following mtype specification ``return_type``
         The time series data for the problem, with n instances
     y: 1D numpy array of length n, only returned if return_X_y if True
         The class labels for each time series instance in X
@@ -321,7 +321,7 @@ def load_osuleaf(split=None, return_X_y=True, return_type=None):
 
     Returns
     -------
-    X: sktime data container, following mtype specification `return_type`
+    X: sktime data container, following mtype specification ``return_type``
         The time series data for the problem, with n instances
     y: 1D numpy array of length n, only returned if return_X_y if True
         The class labels for each time series instance in X
@@ -379,7 +379,7 @@ def load_italy_power_demand(split=None, return_X_y=True, return_type=None):
 
     Returns
     -------
-    X: sktime data container, following mtype specification `return_type`
+    X: sktime data container, following mtype specification ``return_type``
         The time series data for the problem, with n instances
     y: 1D numpy array of length n, only returned if return_X_y if True
         The class labels for each time series instance in X
@@ -562,7 +562,7 @@ def load_arrow_head(split=None, return_X_y=True, return_type=None):
 
     Returns
     -------
-    X: sktime data container, following mtype specification `return_type`
+    X: sktime data container, following mtype specification ``return_type``
         The time series data for the problem, with n instances
     y: 1D numpy array of length n, only returned if return_X_y if True
         The class labels for each time series instance in X
@@ -627,7 +627,7 @@ def load_acsf1(split=None, return_X_y=True, return_type=None):
 
     Returns
     -------
-    X: sktime data container, following mtype specification `return_type`
+    X: sktime data container, following mtype specification ``return_type``
         The time series data for the problem, with n instances
     y: 1D numpy array of length n, only returned if return_X_y if True
         The class labels for each time series instance in X
@@ -691,7 +691,7 @@ def load_basic_motions(split=None, return_X_y=True, return_type=None):
 
     Returns
     -------
-    X: sktime data container, following mtype specification `return_type`
+    X: sktime data container, following mtype specification ``return_type``
         The time series data for the problem, with n instances
     y: 1D numpy array of length n, only returned if return_X_y if True
         The class labels for each time series instance in X
@@ -1124,7 +1124,7 @@ def load_macroeconomic():
     Frequency:          Quarterly
     Number of cases:    1
 
-    This data is kindly wrapped via `statsmodels.datasets.macrodata`.
+    This data is kindly wrapped via ``statsmodels.datasets.macrodata``.
 
     References
     ----------
@@ -1369,7 +1369,7 @@ def load_forecastingdata(
     return_type : str - "pd_multiindex_hier", "default_tsf" (default), or valid sktime
         mtype string for in-memory data container format specification of the
         return type:
-        - "pd_multiindex_hier" = pd.DataFrame of sktime type `pd_multiindex_hier`
+        - "pd_multiindex_hier" = pd.DataFrame of sktime type ``pd_multiindex_hier``
         - "default_tsf" = container that faithfully mirrors tsf format from the original
             implementation in: https://github.com/rakshitha123/TSForecasting/
             blob/master/utils/data_loader.py.
@@ -1380,7 +1380,7 @@ def load_forecastingdata(
         examples/AA_datatypes_and_datasets.ipynb
     extract_path : str, optional (default=None)
         the path to look for the data. If no path is provided, the function
-        looks in `sktime/datasets/data/`. If a path is given, it can be absolute,
+        looks in ``sktime/datasets/data/``. If a path is given, it can be absolute,
         e.g. C:/Temp or relative, e.g. Temp or ./Temp.
 
     Returns

@@ -6,13 +6,13 @@ from copy import deepcopy
 
 from sklearn.utils import check_random_state
 
-from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.macnn import MACNNNetwork
+from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.utils.validation._dependencies import _check_dl_dependencies
 
 
-class MACNNClassifier(BaseDeepClassifier):
-    """Multi-Scale Attention Convolutional Neural Classifier, as described in [1]_.
+class MACNNRegressor(BaseDeepRegressor):
+    """Multi-Scale Attention Convolutional Neural Regressor, as described in [1]_.
 
     Parameters
     ----------
@@ -37,26 +37,23 @@ class MACNNClassifier(BaseDeepClassifier):
         The output size of Conv1D layers within each MACNN Block.
     reduction : int, optional (default = 16)
         The factor by which the first dense layer of a MACNN Block will be divided by.
-    loss : str, optional (default="categorical_crossentropy")
+    loss : str, optional (default="mean_squared_error")
         The name of the loss function to be used during training,
         should be supported by keras.
-    activation : str, optional (default="sigmoid")
-        The activation function to apply at the output. It should be
-        "software" if response variable has more than two types.
     use_bias : bool, optional (default=True)
         Whether bias should be included in the output layer.
     metrics : None or string, optional (default=None)
         The string which will be used during model compilation. If left as None,
-        then "accuracy" is passed to ``model.compile()``.
+        then "accuracy" is passed to `model.compile()`.
     optimizer: None or keras.optimizers.Optimizer instance, optional (default=None)
         The optimizer that is used for model compiltation. If left as None,
-        then ``keras.optimizers.Adam(learning_rate=0.0001)`` is used.
+        then `keras.optimizers.Adam(learning_rate=0.0001)` is used.
     callbacks : None or list of keras.callbacks.Callback, optional (default=None)
         The callback(s) to use during training.
     random_state : int, optional (default=0)
         The seed to any random action.
     verbose : bool, optional (default=False)
-        Verbosity during model training, making it ``True`` will
+        Verbosity during model training, making it `True` will
         print model summary, training information etc.
 
     References
@@ -65,23 +62,13 @@ class MACNNClassifier(BaseDeepClassifier):
     Neural Network for time series classification,
     Neural Networks, Volume 136, 2021, Pages 126-140, ISSN 0893-6080,
     https://doi.org/10.1016/j.neunet.2021.01.001.
-
-    Examples
-    --------
-    >>> from sktime.classification.deep_learning.macnn import MACNNClassifier
-    >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train")
-    >>> X_test, y_test = load_unit_test(split="test")
-    >>> macnn = MACNNClassifier(n_epochs=3) # doctest: +SKIP
-    >>> macnn.fit(X_train, y_train) # doctest: +SKIP
-    MACNNClassifier(...)
     """
 
     _tags = {
         # packaging info
         # --------------
         "authors": ["jnrusson1"],
-        "maintainers": "jnrusson1",
+        "maintainers": ["jnrusson1", "nilesh05apr"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
     }
@@ -97,7 +84,7 @@ class MACNNClassifier(BaseDeepClassifier):
         filter_sizes=(64, 128, 256),
         kernel_size=(3, 6, 12),
         reduction=16,
-        loss="categorical_crossentropy",
+        loss="mean_squared_error",
         activation="sigmoid",
         use_bias=True,
         metrics=None,
@@ -138,7 +125,7 @@ class MACNNClassifier(BaseDeepClassifier):
             random_state=self.random_state,
         )
 
-    def build_model(self, input_shape, n_classes, **kwargs):
+    def build_model(self, input_shape, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
 
         In sktime, time series are stored in numpy arrays of shape (d,m), where d
@@ -150,8 +137,6 @@ class MACNNClassifier(BaseDeepClassifier):
         ----------
         input_shape : tuple
             The shape of the data fed into the input layer, should be (m,d)
-        n_classes: int
-            The number of classes, which becomes the size of the output layer
 
         Returns
         -------
@@ -166,9 +151,7 @@ class MACNNClassifier(BaseDeepClassifier):
 
         input_layer, output_layer = self._network.build_network(input_shape, **kwargs)
 
-        output_layer = keras.layers.Dense(
-            units=n_classes, activation=self.activation, use_bias=self.use_bias
-        )(output_layer)
+        output_layer = keras.layers.Dense(units=1, use_bias=self.use_bias)(output_layer)
 
         self.optimizer_ = (
             keras.optimizers.Adam(learning_rate=0.0001)
@@ -186,7 +169,7 @@ class MACNNClassifier(BaseDeepClassifier):
         return model
 
     def _fit(self, X, y):
-        """Fit the classifier on the training set (X, y).
+        """Fit the regressor on the training set (X, y).
 
         Parameters
         ----------
@@ -199,12 +182,11 @@ class MACNNClassifier(BaseDeepClassifier):
         -------
         self : object
         """
-        y_onehot = self.convert_y_to_keras(y)
         X = X.transpose(0, 2, 1)
 
         check_random_state(self.random_state)
         self.input_shape = X.shape[1:]
-        self.model_ = self.build_model(self.input_shape, self.n_classes_)
+        self.model_ = self.build_model(self.input_shape)
         self.callbacks_ = deepcopy(self.callbacks)
 
         if self.verbose:
@@ -212,7 +194,7 @@ class MACNNClassifier(BaseDeepClassifier):
 
         self.history = self.model_.fit(
             X,
-            y_onehot,
+            y,
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
@@ -229,7 +211,7 @@ class MACNNClassifier(BaseDeepClassifier):
         ----------
         parameter_set : str, optional (default="default")
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return ``"default"`` set.
+            special parameters are defined for a value, will return `"default"` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -240,9 +222,8 @@ class MACNNClassifier(BaseDeepClassifier):
         params : dict or list of dict
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
-            instance.
-            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         params1 = {
             "n_epochs": 5,

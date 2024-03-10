@@ -30,11 +30,11 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
     Test window is defined by forecasting horizons
     relative to the end of the training window.
     It will contain as many indices
-    as there are forecasting horizons provided to the `fh` argument.
+    as there are forecasting horizons provided to the ``fh`` argument.
     For a forecasating horizon :math:`(h_1,\ldots,h_H)`, the training window will
     consist of the indices :math:`(k_n+h_1,\ldots,k_n+h_H)`.
 
-    For example for `initial_window = 5`, `step_length = 1` and `fh = [1, 2, 3]`
+    For example for ``initial_window = 5``, ``step_length = 1`` and ``fh = [1, 2, 3]``
     here is a representation of the folds::
 
     |-----------------------|
@@ -106,14 +106,15 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         return [{}, {"fh": [2, 4], "initial_window": 5, "step_length": 2}]

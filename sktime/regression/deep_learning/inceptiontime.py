@@ -1,18 +1,18 @@
-"""InceptionTime for classification."""
+"""InceptionTime for Regression."""
 __author__ = "james-large"
-__all__ = ["InceptionTimeClassifier"]
+__all__ = ["InceptionTimeRegressor"]
 
 from copy import deepcopy
 
 from sklearn.utils import check_random_state
 
-from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.inceptiontime import InceptionTimeNetwork
+from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.utils.validation._dependencies import _check_dl_dependencies
 
 
-class InceptionTimeClassifier(BaseDeepClassifier):
-    """InceptionTime Deep Learning Classifier.
+class InceptionTimeRegressor(BaseDeepRegressor):
+    """InceptionTime Deep Learning Regressor.
 
     Parameters
     ----------
@@ -31,7 +31,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         random seed for internal random number generator
     verbose: boolean, default=False
         whether to print runtime information
-    loss: str, default="categorical_crossentropy"
+    loss: str, default="mean_squared_error"
     metrics: optional
 
     Notes
@@ -47,7 +47,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         # packaging info
         # --------------
         "authors": ["james-large"],
-        "maintainers": ["james-large"],
+        "maintainers": ["james-large", "niles05apr"],
         # estimator type handled by parent class
     }
 
@@ -64,7 +64,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         callbacks=None,
         random_state=None,
         verbose=False,
-        loss="categorical_crossentropy",
+        loss="mean_squared_error",
         metrics=None,
     ):
         _check_dl_dependencies(severity="error")
@@ -100,16 +100,13 @@ class InceptionTimeClassifier(BaseDeepClassifier):
 
         self._network = InceptionTimeNetwork(**network_params)
 
-    def build_model(self, input_shape, n_classes, **kwargs):
+    def build_model(self, input_shape, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
 
         Parameters
         ----------
         input_shape : tuple
             The shape of the data fed into the input layer
-        n_classes: int
-            The number of classes, which shall become the size of the output
-             layer
 
         Returns
         -------
@@ -119,7 +116,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
 
         input_layer, output_layer = self._network.build_network(input_shape, **kwargs)
 
-        output_layer = keras.layers.Dense(n_classes, activation="softmax")(output_layer)
+        output_layer = keras.layers.Dense(1)(output_layer)
 
         model = keras.models.Model(inputs=input_layer, outputs=output_layer)
 
@@ -138,7 +135,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         return model
 
     def _fit(self, X, y):
-        """Fit the classifier on the training set (X, y).
+        """Fit the regressor on the training set (X, y).
 
         Parameters
         ----------
@@ -151,7 +148,6 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         -------
         self : object
         """
-        y_onehot = self.convert_y_to_keras(y)
         # Transpose to conform to Keras input style.
         X = X.transpose(0, 2, 1)
 
@@ -165,7 +161,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
 
         self.history = self.model_.fit(
             X,
-            y_onehot,
+            y,
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
@@ -199,7 +195,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return ``"default"`` set.
+            special parameters are defined for a value, will return `"default"` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -210,9 +206,8 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
-            instance.
-            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         from sktime.utils.validation._dependencies import _check_soft_dependencies
 

@@ -149,6 +149,8 @@ class MyTimeSeriesParamFitter(BaseParamFitter):
         self.parama = parama
         self.paramb = paramb
         self.paramc = paramc
+        # IMPORTANT: the self.params should never be overwritten or mutated from now on
+        # for handling defaults etc, write to other attributes, e.g., self._parama
 
         # leave this as is
         super().__init__()

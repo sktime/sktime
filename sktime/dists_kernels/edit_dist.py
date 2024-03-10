@@ -59,7 +59,7 @@ class EditDist(BasePairwiseTransformerPanel):
         Gradient of the slope for itakura parallelogram (if using Itakura
         Parallelogram lower bounding)
     bounding_matrix: 2D np.ndarray, optional, default = None
-        if passed, must be of shape (len(X), len(X2)) for X, X2 in `transform`
+        if passed, must be of shape (len(X), len(X2)) for X, X2 in ``transform``
         Custom bounding matrix to use. If defined then other lower_bounding params
         are ignored. The matrix should be structure so that indexes considered in
         bound should be the value 0. and indexes outside the bounding matrix should
