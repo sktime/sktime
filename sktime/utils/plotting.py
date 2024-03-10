@@ -346,8 +346,11 @@ def plot_correlations(
     >>> fig, ax = plot_correlations(y)  # doctest: +SKIP
     """
     _check_soft_dependencies("matplotlib", "statsmodels")
+
     import matplotlib.pyplot as plt
     from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+
+    from sktime.datatypes import convert_to
 
     series = check_y(series)
     series = convert_to(series, "pd.Series", "Series")
@@ -534,6 +537,8 @@ def plot_calibration(y_true, y_pred, ax=None):
         matplotlib axes object with the figure
     """
     import matplotlib.pyplot as plt
+
+    from sktime.datatypes import convert_to
 
     series = convert_to(y_true, "pd.Series", "Series")
 
