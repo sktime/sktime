@@ -49,7 +49,7 @@ class YtoX(BaseTransformer):
     ...     ]
     ... )  # doctest: +SKIP
     >>>
-    >>> # fit and forecast next value
+    >>> # fit and forecast, using Fourier features as exogenous data
     >>> pred = pipe.fit_predict(y, fh=[1, 2, 3, 4, 5])  # doctest: +SKIP
 
     Use case: using lagged endogenous variables as exogeneous data.
@@ -70,7 +70,7 @@ class YtoX(BaseTransformer):
     >>> # use lagged_y_trafo to generate X
     >>> forecaster = lagged_y_trafo ** SARIMAX()  # doctest: +SKIP
     >>>
-    >>> # fit and forecast next value
+    >>> # fit and forecast next value, with lagged y as exogenous data
     >>> forecaster.fit(y_train, fh=[1])  # doctest: +SKIP
     >>> y_pred = forecaster.predict()  # doctest: +SKIP
     """
