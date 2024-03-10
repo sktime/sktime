@@ -217,14 +217,12 @@ class BaseDeepClassifier(BaseClassifier, ABC):
 
         Behaviour:
         if ``path`` is None, returns an in-memory serialized self
-        if ``path`` is a file and legacy_save=False, stores the zip
-        with that name at the location.
+        if ``path`` is a file, stores the zip with that name at the location.
         The contents of the zip file are:
         _metadata - contains class of self, i.e., type(self).
         _obj - serialized self. This class uses the default serialization (pickle).
         keras/ - model, optimizer and state stored inside this directory.
         history - serialized history object.
-        For legacy_save=True, the ending needs to be ".keras" or ".h5"
 
 
         Parameters
