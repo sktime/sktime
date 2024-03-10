@@ -15,7 +15,7 @@ class BaseDatatype(BaseObject):
     """
 
     _tags = {
-        "obj_type": "mtype",
+        "object_type": "datatype",
         "scitype": None,
         "name": None,  # any string
         "name_python": None,  # lower_snake_case
@@ -165,6 +165,7 @@ class BaseConverter(BaseObject):
     """
 
     _tags = {
+        "object_type": "converter",
         "scitype": None,
         "mtype_from": None,  # equal to name field
         "mtype_to": None,  # equal to name field
