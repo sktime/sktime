@@ -11,7 +11,6 @@ from warnings import simplefilter, warn
 import numpy as np
 import pandas as pd
 
-from sktime.datatypes import convert_to
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_interval_df, check_y
 from sktime.utils.validation.series import check_consistent_index_type
@@ -82,10 +81,13 @@ def plot_series(
 
     """
     _check_soft_dependencies("matplotlib", "seaborn")
+
     import matplotlib.pyplot as plt
     import seaborn as sns
     from matplotlib.cbook import flatten
     from matplotlib.ticker import FuncFormatter, MaxNLocator
+
+    from sktime.datatypes import convert_to
 
     for y in series:
         check_y(y)
