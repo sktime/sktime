@@ -39,7 +39,6 @@ from sktime.datatypes._proba import check_dict_Proba
 from sktime.datatypes._registry import AMBIGUOUS_MTYPES, SCITYPE_LIST, mtype_to_scitype
 from sktime.datatypes._table import check_dict_Table
 
-
 check_dict = {}
 
 
