@@ -94,7 +94,7 @@ def run_test_for_class(cls):
         return any(is_class_changed(x) for x in test_classes)
 
     def _is_impacted_by_pyproject_change(cls):
-        """Check if the dep specifcations of cls have changed, return bool."""
+        """Check if the dep specifications of cls have changed, return bool."""
         from packaging.requirements import Requirement
 
         if not isclass(cls) or not hasattr(cls, "get_class_tags"):

@@ -97,17 +97,18 @@ class BaseRegressor(BasePanelMixin):
     def __rmul__(self, other):
         """Magic * method, return concatenated RegressorPipeline, transformers on left.
 
-        Overloaded multiplication operation for regressors. Implemented for `other`
-        being a transformer, otherwise returns `NotImplemented`.
+        Overloaded multiplication operation for regressors. Implemented for ``other``
+        being a transformer, otherwise returns ``NotImplemented``.
 
         Parameters
         ----------
-        other: `sktime` transformer, must inherit from BaseTransformer
-            otherwise, `NotImplemented` is returned
+        other: ``sktime`` transformer, must inherit from BaseTransformer
+            otherwise, ``NotImplemented`` is returned
 
         Returns
         -------
-        RegressorPipeline object, concatenation of `other` (first) with `self` (last).
+        RegressorPipeline object, concatenation of ``other`` (first) with ``self``
+        (last).
         """
         from sktime.regression.compose import RegressorPipeline
         from sktime.transformations.base import BaseTransformer
@@ -299,7 +300,7 @@ class BaseRegressor(BasePanelMixin):
 
         self.check_is_fitted()
 
-        return r2_score(y, self.predict(X), normalize=True, multioutput=multioutput)
+        return r2_score(y, self.predict(X), multioutput=multioutput)
 
     def _fit(self, X, y):
         """Fit time series regressor to training data.
