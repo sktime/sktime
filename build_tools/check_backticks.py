@@ -5,6 +5,7 @@
 
 __author__ = ["geetu040"]
 
+import argparse
 import ast
 import glob
 import re
@@ -69,12 +70,23 @@ def find_invalid_backtick_text(docstring):
 
 def main():
     """Execute the main function of the script."""
-    import sktime
+    # parse command line arguments
+    parser = argparse.ArgumentParser(
+        description="Test script to check for invalid use of single-backticks."
+    )
+    parser.add_argument(
+        "folder_path",
+        nargs="?",
+        default="./sktime",
+        help="Folder path to search for Python files",
+    )
+    args = parser.parse_args()
 
+    folder_path = args.folder_path
     results = {}
 
     # list all the python files in the project
-    py_files = find_py_files(sktime.__path__[0])
+    py_files = find_py_files(folder_path)
 
     for file in py_files:
         docstrings = extract_docstrings(file)
@@ -100,4 +112,11 @@ def main():
 
 
 if __name__ == "__main__":
+    """
+    Usage: defaults to "./sktime"
+    python build_tools/check_backticks.py
+
+    Usage: folder path as argument
+    python build_tools/check_backticks.py sktime/classification/distance_based
+    """
     main()
