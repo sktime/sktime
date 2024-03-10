@@ -32,6 +32,10 @@ class HFTransformersForecaster(BaseForecaster):
     training_args : dict, default={}
         Training arguments to use for the model. See `transformers.TrainingArguments` for details.
         Note that the `output_dir` argument is required.
+    compute_metrics : list, default=None
+        List of metrics to compute during training. See `transformers.Trainer` for details.
+    deterministic : bool, default=False
+        Whether the predictions should be deterministic or not.
 
     Examples
     --------
@@ -60,7 +64,7 @@ class HFTransformersForecaster(BaseForecaster):
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "pd.Series",
         "capability:insample": False,
-
+        "capability:pred_int:insample": False,
     }
 
     def __init__(
@@ -71,6 +75,7 @@ class HFTransformersForecaster(BaseForecaster):
         config={},
         training_args={},
         compute_metrics=None,
+        deterministic=False,
     ):
         super().__init__()
         self.model_path = model_path
@@ -80,6 +85,7 @@ class HFTransformersForecaster(BaseForecaster):
         self.training_args = training_args
         self.compute_metrics = compute_metrics 
         self._compute_metrics = compute_metrics if compute_metrics is not None else []
+        self.deterministic = deterministic
 
     def _fit(self, y, X, fh):
         # Load model and extract config
@@ -176,6 +182,17 @@ class HFTransformersForecaster(BaseForecaster):
 
 
     def _predict(self, fh, X=None):
+        if self.deterministic:
+            torch.manual_seed(42)
+            np.random.seed(42)
+
+        if fh is None:
+            fh = self.fh
+        fh = fh.to_relative(self.cutoff)
+
+        if min(fh._values) < 0:
+            raise NotImplementedError("LTSF is not supporting insample predictions.")
+    
         self.model.eval()
         from torch import from_numpy, tensor
         hist = self._y.values.reshape((1, -1))
@@ -193,7 +210,7 @@ class HFTransformersForecaster(BaseForecaster):
             past_values=from_numpy(hist).to(self.model.dtype).to(self.model.device),
             past_time_features=from_numpy(hist_x[:, -self.model.config.context_length-max(self.model.config.lags_sequence):]).to(self.model.dtype).to(self.model.device),
             future_time_features=from_numpy(x_).to(self.model.dtype).to(self.model.device),
-            past_observed_mask=from_numpy((~np.isnan(hist)).astype(int)).to(self.model.device)
+            past_observed_mask=from_numpy((~np.isnan(hist)).astype(int)).to(self.model.device),
         )
 
         pred = pred.sequences.mean(dim=1).detach().cpu().numpy().T
@@ -204,40 +221,6 @@ class HFTransformersForecaster(BaseForecaster):
                             name = self._y.name
                             )
         return pred.loc[fh.to_absolute(self.cutoff)._values]
-
-    # def _predict_proba(self, fh, X=None):
-    #     self.model.eval()
-    #     from torch import from_numpy, tensor
-    #     hist = self._y.values.reshape((1, -1))
-    #     hist_x = self._X.values.reshape((1, -1, self._X.shape[-1]))
-    #     x_ = X.values.reshape((1, -1, self._X.shape[-1]))
-
-    #     if x_.shape[1] < self.model.config.prediction_length:
-    #         x_ = np.resize(x_, (1, self.model.config.prediction_length, x_.shape[-1]))
-    #     pred = self.model(
-    #         past_values=from_numpy(hist).to(self.model.dtype).to(self.model.device),
-    #         past_time_features=from_numpy(hist_x[:, -self.model.config.context_length-max(self.model.config.lags_sequence):]).to(self.model.dtype).to(self.model.device),
-    #         future_time_features=from_numpy(x_).to(self.model.dtype).to(self.model.device),
-    #         past_observed_mask=from_numpy((~np.isnan(hist)).astype(int)).to(self.model.device)
-    #     )
-
-    #     dist_attrs = ["distribution", "distribution_output"]
-    #     dist_name = list(filter(lambda x: hasattr(self.model.config, x), dist_attrs))[0]
-
-    #     if getattr(self.model.config, dist_name) == "normal":
-    #         return Normal(
-    #             pred.params[0].detach().numpy(), pred.params[1].detach().numpy()
-    #         )
-    #     elif getattr(self.model.config, dist_name)== "student_t":
-    #         return TDistribution(
-    #             pred.params[0].detach().numpy(),
-    #             pred.params[1].detach().numpy(),
-    #             pred.params[2].detach().numpy(),
-    #         )
-    #     elif getattr(self.model.config, dist_name)== "negative_binomial":
-    #         raise Exception("Not implemented yet")
-    #     else:
-    #         raise Exception("Unknown distribution")
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -271,7 +254,8 @@ class HFTransformersForecaster(BaseForecaster):
                     "context_length": 2,
                     "prediction_length": 4,
                     "use_cpu": True,
-                }
+                },
+                "deterministic": True,
             }
         ]
 
