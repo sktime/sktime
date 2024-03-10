@@ -60,7 +60,7 @@ class YtoX(BaseTransformer):
     >>> # create the pipeline
     >>> lagged_y_trafo = YtoX() * Lag(1, index_out="original") * Imputer()
     >>> # we need to specify index_out="original" as otherwise ARIMA gets 1 and 2 ahead
-    >>> # use laggged_y_trafo to generate X
+    >>> # use lagged_y_trafo to generate X
     >>> forecaster = lagged_y_trafo ** SARIMAX()  # doctest: +SKIP
     >>>
     >>> # fit and forecast next value
