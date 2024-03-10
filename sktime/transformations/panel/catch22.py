@@ -58,14 +58,14 @@ def get_methods_dict(which="catch22"):
         "FC_LocalSimple_mean3_stderr": _FC_LocalSimple_mean3_stderr,
         "CO_trev_1_num": _CO_trev_1_num,
         "CO_HistogramAMI_even_2_5": _CO_HistogramAMI_even_2_5,
-        "IN_AutoMutualInfoStats_40_gaussian_fmmi": _IN_AutoMutualInfoStats_40_gaussian_fmmi,
+        "IN_AutoMutualInfoStats_40_gaussian_fmmi": _IN_AutoMutualInfoStats_40_gaussian_fmmi,  # noqa: E501
         "MD_hrv_classic_pnn40": _MD_hrv_classic_pnn40,
         "SB_BinaryStats_mean_longstretch1": _SB_BinaryStats_mean_longstretch1,
         "SB_MotifThree_quantile_hh": _SB_MotifThree_quantile_hh,
         "FC_LocalSimple_mean1_tauresrat": _FC_LocalSimple_mean1_tauresrat,
         "CO_Embed2_Dist_tau_d_expfit_meandiff": _CO_Embed2_Dist_tau_d_expfit_meandiff,
-        "SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1": _SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1,
-        "SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1": _SC_FluctAnal_2_rsrangefit_50_1_logi,
+        "SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1": _SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1,  # noqa: E501
+        "SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1": _SC_FluctAnal_2_rsrangefit_50_1_logi,  # noqa: E501
         "SB_TransitionMatrix_3ac_sumdiagcov": _SB_TransitionMatrix_3ac_sumdiagcov,
         "PD_PeriodicityWang_th0_01": _PD_PeriodicityWang_th0_01,
     }
@@ -75,6 +75,7 @@ def get_methods_dict(which="catch22"):
         return CATCH22_METHODS_DICT
     else:
         return CATCH24_METHODS_DICT
+
 
 SHORT_FEATURE_NAMES_DICT = {
     "DN_HistogramMode_5": "mode_5",
