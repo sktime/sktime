@@ -14,62 +14,68 @@ from joblib import Parallel, delayed
 
 from sktime.datatypes import convert_to
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.panel._catch22_numba import (
-    _ac_first_zero,
-    _autocorr,
-    _catch24_mean,
-    _catch24_std,
-    _CO_Embed2_Dist_tau_d_expfit_meandiff,
-    _CO_f1ecac,
-    _CO_FirstMin_ac,
-    _CO_HistogramAMI_even_2_5,
-    _CO_trev_1_num,
-    _DN_HistogramMode_5,
-    _DN_HistogramMode_10,
-    _DN_OutlierInclude_n_001_mdrmd,
-    _DN_OutlierInclude_p_001_mdrmd,
-    _FC_LocalSimple_mean1_tauresrat,
-    _FC_LocalSimple_mean3_stderr,
-    _IN_AutoMutualInfoStats_40_gaussian_fmmi,
-    _MD_hrv_classic_pnn40,
-    _normalise_series,
-    _PD_PeriodicityWang_th0_01,
-    _SB_BinaryStats_diff_longstretch0,
-    _SB_BinaryStats_mean_longstretch1,
-    _SB_MotifThree_quantile_hh,
-    _SB_TransitionMatrix_3ac_sumdiagcov,
-    _SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1,
-    _SC_FluctAnal_2_rsrangefit_50_1_logi,
-    _SP_Summaries_welch_rect_area_5_1,
-    _SP_Summaries_welch_rect_centroid,
-)
 from sktime.utils.warnings import warn
 
-METHODS_DICT = {
-    "DN_HistogramMode_5": _DN_HistogramMode_5,
-    "DN_HistogramMode_10": _DN_HistogramMode_10,
-    "SB_BinaryStats_diff_longstretch0": _SB_BinaryStats_diff_longstretch0,
-    "DN_OutlierInclude_p_001_mdrmd": _DN_OutlierInclude_p_001_mdrmd,
-    "DN_OutlierInclude_n_001_mdrmd": _DN_OutlierInclude_n_001_mdrmd,
-    "CO_f1ecac": _CO_f1ecac,
-    "CO_FirstMin_ac": _CO_FirstMin_ac,
-    "SP_Summaries_welch_rect_area_5_1": _SP_Summaries_welch_rect_area_5_1,
-    "SP_Summaries_welch_rect_centroid": _SP_Summaries_welch_rect_centroid,
-    "FC_LocalSimple_mean3_stderr": _FC_LocalSimple_mean3_stderr,
-    "CO_trev_1_num": _CO_trev_1_num,
-    "CO_HistogramAMI_even_2_5": _CO_HistogramAMI_even_2_5,
-    "IN_AutoMutualInfoStats_40_gaussian_fmmi": _IN_AutoMutualInfoStats_40_gaussian_fmmi,
-    "MD_hrv_classic_pnn40": _MD_hrv_classic_pnn40,
-    "SB_BinaryStats_mean_longstretch1": _SB_BinaryStats_mean_longstretch1,
-    "SB_MotifThree_quantile_hh": _SB_MotifThree_quantile_hh,
-    "FC_LocalSimple_mean1_tauresrat": _FC_LocalSimple_mean1_tauresrat,
-    "CO_Embed2_Dist_tau_d_expfit_meandiff": _CO_Embed2_Dist_tau_d_expfit_meandiff,
-    "SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1": _SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1,
-    "SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1": _SC_FluctAnal_2_rsrangefit_50_1_logi,
-    "SB_TransitionMatrix_3ac_sumdiagcov": _SB_TransitionMatrix_3ac_sumdiagcov,
-    "PD_PeriodicityWang_th0_01": _PD_PeriodicityWang_th0_01,
-}
-FEATURE_NAMES = list(METHODS_DICT.keys())
+
+def get_methods_dict(which="cath22"):
+    from sktime.transformations.panel._catch22_numba import (
+        _catch24_mean,
+        _catch24_std,
+        _CO_Embed2_Dist_tau_d_expfit_meandiff,
+        _CO_f1ecac,
+        _CO_FirstMin_ac,
+        _CO_HistogramAMI_even_2_5,
+        _CO_trev_1_num,
+        _DN_HistogramMode_5,
+        _DN_HistogramMode_10,
+        _DN_OutlierInclude_n_001_mdrmd,
+        _DN_OutlierInclude_p_001_mdrmd,
+        _FC_LocalSimple_mean1_tauresrat,
+        _FC_LocalSimple_mean3_stderr,
+        _IN_AutoMutualInfoStats_40_gaussian_fmmi,
+        _MD_hrv_classic_pnn40,
+        _PD_PeriodicityWang_th0_01,
+        _SB_BinaryStats_diff_longstretch0,
+        _SB_BinaryStats_mean_longstretch1,
+        _SB_MotifThree_quantile_hh,
+        _SB_TransitionMatrix_3ac_sumdiagcov,
+        _SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1,
+        _SC_FluctAnal_2_rsrangefit_50_1_logi,
+        _SP_Summaries_welch_rect_area_5_1,
+        _SP_Summaries_welch_rect_centroid,
+    )
+
+    CATCH22_METHODS_DICT = {
+        "DN_HistogramMode_5": _DN_HistogramMode_5,
+        "DN_HistogramMode_10": _DN_HistogramMode_10,
+        "SB_BinaryStats_diff_longstretch0": _SB_BinaryStats_diff_longstretch0,
+        "DN_OutlierInclude_p_001_mdrmd": _DN_OutlierInclude_p_001_mdrmd,
+        "DN_OutlierInclude_n_001_mdrmd": _DN_OutlierInclude_n_001_mdrmd,
+        "CO_f1ecac": _CO_f1ecac,
+        "CO_FirstMin_ac": _CO_FirstMin_ac,
+        "SP_Summaries_welch_rect_area_5_1": _SP_Summaries_welch_rect_area_5_1,
+        "SP_Summaries_welch_rect_centroid": _SP_Summaries_welch_rect_centroid,
+        "FC_LocalSimple_mean3_stderr": _FC_LocalSimple_mean3_stderr,
+        "CO_trev_1_num": _CO_trev_1_num,
+        "CO_HistogramAMI_even_2_5": _CO_HistogramAMI_even_2_5,
+        "IN_AutoMutualInfoStats_40_gaussian_fmmi": _IN_AutoMutualInfoStats_40_gaussian_fmmi,
+        "MD_hrv_classic_pnn40": _MD_hrv_classic_pnn40,
+        "SB_BinaryStats_mean_longstretch1": _SB_BinaryStats_mean_longstretch1,
+        "SB_MotifThree_quantile_hh": _SB_MotifThree_quantile_hh,
+        "FC_LocalSimple_mean1_tauresrat": _FC_LocalSimple_mean1_tauresrat,
+        "CO_Embed2_Dist_tau_d_expfit_meandiff": _CO_Embed2_Dist_tau_d_expfit_meandiff,
+        "SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1": _SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1,
+        "SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1": _SC_FluctAnal_2_rsrangefit_50_1_logi,
+        "SB_TransitionMatrix_3ac_sumdiagcov": _SB_TransitionMatrix_3ac_sumdiagcov,
+        "PD_PeriodicityWang_th0_01": _PD_PeriodicityWang_th0_01,
+    }
+    CATCH24_METHODS_DICT = {"DN_Mean": _catch24_mean, "DN_Spread_Std": _catch24_std}
+
+    if which == "catch22":
+        return CATCH22_METHODS_DICT
+    else:
+        return CATCH24_METHODS_DICT
+
 SHORT_FEATURE_NAMES_DICT = {
     "DN_HistogramMode_5": "mode_5",
     "DN_HistogramMode_10": "mode_10",
@@ -95,14 +101,14 @@ SHORT_FEATURE_NAMES_DICT = {
     "PD_PeriodicityWang_th0_01": "periodicity",
 }
 SHORT_FEATURE_NAMES = list(SHORT_FEATURE_NAMES_DICT.values())
+FEATURE_NAMES = list(SHORT_FEATURE_NAMES_DICT.keys())
 
-CATCH24_METHODS_DICT = {"DN_Mean": _catch24_mean, "DN_Spread_Std": _catch24_std}
-CATCH24_FEATURE_NAMES = list(CATCH24_METHODS_DICT.keys())
 CATCH24_SHORT_FEATURE_NAMES_DICT = {
     "DN_Mean": "mean",
     "DN_Spread_Std": "std",
 }
 CATCH24_SHORT_FEATURE_NAMES = list(CATCH24_SHORT_FEATURE_NAMES_DICT.values())
+CATCH24_FEATURE_NAMES = list(CATCH24_SHORT_FEATURE_NAMES_DICT.keys())
 
 
 def _verify_features(
@@ -280,6 +286,9 @@ class Catch22(BaseTransformer):
 
         super().__init__()
 
+        self.METHODS_DICT = get_methods_dict("catch22")
+        self.CATCH24_METHODS_DICT = get_methods_dict("catch24")
+
     def _set_col_names(self, col_names: str) -> str:
         """Set valid column names type.
 
@@ -381,6 +390,12 @@ class Catch22(BaseTransformer):
         Xt : np.ndarray of size [1, n_features], where n_features is the
             number of features requested, containing Catch22/24 features for X.
         """
+        from sktime.transformations.panel._catch22_numba import (
+            _ac_first_zero,
+            _autocorr,
+            _normalise_series,
+        )
+
         n_features = len(f_idx)
         Xt_np = np.zeros((1, n_features))
 
@@ -425,17 +440,17 @@ class Catch22(BaseTransformer):
 
     def __get_feature_function_str(self, feature: str):
         if feature in FEATURE_NAMES:
-            return METHODS_DICT.get(feature)
+            return self.METHODS_DICT.get(feature)
         if feature in CATCH24_FEATURE_NAMES:
-            return CATCH24_METHODS_DICT.get(feature)
+            return self.CATCH24_METHODS_DICT.get(feature)
         else:
             return self.__get_feature_function_int(int(str))
 
     def __get_feature_function_int(self, feature: int):
         if feature < 22:
-            return METHODS_DICT.get(FEATURE_NAMES[feature])
+            return self.METHODS_DICT.get(FEATURE_NAMES[feature])
         if 22 <= feature < 24:
-            return CATCH24_METHODS_DICT.get(CATCH24_FEATURE_NAMES[feature - 22])
+            return self.CATCH24_METHODS_DICT.get(CATCH24_FEATURE_NAMES[feature - 22])
         else:
             raise KeyError(f"No feature with name: {feature}")
 
