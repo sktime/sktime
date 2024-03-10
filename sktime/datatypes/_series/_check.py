@@ -127,6 +127,7 @@ class SeriesPdDataFrame(BaseSeries):
 
 
 def check_pddataframe_series(obj, return_metadata=False, var_name="obj"):
+    """Check if obj is a pandas.DataFrame based specification of single time series."""
     metadata = dict()
 
     if not isinstance(obj, pd.DataFrame):
