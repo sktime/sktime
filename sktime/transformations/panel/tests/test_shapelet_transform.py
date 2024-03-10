@@ -6,8 +6,12 @@ from numpy import testing
 from sktime.datasets import load_basic_motions, load_unit_test
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
+from sktime.utils.parallel import _get_parallel_test_fixtures
+
+BACKENDS = _get_parallel_test_fixtures("estimator")
 
 
+@pytest.mark.parametrize("backend", BACKENDS)
 @pytest.mark.skipif(
     not run_test_for_class(RandomShapeletTransform),
     reason="run test only if softdeps are present and incrementally (if requested)",
@@ -31,6 +35,7 @@ def test_st_on_unit_test():
     )
 
 
+@pytest.mark.parametrize("backend", BACKENDS)
 @pytest.mark.xfail(reason="known sporadic failure, likely pseudo-random instability")
 @pytest.mark.skipif(
     not run_test_for_class(RandomShapeletTransform),
