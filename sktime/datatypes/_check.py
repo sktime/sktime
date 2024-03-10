@@ -43,7 +43,13 @@ from sktime.datatypes._table import check_dict_Table
 check_dict = {}
 
 def get_check_dict():
-    """Function to cache check_dict the first time it is requested."""
+    """Function to cache check_dict the first time it is requested.
+
+    This is to avoid repeated, time consuming crawling in generate_check_dict,
+    which would otherwise be called every time check_dict is requested.
+
+    Leaving the code on root level will also fail, due to circular imports.
+    """
     if len(check_dict) == 0:
         check_dict.update(generate_check_dict())
     return check_dict
