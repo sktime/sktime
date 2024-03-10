@@ -108,6 +108,7 @@ SHORT_FEATURE_NAMES_DICT = {
 }
 SHORT_FEATURE_NAMES = list(SHORT_FEATURE_NAMES_DICT.values())
 FEATURE_NAMES = list(SHORT_FEATURE_NAMES_DICT.keys())
+feature_names = FEATURE_NAMES  # for backwards compatibility, this variable was public
 
 CATCH24_SHORT_FEATURE_NAMES_DICT = {
     "DN_Mean": "mean",
