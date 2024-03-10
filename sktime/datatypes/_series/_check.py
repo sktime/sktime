@@ -129,7 +129,6 @@ class SeriesPdDataFrame(BaseSeries):
 
 
 def check_pddataframe_series(obj, return_metadata=False, var_name="obj"):
-
     metadata = dict()
 
     if not isinstance(obj, pd.DataFrame):

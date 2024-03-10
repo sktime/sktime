@@ -121,7 +121,7 @@ class BaseDatatype(BaseObject):
         msg : str, only returned if return_metadata is True.
             Error message if obj is not of this data type.
         metadata : dict, only returned if return_metadata is True.
-            Metadata dictionary. 
+            Metadata dictionary.
         """
         raise NotImplementedError
 
