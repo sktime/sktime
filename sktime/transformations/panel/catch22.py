@@ -17,7 +17,7 @@ from sktime.transformations.base import BaseTransformer
 from sktime.utils.warnings import warn
 
 
-def get_methods_dict(which="cath22"):
+def get_methods_dict(which="catch22"):
     from sktime.transformations.panel._catch22_numba import (
         _catch24_mean,
         _catch24_std,
