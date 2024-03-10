@@ -37,8 +37,6 @@ metadata: dict - metadata about obj if valid, otherwise None
 
 __author__ = ["fkiraly"]
 
-__all__ = ["check_dict"]
-
 import numpy as np
 import pandas as pd
 

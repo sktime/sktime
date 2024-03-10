@@ -23,8 +23,8 @@ __all__ = [
     "mtype",
 ]
 
-import inspect
 import importlib
+import inspect
 import pkgutil
 from typing import List, Union
 
@@ -42,8 +42,9 @@ from sktime.datatypes._table import check_dict_Table
 
 check_dict = {}
 
+
 def get_check_dict():
-    """Function to cache check_dict the first time it is requested.
+    """Retrieve check_dict, caches the first time it is requested.
 
     This is to avoid repeated, time consuming crawling in generate_check_dict,
     which would otherwise be called every time check_dict is requested.
@@ -63,7 +64,7 @@ def generate_check_dict():
     mod = datatypes
 
     classes = []
-    for _, name, _ in pkgutil.walk_packages(mod.__path__, prefix=mod.__name__ + '.'):
+    for _, name, _ in pkgutil.walk_packages(mod.__path__, prefix=mod.__name__ + "."):
         submodule = importlib.import_module(name)
         for _, obj in inspect.getmembers(submodule):
             if inspect.isclass(obj):
