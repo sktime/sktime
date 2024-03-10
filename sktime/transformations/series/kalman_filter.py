@@ -761,19 +761,23 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {"state_dim": 2}
-        params2 = {"state_dim": 2,
-                   "initial_state": np.array([[0, 0]]),
-                   "initial_state_covariance": np.array([[0.1, 0],
-                                                         [0.1, 0]]),
-                   "state_transition": np.array([[1, 0.1],
-                                                 [0, 1]]),
-                   "process_noise": np.array(
-                       [[1 / 4 * (0.1**4), 1 / 2 * (0.1**3)],
-                        [1 / 2 * (0.1**3), 0.1**2]]) * 0.1,
-                   "measurement_function": np.array([1, 0]),
-                   "measurement_noise": np.array([0.1]),
-                   "denoising": True,
-                   "estimate_matrices": ['measurement_noise']}
+        params2 = {
+            "state_dim": 2,
+            "initial_state": np.array([[0, 0]]),
+            "initial_state_covariance": np.array([[0.1, 0], [0.1, 0]]),
+            "state_transition": np.array([[1, 0.1], [0, 1]]),
+            "process_noise": np.array(
+                [
+                    [1 / 4 * (0.1**4), 1 / 2 * (0.1**3)],
+                    [1 / 2 * (0.1**3), 0.1**2],
+                ]
+            )
+            * 0.1,
+            "measurement_function": np.array([1, 0]),
+            "measurement_noise": np.array([0.1]),
+            "denoising": True,
+            "estimate_matrices": ["measurement_noise"],
+        }
         return [params1, params2]
 
     def _em(self, X, measurement_dim, state_dim):
@@ -1312,19 +1316,23 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {"state_dim": 2}
-        params2 = {"state_dim": 2,
-                   "initial_state": np.array([[0, 0]]),
-                   "initial_state_covariance": np.array([[0.1, 0],
-                                                         [0.1, 0]]),
-                   "state_transition": np.array([[1, 0.1],
-                                                 [0, 1]]),
-                   "process_noise": np.array(
-                       [[1 / 4 * (0.1**4), 1 / 2 * (0.1**3)],
-                        [1 / 2 * (0.1**3), 0.1**2]]) * 0.1,
-                   "measurement_function": np.array([1, 0]),
-                   "measurement_noise": np.array([0.1]),
-                   "denoising": True,
-                   "estimate_matrices": ['measurement_noise']}
+        params2 = {
+            "state_dim": 2,
+            "initial_state": np.array([[0, 0]]),
+            "initial_state_covariance": np.array([[0.1, 0], [0.1, 0]]),
+            "state_transition": np.array([[1, 0.1], [0, 1]]),
+            "process_noise": np.array(
+                [
+                    [1 / 4 * (0.1**4), 1 / 2 * (0.1**3)],
+                    [1 / 2 * (0.1**3), 0.1**2],
+                ]
+            )
+            * 0.1,
+            "measurement_function": np.array([1, 0]),
+            "measurement_noise": np.array([0.1]),
+            "denoising": True,
+            "estimate_matrices": ["measurement_noise"],
+        }
         return [params1, params2]
 
     def _get_iter_t_matrices(self, X, G, u, t, time_steps, shapes):
