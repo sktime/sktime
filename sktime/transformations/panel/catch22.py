@@ -64,7 +64,7 @@ def get_methods_dict(which="catch22"):
         "SB_MotifThree_quantile_hh": _SB_MotifThree_quantile_hh,
         "FC_LocalSimple_mean1_tauresrat": _FC_LocalSimple_mean1_tauresrat,
         "CO_Embed2_Dist_tau_d_expfit_meandiff": _CO_Embed2_Dist_tau_d_expfit_meandiff,
-        "SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1": _SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1,  # noqa: E501
+        "SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1_prop_r1": _SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1,  # noqa: E501
         "SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1": _SC_FluctAnal_2_rsrangefit_50_1_logi,  # noqa: E501
         "SB_TransitionMatrix_3ac_sumdiagcov": _SB_TransitionMatrix_3ac_sumdiagcov,
         "PD_PeriodicityWang_th0_01": _PD_PeriodicityWang_th0_01,
@@ -73,8 +73,13 @@ def get_methods_dict(which="catch22"):
 
     if which == "catch22":
         return CATCH22_METHODS_DICT
-    else:
+    elif which == "catch24":
         return CATCH24_METHODS_DICT
+    else:
+        raise ValueError(
+            "Invalid value for parameter 'which' in catch22.get_methods_dict, "
+            "must be one of the strings 'catch22' or 'catch24'."
+        )
 
 
 SHORT_FEATURE_NAMES_DICT = {
