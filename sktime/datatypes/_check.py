@@ -23,7 +23,9 @@ __all__ = [
     "mtype",
 ]
 
-from pathlib import Path
+import inspect
+import importlib
+import pkgutil
 from typing import List, Union
 
 import numpy as np
@@ -38,45 +40,64 @@ from sktime.datatypes._registry import AMBIGUOUS_MTYPES, SCITYPE_LIST, mtype_to_
 from sktime.datatypes._table import check_dict_Table
 
 
+check_dict = {}
+
+def get_check_dict():
+    """Function to cache check_dict the first time it is requested."""
+    if len(check_dict) == 0:
+        check_dict.update(generate_check_dict())
+    return check_dict
+
+
 def generate_check_dict():
     """Generate check_dict using lookup."""
-    from skbase.lookup import all_objects
-
+    from sktime import datatypes
     from sktime.utils.validation._dependencies import _check_estimator_deps
 
-    ROOT = str(Path(__file__).parent)  # sktime package root directory
+    mod = datatypes
 
-    result = all_objects(
-        object_types=BaseDatatype,
-        package_name="sktime.datatypes",
-        path=ROOT,
-        return_names=False,
-    )
+    classes = []
+    for _, name, _ in pkgutil.walk_packages(mod.__path__, prefix=mod.__name__ + '.'):
+        submodule = importlib.import_module(name)
+        for _, obj in inspect.getmembers(submodule):
+            if inspect.isclass(obj):
+                if not obj.__name__.startswith("Base"):
+                    classes.append(obj)
+    classes = [x for x in classes if issubclass(x, BaseDatatype) and x != BaseDatatype]
+
+    # this does not work, but should - bug in skbase?
+    # ROOT = str(Path(__file__).parent)  # sktime package root directory
+    #
+    # result = all_objects(
+    #     object_types=BaseDatatype,
+    #     package_name="sktime.datatypes",
+    #     path=ROOT,
+    #     return_names=False,
+    # )
 
     # subset only to data types with soft dependencies present
-    result = [x for x in result if _check_estimator_deps(x, severity="none")]
+    result = [x for x in classes if _check_estimator_deps(x, severity="none")]
 
     check_dict = dict()
     for k in result:
         mtype = k.get_class_tag("name")
         scitype = k.get_class_tag("scitype")
 
-        check_dict[(mtype, scitype)] = k._check
+        check_dict[(mtype, scitype)] = k()._check
+
+    # temporary while refactoring
+    check_dict.update(check_dict_Panel)
+    check_dict.update(check_dict_Hierarchical)
+    check_dict.update(check_dict_Alignment)
+    check_dict.update(check_dict_Table)
+    check_dict.update(check_dict_Proba)
 
     return check_dict
 
 
-# pool convert_dict-s
-check_dict = generate_check_dict()
-check_dict.update(check_dict_Panel)
-check_dict.update(check_dict_Hierarchical)
-check_dict.update(check_dict_Alignment)
-check_dict.update(check_dict_Table)
-check_dict.update(check_dict_Proba)
-
-
 def _check_scitype_valid(scitype: str = None):
     """Check validity of scitype."""
+    check_dict = get_check_dict()
     valid_scitypes = list({x[1] for x in check_dict.keys()})
 
     if not isinstance(scitype, str):
@@ -188,6 +209,7 @@ def check_is_mtype(
     """
     mtype = _coerce_list_of_str(mtype, var_name="mtype")
 
+    check_dict = get_check_dict()
     valid_keys = check_dict.keys()
 
     # we loop through individual mtypes in mtype and see whether they pass the check
@@ -337,6 +359,7 @@ def mtype(
         for scitype in as_scitype:
             _check_scitype_valid(scitype)
 
+    check_dict = get_check_dict()
     m_plus_scitypes = [
         (x[0], x[1]) for x in check_dict.keys() if x[0] not in exclude_mtypes
     ]
@@ -446,6 +469,7 @@ def check_is_scitype(
     for x in scitype:
         _check_scitype_valid(x)
 
+    check_dict = get_check_dict()
     valid_keys = check_dict.keys()
 
     # find all the mtype keys corresponding to the scitypes
