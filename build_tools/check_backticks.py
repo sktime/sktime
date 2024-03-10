@@ -100,13 +100,14 @@ def main():
             results[file] = results_on_file
 
     # print the lines along with the invalid backticks text
+    print(f'Results in "{folder_path}"')  # noqa: T201
     if len(results) > 0:
-        print(f"Total Files with invalid backticks: {len(results)}")  # noqa
+        print(f"Total Files with invalid backticks: {len(results)}")  # noqa: T201
         for filename, result in results.items():
             for lineno, errors in result.items():
-                print(f"{filename}:{lineno} {' '.join(errors)}")  # noqa
+                print(f"{filename}:{lineno} {' '.join(errors)}")  # noqa: T201
     else:
-        print("No invalid backticks found")  # noqa
+        print("No invalid backticks found")  # noqa: T201
 
 
 if __name__ == "__main__":
