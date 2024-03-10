@@ -294,8 +294,8 @@ class SeriesPdSeries(BaseSeries):
         # Check time index is ordered in time
         if not index.is_monotonic_increasing:
             msg = (
-                f"The (time) index of {var_name} must be sorted monotonically increasing, "
-                f"but found: {index}"
+                f"The (time) index of {var_name} must be sorted monotonically "
+                f"increasing, but found: {index}"
             )
             return ret(False, msg, None, return_metadata)
 
@@ -413,7 +413,10 @@ class SeriesNumpy(BaseSeries):
             if _req("feature_names", return_metadata):
                 metadata["feature_names"] = [0]
         else:
-            msg = f"{var_name} must be 1D or 2D numpy.ndarray, but found {len(obj.shape)}D"
+            msg = (
+                f"{var_name} must be 1D or 2D numpy.ndarray, "
+                f"but found {len(obj.shape)}D"
+            )
             return ret(False, msg, None, return_metadata)
 
         # np.arrays are considered equally spaced by assumption
