@@ -35,6 +35,9 @@ class YtoX(BaseTransformer):
     >>> from sktime.forecasting.compose import ForecastingPipeline  # doctest: +SKIP
     >>> from sktime.forecasting.arima import ARIMA  # doctest: +SKIP
     >>>
+    >>> # data with no exogenous features
+    >>> y = load_airline()
+    >>>
     >>> # create a pipeline with Fourier features and ARIMA
     >>> ARIMA = ARIMA(order=(1, 1, 1))  # doctest: +SKIP
     >>>
@@ -45,6 +48,9 @@ class YtoX(BaseTransformer):
     ...         ARIMA,
     ...     ]
     ... )  # doctest: +SKIP
+    >>>
+    >>> # fit and forecast next value
+    >>> pred = pipe.fit_predict(y, fh=[1, 2, 3, 4, 5])  # doctest: +SKIP
 
     Use case: using lagged endogenous variables as exogeneous data.
 
@@ -59,13 +65,14 @@ class YtoX(BaseTransformer):
     >>>
     >>> # create the pipeline
     >>> lagged_y_trafo = YtoX() * Lag(1, index_out="original") * Imputer()
+    >>>
     >>> # we need to specify index_out="original" as otherwise ARIMA gets 1 and 2 ahead
     >>> # use lagged_y_trafo to generate X
     >>> forecaster = lagged_y_trafo ** SARIMAX()  # doctest: +SKIP
     >>>
     >>> # fit and forecast next value
     >>> forecaster.fit(y_train, fh=[1])  # doctest: +SKIP
-    >>> forecaster.predict()  # doctest: +SKIP
+    >>> y_pred = forecaster.predict()  # doctest: +SKIP
     """
 
     _tags = {
