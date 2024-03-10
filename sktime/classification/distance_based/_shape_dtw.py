@@ -527,6 +527,6 @@ class ShapeDTW(BaseClassifier):
         params2 = {
             "n_neighbors": 3,
             "shape_descriptor_function": "compound",
-            "shape_descriptor_functions": ['paa', 'dwt']
+            "shape_descriptor_functions": ["paa", "dwt"],
         }
         return [params1, params2]
