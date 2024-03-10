@@ -57,13 +57,11 @@ def find_invalid_backtick_text(docstring):
     valid_backtick_text = re.findall(r":.*?:(`.*?`)", docstring)
 
     # find all the invalid backtick code snippets
-    invalid_backtick_text = []
+    invalid_backtick_text = set()
     for text in all_backtick_text:
         if text in valid_backtick_text:
             continue
-        if text in invalid_backtick_text:
-            continue
-        invalid_backtick_text.append(text)
+        invalid_backtick_text.add(text)
 
     return invalid_backtick_text
 
