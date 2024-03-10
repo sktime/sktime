@@ -23,22 +23,51 @@ __all__ = [
     "mtype",
 ]
 
+from pathlib import Path
 from typing import List, Union
 
 import numpy as np
 
 from sktime.datatypes._alignment import check_dict_Alignment
+from sktime.datatypes._base import BaseDatatype
 from sktime.datatypes._common import _metadata_requested, _ret
 from sktime.datatypes._hierarchical import check_dict_Hierarchical
 from sktime.datatypes._panel import check_dict_Panel
 from sktime.datatypes._proba import check_dict_Proba
 from sktime.datatypes._registry import AMBIGUOUS_MTYPES, SCITYPE_LIST, mtype_to_scitype
-from sktime.datatypes._series import check_dict_Series
 from sktime.datatypes._table import check_dict_Table
 
+
+def generate_check_dict():
+    """Generate check_dict using lookup."""
+    from skbase.lookup import all_objects
+
+    from sktime.utils.validation._dependencies import _check_estimator_deps
+
+    ROOT = str(Path(__file__).parent)  # sktime package root directory
+
+    result = all_objects(
+        object_types=BaseDatatype,
+        package_name="sktime.datatypes",
+        path=ROOT,
+        return_names=False,
+    )
+
+    # subset only to data types with soft dependencies present
+    result = [x for x in result if _check_estimator_deps(x, severity="none")]
+
+    check_dict = dict()
+    for k in result:
+        mtype = k.get_class_tag("name")
+        scitype = k.get_class_tag("scitype")
+
+        check_dict[(mtype, scitype)] = k._check
+
+    return check_dict
+
+
 # pool convert_dict-s
-check_dict = dict()
-check_dict.update(check_dict_Series)
+check_dict = generate_check_dict()
 check_dict.update(check_dict_Panel)
 check_dict.update(check_dict_Hierarchical)
 check_dict.update(check_dict_Alignment)
