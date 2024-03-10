@@ -39,35 +39,9 @@ class Shapelet:
         The calculated information gain of this shapelet
     data: array-like
         The (z-normalised) data of this shapelet.
-    backend : str, optional
-        backend to use for parallelization, one of
-
-        - "None": executes loop sequentally, simple list comprehension
-        - "loky", "multiprocessing" and "threading": uses ``joblib`` ``Parallel`` loops
-        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
-        - "dask": uses ``dask``, requires ``dask`` package in environment
-        - "dask_lazy": same as ``"dask"``, but returns delayed object instead of list
-
-    backend_params : dict, optional
-        additional parameters passed to the backend as config.
-        Valid keys depend on the value of ``backend``:
-        - "None": no additional parameters, ``backend_params`` is ignored
-        - "loky", "multiprocessing" and "threading": default ``joblib`` backends
-          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
-          with the exception of ``backend`` which is directly controlled by ``backend``.
-          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
-          will default to ``joblib`` defaults.
-        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``.
-          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
-          ``backend`` must be passed as a key of ``backend_params`` in this case.
-          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
-          will default to ``joblib`` defaults.
-        - "dask": any valid keys for ``dask.compute`` can be passed, e.g., ``scheduler``
     """
 
-    def __init__(
-        self, series_id, start_pos, length, info_gain, data, backend, backend_params
-    ):
+    def __init__(self, series_id, start_pos, length, info_gain, data):
         self.series_id = series_id
         self.start_pos = start_pos
         self.length = length
@@ -1038,6 +1012,31 @@ class RandomShapeletTransform(BaseTransformer):
     random_state : int or None, default=None
         Seed for random number generation.
 
+    backend : str, optional
+        backend to use for parallelization, one of
+
+        - "None": executes loop sequentally, simple list comprehension
+        - "loky", "multiprocessing" and "threading": uses ``joblib`` ``Parallel`` loops
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
+        - "dask": uses ``dask``, requires ``dask`` package in environment
+        - "dask_lazy": same as ``"dask"``, but returns delayed object instead of list
+
+    backend_params : dict, optional
+        additional parameters passed to the backend as config.
+        Valid keys depend on the value of ``backend``:
+        - "None": no additional parameters, ``backend_params`` is ignored
+        - "loky", "multiprocessing" and "threading": default ``joblib`` backends
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          with the exception of ``backend`` which is directly controlled by ``backend``.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``.
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          ``backend`` must be passed as a key of ``backend_params`` in this case.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "dask": any valid keys for ``dask.compute`` can be passed, e.g., ``scheduler``
+
     Attributes
     ----------
     n_classes : int
@@ -1123,6 +1122,8 @@ class RandomShapeletTransform(BaseTransformer):
         parallel_backend=None,
         batch_size=100,
         random_state=None,
+        backend="joblib",
+        backend_params=None,
     ):
         self.n_shapelet_samples = n_shapelet_samples
         self.max_shapelets = max_shapelets
@@ -1137,6 +1138,10 @@ class RandomShapeletTransform(BaseTransformer):
         self.parallel_backend = parallel_backend
         self.batch_size = batch_size
         self.random_state = random_state
+
+        # Setting the two new arguments of backend and backend_params
+        self.backend = backend
+        self.backend_params = backend_params
 
         # The following set in method fit
         self.n_classes = 0
