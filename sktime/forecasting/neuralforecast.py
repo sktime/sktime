@@ -347,6 +347,9 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
             params = [
                 {
                     "freq": "D",
+                    "inference_input_size": 2,
+                    "encoder_hidden_size": 2,
+                    "decoder_hidden_size": 3,
                     "max_steps": 4,
                     "trainer_kwargs": {"logger": False},
                 },
@@ -667,6 +670,9 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
             params = [
                 {
                     "freq": "D",
+                    "inference_input_size": 2,
+                    "encoder_hidden_size": 2,
+                    "decoder_hidden_size": 3,
                     "max_steps": 4,
                     "trainer_kwargs": {"logger": False},
                 },
@@ -686,6 +692,9 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
             params = [
                 {
                     "freq": "D",
+                    "inference_input_size": 2,
+                    "encoder_hidden_size": 2,
+                    "decoder_hidden_size": 3,
                     "max_steps": 4,
                     "trainer_kwargs": {"logger": False},
                 },
@@ -759,7 +768,7 @@ class NeuralForecastAutoLSTM(_NeuralForecastAdapter):
     Notes
     -----
     * If ``loss`` is unspecified, MAE is used as the loss function for training.
-    * Specifying config overrides the default configuration for hyperparameter optimization.
+    * Specifying config overrides the default config of hyperparameters.
 
     Examples
     --------
@@ -781,12 +790,12 @@ class NeuralForecastAutoLSTM(_NeuralForecastAdapter):
     >>> # fitting the model
     >>> model.fit(y_train, X=X_train, fh=[1, 2, 3, 4])  # doctest: +SKIP
     Seed set to 1
-    Epoch 500: 100%|█| 1/1 [00:00<00:00, 42.85it/s, v_num=870, train_loss_step=0.589, train_loss_epoc
+    Epoch 500: 100%|█| 1/1 [00:00<00:00, 42.85it/s, v_num=870, train_loss_step=0.589,
     NeuralForecastAutoLSTM(freq='A-DEC', num_samples=10, backend='ray')
     >>>
     >>> # getting point predictions
     >>> model.predict(X=X_test)  # doctest: +SKIP
-    Predicting DataLoader 0: 100%|██████████████████████████████████| 1/1 [00:00<00:00, 198.64it/s]
+    Predicting DataLoader 0: 100%|███████████████████| 1/1 [00:00<00:00, 198.64it/s]
     1959    69528.695312
     1960    69567.625000
     1961    68260.437500
@@ -802,9 +811,7 @@ class NeuralForecastAutoLSTM(_NeuralForecastAdapter):
     .. [4] https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
     .. [5] https://nixtlaverse.nixtla.io/neuralforecast/losses.pytorch.html
     .. [6] https://lightning.ai/docs/pytorch/stable/api/pytorch_lightning.trainer.trainer.Trainer.html#lightning.pytorch.trainer.trainer.Trainer
-
-
-    """
+    """  # noqa: E501
 
     _tags = {
         # packaging info

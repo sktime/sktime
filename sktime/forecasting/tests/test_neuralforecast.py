@@ -5,9 +5,9 @@ import pytest
 
 from sktime.datasets import load_longley
 from sktime.forecasting.neuralforecast import (
+    NeuralForecastAutoLSTM,
     NeuralForecastLSTM,
     NeuralForecastRNN,
-    NeuralForecastAutoLSTM,
 )
 from sktime.split import temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
