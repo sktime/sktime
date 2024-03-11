@@ -2604,6 +2604,15 @@
         "bug",
         "code"
       ]
+    },
+    {
+      "login": "deysanjeeb",
+      "name": "Sanjeeb Dey",
+      "avatar_url": "https://avatars.githubusercontent.com/u/39940629?v=4",
+      "profile": "https://github.com/deysanjeeb",
+      "contributions": [
+        "maintenance"
+      ]
     }
   ]
 }
