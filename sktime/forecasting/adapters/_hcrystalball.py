@@ -95,10 +95,10 @@ def _adapt_y_pred(y_pred):
 
 
 class HCrystalBallAdapter(BaseForecaster):
-    """Adapter for using `hcrystalball` forecasters in sktime.
+    """Adapter for using ``hcrystalball`` forecasters in sktime.
 
-    Adapter class - wraps any forecaster from `hcrystalball`
-    and allows using it as an `sktime` `BaseForecaster`.
+    Adapter class - wraps any forecaster from ``hcrystalball``
+    and allows using it as an ``sktime`` ``BaseForecaster``.
 
     Parameters
     ----------
@@ -171,7 +171,7 @@ class HCrystalBallAdapter(BaseForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------

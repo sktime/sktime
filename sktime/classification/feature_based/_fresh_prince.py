@@ -32,7 +32,7 @@ class FreshPRINCE(BaseClassifier):
     verbose : int, default=0
         Level of output printed to the console (for information only)
     n_jobs : int, default=1
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``-1`` means using all processors.
     chunksize : int or None, default=None
         Number of series processed in each parallel TSFresh job, should be optimised
@@ -207,7 +207,7 @@ class FreshPRINCE(BaseClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -218,8 +218,9 @@ class FreshPRINCE(BaseClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         if parameter_set == "results_comparison":
             return {

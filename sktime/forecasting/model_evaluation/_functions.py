@@ -367,9 +367,9 @@ def evaluate(
 
     Results returned in this function's return are:
 
-    * results of ``scoring`` calculations, from 4,  in the `i`-th loop
-    * runtimes for fitting and/or predicting, from 2, 3, 7, in the `i`-th loop
-    * cutoff state of ``forecaster``, at 3, in the `i`-th loop
+    * results of ``scoring`` calculations, from 4,  in the ``i``-th loop
+    * runtimes for fitting and/or predicting, from 2, 3, 7, in the ``i``-th loop
+    * cutoff state of ``forecaster``, at 3, in the ``i``-th loop
     * :math:`y_{train, i}`, :math:`y_{test, i}`, ``y_pred`` (optional)
 
     A distributed and-or parallel back-end can be chosen via the ``backend`` parameter.
@@ -405,7 +405,7 @@ def evaluate(
         to "raise", the exception is raised. If a numeric value is given,
         FitFailedWarning is raised.
     backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
-        Runs parallel evaluate if specified and `strategy` is set as "refit".
+        Runs parallel evaluate if specified and ``strategy`` is set as "refit".
 
         - "None": executes loop sequentally, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
@@ -447,30 +447,31 @@ def evaluate(
     results : pd.DataFrame or dask.dataframe.DataFrame
         DataFrame that contains several columns with information regarding each
         refit/update and prediction of the forecaster.
-        Row index is splitter index of train/test fold in `cv`.
-        Entries in the i-th row are for the i-th train/test split in `cv`.
+        Row index is splitter index of train/test fold in ``cv``.
+        Entries in the i-th row are for the i-th train/test split in ``cv``.
         Columns are as follows:
 
-        - test_{scoring.name}: (float) Model performance score. If `scoring` is a list,
-        then there is a column withname `test_{scoring.name}` for each scorer.
+        - test_{scoring.name}: (float) Model performance score. If ``scoring`` is a
+        list,
+        then there is a column withname ``test_{scoring.name}`` for each scorer.
 
-        - fit_time: (float) Time in sec for `fit` or `update` on train fold.
-        - pred_time: (float) Time in sec to `predict` from fitted estimator.
+        - fit_time: (float) Time in sec for ``fit`` or ``update`` on train fold.
+        - pred_time: (float) Time in sec to ``predict`` from fitted estimator.
         - len_train_window: (int) Length of train window.
         - cutoff: (int, pd.Timestamp, pd.Period) cutoff = last time index in train fold.
-        - y_train: (pd.Series) only present if see `return_data=True`
-        train fold of the i-th split in `cv`, used to fit/update the forecaster.
+        - y_train: (pd.Series) only present if see ``return_data=True``
+        train fold of the i-th split in ``cv``, used to fit/update the forecaster.
 
-        - y_pred: (pd.Series) present if see `return_data=True`
-        forecasts from fitted forecaster for the i-th test fold indices of `cv`.
+        - y_pred: (pd.Series) present if see ``return_data=True``
+        forecasts from fitted forecaster for the i-th test fold indices of ``cv``.
 
-        - y_test: (pd.Series) present if see `return_data=True`
-        testing fold of the i-th split in `cv`, used to compute the metric.
+        - y_test: (pd.Series) present if see ``return_data=True``
+        testing fold of the i-th split in ``cv``, used to compute the metric.
 
     Examples
     --------
-    The type of evaluation that is done by `evaluate` depends on metrics in
-    param `scoring`. Default is `MeanAbsolutePercentageError`.
+    The type of evaluation that is done by ``evaluate`` depends on metrics in
+    param ``scoring``. Default is ``MeanAbsolutePercentageError``.
 
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.model_evaluation import evaluate
@@ -482,7 +483,8 @@ def evaluate(
     >>> results = evaluate(forecaster=forecaster, y=y, cv=cv)
 
     Optionally, users may select other metrics that can be supplied
-    by `scoring` argument. These can be forecast metrics of any kind as stated `here
+    by ``scoring`` argument. These can be forecast metrics of any kind as stated `here
+
     <https://www.sktime.net/en/stable/api_reference/performance_metrics.html?highlight=metrics>`_
     i.e., point forecast metrics, interval metrics, quantile forecast metrics.
     To evaluate estimators using a specific metric, provide them to the scoring arg.
@@ -491,7 +493,7 @@ def evaluate(
     >>> loss = MeanAbsoluteError()
     >>> results = evaluate(forecaster=forecaster, y=y, cv=cv, scoring=loss)
 
-    Optionally, users can provide a list of metrics to `scoring` argument.
+    Optionally, users can provide a list of metrics to ``scoring`` argument.
 
     >>> from sktime.performance_metrics.forecasting import MeanSquaredError
     >>> results = evaluate(
@@ -501,7 +503,7 @@ def evaluate(
     ...     scoring=[MeanSquaredError(square_root=True), MeanAbsoluteError()],
     ... )
 
-    An example of an interval metric is the `PinballLoss`.
+    An example of an interval metric is the ``PinballLoss``.
     It can be used with all probabilistic forecasters.
 
     >>> from sktime.forecasting.naive import NaiveVariance

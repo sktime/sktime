@@ -29,11 +29,11 @@ class TimeSeriesKernelKMeans(_TslearnAdapter, BaseClusterer):
     kernel_params : dict or None (default: None)
         Kernel parameters to be passed to the kernel function.
         None means no kernel parameter is set.
-        For Global Alignment Kernel, the only parameter of interest is `sigma`.
+        For Global Alignment Kernel, the only parameter of interest is ``sigma``.
         If set to 'auto', it is computed based on a sampling of the training
         set
         (cf :ref:`tslearn.metrics.sigma_gak <fun-tslearn.metrics.sigma_gak>`).
-        If no specific value is set for `sigma`, its defaults to 1.
+        If no specific value is set for ``sigma``, its defaults to 1.
     max_iter: int, defaults = 300
         Maximum number of iterations of the k-means algorithm for a single
         run.
@@ -48,7 +48,7 @@ class TimeSeriesKernelKMeans(_TslearnAdapter, BaseClusterer):
         computations.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See scikit-learns'
-        `Glossary <https://scikit-learn.org/stable/glossary.html#term-n-jobs>`_
+        ``Glossary <https://scikit-learn.org/stable/glossary.html#term-n-jobs>``_
         for more details.
     random_state: int or np.random.RandomState instance or None, defaults = None
         Determines random number generation for centroid initialization.
@@ -122,7 +122,7 @@ class TimeSeriesKernelKMeans(_TslearnAdapter, BaseClusterer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -130,8 +130,9 @@ class TimeSeriesKernelKMeans(_TslearnAdapter, BaseClusterer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         return {
             "n_clusters": 2,
