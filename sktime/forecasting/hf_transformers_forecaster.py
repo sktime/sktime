@@ -1,16 +1,17 @@
 """Adapter for using huggingface transformers for forecasting."""
 
-from copy import deepcopy
-
-import pandas as pd
 import numpy as np
+import pandas as pd
 import torch
-from skpro.distributions import Normal, TDistribution
-from torch.utils.data import DataLoader, Dataset
-from transformers import InformerForPrediction, Trainer, TrainingArguments, AutoformerForPrediction
-from sktime.forecasting.base import ForecastingHorizon
+from torch.utils.data import Dataset
+from transformers import (
+    TimeSeriesTransformerForPrediction,
+    AutoModel,
+    Trainer,
+    TrainingArguments,
+)
 
-from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
 __author__ = ["benheid"]
 
@@ -30,10 +31,12 @@ class HFTransformersForecaster(BaseForecaster):
     config : dict, default={}
         Configuration to use for the model.
     training_args : dict, default={}
-        Training arguments to use for the model. See `transformers.TrainingArguments` for details.
+        Training arguments to use for the model. See `transformers.TrainingArguments`
+        for details.
         Note that the `output_dir` argument is required.
     compute_metrics : list, default=None
-        List of metrics to compute during training. See `transformers.Trainer` for details.
+        List of metrics to compute during training. See `transformers.Trainer`
+        for details.
     deterministic : bool, default=False
         Whether the predictions should be deterministic or not.
 
@@ -51,7 +54,6 @@ class HFTransformersForecaster(BaseForecaster):
     >>> fh = [1, 2, 3]
     >>> y_pred = forecaster.predict(fh)
     """
-
 
     _tags = {
         "ignores-exogeneous-X": False,
@@ -83,13 +85,13 @@ class HFTransformersForecaster(BaseForecaster):
         self.validation_split = validation_split
         self.config = config
         self.training_args = training_args
-        self.compute_metrics = compute_metrics 
+        self.compute_metrics = compute_metrics
         self._compute_metrics = compute_metrics if compute_metrics is not None else []
         self.deterministic = deterministic
 
     def _fit(self, y, X, fh):
         # Load model and extract config
-        config = InformerForPrediction.from_pretrained(self.model_path).config
+        config = TimeSeriesTransformerForPrediction.from_pretrained(self.model_path).config
 
         # Update config with user provided config
         _config = config.to_dict()
@@ -101,11 +103,10 @@ class HFTransformersForecaster(BaseForecaster):
 
         del _config["feature_size"]
 
-
         config = config.from_dict(_config)
-
+        import transformers
         # Load model with the updated config
-        self.model, info = InformerForPrediction.from_pretrained(
+        self.model, info = getattr(transformers, config.architectures[0]).from_pretrained(
             self.model_path,
             config=config,
             output_loading_info=True,
@@ -156,11 +157,7 @@ class HFTransformersForecaster(BaseForecaster):
 
             eval_dataset = None
 
-        
-        training_args = TrainingArguments(
-            **self.training_args
-            )
-
+        training_args = TrainingArguments(**self.training_args)
 
         if self.fit_strategy == "minimal":
             if len(info["mismatched_keys"]) == 0:
@@ -180,7 +177,6 @@ class HFTransformersForecaster(BaseForecaster):
         )
         trainer.train()
 
-
     def _predict(self, fh, X=None):
         if self.deterministic:
             torch.manual_seed(42)
@@ -192,34 +188,60 @@ class HFTransformersForecaster(BaseForecaster):
 
         if min(fh._values) < 0:
             raise NotImplementedError("LTSF is not supporting insample predictions.")
-    
+
         self.model.eval()
-        from torch import from_numpy, tensor
+        from torch import from_numpy
+
         hist = self._y.values.reshape((1, -1))
         self.model.config.prediction_length = max(fh.to_relative(self._cutoff)._values)
         if X is not None:
             hist_x = self._X.values.reshape((1, -1, self._X.shape[-1]))
             x_ = X.values.reshape((1, -1, self._X.shape[-1]))
             if x_.shape[1] < self.model.config.prediction_length:
-                x_ = np.resize(x_, (1, self.model.config.prediction_length, x_.shape[-1]))
+                x_ = np.resize(
+                    x_, (1, self.model.config.prediction_length, x_.shape[-1])
+                )
         else:
-            hist_x = np.array([[[]] * (self.model.config.context_length + max(self.model.config.lags_sequence))])
+            hist_x = np.array(
+                [
+                    [[]]
+                    * (
+                        self.model.config.context_length
+                        + max(self.model.config.lags_sequence)
+                    )
+                ]
+            )
             x_ = np.array([[[]] * self.model.config.prediction_length])
 
         pred = self.model.generate(
             past_values=from_numpy(hist).to(self.model.dtype).to(self.model.device),
-            past_time_features=from_numpy(hist_x[:, -self.model.config.context_length-max(self.model.config.lags_sequence):]).to(self.model.dtype).to(self.model.device),
-            future_time_features=from_numpy(x_).to(self.model.dtype).to(self.model.device),
-            past_observed_mask=from_numpy((~np.isnan(hist)).astype(int)).to(self.model.device),
+            past_time_features=from_numpy(
+                hist_x[
+                    :,
+                    -self.model.config.context_length
+                    - max(self.model.config.lags_sequence) :,
+                ]
+            )
+            .to(self.model.dtype)
+            .to(self.model.device),
+            future_time_features=from_numpy(x_)
+            .to(self.model.dtype)
+            .to(self.model.device),
+            past_observed_mask=from_numpy((~np.isnan(hist)).astype(int)).to(
+                self.model.device
+            ),
         )
 
         pred = pred.sequences.mean(dim=1).detach().cpu().numpy().T
 
-        pred = pd.Series(pred.reshape((-1,)), 
-                            index=ForecastingHorizon(range(1, len(pred) + 1)).to_absolute(self._cutoff)._values,
-                            #columns=self._y.columns
-                            name = self._y.name
-                            )
+        pred = pd.Series(
+            pred.reshape((-1,)),
+            index=ForecastingHorizon(range(1, len(pred) + 1))
+            .to_absolute(self._cutoff)
+            ._values,
+            # columns=self._y.columns
+            name=self._y.name,
+        )
         return pred.loc[fh.to_absolute(self.cutoff)._values]
 
     @classmethod
@@ -247,9 +269,10 @@ class HFTransformersForecaster(BaseForecaster):
                 "training_args": {
                     "num_train_epochs": 1,
                     "output_dir": "test_output",
-                    "per_device_train_batch_size" : 32, # TODO create a bug report in HF if len(data) % batch_size == 1 -> BatchNorm is
+                    "per_device_train_batch_size": 32,
+                    # TODO create a bug report in HF if len(data) % batch_size == 1
                 },
-                "config" : {
+                "config": {
                     "lags_sequence": [1, 2, 3],
                     "context_length": 2,
                     "prediction_length": 4,
@@ -286,12 +309,12 @@ class PyTorchDataset(Dataset):
         else:
             exog_data = tensor([[]] * self.seq_len)
             hist_exog = tensor([[]] * self.fh)
-        return (
-{            "past_values" :hist_y,
-            "past_time_features" : hist_exog,
-            "future_time_features" : exog_data,
+        return {
+            "past_values": hist_y,
+            "past_time_features": hist_exog,
+            "future_time_features": exog_data,
             "past_observed_mask": (~hist_y.isnan()).to(int),
-            "future_values" : from_numpy(self.y[i + self.seq_len : i + self.seq_len + self.fh]).float(),}
-        )
-
-
+            "future_values": from_numpy(
+                self.y[i + self.seq_len : i + self.seq_len + self.fh]
+            ).float(),
+        }
