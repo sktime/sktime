@@ -60,7 +60,7 @@ class TemporianTransformer(BaseTransformer):
         "capability:unequal_length": True,
         "handles-missing-data": False,
         "python_dependencies": ["temporian"],
-        "python_version": "<3.12",
+        "python_version": ">=3.8",
     }
 
     def __init__(self, function, compile=False):
@@ -105,7 +105,14 @@ class TemporianTransformer(BaseTransformer):
 
         # Test that the sampling was not modified, otherwise the conversion back to
         # pandas and the set_index would not work as expected
-        res.check_same_sampling(evset)
+        try:
+            res.check_same_sampling(evset)
+        except ValueError:
+            raise ValueError(
+                "The resulting EventSet must have the same sampling as the input. "
+                "Visit our docs for more info "
+                "https://temporian.readthedocs.io/en/stable/user_guide/#sampling"
+            )
 
         res = tp.to_pandas(res, timestamps=False)
         res = res.set_index(X.index)

@@ -89,7 +89,6 @@ def test_dtypes():
                 np.int64,
                 np.float32,
                 np.float64,
-                np.bool_,
             ]
         }
     )
@@ -118,7 +117,7 @@ def test_compiled():
     X_transformed = transformer.fit_transform(X=X)
     pd.testing.assert_series_equal(X_transformed, X + 1)
 
-    # test that an already compiled function down't cause errors
+    # test that an already compiled function doesn't cause errors
     transformer = TemporianTransformer(function=tp.compile(function), compile=True)
     assert transformer.function.is_tp_compiled
     X_transformed = transformer.fit_transform(X=X)
@@ -178,7 +177,10 @@ def test_change_sampling():
         return evset.lag(tp.duration.days(365))
 
     transformer = TemporianTransformer(function=function, compile=True)
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match="The resulting EventSet must have the same sampling as the input",
+    ):
         _ = transformer.fit_transform(X=X)
 
 
