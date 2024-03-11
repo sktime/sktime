@@ -2617,5 +2617,16 @@
         "maintenance"
       ]
     }
+    {
+      "login": "pranavvp16",
+      "name": "Pranav Prajapati",
+      "avatar_url": "https://avatars.githubusercontent.com/pranavvp16",
+      "profile": "https://github.com/pranavvp16",
+      "contributions": [
+            "code",
+            "test",
+            "doc"
+      ]
+    }
   ]
 }
