@@ -4,14 +4,16 @@
 __author__ = ["krishna-t"]
 
 import pytest
-import statsmodels
 
 from sktime.datasets import load_airline
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.detrend.mstl import MSTL
 
 
 @pytest.mark.skipif(
-    statsmodels.tsa.seasonal.MSTL is None, reason="MSTL is not installed"
+    not run_test_for_class([MSTL]),
+    reason="run test only if softdeps are present and incrementally"
+           " (if requested)",
 )
 def test_transform_returns_correct_components():
     """Tests whether expected components are returned when
