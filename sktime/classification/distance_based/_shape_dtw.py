@@ -38,7 +38,7 @@ class ShapeDTW(BaseClassifier):
 
     Parameters
     ----------
-    n_neighbours                : int, int, set k for knn (default =1).
+    n_neighbors                : int, int, set k for knn (default =1).
     subsequence_length          : int, defines the length of the
                                   subsequences(default=sqrt(n_timepoints)).
 
@@ -238,7 +238,7 @@ class ShapeDTW(BaseClassifier):
 
             grid = GridSearchCV(
                 estimator=ShapeDTW(
-                    n_neighbours=n,
+                    n_neighbors=n,
                     subsequence_length=sl,
                     shape_descriptor_function=sdf,
                     shape_descriptor_functions=sdfs,
