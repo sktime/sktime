@@ -835,7 +835,7 @@ class NeuralForecastAutoLSTM(_NeuralForecastAdapter):
         verbose_predict: bool = False,
         loss=None,
         valid_loss=None,
-        config: dict = None,
+        config: typing.Optional[dict] = None,
         search_alg=None,
         num_samples: int = 10,
         backend: str = "ray",
@@ -921,7 +921,6 @@ class NeuralForecastAutoLSTM(_NeuralForecastAdapter):
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
 
-
         Parameters
         ----------
         parameter_set : str, default="default"
@@ -941,14 +940,14 @@ class NeuralForecastAutoLSTM(_NeuralForecastAdapter):
         except ModuleNotFoundError:
             params = [
                 {
+                    "freq": "D",
                     "num_samples": 10,
                     "backend": "ray",
-                    "config": None,
                 },
                 {
                     "num_samples": 1,
                     "backend": "ray",
-                    "callbacks": None,
+                    "config": {"max_steps": 1},
                 },
             ]
         else:
