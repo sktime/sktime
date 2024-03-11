@@ -379,6 +379,7 @@ Deep learning based forecasters
 
     NeuralForecastRNN
     NeuralForecastLSTM
+    NeuralForecastAutoLSTM
 
 
 Intermittent time series forecasters
