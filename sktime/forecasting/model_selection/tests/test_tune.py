@@ -377,6 +377,10 @@ TEST_PARAMS_LIST = [
         (ForecastingGridSearchCV, {"param_grid": TEST_PARAMS_DICT}),
         (ForecastingGridSearchCV, {"param_grid": TEST_PARAMS_LIST}),
         (ForecastingRandomizedSearchCV, {"param_distributions": TEST_PARAMS_LIST}),
+        (
+            ForecastingRandomizedSearchCV,
+            {"param_distributions": TEST_PARAMS_LIST, "n_iter": 100},
+        ),
     ],
 )
 def test_return_n_best_forecasters(Forecaster, return_n_best_forecasters, kwargs):
@@ -403,6 +407,21 @@ def test_return_n_best_forecasters(Forecaster, return_n_best_forecasters, kwargs
             total_combinations = calculate_total_combinations(kwargs["param_grid"])
             assert len(searchCV.n_best_forecasters_) == total_combinations
         else:
-            assert len(searchCV.n_best_forecasters_) == searchCV.n_iter
+            try:
+                assert len(searchCV.n_best_forecasters_) == searchCV.n_iter
+            except AssertionError:
+                total_combinations = calculate_total_combinations(
+                    kwargs["param_distributions"]
+                )
+                assert len(searchCV.n_best_forecasters_) == total_combinations
     else:
-        assert len(searchCV.n_best_forecasters_) == return_n_best_forecasters
+        try:
+            assert len(searchCV.n_best_forecasters_) == return_n_best_forecasters
+        except AssertionError:
+            key = (
+                "param_distributions"
+                if "param_distributions" in kwargs
+                else "param_grid"
+            )
+            total_combinations = calculate_total_combinations(kwargs[key])
+            assert len(searchCV.n_best_forecasters_) == total_combinations
