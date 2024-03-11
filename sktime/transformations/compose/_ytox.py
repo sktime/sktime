@@ -30,22 +30,21 @@ class YtoX(BaseTransformer):
     --------
     Use case: creating exogenous data from index, if no exogenous data is available.
 
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.transformations.compose import YtoX
     >>> from sktime.transformations.series.fourier import FourierFeatures
-    >>> from sktime.transformations.series.ytox import YtoX  # doctest: +SKIP
-    >>> from sktime.forecasting.compose import ForecastingPipeline  # doctest: +SKIP
-    >>> from sktime.forecasting.arima import ARIMA  # doctest: +SKIP
+    >>> from sktime.forecasting.arima import ARIMA
+    >>> from sktime.forecasting.compose import ForecastingPipeline
     >>>
     >>> # data with no exogenous features
     >>> y = load_airline()
     >>>
     >>> # create a pipeline with Fourier features and ARIMA
-    >>> ARIMA = ARIMA(order=(1, 1, 1))  # doctest: +SKIP
-    >>>
     >>> pipe = ForecastingPipeline(
     ...     [
-    ...         YtoX(),
-    ...         FourierFeatures(sp_list=[24, 24 * 7], fourier_terms_list=[10, 5]),
-    ...         ARIMA,
+    ...             YtoX(),
+    ...             FourierFeatures(sp_list=[24, 24 * 7], fourier_terms_list=[10, 5]),
+    ...             ARIMA(order=(1, 1, 1))  # doctest: +SKIP,
     ...     ]
     ... )  # doctest: +SKIP
     >>>
