@@ -4,7 +4,7 @@
 __author__ = ["krishna-t"]
 
 import pytest
-import statsmodels as statsmodels
+import statsmodels
 
 from sktime.datasets import load_airline
 from sktime.transformations.series.detrend.mstl import MSTL
@@ -32,29 +32,24 @@ def test_transform_returns_correct_components():
     # Check if the transformed data has the expected components
     assert "transformed" in transformed.columns, (
         "Test of MSTL.transform failed with return_components=True, "
-        "returned DataFrame columns"
-        " are missing 'transformed"
-        " variable."
+        "returned DataFrame columns are missing 'transformed' "
+        "variable."
     )
     assert "trend" in transformed.columns, (
         "Test of MSTL.transform failed with return_components=True, "
-        "returned DataFrame columns are "
-        "missing 'trend' variable."
+        "returned DataFrame columns are missing 'trend' variable."
     )
     assert "resid" in transformed.columns, (
         "Test of MSTL.transform failed with return_components=True, "
-        "returned DataFrame columns are "
-        "missing 'resid' variable."
+        "returned DataFrame columns are missing 'resid' variable."
     )
     assert "seasonal_3" in transformed.columns, (
         "Test of MSTL.transform failed with return_components=True, "
-        "returned DataFrame columns"
-        " are missing 'seasonal_3 "
+        "returned DataFrame columns are missing 'seasonal_3 "
         "variable."
     )
     assert "seasonal_12" in transformed.columns, (
         "Test of MSTL.transform failed with return_components=True, "
-        "returned DataFrame "
-        "columns are missing "
-        "'seasonal_12' variable."
+        "returned DataFrame columns are missing 'seasonal_12' "
+        "variable."
     )
