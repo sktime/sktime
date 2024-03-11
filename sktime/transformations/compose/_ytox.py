@@ -54,10 +54,10 @@ class YtoX(BaseTransformer):
     Use case: using lagged endogenous variables as exogeneous data.
 
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.sarimax import SARIMAX
     >>> from sktime.transformations.compose import YtoX
-    >>> from sktime.transformations.series.impute import Imputer
     >>> from sktime.transformations.series.lag import Lag
+    >>> from sktime.transformations.series.impute import Imputer
+    >>> from sktime.forecasting.sarimax import SARIMAX
     >>>
     >>> # data with no exogenous features
     >>> y = load_airline()
@@ -67,10 +67,10 @@ class YtoX(BaseTransformer):
     >>>
     >>> # we need to specify index_out="original" as otherwise ARIMA gets 1 and 2 ahead
     >>> # use lagged_y_trafo to generate X
-    >>> forecaster = lagged_y_trafo ** SARIMAX()  # doctest: +SKIP
+    >>> forecaster = lagged_y_trafo ** SARIMAX()
     >>>
     >>> # fit and forecast next value, with lagged y as exogenous data
-    >>> forecaster.fit(y_train, fh=[1])  # doctest: +SKIP
+    >>> forecaster.fit(y, fh=[1])  # doctest: +SKIP
     >>> y_pred = forecaster.predict()  # doctest: +SKIP
     """
 
