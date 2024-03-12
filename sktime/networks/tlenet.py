@@ -5,7 +5,7 @@ from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
 
 
-class TLENetNetwork(BaseDeepNetwork):
+class TleNetNetwork(BaseDeepNetwork):
     """Time Le-Net (TLENET).
 
     Adapted from the implementation used in [1]
@@ -52,7 +52,8 @@ class TLENetNetwork(BaseDeepNetwork):
         classifier and a majority vote is performed to decide a predicted
         label." Le Guennec et al. (2016)
 
-        This method performs window slicing on input time series to generate additional data samples.
+        This method performs window slicing on input time series to
+        generate additional data samples.
 
         Parameters
         ----------
@@ -68,9 +69,11 @@ class TLENetNetwork(BaseDeepNetwork):
         Returns
         -------
         new_x : numpy.ndarray
-            The sliced input data with shape (augmented_samples, length_sliced, features).
+            The sliced input data with shape
+                (augmented_samples, length_sliced, features).
         new_y : numpy.ndarray or None
-            The replicated target labels with shape (augmented_samples, labels) if y is not None, else None.
+            The replicated target labels with shape
+                (augmented_samples, labels) if y is not None, else None.
         increase_num : int
             Number of augmented samples generated per original sample.
 
@@ -122,11 +125,13 @@ class TLENetNetwork(BaseDeepNetwork):
         """
         Warp a slice of a time series by speeding it up or down.
 
-        "This method generates input time series of different lengths. To deal
-        with this issue, we [then] perform window slicing on transformed
-        timeseries for all to have equal length" Le Guennec et al. (2016)
+        "This method generates input time series of different lengths.
+        To deal with this issue, we [then] perform window slicing on
+        transformed timeseries for all to have equal length"
+        Le Guennec et al. (2016)
 
-        This method warps a slice of a time series by speeding it up or down using linear interpolation.
+        This method warps a slice of a time series by speeding it
+        up or down using linear interpolation.
 
         Parameters
         ----------
@@ -203,7 +208,8 @@ class TLENetNetwork(BaseDeepNetwork):
     def adjust_parameters(self, X):
         """Adjust warping and slicing parameters based on data length.
 
-        This method adjusts warping and slicing parameters based on the length of input time series.
+        This method adjusts warping and slicing parameters based on
+        the length of input time series.
 
         Parameters
         ----------
@@ -231,7 +237,8 @@ class TLENetNetwork(BaseDeepNetwork):
     def pre_processing(self, X, y=None):
         """Perform data preprocessing including data augmentation.
 
-        This method applies window warping (WW) and window slicing (WS) for data augmentation.
+        This method applies window warping (WW) and window slicing (WS)
+        for data augmentation.
 
         Parameters
         ----------
@@ -245,9 +252,11 @@ class TLENetNetwork(BaseDeepNetwork):
         Returns
         -------
         new_x : numpy.ndarray
-            The preprocessed input data after augmentation with shape (augmented_samples, length_ratio, features).
+            The preprocessed input data after augmentation with shape
+                (augmented_samples, length_ratio, features).
         new_y : numpy.ndarray or None
-            The preprocessed target labels after augmentation with shape (augmented_samples, labels) if y is not None, else None.
+            The preprocessed target labels after augmentation with shape
+                (augmented_samples, labels) if y is not None, else None.
         tot_increase_num : int
             Total number of augmented samples generated.
         """

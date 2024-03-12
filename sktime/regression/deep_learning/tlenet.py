@@ -1,16 +1,16 @@
 """Time Le-Net (TLENET)."""
 
 __author__ = ["James Large, Withington"]
-__all__ = ["TLENeTRegressor"]
+__all__ = ["TleNetRegressor"]
 
 from sklearn.utils import check_random_state
 
-from sktime.networks.tlenet import TLENetNetwork
+from sktime.networks.tlenet import TleNetNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.utils.validation._dependencies import _check_dl_dependencies
 
 
-class TLENetRegressor(BaseDeepRegressor):
+class TleNetRegressor(BaseDeepRegressor):
     """Time Le-Net (TLENET) from Fawaz et. al.
 
     Parameters
@@ -43,7 +43,8 @@ class TLENetRegressor(BaseDeepRegressor):
 
     Notes
     -----
-    This implementation is based on the https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/tlenet.py
+    This implementation is based on the
+        https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/tlenet.py
     """
 
     _tags = {
@@ -58,7 +59,7 @@ class TLENetRegressor(BaseDeepRegressor):
         self,
         n_epochs=2000,
         batch_size=128,
-        warping_ratio=[0.5, 1, 2],
+        warping_ratio=None,
         slice_ratio=0.1,
         callbacks="ReduceLRonPlateau",
         verbose="auto",
@@ -80,7 +81,7 @@ class TLENetRegressor(BaseDeepRegressor):
         self.optimizer = optimizer
         self.metrics = metrics
 
-        self._network = TLENetNetwork(
+        self._network = TleNetNetwork(
             n_epochs=self.n_epochs,
             batch_size=self.batch_size,
             warping_ratio=self.warping_ratio,
@@ -115,6 +116,9 @@ class TLENetRegressor(BaseDeepRegressor):
 
         tf.random.set_seed(self.random_state)
 
+        if self.warping_ratio is None:
+            self.warping_ratio = [0.5, 1, 2]
+
         input_layers, output_layer = self._network.build_network(input_shape, **kwargs)
 
         output_layer = keras.layers.Dense(units=1)(output_layer)
@@ -148,7 +152,6 @@ class TLENetRegressor(BaseDeepRegressor):
         self : an instance of self.
         """
         import tensorflow as tf
-        from tensorflow import keras
 
         tf.random.set_seed(self.random_state)
 
