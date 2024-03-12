@@ -117,22 +117,4 @@ def run_test_for_class(cls):
 
     # if ONLY_CHANGED_MODULES is off: always True
     # tests are always run if soft dependencies are present
-    if not ONLY_CHANGED_MODULES:
-        return True
-
-    # Condition 2:
-    # any of the modules containing any of the classes in the list have changed
-    # or any of the modules containing any parent classes in sktime have changed
-    cond2 = any(_is_class_changed_or_sktime_parents(x) for x in cls)
-
-    # Condition 3:
-    # if the object is an sktime BaseObject, and one of the test classes
-    # covering the class have changed, then run the test
-    cond3 = any(_tests_covering_class_changed(x) for x in cls)
-
-    # Condition 4:
-    # the package requirements for any dependency in pyproject.toml have changed
-    cond4 = any(_is_impacted_by_pyproject_change(x) for x in cls)
-
-    # run the test if and only if at least one of the conditions 2-4 are met
-    return cond2 or cond3 or cond4
+    return True
