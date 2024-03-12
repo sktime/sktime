@@ -2616,6 +2616,16 @@
         "doc",
         "maintenance"
       ]
+    },
+    {
+      "login": "memeo-pro",
+      "name": "Yash Edake",
+      "avatar_url": "https://avatars.githubusercontent.com/memeo-pro",
+      "profile": "https://github.com/MEMEO-PRO",
+      "contributions": [
+        "maintenance",
+        "bug"
+      ]
     }
   ]
 }
