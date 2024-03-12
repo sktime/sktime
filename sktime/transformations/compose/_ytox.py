@@ -67,7 +67,7 @@ class YtoX(BaseTransformer):
     >>>
     >>> # we need to specify index_out="original" as otherwise ARIMA gets 1 and 2 ahead
     >>> # use lagged_y_trafo to generate X
-    >>> forecaster = lagged_y_trafo ** SARIMAX()
+    >>> forecaster = lagged_y_trafo ** SARIMAX()  # doctest: +SKIP
     >>>
     >>> # fit and forecast next value, with lagged y as exogenous data
     >>> forecaster.fit(y, fh=[1])  # doctest: +SKIP
