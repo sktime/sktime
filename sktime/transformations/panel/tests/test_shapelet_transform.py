@@ -24,7 +24,15 @@ def test_st_on_unit_test():
 
     # fit the shapelet transform
     st = RandomShapeletTransform(
-        max_shapelets=10, n_shapelet_samples=500, random_state=0
+        max_shapelets=10,
+        n_shapelet_samples=500,
+        random_state=0,
+        backend="joblib",
+        backend_params={
+            # "n_jobs": , Deprecated??
+            "backend": "joblib",
+            "prefer": "threads",
+        },
     )
     st.fit(X_train.iloc[indices], y_train[indices])
 
@@ -49,7 +57,15 @@ def test_st_on_basic_motions():
 
     # fit the shapelet transform
     st = RandomShapeletTransform(
-        max_shapelets=10, n_shapelet_samples=500, random_state=0
+        max_shapelets=10,
+        n_shapelet_samples=500,
+        random_state=0,
+        backend="joblib",
+        backend_params={
+            # "n_jobs": , Deprecated??
+            "backend": "joblib",
+            "prefer": "threads",
+        },
     )
     st.fit(X_train.iloc[indices], y_train[indices])
 

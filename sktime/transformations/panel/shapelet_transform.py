@@ -1234,12 +1234,13 @@ class RandomShapeletTransform(BaseTransformer):
                         "shapelets": shapelets,
                         "max_shapelets_per_class": max_shapelets_per_class,
                     },
-                    backend="joblib",
-                    backend_params={
-                        "n_jobs": self._n_jobs,
-                        "backend": self.parallel_backend,
-                        "prefer": "threads",
-                    },
+                    backend=self.backends,
+                    backend_params=self.backend_params
+                    # {
+                    #     "n_jobs": self._n_jobs,
+                    #     "backend": self.parallel_backend,
+                    #     "prefer": "threads",
+                    # },
                 )
 
                 for i, heap in enumerate(shapelets):
@@ -1278,12 +1279,13 @@ class RandomShapeletTransform(BaseTransformer):
                         "shapelets": shapelets,
                         "max_shapelets_per_class": max_shapelets_per_class,
                     },
-                    backend="joblib",
-                    backend_params={
-                        "n_jobs": self._n_jobs,
-                        "backend": self.parallel_backend,
-                        "prefer": "threads",
-                    },
+                    backend=self.backend,
+                    backend_params=self.backend_params
+                    # {
+                    #     "n_jobs": self._n_jobs,
+                    #     "backend": self.parallel_backend,
+                    #     "prefer": "threads",
+                    # },
                 )
 
                 for i, heap in enumerate(shapelets):
