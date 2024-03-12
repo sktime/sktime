@@ -57,6 +57,9 @@ def find_invalid_backtick_text(docstring):
     for text in all_backtick_text:
         if text in valid_backtick_text:
             continue
+        # rst hyperlinks are valid cases
+        if re.match(r"`.*?<http.*?>`", text, flags=re.DOTALL):
+            continue
         invalid_backtick_text.add(text)
 
     return invalid_backtick_text
