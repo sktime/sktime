@@ -763,7 +763,7 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
         params1 = {"state_dim": 2}
         params2 = {
             "state_dim": 2,
-            "initial_state": np.array([[0, 0]]),
+            "initial_state": np.array([0, 0]),
             "initial_state_covariance": np.array([[0.1, 0], [0.1, 0]]),
             "state_transition": np.array([[1, 0.1], [0, 1]]),
             "process_noise": np.array(
@@ -773,8 +773,8 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
                 ]
             )
             * 0.1,
-            "measurement_function": np.array([1, 0]),
-            "measurement_noise": np.array([0.1]),
+            "measurement_function": np.array([[1, 0]]),
+            "measurement_noise": np.array([[0.1]]),
             "denoising": True,
             "estimate_matrices": ["measurement_noise"],
         }
@@ -1318,7 +1318,7 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
         params1 = {"state_dim": 2}
         params2 = {
             "state_dim": 2,
-            "initial_state": np.array([[0, 0]]),
+            "initial_state": np.array([0, 0]),
             "initial_state_covariance": np.array([[0.1, 0], [0.1, 0]]),
             "state_transition": np.array([[1, 0.1], [0, 1]]),
             "process_noise": np.array(
@@ -1328,8 +1328,8 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
                 ]
             )
             * 0.1,
-            "measurement_function": np.array([1, 0]),
-            "measurement_noise": np.array([0.1]),
+            "measurement_function": np.array([[1, 0]]),
+            "measurement_noise": np.array([[0.1]]),
             "denoising": True,
             "estimate_matrices": ["measurement_noise"],
         }
