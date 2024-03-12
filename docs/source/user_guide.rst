@@ -27,3 +27,4 @@ The notebook files can be found `here <https://github.com/sktime/sktime/blob/mai
     :glob:
 
     examples/*
+    examples/*/*
