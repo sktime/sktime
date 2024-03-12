@@ -44,17 +44,13 @@ def extract_docstrings(filename):
 
 def find_invalid_backtick_text(docstring):
     """Find invalid backtick text in a docstring."""
-    # remove all the code blocks to avoid interference
-    # they are allowed to use backticks in any way
-    docstring = re.sub(r"```.*?```", "", docstring, flags=re.DOTALL)
-
-    # remove all double-backticks to avoid interference
+    # remove all multiple backticks to avoid interference
     # we are looking only for invalid single-backtick
-    docstring = re.sub(r"``.*?``", "", docstring)
+    docstring = re.sub(r"`{2,}.*?`{2,}", "", docstring, flags=re.DOTALL)
 
-    all_backtick_text = re.findall(r"`.*?`", docstring)
+    all_backtick_text = re.findall(r"`.*?`", docstring, flags=re.DOTALL)
     # expressions like :math:`d(x, y):= (x-y)^2` are valid cases
-    valid_backtick_text = re.findall(r":.*?:(`.*?`)", docstring)
+    valid_backtick_text = re.findall(r":.*?:(`.*?`)", docstring, flags=re.DOTALL)
 
     # find all the invalid backtick code snippets
     invalid_backtick_text = set()
