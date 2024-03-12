@@ -267,7 +267,7 @@ class BaseGridSearch(_DelegatedForecaster):
         # Select n best forecaster
         self.n_best_forecasters_ = []
         self.n_best_scores_ = []
-        _forecasters_to_return = self.return_n_best_forecasters
+        _forecasters_to_return = min(self.return_n_best_forecasters, len(results.index))
         if _forecasters_to_return == -1:
             _forecasters_to_return = len(results.index)
         for i in range(_forecasters_to_return):
