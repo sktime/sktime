@@ -1422,9 +1422,9 @@ def test_feature_names():
 
     Safety measure to avoid accidental changes to the feature names, or their order.
     """
-    from sktime.transformations.panel.catch22 import feature_names, FEATURE_NAMES
+    from sktime.transformations.panel.catch22 import FEATURE_NAMES, feature_names
 
-    expected_feature_names = feature_names = [
+    expected_feature_names = [
         "DN_HistogramMode_5",
         "DN_HistogramMode_10",
         "SB_BinaryStats_diff_longstretch0",
