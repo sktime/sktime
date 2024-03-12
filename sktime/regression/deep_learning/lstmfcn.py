@@ -7,7 +7,7 @@ from copy import deepcopy
 
 from sklearn.utils import check_random_state
 
-from sktime.networks.lstmfcn import LSTMFCNNetwork
+from sktime.networks.lstmfcn import LSTMFCNNNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
 
 
@@ -95,7 +95,7 @@ class LSTMFCNRegressor(BaseDeepRegressor):
         self.random_state = random_state
         self.verbose = verbose
 
-        self._network = LSTMFCNNetwork(
+        self._network = LSTMFCNNNetwork(
             kernel_sizes=self.kernel_sizes,
             filter_sizes=self.filter_sizes,
             random_state=self.random_state,
