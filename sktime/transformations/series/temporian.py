@@ -47,9 +47,15 @@ class TemporianTransformer(BaseTransformer):
     """
 
     _tags = {
-        "univariate-only": False,
+        # packaging info
+        # --------------
         "authors": ["ianspektor", "javiber"],
         "maintainers": ["ianspektor", "javiber"],
+        "python_dependencies": ["temporian"],
+        "python_version": ">=3.8",
+        # estimator tags
+        # --------------
+        "univariate-only": False,
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:instancewise": True,
@@ -59,8 +65,6 @@ class TemporianTransformer(BaseTransformer):
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
         "handles-missing-data": False,
-        "python_dependencies": ["temporian"],
-        "python_version": ">=3.8",
     }
 
     def __init__(self, function, compile=False):
