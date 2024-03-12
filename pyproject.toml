@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.26.1"
+version = "0.27.0"
 description = "A unified framework for machine learning with time series"
 readme = "README.md"
 keywords = [
@@ -92,7 +92,7 @@ all_extras = [
   "kotsu>=0.3.1",
   "matplotlib>=3.3.2",
   "mne",
-  'numba<0.59,>=0.53; python_version < "3.12"',
+  'numba<0.60,>=0.53',
   'pmdarima!=1.8.1,<3.0.0,>=1.8; python_version < "3.12"',
   'prophet>=1.1; python_version < "3.12"',
   "pycatch22<0.4.4",
@@ -103,7 +103,7 @@ all_extras = [
   "scikit_posthocs>=0.6.5",
   "seaborn>=0.11",
   "seasonal",
-  "skpro<2.2.0,>=2",
+  "skpro<2.3.0,>=2",
   'statsforecast<1.8.0,>=1.0.0; python_version < "3.12"',
   "statsmodels>=0.12.1",
   'stumpy>=1.5.1; python_version < "3.11"',
@@ -132,7 +132,7 @@ all_extras_pandas2 = [
   "kotsu>=0.3.1",
   "matplotlib>=3.3.2",
   "mne",
-  'numba<0.59,>=0.53; python_version < "3.12"',
+  'numba<0.60,>=0.53',
   'pmdarima!=1.8.1,<3.0.0,>=1.8; python_version < "3.12"',
   'prophet>=1.1; python_version < "3.12"',
   "pycatch22<0.4.4",
@@ -141,7 +141,7 @@ all_extras_pandas2 = [
   "scikit_posthocs>=0.6.5",
   "seaborn>=0.11",
   "seasonal",
-  "skpro<2.2.0,>=2",
+  "skpro<2.3.0,>=2",
   'statsforecast<1.8.0,>=1.0.0; python_version < "3.12"',
   "statsmodels>=0.12.1",
   'stumpy>=1.5.1; python_version < "3.11"',
@@ -164,29 +164,29 @@ all_extras_pandas2 = [
 #
 alignment = [
   "dtw-python<1.4,>=1.3",
-  'numba<0.59,>=0.53; python_version < "3.12"',
+  'numba<0.60,>=0.53',
 ]
 annotation = [
   "hmmlearn<0.4,>=0.2.7",
-  'numba<0.59,>=0.53; python_version < "3.12"',
+  'numba<0.60,>=0.53',
   'pyod<1.2,>=0.8; python_version < "3.12"',
 ]
 classification = [
   'esig<0.10,>=0.9.7; python_version < "3.11"',
-  'numba<0.59,>=0.53; python_version < "3.12"',
+  'numba<0.60,>=0.53',
   'tensorflow<=2.14,>=2; python_version < "3.12"',
   'tsfresh<0.21,>=0.17; python_version < "3.12"',
 ]
 clustering = [
-  'numba<0.59,>=0.53; python_version < "3.12"',
+  'numba<0.60,>=0.53',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.12"',
 ]
 forecasting = [
   "arch>=5.6,<6.4",
   'pmdarima!=1.8.1,<2.1,>=1.8; python_version < "3.12"',
   "prophet<1.2,>=1.1",
-  "skpro<2.2,>=2",
-  'statsforecast<1.7,>=0.5.2; python_version < "3.12"',
+  "skpro<2.3.0,>=2",
+  'statsforecast<1.8.0,>=1.0.0; python_version < "3.12"',
   "statsmodels<0.15,>=0.12.1",
   'tbats<1.2,>=1.1; python_version < "3.12"',
 ]
@@ -199,15 +199,15 @@ param_est = [
   "statsmodels<0.15,>=0.12.1",
 ]
 regression = [
-  'numba<0.59,>=0.53; python_version < "3.12"',
+  'numba<0.60,>=0.53',
   'tensorflow<=2.14,>=2; python_version < "3.12"',
 ]
 transformations = [
   'esig<0.10,>=0.9.7; python_version < "3.11"',
   "filterpy<1.5,>=1.4.5",
-  "holidays>=0.29,<0.44",
+  "holidays>=0.29,<0.45",
   "mne>=1.5,<1.7",
-  'numba<0.59,>=0.53; python_version < "3.12"',
+  'numba<0.60,>=0.53',
   "pycatch22>=0.4,<0.4.4",
   "pykalman-bardo<0.10,>=0.9.7",
   "statsmodels<0.15,>=0.12.1",
@@ -250,7 +250,7 @@ tests = [
   "pytest>=7.4,<8.1",
   "pytest-cov<4.2,>=4.1",
   "pytest-randomly<3.16,>=3.15",
-  "pytest-timeout>=2.1,<2.3",
+  "pytest-timeout>=2.1,<2.4",
   "pytest-xdist>=3.3,<3.6",
 ]
 
@@ -263,7 +263,7 @@ binder = [
 cython_extras = [
   "mrseql",
   'mrsqm; python_version < "3.11"',
-  "numba<0.59",
+  "numba<0.60",
 ]
 dl = [
   'FrEIA; python_version < "3.12"',

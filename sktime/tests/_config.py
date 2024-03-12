@@ -47,6 +47,10 @@ EXCLUDE_ESTIMATORS = [
     "ResNetRegressor",
     "FCNRegressor",
     "LSTMFCNRegressor",
+    "MACNNRegressor",
+    "InceptionTimeRegressor",
+    "CNTCClassifier",
+    "CNTCRegressor",
 ]
 
 
@@ -156,6 +160,15 @@ EXCLUDED_TESTS = {
     "FCNRegressor": [
         "test_fit_idempotent",
     ],
+    "MACNNRegressor": [
+        "test_fit_idempotent",
+    ],
+    "InceptionTimeRegressor": [
+        "test_fit_idempotent",
+    ],
+    "CNTCRegressor": [
+        "test_fit_idempotent",
+    ],
     # sth is not quite right with the RowTransformer-s changing state,
     #   but these are anyway on their path to deprecation, see #2370
     "SeriesToPrimitivesRowTransformer": ["test_methods_do_not_change_state"],
@@ -185,7 +198,7 @@ EXCLUDED_TESTS = {
     ],
     # SAX returns strange output format
     # this needs to be fixed, was not tested previously due to legacy exception
-    "SAX": "test_fit_transform_output",
+    "SAXlegacy": "test_fit_transform_output",
     "DynamicFactor": [
         "test_predict_time_index_in_sample_full",  # refer to #4765
     ],

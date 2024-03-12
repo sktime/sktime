@@ -104,7 +104,7 @@ def load_tsf_to_dataframe(
     return_type : str - "pd_multiindex_hier" (default), "tsf_default", or valid sktime
         mtype string for in-memory data container format specification of the
         return type:
-        - "pd_multiindex_hier" = pd.DataFrame of sktime type `pd_multiindex_hier`
+        - "pd_multiindex_hier" = pd.DataFrame of sktime type ``pd_multiindex_hier``
         - "tsf_default" = container that faithfully mirrors tsf format from the original
             implementation in: https://github.com/rakshitha123/TSForecasting/
             blob/master/utils/data_loader.py.

@@ -116,7 +116,7 @@ class IGTS:
 
     IGTS uses top-down search method to greedily find the next change point
     location that creates the maximum information gain. Once this is found, it
-    repeats the process until it finds `k_max` splits of the time series.
+    repeats the process until it finds ``k_max`` splits of the time series.
 
     .. note::
 
@@ -131,12 +131,12 @@ class IGTS:
         Maximum number of change points to find. The number of segments is thus k+1.
     step: : int, default=5
         Step size, or stride for selecting candidate locations of change points.
-        Fox example a `step=5` would produce candidates [0, 5, 10, ...].
-        Has the same meaning as `step` in `range` function.
+        Fox example a ``step=5`` would produce candidates [0, 5, 10, ...].
+        Has the same meaning as ``step`` in ``range`` function.
 
     Attributes
     ----------
-    intermediate_results_: list of `ChangePointResult`
+    intermediate_results_: list of ``ChangePointResult``
         Intermediate segmentation results for each k value, where k=1, 2, ..., k_max
 
     Notes
@@ -230,7 +230,7 @@ class IGTS:
         """Find change points.
 
         Using a top-down search method, iteratively identify at most
-        `k_max` change points that increase the information gain score
+        ``k_max`` change points that increase the information gain score
         the most.
 
         Parameters
@@ -325,7 +325,7 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
 
     IGTS uses top-down search method to greedily find the next change point
     location that creates the maximum information gain. Once this is found, it
-    repeats the process until it finds `k_max` splits of the time series.
+    repeats the process until it finds ``k_max`` splits of the time series.
 
     .. note::
 
@@ -341,8 +341,8 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
 
     step: : int, default=5
         Step size, or stride for selecting candidate locations of change points.
-        Fox example a `step=5` would produce candidates [0, 5, 10, ...]. Has the same
-        meaning as `step` in `range` function.
+        Fox example a ``step=5`` would produce candidates [0, 5, 10, ...]. Has the same
+        meaning as ``step`` in ``range`` function.
 
     Attributes
     ----------
@@ -350,7 +350,7 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
         Locations of change points as integer indexes. By convention change points
         include the identity segmentation, i.e. first and last index + 1 values.
 
-    intermediate_results_: list of `ChangePointResult`
+    intermediate_results_: list of ``ChangePointResult``
         Intermediate segmentation results for each k value, where k=1, 2, ..., k_max
 
     Notes
@@ -407,7 +407,7 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
         Parameters
         ----------
         X: array_like
-            2D `array_like` representing time series with sequence index along
+            2D ``array_like`` representing time series with sequence index along
             the first dimension and value series as columns.
 
         y: array_like
@@ -421,7 +421,7 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
         Parameters
         ----------
         X: array_like
-            2D `array_like` representing time series with sequence index along
+            2D ``array_like`` representing time series with sequence index along
             the first dimension and value series as columns.
 
         y: array_like
@@ -446,7 +446,7 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
         Parameters
         ----------
         X: array_like
-            2D `array_like` representing time series with sequence index along
+            2D ``array_like`` representing time series with sequence index along
             the first dimension and value series as columns.
 
         y: array_like
@@ -511,7 +511,7 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------

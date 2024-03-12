@@ -2320,6 +2320,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/MBristle",
       "profile": "https://github.com/MBristle",
       "contributions": [
+        "bug",
+        "test",
         "doc"
       ]
     },
@@ -2590,7 +2592,9 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/69190238?v=4",
       "profile": "https://cyrilmeyer.eu/",
       "contributions": [
-        "code"
+        "bug",
+        "code",
+        "test"
       ]
     },
     {
@@ -2604,7 +2608,27 @@
       ]
     },
     {
-      "login": "ianspektor",
+      "login": "geetu040",
+      "name": "Armaghan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/90601662?s=96&v=4",
+      "profile": "https://github.com/geetu040",
+      "contributions": [
+        "doc",
+        "maintenance"
+      ]
+    },
+    {
+      "login": "memeo-pro",
+      "name": "Yash Edake",
+      "avatar_url": "https://avatars.githubusercontent.com/memeo-pro",
+      "profile": "https://github.com/MEMEO-PRO",
+      "contributions": [
+        "maintenance",
+        "bug"
+      ]
+    },
+    {
+    "login": "ianspektor",
       "name": "Ian Spektor",
       "avatar_url": "https://avatars.githubusercontent.com/u/49082859?v=4",
       "profile": "https://github.com/ianspektor",

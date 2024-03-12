@@ -54,9 +54,9 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
 
         Raises
         ------
-        TypeError if names in `estimators` are not unique
-        TypeError if estimators in `estimators` are not all forecaster or transformer
-        TypeError if there is not exactly one forecaster in `estimators`
+        TypeError if names in ``estimators`` are not unique
+        TypeError if estimators in ``estimators`` are not all forecaster or transformer
+        TypeError if there is not exactly one forecaster in ``estimators``
         TypeError if not allow_postproc and forecaster is not last estimator
         """
         self_name = type(self).__name__
@@ -160,7 +160,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                         if len(levels) == 1:
                             levels = levels[0]
                         yt[ix] = y.xs(ix, level=levels, axis=1)
-                        # todo 0.27.0 - check why this cannot be easily removed
+                        # todo 0.28.0 - check why this cannot be easily removed
                         # in theory, we should get rid of the "Coverage" case treatment
                         # (the legacy naming convention was removed in 0.23.0)
                         # deal with the "Coverage" case, we need to get rid of this
@@ -204,15 +204,15 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         Parameters
         ----------
         base_class : class, optional, default=None, must be subclass of BaseObject
-            if None, behaves the same as `base_class=BaseObject`
-            if not None, return dict collects descendants of `base_class`
+            if None, behaves the same as ``base_class=BaseObject``
+            if not None, return dict collects descendants of ``base_class``
 
         Returns
         -------
         dict with key = attribute name, value = reference to attribute
-        dict contains all attributes of `self` that inherit from `base_class`, and:
+        dict contains all attributes of ``self`` that inherit from ``base_class``, and:
             whose names do not contain the string "__", e.g., hidden attributes
-            are not class attributes, and are not hyper-parameters (`__init__` args)
+            are not class attributes, and are not hyper-parameters (``__init__`` args)
         """
         import inspect
 
@@ -239,15 +239,16 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sklearn.preprocessing import StandardScaler
 
@@ -336,7 +337,7 @@ class ForecastingPipeline(_Pipeline):
     Attributes
     ----------
     steps_ : list of tuples (str, estimator) of ``sktime`` transformers or forecasters
-        clones of estimators in `steps` which are fitted in the pipeline
+        clones of estimators in ``steps`` which are fitted in the pipeline
         is always in (str, estimator) format, even if ``steps`` is just a list
         strings not passed in ``steps`` are replaced by unique generated strings
         i-th transformer in ``steps_`` is clone of i-th in ``steps``
@@ -374,7 +375,7 @@ class ForecastingPipeline(_Pipeline):
     ... ])
 
         Example 3: using the dunder method
-        Note: * (= apply to `y`) has precedence over ** (= apply to `X`)
+        Note: * (= apply to ``y``) has precedence over ** (= apply to ``X``)
 
     >>> forecaster = NaiveForecaster(strategy="drift")
     >>> imputer = Imputer(method="mean")
@@ -436,7 +437,7 @@ class ForecastingPipeline(_Pipeline):
         -------
         ForecastingPipeline object,
             concatenation of ``other`` (first) with ``self`` (last).
-            not nested, contains only non-TransformerPipeline `sktime` steps
+            not nested, contains only non-TransformerPipeline ``sktime`` steps
         """
         from sktime.transformations.base import BaseTransformer
         from sktime.transformations.compose import TransformerPipeline
@@ -592,7 +593,7 @@ class ForecastingPipeline(_Pipeline):
         pred_int : pd.DataFrame
             Column has multi-index: first level is variable name from y in fit,
                 second level coverage fractions for which intervals were computed.
-                    in the same order as in input `coverage`.
+                    in the same order as in input ``coverage``.
                 Third level is string "lower" or "upper", for lower/upper interval end.
             Row index is fh. Entries are forecasts of lower/upper interval end,
                 for var in col index, at nominal coverage in second col index,
@@ -621,9 +622,9 @@ class ForecastingPipeline(_Pipeline):
 
         Returns
         -------
-        pred_var : pd.DataFrame, format dependent on `cov` variable
+        pred_var : pd.DataFrame, format dependent on ``cov`` variable
             If cov=False:
-                Column names are exactly those of `y` passed in `fit`/`update`.
+                Column names are exactly those of ``y`` passed in ``fit``/``update``.
                     For nameless formats, column index will be a RangeIndex.
                 Row index is fh. Entries are variance forecasts, for var in col index.
             If cov=True:
@@ -912,18 +913,19 @@ class TransformedTargetForecaster(_Pipeline):
     def __mul__(self, other):
         """Magic * method, return (right) concatenated TransformedTargetForecaster.
 
-        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+        Implemented for ``other`` being a transformer, otherwise returns
+        ``NotImplemented``.
 
         Parameters
         ----------
-        other: `sktime` transformer, must inherit from BaseTransformer
-            otherwise, `NotImplemented` is returned
+        other: ``sktime`` transformer, must inherit from BaseTransformer
+            otherwise, ``NotImplemented`` is returned
 
         Returns
         -------
         TransformedTargetForecaster object,
-            concatenation of `self` (first) with `other` (last).
-            not nested, contains only non-TransformerPipeline `sktime` transformers
+            concatenation of ``self`` (first) with ``other`` (last).
+            not nested, contains only non-TransformerPipeline ``sktime`` transformers
         """
         from sktime.transformations.base import BaseTransformer
         from sktime.transformations.compose import TransformerPipeline
@@ -957,18 +959,19 @@ class TransformedTargetForecaster(_Pipeline):
     def __rmul__(self, other):
         """Magic * method, return (left) concatenated TransformerPipeline.
 
-        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+        Implemented for ``other`` being a transformer, otherwise returns
+        ``NotImplemented``.
 
         Parameters
         ----------
-        other: `sktime` transformer, must inherit from BaseTransformer
-            otherwise, `NotImplemented` is returned
+        other: ``sktime`` transformer, must inherit from BaseTransformer
+            otherwise, ``NotImplemented`` is returned
 
         Returns
         -------
         TransformedTargetForecaster object,
-            concatenation of `other` (first) with `self` (last).
-            not nested, contains only non-TransformerPipeline `sktime` steps
+            concatenation of ``other`` (first) with ``self`` (last).
+            not nested, contains only non-TransformerPipeline ``sktime`` steps
         """
         from sktime.transformations.base import BaseTransformer
         from sktime.transformations.compose import TransformerPipeline
@@ -1084,7 +1087,7 @@ class TransformedTargetForecaster(_Pipeline):
         return self
 
     def transform(self, Z, X=None):
-        """Return transformed version of input series `Z`.
+        """Return transformed version of input series ``Z``.
 
         Parameters
         ----------
@@ -1096,7 +1099,7 @@ class TransformedTargetForecaster(_Pipeline):
         Returns
         -------
         Zt : pd.Series or pd.DataFrame
-            Transformed version of input series `Z`.
+            Transformed version of input series ``Z``.
         """
         self.check_is_fitted()
         zt = check_series(Z)
@@ -1105,7 +1108,7 @@ class TransformedTargetForecaster(_Pipeline):
         return zt
 
     def inverse_transform(self, Z, X=None):
-        """Reverse transformation on input series `Z`.
+        """Reverse transformation on input series ``Z``.
 
         Parameters
         ----------
@@ -1189,7 +1192,7 @@ class TransformedTargetForecaster(_Pipeline):
         pred_int : pd.DataFrame
             Column has multi-index: first level is variable name from y in fit,
                 second level coverage fractions for which intervals were computed.
-                    in the same order as in input `coverage`.
+                    in the same order as in input ``coverage``.
                 Third level is string "lower" or "upper", for lower/upper interval end.
             Row index is fh. Entries are forecasts of lower/upper interval end,
                 for var in col index, at nominal coverage in second col index,
@@ -1254,7 +1257,7 @@ class ForecastX(BaseForecaster):
     fit_behaviour : str, one of "use_actual" (default), "use_forecast", optional,
 
         * if "use_actual", then ``forecaster_y`` uses the actual ``X`` as
-        exogenous features in `fit`
+        exogenous features in ``fit``
         * if "use_forecast", then ``forecaster_y`` uses the ``X`` predicted by
         ``forecaster_X`` as exogenous features in ``fit``
 
@@ -1295,8 +1298,8 @@ class ForecastX(BaseForecaster):
     >>> # this now works without X from the future of y!
     >>> y_pred = pipe.predict(fh=fh)  # doctest: +SKIP
 
-    to forecast only some columns, use the `columns` arg,
-    and pass known columns to `predict`:
+    to forecast only some columns, use the ``columns`` arg,
+    and pass known columns to ``predict``:
 
     >>> columns = ["ARMED", "POP"]
     >>> pipe = ForecastX(  # doctest: +SKIP
@@ -1564,7 +1567,7 @@ class ForecastX(BaseForecaster):
         pred_int : pd.DataFrame
             Column has multi-index: first level is variable name from y in fit,
                 second level coverage fractions for which intervals were computed.
-                    in the same order as in input `coverage`.
+                    in the same order as in input ``coverage``.
                 Third level is string "lower" or "upper", for lower/upper interval end.
             Row index is fh, with additional (upper) levels equal to instance levels,
                 from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
@@ -1626,9 +1629,9 @@ class ForecastX(BaseForecaster):
 
         Returns
         -------
-        pred_var : pd.DataFrame, format dependent on `cov` variable
+        pred_var : pd.DataFrame, format dependent on ``cov`` variable
             If cov=False:
-                Column names are exactly those of `y` passed in `fit`/`update`.
+                Column names are exactly those of ``y`` passed in ``fit``/``update``.
                     For nameless formats, column index will be a RangeIndex.
                 Row index is fh, with additional levels equal to instance levels,
                     from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
@@ -1684,7 +1687,7 @@ class ForecastX(BaseForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -1692,8 +1695,9 @@ class ForecastX(BaseForecaster):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.forecasting.compose import YfromX
         from sktime.forecasting.naive import NaiveForecaster
@@ -1730,8 +1734,8 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
     The compositor can be used to permute the sequence of any meta-forecaster,
     including ForecastingPipeline, TransformedTargetForecaster.
 
-    The `steps_arg` parameter needs to be pointed to the "steps"-like parameter
-    of the wrapped forecaster and `permutation` switches the sequence of steps.
+    The ``steps_arg`` parameter needs to be pointed to the "steps"-like parameter
+    of the wrapped forecaster and ``permutation`` switches the sequence of steps.
 
     Not very useful on its own, but
     useful in combination with tuning or auto-ML wrappers on top of this.
@@ -1739,7 +1743,7 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
     Parameters
     ----------
     estimator : sktime forecaster, inheriting from BaseForecaster
-        must have parameter with name `steps_arg`
+        must have parameter with name ``steps_arg``
         estimator whose steps are being permuted
     permutation : list of str, or None, optional, default = None
         if not None, must be equal length as getattr(estimator, steps_arg)
@@ -1865,7 +1869,7 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for forecasters.
 
         Returns
@@ -1873,8 +1877,9 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.transformations.series.boxcox import BoxCoxTransformer

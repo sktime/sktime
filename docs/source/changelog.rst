@@ -18,8 +18,92 @@ available on GitHub.
 For upcoming changes and next releases, see our `milestones <https://github.com/sktime/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
 For our long-term plan, see our :ref:`roadmap`.
 
+Version 0.27.0 - 2024-02-28
+---------------------------
 
-Version 0.26.1 - 2023-02-26
+Maintenance release:
+
+* scheduled deprecations and change actions
+* support for soft dependency ``numba 0.59`` and ``numba`` under ``python 3.12``
+* minor documentation updates, website updates for GSoC 2024
+
+For last non-maintenance content updates, see 0.26.1.
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``numba`` bounds have been updated to ``<0.60``.
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Forecasting tuners
+^^^^^^^^^^^^^^^^^^
+
+* in forecasting tuners ``ForecastingGridSearchCV``, ``ForecastingRandomizedSearchCV``,
+  ``ForecastingSkoptSearchCV``, the ``joblib`` backend specific parameters ``n_jobs``,
+  ``pre_dispatch`` have been removed.
+  Users should pass backend parameters via the ``backend_params`` parameter instead.
+  Direct replacements are ``backend='joblib'``,
+  and ``n_jobs`` and ``pre_dispatch`` passed via ``backend_params``.
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* in ``SplitterSummarizer``, the ``remember_data`` argument has been removed.
+  Users should use the ``fit_on`` and ``transform_on`` arguments instead.
+  Logic identical argument replacements are:
+  ``remember_data=True`` with ``fit_on='all_train'`` and
+  ``transform_on='all_train'``; and ``remember_data=False`` with
+  ``"fit_on='transform_train'`` and ``transform_on='transform_train'``.
+* ``panel.dictionary_based.PAA`` has been renamed to ``PAAlegacy`` in 0.27.0,
+  and ``sktime.transformations.series.PAA2`` has been renamed to ``PAA``.
+  ``PAA`` is now the primary PAA implementation in ``sktime``,
+  while the former ``PAA`` will continue to be available as ``PAAlegacy``.
+  Both estimators are also available under their former name
+  until 0.28.0.
+  To prepare for the name change, do one of the following:
+  1. replace use of ``PAA`` from ``sktime.transformations.panel.dictionary_based``
+  by use of ``PAA2`` from ``sktime.transformations.series.paa``, switching
+  parameter names appropriately, or
+  2. replace use of ``PAA`` from ``sktime.transformations.panel.dictionary_based``
+  by use of ``PAAlegacy`` from ``sktime.transformations.panel.dictionary_based``,
+  without change of parameter values.
+* ``panel.dictionary_based.SAX`` has been renamed to ``SAXlegacy`` in 0.27.0,
+  while ``sktime.transformations.series.SAX2`` has been renamed to ``SAX``.
+  ``SAX`` is now the primary SAX implementation in ``sktime``,
+  while the former ``SAX`` will continue to be available as ``SAXlegacy``.
+  Both estimators are also available under their former name
+  until 0.28.0.
+  To prepare for the name change, do one of the following:
+  1. replace use of ``SAX`` from ``sktime.transformations.panel.dictionary_based``
+  by use of ``SAX2`` from ``sktime.transformations.series.paa``, switching
+  parameter names appropriately, or
+  2. replace use of ``SAX`` from ``sktime.transformations.panel.dictionary_based``
+  by use of ``SAXlegacy`` from ``sktime.transformations.panel.dictionary_based``,
+  without change of parameter values.
+
+
+Contents
+~~~~~~~~
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] improved formatting of ``HierarchyEnsembleForecaster`` docstring (:pr:`6008`) :user:`fkiraly`
+* [DOC] add missing ``PluginParamsTransformer`` to API reference (:pr:`6010`) :user:`fkiraly`
+* [DOC] update contact links in code of conduct (:pr:`6011`) :user:`fkiraly`
+* [DOC] 2024 summer programme links on ``sktime.net`` landing page (:pr:`6013`) :user:`fkiraly`
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] 0.27.0 deprecations and change actions (:pr:`5974`) :user:`fkiraly`
+* [MNT] [Dependabot](deps-dev): Update ``numba`` requirement from ``<0.59`` to ``<0.60`` (:pr:`5877`) :user:`dependabot[bot]`
+
+Contributors
+
+Version 0.26.1 - 2024-02-26
 ---------------------------
 
 Highlights
@@ -225,7 +309,7 @@ Contributors
 :user:`yarnabrina`
 
 
-Version 0.26.0 - 2023-01-27
+Version 0.26.0 - 2024-01-27
 ---------------------------
 
 Maintenance release:
@@ -291,7 +375,7 @@ Contents
 * [BUG] fix tag handling in ``IgnoreX`` (:pr:`5843`) :user:`tpvasconcelos`, :user:`fkiraly`
 
 
-Version 0.25.1 - 2023-01-24
+Version 0.25.1 - 2024-01-24
 ---------------------------
 
 Highlights
@@ -349,7 +433,7 @@ Parameter estimation and hypothesis testing
 
 * Parameter plugin or estimation based parameter tuning estimators can now be quickly constructed
   with the ``*`` dunder, which will construct a ``PluginParamsForecaster`` or ``PluginParamsTransformer``
-  with all fitted paramters (``get_fitted_params``) of the left element plugged in into the right element
+  with all fitted parameters (``get_fitted_params``) of the left element plugged in into the right element
   (``set_params``), where parameter names match.
   For instance, ``SeasonalityACF() * Deseasonalizer()`` will construct
   a ``Deseasonalizer`` whose ``sp`` (seasonality period) parameter is tuned
@@ -747,7 +831,7 @@ Forecasting
   are now supported. To use a custom ``joblib`` backend, use ``set_config`` to
   set the ``backend:parallel`` configuration flag to ``"joblib"``,
   and set the ``backend`` parameter in the ``dict`` set via ``backend:parallel:params``
-  to the name of the custom ``joblib`` backend. Further bakcend parameters
+  to the name of the custom ``joblib`` backend. Further backend parameters
   can be passed in the same ``dict``. See docstring of ``set_config`` for details.
 
 Time series classification
@@ -773,7 +857,7 @@ Transformations
   are now supported. To use a custom ``joblib`` backend, use ``set_config`` to
   set the ``backend:parallel`` configuration flag to ``"joblib"``,
   and set the ``backend`` parameter in the ``dict`` set via ``backend:parallel:params``
-  to the name of the custom ``joblib`` backend. Further bakcend parameters
+  to the name of the custom ``joblib`` backend. Further backend parameters
   can be passed in the same ``dict``. See docstring of ``set_config`` for details.
 
 Enhancements
@@ -2223,7 +2307,7 @@ Maintenance
 * [MNT] [Dependabot](deps): Bump actions/upload-artifact from 2 to 3 (:pr:`4856`) :user:`dependabot[bot]`
 * [MNT] fix remaining ``sklearn 1.3.0`` compatibility issues (:pr:`4860`) :user:`fkiraly`, :user:`hazrulakmal`
 * [MNT] remove forgotten ``deprecated`` import from 0.13.0 (:pr:`4824`) :user:`fkiraly`
-* [MNT] Extend softdep error message tests support for packages with version speciefier and alias (:pr:`4867`) :user:`hazrulakmal`, :user:`fkiraly`
+* [MNT] Extend softdep error message tests support for packages with version specifier and alias (:pr:`4867`) :user:`hazrulakmal`, :user:`fkiraly`
 
 Documentation
 ~~~~~~~~~~~~~
@@ -3411,7 +3495,7 @@ Highlights
 
 * ``HierarchyEnsembleForecaster`` for level- or node-wise application of forecasters on panel/hierarchical data (:pr:`3905`) :user:`VyomkeshVyas`
 * new transformer: ``BKFilter``, Baxter-King filter, interfaced from ``statsmodels`` (:pr:`4127`) :user:`klam-data`, :user:`pyyim``
-* ``get_fitted_params`` of pipelines and other heterogenous meta-estimators now supports parameter nesting (:pr:`4110`) :user:`fkiraly`
+* ``get_fitted_params`` of pipelines and other heterogeneous meta-estimators now supports parameter nesting (:pr:`4110`) :user:`fkiraly`
 
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
@@ -3477,7 +3561,7 @@ Enhancements
 BaseEstimator
 ^^^^^^^^^^^^^
 
-* [ENH] ``get_fitted_params`` for pipelines and other heterogenous meta-estimators (:pr:`4110`) :user:`fkiraly`
+* [ENH] ``get_fitted_params`` for pipelines and other heterogeneous meta-estimators (:pr:`4110`) :user:`fkiraly`
 * [ENH] ``deep`` argument for ``get_fitted_params`` (:pr:`4113`) :user:`fkiraly`
 
 Data types, checks, conversions
@@ -7130,7 +7214,7 @@ Fixed
 
 * [MNT] Fix appveyor failure (:pr:`1541`) :user:`freddyaboulton`
 * [MNT] Fix macOS CI (:pr:`1511`) :user:`mloning`
-* [MNT] Depcrecate manylinux2010 (:pr:`1379`) :user:`mloning`
+* [MNT] Deprecate manylinux2010 (:pr:`1379`) :user:`mloning`
 * [MNT] Added pre-commit hook to sort imports (:pr:`1465`) :user:`aiwalter`
 * [MNT] add :code:`max_requirements`, bound statsmodels (:pr:`1479`) :user:`fkiraly`
 * [MNT] Hotfix tag scitype:y typo (:pr:`1449`) :user:`aiwalter`

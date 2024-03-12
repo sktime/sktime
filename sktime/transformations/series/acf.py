@@ -3,7 +3,7 @@
 """Auto-correlation transformations.
 
 Module
-:mod: `sktime.transformations.series` implements auto-correlation
+:mod: ``sktime.transformations.series`` implements auto-correlation
 transformers.
 """
 
@@ -20,7 +20,7 @@ class AutoCorrelationTransformer(BaseTransformer):
 
     The autocorrelation function measures how correlated a timeseries is
     with itself at different lags. The AutocorrelationTransformer returns
-    these values as a series for each lag up to the `n_lags` specified.
+    these values as a series for each lag up to the ``n_lags`` specified.
 
     Parameters
     ----------
@@ -137,7 +137,7 @@ class AutoCorrelationTransformer(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -145,8 +145,9 @@ class AutoCorrelationTransformer(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         return [{}, {"n_lags": 1}]
 
@@ -160,7 +161,7 @@ class PartialAutoCorrelationTransformer(BaseTransformer):
     on all the points between the time period and the lag.
 
     The PartialAutoCorrelationTransformer returns
-    these values as a series for each lag up to the `n_lags` specified.
+    these values as a series for each lag up to the ``n_lags`` specified.
 
     Parameters
     ----------
@@ -257,7 +258,7 @@ class PartialAutoCorrelationTransformer(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -265,7 +266,8 @@ class PartialAutoCorrelationTransformer(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         return [{}, {"n_lags": 1}]

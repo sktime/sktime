@@ -13,8 +13,7 @@ from sktime.utils.warnings import warn
 __author__ = ["MatthewMiddlehurst"]
 
 
-# TODO 0.27.0: rename the class SAX to SAXlegacy
-class SAX(BaseTransformer):
+class SAXlegacy(BaseTransformer):
     """Symbolic Aggregate approXimation (SAX) transformer.
 
     as described in
@@ -87,17 +86,18 @@ class SAX(BaseTransformer):
 
         super().__init__()
 
+        # todo 0.28.0: remove this warning
         warn(
-            "panel.dictionary_based.SAX will be renamed to SAXlegacy in sktime 0.27.0, "
-            "while sktime.transformations.series.SAX2 will be renamed to SAX. "
+            "panel.dictionary_based.SAX has been renamed to SAXlegacy in sktime 0.27.0,"
+            " while sktime.transformations.series.SAX2 was renamed to SAX. "
             "SAX2 will become the primary SAX implementation in sktime, "
-            "while the current SAX will continue to be available as SAXlegacy. "
+            "while the former SAX will continue to be available as SAXlegacy. "
             "Both estimators are also available under their future name at their "
             "current location, and will be available under their deprecated name "
             "until 0.28.0. "
             "To prepare for the name change, do one of the following: "
-            "1. replace use of SAX from sktime.transformations.panel.dictionary_based "
-            "by use of SAX2 from sktime.transformations.series.sax, or "
+            "1. replace use of SAX2 from sktime.transformations.panel.dictionary_based "
+            "by use of SAX from sktime.transformations.series.sax, or "
             "2. replace use of SAX from sktime.transformations.panel.dictionary_based "
             "by use of SAXlegacy from sktime.transformations.panel.dictionary_based. ",
             DeprecationWarning,
@@ -220,7 +220,7 @@ class SAX(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -228,14 +228,14 @@ class SAX(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         # small word length, window size for testing
         params = {"word_length": 2, "window_size": 4}
         return params
 
 
-# TODO 0.27.0: switch the line to SAX = SAXlegacy
 # TODO 0.28.0: remove this alias altogether
-SAXlegacy = SAX
+SAX = SAXlegacy

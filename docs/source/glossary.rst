@@ -67,7 +67,7 @@ sktime.
         Some tags are for internal or extender use only, e.g., ``X_inner_mtype``,
         which allows an extender to specify the mtype of the inner data container
         they would like to work with.
-        A list of all tags and their meaning, optinally filtered by the :term:`scitype`
+        A list of all tags and their meaning, optionally filtered by the :term:`scitype`
         of object they apply to, can be obtained from
         ``sktime.registry.all_tags``. Further details on tags, for developers,
         can be found in the specification sheet that is part of the :term:`extension templates`.
