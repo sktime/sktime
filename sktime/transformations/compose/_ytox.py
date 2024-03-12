@@ -72,6 +72,48 @@ class YtoX(BaseTransformer):
     >>> # fit and forecast next value, with lagged y as exogenous data
     >>> forecaster.fit(y, fh=[1])  # doctest: +SKIP
     >>> y_pred = forecaster.predict()  # doctest: +SKIP
+
+    Use case: using summarized endogenous variables as exogeneous data.
+
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.transformations.series.summarize import WindowSummarizer
+    >>> from sktime.transformations.compose import YtoX
+    >>> from sktime.forecasting.compose import make_reduction
+    >>> from sktime.forecasting.compose import ForecastingPipeline
+    >>> from sklearn.ensemble import GradientBoostingRegressor  # doctest: +SKIP
+    >>>
+    >>> # data with no exogenous features
+    >>> y = load_airline()
+    >>>
+    >>> # keyword arguments for WindowSummarizer
+    >>> kwargs = {
+    ...     "lag_feature": {
+    ...         "lag": [1],
+    ...         "mean": [[1, 3], [3, 6]],
+    ...         "std": [[1, 4]],
+    ...     },
+    ...     "truncate": 'bfill',
+    ... }
+    >>>
+    >>> # create forecaster from sklearn regressor using make_reduction
+    >>> forecaster = make_reduction(
+    ...     GradientBoostingRegressor(),
+    ...     strategy="recursive",
+    ...     pooling="global",
+    ...     window_length=12,
+    ... )  # doctest: +SKIP
+    >>>
+    >>> # create the pipeline
+    >>> pipe = ForecastingPipeline(
+    ...     steps=[
+    ...         ("ytox", YtoX()),
+    ...         ("summarizer", WindowSummarizer(**kwargs)),
+    ...         ("forecaster", forecaster),
+    ...     ]
+    ... )  # doctest: +SKIP
+    >>>
+    >>> # fit and forecast, with summarized y as exogenous data
+    >>> preds = pipe.fit_predict(y=y, fh=range(1, 20))  # doctest: +SKIP
     """
 
     _tags = {
