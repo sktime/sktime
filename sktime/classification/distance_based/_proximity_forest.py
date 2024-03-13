@@ -133,14 +133,15 @@ def distance_predefined_params(distance_measure, **params):
 
     Parameters
     ----------
-    distance_measure: the distance measure to use, valid distance measures are
-        ``eclidean``, ``dtw``, ``ddtw``, ``wdtw``, ``wddtw``, ``msm``, ``lcss``,
-        ``erp``
-    params: the parameters to use in the distance measure
+    distance_measure: callable
+        A callable distance measure function to use.
+    params: dict
+        The parameters to use in the distance measure
 
     Returns
     -------
-    ret: a distance measure with no parameters
+    ret: callable
+        A distance measure with no parameters
     """
 
     def distance(instance_a, instance_b):
@@ -157,11 +158,13 @@ def numba_wrapper(distance_measure):
 
     Parameters
     ----------
-    distance_measure: distance measure to wrap
+    distance_measure: callable
+        A distance measure to wrap
 
     Returns
     -------
-    ret: a distance measure which automatically formats data for numba distance
+    ret: callable
+        a distance measure which automatically formats data for numba distance
         measures
     """
 
