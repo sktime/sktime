@@ -2628,7 +2628,16 @@
       ]
     },
     {
-    "login": "ianspektor",
+      "login": "deysanjeeb",
+      "name": "Sanjeeb Dey",
+      "avatar_url": "https://avatars.githubusercontent.com/u/39940629?v=4",
+      "profile": "https://github.com/deysanjeeb",
+      "contributions": [
+        "maintenance"
+      ]
+    },
+    {
+      "login": "ianspektor",
       "name": "Ian Spektor",
       "avatar_url": "https://avatars.githubusercontent.com/u/49082859?v=4",
       "profile": "https://github.com/ianspektor",
