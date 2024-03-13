@@ -8,8 +8,12 @@ import pandas
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
-__all__ = ["_NeuralForecastAdapter"]
+__all__ = ["_NeuralForecastAdapter", "_SUPPORTED_LOCAL_SCALAR_TYPES"]
 __author__ = ["yarnabrina"]
+
+_SUPPORTED_LOCAL_SCALAR_TYPES = typing.Literal[
+    "standard", "robust", "robust-iqr", "minmax", "boxcox"
+]
 
 
 class _NeuralForecastAdapter(BaseForecaster):

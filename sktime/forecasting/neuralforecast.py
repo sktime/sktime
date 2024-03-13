@@ -3,7 +3,10 @@
 import functools
 import typing
 
-from sktime.forecasting.base.adapters._neuralforecast import _NeuralForecastAdapter
+from sktime.forecasting.base.adapters._neuralforecast import (
+    _SUPPORTED_LOCAL_SCALAR_TYPES,
+    _NeuralForecastAdapter,
+)
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 __author__ = ["yarnabrina"]
@@ -163,9 +166,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
     def __init__(
         self: "NeuralForecastRNN",
         freq: str = "auto",
-        local_scaler_type: typing.Optional[
-            typing.Literal["standard", "robust", "robust-iqr", "minmax", "boxcox"]
-        ] = None,
+        local_scaler_type: typing.Optional[_SUPPORTED_LOCAL_SCALAR_TYPES] = None,
         futr_exog_list: typing.Optional[typing.List[str]] = None,
         verbose_fit: bool = False,
         verbose_predict: bool = False,
@@ -518,9 +519,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
     def __init__(
         self: "NeuralForecastLSTM",
         freq: str = "auto",
-        local_scaler_type: typing.Optional[
-            typing.Literal["standard", "robust", "robust-iqr", "minmax", "boxcox"]
-        ] = None,
+        local_scaler_type: typing.Optional[_SUPPORTED_LOCAL_SCALAR_TYPES] = None,
         futr_exog_list: typing.Optional[typing.List[str]] = None,
         verbose_fit: bool = False,
         verbose_predict: bool = False,
