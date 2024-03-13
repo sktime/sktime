@@ -355,10 +355,7 @@ def test_transform_and_smooth_pk(params, measurements):
         package_import_alias={"pykalman": "pykalman"},
         severity="none",
     ),
-    reason=(
-        "skip test if required soft dependencies pykalman, "
-        "filterpy not available"
-    ),
+    reason="skip test if required soft dependencies pykalman, filterpy not available",
 )
 @pytest.mark.parametrize(
     "classes, params, measurements",
@@ -598,10 +595,7 @@ def test_em(classes, params, measurements):
         package_import_alias={"pykalman": "pykalman"},
         severity="none",
     ),
-    reason=(
-        "skip test if required soft dependencies pykalman, "
-        "filterpy not available"
-    ),
+    reason="skip test if required soft dependencies pykalman, filterpy not available",
 )
 @pytest.mark.parametrize(
     "classes, params, measurements",
