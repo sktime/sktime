@@ -33,7 +33,7 @@ class TemporianTransformer(BaseTransformer):
     >>> import temporian as tp  # doctest: +SKIP
     >>>
     >>> def function(evset):  # doctest: +SKIP
-    >>>    return evset.simple_moving_average(tp.duration.days(3 * 365))  \
+    ...     return evset.simple_moving_average(tp.duration.days(3 * 365))  \
         # doctest: +SKIP
     >>> transformer = TemporianTransformer(function=function)  # doctest: +SKIP
     >>> X = load_airline()  # doctest: +SKIP
@@ -111,12 +111,12 @@ class TemporianTransformer(BaseTransformer):
         # pandas and the set_index would not work as expected
         try:
             res.check_same_sampling(evset)
-        except ValueError:
+        except ValueError as exc:
             raise ValueError(
                 "The resulting EventSet must have the same sampling as the input. "
                 "Visit our docs for more info "
                 "https://temporian.readthedocs.io/en/stable/user_guide/#sampling"
-            )
+            ) from exc
 
         res = tp.to_pandas(res, timestamps=False)
         res = res.set_index(X.index)
