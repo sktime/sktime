@@ -165,6 +165,8 @@ class ShapeDTW(BaseClassifier):
         if self.metric_params is None:
             self.metric_params = {}
             _reset = True
+        else:
+            _reset = False
 
         # If the shape descriptor is 'compound',
         # calculate the appropriate weighting_factor
