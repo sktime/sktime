@@ -68,12 +68,8 @@ class TemporianTransformer(BaseTransformer):
     }
 
     def __init__(self, function, compile=False):
-        import temporian as tp
-
         self.function = function
         self.compile = compile
-        if compile:
-            self.function = tp.compile(self.function)
 
         super().__init__()
 
@@ -101,7 +97,9 @@ class TemporianTransformer(BaseTransformer):
         timestamps_col = X_noindex.columns[0]
         evset = tp.from_pandas(X_noindex, timestamps=timestamps_col)
 
-        res = self.function(evset)
+        function = tp.compile(self.function) if self.compile else self.function
+
+        res = function(evset)
         if not isinstance(res, tp.EventSet):
             raise TypeError(
                 f"Expected return type to be an EventSet but received a {type(res)}"

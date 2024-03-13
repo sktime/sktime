@@ -5,6 +5,7 @@
 __author__ = ["ianspektor", "javiber"]
 
 from datetime import datetime
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
@@ -102,7 +103,7 @@ def test_dtypes():
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_compiled():
-    """Tests function already compiled."""
+    """Tests compiling the function."""
     import temporian as tp
 
     def function(evset):
@@ -110,18 +111,38 @@ def test_compiled():
 
     X = get_examples("pd.Series", as_scitype="Series")[0]
 
-    transformer = TemporianTransformer(function=function, compile=True)
-    # assert the function was compiled
-    assert transformer.function.is_tp_compiled
+    true_compile = tp.compile
 
-    X_transformed = transformer.fit_transform(X=X)
-    pd.testing.assert_series_equal(X_transformed, X + 1)
+    with patch.object(tp, "compile") as compile_patch:
+        compile_patch.side_effect = true_compile
+        transformer = TemporianTransformer(function=function, compile=True)
+        X_transformed = transformer.fit_transform(X=X)
+        pd.testing.assert_series_equal(X_transformed, X + 1)
+        compile_patch.assert_called_once_with(function)
 
-    # test that an already compiled function doesn't cause errors
-    transformer = TemporianTransformer(function=tp.compile(function), compile=True)
-    assert transformer.function.is_tp_compiled
-    X_transformed = transformer.fit_transform(X=X)
-    pd.testing.assert_series_equal(X_transformed, X + 1)
+
+@pytest.mark.skipif(
+    not run_test_for_class(TemporianTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_compile_already_compiled():
+    """Tests compiling doesn't fail if the function was compiled already."""
+    import temporian as tp
+
+    @tp.compile
+    def function(evset):
+        return evset + 1
+
+    X = get_examples("pd.Series", as_scitype="Series")[0]
+
+    true_compile = tp.compile
+
+    with patch.object(tp, "compile") as compile_patch:
+        compile_patch.side_effect = true_compile
+        transformer = TemporianTransformer(function, compile=True)
+        X_transformed = transformer.fit_transform(X=X)
+        pd.testing.assert_series_equal(X_transformed, X + 1)
+        compile_patch.assert_called_once_with(function)
 
 
 @pytest.mark.skipif(
