@@ -8,7 +8,7 @@ from copy import deepcopy
 from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
-from sktime.networks.lstmfcn import LSTMFCNNNetwork
+from sktime.networks.lstmfcn import LSTMFCNNetwork
 
 
 class LSTMFCNClassifier(BaseDeepClassifier):
@@ -96,7 +96,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         self.random_state = random_state
         self.verbose = verbose
 
-        self._network = LSTMFCNNNetwork(
+        self._network = LSTMFCNNetwork(
             kernel_sizes=self.kernel_sizes,
             filter_sizes=self.filter_sizes,
             random_state=self.random_state,

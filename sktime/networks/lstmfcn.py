@@ -5,7 +5,7 @@ __author__ = ["jnrusson1", "solen0id"]
 from sktime.networks.base import BaseDeepNetwork
 
 
-class LSTMFCNNNetwork(BaseDeepNetwork):
+class LSTMFCNNetwork(BaseDeepNetwork):
     """Implementation of LSTMFCNClassifier from Karim et al (2019) [1].
 
     Overview
