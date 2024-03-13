@@ -7,6 +7,7 @@ because we can generalise tags and _predict
 __author__ = ["AurumnPegasus", "achieveordie"]
 __all__ = ["BaseDeepRegressor"]
 
+import os
 from abc import ABC, abstractmethod
 
 import numpy as np
@@ -160,7 +161,7 @@ class BaseDeepRegressor(BaseRegressor, ABC):
         if hasattr(self, "history"):
             self.__dict__["history"] = self.history
 
-    def save(self, path=None):
+    def save(self, path=None, legacy_save=False):
         """Save serialized self to bytes-like object or to (.zip) file.
 
         Behaviour:
@@ -198,11 +199,8 @@ class BaseDeepRegressor(BaseRegressor, ABC):
 
             in_memory_model = None
             if self.model_ is not None:
-                with h5py.File(
-                    "disk_less", "w", driver="core", backing_store=False
-                ) as h5file:
-                    self.model_.save(h5file)
-                    h5file.flush()
+                self.model_.save("disk_less.h5")
+                with h5py.File("disk_less.h5", "r") as h5file:
                     in_memory_model = h5file.id.get_file_image()
 
             in_memory_history = pickle.dumps(self.history.history)
@@ -226,7 +224,22 @@ class BaseDeepRegressor(BaseRegressor, ABC):
         path.mkdir()
 
         if self.model_ is not None:
-            self.model_.save(path / "keras/")
+            if (
+                _check_soft_dependencies("tensorflow>=2.16.0", severity="none")
+                or not legacy_save
+            ):
+                keras_path = path / "keras" / "model.keras"
+                os.makedirs(keras_path.parent, exist_ok=True)
+                self.model_.save(keras_path)
+            else:
+                from warnings import warn
+
+                warn(
+                    "WARNING: The default value of legacy_warning switches to False",
+                    "in sktime 0.28.0, and the",
+                    "legacy saving method will be removed in sktime 0.29.0.",
+                )
+                self.model_.save(path / "keras/")
 
         with open(path / "history", "wb") as history_writer:
             pickle.dump(self.history.history, history_writer)
@@ -254,11 +267,8 @@ class BaseDeepRegressor(BaseRegressor, ABC):
         -------
         Deserialized self resulting in output ``serial``, of ``cls.save(None)``
         """
-        _check_soft_dependencies("h5py")
         import pickle
-        from tempfile import TemporaryFile
 
-        import h5py
         from tensorflow.keras.models import load_model
 
         if not isinstance(serial, tuple):
@@ -278,11 +288,9 @@ class BaseDeepRegressor(BaseRegressor, ABC):
         if in_memory_model is None:
             cls.model_ = None
         else:
-            with TemporaryFile() as store_:
+            with open("diskless.h5", "wb") as store_:
                 store_.write(in_memory_model)
-                h5file = h5py.File(store_, "r")
-                cls.model_ = load_model(h5file)
-                h5file.close()
+                cls.model_ = load_model("diskless.h5")
 
         cls.history = pickle.loads(in_memory_history)
         return pickle.loads(serial)
@@ -314,9 +322,12 @@ class BaseDeepRegressor(BaseRegressor, ABC):
                     continue
                 zip_file.extract(file, temp_unzip_loc)
 
-        keras_location = temp_unzip_loc / "keras"
+        keras_location_legacy = temp_unzip_loc / "keras"
+        keras_location = temp_unzip_loc / "keras" / "model.keras"
         if keras_location.exists():
             cls.model_ = keras.models.load_model(keras_location)
+        elif keras_location_legacy.exists():
+            cls.model_ = keras.models.load_model(keras_location_legacy)
         else:
             cls.model_ = None
 

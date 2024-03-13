@@ -424,7 +424,7 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         if keras_location.exists():
             cls.model_ = keras.models.load_model(keras_location)
         elif keras_location_legacy.exists():
-            cls.model_ = keras.models.load_model(keras_location)
+            cls.model_ = keras.models.load_model(keras_location_legacy)
         else:
             cls.model_ = None
 
