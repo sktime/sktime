@@ -143,7 +143,7 @@ class BaseClassifier(BasePanelMixin):
             return TabularToSeriesAdaptor(other) * self
         else:
             return NotImplemented
-    
+
     def __or__(self, other):
         """Magic | method, return MultiplexClassifier.
 
