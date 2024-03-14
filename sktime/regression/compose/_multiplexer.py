@@ -4,9 +4,9 @@
 # based on MultiplexForecaster
 
 from sktime.base import _HeterogenousMetaEstimator
+from sktime.datatypes import MTYPE_LIST_PANEL, MTYPE_LIST_TABLE
 from sktime.regression._delegate import _DelegatedRegressor
 from sktime.regression.base import BaseRegressor
-from sktime.datatypes import MTYPE_LIST_PANEL, MTYPE_LIST_TABLE
 
 __author__ = ["ksharma6"]
 __all__ = ["MultiplexRegressor"]
