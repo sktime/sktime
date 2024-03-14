@@ -15,8 +15,8 @@ from sktime.transformations.series.detrend.mstl import MSTL
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_transform_returns_correct_components():
-    """Tests whether expected components are returned when
-    *return_components* parameter is switched on."""
+    """Tests if expected components are returned when return_components=True.
+    """
     # Load our default test dataset
     series = load_airline()
     series.index = series.index.to_timestamp()
