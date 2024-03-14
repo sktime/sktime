@@ -53,6 +53,17 @@ class CNNRegressor(BaseDeepRegressor):
     -----
     Adapted from the implementation from Fawaz et. al
     https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/cnn.py
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_unit_test
+    >>> from sktime.regression.deep_learning.cnn import CNNRegressor
+    >>> X_train, y_train = load_unit_test(return_X_y=True, split="train")
+    >>> X_test, y_test = load_unit_test(return_X_y=True, split="test")
+    >>> regressor = CNNRegressor() # doctest: +SKIP
+    >>> regressor.fit(X_train, y_train) # doctest: +SKIP
+    CNNRegressor(...)
+    >>> y_pred = regressor.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
