@@ -12,9 +12,7 @@ from sktime.transformations.series.detrend.mstl import MSTL
 
 @pytest.mark.skipif(
     not run_test_for_class([MSTL]),
-    reason="run test only if softdeps are present and "
-    "incrementally"
-    " (if requested)",
+    reason="run test only if softdeps are present " "and incrementally (if requested)",
 )
 def test_transform_returns_correct_components():
     """Tests whether expected components are returned when
