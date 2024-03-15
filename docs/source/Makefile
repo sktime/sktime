@@ -2,13 +2,13 @@
 
 # You can set these variables from the command line.
 PREPROCESS    = sphinx-apidoc
-APIDOCTEMPLATEDIR = source/_templates/apidoc
-AUTOGENDIR    = source/api_reference/auto_generated
+APIDOCTEMPLATEDIR = _templates/apidoc
+AUTOGENDIR    = api_reference/auto_generated
 SPHINXOPTS    =
-SPHINXBUILD   = sphinx-build
-SOURCEDIR     = source
-BUILDDIR      = _build
-PROJECTDIR    = "../sktime/"
+SPHINXBUILD   = sphinx-build 
+SOURCEDIR     = .
+BUILDDIR      = ../build
+PROJECTDIR    = "../../sktime/"
 
 # exclude unit tests from API reference
 EXCLUDEPATHS = "../*tests* ../*test* ../*contrib* ../*setup* ../*all*"
@@ -27,3 +27,4 @@ help:
 	@$(PREPROCESS) -eMT --templatedir $(APIDOCTEMPLATEDIR) -o $(AUTOGENDIR) $(PROJECTDIR) "$(EXCLUDEPATHS)"
 	-rm -rf $(BUILDDIR)
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+	
