@@ -33,7 +33,7 @@ generated in java.
 
 
 def demo_loading():
-    """Test function to check dataset loading of univariate and multivaria problems."""
+    """Test function to check dataset loading of univariate and multivariate problems."""
     for i in range(0, len(dataset_lists.univariate)):
         data_dir = "../"
         dataset = dataset_lists.univariate[i]
@@ -63,6 +63,60 @@ def demo_loading():
         print(testX.shape)
         print("Test Y shape :")
         print(testY.shape)
+
+if __name__ == "__main__":
+    """Example simple usage, with arguments input via script or hard coded for
+    testing."""
+    if sys.argv.__len__() > 1:  # cluster run, this is fragile
+        print(sys.argv)
+        data_dir = sys.argv[1]
+        results_dir = sys.argv[2]
+        classifier = sys.argv[3]
+        dataset = sys.argv[4]
+        resample = int(sys.argv[5]) - 1
+
+        if len(sys.argv) > 6:
+            tf = sys.argv[6].lower() == "true"
+        else:
+            tf = False
+
+        if len(sys.argv) > 7:
+            predefined_resample = sys.argv[7].lower() == "true"
+        else:
+            predefined_resample = False
+
+        load_and_run_classification_experiment(
+            problem_path=data_dir,
+            results_path=results_dir,
+            classifier=set_classifier(classifier, resample, tf),
+            cls_name=classifier,
+            dataset=dataset,
+            resample_id=resample,
+            build_train=tf,
+            predefined_resample=predefined_resample,
+        )
+    else:  # Local run
+        print(" Local Run")
+        data_dir = "../datasets/data/"
+        results_dir = "./temp/"
+        cls_name = "FreshPRINCE"
+        classifier = FreshPRINCE()
+        dataset = "UnitTest"
+        resample = 0
+        tf = False
+        predefined_resample = False
+
+        load_and_run_classification_experiment(
+            overwrite=True,
+            problem_path=data_dir,
+            results_path=results_dir,
+            cls_name=cls_name,
+            classifier=classifier,
+            dataset=dataset,
+            resample_id=resample,
+            build_train=tf,
+            predefined_resample=predefined_resample,
+        )
 
 
 if __name__ == "__main__":
