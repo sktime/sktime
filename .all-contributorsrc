@@ -2627,6 +2627,34 @@
         "doc",
         "maintenance"
       ]
+    },
+    {
+      "login": "meraldoantonio",
+      "name": "Meraldo Antonio",
+      "avatar_url": "https://avatars.githubusercontent.com/u/37468543?v=4",
+      "profile": "https://github.com/meraldoantonio",
+      "contributions": [
+        "doc"
+       ]
+    },
+    {
+      "login": "memeo-pro",
+      "name": "Yash Edake",
+      "avatar_url": "https://avatars.githubusercontent.com/memeo-pro",
+      "profile": "https://github.com/MEMEO-PRO",
+      "contributions": [
+        "maintenance",
+        "bug"
+      ]
+    },
+    {
+      "login": "deysanjeeb",
+      "name": "Sanjeeb Dey",
+      "avatar_url": "https://avatars.githubusercontent.com/u/39940629?v=4",
+      "profile": "https://github.com/deysanjeeb",
+      "contributions": [
+        "maintenance"
+      ]
     }
   ]
 }
