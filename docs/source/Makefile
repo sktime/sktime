@@ -1,30 +1,32 @@
 # Minimal makefile for Sphinx documentation
 
 # You can set these variables from the command line.
-PREPROCESS    = sphinx-apidoc
-APIDOCTEMPLATEDIR = _templates/apidoc
-AUTOGENDIR    = api_reference/auto_generated
-SPHINXOPTS    =
-SPHINXBUILD   = sphinx-build 
-SOURCEDIR     = .
-BUILDDIR      = ../build
-PROJECTDIR    = "../../sktime/"
+SPHINXBUILD        = sphinx-build
+SPHINXOPTS         = 
+SPHINXAUTOBUILD    = sphinx-autobuild
+SPHINXAUTOOPTS     = 
+SOURCEDIR          = .
+BUILDDIR           = ../build
+SKTIMEDIR          = ../../sktime
 
-# exclude unit tests from API reference
-EXCLUDEPATHS = "../*tests* ../*test* ../*contrib* ../*setup* ../*all*"
+.PHONY: help build autobuild
 
-# Put it first so that "make" without argument is like "make help".
+# "make" without argument is like "make help".
 help:
-	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)"
 
-.PHONY: help Makefile
+clean: 
+	rm -rf $(BUILDDIR)
+	@echo "Deleted directory $(BUILDDIR)."
 
-# Catch-all target: route all unknown targets to Sphinx using the new
-# "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
-%: Makefile
-	./symlink_examples.sh
-	rm -rf $(AUTOGENDIR)
-	@$(PREPROCESS) -eMT --templatedir $(APIDOCTEMPLATEDIR) -o $(AUTOGENDIR) $(PROJECTDIR) "$(EXCLUDEPATHS)"
-	-rm -rf $(BUILDDIR)
-	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
-	
+# $(O) is meant as a shortcut for custom options. 
+# i.e to log stderr into a seprate file: 
+# make build O="--no-color 2> build_warnings.log"  
+build:
+#	./symlink_examples.sh
+	$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+
+# $(O) is meant as a shortcut for custom options.
+autobuild:
+#   use --pre-build COMMAND to call ./symlink_examples.sh
+	$(SPHINXAUTOBUILD) "$(SOURCEDIR)" "$(BUILDDIR)/html" -d "$(BUILDDIR)/doctrees" $(SPHINXAUTOOPTS) $(O) --watch "$(SKTIMEDIR)" --re-ignore ".*\.json"
