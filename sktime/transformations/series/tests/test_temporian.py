@@ -26,7 +26,7 @@ def test_flat_univariate():
     X = load_solar()[0:32]
 
     def function(evset):
-        return evset["Number of airline passengers"] + 1
+        return evset["solar_gen"] + 1
 
     transformer = TemporianTransformer(function=function)
     X_transformed = transformer.fit_transform(X=X)
@@ -210,15 +210,16 @@ def test_change_sampling():
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_complex_function():
-    """Tests function already compiled."""
     import temporian as tp
 
+    # in this dataset each row is a period of 1/2 hour
+
     def function(evset):
-        return evset.simple_moving_average(tp.duration.days(3 * 365)).resample(evset)
+        return evset.simple_moving_average(tp.duration.days(1)).resample(evset)
 
     X = load_solar()
 
     transformer = TemporianTransformer(function=function, compile=True)
     result = transformer.fit_transform(X=X)
     assert result.iloc[0] == X.iloc[0]
-    assert result.iloc[-1] == X.iloc[-3:].mean()
+    assert np.allclose(result.iloc[-1], X.iloc[-48:].mean())
