@@ -2618,6 +2618,15 @@
       ]
     },
     {
+      "login": "meraldoantonio",
+      "name": "Meraldo Antonio",
+      "avatar_url": "https://avatars.githubusercontent.com/u/37468543?v=4",
+      "profile": "https://github.com/meraldoantonio",
+      "contributions": [
+        "doc"
+       ]
+    },
+    {
       "login": "memeo-pro",
       "name": "Yash Edake",
       "avatar_url": "https://avatars.githubusercontent.com/memeo-pro",
@@ -2654,6 +2663,16 @@
       "contributions": [
         "code",
         "doc"
+      ]
+    },
+    {
+      "login": "fnhirwa",
+      "name": "Felix Hirwa Nshuti",
+      "avatar_url": "https://avatars.githubusercontent.com/u/67042527?s=64&v=4",
+      "profile": "https://github.com/fnhirwa",
+      "contributions": [
+        "code",
+        "maintenance"
       ]
     }
   ]
