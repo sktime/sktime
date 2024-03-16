@@ -6,6 +6,7 @@ because we can generalise tags, _predict and _predict_proba
 __author__ = ["James-Large", "ABostrom", "TonyBagnall", "aurunmpegasus", "achieveordie"]
 __all__ = ["BaseDeepClassifier"]
 
+import os
 from abc import ABC, abstractmethod
 
 import numpy as np
@@ -204,7 +205,7 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         if hasattr(self, "history"):
             self.__dict__["history"] = self.history
 
-    def save(self, path=None, serialization_format="pickle"):
+    def save(self, path=None, serialization_format="pickle", legacy_save=True):
         """Save serialized self to bytes-like object or to (.zip) file.
 
         Behaviour:
@@ -226,17 +227,25 @@ class BaseDeepClassifier(BaseClassifier, ABC):
                 path="/home/stored/estimator" then a zip file ``estimator.zip`` will be
                 stored in ``/home/stored/``.
 
-        serialization_format: str, default = "pickle"
+        serialization_format : str, default = "pickle"
             Module to use for serialization.
             The available options are present under
             ``sktime.base._base.SERIALIZATION_FORMATS``. Note that non-default formats
             might require installation of other soft dependencies.
+
+        legacy_save : bool, default = True
+            whether to use the legacy saving method for the model. If
+            tensorflow >= 2.16.0 is installed, this is ignored.
+            The default will switch to False in sktime 0.28.0, and the
+            legacy saving method will be removed in sktime 0.29.0.
 
         Returns
         -------
         if ``path`` is None - in-memory serialized self
         if ``path`` is file location - ZipFile with reference to the file
         """
+        # TODO - remove the legacy_save parameter in sktime 0.30.0
+        # TODO - change the default value of legacy_save to False in sktime 0.29.0
         import pickle
         from pathlib import Path
 
@@ -257,24 +266,47 @@ class BaseDeepClassifier(BaseClassifier, ABC):
             path = Path(path) if isinstance(path, str) else path
             path.mkdir()
 
+        if legacy_save:
+            from sktime.utils.warnings import warn
+
+            warn(
+                "WARNING: In the save method of classifiers and regressors,"
+                " saving logic has changed to be compatible with tensorflow 2.16. "
+                "The old saving logic is deprecated and will be removed in "
+                "sktime 0.30.0. "
+                "If tensorflow>=2.16.0 is installed, the new saving logic is always "
+                "used. If not, by default, the legacy saving logic is used until "
+                "sktime 0.28.last, and the new logic is used from sktime 0.29.0."
+                "For safe change in an environment with tensorflow<2.16.0, "
+                "set the legacy_save parameter explicitly to False to test the "
+                "new saving logic. If no issues are found, no changes to your code "
+                "are necessary. To keep using the legacy method, set the parameter "
+                "legacy_save to True. Note that the legacy_save parameter will be "
+                "removed entirely in sktime 0.30.0.",
+                FutureWarning,
+                obj=self,
+                stacklevel=2,
+            )
+
+        if _check_soft_dependencies("tensorflow>=2.16.0", severity="none"):
+            legacy_save = False
+
         if serialization_format == "cloudpickle":
             _check_soft_dependencies("cloudpickle", severity="error")
             import cloudpickle
 
-            return self._serialize_using_dump_func(
-                path=path,
-                dump=cloudpickle.dump,
-                dumps=cloudpickle.dumps,
-            )
-
+            serializer = cloudpickle
         elif serialization_format == "pickle":
-            return self._serialize_using_dump_func(
-                path=path,
-                dump=pickle.dump,
-                dumps=pickle.dumps,
-            )
+            serializer = pickle
 
-    def _serialize_using_dump_func(self, path, dump, dumps):
+        return self._serialize_using_dump_func(
+            path=path,
+            dump=serializer.dump,
+            dumps=serializer.dumps,
+            legacy_save=legacy_save,
+        )
+
+    def _serialize_using_dump_func(self, path, dump, dumps, legacy_save=False):
         """Serialize & return DL Estimator using ``dump`` and ``dumps`` functions."""
         import shutil
         from zipfile import ZipFile
@@ -286,11 +318,8 @@ class BaseDeepClassifier(BaseClassifier, ABC):
 
             in_memory_model = None
             if self.model_ is not None:
-                with h5py.File(
-                    "disk_less", "w", driver="core", backing_store=False
-                ) as h5file:
-                    self.model_.save(h5file)
-                    h5file.flush()
+                self.model_.save("disk_less.h5")
+                with h5py.File("disk_less.h5", "r") as h5file:
                     in_memory_model = h5file.id.get_file_image()
 
             in_memory_history = dumps(history)
@@ -304,7 +333,12 @@ class BaseDeepClassifier(BaseClassifier, ABC):
             )
 
         if self.model_ is not None:
-            self.model_.save(path / "keras/")
+            if not legacy_save:
+                keras_path = path / "keras" / "model.keras"
+                os.makedirs(keras_path.parent, exist_ok=True)
+                self.model_.save(keras_path)
+            else:
+                self.model_.save(path / "keras/")
 
         with open(path / "history", "wb") as history_writer:
             dump(history, history_writer)
@@ -335,9 +369,7 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         """
         _check_soft_dependencies("h5py")
         import pickle
-        from tempfile import TemporaryFile
 
-        import h5py
         from tensorflow.keras.models import load_model
 
         if not isinstance(serial, tuple):
@@ -357,11 +389,9 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         if in_memory_model is None:
             cls.model_ = None
         else:
-            with TemporaryFile() as store_:
+            with open("diskless.h5", "wb") as store_:
                 store_.write(in_memory_model)
-                h5file = h5py.File(store_, "r")
-                cls.model_ = load_model(h5file)
-                h5file.close()
+                cls.model_ = load_model("diskless.h5")
 
         cls.history = pickle.loads(in_memory_history)
         return pickle.loads(serial)
@@ -393,9 +423,12 @@ class BaseDeepClassifier(BaseClassifier, ABC):
                     continue
                 zip_file.extract(file, temp_unzip_loc)
 
-        keras_location = temp_unzip_loc / "keras"
+        keras_location_legacy = temp_unzip_loc / "keras"
+        keras_location = temp_unzip_loc / "keras" / "model.keras"
         if keras_location.exists():
             cls.model_ = keras.models.load_model(keras_location)
+        elif keras_location_legacy.exists():
+            cls.model_ = keras.models.load_model(keras_location_legacy)
         else:
             cls.model_ = None
 
