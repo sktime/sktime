@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.datasets import load_airline, load_lynx
+from sktime.datasets import load_solar
 from sktime.datatypes import get_examples
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.temporian import TemporianTransformer
@@ -23,10 +23,10 @@ from sktime.transformations.series.temporian import TemporianTransformer
 )
 def test_flat_univariate():
     """Tests basic function works on flat (non-indexed) univariate time series."""
-    X = load_airline()[0:32]
+    X = load_solar()[0:32]
 
     def function(evset):
-        return evset["Number of airline passengers"] + 1
+        return evset["solar_gen"] + 1
 
     transformer = TemporianTransformer(function=function)
     X_transformed = transformer.fit_transform(X=X)
@@ -156,7 +156,7 @@ def test_multiple_output():
         split = datetime(1950, 7, 16)
         return evset.before(split), evset.after(split)
 
-    X = load_airline()
+    X = load_solar()
 
     transformer = TemporianTransformer(function=function)
     with pytest.raises(
@@ -175,7 +175,7 @@ def test_multiple_input():
     def function(evset, incorrect_param):
         return evset + 1
 
-    X = load_airline()
+    X = load_solar()
 
     transformer = TemporianTransformer(function=function)
     with pytest.raises(TypeError, match="missing 1 required positional"):
@@ -190,12 +190,12 @@ def test_change_sampling():
     """Tests error when changing the sampling."""
     import temporian as tp
 
-    # in this dataset each row is a period of 1 year,
-    # lagging for one year would remove the first row thus changing the sampling
-    X = load_lynx()
+    # in this dataset each row is a period of 1/2 hour
+    # lagging for one hour would remove the first two rows thus changing the sampling
+    X = load_solar()
 
     def function(evset):
-        return evset.lag(tp.duration.days(365))
+        return evset.lag(tp.duration.hours(1))
 
     transformer = TemporianTransformer(function=function, compile=True)
     with pytest.raises(
@@ -210,15 +210,16 @@ def test_change_sampling():
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_complex_function():
-    """Tests function already compiled."""
     import temporian as tp
 
-    def function(evset):
-        return evset.simple_moving_average(tp.duration.days(3 * 365)).resample(evset)
+    # in this dataset each row is a period of 1/2 hour
 
-    X = load_lynx()
+    def function(evset):
+        return evset.simple_moving_average(tp.duration.days(1)).resample(evset)
+
+    X = load_solar()
 
     transformer = TemporianTransformer(function=function, compile=True)
     result = transformer.fit_transform(X=X)
     assert result.iloc[0] == X.iloc[0]
-    assert result.iloc[-1] == X.iloc[-3:].mean()
+    assert np.allclose(result.iloc[-1], X.iloc[-48:].mean())
