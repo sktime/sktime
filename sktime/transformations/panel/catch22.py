@@ -246,6 +246,7 @@ class Catch22(BaseTransformer):
         "fit_is_empty": True,
     }
 
+    # todo 0.29.0: remove n_jobs parameter
     def __init__(
         self,
         features: Union[int, str, List[Union[int, str]]] = "all",
@@ -264,12 +265,12 @@ class Catch22(BaseTransformer):
 
         # todo: remove this unimplemented logic
         self._transform_features = None
-        # todo 0.28.0: remove this warning and logic
+        # todo 0.29.0: remove this warning and logic
         self.n_jobs = n_jobs
         if n_jobs != "deprecated":
             warn(
                 "In Catch22, the parameter "
-                "n_jobs is deprecated and will be removed in v0.28.0. "
+                "n_jobs is deprecated and will be removed in v0.29.0. "
                 "Instead, use set_config with the backend and backend:params "
                 "config fields, and set backend to 'joblib' and pass n_jobs "
                 "as a parameter of backend_params. ",
