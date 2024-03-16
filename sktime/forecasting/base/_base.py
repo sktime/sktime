@@ -2297,16 +2297,8 @@ class BaseForecaster(BaseEstimator):
 
         if implements_proba:
             # todo: this works only univariate now, need to implement multivariate
-            pred_var = self._predict_proba(fh=fh, X=X)
-            pred_var = pd.DataFrame(pred_var)
-
-            # ensure index and columns are as expected
-            if fh.is_relative:
-                fh = fh.to_absolute(self.cutoff)
-            pred_var.index = fh.to_pandas()
-
-            if isinstance(pred_var, pd.DataFrame):
-                pred_var.columns = self._get_columns(method="predict_var")
+            pred_dist = self.predict_proba(fh=fh, X=X)
+            pred_var = pred_dist.var()
 
             return pred_var
 

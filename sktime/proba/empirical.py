@@ -56,8 +56,8 @@ class Empirical(BaseDistribution):
         self.index = index
         self.columns = columns
 
-        _timestamps = spl.index.get_level_values(-1).unique()
-        _spl_instances = spl.index.droplevel(-1).unique()
+        _timestamps = spl.index.droplevel(0).unique()
+        _spl_instances = spl.index.get_level_values(0).unique()
         self._timestamps = _timestamps
         self._spl_instances = _spl_instances
         self._N = len(_spl_instances)
@@ -84,7 +84,8 @@ class Empirical(BaseDistribution):
             sorted[t] = {}
             weights[t] = {}
             for col in cols:
-                spl_t = self.spl.loc[(slice(None), t), col].values
+                sl = (slice(None),) + self._coerce_tuple(t)
+                spl_t = self.spl.loc[sl, col].values
                 sorter = np.argsort(spl_t)
                 spl_t_sorted = spl_t[sorter]
                 sorted[t][col] = spl_t_sorted
@@ -98,6 +99,11 @@ class Empirical(BaseDistribution):
 
         self._sorted = sorted
         self._weights = weights
+
+    def _coerce_tuple(self, x):
+        if not isinstance(x, tuple):
+            x = (x,)
+        return x
 
     def _apply_per_ix(self, func, params, x=None):
         """Apply function per index."""
