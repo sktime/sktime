@@ -267,6 +267,7 @@ dl = [
   'neuralforecast<1.7.0,>=1.6.4; python_version < "3.11"',
   'tensorflow>=2; python_version < "3.12"',
   'tensorflow<2.16.0,>=2; python_version < "3.12"',
+  'torch; python_version < "3.12"',
 ]
 mlflow = [
   "mlflow",
