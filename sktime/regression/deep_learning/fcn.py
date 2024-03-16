@@ -47,6 +47,17 @@ class FCNRegressor(BaseDeepRegressor):
     ----------
     .. [1] Zhao et. al, Convolutional neural networks for time series classification,
     Journal of Systems Engineering and Electronics, 28(1):2017.
+
+     Examples
+    --------
+    >>> from sktime.datasets import load_unit_test
+    >>> from sktime.regression.deep_learning.fcn import FCNRegressor
+    >>> X_train, y_train = load_unit_test(return_X_y=True, split="train")
+    >>> X_test, y_test = load_unit_test(return_X_y=True, split="test")
+    >>> regressor = FCNRegressor() # doctest: +SKIP
+    >>> regressor.fit(X_train, y_train) # doctest: +SKIP
+    FCNRegressor(...)
+    >>> y_pred = regressor.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
