@@ -107,7 +107,6 @@ class TapNetRegressor(BaseDeepRegressor):
         verbose=False,
     ):
         _check_dl_dependencies(severity="error")
-        super().__init__()
 
         self.batch_size = batch_size
         self.random_state = random_state
@@ -135,6 +134,8 @@ class TapNetRegressor(BaseDeepRegressor):
         # parameters for random projection
         self.use_rp = use_rp
         self.rp_params = rp_params
+
+        super().__init__()
 
         self._network = TapNetNetwork(
             dropout=self.dropout,

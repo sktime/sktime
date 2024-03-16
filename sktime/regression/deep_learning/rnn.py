@@ -74,8 +74,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
     ):
         _check_dl_dependencies(severity="error")
 
-        super().__init__()
-
+        self.n_epochs = n_epochs
         self.batch_size = batch_size
         self.verbose = verbose
         self.units = units
@@ -87,9 +86,11 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         self.activation = activation
         self.use_bias = use_bias
         self.optimizer = optimizer
+
+        super().__init__()
+
         self.history = None
         self._network = RNNNetwork(random_state=random_state, units=units)
-        self.n_epochs = n_epochs
 
     def build_model(self, input_shape, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
