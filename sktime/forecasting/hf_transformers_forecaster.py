@@ -4,12 +4,7 @@ import numpy as np
 import pandas as pd
 import torch
 from torch.utils.data import Dataset
-from transformers import (
-    TimeSeriesTransformerForPrediction,
-    AutoModel,
-    Trainer,
-    TrainingArguments,
-)
+from transformers import AutoConfig, Trainer, TrainingArguments
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
@@ -49,6 +44,18 @@ class HFTransformersForecaster(BaseForecaster):
     >>> y = load_airline()
     >>> forecaster = HFTransformersForecaster(
     ...    model_path="huggingface/autoformer-tourism-monthly"
+    ...    training_args ={
+    ...        "num_train_epochs": 20,
+    ...        "output_dir": "test_output",
+    ...        "per_device_train_batch_size": 32,
+    ...    },
+    ...    config={
+    ...         "lags_sequence": [1, 2, 3],
+    ...         "context_length": 2,
+    ...         "prediction_length": 4,
+    ...         "use_cpu": True,
+    ...         "label_length": 2,
+    ...    },
     ... )
     >>> forecaster.fit(y)
     >>> fh = [1, 2, 3]
@@ -91,7 +98,7 @@ class HFTransformersForecaster(BaseForecaster):
 
     def _fit(self, y, X, fh):
         # Load model and extract config
-        config = TimeSeriesTransformerForPrediction.from_pretrained(self.model_path).config
+        config = AutoConfig.from_pretrained(self.model_path)
 
         # Update config with user provided config
         _config = config.to_dict()
@@ -105,8 +112,11 @@ class HFTransformersForecaster(BaseForecaster):
 
         config = config.from_dict(_config)
         import transformers
+
         # Load model with the updated config
-        self.model, info = getattr(transformers, config.architectures[0]).from_pretrained(
+        self.model, info = getattr(
+            transformers, config.architectures[0]
+        ).from_pretrained(
             self.model_path,
             config=config,
             output_loading_info=True,
@@ -130,7 +140,7 @@ class HFTransformersForecaster(BaseForecaster):
                 _model.weight.masked_fill(_model.weight.isnan(), 0.001),
                 requires_grad=True,
             )
-        
+
         if self.validation_split is not None:
             split = int(len(y) * (1 - self.validation_split))
 
@@ -270,7 +280,6 @@ class HFTransformersForecaster(BaseForecaster):
                     "num_train_epochs": 1,
                     "output_dir": "test_output",
                     "per_device_train_batch_size": 32,
-                    # TODO create a bug report in HF if len(data) % batch_size == 1
                 },
                 "config": {
                     "lags_sequence": [1, 2, 3],
