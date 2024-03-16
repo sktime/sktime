@@ -219,8 +219,6 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
         instance.
         ``create_test_instance`` uses the first (or only) dictionary in ``params``.
     """
-        if parameter_set == "default":
-            return [{"num_kernels": 20}, {"num_kernels": 100}]
+        return [{"num_kernels": 20}, {"num_kernels": 100}]
 
-        return {}
 
