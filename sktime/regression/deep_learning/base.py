@@ -38,12 +38,6 @@ class BaseDeepRegressor(BaseRegressor, ABC):
         "python_dependencies": "tensorflow",
     }
 
-    def __init__(self, batch_size=40):
-        super().__init__()
-
-        self.batch_size = batch_size
-        self.model_ = None
-
     @abstractmethod
     def build_model(self, input_shape, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
