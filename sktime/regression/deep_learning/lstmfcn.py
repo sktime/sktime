@@ -76,7 +76,6 @@ class LSTMFCNRegressor(BaseDeepRegressor):
         random_state=None,
         verbose=0,
     ):
-
         # predefined
         self.n_epochs = n_epochs
         self.batch_size = batch_size
