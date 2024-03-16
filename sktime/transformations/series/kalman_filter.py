@@ -773,8 +773,6 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
                 ]
             )
             * 0.1,
-            "measurement_function": np.array([[1, 0]]),
-            "measurement_noise": np.array([[0.1]]),
             "denoising": True,
             "estimate_matrices": ["measurement_noise"],
         }
