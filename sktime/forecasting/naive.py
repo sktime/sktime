@@ -358,8 +358,22 @@ class NaiveForecaster(_BaseWindowForecaster):
 
         expected_index = fh.to_absolute(cutoff).to_pandas()
 
-        if strategy == "last" and sp == 1:
-            y_old = lagger.fit_transform(_y)
+        def naive_last(template):
+            """Fill a pd.Series at expected_index via the 'last' strategy.
+
+            Parameters
+            ----------
+            template : pd.Series
+                template with values to use to fill the output
+
+            Returns
+            -------
+            y_pred : pd.Series, with index expected_index
+                The value ``y_pred.loc[i]`` is the value ``template.loc[j]``
+                where ``j`` is the largest element of ``template.index``
+                with the property ``j<i``.
+            """
+            y_old = lagger.fit_transform(template)
             y_new = pd.DataFrame(index=expected_index, columns=[0], dtype="float64")
             full_y = pd.concat([y_old, y_new], keys=["a", "b"]).sort_index(level=-1)
             y_filled = full_y.ffill().bfill()
@@ -367,6 +381,69 @@ class NaiveForecaster(_BaseWindowForecaster):
             y_pred = y_filled.loc["b"]
             # convert to pd.Series from pd.DataFrame
             y_pred = y_pred.iloc[:, 0]
+
+            return y_pred
+
+        def diff_to_last(template):
+            """Fill a pd.Series at expected_index with diff to last ix in template.
+
+            Parameters
+            ----------
+            template : pd.Series
+                template with values to use to fill the output
+
+            Returns
+            -------
+            y_pred : pd.Series, with index expected_index
+                The value ``y_pred.loc[i]`` is abs(i-j),
+                where ``j`` is the largest element of ``template.index``
+                with the property ``j<i``.
+            """
+            ix_old = ix_to_float_series(template, out="DataFrame")
+            ix_old = lagger.fit_transform(ix_old)
+            ix_new = ix_to_float_series(expected_index, out="DataFrame")
+            full_ix = pd.concat([ix_old, ix_new], keys=["a", "b"]).sort_index(level=-1)
+            ix_diff_full = full_ix.diff().fillna(method="ffill")
+            # subset to index of expected_index
+            ix_diff = ix_diff_full.loc["b"]
+            # convert to pd.Series from pd.DataFrame
+            ix_diff = ix_diff.iloc[:, 0]
+
+            return ix_diff
+
+        def ix_to_float_series(ix, out="Series"):
+            """Coerce index to a pandas object with integer index and float values.
+
+            Parameters
+            ----------
+            ix : pd.Series, or pd.Index
+                if pd.Series, is replaced by ix.index
+            out : str, one of "Series" or "DataFrame"
+                typ
+
+            Returns
+            -------
+            s : pd.Series or pd.DataFrame
+                s.index[i] is i
+                s[i] is ix[i], coerced to float
+            """
+            if hasattr(ix, "index"):
+                ix = ix.index
+
+            s = pd.Series(ix, index=ix)
+
+            if s.values.dtype == "object":
+                s = s.astype("int64")
+                s = s.astype("float64")
+
+            if out == "DataFrame":
+                s = pd.DataFrame(s)
+                s.columns = [0]
+
+            return s
+
+        if strategy == "last" and sp == 1:
+            y_pred = naive_last(_y)
 
         elif strategy == "last" and sp > 1:
             y_old = _pivot_sp(_y, sp, anchor_side="end")
@@ -386,6 +463,35 @@ class NaiveForecaster(_BaseWindowForecaster):
             # convert to pd.Series from pd.DataFrame
             y_pred = y_pred.iloc[:, 0]
 
+        elif strategy == "drift":
+            offset = self.window_length_ - 1
+
+            # below, denote by last(i) the largest j in _y.index
+            # such that j < i
+
+            # y_diff_w[j] = _y[j] - _y[j-offset]
+            y_diff_w = _y.diff(offset).fillna(method="bfill")
+            # y_diff_w_new[i] = y_diff_w[last(i)]
+            y_diff_w_new = naive_last(y_diff_w)
+
+            # we consistendly coerce dates to floats
+            # this cancels out in the fraction below
+            y_ix = ix_to_float_series(_y.index)
+            # y_ix_diff_w[j] = _y.index[j] - _y.index[j-offset]
+            y_ix_diff_w = y_ix.diff(offset).fillna(method="bfill")
+            # y_ix_diff_w_new[i] = y_ix_diff_w[last(i)]
+            y_ix_diff_w_new = naive_last(y_ix_diff_w)
+
+            # y_last[i] = _y[last(i)]
+            y_last = naive_last(_y)
+
+            # y_ix_diff[i] = i - last(i)
+            y_ix_diff = diff_to_last(y_ix)
+
+            # both y_ix_diff and y_ix_diff_w_new are float coerced
+            # this is consistently done so the conversion factor cancels out
+            y_pred = y_last + y_ix_diff * y_diff_w_new / y_ix_diff_w_new
+
         y_pred.name = _y.name
         return y_pred
 
@@ -400,7 +506,7 @@ class NaiveForecaster(_BaseWindowForecaster):
             Exogenous time series
         """
         strategy = self.strategy
-        NEW_PREDICT = ["last"]
+        NEW_PREDICT = ["last", "drift"]
 
         if strategy in NEW_PREDICT:
             return self._predict_naive(fh=fh, X=X)
