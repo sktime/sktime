@@ -66,6 +66,7 @@ class DummyClassifier(BaseClassifier):
     >>> X_test, y_test = load_unit_test(split="test")
     >>> classifier = DummyClassifier(strategy="prior")
     >>> classifier.fit(X_train, y_train)
+    DummyClassifier()
     >>> y_pred = classifier.predict(X_test)
     >>> y_pred_proba = classifier.predict_proba(X_test)
     """
