@@ -20,8 +20,11 @@ def forecasting_validation(
 
     Parameters
     ----------
-    dataset_loader : Callable
-        A function which returns a dataset, like from `sktime.datasets`.
+    dataset_loader : Callable or a tuple
+        If Callable. a function which returns a dataset, like from `sktime.datasets`
+        If Tuple, must be in the format of (Y, X) where Y is the target variable
+        and X is exogenous variabele where both must be sktime pd.DataFrame MTYPE.
+        When tuple is given, task_id argument must be filled.
     cv_splitter : BaseSplitter object
         Splitter used for generating validation folds.
     scorers : a list of BaseMetric objects
@@ -33,9 +36,27 @@ def forecasting_validation(
     -------
     Dictionary of benchmark results for that forecaster
     """
-    y = dataset_loader()
+    # TODO:
+    # dataset_loader accept sktime dataset object (future plan)
+    if callable(dataset_loader):
+        data = dataset_loader()
+        if isinstance(data, tuple):
+            y, X = data
+        else:
+            y, X = data, None
+    else:
+        y, X = dataset_loader
+
     results = {}
-    scores_df = evaluate(forecaster=estimator, y=y, cv=cv_splitter, scoring=scorers)
+    scores_df = evaluate(
+        forecaster=estimator,
+        y=y,
+        X=X,
+        cv=cv_splitter,
+        scoring=scorers,
+    )
+
+    # converting pd.Dataframe to Dict
     for scorer in scorers:
         scorer_name = scorer.name
         for ix, row in scores_df.iterrows():
@@ -87,8 +108,11 @@ class ForecastingBenchmark(BaseBenchmark):
 
         Parameters
         ----------
-        dataset_loader : Callable
-            A function which returns a dataset, like from `sktime.datasets`.
+        dataset_loader : Callable or a tuple
+            If Callable. a function which returns a dataset, like from `sktime.datasets`
+            If Tuple, must be in the format of (Y, X) where Y is the target variable
+            and X is exogenous variabele where both must be sktime pd.DataFrame MTYPE.
+            When tuple is given, task_id argument must be filled.
         cv_splitter : BaseSplitter object
             Splitter used for generating validation folds.
         scorers : a list of BaseMetric objects
@@ -101,12 +125,18 @@ class ForecastingBenchmark(BaseBenchmark):
         -------
         A dictionary of benchmark results for that forecaster
         """
+        if not (callable(dataset_loader) or isinstance(dataset_loader, tuple)):
+            raise TypeError("dataset_loader must be a callable or a tuple")
         task_kwargs = {
             "dataset_loader": dataset_loader,
             "cv_splitter": cv_splitter,
             "scorers": scorers,
         }
         if task_id is None:
+            if isinstance(dataset_loader, tuple):
+                raise ValueError(
+                    "Unable to use default task_id naming. Please insert them manually"
+                )
             task_id = (
                 f"[dataset={dataset_loader.__name__}]"
                 f"_[cv_splitter={cv_splitter.__class__.__name__}]"
