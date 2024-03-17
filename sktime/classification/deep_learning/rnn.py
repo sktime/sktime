@@ -47,6 +47,15 @@ class SimpleRNNClassifier(BaseDeepClassifier):
     ----------
     ..[1] benchmark forecaster in M4 forecasting competition:
     https://github.com/Mcompetitions/M4-methods
+
+    Examples
+    --------
+    >>> from sktime.classification.deep_learning.rnn import SimpleRNNClassifier
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> clf = SimpleRNNClassifier(n_epochs=20,batch_size=20) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
+    ResNetClassifier(...)
     """
 
     _tags = {
@@ -73,9 +82,8 @@ class SimpleRNNClassifier(BaseDeepClassifier):
     ):
         _check_dl_dependencies(severity="error")
 
-        super().__init__()
-
         self.batch_size = batch_size
+        self.n_epochs = n_epochs
         self.verbose = verbose
         self.units = units
         self.callbacks = callbacks
@@ -86,9 +94,11 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         self.activation = activation
         self.use_bias = use_bias
         self.optimizer = optimizer
+
+        super().__init__()
+
         self.history = None
         self._network = RNNNetwork(random_state=random_state, units=units)
-        self.n_epochs = n_epochs
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
@@ -121,7 +131,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         )(output_layer)
 
         self.optimizer_ = (
-            keras.optimizers.RMSprop(lr=0.001)
+            keras.optimizers.RMSprop(learning_rate=0.001)
             if self.optimizer is None
             else self.optimizer
         )

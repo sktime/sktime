@@ -92,9 +92,7 @@ class CNNRegressor(BaseDeepRegressor):
         optimizer=None,
     ):
         _check_dl_dependencies(severity="error")
-        super().__init__(
-            batch_size=batch_size,
-        )
+        super().__init__()
         self.n_conv_layers = n_conv_layers
         self.avg_pool_size = avg_pool_size
         self.kernel_size = kernel_size

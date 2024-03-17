@@ -76,12 +76,6 @@ class LSTMFCNRegressor(BaseDeepRegressor):
         random_state=None,
         verbose=0,
     ):
-        super().__init__()
-
-        self.input_shape = None
-        self.model_ = None
-        self.history = None
-
         # predefined
         self.n_epochs = n_epochs
         self.batch_size = batch_size
@@ -95,6 +89,12 @@ class LSTMFCNRegressor(BaseDeepRegressor):
         self.random_state = random_state
         self.verbose = verbose
 
+        super().__init__()
+
+        self.input_shape = None
+        self.model_ = None
+        self.history = None
+
         self._network = LSTMFCNNetwork(
             kernel_sizes=self.kernel_sizes,
             filter_sizes=self.filter_sizes,
@@ -103,7 +103,6 @@ class LSTMFCNRegressor(BaseDeepRegressor):
             dropout=self.dropout,
             attention=self.attention,
         )
-        self._is_fitted = False
 
     def build_model(self, input_shape, **kwargs):
         """
