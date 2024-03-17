@@ -126,7 +126,8 @@ class DtwDist(BasePairwiseTransformerPanel):
         # packaging info
         # --------------
         "authors": ["chrisholder", "TonyBagnall", "fkiraly"],
-        "python_dependencies": "numba",
+        # "python_dependencies": "numba",  optional backend
+        #
         # estimator type
         # --------------
         "symmetric": True,  # all the distances are symmetric
@@ -173,6 +174,10 @@ class DtwDist(BasePairwiseTransformerPanel):
         self.kwargs = kwargs
 
         super().__init__()
+
+        from sktime.utils.numba.warning import _check_numba_warning
+
+        _check_numba_warning(self, category=UserWarning)
 
     def _transform(self, X, X2=None):
         """Compute distance/kernel matrix.
