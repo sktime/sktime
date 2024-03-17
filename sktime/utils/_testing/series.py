@@ -17,6 +17,7 @@ def _make_series(
     random_state=None,
     add_nan=False,
     return_mtype=None,
+    freq=None,
 ):
     """Generate univariate or multivariate time series.
 
@@ -76,7 +77,7 @@ def _make_series(
         return data
 
     # pd.Series, pd.DataFrame case
-    index = _make_index(n_timepoints, index_type)
+    index = _make_index(n_timepoints, index_type, freq)
     if n_columns == 1 and return_mtype is None or return_mtype == "pd.Series":
         return pd.Series(data.ravel(), index)
     elif return_mtype is None or return_mtype == "pd.DataFrame":
@@ -90,7 +91,7 @@ def _make_series(
     return res_conv
 
 
-def _make_index(n_timepoints, index_type=None):
+def _make_index(n_timepoints, index_type=None, freq=None):
     """Make indices for unit testing."""
     if index_type == "period":
         start = "2000-01"
@@ -99,7 +100,7 @@ def _make_index(n_timepoints, index_type=None):
 
     elif index_type == "datetime" or index_type is None:
         start = "2000-01-01"
-        freq = "D"
+        freq = "D" if freq is None else freq
         return pd.date_range(start=start, periods=n_timepoints, freq=freq)
 
     elif index_type == "range":
