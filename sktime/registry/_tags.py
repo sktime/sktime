@@ -463,6 +463,12 @@ ESTIMATOR_TAG_REGISTER = [
         "whether split_series uses split (iloc) or split_loc (loc) to split series",
     ),
     (
+        "split_type",
+        "splitter",
+        ("str", ["temporal", "instance"]),
+        "whether the splitter splits by time or by instance (panel/hierarchy index)",
+    ),
+    (
         "capabilities:exact",
         "distribution",
         ("list", "str"),
