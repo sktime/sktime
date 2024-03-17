@@ -413,7 +413,8 @@ def _check_env_marker(obj, package=None, msg=None, severity="error"):
     except InvalidMarker:
         msg_version = (
             f"wrong format for env_marker tag, "
-            f'must be PEP 508 compatible specifier string, e.g., os_name!="unix",'
+            f'must be PEP 508 compatible specifier string, e.g., "
+            "platform_system!="windows",'
             f' but found "{est_marker_tag}"'
         )
         raise InvalidMarker(msg_version)
