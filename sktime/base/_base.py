@@ -78,6 +78,14 @@ class BaseObject(_BaseObject):
     Extends skbase BaseObject with additional features.
     """
 
+    # global default tags for dependencz management
+    _tags = {
+        "python_version": None,  # PEP 440 version specifier, e.g., ">=3.7"
+        "python_dependencies": None,  # PEP 440 dependency strs, e.g., "pandas>=1.0"
+        "python_dependencies_alias": {"scikit-learn": "sklearn"},
+        "env_markers": None,  # PEP 508 environment marker, e.g., "os_name=='unix'"
+    }
+
     _config = {
         "warnings": "on",
         "backend:parallel": None,  # parallelization backend for broadcasting
@@ -501,9 +509,6 @@ class BaseEstimator(BaseObject):
 
     Extends sktime's BaseObject to include basic functionality for fittable estimators.
     """
-
-    # global dependency alias tag for sklearn dependency management
-    _tags = {"python_dependencies_alias": {"scikit-learn": "sklearn"}}
 
     def __init__(self):
         self._is_fitted = False
