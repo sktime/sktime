@@ -15,14 +15,6 @@ import numpy as np
 import pandas as pd
 
 from sktime.base import BaseEstimator
-from sktime.datatypes import (
-    MTYPE_LIST_PANEL,
-    MTYPE_LIST_TABLE,
-    VectorizedDF,
-    check_is_error_msg,
-    check_is_scitype,
-    convert,
-)
 from sktime.utils.warnings import warn
 
 
@@ -105,6 +97,8 @@ class BasePanelMixin(BaseEstimator):
     def _fit_predict_boilerplate(self, X, y, cv, change_state, method):
         """Boilerplate logic for fit_predict and fit_predict_proba."""
         from sklearn.model_selection import KFold
+
+        from sktime.datatypes import convert
 
         if isinstance(cv, int):
             random_state = getattr(self, "random_state", None)
@@ -265,6 +259,8 @@ class BasePanelMixin(BaseEstimator):
             usually a pd.DataFrame (nested) or 3D np.ndarray
             Checked and possibly converted input data
         """
+        from sktime.datatypes import convert
+
         inner_type = self.get_tag("X_inner_mtype")
         # convert pd.DataFrame
         X = convert(
@@ -293,6 +289,14 @@ class BasePanelMixin(BaseEstimator):
         y_mtype : str, only returned if return_to_mtype=True
             mtype of y_inner, after convert
         """
+        from sktime.datatypes import (
+            MTYPE_LIST_TABLE,
+            VectorizedDF,
+            check_is_error_msg,
+            check_is_scitype,
+            convert,
+        )
+
         if y is None:
             if return_to_mtype:
                 return None, None, None
@@ -363,6 +367,8 @@ class BasePanelMixin(BaseEstimator):
         y_mtype : str
             mtype of y
         """
+        from sktime.datatypes import check_is_scitype
+
         y_mtype = check_is_scitype(y, "Table", return_metadata="mtype")
         return y_mtype
 
@@ -378,6 +384,8 @@ class BasePanelMixin(BaseEstimator):
         -------
         y : np.ndarray or pd.DataFrame
         """
+        from sktime.datatypes import convert
+
         # for consistency with legacy behaviour:
         # output is coerced to numpy1D in case of univariate output
         if not self._y_metadata["is_univariate"]:
@@ -429,6 +437,12 @@ class BasePanelMixin(BaseEstimator):
         ValueError
             If y or X is invalid input data type, or there is not enough data
         """
+        from sktime.datatypes import (
+            MTYPE_LIST_PANEL,
+            check_is_error_msg,
+            check_is_scitype,
+        )
+
         # Check X is valid input type and recover the data characteristics
         X_valid, msg, X_metadata = check_is_scitype(
             X, scitype="Panel", return_metadata=return_metadata
