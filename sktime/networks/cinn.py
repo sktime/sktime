@@ -219,6 +219,6 @@ class cINNNetwork:
         )
 
 
-# TODO 0.29.0: switch the line to cINNForecaster = CINNForecaster
+# TODO 0.29.0: switch the line to cINNNetwork = CINNNetwork
 # TODO 0.30.0: remove this alias altogether
 CINNNetwork = cINNNetwork
