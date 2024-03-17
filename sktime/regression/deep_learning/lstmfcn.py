@@ -52,17 +52,6 @@ class LSTMFCNRegressor(BaseDeepRegressor):
     ----------
     .. [1] Karim et al. Multivariate LSTM-FCNs for Time Series Classification, 2019
     https://arxiv.org/pdf/1801.04503.pdf
-
-    Examples
-    --------
-    >>> from sktime.datasets import load_unit_test
-    >>> from sktime.regression.deep_learning.lstmfcn import LSTMFCNRegressor
-    >>> X_train, y_train = load_unit_test(return_X_y=True, split="train")
-    >>> X_test, y_test = load_unit_test(return_X_y=True, split="test")
-    >>> regressor = LSTMFCNRegressor() # doctest: +SKIP
-    >>> regressor.fit(X_train, y_train) # doctest: +SKIP
-    LSTMFCNRegressor(...)
-    >>> y_pred = regressor.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
