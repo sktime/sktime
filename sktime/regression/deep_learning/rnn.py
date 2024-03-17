@@ -47,6 +47,15 @@ class SimpleRNNRegressor(BaseDeepRegressor):
     ----------
     ..[1] benchmark forecaster in M4 forecasting competition:
     https://github.com/Mcompetitions/M4-methods
+
+    Examples
+    --------
+    >>> from sktime.regression.deep_learning.rnn import SimpleRNNRegressor
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, Y_train = load_unit_test(split="train")
+    >>> clf = SimpleRNNRegressor(n_epochs=20, batch_size=4) # doctest: +SKIP
+    >>> clf.fit(X_train, Y_train) # doctest: +SKIP
+    SimpleRNNRegressor(...)
     """
 
     _tags = {
@@ -117,7 +126,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         )(output_layer)
 
         self.optimizer_ = (
-            keras.optimizers.RMSprop(lr=0.001)
+            keras.optimizers.RMSprop(learning_rate = 0.001)
             if self.optimizer is None
             else self.optimizer
         )
