@@ -434,9 +434,7 @@ def _check_env_marker(obj, package=None, msg=None, severity="error"):
         )
 
         if package is not None:
-            msg += (
-                f" This is due to requirements of the {package} package."
-            )
+            msg += f" This is due to requirements of the {package} package."
 
     if severity == "error":
         raise ModuleNotFoundError(msg)
