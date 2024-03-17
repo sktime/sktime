@@ -2,6 +2,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapters for time series annotation."""
 
-__all__ = ["PyODAnnotator"]
+__all__ = ["PyODAnnotator", "QuantileOutlierDetector"]
 
 from sktime.annotation.adapters._pyod import PyODAnnotator
+from sktime.annotation.adapters._sktime_od import QuantileOutlierDetector
