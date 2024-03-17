@@ -10,6 +10,234 @@ from sktime.datatypes._utilities import get_window
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 
 
+class _ConditionalRefitForecaster(_DelegatedForecaster):
+    """Refits if get_refit_data_ does not return None when update is called.
+
+    If update is called with update_params=True and get_refit_data_ returns some data,
+        refits the forecaster instead (call to fit).
+    Refitting is done on the data returned by get_refit_data_.
+    After the wrapper forecast is fitted, set_refit_conditions_ is called to set the
+        conditions used for determining whether a model should be refitted.
+    Before update is done, update_refit_conditions_ is called to update the conditions
+        used for determining whether a model should be refitted.
+    """
+
+    _delegate_name = "forecaster_"
+
+    _tags = {"fit_is_empty": False, "requires-fh-in-fit": False}
+
+    def __init__(self, forecaster):
+        self.forecaster = forecaster
+        self.forecaster_ = forecaster.clone()
+
+        super(_ConditionalRefitForecaster, self).__init__()
+
+        self.clone_tags(forecaster)
+
+        # fit must be executed to fit the wrapped estimator and remember the cutoff
+        self.set_tags(fit_is_empty=False)
+
+    def _set_refit_conditions(self, y=None, X=None, fh=None):
+        """Set the data to be used for refitting the wrapped forecaster.
+
+        This is called in `_fit`.
+
+        Writes to self:
+            Sets fitted model attributes ending in "_"
+        """
+        pass
+
+    def _get_refit_data(self, y=None, X=None):
+        """Return the data to be used for refitting the wrapped forecaster.
+
+        This is called at the beginning of `_update`.
+
+        If None is returned, refitting should be skipped.
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+        """
+        pass
+
+    def _update_refit_conditions(self, refit_data, y=None, X=None):
+        """Update the model attributes related to deciding whether to refit.
+
+        This is called at the end of `_update`.
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+
+        Writes to self:
+            Sets fitted model attributes ending in "_"
+        """
+        pass
+
+    def _fit(self, y, X=None, fh=None):
+        """Fit forecaster to training data.
+
+        private _fit containing the core logic, called from fit
+
+        Writes to self:
+            Sets fitted model attributes ending in "_".
+
+        Parameters
+        ----------
+        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+            Time series to which to fit the forecaster.
+            if self.get_tag("scitype:y")=="univariate":
+                guaranteed to have a single column/variable
+            if self.get_tag("scitype:y")=="multivariate":
+                guaranteed to have 2 or more columns
+            if self.get_tag("scitype:y")=="both": no restrictions apply
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+            Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
+            Otherwise, if not passed in _fit, guaranteed to be passed in _predict
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to fit to.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        estimator = self._get_delegate()
+        estimator.fit(y=y, fh=fh, X=X)
+        self._set_refit_conditions(y, X, fh)
+        return self
+
+    def _update(self, y, X=None, update_params=True):
+        """Update time series to incremental training data.
+
+        private _update containing the core logic, called from update
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+
+        Writes to self:
+            Sets fitted model attributes ending in "_", if update_params=True.
+            Does not write to self if update_params=False.
+
+        Parameters
+        ----------
+        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+            Time series with which to update the forecaster.
+            if self.get_tag("scitype:y")=="univariate":
+                guaranteed to have a single column/variable
+            if self.get_tag("scitype:y")=="multivariate":
+                guaranteed to have 2 or more columns
+            if self.get_tag("scitype:y")=="both": no restrictions apply
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        update_params : bool, optional (default=True)
+            whether model parameters should be updated
+
+        Returns
+        -------
+        self : reference to self
+        """
+        estimator = self._get_delegate()
+        refit_data = self._get_refit_data(y, X)
+
+        if refit_data is not None and update_params:
+            estimator.fit(
+                y=refit_data.y,
+                X=refit_data.X,
+                fh=refit_data.ffh,
+                update_params=update_params,
+            )
+        else:
+            # if no: call update as usual
+            estimator.update(y=y, X=X, update_params=update_params)
+
+        self._update_refit_conditions(refit_data, y, X)
+        return self
+
+
+class ConditionalRefitForecaster(_ConditionalRefitForecaster):
+    """Refits if get_refit_data does not return None when update is called.
+
+    If update is called with update_params=True and get_refit_data returns some data,
+        refits the forecaster instead (call to fit).
+    Refitting is done on the data returned by get_refit_data.
+    After the wrapper forecast is fitted, set_refit_conditions is called to set the
+        conditions used for determining whether a model should be refitted.
+    Before update is done, update_refit_conditions is called to update the conditions
+        used for determining whether a model should be refitted.
+    """
+
+    _delegate_name = "forecaster_"
+
+    _tags = {"fit_is_empty": False, "requires-fh-in-fit": False}
+
+    def __init__(
+        self, forecaster, set_refit_conditions, get_refit_data, update_refit_conditions
+    ):
+        self.forecaster = forecaster
+        self.forecaster_ = forecaster.clone()
+
+        self.set_refit_conditions_ = set_refit_conditions
+        self.get_refit_data_ = get_refit_data
+        self.update_refit_conditions_ = update_refit_conditions
+
+        super(_ConditionalRefitForecaster, self).__init__()
+
+        self.clone_tags(forecaster)
+
+        # fit must be executed to fit the wrapped estimator and remember the cutoff
+        self.set_tags(fit_is_empty=False)
+
+    def _set_refit_conditions(self, y=None, X=None, fh=None):
+        """Set the data to be used for refitting the wrapped forecaster.
+
+        This is called in `_fit`.
+
+        Writes to self:
+            Sets fitted model attributes ending in "_"
+        """
+        return self.set_refit_conditions_(y, X, fh)
+
+    def _get_refit_data(self, y=None, X=None):
+        """Return the data to be used for refitting the wrapped forecaster.
+
+        This is called at the beginning of `_update`.
+
+        If None is returned, refitting should be skipped.
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+        """
+        return self._get_refit_data(y, X)
+
+    def _update_refit_conditions(self, refit_data, y=None, X=None):
+        """Update the model attributes related to deciding whether to refit.
+
+        This is called at the end of `_update`.
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+
+        Writes to self:
+            Sets fitted model attributes ending in "_"
+        """
+        return self._update_refit_conditions(refit_data, y, X)
+
+
 class UpdateRefitsEvery(_DelegatedForecaster):
     """Refits periodically when update is called.
 
