@@ -108,7 +108,7 @@ all_extras = [
   "statsmodels>=0.12.1",
   'stumpy>=1.5.1; python_version < "3.11"',
   'tbats>=1.1; python_version < "3.12"',
-  'tensorflow; python_version < "3.12"',
+  'tensorflow<2.17,>=2; python_version < "3.12"',
   'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   "xarray",
@@ -145,7 +145,7 @@ all_extras_pandas2 = [
   "statsmodels>=0.12.1",
   'stumpy>=1.5.1; python_version < "3.11"',
   'tbats>=1.1; python_version < "3.12"',
-  'tensorflow; python_version < "3.12"',
+  'tensorflow<2.17,>=2; python_version < "3.12"',
   'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   "xarray",
@@ -172,7 +172,7 @@ annotation = [
 classification = [
   'esig<0.10,>=0.9.7; python_version < "3.11"',
   'numba<0.60,>=0.53',
-  'tensorflow<=2.14,>=2; python_version < "3.12"',
+  'tensorflow<2.17,>=2; python_version < "3.12"',
   'tsfresh<0.21,>=0.17; python_version < "3.12"',
 ]
 clustering = [
@@ -190,7 +190,7 @@ forecasting = [
 ]
 networks = [
   "keras-self-attention<0.52,>=0.51",
-  'tensorflow<=2.14,>=2; python_version < "3.12"',
+  'tensorflow<2.17,>=2; python_version < "3.12"',
 ]
 param_est = [
   "seasonal<0.4,>=0.3.1",
@@ -198,7 +198,7 @@ param_est = [
 ]
 regression = [
   'numba<0.60,>=0.53',
-  'tensorflow<=2.14,>=2; python_version < "3.12"',
+  'tensorflow<2.17,>=2; python_version < "3.12"',
 ]
 transformations = [
   'esig<0.10,>=0.9.7; python_version < "3.11"',
@@ -244,10 +244,10 @@ docs = [
   "tabulate",
 ]
 tests = [
-  "pytest>=7.4,<8.1",
+  "pytest>=7.4,<8.2",
   "pytest-cov<4.2,>=4.1",
   "pytest-randomly<3.16,>=3.15",
-  "pytest-timeout>=2.1,<2.3",
+  "pytest-timeout>=2.1,<2.4",
   "pytest-xdist>=3.3,<3.6",
 ]
 
@@ -265,7 +265,7 @@ cython_extras = [
 dl = [
   'FrEIA; python_version < "3.12"',
   'neuralforecast<1.7.0,>=1.6.4; python_version < "3.11"',
-  'tensorflow<=2.14,>=2; python_version < "3.12"',
+  'tensorflow<2.17,>=2; python_version < "3.12"',
   'torch; python_version < "3.12"',
 ]
 mlflow = [
