@@ -898,7 +898,10 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
 
         if is_timestamp:
             # coerce back to DatetimeIndex after operation
-            absolute = absolute.to_timestamp(fh.freq)
+            if hasattr(absolute, "freq") and absolute.freq is not None:
+                absolute = absolute.to_timestamp()
+            else:
+                absolute = absolute.to_timestamp(fh.freq)
 
         if old_tz is not None:
             absolute = absolute.tz_localize(old_tz)
@@ -956,7 +959,10 @@ def _coerce_to_period(x, freq=None):
             "_coerce_to_period requires freq argument to be passed if x is pd.Timestamp"
         )
     try:
-        return x.to_period(freq)
+        if hasattr(x, "freq") and x.freq is not None:
+            return x.to_period()
+        else:
+            return x.to_period(freq)
     except (ValueError, AttributeError) as e:
         msg = str(e)
         if "Invalid frequency" in msg or "_period_dtype_code" in msg:
