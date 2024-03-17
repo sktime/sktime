@@ -9,7 +9,11 @@ __all__ = ["BaseDeepRegressor"]
 
 import os
 from abc import ABC, abstractmethod
-
+import pickle
+import shutil
+from pathlib import Path
+from zipfile import ZipFile
+from sktime.base._base import SERIALIZATION_FORMATS
 import numpy as np
 
 from sktime.regression.base import BaseRegressor
@@ -161,7 +165,7 @@ class BaseDeepRegressor(BaseRegressor, ABC):
         if hasattr(self, "history"):
             self.__dict__["history"] = self.history
 
-    def save(self, path=None, legacy_save=True):
+    def save(self, path=None,serialization_format="pickle", legacy_save=True):
         """Save serialized self to bytes-like object or to (.zip) file.
 
         Behaviour:
@@ -183,6 +187,12 @@ class BaseDeepRegressor(BaseRegressor, ABC):
                 path="/home/stored/estimator" then a zip file ``estimator.zip`` will be
                 stored in ``/home/stored/``.
 
+        serialization_format : str, default = "pickle"
+            Module to use for serialization.
+            The available options are present under
+            ``sktime.base._base.SERIALIZATION_FORMATS``. Note that non-default formats
+            might require installation of other soft dependencies.
+
         legacy_save : bool, default = True
             whether to use the legacy saving method for the model. If
             tensorflow >= 2.16.0 is installed, this is ignored.
@@ -194,12 +204,22 @@ class BaseDeepRegressor(BaseRegressor, ABC):
         if ``path`` is None - in-memory serialized self
         if ``path`` is file location - ZipFile with reference to the file
         """
-        # TODO 0.30.0 - remove the legacy_save parameter in sktime 0.30.0
-        # TODO 0.29.0 - change the default value of legacy_save to False
-        import pickle
-        import shutil
-        from pathlib import Path
-        from zipfile import ZipFile
+        if serialization_format not in self.SERIALIZATION_FORMATS:
+            raise ValueError(
+                f"The provided `serialization_format`='{serialization_format}' "
+                "is not yet supported. The possible formats are: "
+                f"{self.SERIALIZATION_FORMATS}."
+            )
+
+        if path is not None and not isinstance(path, (str, Path)):
+            raise TypeError(
+                "`path` is expected to either be a string or a Path object "
+                f"but found of type:{type(path)}."
+            )
+
+        if path is not None:
+            path = Path(path) if isinstance(path, str) else path
+            path.mkdir()
 
         if legacy_save:
             from sktime.utils.warnings import warn
@@ -223,11 +243,28 @@ class BaseDeepRegressor(BaseRegressor, ABC):
                 stacklevel=2,
             )
 
-        if _check_soft_dependencies("tensorflow>=2.16.0", severity="none"):
-            legacy_save = False
+        if serialization_format == "cloudpickle":
+            _check_soft_dependencies("cloudpickle", severity="error")
+            import cloudpickle
 
+            serializer = cloudpickle
+        elif serialization_format == "pickle":
+            serializer = pickle
+
+        return self._serialize_using_dump_func(
+            path=path,
+            dump=serializer.dump,
+            dumps=serializer.dumps,
+            legacy_save=legacy_save,
+        )
+
+    def _serialize_using_dump_func(self, path, dump, dumps, legacy_save=False):
+        """Serialize & return DL Estimator using ``dump`` and ``dumps`` functions."""
+        import os
+
+        history = self.history.history if self.history is not None else None
         if path is None:
-            _check_soft_dependencies("h5py")
+            _check_soft_dependencies("h5py", severity="error")
             import h5py
 
             in_memory_model = None
@@ -236,25 +273,15 @@ class BaseDeepRegressor(BaseRegressor, ABC):
                 with h5py.File("disk_less.h5", "r") as h5file:
                     in_memory_model = h5file.id.get_file_image()
 
-            in_memory_history = pickle.dumps(self.history.history)
-
+            in_memory_history = dumps(history)
             return (
                 type(self),
                 (
-                    pickle.dumps(self),
+                    dumps(self),
                     in_memory_model,
                     in_memory_history,
                 ),
             )
-
-        if not isinstance(path, (str, Path)):
-            raise TypeError(
-                "`path` is expected to either be a string or a Path object "
-                f"but found of type:{type(path)}."
-            )
-
-        path = Path(path) if isinstance(path, str) else path
-        path.mkdir()
 
         if self.model_ is not None:
             if not legacy_save:
@@ -265,10 +292,11 @@ class BaseDeepRegressor(BaseRegressor, ABC):
                 self.model_.save(path / "keras/")
 
         with open(path / "history", "wb") as history_writer:
-            pickle.dump(self.history.history, history_writer)
-
-        pickle.dump(type(self), open(path / "_metadata", "wb"))
-        pickle.dump(self, open(path / "_obj", "wb"))
+            dump(history, history_writer)
+        with open(path / "_metadata", "wb") as file:
+            dump(type(self), file)
+        with open(path / "_obj", "wb") as file:
+            dump(self, file)
 
         shutil.make_archive(base_name=path, format="zip", root_dir=path)
         shutil.rmtree(path)
