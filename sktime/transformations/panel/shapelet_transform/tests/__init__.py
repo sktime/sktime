@@ -1,0 +1,1 @@
+"""Shapelet transform unit tests."""

@@ -148,6 +148,7 @@ Shapelets, wavelets, and convolution
 
     ShapeletTransform
     RandomShapeletTransform
+    ShapeletTransformPyts
 
 .. currentmodule:: sktime.transformations.panel.rocket
 
