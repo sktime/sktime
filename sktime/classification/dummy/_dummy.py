@@ -64,10 +64,10 @@ class DummyClassifier(BaseClassifier):
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train")
     >>> X_test, y_test = load_unit_test(split="test")
-    >>> classifier = DummyClassifier(strategy="prior") # doctest: +SKIP
-    >>> classifier.fit(X_train, y_train) # doctest: +SKIP
-    >>> y_pred = classifier.predict(X_test) # doctest: +SKIP
-    >>> y_pred_proba = classifier.predict_proba(X_test) # doctest: +SKIP
+    >>> classifier = DummyClassifier(strategy="prior")
+    >>> classifier.fit(X_train, y_train)
+    >>> y_pred = classifier.predict(X_test)
+    >>> y_pred_proba = classifier.predict_proba(X_test)
     """
 
     _tags = {
