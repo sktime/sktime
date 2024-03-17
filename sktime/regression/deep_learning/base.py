@@ -12,8 +12,6 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 from sktime.regression.base import BaseRegressor
-from sktime.base._base import SERIALIZATION_FORMATS
-
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
@@ -162,7 +160,7 @@ class BaseDeepRegressor(BaseRegressor, ABC):
         if hasattr(self, "history"):
             self.__dict__["history"] = self.history
 
-    def save(self, path=None, serialization_format="pickle"):
+    def save(self, path=None):
         """Save serialized self to bytes-like object or to (.zip) file.
 
         Behaviour:
@@ -184,80 +182,61 @@ class BaseDeepRegressor(BaseRegressor, ABC):
                 path="/home/stored/estimator" then a zip file `estimator.zip` will be
                 stored in `/home/stored/`.
 
-        serialization_format: str, default = "pickle"
-            Module to use for serialization.
-            The available options are present under
-            `BaseDeepRegressor.SERIALIZATION_FORMATS`. Note that non-default formats
-            might require installation of other soft dependencies.
-
         Returns
         -------
         if `path` is None - in-memory serialized self
         if `path` is file location - ZipFile with reference to the file
         """
         import pickle
-        import cloudpickle
         import shutil
-        from zipfile import ZipFile
         from pathlib import Path
-        if serialization_format not in self.SERIALIZATION_FORMATS:
-            raise ValueError(
-                f"The provided `serialization_format`='{serialization_format}' "
-                "is not yet supported. The possible formats are: "
-                f"{self.SERIALIZATION_FORMATS}."
+        from zipfile import ZipFile
+
+        if path is None:
+            _check_soft_dependencies("h5py")
+            import h5py
+
+            in_memory_model = None
+            if self.model_ is not None:
+                with h5py.File(
+                    "disk_less", "w", driver="core", backing_store=False
+                ) as h5file:
+                    self.model_.save(h5file)
+                    h5file.flush()
+                    in_memory_model = h5file.id.get_file_image()
+
+            in_memory_history = pickle.dumps(self.history.history)
+
+            return (
+                type(self),
+                (
+                    pickle.dumps(self),
+                    in_memory_model,
+                    in_memory_history,
+                ),
             )
 
-        if path is not None and not isinstance(path, (str, Path)):
+        if not isinstance(path, (str, Path)):
             raise TypeError(
                 "`path` is expected to either be a string or a Path object "
                 f"but found of type:{type(path)}."
             )
 
-        if path is not None:
-            path = Path(path) if isinstance(path, str) else path
-            path.mkdir()
+        path = Path(path) if isinstance(path, str) else path
+        path.mkdir()
 
-        if serialization_format == "cloudpickle":
-            serialized_data = cloudpickle.dumps(self)
-        elif serialization_format == "pickle":
-            serialized_data = pickle.dumps(self)
-
-        if path is None:
-            return serialized_data
-
-        # Handle saving to file
         if self.model_ is not None:
             self.model_.save(path / "keras/")
 
         with open(path / "history", "wb") as history_writer:
             pickle.dump(self.history.history, history_writer)
 
-        with open(path / "_metadata", "wb") as metadata_writer:
-            pickle.dump(type(self), metadata_writer)
-        with open(path / "_obj", "wb") as obj_writer:
-            obj_writer.write(serialized_data)
+        pickle.dump(type(self), open(path / "_metadata", "wb"))
+        pickle.dump(self, open(path / "_obj", "wb"))
 
-        # Create zip archive
-        zip_path = path.with_suffix(".zip")
-        with ZipFile(zip_path, "w") as zipf:
-            # Add serialized object and metadata to zip
-            zipf.write(path / "_metadata", arcname="_metadata")
-            zipf.write(path / "_obj", arcname="_obj")
-
-            # Add keras directory if model exists
-            if hasattr(self, "model_") and self.model_ is not None:
-                model_dir = path / "keras"
-                model_dir.mkdir()
-                # Add model files to keras directory
-
-            # Add history file if history exists
-            if hasattr(self, "history") and self.history is not None:
-                zipf.write(path / "history", arcname="history")
-
-        # Clean up temporary files
+        shutil.make_archive(base_name=path, format="zip", root_dir=path)
         shutil.rmtree(path)
-
-        return ZipFile(zip_path)
+        return ZipFile(path.with_name(f"{path.stem}.zip"))
 
     @classmethod
     def load_from_serial(cls, serial):
