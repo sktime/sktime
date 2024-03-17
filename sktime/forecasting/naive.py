@@ -15,6 +15,7 @@ __author__ = [
 ]
 
 import math
+from itertools import accumulate
 
 import numpy as np
 import pandas as pd
@@ -25,7 +26,7 @@ from sktime.datatypes._utilities import get_slice
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
-from sktime.utils.seasonality import _pivot_sp, _unpivot_sp
+from sktime.utils.seasonality import _make_period_index_df
 from sktime.utils.validation import check_window_length
 from sktime.utils.validation.forecasting import check_sp
 from sktime.utils.warnings import warn
@@ -357,7 +358,6 @@ class NaiveForecaster(_BaseWindowForecaster):
         lagger = Lag(1, keep_column_names=True, freq=freq)
 
         expected_index = fh.to_absolute(cutoff).to_pandas()
-
         if strategy == "last" and sp == 1:
             y_old = lagger.fit_transform(_y)
             y_new = pd.DataFrame(index=expected_index, columns=[0], dtype="float64")
@@ -369,23 +369,16 @@ class NaiveForecaster(_BaseWindowForecaster):
             y_pred = y_pred.iloc[:, 0]
 
         elif strategy == "last" and sp > 1:
-            y_old = _pivot_sp(_y, sp, anchor_side="end")
-            y_old = lagger.fit_transform(y_old)
-
-            y_new_mask = pd.Series(index=expected_index, dtype="float64")
-            y_new = _pivot_sp(y_new_mask, sp, anchor=_y, anchor_side="end")
-            full_y = pd.concat([y_old, y_new], keys=["a", "b"]).sort_index(level=-1)
-            y_filled = full_y.ffill().bfill()
-            # subset to rows that contain elements we wanted to fill
-            y_pred = y_filled.loc["b"]
-            # reformat to wide
-            y_pred = _unpivot_sp(y_pred, template=_y)
-
-            # subset to required indices
-            y_pred = y_pred.reindex(expected_index)
-            # convert to pd.Series from pd.DataFrame
-            y_pred = y_pred.iloc[:, 0]
-
+            y_new_mask = pd.DataFrame(index=expected_index, columns=_y.to_frame().columns, dtype="float64")
+            full_y = _y.combine_first(y_new_mask)
+            idx = full_y.index.astype("int64")
+            period_len_int = idx[1] - idx[0]
+            diff_index = idx[1:] - idx[:-1]
+            acc_index = pd.Index(list(accumulate(diff_index)))
+            groups = [0] + list(acc_index % (sp * period_len_int))
+            full_y = full_y.groupby(groups).ffill()
+            y_pred = full_y.loc[expected_index.astype(full_y.index.dtype)]
+            y_pred.index = expected_index
         y_pred.name = _y.name
         return y_pred
 
