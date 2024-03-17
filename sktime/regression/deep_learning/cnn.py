@@ -168,7 +168,7 @@ class CNNRegressor(BaseDeepRegressor):
         return model
 
     def _fit(self, X, y):
-        """Fit the classifier on the training set (X, y).
+        """Fit the regressor on the training set (X, y).
 
         Parameters
         ----------
@@ -188,7 +188,7 @@ class CNNRegressor(BaseDeepRegressor):
         self.input_shape = X.shape[1:]
         self.model_ = self.build_model(self.input_shape)
         if self.verbose:
-            self.model.summary()
+            self.model_.summary()
 
         self.history = self.model_.fit(
             X,
