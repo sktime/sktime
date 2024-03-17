@@ -78,7 +78,7 @@ class BaseObject(_BaseObject):
     Extends skbase BaseObject with additional features.
     """
 
-    # global default tags for dependencz management
+    # global default tags for dependency management
     _tags = {
         "python_version": None,  # PEP 440 version specifier, e.g., ">=3.7"
         "python_dependencies": None,  # PEP 440 dependency strs, e.g., "pandas>=1.0"
