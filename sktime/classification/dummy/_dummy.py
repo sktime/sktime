@@ -59,6 +59,7 @@ class DummyClassifier(BaseClassifier):
         parameter is useful only for the "constant" strategy.
 
     Examples:
+    --------
     >>> from sktime.classification.dummy import DummyClassifier
     >>> from sktime.datasets import load_unit_test
     >>> classifier = DummyClassifier(strategy="prior") # doctest: +SKIP
