@@ -49,7 +49,7 @@ class MLPRegressor(BaseDeepRegressor):
     scratch with deep neural networks: A strong baseline,
     International joint conference on neural networks (IJCNN), 2017.
 
-      Examples
+    Examples
     --------
     >>> from sktime.datasets import load_unit_test
     >>> from sktime.regression.deep_learning.mlp import MLPRegressor
