@@ -126,7 +126,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         )(output_layer)
 
         self.optimizer_ = (
-            keras.optimizers.RMSprop(learning_rate = 0.001)
+            keras.optimizers.RMSprop(learning_rate=0.001)
             if self.optimizer is None
             else self.optimizer
         )
