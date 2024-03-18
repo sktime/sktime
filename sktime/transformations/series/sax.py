@@ -26,11 +26,11 @@ class SAX(BaseTransformer):
     Parameters
     ----------
     word_size : int, optional (default=8, greater equal 1 if frame_size=0)
-        length of transformed time series. Ignored if `frame_size` is set.
+        length of transformed time series. Ignored if ``frame_size`` is set.
     alphabet_size : int, optional (default=5, greater equal 2)
         number of discrete values transformed time series is binned to.
     frame_size : int, optional (default=0, greater equal 0)
-        length of the frames over which the mean is taken. Overrides `frames` if > 0.
+        length of the frames over which the mean is taken. Overrides ``frames`` if > 0.
 
     References
     ----------
@@ -129,7 +129,7 @@ class SAX(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -137,8 +137,9 @@ class SAX(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params = {"word_size": 4, "alphabet_size": 5}
         return params

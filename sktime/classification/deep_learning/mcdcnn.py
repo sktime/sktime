@@ -47,11 +47,11 @@ class MCDCNNClassifier(BaseDeepClassifier):
         Whether bias should be included in the output layer.
     metrics : None or string, optional (default=None)
         The string which will be used during model compilation. If left as None,
-        then "accuracy" is passed to `model.compile()`.
+        then "accuracy" is passed to ``model.compile()``.
     optimizer: None or keras.optimizers.Optimizer instance, optional (default=None)
         The optimizer that is used for model compiltation. If left as None,
-        then `keras.optimizers.SGD` is used with the following parameters -
-        `learning_rate=0.01, momentum=0.9, weight_decay=0.0005`.
+        then ``keras.optimizers.SGD`` is used with the following parameters -
+        ``learning_rate=0.01, momentum=0.9, weight_decay=0.0005``.
     callbacks : None or list of keras.callbacks.Callback, optional (default=None)
         The callback(s) to use during training.
     random_state : int, optional (default=0)

@@ -246,6 +246,7 @@ class Catch22(BaseTransformer):
         "fit_is_empty": True,
     }
 
+    # todo 0.29.0: remove n_jobs parameter
     def __init__(
         self,
         features: Union[int, str, List[Union[int, str]]] = "all",
@@ -264,12 +265,12 @@ class Catch22(BaseTransformer):
 
         # todo: remove this unimplemented logic
         self._transform_features = None
-        # todo 0.28.0: remove this warning and logic
+        # todo 0.29.0: remove this warning and logic
         self.n_jobs = n_jobs
         if n_jobs != "deprecated":
             warn(
                 "In Catch22, the parameter "
-                "n_jobs is deprecated and will be removed in v0.28.0. "
+                "n_jobs is deprecated and will be removed in v0.29.0. "
                 "Instead, use set_config with the backend and backend:params "
                 "config fields, and set backend to 'joblib' and pass n_jobs "
                 "as a parameter of backend_params. ",
@@ -488,15 +489,16 @@ class Catch22(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         param1 = {}
         param2 = {"features": "DN_HistogramMode_5", "col_names": "int_feat"}

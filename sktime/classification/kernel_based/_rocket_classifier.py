@@ -28,12 +28,13 @@ class RocketClassifier(_DelegatedClassifier):
     transformer and builds a RidgeClassifierCV estimator using the transformed data.
 
     Shorthand for the pipeline
-    `rocket * StandardScaler(with_mean=False) * RidgeClassifierCV(alphas)`
-    where `alphas = np.logspace(-3, 3, 10)`, and
-    where `rocket` depends on params `rocket_transform`, `use_multivariate` as follows
+    ``rocket * StandardScaler(with_mean=False) * RidgeClassifierCV(alphas)``
+    where ``alphas = np.logspace(-3, 3, 10)``, and
+    where ``rocket`` depends on params ``rocket_transform``, ``use_multivariate`` as
+    follows
 
     ================ ================== =======================
-    rocket_transform `use_multivariate` rocket (class)
+    rocket_transform ``use_multivariate`` rocket (class)
     ================ ================== =======================
     "rocket"         any                Rocket
     "minirocket"     "yes"               MiniRocketMultivariate
@@ -44,8 +45,8 @@ class RocketClassifier(_DelegatedClassifier):
 
     classes are sktime classes, other parameters are passed on to the rocket class.
 
-    To build other classifiers with rocket transformers, use `make_pipeline` or the
-    pipeline dunder `*`, and different transformers/classifiers in combination.
+    To build other classifiers with rocket transformers, use ``make_pipeline`` or the
+    pipeline dunder ``*``, and different transformers/classifiers in combination.
 
     Parameters
     ----------
@@ -64,7 +65,7 @@ class RocketClassifier(_DelegatedClassifier):
         "yes" = always uses multivariate transformers, native multi/univariate
         "no" = always univariate transformers, multivariate by framework vectorization
     n_jobs : int, default=1
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``-1`` means using all processors.
     random_state : int or None, default=None
         Seed for random number generation.
@@ -217,7 +218,7 @@ class RocketClassifier(_DelegatedClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -228,8 +229,9 @@ class RocketClassifier(_DelegatedClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         if parameter_set == "results_comparison":
             return {"num_kernels": 100}
