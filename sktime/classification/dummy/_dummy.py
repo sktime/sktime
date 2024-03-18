@@ -58,7 +58,7 @@ class DummyClassifier(BaseClassifier):
         The explicit constant as predicted by the "constant" strategy. This
         parameter is useful only for the "constant" strategy.
 
-    Examples:
+    Examples
     --------
     >>> from sktime.classification.dummy import DummyClassifier
     >>> from sktime.datasets import load_unit_test
