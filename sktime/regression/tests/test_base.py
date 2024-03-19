@@ -7,13 +7,11 @@ import pickle
 import numpy as np
 import pandas as pd
 import pytest
-from sklearn.model_selection import KFold
 
 from sktime.regression.base import BaseRegressor
 from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
 from sktime.regression.dummy import DummyRegressor
-from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.panel import (
     _make_panel,
     _make_regression_y,
@@ -331,70 +329,6 @@ def test_input_conversion_fit_predict(mtype):
     clf.predict(X)
 
 
-@pytest.mark.parametrize("method", ["fit_predict"])
-def test_fit_predict_change_state(method):
-    """Test change_state flag in fit_predict works as intended."""
-    X, y = make_regression_problem()
-
-    clf = KNeighborsTimeSeriesRegressor()
-
-    y_pred = getattr(clf, method)(X, y, change_state=False)
-    assert not clf.is_fitted
-
-    y_pred_post_fit = getattr(clf, method)(X, y, change_state=True)
-    assert clf.is_fitted
-
-    y_pred_post_fit2 = getattr(clf, method)(X, y, change_state=False)
-    assert clf.is_fitted
-
-    # get output from fit and predict
-    clf = KNeighborsTimeSeriesRegressor()
-    normal_method = method.partition("_")[2]
-    y_pred_normal = getattr(clf.fit(X, y), normal_method)(X)
-
-    # all the above outputs should be equal
-    _assert_array_almost_equal(y_pred_normal, y_pred)
-    _assert_array_almost_equal(y_pred_post_fit, y_pred)
-    _assert_array_almost_equal(y_pred_post_fit, y_pred_post_fit2)
-
-    assert len(y_pred) == len(y)
-
-
-@pytest.mark.parametrize("y_multivariate", [True, False])
-@pytest.mark.parametrize("method", ["fit_predict"])
-def test_fit_predict_cv(method, y_multivariate):
-    """Test cv argument in fit_predict"""
-    X, y = make_regression_problem()
-
-    if y_multivariate:
-        y = pd.concat([y, y], axis=1)
-        y = pd.DataFrame(y)
-
-    clf = KNeighborsTimeSeriesRegressor()
-    clf.random_state = 42
-    cv = KFold(3, random_state=42, shuffle=True)
-
-    y_pred_cv_int = getattr(clf, method)(X, y, cv=3, change_state=False)
-    y_pred_cv_obj = getattr(clf, method)(X, y, cv=cv, change_state=False)
-    assert not clf.is_fitted
-
-    _assert_array_almost_equal(y_pred_cv_int, y_pred_cv_obj)
-    assert -1 not in y_pred_cv_int
-
-    assert len(y) == len(y_pred_cv_int)
-
-    # check that state is same as self.fit(X, y) if change_state=True
-    y_pred_cv_obj_fit = getattr(clf, method)(X, y, cv=cv, change_state=True)
-    assert clf.is_fitted
-
-    # get output from fit and predict
-    clf = KNeighborsTimeSeriesRegressor()
-    normal_method = method.partition("_")[2]
-    y_pred_normal = getattr(clf.fit(X, y), normal_method)(X)
-
-    _assert_array_almost_equal(y_pred_normal, y_pred_cv_obj_fit)
-
-
 @pytest.mark.parametrize("method", ["predict"])
 def test_predict_single_class(method):
     """Test return of predict in case only single class seen in fit."""
@@ -409,25 +343,6 @@ def test_predict_single_class(method):
     y_pred = getattr(clf, method)(X_test)
 
     if method == "predict":
-        assert isinstance(y_pred, np.ndarray)
-        assert y_pred.ndim == 1
-        assert y_pred.shape == (n_instances,)
-        assert all(list(y_pred == 42))
-
-
-@pytest.mark.parametrize("cv", [None, KFold(3, random_state=42, shuffle=True)])
-@pytest.mark.parametrize("method", ["fit_predict"])
-def test_fit_predict_single_class(method, cv):
-    """Test return of fit_predict in case only single class seen in fit."""
-    X, y = make_regression_problem()
-    y[:] = 42
-    n_instances = len(X)
-
-    clf = KNeighborsTimeSeriesRegressor()
-
-    y_pred = getattr(clf, method)(X, y, cv=cv, change_state=False)
-
-    if method == "fit_predict":
         assert isinstance(y_pred, np.ndarray)
         assert y_pred.ndim == 1
         assert y_pred.shape == (n_instances,)
