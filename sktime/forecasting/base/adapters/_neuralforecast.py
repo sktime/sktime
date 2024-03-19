@@ -135,7 +135,6 @@ class _NeuralForecastAdapter(BaseForecaster):
 
         algorithm_instance = self.algorithm_class(
             fh,
-            alias=self.algorithm_name,
             **self.algorithm_parameters,
             **exogenous_parameters,
         )

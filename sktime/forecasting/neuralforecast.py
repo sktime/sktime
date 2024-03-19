@@ -714,7 +714,266 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         return params
 
 
+class NeuralForecastAutoLSTM(_NeuralForecastAdapter):
+    """NeuralForecast AutoLSTM model.
+
+    Interface to ``neuralforecast.auto.AutoLSTM`` [1]_
+    through ``neuralforecast.NeuralForecast`` [2]_,
+    from ``neuralforecast`` [3]_ by Nixtla.
+
+    The AutoLSTM model is a hyperparameter optimization wrapper for the LSTM model.
+    It uses Ray Tune to optimize the hyperparameters of the LSTM model.
+
+    Parameters
+    ----------
+    freq : str
+        frequency of the data, see available frequencies [4]_ from ``pandas``
+    local_scaler_type : str (default=None)
+        scaler to apply per-series to all features before fitting, which is inverted
+        after predicting
+
+        can be one of the following:
+
+        - 'standard'
+        - 'robust'
+        - 'robust-iqr'
+        - 'minmax'
+        - 'boxcox'
+    verbose_fit : bool (default=False)
+        print processing steps during fit
+    verbose_predict : bool (default=False)
+        print processing steps during predict
+    input_size : int (default=-1)
+        maximum sequence length for truncated train backpropagation
+
+        default (-1) uses all history
+    loss : pytorch module (default=None)
+        instantiated train loss class from losses collection [5]_
+    valid_loss : pytorch module (default=None)
+        instantiated validation loss class from losses collection [5]_
+    config : dict (default=None)
+        dictionary with ray tune configuration parameters
+    search_alg : object (default=None)
+        search algorithm object from ray tune
+    num_samples : int (default=10)
+        Number of hyperparameter optimization steps/samples.
+    backend : str (default="ray")
+        backend for hyperparameter optimization can be one of the following:
+
+        - 'ray'
+        - 'optuna'
+    verbose : bool (default=False)
+        print processing steps during hyperparameter optimization
+
+    Notes
+    -----
+    * If ``loss`` is unspecified, MAE is used as the loss function for training.
+    * Specifying config overrides the default config of hyperparameters.
+
+    Examples
+    --------
+    >>>
+    >>> # importing necessary libraries
+    >>> from sktime.datasets import load_longley
+    >>> from sktime.forecasting.neuralforecast import NeuralForecastAutoLSTM
+    >>> from sktime.split import temporal_train_test_split
+    >>>
+    >>> # loading the Longley dataset and splitting it into train and test subsets
+    >>> y, X = load_longley()
+    >>> y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, test_size=4)
+    >>>
+    >>> # creating model instance configuring the hyperparameters
+    >>> model = NeuralForecastAutoLSTM(  # doctest: +SKIP
+    ...     "A-DEC", num_samples=10, backend="ray"
+    ... )
+    >>>
+    >>> # fitting the model
+    >>> model.fit(y_train, X=X_train, fh=[1, 2, 3, 4])  # doctest: +SKIP
+    Seed set to 1
+    Epoch 500: 100%|█| 1/1 [00:00<00:00, 42.85it/s, v_num=870, train_loss_step=0.589,
+    NeuralForecastAutoLSTM(freq='A-DEC', num_samples=10, backend='ray')
+    >>>
+    >>> # getting point predictions
+    >>> model.predict(X=X_test)  # doctest: +SKIP
+    Predicting DataLoader 0: 100%|███████████████████| 1/1 [00:00<00:00, 198.64it/s]
+    1959    69528.695312
+    1960    69567.625000
+    1961    68260.437500
+    1962    67320.210938
+    Freq: A-DEC, Name: TOTEMP, dtype: float64
+    >>>
+
+    References
+    ----------
+    .. [1] https://nixtlaverse.nixtla.io/neuralforecast/models.html#autolstm
+    .. [2] https://nixtlaverse.nixtla.io/neuralforecast/core.html#neuralforecast
+    .. [3] https://github.com/Nixtla/neuralforecast/blob/main/neuralforecast/auto.py#L116
+    .. [4] https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
+    .. [5] https://nixtlaverse.nixtla.io/neuralforecast/losses.pytorch.html
+    .. [6] https://lightning.ai/docs/pytorch/stable/api/pytorch_lightning.trainer.trainer.Trainer.html#lightning.pytorch.trainer.trainer.Trainer
+    """  # noqa: E501
+
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["pranavvp16"],
+        "maintainers": ["pranavvp16"],
+        # "python_dependencies": "neuralforecast"
+        # inherited from _NeuralForecastAdapter
+        # estimator type
+        # --------------
+        "python_dependencies": ["neuralforecast>=1.6.4"],
+    }
+
+    def __init__(
+        self: "NeuralForecastLSTM",
+        freq: str,
+        local_scaler_type: typing.Optional[
+            typing.Literal["standard", "robust", "robust-iqr", "minmax", "boxcox"]
+        ] = None,
+        verbose_fit: bool = False,
+        verbose_predict: bool = False,
+        loss=None,
+        valid_loss=None,
+        config: typing.Optional[dict] = None,
+        search_alg=None,
+        num_samples: int = 10,
+        backend: str = "ray",
+        verbose: bool = False,
+    ):
+        self.loss = loss
+        self.valid_loss = valid_loss
+        self.config = config
+        self.search_alg = search_alg
+        self.num_samples = num_samples
+        self.backend = backend
+        self.verbose = verbose
+
+        super().__init__(
+            freq,
+            local_scaler_type=local_scaler_type,
+            verbose_fit=verbose_fit,
+            verbose_predict=verbose_predict,
+        )
+
+        self._loss = None
+        self._valid_loss = None
+        self._config = None
+        self._search_alg = None
+
+    @functools.cached_property
+    def algorithm_exogenous_support(self: "NeuralForecastAutoLSTM") -> bool:
+        """Set support for exogenous features."""
+        return True
+
+    @functools.cached_property
+    def algorithm_name(self: "NeuralForecastAutoLSTM") -> str:
+        """Set custom model name."""
+        return "AutoLSTM"
+
+    @functools.cached_property
+    def algorithm_class(self: "NeuralForecastAutoLSTM"):
+        """Import underlying NeuralForecast algorithm class."""
+        from neuralforecast.auto import AutoLSTM
+
+        return AutoLSTM
+
+    @functools.cached_property
+    def algorithm_parameters(self: "NeuralForecastAutoLSTM") -> dict:
+        """Get keyword parameters for the underlying NeuralForecast algorithm class.
+
+        Returns
+        -------
+        dict
+            keyword arguments for the underlying algorithm class
+        """
+        if self.loss:
+            self._loss = self.loss
+        else:
+            from neuralforecast.losses.pytorch import MAE
+
+            self._loss = MAE()
+
+        if self.valid_loss:
+            self._valid_loss = self.valid_loss
+
+        if self.config:
+            self._config = self.config
+
+        if self.search_alg:
+            self._search_alg = self.search_alg
+        else:
+            from ray.tune.search.basic_variant import BasicVariantGenerator
+
+            self._search_alg = BasicVariantGenerator(random_state=1)
+
+        return {
+            "loss": self._loss,
+            "valid_loss": self._valid_loss,
+            "config": self._config,
+            "search_alg": self._search_alg,
+            "num_samples": self.num_samples,
+            "backend": self.backend,
+            "verbose": self.verbose,
+        }
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for forecasters.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+
+        """
+        del parameter_set
+
+        try:
+            _check_soft_dependencies("neuralforecast", severity="error")
+        except ModuleNotFoundError:
+            params = [
+                {
+                    "freq": "D",
+                    "num_samples": 10,
+                    "backend": "ray",
+                },
+                {
+                    "num_samples": 1,
+                    "backend": "ray",
+                    "config": {"max_steps": 1},
+                },
+            ]
+        else:
+            from neuralforecast.losses.pytorch import SMAPE, QuantileLoss
+
+            params = [
+                {
+                    "freq": "D",
+                    "num_samples": 10,
+                    "backend": "ray",
+                    "config": {"max_steps": 1},
+                },
+                {
+                    "freq": "D",
+                    "num_samples": 1,
+                    "backend": "ray",
+                    "loss": QuantileLoss(0.5),
+                    "valid_loss": SMAPE(),
+                },
+            ]
+
+        return params
+
+
 __all__ = [
     "NeuralForecastRNN",
     "NeuralForecastLSTM",
+    "NeuralForecastAutoLSTM",
 ]
