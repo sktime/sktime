@@ -632,6 +632,20 @@ These transformers subset `X` by time points (`pandas` index or index level) or 
     ColumnSelect
     IndexSubset
 
+Adapters to other frameworks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Generic framework adapters that expose other frameworks in the ``sktime`` interface.
+
+.. currentmodule:: sktime.transformations.series.temporian
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TemporianTransformer
+
+
 Panel transformers
 ------------------
 
