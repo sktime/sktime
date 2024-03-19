@@ -78,7 +78,8 @@ def test_get_class_tags():
 
     msg = "Inheritance logic in BaseObject.get_class_tags is incorrect"
 
-    expected_tags = FIXTURE_CLASSCHILD_TAGS.copy().update(DEFAULT_TAGS)
+    expected_tags = FIXTURE_CLASSCHILD_TAGS.copy()
+    expected_tags.update(DEFAULT_TAGS)
     assert child_tags == expected_tags, msg
 
 
@@ -121,7 +122,8 @@ def test_get_tags():
 
     msg = "Inheritance logic in BaseObject.get_tags is incorrect"
 
-    expected_tags = FIXTURE_OBJECT_TAGS.copy().update(DEFAULT_TAGS)
+    expected_tags = FIXTURE_OBJECT_TAGS.copy()
+    expected_tags.update(DEFAULT_TAGS)
     assert object_tags == expected_tags, msg
 
 
@@ -181,7 +183,8 @@ def test_set_tags():
 
     assert FIXTURE_OBJECT_SET._tags_dynamic == FIXTURE_OBJECT_SET_DYN, msg
 
-    expected_tags = FIXTURE_OBJECT_SET_TAGS.copy().update(DEFAULT_TAGS)
+    expected_tags = FIXTURE_OBJECT_SET_TAGS.copy()
+    expected_tags.update(DEFAULT_TAGS)
     assert FIXTURE_OBJECT_SET.get_tags() == expected_tags, msg
 
 
