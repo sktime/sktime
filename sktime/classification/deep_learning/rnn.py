@@ -47,6 +47,15 @@ class SimpleRNNClassifier(BaseDeepClassifier):
     ----------
     ..[1] benchmark forecaster in M4 forecasting competition:
     https://github.com/Mcompetitions/M4-methods
+
+    Examples
+    --------
+    >>> from sktime.classification.deep_learning.rnn import SimpleRNNClassifier
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> clf = SimpleRNNClassifier(n_epochs=20,batch_size=20) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
+    ResNetClassifier(...)
     """
 
     _tags = {
@@ -121,7 +130,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         )(output_layer)
 
         self.optimizer_ = (
-            keras.optimizers.RMSprop(lr=0.001)
+            keras.optimizers.RMSprop(learning_rate=0.001)
             if self.optimizer is None
             else self.optimizer
         )
