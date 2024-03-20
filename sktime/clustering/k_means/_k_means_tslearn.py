@@ -51,7 +51,7 @@ class TimeSeriesKMeansTslearn(_TslearnAdapter, BaseClusterer):
         parallelization.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See scikit-learns'
-        ``Glossary <https://scikit-learn.org/stable/glossary.html#term-n-jobs>``_
+        `Glossary <https://scikit-learn.org/stable/glossary.html#term-n-jobs>`_
         for more details.
 
     dtw_inertia: bool (default: False)
