@@ -46,7 +46,6 @@ EXCLUDE_ESTIMATORS = [
     "FCNRegressor",
     "LSTMFCNRegressor",
     "MACNNRegressor",
-    "InceptionTimeRegressor",
     "CNTCClassifier",
     "CNTCRegressor",
 ]
