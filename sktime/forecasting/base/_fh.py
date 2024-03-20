@@ -381,6 +381,9 @@ class ForecastingHorizon:
         if hasattr(self, "_freq") and hasattr(self._freq, "freqstr"):
             # _freq is a pandas offset, frequency string is obtained via freqstr
             return self._freq.freqstr
+        elif hasattr(self, "_freq") and isinstance(self._freq, str):
+            # _freq is a string, frequency string is obtained directly
+            return self._freq
         else:
             return None
 
@@ -415,8 +418,12 @@ class ForecastingHorizon:
                     f"Current: {freq_from_self}, from update: {freq_from_obj}."
                 )
         elif freq_from_obj is not None:  # only freq_from_obj is not None
+            if freq_from_obj == "ME":
+                freq_from_obj = "M"
             self._freq = freq_from_obj
         else:
+            if freq_from_obj == "ME":
+                freq_from_obj = "M"
             # leave self._freq as freq_from_self, or set to None if does not exist yet
             self._freq = freq_from_self
 
