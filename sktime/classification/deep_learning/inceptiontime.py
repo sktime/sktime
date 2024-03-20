@@ -68,9 +68,6 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         metrics=None,
     ):
         _check_dl_dependencies(severity="error")
-        super().__init__()
-
-        self.verbose = verbose
 
         # predefined
         self.batch_size = batch_size
@@ -86,7 +83,8 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         self.use_bottleneck = use_bottleneck
         self.use_residual = use_residual
         self.verbose = verbose
-        self._is_fitted = False
+
+        super().__init__()
 
         network_params = {
             "n_filters": n_filters,

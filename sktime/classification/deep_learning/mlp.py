@@ -82,7 +82,7 @@ class MLPClassifier(BaseDeepClassifier):
         optimizer=None,
     ):
         _check_dl_dependencies(severity="error")
-        super().__init__()
+
         self.callbacks = callbacks
         self.n_epochs = n_epochs
         self.batch_size = batch_size
@@ -93,6 +93,9 @@ class MLPClassifier(BaseDeepClassifier):
         self.activation = activation
         self.use_bias = use_bias
         self.optimizer = optimizer
+
+        super().__init__()
+
         self.history = None
         self._network = MLPNetwork(
             random_state=self.random_state,
