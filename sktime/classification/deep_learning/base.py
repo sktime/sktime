@@ -41,13 +41,6 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         "python_dependencies": "tensorflow",
     }
 
-    def __init__(self, batch_size=40, random_state=None):
-        super().__init__()
-
-        self.batch_size = batch_size
-        self.random_state = random_state
-        self.model_ = None
-
     @abstractmethod
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
