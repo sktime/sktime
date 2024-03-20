@@ -17,45 +17,45 @@ from sktime.utils.sklearn import (
 class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
     """Pipeline of transformers compositor.
 
-    The `TransformerPipeline` compositor allows to chain transformers.
+    The ``TransformerPipeline`` compositor allows to chain transformers.
     The pipeline is constructed with a list of sktime transformers, i.e.
     estimators following the BaseTransformer interface. The list can be
     unnamed (a simple list of transformers) or string named (a list of
     pairs of string, estimator).
 
-    For a list of transformers `trafo1`, `trafo2`, ..., `trafoN`,
+    For a list of transformers ``trafo1``, ``trafo2``, ..., ``trafoN``,
     the pipeline behaves as follows:
 
-    * `fit`
-        Changes state by running `trafo1.fit_transform`,
+    * ``fit``
+        Changes state by running ``trafo1.fit_transform``,
         trafo2.fit_transform` etc sequentially, with
-        `trafo[i]` receiving the output of `trafo[i-1]`
-    * `transform`
-        Result is of executing `trafo1.transform`, `trafo2.transform`,
-        etc with `trafo[i].transform` input = output of `trafo[i-1].transform`,
-        and returning the output of `trafoN.transform`
-    * `inverse_transform`
-        Result is of executing `trafo[i].inverse_transform`,
-        with `trafo[i].inverse_transform` input = output
-        `trafo[i-1].inverse_transform`, and returning the output of
-        `trafoN.inverse_transform`
-    * `update`
-        Changes state by chaining `trafo1.update`, `trafo1.transform`,
-        `trafo2.update`, `trafo2.transform`, ..., `trafoN.update`,
-        where `trafo[i].update` and `trafo[i].transform` receive as input
-        the output of `trafo[i-1].transform`
+        ``trafo[i]`` receiving the output of ``trafo[i-1]``
+    * ``transform``
+        Result is of executing ``trafo1.transform``, ``trafo2.transform``,
+        etc with ``trafo[i].transform`` input = output of ``trafo[i-1].transform``,
+        and returning the output of ``trafoN.transform``
+    * ``inverse_transform``
+        Result is of executing ``trafo[i].inverse_transform``,
+        with ``trafo[i].inverse_transform`` input = output
+        ``trafo[i-1].inverse_transform``, and returning the output of
+        ``trafoN.inverse_transform``
+    * ``update``
+        Changes state by chaining ``trafo1.update``, ``trafo1.transform``,
+        ``trafo2.update``, ``trafo2.transform``, ..., ``trafoN.update``,
+        where ``trafo[i].update`` and ``trafo[i].transform`` receive as input
+        the output of ``trafo[i-1].transform``
 
-    The `get_params`, `set_params` uses `sklearn` compatible nesting interface
+    The ``get_params``, ``set_params`` uses ``sklearn`` compatible nesting interface
     if list is unnamed, names are generated as names of classes
-    if names are non-unique, `f"_{str(i)}"` is appended to each name string
-    where `i` is the total count of occurrence of a non-unique string
+    if names are non-unique, ``f"_{str(i)}"`` is appended to each name string
+    where ``i`` is the total count of occurrence of a non-unique string
     inside the list of names leading up to it (inclusive)
 
-    A `TransformerPipeline` can also be created by using the magic multiplication
-    on any transformer, i.e., any estimator inheriting from `BaseTransformer`
-    for instance, `my_trafo1 * my_trafo2 * my_trafo3`
+    A ``TransformerPipeline`` can also be created by using the magic multiplication
+    on any transformer, i.e., any estimator inheriting from ``BaseTransformer``
+    for instance, ``my_trafo1 * my_trafo2 * my_trafo3``
     will result in the same object as  obtained from the constructor
-    `TransformerPipeline([my_trafo1, my_trafo2, my_trafo3])`
+    ``TransformerPipeline([my_trafo1, my_trafo2, my_trafo3])``
     A magic multiplication can also be used with (str, transformer) pairs,
     as long as one element in the chain is a transformer
 
@@ -63,15 +63,15 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
     ----------
     steps : list of sktime transformers, or
         list of tuples (str, transformer) of sktime transformers
-        these are "blueprint" transformers, states do not change when `fit` is called
+        these are "blueprint" transformers, states do not change when ``fit`` is called
 
     Attributes
     ----------
     steps_ : list of tuples (str, transformer) of sktime transformers
-        clones of transformers in `steps` which are fitted in the pipeline
-        is always in (str, transformer) format, even if `steps` is just a list
-        strings not passed in `steps` are replaced by unique generated strings
-        i-th transformer in `steps_` is clone of i-th in `steps`
+        clones of transformers in ``steps`` which are fitted in the pipeline
+        is always in (str, transformer) format, even if ``steps`` is just a list
+        strings not passed in ``steps`` are replaced by unique generated strings
+        i-th transformer in ``steps_`` is clone of i-th in ``steps``
 
     Examples
     --------
@@ -199,17 +199,19 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
     def __mul__(self, other):
         """Magic * method, return (right) concatenated TransformerPipeline.
 
-        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+        Implemented for ``other`` being a transformer, otherwise returns
+        ``NotImplemented``.
 
         Parameters
         ----------
-        other: `sktime` transformer, must inherit from BaseTransformer
-            otherwise, `NotImplemented` is returned
+        other: ``sktime`` transformer, must inherit from BaseTransformer
+            otherwise, ``NotImplemented`` is returned
 
         Returns
         -------
-        TransformerPipeline object, concatenation of `self` (first) with `other` (last).
-            not nested, contains only non-TransformerPipeline `sktime` transformers
+        TransformerPipeline object, concatenation of ``self`` (first) with ``other``
+        (last).
+            not nested, contains only non-TransformerPipeline ``sktime`` transformers
         """
         from sktime.classification.compose import SklearnClassifierPipeline
         from sktime.clustering.compose import SklearnClustererPipeline
@@ -240,17 +242,19 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
     def __rmul__(self, other):
         """Magic * method, return (left) concatenated TransformerPipeline.
 
-        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+        Implemented for ``other`` being a transformer, otherwise returns
+        ``NotImplemented``.
 
         Parameters
         ----------
-        other: `sktime` transformer, must inherit from BaseTransformer
-            otherwise, `NotImplemented` is returned
+        other: ``sktime`` transformer, must inherit from BaseTransformer
+            otherwise, ``NotImplemented`` is returned
 
         Returns
         -------
-        TransformerPipeline object, concatenation of `other` (first) with `self` (last).
-            not nested, contains only non-TransformerPipeline `sktime` steps
+        TransformerPipeline object, concatenation of ``other`` (first) with ``self``
+        (last).
+            not nested, contains only non-TransformerPipeline ``sktime`` steps
         """
         other = _coerce_to_sktime(other)
         return self._dunder_concat(
@@ -370,15 +374,16 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         # imports
         from sktime.transformations.series.exponent import ExponentTransformer

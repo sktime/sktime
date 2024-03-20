@@ -11,7 +11,7 @@ from sktime.forecasting.base.adapters import _StatsModelsAdapter
 class ExponentialSmoothing(_StatsModelsAdapter):
     """Holt-Winters exponential smoothing forecaster.
 
-    Direct interface for `statsmodels.tsa.holtwinters`.
+    Direct interface for ``statsmodels.tsa.holtwinters``.
 
     Default settings use simple exponential smoothing without trend and
     seasonality components.
@@ -41,8 +41,8 @@ class ExponentialSmoothing(_StatsModelsAdapter):
     initialization_method:{'estimated','heuristic','legacy-heuristic','known',None},
         default='estimated'
         Method for initialize the recursions.
-        If 'known' initialization is used, then `initial_level` must be
-        passed, as well as `initial_trend` and `initial_seasonal` if
+        If 'known' initialization is used, then ``initial_level`` must be
+        passed, as well as ``initial_trend`` and ``initial_seasonal`` if
         applicable.
         'heuristic' uses a heuristic based on the data to estimate initial
         level, trend, and seasonal state. 'estimated' uses the same heuristic
@@ -212,7 +212,7 @@ class ExponentialSmoothing(_StatsModelsAdapter):
         ----------
         parameter_set : str , default = "default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for forecasters.
 
         Returns
@@ -220,8 +220,9 @@ class ExponentialSmoothing(_StatsModelsAdapter):
         params :dict or list of dict , default = {}
             parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in `params
         """
         params = [
             {},
