@@ -11,12 +11,18 @@ from sktime.transformations.base import BaseTransformer
 class TSBootstrapAdapter(BaseTransformer):
     """Adapter for TSBBootstrap.
 
+    The bootstrap samples will be returned as a Panel with the first level
+    being integer index of the synthetic sample.
+
+    For hierarchical data, the bootstrap index will be added as the index
+    at integer position -2.
+
     Parameters
     ----------
     bootstrap : bootstrap from tsbootstrap
         default = SlidingWindowSplitter(window_length=3, step_length=1)
         The splitter used for the bootstrap splitting.
-    include_actual : bool, default=True
+    include_actual : bool, default=False
         Whether to include the actual data in the output.
 
     Examples
