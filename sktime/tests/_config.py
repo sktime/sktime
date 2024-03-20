@@ -34,8 +34,6 @@ EXCLUDE_ESTIMATORS = [
     # DL classifier suspected to cause hangs and memouts, see #4610
     "FCNClassifier",
     "MACNNClassifier",
-    "SimpleRNNClassifier",
-    "SimpleRNNRegressor",
     "EditDist",
     "CNNClassifier",
     "FCNClassifier",
@@ -218,6 +216,8 @@ EXCLUDED_TESTS = {
     "StatsForecastMSTL": ["test_pred_int_tag"],
     # KNeighborsTimeSeriesClassifierTslearn crashes in parallel mode
     "KNeighborsTimeSeriesClassifierTslearn": ["test_multiprocessing_idempotent"],
+    # ShapeletTransformPyts creates nested numpy shapelets sporadically, see #6171
+    "ShapeletTransformPyts": ["test_non_state_changing_method_contract"],
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish
