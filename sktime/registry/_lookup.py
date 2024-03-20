@@ -144,7 +144,7 @@ def all_estimators(
 
     References
     ----------
-    Modified version from scikit-learn's `all_estimators()`.
+    Modified version from scikit-learn's ``all_estimators()``.
     """
     MODULES_TO_IGNORE = (
         "tests",
@@ -277,17 +277,21 @@ def all_tags(
 ):
     """Get a list of all tags from sktime.
 
-    Retrieves tags directly from `_tags`, offers filtering functionality.
+    All objects in ``sktime`` are tagged with a set of :term``tag``s.
+    This function allows to list all tags, optionally filtered by
+    the object :term:`scitype` they apply to.
 
     Parameters
     ----------
     estimator_types: string, list of string, optional (default=None)
-        Ta gs for hich kind of estimators should be returned.
+        The object type (:term:`scitype`) for which applicable tags should be listed.
 
         - If None, no filter is applied and tags for all estimators are returned.
-        - Possible values are 'classifier', 'regressor', 'transformer' and
-        'forecaster' to get estimator tags only fo these specific types, or a list of
-        these to get tags for estimators that fit at least one of the types.
+        - Possible values are identifier strings for object scitypes, such as
+          ``"forecaster"``, ``"classifier", ``"transformer"``, or lists thereof.
+          If list, finds tags applicable to at least one of the listed types.
+          Valid scitype strings are in ``sktime.registry.BASE_CLASS_SCITYPE_LIST``.
+
 
     as_dataframe: bool, optional (default=False)
         if False, return is as described below;
@@ -297,11 +301,13 @@ def all_tags(
     -------
     tags: list of tuples (a, b, c, d),
         in alphabetical order by a
+
         a : string - name of the tag as used in the _tags dictionary
-        b : string - name of the scitype this tag applies to
-        must be in _base_classes.BASE_CLASS_SCITYPE_LIST
-        c : string - expected type of the tag value
-        should be one of:
+
+        b : string - name of the scitype this tag applies to,
+        as in .BASE_CLASS_SCITYPE.LIST
+
+        c : string - expected type of the tag value, one of:
 
             * ``"bool"`` - valid values are True/False
             * ``"int"`` - valid values are all integers

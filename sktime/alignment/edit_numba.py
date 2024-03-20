@@ -57,7 +57,7 @@ class AlignerEditNumba(BaseAligner):
         Gradient of the slope for itakura parallelogram (if using Itakura
         Parallelogram lower bounding)
     bounding_matrix: 2D np.ndarray, optional, default = None
-        if passed, must be of shape (len(X), len(X2)) for X, X2 in `transform`
+        if passed, must be of shape (len(X), len(X2)) for X, X2 in ``transform``
         Custom bounding matrix to use. If defined then other lower_bounding params
         are ignored. The matrix should be structure so that indexes considered in
         bound should be the value 0. and indexes outside the bounding matrix should
@@ -266,7 +266,7 @@ class AlignerEditNumba(BaseAligner):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for aligners.
 
         Returns
@@ -274,8 +274,9 @@ class AlignerEditNumba(BaseAligner):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params0 = {}
         params1 = {"distance": "twe"}

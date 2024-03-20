@@ -85,7 +85,7 @@ def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
     Raises
     ------
     TypeError :
-        Raised if `values` type is not supported
+        Raised if ``values`` type is not supported
 
     Returns
     -------
@@ -381,6 +381,9 @@ class ForecastingHorizon:
         if hasattr(self, "_freq") and hasattr(self._freq, "freqstr"):
             # _freq is a pandas offset, frequency string is obtained via freqstr
             return self._freq.freqstr
+        elif hasattr(self, "_freq") and isinstance(self._freq, str):
+            # _freq is a string, frequency string is obtained directly
+            return self._freq
         else:
             return None
 
@@ -415,8 +418,12 @@ class ForecastingHorizon:
                     f"Current: {freq_from_self}, from update: {freq_from_obj}."
                 )
         elif freq_from_obj is not None:  # only freq_from_obj is not None
+            if freq_from_obj == "ME":
+                freq_from_obj = "M"
             self._freq = freq_from_obj
         else:
+            if freq_from_obj == "ME":
+                freq_from_obj = "M"
             # leave self._freq as freq_from_self, or set to None if does not exist yet
             self._freq = freq_from_self
 
@@ -436,7 +443,7 @@ class ForecastingHorizon:
         Parameters
         ----------
         **kwargs : dict of kwargs
-            kwargs passed to `to_numpy()` of wrapped pandas index.
+            kwargs passed to ``to_numpy()`` of wrapped pandas index.
 
         Returns
         -------
@@ -491,10 +498,10 @@ class ForecastingHorizon:
     def to_absolute_index(self, cutoff=None):
         """Return absolute values of the horizon as a pandas.Index.
 
-        For a forecaster `f` that has `fh` being `self`,
-        the return of this method with `cutoff=f.cutoff` is the same
+        For a forecaster ``f`` that has ``fh`` being ``self``,
+        the return of this method with ``cutoff=f.cutoff`` is the same
         as the expected index of the return of the forecaster's predict methods,
-        e.g., `f.predict` or `f.predict_interval`
+        e.g., ``f.predict`` or ``f.predict_interval``
 
         Parameters
         ----------
@@ -513,7 +520,7 @@ class ForecastingHorizon:
         return fh_abs.to_pandas()
 
     def to_absolute_int(self, start, cutoff=None):
-        """Return absolute values as zero-based integer index starting from `start`.
+        """Return absolute values as zero-based integer index starting from ``start``.
 
         Parameters
         ----------
@@ -809,7 +816,7 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
             absolute = _coerce_to_period(absolute, freq=fh.freq)
             cutoff = _coerce_to_period(cutoff, freq=fh.freq)
 
-        # TODO: 0.27.0:
+        # TODO: 0.28.0:
         # Check at every minor release whether lower pandas bound >=0.15.0
         # if yes, can remove the workaround in the "else" condition and the check
         #

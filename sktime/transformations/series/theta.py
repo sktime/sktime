@@ -20,11 +20,11 @@ class ThetaLinesTransformer(BaseTransformer):
 
     Overview: Input :term:`univariate series <Univariate time series>` of length
     "n" and ThetaLinesTransformer modifies the local curvature of the time series
-    using Theta-coefficient values passed through the parameter `theta`.
+    using Theta-coefficient values passed through the parameter ``theta``.
 
     Each Theta-coefficient is applied directly to the second differences of the input
     series. The resulting transformed series (Theta-lines) are returned as a
-    pd.DataFrame of shape `len(input series) * len(theta)`.
+    pd.DataFrame of shape ``len(input series) * len(theta)``.
 
     Parameters
     ----------

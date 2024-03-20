@@ -25,6 +25,7 @@ __author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst"]
 import time
 
 import numpy as np
+import pandas as pd
 
 from sktime.base import BasePanelMixin
 from sktime.datatypes import VectorizedDF, check_is_scitype, convert
@@ -59,6 +60,7 @@ class BaseClassifier(BasePanelMixin):
         "capability:unequal_length": False,
         "capability:missing_values": False,
         "capability:train_estimate": False,
+        "capability:feature_importance": False,
         "capability:contractable": False,
         "capability:multithreading": False,
         "capability:predict_proba": False,
@@ -106,17 +108,18 @@ class BaseClassifier(BasePanelMixin):
     def __rmul__(self, other):
         """Magic * method, return concatenated ClassifierPipeline, transformers on left.
 
-        Overloaded multiplication operation for classifiers. Implemented for `other`
-        being a transformer, otherwise returns `NotImplemented`.
+        Overloaded multiplication operation for classifiers. Implemented for ``other``
+        being a transformer, otherwise returns ``NotImplemented``.
 
         Parameters
         ----------
-        other: `sktime` transformer, must inherit from BaseTransformer
-            otherwise, `NotImplemented` is returned
+        other: ``sktime`` transformer, must inherit from BaseTransformer
+            otherwise, ``NotImplemented`` is returned
 
         Returns
         -------
-        ClassifierPipeline object, concatenation of `other` (first) with `self` (last).
+        ClassifierPipeline object, concatenation of ``other`` (first) with ``self``
+        (last).
         """
         from sktime.classification.compose import ClassifierPipeline
         from sktime.transformations.base import BaseTransformer
@@ -387,7 +390,15 @@ class BaseClassifier(BasePanelMixin):
             X=X, y=y, cv=cv, change_state=change_state, method="predict"
         )
 
-    def _fit_predict_boilerplate(self, X, y, cv, change_state, method):
+    def _fit_predict_boilerplate(
+        self,
+        X,
+        y,
+        cv,
+        change_state,
+        method,
+        return_type="single_y_pred",
+    ):
         """Boilerplate logic for fit_predict and fit_predict_proba."""
         from sklearn.model_selection import KFold
 
@@ -432,31 +443,81 @@ class BaseClassifier(BasePanelMixin):
             X = convert(
                 X,
                 from_type=X_mtype,
-                to_type="nested_univ",
+                to_type=["pd-multiindex", "nested_univ"],
                 as_scitype="Panel",
                 store_behaviour="freeze",
             )
 
-        if method == "predict_proba":
-            y_pred = np.empty([len(y), len(np.unique(y))])
-        else:
-            y_pred = np.empty_like(y)
-        y_pred[:] = -1
-        if isinstance(X, np.ndarray):
-            for tr_idx, tt_idx in cv.split(X):
-                X_train = X[tr_idx]
-                X_test = X[tt_idx]
-                y_train = y[tr_idx]
-                fitted_est = self.clone().fit(X_train, y_train)
-                y_pred[tt_idx] = getattr(fitted_est, method)(X_test)
-        else:
-            for tr_idx, tt_idx in cv.split(X):
-                X_train = X.iloc[tr_idx]
-                X_test = X.iloc[tt_idx]
-                y_train = y[tr_idx]
-                fitted_est = self.clone().fit(X_train, y_train)
-                y_pred[tt_idx] = getattr(fitted_est, method)(X_test)
+        y_preds = []
+        tt_ixx = []
 
+        for tr_idx, tt_idx in cv.split(X):
+            X_train = self._subset(X, tr_idx)
+            X_test = self._subset(X, tt_idx)
+            y_train = self._subset(y, tr_idx)
+            fitted_est = self.clone().fit(X_train, y_train)
+            y_preds.append(getattr(fitted_est, method)(X_test))
+            tt_ixx.append(tt_idx)
+
+        if return_type == "single_y_pred":
+            return self._pool(y_preds, tt_ixx, y)
+        else:
+            return y_preds
+
+    def _subset(self, obj, ix):
+        """Subset input data by ix, for use in fit_predict_boilerplate.
+
+        Parameters
+        ----------
+        obj : pd.DataFrame or np.ndarray
+            if pd.DataFrame, instance index = first level of pd.MultiIndex
+            if np.ndarray, instance index = 0-th axis
+        ix : sklearn splitter index, e.g., ix, _ from KFold.split(X)
+
+        Returns
+        -------
+        obj_ix : obj subset by ix
+        """
+        if isinstance(obj, np.ndarray):
+            return obj[ix]
+        if not isinstance(obj, (pd.DataFrame, pd.Series)):
+            raise ValueError("obj must be a pd.DataFrame, pd.Series, or np.ndarray")
+        if not isinstance(obj.index, pd.MultiIndex):
+            return obj.iloc[ix]
+        else:
+            ix_loc = obj.index.get_level_values(0).unique()[ix]
+            return obj.loc[ix_loc]
+
+    def _pool(self, y_preds, tt_ixx, y):
+        """Pool predictions from cv splits, for use in fit_predict_boilerplate.
+
+        Parameters
+        ----------
+        y_preds : list of np.ndarray or pd.DataFrame
+            list of predictions from cv splits
+        tt_ixx : list of np.ndarray or pd.DataFrame
+            list of test indices from cv splits
+
+        Returns
+        -------
+        y_pred : np.ndarray, pooled predictions
+        """
+        y_pred = y_preds[0]
+        if isinstance(y_pred, (pd.DataFrame, pd.Series)):
+            for i in range(1, len(y_preds)):
+                y_pred = y_pred.combine_first(y_preds[i])
+            y_pred = y_pred.reindex(y.index).fillna(-1)
+        else:
+            if y_pred.ndim == 1:
+                sh = y.shape
+            else:
+                sh = (y.shape[0], y_pred.shape[1])
+            y_pred = -np.ones(sh, dtype=y.dtype)
+            for i, ix in enumerate(tt_ixx):
+                y_preds_i = y_preds[i]
+                if y_pred.ndim == 1:
+                    y_preds_i = y_preds_i.reshape(-1)
+                y_pred[ix] = y_preds_i
         return y_pred
 
     def fit_predict_proba(self, X, y, cv=None, change_state=True):
@@ -566,7 +627,7 @@ class BaseClassifier(BasePanelMixin):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -577,8 +638,9 @@ class BaseClassifier(BasePanelMixin):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         return super().get_test_params(parameter_set=parameter_set)
 
