@@ -67,6 +67,7 @@ Deep learning
     ResNetClassifier
     SimpleRNNClassifier
     TapNetClassifier
+    TleNetClassifier
 
 Dictionary-based
 ----------------
