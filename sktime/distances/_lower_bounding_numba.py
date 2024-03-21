@@ -60,12 +60,8 @@ def create_shape_on_matrix(
     for i in range(start_val, upper_line_y_values):
         x = i * x_step_size
 
-        if i > half_way:
-            upper_y = max(0, min(y_size - 1, math.ceil(y_upper_line[i])))
-            lower_y = max(0, min(y_size - 1, math.floor(y_lower_line[i])))
-        else:
-            upper_y = max(0, min(y_size - 1, math.ceil(y_upper_line[i])))
-            lower_y = max(0, min(y_size - 1, math.floor(y_lower_line[i])))
+        upper_y = max(0, min(y_size - 1, math.ceil(y_upper_line[i])))
+        lower_y = max(0, min(y_size - 1, math.floor(y_lower_line[i])))
 
         if upper_line_y_values == lower_line_y_values:
             if upper_y == lower_y:
