@@ -52,6 +52,16 @@ class LSTMFCNClassifier(BaseDeepClassifier):
     ----------
     .. [1] Karim et al. Multivariate LSTM-FCNs for Time Series Classification, 2019
     https://arxiv.org/pdf/1801.04503.pdf
+
+    Examples
+    --------
+    >>> from sktime.classification.deep_learning.lstmfcn import LSTMFCNClassifier
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> lstmfcn = FCNClassifier(n_epochs=20,batch_size=4)  # doctest: +SKIP
+    >>> lstmfcn.fit(X_train, y_train)  # doctest: +SKIP
+    FCNClassifier(...)
     """
 
     _tags = {
