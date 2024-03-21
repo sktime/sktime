@@ -1,9 +1,7 @@
 name: Update Contributors
 
 on:
-  pull_request:
-    branches:
-      - main
+  push:
     paths:
       - '.all-contributorsrc'
 
