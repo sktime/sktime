@@ -55,8 +55,6 @@ def create_shape_on_matrix(
             "values"
         )
 
-    half_way = math.floor(upper_line_y_values / 2)
-
     for i in range(start_val, upper_line_y_values):
         x = i * x_step_size
 
