@@ -51,8 +51,8 @@ EXCLUDE_ESTIMATORS = [
     "InceptionTimeRegressor",
     "CNTCClassifier",
     "CNTCRegressor",
-    "TleNetRegressor",
-    "TleNetClassifier",
+
+
 ]
 
 
