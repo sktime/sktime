@@ -631,9 +631,9 @@ def dtw_distance(
     * two time series of equal length
     * the Euclidean pairwise distance
 
-    For unequal length time series, use `sktime.dists_kernels.DistFromAligner`
-    with a time warping aligner such as `sktime.aligners.AlignerDTW`.
-    To use arbitrary pairwise distances, use `sktime.aligners.AlignerDTWfromDist`.
+    For unequal length time series, use ``sktime.dists_kernels.DistFromAligner``
+    with a time warping aligner such as ``sktime.aligners.AlignerDTW``.
+    To use arbitrary pairwise distances, use ``sktime.aligners.AlignerDTWfromDist``.
 
     Mathematically, for two sequences
     :math:'\mathbf{a}=\{a_1,a_2,\ldots,a_m\}' and :math:'\mathbf{b}=\{b_1,b_2,\ldots,
@@ -652,8 +652,10 @@ def dtw_distance(
     This implementation assumes for warping paths that:
     * closed paths: :math:`i_1 = j_1 = 1`; :math:`i_s = m, j_s = n`
     * monotonous paths: :math:`i_k \le i_{k+1}, j_k \le j_{k+1}` for all :math:`k`
-    * strictly monotonous paths: :math:`(i_k, j_k) \neq (i_{k+1}, j_{k+1})` for all :math:`k`
-    The DTW path between sequences is the path through :math:'M' that minimizes the total distance,
+    * strictly monotonous paths: :math:`(i_k, j_k) \neq (i_{k+1}, j_{k+1})` for all
+    :math:`k`
+    The DTW path between sequences is the path through :math:'M' that minimizes the total
+    distance,
     over all valid paths (satisfying the above assumptions), given the sequences.
     Formally:
     The distance for a warping path :math:'P' of length :math:'s' is
@@ -663,11 +665,12 @@ def dtw_distance(
     .. math::  P^* = \argmin_{P\in \mathcal{P}} D_{P}(\mathbf{a},\mathbf{b}).
     The DTW distance between the two sequences :math:'\mathbf{a},\mathbf{b}' is
     the minimum warping path distance:
-    .. math::  d_{dtw}(\mathbf{a}, \mathbf{b}) = \min_{P\in \mathcal{P}} D_{P}(\mathbf{a},\mathbf{b}) = D_{P^*}(\mathbf{a},\mathbf{b}).
+    .. math:: d_{dtw}(\mathbf{a}, \mathbf{b}) = \min_{P\in \mathcal{P}} D_{P}(\mathbf{a},\mathbf{b}) =
+    D_{P^*}(\mathbf{a},\mathbf{b}).
     The optimal warping path $P^*$ can be found exactly through dynamic programming.
     This can be a time consuming operation, and it is common to put a
     restriction on the amount of warping allowed. This is implemented through
-    the `bounding_matrix` structure, that restricts allowable warpings by a mask.
+    the ``bounding_matrix`` structure, that restricts allowable warpings by a mask.
     Common bounding strategies include the Sakoe-Chiba band [3]_ and the Itakura
     parallelogram [4_]. The Sakoe-Chiba band creates a warping path window that has
     the same width along the diagonal of :math:'M'. The Itakura paralleogram allows
