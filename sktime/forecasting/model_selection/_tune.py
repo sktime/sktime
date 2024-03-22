@@ -267,7 +267,10 @@ class BaseGridSearch(_DelegatedForecaster):
         # Select n best forecaster
         self.n_best_forecasters_ = []
         self.n_best_scores_ = []
-        for i in range(self.return_n_best_forecasters):
+        _forecasters_to_return = min(self.return_n_best_forecasters, len(results.index))
+        if _forecasters_to_return == -1:
+            _forecasters_to_return = len(results.index)
+        for i in range(_forecasters_to_return):
             params = results["params"].iloc[i]
             rank = results[f"rank_{scoring_name}"].iloc[i]
             rank = str(int(rank))
@@ -445,7 +448,9 @@ class ForecastingGridSearchCV(BaseGridSearch):
     verbose: int, optional (default=0)
     return_n_best_forecasters : int, default=1
         In case the n best forecaster should be returned, this value can be set
-        and the n best forecasters will be assigned to n_best_forecasters_
+        and the n best forecasters will be assigned to n_best_forecasters_.
+        Set return_n_best_forecasters to -1 to return all forecasters.
+
     error_score : numeric value or the str 'raise', optional (default=np.nan)
         The test score returned when a forecaster fails to be fitted.
     return_train_score : bool, optional (default=False)
@@ -773,7 +778,9 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
     verbose : int, optional (default=0)
     return_n_best_forecasters: int, default=1
         In case the n best forecaster should be returned, this value can be set
-        and the n best forecasters will be assigned to n_best_forecasters_
+        and the n best forecasters will be assigned to n_best_forecasters_.
+        Set return_n_best_forecasters to -1 to return all forecasters.
+
     random_state : int, RandomState instance or None, default=None
         Pseudo random number generator state used for random uniform sampling
         from lists of possible values instead of scipy.stats distributions.
@@ -1037,7 +1044,8 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         FitFailedWarning is raised.
     return_n_best_forecasters: int, default=1
         In case the n best forecaster should be returned, this value can be set
-        and the n best forecasters will be assigned to n_best_forecasters_
+        and the n best forecasters will be assigned to n_best_forecasters_.
+        Set return_n_best_forecasters to -1 to return all forecasters.
 
     backend : {"dask", "loky", "multiprocessing", "threading"}, by default "loky".
         Runs parallel evaluate if specified and ``strategy`` is set as "refit".
