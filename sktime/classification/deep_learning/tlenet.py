@@ -89,7 +89,6 @@ class TleNetClassifier(BaseDeepClassifier):
         self.metrics = metrics
 
         self._network = TleNetNetwork(
-            batch_size=self.batch_size,
             warping_ratio=self.warping_ratio,
             slice_ratio=self.slice_ratio,
             random_state=self.random_state,
