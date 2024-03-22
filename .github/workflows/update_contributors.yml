@@ -2,9 +2,11 @@ name: Update Contributors
 
 on:
   push:
+    branches-ignore:
+      - main
     paths:
       - '.all-contributorsrc'
-
+      
 jobs:
   generate-markdown-and-commit:
     runs-on: ubuntu-latest
