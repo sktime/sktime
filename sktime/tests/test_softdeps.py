@@ -53,6 +53,7 @@ EXCEPTED_FROM_NO_DEP_CHECK = []
 EXCEPTED_FROM_GET_PARAMS_CHECK = [
     "PyODAnnotator",  # adapters always require soft dep. Here: pyod
     "HCrystalBallAdapter",  # adapters always require soft dep. Here: hcrystalball
+    "TemporianTransformer",  # adapters always require soft dep. Here: temporian
 ]
 
 

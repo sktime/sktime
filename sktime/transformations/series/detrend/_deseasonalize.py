@@ -50,7 +50,7 @@ class Deseasonalizer(BaseTransformer):
     -----
     For further explanation on seasonal components and additive vs.
     multiplicative models see
-    ``Forecasting: Principles and Practice <https://otexts.com/fpp3/components.html>``_.
+    `Forecasting: Principles and Practice <https://otexts.com/fpp3/components.html>`_.
     Seasonal decomposition is computed using `statsmodels
 
     <https://www.statsmodels.org/stable/generated/statsmodels.tsa.seasonal.seasonal_decompose.html>`_.
@@ -286,7 +286,7 @@ class ConditionalDeseasonalizer(Deseasonalizer):
     -----
     For further explanation on seasonal components and additive vs.
     multiplicative models see
-    ``Forecasting: Principles and Practice <https://otexts.com/fpp3/components.html>``_.
+    `Forecasting: Principles and Practice <https://otexts.com/fpp3/components.html>`_.
     Seasonal decomposition is computed using `statsmodels
 
     <https://www.statsmodels.org/stable/generated/statsmodels.tsa.seasonal.seasonal_decompose.html>`_.
