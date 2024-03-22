@@ -32,8 +32,8 @@ def get_test_class_registry():
     from sktime.forecasting.tests.test_all_forecasters import TestAllForecasters
     from sktime.param_est.tests.test_all_param_est import TestAllParamFitters
     from sktime.proba.tests.test_all_distrs import TestAllDistributions
-    from sktime.split.tests.test_all_splitters import TestAllSplitters
     from sktime.regression.tests.test_all_regressors import TestAllRegressors
+    from sktime.split.tests.test_all_splitters import TestAllSplitters
     from sktime.tests.test_all_estimators import TestAllEstimators, TestAllObjects
     from sktime.transformations.tests.test_all_transformers import TestAllTransformers
 
