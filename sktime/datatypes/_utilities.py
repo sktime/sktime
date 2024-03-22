@@ -287,7 +287,8 @@ def get_cutoff(
                     # (see pd.infer_freq for details)
                     pass
             else:
-                res.freq = idx.freq
+                if res.freq != idx.freq:
+                    res.freq = idx.freq
 
         return res
 
