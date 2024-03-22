@@ -69,8 +69,8 @@ class TestAllSplitters(SplitterFixtureGenerator, QuickTester):
 
             assert train.ndim == 1
             assert test.ndim == 1
-            assert train.dtype == np.int
-            assert test.dtype == np.int
+            assert train.dtype == np.int64
+            assert test.dtype == np.int64
 
             assert np.all(train < len(y))
             assert np.all(test < len(y))
