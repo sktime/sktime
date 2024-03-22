@@ -1,6 +1,8 @@
 name: Update Contributors
 
 on:
+  release:
+    types: [published]
   push:
     branches-ignore:
       - main
