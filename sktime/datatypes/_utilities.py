@@ -279,7 +279,13 @@ def get_cutoff(
         res = idx[[ix]]
         if hasattr(idx, "freq"):
             if idx.freq is None:
-                res.freq = pd.infer_freq(idx)
+                try:
+                    res.freq = pd.infer_freq(idx)
+                except ValueError:
+                    # This can happen when there are fewer
+                    # than three values in the index
+                    # (see pd.infer_freq for details)
+                    pass
             else:
                 if res.freq != idx.freq:
                     res.freq = idx.freq
