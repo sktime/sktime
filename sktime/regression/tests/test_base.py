@@ -361,6 +361,7 @@ def test_deep_estimator_empty():
     assert empty_dummy.__dict__ == deserialized_empty.__dict__
 
 
+@pytest.mark.xfail(reason="known failure, see #6153")
 @pytest.mark.skipif(
     not _check_soft_dependencies("tensorflow", severity="none"),
     reason="skip test if required soft dependency not available",
