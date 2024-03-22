@@ -289,7 +289,6 @@ def get_cutoff(
             else:
                 if res.freq != idx.freq:
                     res.freq = idx.freq
-
         return res
 
     if isinstance(obj, pd.Series):
