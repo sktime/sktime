@@ -82,16 +82,10 @@ class TleNetRegressor(BaseDeepRegressor):
         self.metrics = metrics
 
         self._network = TleNetNetwork(
-            n_epochs=self.n_epochs,
             batch_size=self.batch_size,
             warping_ratio=self.warping_ratio,
             slice_ratio=self.slice_ratio,
-            callbacks=self.callbacks,
-            verbose=self.verbose,
             random_state=self.random_state,
-            loss=self.loss,
-            optimizer=self.optimizer,
-            metrics=self.metrics,
         )
 
     def build_model(self, input_shape, **kwargs):
