@@ -280,13 +280,13 @@ def get_cutoff(
         if hasattr(idx, "freq"):
             if idx.freq is None:
                 try:
-                    res.freq = pd.infer_freq(idx)
+                    res.asfreq(pd.infer_freq(idx))
                 except ValueError:
                     # This can happen when there are fewer
                     # than three values in the index
                     pass
             else:
-                res.freq = idx.freq
+                res.asfreq(idx.freq)
         return res
 
     if isinstance(obj, pd.Series):
