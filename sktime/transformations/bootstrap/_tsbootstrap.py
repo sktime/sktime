@@ -9,7 +9,7 @@ from sktime.transformations.base import BaseTransformer
 
 
 class TSBootstrapAdapter(BaseTransformer):
-    """Adapter for TSBBootstrap.
+    """Adapter for TSBootstrap.
 
     The bootstrap samples will be returned as a Panel with the first level
     being integer index of the synthetic sample.
@@ -20,7 +20,6 @@ class TSBootstrapAdapter(BaseTransformer):
     Parameters
     ----------
     bootstrap : bootstrap from tsbootstrap
-        default = SlidingWindowSplitter(window_length=3, step_length=1)
         The splitter used for the bootstrap splitting.
     include_actual : bool, default=False
         Whether to include the actual data in the output.
@@ -53,7 +52,7 @@ class TSBootstrapAdapter(BaseTransformer):
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
-        "python_dependencies": ["tsbootstrap>=0.0.3"],
+        "python_dependencies": ["tsbootstrap>=0.1.0"],
     }
 
     def __init__(
