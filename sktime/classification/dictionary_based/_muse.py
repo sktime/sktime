@@ -101,7 +101,7 @@ class MUSE(BaseClassifier):
     Notes
     -----
     For the Java version, see
-    - ``Original Publication <https://github.com/patrickzib/SFA>``_.
+    - `Original Publication <https://github.com/patrickzib/SFA>`_.
     - `MUSE
         <https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/
     classifiers/multivariate/WEASEL_MUSE.java>`_.

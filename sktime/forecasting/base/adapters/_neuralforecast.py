@@ -17,8 +17,10 @@ class _NeuralForecastAdapter(BaseForecaster):
 
     Parameters
     ----------
-    freq : str
+    freq : str (default="auto")
         frequency of the data, see available frequencies [1]_ from ``pandas``
+
+        default ("auto") interprets freq from ForecastingHorizon in ``fit``
     local_scaler_type : str (default=None)
         scaler to apply per-series to all features before fitting, which is inverted
         after predicting
@@ -66,7 +68,7 @@ class _NeuralForecastAdapter(BaseForecaster):
 
     def __init__(
         self: "_NeuralForecastAdapter",
-        freq: str,
+        freq: str = "auto",
         local_scaler_type: typing.Optional[
             typing.Literal["standard", "robust", "robust-iqr", "minmax", "boxcox"]
         ] = None,
@@ -83,6 +85,9 @@ class _NeuralForecastAdapter(BaseForecaster):
         self.verbose_predict = verbose_predict
 
         super().__init__()
+
+        # initiate internal variables to avoid AttributeError in future
+        self._freq = None
 
         self.id_col = "unique_id"
         self.time_col = "ds"
@@ -143,7 +148,7 @@ class _NeuralForecastAdapter(BaseForecaster):
         from neuralforecast import NeuralForecast
 
         model = NeuralForecast(
-            [algorithm_instance], self.freq, local_scaler_type=self.local_scaler_type
+            [algorithm_instance], self._freq, local_scaler_type=self.local_scaler_type
         )
 
         return model
@@ -175,13 +180,28 @@ class _NeuralForecastAdapter(BaseForecaster):
         -------
         self : _NeuralForecastAdapter
             reference to self
+
+        Raises
+        ------
+        ValueError
+            When ``freq="auto"`` and cannot be interpreted from ``ForecastingHorizon``
         """
         if not fh.is_all_out_of_sample(cutoff=self.cutoff):
             raise NotImplementedError("in-sample prediction is currently not supported")
 
+        if self.freq == "auto" and fh.freq is None:
+            # when freq cannot be interpreted from ForecastingHorizon
+            raise ValueError(
+                f"Error in {self.__class__.__name__}, "
+                f"could not interpret freq, "
+                f"try passing freq in model initialization"
+            )
+
+        self._freq = fh.freq if self.freq == "auto" else self.freq
+
         train_indices = y.index
         if isinstance(train_indices, pandas.PeriodIndex):
-            train_indices = train_indices.to_timestamp(freq=self.freq)
+            train_indices = train_indices.to_timestamp(freq=self._freq)
 
         train_data = {
             self.id_col: 1,
@@ -252,7 +272,7 @@ class _NeuralForecastAdapter(BaseForecaster):
         if self.futr_exog_list:
             predict_indices = X.index
             if isinstance(predict_indices, pandas.PeriodIndex):
-                predict_indices = predict_indices.to_timestamp(freq=self.freq)
+                predict_indices = predict_indices.to_timestamp(freq=self._freq)
 
             predict_data = {self.id_col: 1, self.time_col: predict_indices.to_numpy()}
 
