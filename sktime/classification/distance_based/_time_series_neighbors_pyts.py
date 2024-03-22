@@ -74,19 +74,19 @@ class KNeighborsTimeSeriesClassifierPyts(_PytsAdapter, BaseClassifier):
 
     Examples
     --------
-    >>> from sktime.classification.distance_based import KNeighborsTimeSeriesClassifierPyts
+    >>> from sktime.classification.distance_based import KNeighborsTimeSeriesClassifierPyts  # doctest: +SKIP # noqa
     >>> from sktime.datasets import load_unit_test  # doctest: +SKIP
     >>> X_train, y_train = load_unit_test(split="train")  # doctest: +SKIP
     >>> X_test, y_test = load_unit_test(split="test")  # doctest: +SKIP
     >>> clf = KNeighborsTimeSeriesClassifierPyts(n_neighbors=1,
-        weights="uniform",
-        algorithm="auto",
-        leaf_size=30,
-        p=2,
-        metric="minkowski",
-        metric_params=None,
-        n_jobs=1
-        )  # doctest: +SKIP
+    ...        weights="uniform",
+    ...        algorithm="auto",
+    ...        leaf_size=30,
+    ...        p=2,
+    ...        metric="minkowski",
+    ...        metric_params=None,
+    ...        n_jobs=1
+    ...        )  # doctest: +SKIP
     >>> clf.fit(X_train, y_train)  # doctest: +SKIP
     KNeighborsTimeSeriesClassifierPyts(...)
     >>> y_pred = clf.predict(X_test)  # doctest: +SKIP

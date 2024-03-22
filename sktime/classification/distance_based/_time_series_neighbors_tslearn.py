@@ -56,20 +56,20 @@ class KNeighborsTimeSeriesClassifierTslearn(_TslearnAdapter, BaseClassifier):
         The frequency of the messages increases with the verbosity level.
         If it more than 10, all iterations are reported.
 
-     Examples
+    Examples
     --------
-    >>> from sktime.classification.distance_based import KNeighborsTimeSeriesClassifierTslearn
+    >>> from sktime.classification.distance_based import KNeighborsTimeSeriesClassifierTslearn # doctest: +SKIP # noqa
     >>> from sktime.datasets import load_unit_test  # doctest: +SKIP
     >>> X_train, y_train = load_unit_test(split="train")  # doctest: +SKIP
     >>> X_test, y_test = load_unit_test(split="test")  # doctest: +SKIP
     >>> clf = KNeighborsTimeSeriesClassifierTslearn(
-        n_neighbors=5,
-        weights="uniform",
-        metric="dtw",
-        metric_params=None,
-        n_jobs=None,
-        verbose=0,
-        )  # doctest: +SKIP
+    ...         n_neighbors=5,
+    ...         weights="uniform",
+    ...         metric="dtw",
+    ...         metric_params=None,
+    ...         n_jobs=None,
+    ...         verbose=0,
+    ...         )  # doctest: +SKIP
     >>> clf.fit(X_train, y_train)  # doctest: +SKIP
     KNeighborsTimeSeriesClassifierTslearn(...)
     >>> y_pred = clf.predict(X_test)  # doctest: +SKIP
