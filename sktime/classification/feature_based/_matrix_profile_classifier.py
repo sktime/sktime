@@ -194,4 +194,12 @@ class MatrixProfileClassifier(BaseClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        return {"subsequence_length": 4}
+        if parameter_set == "results_comparison":
+            return {
+                "subsequence_length": 8,
+            }
+        else:
+            param1 = {"subsequence_length": 4}
+            param2 = {"subsequence_length": 10}
+
+            return [param1, param2]
