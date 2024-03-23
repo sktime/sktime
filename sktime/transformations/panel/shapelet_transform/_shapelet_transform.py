@@ -1257,7 +1257,7 @@ class RandomShapeletTransform(BaseTransformer):
                         "max_shapelets_per_class": max_shapelets_per_class,
                     },
                     backend=self._backend,
-                    backend_params=self._backend_params
+                    backend_params=self._backend_params,
                 )
 
                 for i, heap in enumerate(shapelets):
@@ -1298,7 +1298,7 @@ class RandomShapeletTransform(BaseTransformer):
                     },
                     # todo 0.29.0: change to non-underscore params
                     backend=self._backend,
-                    backend_params=self._backend_params
+                    backend_params=self._backend_params,
                 )
 
                 for i, heap in enumerate(shapelets):
