@@ -1,9 +1,14 @@
-$(document).ready(function () {
-  $("#myInput").on("keyup", function () {
-	var value = $(this).val().toLowerCase();
-	$("tr").filter(function () {
-	  $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
-	});
+document.addEventListener("DOMContentLoaded", function () {
+  var myInput = document.getElementById("myInput");
+
+  myInput.addEventListener("keyup", function () {
+    var value = this.value.toLowerCase();
+    var rows = document.getElementsByTagName("tr");
+
+    for (var i = 0; i < rows.length; i++) {
+      var rowText = rows[i].textContent.toLowerCase();
+      rows[i].style.display = rowText.indexOf(value) > -1 ? "" : "none";
+    }
   });
 });
 
