@@ -90,18 +90,18 @@ def test_update_predict_with_x():
     # Generate synthetic data
     num_rows = 300
     data = {
-        'open': np.random.uniform(10000, 20000, num_rows),
-        'high': np.random.uniform(10000, 20000, num_rows),
-        'low': np.random.uniform(10000, 20000, num_rows),
-        'close': np.random.uniform(10000, 20000, num_rows),
-        'target': np.random.uniform(10000, 20000, num_rows)
+        "open": np.random.uniform(10000, 20000, num_rows),
+        "high": np.random.uniform(10000, 20000, num_rows),
+        "low": np.random.uniform(10000, 20000, num_rows),
+        "close": np.random.uniform(10000, 20000, num_rows),
+        "target": np.random.uniform(10000, 20000, num_rows)
     }
 
     # Create DataFrame
     synthetic_df = pd.DataFrame(data)
 
     # Set index to DatetimeIndex similar to the provided index
-    synthetic_df.index = pd.date_range(start='2020-08-06', periods=num_rows, freq='D')
+    synthetic_df.index = pd.date_range(start="2020-08-06", periods=num_rows, freq="D")
 
     y = synthetic_df[["target"]]
     X = synthetic_df[["open", "high", "low", "close"]]
