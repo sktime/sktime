@@ -334,7 +334,7 @@ class CutoffFhSplitter(BaseSplitter):
         n_splits : int
             The number of splits.
         """
-        return len(self.cutoffs)
+        return len(self.cutoff)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
