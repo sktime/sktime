@@ -130,7 +130,7 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
         self.verbose = verbose
 
         super().__init__()
- 
+
         # import inside method to avoid hard dependency
         from prophet.forecaster import Prophet as _Prophet
 
