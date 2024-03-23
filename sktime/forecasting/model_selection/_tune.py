@@ -800,6 +800,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         from sktime.forecasting.trend import PolynomialTrendForecaster
         from sktime.performance_metrics.forecasting import (
             MeanAbsolutePercentageError,
+            MedianAbsolutePercentageError,
             mean_absolute_percentage_error,
         )
         from sktime.split import SingleWindowSplitter
@@ -841,7 +842,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
             "param_grid": {"window_length": [3, 4]},
             "scoring": [
                 MeanAbsolutePercentageError(symmetric=True),
-                MeanAbsolutePercentageError(),
+                MedianAbsolutePercentageError(symmetric=True),
             ],
             "ranking_metric": 0,
             "update_behaviour": "no_update",
@@ -1072,7 +1073,10 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         """
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.forecasting.trend import PolynomialTrendForecaster
-        from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
+        from sktime.performance_metrics.forecasting import (
+            MeanAbsolutePercentageError,
+            MedianAbsolutePercentageError,
+        )
         from sktime.split import SingleWindowSplitter
 
         params = {
@@ -1112,7 +1116,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             "param_distributions": {"degree": [1, 2]},
             "scoring": [
                 MeanAbsolutePercentageError(symmetric=True),
-                MeanAbsolutePercentageError(),
+                MedianAbsolutePercentageError(symmetric=True),
             ],
             "ranking_metric": 0,
             "update_behaviour": "no_update",
