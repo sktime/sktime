@@ -2455,7 +2455,7 @@ class BaseForecaster(BaseEstimator):
         # iterate over data
         for new_window, _ in cv.split(y):
             y_new = y.iloc[new_window]
-            if X:
+            if X is not None:
                 X = X.iloc[new_window]
 
             # we use `update_predict_single` here
