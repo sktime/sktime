@@ -5,7 +5,6 @@ __author__ = ["steenrotsman"]
 import numpy as np
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.warnings import warn
 
 
 class PAA(BaseTransformer):

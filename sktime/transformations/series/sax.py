@@ -5,7 +5,6 @@ from scipy.stats import norm, zscore
 
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.series.paa import PAA
-from sktime.utils.warnings import warn
 
 
 class SAX(BaseTransformer):
