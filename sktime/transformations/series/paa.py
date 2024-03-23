@@ -70,20 +70,6 @@ class PAA(BaseTransformer):
 
         super().__init__()
 
-        # TODO 0.28.0: remove the deprecation warning
-        warn(
-            "Since sktime 0.27.0, PAA2 is the primary PAA implementation in "
-            "sktime, and has been renamed to PAA. "
-            "PAA2 is available under both its current and future name at its "
-            "current location, imports under the deprecated name PAA2 will be possible"
-            "until 0.28.0. "
-            "To prepare for the name change, replace imports of PAA2 from "
-            "sktime.transformations.series.paa by imports of PAA from the same "
-            "module.",
-            DeprecationWarning,
-            obj=self,
-        )
-
         self._check_params()
 
     def _transform(self, X, y=None):
@@ -167,7 +153,3 @@ class PAA(BaseTransformer):
 
         if self.frames < 1 and not self.frame_size:
             raise ValueError("frames must be at least 1.")
-
-
-# TODO 0.28.0: remove the alias line altogether
-PAA2 = PAA

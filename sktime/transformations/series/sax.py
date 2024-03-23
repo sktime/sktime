@@ -80,19 +80,6 @@ class SAX(BaseTransformer):
 
         super().__init__()
 
-        warn(
-            "Since sktime 0.27.0, SAX2 is the primary SAX implementation in "
-            "sktime, and has been renamed to SAX. "
-            "SAX2 is available under both its current and future name at its "
-            "current location, imports under the deprecated name SAX2 will be possible"
-            "until 0.28.0. "
-            "To prepare for the name change, replace imports of SAX2 from "
-            "sktime.transformations.series.sax by imports of SAX from the same "
-            "module.",
-            DeprecationWarning,
-            obj=self,
-        )
-
         self._check_params()
 
     def _transform(self, X, y=None):
@@ -156,7 +143,3 @@ class SAX(BaseTransformer):
             raise ValueError("alphabet_size must be at least 2.")
         if self.frame_size < 0:
             raise ValueError("frame_size must be at least 0.")
-
-
-# TODO 0.28.0: remove the alias line altogether
-SAX2 = SAX

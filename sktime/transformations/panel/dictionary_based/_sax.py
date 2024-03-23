@@ -86,24 +86,6 @@ class SAXlegacy(BaseTransformer):
 
         super().__init__()
 
-        # todo 0.28.0: remove this warning
-        warn(
-            "panel.dictionary_based.SAX has been renamed to SAXlegacy in sktime 0.27.0,"
-            " while sktime.transformations.series.SAX2 was renamed to SAX. "
-            "SAX2 will become the primary SAX implementation in sktime, "
-            "while the former SAX will continue to be available as SAXlegacy. "
-            "Both estimators are also available under their future name at their "
-            "current location, and will be available under their deprecated name "
-            "until 0.28.0. "
-            "To prepare for the name change, do one of the following: "
-            "1. replace use of SAX2 from sktime.transformations.panel.dictionary_based "
-            "by use of SAX from sktime.transformations.series.sax, or "
-            "2. replace use of SAX from sktime.transformations.panel.dictionary_based "
-            "by use of SAXlegacy from sktime.transformations.panel.dictionary_based. ",
-            DeprecationWarning,
-            obj=self,
-        )
-
         self.set_config(**{"output_conversion": "off"})
 
     # todo: looks like this just loops over series instances
@@ -235,7 +217,3 @@ class SAXlegacy(BaseTransformer):
         # small word length, window size for testing
         params = {"word_length": 2, "window_size": 4}
         return params
-
-
-# TODO 0.28.0: remove this alias altogether
-SAX = SAXlegacy
