@@ -1271,6 +1271,13 @@ class ForecastX(BaseForecaster):
         * if a ``pandas.Index`` coercible, then uses columns indexed by the index
         after coercion, in ``X`` passed (converted to pandas)
 
+    predict_behaviour : str, optional (default = "always")
+
+        * if "only_if_necessary", then ``forecaster_X`` predictions are only used if
+            passed ``X`` lacks future values for the variables in ``columns``
+        * if "always", then ``forecaster_X`` predictions are always used as inputs in
+            ``forecaster_y``, even if passed ``X`` has future values
+
     Attributes
     ----------
     forecaster_X_ : BaseForecaster
@@ -1310,6 +1317,12 @@ class ForecastX(BaseForecaster):
     >>> pipe = pipe.fit(y_train, X=X_train, fh=fh)  # doctest: +SKIP
     >>> # dropping ["ARMED", "POP"] = columns where we expect not to have future values
     >>> y_pred = pipe.predict(fh=fh, X=X_test.drop(columns=columns))  # doctest: +SKIP
+
+    Notes
+    -----
+    * ``predict_behaviour="only_if_necessary"`` is as of now unused if future values are
+        passed for a subset of exogeneous variables in ``columns``. In that case, it
+        behaves as if ``predict_behaviour="always"``.
     """
 
     _tags = {
@@ -1334,6 +1347,7 @@ class ForecastX(BaseForecaster):
         columns=None,
         fit_behaviour="use_actual",
         forecaster_X_exogeneous="None",
+        predict_behaviour="always",
     ):
         if fit_behaviour not in ["use_actual", "use_forecast"]:
             raise ValueError(
@@ -1361,6 +1375,13 @@ class ForecastX(BaseForecaster):
                     'forecaster_X_exogeneous must be one of "None", "complement",'
                     "or a pandas.Index coercible"
                 )
+
+        if predict_behaviour not in ["only_if_necessary", "always"]:
+            raise ValueError(
+                'predict_behaviour must be one of "only_if_necessary", "always"'
+            )
+
+        self.predict_behaviour = predict_behaviour
 
         super().__init__()
 
@@ -1462,6 +1483,20 @@ class ForecastX(BaseForecaster):
             return None
         if isinstance(self.columns, (list, pd.Index)) and len(self.columns) == 0:
             return X
+
+        # if user passes data for future unknown variables, do not forecast them
+        # this is done only if predict_behaviour is "only_if_necessary"
+        if isinstance(self.columns, (list, pd.Index)) and len(self.columns):
+            is_future_unknown_actually_known = all(
+                column in X.columns for column in self.columns
+            )
+
+            if (
+                is_future_unknown_actually_known
+                and self.predict_behaviour == "only_if_necessary"
+            ):
+                return X
+
         if self.behaviour == "update":
             forecaster = self.forecaster_X_
         elif self.behaviour == "refit":
