@@ -71,7 +71,7 @@ def _coerce_to_list(obj):
         return obj
 
 
-class BaseForecaster(BaseEstimator):
+class BaseForecaster(BaseEstimator):  # comment
     """Base forecaster template class.
 
     The base forecaster specifies the methods and method signatures that all forecasters
