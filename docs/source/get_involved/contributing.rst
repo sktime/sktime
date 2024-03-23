@@ -24,7 +24,7 @@ and people who are looking to learn and develop their skills.
 
 Recommended steps for first time contributors, or to get started with regular contributions:
 
-1. Say hello (in the lobby on `Discord`_)!
+1. Say hello (in the ``#intro`` channel on `Discord`_)!
 2. Get set up for development, see `instructions in the developer guide <https://www.sktime.net/en/stable/developer_guide.html>`_.
 3. Pick a good first issue to work on, see a collection `in this summary issue <https://github.com/sktime/sktime/issues/1147>`_ , or from `this list <https://github.com/sktime/sktime/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22>`_
    suggestion: pick something small with simple content to learn the "process"
