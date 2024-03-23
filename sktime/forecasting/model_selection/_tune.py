@@ -359,22 +359,23 @@ class BaseGridSearch(_DelegatedForecaster):
             )
         return self
 
-    def _check_scoring(self):
+    def _check_scoring (self):
         if isinstance(self.scoring, dict):
             scoring = []
             scoring_names = []
+            scoringtemp = {item for item in self.scoring.items()}
             if (
                 self.ranking_metric is not None
                 and isinstance(self.ranking_metric, str)
-                and self.ranking_metric in self.scoring.keys()
+                and self.ranking_metric in scoringtemp.keys()
             ):
-                metric = self.scoring.pop(self.ranking_metric)
+                metric = scoringtemp.pop(self.ranking_metric)
                 metric = check_scoring(metric, obj=self)
                 metric.name = self.ranking_metric
                 metric_name = f"test_{self.ranking_metric}"
                 scoring.append(metric)
                 scoring_names.append(metric_name)
-            elif len(self.scoring) > 1:
+            elif len(scoringtemp) > 1:
                 warn(
                     f"The parameter ranking_metric of {self.__class__.__name__} "
                     "must be specified correctly. By default, it has selected"
@@ -384,7 +385,7 @@ class BaseGridSearch(_DelegatedForecaster):
                     obj=self,
                     stacklevel=2,
                 )
-            for name, metric in self.scoring.items():
+            for name, metric in scoringtemp.items():
                 metric = check_scoring(metric, obj=self)
                 metric.name = name
                 if not isinstance(name, str):
@@ -398,8 +399,9 @@ class BaseGridSearch(_DelegatedForecaster):
         elif isinstance(self.scoring, list):
             scoring = []
             scoring_names = []
+            scoringtemp = [metric for metric in self.scoring]
             if self.ranking_metric is not None and isinstance(self.ranking_metric, int):
-                if self.ranking_metric not in range(len(self.scoring)):
+                if self.ranking_metric not in range(len(scoringtemp)):
                     self.ranking_metric = 0
                     warn(
                         f"The parameter ranking_metric of {self.__class__.__name__} "
@@ -410,7 +412,7 @@ class BaseGridSearch(_DelegatedForecaster):
                         obj=self,
                         stacklevel=2,
                     )
-                metric = self.scoring.pop(self.ranking_metric)
+                metric = scoringtemp.pop(self.ranking_metric)
                 temp_metric = metric
                 metric = check_scoring(metric, obj=self)
                 metric_name = metric.name
@@ -422,7 +424,7 @@ class BaseGridSearch(_DelegatedForecaster):
                 metric_name = f"test_{metric_name}"
                 scoring.append(metric)
                 scoring_names.append(metric_name)
-            elif len(self.scoring) > 1:
+            elif len(scoringtemp) > 1:
                 warn(
                     f"The parameter ranking_metric of {self.__class__.__name__} must "
                     "be specified correctly. By default, it has selected the first "
@@ -431,7 +433,7 @@ class BaseGridSearch(_DelegatedForecaster):
                     obj=self,
                     stacklevel=2,
                 )
-            for metric in self.scoring:
+            for metric in scoringtemp:
                 temp_metric = metric
                 metric = check_scoring(metric, obj=self)
                 metric_name = metric.name
