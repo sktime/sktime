@@ -94,7 +94,7 @@ def test_update_predict_with_x():
         "high": np.random.uniform(10000, 20000, num_rows),
         "low": np.random.uniform(10000, 20000, num_rows),
         "close": np.random.uniform(10000, 20000, num_rows),
-        "target": np.random.uniform(10000, 20000, num_rows)
+        "target": np.random.uniform(10000, 20000, num_rows),
     }
 
     # Create DataFrame
