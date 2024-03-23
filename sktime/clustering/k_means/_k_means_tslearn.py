@@ -204,8 +204,20 @@ class TimeSeriesKMeansTslearn(_TslearnAdapter, BaseClusterer):
             "random_state": None,
             "init": "random",
         }
+        params3 = {
+        "n_clusters": 5,
+        "max_iter": 100,
+        "tol": 1e-5,
+        "n_init": 5,
+        "metric": "euclidean",
+        "max_iter_barycenter": 20,
+        "verbose": 1,
+        "random_state": 42,
+        "init": "random",
+        }
+        return [params2, params3]
         # return [params1, params2]
-        return [params2]
+        # return [params2]
 
     def _score(self, X, y=None) -> float:
         return np.abs(self.inertia_)
