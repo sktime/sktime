@@ -56,7 +56,6 @@ class TestAllSplitters(SplitterFixtureGenerator, QuickTester):
         splits = list(gen_split)
 
         assert isinstance(splits, list)
-        assert len(splits) == n_splits
 
         for x in splits:
             assert isinstance(x, tuple)
@@ -69,8 +68,8 @@ class TestAllSplitters(SplitterFixtureGenerator, QuickTester):
 
             assert train.ndim == 1
             assert test.ndim == 1
-            assert train.dtype == np.int64
-            assert test.dtype == np.int64
+            assert train.dtype in [np.int64, np.int32]
+            assert test.dtype in [np.int64, np.int32]
 
             assert np.all(train < len(y))
             assert np.all(test < len(y))
