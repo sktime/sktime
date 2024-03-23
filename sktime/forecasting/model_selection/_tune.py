@@ -70,7 +70,7 @@ class BaseGridSearch(_DelegatedForecaster):
         self.tune_by_variable = tune_by_variable
         self.backend_params = backend_params
         self.n_jobs = n_jobs
-        self.ranking_metric=ranking_metric
+        self.ranking_metric = ranking_metric
 
         super().__init__()
 
@@ -185,102 +185,7 @@ class BaseGridSearch(_DelegatedForecaster):
         """
         cv = check_cv(self.cv)
 
-        if isinstance(self.scoring, dict):
-            scoring = []
-            scoring_names = []
-            if (
-                self.ranking_metric is not None
-                and isinstance(self.ranking_metric, str)
-                and self.ranking_metric in self.scoring.keys()
-            ):
-                metric = self.scoring.pop(self.ranking_metric)
-                metric = check_scoring(metric, obj=self)
-                metric.name = self.ranking_metric
-                metric_name = f"test_{self.ranking_metric}"
-                scoring.append(metric)
-                scoring_names.append(metric_name)
-            elif len(self.scoring) > 1:
-                warn(
-                    f"The parameter ranking_metric of {self.__class__.__name__} "
-                    "must be specified correctly. By default, it has selected"
-                    "the first argument of the dict. Either the parameter has "
-                    "not been specified, it is not a string or it is not present in "
-                    "the dict passed to the scoring parameter.",
-                    obj=self,
-                    stacklevel=2,
-                )
-            for name, metric in self.scoring.items():
-                metric = check_scoring(metric, obj=self)
-                metric.name = name
-                if not isinstance(name, str):
-                    raise TypeError(
-                        "The keys of the dict passed to the scoring parameter are "
-                        "not strings. Please specify them properly."
-                    )
-                metric_name = f"test_{name}"
-                scoring.append(metric)
-                scoring_names.append(metric_name)
-        elif isinstance(self.scoring, list):
-            scoring = []
-            scoring_names = []
-            if self.ranking_metric is not None and isinstance(self.ranking_metric, int):
-                if self.ranking_metric not in range(len(self.scoring)):
-                    self.ranking_metric = 0
-                    warn(
-                        f"The parameter ranking_metric of {self.__class__.__name__} "
-                        "must be specified correctly. By default, it has selected the "
-                        "first argument of the list. The parameter has not been not "
-                        "specified as a valid integer value from 0 to len(scoring)-1, "
-                        "both inclusive.",
-                        obj=self,
-                        stacklevel=2,
-                    )
-                metric = self.scoring.pop(self.ranking_metric)
-                temp_metric = metric
-                metric = check_scoring(metric, obj=self)
-                metric_name = metric.name
-                if metric_name == "_DynamicForecastingErrorMetric" and hasattr(
-                    temp_metric, "__name__"
-                ):
-                    metric_name = temp_metric.__name__
-                metric.name = metric_name
-                metric_name = f"test_{metric_name}"
-                scoring.append(metric)
-                scoring_names.append(metric_name)
-            elif len(self.scoring) > 1:
-                warn(
-                    f"The parameter ranking_metric of {self.__class__.__name__} must "
-                    "be specified correctly. By default, it has selected the first "
-                    "argument of the list. Either the parameter has not been not "
-                    "specified or is not an integer value.",
-                    obj=self,
-                    stacklevel=2,
-                )
-            for metric in self.scoring:
-                temp_metric = metric
-                metric = check_scoring(metric, obj=self)
-                metric_name = metric.name
-                if metric_name == "_DynamicForecastingErrorMetric" and hasattr(
-                    temp_metric, "__name__"
-                ):
-                    metric_name = temp_metric.__name__
-                metric.name = metric_name
-                metric_name = f"test_{metric_name}"
-                scoring.append(metric)
-                scoring_names.append(metric_name)
-        else:
-            # Declaring it as a list of size one
-            scoring = [check_scoring(self.scoring, obj=self)]
-            scoring_names = [f"test_{scoring[0].name}"]
-            if self.ranking_metric is not None:
-                warn(
-                    f"The parameter ranking_metric of {self.__class__.__name__} must "
-                    "be specified correctly. When scoring is not a list or dict, it "
-                    "should be specified as None, or not passed. It has currently "
-                    "ignored.",
-                    obj=self,
-                    stacklevel=2,
-                )
+        scoring, scoring_names = self._check_scoring()
 
         backend = self.backend
         backend_params = self.backend_params if self.backend_params else {}
@@ -335,9 +240,9 @@ class BaseGridSearch(_DelegatedForecaster):
         ranking_metric_name = scoring_names[0]
 
         # Rank results, according to whether greater is better for the given scoring.
-        results[f"rank_{ranking_metric_name}"] = results.loc[:, f"mean_{ranking_metric_name}"].rank(
-            ascending=ranking_metric.get_tag("lower_is_better")
-        )
+        results[f"rank_{ranking_metric_name}"] = results.loc[
+            :, f"mean_{ranking_metric_name}"
+        ].rank(ascending=ranking_metric.get_tag("lower_is_better"))
 
         self.cv_results_ = results
 
@@ -453,6 +358,105 @@ class BaseGridSearch(_DelegatedForecaster):
                 f' or "no_update", but found {update_behaviour}'
             )
         return self
+
+    def _check_scoring(self):
+        if isinstance(self.scoring, dict):
+            scoring = []
+            scoring_names = []
+            if (
+                self.ranking_metric is not None
+                and isinstance(self.ranking_metric, str)
+                and self.ranking_metric in self.scoring.keys()
+            ):
+                metric = self.scoring.pop(self.ranking_metric)
+                metric = check_scoring(metric, obj=self)
+                metric.name = self.ranking_metric
+                metric_name = f"test_{self.ranking_metric}"
+                scoring.append(metric)
+                scoring_names.append(metric_name)
+            elif len(self.scoring) > 1:
+                warn(
+                    f"The parameter ranking_metric of {self.__class__.__name__} "
+                    "must be specified correctly. By default, it has selected"
+                    "the first argument of the dict. Either the parameter has "
+                    "not been specified, it is not a string or it is not present in "
+                    "the dict passed to the scoring parameter.",
+                    obj=self,
+                    stacklevel=2,
+                )
+            for name, metric in self.scoring.items():
+                metric = check_scoring(metric, obj=self)
+                metric.name = name
+                if not isinstance(name, str):
+                    raise TypeError(
+                        "The keys of the dict passed to the scoring parameter are "
+                        "not strings. Please specify them properly."
+                    )
+                metric_name = f"test_{name}"
+                scoring.append(metric)
+                scoring_names.append(metric_name)
+        elif isinstance(self.scoring, list):
+            scoring = []
+            scoring_names = []
+            if self.ranking_metric is not None and isinstance(self.ranking_metric, int):
+                if self.ranking_metric not in range(len(self.scoring)):
+                    self.ranking_metric = 0
+                    warn(
+                        f"The parameter ranking_metric of {self.__class__.__name__} "
+                        "must be specified correctly. By default, it has selected the "
+                        "first argument of the list. The parameter has not been not "
+                        "specified as a valid integer value from 0 to len(scoring)-1, "
+                        "both inclusive.",
+                        obj=self,
+                        stacklevel=2,
+                    )
+                metric = self.scoring.pop(self.ranking_metric)
+                temp_metric = metric
+                metric = check_scoring(metric, obj=self)
+                metric_name = metric.name
+                if metric_name == "_DynamicForecastingErrorMetric" and hasattr(
+                    temp_metric, "__name__"
+                ):
+                    metric_name = temp_metric.__name__
+                metric.name = metric_name
+                metric_name = f"test_{metric_name}"
+                scoring.append(metric)
+                scoring_names.append(metric_name)
+            elif len(self.scoring) > 1:
+                warn(
+                    f"The parameter ranking_metric of {self.__class__.__name__} must "
+                    "be specified correctly. By default, it has selected the first "
+                    "argument of the list. Either the parameter has not been not "
+                    "specified or is not an integer value.",
+                    obj=self,
+                    stacklevel=2,
+                )
+            for metric in self.scoring:
+                temp_metric = metric
+                metric = check_scoring(metric, obj=self)
+                metric_name = metric.name
+                if metric_name == "_DynamicForecastingErrorMetric" and hasattr(
+                    temp_metric, "__name__"
+                ):
+                    metric_name = temp_metric.__name__
+                metric.name = metric_name
+                metric_name = f"test_{metric_name}"
+                scoring.append(metric)
+                scoring_names.append(metric_name)
+        else:
+            # Declaring it as a list of size one
+            scoring = [check_scoring(self.scoring, obj=self)]
+            scoring_names = [f"test_{scoring[0].name}"]
+            if self.ranking_metric is not None:
+                warn(
+                    f"The parameter ranking_metric of {self.__class__.__name__} must "
+                    "be specified correctly. When scoring is not a list or dict, it "
+                    "should be specified as None, or not passed. It has currently "
+                    "ignored.",
+                    obj=self,
+                    stacklevel=2,
+                )
+        return scoring, scoring_names
 
 
 def _fit_and_score(params, meta):
@@ -803,12 +807,14 @@ class ForecastingGridSearchCV(BaseGridSearch):
             "cv": SingleWindowSplitter(fh=1),
             "param_grid": {"window_length": [2, 5]},
             "scoring": MeanAbsolutePercentageError(symmetric=True),
+            "ranking_metric": None,
         }
         params2 = {
             "forecaster": PolynomialTrendForecaster(),
             "cv": SingleWindowSplitter(fh=1),
             "param_grid": {"degree": [1, 2]},
             "scoring": mean_absolute_percentage_error,
+            "ranking_metric": None,
             "update_behaviour": "inner_only",
         }
         params3 = {
@@ -816,9 +822,32 @@ class ForecastingGridSearchCV(BaseGridSearch):
             "cv": SingleWindowSplitter(fh=1),
             "param_grid": {"window_length": [3, 4]},
             "scoring": "MeanAbsolutePercentageError(symmetric=True)",
+            "ranking_metric": None,
             "update_behaviour": "no_update",
         }
-        return [params, params2, params3]
+        params4 = {
+            "forecaster": NaiveForecaster(strategy="mean"),
+            "cv": SingleWindowSplitter(fh=1),
+            "param_grid": {"window_length": [3, 4]},
+            "scoring": {
+                "symmetric_mape": MeanAbsolutePercentageError(symmetric=True),
+                "asymmetric_mape": MeanAbsolutePercentageError(),
+            },
+            "ranking_metric": "symmetric_mape",
+            "update_behaviour": "no_update",
+        }
+        params5 = {
+            "forecaster": NaiveForecaster(strategy="mean"),
+            "cv": SingleWindowSplitter(fh=1),
+            "param_grid": {"window_length": [3, 4]},
+            "scoring": [
+                MeanAbsolutePercentageError(symmetric=True),
+                MeanAbsolutePercentageError(),
+            ],
+            "ranking_metric": 0,
+            "update_behaviour": "no_update",
+        }
+        return [params, params2, params3, params4, params5]
 
 
 class ForecastingRandomizedSearchCV(BaseGridSearch):
@@ -1051,6 +1080,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             "cv": SingleWindowSplitter(fh=1),
             "param_distributions": {"window_length": [2, 5]},
             "scoring": MeanAbsolutePercentageError(symmetric=True),
+            "ranking_metric": None,
         }
 
         params2 = {
@@ -1058,6 +1088,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             "cv": SingleWindowSplitter(fh=1),
             "param_distributions": {"degree": [1, 2]},
             "scoring": MeanAbsolutePercentageError(symmetric=True),
+            "ranking_metric": None,
             "update_behaviour": "inner_only",
         }
         params3 = {
@@ -1065,10 +1096,32 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             "cv": SingleWindowSplitter(fh=1),
             "param_distributions": {"window_length": [3, 4]},
             "scoring": "MeanAbsolutePercentageError(symmetric=True)",
+            "ranking_metric": None,
             "update_behaviour": "no_update",
         }
-
-        return [params, params2, params3]
+        params4 = {
+            "forecaster": PolynomialTrendForecaster(),
+            "cv": SingleWindowSplitter(fh=1),
+            "param_distributions": {"degree": [1, 2]},
+            "scoring": {
+                "symmetric_mape": MeanAbsolutePercentageError(symmetric=True),
+                "asymmetric_mape": MeanAbsolutePercentageError(),
+            },
+            "ranking_metric": "symmetric_mape",
+            "update_behaviour": "no_update",
+        }
+        params5 = {
+            "forecaster": PolynomialTrendForecaster(),
+            "cv": SingleWindowSplitter(fh=1),
+            "param_distributions": {"degree": [1, 2]},
+            "scoring": [
+                MeanAbsolutePercentageError(symmetric=True),
+                MeanAbsolutePercentageError(),
+            ],
+            "ranking_metric": 0,
+            "update_behaviour": "no_update",
+        }
+        return [params, params2, params3, params4, params5]
 
 
 class ForecastingSkoptSearchCV(BaseGridSearch):
