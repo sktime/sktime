@@ -89,21 +89,18 @@ class Catch22Wrapper(BaseTransformer):
         "fit_is_empty": True,
     }
 
-    # todo 0.28.0: remove n_jobs parameter
     def __init__(
         self,
         features="all",
         catch24=False,
         outlier_norm=False,
         replace_nans=False,
-        n_jobs="deprecated",
         col_names="range",
     ):
         self.features = features
         self.catch24 = catch24
         self.outlier_norm = outlier_norm
         self.replace_nans = replace_nans
-        self.n_jobs = n_jobs
         self.col_names = col_names
 
         self.features_arguments = (
@@ -129,19 +126,6 @@ class Catch22Wrapper(BaseTransformer):
         self._transform_features = None
 
         super().__init__()
-
-        # todo 0.28.0: remove this warning and logic
-        if n_jobs != "deprecated":
-            warn(
-                "In Catch22Wrapper, the parameter "
-                "n_jobs is deprecated and will be removed in v0.28.0. "
-                "Instead, use set_config with the backend and backend:params "
-                "config fields, and set backend to 'joblib' and pass n_jobs "
-                "as a parameter of backend_params. ",
-                FutureWarning,
-                obj=self,
-            )
-            self.set_config(backend="joblib", backend_params={"n_jobs": n_jobs})
 
     def _transform(self, X, y=None):
         """Transform data into the Catch22 features.
