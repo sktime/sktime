@@ -105,7 +105,6 @@ class MCDCNNRegressor(BaseDeepRegressor):
         random_state=0,
     ):
         _check_dl_dependencies(severity="error")
-        super().__init__()
 
         self.n_epochs = n_epochs
         self.batch_size = batch_size
@@ -123,6 +122,9 @@ class MCDCNNRegressor(BaseDeepRegressor):
         self.optimizer = optimizer
         self.verbose = verbose
         self.random_state = random_state
+
+        super().__init__()
+
         self.history = None
         self._network = MCDCNNNetwork(
             kernel_size=self.kernel_size,

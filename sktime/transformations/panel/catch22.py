@@ -75,7 +75,7 @@ def get_methods_dict(which="all"):
         "SB_MotifThree_quantile_hh": _SB_MotifThree_quantile_hh,
         "FC_LocalSimple_mean1_tauresrat": _FC_LocalSimple_mean1_tauresrat,
         "CO_Embed2_Dist_tau_d_expfit_meandiff": _CO_Embed2_Dist_tau_d_expfit_meandiff,
-        "SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1_prop_r1": _SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1,  # noqa: E501
+        "SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1": _SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1,  # noqa: E501
         "SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1": _SC_FluctAnal_2_rsrangefit_50_1_logi,  # noqa: E501
         "SB_TransitionMatrix_3ac_sumdiagcov": _SB_TransitionMatrix_3ac_sumdiagcov,
         "PD_PeriodicityWang_th0_01": _PD_PeriodicityWang_th0_01,
@@ -273,6 +273,7 @@ class Catch22(BaseTransformer):
         "fit_is_empty": True,
     }
 
+    # todo 0.29.0: remove n_jobs parameter
     def __init__(
         self,
         features: Union[int, str, List[Union[int, str]]] = "all",
@@ -291,12 +292,12 @@ class Catch22(BaseTransformer):
 
         # todo: remove this unimplemented logic
         self._transform_features = None
-        # todo 0.28.0: remove this warning and logic
+        # todo 0.29.0: remove this warning and logic
         self.n_jobs = n_jobs
         if n_jobs != "deprecated":
             warn(
                 "In Catch22, the parameter "
-                "n_jobs is deprecated and will be removed in v0.28.0. "
+                "n_jobs is deprecated and will be removed in v0.29.0. "
                 "Instead, use set_config with the backend and backend:params "
                 "config fields, and set backend to 'joblib' and pass n_jobs "
                 "as a parameter of backend_params. ",
