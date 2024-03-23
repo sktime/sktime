@@ -158,7 +158,6 @@ def all_estimators(
         "test_split",
     )
 
-    result = []
     ROOT = str(Path(__file__).parent.parent)  # sktime package root directory
 
     if estimator_types:
