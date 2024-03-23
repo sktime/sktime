@@ -11,7 +11,6 @@ import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel import catch22
-from sktime.utils.warnings import warn
 
 
 class Catch22Wrapper(BaseTransformer):

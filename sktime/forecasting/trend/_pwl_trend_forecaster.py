@@ -8,7 +8,6 @@ import pandas as pd
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base.adapters import _ProphetAdapter
-from sktime.utils.warnings import warn
 
 
 class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):

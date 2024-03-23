@@ -8,7 +8,6 @@ import scipy.stats
 
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel.dictionary_based import PAAlegacy as PAA
-from sktime.utils.warnings import warn
 
 __author__ = ["MatthewMiddlehurst"]
 
