@@ -124,7 +124,7 @@ SHORT_FEATURE_NAMES_DICT = {
     "DN_Spread_Std": "std",
 }
 
-ALL_FEATURE_NAMES = list(FEATURE_NAMES_DICT.keys())
+ALL_FEATURE_NAMES = list(SHORT_FEATURE_NAMES_DICT.keys())
 ALL_SHORT_FEATURE_NAMES = list(SHORT_FEATURE_NAMES_DICT.values())
 
 CATCH22_FEATURE_NAMES = ALL_FEATURE_NAMES[:22]
@@ -475,7 +475,10 @@ class Catch22(BaseTransformer):
         if isinstance(feature, int):
             return self.METHODS_DICT.get(ALL_FEATURE_NAMES[feature])
         else:
-            raise KeyError(f"No feature with name: {feature}")
+            raise TypeError(
+                "Invalide type in Catch22.__get_feature_function_int. "
+                f"Expected int, got {type(feature)}."
+            )
 
     def _prepare_output_col_names(
         self, n_features: int
