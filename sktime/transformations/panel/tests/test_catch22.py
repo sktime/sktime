@@ -1415,3 +1415,38 @@ catch22wrapper_basic_motions_data = np.array(
         ],
     ]
 )
+
+
+def test_feature_names():
+    """Test that the hard-coded feature name variables are as expected.
+
+    Safety measure to avoid accidental changes to the feature names, or their order.
+    """
+    from sktime.transformations.panel.catch22 import FEATURE_NAMES, feature_names
+
+    expected_feature_names = [
+        "DN_HistogramMode_5",
+        "DN_HistogramMode_10",
+        "SB_BinaryStats_diff_longstretch0",
+        "DN_OutlierInclude_p_001_mdrmd",
+        "DN_OutlierInclude_n_001_mdrmd",
+        "CO_f1ecac",
+        "CO_FirstMin_ac",
+        "SP_Summaries_welch_rect_area_5_1",
+        "SP_Summaries_welch_rect_centroid",
+        "FC_LocalSimple_mean3_stderr",
+        "CO_trev_1_num",
+        "CO_HistogramAMI_even_2_5",
+        "IN_AutoMutualInfoStats_40_gaussian_fmmi",
+        "MD_hrv_classic_pnn40",
+        "SB_BinaryStats_mean_longstretch1",
+        "SB_MotifThree_quantile_hh",
+        "FC_LocalSimple_mean1_tauresrat",
+        "CO_Embed2_Dist_tau_d_expfit_meandiff",
+        "SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1",
+        "SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1",
+        "SB_TransitionMatrix_3ac_sumdiagcov",
+        "PD_PeriodicityWang_th0_01",
+    ]
+    assert feature_names == expected_feature_names
+    assert feature_names == FEATURE_NAMES

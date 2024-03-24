@@ -65,6 +65,7 @@ class FourierFeatures(BaseTransformer):
         Only used when X has a pd.DatetimeIndex without a specified frequency.
         Specifies the frequency of the index of your data. The string should
         match a pandas offset alias:
+
         https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
     keep_original_columns : boolean, optional, default=False
         Keep original columns in X passed to ``.transform()``
@@ -328,7 +329,7 @@ class FourierFeatures(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -336,8 +337,9 @@ class FourierFeatures(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params = [
             {"sp_list": [12], "fourier_terms_list": [4]},

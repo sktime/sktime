@@ -22,24 +22,25 @@ class ScipyDist(BasePairwiseTransformer):
 
     Parameters
     ----------
-    metric : string or function, as in cdist; default = 'euclidean'
-        if string, one of: 'braycurtis', 'canberra', 'chebyshev', 'cityblock',
-            'correlation', 'cosine', 'dice', 'euclidean', 'hamming', 'jaccard',
-            'jensenshannon',
-            'kulsinski' (< scipy 1.11) or 'kulczynski1' (from scipy 1.11),
-            'mahalanobis', 'matching', 'minkowski',
-            'rogerstanimoto', 'russellrao', 'seuclidean', 'sokalmichener',
-            'sokalsneath', 'sqeuclidean', 'yule'
+    metric : string or function, as in cdist; default = ``euclidean``
+        if string, one of: ``braycurtis``, ``canberra``, ``chebyshev``, ``cityblock``,
+            ``correlation``, ``cosine``, ``dice``, ``euclidean``, ``hamming``,
+            ``jaccard``, ``jensenshannon``,
+            ``kulsinski`` (< scipy 1.11) or ``kulczynski1`` (from scipy 1.11),
+            ``mahalanobis``, ``matching``, ``minkowski``,
+            ``rogerstanimoto``, ``russellrao``, ``seuclidean``, ``sokalmichener``,
+            ``sokalsneath``, ``sqeuclidean``, ``yule``
         if function, should have signature 1D-np.array x 1D-np.array -> float
-    p:  if metric='minkowski', the "p" in "p-norm", otherwise irrelevant
-    colalign : string, one of 'intersect' (default), 'force-align', 'none'
+    p:  if metric=``minkowski``, the ``p`` in ``p-norm``, otherwise irrelevant
+    colalign : string, one of ``intersect`` (default), ``force-align``, ``none``
         controls column alignment if X, X2 passed in fit are pd.DataFrame
-        columns between X and X2 are aligned via column names
-        if 'intersect', distance is computed on columns occurring both in X and X2,
+        columns between X and X2 are aligned via column names.
+
+        if ``intersect``, distance is computed on columns occurring both in X and X2,
             other columns are discarded; column ordering in X2 is copied from X
-        if 'force-align', raises an error if the set of columns in X, X2 differs;
+        if ``force-align``, raises an error if the set of columns in X, X2 differs;
             column ordering in X2 is copied from X
-        if 'none', X and X2 are passed through unmodified (no columns are aligned)
+        if ``none``, X and X2 are passed through unmodified (no columns are aligned)
             note: this will potentially align "non-matching" columns
     var_weights : 1D np.array of float or None, default=None
         weight/scaling vector applied to variables in X/X2
@@ -47,7 +48,7 @@ class ScipyDist(BasePairwiseTransformer):
         if None, equivalent to all-ones vector
     metric_kwargs : dict, optional, default=None
         any kwargs passed to the metric in addition, i.e., to the function cdist
-        common kwargs: "w" : array-like, same length as X.columns, weights for metric
+        common kwargs: ``w`` : array-like, same length as X.columns, weights for metric
         refer to scipy.spatial.distance.dist for a documentation of other extra kwargs
     """
 
@@ -100,7 +101,21 @@ class ScipyDist(BasePairwiseTransformer):
         metric_kwargs = self.metric_kwargs
         if metric_kwargs is None:
             metric_kwargs = {}
-
+        if isinstance(X, pd.DataFrame) and isinstance(X2, pd.DataFrame):
+            if self.colalign == "intersect":
+                common_cols = X.columns.intersection(X2.columns)
+                X = X[common_cols]
+                X2 = X2[common_cols]
+                # reordering X2 columns to match X
+                X2 = X2[X.columns]
+            elif self.colalign == "force-align":
+                if not X.columns.equals(X2.columns):
+                    raise ValueError("X and X2 have different columns")
+                X2 = X2[X.columns]
+            elif self.colalign == "none":
+                pass
+            else:
+                raise ValueError("colalign must be one of intersect, force-align, none")
         if isinstance(X, pd.DataFrame):
             X = X.select_dtypes("number").to_numpy(dtype="float")
 
@@ -131,7 +146,7 @@ class ScipyDist(BasePairwiseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for distance/kernel transformers.
 
         Returns
@@ -139,13 +154,15 @@ class ScipyDist(BasePairwiseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         # default settings
         params1 = {}
 
         # using kwargs
-        params2 = {"metric": "minkowski", "p": 3}
+        params2 = {"metric": "minkowski", "p": 3, "colalign": "intersect"}
+        params3 = {"metric": "euclidean", "colalign": "force-align"}
 
-        return [params1, params2]
+        return [params1, params2, params3]
