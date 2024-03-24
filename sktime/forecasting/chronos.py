@@ -2,7 +2,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements Chronos forecaster by wrapping amazon's chronos."""
 
-import torch
 import numpy as np
 import pandas as pd
 
@@ -55,6 +54,7 @@ class Chronos(BaseForecaster):
 
     # tag values are "safe defaults" which can usually be left as-is
     _tags = {
+        "python_dependencies": ["torch"],
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "scitype:y": "univariate",
@@ -96,6 +96,7 @@ class Chronos(BaseForecaster):
         -------
         self : reference to self
         """
+        import torch
         from chronos import ChronosPipeline
         if self.args_list is not None:
             args_list = [self.modelName] + self.args_list
@@ -156,5 +157,5 @@ class Chronos(BaseForecaster):
         -------
         params : dict or list of dict
         """
-        params = {"modelName": "amazon/chronos-t5-small", "kwargs_dict": {"torch_dtype": torch.bfloat16}}
+        params = {"modelName": "amazon/chronos-t5-small"}
         return params
