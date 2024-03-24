@@ -241,7 +241,7 @@ class CutoffSplitter(BaseSplitter):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        return [{"cutoffs": np.array([3, 7, 10])}, {"cutoffs": [21, 22]}]
+        return [{"cutoffs": np.array([3, 7, 10])}, {"cutoffs": [6, 9]}]
 
 
 class CutoffFhSplitter(BaseSplitter):
