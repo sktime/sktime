@@ -229,3 +229,12 @@ class ResNetRegressor(BaseDeepRegressor):
             )
 
         return test_params
+        # serializing lambda functions
+    def pickling(lambda_func):
+        lf = lambda_func
+        #  serialize(lf):
+        code = lf.__code__
+        env = lf.__globals__
+        # Return a picklable representation (e.g., a dictionary)
+        return {"code": code, "env": env}
+        # returns the constructed dictionary, representing the serialized lambda function
