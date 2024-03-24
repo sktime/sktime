@@ -48,7 +48,10 @@ def test_st_on_basic_motions(backend):
 
     # fit the shapelet transform
     st = RandomShapeletTransform(
-        max_shapelets=10, n_shapelet_samples=500, random_state=0, **backend.copy(),
+        max_shapelets=10,
+        n_shapelet_samples=500,
+        random_state=0,
+        **backend.copy(),
     )
     st.fit(X_train.iloc[indices], y_train[indices])
 
