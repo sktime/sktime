@@ -333,26 +333,59 @@ def test_use_of_passed_unknown_X(predict_behaviour_option: str) -> None:
 
     y_train, _, X_train, X_test = temporal_train_test_split(y, X, test_size=4)
 
-    model = ForecastX(
+    model_with_explicit_columns = ForecastX(
         ARIMA(),
         forecaster_X=NaiveForecaster(),
         columns=cols_to_forecast,
         predict_behaviour=predict_behaviour_option,
     )
 
-    model.fit(y_train, X=X_train, fh=fh)
+    model_with_explicit_columns.fit(y_train, X=X_train, fh=fh)
 
-    with mock.patch.object(model.forecaster_X_, "predict") as mock_predict:
+    with mock.patch.object(
+        model_with_explicit_columns.forecaster_X_, "predict"
+    ) as mock_predict:
         mock_predict.return_value = X_test
 
-        _ = model.predict(X=X_test.drop(columns=cols_to_forecast))
+        _ = model_with_explicit_columns.predict(X=X_test.drop(columns=cols_to_forecast))
 
         mock_predict.assert_called_once()
 
-    with mock.patch.object(model.forecaster_X_, "predict") as mock_predict:
+    with mock.patch.object(
+        model_with_explicit_columns.forecaster_X_, "predict"
+    ) as mock_predict:
         mock_predict.return_value = X_test
 
-        _ = model.predict(X=X_test)
+        _ = model_with_explicit_columns.predict(X=X_test)
+
+        if predict_behaviour_option == "use_forecasts":
+            mock_predict.assert_called_once()
+        elif predict_behaviour_option == "use_actuals":
+            mock_predict.assert_not_called()
+
+    model_with_implicit_columns = ForecastX(
+        ARIMA(),
+        forecaster_X=NaiveForecaster(),
+        predict_behaviour=predict_behaviour_option,
+    )
+
+    model_with_implicit_columns.fit(y_train, X=X_train, fh=fh)
+
+    with mock.patch.object(
+        model_with_implicit_columns.forecaster_X_, "predict"
+    ) as mock_predict:
+        mock_predict.return_value = X_test
+
+        _ = model_with_implicit_columns.predict()
+
+        mock_predict.assert_called_once()
+
+    with mock.patch.object(
+        model_with_implicit_columns.forecaster_X_, "predict"
+    ) as mock_predict:
+        mock_predict.return_value = X_test
+
+        _ = model_with_implicit_columns.predict(X=X_test)
 
         if predict_behaviour_option == "use_forecasts":
             mock_predict.assert_called_once()
