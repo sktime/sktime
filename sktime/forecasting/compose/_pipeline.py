@@ -1216,6 +1216,11 @@ class ForecastX(BaseForecaster):
     If ``columns`` argument is provided, will carry ``predict`` out only for the columns
     in ``columns``, and will use other columns in ``X`` unchanged.
 
+    If variables in ``columns`` are present in the provided ``X`` during ``predict``,
+    by default these are still forecasted and the forecasts are used for prediction of
+    ``y`` variables. This behaviour can be modified by passing ``predict_behaviour``
+    argument as ``"use_actuals"`` instead of the default value of ``"use_forecasts"``.
+
     The two forecasters and forecasting horizons (for forecasting ``y`` resp ``X``)
     can be selected independently, but default to the same.
 
