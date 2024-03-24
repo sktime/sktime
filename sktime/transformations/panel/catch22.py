@@ -124,7 +124,7 @@ SHORT_FEATURE_NAMES_DICT = {
     "DN_Spread_Std": "std",
 }
 
-ALL_FEATURE_NAMES = list(SHORT_FEATURE_NAMES_DICT.keys())
+ALL_FEATURE_NAMES = list(FEATURE_NAMES_DICT.keys())
 ALL_SHORT_FEATURE_NAMES = list(SHORT_FEATURE_NAMES_DICT.values())
 
 CATCH22_FEATURE_NAMES = ALL_FEATURE_NAMES[:22]
@@ -456,6 +456,11 @@ class Catch22(BaseTransformer):
         return Xt_np
 
     def _get_feature_function(self, feature: Union[int, str]):
+        if not isinstance(feature, (int, str)):
+            raise TypeError(
+                "Invalid feature name type in Catch22._get_feature_function. "
+                f"Expected int or str, got {type(feature)}."
+            )
         if isinstance(feature, str):
             return self.__get_feature_function_str(feature)
         return self.__get_feature_function_int(feature)
