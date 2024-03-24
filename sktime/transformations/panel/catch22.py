@@ -131,6 +131,7 @@ CATCH22_FEATURE_NAMES = ALL_FEATURE_NAMES[:22]
 CATCH22_SHORT_FEATURE_NAMES = ALL_SHORT_FEATURE_NAMES[:22]
 
 feature_names = CATCH22_FEATURE_NAMES  # for backwards compatibility, this was public
+FEATURE_NAMES = CATCH22_FEATURE_NAMES  # for backwards compatibility, this was public
 
 
 def _verify_features(
