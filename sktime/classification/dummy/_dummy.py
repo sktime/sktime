@@ -57,6 +57,18 @@ class DummyClassifier(BaseClassifier):
     constant : int or str or array-like of shape (n_outputs,), default=None
         The explicit constant as predicted by the "constant" strategy. This
         parameter is useful only for the "constant" strategy.
+
+    Examples
+    --------
+    >>> from sktime.classification.dummy import DummyClassifier
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> X_test, y_test = load_unit_test(split="test")
+    >>> classifier = DummyClassifier(strategy="prior")
+    >>> classifier.fit(X_train, y_train)
+    DummyClassifier()
+    >>> y_pred = classifier.predict(X_test)
+    >>> y_pred_proba = classifier.predict_proba(X_test)
     """
 
     _tags = {
