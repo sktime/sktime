@@ -37,13 +37,13 @@ class PAA(BaseTransformer):
     Examples
     --------
     >>> from numpy import arange
-    >>> from sktime.transformations.series.paa import PAA2
+    >>> from sktime.transformations.series.paa import PAA
 
     >>> X = arange(10)
-    >>> paa = PAA2(frames=3)
+    >>> paa = PAA(frames=3)
     >>> paa.fit_transform(X)  # doctest: +SKIP
     array([1.2, 4.5, 7.8])
-    >>> paa = PAA2(frame_size=3)  # doctest: +SKIP
+    >>> paa = PAA(frame_size=3)  # doctest: +SKIP
     array([1, 4, 7, 9])
     """
 

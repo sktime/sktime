@@ -46,13 +46,13 @@ class SAX(BaseTransformer):
     Examples
     --------
     >>> from numpy import arange
-    >>> from sktime.transformations.series.sax import SAX2
+    >>> from sktime.transformations.series.sax import SAX
 
     >>> X = arange(10)
-    >>> sax = SAX2(word_size=3, alphabet_size=5)
+    >>> sax = SAX(word_size=3, alphabet_size=5)
     >>> sax.fit_transform(X)  # doctest: +SKIP
     array([0, 2, 4])
-    >>> sax = SAX2(frame_size=2, alphabet_size=5)  # doctest: +SKIP
+    >>> sax = SAX(frame_size=2, alphabet_size=5)  # doctest: +SKIP
     array([0, 1, 2, 3, 4])
     """
 
