@@ -1271,12 +1271,12 @@ class ForecastX(BaseForecaster):
         * if a ``pandas.Index`` coercible, then uses columns indexed by the index
         after coercion, in ``X`` passed (converted to pandas)
 
-    predict_behaviour : str, optional (default = "always")
+    predict_behaviour : str, optional (default = "use_forecasts")
 
-        * if "only_if_necessary", then ``forecaster_X`` predictions are only used if
+        * if "use_forecasts", then ``forecaster_X`` predictions are always used as
+            inputs in ``forecaster_y``, even if passed ``X`` has future values
+        * if "use_actuals", then ``forecaster_X`` predictions are only used if
             passed ``X`` lacks future values for the variables in ``columns``
-        * if "always", then ``forecaster_X`` predictions are always used as inputs in
-            ``forecaster_y``, even if passed ``X`` has future values
 
     Attributes
     ----------
@@ -1320,9 +1320,9 @@ class ForecastX(BaseForecaster):
 
     Notes
     -----
-    * ``predict_behaviour="only_if_necessary"`` is as of now unused if future values are
+    * ``predict_behaviour="use_actuals"`` is as of now unused if future values are
         passed for a subset of exogeneous variables in ``columns``. In that case, it
-        behaves as if ``predict_behaviour="always"``.
+        behaves as if ``predict_behaviour="use_forecasts"``.
     """
 
     _tags = {
@@ -1347,7 +1347,7 @@ class ForecastX(BaseForecaster):
         columns=None,
         fit_behaviour="use_actual",
         forecaster_X_exogeneous="None",
-        predict_behaviour="always",
+        predict_behaviour="use_forecasts",
     ):
         if fit_behaviour not in ["use_actual", "use_forecast"]:
             raise ValueError(
@@ -1376,9 +1376,9 @@ class ForecastX(BaseForecaster):
                     "or a pandas.Index coercible"
                 )
 
-        if predict_behaviour not in ["only_if_necessary", "always"]:
+        if predict_behaviour not in ["use_forecasts", "use_actuals"]:
             raise ValueError(
-                'predict_behaviour must be one of "only_if_necessary", "always"'
+                "predict_behaviour must be one of 'use_forecasts', 'use_actuals'"
             )
 
         self.predict_behaviour = predict_behaviour
@@ -1485,7 +1485,7 @@ class ForecastX(BaseForecaster):
             return X
 
         # if user passes data for future unknown variables, do not forecast them
-        # this is done only if predict_behaviour is "only_if_necessary"
+        # this is done only if predict_behaviour is "use_actuals"
         if isinstance(self.columns, (list, pd.Index)) and len(self.columns):
             is_future_unknown_actually_known = all(
                 column in X.columns for column in self.columns
@@ -1493,7 +1493,7 @@ class ForecastX(BaseForecaster):
 
             if (
                 is_future_unknown_actually_known
-                and self.predict_behaviour == "only_if_necessary"
+                and self.predict_behaviour == "use_actuals"
             ):
                 return X
 

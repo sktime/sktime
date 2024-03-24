@@ -323,7 +323,7 @@ def test_forecastx_exog_for_forecaster_x():
     not _check_estimator_deps(ARIMA, severity="none"),
     reason="skip test if required soft dependency is not available",
 )
-@pytest.mark.parametrize("predict_behaviour_option", ["only_if_necessary", "always"])
+@pytest.mark.parametrize("predict_behaviour_option", ["use_forecasts", "use_actuals"])
 def test_use_of_passed_unknown_X(predict_behaviour_option: str) -> None:
     from sktime.forecasting.compose import ForecastX
 
@@ -354,7 +354,7 @@ def test_use_of_passed_unknown_X(predict_behaviour_option: str) -> None:
 
         _ = model.predict(X=X_test)
 
-        if predict_behaviour_option == "always":
+        if predict_behaviour_option == "use_forecasts":
             mock_predict.assert_called_once()
-        elif predict_behaviour_option == "only_if_necessary":
+        elif predict_behaviour_option == "use_actuals":
             mock_predict.assert_not_called()
