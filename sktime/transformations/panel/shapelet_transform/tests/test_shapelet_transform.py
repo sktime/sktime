@@ -11,7 +11,6 @@ from sktime.utils.parallel import _get_parallel_test_fixtures
 BACKENDS = _get_parallel_test_fixtures("estimator")
 
 
-@pytest.mark.parametrize("backend", BACKENDS)
 @pytest.mark.skipif(
     not run_test_for_class(RandomShapeletTransform),
     reason="run test only if softdeps are present and incrementally (if requested)",
@@ -24,14 +23,7 @@ def test_st_on_unit_test():
 
     # fit the shapelet transform
     st = RandomShapeletTransform(
-        max_shapelets=10,
-        n_shapelet_samples=500,
-        random_state=0,
-        backend="loky",
-        backend_params={
-            "n_jobs": 1,
-            "prefer": "threads",
-        },
+        max_shapelets=10, n_shapelet_samples=500, random_state=0
     )
     st.fit(X_train.iloc[indices], y_train[indices])
 
@@ -48,7 +40,7 @@ def test_st_on_unit_test():
     not run_test_for_class(RandomShapeletTransform),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-def test_st_on_basic_motions():
+def test_st_on_basic_motions(backend):
     """Test of ShapeletTransform on basic motions data."""
     # load basic motions data
     X_train, y_train = load_basic_motions(split="train", return_X_y=True)
@@ -56,15 +48,7 @@ def test_st_on_basic_motions():
 
     # fit the shapelet transform
     st = RandomShapeletTransform(
-        max_shapelets=10,
-        n_shapelet_samples=500,
-        random_state=0,
-        backend="joblib",
-        backend_params={
-            # "n_jobs": , Deprecated??
-            "backend": "joblib",
-            "prefer": "threads",
-        },
+        max_shapelets=10, n_shapelet_samples=500, random_state=0, **backend.copy(),
     )
     st.fit(X_train.iloc[indices], y_train[indices])
 
