@@ -27,10 +27,9 @@ def test_st_on_unit_test():
         max_shapelets=10,
         n_shapelet_samples=500,
         random_state=0,
-        backend="joblib",
+        backend="loky",
         backend_params={
-            # "n_jobs": , Deprecated??
-            "backend": "joblib",
+            "n_jobs": 1,
             "prefer": "threads",
         },
     )
