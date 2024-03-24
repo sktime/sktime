@@ -319,6 +319,10 @@ def test_forecastx_exog_for_forecaster_x():
     assert model_3.forecaster_X_._X.columns.tolist() == ["UNEMP", "ARMED"]
 
 
+@pytest.mark.skipif(
+    not _check_estimator_deps(ARIMA, severity="none"),
+    reason="skip test if required soft dependency is not available",
+)
 @pytest.mark.parametrize("predict_behaviour_option", ["only_if_necessary", "always"])
 def test_use_of_passed_unknown_X(predict_behaviour_option: str) -> None:
     from sktime.forecasting.compose import ForecastX
