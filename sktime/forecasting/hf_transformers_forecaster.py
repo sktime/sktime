@@ -15,6 +15,10 @@ class HFTransformersForecaster(BaseForecaster):
     """
     Forecaster that uses a huggingface model for forecasting.
 
+    This forecaster fetches the model from the huggingface model hub.
+    Note, this forecaster is in an experimental state. It is currently only
+    working for Informer, Autoformer, and TimeSeriesTransformer. 
+
     Parameters
     ----------
     model_path : str
@@ -34,6 +38,8 @@ class HFTransformersForecaster(BaseForecaster):
         for details.
     deterministic : bool, default=False
         Whether the predictions should be deterministic or not.
+    callbacks : list, default=[]
+        List of callbacks to use during training. See `transformers.Trainer`
 
     Examples
     --------
@@ -85,6 +91,7 @@ class HFTransformersForecaster(BaseForecaster):
         training_args={},
         compute_metrics=None,
         deterministic=False,
+        callbacks=[]
     ):
         super().__init__()
         self.model_path = model_path
@@ -93,8 +100,9 @@ class HFTransformersForecaster(BaseForecaster):
         self.config = config
         self.training_args = training_args
         self.compute_metrics = compute_metrics
-        self._compute_metrics = compute_metrics if compute_metrics is not None else []
+        self._compute_metrics = compute_metrics
         self.deterministic = deterministic
+        self.callbacks = callbacks
 
     def _fit(self, y, X, fh):
         # Load model and extract config
@@ -105,17 +113,31 @@ class HFTransformersForecaster(BaseForecaster):
         _config.update(self.config)
         _config["num_dynamic_real_features"] = X.shape[-1] if X is not None else 0
         _config["num_static_real_features"] = 0
+        _config["num_dynamic_real_features"] = 0
         _config["num_static_categorical_features"] = 0
-        _config["num_time_features"] = 0
+        _config["num_time_features"] = 0 if X is None else X.shape[-1]
 
         del _config["feature_size"]
 
         config = config.from_dict(_config)
         import transformers
 
+        prediction_model_class = None
+        if hasattr(config, "architectures") and config.architectures is not None:
+            prediction_model_class = config.architectures[0]
+        elif hasattr(config, "model_type"):
+            prediction_model_class = (
+                "".join(x.capitalize() for x in config.model_type.lower().split("_"))
+                + "ForPrediction"
+            )
+        else:
+            raise Exception(
+                "The model type is not inferrable from the config."
+                "Thus, the model cannot be loaded."
+            )
         # Load model with the updated config
         self.model, info = getattr(
-            transformers, config.architectures[0]
+            transformers, prediction_model_class
         ).from_pretrained(
             self.model_path,
             config=config,
@@ -166,8 +188,11 @@ class HFTransformersForecaster(BaseForecaster):
             )
 
             eval_dataset = None
+        from copy import deepcopy
+        training_args = deepcopy(self.training_args)
+        training_args["label_names"] = ["future_values"]
 
-        training_args = TrainingArguments(**self.training_args)
+        training_args = TrainingArguments(**training_args)
 
         if self.fit_strategy == "minimal":
             if len(info["mismatched_keys"]) == 0:
@@ -184,6 +209,7 @@ class HFTransformersForecaster(BaseForecaster):
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
             compute_metrics=self._compute_metrics,
+            callbacks=self.callbacks
         )
         trainer.train()
 
@@ -203,7 +229,7 @@ class HFTransformersForecaster(BaseForecaster):
         from torch import from_numpy
 
         hist = self._y.values.reshape((1, -1))
-        self.model.config.prediction_length = max(fh.to_relative(self._cutoff)._values)
+        self.model.config.prediction_length = max(fh.to_relative(self._cutoff)._values) + 1
         if X is not None:
             hist_x = self._X.values.reshape((1, -1, self._X.shape[-1]))
             x_ = X.values.reshape((1, -1, self._X.shape[-1]))
@@ -246,7 +272,7 @@ class HFTransformersForecaster(BaseForecaster):
 
         pred = pd.Series(
             pred.reshape((-1,)),
-            index=ForecastingHorizon(range(1, len(pred) + 1))
+            index=ForecastingHorizon(range(0, len(pred)))
             .to_absolute(self._cutoff)
             ._values,
             # columns=self._y.columns
@@ -288,7 +314,24 @@ class HFTransformersForecaster(BaseForecaster):
                     "use_cpu": True,
                 },
                 "deterministic": True,
-            }
+            },
+            {
+                "model_path": "huggingface/autoformer-tourism-monthly",
+                "fit_strategy": "minimal",
+                "training_args": {
+                    "num_train_epochs": 1,
+                    "output_dir": "test_output",
+                    "per_device_train_batch_size": 32,
+                },
+                "config": {
+                    "lags_sequence": [1, 2, 3],
+                    "context_length": 2,
+                    "prediction_length": 4,
+                    "label_length": 2,
+                    "use_cpu": True,
+                },
+                "deterministic": True,
+            },
         ]
 
 
@@ -316,8 +359,8 @@ class PyTorchDataset(Dataset):
             ).float()
             hist_exog = tensor(self.X[i : i + self.seq_len]).float()
         else:
-            exog_data = tensor([[]] * self.seq_len)
-            hist_exog = tensor([[]] * self.fh)
+            exog_data = tensor([[]] * self.fh)
+            hist_exog = tensor([[]] * self.seq_len)
         return {
             "past_values": hist_y,
             "past_time_features": hist_exog,
