@@ -1495,12 +1495,15 @@ class ForecastX(BaseForecaster):
             is_future_unknown_actually_known = all(
                 column in X.columns for column in self.columns
             )
+        elif X is None:
+            is_future_unknown_actually_known = False
+        else:
+            is_future_unknown_actually_known = all(
+                column in X.columns for column in self._X.columns
+            )
 
-            if (
-                is_future_unknown_actually_known
-                and self.predict_behaviour == "use_actuals"
-            ):
-                return X
+        if is_future_unknown_actually_known and self.predict_behaviour == "use_actuals":
+            return X
 
         if self.behaviour == "update":
             forecaster = self.forecaster_X_
