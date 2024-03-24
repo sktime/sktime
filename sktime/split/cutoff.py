@@ -13,6 +13,7 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
+from pandas.api.types import is_datetime64_any_dtype
 
 from sktime.split.base import BaseSplitter
 from sktime.split.base._common import (
@@ -304,11 +305,20 @@ class CutoffFhSplitter(BaseSplitter):
         cutoff = self.cutoff
         fh = self.fh
 
+        if not isinstance(cutoff, pd.Index):
+            cutoff = pd.Index(cutoff)
+
         if fh is not None:
             from sktime.forecasting.base import ForecastingHorizon
 
             if not isinstance(fh, ForecastingHorizon):
                 fh = ForecastingHorizon(fh)
+
+        def is_date_like(x):
+            return is_datetime64_any_dtype(x) or isinstance(x, pd.PeriodDtype)
+
+        if is_date_like(y) and not is_date_like(cutoff):
+            cutoff = y[cutoff]
 
         for k in cutoff:
             train = y[y <= k]
@@ -355,6 +365,6 @@ class CutoffFhSplitter(BaseSplitter):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        params1 = {"cutoff": 3}
+        params1 = {"cutoff": np.array([3])}
         params2 = {"cutoff": [3, 4], "fh": [1, 2]}
         return [params1, params2]

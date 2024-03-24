@@ -53,6 +53,7 @@ EXCLUDE_ESTIMATORS = [
     "SameLocSplitter",
     "TestPlusTrainSplitter",
     "Repeat",
+    "CutoffFhSplitter",
 ]
 
 
