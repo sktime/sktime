@@ -227,7 +227,7 @@ There are many ways to join the sktime community. We follow the [all-contributor
 [enhancement proposals]: https://github.com/sktime/enhancement-proposals
 [roles]: https://www.sktime.net/en/latest/about/team.html
 
-## :mortar_board: Hall-of-Fame
+## :trophy: Hall-of-Fame
 Thanks to all the contributors for all your wonderful PRs, issues and ideas.
 <a href="https://github.com/sktime/sktime/graphs/contributors">
 <img src="https://opencollective.com/sktime/contributors.svg?width=600&button=false" />
