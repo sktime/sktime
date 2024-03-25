@@ -1170,7 +1170,7 @@ class RandomShapeletTransform(BaseTransformer):
                 FutureWarning,
                 obj=self,
             )
-            self._backend = "joblib"
+            self._bakcend = backend            
             n_jobs = check_n_jobs(n_jobs)
             if backend_params is None:
                 self._backend_params = {}
