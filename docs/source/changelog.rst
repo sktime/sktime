@@ -30,6 +30,7 @@ Highlights
 * ``Catch22`` transformer now supports short aliases and parallelization backend selection (:pr:`6002`) :user:`julnow`
 * forecasting tuners can now return performances of all parameters, via ``return_n_best_forecasters=-1`` (:pr:`6031`) :user:`HassnHamada`
 * ``NeuralForecastRNN`` can now auto-detect ``freq`` (:pr:`6039`) :user:`geetu040`
+* time series splitters are now first-class objects, with suite tests and ``check_estimator`` support (:pr:`6051`) :user:`fkiraly`
 
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
@@ -70,7 +71,6 @@ Data loaders
 ^^^^^^^^^^^^
 
 * [ENH] automatic inference of file ending in data loaders for single file types (:pr:`6045`) :user:`SaiRevanth25`
-
 
 Data types, checks, conversions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
