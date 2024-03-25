@@ -145,7 +145,7 @@ class CNNNetwork(BaseDeepNetwork):
         """
         params1 = {}
         params2 = {
-            "filter_size": [10],
+            "filter_sizes": [10],
             "kernel_size": 3,
             "avg_pool_size": 1,
             "padding": "valid",
