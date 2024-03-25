@@ -50,6 +50,8 @@ class RandomIntervalClassifier(BaseClassifier):
     --------
     RandomIntervals
 
+    Examples
+    --------
     >>> from sktime.classification.feature_based import RandomIntervalClassifier
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> from sktime.datasets import load_unit_test

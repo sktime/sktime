@@ -58,6 +58,8 @@ class FreshPRINCE(BaseClassifier):
         (2018): 72-77.
         https://www.sciencedirect.com/science/article/pii/S0925231218304843
 
+    Examples
+    --------
     >>> from sktime.classification.feature_based import FreshPRINCE
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)

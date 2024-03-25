@@ -63,6 +63,8 @@ class TSFreshClassifier(BaseClassifier):
         (2018): 72-77.
         https://www.sciencedirect.com/science/article/pii/S0925231218304843
 
+    Examples
+    --------
     >>> from sktime.classification.feature_based import TSFreshClassifier
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> from sktime.datasets import load_unit_test
