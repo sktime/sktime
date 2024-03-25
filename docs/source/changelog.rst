@@ -245,8 +245,11 @@ Webpage
 Contributors
 ~~~~~~~~~~~~
 
+:user:`Abhay-Lejith`,
+:user:`achoum`,
 :user:`albertoazzari`,
 :user:`Alex-JG3`,
+:user:`astrogilda`,
 :user:`benHeid`,
 :user:`Cyril-Meyer`,
 :user:`deysanjeeb`,
@@ -264,8 +267,10 @@ Contributors
 :user:`kcentric`,
 :user:`ksharma6`,
 :user:`manuel-munoz-aguirre`,
+:user:`MBristle`,
 :user:`MEMEO-PRO`,
 :user:`meraldoantonio`,
+:user:`nilesh05apr`,
 :user:`pranavvp16`,
 :user:`SaiRevanth25`,
 :user:`sahusiddharth`,
