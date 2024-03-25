@@ -24,7 +24,7 @@ Version 0.27.1 - 2024-03-25
 Highlights
 ~~~~~~~~~~
 
-* Phase 1 integration with ``temporian`` - ``TemporianTransformer`` transformer (:pr:`5980`) :user:`ianspektor`, :user:`achoum`
+* Phase 1 integration with ``temporian`` - ``TemporianTransformer`` transformer (:pr:`5980`) :user:`ianspektor`, :user:`achoum`, :user:`javiber`
 * Phase 1 integration with ``tsbootstrap`` - ``TSBootstrapAdapter`` transformer (:pr:`5887`) :user:`benHeid`, :user:`astrogilda`, :user:`fkiraly`
 * Shapelet transform from ``pyts`` available as ``sktime`` transformer (:pr:`6082`) :user:`Abhay-Lejith`
 * ``Catch22`` transformer now supports short aliases and parallelization backend selection (:pr:`6002`) :user:`julnow`
@@ -263,6 +263,7 @@ Contributors
 :user:`Greyisheep`,
 :user:`HassnHamada`,
 :user:`ianspektor`,
+:user:`javiber`,
 :user:`julian-fong`,
 :user:`julnow`,
 :user:`KaustubhUp025`,
