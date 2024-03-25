@@ -374,7 +374,7 @@ must not be copied or otherwise proliferated.
 ------------------
 
 This Code of Conduct is a living document,
-maintanined and developed by the ``sktime`` project and its contributors.
+maintained and developed by the ``sktime`` project and its contributors.
 
 Its original form is adapted from the `The Turing
 Way <https://github.com/alan-turing-institute/the-turing-way>`__ project
