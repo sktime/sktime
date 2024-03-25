@@ -190,6 +190,7 @@ Maintenance
 * [MNT] run ``update-contributors`` workflow only on PR by (:pr:`6133`) :user:`fkiraly`
 * [MNT] temporary skip sporadically failing tests for ``ShapeletTransformPyts`` (:pr:`6172`) :user:`fkiraly`
 * [MNT] enable concurrency settings in 'Install and Test' GHA workflow (:pr:`6074`) :user:`MEMEO-PRO`
+* [MNT] temporary skip for some sporadic failures on ``main`` (:pr:`6208`) :user:`fkiraly`
 
 
 Fixes
