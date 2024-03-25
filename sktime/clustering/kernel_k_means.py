@@ -48,7 +48,7 @@ class TimeSeriesKernelKMeans(_TslearnAdapter, BaseClusterer):
         computations.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See scikit-learns'
-        ``Glossary <https://scikit-learn.org/stable/glossary.html#term-n-jobs>``_
+        `Glossary <https://scikit-learn.org/stable/glossary.html#term-n-jobs>`_
         for more details.
     random_state: int or np.random.RandomState instance or None, defaults = None
         Determines random number generation for centroid initialization.
