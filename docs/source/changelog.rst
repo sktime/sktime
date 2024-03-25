@@ -185,7 +185,7 @@ Maintenance
 * [MNT] Fix failing tests due to ``tensorflow`` update (:pr:`6098`) :user:`benHeid`
 * [MNT] silence sporadic failure in ``test_evaluate_error_score`` (:pr:`6058`) :user:`fkiraly`
 * [MNT] update ``statsforecast`` version in ``forecasting`` extra  (:pr:`6064`) :user:`yarnabrina`
-* [MNT] Docker files updated by (:pr:`6076`) :user:`deysanjeeb` 
+* [MNT] Docker files updated by (:pr:`6076`) :user:`deysanjeeb`
 * [MNT] deprecation action timing for ``Catch22`` changes  (:pr:`6123`) :user:`fkiraly`
 * [MNT] run ``update-contributors`` workflow only on PR by (:pr:`6133`) :user:`fkiraly`
 * [MNT] temporary skip sporadically failing tests for ``ShapeletTransformPyts`` (:pr:`6172`) :user:`fkiraly`
