@@ -18,8 +18,194 @@ available on GitHub.
 For upcoming changes and next releases, see our `milestones <https://github.com/sktime/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
 For our long-term plan, see our :ref:`roadmap`.
 
-Version 0.27.1 - 2024-03-23
+Version 0.27.1 - 2024-03-25
 ---------------------------
+
+Enhancements
+~~~~~~~~~~~~
+
+* [ENH] Refactored and improved ``Catch22`` transformer - support for column names, short aliases, refactor to ``pd.Series``, ``sktime`` native parallelization (:pr:`6002`) :user:`julnow`
+* [ENH] ``TemporianTransformer`` implementation (:pr:`5980`) :user:`ianspektor`
+* [ENH] added test params to ``RNNNetwork`` on 3429 (:pr:`6155`) :user:`julian-fong`
+* [DOC] in ``BaseSeriesAnnotator``, document the ``int_label`` option (:pr:`6143`) :user:`Alex-JG3`
+* [MNT] create build tool to check invalid backticks (:pr:`6088`) :user:`geetu040`
+* [ENH] ``NeuralForecastRNN`` should auto-detect ``freq`` (:pr:`6039`) :user:`geetu040`
+* [ENH] forecasting tuners, ``return_n_best_forecasters=-1`` to return performances of all forecasters (:pr:`6031`) :user:`HassnHamada`
+* [BUG] Fix the ``colalign`` functionality to ``ScipyDist`` class as specified in the docstrings (:pr:`6110`) :user:`fnhirwa`
+* [ENH] ``tsbootstrap`` adapter (:pr:`5887`) :user:`benHeid`
+* [ENH] remove unnecessary line in ``all_estimators`` (:pr:`6103`) :user:`fkiraly`
+* [ENH] add new test parameter sets for ````TimeSeriesKMeansTslearn```` (:pr:`6195`) :user:`shankariraja`
+* [ENH] ``MultiplexRegressor`` - autoML multiplexer for time series regressors (:pr:`6075`) :user:`ksharma6`
+* [ENH] test suite for splitters (:pr:`6051`) :user:`fkiraly`
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] Fix invalid use of single-grave in docstrings (:pr:`6023`) :user:`geetu040`
+* [DOC] corrected Discord channel mention in developer guide (:pr:`6163`) :user:`shankariraja`
+* [DOC] add credit to :user:`rikstarmans in ``FallbackForecaster`` (:pr:`6069`) :user:`fkiraly`
+* [DOC] Added an example to MLPRegressor #4264  (:pr:`6135`) :user:`vandit98`
+* [DOC] in ``BaseSeriesAnnotator``, document the ``int_label`` option (:pr:`6143`) :user:`Alex-JG3`
+* [DOC] fix typo in ``_registry.py`` (:pr:`6160`) :user:`pranavvp16`
+* [MNT] create build tool to check invalid backticks (:pr:`6088`) :user:`geetu040`
+*  [DOC] minor clarifications in mtype descriptions (:pr:`6078`) :user:`fkiraly`
+* [DOC] ExponentialSmoothing default method change from L-BFGS-B to SLSQP (:pr:`6186`) :user:`manuel-munoz-aguirre`
+* [DOC] fix missing exports in time series regression API ref (:pr:`6191`) :user:`fkiraly`
+* [DOC] add more examples to CoC from python software foundation CoC (:pr:`6185`) :user:`fkiraly`
+* [BUG] search function for estimator overview not working (:pr:`6105`) :user:`duydl`
+* [DOC] correct deprecation versions in ``BaseDeepClassifier`` docstring (:pr:`6197`) :user:`fkiraly`
+* [DOC] update maintainer tag information in docs and PR template (:pr:`6072`) :user:`fkiraly`
+* [DOC] Add hall-of-fame widget to README (Added the Hall-of-fame section) #3716  (:pr:`6203`) :user:`KaustubhUp025`
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] [Dependabot](deps-dev): Update holidays requirement from <0.45,>=0.29 to >=0.29,<0.46 (:pr:`6164`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps-dev): Update dtw-python requirement from <1.4,>=1.3 to >=1.3,<1.5 (:pr:`6165`) :user:`dependabot[bot]`
+* [MNT] temporary skip sporadically failing tests for ``ShapeletTransformPyts`` (:pr:`6172`) :user:`fkiraly`
+* [MNT] create build tool to check invalid backticks (:pr:`6088`) :user:`geetu040`
+* [MNT] [Dependabot](deps): Bump tj-actions/changed-files from 42 to 43 (:pr:`6125`) :user:`dependabot[bot]`
+* Revert "[MNT] run ``update-contributors`` workflow only on PR" (:pr:`6173`) :user:`fkiraly`
+* [MNT] decouple ``catch22`` module from ``numba`` utilities (:pr:`6101`) :user:`fkiraly`
+* [MNT] bound ``temporian<0.8.0`` (:pr:`6184`) :user:`fkiraly`
+* &duydl [MNT] Ensure Update Contributors does not run on main (:pr:`6189`) :user:`Greyisheep`
+
+Fixes
+~~~~~
+
+* [BUG] Resolved wrong arg name ``lr`` in ``SimpleRNNClassifier`` and regressor, fix minor ``batch_size`` param issue in ``ResNetClassifier`` (:pr:`6154`) :user:`vandit98`
+* [BUG] fix ``super`` calls in deep learning classifiers and regressors (:pr:`6139`) :user:`fkiraly`
+* [BUG] fix network construction in ``InceptionTimeRegressor`` (:pr:`6140`) :user:`fkiraly`
+* [ENH][BUG] Second test parameter set for shapeDTW (:pr:`6093`) :user:`Xinyu-Wu-0000`
+* &fspinna [BUG] fix ``FeatureUnion`` for primitive outputs (:pr:`6079`) :user:`fkiraly`
+* [BUG] fix ``BaseForecaster.predict_var`` default if ``predict_proba`` is implemented (:pr:`6067`) :user:`fkiraly`
+* [BUG] Ignore ``ValueError`` on ``pd.infer_freq`` when index has fewer than 3 values (:pr:`6097`) :user:`tpvasconcelos`
+* [BUG] search function for estimator overview not working (:pr:`6105`) :user:`duydl`
+* [BUG] resolve redundant or problematic statements in ``numba`` bounding matrix routines (:pr:`6183`) :user:`albertoazzari`
+
+Other
+~~~~~
+
+* [DOC]  Added example for lstmfcn and  mlp  # 4264 (:pr:`6136`) :user:`vandit98`
+* [MNT] initialize change cycle (0.28.0) for renaming ``cINNForecaster`` to ``CINNForecaster`` (:pr:`6121`) :user:`geetu040`
+* [ENH] automatic inference of file ending in data loaders for single file types (:pr:`6045`) :user:`SaiRevanth25`
+* [DOC] Added an example to DummyClassifier #4264 (:pr:`6146`) :user:`YashKhare20`
+
+
+
+## What's Changed
+### 🚀 Features
+* [ENH] Migrate DL regressors from sktime-dl: CNTC, InceptionTime, MACNN by :user:`nilesh05apr` (:pr:`6038`)
+* [ENH] ``neuralforecast`` based LSTM model by :user:`pranavvp16` (:pr:`6047`)
+* [ENH] Refactored and improved ``Catch22`` transformer - support for column names, short aliases, refactor to ``pd.Series``, ``sktime`` native parallelization by :user:`julnow` (:pr:`6002`)
+* [ENH] add test cases for ``HampelFilter`` by :user:`fkiraly` (:pr:`6087`)
+* Add a ``test_mstl`` module checking if ``transform`` returns desired components by :user:`kcentric` (:pr:`6084`)
+* [ENH] remove private methods from parameters of ``ProximityForest``, ``ProximityTree``, and ``ProximityStump`` by :user:`fnhirwa` (:pr:`6046`)
+* [ENH] Second test parameter set for Kalman Filter by :user:`Xinyu-Wu-0000` (:pr:`6095`)
+* [ENH] fix ``ForecastingHorizon.freq`` handling for ``pandas 2.2.X`` by :user:`fkiraly` (:pr:`6057`)
+* [ENH] Shapelet transform interfacing ``pyts`` by :user:`Abhay-Lejith` (:pr:`6082`)
+* [ENH] ``TemporianTransformer`` implementation by :user:`ianspektor` (:pr:`5980`)
+* [ENH] added test params to ``RNNNetwork`` on 3429 by :user:`julian-fong` (:pr:`6155`)
+* [DOC] in ``BaseSeriesAnnotator``, document the ``int_label`` option by :user:`Alex-JG3` (:pr:`6143`)
+* [MNT] create build tool to check invalid backticks by :user:`geetu040` (:pr:`6088`)
+* [ENH] ``NeuralForecastRNN`` should auto-detect ``freq`` by :user:`geetu040` (:pr:`6039`)
+* [ENH] forecasting tuners, ``return_n_best_forecasters=-1`` to return performances of all forecasters by :user:`HassnHamada` (:pr:`6031`)
+* [BUG] Fix the ``colalign`` functionality to ``ScipyDist`` class as specified in the docstrings by :user:`fnhirwa` (:pr:`6110`)
+* [ENH] ``tsbootstrap`` adapter by :user:`benHeid` (:pr:`5887`)
+* [ENH] remove unnecessary line in ``all_estimators`` by :user:`fkiraly` (:pr:`6103`)
+* [ENH] add new test parameter sets for ``TimeSeriesKMeansTslearn`` by :user:`shankariraja` (:pr:`6195`)
+* [ENH] ``MultiplexRegressor`` - autoML multiplexer for time series regressors by :user:`ksharma6` (:pr:`6075`)
+* [ENH] test suite for splitters by :user:`fkiraly` (:pr:`6051`)
+### 🐛 Bug Fixes
+* [BUG] fix ``BaseRegressor.score`` method failing with ``sklearn.metrics r2_score got an unexpected keyword argument 'normalize'`` by :user:`Cyril-Meyer` (:pr:`6019`)
+* [BUG] Fixed SARIMAX fail when X is passed to predict but not fit by :user:`Abhay-Lejith` (:pr:`6005`)
+* [BUG] fix ``deep_equals`` when comparing ``ForecastingHorizon`` of different lengths by :user:`MBristle` (:pr:`5954`)
+* [MNT] enable concurrency settings in 'Install and Test' GHA workflow by :user:`MEMEO-PRO` (:pr:`6074`)
+* [BUG] Fix unexpected NaN values in ``summarize.py``  by :user:`ShreeshaM07` (:pr:`6081`)
+* [BUG] Resolved wrong arg name ``lr`` in ``SimpleRNNClassifier`` and regressor, fix minor ``batch_size`` param issue in ``ResNetClassifier`` by :user:`vandit98` (:pr:`6154`)
+* [BUG] fix ``super`` calls in deep learning classifiers and regressors by :user:`fkiraly` (:pr:`6139`)
+* [BUG] fix network construction in ``InceptionTimeRegressor`` by :user:`fkiraly` (:pr:`6140`)
+* [ENH][BUG] Second test parameter set for shapeDTW by :user:`Xinyu-Wu-0000` (:pr:`6093`)
+* &fspinna [BUG] fix ``FeatureUnion`` for primitive outputs by :user:`fkiraly` (:pr:`6079`)
+* [BUG] fix ``BaseForecaster.predict_var`` default if ``predict_proba`` is implemented by :user:`fkiraly` (:pr:`6067`)
+* [BUG] Ignore ``ValueError`` on ``pd.infer_freq`` when index has fewer than 3 values by :user:`tpvasconcelos` (:pr:`6097`)
+* [BUG] search function for estimator overview not working by :user:`duydl` (:pr:`6105`)
+* [BUG] resolve redundant or problematic statements in ``numba`` bounding matrix routines by :user:`albertoazzari` (:pr:`6183`)
+### Other Changes
+* [DOC] Fix syntax error in "getting started" example code block for Time Series Regression by :user:`sahusiddharth` (:pr:`6022`)
+* [DOC] Added blank lines to properly render ``FourierFeatures`` docstring, ``sp_list`` (#5932) by :user:`tiloye` (:pr:`5984`)
+* [ENH] use ``Index.unique`` instead of ``set`` in conversion from ``pd-multiindex`` to ``df-list`` mtype by :user:`fkiraly` (:pr:`6007`)
+* [MNT] Fix typos in changelog by :user:`yarnabrina` (:pr:`6034`)
+* [MNT] update codecov configuration and badge URL by :user:`yarnabrina` (:pr:`6041`)
+* Revert "[MNT] update codecov configuration and badge URL" by :user:`yarnabrina` (:pr:`6049`)
+* [DOC] add missing author credits of :user:`ivarzap by :user:`fkiraly` (:pr:`6050`)
+* [DOC] fix various typos by :user:`fkiraly` (:pr:`6043`)
+* [DOC] clarification regarding immutability of ``self``-params in extension templates by :user:`fkiraly` (:pr:`6053`)
+* [DOC] Fix invalid use of single-grave in docstrings by :user:`geetu040` (:pr:`6023`)
+* [MNT] silence sporadic failure in ``test_evaluate_error_score`` by :user:`fkiraly` (:pr:`6058`)
+* [MNT] update ``statsforecast`` version in ``forecasting`` extra by :user:`yarnabrina` (:pr:`6064`)
+* [ENH] Examples for ``YtoX`` transformer by :user:`fkiraly` (:pr:`6028`)
+* [MNT] Docker files updated by :user:`deysanjeeb` (:pr:`6076`)
+* [DOC] Added an example to CNNRegressor #4264 by :user:`meraldoantonio` (:pr:`6102`)
+* [MNT] bound ``tensorflow<2.16.0`` by :user:`fkiraly` (:pr:`6117`)
+* [MNT] correct deprecation action timing for ``Catch22`` changes by :user:`fkiraly` (:pr:`6123`)
+* [ENH] Examples for ``YtoX`` transformer docstring by :user:`geetu040` (:pr:`6059`)
+* [ENH] Adds ``MSTL`` import statement in ``detrend`` by :user:`geetu040` (:pr:`6116`)
+* [BUG] Fix failing tests due to tensorflow update by :user:`benHeid` (:pr:`6098`)
+* [MNT] run ``update-contributors`` workflow only on PR by :user:`fkiraly` (:pr:`6133`)
+* [DOC] corrected Discord channel mention in developer guide by :user:`shankariraja` (:pr:`6163`)
+* [DOC] add credit to :user:`rikstarmans in ``FallbackForecaster`` by :user:`fkiraly` (:pr:`6069`)
+* [DOC] Added an example to MLPRegressor #4264  by :user:`vandit98` (:pr:`6135`)
+* [MNT] temporary skip sporadically failing tests for ``ShapeletTransformPyts`` by :user:`fkiraly` (:pr:`6172`)
+* [DOC] fix typo in ``_registry.py`` by :user:`pranavvp16` (:pr:`6160`)
+* [DOC]  Added example for lstmfcn and  mlp  # 4264 by :user:`vandit98` (:pr:`6136`)
+* Revert "[MNT] run ``update-contributors`` workflow only on PR" by :user:`fkiraly` (:pr:`6173`)
+* [MNT] decouple ``catch22`` module from ``numba`` utilities by :user:`fkiraly` (:pr:`6101`)
+* [DOC] minor clarifications in mtype descriptions by :user:`fkiraly` (:pr:`6078`)
+* [MNT] bound ``temporian<0.8.0`` by :user:`fkiraly` (:pr:`6184`)
+* [MNT] initialize change cycle (0.28.0) for renaming ``cINNForecaster`` to ``CINNForecaster`` by :user:`geetu040` (:pr:`6121`)
+* [DOC] ExponentialSmoothing default method change from L-BFGS-B to SLSQP by :user:`manuel-munoz-aguirre` (:pr:`6186`)
+* [DOC] fix missing exports in time series regression API ref by :user:`fkiraly` (:pr:`6191`)
+* [ENH] automatic inference of file ending in data loaders for single file types by :user:`SaiRevanth25` (:pr:`6045`)
+* [DOC] add more examples to CoC from python software foundation CoC by :user:`fkiraly` (:pr:`6185`)
+* &duydl [MNT] Ensure Update Contributors does not run on main by :user:`Greyisheep` (:pr:`6189`)
+* [DOC] correct deprecation versions in ``BaseDeepClassifier`` docstring by :user:`fkiraly` (:pr:`6197`)
+* [DOC] update maintainer tag information in docs and PR template by :user:`fkiraly` (:pr:`6072`)
+* [DOC] Added an example to DummyClassifier #4264 by :user:`YashKhare20` (:pr:`6146`)
+* [DOC] Add hall-of-fame widget to README (Added the Hall-of-fame section) #3716  by :user:`KaustubhUp025` (:pr:`6203`)
+
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`albertoazzari`,
+:user:`Alex-JG3`,
+:user:`benHeid`,
+:user:`deysanjeeb`,
+:user:`duydl`,
+:user:`fkiraly`,
+:user:`fnhirwa`,
+:user:`geetu040`,
+:user:`Greyisheep`,
+:user:`HassnHamada`,
+:user:`ianspektor`,
+:user:`julian-fong`,
+:user:`julnow`,
+:user:`KaustubhUp025`,
+:user:`kcentric`,
+:user:`ksharma6`,
+:user:`manuel-munoz-aguirre`,
+:user:`MEMEO-PRO`,
+:user:`meraldoantonio`,
+:user:`pranavvp16`,
+:user:`SaiRevanth25`,
+:user:`sahusiddharth`,
+:user:`shankariraja`,
+:user:`tiloye`,
+:user:`tpvasconcelos`,
+:user:`vandit98`,
+:user:`Xinyu-Wu-0000`,
+:user:`YashKhare20`
 
 
 Version 0.27.0 - 2024-02-28
