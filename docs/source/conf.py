@@ -226,7 +226,9 @@ html_context = {
 }
 html_favicon = "images/sktime-favicon.ico"
 html_sidebars = {
-    "**": ["sidebar-nav-bs.html", "sidebar-ethical-ads.html"]
+    "**": ["sidebar-nav-bs.html", "sidebar-ethical-ads.html"],
+    "index": [],
+    "get_started": [],
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
