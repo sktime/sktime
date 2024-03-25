@@ -2637,13 +2637,51 @@
       ]
     },
     {
-      "login": "ksharma6",
-      "name": "Kishen Sharma",
-      "avatar_url": "https://avatars.githubusercontent.com/u/142558351?v=4",
-      "profile": "https://github.com/ksharma6",
+      "login": "ianspektor",
+      "name": "Ian Spektor",
+      "avatar_url": "https://avatars.githubusercontent.com/u/49082859?v=4",
+      "profile": "https://github.com/ianspektor",
       "contributions": [
         "code",
-        "test"
+        "doc"
+      ]
+    },
+    {
+      "login": "javiber",
+      "name": "Javier Berneche",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3588715?v=4",
+      "profile": "https://github.com/javiber",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "fnhirwa",
+      "name": "Felix Hirwa Nshuti",
+      "avatar_url": "https://avatars.githubusercontent.com/u/67042527?s=64&v=4",
+      "profile": "https://github.com/fnhirwa",
+      "contributions": [
+        "code",
+        "maintenance"
+      ]
+    },
+    {
+      "login": "vandit98",
+      "name": "Vandit Tyagi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/91458535?v=4",
+      "profile": "https://github.com/vandit98",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "manuel-munoz-aguirre",
+      "name": "Manuel Muñoz Aguirre",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5576458?v=4",
+      "profile": "https://github.com/manuel-munoz-aguirre",
+      "contributions": [
+        "doc"
       ]
     }
   ]
