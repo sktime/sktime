@@ -20,7 +20,7 @@ State:
 __all__ = [
     "BaseRegressor",
 ]
-__author__ = ["mloning", "fkiraly"]
+__author__ = ["mloning", "fkiraly", "ksharma6"]
 
 import time
 
@@ -130,6 +130,27 @@ class BaseRegressor(BasePanelMixin):
                 return RegressorPipeline(regressor=self, transformers=[other])
         elif is_sklearn_transformer(other):
             return TabularToSeriesAdaptor(other) * self
+        else:
+            return NotImplemented
+
+    def __or__(self, other):
+        """Magic | method, return MultiplexRegressor.
+
+        Implemented for `other` being either a MultiplexRegressor or a regressor.
+
+        Parameters
+        ----------
+        other: `sktime` regressor or sktime MultiplexRegressor
+
+        Returns
+        -------
+        MultiplexRegressor object
+        """
+        from sktime.regression.compose import MultiplexRegressor
+
+        if isinstance(other, MultiplexRegressor) or isinstance(other, BaseRegressor):
+            multiplex_self = MultiplexRegressor([self])
+            return multiplex_self | other
         else:
             return NotImplemented
 

@@ -2669,6 +2669,16 @@
       ]
     },
     {
+      "login": "YashKhare20",
+      "name": "Yash Khare",
+      "avatar_url": "https://avatars.githubusercontent.com/u/92680366?s=400",
+      "profile": "https://github.com/YashKhare20",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
       "login": "ianspektor",
       "name": "Ian Spektor",
       "avatar_url": "https://avatars.githubusercontent.com/u/49082859?v=4",
@@ -2703,6 +2713,15 @@
       "name": "Vandit Tyagi",
       "avatar_url": "https://avatars.githubusercontent.com/u/91458535?v=4",
       "profile": "https://github.com/vandit98",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "manuel-munoz-aguirre",
+      "name": "Manuel Muñoz Aguirre",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5576458?v=4",
+      "profile": "https://github.com/manuel-munoz-aguirre",
       "contributions": [
         "doc"
       ]
