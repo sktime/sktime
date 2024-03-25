@@ -231,6 +231,7 @@ Transformations
 
 * [BUG] fix ``FeatureUnion`` for primitive outputs (:pr:`6079`) :user:`fkiraly`, :user:`fspinna`
 * [BUG] Fix unexpected NaN values in ``Summarizer`` (:pr:`6081`) :user:`ShreeshaM07`
+* [BUG] Update ``_shapelet_transform_numba.py`` to improve numerical stability (:pr:`6141`) :user:`stevcabello`
 
 Test framework
 ^^^^^^^^^^^^^^
@@ -275,6 +276,7 @@ Contributors
 :user:`SaiRevanth25`,
 :user:`sahusiddharth`,
 :user:`shankariraja`,
+:user:`stevcabello`,
 :user:`tiloye`,
 :user:`tpvasconcelos`,
 :user:`vandit98`,
