@@ -74,7 +74,8 @@ class KNeighborsTimeSeriesClassifierPyts(_PytsAdapter, BaseClassifier):
 
     Examples
     --------
-    >>> from sktime.classification.distance_based import KNeighborsTimeSeriesClassifierPyts  # doctest: +SKIP # noqa
+    >>> import sktime.classification.distance_based as clf_db
+    >>> from clf_db import KNeighborsTimeSeriesClassifierPyts
     >>> from sktime.datasets import load_unit_test  # doctest: +SKIP
     >>> X_train, y_train = load_unit_test(split="train")  # doctest: +SKIP
     >>> X_test, y_test = load_unit_test(split="test")  # doctest: +SKIP
