@@ -463,11 +463,6 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
 
         Note - parameters estimated by EM algorithm assumed to be constant.
 
-    backend: str, optional (default="pykalman")
-        The pykalman package has multiple forks released on pypi, at current.
-        Until the forks are merged, the user can choose the backend to use.
-        pykalman-bardo has fixes for python 3.11, 3.12, but is not the official project.
-
     See Also
     --------
     KalmanFilterTransformerFP :
@@ -572,12 +567,7 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
         initial_state_covariance=None,
         estimate_matrices=None,
         denoising=False,
-        backend="pykalman",
     ):
-        if backend != "pykalman":
-            self.set_tags(python_dependencies=backend)
-            self.set_tags(python_dependencies_alias={backend: "pykalman"})
-
         super().__init__(
             state_dim=state_dim,
             state_transition=state_transition,
@@ -593,7 +583,6 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
         self.measurement_offsets = measurement_offsets
         self.estimate_matrices = estimate_matrices
         self.denoising = denoising
-        self.backend = backend
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -1097,7 +1086,6 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
             obj=self,
             condition=(self.estimate_matrices is not None),
             package="pykalman",
-            package_import_alias={"pykalman": "pykalman"},
             severity="error",
             msg=(
                 f"{self.__class__.__name__}'s matrix parameter estimation "
