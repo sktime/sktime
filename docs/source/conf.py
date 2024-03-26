@@ -229,6 +229,7 @@ html_sidebars = {
     "**": ["sidebar-nav-bs.html", "sidebar-ethical-ads.html"],
     "index": [],
     "get_started": [],
+    "search": [],
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
