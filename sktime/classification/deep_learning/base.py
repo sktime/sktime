@@ -236,8 +236,8 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         legacy_save : bool, default = True
             whether to use the legacy saving method for the model. If
             tensorflow >= 2.16.0 is installed, this is ignored.
-            The default will switch to False in sktime 0.28.0, and the
-            legacy saving method will be removed in sktime 0.29.0.
+            The default will switch to False in sktime 0.29.0, and the
+            legacy saving method will be removed in sktime 0.30.0.
 
         Returns
         -------
