@@ -246,3 +246,40 @@ class KNeighborsTimeSeriesRegressor(BaseRegressor):
         y_pred = self.knn_estimator_.predict(dist_mat)
 
         return y_pred
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
+        """
+        param1 = {
+            'n_neighbors': 1,
+            'weights': 'uniform',
+            'algorithm': 'auto',
+            'distance': 'euclidean',
+            'distance_params': None,
+            'n_jobs': None,
+        }
+        param2 = {
+            'n_neighbors': 3,
+            'weights': 'distance',
+            'algorithm': 'ball_tree',
+            'distance': 'dtw',
+            'distance_params': {'window': 0.5},
+            'n_jobs': -1,
+        }
+        return [param1, param2]
