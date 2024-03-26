@@ -2,9 +2,9 @@
 
 # You can set these variables from the command line.
 SPHINXBUILD        = sphinx-build
-SPHINXOPTS         = 
+SPHINXOPTS         =
 SPHINXAUTOBUILD    = sphinx-autobuild
-SPHINXAUTOOPTS     = 
+SPHINXAUTOOPTS     =
 SOURCEDIR          = .
 BUILDDIR           = ../build
 SKTIMEDIR          = ../../sktime
@@ -15,13 +15,13 @@ SKTIMEDIR          = ../../sktime
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)"
 
-clean: 
+clean:
 	rm -rf $(BUILDDIR)
 	@echo "Deleted directory $(BUILDDIR)."
 
-# $(O) is meant as a shortcut for custom options. 
-# i.e to log stderr into a seprate file: 
-# make build O="--no-color 2> build_warnings.log"  
+# $(O) is meant as a shortcut for custom options.
+# i.e to log stderr into a seprate file:
+# make build O="--no-color 2> build_warnings.log"
 build:
 #	./symlink_examples.sh
 	$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
