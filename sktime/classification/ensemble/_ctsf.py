@@ -203,7 +203,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
 
     def __init__(
         self,
-        estimator,
+        estimator=None,
         n_estimators=100,
         max_depth=None,
         min_samples_split=2,
