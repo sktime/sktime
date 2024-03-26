@@ -427,6 +427,12 @@ ESTIMATOR_TAG_REGISTER = [
         key-value pairs are package name, import name",
     ),
     (
+        "env_marker",
+        "estimator",
+        "str",
+        "environment marker (PEP 508) requirement for estimator, or None = no marker",
+    ),
+    (
         "requires_cython",
         "estimator",
         "bool",
