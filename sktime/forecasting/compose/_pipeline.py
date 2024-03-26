@@ -1768,7 +1768,9 @@ class ForecastX(BaseForecaster):
             "forecaster_X_exogeneous": "complement",
         }
 
-        return [params1, params2, params3]
+        params4 = {"forecaster_y": fy, "predict_behaviour": "use_actuals"}
+
+        return [params1, params2, params3, params4]
 
 
 class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
