@@ -32,6 +32,7 @@ Dependency changes
 ~~~~~~~~~~~~~~~~~~
 
 * ``sktime`` now supports ``pandas`` 2.2.X
+* ``temporian`` (transformations soft dependency) bounds have been updated to ``>=0.7.0,<0.9.0``.
 * ``pykalman-bardo`` dependencies have been replaced by the original fork ``pykalman``.
   ``pykalman-bardo`` has been merged back into ``pykalman``,
   which is no longer abandoned.
@@ -101,8 +102,11 @@ Contents
 
 * [MNT] 0.28.0 deprecations and change actions (:pr:`6198`) :user:`fkiraly`
 * [MNT] raise ``pandas`` bound to ``pandas<2.3.0`` (:pr:`5841`) :user:`fkiraly`
+* [MNT] update ``temporian`` bound to ``<0.9.0,!=0.8.0`` (:pr:`6222`) :user:`fkiraly`
 * [MNT] revert switch from ``pykalman`` to ``pykalman-bardo`` (:pr:`6114`) :user:`fkiraly`
 * [MNT] [Dependabot](deps-dev): Update ``pytest-cov`` requirement from ``<4.2,>=4.1`` to ``>=4.1,<5.1`` (:pr:`6215`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Bump ``tj-actions/changed-files`` from 43 to 44 (:pr:`6226`) :user:`dependabot[bot]`
+* [ENH] stricter condition for ``get_test_params`` not failing in repo soft dependency isolation tests (:pr:`6223`) :user:`fkiraly`
 
 
 Version 0.27.1 - 2024-03-25
