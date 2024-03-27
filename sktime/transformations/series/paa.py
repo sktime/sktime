@@ -5,7 +5,6 @@ __author__ = ["steenrotsman"]
 import numpy as np
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.warnings import warn
 
 
 class PAA(BaseTransformer):
@@ -38,13 +37,13 @@ class PAA(BaseTransformer):
     Examples
     --------
     >>> from numpy import arange
-    >>> from sktime.transformations.series.paa import PAA2
+    >>> from sktime.transformations.series.paa import PAA
 
     >>> X = arange(10)
-    >>> paa = PAA2(frames=3)
+    >>> paa = PAA(frames=3)
     >>> paa.fit_transform(X)  # doctest: +SKIP
     array([1.2, 4.5, 7.8])
-    >>> paa = PAA2(frame_size=3)  # doctest: +SKIP
+    >>> paa = PAA(frame_size=3)  # doctest: +SKIP
     array([1, 4, 7, 9])
     """
 
@@ -69,20 +68,6 @@ class PAA(BaseTransformer):
         self.frame_size = frame_size
 
         super().__init__()
-
-        # TODO 0.28.0: remove the deprecation warning
-        warn(
-            "Since sktime 0.27.0, PAA2 is the primary PAA implementation in "
-            "sktime, and has been renamed to PAA. "
-            "PAA2 is available under both its current and future name at its "
-            "current location, imports under the deprecated name PAA2 will be possible"
-            "until 0.28.0. "
-            "To prepare for the name change, replace imports of PAA2 from "
-            "sktime.transformations.series.paa by imports of PAA from the same "
-            "module.",
-            DeprecationWarning,
-            obj=self,
-        )
 
         self._check_params()
 
@@ -167,7 +152,3 @@ class PAA(BaseTransformer):
 
         if self.frames < 1 and not self.frame_size:
             raise ValueError("frames must be at least 1.")
-
-
-# TODO 0.28.0: remove the alias line altogether
-PAA2 = PAA

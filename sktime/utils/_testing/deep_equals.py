@@ -16,7 +16,7 @@ import numpy as np
 import pandas as pd
 
 
-# todo 0.28.0: check whether scikit-base>=0.6.1 lower bound is 0.6.1 or higher
+# todo 0.29.0: check whether scikit-base>=0.6.1 lower bound is 0.6.1 or higher
 # if yes, remove this legacy function and use the new one from sktime.utils.deep_equals
 def deep_equals(x, y, return_msg=False):
     """Test two objects for equality in value.

@@ -117,7 +117,7 @@ def get_params_mapping(params):
     """Transform parameters names.
 
     From KalmanFilterTransformerPK, KalmanFilterTransformerFP naming forms to
-    `pykalman-bardo`'s naming form.
+    `pykalman`'s naming form.
     """
     params_mapping = {
         "state_transition": "transition_matrices",
@@ -150,7 +150,7 @@ def init_kf_pykalman(
     estimate_matrices=None,
     denoising=False,
 ):
-    """Initiate instance of `pykalman-bardo`'s `KalmanFilter`."""
+    """Initiate instance of `pykalman`'s `KalmanFilter`."""
     from pykalman.standard import KalmanFilter
 
     em_vars = get_params_mapping(params=estimate_matrices)
@@ -200,12 +200,8 @@ def init_kf_filterpy(measurements, adapter, n=10, y=None):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies(
-        "pykalman-bardo",
-        package_import_alias={"pykalman-bardo": "pykalman"},
-        severity="none",
-    ),
-    reason="skip test if required soft dependency pykalman-bardo not available",
+    not _check_soft_dependencies("pykalman", severity="none"),
+    reason="skip test if required soft dependency pykalman not available",
 )
 @pytest.mark.parametrize(
     "params, measurements",
@@ -320,7 +316,7 @@ def test_transform_and_smooth_pk(params, measurements):
 
     Creating two instances of KalmanFilterTransformerPK, one instance with parameter
     `denoising` set to False, and the other's set to True. Compare result with
-    `pykalman-bardo`'s `filter` and `smooth`.
+    `pykalman`'s `filter` and `smooth`.
     """
     mask_measurements = np.ma.masked_invalid(np.copy(measurements))
 
@@ -349,16 +345,8 @@ def test_transform_and_smooth_pk(params, measurements):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies(
-        "pykalman-bardo",
-        "filterpy",
-        package_import_alias={"pykalman-bardo": "pykalman"},
-        severity="none",
-    ),
-    reason=(
-        "skip test if required soft dependencies pykalman-bardo, "
-        "filterpy not available"
-    ),
+    not _check_soft_dependencies("pykalman", "filterpy", severity="none"),
+    reason="skip test if required soft dependencies pykalman, filterpy not available",
 )
 @pytest.mark.parametrize(
     "classes, params, measurements",
@@ -561,7 +549,7 @@ def test_em(classes, params, measurements):
     """Test adapters matrix estimation.
 
     Call `fit` of input adapter/s, and compare all matrix parameters with
-    `pykalman-bardo`'s matrix parameters returned from `em`. This test
+    `pykalman`'s matrix parameters returned from `em`. This test
     is useful for both KalmanFilterTransformerPK and
     KalmanFilterTransformerFP.
     """
@@ -592,16 +580,8 @@ def test_em(classes, params, measurements):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies(
-        "pykalman-bardo",
-        "filterpy",
-        package_import_alias={"pykalman-bardo": "pykalman"},
-        severity="none",
-    ),
-    reason=(
-        "skip test if required soft dependencies pykalman-bardo, "
-        "filterpy not available"
-    ),
+    not _check_soft_dependencies("pykalman", "filterpy", severity="none"),
+    reason="skip test if required soft dependencies pykalman, filterpy not available",
 )
 @pytest.mark.parametrize(
     "classes, params, measurements",
