@@ -45,8 +45,56 @@ Deprecations and removals
 Forecasting
 ^^^^^^^^^^^
 
+* in ``ProphetPiecewiseLinearTrendForecaster``, the seasonality parameters
+  ``yearly_seasonality``, ``weekly_seasonality`` and ``daily_seasonality``
+  now have default values of ``False``.
+  To retain previous behaviour, set these parameters explicitly to ``"auto"``.
+
 Transformations
 ^^^^^^^^^^^^^^^
+
+* The ``n_jobs`` parameter in the ``Catch22`` transformer is deprecated
+  and will be removed in 0.29.0.
+  Users should pass parallelization backend parameters via ``set_config`` instead.
+  To specify ``n_jobs``, use any of the backends supporting it in the
+  ``backend:parallel`` configuration, such as ``"loky"`` or ``"multithreading"``.
+  The ``n_jobs`` parameter should be passed via the
+  ``backend:parallel:params`` configuration.
+  To retain previous behaviour, with a specific setting of ``n_jobs=x``,
+  use ``set_config(**{"backend:parallel": "loky", "backend:parallel:params": {"n_jobs": x}})``.
+* The ``n_jobs`` parameter in the ``Catch22Wrapper`` transformer has been removed.
+  Users should pass parallelization backend parameters via ``set_config`` instead.
+  To specify ``n_jobs``, use any of the backends supporting it in the
+  ``backend:parallel`` configuration, such as ``"loky"`` or ``"multithreading"``.
+  The ``n_jobs`` parameter should be passed via the
+  ``backend:parallel:params`` configuration.
+  To retain previous behaviour, with a specific setting of ``n_jobs=x``,
+  use ``set_config(**{"backend:parallel": "loky", "backend:parallel:params": {"n_jobs": x}})``.
+* ``panel.dictionary_based.PAA`` has been renamed to ``PAAlegacy`` in 0.27.0,
+  and ``sktime.transformations.series.PAA2`` has been renamed to ``PAA``.
+  ``PAA`` is now the primary PAA implementation in ``sktime``.
+  After completion of the deprecation cycle, the estimators are no longer available
+  under their previous names.
+  To migrate dependent code to use the new names, do one of the following:
+  1. replace use of ``PAA`` from ``sktime.transformations.panel.dictionary_based``
+  by use of ``PAA2`` from ``sktime.transformations.series.paa``, switching
+  parameter names appropriately, or
+  2. replace use of ``PAA`` from ``sktime.transformations.panel.dictionary_based``
+  by use of ``PAAlegacy`` from ``sktime.transformations.panel.dictionary_based``,
+  without change of parameter values.
+* ``panel.dictionary_based.SAX`` has been renamed to ``SAXlegacy`` in 0.27.0,
+  while ``sktime.transformations.series.SAX2`` has been renamed to ``SAX``.
+  ``SAX`` is now the primary SAX implementation in ``sktime``,
+  while the former ``SAX`` will continue to be available as ``SAXlegacy``.
+  After completion of the deprecation cycle, the estimators are no longer available
+  under their previous names.
+  To migrate dependent code to use the new names, do one of the following:
+  1. replace use of ``SAX`` from ``sktime.transformations.panel.dictionary_based``
+  by use of ``SAX2`` from ``sktime.transformations.series.paa``, switching
+  parameter names appropriately, or
+  2. replace use of ``SAX`` from ``sktime.transformations.panel.dictionary_based``
+  by use of ``SAXlegacy`` from ``sktime.transformations.panel.dictionary_based``,
+  without change of parameter values.
 
 Version 0.27.1 - 2024-03-25
 ---------------------------
