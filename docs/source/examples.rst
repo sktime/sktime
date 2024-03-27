@@ -68,5 +68,6 @@ Other
 .. nbgallery::
     :glob:
 
+    examples/00_sktime_intro.ipynb
     examples/04_benchmarking.ipynb
     examples/other/*
