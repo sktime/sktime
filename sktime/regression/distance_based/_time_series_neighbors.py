@@ -267,19 +267,19 @@ class KNeighborsTimeSeriesRegressor(BaseRegressor):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         param1 = {
-            'n_neighbors': 1,
-            'weights': 'uniform',
-            'algorithm': 'auto',
-            'distance': 'euclidean',
-            'distance_params': None,
-            'n_jobs': None,
+            "n_neighbors": 1,
+            "weights": "uniform",
+            "algorithm": "auto",
+            "distance": "euclidean",
+            "distance_params": None,
+            "n_jobs": None,
         }
         param2 = {
-            'n_neighbors': 3,
-            'weights': 'distance',
-            'algorithm': 'ball_tree',
-            'distance': 'dtw',
-            'distance_params': {'window': 0.5},
-            'n_jobs': -1,
+            "n_neighbors": 3,
+            "weights": "distance",
+            "algorithm": "ball_tree",
+            "distance": "dtw",
+            "distance_params": {"window": 0.5},
+            "n_jobs": -1,
         }
         return [param1, param2]
