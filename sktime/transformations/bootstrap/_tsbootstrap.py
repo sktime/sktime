@@ -131,6 +131,6 @@ class TSBootstrapAdapter(BaseTransformer):
                 },
             ]
         else:
-            params = []
+            params = {}
 
         return params
