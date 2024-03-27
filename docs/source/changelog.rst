@@ -31,7 +31,7 @@ For last non-maintenance content updates, see 0.27.1.
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
 
-* ``sktime`` now supports ``pandas`` 2.1.X
+* ``sktime`` now supports ``pandas`` 2.2.X
 * ``pykalman-bardo`` dependencies have been replaced by the original fork ``pykalman``.
   ``pykalman-bardo`` has been merged back into ``pykalman``,
   which is no longer abandoned.
