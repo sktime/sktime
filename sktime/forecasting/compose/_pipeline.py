@@ -1216,6 +1216,11 @@ class ForecastX(BaseForecaster):
     If ``columns`` argument is provided, will carry ``predict`` out only for the columns
     in ``columns``, and will use other columns in ``X`` unchanged.
 
+    If variables in ``columns`` are present in the provided ``X`` during ``predict``,
+    by default these are still forecasted and the forecasts are used for prediction of
+    ``y`` variables. This behaviour can be modified by passing ``predict_behaviour``
+    argument as ``"use_actuals"`` instead of the default value of ``"use_forecasts"``.
+
     The two forecasters and forecasting horizons (for forecasting ``y`` resp ``X``)
     can be selected independently, but default to the same.
 
@@ -1271,6 +1276,13 @@ class ForecastX(BaseForecaster):
         * if a ``pandas.Index`` coercible, then uses columns indexed by the index
         after coercion, in ``X`` passed (converted to pandas)
 
+    predict_behaviour : str, optional (default = "use_forecasts")
+
+        * if "use_forecasts", then ``forecaster_X`` predictions are always used as
+            inputs in ``forecaster_y``, even if passed ``X`` has future values
+        * if "use_actuals", then ``forecaster_X`` predictions are only used if
+            passed ``X`` lacks future values for the variables in ``columns``
+
     Attributes
     ----------
     forecaster_X_ : BaseForecaster
@@ -1310,6 +1322,12 @@ class ForecastX(BaseForecaster):
     >>> pipe = pipe.fit(y_train, X=X_train, fh=fh)  # doctest: +SKIP
     >>> # dropping ["ARMED", "POP"] = columns where we expect not to have future values
     >>> y_pred = pipe.predict(fh=fh, X=X_test.drop(columns=columns))  # doctest: +SKIP
+
+    Notes
+    -----
+    * ``predict_behaviour="use_actuals"`` is as of now unused if future values are
+        passed for a subset of exogeneous variables in ``columns``. In that case, it
+        behaves as if ``predict_behaviour="use_forecasts"``.
     """
 
     _tags = {
@@ -1334,6 +1352,7 @@ class ForecastX(BaseForecaster):
         columns=None,
         fit_behaviour="use_actual",
         forecaster_X_exogeneous="None",
+        predict_behaviour="use_forecasts",
     ):
         if fit_behaviour not in ["use_actual", "use_forecast"]:
             raise ValueError(
@@ -1361,6 +1380,13 @@ class ForecastX(BaseForecaster):
                     'forecaster_X_exogeneous must be one of "None", "complement",'
                     "or a pandas.Index coercible"
                 )
+
+        if predict_behaviour not in ["use_forecasts", "use_actuals"]:
+            raise ValueError(
+                "predict_behaviour must be one of 'use_forecasts', 'use_actuals'"
+            )
+
+        self.predict_behaviour = predict_behaviour
 
         super().__init__()
 
@@ -1462,6 +1488,23 @@ class ForecastX(BaseForecaster):
             return None
         if isinstance(self.columns, (list, pd.Index)) and len(self.columns) == 0:
             return X
+
+        # if user passes data for future unknown variables, do not forecast them
+        # this is done only if predict_behaviour is "use_actuals"
+        if isinstance(self.columns, (list, pd.Index)) and len(self.columns):
+            is_future_unknown_actually_known = all(
+                column in X.columns for column in self.columns
+            )
+        elif X is None:
+            is_future_unknown_actually_known = False
+        else:
+            is_future_unknown_actually_known = all(
+                column in X.columns for column in self._X.columns
+            )
+
+        if is_future_unknown_actually_known and self.predict_behaviour == "use_actuals":
+            return X
+
         if self.behaviour == "update":
             forecaster = self.forecaster_X_
         elif self.behaviour == "refit":
@@ -1725,7 +1768,9 @@ class ForecastX(BaseForecaster):
             "forecaster_X_exogeneous": "complement",
         }
 
-        return [params1, params2, params3]
+        params4 = {"forecaster_y": fy, "predict_behaviour": "use_actuals"}
+
+        return [params1, params2, params3, params4]
 
 
 class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
