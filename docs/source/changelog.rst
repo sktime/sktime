@@ -31,7 +31,7 @@ For last non-maintenance content updates, see 0.27.1.
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
 
-* ``sktime`` now supports ``pandas`` 2.2.X
+* ``sktime`` now supports ``pandas`` ``2.2.X``, bounds have been updated to ``<2.3.0,>=1.1``.
 * ``temporian`` (transformations soft dependency) bounds have been updated to ``>=0.7.0,<0.9.0``.
 * ``pykalman-bardo`` dependencies have been replaced by the original fork ``pykalman``.
   ``pykalman-bardo`` has been merged back into ``pykalman``,
