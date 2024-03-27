@@ -96,6 +96,15 @@ Transformations
   by use of ``SAXlegacy`` from ``sktime.transformations.panel.dictionary_based``,
   without change of parameter values.
 
+Contents
+~~~~~~~~
+
+* [MNT] 0.28.0 deprecations and change actions (:pr:`6198`) :user:`fkiraly`
+* [MNT] raise ``pandas`` bound to ``pandas<2.3.0`` (:pr:`5841`) :user:`fkiraly`
+* [MNT] revert switch from ``pykalman`` to ``pykalman-bardo`` (:pr:`6114`) :user:`fkiraly`
+* [MNT] [Dependabot](deps-dev): Update ``pytest-cov`` requirement from ``<4.2,>=4.1`` to ``>=4.1,<5.1`` (:pr:`6215`) :user:`dependabot[bot]`
+
+
 Version 0.27.1 - 2024-03-25
 ---------------------------
 
