@@ -31,6 +31,13 @@ For last non-maintenance content updates, see 0.27.1.
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
 
+* ``sktime`` now supports ``pandas`` 2.1.X
+* ``pykalman-bardo`` dependencies have been replaced by the original fork ``pykalman``.
+  ``pykalman-bardo`` has been merged back into ``pykalman``,
+  which is no longer abandoned.
+  This is a soft dependency, and the switch does not affect users installing
+  ``sktime`` using one of its dependency sets.
+
 
 Deprecations and removals
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -543,8 +550,8 @@ Maintenance
 * [MNT] improvements to modular CI framework - part 2, merge frameworks (:pr:`5785`) :user:`fkiraly`
 * [MNT] ``pandas 2.2.X`` compatibility fixes (:pr:`5840`) :user:`fkiraly`
 * [MNT] fix moto breaking change by using different mocking methods depending on version (:pr:`5858`) :user:`yarnabrina`
-* [MNT] address some `pandas` deprecations (:pr:`5883`) :user:`fkiraly`
-* [MNT] addressed `FutureWarning` for RMSE by using newer ``root_mean_absolute_error`` function (:pr:`5884`) :user:`yarnabrina`
+* [MNT] address some ``pandas`` deprecations (:pr:`5883`) :user:`fkiraly`
+* [MNT] addressed ``FutureWarning`` for RMSE by using newer ``root_mean_absolute_error`` function (:pr:`5884`) :user:`yarnabrina`
 * [MNT] Skip ``mlflow`` tests when soft-dependencies are absent (:pr:`5888`) :user:`achieveordie`
 * [MNT] fix failing CRON "test all" workflow (:pr:`5925`) :user:`fkiraly`
 * [MNT] update versions of several actions (:pr:`5929`) :user:`yarnabrina`
