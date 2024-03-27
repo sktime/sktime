@@ -5,7 +5,6 @@ from scipy.stats import norm, zscore
 
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.series.paa import PAA
-from sktime.utils.warnings import warn
 
 
 class SAX(BaseTransformer):
@@ -47,13 +46,13 @@ class SAX(BaseTransformer):
     Examples
     --------
     >>> from numpy import arange
-    >>> from sktime.transformations.series.sax import SAX2
+    >>> from sktime.transformations.series.sax import SAX
 
     >>> X = arange(10)
-    >>> sax = SAX2(word_size=3, alphabet_size=5)
+    >>> sax = SAX(word_size=3, alphabet_size=5)
     >>> sax.fit_transform(X)  # doctest: +SKIP
     array([0, 2, 4])
-    >>> sax = SAX2(frame_size=2, alphabet_size=5)  # doctest: +SKIP
+    >>> sax = SAX(frame_size=2, alphabet_size=5)  # doctest: +SKIP
     array([0, 1, 2, 3, 4])
     """
 
@@ -79,19 +78,6 @@ class SAX(BaseTransformer):
         self.frame_size = frame_size
 
         super().__init__()
-
-        warn(
-            "Since sktime 0.27.0, SAX2 is the primary SAX implementation in "
-            "sktime, and has been renamed to SAX. "
-            "SAX2 is available under both its current and future name at its "
-            "current location, imports under the deprecated name SAX2 will be possible"
-            "until 0.28.0. "
-            "To prepare for the name change, replace imports of SAX2 from "
-            "sktime.transformations.series.sax by imports of SAX from the same "
-            "module.",
-            DeprecationWarning,
-            obj=self,
-        )
 
         self._check_params()
 
@@ -156,7 +142,3 @@ class SAX(BaseTransformer):
             raise ValueError("alphabet_size must be at least 2.")
         if self.frame_size < 0:
             raise ValueError("frame_size must be at least 0.")
-
-
-# TODO 0.28.0: remove the alias line altogether
-SAX2 = SAX
