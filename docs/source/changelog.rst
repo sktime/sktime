@@ -18,6 +18,29 @@ available on GitHub.
 For upcoming changes and next releases, see our `milestones <https://github.com/sktime/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
 For our long-term plan, see our :ref:`roadmap`.
 
+Version 0.28.0 - 2024-03-27
+---------------------------
+
+Maintenance release:
+
+* scheduled deprecations and change actions
+* support for ``pandas 2.2.X``
+
+For last non-maintenance content updates, see 0.27.1.
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Forecasting
+^^^^^^^^^^^
+
+Transformations
+^^^^^^^^^^^^^^^
+
 Version 0.27.1 - 2024-03-25
 ---------------------------
 
@@ -369,7 +392,6 @@ Maintenance
 * [MNT] 0.27.0 deprecations and change actions (:pr:`5974`) :user:`fkiraly`
 * [MNT] [Dependabot](deps-dev): Update ``numba`` requirement from ``<0.59`` to ``<0.60`` (:pr:`5877`) :user:`dependabot[bot]`
 
-Contributors
 
 Version 0.26.1 - 2024-02-26
 ---------------------------
