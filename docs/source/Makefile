@@ -22,7 +22,7 @@ clean:
 # $(O) is meant as a shortcut for custom options.
 # i.e to log stderr into a seprate file:
 # make build O="--no-color 2> build_warnings.log"
-build:
+html:
 #	./symlink_examples.sh
 	$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
