@@ -197,15 +197,36 @@ To build the documentation locally, you need to install a few extra
 dependencies listed in
 `pyproject.toml <https://github.com/sktime/sktime/blob/main/pyproject.toml>`__.
 
-1. To install extra dependencies from the root directory, run:
+1. To install extra dependencies for building documentation, run:
 
    .. code:: bash
 
-      pip install .[docs]
+      pip install --editable .[docs]
 
-2. To build the website locally, run:
+2. To build the website locally, navigate to ``docs/source`` and execute:
 
    .. code:: bash
 
-      cd docs
       make html
+
+   Please note that the initial build may take up to 20 minutes. Subsequent builds for incremental changes will be significantly faster.
+
+3. For a clean build, run:
+
+   .. code:: bash
+
+      make clean html
+
+4. For live-reloading while editing the documentation, you can use ``sphinx-autobuild``.
+
+   First, install ``sphinx-autobuild`` by running:
+
+   .. code:: bash
+
+      pip install sphinx-autobuild
+
+   Then in ``docs/source``, run:
+
+   .. code:: bash
+
+      make autobuild
