@@ -4,7 +4,8 @@
 __all__ = [
     "ForecastingHorizon",
     "BaseForecaster",
+    "GlobalBaseForecaster",
 ]
 
-from sktime.forecasting.base._base import BaseForecaster
+from sktime.forecasting.base._base import BaseForecaster, GlobalBaseForecaster
 from sktime.forecasting.base._fh import ForecastingHorizon
