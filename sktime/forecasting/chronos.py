@@ -52,7 +52,7 @@ class Chronos(BaseForecaster):
 
     # tag values are "safe defaults" which can usually be left as-is
     _tags = {
-        "python_dependencies": ["torch"],
+        "python_dependencies": ["torch", "chronos"],
         "y_inner_mtype": "pd.Series",
         "scitype:y": "univariate",
         "ignores-exogeneous-X": True,

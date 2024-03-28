@@ -79,6 +79,7 @@ dependencies = [
 all_extras = [
   "arch>=5.6,<6.4.0",
   "cloudpickle",
+  "chronos @ git+https://github.com/amazon-science/chronos-forecasting.git",
   "dash!=2.9.0",
   "dask<2024.2.2",
   "dtw-python",
@@ -185,6 +186,7 @@ clustering = [
 ]
 forecasting = [
   "arch>=5.6,<6.4",
+  "chronos @ git+https://github.com/amazon-science/chronos-forecasting.git",
   'pmdarima!=1.8.1,<2.1,>=1.8; python_version < "3.12"',
   "prophet<1.2,>=1.1",
   "skpro<2.3.0,>=2",
