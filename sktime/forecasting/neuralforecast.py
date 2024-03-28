@@ -812,7 +812,7 @@ class NeuralForecastAutoTFT(_NeuralForecastAutoAdapter):
         # inherited from _NeuralForecastAdapter
         # estimator type
         # --------------
-        "python_dependencies": ["neuralforecast>=1.6.4"],
+        "python_dependencies": ["neuralforecast>=1.7.0"],
     }
 
     def __init__(

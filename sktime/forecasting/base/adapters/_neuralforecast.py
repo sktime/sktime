@@ -400,7 +400,7 @@ class _NeuralForecastAutoAdapter(_NeuralForecastAdapter):
         "authors": ["yarnabrina"],
         "maintainers": ["yarnabrina"],
         "python_version": ">=3.8",
-        "python_dependencies": ["neuralforecast"],
+        "python_dependencies": ["neuralforecast>=1.7.0"],
         # estimator type
         # --------------
         "y_inner_mtype": "pd.Series",
