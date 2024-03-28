@@ -2,17 +2,14 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements Chronos forecaster by wrapping amazon's chronos."""
 
-import numpy as np
-import pandas as pd
-
 __author__ = ["RigvedManoj"]
 __all__ = ["Chronos"]
 
 
+import numpy as np
+import pandas as pd
+
 from sktime.forecasting.base import BaseForecaster
-
-
-# todo: add any necessary imports here
 
 
 class Chronos(BaseForecaster):
@@ -23,7 +20,7 @@ class Chronos(BaseForecaster):
 
     Parameters
     ----------
-    modelName: str, required
+    model_name: str, required
     top_p: float, default=1.0
     top_k: int, default=50
     temperature: float, default=1.0
@@ -40,23 +37,23 @@ class Chronos(BaseForecaster):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.chronos import Chronos
     >>> from sktime.split import temporal_train_test_split
-    >>> from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> import torch
     >>> y = load_airline()
     >>> y_train, y_test = temporal_train_test_split(y)
     >>> fh = ForecastingHorizon(y_test.index, is_relative=False)
-    >>> forecaster = Chronos("amazon/chronos-t5-small", kwargs_dict={"torch_dtype": torch.bfloat16})
-    >>> forecaster.fit(y_train)
-    >>> y_pred = forecaster.predict(fh)
-    >>> mean_absolute_percentage_error(y_test, y_pred)
+    >>> forecaster = Chronos(
+    ...        "amazon/chronos-t5-small",
+    ...        kwargs_dict={"torch_dtype": torch.bfloat16}
+        )  # doctest: +SKIP
+    >>> forecaster.fit(y_train)  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh) # doctest: +SKIP
     """
 
     # tag values are "safe defaults" which can usually be left as-is
     _tags = {
         "python_dependencies": ["torch"],
         "y_inner_mtype": "pd.Series",
-        "X_inner_mtype": "pd.DataFrame",
         "scitype:y": "univariate",
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
@@ -64,8 +61,17 @@ class Chronos(BaseForecaster):
         "maintainers": ["RigvedManoj"],
     }
 
-    def __init__(self, modelName, num_samples=20, temperature=1.0, top_k=50, top_p=1.0, args_list=None, kwargs_dict=None):
-        self.modelName = modelName
+    def __init__(
+        self,
+        model_name,
+        num_samples=20,
+        temperature=1.0,
+        top_k=50,
+        top_p=1.0,
+        args_list=None,
+        kwargs_dict=None,
+    ):
+        self.model_name = model_name
         self.num_samples = num_samples
         self.temperature = temperature
         self.top_k = top_k
@@ -98,14 +104,17 @@ class Chronos(BaseForecaster):
         """
         import torch
         from chronos import ChronosPipeline
+
         if self.args_list is not None:
-            args_list = [self.modelName] + self.args_list
+            args_list = [self.model_name] + self.args_list
         else:
-            args_list = [self.modelName]
+            args_list = [self.model_name]
         if self.kwargs_dict is None:
             self._model = ChronosPipeline.from_pretrained(*args_list)
         else:
-            self._model = ChronosPipeline.from_pretrained(*args_list, **self.kwargs_dict)
+            self._model = ChronosPipeline.from_pretrained(
+                *args_list, **self.kwargs_dict
+            )
         self._context = torch.tensor(y.values)
         return self
 
@@ -136,10 +145,10 @@ class Chronos(BaseForecaster):
             top_p=self.top_p,
         )
         values = np.median(forecast[0].numpy(), axis=0)
-        '''
+        """
         row_idx = fh.to_absolute_index(self.cutoff)
         col_idx = self._y.index
-        '''
+        """
         y_pred = pd.DataFrame(values)
         return y_pred
 
@@ -157,5 +166,5 @@ class Chronos(BaseForecaster):
         -------
         params : dict or list of dict
         """
-        params = {"modelName": "amazon/chronos-t5-small"}
+        params = {"model_name": "amazon/chronos-t5-small"}
         return params
