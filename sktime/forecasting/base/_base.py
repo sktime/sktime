@@ -34,7 +34,7 @@ State:
 
 __author__ = ["mloning", "big-o", "fkiraly", "sveameyer13", "miraep8", "ciaran-g"]
 
-__all__ = ["BaseForecaster"]
+__all__ = ["BaseForecaster", "GlobalBaseForecaster"]
 
 from copy import deepcopy
 from itertools import product
@@ -2538,6 +2538,125 @@ class BaseForecaster(BaseEstimator):
 
 # initialize dynamic docstrings
 BaseForecaster._init_dynamic_doc()
+
+
+class GlobalBaseForecaster(BaseForecaster):
+    """Base global forecaster template class.
+
+    This class is a temporal solution, might be merged into BaseForecaster later.
+
+    The base forecaster specifies the methods and method signatures that all
+    global forecasters have to implement.
+
+    Specific implementations of these methods is deferred to concrete forecasters.
+
+    """
+
+    def predict(self, fh=None, X=None, y=None):
+        """Forecast time series at future horizon.
+
+        State required:
+            Requires state to be "fitted", i.e., ``self.is_fitted=True``.
+
+        Accesses in self:
+
+            * Fitted model attributes ending in "_".
+            * ``self.cutoff``, ``self.is_fitted``
+
+        Writes to self:
+            Stores ``fh`` to ``self.fh`` if ``fh`` is passed and has not been passed
+            previously.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ``ForecastingHorizon``, optional (default=None)
+            The forecasting horizon encoding the time stamps to forecast at.
+            Should not be passed if has already been passed in ``fit``.
+            If has not been passed in fit, must be passed, not optional
+
+        X : time series in ``sktime`` compatible format, optional (default=None)
+            Exogeneous time series to use in prediction.
+            Should be of same scitype (``Series``, ``Panel``, or ``Hierarchical``)
+            as ``y`` in ``fit``.
+            If ``self.get_tag("X-y-must-have-same-index")``,
+            ``X.index`` must contain ``fh`` index reference.
+
+        y : time series in ``sktime`` compatible format, optional (default=None)
+            Historical values of the time series that should be predicted.
+
+        Returns
+        -------
+        y_pred : time series in sktime compatible data container format
+            Point forecasts at ``fh``, with same index as ``fh``.
+            ``y_pred`` has same type as the ``y`` that has been passed most recently:
+            ``Series``, ``Panel``, ``Hierarchical`` scitype, same format (see above)
+        """
+        # handle inputs
+        self.check_is_fitted()
+
+        # input check and conversion for X
+        X_inner = self._check_X(X=X)
+
+        # input check and conversion for y
+        y_inner = self._check_X_y(X=X, y=y)
+
+        # check fh and coerce to ForecastingHorizon, if not already passed in fit
+        fh = self._check_fh(fh)
+
+        # check global tag
+        gf = self.get_tag(
+            "capability:global_forecasting", tag_value_default=None, raise_error=False
+        )
+        if gf is not True and y is not None:
+            ValueError("no global forecasting support!")
+
+        # we call the ordinary _predict if no looping/vectorization needed
+        if not self._is_vectorized:
+            y_pred = self._predict(fh=fh, X=X_inner, y=y_inner)
+        else:
+            # otherwise we call the vectorized version of predict
+            # TODO add y to _vectorize
+            y_pred = self._vectorize("predict", X=X_inner, fh=fh)
+
+        # convert to output mtype, identical with last y mtype seen
+        y_out = convert_to(
+            y_pred,
+            self._y_metadata["mtype"],
+            store=self._converter_store_y,
+            store_behaviour="freeze",
+        )
+
+        return y_out
+
+    def _predict(self, fh, X, y):
+        """Forecast time series at future horizon.
+
+        private _predict containing the core logic, called from predict
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+            If not passed in _fit, guaranteed to be passed here
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
+        y : time series in ``sktime`` compatible format, optional (default=None)
+            Historical values of the time series that should be predicted.
+
+        Returns
+        -------
+        y_pred : pd.Series
+            Point predictions
+        """
+        raise NotImplementedError("abstract method")
 
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):
