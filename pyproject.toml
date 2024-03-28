@@ -191,6 +191,7 @@ forecasting = [
   'statsforecast<1.8.0,>=1.0.0; python_version < "3.12"',
   "statsmodels<0.15,>=0.12.1",
   'tbats<1.2,>=1.1; python_version < "3.12"',
+  'u8darts<0.28,>=0.27.2; python_version < "3.10"',
 ]
 networks = [
   "keras-self-attention<0.52,>=0.51",
@@ -273,6 +274,7 @@ dl = [
   'neuralforecast<1.7.0,>=1.6.4; python_version < "3.11"',
   'tensorflow<2.17,>=2; python_version < "3.12"',
   'torch; python_version < "3.12"',
+  'u8darts<0.28,>=0.27.2; python_version < "3.10"',
 ]
 mlflow = [
   "mlflow",

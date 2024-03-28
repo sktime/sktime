@@ -29,10 +29,12 @@ __all__ = [
     "Permute",
     "YfromX",
     "IgnoreX",
+    "DartsRegressionModel",
 ]
 
 from sktime.forecasting.compose._bagging import BaggingForecaster
 from sktime.forecasting.compose._column_ensemble import ColumnEnsembleForecaster
+from sktime.forecasting.compose._darts_reduce import DartsRegressionModel
 from sktime.forecasting.compose._ensemble import (
     AutoEnsembleForecaster,
     EnsembleForecaster,
