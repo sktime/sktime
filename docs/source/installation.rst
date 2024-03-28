@@ -77,9 +77,10 @@ To install ``sktime`` with maximum dependencies, including soft dependencies, in
 
     conda install -c conda-forge sktime-all-extras
 
-Note: currently this does not include the dependency ``catch-22``.
-As this package is not available on ``conda-forge``, it must be installed via ``pip`` if desired.
-Contributions to remedy this situation are appreciated.
+Note: not all soft dependencies of ``sktime`` are also available on ``conda-forge``,
+``sktime-all-extras`` includes only the soft dependencies that are available on ``conda-forge``.
+The other soft dependencies can be installed via ``pip``, after ``conda install pip``.
+
 
 Development versions
 --------------------
