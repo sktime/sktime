@@ -58,6 +58,8 @@ extensions = [
 myst_enable_extensions = ["colon_fence"]
 
 # Notebook thumbnails
+
+# Populate thumbnails of notebooks? 
 nbsphinx_thumbnails = {
     "examples/02_classification": "examples/img/tsc.png",
 }
@@ -234,9 +236,6 @@ html_sidebars = {
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 html_css_files = ["css/custom.css"]
-html_js_files = [
-    "js/dynamic_table.js",
-]
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
@@ -300,10 +299,10 @@ texinfo_documents = [
 
 
 def _make_estimator_overview(app):
-    """Make estimator overview table."""
+    # """Make estimator overview table."""
     import pandas as pd
 
-    from sktime.registry import all_estimators
+    from sktime.registry import all_estimators, all_tags
 
     def _process_author_info(author_info):
         """Process author information from source code files.
@@ -347,27 +346,84 @@ def _make_estimator_overview(app):
 
     def _does_not_start_with_underscore(input_string):
         return not input_string.startswith("_")
+    
+    ## Instead of hard code type list, populate a dictionry with tags 
+    forecaster_tags = []
+    transformer_tags = []
+    regressor_tags = []
+    aligner_tags = []
+    cluster_tags = []
+    classifier_tags = []
+
+    for tag in all_tags():
+        if "forecaster" == tag[1] or "forecaster" in tag[1]:
+            forecaster_tags.append(tag[0])  
+        if "transformer" == tag[1] or "transformer" in tag[1]:
+            transformer_tags.append(tag[0])  
+        if "aligner" == tag[1] or "aligner" in tag[1]:
+            aligner_tags.append(tag[0])  
+        if "clusterer" == tag[1] or "clusterer" in tag[1]:
+            cluster_tags.append(tag[0])  
+        if "regressor" == tag[1] or "regressor" in tag[1]:
+            regressor_tags.append(tag[0])
+        if "classifier" == tag[1] or "classifier" in tag[1]:
+            classifier_tags.append(tag[0])
 
     # creates dataframe as df
-    COLNAMES = ["Class Name", "Estimator Type", "Authors", "Maintainers"]
+    COLNAMES = ["Class Name", "Estimator Type", "Authors", "Maintainers", "Dependencies", "Import Path", "Distribution Type", "Empty Fit", "Handle Missing Data", "Tags"]
 
     records = []
-
+    
     for modname, modclass in all_estimators():
-        algorithm_type = modclass.get_class_tag("object_type", "object")
+
         author_tag = modclass.get_class_tag("authors", "sktime developers")
         author_info = _process_author_info(author_tag)
         maintainer_tag = modclass.get_class_tag("maintainers", "sktime developers")
         maintainer_info = _process_author_info(maintainer_tag)
+        
+        python_dependencies = list(modclass.get_class_tag("python_dependencies_alias", {}).keys())
+        more_python_dependencies = modclass.get_class_tag("python_dependencies", [])
+        
+        if type(more_python_dependencies) is list:
+            python_dependencies.extend(more_python_dependencies)
+        else:
+            python_dependencies.append(more_python_dependencies)
+        
+        distribution_type = modclass.get_class_tag("distribution_type", "")
+        fit_is_empty = modclass.get_class_tag("fit_is_empty", "")
+        handles_missing_data = modclass.get_class_tag("handles-missing-data", "")
+        
+        algorithm_type = modclass.get_class_tag("object_type", "object")
+        tags = {}
+        
+        if algorithm_type == "forecaster":
+            for tag in forecaster_tags:
+                tags[tag] = modclass.get_class_tag(tag, None)
+        elif algorithm_type == "transformer":
+            for tag in transformer_tags:
+                tags[tag] = modclass.get_class_tag(tag, None)
+        elif algorithm_type == "regressor":
+            for tag in regressor_tags:
+                tags[tag] = modclass.get_class_tag(tag, None)
+        elif algorithm_type == "aligner":
+            for tag in aligner_tags:
+                tags[tag] = modclass.get_class_tag(tag, None)
+        elif algorithm_type == "clusterer":
+            for tag in cluster_tags:
+                tags[tag] = modclass.get_class_tag(tag, None)
+        elif algorithm_type == "classifier":
+            for tag in cluster_tags:
+                tags[tag] = modclass.get_class_tag(tag, None)
 
         # includes part of class string
         modpath = str(modclass)[8:-2]
         path_parts = modpath.split(".")
-        # joins strings excluding starting with '_'
-        clean_path = ".".join(list(filter(_does_not_start_with_underscore, path_parts)))
+        del path_parts[-2]
+        clean_path = ".".join(path_parts)
+        import_path = ".".join(path_parts[:-1])
         # adds html link reference
         modname = str(
-            '<a href="https://www.sktime.net/en/latest/api_reference'
+            '<a href="api_reference' 
             + "/auto_generated/"
             + clean_path
             + '.html">'
@@ -375,11 +431,16 @@ def _make_estimator_overview(app):
             + "</a>"
         )
 
-        records.append([modname, algorithm_type, author_info, maintainer_info])
+        records.append([modname, algorithm_type, author_info, maintainer_info, python_dependencies, import_path, distribution_type, fit_is_empty, handles_missing_data, tags])
 
     df = pd.DataFrame(records, columns=COLNAMES)
-    with open("estimator_overview_table.md", "w") as file:
-        df.to_markdown(file, index=False)
+
+    # with open("estimator_overview_table.md", "w") as file:
+    #     df.to_markdown(file, index=False)
+        
+    with open("_static/estimator_overview_db.json", "w") as file:
+        df.to_json(file, orient='records')
+    # pass
 
 
 def setup(app):
