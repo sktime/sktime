@@ -119,8 +119,8 @@ class ShapeDTW(BaseClassifier):
     ...     subsequence_length=30,
     ...     shape_descriptor_function="raw",
     ...     shape_descriptor_functions=None,
-    ...     metric_params=None
-    ...     )  # doctest: +SKIP
+    ...     metric_params=None,
+    ... )  # doctest: +SKIP
     >>> clf.fit(X_train, y_train)  # doctest: +SKIP
     ShapeDTW(...)
     >>> y_pred = clf.predict(X_test)  # doctest: +SKIP

@@ -59,10 +59,10 @@ class RandomIntervalClassifier(BaseClassifier):
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
     >>> clf = RandomIntervalClassifier(
     ...     estimator=RandomForestClassifier(n_estimators=5)
-    ... ) # doctest: +SKIP
-    >>> clf.fit(X_train, y_train) # doctest: +SKIP
+    ... )  # doctest: +SKIP
+    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
     RandomIntervalClassifier(...)
-    >>> y_pred = clf.predict(X_test) # doctest: +SKIP
+    >>> y_pred = clf.predict(X_test)  # doctest: +SKIP
     """
 
     _tags = {

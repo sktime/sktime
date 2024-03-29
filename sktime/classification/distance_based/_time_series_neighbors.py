@@ -123,7 +123,8 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
 
     Examples
     --------
-    >>> from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
+    >>> import sktime.classification.distance_based as db_clf
+    >>> from db_clf import KNeighborsTimeSeriesClassifier
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(return_X_y=True, split="train")
     >>> X_test, y_test = load_unit_test(return_X_y=True, split="test")

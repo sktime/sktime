@@ -70,10 +70,10 @@ class FreshPRINCE(BaseClassifier):
     ...     save_transformed_data=False,
     ...     verbose=0,
     ...     n_jobs=1,
-    ...     ) # doctest: +SKIP
-    >>> clf.fit(X_train, y_train) # doctest: +SKIP
+    ... ) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
     FreshPRINCE(...)
-    >>> y_pred = clf.predict(X_test) # doctest: +SKIP
+    >>> y_pred = clf.predict(X_test)  # doctest: +SKIP
     """
 
     _tags = {

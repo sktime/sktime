@@ -74,9 +74,9 @@ class TSFreshClassifier(BaseClassifier):
     ...     estimator=RandomForestClassifier(n_estimators=5),
     ...     default_fc_parameters="efficient",
     ... ) # doctest: +SKIP
-    >>> clf.fit(X_train, y_train) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
     TSFreshClassifier(...)
-    >>> y_pred = clf.predict(X_test) # doctest: +SKIP
+    >>> y_pred = clf.predict(X_test)  # doctest: +SKIP
     """
 
     _tags = {

@@ -182,10 +182,10 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
     >>> clf = ComposableTimeSeriesForestClassifier(
     ...     RocketClassifier(num_kernels=100),
     ...     n_estimators=10,
-    ... ) # doctest: +SKIP
-    >>> clf.fit(X_train, y_train) # doctest: +SKIP
+    ... )  # doctest: +SKIP
+    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
     ComposableTimeSeriesForestClassifier(...)
-    >>> y_pred = clf.predict(X_test) # doctest: +SKIP
+    >>> y_pred = clf.predict(X_test)  # doctest: +SKIP
     """
 
     _tags = {
