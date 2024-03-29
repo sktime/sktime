@@ -8,7 +8,7 @@ If the active forecaster fails during prediction, it proceeds to the next. This 
 a robust forecasting mechanism by providing fallback options.
 """
 
-__author__ = ["ninedigits"]
+__author__ = ["ninedigits", "RikStarmans"]
 __all__ = ["FallbackForecaster"]
 
 from sktime.base import _HeterogenousMetaEstimator
@@ -18,7 +18,7 @@ from sktime.utils.warnings import warn
 
 
 def _check_nan_policy_option(nan_predict_policy):
-    """Ensure user selects correct `nan_predict_policy` option."""
+    """Ensure user selects correct ``nan_predict_policy`` option."""
     nan_predict_policy_options = ["ignore", "raise", "warn"]
     if nan_predict_policy not in nan_predict_policy_options:
         raise AttributeError(
@@ -27,6 +27,16 @@ def _check_nan_policy_option(nan_predict_policy):
             f"{nan_predict_policy}"
         )
     return nan_predict_policy
+
+
+def _has_nan(array_like):
+    """Return true if an array like variable has any null values."""
+    import pandas as pd
+
+    for i in array_like:
+        if pd.isnull(i):
+            return True
+    return False
 
 
 class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
@@ -43,7 +53,7 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
         list of tuples (str, estimator) of sktime forecasters
         Forecasters to be tried sequentially.
         These are "blueprint" transformers resp forecasters,
-        forecaster states do not change when `fit` is called
+        forecaster states do not change when ``fit`` is called
 
     verbose : bool, default=False
         If True, raises warnings when a forecaster fails to fit or predict.
@@ -107,7 +117,7 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
     """
 
     _tags = {
-        "authors": ["ninedigits"],
+        "authors": ["ninedigits", "RikStarmans"],
         "maintainers": ["ninedigits"],
         "handles-missing-data": True,
         "scitype:y": "both",
@@ -145,7 +155,7 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
 
     def _validate_y_pred(self, y_pred):
         if self.nan_predict_policy in ("warn", "raise"):
-            has_nans = y_pred.isnull().any()
+            has_nans = _has_nan(y_pred.values)
             if has_nans:
                 msg = f"Null value presents in predict: {y_pred}"
                 if self.nan_predict_policy == "raise":
@@ -190,7 +200,7 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
         Attempt to fit the forecasters in sequence until one succeeds.
 
         This method iterates over the forecasters starting from the index
-        `first_nonfailing_forecaster_index_`. For each forecaster, it tries to fit it
+        ``first_nonfailing_forecaster_index_``. For each forecaster, it tries to fit it
         with the current data. If the fit method of a forecaster raises an exception,
         it records the exception and proceeds to the next forecaster. If a forecaster
         fits successfully, it updates the current forecaster and its name.
@@ -286,7 +296,7 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------

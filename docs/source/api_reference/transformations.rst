@@ -148,6 +148,7 @@ Shapelets, wavelets, and convolution
 
     ShapeletTransform
     RandomShapeletTransform
+    ShapeletTransformPyts
 
 .. currentmodule:: sktime.transformations.panel.rocket
 
@@ -304,13 +305,6 @@ Detrending and Decomposition
     Deseasonalizer
     ConditionalDeseasonalizer
     STLTransformer
-
-.. currentmodule:: sktime.transformations.series.detrend.mstl
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
     MSTL
 
 .. currentmodule:: sktime.transformations.series.vmd
@@ -451,7 +445,7 @@ Binning, sampling and segmentation
     :toctree: auto_generated/
     :template: class.rst
 
-    PAA2
+    PAA
 
 .. currentmodule:: sktime.transformations.series.sax
 
@@ -459,7 +453,7 @@ Binning, sampling and segmentation
     :toctree: auto_generated/
     :template: class.rst
 
-    SAX2
+    SAX
 
 .. currentmodule:: sktime.transformations.panel.dictionary_based
 
@@ -467,8 +461,8 @@ Binning, sampling and segmentation
     :toctree: auto_generated/
     :template: class.rst
 
-    PAA
-    SAX
+    PAAlegacy
+    SAXlegacy
 
 Missing value treatment
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -637,6 +631,20 @@ These transformers subset `X` by time points (`pandas` index or index level) or 
 
     ColumnSelect
     IndexSubset
+
+Adapters to other frameworks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Generic framework adapters that expose other frameworks in the ``sktime`` interface.
+
+.. currentmodule:: sktime.transformations.series.temporian
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TemporianTransformer
+
 
 Panel transformers
 ------------------

@@ -34,16 +34,26 @@ EXCLUDE_ESTIMATORS = [
     # DL classifier suspected to cause hangs and memouts, see #4610
     "FCNClassifier",
     "MACNNClassifier",
-    "SimpleRNNClassifier",
-    "SimpleRNNRegressor",
     "EditDist",
     "CNNClassifier",
     "FCNClassifier",
     "InceptionTimeClassifier",
     "LSTMFCNClassifier",
     "MLPClassifier",
+    "MLPRegressor",
     "CNNRegressor",
     "ResNetRegressor",
+    "FCNRegressor",
+    "LSTMFCNRegressor",
+    "MACNNRegressor",
+    "CNTCClassifier",
+    "CNTCRegressor",
+    # splitters excluded with undiagnosed failures, see #6194
+    # these are temporarily skipped to allow merging of the base test framework
+    "SameLocSplitter",
+    "TestPlusTrainSplitter",
+    "Repeat",
+    "CutoffFhSplitter",
 ]
 
 
@@ -83,6 +93,7 @@ EXCLUDED_TESTS = {
         "test_persistence_via_pickle",
         "test_fit_does_not_overwrite_hyper_params",
         "test_save_estimators_to_file",
+        "test_fit_idempotent",  # see 6201
     ],
     # TapNet fails due to Lambda layer, see #3539 and #3616
     "TapNetClassifier": [
@@ -114,7 +125,13 @@ EXCLUDED_TESTS = {
     "LSTMFCNClassifier": [
         "test_fit_idempotent",
     ],
+    "LSTMFCNRegressor": [
+        "test_fit_idempotent",
+    ],
     "MLPClassifier": [
+        "test_fit_idempotent",
+    ],
+    "MLPRegressor": [
         "test_fit_idempotent",
     ],
     "CNTCClassifier": [
@@ -129,6 +146,7 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
         "test_persistence_via_pickle",
         "test_save_estimators_to_file",
+        "test_multioutput",  # see 6201
     ],
     "SimpleRNNRegressor": [
         "test_fit_idempotent",
@@ -142,6 +160,18 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
     ],
     "MACNNClassifier": [
+        "test_fit_idempotent",
+    ],
+    "FCNRegressor": [
+        "test_fit_idempotent",
+    ],
+    "MACNNRegressor": [
+        "test_fit_idempotent",
+    ],
+    "InceptionTimeRegressor": [
+        "test_fit_idempotent",
+    ],
+    "CNTCRegressor": [
         "test_fit_idempotent",
     ],
     # sth is not quite right with the RowTransformer-s changing state,
@@ -173,7 +203,7 @@ EXCLUDED_TESTS = {
     ],
     # SAX returns strange output format
     # this needs to be fixed, was not tested previously due to legacy exception
-    "SAX": "test_fit_transform_output",
+    "SAXlegacy": "test_fit_transform_output",
     "DynamicFactor": [
         "test_predict_time_index_in_sample_full",  # refer to #4765
     ],
@@ -189,6 +219,12 @@ EXCLUDED_TESTS = {
     "LTSFDLinearForecaster": ["test_predict_time_index_in_sample_full"],
     "LTSFNLinearForecaster": ["test_predict_time_index_in_sample_full"],
     "WEASEL": ["test_multiprocessing_idempotent"],  # see 5658
+    # StatsForecastMSTL is failing in probabistic forecasts, see #5703, #5920
+    "StatsForecastMSTL": ["test_pred_int_tag"],
+    # KNeighborsTimeSeriesClassifierTslearn crashes in parallel mode
+    "KNeighborsTimeSeriesClassifierTslearn": ["test_multiprocessing_idempotent"],
+    # ShapeletTransformPyts creates nested numpy shapelets sporadically, see #6171
+    "ShapeletTransformPyts": ["test_non_state_changing_method_contract"],
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish

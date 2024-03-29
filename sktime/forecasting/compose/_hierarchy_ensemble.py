@@ -20,38 +20,39 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
     Can apply different univariate forecaster either on different
     level of aggregation or on different hierarchical nodes.
 
-    `HierarchyEnsembleForecaster` is passed forecaster/level or
+    ``HierarchyEnsembleForecaster`` is passed forecaster/level or
     forecaster/node pairs. Level can only be int >= 0 with 0
     signifying the topmost level of aggregation.
     Node can only be a tuple of strings or list of tuples.
 
-    Behaviour in `fit`, `predict`:
-    For level pairs f_i, l_i passed, applies forecaster f_i to level l_i.
-    For node pairs f_i, n_i passed, applies forecaster f_i on each node of n_i.
-    if "default" argument passed, applies "default" forecaster on the
-    remaining levels/nodes which are not mentioned in argument 'forecasters'.
-    `predict` results are concatenated to one container with same columns as in `fit`.
-
+    Behaviour in ``fit``, ``predict``:
+    For level pairs ``f_i, l_i`` passed, applies forecaster ``f_i`` to level ``l_i``.
+    For node pairs ``f_i, n_i`` passed,
+    applies forecaster ``f_i`` on each node of ``n_i``.
+    If ``default`` argument is passed, applies ``default`` forecaster on the
+    remaining levels/nodes which are not mentioned in argument ``forecasters``.
+    ``predict`` results are concatenated to one container with
+    same columns as in ``fit``.
 
     Parameters
     ----------
     forecasters : sktime forecaster, or list of tuples
-                (str, estimator, int or list of tuple/s)
-        if forecaster, clones of forecaster are applied to all aggregated levels.
+        (str, estimator, int or list of tuple/s)
+        if forecaster, clones of ``forecaster`` are applied to all aggregated levels.
         if list of tuples, with name = str, estimator is forecaster, level/node
         as int/tuples respectively.
-        all levels/nodes must be present in 'forecasters' attribute if 'default'
+        all levels/nodes must be present in ``forecasters`` attribute if ``default``
         attribute is None
 
     by : {'node', 'level', default='level'}
-        if 'level', applies a univariate forecaster on all the hierarchical
+        if ``'level'``, applies a univariate forecaster on all the hierarchical
         nodes within a level of aggregation
-        if 'node', applies separate univariate forecaster for each
+        if ``'node'``, applies separate univariate forecaster for each
         hierarchical node.
 
     default : sktime forecaster {default = None}
-        if passed, applies 'default' forecaster on the nodes/levels
-        not mentioned in the 'forecaster' argument.
+        if passed, applies ``default`` forecaster on the nodes/levels
+        not mentioned in the ``forecaster`` argument.
 
     Examples
     --------
@@ -601,7 +602,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -609,8 +610,9 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         # imports
         from sktime.forecasting.naive import NaiveForecaster
