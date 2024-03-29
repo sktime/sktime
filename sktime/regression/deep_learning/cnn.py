@@ -186,7 +186,7 @@ class CNNRegressor(BaseDeepRegressor):
         self.input_shape = X.shape[1:]
         self.model_ = self.build_model(self.input_shape)
         if self.verbose:
-            self.model.summary()
+            self.model_.summary()
 
         self.history = self.model_.fit(
             X,
