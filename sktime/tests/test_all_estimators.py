@@ -12,6 +12,7 @@ import types
 from copy import deepcopy
 from inspect import getfullargspec, isclass, signature
 from tempfile import TemporaryDirectory
+from _pytest.outcomes import Skipped
 
 import joblib
 import numpy as np
@@ -599,6 +600,8 @@ class QuickTester:
                     try:
                         test_fun(**deepcopy(args))
                         results[key] = "PASSED"
+                    except Skipped as err:
+                        results[key] = f'SKIPPED: {err.msg}'
                     except Exception as err:
                         results[key] = err
                 else:
