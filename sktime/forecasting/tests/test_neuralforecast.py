@@ -251,3 +251,60 @@ def test_neural_forecast_fail_with_auto_freq_on_range_index(model_class) -> None
 
     # attempt train
     model.fit(y, fh=[1, 2, 3, 4])
+
+
+@pytest.mark.parametrize("model_class", [NeuralForecastLSTM, NeuralForecastRNN])
+@pytest.mark.skipif(
+    not run_test_for_class([NeuralForecastLSTM, NeuralForecastRNN]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_neural_forecast_with_non_default_optimizer(model_class) -> None:
+    """Test with user defined optimizer."""
+    # import non-default pytorch optimizer
+    from torch.optim import Adam
+
+    # define model
+    model = model_class(
+        freq="A-DEC",
+        max_steps=5,
+        optimizer=Adam,
+        trainer_kwargs={"logger": False},
+    )
+
+    # train model
+    model.fit(X_train, fh=[1, 2, 3, 4])
+
+    # predict with trained model
+    X_pred = model.predict()
+
+    # check prediction index
+    pandas.testing.assert_index_equal(X_pred.index, X_test.index, check_names=False)
+
+
+@pytest.mark.parametrize("model_class", [NeuralForecastLSTM, NeuralForecastRNN])
+@pytest.mark.skipif(
+    not run_test_for_class([NeuralForecastLSTM, NeuralForecastRNN]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_neural_forecast_with_non_default_optimizer_with_kwargs(model_class) -> None:
+    """Test with user defined optimizer and optimizer_kwargs."""
+    # import non-default pytorch optimizer
+    from torch.optim import Adagrad
+
+    # define model
+    model = model_class(
+        freq="A-DEC",
+        optimizer=Adagrad,
+        optimizer_kwargs={"lr": 0.1},
+        max_steps=5,
+        trainer_kwargs={"logger": False},
+    )
+
+    # train model
+    model.fit(X_train, fh=[1, 2, 3, 4])
+
+    # predict with trained model
+    X_pred = model.predict()
+
+    # check prediction index
+    pandas.testing.assert_index_equal(X_pred.index, X_test.index, check_names=False)

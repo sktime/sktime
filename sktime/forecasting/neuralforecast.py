@@ -3,6 +3,8 @@
 import functools
 import typing
 
+from torch import optim
+
 from sktime.forecasting.base.adapters._neuralforecast import _NeuralForecastAdapter
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
@@ -93,6 +95,10 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         workers to be used by ``TimeSeriesDataLoader``
     drop_last_loader : bool (default=False)
         whether ``TimeSeriesDataLoader`` drops last non-full batch
+    optimizer : torch.optim.Optimizer (default=None)
+        optimizer to use for training, if passed with None defaults to Adam
+    optimizer_kwargs : dict (default=None)
+        dict of parameters to pass to the user defined optimizer
     trainer_kwargs : dict (default=None)
         keyword trainer arguments inherited from PyTorch Lighning's trainer [6]_
 
@@ -192,6 +198,8 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         random_seed=1,
         num_workers_loader=0,
         drop_last_loader=False,
+        optimizer: optim.Optimizer = None,
+        optimizer_kwargs: dict = None,
         trainer_kwargs: typing.Optional[dict] = None,
     ):
         self.input_size = input_size
@@ -217,6 +225,8 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         self.random_seed = random_seed
         self.num_workers_loader = num_workers_loader
         self.drop_last_loader = drop_last_loader
+        self.optimizer = optimizer
+        self.optimizer_kwargs = optimizer_kwargs
         self.trainer_kwargs = trainer_kwargs
 
         super().__init__(
@@ -296,6 +306,8 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
             "random_seed": self.random_seed,
             "num_workers_loader": self.num_workers_loader,
             "drop_last_loader": self.drop_last_loader,
+            "optimizer": self.optimizer,
+            "optimizer_kwargs": self.optimizer_kwargs,
             **self._trainer_kwargs,
         }
 
@@ -452,6 +464,10 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         workers to be used by `TimeSeriesDataLoader`
     drop_last_loader : bool (default=False)
         whether `TimeSeriesDataLoader` drops last non-full batch
+    optimizer : torch.optim.Optimizer (default=None)
+        optimizer to use for training, if passed with None defaults to Adam
+    optimizer_kwargs : dict (default=None)
+        dict of parameters to pass to the user defined optimizer
     trainer_kwargs : dict (default=None)
         keyword trainer arguments inherited from PyTorch Lighning's trainer [6]_
 
@@ -546,6 +562,8 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         random_seed=1,
         num_workers_loader=0,
         drop_last_loader=False,
+        optimizer: optim.Optimizer = None,
+        optimizer_kwargs: dict = None,
         trainer_kwargs: typing.Optional[dict] = None,
     ):
         self.input_size = input_size
@@ -570,6 +588,8 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         self.random_seed = random_seed
         self.num_workers_loader = num_workers_loader
         self.drop_last_loader = drop_last_loader
+        self.optimizer = optimizer
+        self.optimizer_kwargs = optimizer_kwargs
         self.trainer_kwargs = trainer_kwargs
 
         super().__init__(
@@ -647,6 +667,8 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
             "random_seed": self.random_seed,
             "num_workers_loader": self.num_workers_loader,
             "drop_last_loader": self.drop_last_loader,
+            "optimizer": self.optimizer,
+            "optimizer_kwargs": self.optimizer_kwargs,
             **self._trainer_kwargs,
         }
 
