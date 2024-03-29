@@ -37,7 +37,7 @@ def test_split_by_fh(index_type, fh_type, is_relative, values):
     """Test temporal_train_test_split."""
     if fh_type == "timedelta":
         pytest.skip(
-           "ForecastingHorizon with timedelta values "
+            "ForecastingHorizon with timedelta values "
             "is currently experimental and not supported everywhere"
         )
     y = _make_series(20, index_type=index_type)

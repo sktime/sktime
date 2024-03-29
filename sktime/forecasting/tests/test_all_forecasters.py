@@ -213,7 +213,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         index_type, fh_type, is_relative = index_fh_comb
         if fh_type == "timedelta":
             pytest.skip(
-               "ForecastingHorizon with timedelta values "
+                "ForecastingHorizon with timedelta values "
                 "is currently experimental and not supported everywhere"
             )
         y_train = _make_series(
@@ -267,7 +267,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         index_type, fh_type, is_relative = index_fh_comb
         if fh_type == "timedelta":
             pytest.skip(
-               "ForecastingHorizon with timedelta values "
+                "ForecastingHorizon with timedelta values "
                 "is currently experimental and not supported everywhere"
             )
         z, X = make_forecasting_problem(index_type=index_type, make_X=True)
@@ -305,7 +305,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         index_type, fh_type, is_relative = index_fh_comb
         if fh_type == "timedelta":
             pytest.skip(
-               "ForecastingHorizon with timedelta values " 
+                "ForecastingHorizon with timedelta values "
                 "is currently experimental and not supported everywhere"
             )
         y_train = _make_series(n_columns=n_columns, index_type=index_type)
