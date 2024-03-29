@@ -1102,7 +1102,7 @@ class RandomShapeletTransform(BaseTransformer):
         "python_dependencies": "numba",
     }
 
-    # todo 0.29.0: remove n_jobs and parallel_backend parameters
+    # todo 0.30.0: remove n_jobs and parallel_backend parameters
     def __init__(
         self,
         n_shapelet_samples=10000,
@@ -1156,13 +1156,13 @@ class RandomShapeletTransform(BaseTransformer):
 
         super().__init__()
 
-        # todo 0.29.0: remove this warning and logic
+        # todo 0.30.0: remove this warning and logic
         self.n_jobs = n_jobs
         if n_jobs != "deprecated" or parallel_backend != "deprecated":
             warn(
                 "In RandomShapeletTransform, the parameters "
                 "n_jobs and parallel_backend are deprecated "
-                "and will be removed in v0.29.0. "
+                "and will be removed in v0.30.0. "
                 "For n_jobs, use the backend_params "
                 "parameter, and pass n_jobs as a parameter of backend_params. "
                 "For parallel_backend, set backend to 'joblib', and "
@@ -1184,7 +1184,7 @@ class RandomShapeletTransform(BaseTransformer):
         else:
             self._backend = backend
             self._backend_params = backend_params
-        # todo 0.29.0 - end remove
+        # todo 0.30.0 - end remove
 
     def _fit(self, X, y=None):
         """Fit the shapelet transform to a specified X and y.
@@ -1296,7 +1296,7 @@ class RandomShapeletTransform(BaseTransformer):
                         "shapelets": shapelets,
                         "max_shapelets_per_class": max_shapelets_per_class,
                     },
-                    # todo 0.29.0: change to non-underscore params
+                    # todo 0.30.0: change to non-underscore params
                     backend=self._backend,
                     backend_params=self._backend_params,
                 )
