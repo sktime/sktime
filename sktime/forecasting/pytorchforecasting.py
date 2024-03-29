@@ -8,6 +8,7 @@ from pytorch_forecasting.metrics import MultiHorizonMetric
 from torch import nn
 
 from sktime.forecasting.base.adapters._pytorchforecasting import (
+    _none_check,
     _PytorchForecastingAdapter,
 )
 
@@ -26,7 +27,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         # inherited from _PytorchForecastingAdapter
         # estimator type
         # --------------
-        "python_dependencies": ["pytorch-forecasting", "torch", "pytorch-lightning"],
+        "python_dependencies": ["pytorch_forecasting", "torch", "lightning"],
     }
 
     def __init__(
@@ -117,6 +118,29 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         dict
             keyword arguments for the underlying algorithm class
         """
+        self._static_categoricals = _none_check(self.static_categoricals, [])
+        self._static_reals = _none_check(self.static_reals, [])
+        self._time_varying_categoricals_encoder = _none_check(
+            self.time_varying_categoricals_encoder, []
+        )
+        self._time_varying_categoricals_decoder = _none_check(
+            self.time_varying_categoricals_decoder, []
+        )
+        self._categorical_groups = _none_check(self.categorical_groups, {})
+        self._time_varying_reals_encoder = _none_check(
+            self.time_varying_reals_encoder, []
+        )
+        self._time_varying_reals_decoder = _none_check(
+            self.time_varying_reals_decoder, []
+        )
+        self._x_reals = _none_check(self.x_reals, [])
+        self._x_categoricals = _none_check(self.x_categoricals, [])
+        self._hidden_continuous_sizes = _none_check(self.hidden_continuous_sizes, {})
+        self._embedding_sizes = _none_check(self.embedding_sizes, {})
+        self._embedding_paddings = _none_check(self.embedding_paddings, [])
+        self._embedding_labels = _none_check(self.embedding_labels, {})
+        self._monotone_constaints = _none_check(self.monotone_constaints, {})
+
         return {
             "hidden_size": self.hidden_size,
             "lstm_layers": self.lstm_layers,
@@ -124,20 +148,24 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
             "output_size": self.output_size,
             "attention_head_size": self.attention_head_size,
             "max_encoder_length": self.max_encoder_length,
-            "static_categoricals": self.static_categoricals,
-            "static_reals": self.static_reals,
-            "time_varying_categoricals_encoder": self.time_varying_categoricals_encoder,
-            "time_varying_categoricals_decoder": self.time_varying_categoricals_decoder,
-            "categorical_groups": self.categorical_groups,
-            "time_varying_reals_encoder": self.time_varying_reals_encoder,
-            "time_varying_reals_decoder": self.time_varying_reals_decoder,
-            "x_reals": self.x_reals,
-            "x_categoricals": self.x_categoricals,
+            "static_categoricals": self._static_categoricals,
+            "static_reals": self._static_reals,
+            "time_varying_categoricals_encoder": (
+                self._time_varying_categoricals_encoder
+            ),
+            "time_varying_categoricals_decoder": (
+                self._time_varying_categoricals_decoder
+            ),
+            "categorical_groups": self._categorical_groups,
+            "time_varying_reals_encoder": self._time_varying_reals_encoder,
+            "time_varying_reals_decoder": self._time_varying_reals_decoder,
+            "x_reals": self._x_reals,
+            "x_categoricals": self._x_categoricals,
             "hidden_continuous_size": self.hidden_continuous_size,
-            "hidden_continuous_sizes": self.hidden_continuous_sizes,
-            "embedding_sizes": self.embedding_sizes,
-            "embedding_paddings": self.embedding_paddings,
-            "embedding_labels": self.embedding_labels,
+            "hidden_continuous_sizes": self._hidden_continuous_sizes,
+            "embedding_sizes": self._embedding_sizes,
+            "embedding_paddings": self._embedding_paddings,
+            "embedding_labels": self._embedding_labels,
             "learning_rate": self.learning_rate,
             "log_interval": self.log_interval,
             "log_val_interval": self.log_val_interval,

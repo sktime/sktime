@@ -25,7 +25,7 @@ class _PytorchForecastingAdapter(GlobalBaseForecaster):
         "authors": ["XinyuWu"],
         "maintainers": ["XinyuWu"],
         "python_version": ">=3.8",
-        "python_dependencies": ["pytorch-forecasting"],
+        "python_dependencies": ["pytorch_forecasting"],
         # estimator type
         # --------------
         "y_inner_mtype": "pd.Series",
@@ -80,7 +80,8 @@ class _PytorchForecastingAdapter(GlobalBaseForecaster):
         )
         import pytorch_lightning as pl
 
-        traner_instance = pl.Trainer(**self.trainer_params)
+        self._trainer_params = _none_check(self.trainer_params, {})
+        traner_instance = pl.Trainer(**self._trainer_params)
         return algorithm_instance, traner_instance
 
     def _fit(
@@ -165,3 +166,7 @@ class _PytorchForecastingAdapter(GlobalBaseForecaster):
         predictions = best_model.predict(X, return_y=True)
         # TODO convert predictions to pandas.Series final_predictions
         return predictions
+
+
+def _none_check(value, default):
+    return value if value is not None else default
