@@ -4,9 +4,22 @@ from copy import deepcopy
 
 import numpy as np
 import pandas as pd
-import torch
-from torch.utils.data import Dataset
-from transformers import AutoConfig, Trainer, TrainingArguments
+from skbase.utils.dependencies import _check_soft_dependencies
+
+if _check_soft_dependencies("torch", severity="none"):
+    import torch
+    from torch.utils.data import Dataset
+else:
+
+    class Dataset:
+        """Dummy class if torch is unavailable."""
+
+        pass
+
+
+if _check_soft_dependencies("transformers", severity="none"):
+    import transformers
+    from transformers import AutoConfig, Trainer, TrainingArguments
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
@@ -30,7 +43,8 @@ class HFTransformersForecaster(BaseForecaster):
     validation_split : float, default=0.2
         Fraction of the data to use for validation
     config : dict, default={}
-        Configuration to use for the model.
+        Configuration to use for the model. See the `transformers`
+        documentation for details.
     training_args : dict, default={}
         Training arguments to use for the model. See `transformers.TrainingArguments`
         for details.
@@ -122,7 +136,8 @@ class HFTransformersForecaster(BaseForecaster):
         _config["num_static_categorical_features"] = 0
         _config["num_time_features"] = 0 if X is None else X.shape[-1]
 
-        del _config["feature_size"]
+        if hasattr(config, "feature_size"):
+            del _config["feature_size"]
 
         config = config.from_dict(_config)
         import transformers
@@ -219,15 +234,16 @@ class HFTransformersForecaster(BaseForecaster):
 
     def _predict(self, fh, X=None):
         if self.deterministic:
-            torch.manual_seed(42)
-            np.random.seed(42)
+            transformers.set_seed(42)
 
         if fh is None:
             fh = self.fh
         fh = fh.to_relative(self.cutoff)
 
         if min(fh._values) < 0:
-            raise NotImplementedError("LTSF is not supporting insample predictions.")
+            raise NotImplementedError(
+                "The huggingface adapter is not supporting insample predictions."
+            )
 
         self.model.eval()
         from torch import from_numpy
