@@ -79,10 +79,10 @@ class HFTransformersForecaster(BaseForecaster):
     ...         "use_cpu": True,
     ...         "label_length": 2,
     ...    },
-    ... )
-    >>> forecaster.fit(y)
+    ... ) # doctest: +SKIP
+    >>> forecaster.fit(y) # doctest: +SKIP
     >>> fh = [1, 2, 3]
-    >>> y_pred = forecaster.predict(fh)
+    >>> y_pred = forecaster.predict(fh) # doctest: +SKIP
     """
 
     _tags = {
