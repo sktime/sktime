@@ -36,7 +36,7 @@ def set_random_state(estimator, random_state=0):
     ):
         from skbase.utils.random_state import set_random_state as _set_random_state
 
-        return set_random_state(estimator, random_state)
+        return _set_random_state(estimator, random_state)
 
     random_state = check_random_state(random_state)
     to_set = {}
