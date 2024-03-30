@@ -29,7 +29,7 @@ EXCLUDE_ESTIMATORS = [
     "TapNetRegressor",
     "TapNetClassifier",
     "ResNetClassifier",  # known ResNetClassifier sporafic failures, see #3954
-    "LSTMFCNClassifier",  # unknown cause, see bug report #4033
+    #"LSTMFCNClassifier",  # unknown cause, see bug report #4033
     "TimeSeriesLloyds",  # an abstract class, but does not follow naming convention
     # DL classifier suspected to cause hangs and memouts, see #4610
     "FCNClassifier",
@@ -38,13 +38,13 @@ EXCLUDE_ESTIMATORS = [
     "CNNClassifier",
     "FCNClassifier",
     "InceptionTimeClassifier",
-    "LSTMFCNClassifier",
+    #"LSTMFCNClassifier",
     "MLPClassifier",
     "MLPRegressor",
     "CNNRegressor",
     "ResNetRegressor",
     "FCNRegressor",
-    "LSTMFCNRegressor",
+    #"LSTMFCNRegressor",
     "MACNNRegressor",
     "CNTCClassifier",
     "CNTCRegressor",
