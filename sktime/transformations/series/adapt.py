@@ -278,15 +278,16 @@ class TabularToSeriesAdaptor(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sklearn.feature_selection import VarianceThreshold
         from sklearn.preprocessing import StandardScaler
@@ -306,10 +307,11 @@ class TabularToSeriesAdaptor(BaseTransformer):
 class PandasTransformAdaptor(BaseTransformer):
     """Adapt pandas transformations to sktime interface.
 
-    In `transform`, executes `pd.DataFrame` method of name `method` on data,
-    optionally with keywords arguments passed, via `kwargs` hyper-parameter.
-    The `apply_to` parameter controls what the data is upon which `method` is called:
-    "call" = for `X` seen in `transform`, "all"/"all_subset" = all data seen so far.
+    In ``transform``, executes ``pd.DataFrame`` method of name ``method`` on data,
+    optionally with keywords arguments passed, via ``kwargs`` hyper-parameter.
+    The ``apply_to`` parameter controls what the data is upon which ``method`` is
+    called:
+    "call" = for ``X`` seen in ``transform``, "all"/"all_subset" = all data seen so far.
     See below for details.
 
     For hierarchical series, operation is applied by instance.
@@ -321,12 +323,13 @@ class PandasTransformAdaptor(BaseTransformer):
     kwargs : dict, optional, default = empty dict (no kwargs passed to method)
         arguments passed to DataFrame.method
     apply_to : str, one of "call", "all", "all_subset", optional, default = "call"
-        "call" = method is applied to `X` seen in transform only
-        "all" = method is applied to all `X` seen in `fit`, `update`, `transform`
-            more precisely, the application to `self._X` is returned
-        "all_subset" = method is applied to all `X` like for "all" value,
-            but before returning, result is sub-set to indices of `X` in `transform`
-        in "all", "all_subset", `X` seen in `transform` do not update `self._X`
+        "call" = method is applied to ``X`` seen in transform only
+        "all" = method is applied to all ``X`` seen in ``fit``, ``update``,
+        ``transform``
+            more precisely, the application to ``self._X`` is returned
+        "all_subset" = method is applied to all ``X`` like for "all" value,
+            but before returning, result is sub-set to indices of ``X`` in ``transform``
+        in "all", "all_subset", ``X`` seen in ``transform`` do not update ``self._X``
 
     Examples
     --------
@@ -427,15 +430,16 @@ class PandasTransformAdaptor(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {"method": "diff"}
         params2 = {"method": "diff", "kwargs": {"periods": 2}, "apply_to": "all_subset"}

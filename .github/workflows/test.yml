@@ -8,6 +8,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   code-quality:
     name: code-quality
@@ -23,7 +27,7 @@ jobs:
         run: python3 -m pip install pre-commit
       - id: changed-files
         name: identify modified files
-        uses: tj-actions/changed-files@v42
+        uses: tj-actions/changed-files@v44
       - name: run pre-commit hooks on modified files
         run: pre-commit run --color always --files ${{ steps.changed-files.outputs.all_changed_files }} --show-diff-on-failure
       - name: check missing __init__ files

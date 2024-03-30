@@ -158,7 +158,11 @@ class BaseSplitter(BaseObject):
         test : 1D np.ndarray of dtype int
             Test window indices, iloc references to test indices in y
         """
-        raise NotImplementedError("abstract method")
+        for train_loc, test_loc in self.split_loc(y):
+            # default gets iloc index from loc index
+            train_iloc = y.get_indexer(train_loc)
+            test_iloc = y.get_indexer(test_loc)
+            yield train_iloc, test_iloc
 
     def _split_vectorized(self, y: pd.MultiIndex) -> SPLIT_GENERATOR_TYPE:
         """Get iloc references to train/test splits of `y`, for pd.MultiIndex.
