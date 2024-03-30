@@ -5,6 +5,7 @@ import functools
 import typing
 from typing import Any, Dict, List
 
+import lightning.pytorch as pl
 import pandas
 from pytorch_forecasting.data import TimeSeriesDataSet
 from pytorch_forecasting.metrics import MultiHorizonMetric
@@ -28,8 +29,8 @@ class _PytorchForecastingAdapter(GlobalBaseForecaster):
         "python_dependencies": ["pytorch_forecasting"],
         # estimator type
         # --------------
-        "y_inner_mtype": "pd.Series",
-        "X_inner_mtype": "pd.DataFrame",
+        "y_inner_mtype": "pd_multiindex_hier",
+        "X_inner_mtype": "pd_multiindex_hier",
         "scitype:y": "univariate",
         "requires-fh-in-fit": True,
         "X-y-must-have-same-index": True,
@@ -78,15 +79,13 @@ class _PytorchForecastingAdapter(GlobalBaseForecaster):
             **{"loss": self.loss, "logging_metrics": self.logging_metrics},
             **self._kwargs,
         )
-        import pytorch_lightning as pl
-
         self._trainer_params = _none_check(self.trainer_params, {})
         traner_instance = pl.Trainer(**self._trainer_params)
         return algorithm_instance, traner_instance
 
     def _fit(
         self: "_PytorchForecastingAdapter",
-        y: pandas.Series,
+        y: pandas.DataFrame,
         X: typing.Optional[pandas.DataFrame],
         fh: ForecastingHorizon,
     ) -> "_PytorchForecastingAdapter":
@@ -117,13 +116,12 @@ class _PytorchForecastingAdapter(GlobalBaseForecaster):
         ValueError
             When ``freq="auto"`` and cannot be interpreted from ``ForecastingHorizon``
         """
-        # TODO convert X to pytorch-forcasting TimeSeriesDataSet Xdataset
-        self._forecaster, self._trainer = self._instantiate_model(X)
-        # TODO convert X to pytorch-forcasting TimeSeriesDataSet.to_dataloader()
+        data = _Xy_to_dataset(X, y)
+        self._forecaster, self._trainer = self._instantiate_model(data)
         self._trainer.fit(
             self._forecaster,
-            train_dataloaders=X.to_dataloader(train=True),
-            val_dataloaders=X.to_dataloader(train=False),
+            train_dataloaders=data.to_dataloader(train=True),
+            # val_dataloaders=data.to_dataloader(train=False),
         )
         return self
 
@@ -170,3 +168,18 @@ class _PytorchForecastingAdapter(GlobalBaseForecaster):
 
 def _none_check(value, default):
     return value if value is not None else default
+
+
+def _Xy_to_dataset(X: pandas.DataFrame, y: pandas.DataFrame):
+    assert (X.index == y.index).all()
+    data = X.join(y, on=X.index.names)
+    index_names = data.index.names
+    index_lens = index_names.__len__()
+    data = data.reset_index(level=list(range(index_lens)))
+
+    return TimeSeriesDataSet(
+        data,
+        time_idx=index_names[-1],
+        target=data.columns[-1],
+        group_ids=index_names[0:-1],
+    )
