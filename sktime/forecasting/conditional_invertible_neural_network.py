@@ -1,4 +1,4 @@
-"""Conditional Invertible Neural Network (CINN) for forecasting."""
+"""Conditional Invertible Neural Network (cINN) for forecasting."""
 __author__ = ["benHeid"]
 
 from copy import deepcopy
