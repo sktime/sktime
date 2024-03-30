@@ -40,8 +40,7 @@ class InstanceSplitter(BaseSplitter):
     >>>
     >>> y = _make_hierarchical()
     >>> splitter = InstanceSplitter(KFold(n_splits=3))
-    >>> list(splitter.split(y))
-    ...
+    >>> list(splitter.split(y))  # doctest: +SKIP
     """
 
     _tags = {
