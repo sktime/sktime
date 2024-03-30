@@ -1,4 +1,4 @@
-"""Conditional Invertible Neural Network (cINN) for forecasting."""
+"""Conditional Invertible Neural Network (CINN) for forecasting."""
 __author__ = ["benHeid"]
 
 from copy import deepcopy
@@ -13,7 +13,7 @@ from sktime.forecasting.base.adapters._pytorch import (
     PyTorchTrainDataset,
 )
 from sktime.forecasting.trend import CurveFitForecaster
-from sktime.networks.cinn import cINNNetwork
+from sktime.networks.cinn import CINNNetwork
 from sktime.transformations.merger import Merger
 from sktime.transformations.series.fourier import FourierFeatures
 from sktime.transformations.series.summarize import WindowSummarizer
@@ -31,7 +31,7 @@ else:
 
 
 def default_sine(x, amplitude, phase, offset, amplitude2, amplitude3, phase2):
-    """Calculate a special sine for the cINN."""
+    """Calculate a special sine for the CINN."""
     sbase = np.sin(x * (1 / 365 / 24 * np.pi * 4) + phase) * amplitude + offset
     s1 = (
         amplitude2
@@ -42,15 +42,14 @@ def default_sine(x, amplitude, phase, offset, amplitude2, amplitude3, phase2):
     return sbase + s1 + s2
 
 
-# TODO 0.29.0: rename the class cINNForecaster to CINNForecaster
-class cINNForecaster(BaseDeepNetworkPyTorch):
+class CINNForecaster(BaseDeepNetworkPyTorch):
     """
-    Conditional Invertible Neural Network (cINN) Forecaster.
+    Conditional Invertible Neural Network (CINN) Forecaster.
 
-    This forecaster uses a cINN to forecast the time series. The cINN learns a
+    This forecaster uses a CINN to forecast the time series. The CINN learns a
     bijective mapping between the time series and a normal distributed latent
     space. The latent space is then sampled and transformed back to the time
-    series space. The cINN is conditioned on statistical and fourier term based
+    series space. The CINN is conditioned on statistical and fourier term based
     features of the time series and the provided exogenous features. This
     forecaster was applied in the BigDEAL challenge by the KIT-IAI team
     and is described in [1]_.
@@ -58,11 +57,11 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
     Parameters
     ----------
     n_coupling_layers : int, optional (default=15)
-        Number of coupling layers in the cINN.
+        Number of coupling layers in the CINN.
     hidden_dim_size : int, optional (default=64)
         Number of hidden units in the subnet.
     sample_dim : int, optional (default=24)
-        Dimension of the samples that the cINN is creating
+        Dimension of the samples that the CINN is creating
     batch_size : int, optional (default=64)
         Batch size for the training.
     encoded_cond_size : int, optional (default=64)
@@ -81,7 +80,7 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
     lag_feature: str, optional (default="mean")
         The rolling statistic that the WindowSummarizer should calculate.
     num_epochs : int, optional (default=50)
-        Number of epochs to train the cINN.
+        Number of epochs to train the CINN.
     verbose : bool, optional (default=False)
         Whether to print the training progress.
     f_statistic : function, optional (default=default_sine)
@@ -89,7 +88,7 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
     init_param_f_statistic : list of float, optional (default=[1, 0, 0, 10, 1, 1])
         Initial parameters for the f_statistic function.
     deterministic : bool, optional (default=False)
-        Whether to use a deterministic or stochastic cINN. Note, deterministic
+        Whether to use a deterministic or stochastic CINN. Note, deterministic
         should only used for testing.
     patience : int, optional (default=5)
         Number of epochs to wait before stopping the training.
@@ -107,13 +106,13 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
     Examples
     --------
     >>> from sktime.forecasting.conditional_invertible_neural_network import (
-    ...     cINNForecaster,
+    ...     CINNForecaster,
     ... )
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> model = cINNForecaster() # doctest: +SKIP
+    >>> model = CINNForecaster() # doctest: +SKIP
     >>> model.fit(y) # doctest: +SKIP
-    cINNForecaster(...)
+    CINNForecaster(...)
     >>> y_pred = model.predict(fh=[1,2,3]) # doctest: +SKIP
     """
 
@@ -179,8 +178,9 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
         self.val_split = val_split
         super().__init__(num_epochs, batch_size, lr=lr)
 
+        # TODO 0.30.0: remove this warning
         warn(
-            "cINNForecaster will be renamed to CINNForecaster in sktime 0.29.0, "
+            "cINNForecaster has been renamed to CINNForecaster in sktime 0.29.0, "
             "The estimator is available under the future name at its "
             "current location, and will be available under its deprecated name "
             "until 0.30.0. "
@@ -259,7 +259,7 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
         self.optimizer = self._instantiate_optimizer()
         early_stopper = _EarlyStopper(patience=self.patience, min_delta=self.delta)
 
-        # Fit the cINN
+        # Fit the CINN
         for epoch in range(self.num_epochs):
             if not self._run_epoch(
                 epoch,
@@ -279,7 +279,7 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
         self.z_std_ = self.z_.std()
 
     def _build_network(self, fh):
-        return cINNNetwork(
+        return CINNNetwork(
             horizon=self.sample_dim,
             cond_features=self.n_cond_features,
             encoded_cond_size=self.encoded_cond_size,
@@ -511,7 +511,7 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
 
         cinn_forecaster = pickle.loads(serial)
         if hasattr(cinn_forecaster, "_state_dict"):
-            cinn_forecaster.network = cINNNetwork(
+            cinn_forecaster.network = CINNNetwork(
                 horizon=cinn_forecaster.sample_dim,
                 cond_features=cinn_forecaster.n_cond_features,
                 encoded_cond_size=cinn_forecaster.encoded_cond_size,
@@ -581,7 +581,7 @@ class PyTorchCinnTestDataset(Dataset):
 
 class _EarlyStopper:
     """
-    Early stopping for the cINN.
+    Early stopping for the CINN.
 
     Parameters
     ----------
@@ -622,6 +622,5 @@ class _EarlyStopper:
         return False
 
 
-# TODO 0.29.0: switch the line to cINNForecaster = CINNForecaster
 # TODO 0.30.0: remove this alias altogether
-CINNForecaster = cINNForecaster
+cINNForecaster = CINNForecaster

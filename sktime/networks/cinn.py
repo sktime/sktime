@@ -1,4 +1,4 @@
-"""Conditional Invertible Neural Network (cINN) for forecasting."""
+"""Conditional Invertible Neural Network (CINN) for forecasting."""
 __author__ = ["benHeid"]
 
 import numpy as np
@@ -24,8 +24,7 @@ if _check_soft_dependencies("FrEIA", severity="none"):
     import FrEIA.modules as Fm
 
 
-# TODO 0.29.0: rename the class cINNNetwork to CINNNetwork
-class cINNNetwork:
+class CINNNetwork:
     """
     Conditional Invertible Neural Network.
 
@@ -38,14 +37,14 @@ class cINNNetwork:
     encoded_cond_size : int
         Dimension of the encoded condition.
     num_coupling_layers : int
-        Number of coupling layers in the cINN.
+        Number of coupling layers in the CINN.
     hidden_dim_size : int
         Number of hidden units in the subnet.
     activation : torch.nn.modules.Module
         Activation function to use in the subnet.
     """
 
-    class _cINNNetwork(NNModule):
+    class _CINNNetwork(NNModule):
         def __init__(
             self,
             horizon,
@@ -78,7 +77,7 @@ class cINNNetwork:
             self, horizon, cond_features, encoded_cond_size, num_coupling_layers
         ):
             """
-            Build the cINN.
+            Build the CINN.
 
             Parameters
             ----------
@@ -89,7 +88,7 @@ class cINNNetwork:
             encoded_cond_size : int
                 Dimension of the encoded condition.
             num_coupling_layers : int
-                Number of coupling layers in the cINN.
+                Number of coupling layers in the CINN.
             """
             nodes = [Ff.InputNode(horizon)]
 
@@ -113,11 +112,11 @@ class cINNNetwork:
             return Ff.GraphINN(nodes + [cond, Ff.OutputNode(nodes[-1])], verbose=False)
 
         def parameters(self, recurse: bool = True):
-            """Return the trainable parameters of the cINN."""
+            """Return the trainable parameters of the CINN."""
             return self.trainable_parameters
 
         def create_subnet(self, hidden_dim_size, activation):
-            """Create a subnet for the cINN.
+            """Create a subnet for the CINN.
 
             Parameters
             ----------
@@ -137,7 +136,7 @@ class cINNNetwork:
             return get_subnet
 
         def forward(self, x, c, rev=False):
-            """Forward pass through the cINN.
+            """Forward pass through the CINN.
 
             Parameters
             ----------
@@ -168,7 +167,7 @@ class cINNNetwork:
 
         def reverse_sample(self, z, c):
             """
-            Reverse sample from the cINN.
+            Reverse sample from the CINN.
 
             Parameters
             ----------
@@ -196,8 +195,9 @@ class cINNNetwork:
         self.hidden_dim_size = hidden_dim_size
         self.activation = activation if activation is not None else nn.ReLU
 
+        # TODO 0.30.0: remove this warning
         warn(
-            "cINNNetwork will be renamed to CINNNetwork in sktime 0.29.0, "
+            "cINNNetwork has been renamed to CINNNetwork in sktime 0.29.0, "
             "The estimator is available under the future name at its "
             "current location, and will be available under its deprecated name "
             "until 0.30.0. "
@@ -208,8 +208,8 @@ class cINNNetwork:
         )
 
     def build(self):
-        """Build the cINN."""
-        return self._cINNNetwork(
+        """Build the CINN."""
+        return self._CINNNetwork(
             self.horizon,
             self.cond_features,
             self.encoded_cond_size,
@@ -219,6 +219,5 @@ class cINNNetwork:
         )
 
 
-# TODO 0.29.0: switch the line to cINNNetwork = CINNNetwork
 # TODO 0.30.0: remove this alias altogether
-CINNNetwork = cINNNetwork
+cINNNetwork = CINNNetwork
