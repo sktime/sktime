@@ -154,7 +154,7 @@ class ForecasterFitPredictUnivariateMultipleFrequency(ForecasterTestScenario):
                 n_timepoints=20,
                 random_state=RAND_SEED,
                 index_type="datetime",
-                freq="2D",
+                freq="2M",
             )
         },
         "predict": {"fh": 1},

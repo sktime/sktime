@@ -220,7 +220,7 @@ class TransformerFitTransformSeriesUnivariateMultipleFrequency(TransformerTestSc
                 n_timepoints=N_T + 1,
                 random_state=RAND_SEED,
                 index_type="datetime",
-                freq="2D",
+                freq="2M",
             )
         },
         "transform": {
@@ -228,7 +228,7 @@ class TransformerFitTransformSeriesUnivariateMultipleFrequency(TransformerTestSc
                 n_timepoints=N_T + 1,
                 random_state=RAND_SEED2,
                 index_type="datetime",
-                freq="2D",
+                freq="2M",
             )
         },
         # "inverse_transform": {"X": _make_series(n_timepoints=N_T)},
