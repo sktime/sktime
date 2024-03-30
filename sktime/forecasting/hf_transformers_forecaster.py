@@ -66,7 +66,7 @@ class HFTransformersForecaster(BaseForecaster):
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> forecaster = HFTransformersForecaster(
-    ...    model_path="huggingface/autoformer-tourism-monthly"
+    ...    model_path="huggingface/autoformer-tourism-monthly",
     ...    training_args ={
     ...        "num_train_epochs": 20,
     ...        "output_dir": "test_output",
