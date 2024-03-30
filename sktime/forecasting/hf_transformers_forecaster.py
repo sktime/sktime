@@ -152,7 +152,7 @@ class HFTransformersForecaster(BaseForecaster):
                 + "ForPrediction"
             )
         else:
-            raise Exception(
+            raise ValueError(
                 "The model type is not inferrable from the config."
                 "Thus, the model cannot be loaded."
             )
@@ -221,7 +221,7 @@ class HFTransformersForecaster(BaseForecaster):
             for param in self.model.parameters():
                 param.requires_grad = True
         else:
-            raise Exception("Unknown fit strategy")
+            raise ValueError("Unknown fit strategy")
 
         trainer = Trainer(
             model=self.model,
