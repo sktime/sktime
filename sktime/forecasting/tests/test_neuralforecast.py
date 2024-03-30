@@ -247,7 +247,7 @@ def test_neural_forecast_fail_with_auto_freq_on_range_index(model_class) -> None
         model.fit(y, fh=[1, 2, 3, 4])
 
     # should work with freq passed as param
-    model = model_class(freq="W", max_steps=5, trainer_kwargs={"logger": False})
+    model = model_class(freq=1, max_steps=5, trainer_kwargs={"logger": False})
 
     # attempt train
     model.fit(y, fh=[1, 2, 3, 4])
