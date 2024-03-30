@@ -111,6 +111,7 @@ def _pivot_sp(df, sp, anchor=None, freq=None, anchor_side="start"):
     if freq is None and hasattr(anchor.index, "freq"):
         freq = anchor.index.freq
 
+    # Make df to period index if it datetime index
     df, was_datetime = _make_period_index_df(df, freq)
 
     if isinstance(anchor.index, pd.DatetimeIndex):
@@ -157,7 +158,9 @@ def _pivot_sp(df, sp, anchor=None, freq=None, anchor_side="start"):
     df_pivot.index = pivot_ix
 
     if was_datetime:
-        df_pivot.index = df_pivot.index.to_timestamp().tz_localize(anchor.index.tz)
+        df_pivot.index = df_pivot.index.to_timestamp(
+            freq=anchor.index.freq
+        ).tz_localize(anchor.index.tz)
 
     df_pivot.columns = df_pivot.columns.droplevel(0)
 
@@ -230,7 +233,7 @@ def _unpivot_sp(df, template=None):
     df_melt = df_melt.dropna()
 
     if was_datetime:
-        df_melt.index = df_melt.index.to_timestamp().tz_localize(tz)
+        df_melt.index = df_melt.index.to_timestamp(template.index.freq).tz_localize(tz)
 
     if template is not None:
         if hasattr(template, "columns"):
