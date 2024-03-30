@@ -3,8 +3,6 @@
 import functools
 import typing
 
-from torch import optim
-
 from sktime.forecasting.base.adapters._neuralforecast import _NeuralForecastAdapter
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
@@ -95,7 +93,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         workers to be used by ``TimeSeriesDataLoader``
     drop_last_loader : bool (default=False)
         whether ``TimeSeriesDataLoader`` drops last non-full batch
-    optimizer : torch.optim.Optimizer (default=None)
+    optimizer : pytorch optimizer (default=None)
         optimizer to use for training, if passed with None defaults to Adam
     optimizer_kwargs : dict (default=None)
         dict of parameters to pass to the user defined optimizer
@@ -163,7 +161,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         # inherited from _NeuralForecastAdapter
         # estimator type
         # --------------
-        "python_dependencies": ["neuralforecast>=1.6.4"],
+        "python_dependencies": ["neuralforecast>=1.7.0"],
     }
 
     def __init__(
@@ -198,7 +196,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         random_seed=1,
         num_workers_loader=0,
         drop_last_loader=False,
-        optimizer: optim.Optimizer = None,
+        optimizer=None,
         optimizer_kwargs: dict = None,
         trainer_kwargs: typing.Optional[dict] = None,
     ):
@@ -464,7 +462,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         workers to be used by `TimeSeriesDataLoader`
     drop_last_loader : bool (default=False)
         whether `TimeSeriesDataLoader` drops last non-full batch
-    optimizer : torch.optim.Optimizer (default=None)
+    optimizer : pytorch-optimizer (default=None)
         optimizer to use for training, if passed with None defaults to Adam
     optimizer_kwargs : dict (default=None)
         dict of parameters to pass to the user defined optimizer
@@ -528,7 +526,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         # inherited from _NeuralForecastAdapter
         # estimator type
         # --------------
-        "python_dependencies": ["neuralforecast>=1.6.4"],
+        "python_dependencies": ["neuralforecast>=1.7.0"],
     }
 
     def __init__(
@@ -562,7 +560,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         random_seed=1,
         num_workers_loader=0,
         drop_last_loader=False,
-        optimizer: optim.Optimizer = None,
+        optimizer=None,
         optimizer_kwargs: dict = None,
         trainer_kwargs: typing.Optional[dict] = None,
     ):
