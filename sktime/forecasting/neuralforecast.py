@@ -22,8 +22,9 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
 
     Parameters
     ----------
-    freq : str (default="auto")
+    freq : typing.Union[str, int] (default="auto")
         frequency of the data, see available frequencies [4]_ from ``pandas``
+        use int freq when using RangeIndex in ``y``
 
         default ("auto") interprets freq from ForecastingHorizon in ``fit``
     local_scaler_type : str (default=None)
@@ -162,7 +163,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
 
     def __init__(
         self: "NeuralForecastRNN",
-        freq: str = "auto",
+        freq: typing.Union[str, int] = "auto",
         local_scaler_type: typing.Optional[
             typing.Literal["standard", "robust", "robust-iqr", "minmax", "boxcox"]
         ] = None,
@@ -383,8 +384,9 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
 
     Parameters
     ----------
-    freq : str (default="auto")
+    freq : typing.Union[str, int] (default="auto")
         frequency of the data, see available frequencies [4]_ from ``pandas``
+        use int freq when using RangeIndex in ``y``
 
         default ("auto") interprets freq from ForecastingHorizon in ``fit``
     local_scaler_type : str (default=None)
@@ -517,7 +519,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
 
     def __init__(
         self: "NeuralForecastLSTM",
-        freq: str = "auto",
+        freq: typing.Union[str, int] = "auto",
         local_scaler_type: typing.Optional[
             typing.Literal["standard", "robust", "robust-iqr", "minmax", "boxcox"]
         ] = None,

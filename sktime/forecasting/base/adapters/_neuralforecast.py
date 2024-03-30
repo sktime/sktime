@@ -17,8 +17,9 @@ class _NeuralForecastAdapter(BaseForecaster):
 
     Parameters
     ----------
-    freq : str (default="auto")
+    freq : typing.Union[str, int] (default="auto")
         frequency of the data, see available frequencies [1]_ from ``pandas``
+        use int freq when using RangeIndex in ``y``
 
         default ("auto") interprets freq from ForecastingHorizon in ``fit``
     local_scaler_type : str (default=None)
@@ -68,7 +69,7 @@ class _NeuralForecastAdapter(BaseForecaster):
 
     def __init__(
         self: "_NeuralForecastAdapter",
-        freq: str = "auto",
+        freq: typing.Union[str, int] = "auto",
         local_scaler_type: typing.Optional[
             typing.Literal["standard", "robust", "robust-iqr", "minmax", "boxcox"]
         ] = None,
