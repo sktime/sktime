@@ -1231,6 +1231,10 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
 
         # Compare the state of the model parameters with the original parameters
         new_params = fitted_est.get_params()
+        # .get_params() returns an empty list for callback.
+        # this is inconsistent with function initialisation where callbacks was set to None. 
+        if new_params['callbacks'] == []:
+            new_params['callbacks'] = None
         for param_name, original_value in original_params.items():
             new_value = new_params[param_name]
 
