@@ -60,7 +60,7 @@ class CNNNetwork(BaseDeepNetwork):
         self.kernel_size = kernel_size
         self.avg_pool_size = avg_pool_size
         self.n_conv_layers = n_conv_layers
-        self.filter_sizes = None
+        self.filter_sizes = filter_sizes
         if filter_sizes is None:
             self._filter_sizes = [6, 12]
         else:
