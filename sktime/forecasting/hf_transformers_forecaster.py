@@ -37,7 +37,7 @@ class HFTransformersForecaster(BaseForecaster):
     Parameters
     ----------
     model_path : str
-        Path to the huggingface model to use for forecasting. Currently, 
+        Path to the huggingface model to use for forecasting. Currently,
         Informer, Autoformer, and TimeSeriesTransformer are supported.
     fit_strategy : str, default="minimal"
         Strategy to use for fitting the model. Can be "minimal" or "full"
