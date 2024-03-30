@@ -31,7 +31,7 @@ else:
 
 
 def default_sine(x, amplitude, phase, offset, amplitude2, amplitude3, phase2):
-    """Calculate a special sine for the CINN."""
+    """Calculate a special sine for the cINN."""
     sbase = np.sin(x * (1 / 365 / 24 * np.pi * 4) + phase) * amplitude + offset
     s1 = (
         amplitude2
@@ -44,12 +44,12 @@ def default_sine(x, amplitude, phase, offset, amplitude2, amplitude3, phase2):
 
 class CINNForecaster(BaseDeepNetworkPyTorch):
     """
-    Conditional Invertible Neural Network (CINN) Forecaster.
+    Conditional Invertible Neural Network (cINN) Forecaster.
 
-    This forecaster uses a CINN to forecast the time series. The CINN learns a
+    This forecaster uses a cINN to forecast the time series. The cINN learns a
     bijective mapping between the time series and a normal distributed latent
     space. The latent space is then sampled and transformed back to the time
-    series space. The CINN is conditioned on statistical and fourier term based
+    series space. The cINN is conditioned on statistical and fourier term based
     features of the time series and the provided exogenous features. This
     forecaster was applied in the BigDEAL challenge by the KIT-IAI team
     and is described in [1]_.
@@ -57,11 +57,11 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
     Parameters
     ----------
     n_coupling_layers : int, optional (default=15)
-        Number of coupling layers in the CINN.
+        Number of coupling layers in the cINN.
     hidden_dim_size : int, optional (default=64)
         Number of hidden units in the subnet.
     sample_dim : int, optional (default=24)
-        Dimension of the samples that the CINN is creating
+        Dimension of the samples that the cINN is creating
     batch_size : int, optional (default=64)
         Batch size for the training.
     encoded_cond_size : int, optional (default=64)
@@ -80,7 +80,7 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
     lag_feature: str, optional (default="mean")
         The rolling statistic that the WindowSummarizer should calculate.
     num_epochs : int, optional (default=50)
-        Number of epochs to train the CINN.
+        Number of epochs to train the cINN.
     verbose : bool, optional (default=False)
         Whether to print the training progress.
     f_statistic : function, optional (default=default_sine)
@@ -88,7 +88,7 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
     init_param_f_statistic : list of float, optional (default=[1, 0, 0, 10, 1, 1])
         Initial parameters for the f_statistic function.
     deterministic : bool, optional (default=False)
-        Whether to use a deterministic or stochastic CINN. Note, deterministic
+        Whether to use a deterministic or stochastic cINN. Note, deterministic
         should only used for testing.
     patience : int, optional (default=5)
         Number of epochs to wait before stopping the training.
@@ -259,7 +259,7 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         self.optimizer = self._instantiate_optimizer()
         early_stopper = _EarlyStopper(patience=self.patience, min_delta=self.delta)
 
-        # Fit the CINN
+        # Fit the cINN
         for epoch in range(self.num_epochs):
             if not self._run_epoch(
                 epoch,
@@ -581,7 +581,7 @@ class PyTorchCinnTestDataset(Dataset):
 
 class _EarlyStopper:
     """
-    Early stopping for the CINN.
+    Early stopping for the cINN.
 
     Parameters
     ----------

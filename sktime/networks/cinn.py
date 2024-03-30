@@ -37,7 +37,7 @@ class CINNNetwork:
     encoded_cond_size : int
         Dimension of the encoded condition.
     num_coupling_layers : int
-        Number of coupling layers in the CINN.
+        Number of coupling layers in the cINN.
     hidden_dim_size : int
         Number of hidden units in the subnet.
     activation : torch.nn.modules.Module
@@ -77,7 +77,7 @@ class CINNNetwork:
             self, horizon, cond_features, encoded_cond_size, num_coupling_layers
         ):
             """
-            Build the CINN.
+            Build the cINN.
 
             Parameters
             ----------
@@ -88,7 +88,7 @@ class CINNNetwork:
             encoded_cond_size : int
                 Dimension of the encoded condition.
             num_coupling_layers : int
-                Number of coupling layers in the CINN.
+                Number of coupling layers in the cINN.
             """
             nodes = [Ff.InputNode(horizon)]
 
@@ -112,11 +112,11 @@ class CINNNetwork:
             return Ff.GraphINN(nodes + [cond, Ff.OutputNode(nodes[-1])], verbose=False)
 
         def parameters(self, recurse: bool = True):
-            """Return the trainable parameters of the CINN."""
+            """Return the trainable parameters of the cINN."""
             return self.trainable_parameters
 
         def create_subnet(self, hidden_dim_size, activation):
-            """Create a subnet for the CINN.
+            """Create a subnet for the cINN.
 
             Parameters
             ----------
@@ -136,7 +136,7 @@ class CINNNetwork:
             return get_subnet
 
         def forward(self, x, c, rev=False):
-            """Forward pass through the CINN.
+            """Forward pass through the cINN.
 
             Parameters
             ----------
@@ -167,7 +167,7 @@ class CINNNetwork:
 
         def reverse_sample(self, z, c):
             """
-            Reverse sample from the CINN.
+            Reverse sample from the cINN.
 
             Parameters
             ----------
@@ -208,7 +208,7 @@ class CINNNetwork:
         )
 
     def build(self):
-        """Build the CINN."""
+        """Build the cINN."""
         return self._CINNNetwork(
             self.horizon,
             self.cond_features,
