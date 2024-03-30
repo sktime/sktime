@@ -38,6 +38,8 @@ def set_random_state(estimator, random_state=0):
 
         return _set_random_state(estimator, random_state)
 
+    from sklearn.utils import check_random_state
+
     random_state = check_random_state(random_state)
     to_set = {}
     for key in sorted(estimator.get_params(deep=True)):
