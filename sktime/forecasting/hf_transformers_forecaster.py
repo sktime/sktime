@@ -1,5 +1,7 @@
 """Adapter for using huggingface transformers for forecasting."""
 
+from copy import deepcopy
+
 import numpy as np
 import pandas as pd
 import torch
@@ -17,7 +19,7 @@ class HFTransformersForecaster(BaseForecaster):
 
     This forecaster fetches the model from the huggingface model hub.
     Note, this forecaster is in an experimental state. It is currently only
-    working for Informer, Autoformer, and TimeSeriesTransformer. 
+    working for Informer, Autoformer, and TimeSeriesTransformer.
 
     Parameters
     ----------
@@ -87,22 +89,25 @@ class HFTransformersForecaster(BaseForecaster):
         model_path: str,
         fit_strategy="minimal",
         validation_split=0.2,
-        config={},
-        training_args={},
+        config=None,
+        training_args=None,
         compute_metrics=None,
         deterministic=False,
-        callbacks=[]
+        callbacks=None,
     ):
         super().__init__()
         self.model_path = model_path
         self.fit_strategy = fit_strategy
         self.validation_split = validation_split
         self.config = config
+        self._config = config if config is not None else {}
         self.training_args = training_args
         self.compute_metrics = compute_metrics
         self._compute_metrics = compute_metrics
+        self._compute_metrics = compute_metrics
         self.deterministic = deterministic
         self.callbacks = callbacks
+        self._callbacks = callbacks
 
     def _fit(self, y, X, fh):
         # Load model and extract config
@@ -110,7 +115,7 @@ class HFTransformersForecaster(BaseForecaster):
 
         # Update config with user provided config
         _config = config.to_dict()
-        _config.update(self.config)
+        _config.update(self._config)
         _config["num_dynamic_real_features"] = X.shape[-1] if X is not None else 0
         _config["num_static_real_features"] = 0
         _config["num_dynamic_real_features"] = 0
@@ -188,10 +193,9 @@ class HFTransformersForecaster(BaseForecaster):
             )
 
             eval_dataset = None
-        from copy import deepcopy
+
         training_args = deepcopy(self.training_args)
         training_args["label_names"] = ["future_values"]
-
         training_args = TrainingArguments(**training_args)
 
         if self.fit_strategy == "minimal":
@@ -209,7 +213,7 @@ class HFTransformersForecaster(BaseForecaster):
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
             compute_metrics=self._compute_metrics,
-            callbacks=self.callbacks
+            callbacks=self._callbacks,
         )
         trainer.train()
 
@@ -229,7 +233,9 @@ class HFTransformersForecaster(BaseForecaster):
         from torch import from_numpy
 
         hist = self._y.values.reshape((1, -1))
-        self.model.config.prediction_length = max(fh.to_relative(self._cutoff)._values) + 1
+        self.model.config.prediction_length = (
+            max(fh.to_relative(self._cutoff)._values) + 1
+        )
         if X is not None:
             hist_x = self._X.values.reshape((1, -1, self._X.shape[-1]))
             x_ = X.values.reshape((1, -1, self._X.shape[-1]))
