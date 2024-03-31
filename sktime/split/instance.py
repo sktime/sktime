@@ -89,6 +89,9 @@ class InstanceSplitter(BaseSplitter):
         n_splits : int
             The number of splits.
         """
+        if not isinstance(y, pd.Index):
+            y = self._check_y(y, allow_index=True)[0]
+            y = y.index
         inst_ix = y.droplevel(-1).unique()
         return self.cv.get_n_splits(inst_ix)
 
