@@ -1,5 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests for interfacing estimators from neuralforecast."""
+import random
+
 import pandas
 import pytest
 
@@ -225,29 +227,125 @@ def test_neural_forecast_with_auto_against_given_freq(model_class, freq) -> None
     assert offset_freq == offset_auto_freq
 
 
+@pytest.mark.parametrize(
+    "index",
+    [
+        pandas.RangeIndex(start=0, stop=20),
+        pandas.Index(range(20)),
+    ],
+)
 @pytest.mark.parametrize("model_class", [NeuralForecastLSTM, NeuralForecastRNN])
 @pytest.mark.skipif(
     not run_test_for_class([NeuralForecastLSTM, NeuralForecastRNN]),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-def test_neural_forecast_fail_with_auto_freq_on_range_index(model_class) -> None:
-    """Test fail with freq set to 'auto' on pd.RangeIndex."""
-    # prepare data
-    y = pandas.Series(data=range(10), index=pandas.RangeIndex(start=0, stop=10))
+def test_neural_forecast_with_auto_freq_on_int_like(index, model_class) -> None:
+    """Test with freq set to 'auto' on int-like index."""
 
-    # should fail to interpret auto freq
-    with pytest.raises(
-        ValueError,
-        match="could not interpret freq, try passing freq in model initialization",
-    ):
-        # define model
-        model = model_class(freq="auto", max_steps=5, trainer_kwargs={"logger": False})
+    y = pandas.Series(data=range(len(index)), index=index)
 
-        # attempt train
-        model.fit(y, fh=[1, 2, 3, 4])
+    model = model_class(freq=1, max_steps=1, trainer_kwargs={"logger": False})
+    model_auto = model_class(freq="auto", max_steps=1, trainer_kwargs={"logger": False})
 
-    # should work with freq passed as param
-    model = model_class(freq=1, max_steps=5, trainer_kwargs={"logger": False})
+    model.fit(y, fh=[1, 2, 3])
+    model_auto.fit(y, fh=[1, 2, 3])
 
-    # attempt train
-    model.fit(y, fh=[1, 2, 3, 4])
+    pred = model.predict()
+    pred_auto = model_auto.predict()
+
+    # check prediction
+    pandas.testing.assert_series_equal(pred, pred_auto)
+
+
+@pytest.mark.parametrize(
+    "index",
+    [
+        pandas.RangeIndex(start=0, stop=20),
+        pandas.Index(range(20)),
+    ],
+)
+@pytest.mark.parametrize("model_class", [NeuralForecastLSTM, NeuralForecastRNN])
+@pytest.mark.skipif(
+    not run_test_for_class([NeuralForecastLSTM, NeuralForecastRNN]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_neural_forecast_with_auto_freq_on_missing_int_like(index, model_class) -> None:
+    """Test with freq set to 'auto' on int-like index with missing values."""
+
+    index = index.drop(random.choices(index, k=5))
+    y = pandas.Series(data=range(len(index)), index=index)
+
+    model = model_class(freq=1, max_steps=1, trainer_kwargs={"logger": False})
+    model_auto = model_class(freq="auto", max_steps=1, trainer_kwargs={"logger": False})
+
+    model.fit(y, fh=[1, 2, 3])
+    model_auto.fit(y, fh=[1, 2, 3])
+
+    pred = model.predict()
+    pred_auto = model_auto.predict()
+
+    # check prediction
+    pandas.testing.assert_series_equal(pred, pred_auto)
+
+
+@pytest.mark.parametrize(
+    "index",
+    [
+        pandas.date_range(start="2024-01-01", periods=10),
+        pandas.period_range(start="2024-01-01", periods=10),
+    ],
+)
+@pytest.mark.parametrize("model_class", [NeuralForecastLSTM, NeuralForecastRNN])
+@pytest.mark.skipif(
+    not run_test_for_class([NeuralForecastLSTM, NeuralForecastRNN]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_neural_forecast_with_auto_freq_on_date_like(index, model_class) -> None:
+    """Test with freq set to 'auto' on date-like index."""
+
+    y = pandas.Series(data=range(len(index)), index=index)
+
+    model = model_class(freq="D", max_steps=1, trainer_kwargs={"logger": False})
+    model_auto = model_class(freq="auto", max_steps=1, trainer_kwargs={"logger": False})
+
+    model.fit(y, fh=[1, 2, 3])
+    model_auto.fit(y, fh=[1, 2, 3])
+
+    pred = model.predict()
+    pred_auto = model_auto.predict()
+
+    # check prediction
+    pandas.testing.assert_series_equal(pred, pred_auto)
+
+
+@pytest.mark.parametrize(
+    "index",
+    [
+        # pandas.date_range(start='2024-01-01', periods=10), Raises Exception on both
+        pandas.period_range(start="2024-01-01", periods=10),
+    ],
+)
+@pytest.mark.parametrize("model_class", [NeuralForecastLSTM, NeuralForecastRNN])
+@pytest.mark.skipif(
+    not run_test_for_class([NeuralForecastLSTM, NeuralForecastRNN]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_neural_forecast_with_auto_freq_on_missing_date_like(
+    index, model_class
+) -> None:
+    """Test with freq set to 'auto' on date-like index with missing values."""
+
+    index = index.drop(random.choices(index, k=5))
+    y = pandas.Series(data=range(len(index)), index=index)
+
+    model = model_class(freq="D", max_steps=1, trainer_kwargs={"logger": False})
+    model_auto = model_class(freq="auto", max_steps=1, trainer_kwargs={"logger": False})
+
+    model.fit(y, fh=[1, 2, 3])
+    model_auto.fit(y, fh=[1, 2, 3])
+
+    pred = model.predict()
+    pred_auto = model_auto.predict()
+
+    # check prediction
+    pandas.testing.assert_series_equal(pred, pred_auto)
