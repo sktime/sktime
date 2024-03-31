@@ -5,9 +5,7 @@ import functools
 import typing
 from typing import Any, Dict, List
 
-import lightning.pytorch as pl
 import pandas
-from pytorch_forecasting.data import TimeSeriesDataSet
 
 from sktime.forecasting.base import ForecastingHorizon, GlobalBaseForecaster
 
@@ -70,7 +68,7 @@ class _PytorchForecastingAdapter(GlobalBaseForecaster):
 
         """
 
-    def _instantiate_model(self: "_PytorchForecastingAdapter", data: TimeSeriesDataSet):
+    def _instantiate_model(self: "_PytorchForecastingAdapter", data):
         """Instantiate the model."""
         algorithm_instance = self.algorithm_class.from_dataset(
             data,
@@ -79,6 +77,8 @@ class _PytorchForecastingAdapter(GlobalBaseForecaster):
             **self._kwargs,
         )
         self._trainer_params = _none_check(self.trainer_params, {})
+        import lightning.pytorch as pl
+
         traner_instance = pl.Trainer(**self._trainer_params)
         return algorithm_instance, traner_instance
 
@@ -117,7 +117,7 @@ class _PytorchForecastingAdapter(GlobalBaseForecaster):
         """
         self._dataset_params = _none_check(self.dataset_params, {})
         max_prediction_length = fh.to_relative()[-1]
-        training, validation = _Xy_to_dataset(
+        training, validation = self._Xy_to_dataset(
             X, y, self._dataset_params, max_prediction_length
         )
         self._forecaster, self._trainer = self._instantiate_model(training)
@@ -180,33 +180,35 @@ class _PytorchForecastingAdapter(GlobalBaseForecaster):
         # TODO convert predictions to pandas.Series final_predictions
         return predictions
 
+    def _Xy_to_dataset(
+        self,
+        X: pandas.DataFrame,
+        y: pandas.DataFrame,
+        dataset_params: Dict[str, Any],
+        max_prediction_length,
+    ):
+        from pytorch_forecasting.data import TimeSeriesDataSet
+
+        assert (X.index == y.index).all()
+        data = X.join(y, on=X.index.names)
+        index_names = data.index.names
+        index_lens = index_names.__len__()
+        data = data.reset_index(level=list(range(index_lens)))
+        training_cutoff = data[index_names[-1]].max() - max_prediction_length
+        _dataset_params = {
+            "data": data[data[index_names[-1]] <= training_cutoff],
+            "time_idx": index_names[-1],
+            "target": data.columns[-1],
+            "group_ids": index_names[0:-1],
+        }
+        _dataset_params.update(dataset_params)
+        _dataset_params["max_prediction_length"] = int(max_prediction_length)
+        training = TimeSeriesDataSet(**_dataset_params)
+        validation = TimeSeriesDataSet.from_dataset(
+            training, data, predict=True, stop_randomization=True
+        )
+        return training, validation
+
 
 def _none_check(value, default):
     return value if value is not None else default
-
-
-def _Xy_to_dataset(
-    X: pandas.DataFrame,
-    y: pandas.DataFrame,
-    dataset_params: Dict[str, Any],
-    max_prediction_length,
-):
-    assert (X.index == y.index).all()
-    data = X.join(y, on=X.index.names)
-    index_names = data.index.names
-    index_lens = index_names.__len__()
-    data = data.reset_index(level=list(range(index_lens)))
-    training_cutoff = data[index_names[-1]].max() - max_prediction_length
-    _dataset_params = {
-        "data": data[data[index_names[-1]] <= training_cutoff],
-        "time_idx": index_names[-1],
-        "target": data.columns[-1],
-        "group_ids": index_names[0:-1],
-    }
-    _dataset_params.update(dataset_params)
-    _dataset_params["max_prediction_length"] = int(max_prediction_length)
-    training = TimeSeriesDataSet(**_dataset_params)
-    validation = TimeSeriesDataSet.from_dataset(
-        training, data, predict=True, stop_randomization=True
-    )
-    return training, validation
