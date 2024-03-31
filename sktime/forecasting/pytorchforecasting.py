@@ -171,7 +171,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
             "log_val_interval": self.log_val_interval,
             "log_gradient_flow": self.log_gradient_flow,
             "reduce_on_plateau_patience": self.reduce_on_plateau_patience,
-            "monotone_constaints": self.monotone_constaints,
+            "monotone_constaints": self._monotone_constaints,
             "share_single_variable_networks": self.share_single_variable_networks,
             "causal_attention": self.causal_attention,
         }
