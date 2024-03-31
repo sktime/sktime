@@ -10,7 +10,7 @@ from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
-from pandas.tseries.frequencies import to_offset
+from pandas.tseries.frequencies import to_offset, get_period_alias, freq_to_period_freqstr
 
 from sktime.utils.datetime import _coerce_duration_to_int
 from sktime.utils.validation import (
@@ -898,7 +898,7 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
 
         if is_timestamp:
             # coerce back to DatetimeIndex after operation
-            absolute = absolute.to_timestamp(fh.freq)
+            absolute = absolute.to_timestamp(to_offset(fh.freq))
 
         if old_tz is not None:
             absolute = absolute.tz_localize(old_tz)
@@ -956,7 +956,9 @@ def _coerce_to_period(x, freq=None):
             "_coerce_to_period requires freq argument to be passed if x is pd.Timestamp"
         )
     try:
-        return x.to_period(freq)
+        offset = to_offset(freq)
+        period_alias = get_period_alias(offset.name)
+        return x.to_period(period_alias)
     except (ValueError, AttributeError) as e:
         msg = str(e)
         if "Invalid frequency" in msg or "_period_dtype_code" in msg:
