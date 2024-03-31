@@ -123,7 +123,10 @@ class _PytorchForecastingAdapter(GlobalBaseForecaster):
             When ``freq="auto"`` and cannot be interpreted from ``ForecastingHorizon``
         """
         self._dataset_params = _none_check(self.dataset_params, {})
-        training, validation = _Xy_to_dataset(X, y, self._dataset_params)
+        max_prediction_length = fh.to_relative()[-1]
+        training, validation = _Xy_to_dataset(
+            X, y, self._dataset_params, max_prediction_length
+        )
         self._forecaster, self._trainer = self._instantiate_model(training)
         self._train_to_dataloader_params = {"train": True}
         self._train_to_dataloader_params.update(
@@ -190,20 +193,25 @@ def _none_check(value, default):
 
 
 def _Xy_to_dataset(
-    X: pandas.DataFrame, y: pandas.DataFrame, dataset_params: Dict[str, Any]
+    X: pandas.DataFrame,
+    y: pandas.DataFrame,
+    dataset_params: Dict[str, Any],
+    max_prediction_length,
 ):
     assert (X.index == y.index).all()
     data = X.join(y, on=X.index.names)
     index_names = data.index.names
     index_lens = index_names.__len__()
     data = data.reset_index(level=list(range(index_lens)))
+    training_cutoff = data[index_names[-1]].max() - max_prediction_length
     _dataset_params = {
-        "data": data,
+        "data": data[data[index_names[-1]] <= training_cutoff],
         "time_idx": index_names[-1],
         "target": data.columns[-1],
         "group_ids": index_names[0:-1],
     }
     _dataset_params.update(dataset_params)
+    _dataset_params["max_prediction_length"] = int(max_prediction_length)
     training = TimeSeriesDataSet(**_dataset_params)
     validation = TimeSeriesDataSet.from_dataset(
         training, data, predict=True, stop_randomization=True
