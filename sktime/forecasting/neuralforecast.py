@@ -93,12 +93,12 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         workers to be used by ``TimeSeriesDataLoader``
     drop_last_loader : bool (default=False)
         whether ``TimeSeriesDataLoader`` drops last non-full batch
+    trainer_kwargs : dict (default=None)
+        keyword trainer arguments inherited from PyTorch Lighning's trainer [6]_
     optimizer : pytorch optimizer (default=None)
         optimizer to use for training, if passed with None defaults to Adam
     optimizer_kwargs : dict (default=None)
         dict of parameters to pass to the user defined optimizer
-    trainer_kwargs : dict (default=None)
-        keyword trainer arguments inherited from PyTorch Lighning's trainer [6]_
 
     Notes
     -----
@@ -161,7 +161,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         # inherited from _NeuralForecastAdapter
         # estimator type
         # --------------
-        "python_dependencies": ["neuralforecast>=1.7.0"],
+        "python_dependencies": ["neuralforecast>=1.6.4"],
     }
 
     def __init__(
@@ -196,9 +196,9 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         random_seed=1,
         num_workers_loader=0,
         drop_last_loader=False,
+        trainer_kwargs: typing.Optional[dict] = None,
         optimizer=None,
         optimizer_kwargs: dict = None,
-        trainer_kwargs: typing.Optional[dict] = None,
     ):
         self.input_size = input_size
         self.inference_input_size = inference_input_size
@@ -462,12 +462,12 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         workers to be used by `TimeSeriesDataLoader`
     drop_last_loader : bool (default=False)
         whether `TimeSeriesDataLoader` drops last non-full batch
+    trainer_kwargs : dict (default=None)
+        keyword trainer arguments inherited from PyTorch Lighning's trainer [6]_
     optimizer : pytorch-optimizer (default=None)
         optimizer to use for training, if passed with None defaults to Adam
     optimizer_kwargs : dict (default=None)
         dict of parameters to pass to the user defined optimizer
-    trainer_kwargs : dict (default=None)
-        keyword trainer arguments inherited from PyTorch Lighning's trainer [6]_
 
     Notes
     -----
@@ -526,7 +526,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         # inherited from _NeuralForecastAdapter
         # estimator type
         # --------------
-        "python_dependencies": ["neuralforecast>=1.7.0"],
+        "python_dependencies": ["neuralforecast>=1.6.4"],
     }
 
     def __init__(
@@ -560,9 +560,9 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         random_seed=1,
         num_workers_loader=0,
         drop_last_loader=False,
+        trainer_kwargs: typing.Optional[dict] = None,
         optimizer=None,
         optimizer_kwargs: dict = None,
-        trainer_kwargs: typing.Optional[dict] = None,
     ):
         self.input_size = input_size
         self.inference_input_size = inference_input_size

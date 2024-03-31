@@ -3,13 +3,15 @@
 import abc
 import functools
 import typing
+from inspect import signature
+from logging import warn
 
 import pandas
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
 __all__ = ["_NeuralForecastAdapter"]
-__author__ = ["yarnabrina"]
+__author__ = ["yarnabrina", "pranavvp16"]
 
 
 class _NeuralForecastAdapter(BaseForecaster):
@@ -132,16 +134,49 @@ class _NeuralForecastAdapter(BaseForecaster):
         - custom model name (``alias``) - used from ``algorithm_name``
         """
 
+    def _get_valid_parameters(self: "_NeuralForecastAdapter") -> dict:
+        """Get valid parameters for the underlying NeuralForecast algorithm class.
+
+        Returns
+        -------
+        dict
+            valid list of arguments for the underlying algorithm class
+        """
+        from pytorch_lightning import Trainer
+
+        model_class = self.algorithm_class
+        trainer_params = list(signature(Trainer.__init__).parameters.keys())
+        valid_parameters = list(signature(model_class.__init__).parameters.keys())
+        valid_parameters += trainer_params
+
+        sktime_parameters = self.algorithm_parameters
+
+        for sktime_param in list(sktime_parameters.keys()):
+            if sktime_param not in valid_parameters:
+                if sktime_parameters[sktime_param] is not None:
+                    warn(
+                        f"Keyword argument '{sktime_param}' will be omitted as it is"
+                        f" not found in the __init__ method "
+                        f"from {self.algorithm_class}. "
+                        f"Check your neuralforecast version"
+                        f"to find out the right API parameters."
+                    )
+                sktime_parameters.pop(sktime_param)
+
+        return sktime_parameters
+
     def _instantiate_model(self: "_NeuralForecastAdapter", fh: ForecastingHorizon):
         """Instantiate the model."""
         exogenous_parameters = (
             {"futr_exog_list": self.futr_exog_list} if self.needs_X else {}
         )
 
+        # filer params according to neuralforecast version
+        params = self._get_valid_parameters()
         algorithm_instance = self.algorithm_class(
             fh,
             alias=self.algorithm_name,
-            **self.algorithm_parameters,
+            **params,
             **exogenous_parameters,
         )
 
