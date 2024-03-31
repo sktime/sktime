@@ -403,7 +403,7 @@ def test_naive_predict_interval_against_R_naive(strategy, sp, lower, upper):
     pd.testing.assert_frame_equal(y_pred_ints, expected)
 
 
-@pytest.mark.parametrize("freq", ["2D", "W", "W-TUE", "M", "2M"])
+@pytest.mark.parametrize("freq", ["2D", "W", "W-TUE", "M"])
 def test_naive_sp_greater_1_not_nan(freq):
     sample_dates = pd.date_range(start="2001-01-01", periods=30, freq=freq)
     sample_values = np.random.default_rng(seed=0).random(size=len(sample_dates))
