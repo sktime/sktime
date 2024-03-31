@@ -327,7 +327,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         except ModuleNotFoundError:
             params = [
                 {
-                    "freq": "D",
+                    "freq": "auto",
                     "inference_input_size": 2,
                     "encoder_hidden_size": 2,
                     "decoder_hidden_size": 3,
@@ -335,7 +335,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
                     "trainer_kwargs": {"logger": False},
                 },
                 {
-                    "freq": "D",
+                    "freq": "auto",
                     "inference_input_size": 2,
                     "encoder_hidden_size": 2,
                     "decoder_hidden_size": 3,
@@ -349,7 +349,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
 
             params = [
                 {
-                    "freq": "D",
+                    "freq": "auto",
                     "inference_input_size": 2,
                     "encoder_hidden_size": 2,
                     "decoder_hidden_size": 3,
@@ -357,7 +357,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
                     "trainer_kwargs": {"logger": False},
                 },
                 {
-                    "freq": "D",
+                    "freq": "auto",
                     "inference_input_size": 2,
                     "encoder_hidden_size": 2,
                     "decoder_hidden_size": 3,
@@ -675,7 +675,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         except ModuleNotFoundError:
             params = [
                 {
-                    "freq": "D",
+                    "freq": "auto",
                     "inference_input_size": 2,
                     "encoder_hidden_size": 2,
                     "decoder_hidden_size": 3,
@@ -683,7 +683,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
                     "trainer_kwargs": {"logger": False},
                 },
                 {
-                    "freq": "D",
+                    "freq": "auto",
                     "inference_input_size": 2,
                     "encoder_hidden_size": 2,
                     "encode_bias": False,
@@ -697,7 +697,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
 
             params = [
                 {
-                    "freq": "D",
+                    "freq": "auto",
                     "inference_input_size": 2,
                     "encoder_hidden_size": 2,
                     "decoder_hidden_size": 3,
@@ -705,7 +705,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
                     "trainer_kwargs": {"logger": False},
                 },
                 {
-                    "freq": "D",
+                    "freq": "auto",
                     "inference_input_size": 2,
                     "encoder_hidden_size": 2,
                     "decoder_hidden_size": 3,
