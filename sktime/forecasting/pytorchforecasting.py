@@ -63,6 +63,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         causal_attention: bool = True,
         logging_metrics: nn.ModuleList = None,
         allowed_encoder_known_variable_names: List[str] | None = None,
+        dataset_params: Dict[str, Any] | None = None,
         trainer_params: Dict[str, Any] | None = None,
         **kwargs,
     ) -> None:
@@ -70,6 +71,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
             loss,
             logging_metrics,
             allowed_encoder_known_variable_names,
+            dataset_params,
             trainer_params,
             **kwargs,
         )

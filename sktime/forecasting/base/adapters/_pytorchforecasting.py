@@ -43,6 +43,7 @@ class _PytorchForecastingAdapter(GlobalBaseForecaster):
         loss: MultiHorizonMetric = None,
         logging_metrics: nn.ModuleList = None,
         allowed_encoder_known_variable_names: List[str] | None = None,
+        dataset_params: Dict[str, Any] | None = None,
         trainer_params: Dict[str, Any] | None = None,
         **kwargs,
     ) -> None:
@@ -50,6 +51,7 @@ class _PytorchForecastingAdapter(GlobalBaseForecaster):
         self.loss = loss
         self.logging_metrics = logging_metrics
         self.allowed_encoder_known_variable_names = allowed_encoder_known_variable_names
+        self.dataset_params = dataset_params
         self.trainer_params = trainer_params
         self._kwargs = kwargs
 
@@ -116,7 +118,8 @@ class _PytorchForecastingAdapter(GlobalBaseForecaster):
         ValueError
             When ``freq="auto"`` and cannot be interpreted from ``ForecastingHorizon``
         """
-        data = _Xy_to_dataset(X, y)
+        self._dataset_params = _none_check(self.dataset_params, {})
+        data = _Xy_to_dataset(X, y, self._dataset_params)
         self._forecaster, self._trainer = self._instantiate_model(data)
         self._trainer.fit(
             self._forecaster,
@@ -170,16 +173,19 @@ def _none_check(value, default):
     return value if value is not None else default
 
 
-def _Xy_to_dataset(X: pandas.DataFrame, y: pandas.DataFrame):
+def _Xy_to_dataset(
+    X: pandas.DataFrame, y: pandas.DataFrame, dataset_params: Dict[str, Any]
+):
     assert (X.index == y.index).all()
     data = X.join(y, on=X.index.names)
     index_names = data.index.names
     index_lens = index_names.__len__()
     data = data.reset_index(level=list(range(index_lens)))
-
-    return TimeSeriesDataSet(
-        data,
-        time_idx=index_names[-1],
-        target=data.columns[-1],
-        group_ids=index_names[0:-1],
-    )
+    _dataset_params = {
+        "data": data,
+        "time_idx": index_names[-1],
+        "target": data.columns[-1],
+        "group_ids": index_names[0:-1],
+    }
+    _dataset_params.update(dataset_params)
+    return TimeSeriesDataSet(**_dataset_params)
