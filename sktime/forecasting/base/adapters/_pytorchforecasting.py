@@ -44,6 +44,8 @@ class _PytorchForecastingAdapter(GlobalBaseForecaster):
         logging_metrics: nn.ModuleList = None,
         allowed_encoder_known_variable_names: List[str] | None = None,
         dataset_params: Dict[str, Any] | None = None,
+        train_to_dataloader_params: Dict[str, Any] | None = None,
+        validation_to_dataloader_params: Dict[str, Any] | None = None,
         trainer_params: Dict[str, Any] | None = None,
         **kwargs,
     ) -> None:
@@ -53,6 +55,8 @@ class _PytorchForecastingAdapter(GlobalBaseForecaster):
         self.allowed_encoder_known_variable_names = allowed_encoder_known_variable_names
         self.dataset_params = dataset_params
         self.trainer_params = trainer_params
+        self.train_to_dataloader_params = train_to_dataloader_params
+        self.validation_to_dataloader_params = validation_to_dataloader_params
         self._kwargs = kwargs
 
     @functools.cached_property
@@ -119,12 +123,24 @@ class _PytorchForecastingAdapter(GlobalBaseForecaster):
             When ``freq="auto"`` and cannot be interpreted from ``ForecastingHorizon``
         """
         self._dataset_params = _none_check(self.dataset_params, {})
-        data = _Xy_to_dataset(X, y, self._dataset_params)
-        self._forecaster, self._trainer = self._instantiate_model(data)
+        training, validation = _Xy_to_dataset(X, y, self._dataset_params)
+        self._forecaster, self._trainer = self._instantiate_model(training)
+        self._train_to_dataloader_params = {"train": True}
+        self._train_to_dataloader_params.update(
+            _none_check(self.train_to_dataloader_params, {})
+        )
+        self._validation_to_dataloader_params = {"train": False}
+        self._validation_to_dataloader_params.update(
+            _none_check(self.validation_to_dataloader_params, {})
+        )
         self._trainer.fit(
             self._forecaster,
-            train_dataloaders=data.to_dataloader(train=True),
-            # val_dataloaders=data.to_dataloader(train=False),
+            train_dataloaders=training.to_dataloader(
+                **self._train_to_dataloader_params
+            ),
+            val_dataloaders=validation.to_dataloader(
+                **self._validation_to_dataloader_params
+            ),
         )
         return self
 
@@ -188,4 +204,8 @@ def _Xy_to_dataset(
         "group_ids": index_names[0:-1],
     }
     _dataset_params.update(dataset_params)
-    return TimeSeriesDataSet(**_dataset_params)
+    training = TimeSeriesDataSet(**_dataset_params)
+    validation = TimeSeriesDataSet.from_dataset(
+        training, data, predict=True, stop_randomization=True
+    )
+    return training, validation

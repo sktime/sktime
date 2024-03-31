@@ -64,6 +64,8 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         logging_metrics: nn.ModuleList = None,
         allowed_encoder_known_variable_names: List[str] | None = None,
         dataset_params: Dict[str, Any] | None = None,
+        train_to_dataloader_params: Dict[str, Any] | None = None,
+        validation_to_dataloader_params: Dict[str, Any] | None = None,
         trainer_params: Dict[str, Any] | None = None,
         **kwargs,
     ) -> None:
@@ -72,6 +74,8 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
             logging_metrics,
             allowed_encoder_known_variable_names,
             dataset_params,
+            train_to_dataloader_params,
+            validation_to_dataloader_params,
             trainer_params,
             **kwargs,
         )
