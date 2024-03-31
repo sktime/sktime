@@ -8,8 +8,6 @@ from typing import Any, Dict, List
 import lightning.pytorch as pl
 import pandas
 from pytorch_forecasting.data import TimeSeriesDataSet
-from pytorch_forecasting.metrics import MultiHorizonMetric
-from torch import nn
 
 from sktime.forecasting.base import ForecastingHorizon, GlobalBaseForecaster
 
@@ -40,8 +38,6 @@ class _PytorchForecastingAdapter(GlobalBaseForecaster):
 
     def __init__(
         self: "_PytorchForecastingAdapter",
-        loss: MultiHorizonMetric = None,
-        logging_metrics: nn.ModuleList = None,
         allowed_encoder_known_variable_names: List[str] | None = None,
         dataset_params: Dict[str, Any] | None = None,
         train_to_dataloader_params: Dict[str, Any] | None = None,
@@ -50,8 +46,6 @@ class _PytorchForecastingAdapter(GlobalBaseForecaster):
         **kwargs,
     ) -> None:
         super().__init__()
-        self.loss = loss
-        self.logging_metrics = logging_metrics
         self.allowed_encoder_known_variable_names = allowed_encoder_known_variable_names
         self.dataset_params = dataset_params
         self.trainer_params = trainer_params
@@ -82,7 +76,6 @@ class _PytorchForecastingAdapter(GlobalBaseForecaster):
             data,
             self.allowed_encoder_known_variable_names,
             **self.algorithm_parameters,
-            **{"loss": self.loss, "logging_metrics": self.logging_metrics},
             **self._kwargs,
         )
         self._trainer_params = _none_check(self.trainer_params, {})
