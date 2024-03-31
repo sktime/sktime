@@ -270,7 +270,7 @@ cython_extras = [
 ]
 dl = [
   'FrEIA; python_version < "3.12"',
-  'neuralforecast<1.7.0,>=1.6.4; python_version < "3.11"',
+  'neuralforecast<1.8.0,>=1.6.4; python_version < "3.11"',
   'tensorflow<2.17,>=2; python_version < "3.12"',
   'torch; python_version < "3.12"',
 ]
