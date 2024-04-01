@@ -1574,7 +1574,22 @@ class MedianSquaredError(BaseForecastingErrorMetricFunc):
 
 
 class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
-    """Geometric mean absolute error (GMAE).
+    r"""Geometric mean absolute error (GMAE).
+    For a univariate, non-hierarchical sample
+    of true values :math:`y_1, \dots, y_n` and
+    predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n` (in :math:`mathbb{R}`),
+    at time indices :math:`t_1, \dots, t_n`,
+    ``evaluate`` or call returns the Geometric Mean Absolute Error,
+    :math:`\left( \prod_{i=1}^n |y_i - \widehat{y}_i| \right)^{\frac{1}{n}}`.
+    (the time indices are not used)
+
+    ``multioutput`` and ``multilevel`` control averaging across variables and
+    hierarchy indices, see below.
+
+    ``evaluate_by_index`` returns, at a time index :math:`t_i`,
+    the absolute error at that time index, :math:`|y_i - \widehat{y}_i|`,
+    for all time indices :math:`t_1, \dots, t_n` in the input.
+
 
     GMAE output is non-negative floating point. The best value is approximately
     zero, rather than zero.
@@ -1679,11 +1694,11 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
                 return raw_values
 
             if multioutput == "uniform_average":
-                return raw_values.mean(axis=1)
+                return np.power(np.prod(raw_values, axis=1), 1 / len(raw_values))
 
-        # else, we expect multioutput to be array-like
-        return raw_values.dot(multioutput)
-
+         # else, we expect multioutput to be array-like
+        weights = np.array(multioutput)
+        return np.power(np.prod(raw_values ** weights, axis=1), 1 / np.sum(weights))
 
 class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):
     """Geometric mean squared error (GMSE) or Root geometric mean squared error (RGMSE).
