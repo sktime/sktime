@@ -408,5 +408,5 @@ def test_insample_with_numpy_input():
     y = np.random.random(1000)
     forecaster = NaiveForecaster()
     forecaster.fit(y)
-    y_pred = forecaster.predict(np.arange(0,10))
+    y_pred = forecaster.predict(np.arange(0, 10))
     assert len(y_pred) == 10
