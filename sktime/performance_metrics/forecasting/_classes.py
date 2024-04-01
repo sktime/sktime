@@ -1657,6 +1657,86 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
     0.7000014418652152
     """
 
+    def _compute_pseudo_values(self, y_true, y_pred):
+        """Compute the jackknife pseudo-values for the Geometric Mean Absolute Error (GMAE) metric.
+
+        This private method computes the jackknife pseudo-values for the GMAE metric.
+        The pseudo-values are used to estimate the influence of each observation on the overall metric.
+
+        Parameters
+        ----------
+        y_true : pd.Series or pd.DataFrame
+            Ground truth (correct) target values.
+            y can be in one of the following formats:
+            Series scitype: pd.DataFrame
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+        y_pred : pd.Series or pd.DataFrame
+            Forecasted values to evaluate
+            must be of same format as y_true, same indices and columns if indexed
+
+        Returns
+        -------
+        pseudo_values : pd.Series or pd.DataFrame
+            Jackknife pseudo-values for the GMAE metric.
+            - If self.multioutput="uniform_average", returns a pd.Series where each entry
+              is the pseudo-value for a time point, averaged over variables.
+            - If self.multioutput="raw_values", returns a pd.DataFrame where each entry
+              is the pseudo-value for a time point, for each variable.
+        """
+        raw_values = (y_true - y_pred).abs()
+
+        n = raw_values.shape[0]
+        gmae_values = []
+        for i in range(n):
+            excluded_error = np.delete(raw_values, i, axis=0)  # Exclude i-th error
+            excluded_product = np.prod(excluded_error)
+            gmae_values.append(excluded_product ** (1 / (n - 1)))
+
+        return np.array(gmae_values)
+
+    def _evaluate(self, y_true, y_pred, **kwargs):
+        """Evaluate the Geometric Mean Absolute Error (GMAE) metric on given inputs.
+
+        This private method contains core logic for computing the GMAE metric.
+        By default, it uses `_evaluate_by_index` to compute the arithmetic mean over time points.
+
+        Parameters
+        ----------
+        y_true : pd.Series or pd.DataFrame
+            Ground truth (correct) target values
+            y can be in one of the following formats:
+            Series scitype: pd.DataFrame
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+            
+        y_pred : pd.Series or pd.DataFrame
+            Forecasted values to evaluate
+            must be of same format as y_true, same indices and columns if indexed
+            
+        Returns
+        -------
+        loss : float or np.ndarray
+            Calculated metric, averaged or by variable.
+            - If self.multioutput="uniform_average", returns the average GMAE metric over variables.
+            - If self.multioutput="raw_values", returns an array of GMAE values for each variable.
+        """
+        multioutput = self.multioutput
+
+        pseudo_values = self._compute_pseudo_values(y_true, y_pred)
+
+        if isinstance(multioutput, str):
+            if multioutput == "raw_values":
+                return pseudo_values
+
+            if multioutput == "uniform_average":
+                return np.mean(pseudo_values)
+
+        # else, we expect multioutput to be array-like
+        weights = np.array(multioutput)
+        weighted_pseudo_values = pseudo_values * weights
+        return np.mean(weighted_pseudo_values)
+    
     def _evaluate_by_index(self, y_true, y_pred, **kwargs):
         """Return the metric evaluated at each time point.
 
@@ -1710,6 +1790,7 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
         log_mean = np.mean(weighted_log_errors, axis=1)
         gmae = np.exp(log_mean)
         return gmae
+
 
 class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):
     """Geometric mean squared error (GMSE) or Root geometric mean squared error (RGMSE).
