@@ -1694,11 +1694,22 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
                 return raw_values
 
             if multioutput == "uniform_average":
-                return np.power(np.prod(raw_values, axis=1), 1 / len(raw_values))
+                errors = raw_values.to_numpy()
+                errors = np.maximum(errors, np.finfo(np.float64).eps)  # Ensure errors are strictly positive
+                log_errors = np.log(errors)
+                log_mean = np.mean(log_errors, axis=1)
+                gmae = np.exp(log_mean)
+                return gmae
 
-         # else, we expect multioutput to be array-like
+        # else, we expect multioutput to be array-like
         weights = np.array(multioutput)
-        return np.power(np.prod(raw_values ** weights, axis=1), 1 / np.sum(weights))
+        errors = raw_values.to_numpy()
+        errors = np.maximum(errors, np.finfo(np.float64).eps)  # Ensure errors are strictly positive
+        log_errors = np.log(errors)
+        weighted_log_errors = log_errors * weights[:, np.newaxis]
+        log_mean = np.mean(weighted_log_errors, axis=1)
+        gmae = np.exp(log_mean)
+        return gmae
 
 class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):
     """Geometric mean squared error (GMSE) or Root geometric mean squared error (RGMSE).
