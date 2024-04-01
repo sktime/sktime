@@ -275,17 +275,10 @@ def test_neural_forecast_with_auto_freq_on_missing_int_like(index, model_class) 
     index = index.drop(random.choices(index, k=5))
     y = pandas.Series(data=range(len(index)), index=index)
 
-    model = model_class(freq=1, max_steps=1, trainer_kwargs={"logger": False})
-    model_auto = model_class(freq="auto", max_steps=1, trainer_kwargs={"logger": False})
+    model = model_class(freq="auto", max_steps=1, trainer_kwargs={"logger": False})
 
-    model.fit(y, fh=[1, 2, 3])
-    model_auto.fit(y, fh=[1, 2, 3])
-
-    pred = model.predict()
-    pred_auto = model_auto.predict()
-
-    # check prediction
-    pandas.testing.assert_series_equal(pred, pred_auto)
+    with pytest.raises(ValueError, match="could not interpret freq"):
+        model.fit(y, fh=[1, 2, 3])
 
 
 @pytest.mark.parametrize(
@@ -321,8 +314,9 @@ def test_neural_forecast_with_auto_freq_on_date_like(index, model_class) -> None
 @pytest.mark.parametrize(
     "index",
     [
-        # pandas.date_range(start='2024-01-01', periods=10), Raises Exception on both
-        pandas.period_range(start="2024-01-01", periods=10),
+        pandas.date_range(start="2024-01-01", periods=10),
+        # freq is preserved in index even in missing data
+        # pandas.period_range(start='2024-01-01', periods=10),
     ],
 )
 @pytest.mark.parametrize("model_class", [NeuralForecastLSTM, NeuralForecastRNN])
@@ -338,14 +332,7 @@ def test_neural_forecast_with_auto_freq_on_missing_date_like(
     index = index.drop(random.choices(index, k=5))
     y = pandas.Series(data=range(len(index)), index=index)
 
-    model = model_class(freq="D", max_steps=1, trainer_kwargs={"logger": False})
-    model_auto = model_class(freq="auto", max_steps=1, trainer_kwargs={"logger": False})
+    model = model_class(freq="auto", max_steps=1, trainer_kwargs={"logger": False})
 
-    model.fit(y, fh=[1, 2, 3])
-    model_auto.fit(y, fh=[1, 2, 3])
-
-    pred = model.predict()
-    pred_auto = model_auto.predict()
-
-    # check prediction
-    pandas.testing.assert_series_equal(pred, pred_auto)
+    with pytest.raises(ValueError, match="could not interpret freq"):
+        model.fit(y, fh=[1, 2, 3])

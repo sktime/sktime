@@ -190,13 +190,14 @@ class _NeuralForecastAdapter(BaseForecaster):
         if not fh.is_all_out_of_sample(cutoff=self.cutoff):
             raise NotImplementedError("in-sample prediction is currently not supported")
 
-        # A. freq is not auto {use this}
+        # A. freq is given {use this}
         # B. freq is auto
-        #     B1. freq is infered {use this}
-        #     B2. freq is not infered
-        #         B2.1. y is date-like {use "D"}
-        #         B2.2. y is int-like  {use 1}
-        #         B2.3. other indexes; this part of code is never reached
+        #     B1. freq is infered from fh {use this}
+        #     B2. freq is not infered from fh
+        #         B2.1. y is date-like {raise exception}
+        #         B2.2. y is not date-like
+        #             B2.2.1 uniform data {use diff in time}
+        #             B2.2.2 missing data {raise exception}
 
         if self.freq != "auto":
             # A
@@ -209,18 +210,25 @@ class _NeuralForecastAdapter(BaseForecaster):
             else:
                 # B2
                 if isinstance(y.index, (pandas.PeriodIndex, pandas.DatetimeIndex)):
-                    # B.2.1
-                    self._freq = "D"
-                elif isinstance(y.index, (pandas.Index, pandas.RangeIndex)):
-                    # B.2.2
-                    self._freq = 1
-                else:
-                    # B.2.3
+                    # B2.1
                     raise ValueError(
                         f"Error in {self.__class__.__name__}, "
                         f"could not interpret freq, "
                         f"try passing freq in model initialization"
                     )
+                else:
+                    # B2.2
+                    diffs = y.index.diff(periods=1).unique()
+                    if diffs.shape[0] > 2:
+                        # B2.2.1
+                        raise ValueError(
+                            f"Error in {self.__class__.__name__}, "
+                            f"could not interpret freq, "
+                            f"try passing integer freq in model initialization"
+                        )
+                    else:
+                        # B2.2.2
+                        self._freq = int(diffs[-1])
 
         train_indices = y.index
         if isinstance(train_indices, pandas.PeriodIndex):
