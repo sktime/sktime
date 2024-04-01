@@ -1543,8 +1543,12 @@ class MeanSquaredError(BaseForecastingErrorMetric):
 
         if self.square_root:
             n = raw_values.shape[0]
-            rmse = raw_values.mean(axis=0)
-            pseudo_values = n * rmse - (n - 1) * raw_values
+            mse = raw_values.mean(axis=0)
+            sqe_sum = raw_values.sum(axis=0)
+            rmse = mse.pow(0.5)
+            mse_jackknife = (sqe_sum - raw_values) / (n - 1)
+            rmse_jackknife = mse_jackknife.pow(0.5)
+            pseudo_values = n * rmse - (n - 1) * rmse_jackknife
         else:
             pseudo_values = raw_values
 
