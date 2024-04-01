@@ -1360,7 +1360,7 @@ class MedianAbsoluteError(BaseForecastingErrorMetricFunc):
 
 class MeanSquaredError(BaseForecastingErrorMetric):
     r"""Mean squared error (MSE) or root mean squared error (RMSE).
-   
+
     For a univariate, non-hierarchical sample
     of true values :math:`y_1, \dots, y_n` and
     predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n` (in :math:`mathbb{R}`),
@@ -1493,7 +1493,7 @@ class MeanSquaredError(BaseForecastingErrorMetric):
         """
         multioutput = self.multioutput
 
-        raw_values = (y_true - y_pred)**2
+        raw_values = (y_true - y_pred) ** 2
         msqe = raw_values.mean()
 
         if self.square_root:
@@ -1539,7 +1539,7 @@ class MeanSquaredError(BaseForecastingErrorMetric):
         """
         multioutput = self.multioutput
 
-        raw_values = (y_true - y_pred)**2
+        raw_values = (y_true - y_pred) ** 2
 
         if self.square_root:
             n = raw_values.shape[0]
