@@ -1358,7 +1358,7 @@ class MedianAbsoluteError(BaseForecastingErrorMetricFunc):
     func = median_absolute_error
 
 
-class MeanSquaredError(BaseForecastingErrorMetricFunc):
+class MeanSquaredError(BaseForecastingErrorMetric):
     """Mean squared error (MSE) or root mean squared error (RMSE).
    
     For a univariate, non-hierarchical sample
