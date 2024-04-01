@@ -117,6 +117,7 @@ class HFTransformersForecaster(BaseForecaster):
         self.config = config
         self._config = config if config is not None else {}
         self.training_args = training_args
+        self._training_args = training_args if training_args is not None else {}
         self.compute_metrics = compute_metrics
         self._compute_metrics = compute_metrics
         self._compute_metrics = compute_metrics
@@ -139,6 +140,12 @@ class HFTransformersForecaster(BaseForecaster):
 
         if hasattr(config, "feature_size"):
             del _config["feature_size"]
+
+        if fh is not None:
+            _config["prediction_length"] = (
+                max(*(fh.to_relative(self._cutoff)._values + 1),
+                    _config["prediction_length"])
+            )
 
         config = config.from_dict(_config)
         import transformers
@@ -250,13 +257,11 @@ class HFTransformersForecaster(BaseForecaster):
         from torch import from_numpy
 
         hist = self._y.values.reshape((1, -1))
-        self.model.config.prediction_length = (
-            max(fh.to_relative(self._cutoff)._values) + 1
-        )
         if X is not None:
             hist_x = self._X.values.reshape((1, -1, self._X.shape[-1]))
             x_ = X.values.reshape((1, -1, self._X.shape[-1]))
             if x_.shape[1] < self.model.config.prediction_length:
+                # TODO raise exception here?
                 x_ = np.resize(
                     x_, (1, self.model.config.prediction_length, x_.shape[-1])
                 )
@@ -295,7 +300,7 @@ class HFTransformersForecaster(BaseForecaster):
 
         pred = pd.Series(
             pred.reshape((-1,)),
-            index=ForecastingHorizon(range(0, len(pred)))
+            index=ForecastingHorizon(range(len(pred)))
             .to_absolute(self._cutoff)
             ._values,
             # columns=self._y.columns
@@ -329,12 +334,12 @@ class HFTransformersForecaster(BaseForecaster):
                     "num_train_epochs": 1,
                     "output_dir": "test_output",
                     "per_device_train_batch_size": 32,
+                    "use_cpu": True,
                 },
                 "config": {
                     "lags_sequence": [1, 2, 3],
                     "context_length": 2,
                     "prediction_length": 4,
-                    "use_cpu": True,
                 },
                 "deterministic": True,
             },
@@ -345,13 +350,13 @@ class HFTransformersForecaster(BaseForecaster):
                     "num_train_epochs": 1,
                     "output_dir": "test_output",
                     "per_device_train_batch_size": 32,
+                    "use_cpu": True,
                 },
                 "config": {
                     "lags_sequence": [1, 2, 3],
                     "context_length": 2,
                     "prediction_length": 4,
                     "label_length": 2,
-                    "use_cpu": True,
                 },
                 "deterministic": True,
             },
