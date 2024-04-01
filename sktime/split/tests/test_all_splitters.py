@@ -46,9 +46,9 @@ class TestAllSplitters(SplitterFixtureGenerator, QuickTester):
             y = _make_series()
             # instance splitters do not support single series
             # and should raise informative error message instead
-            if estimator_instance.get_tag("split_type") == "instance":
+            if splitter.get_tag("split_type") == "instance":
                 with pytest.raises(ValueError, match="requires Panel"):
-                    splitter.split(y)
+                    list(splitter.split(y))
                 return None
 
         n_splits = splitter.get_n_splits(y)
@@ -91,9 +91,9 @@ class TestAllSplitters(SplitterFixtureGenerator, QuickTester):
             y = _make_series()
             # instance splitters do not support single series
             # and should raise informative error message instead
-            if estimator_instance.get_tag("split_type") == "instance":
+            if splitter.get_tag("split_type") == "instance":
                 with pytest.raises(ValueError, match="requires Panel"):
-                    splitter.split_loc(y)
+                    list(splitter.split(y))
                 return None
 
         n_splits = splitter.get_n_splits(y)
@@ -132,9 +132,9 @@ class TestAllSplitters(SplitterFixtureGenerator, QuickTester):
             y = _make_series()
             # instance splitters do not support single series
             # and should raise informative error message instead
-            if estimator_instance.get_tag("split_type") == "instance":
+            if splitter.get_tag("split_type") == "instance":
                 with pytest.raises(ValueError, match="requires Panel"):
-                    splitter.split_series(y)
+                    list(splitter.split(y))
                 return None
 
         n_splits = splitter.get_n_splits(y)
