@@ -1391,12 +1391,6 @@ class MeanSquaredError(BaseForecastingErrorMetric):
       i.e., using values :math:`y_1, \dots, y_{i-1}, y_{i+1}, \dots, y_n`,
       and :math:`\widehat{y}_1, \dots, \widehat{y}_{i-1}, \widehat{y}_{i+1}, \dots, \widehat{y}_n`.  # noqa: E501
 
-    MAE output is non-negative floating point. The best value is 0.0.
-
-    MAE is on the same scale as the data. Because MAE takes the absolute value
-    of the forecast error rather than squaring it, MAE penalizes large errors
-    to a lesser degree than MSE or RMSE.
-
     MSE is measured in squared units of the input data, and RMSE is on the
     same scale as the data. Because MSE and RMSE square the forecast error
     rather than taking the absolute value, they penalize large errors more than
