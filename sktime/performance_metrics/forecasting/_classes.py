@@ -1382,7 +1382,7 @@ class MeanSquaredError(BaseForecastingErrorMetric):
     ``evaluate_by_index`` returns, at a time index :math:`t_i`:
 
     * if ``square_root`` is False, the squared error at that time index,
-      the absolute error at that time index, :math:`\left(y_i - \widehat{y}_i\right)^2`,
+      :math:`\left(y_i - \widehat{y}_i\right)^2`,
       for all time indices :math:`t_1, \dots, t_n` in the input.
     * if ``square_root`` is True, the jackknife pseudo-value of the RMSE
       at that time index, :math:`n * \bar{\varepsilon} - (n-1) * \varepsilon_i`,
