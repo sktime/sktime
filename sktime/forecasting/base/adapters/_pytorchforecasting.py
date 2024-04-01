@@ -3,7 +3,7 @@
 import abc
 import functools
 import typing
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import pandas
 
@@ -36,11 +36,11 @@ class _PytorchForecastingAdapter(GlobalBaseForecaster):
 
     def __init__(
         self: "_PytorchForecastingAdapter",
-        allowed_encoder_known_variable_names: List[str] | None = None,
-        dataset_params: Dict[str, Any] | None = None,
-        train_to_dataloader_params: Dict[str, Any] | None = None,
-        validation_to_dataloader_params: Dict[str, Any] | None = None,
-        trainer_params: Dict[str, Any] | None = None,
+        allowed_encoder_known_variable_names: Optional[List[str]] = None,
+        dataset_params: Optional[Dict[str, Any]] = None,
+        train_to_dataloader_params: Optional[Dict[str, Any]] = None,
+        validation_to_dataloader_params: Optional[Dict[str, Any]] = None,
+        trainer_params: Optional[Dict[str, Any]] = None,
         **kwargs,
     ) -> None:
         super().__init__()
