@@ -234,7 +234,7 @@ class CNNRegressor(BaseDeepRegressor):
             "batch_size": 6,
             "kernel_size": 2,
             "n_conv_layers": 1,
-            "verbose": True
+            "verbose": True,
         }
         test_params = [param1, param2]
 
