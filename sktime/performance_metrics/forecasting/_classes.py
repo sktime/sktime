@@ -1499,7 +1499,7 @@ class MeanSquaredError(BaseForecastingErrorMetricFunc):
         """
         multioutput = self.multioutput
 
-        raw_values = (y_true - y_pred)^2
+        raw_values = (y_true - y_pred)**2
         msqe = raw_values.mean()
 
         if self.square_root:
@@ -1545,7 +1545,7 @@ class MeanSquaredError(BaseForecastingErrorMetricFunc):
         """
         multioutput = self.multioutput
 
-        raw_values = (y_true - y_pred)^2
+        raw_values = (y_true - y_pred)**2
 
         if self.square_root:
             n = raw_values.shape[0]
