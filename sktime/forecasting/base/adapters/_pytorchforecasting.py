@@ -116,9 +116,9 @@ class _PytorchForecastingAdapter(GlobalBaseForecaster):
             When ``freq="auto"`` and cannot be interpreted from ``ForecastingHorizon``
         """
         self._dataset_params = _none_check(self.dataset_params, {})
-        max_prediction_length = fh.to_relative()[-1]
+        self._max_prediction_length = fh.to_relative()[-1]
         training, validation = self._Xy_to_dataset(
-            X, y, self._dataset_params, max_prediction_length
+            X, y, self._dataset_params, self._max_prediction_length
         )
         self._forecaster, self._trainer = self._instantiate_model(training)
         self._train_to_dataloader_params = {"train": True}
@@ -144,7 +144,7 @@ class _PytorchForecastingAdapter(GlobalBaseForecaster):
         self: "_PytorchForecastingAdapter",
         fh: typing.Optional[ForecastingHorizon],
         X: typing.Optional[pandas.DataFrame],
-        y: typing.Optional[pandas.Series],
+        y: typing.Optional[pandas.DataFrame],
     ) -> pandas.Series:
         """Forecast time series at future horizon.
 
@@ -173,12 +173,22 @@ class _PytorchForecastingAdapter(GlobalBaseForecaster):
             guaranteed to have a single column/variable
             Point predictions
         """
-        # TODO convert X, y to pytorch-forecasting dataloader Xy_dataloader
+        training, validation = self._Xy_to_dataset(
+            X, y, self._dataset_params, self._max_prediction_length
+        )
         best_model_path = self._trainer.checkpoint_callback.best_model_path
         best_model = self.algorithm_class.load_from_checkpoint(best_model_path)
-        predictions = best_model.predict(X, return_y=True)
-        # TODO convert predictions to pandas.Series final_predictions
-        return predictions
+        predictions = best_model.predict(
+            validation.to_dataloader(**self._validation_to_dataloader_params),
+            return_x=True,
+            return_index=True,
+            return_decoder_lengths=True,
+        )
+        output = self._predictions_to_dataframe(
+            predictions, self._max_prediction_length
+        )
+
+        return output
 
     def _Xy_to_dataset(
         self,
@@ -208,6 +218,26 @@ class _PytorchForecastingAdapter(GlobalBaseForecaster):
             training, data, predict=True, stop_randomization=True
         )
         return training, validation
+
+    def _predictions_to_dataframe(self, predictions, max_prediction_length):
+        output = predictions.output.cpu().numpy()
+        index = predictions.index
+        columns_names = index.columns.to_list()
+        time_idx = columns_names.pop(0)
+        columns_names.append(time_idx)
+        data = index.loc[index.index.repeat(max_prediction_length)].reset_index(
+            drop=True
+        )
+        data = data.reindex(columns=columns_names)
+        data["volume"] = output.flatten()
+        for i in range(output.shape[0]):
+            start_idx = i * max_prediction_length
+            start_time = data.loc[start_idx, time_idx]
+            data.loc[
+                start_idx : start_idx + max_prediction_length - 1, time_idx
+            ] = list(range(start_time, start_time + max_prediction_length))
+        data.set_index(columns_names, inplace=True)
+        return data
 
 
 def _none_check(value, default):

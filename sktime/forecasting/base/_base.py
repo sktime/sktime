@@ -2594,11 +2594,12 @@ class GlobalBaseForecaster(BaseForecaster):
         # handle inputs
         self.check_is_fitted()
 
-        # input check and conversion for X
-        X_inner = self._check_X(X=X)
+        # check and convert X/y
+        X_inner, y_inner = self._check_X_y(X=X, y=y)
 
-        # input check and conversion for y
-        y_inner = self._check_X_y(X=X, y=y)
+        # set internal X/y to the new X/y
+        # this also updates cutoff from y
+        self._update_y_X(y_inner, X_inner)
 
         # check fh and coerce to ForecastingHorizon, if not already passed in fit
         fh = self._check_fh(fh)
