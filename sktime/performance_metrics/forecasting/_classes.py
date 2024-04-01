@@ -1372,7 +1372,7 @@ class MeanSquaredError(BaseForecastingErrorMetric):
     * if ``square_root`` is True, the Root Mean Squared Error,
       :math:`\sqrt{\frac{1}{n}\sum_{i=1}^n \left(y_i - \widehat{y}_i\right)^2}`
 
-    Both MSE and RMSE are both non-negative floating point, lower values are better.
+    MSE and RMSE are both non-negative floating point, lower values are better.
     The lowest possible value is 0.0.
 
     ``multioutput`` and ``multilevel`` control averaging across variables and
