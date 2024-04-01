@@ -119,16 +119,18 @@ class TSBootstrapAdapter(BaseTransformer):
         from sktime.utils.validation._dependencies import _check_soft_dependencies
 
         deps = cls.get_class_tag("python_dependencies")
-        _check_soft_dependencies(deps, severity="error")
 
-        from tsbootstrap import BlockBootstrap, MovingBlockBootstrap
+        if _check_soft_dependencies(deps, severity="none"):
+            from tsbootstrap import BlockBootstrap, MovingBlockBootstrap
 
-        params = [
-            {"bootstrap": BlockBootstrap(n_bootstraps=10)},
-            {
-                "bootstrap": MovingBlockBootstrap(n_bootstraps=10, block_length=4),
-                "include_actual": True,
-            },
-        ]
+            params = [
+                {"bootstrap": BlockBootstrap(n_bootstraps=10)},
+                {
+                    "bootstrap": MovingBlockBootstrap(n_bootstraps=10, block_length=4),
+                    "include_actual": True,
+                },
+            ]
+        else:
+            params = {"bootstrap": "dummy"}
 
         return params

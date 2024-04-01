@@ -2,7 +2,7 @@
 import numpy as np
 import pytest
 
-from sktime.transformations.series.paa import PAA2
+from sktime.transformations.series.paa import PAA
 
 
 # Check that exception is raised for bad frames values.
@@ -16,10 +16,10 @@ def test_bad_input_args(bad_frames):
     if not isinstance(bad_frames, int):
         for attribute in ["frames", "frame_size"]:
             with pytest.raises(TypeError):
-                PAA2(**{attribute: bad_frames}).fit(X).transform(X)
+                PAA(**{attribute: bad_frames}).fit(X).transform(X)
     else:
         with pytest.raises(ValueError):
-            PAA2(bad_frames).fit(X).transform(X)
+            PAA(bad_frames).fit(X).transform(X)
 
 
 @pytest.mark.parametrize(
@@ -38,7 +38,7 @@ def test_bad_input_args(bad_frames):
 def test_output_of_transformer(frames, frame_size, expected):
     """Test that the transformer has changed the data correctly."""
     X = np.arange(10).T
-    paa = PAA2(frames, frame_size)
+    paa = PAA(frames, frame_size)
     res = paa.fit_transform(X)
     want = np.array(expected, dtype=np.float64).T
     np.testing.assert_array_equal(res, want)
