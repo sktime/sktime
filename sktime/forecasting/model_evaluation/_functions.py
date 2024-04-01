@@ -15,6 +15,7 @@ import pandas as pd
 from sktime.datatypes import check_is_scitype, convert_to
 from sktime.exceptions import FitFailedWarning
 from sktime.forecasting.base import ForecastingHorizon
+from sktime.forecasting.callbacks.callback_list import CallbackList
 from sktime.utils.parallel import parallelize
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_cv, check_scoring
@@ -183,9 +184,9 @@ def _get_pred_args_from_metric(scitype, metric):
     return {}
 
 
-def _evaluate_window(x, meta):
+def _evaluate_window(iteration, x, meta):
     # unpack args
-    i, (y_train, y_test, X_train, X_test) = x
+    (y_train, y_test, X_train, X_test) = x
     fh = meta["fh"]
     forecaster = meta["forecaster"]
     strategy = meta["strategy"]
@@ -210,7 +211,7 @@ def _evaluate_window(x, meta):
     try:
         # fit/update
         start_fit = time.perf_counter()
-        if i == 0 or strategy == "refit":
+        if iteration == 0 or strategy == "refit":
             forecaster = forecaster.clone()
             forecaster.fit(y=y_train, X=X_train, fh=fh)
         else:  # if strategy in ["update", "no-update_params"]:
@@ -280,7 +281,8 @@ def _evaluate_window(x, meta):
                 In evaluate, fitting of forecaster {type(forecaster).__name__} failed,
                 you can set error_score='raise' in evaluate to see
                 the exception message.
-                Fit failed for the {i}-th data split, on training data y_train with
+                Fit failed for the {iteration}-th data split,
+                on training data y_train with
                 cutoff {cutoff}, and len(y_train)={len(y_train)}.
                 The score will be set to {error_score}.
                 Failed forecaster with parameters: {forecaster}.
@@ -312,10 +314,10 @@ def _evaluate_window(x, meta):
     result = result.reindex(columns=column_order.keys())
 
     # Return forecaster if "update"
-    if strategy == "update" or (strategy == "no-update_params" and i == 0):
-        return result, forecaster
+    if strategy == "update" or (strategy == "no-update_params" and iteration == 0):
+        return result, y_pred, forecaster
     else:
-        return result
+        return result, y_pred
 
 
 def evaluate(
@@ -325,6 +327,7 @@ def evaluate(
     X=None,
     strategy: str = "refit",
     scoring: Optional[Union[callable, List[callable]]] = None,
+    callbacks=None,
     return_data: bool = False,
     error_score: Union[str, int, float] = np.nan,
     backend: Optional[str] = None,
@@ -524,6 +527,13 @@ def evaluate(
     cv = check_cv(cv, enforce_start_with_window=True)
     scoring = _check_scores(scoring)
 
+    if callbacks is None:
+        callbacks = CallbackList()
+    else:
+        callbacks = CallbackList(
+            callbacks=callbacks, forecaster=forecaster, scores=scoring
+        )
+
     ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
 
     y_valid, _, _ = check_is_scitype(y, scitype=ALLOWED_SCITYPES, return_metadata=True)
@@ -596,14 +606,23 @@ def evaluate(
     if not_parallel:
         # Run temporal cross-validation sequentially
         results = []
-        for x in enumerate(yx_splits):
-            is_first = x[0] == 0  # first iteration
+        for iteration, x in enumerate(yx_splits):
+            is_first = iteration == 0  # first iteration
+            if is_first:
+                callbacks.on_iteration_start()
             if strategy == "update" or (strategy == "no-update_params" and is_first):
-                result, forecaster = _evaluate_window(x, _evaluate_window_kwargs)
+                result, y_pred, forecaster = _evaluate_window(
+                    iteration, x, _evaluate_window_kwargs
+                )
                 _evaluate_window_kwargs["forecaster"] = forecaster
             else:
-                result = _evaluate_window(x, _evaluate_window_kwargs)
+                result, y_pred = _evaluate_window(iteration, x, _evaluate_window_kwargs)
+            callbacks.on_iteration(iteration, y_pred, x, result, update=is_first)
+
             results.append(result)
+
+        callbacks.on_iteration_end(results=results)
+
     else:
         if backend == "dask":
             backend_in = "dask_lazy"
