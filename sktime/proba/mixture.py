@@ -5,13 +5,14 @@ __author__ = ["fkiraly"]
 
 import numpy as np
 import pandas as pd
-# from sktime.proba.base  import BaseMetaObject
 
+from sktime.base._meta import _HeterogenousMetaEstimator
 from sktime.proba.base import BaseDistribution
 
 
-class Mixture(BaseDistribution):
+class Mixture(_HeterogenousMetaEstimator, BaseDistribution):
     """Mixture of distributions.
+
     Parameters
     ----------
     distributions : list of tuples (str, BaseDistribution) or BaseDistribution
@@ -21,10 +22,12 @@ class Mixture(BaseDistribution):
         if not provided, uniform mixture is assumed
     index : pd.Index, optional, default = inferred from component distributions
     columns : pd.Index, optional, default = inferred from component distributions
+
     Example
     -------
     >>> from sktime.proba.mixture import Mixture
     >>> from sktime.proba.normal import Normal
+    >>>
     >>> n1 = Normal(mu=[[0, 1], [2, 3], [4, 5]], sigma=1)
     >>> n2 = Normal(mu=3, sigma=2, index=n1.index, columns=n1.columns)
     >>> m = Mixture(distributions=[("n1", n1), ("n2", n2)], weights=[0.3, 0.7])
@@ -39,7 +42,6 @@ class Mixture(BaseDistribution):
     }
 
     def __init__(self, distributions, weights=None, index=None, columns=None):
-
         self.distributions = distributions
         self.weights = weights
         self.index = index
@@ -62,7 +64,6 @@ class Mixture(BaseDistribution):
         super().__init__(index=index, columns=columns)
 
     def _iloc(self, rowidx=None, colidx=None):
-
         dists = self._distributions
         weights = self.weights
 
