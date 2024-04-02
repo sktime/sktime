@@ -117,6 +117,11 @@ class _DummyConvertPandas(BaseClassifier):
         return self
 
 
+multivariate_message = r"multivariate series"
+missing_message = r"missing values"
+unequal_message = r"unequal length series"
+
+
 def test_base_classifier_fit():
     """Test function for the BaseClassifier class fit.
 
@@ -142,12 +147,12 @@ def test_base_classifier_fit():
     assert result is dummy
     result = dummy.fit(test_X3, test_y2)
     assert result is dummy
-    with pytest.raises(ValueError, match=r"multivariate series"):
+    with pytest.raises(ValueError, match=multivariate_message):
         result = dummy.fit(test_X2, test_y1)
     assert result is dummy
     result = dummy.fit(test_X3, test_y1)
     assert result is dummy
-    with pytest.raises(ValueError, match=r"multivariate series"):
+    with pytest.raises(ValueError, match=multivariate_message):
         result = dummy.fit(test_X4, test_y1)
     assert result is dummy
 
@@ -175,25 +180,25 @@ def test_check_capabilities(missing, multivariate, unequal):
 
     # checks that errors are raised
     if missing:
-        with pytest.raises(ValueError, match=r"missing values"):
+        with pytest.raises(ValueError, match=missing_message):
             handles_none._check_capabilities(X_metadata)
     if multivariate:
-        with pytest.raises(ValueError, match=r"multivariate series"):
+        with pytest.raises(ValueError, match=multivariate_message):
             handles_none._check_capabilities(X_metadata)
     if unequal:
-        with pytest.raises(ValueError, match=r"unequal length series"):
+        with pytest.raises(ValueError, match=unequal_message):
             handles_none._check_capabilities(X_metadata)
     if not missing and not multivariate and not unequal:
         handles_none._check_capabilities(X_metadata)
 
     if missing:
-        with pytest.warns(UserWarning, match=r"missing values"):
+        with pytest.warns(UserWarning, match=missing_message):
             handles_none_composite._check_capabilities(X_metadata)
     if multivariate:
-        with pytest.warns(UserWarning, match=r"multivariate series"):
+        with pytest.warns(UserWarning, match=multivariate_message):
             handles_none_composite._check_capabilities(X_metadata)
     if unequal:
-        with pytest.warns(UserWarning, match=r"unequal length series"):
+        with pytest.warns(UserWarning, match=unequal_message):
             handles_none_composite._check_capabilities(X_metadata)
     if not missing and not multivariate and not unequal:
         handles_none_composite._check_capabilities(X_metadata)
