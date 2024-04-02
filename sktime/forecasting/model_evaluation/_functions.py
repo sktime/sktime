@@ -184,9 +184,9 @@ def _get_pred_args_from_metric(scitype, metric):
     return {}
 
 
-def _evaluate_window(iteration, x, meta):
+def _evaluate_window(x, meta):
     # unpack args
-    (y_train, y_test, X_train, X_test) = x
+    i, (y_train, y_test, X_train, X_test) = x
     fh = meta["fh"]
     forecaster = meta["forecaster"]
     strategy = meta["strategy"]
@@ -211,7 +211,7 @@ def _evaluate_window(iteration, x, meta):
     try:
         # fit/update
         start_fit = time.perf_counter()
-        if iteration == 0 or strategy == "refit":
+        if i == 0 or strategy == "refit":
             forecaster = forecaster.clone()
             forecaster.fit(y=y_train, X=X_train, fh=fh)
         else:  # if strategy in ["update", "no-update_params"]:
@@ -281,7 +281,7 @@ def _evaluate_window(iteration, x, meta):
                 In evaluate, fitting of forecaster {type(forecaster).__name__} failed,
                 you can set error_score='raise' in evaluate to see
                 the exception message.
-                Fit failed for the {iteration}-th data split,
+                Fit failed for the {i}-th data split,
                 on training data y_train with
                 cutoff {cutoff}, and len(y_train)={len(y_train)}.
                 The score will be set to {error_score}.
@@ -314,7 +314,7 @@ def _evaluate_window(iteration, x, meta):
     result = result.reindex(columns=column_order.keys())
 
     # Return forecaster if "update"
-    if strategy == "update" or (strategy == "no-update_params" and iteration == 0):
+    if strategy == "update" or (strategy == "no-update_params" and i == 0):
         return result, y_pred, forecaster
     else:
         return result, y_pred
@@ -606,18 +606,19 @@ def evaluate(
     if not_parallel:
         # Run temporal cross-validation sequentially
         results = []
-        for iteration, x in enumerate(yx_splits):
-            is_first = iteration == 0  # first iteration
+        for x in enumerate(yx_splits):
+            i = x[0]
+            is_first = i == 0  # first iteration
             if is_first:
                 callbacks.on_iteration_start()
             if strategy == "update" or (strategy == "no-update_params" and is_first):
                 result, y_pred, forecaster = _evaluate_window(
-                    iteration, x, _evaluate_window_kwargs
+                    x, _evaluate_window_kwargs
                 )
                 _evaluate_window_kwargs["forecaster"] = forecaster
             else:
-                result, y_pred = _evaluate_window(iteration, x, _evaluate_window_kwargs)
-            callbacks.on_iteration(iteration, y_pred, x, result, update=is_first)
+                result, y_pred = _evaluate_window(x, _evaluate_window_kwargs)
+            callbacks.on_iteration(i, y_pred, x, result, update=is_first)
 
             results.append(result)
 

@@ -41,7 +41,7 @@ class MLFlowCallback(Callback):
 
     def on_iteration(self, iteration, y_pred, x, result, update=None):
         """Start MLFlow run or open existing run."""
-        (y_train, y_test, X_train, X_test) = x
+        _, (y_train, y_test, X_train, X_test) = x
         scores = {}
         for score in self.score_metrics:
             scores[f"{score.name}"] = result[f"test_{score.name}"].iloc[0]
