@@ -5,7 +5,6 @@
 __author__ = ["RigvedManoj"]
 __all__ = ["Chronos"]
 
-
 import numpy as np
 import pandas as pd
 
@@ -38,14 +37,14 @@ class Chronos(BaseForecaster):
     >>> from sktime.forecasting.chronos import Chronos
     >>> from sktime.split import temporal_train_test_split
     >>> from sktime.forecasting.base import ForecastingHorizon
-    >>> import torch
+    >>> import torch # doctest: +SKIP
     >>> y = load_airline()
     >>> y_train, y_test = temporal_train_test_split(y)
     >>> fh = ForecastingHorizon(y_test.index, is_relative=False)
     >>> forecaster = Chronos(
     ...        "amazon/chronos-t5-small",
     ...        kwargs_dict={"torch_dtype": torch.bfloat16}
-        )  # doctest: +SKIP
+    ... )  # doctest: +SKIP
     >>> forecaster.fit(y_train)  # doctest: +SKIP
     >>> y_pred = forecaster.predict(fh) # doctest: +SKIP
     """
@@ -145,11 +144,8 @@ class Chronos(BaseForecaster):
             top_p=self.top_p,
         )
         values = np.median(forecast[0].numpy(), axis=0)
-        """
         row_idx = fh.to_absolute_index(self.cutoff)
-        col_idx = self._y.index
-        """
-        y_pred = pd.DataFrame(values)
+        y_pred = pd.DataFrame(values, index=row_idx)
         return y_pred
 
     @classmethod
