@@ -8,7 +8,61 @@ from sktime.forecasting.callbacks.callback import Callback
 
 
 class MLFlowCallback(Callback):
-    """MLFlow callback for logging metrics and plots to MLFlow."""
+    """MLFlow callback for logging metrics and plots to MLFlow.
+
+    Parameters
+    ----------
+    forecaster : Forecaster.
+        Forecaster being evaluated.
+    scores : list of sktime.performance_metrics.base.PerformanceMetric
+        List of performance metrics to calculate.
+    tracking_uri : str
+        URI of the MLFlow tracking server.
+    run_name : str
+        Name of the MLFlow run.
+    experiment_id : str
+        ID of the MLFlow experiment.
+    nested : bool
+        Whether to create a nested run. If set to True, make sure to have a parent run.
+
+    Examples
+    --------
+    # Import necessary libraries
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.model_evaluation import evaluate
+    >>> from sktime.split import ExpandingWindowSplitter
+    >>> from sktime.forecasting.callbacks.mlflow import MLFlowCallback
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> import mlflow
+
+    # Start your mlflow server locally with `mlflow server --host 127.0.0.1 --port 8080`
+
+    # Load data
+    >>> y = load_airline()[:48]
+
+    # Create forecaster
+    >>> forecaster = NaiveForecaster(strategy="mean", sp=3)
+
+    # Create expanding window splitter
+    >>> cv = ExpandingWindowSplitter(initial_window=12, step_length=6, fh=[1, 2, 3])
+
+    # Set MLflow tracking URI
+    >>> mlflow.set_tracking_uri("http://127.0.0.1:8080")
+
+    # Set MLflow experiment
+    >>> experiment_id = mlflow.set_experiment("Airline_Models").experiment_id
+
+    # Start parent run if nested is set to True:
+    >>> with mlflow.start_run(run_name="parent_run") as parent_run:
+    ...     # Evaluate forecaster with MLFlowCallback
+    ...     results = evaluate(
+    ...         forecaster=forecaster,
+    ...         y=y,
+    ...         cv=cv,
+    ...         strategy="update",
+    ...         callbacks=[MLFlowCallback(experiment_id=experiment_id, nested=True)]
+    ...     )
+    """
 
     def __init__(
         self,
@@ -17,9 +71,11 @@ class MLFlowCallback(Callback):
         tracking_uri=None,
         run_name=None,
         experiment_id=None,
+        nested=False,
     ):
         super().__init__()
         self.experiment_id = experiment_id
+        self.nested = nested
         self.tracking_uri = tracking_uri
         self._forecaster = forecaster
         self.score_metrics = scores
@@ -60,7 +116,9 @@ class MLFlowCallback(Callback):
         Logging the plots of training, prediction and true values.
         Logging all scores.
         """
-        mlflow.start_run(run_name=self.run_name, experiment_id=self.experiment_id)
+        mlflow.start_run(
+            run_name=self.run_name, experiment_id=self.experiment_id, nested=self.nested
+        )
         mlflow.log_params(self.forecaster.get_params())
 
     def on_iteration_end(self, results=None):
