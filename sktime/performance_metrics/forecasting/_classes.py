@@ -1297,7 +1297,7 @@ class MeanAbsoluteError(BaseForecastingErrorMetric):
 
 
 class MedianAbsoluteError(BaseForecastingErrorMetricFunc):
-    """Median absolute error (MdAE).
+    r"""Median absolute error (MdAE).
 
     MdAE output is non-negative floating point. The best value is 0.0.
 
@@ -1308,6 +1308,19 @@ class MedianAbsoluteError(BaseForecastingErrorMetricFunc):
     Taking the median instead of the mean of the absolute errors also makes
     this metric more robust to error outliers since the median tends
     to be a more robust measure of central tendency in the presence of outliers.
+
+    For a univariate, non-hierarchical sample of true values :math:`y_1, \dots, y_n`
+    and predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n`,
+    at time indices :math:`t_1, \dots, t_n`,
+    ``evaluate`` or call returns the Median Absolute Error,
+    :math:`\text{median}(|y_i - \widehat{y}_i|)`.
+
+    ``multioutput`` and ``multilevel`` control averaging across variables and
+    hierarchy indices, see below.
+
+    ``evaluate_by_index`` returns, at a time index :math:`t_i`,
+    the absolute error at that time index, :math:`|y_i - \widehat{y}_i|`,
+    for all time indices :math:`t_1, \dots, t_n` in the input.
 
     Parameters
     ----------
@@ -1384,7 +1397,7 @@ class MedianAbsoluteError(BaseForecastingErrorMetricFunc):
         Returns
         -------
         loss : pd.Series or pd.DataFrame
-            Calculated metric, by time point (default=jackknife pseudo-values).
+            Calculated metric, by time point.
             pd.Series if self.multioutput="uniform_average" or array-like
                 index is equal to index of y_true
                 entry at index i is metric at time i, averaged over variables
