@@ -41,6 +41,7 @@ from sktime.utils.datetime import (
     _shift,
     infer_freq,
 )
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.series import is_in_valid_index_types, is_integer_index
 
 
@@ -326,11 +327,16 @@ FREQUENCY_STRINGS = [*FIXED_FREQUENCY_STRINGS, *NON_FIXED_FREQUENCY_STRINGS]
 
 def _get_expected_freqstr(freqstr):
     # special case for 10min, T is being deprecated and replaced by min
-    if freqstr == "10min":
-        fh_freqstr_expected = "10T"
-    else:
-        fh_freqstr_expected = freqstr
-    return fh_freqstr_expected
+    if _check_soft_dependencies("pandas<2.2.0", severity="none"):
+        if freqstr == "10min":
+            return "10T"
+        return freqstr
+    # on more recent pandas versions, >=2.2.0
+    if freqstr == "H":
+        return "h"
+    if freqstr == "M":
+        return "ME"
+    return freqstr
 
 
 @pytest.mark.parametrize("freqstr", FREQUENCY_STRINGS)

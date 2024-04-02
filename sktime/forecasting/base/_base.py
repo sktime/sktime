@@ -149,18 +149,19 @@ class BaseForecaster(BaseEstimator):
     def __mul__(self, other):
         """Magic * method, return (right) concatenated TransformedTargetForecaster.
 
-        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+        Implemented for ``other`` being a transformer, otherwise returns
+        ``NotImplemented``.
 
         Parameters
         ----------
-        other: `sktime` transformer, must inherit from BaseTransformer
-            otherwise, `NotImplemented` is returned
+        other: ``sktime`` transformer, must inherit from BaseTransformer
+            otherwise, ``NotImplemented`` is returned
 
         Returns
         -------
         TransformedTargetForecaster object,
-            concatenation of `self` (first) with `other` (last).
-            not nested, contains only non-TransformerPipeline `sktime` transformers
+            concatenation of ``self`` (first) with ``other`` (last).
+            not nested, contains only non-TransformerPipeline ``sktime`` transformers
         """
         from sktime.forecasting.compose import TransformedTargetForecaster
         from sktime.transformations.base import BaseTransformer
@@ -180,18 +181,19 @@ class BaseForecaster(BaseEstimator):
     def __rmul__(self, other):
         """Magic * method, return (left) concatenated TransformedTargetForecaster.
 
-        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+        Implemented for ``other`` being a transformer, otherwise returns
+        ``NotImplemented``.
 
         Parameters
         ----------
-        other: `sktime` transformer, must inherit from BaseTransformer
-            otherwise, `NotImplemented` is returned
+        other: ``sktime`` transformer, must inherit from BaseTransformer
+            otherwise, ``NotImplemented`` is returned
 
         Returns
         -------
         TransformedTargetForecaster object,
-            concatenation of `other` (first) with `self` (last).
-            not nested, contains only non-TransformerPipeline `sktime` steps
+            concatenation of ``other`` (first) with ``self`` (last).
+            not nested, contains only non-TransformerPipeline ``sktime`` steps
         """
         from sktime.forecasting.compose import TransformedTargetForecaster
         from sktime.transformations.base import BaseTransformer
@@ -211,18 +213,19 @@ class BaseForecaster(BaseEstimator):
     def __rpow__(self, other):
         """Magic ** method, return (left) concatenated ForecastingPipeline.
 
-        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+        Implemented for ``other`` being a transformer, otherwise returns
+        ``NotImplemented``.
 
         Parameters
         ----------
-        other: `sktime` transformer, must inherit from BaseTransformer
-            otherwise, `NotImplemented` is returned
+        other: ``sktime`` transformer, must inherit from BaseTransformer
+            otherwise, ``NotImplemented`` is returned
 
         Returns
         -------
         TransformedTargetForecaster object,
-            concatenation of `other` (first) with `self` (last).
-            not nested, contains only non-TransformerPipeline `sktime` steps
+            concatenation of ``other`` (first) with ``self`` (last).
+            not nested, contains only non-TransformerPipeline ``sktime`` steps
         """
         from sktime.forecasting.compose import ForecastingPipeline
         from sktime.transformations.base import BaseTransformer
@@ -242,11 +245,11 @@ class BaseForecaster(BaseEstimator):
     def __or__(self, other):
         """Magic | method, return MultiplexForecaster.
 
-        Implemented for `other` being either a MultiplexForecaster or a forecaster.
+        Implemented for ``other`` being either a MultiplexForecaster or a forecaster.
 
         Parameters
         ----------
-        other: `sktime` forecaster or sktime MultiplexForecaster
+        other: ``sktime`` forecaster or sktime MultiplexForecaster
 
         Returns
         -------
@@ -266,19 +269,20 @@ class BaseForecaster(BaseEstimator):
         First index does subsetting of exogeneous input data.
         Second index does subsetting of the forecast (but not of endogeneous data).
 
-        Keys must be valid inputs for `columns` in `ColumnSelect`.
+        Keys must be valid inputs for ``columns`` in ``ColumnSelect``.
 
         Parameters
         ----------
-        key: valid input for `columns` in `ColumnSelect`, or pair thereof
+        key: valid input for ``columns`` in ``ColumnSelect``, or pair thereof
             keys can also be a :-slice, in which case it is considered as not passed
 
         Returns
         -------
         the following composite pipeline object:
             ColumnSelect(columns1) ** self * ColumnSelect(columns2)
-            where `columns1` is first or only item in `key`, and `columns2` is the last
-            if only one item is passed in `key`, only `columns1` is applied to input
+            where ``columns1`` is first or only item in ``key``, and ``columns2`` is the
+            last
+            if only one item is passed in ``key``, only ``columns1`` is applied to input
         """
         from sktime.transformations.series.subset import ColumnSelect
 
@@ -320,7 +324,7 @@ class BaseForecaster(BaseEstimator):
             * Sets fitted model attributes ending in "_", fitted attributes are
               inspectable via ``get_fitted_params``.
             * Sets ``self.is_fitted`` flag to ``True``.
-            * Sets ``self.cutoff`` to last index seen in `y`.
+            * Sets ``self.cutoff`` to last index seen in ``y``.
             * Stores ``fh`` to ``self.fh`` if ``fh`` is passed.
 
         Parameters
@@ -471,7 +475,7 @@ class BaseForecaster(BaseEstimator):
             * Sets fitted model attributes ending in "_", fitted attributes are
               inspectable via ``get_fitted_params``.
             * Sets ``self.is_fitted`` flag to ``True``.
-            * Sets ``self.cutoff`` to last index seen in `y`.
+            * Sets ``self.cutoff`` to last index seen in ``y``.
             * Stores ``fh`` to ``self.fh``.
 
         Parameters
@@ -676,7 +680,7 @@ class BaseForecaster(BaseEstimator):
         pred_int : pd.DataFrame
             Column has multi-index: first level is variable name from y in fit,
                 second level coverage fractions for which intervals were computed.
-                    in the same order as in input `coverage`.
+                    in the same order as in input ``coverage``.
                 Third level is string "lower" or "upper", for lower/upper interval end.
             Row index is fh, with additional (upper) levels equal to instance levels,
                 from y seen in fit, if y seen in fit was Panel or Hierarchical.
@@ -755,9 +759,9 @@ class BaseForecaster(BaseEstimator):
 
         Returns
         -------
-        pred_var : pd.DataFrame, format dependent on `cov` variable
+        pred_var : pd.DataFrame, format dependent on ``cov`` variable
             If cov=False:
-                Column names are exactly those of `y` passed in `fit`/`update`.
+                Column names are exactly those of ``y`` passed in ``fit``/``update``.
                     For nameless formats, column index will be a RangeIndex.
                 Row index is fh, with additional levels equal to instance levels,
                     from y seen in fit, if y seen in fit was Panel or Hierarchical.
@@ -886,7 +890,7 @@ class BaseForecaster(BaseEstimator):
 
         Writes to self:
 
-            * Updates ``self.cutoff`` to latest index seen in `y`.
+            * Updates ``self.cutoff`` to latest index seen in ``y``.
             * If ``update_params=True``, updates fitted model attributes ending in "_".
 
         Parameters
@@ -989,7 +993,7 @@ class BaseForecaster(BaseEstimator):
             * ``self.cutoff``, ``self.is_fitted``
 
         Writes to self (unless ``reset_forecaster=True``):
-            * Updates ``self.cutoff`` to latest index seen in `y`.
+            * Updates ``self.cutoff`` to latest index seen in ``y``.
             * If ``update_params=True``, updates fitted model attributes ending in "_".
 
         Does not update state if ``reset_forecaster=True``.
@@ -1019,7 +1023,7 @@ class BaseForecaster(BaseEstimator):
 
         cv : temporal cross-validation generator inheriting from BaseSplitter, optional
             for example, ``SlidingWindowSplitter`` or ``ExpandingWindowSplitter``;
-            default = ExpandingWindowSplitter with `initial_window=1` and defaults
+            default = ExpandingWindowSplitter with ``initial_window=1`` and defaults
             = individual data points in y/X are added and forecast one-by-one,
             ``initial_window = 1``, ``step_length = 1`` and ``fh = 1``
 
@@ -1106,8 +1110,8 @@ class BaseForecaster(BaseEstimator):
             If update_params=True, model attributes ending in "_".
 
         Writes to self:
-            Update self._y and self._X with `y` and `X`, by appending rows.
-            Updates self.cutoff and self._cutoff to last index seen in `y`.
+            Update self._y and self._X with ``y`` and ``X``, by appending rows.
+            Updates self.cutoff and self._cutoff to last index seen in ``y``.
             If update_params=True,
                 updates fitted model attributes ending in "_".
 
@@ -1346,13 +1350,13 @@ class BaseForecaster(BaseEstimator):
             Dictionary of fitted parameters, paramname : paramvalue
             keys-value pairs include:
 
-            * always: all fitted parameters of this object, as via `get_param_names`
+            * always: all fitted parameters of this object, as via ``get_param_names``
               values are fitted parameter value for that key, of this object
-            * if `deep=True`, also contains keys/value pairs of component parameters
-              parameters of components are indexed as `[componentname]__[paramname]`
-              all parameters of `componentname` appear as `paramname` with its value
-            * if `deep=True`, also contains arbitrary levels of component recursion,
-              e.g., `[componentname]__[componentcomponentname]__[paramname]`, etc
+            * if ``deep=True``, also contains keys/value pairs of component parameters
+              parameters of components are indexed as ``[componentname]__[paramname]``
+              all parameters of ``componentname`` appear as ``paramname`` with its value
+            * if ``deep=True``, also contains arbitrary levels of component recursion,
+              e.g., ``[componentname]__[componentcomponentname]__[paramname]``, etc
         """
         # if self is not vectorized, run the default get_fitted_params
         if not getattr(self, "_is_vectorized", False):
@@ -1731,7 +1735,7 @@ class BaseForecaster(BaseEstimator):
 
         Notes
         -----
-        Set self._cutoff to `cutoff`, coerced to a pandas.Index.
+        Set self._cutoff to ``cutoff``, coerced to a pandas.Index.
         """
         if not isinstance(cutoff, pd.Index):
             cutoff = pd.Index([cutoff])
@@ -1749,7 +1753,7 @@ class BaseForecaster(BaseEstimator):
                 pd_multiindex_hier, of Hierarchical scitype
         Notes
         -----
-        Set self._cutoff to pandas.Index containing latest index seen in `y`.
+        Set self._cutoff to pandas.Index containing latest index seen in ``y``.
         """
         cutoff_idx = get_cutoff(y, self.cutoff, return_index=True)
         self._cutoff = cutoff_idx
@@ -2124,7 +2128,7 @@ class BaseForecaster(BaseEstimator):
         pred_int : pd.DataFrame
             Column has multi-index: first level is variable name from y in fit,
                 second level coverage fractions for which intervals were computed.
-                    in the same order as in input `coverage`.
+                    in the same order as in input ``coverage``.
                 Third level is string "lower" or "upper", for lower/upper interval end.
             Row index is fh, with additional (upper) levels equal to instance levels,
                 from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
@@ -2257,9 +2261,9 @@ class BaseForecaster(BaseEstimator):
 
         Returns
         -------
-        pred_var : pd.DataFrame, format dependent on `cov` variable
+        pred_var : pd.DataFrame, format dependent on ``cov`` variable
             If cov=False:
-                Column names are exactly those of `y` passed in `fit`/`update`.
+                Column names are exactly those of ``y`` passed in ``fit``/``update``.
                     For nameless formats, column index will be a RangeIndex.
                 Row index is fh, with additional levels equal to instance levels,
                     from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
@@ -2589,7 +2593,9 @@ def _format_moving_cutoff_predictions(y_preds, cutoffs):
 
     if not y_pred.index.is_monotonic_increasing:
         y_pred = y_pred.sort_index()
-    if hasattr(y_pred, "columns") and not y_pred.columns.is_monotonic_increasing:
-        y_pred = y_pred.sort_index(axis=1)
+
+    if hasattr(y_preds[0], "columns") and not isinstance(y_pred.columns, pd.MultiIndex):
+        col_ordered = y_preds[0].columns
+        y_pred = y_pred.loc[:, col_ordered]
 
     return y_pred

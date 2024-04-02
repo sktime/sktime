@@ -28,7 +28,7 @@ def check_estimator(
     raise_exceptions : bool, optional, default=False
         whether to return exceptions/failures in the results dict, or raise them
 
-        * if False: returns exceptions in returned `results` dict
+        * if False: returns exceptions in returned ``results`` dict
         * if True: raises exceptions as they occur
 
     tests_to_run : str or list of str, optional. Default = run all tests.

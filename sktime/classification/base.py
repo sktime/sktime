@@ -20,7 +20,7 @@ State:
 __all__ = [
     "BaseClassifier",
 ]
-__author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst"]
+__author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst", "ksharma6"]
 
 import time
 
@@ -108,17 +108,18 @@ class BaseClassifier(BasePanelMixin):
     def __rmul__(self, other):
         """Magic * method, return concatenated ClassifierPipeline, transformers on left.
 
-        Overloaded multiplication operation for classifiers. Implemented for `other`
-        being a transformer, otherwise returns `NotImplemented`.
+        Overloaded multiplication operation for classifiers. Implemented for ``other``
+        being a transformer, otherwise returns ``NotImplemented``.
 
         Parameters
         ----------
-        other: `sktime` transformer, must inherit from BaseTransformer
-            otherwise, `NotImplemented` is returned
+        other: ``sktime`` transformer, must inherit from BaseTransformer
+            otherwise, ``NotImplemented`` is returned
 
         Returns
         -------
-        ClassifierPipeline object, concatenation of `other` (first) with `self` (last).
+        ClassifierPipeline object, concatenation of ``other`` (first) with ``self``
+        (last).
         """
         from sktime.classification.compose import ClassifierPipeline
         from sktime.transformations.base import BaseTransformer
@@ -140,6 +141,27 @@ class BaseClassifier(BasePanelMixin):
                 return ClassifierPipeline(classifier=self, transformers=[other])
         elif is_sklearn_transformer(other):
             return TabularToSeriesAdaptor(other) * self
+        else:
+            return NotImplemented
+
+    def __or__(self, other):
+        """Magic | method, return MultiplexClassifier.
+
+        Implemented for `other` being either a MultiplexClassifier or a classifier.
+
+        Parameters
+        ----------
+        other: `sktime` classifier or sktime MultiplexClassifier
+
+        Returns
+        -------
+        MultiplexClassifier object
+        """
+        from sktime.classification.compose import MultiplexClassifier
+
+        if isinstance(other, MultiplexClassifier) or isinstance(other, BaseClassifier):
+            multiplex_self = MultiplexClassifier([self])
+            return multiplex_self | other
         else:
             return NotImplemented
 
@@ -626,7 +648,7 @@ class BaseClassifier(BasePanelMixin):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -637,8 +659,9 @@ class BaseClassifier(BasePanelMixin):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         return super().get_test_params(parameter_set=parameter_set)
 

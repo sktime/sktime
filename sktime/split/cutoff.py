@@ -13,6 +13,7 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
+from pandas.api.types import is_datetime64_any_dtype
 
 from sktime.split.base import BaseSplitter
 from sktime.split.base._common import (
@@ -50,9 +51,9 @@ def _check_cutoffs_and_y(cutoffs: VALID_CUTOFF_TYPES, y: ACCEPTED_Y_TYPES) -> No
     Raises
     ------
     ValueError
-        if max cutoff is above the last observation in `y`
+        if max cutoff is above the last observation in ``y``
     TypeError
-        if `cutoffs` type is not supported
+        if ``cutoffs`` type is not supported
     """
     max_cutoff = np.max(cutoffs)
     msg = (
@@ -75,24 +76,24 @@ def _check_cutoffs_fh_y(
     """Check that combination of inputs is compatible.
 
     Currently, only two cases are allowed:
-    either both `cutoffs` and `fh` are integers, or they are datetime or timedelta.
+    either both ``cutoffs`` and ``fh`` are integers, or they are datetime or timedelta.
 
     Parameters
     ----------
     cutoffs : np.array or pd.Index
         Cutoff points, positive and integer- or datetime-index like.
-        Type should match the type of `fh` input.
+        Type should match the type of ``fh`` input.
     fh : int, timedelta, list or np.ndarray of ints or timedeltas
-        Type should match the type of `cutoffs` input.
+        Type should match the type of ``cutoffs`` input.
     y : pd.Index
         Index of time series
 
     Raises
     ------
     ValueError
-        if max cutoff plus max `fh` is above the last observation in `y`
+        if max cutoff plus max ``fh`` is above the last observation in ``y``
     TypeError
-        if `cutoffs` and `fh` type combination is not supported
+        if ``cutoffs`` and ``fh`` type combination is not supported
     """
     max_cutoff = np.max(cutoffs)
     max_fh = fh.max()
@@ -118,30 +119,30 @@ class CutoffSplitter(BaseSplitter):
     can be written as :math:`(k_1,\ldots,k_n)` for integer based indexing,
     or :math:`(t(k_1),\ldots,t(k_n))` for datetime based indexing.
 
-    For a cutoff :math:`k_i` and a `window_length` :math:`w`
+    For a cutoff :math:`k_i` and a ``window_length`` :math:`w`
     the training window is :math:`(k_i-w+1,k_i-w+2,k_i-w+3,\ldots,k_i)`.
     Training window's last point is equal to the cutoff.
 
     Test window is defined by forecasting horizons
     relative to the end of the training window.
     It will contain as many indices
-    as there are forecasting horizons provided to the `fh` argument.
+    as there are forecasting horizons provided to the ``fh`` argument.
     For a forecasting horizon :math:`(h_1,\ldots,h_H)`, the test window will
     consist of the indices :math:`(k_n+h_1,\ldots, k_n+h_H)`.
 
-    The number of splits returned by `.get_n_splits`
+    The number of splits returned by ``.get_n_splits``
     is then trivially equal to :math:`n`.
 
-    The sorted array of cutoffs returned by `.get_cutoffs` is then equal to
+    The sorted array of cutoffs returned by ``.get_cutoffs`` is then equal to
     :math:`(t(k_1),\ldots,t(k_n))` with :math:`k_i<k_{i+1}`.
 
     Parameters
     ----------
     cutoffs : list or np.ndarray or pd.Index
         Cutoff points, positive and integer- or datetime-index like.
-        Type should match the type of `fh` input.
+        Type should match the type of ``fh`` input.
     fh : int, timedelta, list or np.ndarray of ints or timedeltas
-        Type should match the type of `cutoffs` input.
+        Type should match the type of ``cutoffs`` input.
     window_length : int or timedelta or pd.DateOffset
 
     Examples
@@ -230,17 +231,18 @@ class CutoffSplitter(BaseSplitter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        return [{"cutoffs": np.array([3, 7, 10])}, {"cutoffs": [21, 22]}]
+        return [{"cutoffs": np.array([3, 7, 10])}, {"cutoffs": [6, 9]}]
 
 
 class CutoffFhSplitter(BaseSplitter):
@@ -248,27 +250,28 @@ class CutoffFhSplitter(BaseSplitter):
 
     Train and test splits are determied as follows:
 
-    for each cutoff point `k=cutoff[i]`, in `split`:
+    for each cutoff point ``k=cutoff[i]``, in ``split``:
 
-    * training fold is all loc indices up to and including `k`
-    * if `fh` is not passed, test fold is all loc indices strictly after `k`
-    * if `fh is passed`, test fold is all loc indices in `k + fh`, if `fh` is relative.
+    * training fold is all loc indices up to and including ``k``
+    * if ``fh`` is not passed, test fold is all loc indices strictly after ``k``
+    * if ``fh is passed``, test fold is all loc indices in ``k + fh``, if ``fh`` is
+    relative.
       More precisely, `fh.to_absolute_index(cutoff=k)
-      If `fh` is absolute, then the test window is `fh` itself.
+      If ``fh`` is absolute, then the test window is ``fh`` itself.
 
-    It should be noted that, unlike in `CutoffSplitter`,
+    It should be noted that, unlike in ``CutoffSplitter``,
     test folds are not determined by a window length,
-    but by indices of the forecasting horizon `fh`, i.e., test folds can be
+    but by indices of the forecasting horizon ``fh``, i.e., test folds can be
     non-contiguous, even if the data index is regular.
 
     Parameters
     ----------
     cutoff : np.array or pd.Index
         Cutoff points, positive and integer- or datetime-index like.
-        Type should match the type of `fh` input.
+        Type should match the type of ``fh`` input.
     fh : None, ForecastingHorizon, int, timedelta, iterable of ints or timedeltas
         Forecasting horizon, relative or absolute, to determine test folds.
-        Type should match the type of `cutoffs` input.
+        Type should match the type of ``cutoffs`` input.
         If not ForecastingHorizon, is coerced.
     """
 
@@ -283,7 +286,7 @@ class CutoffFhSplitter(BaseSplitter):
         super().__init__(fh=fh)
 
     def _split_loc(self, y):
-        """Get loc references to train/test splits of `y`.
+        """Get loc references to train/test splits of ``y``.
 
         private _split containing the core logic, called from split_loc
 
@@ -302,11 +305,20 @@ class CutoffFhSplitter(BaseSplitter):
         cutoff = self.cutoff
         fh = self.fh
 
+        if not isinstance(cutoff, pd.Index):
+            cutoff = pd.Index(cutoff)
+
         if fh is not None:
             from sktime.forecasting.base import ForecastingHorizon
 
             if not isinstance(fh, ForecastingHorizon):
                 fh = ForecastingHorizon(fh)
+
+        def is_date_like(x):
+            return is_datetime64_any_dtype(x) or isinstance(x, pd.PeriodDtype)
+
+        if is_date_like(y) and not is_date_like(cutoff):
+            cutoff = y[cutoff]
 
         for k in cutoff:
             train = y[y <= k]
@@ -332,7 +344,7 @@ class CutoffFhSplitter(BaseSplitter):
         n_splits : int
             The number of splits.
         """
-        return len(self.cutoffs)
+        return len(self.cutoff)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -342,16 +354,17 @@ class CutoffFhSplitter(BaseSplitter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        params1 = {"cutoff": 3}
+        params1 = {"cutoff": np.array([3])}
         params2 = {"cutoff": [3, 4], "fh": [1, 2]}
         return [params1, params2]
