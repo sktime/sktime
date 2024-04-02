@@ -135,6 +135,8 @@ class InvertAugmenter(_AugmenterTags, BaseTransformer):
 
     Examples
     --------
+    >>> from sktime.transformations.series.augmenter import InvertAugmenter
+    >>> import pandas as pd
     >>> X = pd.Series([1,2,3,4,5])
     >>> augmenter = InvertAugmenter()
     >>> Xt = augmenter.fit_transform(X)
