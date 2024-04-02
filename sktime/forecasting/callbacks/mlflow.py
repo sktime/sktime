@@ -33,6 +33,7 @@ class MLFlowCallback(Callback):
     >>> from sktime.split import ExpandingWindowSplitter
     >>> from sktime.forecasting.callbacks.mlflow import MLFlowCallback
     >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.forecasting.trend import PolynomialTrendForecaster
     >>> import mlflow
 
     # Start your mlflow server locally with `mlflow server --host 127.0.0.1 --port 8080`
@@ -53,10 +54,19 @@ class MLFlowCallback(Callback):
     >>> experiment_id = mlflow.set_experiment("Airline_Models").experiment_id
 
     # Start parent run if nested is set to True:
-    >>> with mlflow.start_run(run_name="parent_run") as parent_run:
-    ...     # Evaluate forecaster with MLFlowCallback
-    ...     results = evaluate(
-    ...         forecaster=forecaster,
+    >>> with mlflow.start_run(run_name="parent_run"):
+    ...     # Evaluate NaiveForecaster with MLFlowCallback
+    ...     results_naive = evaluate(
+    ...         forecaster=NaiveForecaster(strategy="mean", sp=3),
+    ...         y=y,
+    ...         cv=cv,
+    ...         strategy="update",
+    ...         callbacks=[MLFlowCallback(experiment_id=experiment_id, nested=True)]
+    ...     )
+    ...
+    ...     # Evaluate PolynomialTrendForecaster with MLFlowCallback
+    ...     results_polynomial = evaluate(
+    ...         forecaster=PolynomialTrendForecaster(degree=2),
     ...         y=y,
     ...         cv=cv,
     ...         strategy="update",
