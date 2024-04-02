@@ -4,6 +4,7 @@ import abc
 import functools
 import typing
 
+import numpy as np
 import pandas
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
@@ -218,8 +219,8 @@ class _NeuralForecastAdapter(BaseForecaster):
                     )
                 else:
                     # B2.2
-                    diffs = y.index.diff(periods=1).unique()
-                    if diffs.shape[0] > 2:
+                    diffs = np.unique(np.diff(y.index))
+                    if diffs.shape[0] > 1:
                         # B2.2.1
                         raise ValueError(
                             f"Error in {self.__class__.__name__}, "
