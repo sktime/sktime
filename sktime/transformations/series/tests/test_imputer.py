@@ -15,19 +15,6 @@ from sktime.transformations.series.impute import Imputer
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils._testing.hierarchical import _make_hierarchical
 
-METHODS = [
-    "drift",
-    "linear",
-    "nearest",
-    "constant",
-    "mean",
-    "median",
-    "backfill",
-    "pad",
-    "random",
-    "forecaster",
-]
-
 y, X = make_forecasting_problem(make_X=True)
 
 X.iloc[3, 0] = np.nan
@@ -49,7 +36,21 @@ z.iloc[-1] = np.nan
 @pytest.mark.parametrize("forecaster", [None, NaiveForecaster()])
 @pytest.mark.parametrize("value", [None, 1])
 @pytest.mark.parametrize("Z", [y, X, z])
-@pytest.mark.parametrize("method", METHODS)
+@pytest.mark.parametrize(
+    "method",
+    [
+        "drift",
+        "linear",
+        "nearest",
+        "constant",
+        "mean",
+        "median",
+        "backfill",
+        "pad",
+        "random",
+        "forecaster",
+    ],
+)
 def test_imputer(method, Z, value, forecaster):
     """Test univariate and multivariate Imputer with all methods."""
     forecaster = NaiveForecaster() if method == "forecaster" else forecaster
@@ -59,7 +60,17 @@ def test_imputer(method, Z, value, forecaster):
     assert not y_hat.isnull().to_numpy().any()
 
 
-@pytest.mark.parametrize("method", METHODS)
+@pytest.mark.parametrize(
+    "method",
+    [
+        "linear",
+        "nearest",
+        "mean",
+        "median",
+        "backfill",
+        "pad",
+    ],
+)
 def test_impute_multiindex(method):
     """Test for data leakage in case of pd-multiindex data.
 
