@@ -142,9 +142,9 @@ class HFTransformersForecaster(BaseForecaster):
             del _config["feature_size"]
 
         if fh is not None:
-            _config["prediction_length"] = (
-                max(*(fh.to_relative(self._cutoff)._values + 1),
-                    _config["prediction_length"])
+            _config["prediction_length"] = max(
+                *(fh.to_relative(self._cutoff)._values + 1),
+                _config["prediction_length"],
             )
 
         config = config.from_dict(_config)
@@ -334,7 +334,6 @@ class HFTransformersForecaster(BaseForecaster):
                     "num_train_epochs": 1,
                     "output_dir": "test_output",
                     "per_device_train_batch_size": 32,
-                    "use_cpu": True,
                 },
                 "config": {
                     "lags_sequence": [1, 2, 3],
@@ -350,7 +349,6 @@ class HFTransformersForecaster(BaseForecaster):
                     "num_train_epochs": 1,
                     "output_dir": "test_output",
                     "per_device_train_batch_size": 32,
-                    "use_cpu": True,
                 },
                 "config": {
                     "lags_sequence": [1, 2, 3],
