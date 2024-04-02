@@ -89,7 +89,7 @@ def test_impute_multiindex(method):
     assert np.array_equal(df.iloc[:3, :], df_imp.iloc[:3, :], equal_nan=True)
 
     # instance 1 and 2 should not have any missing values
-    assert df_imp.iloc[3:, :].isna().any().any()
+    assert not df_imp.iloc[3:, :].isna().any().any()
 
     # test consistency between applying the imputer to every instance separately,
     # vs applying them to the panel
