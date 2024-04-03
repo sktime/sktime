@@ -124,7 +124,7 @@ class MLFlowCallback(Callback):
             self.run_name = forecaster.__class__.__name__
 
     def _reset(self):
-        """Reset relevant attributes (forecaster, run_name) for a new MLFlow run.
+        """Reset relevant attributes (forecaster, run_name, score_metrics).
 
         It is expected that the same MLFLowCallback object can be reused multiple times.
         Therefore certain variables should be reset everytime that the `evaluate`
