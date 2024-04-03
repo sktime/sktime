@@ -1,9 +1,12 @@
 """MLFLow callback for logging metrics and plots to MLFlow."""
+from typing import Optional
+
 import mlflow
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
+from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.callbacks.callback import Callback
 
 
@@ -53,6 +56,20 @@ class MLFlowCallback(Callback):
     # Set MLflow experiment
     >>> experiment_id = mlflow.set_experiment("Airline_Models").experiment_id
 
+    # Set MLflow callback
+    >>> mlflow_callback = MLFlowCallback(experiment_id=experiment_id)
+
+    >>> results_naive = evaluate(
+    ...         forecaster=NaiveForecaster(strategy="mean", sp=3),
+    ...         y=y,
+    ...         cv=cv,
+    ...         strategy="update",
+    ...         callbacks=[mlflow_callback]
+    ...     )
+
+    # Set MLflow callback for nested runs:
+    >>> mlflow_callback = MLFlowCallback(experiment_id=experiment_id, nested=True)
+
     # Start parent run if nested is set to True:
     >>> with mlflow.start_run(run_name="parent_run"):
     ...     # Evaluate NaiveForecaster with MLFlowCallback
@@ -61,7 +78,7 @@ class MLFlowCallback(Callback):
     ...         y=y,
     ...         cv=cv,
     ...         strategy="update",
-    ...         callbacks=[MLFlowCallback(experiment_id=experiment_id, nested=True)]
+    ...         callbacks=[mlflow_callback]
     ...     )
     ...
     ...     # Evaluate PolynomialTrendForecaster with MLFlowCallback
@@ -70,18 +87,18 @@ class MLFlowCallback(Callback):
     ...         y=y,
     ...         cv=cv,
     ...         strategy="update",
-    ...         callbacks=[MLFlowCallback(experiment_id=experiment_id, nested=True)]
+    ...         callbacks=[mlflow_callback]
     ...     )
     """
 
     def __init__(
         self,
-        forecaster=None,
-        scores=None,
-        tracking_uri=None,
-        run_name=None,
-        experiment_id=None,
-        nested=False,
+        forecaster: Optional[BaseForecaster] = None,
+        scores: Optional[list] = None,
+        tracking_uri: str = None,
+        run_name: Optional[str] = None,
+        experiment_id: str = None,
+        nested: bool = False,
     ):
         super().__init__()
         self.experiment_id = experiment_id
@@ -89,6 +106,7 @@ class MLFlowCallback(Callback):
         self.tracking_uri = tracking_uri
         self._forecaster = forecaster
         self.score_metrics = scores
+        self.runs = []
         self.run_name = run_name
 
         if tracking_uri:
@@ -104,6 +122,17 @@ class MLFlowCallback(Callback):
         self._forecaster = forecaster
         if not self.run_name:
             self.run_name = forecaster.__class__.__name__
+
+    def _reset(self):
+        """Reset relevant attributes (forecaster, run_name) for a new MLFlow run.
+
+        It is expected that the same MLFLowCallback object can be reused multiple times.
+        Therefore certain variables should be reset everytime that the `evaluate`
+        function is finished.
+        """
+        self.run_name = None
+        self.forecaster = None
+        self.score_metrics = []
 
     def on_iteration(self, iteration, y_pred, x, result, update=None):
         """Start MLFlow run or open existing run."""
@@ -126,9 +155,10 @@ class MLFlowCallback(Callback):
         Logging the plots of training, prediction and true values.
         Logging all scores.
         """
-        mlflow.start_run(
+        run = mlflow.start_run(
             run_name=self.run_name, experiment_id=self.experiment_id, nested=self.nested
         )
+        self.runs.append(run)
         mlflow.log_params(self.forecaster.get_params())
 
     def on_iteration_end(self, results=None):
@@ -141,6 +171,7 @@ class MLFlowCallback(Callback):
             )
             mlflow.log_figure(fig, f"histograms/{score.name}.html")
         mlflow.end_run()
+        self._reset()
 
     def _create_histogram(self, values, column_name):
         fig = px.histogram(values, x=column_name, title="Histogram of Scores")
