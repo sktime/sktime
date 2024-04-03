@@ -204,6 +204,38 @@ class TransformerFitTransformSeriesUnivariate(TransformerTestScenario):
     default_method_sequence = ["fit", "transform"]
 
 
+class TransformerFitTransformSeriesUnivariateMultipleFrequency(TransformerTestScenario):
+    """Fit/transform, univariate Series X."""
+
+    _tags = {
+        "X_scitype": "Series",
+        "X_univariate": True,
+        "has_y": False,
+        "is_enabled": True,
+    }
+
+    args = {
+        "fit": {
+            "X": _make_series(
+                n_timepoints=N_T + 1,
+                random_state=RAND_SEED,
+                index_type="datetime",
+                freq="2M",
+            )
+        },
+        "transform": {
+            "X": _make_series(
+                n_timepoints=N_T + 1,
+                random_state=RAND_SEED2,
+                index_type="datetime",
+                freq="2M",
+            )
+        },
+        # "inverse_transform": {"X": _make_series(n_timepoints=N_T)},
+    }
+    default_method_sequence = ["fit", "transform"]
+
+
 class TransformerFitTransformSeriesMultivariate(TransformerTestScenario):
     """Fit/transform, multivariate Series X."""
 

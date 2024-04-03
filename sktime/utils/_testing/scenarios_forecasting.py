@@ -143,6 +143,25 @@ class ForecasterFitPredictUnivariateNoXLateFh(ForecasterTestScenario):
     default_method_sequence = ["fit", "predict"]
 
 
+class ForecasterFitPredictUnivariateMultipleFrequency(ForecasterTestScenario):
+    """Fit/predict only, univariate y, no X, fh passed late in predict."""
+
+    _tags = {"univariate_y": True, "fh_passed_in_fit": False}
+
+    args = {
+        "fit": {
+            "y": _make_series(
+                n_timepoints=20,
+                random_state=RAND_SEED,
+                index_type="datetime",
+                freq="2M",
+            )
+        },
+        "predict": {"fh": 1},
+    }
+    default_method_sequence = ["fit", "predict"]
+
+
 y_with_name = _make_series(n_timepoints=20, random_state=RAND_SEED)
 y_with_name.name = "foo"
 
