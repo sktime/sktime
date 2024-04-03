@@ -114,7 +114,7 @@ class Chronos(BaseForecaster):
             self._model = ChronosPipeline.from_pretrained(
                 *args_list, **self.kwargs_dict
             )
-        self._context = torch.tensor(y.values)
+        self._context = torch.tensor(self._y.values)
         return self
 
     def _predict(self, fh=None, X=None):
@@ -144,8 +144,8 @@ class Chronos(BaseForecaster):
             top_p=self.top_p,
         )
         values = np.median(forecast[0].numpy(), axis=0)
-        row_idx = fh.to_absolute_index(self.cutoff)
-        y_pred = pd.DataFrame(values, index=row_idx)
+        row_idx = self.fh.to_absolute_index(self.cutoff)
+        y_pred = pd.Series(values, index=row_idx, name=self._y.name)
         return y_pred
 
     @classmethod
