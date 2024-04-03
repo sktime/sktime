@@ -4,11 +4,11 @@ import abc
 import functools
 import typing
 from inspect import signature
-from logging import warn
 
 import pandas
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.utils.warnings import warn
 
 __all__ = ["_NeuralForecastAdapter"]
 __author__ = ["yarnabrina", "pranavvp16"]
