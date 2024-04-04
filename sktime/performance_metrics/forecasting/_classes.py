@@ -1313,7 +1313,7 @@ class MedianAbsoluteError(BaseForecastingErrorMetricFunc):
     and predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n`,
     at time indices :math:`t_1, \dots, t_n`,
     ``evaluate`` or call returns the Median Absolute Error,
-    :math:`\text{median}(|y_i - \widehat{y}_i|)`.
+    :math:`\text{median}\left(|y_i - \widehat{y}_i|\right)_{i=1}^{n}`.
 
     ``multioutput`` and ``multilevel`` control averaging across variables and
     hierarchy indices, see below.
