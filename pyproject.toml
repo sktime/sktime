@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.27.1"
+version = "0.28.0"
 description = "A unified framework for machine learning with time series"
 readme = "README.md"
 keywords = [
@@ -96,7 +96,7 @@ all_extras = [
   'pmdarima!=1.8.1,<3.0.0,>=1.8; python_version < "3.12"',
   'prophet>=1.1; python_version < "3.12"',
   "pycatch22<0.4.4",
-  "pykalman-bardo<0.10,>=0.9.7",
+  "pykalman<0.10,>=0.9.5",
   'pyod>=0.8; python_version < "3.11"',
   "pyts<0.14.0; python_version < '3.12'",
   "scikit-optimize",
@@ -108,7 +108,7 @@ all_extras = [
   "statsmodels>=0.12.1",
   'stumpy>=1.5.1; python_version < "3.11"',
   'tbats>=1.1; python_version < "3.12"',
-  'temporian<0.8.0,>=0.7.0; python_version < "3.12" and sys_platform != "win32"',
+  'temporian<0.9.0,>=0.7.0,!=0.8.0; python_version < "3.12" and sys_platform != "win32"',
   'tensorflow<2.17,>=2; python_version < "3.12"',
   'tsbootstrap<0.2,>=0.1.0',
   'tsfresh>=0.17; python_version < "3.12"',
@@ -137,7 +137,7 @@ all_extras_pandas2 = [
   'pmdarima!=1.8.1,<3.0.0,>=1.8; python_version < "3.12"',
   'prophet>=1.1; python_version < "3.12"',
   "pycatch22<0.4.4",
-  "pykalman-bardo<0.10,>=0.9.7",
+  "pykalman<0.10,>=0.9.5",
   'pyod>=0.8; python_version < "3.11"',
   "scikit_posthocs>=0.6.5",
   "seaborn>=0.11",
@@ -147,7 +147,7 @@ all_extras_pandas2 = [
   "statsmodels>=0.12.1",
   'stumpy>=1.5.1; python_version < "3.11"',
   'tbats>=1.1; python_version < "3.12"',
-  'temporian<0.8.0,>=0.7.0; python_version < "3.12" and sys_platform != "win32"',
+  'temporian<0.9.0,>=0.7.0,!=0.8.0; python_version < "3.12" and sys_platform != "win32"',
   'tensorflow<2.17,>=2; python_version < "3.12"',
   'tsbootstrap<0.2,>=0.1.0',
   'tsfresh>=0.17; python_version < "3.12"',
@@ -207,14 +207,14 @@ regression = [
 transformations = [
   'esig<0.10,>=0.9.7; python_version < "3.11"',
   "filterpy<1.5,>=1.4.5",
-  "holidays>=0.29,<0.46",
+  "holidays>=0.29,<0.47",
   "mne>=1.5,<1.7",
   'numba<0.60,>=0.53',
   "pycatch22>=0.4,<0.4.4",
-  "pykalman-bardo<0.10,>=0.9.7",
+  "pykalman<0.10,>=0.9.5",
   "statsmodels<0.15,>=0.12.1",
   'stumpy<1.13,>=1.5.1; python_version < "3.12"',
-  'temporian<0.8.0,>=0.7.0; python_version < "3.12" and sys_platform != "win32"',
+  'temporian<0.9.0,>=0.7.0,!=0.8.0; python_version < "3.12" and sys_platform != "win32"',
   'tsbootstrap<0.2,>=0.1.0',
   'tsfresh<0.21,>=0.17; python_version < "3.12"',
 ]
