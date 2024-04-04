@@ -39,3 +39,32 @@ def check_labels(labels):
     valid_labels = ["indicator", "score", "int_label"]
     if labels not in valid_labels:
         raise ValueError(f"`labels` must be in: {valid_labels}, but found: {labels}.")
+
+
+def check_task(task):
+    """Check annotation task.
+
+    Parameters
+    ----------
+    task : str {"segmentation", "change_point_detection", "anomaly_detection"}
+        Annotation task.
+    """
+    valid_tasks = ["segmentation", "change_point_detection", "anomaly_detection"]
+    if task not in valid_tasks:
+        raise ValueError(f"`task` must be in: {valid_tasks}, but found: {task}.")
+
+
+def check_learning_type(learning_type):
+    """Check learning type.
+
+    Parameters
+    ----------
+    learning_type : str {"supervised", "unsupervised"}
+        Annotation Learning type.
+    """
+    valid_learning_types = ["supervised", "unsupervised"]
+    if learning_type not in valid_learning_types:
+        raise ValueError(
+            f"`learning_type` must be in: {valid_learning_types}, "
+            f"but found: {learning_type}."
+        )
