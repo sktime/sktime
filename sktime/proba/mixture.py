@@ -81,8 +81,10 @@ class Mixture(_HeterogenousMetaEstimator, BaseDistribution):
 
     def mean(self):
         r"""Return expected value of the distribution.
+
         Let :math:`X` be a random variable with the distribution of `self`.
         Returns the expectation :math:`\mathbb{E}[X]`
+
         Returns
         -------
         pd.DataFrame with same rows, columns as `self`
@@ -92,8 +94,10 @@ class Mixture(_HeterogenousMetaEstimator, BaseDistribution):
 
     def var(self):
         r"""Return element/entry-wise variance of the distribution.
+
         Let :math:`X` be a random variable with the distribution of `self`.
         Returns :math:`\mathbb{V}[X] = \mathbb{E}\left(X - \mathbb{E}[X]\right)^2`
+
         Returns
         -------
         pd.DataFrame with same rows, columns as `self`
@@ -143,9 +147,11 @@ class Mixture(_HeterogenousMetaEstimator, BaseDistribution):
 
     def sample(self, n_samples=None):
         """Sample from the distribution.
+
         Parameters
         ----------
         n_samples : int, optional, default = None
+
         Returns
         -------
         if `n_samples` is `None`:
