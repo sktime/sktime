@@ -53,7 +53,7 @@ class TSRGridSearchCV(_DelegatedRegressor):
 
     refit : bool, str, or callable, default=True
         Refit an estimator using the best found parameters on the whole
-        dataset. If ``False``, the ``predict`` and ``predict_probab`` will not work.
+        dataset. If ``False``, the ``predict`` will not work.
 
         For multiple metric evaluation, this needs to be a `str` denoting the
         scorer that would be used to find the best parameters for refitting
@@ -241,7 +241,6 @@ class TSRGridSearchCV(_DelegatedRegressor):
         "capability:unequal_length": True,
         "capability:missing_values": True,
         "capability:multithreading": True,
-        "capability:predict_proba": True,
     }
 
     def __init__(
