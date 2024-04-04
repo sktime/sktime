@@ -330,8 +330,8 @@ class BaseClassifier(BasePanelMixin):
         return self._predict_proba(X)
 
     def fit_predict(
-            self, X, y, cv=None, change_state=True, return_type="single_y_pred"
-        ):
+        self, X, y, cv=None, change_state=True, return_type="single_y_pred"
+    ):
         """Fit and predict labels for sequences in X.
 
         Convenience method to produce in-sample predictions and
