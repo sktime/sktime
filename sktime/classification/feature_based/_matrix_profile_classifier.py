@@ -194,6 +194,16 @@ class MatrixProfileClassifier(BaseClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        return [
+        params = [
             {"subsequence_length": 4, "estimator": KNeighborsClassifier(n_neighbors=2)}
         ]
+
+        if parameter_set == "new_param_set":
+            params.append(
+                {
+                    "subsequence_length": 6,
+                    "estimator": KNeighborsClassifier(n_neighbors=3),
+                }
+            )
+
+        return params
