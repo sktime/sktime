@@ -28,10 +28,10 @@ class Callback:
     def scores(self, scores):
         self._scores = scores
 
-    def on_iteration_start(self, update=None):
+    def on_iteration_start(self, evaluate_window_kwargs=None):
         """Call at the start of each iteration."""
 
-    def on_iteration(self, iteration, y_pred, x, result: pd.DataFrame, update=None):
+    def on_iteration(self, iteration, x, result: pd.DataFrame, update=None):
         """Call after each iteration."""
 
     def on_iteration_end(self, results=None):

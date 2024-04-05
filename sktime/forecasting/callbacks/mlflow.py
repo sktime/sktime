@@ -78,7 +78,8 @@ class MLFlowCallback(Callback):
     ...         y=y,
     ...         cv=cv,
     ...         strategy="update",
-    ...         callbacks=[mlflow_callback]
+    ...         callbacks=[mlflow_callback],
+    ...         return_data=True
     ...     )
     ...
     ...     # Evaluate PolynomialTrendForecaster with MLFlowCallback
@@ -87,7 +88,8 @@ class MLFlowCallback(Callback):
     ...         y=y,
     ...         cv=cv,
     ...         strategy="update",
-    ...         callbacks=[mlflow_callback]
+    ...         callbacks=[mlflow_callback],
+    ...         return_data=True
     ...     )
     """
 
@@ -134,10 +136,11 @@ class MLFlowCallback(Callback):
         self.forecaster = None
         self.score_metrics = []
 
-    def on_iteration(self, iteration, y_pred, x, result, update=None):
+    def on_iteration(self, iteration, x, result, update=None):
         """Start MLFlow run or open existing run."""
         _, (y_train, y_test, X_train, X_test) = x
         scores = {}
+        y_pred = result["y_pred"]
         for score in self.score_metrics:
             scores[f"{score.name}"] = result[f"test_{score.name}"].iloc[0]
             mlflow.log_metric(
@@ -147,7 +150,7 @@ class MLFlowCallback(Callback):
         fig = self._plot_time_series(y_train, y_test, y_pred, scores)
         mlflow.log_figure(fig, f"time_series_plots/iteration_{iteration}.html")
 
-    def on_iteration_start(self, update=None):
+    def on_iteration_start(self, evaluate_window_kwargs=None):
         """
         Log metrics and plots to MLFlow.
 
@@ -155,6 +158,11 @@ class MLFlowCallback(Callback):
         Logging the plots of training, prediction and true values.
         Logging all scores.
         """
+        if not evaluate_window_kwargs["return_data"]:
+            raise ValueError(
+                f"return_data must be set to True for MLFlow callbacks to work."
+                f" Got return_data={evaluate_window_kwargs['return_data']}."
+            )
         run = mlflow.start_run(
             run_name=self.run_name, experiment_id=self.experiment_id, nested=self.nested
         )

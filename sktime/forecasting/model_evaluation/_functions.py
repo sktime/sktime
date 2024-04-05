@@ -315,9 +315,9 @@ def _evaluate_window(x, meta):
 
     # Return forecaster if "update"
     if strategy == "update" or (strategy == "no-update_params" and i == 0):
-        return result, y_pred, forecaster
+        return result, forecaster
     else:
-        return result, y_pred
+        return result
 
 
 def evaluate(
@@ -610,15 +610,13 @@ def evaluate(
             i = x[0]
             is_first = i == 0  # first iteration
             if is_first:
-                callbacks.on_iteration_start()
+                callbacks.on_iteration_start(_evaluate_window_kwargs)
             if strategy == "update" or (strategy == "no-update_params" and is_first):
-                result, y_pred, forecaster = _evaluate_window(
-                    x, _evaluate_window_kwargs
-                )
+                result, forecaster = _evaluate_window(x, _evaluate_window_kwargs)
                 _evaluate_window_kwargs["forecaster"] = forecaster
             else:
-                result, y_pred = _evaluate_window(x, _evaluate_window_kwargs)
-            callbacks.on_iteration(i, y_pred, x, result, update=is_first)
+                result = _evaluate_window(x, _evaluate_window_kwargs)
+            callbacks.on_iteration(i, x, result)
 
             results.append(result)
 
