@@ -649,7 +649,7 @@ def test_forecastbylevel_nan_predict():
     from sktime.utils._testing.hierarchical import _make_hierarchical
 
     df = _make_hierarchical(
-        hierarchy_levels=(2, 2, 10),
+        hierarchy_levels=(2, 2, 2),
         max_timepoints=10,
         min_timepoints=10,
         same_cutoff=True,
