@@ -6,12 +6,8 @@ class CallbackList(Callback):
     """Callback list calls all callbacks in the list."""
 
     def __init__(self, callbacks=None, forecaster=None, scores=None):
-        if callbacks is None:
-            callbacks = []
-        if scores is None:
-            scores = []
-        self.callbacks = callbacks
-        self.scores = scores
+        self.callbacks = [] if callbacks is None else callbacks
+        self.scores = [] if scores is None else scores
         self.forecaster = forecaster
 
     @property
