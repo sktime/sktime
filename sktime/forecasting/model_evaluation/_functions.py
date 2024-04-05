@@ -627,7 +627,7 @@ def evaluate(
             backend_in = "dask_lazy"
         else:
             backend_in = backend
-        results, _ = parallelize(
+        results = parallelize(
             fun=_evaluate_window,
             iter=enumerate(yx_splits),
             meta=_evaluate_window_kwargs,
