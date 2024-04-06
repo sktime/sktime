@@ -272,7 +272,7 @@ def test_neural_forecast_with_auto_freq_on_int_like(index, model_class) -> None:
 def test_neural_forecast_with_auto_freq_on_missing_int_like(index, model_class) -> None:
     """Test with freq set to 'auto' on int-like index with missing values."""
 
-    index = index.drop(random.choices(index, k=5))
+    index = index.drop(random.choices(index[1:-1], k=5))
     y = pandas.Series(data=range(len(index)), index=index)
 
     model = model_class(freq="auto", max_steps=1, trainer_kwargs={"logger": False})
@@ -337,7 +337,7 @@ def test_neural_forecast_with_auto_freq_on_missing_date_like(
 ) -> None:
     """Test with freq set to 'auto' on date-like index with missing values."""
 
-    index = index.drop(random.choices(index, k=2))
+    index = index.drop(random.choices(index[1:-1], k=2))
     y = pandas.Series(data=range(len(index)), index=index)
 
     model = model_class(freq="auto", max_steps=1, trainer_kwargs={"logger": False})
