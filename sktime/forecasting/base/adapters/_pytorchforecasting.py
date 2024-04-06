@@ -25,8 +25,8 @@ class _PytorchForecastingAdapter(GlobalBaseForecaster):
         "python_dependencies": ["pytorch_forecasting"],
         # estimator type
         # --------------
-        "y_inner_mtype": "pd_multiindex_hier",
-        "X_inner_mtype": "pd_multiindex_hier",
+        "y_inner_mtype": ["pd-multiindex", "pd_multiindex_hier"],
+        "X_inner_mtype": ["pd-multiindex", "pd_multiindex_hier"],
         "scitype:y": "univariate",
         "requires-fh-in-fit": True,
         "X-y-must-have-same-index": True,
@@ -36,20 +36,20 @@ class _PytorchForecastingAdapter(GlobalBaseForecaster):
 
     def __init__(
         self: "_PytorchForecastingAdapter",
+        model_params: Optional[Dict[str, Any]] = None,
         allowed_encoder_known_variable_names: Optional[List[str]] = None,
         dataset_params: Optional[Dict[str, Any]] = None,
         train_to_dataloader_params: Optional[Dict[str, Any]] = None,
         validation_to_dataloader_params: Optional[Dict[str, Any]] = None,
         trainer_params: Optional[Dict[str, Any]] = None,
-        **kwargs,
     ) -> None:
         super().__init__()
+        self.model_params = model_params
         self.allowed_encoder_known_variable_names = allowed_encoder_known_variable_names
         self.dataset_params = dataset_params
         self.trainer_params = trainer_params
         self.train_to_dataloader_params = train_to_dataloader_params
         self.validation_to_dataloader_params = validation_to_dataloader_params
-        self._kwargs = kwargs
 
     @functools.cached_property
     @abc.abstractmethod
@@ -70,11 +70,12 @@ class _PytorchForecastingAdapter(GlobalBaseForecaster):
 
     def _instantiate_model(self: "_PytorchForecastingAdapter", data):
         """Instantiate the model."""
+        self._model_params = _none_check(self.model_params, {})
         algorithm_instance = self.algorithm_class.from_dataset(
             data,
             self.allowed_encoder_known_variable_names,
             **self.algorithm_parameters,
-            **self._kwargs,
+            **self._model_params,
         )
         self._trainer_params = _none_check(self.trainer_params, {})
         import lightning.pytorch as pl

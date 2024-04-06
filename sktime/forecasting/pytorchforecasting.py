@@ -27,20 +27,20 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
 
     def __init__(
         self: "PytorchForecastingTFT",
+        model_params: Optional[Dict[str, Any]] = None,
         allowed_encoder_known_variable_names: Optional[List[str]] = None,
         dataset_params: Optional[Dict[str, Any]] = None,
         train_to_dataloader_params: Optional[Dict[str, Any]] = None,
         validation_to_dataloader_params: Optional[Dict[str, Any]] = None,
         trainer_params: Optional[Dict[str, Any]] = None,
-        **kwargs,
     ) -> None:
         super().__init__(
+            model_params,
             allowed_encoder_known_variable_names,
             dataset_params,
             train_to_dataloader_params,
             validation_to_dataloader_params,
             trainer_params,
-            **kwargs,
         )
 
     @functools.cached_property
