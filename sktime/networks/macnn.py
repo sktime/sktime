@@ -4,7 +4,25 @@ __author__ = ["jnrusson1"]
 
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
+from tensorflow import keras
+from tensorflow.keras import layers
 
+#Wrapper Layers for using KerasTensor in tf func.
+class ReduceMean(layers.Layer):
+    def __init__(self, axis=1, **kwargs):
+        super(ReduceMean, self).__init__(**kwargs)
+        self.axis = axis
+
+    def call(self, inputs):
+        return keras.backend.mean(inputs, axis=self.axis)
+    
+class Reshape(layers.Layer):
+    def __init__(self, shape, **kwargs):
+        super(Reshape, self).__init__(**kwargs)
+        self.shape = shape
+
+    def call(self, inputs):
+        return keras.backend.reshape(inputs, self.shape)
 
 class MACNNNetwork(BaseDeepNetwork):
     """Base MACNN Network for MACNNClassifier and MACNNRegressor.
@@ -91,12 +109,12 @@ class MACNNNetwork(BaseDeepNetwork):
         x1 = keras.layers.BatchNormalization()(x1)
         x1 = keras.layers.Activation("relu")(x1)
 
-        x2 = reduce_mean(x1, 1)
+        x2 = ReduceMean(axis=1)(x1)
         x2 = keras.layers.Dense(
             int(kernels * 3 / reduce), use_bias=False, activation="relu"
         )(x2)
         x2 = keras.layers.Dense(int(kernels * 3), use_bias=False, activation="relu")(x2)
-        x2 = reshape(x2, [-1, 1, kernels * 3])
+        x2 = Reshape([-1, 1, kernels * 3])(x2)
 
         return x1 * x2
 
@@ -155,6 +173,6 @@ class MACNNNetwork(BaseDeepNetwork):
 
         x = self._stack(x, self.repeats, self.filter_sizes[2], self.reduction)
 
-        output_layer = reduce_mean(x, 1)
+        output_layer = ReduceMean(axis=1)(x)
 
         return input_layer, output_layer
