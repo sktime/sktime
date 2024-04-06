@@ -21,22 +21,15 @@ class PyODAnnotator(BaseSeriesAnnotator):
     estimator : PyOD estimator
         See ``https://pyod.readthedocs.io/en/latest/`` documentation for a detailed
         description of all options.
-    fmt : str {"dense", "sparse"}, optional (default="dense")
-        Annotation output format:
-        * If "sparse", a sub-series of labels for only the outliers in X is returned,
-        * If "dense", a series of labels for all values in X is returned.
-    labels : str {"indicator", "score"}, optional (default="indicator")
-        Annotation output labels:
-        * If "indicator", returned values are boolean, indicating whether a value is an
-        outlier,
-        * If "score", returned values are floats, giving the outlier score.
+    learning_type : str {"supervised", "unsupervised"}, optional (default="unsupervised")
+        The learning type of the annotator; can be supervised or unsupervised.
     """
 
     _tags = {"python_dependencies": "pyod"}
 
-    def __init__(self, estimator, fmt="dense", labels="indicator"):
+    def __init__(self, estimator, learning_type="unsupervised"):
         self.estimator = estimator  # pyod estimator
-        super().__init__(fmt=fmt, labels=labels)
+        super().__init__(task="anomaly_detection", learning_type=learning_type)
 
     def _fit(self, X, Y=None):
         """Fit to training data.
@@ -77,11 +70,7 @@ class PyODAnnotator(BaseSeriesAnnotator):
         Returns
         -------
         Y : pd.Series - annotations for sequence X
-            exact format depends on annotation type
         """
-        fmt = self.fmt
-        labels = self.labels
-
         X_np = X.to_numpy()
 
         if len(X_np.shape) == 1:
@@ -89,16 +78,9 @@ class PyODAnnotator(BaseSeriesAnnotator):
 
         Y_np = self.estimator_.predict(X_np)
 
-        if labels == "score":
-            Y_val_np = self.estimator_.decision_function(X_np)
-        elif labels == "indicator":
-            Y_val_np = Y_np
-
-        if fmt == "dense":
-            Y = pd.Series(Y_val_np, index=X.index)
-        elif fmt == "sparse":
-            Y_loc = np.where(Y_np)
-            Y = pd.Series(Y_val_np[Y_loc], index=X.index[Y_loc])
+        # Convert the output to a sparse format
+        Y_loc = np.where(Y_np)
+        Y = pd.Series(Y_np[Y_loc], index=X.index[Y_loc])
 
         return Y
 
