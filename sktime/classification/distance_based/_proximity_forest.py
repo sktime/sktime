@@ -660,7 +660,9 @@ class ProximityStump(BaseClassifier):
     Parameters
     ----------
     backend : {"dask", "loky", "multiprocessing", "threading"}, by default "loky".
-        Runs parallel evaluate if specified.
+        Runs parallel evaluate if specified. For ProximityStump, "multiprocessing"
+        will result in an error during parallelization, so it cannot be used.
+        If "multiprocessing" is selected, it will default to "loky" instead.
 
     backend_params : dict, optional
         additional parameters passed to the backend as config.
@@ -877,6 +879,10 @@ class ProximityStump(BaseClassifier):
         meta["exemplars"] = self.X_exemplar
         meta["distance_measure"] = self._distance_measure()
         if self.backend:
+            # ensure it isn't multiprocessing, if it is change to loky
+            if self.backend == "multiprocessing":
+                self.backend = "loky"
+
             iters = [X.iloc[index, :] for index in range(X.shape[0])]
             distances = [
                 parallelize(
@@ -1035,7 +1041,9 @@ class ProximityTree(BaseClassifier):
     Parameters
     ----------
     backend : {"dask", "loky", "multiprocessing", "threading"}, by default "loky".
-        Runs parallel evaluate if specified.
+        Runs parallel evaluate if specified. For ProximityTree, "multiprocessing"
+        will result in an error during parallelization, so it cannot be used.
+        If "multiprocessing" is selected, it will default to "loky" instead.
 
     backend_params : dict, optional
         additional parameters passed to the backend as config.
@@ -1379,7 +1387,9 @@ class ProximityForest(BaseClassifier):
     Parameters
     ----------
     backend : {"dask", "loky", "multiprocessing", "threading"}, by default "loky".
-        Runs parallel evaluate if specified.
+        Runs parallel evaluate if specified. For ProximityForest, "multiprocessing"
+        will result in an error during parallelization, so it cannot be used.
+        If "multiprocessing" is selected, it will default to "loky" instead.
 
     backend_params : dict, optional
         additional parameters passed to the backend as config.
@@ -1525,38 +1535,6 @@ class ProximityForest(BaseClassifier):
         distance_measure = param_perm.pop("distance_measure")
         return distance_predefined_params(distance_measure, **param_perm)
 
-    # def _fit_tree(self, X, y, index, random_state):
-    #     """Build the classifierr on the training set (X, y).
-
-    #     Parameters
-    #     ----------
-    #     X : array-like or sparse matrix of shape = [n_instances,n_columns]
-    #         The training input samples.  If a Pandas data frame is passed,
-    #         column 0 is extracted.
-    #     y : array-like, shape = [n_instances]
-    #         The class labels.
-    #     index : index of the tree to be constructed
-    #     random_state: random_state to send to the tree to be constructed
-
-    #     Returns
-    #     -------
-    #     self : object
-    #     """
-    #     if self.verbosity > 0:
-    #         print("tree " + str(index) + " building")  # noqa
-    #     tree = ProximityTree(
-    #         backend=self.backend,
-    #         backend_params=self.backend_params,
-    #         random_state=random_state,
-    #         verbosity=self.verbosity,
-    #         distance_measure=self.distance_measure,
-    #         max_depth=self.max_depth,
-    #         is_leaf=self.is_leaf,
-    #         n_stump_evaluations=self.n_stump_evaluations,
-    #     )
-    #     tree.fit(X, y)
-    #     return tree
-
     def _fit_tree(self, index, meta):
         """Build the classifierr on the training set (X, y).
 
@@ -1613,26 +1591,15 @@ class ProximityForest(BaseClassifier):
         self._random_object = check_random_state(self.random_state)
         self.y = y
 
-        # if self._threads_to_use > 1:
-        #     parallel = Parallel(self._threads_to_use)
-        #     self.trees = parallel(
-        #         delayed(self._fit_tree)(
-        #             X, y, index, self._random_object.randint(0, self.n_estimators)
-        #         )
-        #         for index in range(self.n_estimators)
-        #     )
-        # else:
-        #     self.trees = [
-        #         self._fit_tree(
-        #             X, y, index, self._random_object.randint(0, self.n_estimators)
-        #         )
-        #         for index in range(self.n_estimators)
-        #     ]
         meta = {}
         meta["X"] = self.X
         meta["y"] = self.y
         meta["_random_object"] = self._random_object
         if self.backend:
+            # ensure it isn't multiprocessing, if it is change to loky
+            if self.backend == "multiprocessing":
+                self.backend = "loky"
+
             iters = [index for index in range(self.n_estimators)]
             self.trees = [
                 parallelize(
@@ -1652,24 +1619,6 @@ class ProximityForest(BaseClassifier):
         return self
 
     @staticmethod
-    # def _predict_proba_tree(X, tree):
-    #     """Find probability estimates for each class for all cases in X.
-    #     Parameters
-    #     ----------
-    #     X : array-like or sparse matrix of shape = [n_instances, n_columns]
-    #         The training input samples.
-    #         If a Pandas data frame is passed (sktime format)
-    #         If a Pandas data frame is passed, a check is performed that it
-    #         only has one column.
-    #         If not, an exception is thrown, since this classifier does not
-    #         yet have
-    #         multivariate capability.
-    #     tree : the tree to collect predictions from
-    #     Returns
-    #     -------
-    #     output : array of shape = [n_instances, n_classes] of probabilities
-    #     """
-    #     return tree.predict_proba(X)
     def _predict_proba_tree(instance, meta):
         """Find probability estimates for each class for all cases in X.
 
@@ -1745,14 +1694,11 @@ class ProximityForest(BaseClassifier):
         # set meta vars
         meta = {}
         meta["X"] = X
-        # if self._threads_to_use > 1:
-        #     parallel = Parallel(self._threads_to_use)
-        #     distributions = parallel(
-        #         delayed(self._predict_proba_tree)(X, tree) for tree in self.trees
-        #     )
-        # else:
-        #     distributions = [self._predict_proba_tree(X, tree) for tree in self.trees]
         if self.backend:
+            # ensure it isn't multiprocessing, if it is change to loky
+            if self.backend == "multiprocessing":
+                self.backend = "loky"
+
             iters = [tree for tree in self.trees]
             distributions = [
                 parallelize(
