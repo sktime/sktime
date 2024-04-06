@@ -277,7 +277,10 @@ def test_neural_forecast_with_auto_freq_on_missing_int_like(index, model_class) 
 
     model = model_class(freq="auto", max_steps=1, trainer_kwargs={"logger": False})
 
-    with pytest.raises(ValueError, match="could not interpret freq"):
+    with pytest.raises(
+        ValueError,
+        match="(could not interpret freq).*(use a valid integer offset in index)",
+    ):
         model.fit(y, fh=[1, 2, 3])
 
 
@@ -334,5 +337,7 @@ def test_neural_forecast_with_auto_freq_on_missing_date_like(
 
     model = model_class(freq="auto", max_steps=1, trainer_kwargs={"logger": False})
 
-    with pytest.raises(ValueError, match="could not interpret freq"):
+    with pytest.raises(
+        ValueError, match="(could not interpret freq).*(use a valid offset in index)"
+    ):
         model.fit(y, fh=[1, 2, 3])
