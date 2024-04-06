@@ -445,6 +445,18 @@ ESTIMATOR_TAG_REGISTER = [
         "distribution type of data as str",
     ),
     (
+        "task",
+        "series-annotator",
+        "str",
+        "subtype of series annotator, e.g., 'anomaly_detection', 'segmentation'",
+    ),
+    (
+        "learning_type",
+        "series-annotator",
+        "str",
+        "type of learning, e.g., 'supervised', 'unsupervised'",
+    ),
+    (
         "reserved_params",
         "estimator",
         ("list", "str"),

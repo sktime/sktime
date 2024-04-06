@@ -30,8 +30,8 @@ from sktime.utils.validation.series import check_series
 class BaseSeriesAnnotator(BaseEstimator):
     """Base series annotator.
 
-    Parameters
-    ----------
+    Developers should set the task and learning_type tags in the derived class.
+    
     task : str {"segmentation", "change_point_detection", "anomaly_detection"}
         The main annotation task:
         * If `segmentation`, the annotator divides timeseries into discrete chunks
@@ -61,12 +61,16 @@ class BaseSeriesAnnotator(BaseEstimator):
 
     _tags = {
         "object_type": "series-annotator",  # type of object
+        "learning_type": "None",  # Tag to determine test in test_all_annotators
+        "task": "None",  # Tag to determine test in test_all_annotators
+        #
+        # todo: distribution_type? we may have to refactor this, seems very soecufuc
         "distribution_type": "None",  # Tag to determine test in test_all_annotators
     }  # for unit test cases
 
-    def __init__(self, task, learning_type):
-        self.task = task
-        self.learning_type = learning_type
+    def __init__(self):
+        self.task = self.get_class_tag("task")
+        self.learning_type = self.get_class_tag("learning_type")
 
         self._is_fitted = False
 

@@ -219,6 +219,8 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
     """
 
     _tags = {
+        "task": "segmentation",
+        "learning_type": "unsupervised",
         "univariate-only": True,
         "fit_is_empty": True,
         "python_dependencies": "numba",
@@ -229,7 +231,7 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
         self.n_cps = n_cps
         self.exclusion_radius = exclusion_radius
         self.fmt = fmt
-        super().__init__(task="segmentation", learning_type="unsupervised")
+        super().__init__()
 
     def _fit(self, X, Y=None):
         """Do nothing, as there is no need to fit a model for ClaSP.
