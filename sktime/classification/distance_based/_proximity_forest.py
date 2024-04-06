@@ -30,7 +30,8 @@ from sktime.distances import (
 from sktime.transformations.base import _PanelToPanelTransformer
 from sktime.transformations.panel.summarize import DerivativeSlopeTransformer
 from sktime.utils.parallel import parallelize
-from sktime.utils.warnings import warn
+
+# from sktime.utils.warnings import warn
 
 # todo unit tests / sort out current unit tests
 # todo logging package rather than print to screen
@@ -750,15 +751,15 @@ class ProximityStump(BaseClassifier):
         self._random_object = None
         super().__init__()
 
-        if n_jobs != "deprecated":
-            warn(
-                f"Parameter n_jobs of {self.__class__.__name__} has been removed "
-                "in sktime 0.27.0 and is no longer used. It is ignored when passed. "
-                "Instead, the backend and backend_params parameters should be used "
-                "to pass n_jobs or other parallelization parameters.",
-                obj=self,
-                stacklevel=2,
-            )
+        # if n_jobs != "deprecated":
+        #     warn(
+        #         f"Parameter n_jobs of {self.__class__.__name__} has been removed "
+        #         "in sktime 0.27.0 and is no longer used. It is ignored when passed. "
+        #         "Instead, the backend and backend_params parameters should be used "
+        #         "to pass n_jobs or other parallelization parameters.",
+        #         obj=self,
+        #         stacklevel=2,
+        #     )
 
     def pick_distance_measure(self):
         """Pick a distance measure.
@@ -1031,7 +1032,7 @@ class ProximityStump(BaseClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        params1 = {"random_state": 0, "backend": "dask"}
+        params1 = {"random_state": 0, "backend": "multiprocessing"}
         params2 = {"random_state": 42, "distance_measure": "dtw"}
         return [params1, params2]
 
