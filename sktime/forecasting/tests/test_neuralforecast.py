@@ -317,8 +317,13 @@ def test_neural_forecast_with_auto_freq_on_date_like(index, model_class) -> None
 @pytest.mark.parametrize(
     "index",
     [
-        pandas.date_range(start="2024-01-01", periods=10),
-        # freq is preserved in index even in missing data
+        # DatetimeIndex
+        pandas.date_range(start="2024-01-01", periods=5),
+        pandas.to_datetime(
+            ["2000-01-01", "2000-01-02", "2000-01-03", "2000-01-04", "2000-01-05"]
+        ),
+        # PeriodIndex
+        # freq is preserved in index even in missing data; no exception raised
         # pandas.period_range(start='2024-01-01', periods=10),
     ],
 )
@@ -332,7 +337,7 @@ def test_neural_forecast_with_auto_freq_on_missing_date_like(
 ) -> None:
     """Test with freq set to 'auto' on date-like index with missing values."""
 
-    index = index.drop(random.choices(index, k=5))
+    index = index.drop(random.choices(index, k=2))
     y = pandas.Series(data=range(len(index)), index=index)
 
     model = model_class(freq="auto", max_steps=1, trainer_kwargs={"logger": False})
