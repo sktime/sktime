@@ -197,8 +197,8 @@ class _NeuralForecastAdapter(BaseForecaster):
         #     B2. freq is not infered from fh
         #         B2.1. y is date-like {raise exception}
         #         B2.2. y is not date-like
-        #             B2.2.1 uniform data {use diff in time}
-        #             B2.2.2 missing data {raise exception}
+        #             B2.2.1 equispaced integers {use diff in time}
+        #             B2.2.2 non-equispaced integers {raise exception}
 
         if self.freq != "auto":
             # A
@@ -229,7 +229,7 @@ class _NeuralForecastAdapter(BaseForecaster):
                         )
                     else:
                         # B2.2.2
-                        self._freq = int(diffs[-1])
+                        self._freq = int(diffs[-1])  # converts numpy.int64 to int
 
         train_indices = y.index
         if isinstance(train_indices, pandas.PeriodIndex):
