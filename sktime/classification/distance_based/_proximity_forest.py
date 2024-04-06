@@ -13,7 +13,6 @@ import math
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
 from scipy import stats
 from sklearn.preprocessing import normalize
 from sklearn.utils import check_random_state
@@ -30,8 +29,7 @@ from sktime.distances import (
 from sktime.transformations.base import _PanelToPanelTransformer
 from sktime.transformations.panel.summarize import DerivativeSlopeTransformer
 from sktime.utils.parallel import parallelize
-
-# from sktime.utils.warnings import warn
+from sktime.utils.warnings import warn
 
 # todo unit tests / sort out current unit tests
 # todo logging package rather than print to screen
@@ -730,7 +728,7 @@ class ProximityStump(BaseClassifier):
         random_state=None,
         distance_measure=None,
         verbosity=0,
-        n_jobs=None,
+        n_jobs="deprecated",
     ):
         self.backend = backend
         self.backend_params = backend_params
@@ -751,15 +749,15 @@ class ProximityStump(BaseClassifier):
         self._random_object = None
         super().__init__()
 
-        # if n_jobs != "deprecated":
-        #     warn(
-        #         f"Parameter n_jobs of {self.__class__.__name__} has been removed "
-        #         "in sktime 0.27.0 and is no longer used. It is ignored when passed. "
-        #         "Instead, the backend and backend_params parameters should be used "
-        #         "to pass n_jobs or other parallelization parameters.",
-        #         obj=self,
-        #         stacklevel=2,
-        #     )
+        if n_jobs != "deprecated":
+            warn(
+                f"Parameter n_jobs of {self.__class__.__name__} has been removed "
+                "in sktime 0.27.0 and is no longer used. It is ignored when passed. "
+                "Instead, the backend and backend_params parameters should be used "
+                "to pass n_jobs or other parallelization parameters.",
+                obj=self,
+                stacklevel=2,
+            )
 
     def pick_distance_measure(self):
         """Pick a distance measure.
@@ -874,14 +872,6 @@ class ProximityStump(BaseClassifier):
         ret: 2d numpy array of distances from each instance to each
             exemplar (instance by exemplar)
         """
-        # if self._threads_to_use > 1:
-        #     parallel = Parallel(self._threads_to_use)
-        #     distances = parallel(
-        #         delayed(self._distance_to_exemplars_inst)(
-        #             self.X_exemplar, X.iloc[index, :], self._distance_measure()
-        #         )
-        #         for index in range(X.shape[0])
-        #     )
         # set the meta vars
         meta = {}
         meta["exemplars"] = self.X_exemplar
@@ -1032,7 +1022,7 @@ class ProximityStump(BaseClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        params1 = {"random_state": 0, "backend": "multiprocessing"}
+        params1 = {"random_state": 0, "backend": "dask"}
         params2 = {"random_state": 42, "distance_measure": "dtw"}
         return [params1, params2]
 
@@ -1123,7 +1113,7 @@ class ProximityTree(BaseClassifier):
         max_depth=math.inf,
         is_leaf=pure,
         verbosity=0,
-        n_jobs=None,
+        n_jobs="deprecated",
         n_stump_evaluations=5,
     ):
         self.backend = backend
@@ -1488,7 +1478,7 @@ class ProximityForest(BaseClassifier):
         max_depth=math.inf,
         is_leaf=pure,
         n_stump_evaluations=5,
-        n_jobs=None,
+        n_jobs="deprecated",
     ):
         self.backend = backend
         self.backend_params = backend_params
@@ -1535,7 +1525,39 @@ class ProximityForest(BaseClassifier):
         distance_measure = param_perm.pop("distance_measure")
         return distance_predefined_params(distance_measure, **param_perm)
 
-    def _fit_tree(self, X, y, index, random_state):
+    # def _fit_tree(self, X, y, index, random_state):
+    #     """Build the classifierr on the training set (X, y).
+
+    #     Parameters
+    #     ----------
+    #     X : array-like or sparse matrix of shape = [n_instances,n_columns]
+    #         The training input samples.  If a Pandas data frame is passed,
+    #         column 0 is extracted.
+    #     y : array-like, shape = [n_instances]
+    #         The class labels.
+    #     index : index of the tree to be constructed
+    #     random_state: random_state to send to the tree to be constructed
+
+    #     Returns
+    #     -------
+    #     self : object
+    #     """
+    #     if self.verbosity > 0:
+    #         print("tree " + str(index) + " building")  # noqa
+    #     tree = ProximityTree(
+    #         backend=self.backend,
+    #         backend_params=self.backend_params,
+    #         random_state=random_state,
+    #         verbosity=self.verbosity,
+    #         distance_measure=self.distance_measure,
+    #         max_depth=self.max_depth,
+    #         is_leaf=self.is_leaf,
+    #         n_stump_evaluations=self.n_stump_evaluations,
+    #     )
+    #     tree.fit(X, y)
+    #     return tree
+
+    def _fit_tree(self, index, meta):
         """Build the classifierr on the training set (X, y).
 
         Parameters
@@ -1543,6 +1565,7 @@ class ProximityForest(BaseClassifier):
         X : array-like or sparse matrix of shape = [n_instances,n_columns]
             The training input samples.  If a Pandas data frame is passed,
             column 0 is extracted.
+        meta : dict containing y, index, and a random_state. See below for details
         y : array-like, shape = [n_instances]
             The class labels.
         index : index of the tree to be constructed
@@ -1552,6 +1575,10 @@ class ProximityForest(BaseClassifier):
         -------
         self : object
         """
+        X = meta["X"]
+        y = meta["y"]
+        random_state = meta["_random_object"].randint(0, self.n_estimators)
+
         if self.verbosity > 0:
             print("tree " + str(index) + " building")  # noqa
         tree = ProximityTree(
@@ -1586,30 +1613,71 @@ class ProximityForest(BaseClassifier):
         self._random_object = check_random_state(self.random_state)
         self.y = y
 
-        if self._threads_to_use > 1:
-            parallel = Parallel(self._threads_to_use)
-            self.trees = parallel(
-                delayed(self._fit_tree)(
-                    X, y, index, self._random_object.randint(0, self.n_estimators)
+        # if self._threads_to_use > 1:
+        #     parallel = Parallel(self._threads_to_use)
+        #     self.trees = parallel(
+        #         delayed(self._fit_tree)(
+        #             X, y, index, self._random_object.randint(0, self.n_estimators)
+        #         )
+        #         for index in range(self.n_estimators)
+        #     )
+        # else:
+        #     self.trees = [
+        #         self._fit_tree(
+        #             X, y, index, self._random_object.randint(0, self.n_estimators)
+        #         )
+        #         for index in range(self.n_estimators)
+        #     ]
+        meta = {}
+        meta["X"] = self.X
+        meta["y"] = self.y
+        meta["_random_object"] = self._random_object
+        if self.backend:
+            iters = [index for index in range(self.n_estimators)]
+            self.trees = [
+                parallelize(
+                    fun=self._fit_tree,
+                    iter=iters,
+                    meta=meta,
+                    backend=self.backend,
+                    backend_params=self.backend_params,
                 )
-                for index in range(self.n_estimators)
-            )
+            ]
         else:
             self.trees = [
-                self._fit_tree(
-                    X, y, index, self._random_object.randint(0, self.n_estimators)
-                )
+                self._fit_tree(index=index, meta=meta)
                 for index in range(self.n_estimators)
             ]
 
         return self
 
     @staticmethod
-    def _predict_proba_tree(X, tree):
+    # def _predict_proba_tree(X, tree):
+    #     """Find probability estimates for each class for all cases in X.
+    #     Parameters
+    #     ----------
+    #     X : array-like or sparse matrix of shape = [n_instances, n_columns]
+    #         The training input samples.
+    #         If a Pandas data frame is passed (sktime format)
+    #         If a Pandas data frame is passed, a check is performed that it
+    #         only has one column.
+    #         If not, an exception is thrown, since this classifier does not
+    #         yet have
+    #         multivariate capability.
+    #     tree : the tree to collect predictions from
+    #     Returns
+    #     -------
+    #     output : array of shape = [n_instances, n_classes] of probabilities
+    #     """
+    #     return tree.predict_proba(X)
+    def _predict_proba_tree(instance, meta):
         """Find probability estimates for each class for all cases in X.
 
         Parameters
         ----------
+        meta : dict
+            dictionary containing parameters to find probability estimates
+            See below for details
         X : array-like or sparse matrix of shape = [n_instances, n_columns]
             The training input samples.
             If a Pandas data frame is passed (sktime format)
@@ -1618,13 +1686,14 @@ class ProximityForest(BaseClassifier):
             If not, an exception is thrown, since this classifier does not
             yet have
             multivariate capability.
-        tree : the tree to collect predictions from
+        instance : the tree to collect predictions from
 
         Returns
         -------
         output : array of shape = [n_instances, n_classes] of probabilities
         """
-        return tree.predict_proba(X)
+        X = meta["X"]
+        return instance.predict_proba(X)
 
     def _predict(self, X) -> np.ndarray:
         """Predicts labels for sequences in X.
@@ -1672,13 +1741,32 @@ class ProximityForest(BaseClassifier):
         output : array of shape = [n_instances, n_classes] of probabilities
         """
         X = _negative_dataframe_indices(X)
-        if self._threads_to_use > 1:
-            parallel = Parallel(self._threads_to_use)
-            distributions = parallel(
-                delayed(self._predict_proba_tree)(X, tree) for tree in self.trees
-            )
+
+        # set meta vars
+        meta = {}
+        meta["X"] = X
+        # if self._threads_to_use > 1:
+        #     parallel = Parallel(self._threads_to_use)
+        #     distributions = parallel(
+        #         delayed(self._predict_proba_tree)(X, tree) for tree in self.trees
+        #     )
+        # else:
+        #     distributions = [self._predict_proba_tree(X, tree) for tree in self.trees]
+        if self.backend:
+            iters = [tree for tree in self.trees]
+            distributions = [
+                parallelize(
+                    fun=self._predict_proba_tree,
+                    iter=iters,
+                    meta=meta,
+                    backend=self.backend,
+                    backend_params=self.backend_params,
+                )
+            ]
         else:
-            distributions = [self._predict_proba_tree(X, tree) for tree in self.trees]
+            distributions = [
+                self._predict_proba_tree(tree, meta) for tree in self.trees
+            ]
         distributions = np.array(distributions)
         distributions = np.sum(distributions, axis=0)
         normalize(distributions, copy=False, norm="l1")

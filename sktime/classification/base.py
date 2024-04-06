@@ -30,7 +30,6 @@ import pandas as pd
 from sktime.base import BasePanelMixin
 from sktime.datatypes import VectorizedDF, check_is_scitype, convert
 from sktime.utils.sklearn import is_sklearn_transformer
-from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation._dependencies import _check_estimator_deps
 
 
@@ -249,14 +248,16 @@ class BaseClassifier(BasePanelMixin):
 
         # Convert data as dictated by the classifier tags
         X = self._convert_X(X, X_mtype)
-        multithread = self.get_tag("capability:multithreading")
-        if multithread:
-            try:
-                self._threads_to_use = check_n_jobs(self.n_jobs)
-            except NameError:
-                raise AttributeError(
-                    "self.n_jobs must be set if capability:multithreading is True"
-                )
+
+        # commenting out multithreading as it is deprecated
+        # multithread = self.get_tag("capability:multithreading")
+        # if multithread:
+        #     try:
+        #         self._threads_to_use = check_n_jobs(self.n_jobs)
+        #     except NameError:
+        #         raise AttributeError(
+        #             "self.n_jobs must be set if capability:multithreading is True"
+        #         )
 
         # pass coerced and checked data to inner _fit
         self._fit(X, y)
