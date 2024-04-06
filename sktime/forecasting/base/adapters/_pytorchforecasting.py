@@ -118,6 +118,7 @@ class _PytorchForecastingAdapter(GlobalBaseForecaster):
         """
         self._dataset_params = _none_check(self.dataset_params, {})
         self._max_prediction_length = fh.to_relative()[-1]
+        self.y_name = y.columns[-1]
         training, validation = self._Xy_to_dataset(
             X, y, self._dataset_params, self._max_prediction_length
         )
@@ -230,7 +231,7 @@ class _PytorchForecastingAdapter(GlobalBaseForecaster):
             drop=True
         )
         data = data.reindex(columns=columns_names)
-        data["volume"] = output.flatten()
+        data[self.y_name] = output.flatten()
         for i in range(output.shape[0]):
             start_idx = i * max_prediction_length
             start_time = data.loc[start_idx, time_idx]
