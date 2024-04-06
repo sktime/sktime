@@ -1,7 +1,5 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests for interfacing estimators from neuralforecast."""
-import random
-
 import pandas
 import pytest
 
@@ -228,10 +226,21 @@ def test_neural_forecast_with_auto_against_given_freq(model_class, freq) -> None
 
 
 @pytest.mark.parametrize(
-    "index",
+    "index, freq",
     [
-        pandas.RangeIndex(start=0, stop=20),
-        pandas.Index(range(20)),
+        # RangeIndex
+        (pandas.RangeIndex(start=0, stop=20), 1),
+        (pandas.RangeIndex(start=0, stop=20, step=3), 3),
+        # Index
+        (pandas.Index(range(20)), 1),
+        (pandas.Index([1, 4, 7, 10, 13, 16]), 3),
+        # DatetimeIndex
+        (pandas.date_range(start="2024-01-01", periods=10), "D"),
+        (pandas.date_range(start="2024-01-01", periods=10, freq="M"), "M"),
+        # PeriodIndex
+        (pandas.period_range(start="2024-01-01", periods=10), "D"),
+        (pandas.period_range(start="2024-01-01", periods=10, freq="M"), "M"),
+        (pandas.period_range(start="2024-01-01", periods=10).drop(["2024-01-02"]), "D"),
     ],
 )
 @pytest.mark.parametrize("model_class", [NeuralForecastLSTM, NeuralForecastRNN])
@@ -239,12 +248,14 @@ def test_neural_forecast_with_auto_against_given_freq(model_class, freq) -> None
     not run_test_for_class([NeuralForecastLSTM, NeuralForecastRNN]),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-def test_neural_forecast_with_auto_freq_on_int_like(index, model_class) -> None:
-    """Test with freq set to 'auto' on int-like index."""
+def test_neural_forecast_with_auto_freq_on_valid_index(
+    index, freq, model_class
+) -> None:
+    """Test with freq set to 'auto' on valid indexes (equispaced dates)."""
 
     y = pandas.Series(data=range(len(index)), index=index)
 
-    model = model_class(freq=1, max_steps=1, trainer_kwargs={"logger": False})
+    model = model_class(freq=freq, max_steps=1, trainer_kwargs={"logger": False})
     model_auto = model_class(freq="auto", max_steps=1, trainer_kwargs={"logger": False})
 
     model.fit(y, fh=[1, 2, 3])
@@ -260,8 +271,9 @@ def test_neural_forecast_with_auto_freq_on_int_like(index, model_class) -> None:
 @pytest.mark.parametrize(
     "index",
     [
-        pandas.RangeIndex(start=0, stop=20),
-        pandas.Index(range(20)),
+        # RangeIndex is always equispaced
+        # Index
+        pandas.Index([1, 2, 3, 4, 5, 7])
     ],
 )
 @pytest.mark.parametrize("model_class", [NeuralForecastLSTM, NeuralForecastRNN])
@@ -272,7 +284,6 @@ def test_neural_forecast_with_auto_freq_on_int_like(index, model_class) -> None:
 def test_neural_forecast_with_auto_freq_on_missing_int_like(index, model_class) -> None:
     """Test with freq set to 'auto' on int-like index with missing values."""
 
-    index = index.drop(random.choices(index[1:-1], k=5))
     y = pandas.Series(data=range(len(index)), index=index)
 
     model = model_class(freq="auto", max_steps=1, trainer_kwargs={"logger": False})
@@ -287,44 +298,10 @@ def test_neural_forecast_with_auto_freq_on_missing_int_like(index, model_class) 
 @pytest.mark.parametrize(
     "index",
     [
-        pandas.date_range(start="2024-01-01", periods=10),
-        pandas.period_range(start="2024-01-01", periods=10),
-    ],
-)
-@pytest.mark.parametrize("model_class", [NeuralForecastLSTM, NeuralForecastRNN])
-@pytest.mark.skipif(
-    not run_test_for_class([NeuralForecastLSTM, NeuralForecastRNN]),
-    reason="run test only if softdeps are present and incrementally (if requested)",
-)
-def test_neural_forecast_with_auto_freq_on_date_like(index, model_class) -> None:
-    """Test with freq set to 'auto' on date-like index."""
-
-    y = pandas.Series(data=range(len(index)), index=index)
-
-    model = model_class(freq="D", max_steps=1, trainer_kwargs={"logger": False})
-    model_auto = model_class(freq="auto", max_steps=1, trainer_kwargs={"logger": False})
-
-    model.fit(y, fh=[1, 2, 3])
-    model_auto.fit(y, fh=[1, 2, 3])
-
-    pred = model.predict()
-    pred_auto = model_auto.predict()
-
-    # check prediction
-    pandas.testing.assert_series_equal(pred, pred_auto)
-
-
-@pytest.mark.parametrize(
-    "index",
-    [
+        # PeriodIndex: freq is preserved in index even in missing data
         # DatetimeIndex
-        pandas.date_range(start="2024-01-01", periods=5),
-        pandas.to_datetime(
-            ["2000-01-01", "2000-01-02", "2000-01-03", "2000-01-04", "2000-01-05"]
-        ),
-        # PeriodIndex
-        # freq is preserved in index even in missing data; no exception raised
-        # pandas.period_range(start='2024-01-01', periods=10),
+        pandas.date_range(start="2024-01-01", periods=5).drop(["2024-01-02"]),
+        pandas.to_datetime(["2000-01-01", "2000-01-02", "2000-01-04", "2000-01-05"]),
     ],
 )
 @pytest.mark.parametrize("model_class", [NeuralForecastLSTM, NeuralForecastRNN])
@@ -337,7 +314,6 @@ def test_neural_forecast_with_auto_freq_on_missing_date_like(
 ) -> None:
     """Test with freq set to 'auto' on date-like index with missing values."""
 
-    index = index.drop(random.choices(index[1:-1], k=2))
     y = pandas.Series(data=range(len(index)), index=index)
 
     model = model_class(freq="auto", max_steps=1, trainer_kwargs={"logger": False})
