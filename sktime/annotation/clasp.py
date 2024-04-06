@@ -228,7 +228,8 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
         self.period_length = int(period_length)
         self.n_cps = n_cps
         self.exclusion_radius = exclusion_radius
-        super().__init__(fmt)
+        self.fmt = fmt
+        super().__init__(task="segmentation", learning_type="unsupervised")
 
     def _fit(self, X, Y=None):
         """Do nothing, as there is no need to fit a model for ClaSP.
