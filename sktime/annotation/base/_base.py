@@ -23,7 +23,7 @@ __author__ = ["satya-pattnaik ", "fkiraly"]
 __all__ = ["BaseSeriesAnnotator"]
 
 from sktime.base import BaseEstimator
-from sktime.utils.validation.annotation import check_fmt, check_labels
+from sktime.utils.validation.annotation import check_learning_type, check_task
 from sktime.utils.validation.series import check_series
 
 
@@ -32,17 +32,20 @@ class BaseSeriesAnnotator(BaseEstimator):
 
     Parameters
     ----------
-    fmt : str {"dense", "sparse"}, optional (default="dense")
-        Annotation output format:
-        * If "sparse", a sub-series of labels for only the outliers in X is returned,
-        * If "dense", a series of labels for all values in X is returned.
-    labels : str {"indicator", "score", "int_label"}, optional (default="indicator")
-        Annotation output labels:
-        * If "indicator", returned values are boolean, indicating whether a value is an
-        outlier,
-        * If "score", returned values are floats, giving the outlier score.
-        * If "int_label", returned values are integers indicating which segment the
-        value belongs to.
+    task : str {"segmentation", "change_point_detection", "anomaly_detection"}
+        The main annotation task:
+        * If `segmentation`, the annotator divides timeseries into discrete chunks
+        based on certain criteria. The same label can be applied at mulitple
+        disconnected regions of the timeseries.
+        * If `change_point_detection`, the annotator finds points where the statistical
+        properties of the timeseries change significantly.
+        * If `anomaly_detection`, the annotator finds points that differ significantly
+        from the normal statistical properties of the timeseries.
+
+    learning_type : str {"supervised", "unsupervised"}
+        Annotation learning type:
+        * If `supervised`, the annotator learns from labelled data.
+        * If `unsupervised`, the annotator learns from unlabelled data.
 
     Notes
     -----
@@ -61,9 +64,9 @@ class BaseSeriesAnnotator(BaseEstimator):
         "distribution_type": "None",  # Tag to determine test in test_all_annotators
     }  # for unit test cases
 
-    def __init__(self, fmt="dense", labels="indicator"):
-        self.fmt = fmt
-        self.labels = labels
+    def __init__(self, task, learning_type):
+        self.task = task
+        self.learning_type = learning_type
 
         self._is_fitted = False
 
@@ -92,8 +95,8 @@ class BaseSeriesAnnotator(BaseEstimator):
         Creates fitted model that updates attributes ending in "_". Sets
         _is_fitted flag to True.
         """
-        check_labels(self.labels)
-        check_fmt(self.fmt)
+        check_learning_type(self.learning_type)
+        check_task(self.task)
         X = check_series(X)
 
         if Y is not None:
