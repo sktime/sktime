@@ -443,7 +443,7 @@ class GreedyGaussianSegmentation(BaseSeriesAnnotator):
         self.random_state = random_state
 
         _check_estimator_deps(self)
-        super().__init__(fmt="dense", labels="int_label")
+        super().__init__(task="segmentation", learning_type="unsupervised")
 
         self._adaptee = GGS(
             k_max=k_max,
