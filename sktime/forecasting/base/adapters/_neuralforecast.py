@@ -200,6 +200,19 @@ class _NeuralForecastAdapter(BaseForecaster):
         #             B2.2.1 equispaced integers {use diff in time}
         #             B2.2.2 non-equispaced integers {raise exception}
 
+        # behavior of different indexes when freq="auto"
+        # | Indexes                 | behavior  |
+        # | ----------------------- | --------- |
+        # | PeriodIndex             | B1        |
+        # | PeriodIndex (Missing)   | B1        |
+        # | DatetimeIndex           | B1        |
+        # | DatetimeIndex (Missing) | B2.1      |
+        # | RangeIndex              | B2.2.1    |
+        # | RangeIndex (Missing)    | B2.2.2    |
+        # | Index                   | B2.2.1    |
+        # | Index (Missing)         | B2.2.2    |
+        # | Other                   | unreached |
+
         if self.freq != "auto":
             # A
             self._freq = self.freq
@@ -210,7 +223,7 @@ class _NeuralForecastAdapter(BaseForecaster):
                 self._freq = fh.freq
             else:
                 # B2
-                if isinstance(y.index, (pandas.PeriodIndex, pandas.DatetimeIndex)):
+                if isinstance(y.index, pandas.DatetimeIndex):
                     # B2.1
                     raise ValueError(
                         f"Error in {self.__class__.__name__}, "
