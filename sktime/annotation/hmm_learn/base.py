@@ -27,7 +27,7 @@ class BaseHMMLearn(BaseSeriesAnnotator):
     _hmm_estimator = None
 
     def __init__(self):
-        super().__init__()
+        super().__init__(task="segmentation", learning_type="unsupervised")
 
     @staticmethod
     def _fix_input(X):

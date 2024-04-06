@@ -139,7 +139,7 @@ class HMM(BaseSeriesAnnotator):
         self.initial_probs = initial_probs
         self.emission_funcs = emission_funcs
         self.transition_prob_mat = transition_prob_mat
-        super().__init__(fmt="dense", labels="int_label")
+        super().__init__(task="segmentation", learning_type="unsupervised")
         self._validate_init()
 
     def _validate_init(self):
