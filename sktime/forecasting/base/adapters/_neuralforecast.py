@@ -10,7 +10,7 @@ import pandas
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
 __all__ = ["_NeuralForecastAdapter"]
-__author__ = ["yarnabrina"]
+__author__ = ["yarnabrina", "geetu040"]
 
 
 class _NeuralForecastAdapter(BaseForecaster):

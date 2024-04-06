@@ -6,7 +6,7 @@ import typing
 from sktime.forecasting.base.adapters._neuralforecast import _NeuralForecastAdapter
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-__author__ = ["yarnabrina"]
+__author__ = ["yarnabrina", "geetu040"]
 
 
 class NeuralForecastRNN(_NeuralForecastAdapter):
