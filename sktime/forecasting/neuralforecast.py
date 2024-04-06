@@ -1,7 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Interfaces to estimators from neuralforecast by Nixtla."""
 import functools
-import typing
+from typing import List, Literal, Optional, Union
 
 from sktime.forecasting.base.adapters._neuralforecast import _NeuralForecastAdapter
 from sktime.utils.validation._dependencies import _check_soft_dependencies
@@ -22,7 +22,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
 
     Parameters
     ----------
-    freq : typing.Union[str, int] (default="auto")
+    freq : Union[str, int] (default="auto")
         frequency of the data, see available frequencies [4]_ from ``pandas``
         use int freq when using RangeIndex in ``y``
 
@@ -84,7 +84,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         number of training steps between every validation loss check
     batch_size : int (default=32)
         number of different series in each batch
-    valid_batch_size : typing.Optional[int] (default=None)
+    valid_batch_size : Optional[int] (default=None)
         number of different series in each validation and test batch
     scaler_type : str (default="robust")
         type of scaler for temporal inputs normalization
@@ -163,11 +163,11 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
 
     def __init__(
         self: "NeuralForecastRNN",
-        freq: typing.Union[str, int] = "auto",
-        local_scaler_type: typing.Optional[
-            typing.Literal["standard", "robust", "robust-iqr", "minmax", "boxcox"]
+        freq: Union[str, int] = "auto",
+        local_scaler_type: Optional[
+            Literal["standard", "robust", "robust-iqr", "minmax", "boxcox"]
         ] = None,
-        futr_exog_list: typing.Optional[typing.List[str]] = None,
+        futr_exog_list: Optional[List[str]] = None,
         verbose_fit: bool = False,
         verbose_predict: bool = False,
         input_size: int = -1,
@@ -188,12 +188,12 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         early_stop_patience_steps: int = -1,
         val_check_steps: int = 100,
         batch_size=32,
-        valid_batch_size: typing.Optional[int] = None,
+        valid_batch_size: Optional[int] = None,
         scaler_type: str = "robust",
         random_seed=1,
         num_workers_loader=0,
         drop_last_loader=False,
-        trainer_kwargs: typing.Optional[dict] = None,
+        trainer_kwargs: Optional[dict] = None,
     ):
         self.input_size = input_size
         self.inference_input_size = inference_input_size
@@ -384,7 +384,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
 
     Parameters
     ----------
-    freq : typing.Union[str, int] (default="auto")
+    freq : Union[str, int] (default="auto")
         frequency of the data, see available frequencies [4]_ from ``pandas``
         use int freq when using RangeIndex in ``y``
 
@@ -444,7 +444,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         number of training steps between every validation loss check
     batch_size : int (default=32)
         number of different series in each batch
-    valid_batch_size : typing.Optional[int] (default=None)
+    valid_batch_size : Optional[int] (default=None)
         number of different series in each validation and test batch
     scaler_type : str (default="robust")
         type of scaler for temporal inputs normalization
@@ -519,11 +519,11 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
 
     def __init__(
         self: "NeuralForecastLSTM",
-        freq: typing.Union[str, int] = "auto",
-        local_scaler_type: typing.Optional[
-            typing.Literal["standard", "robust", "robust-iqr", "minmax", "boxcox"]
+        freq: Union[str, int] = "auto",
+        local_scaler_type: Optional[
+            Literal["standard", "robust", "robust-iqr", "minmax", "boxcox"]
         ] = None,
-        futr_exog_list: typing.Optional[typing.List[str]] = None,
+        futr_exog_list: Optional[List[str]] = None,
         verbose_fit: bool = False,
         verbose_predict: bool = False,
         input_size: int = -1,
@@ -543,12 +543,12 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         early_stop_patience_steps: int = -1,
         val_check_steps: int = 100,
         batch_size=32,
-        valid_batch_size: typing.Optional[int] = None,
+        valid_batch_size: Optional[int] = None,
         scaler_type: str = "robust",
         random_seed=1,
         num_workers_loader=0,
         drop_last_loader=False,
-        trainer_kwargs: typing.Optional[dict] = None,
+        trainer_kwargs: Optional[dict] = None,
     ):
         self.input_size = input_size
         self.inference_input_size = inference_input_size

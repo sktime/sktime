@@ -2,7 +2,7 @@
 """Implements adapter for NeuralForecast models."""
 import abc
 import functools
-import typing
+from typing import List, Literal, Optional, Union
 
 import numpy as np
 import pandas
@@ -18,7 +18,7 @@ class _NeuralForecastAdapter(BaseForecaster):
 
     Parameters
     ----------
-    freq : typing.Union[str, int] (default="auto")
+    freq : Union[str, int] (default="auto")
         frequency of the data, see available frequencies [1]_ from ``pandas``
         use int freq when using RangeIndex in ``y``
 
@@ -70,11 +70,11 @@ class _NeuralForecastAdapter(BaseForecaster):
 
     def __init__(
         self: "_NeuralForecastAdapter",
-        freq: typing.Union[str, int] = "auto",
-        local_scaler_type: typing.Optional[
-            typing.Literal["standard", "robust", "robust-iqr", "minmax", "boxcox"]
+        freq: Union[str, int] = "auto",
+        local_scaler_type: Optional[
+            Literal["standard", "robust", "robust-iqr", "minmax", "boxcox"]
         ] = None,
-        futr_exog_list: typing.Optional[typing.List[str]] = None,
+        futr_exog_list: Optional[List[str]] = None,
         verbose_fit: bool = False,
         verbose_predict: bool = False,
     ) -> None:
@@ -158,7 +158,7 @@ class _NeuralForecastAdapter(BaseForecaster):
     def _fit(
         self: "_NeuralForecastAdapter",
         y: pandas.Series,
-        X: typing.Optional[pandas.DataFrame],
+        X: Optional[pandas.DataFrame],
         fh: ForecastingHorizon,
     ) -> "_NeuralForecastAdapter":
         """Fit forecaster to training data.
@@ -261,8 +261,8 @@ class _NeuralForecastAdapter(BaseForecaster):
 
     def _predict(
         self: "_NeuralForecastAdapter",
-        fh: typing.Optional[ForecastingHorizon],
-        X: typing.Optional[pandas.DataFrame],
+        fh: Optional[ForecastingHorizon],
+        X: Optional[pandas.DataFrame],
     ) -> pandas.Series:
         """Forecast time series at future horizon.
 
