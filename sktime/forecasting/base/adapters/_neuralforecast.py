@@ -215,7 +215,8 @@ class _NeuralForecastAdapter(BaseForecaster):
                     raise ValueError(
                         f"Error in {self.__class__.__name__}, "
                         f"could not interpret freq, "
-                        f"try passing freq in model initialization"
+                        f"try passing freq in model initialization "
+                        f"or use a valid offset in index"
                     )
                 else:
                     # B2.2
@@ -225,7 +226,8 @@ class _NeuralForecastAdapter(BaseForecaster):
                         raise ValueError(
                             f"Error in {self.__class__.__name__}, "
                             f"could not interpret freq, "
-                            f"try passing integer freq in model initialization"
+                            f"try passing integer freq in model initialization "
+                            f"or use a valid integer offset in index"
                         )
                     else:
                         # B2.2.2
