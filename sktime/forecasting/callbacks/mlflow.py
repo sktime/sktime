@@ -1,10 +1,8 @@
 """MLFLow callback for logging metrics and plots to MLFlow."""
+
 from typing import Optional
 
-import mlflow
 import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.callbacks.callback import Callback
@@ -103,6 +101,8 @@ class MLFlowCallback(Callback):
         nested: bool = False,
     ):
         super().__init__()
+        import mlflow
+
         self.experiment_id = experiment_id
         self.nested = nested
         self.tracking_uri = tracking_uri
@@ -138,6 +138,8 @@ class MLFlowCallback(Callback):
 
     def on_iteration(self, iteration, x, result, update=None):
         """Start MLFlow run or open existing run."""
+        import mlflow
+
         _, (y_train, y_test, X_train, X_test) = x
         scores = {}
         y_pred = result["y_pred"]
@@ -158,6 +160,8 @@ class MLFlowCallback(Callback):
         Logging the plots of training, prediction and true values.
         Logging all scores.
         """
+        import mlflow
+
         if not evaluate_window_kwargs["return_data"]:
             raise ValueError(
                 f"return_data must be set to True for MLFlow callbacks to work."
@@ -171,6 +175,8 @@ class MLFlowCallback(Callback):
 
     def on_iteration_end(self, results=None):
         """Stop or close MlFlow run."""
+        import mlflow
+
         if isinstance(results, list):
             results = pd.concat(results, ignore_index=True)
         for score in self.score_metrics:
@@ -182,11 +188,15 @@ class MLFlowCallback(Callback):
         self._reset()
 
     def _create_histogram(self, values, column_name):
+        import plotly.express as px
+
         fig = px.histogram(values, x=column_name, title="Histogram of Scores")
         fig.update_traces(texttemplate="%{y}", textposition="outside")
         return fig
 
     def _plot_time_series(self, train, test, predictions, scores):
+        import plotly.graph_objects as go
+
         train_trace = go.Scatter(
             x=train.index.astype(str),
             y=train.values,
