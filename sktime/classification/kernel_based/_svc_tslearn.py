@@ -29,7 +29,7 @@ class TimeSeriesSVCTslearn(_TslearnAdapter, BaseClassifier):
         If gamma is 'auto' then:
 
         - for 'gak' kernel, it is computed based on a sampling of the training
-          set (cf :ref:`tslearn.metrics.gamma_soft_dtw <fun-tslearn.metrics.gamma_soft_dtw>`)
+          set ``tslearn.metrics.gamma_soft_dtw``
         - for other kernels (eg. 'rbf'), 1/n_features will be used.
 
     coef0 : float, optional (default=0.0)
@@ -96,7 +96,7 @@ class TimeSeriesSVCTslearn(_TslearnAdapter, BaseClassifier):
 
     n_support_ : array-like, dtype=int32, shape = [n_class]
         Number of support vectors for each class.
-        
+
     support_vectors_ : list of arrays of shape [n_SV, sz, d]
         List of support vectors in tslearn dataset format, one array per class
 
