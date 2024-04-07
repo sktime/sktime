@@ -884,16 +884,13 @@ class ProximityStump(BaseClassifier):
                 self.backend = "loky"
 
             iters = [X.iloc[index, :] for index in range(X.shape[0])]
-            distances = [
-                parallelize(
-                    fun=self._distance_to_exemplars_inst,
-                    iter=iters,
-                    meta=meta,
-                    backend=self.backend,
-                    backend_params=self.backend_params,
-                )
-            ]
-
+            distances = parallelize(
+                fun=self._distance_to_exemplars_inst,
+                iter=iters,
+                meta=meta,
+                backend=self.backend,
+                backend_params=self.backend_params,
+            )
         else:
             distances = [
                 self._distance_to_exemplars_inst(x=X.iloc[index, :], meta=meta)
@@ -1028,7 +1025,7 @@ class ProximityStump(BaseClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        params1 = {"random_state": 0, "backend": "dask"}
+        params1 = {"random_state": 0, "backend": "loky"}
         params2 = {"random_state": 42, "distance_measure": "dtw"}
         return [params1, params2]
 
@@ -1375,7 +1372,9 @@ class ProximityTree(BaseClassifier):
         """
         params1 = {"max_depth": 1, "n_stump_evaluations": 1}
         params2 = {"max_depth": 5, "n_stump_evaluations": 2, "distance_measure": "dtw"}
-        return [params1, params2]
+        params3 = {"backend": "dask"}
+        params4 = {"backend": "threading"}
+        return [params1, params2, params3, params4]
 
 
 class ProximityForest(BaseClassifier):
@@ -1601,25 +1600,22 @@ class ProximityForest(BaseClassifier):
                 self.backend = "loky"
 
             iters = [index for index in range(self.n_estimators)]
-            self.trees = [
-                parallelize(
-                    fun=self._fit_tree,
-                    iter=iters,
-                    meta=meta,
-                    backend=self.backend,
-                    backend_params=self.backend_params,
-                )
-            ]
+            self.trees = parallelize(
+                fun=self._fit_tree,
+                iter=iters,
+                meta=meta,
+                backend=self.backend,
+                backend_params=self.backend_params,
+            )
         else:
             self.trees = [
                 self._fit_tree(index=index, meta=meta)
                 for index in range(self.n_estimators)
             ]
-
         return self
 
     @staticmethod
-    def _predict_proba_tree(instance, meta):
+    def _predict_proba_tree(tree, meta):
         """Find probability estimates for each class for all cases in X.
 
         Parameters
@@ -1635,14 +1631,14 @@ class ProximityForest(BaseClassifier):
             If not, an exception is thrown, since this classifier does not
             yet have
             multivariate capability.
-        instance : the tree to collect predictions from
+        tree : the tree to collect predictions from
 
         Returns
         -------
         output : array of shape = [n_instances, n_classes] of probabilities
         """
         X = meta["X"]
-        return instance.predict_proba(X)
+        return tree.predict_proba(X)
 
     def _predict(self, X) -> np.ndarray:
         """Predicts labels for sequences in X.
@@ -1696,23 +1692,20 @@ class ProximityForest(BaseClassifier):
         meta["X"] = X
         if self.backend:
             # ensure it isn't multiprocessing, if it is change to loky
-            if self.backend == "multiprocessing":
-                self.backend = "loky"
+            # if self.backend == "multiprocessing":
+            #     self.backend = "loky"
 
-            iters = [tree for tree in self.trees]
-            distributions = [
-                parallelize(
-                    fun=self._predict_proba_tree,
-                    iter=iters,
-                    meta=meta,
-                    backend=self.backend,
-                    backend_params=self.backend_params,
-                )
-            ]
+            iters = self.trees
+            distributions = parallelize(
+                fun=self._predict_proba_tree,
+                iter=iters,
+                meta=meta,
+                backend=self.backend,
+                backend_params=self.backend_params,
+            )
         else:
-            distributions = [
-                self._predict_proba_tree(tree, meta) for tree in self.trees
-            ]
+            iters = self.trees
+            distributions = [self._predict_proba_tree(tree, meta) for tree in iters]
         distributions = np.array(distributions)
         distributions = np.sum(distributions, axis=0)
         normalize(distributions, copy=False, norm="l1")
@@ -1789,14 +1782,20 @@ class ProximityForest(BaseClassifier):
         if parameter_set == "results_comparison":
             return {"n_estimators": 3, "max_depth": 2, "n_stump_evaluations": 2}
         else:
-            param1 = {"n_estimators": 2, "max_depth": 1, "n_stump_evaluations": 1}
-            param2 = {
+            params1 = {
+                "n_estimators": 2,
+                "max_depth": 1,
+                "n_stump_evaluations": 1,
+                "backend": "loky",
+            }
+            params2 = {
                 "n_estimators": 4,
                 "max_depth": 2,
                 "n_stump_evaluations": 3,
                 "distance_measure": "dtw",
+                "backend": "dask",
             }
-            return [param1, param2]
+            return [params1, params2]
 
 
 # start of util functions
