@@ -129,7 +129,6 @@ class TimeSeriesSVRTslearn(_TslearnAdapter, BaseClassifier):
         tol=0.001,
         epsilon=0.1,
         cache_size=200,
-        class_weight=None,
         n_jobs=None,
         verbose=0,
         max_iter=-1,
@@ -143,7 +142,6 @@ class TimeSeriesSVRTslearn(_TslearnAdapter, BaseClassifier):
         self.tol = tol
         self.epsilon = epsilon
         self.cache_size = cache_size
-        self.class_weight = class_weight
         self.n_jobs = n_jobs
         self.verbose = verbose
         self.max_iter = max_iter
