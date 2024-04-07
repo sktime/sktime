@@ -180,6 +180,7 @@ Kernel-based
     :template: class.rst
 
     TimeSeriesSVC
+    TimeSeriesSVCTslearn
     Arsenal
     RocketClassifier
 
