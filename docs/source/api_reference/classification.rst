@@ -194,6 +194,7 @@ Shapelet-based
     :template: class.rst
 
     ShapeletTransformClassifier
+    ShapeletLearningClassifier
     MrSEQL
     MrSQM
 
