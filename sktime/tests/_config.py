@@ -225,6 +225,10 @@ EXCLUDED_TESTS = {
     "KNeighborsTimeSeriesClassifierTslearn": ["test_multiprocessing_idempotent"],
     # ShapeletTransformPyts creates nested numpy shapelets sporadically, see #6171
     "ShapeletTransformPyts": ["test_non_state_changing_method_contract"],
+    "TimeSeriesSVRTslearn": [ # not deterministic, see 6274
+        "test_fit_idempotent",
+        "test_multiprocessing_idempotent",
+    ]
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish
