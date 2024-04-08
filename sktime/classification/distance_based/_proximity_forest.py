@@ -1372,7 +1372,7 @@ class ProximityTree(BaseClassifier):
         """
         params1 = {"max_depth": 1, "n_stump_evaluations": 1}
         params2 = {"max_depth": 5, "n_stump_evaluations": 2, "distance_measure": "dtw"}
-        params3 = {"backend": "dask"}
+        params3 = {"backend": "loky"}
         params4 = {"backend": "threading"}
         return [params1, params2, params3, params4]
 
@@ -1779,6 +1779,8 @@ class ProximityForest(BaseClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
+
         if parameter_set == "results_comparison":
             return {"n_estimators": 3, "max_depth": 2, "n_stump_evaluations": 2}
         else:
@@ -1786,16 +1788,20 @@ class ProximityForest(BaseClassifier):
                 "n_estimators": 2,
                 "max_depth": 1,
                 "n_stump_evaluations": 1,
-                "backend": "loky",
             }
             params2 = {
                 "n_estimators": 4,
                 "max_depth": 2,
                 "n_stump_evaluations": 3,
                 "distance_measure": "dtw",
-                "backend": "dask",
+                "backend": "threading",
             }
-            return [params1, params2]
+            params_set = [params1, params2]
+
+            if _check_soft_dependencies("dask", severity="none"):
+                params3 = {"backend": "dask"}
+                params_set.append(params3)
+            return params_set
 
 
 # start of util functions
