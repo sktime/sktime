@@ -194,4 +194,7 @@ class MatrixProfileClassifier(BaseClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        return {"subsequence_length": 4}
+        return [
+            {"subsequence_length": 4},
+            {"subsequence_length": 6, "estimator": KNeighborsClassifier(n_neighbors=3)},
+        ]
