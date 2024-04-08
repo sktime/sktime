@@ -401,3 +401,12 @@ def test_naive_predict_interval_against_R_naive(strategy, sp, lower, upper):
     expected[(0, coverage, "upper")] = upper
 
     pd.testing.assert_frame_equal(y_pred_ints, expected)
+
+
+def test_insample_with_numpy_input():
+    """Test insample prediction with numpy input."""
+    y = np.random.random(1000)
+    forecaster = NaiveForecaster()
+    forecaster.fit(y)
+    y_pred = forecaster.predict(np.arange(0, 10))
+    assert len(y_pred) == 10
