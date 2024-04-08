@@ -2718,10 +2718,28 @@
       ]
     },
     {
+      "login": "MMTrooper",
+      "name": "Michael Mwimali",
+      "avatar_url": "https://avatars.githubusercontent.com/u/89777534?v=4",
+      "profile": "https://github.com/MMTrooper",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
       "login": "manuel-munoz-aguirre",
       "name": "Manuel Muñoz Aguirre",
       "avatar_url": "https://avatars.githubusercontent.com/u/5576458?v=4",
       "profile": "https://github.com/manuel-munoz-aguirre",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "anteemony",
+      "name": "Anthony Okonneh",
+      "avatar_url": "https://avatars.githubusercontent.com/u/90141191?v=4",
+      "profile": "https://github.com/Anteemony",
       "contributions": [
         "doc"
       ]
