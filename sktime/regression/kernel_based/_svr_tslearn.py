@@ -107,7 +107,7 @@ class TimeSeriesSVRTslearn(_TslearnAdapter, BaseRegressor):
     }
 
     # defines the name of the attribute containing the tslearn estimator
-    _estimator_attr = "_tslearn_knn"
+    _estimator_attr = "_tslearn_svr"
 
     def _get_tslearn_class(self):
         """Get tslearn class.
