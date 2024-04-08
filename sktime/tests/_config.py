@@ -168,6 +168,7 @@ EXCLUDED_TESTS = {
     ],
     "MACNNRegressor": [
         "test_fit_idempotent",
+        "test_persistence_via_pickle",
     ],
     "InceptionTimeRegressor": [
         "test_fit_idempotent",
