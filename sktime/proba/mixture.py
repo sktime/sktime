@@ -38,8 +38,13 @@ class Mixture(_HeterogenousMetaEstimator, BaseDistribution):
         "capabilities:approx": ["pdfnorm", "energy", "ppf"],
         "capabilities:exact": ["mean", "var", "pdf", "log_pdf", "cdf"],
         "distr:measuretype": "mixed",
-        "named_object_parameters": "_distributions",
     }
+
+    # for default get_params/set_params from _HeterogenousMetaEstimator
+    # _steps_attr points to the attribute of self
+    # which contains the heterogeneous set of estimators
+    # this must be an iterable of (name: str, estimator, ...) tuples for the default
+    _steps_attr = "_distributions"
 
     def __init__(self, distributions, weights=None, index=None, columns=None):
         self.distributions = distributions
