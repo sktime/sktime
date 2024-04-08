@@ -41,6 +41,16 @@ class InceptionTimeClassifier(BaseDeepClassifier):
 
     Adapted from the implementation from Fawaz et. al
     https://github.com/hfawaz/InceptionTime/blob/master/classifiers/inception.py
+
+    Examples
+    --------
+    >>> from sktime.classification.deep_learning import InceptionTimeClassifier
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> X_test, y_test = load_unit_test(split="test")
+    >>> clf = InceptionTimeClassifier()  # doctest: +SKIP
+    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
+    InceptionTimeClassifier(...)
     """
 
     _tags = {
