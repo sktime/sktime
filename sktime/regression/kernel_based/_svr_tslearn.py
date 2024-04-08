@@ -1,9 +1,9 @@
 """Time series SVR, from tslearn."""
 from sktime.base.adapters._tslearn import _TslearnAdapter
-from sktime.classification.base import BaseClassifier
+from sktime.regression.base import BaseRegressor
 
 
-class TimeSeriesSVRTslearn(_TslearnAdapter, BaseClassifier):
+class TimeSeriesSVRTslearn(_TslearnAdapter, BaseRegressor):
     """Time Series Suppoer Vector Regressor, from tslearn.
 
     Direct interface to ``tslearn.svm.svm.TimeSeriesSVR``.
@@ -15,7 +15,7 @@ class TimeSeriesSVRTslearn(_TslearnAdapter, BaseClassifier):
 
     kernel : string, optional (default='gak')
          Specifies the kernel type to be used in the algorithm.
-         It must be one of 'gak' or a kernel accepted by ``sklearn.svm.SVC``.
+         It must be one of 'gak' or a kernel accepted by ``sklearn.svm.SVR``.
          If none is given, 'gak' will be used. If a callable is given it is
          used to pre-compute the kernel matrix from data matrices; that matrix
          should be an array of shape ``(n_samples, n_samples)``.
