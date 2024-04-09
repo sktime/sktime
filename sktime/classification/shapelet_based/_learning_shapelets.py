@@ -14,11 +14,10 @@ class ShapeletLearningClassifier(_TslearnAdapter, BaseClassifier):
     ----------
     n_shapelets_per_size: dict (default: None)
         Dictionary giving, for each shapelet size (key),
-        the number of such shapelets to be trained (value). 
+        the number of such shapelets to be trained (value).
         If None, `grabocka_params_to_shapelet_size_dict` is used and the
-        size used to compute is that of the shortest time series passed at fit 
-        time.
-        
+        size used to compute is that of the shortest time series passed at fit time.
+
     max_iter: int (default: 10,000)
         Number of training epochs.
 
@@ -26,12 +25,12 @@ class ShapeletLearningClassifier(_TslearnAdapter, BaseClassifier):
         Batch size to be used.
 
     optimizer: str or keras.optimizers.Optimizer (default: "sgd")
-        `keras` optimizer to use for training.
-    
+        ``keras`` optimizer to use for training.
+
     weight_regularizer: float or None (default: 0.)
         Strength of the L2 regularizer to use for training the classification
         (softmax) layer. If 0, no regularization is performed.
-    
+
     shapelet_length: float (default: 0.15)
         The length of the shapelets, expressed as a fraction of the time 
         series length.
