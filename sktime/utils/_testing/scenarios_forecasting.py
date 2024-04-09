@@ -116,7 +116,8 @@ class ForecasterFitPredictUnivariateNoX(ForecasterTestScenario):
     def args(self):
         return {
             "fit": {
-                "y": _make_series(n_timepoints=20, random_state=RAND_SEED), "fh": 1
+                "y": _make_series(n_timepoints=20, random_state=RAND_SEED),
+                "fh": 1,
             },
             "predict": {"fh": 1},
         }
@@ -133,7 +134,8 @@ class ForecasterFitPredictUnivariateNoXEarlyFh(ForecasterTestScenario):
     def args(self):
         return {
             "fit": {
-                "y": _make_series(n_timepoints=20, random_state=RAND_SEED), "fh": 1
+                "y": _make_series(n_timepoints=20, random_state=RAND_SEED),
+                "fh": 1,
             },
             "predict": {},
         }
@@ -249,7 +251,6 @@ class ForecasterFitPredictMultivariateWithX(ForecasterTestScenario):
         }
 
     default_method_sequence = ["fit", "predict"]
-
 
 
 class ForecasterFitPredictPanelSimple(ForecasterTestScenario):
