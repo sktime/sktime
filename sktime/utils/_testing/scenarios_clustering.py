@@ -7,7 +7,10 @@ __author__ = ["fkiraly"]
 
 __all__ = ["scenarios_clustering"]
 
+from inspect import isclass
+
 from sktime.base import BaseObject
+from sktime.registry import scitype
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_panel_X, make_clustering_problem
 from sktime.utils._testing.scenarios import TestScenario
@@ -43,6 +46,43 @@ class ClustererTestScenario(TestScenario, BaseObject):
             key = "predict"
 
         return super().get_args(key=key, obj=obj, deepcopy_args=deepcopy_args)
+
+    def is_applicable(self, obj):
+        """Check whether scenario is applicable to obj.
+
+        Parameters
+        ----------
+        obj : class or object to check against scenario
+
+        Returns
+        -------
+        applicable: bool
+            True if self is applicable to obj, False if not
+        """
+
+        def get_tag(obj, tag_name):
+            if isclass(obj):
+                return obj.get_class_tag(tag_name)
+            else:
+                return obj.get_tag(tag_name)
+
+        # applicable only if obj inherits from BaseClassifier, BaseEarlyClassifier or
+        #   BaseRegressor. currently we test both classifiers and regressors using these
+        #   scenarios
+        if scitype(obj) != "clusterer":
+            return False
+
+        # if X is multivariate, applicable only if can handle multivariate
+        is_multivariate = not self.get_tag("X_univariate")
+        if is_multivariate and not get_tag(obj, "capability:multivariate"):
+            return False
+
+        # if X is unequal length, applicable only if can handle unequal length
+        is_unequal_length = self.get_tag("X_unequal_length")
+        if is_unequal_length and not get_tag(obj, "capability:unequal_length"):
+            return False
+
+        return True
 
 
 class ClustererFitPredict(ClustererTestScenario):
