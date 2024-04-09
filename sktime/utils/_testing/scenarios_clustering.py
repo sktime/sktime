@@ -88,7 +88,11 @@ class ClustererTestScenario(TestScenario, BaseObject):
 class ClustererFitPredict(ClustererTestScenario):
     """Fit/predict with panel Xmake_clustering_problem."""
 
-    _tags = {"X_univariate": True, "is_enabled": True}
+    _tags = {
+        "X_univariate": True,
+        "X_unequal_length": False,
+        "is_enabled": True,
+    }
 
     args = {
         "fit": {"X": make_clustering_problem(random_state=RAND_SEED)},
@@ -112,7 +116,6 @@ class ClustererFitPredictUnequalLength(ClustererTestScenario):
         "X_univariate": True,
         "X_unequal_length": True,
         "is_enabled": True,
-        "n_classes": 2,
     }
 
     args = {
