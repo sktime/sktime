@@ -96,9 +96,9 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         whether ``TimeSeriesDataLoader`` drops last non-full batch
     trainer_kwargs : dict (default=None)
         keyword trainer arguments inherited from PyTorch Lighning's trainer [6]_
-    optimizer : pytorch optimizer (default=None)
+    optimizer : pytorch optimizer (default=None) [7]_
         optimizer to use for training, if passed with None defaults to Adam
-    optimizer_kwargs : dict (default=None)
+    optimizer_kwargs : dict (default=None) [8]_
         dict of parameters to pass to the user defined optimizer
 
     Notes
@@ -151,6 +151,8 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
     .. [5] https://nixtlaverse.nixtla.io/neuralforecast/losses.pytorch.html
     .. [6]
     https://lightning.ai/docs/pytorch/stable/api/pytorch_lightning.trainer.trainer.Trainer.html#lightning.pytorch.trainer.trainer.Trainer
+    .. [7] https://pytorch.org/docs/stable/optim.html
+    .. [8] https://pytorch.org/docs/stable/generated/torch.optim.Adam.html#torch.optim.Adam
     """  # noqa: E501
 
     _tags = {
@@ -466,9 +468,9 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         whether `TimeSeriesDataLoader` drops last non-full batch
     trainer_kwargs : dict (default=None)
         keyword trainer arguments inherited from PyTorch Lighning's trainer [6]_
-    optimizer : pytorch-optimizer (default=None)
+    optimizer : pytorch optimizer (default=None) [7]_
         optimizer to use for training, if passed with None defaults to Adam
-    optimizer_kwargs : dict (default=None)
+    optimizer_kwargs : dict (default=None) [8]_
         dict of parameters to pass to the user defined optimizer
 
     Notes
@@ -517,6 +519,8 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
     .. [4] https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
     .. [5] https://nixtlaverse.nixtla.io/neuralforecast/losses.pytorch.html
     .. [6] https://lightning.ai/docs/pytorch/stable/api/pytorch_lightning.trainer.trainer.Trainer.html#lightning.pytorch.trainer.trainer.Trainer
+    .. [7] https://pytorch.org/docs/stable/optim.html
+    .. [8] https://pytorch.org/docs/stable/generated/torch.optim.Adam.html#torch.optim.Adam
     """  # noqa: E501
 
     _tags = {

@@ -2,6 +2,7 @@
 """Implements adapter for NeuralForecast models."""
 import abc
 import functools
+from copy import deepcopy
 from inspect import signature
 from typing import List, Literal, Optional, Union
 
@@ -151,21 +152,24 @@ class _NeuralForecastAdapter(BaseForecaster):
         valid_parameters = list(signature(model_class.__init__).parameters.keys())
         valid_parameters += trainer_params
 
-        sktime_parameters = self.algorithm_parameters
+        sktime_parameters = set(self.algorithm_parameters.keys())
+        valid_parameters = set(valid_parameters)
 
-        for sktime_param in list(sktime_parameters.keys()):
-            if sktime_param not in valid_parameters:
-                if sktime_parameters[sktime_param] is not None:
-                    warn(
-                        f"Keyword argument '{sktime_param}' will be omitted as it is"
-                        f" not found in the __init__ method "
-                        f"from {self.algorithm_class}. "
-                        f"Check your neuralforecast version"
-                        f"to find out the right API parameters."
-                    )
-                sktime_parameters.pop(sktime_param)
+        unsupported_parameters = sktime_parameters - valid_parameters
 
-        return sktime_parameters
+        filter_params = deepcopy(self.algorithm_parameters)
+        for unsupported_param in unsupported_parameters:
+            if filter_params[unsupported_param] is not None:
+                warn(
+                    f"Keyword argument '{unsupported_param}' will be omitted as it is"
+                    f" not found in the __init__ method "
+                    f"from {self.algorithm_class}. "
+                    f"Check your neuralforecast version "
+                    f"to find out the right API parameters."
+                )
+            filter_params.pop(unsupported_param)
+
+        return filter_params
 
     def _instantiate_model(self: "_NeuralForecastAdapter", fh: ForecastingHorizon):
         """Instantiate the model."""
@@ -173,7 +177,7 @@ class _NeuralForecastAdapter(BaseForecaster):
             {"futr_exog_list": self.futr_exog_list} if self.needs_X else {}
         )
 
-        # filer params according to neuralforecast version
+        # filter params according to neuralforecast version
         params = self._get_valid_parameters()
         algorithm_instance = self.algorithm_class(
             fh,
