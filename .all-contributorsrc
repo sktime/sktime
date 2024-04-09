@@ -2320,6 +2320,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/MBristle",
       "profile": "https://github.com/MBristle",
       "contributions": [
+        "bug",
+        "test",
         "doc"
       ]
     },
@@ -2603,6 +2605,152 @@
       "contributions": [
         "bug",
         "code"
+      ]
+    },
+    {
+      "login": "ShreeshaM07",
+      "name": "Shreesha M",
+      "avatar_url": "https://avatars.githubusercontent.com/u/120820143?s=400&v=4",
+      "profile": "https://github.com/ShreeshaM07",
+      "contributions": [
+        "bug",
+        "code",
+        "test"
+      ]
+    },
+    {
+      "login": "geetu040",
+      "name": "Armaghan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/90601662?s=96&v=4",
+      "profile": "https://github.com/geetu040",
+      "contributions": [
+        "code",
+        "doc",
+        "maintenance"
+      ]
+    },
+    {
+      "login": "Xinyu-Wu-0000",
+      "name": "Xinyu Wu",
+      "avatar_url": "https://avatars.githubusercontent.com/u/57612792?v=4",
+      "profile": "https://github.com/Xinyu-Wu-0000",
+      "contributions": [
+        "bug",
+        "code",
+        "test"
+      ]
+    },
+    {
+      "login": "meraldoantonio",
+      "name": "Meraldo Antonio",
+      "avatar_url": "https://avatars.githubusercontent.com/u/37468543?v=4",
+      "profile": "https://github.com/meraldoantonio",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "memeo-pro",
+      "name": "Yash Edake",
+      "avatar_url": "https://avatars.githubusercontent.com/memeo-pro",
+      "profile": "https://github.com/MEMEO-PRO",
+      "contributions": [
+        "maintenance",
+        "bug"
+      ]
+    },
+    {
+      "login": "deysanjeeb",
+      "name": "Sanjeeb Dey",
+      "avatar_url": "https://avatars.githubusercontent.com/u/39940629?v=4",
+      "profile": "https://github.com/deysanjeeb",
+      "contributions": [
+        "maintenance"
+      ]
+    },
+    {
+      "login": "YashKhare20",
+      "name": "Yash Khare",
+      "avatar_url": "https://avatars.githubusercontent.com/u/92680366?s=400",
+      "profile": "https://github.com/YashKhare20",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "ianspektor",
+      "name": "Ian Spektor",
+      "avatar_url": "https://avatars.githubusercontent.com/u/49082859?v=4",
+      "profile": "https://github.com/ianspektor",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "javiber",
+      "name": "Javier Berneche",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3588715?v=4",
+      "profile": "https://github.com/javiber",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "fnhirwa",
+      "name": "Felix Hirwa Nshuti",
+      "avatar_url": "https://avatars.githubusercontent.com/u/67042527?s=64&v=4",
+      "profile": "https://github.com/fnhirwa",
+      "contributions": [
+        "code",
+        "maintenance"
+      ]
+    },
+    {
+      "login": "vandit98",
+      "name": "Vandit Tyagi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/91458535?v=4",
+      "profile": "https://github.com/vandit98",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "MMTrooper",
+      "name": "Michael Mwimali",
+      "avatar_url": "https://avatars.githubusercontent.com/u/89777534?v=4",
+      "profile": "https://github.com/MMTrooper",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "manuel-munoz-aguirre",
+      "name": "Manuel Muñoz Aguirre",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5576458?v=4",
+      "profile": "https://github.com/manuel-munoz-aguirre",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "morestart",
+      "name": "ctl",
+      "avatar_url": "https://avatars.githubusercontent.com/u/35556811",
+      "profile": "https://github.com/morestart",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "anteemony",
+      "name": "Anthony Okonneh",
+      "avatar_url": "https://avatars.githubusercontent.com/u/90141191?v=4",
+      "profile": "https://github.com/Anteemony",
+      "contributions": [
+        "doc"
       ]
     }
   ]

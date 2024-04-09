@@ -144,7 +144,7 @@ def all_estimators(
 
     References
     ----------
-    Modified version from scikit-learn's `all_estimators()`.
+    Modified version from scikit-learn's ``all_estimators()``.
     """
     MODULES_TO_IGNORE = (
         "tests",
@@ -158,7 +158,6 @@ def all_estimators(
         "test_split",
     )
 
-    result = []
     ROOT = str(Path(__file__).parent.parent)  # sktime package root directory
 
     if estimator_types:
@@ -277,7 +276,7 @@ def all_tags(
 ):
     """Get a list of all tags from sktime.
 
-    All objects in ``sktime`` are tagged with a set of :term`tag`s.
+    All objects in ``sktime`` are tagged with a set of :term``tag``s.
     This function allows to list all tags, optionally filtered by
     the object :term:`scitype` they apply to.
 

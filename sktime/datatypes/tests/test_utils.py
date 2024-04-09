@@ -262,6 +262,28 @@ def test_get_cutoff_inferred_freq():
     assert cutoff.freq == "D"
 
 
+def test_get_cutoff_inferred_freq_small_series():
+    """Tests that get_cutoff does not fail on series smaller than three elements.
+
+    The purpose of this test is to check that the ValueError raised by pd.infer_freq is
+    not propagated to the user, but rather caught and handled by falling back to None.
+
+    See https://github.com/sktime/sktime/issues/5853
+    and https://github.com/sktime/sktime/pull/6097 for more details.
+    """
+    y = pd.DataFrame(
+        data={"y": [1, 2]},
+        index=pd.to_datetime(["2020-01-01", "2020-01-02"]),
+    )
+    cutoff = get_cutoff(y, return_index=True)
+    assert cutoff.freq is None
+
+    # Check that it also works for multi-indexed DataFrames
+    y = _make_hierarchical(hierarchy_levels=(2,), min_timepoints=2, max_timepoints=3)
+    cutoff = get_cutoff(y, return_index=True)
+    assert cutoff.freq is None
+
+
 @pytest.mark.parametrize("window_length, lag", [(2, 0), (None, 0), (4, 1)])
 @pytest.mark.parametrize("scitype,mtype", SCITYPE_MTYPE_PAIRS)
 def test_get_window_output_type(scitype, mtype, window_length, lag):

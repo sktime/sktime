@@ -369,7 +369,7 @@ Deep learning based forecasters
     :toctree: auto_generated/
     :template: class.rst
 
-    CINNForecaster
+    cINNForecaster
 
 .. currentmodule:: sktime.forecasting.neuralforecast
 
@@ -378,6 +378,7 @@ Deep learning based forecasters
     :template: class.rst
 
     NeuralForecastRNN
+    NeuralForecastLSTM
 
 
 Intermittent time series forecasters

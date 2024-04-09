@@ -133,7 +133,7 @@ class GGS:
         Parameters
         ----------
         data: array_like
-            2D `array_like` representing time series with sequence index along
+            2D ``array_like`` representing time series with sequence index along
             the first dimension and value series as columns.
 
         Returns
@@ -158,7 +158,7 @@ class GGS:
         Args
         ----
         data: array_like
-            2D `array_like` representing time series with sequence index along
+            2D ``array_like`` representing time series with sequence index along
             the first dimension and value series as columns.
         change_points: list of ints
             Locations of change points as integer indexes.
@@ -185,7 +185,7 @@ class GGS:
         Parameters
         ----------
         data: array_like
-            2D `array_like` representing time series with sequence index along
+            2D ``array_like`` representing time series with sequence index along
             the first dimension and value series as columns.
 
         Returns
@@ -250,7 +250,7 @@ class GGS:
         Parameters
         ----------
         data: array_like
-            2D `array_like` representing time series with sequence index along
+            2D ``array_like`` representing time series with sequence index along
             the first dimension and value series as columns.
         change_points: list of ints
             Locations of change points as integer indexes.
@@ -321,7 +321,7 @@ class GGS:
         Parameters
         ----------
         data: array_like
-            2D `array_like` representing time series with sequence index along
+            2D ``array_like`` representing time series with sequence index along
             the first dimension and value series as columns.
 
         Returns
@@ -548,7 +548,7 @@ class GreedyGaussianSegmentation(BaseSeriesAnnotator):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
