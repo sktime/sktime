@@ -2743,6 +2743,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "ssabarwal",
+      "name": "Shlok Sabarwal",
+      "avatar_url": "https://gravatar.com/avatar/cbdbaac712ae282d730cd3028e862d45?s=400&d=robohash&r=x",
+      "prifle": "https://www.github.com/shlok191/",
+      "contributions": [
+        "code"
+      ]
     }
   ]
 }
