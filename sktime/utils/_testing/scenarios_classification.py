@@ -143,7 +143,7 @@ class ClassifierFitPredictNumpy(ClassifierTestScenario):
             random_state=RAND_SEED,
             return_numpy=True,
         )
-        return  {
+        return {
             "fit": {"y": y3, "X": X_np},
             "predict": {"X": X_test_np},
         }
