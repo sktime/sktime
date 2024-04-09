@@ -32,8 +32,7 @@ class ShapeletLearningClassifier(_TslearnAdapter, BaseClassifier):
         (softmax) layer. If 0, no regularization is performed.
 
     shapelet_length: float (default: 0.15)
-        The length of the shapelets, expressed as a fraction of the time 
-        series length.
+        The length of the shapelets, expressed as a fraction of the time series length.
         Used only if ``n_shapelets_per_size`` is None.
 
     total_lengths: int (default: 3)
