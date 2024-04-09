@@ -251,14 +251,6 @@ class ForecasterFitPredictMultivariateWithX(ForecasterTestScenario):
     default_method_sequence = ["fit", "predict"]
 
 
-y_panel = _make_panel_X(
-    n_instances=3,
-    n_timepoints=10,
-    n_columns=1,
-    random_state=RAND_SEED,
-    all_positive=True,
-)
-
 
 class ForecasterFitPredictPanelSimple(ForecasterTestScenario):
     """Fit/predict only, univariate Panel y, no X, and longer fh passed early in fit."""
@@ -272,7 +264,14 @@ class ForecasterFitPredictPanelSimple(ForecasterTestScenario):
 
     @property
     def args(self):
-        return {"fit": {"y": y_panel.copy(), "fh": [1, 2, 3]}, "predict": {}}
+        y_panel = _make_panel_X(
+            n_instances=3,
+            n_timepoints=10,
+            n_columns=1,
+            random_state=RAND_SEED,
+            all_positive=True,
+        )
+        return {"fit": {"y": y_panel, "fh": [1, 2, 3]}, "predict": {}}
 
     default_method_sequence = ["fit", "predict"]
 
