@@ -14,7 +14,9 @@ EXAMPLE_CLASSES = [DummyClassifier, ForecastKnownValues, ExponentTransformer]
 
 @pytest.mark.parametrize("estimator_class", EXAMPLE_CLASSES)
 def test_check_estimator_passed(estimator_class):
-    """Test that check_estimator returns passed tests for examples we know pass or skip."""
+    """Test that check_estimator returns passed tests
+    for examples we know pass or skip.
+    """
     estimator_instance = estimator_class.create_test_instance()
 
     result_class = check_estimator(estimator_class, verbose=False)
