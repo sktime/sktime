@@ -8,6 +8,7 @@ __author__ = ["fkiraly"]
 __all__ = ["scenarios_clustering"]
 
 from sktime.base import BaseObject
+from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_panel_X, make_clustering_problem
 from sktime.utils._testing.scenarios import TestScenario
 
@@ -56,6 +57,33 @@ class ClustererFitPredict(ClustererTestScenario):
     default_method_sequence = ["fit", "predict"]
 
 
+X_unequal_length = _make_hierarchical(
+    hierarchy_levels=(10,), min_timepoints=10, max_timepoints=15, random_state=RAND_SEED
+)
+X_unequal_length_test = _make_hierarchical(
+    hierarchy_levels=(5,), min_timepoints=10, max_timepoints=15, random_state=RAND_SEED
+)
+
+
+class ClustererFitPredictUnequalLength(ClustererTestScenario):
+    """Fit/predict with univariate panel X, unequal length series."""
+
+    _tags = {
+        "X_univariate": True,
+        "X_unequal_length": True,
+        "is_enabled": True,
+        "n_classes": 2,
+    }
+
+    args = {
+        "fit": {"X": X_unequal_length},
+        "predict": {"X": X_unequal_length_test},
+    }
+    default_method_sequence = ["fit", "predict", "predict_proba", "decision_function"]
+    default_arg_sequence = ["fit", "predict", "predict", "predict"]
+
+
 scenarios_clustering = [
     ClustererFitPredict,
+    ClustererFitPredictUnequalLength,
 ]
