@@ -35,31 +35,31 @@ class ShapeletLearningClassifier(_TslearnAdapter, BaseClassifier):
     shapelet_length: float (default: 0.15)
         The length of the shapelets, expressed as a fraction of the time 
         series length.
-        Used only if `n_shapelets_per_size` is None.
-    
+        Used only if ``n_shapelets_per_size`` is None.
+
     total_lengths: int (default: 3)
         The number of different shapelet lengths. Will extract shapelets of
         length i * shapelet_length for i in [1, total_lengths]
-        Used only if `n_shapelets_per_size` is None.
-        
+        Used only if ``n_shapelets_per_size`` is None.
+
     max_size: int or None (default: None)
-        Maximum size for time series to be fed to the model. If None, it is 
+        Maximum size for time series to be fed to the model. If None, it is
         set to the size (number of timestamps) of the training time series.
-        
+
     scale: bool (default: False)
-        Whether input data should be scaled for each feature of each time 
+        Whether input data should be scaled for each feature of each time
         series to lie in the [0-1] interval.
         Default for this parameter is set to `False` in version 0.4 to ensure
-        backward compatibility, but is likely to change in a future version.        
+        backward compatibility, but is likely to change in a future version.
 
     verbose: {0, 1, 2} (default: 0)
-        `keras` verbose level.
+        ``keras`` verbose level.
 
     random_state : int or None, optional (default: None)
         The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        the data.  If int, ``random_state`` is the seed used by the random number
+        generator; If None, the random number generator is the ``RandomState``
+        instance used by ``np.random``.
 
     Attributes
     ----------
@@ -118,7 +118,7 @@ class ShapeletLearningClassifier(_TslearnAdapter, BaseClassifier):
         max_iter=10000,
         batch_size=256,
         optimizer="sgd",
-        weight_regularizer=0.,
+        weight_regularizer=0.0,
         shapelet_length=0.15,
         total_lengths=3,
         max_size=None,
