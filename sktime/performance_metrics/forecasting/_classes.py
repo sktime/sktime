@@ -1420,12 +1420,38 @@ class MedianAbsoluteError(BaseForecastingErrorMetricFunc):
         return raw_values.dot(multioutput)
 
 
-class MeanSquaredError(BaseForecastingErrorMetricFunc):
-    """Mean squared error (MSE) or root mean squared error (RMSE).
+class MeanSquaredError(BaseForecastingErrorMetric):
+    r"""Mean squared error (MSE) or root mean squared error (RMSE).
 
-    If ``square_root`` is False then calculates MSE and if ``square_root`` is True
-    then RMSE is calculated.  Both MSE and RMSE are both non-negative floating
-    point. The best value is 0.0.
+    For a univariate, non-hierarchical sample
+    of true values :math:`y_1, \dots, y_n` and
+    predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n` (in :math:`mathbb{R}`),
+    at time indices :math:`t_1, \dots, t_n`,
+    ``evaluate`` or call returns:
+
+    * if ``square_root`` is False, the Mean Squared Error,
+      :math:`\frac{1}{n}\sum_{i=1}^n \left(y_i - \widehat{y}_i\right)^2`
+    * if ``square_root`` is True, the Root Mean Squared Error,
+      :math:`\sqrt{\frac{1}{n}\sum_{i=1}^n \left(y_i - \widehat{y}_i\right)^2}`
+
+    MSE and RMSE are both non-negative floating point, lower values are better.
+    The lowest possible value is 0.0.
+
+    ``multioutput`` and ``multilevel`` control averaging across variables and
+    hierarchy indices, see below. If ``square_root`` is True, averages
+    are taken over square roots of squared errors.
+
+    ``evaluate_by_index`` returns, at a time index :math:`t_i`:
+
+    * if ``square_root`` is False, the squared error at that time index,
+      :math:`\left(y_i - \widehat{y}_i\right)^2`,
+      for all time indices :math:`t_1, \dots, t_n` in the input.
+    * if ``square_root`` is True, the jackknife pseudo-value of the RMSE
+      at that time index, :math:`n * \bar{\varepsilon} - (n-1) * \varepsilon_i`,
+      where :math:`\bar{\varepsilon}` is the RMSE over all time indices,
+      and :math:`\varepsilon_i` is the RMSE with the i-th time index removed,
+      i.e., using values :math:`y_1, \dots, y_{i-1}, y_{i+1}, \dots, y_n`,
+      and :math:`\widehat{y}_1, \dots, \widehat{y}_{i-1}, \widehat{y}_{i+1}, \dots, \widehat{y}_n`.  # noqa: E501
 
     MSE is measured in squared units of the input data, and RMSE is on the
     same scale as the data. Because MSE and RMSE square the forecast error
@@ -1489,8 +1515,6 @@ class MeanSquaredError(BaseForecastingErrorMetricFunc):
     0.8936491673103708
     """
 
-    func = mean_squared_error
-
     def __init__(
         self,
         multioutput="uniform_average",
@@ -1499,6 +1523,106 @@ class MeanSquaredError(BaseForecastingErrorMetricFunc):
     ):
         self.square_root = square_root
         super().__init__(multioutput=multioutput, multilevel=multilevel)
+
+    def _evaluate(self, y_true, y_pred, **kwargs):
+        """Evaluate the desired metric on given inputs.
+
+        private _evaluate containing core logic, called from evaluate
+
+        By default this uses evaluate_by_index, taking arithmetic mean over time points.
+
+        Parameters
+        ----------
+        y_true : time series in sktime compatible data container format
+            Ground truth (correct) target values
+            y can be in one of the following formats:
+            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
+                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+        y_pred :time series in sktime compatible data container format
+            Forecasted values to evaluate
+            must be of same format as y_true, same indices and columns if indexed
+
+        Returns
+        -------
+        loss : float or np.ndarray
+            Calculated metric, averaged or by variable.
+            float if self.multioutput="uniform_average" or array-like
+                value is metric averaged over variables (see class docstring)
+            np.ndarray of shape (y_true.columns,) if self.multioutput="raw_values"
+                i-th entry is metric calculated for i-th variable
+        """
+        multioutput = self.multioutput
+
+        raw_values = (y_true - y_pred) ** 2
+        msqe = raw_values.mean()
+
+        if self.square_root:
+            msqe = msqe.pow(0.5)
+
+        if isinstance(multioutput, str):
+            if multioutput == "raw_values":
+                return msqe
+
+            if multioutput == "uniform_average":
+                return msqe.mean()
+
+        # else, we expect multioutput to be array-like
+        return msqe.dot(multioutput)
+
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point.
+
+        private _evaluate_by_index containing core logic, called from evaluate_by_index
+
+        Parameters
+        ----------
+        y_true : time series in sktime compatible pandas based data container format
+            Ground truth (correct) target values
+            y can be in one of the following formats:
+            Series scitype: pd.DataFrame
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+        y_pred :time series in sktime compatible data container format
+            Forecasted values to evaluate
+            must be of same format as y_true, same indices and columns if indexed
+
+        Returns
+        -------
+        loss : pd.Series or pd.DataFrame
+            Calculated metric, by time point (default=jackknife pseudo-values).
+            pd.Series if self.multioutput="uniform_average" or array-like
+                index is equal to index of y_true
+                entry at index i is metric at time i, averaged over variables
+            pd.DataFrame if self.multioutput="raw_values"
+                index and columns equal to those of y_true
+                i,j-th entry is metric at time i, at variable j
+        """
+        multioutput = self.multioutput
+
+        raw_values = (y_true - y_pred) ** 2
+
+        if self.square_root:
+            n = raw_values.shape[0]
+            mse = raw_values.mean(axis=0)
+            rmse = mse.pow(0.5)
+            sqe_sum = raw_values.sum(axis=0)
+            mse_jackknife = (sqe_sum - raw_values) / (n - 1)
+            rmse_jackknife = mse_jackknife.pow(0.5)
+            pseudo_values = n * rmse - (n - 1) * rmse_jackknife
+        else:
+            pseudo_values = raw_values
+
+        if isinstance(multioutput, str):
+            if multioutput == "raw_values":
+                return pseudo_values
+
+            if multioutput == "uniform_average":
+                return pseudo_values.mean(axis=1)
+
+        # else, we expect multioutput to be array-like
+        return pseudo_values.dot(multioutput)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
