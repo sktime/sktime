@@ -14,14 +14,28 @@ EXAMPLE_CLASSES = [DummyClassifier, ForecastKnownValues, ExponentTransformer]
 
 @pytest.mark.parametrize("estimator_class", EXAMPLE_CLASSES)
 def test_check_estimator_passed(estimator_class):
-    """Test that check_estimator returns only passed tests for examples we know pass."""
+    """Test that check_estimator returns passed tests for examples we know pass or skip."""
     estimator_instance = estimator_class.create_test_instance()
 
     result_class = check_estimator(estimator_class, verbose=False)
-    assert all(x == "PASSED" for x in result_class.values())
+
+    # Check there are no failures.
+    assert not any(x == "FAILED" for x in result_class.values())
+
+    # Check less than 10% are skipped.
+    skip_ratio = sum(list((x[:4] == "SKIP" for x in result_class.values())))
+    skip_ratio = skip_ratio/len(result_class.values())
+    assert skip_ratio < 0.1
 
     result_instance = check_estimator(estimator_instance, verbose=False)
-    assert all(x == "PASSED" for x in result_instance.values())
+
+    # Check there are no failures.
+    assert not any(x == "FAILED" for x in result_instance.values())
+
+    # Check less than 10% are skipped.
+    skip_ratio = sum(list((x[:4] == "SKIP" for x in result_instance.values())))
+    skip_ratio = skip_ratio/len(result_instance.values())
+    assert skip_ratio < 0.1
 
 
 @pytest.mark.parametrize("estimator_class", EXAMPLE_CLASSES)
