@@ -2116,7 +2116,8 @@
       "profile": "https://www.linkedin.com/in/pranav-prajapati-a5b413226/",
       "contributions": [
         "code",
-        "test"
+        "test",
+        "bug"
       ]
     },
     {
@@ -2733,6 +2734,15 @@
       "profile": "https://github.com/manuel-munoz-aguirre",
       "contributions": [
         "doc"
+      ]
+    },
+    {
+      "login": "morestart",
+      "name": "ctl",
+      "avatar_url": "https://avatars.githubusercontent.com/u/35556811",
+      "profile": "https://github.com/morestart",
+      "contributions": [
+        "bug"
       ]
     },
     {
