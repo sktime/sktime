@@ -147,19 +147,29 @@ class _NeuralForecastAdapter(BaseForecaster):
         """
         from pytorch_lightning import Trainer
 
+        # get valid init parameters from the model class and Trainer
         model_class = self.algorithm_class
         trainer_params = list(signature(Trainer.__init__).parameters.keys())
         valid_parameters = list(signature(model_class.__init__).parameters.keys())
         valid_parameters += trainer_params
 
-        sktime_parameters = set(self.algorithm_parameters.keys())
-        valid_parameters = set(valid_parameters)
+        sktime_parameters = self.algorithm_parameters
+        default_parameters = self.get_param_defaults()
 
-        unsupported_parameters = sktime_parameters - valid_parameters
+        valid_parameters = set(valid_parameters)
+        unsupported_parameters = set(sktime_parameters.keys()) - valid_parameters
+
+        # iterate through neuralforecast parameters and check for non default values
+        non_trainer_params = set(sktime_parameters.keys()) - set(trainer_params)
+        user_parameters = [
+            key
+            for key in non_trainer_params
+            if sktime_parameters[key] != default_parameters[key]
+        ]
 
         filter_params = deepcopy(self.algorithm_parameters)
         for unsupported_param in unsupported_parameters:
-            if filter_params[unsupported_param] is not None:
+            if unsupported_param in user_parameters:
                 warn(
                     f"Keyword argument '{unsupported_param}' will be omitted as it is"
                     f" not found in the __init__ method "
