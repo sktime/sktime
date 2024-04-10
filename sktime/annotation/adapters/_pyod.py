@@ -21,15 +21,17 @@ class PyODAnnotator(BaseSeriesAnnotator):
     estimator : PyOD estimator
         See ``https://pyod.readthedocs.io/en/latest/`` documentation for a detailed
         description of all options.
-    learning_type : str {"supervised", "unsupervised"}, optional (default="unsupervised")
-        The learning type of the annotator; can be supervised or unsupervised.
     """
 
-    _tags = {"python_dependencies": "pyod"}
+    _tags = {
+        "python_dependencies": "pyod",
+        "task": "anomaly_detection",
+        "learning_type": "unsupervised",
+    }
 
-    def __init__(self, estimator, learning_type="unsupervised"):
+    def __init__(self, estimator):
         self.estimator = estimator  # pyod estimator
-        super().__init__(task="anomaly_detection", learning_type=learning_type)
+        super().__init__()
 
     def _fit(self, X, Y=None):
         """Fit to training data.
