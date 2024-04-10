@@ -31,7 +31,7 @@ class BaseSeriesAnnotator(BaseEstimator):
     """Base series annotator.
 
     Developers should set the task and learning_type tags in the derived class.
-    
+
     task : str {"segmentation", "change_point_detection", "anomaly_detection"}
         The main annotation task:
         * If `segmentation`, the annotator divides timeseries into discrete chunks
