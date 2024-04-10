@@ -366,7 +366,11 @@ class TransformerFitTransformPanelUnivariateWithClassY(TransformerTestScenario):
                     all_positive=True,
                     random_state=RAND_SEED,
                 ),
-                "y": _make_classification_y(n_instances=7, n_classes=2),
+                "y": _make_classification_y(
+                    n_instances=7,
+                    n_classes=2,
+                    random_state=RAND_SEED,
+                ),
             },
             "transform": {
                 "X": _make_panel_X(
@@ -374,9 +378,13 @@ class TransformerFitTransformPanelUnivariateWithClassY(TransformerTestScenario):
                     n_columns=1,
                     n_timepoints=N_T + 1,
                     all_positive=True,
-                    random_state=RAND_SEED,
+                    random_state=RAND_SEED + 1,
                 ),
-                "y": _make_classification_y(n_instances=7, n_classes=2),
+                "y": _make_classification_y(
+                    n_instances=7,
+                    n_classes=2,
+                    random_state=RAND_SEED + 1,
+                ),
             },
         }
 
