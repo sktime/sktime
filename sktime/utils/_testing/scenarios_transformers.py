@@ -262,7 +262,7 @@ class TransformerFitTransformPanelUnivariateNumpyWithClassYOnlyFit(
 
     @property
     def args(self):
-        y3 = _make_classification_y(n_instances=9, n_classes=3)
+        y3 = _make_classification_y(n_instances=9, n_classes=3, random_state=RAND_SEED)
         X_np = _make_panel_X(
             n_instances=9,
             n_columns=1,
