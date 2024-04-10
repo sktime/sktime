@@ -42,36 +42,22 @@ class TransformerPairwisePanelTestScenario(TestScenario, BaseObject):
     pass
 
 
-d = {"col1": [1, 2], "col2": [3, 4]}
-d = pd.DataFrame(d)
-
-d2 = {"col1": [2, 3, 4], "col2": [3, 4, 5]}
-d2 = pd.DataFrame(d2)
-
-X1_np = _make_series(
-    n_columns=4,
-    n_timepoints=4,
-    random_state=1,
-    return_mtype="np.ndarray",
-)
-X2_np = _make_series(
-    n_columns=4,
-    n_timepoints=5,
-    random_state=2,
-    return_mtype="np.ndarray",
-)
-
-
 class TransformerPairwiseTransformSymm(TransformerPairwiseTestScenario):
     """Empty fit, one argument in transform."""
 
     _tags = {"symmetric": True, "is_enabled": True}
 
-    args = {
-        "fit": {"X": None, "X2": None},
-        "transform": {"X": d},
-        "transform_diag": {"X": d},
-    }
+    @property
+    def args(self):
+        d = {"col1": [1, 2], "col2": [3, 4]}
+        d = pd.DataFrame(d)
+
+        return {
+            "fit": {"X": None, "X2": None},
+            "transform": {"X": d},
+            "transform_diag": {"X": d},
+        }
+
     default_method_sequence = ["fit", "transform"]
 
 
@@ -80,11 +66,20 @@ class TransformerPairwiseTransformAsymm(TransformerPairwiseTestScenario):
 
     _tags = {"symmetric": False, "is_enabled": True}
 
-    args = {
-        "fit": {"X": None, "X2": None},
-        "transform": {"X": d, "X2": d2},
-        "transform_diag": {"X": d},
-    }
+    @property
+    def args(self):
+        d = {"col1": [1, 2], "col2": [3, 4]}
+        d = pd.DataFrame(d)
+
+        d2 = {"col1": [2, 3, 4], "col2": [3, 4, 5]}
+        d2 = pd.DataFrame(d2)
+
+        return {
+            "fit": {"X": None, "X2": None},
+            "transform": {"X": d, "X2": d2},
+            "transform_diag": {"X": d},
+        }
+
     default_method_sequence = ["fit", "transform"]
 
 
@@ -93,11 +88,27 @@ class TransformerPairwiseTransformNumpy(TransformerPairwiseTestScenario):
 
     _tags = {"symmetric": False, "is_enabled": True}
 
-    args = {
-        "fit": {"X": None, "X2": None},
-        "transform": {"X": X1_np, "X2": X2_np},
-        "transform_diag": {"X": X1_np},
-    }
+    @property
+    def args(self):
+        X1_np = _make_series(
+            n_columns=4,
+            n_timepoints=4,
+            random_state=1,
+            return_mtype="np.ndarray",
+        )
+        X2_np = _make_series(
+            n_columns=4,
+            n_timepoints=5,
+            random_state=2,
+            return_mtype="np.ndarray",
+        )
+
+        return {
+            "fit": {"X": None, "X2": None},
+            "transform": {"X": X1_np, "X2": X2_np},
+            "transform_diag": {"X": X1_np},
+        }
+
     default_method_sequence = ["fit", "transform"]
 
 
