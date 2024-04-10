@@ -77,7 +77,7 @@ def test_impute_multiindex(method):
     Failure case in bug #6224
     """
 
-    df = get_examples(mtype="pd-multiindex")[0]
+    df = get_examples(mtype="pd-multiindex")[0].copy()
     df.iloc[:3, :] = np.nan  # instance 0 entirely missing
     df.iloc[3:4, :] = np.nan  # instance 1 first timepoint missing
     df.iloc[8:, :] = np.nan  # instance 2 last timepoint missing
