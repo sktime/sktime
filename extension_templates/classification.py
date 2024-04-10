@@ -82,8 +82,11 @@ class MyTimeSeriesClassifier(BaseClassifier):
         "authors": ["author1", "author2"],  # authors, GitHub handles
         "maintainers": ["maintainer1", "maintainer2"],  # maintainers, GitHub handles
         # author = significant contribution to code at some point
-        # maintainer = algorithm maintainer role, "owner"
-        # specify one or multiple authors and maintainers, only for sktime contribution
+        #     if interfacing a 3rd party estimator, ensure to give credit to the
+        #     authors of the interfaced estimator
+        # maintainer = algorithm maintainer role, "owner" of the sktime class
+        #     for 3rd party interfaces, the scope is the sktime class only
+        # specify one or multiple authors and maintainers
         # remove maintainer tag if maintained by sktime core team
         #
         "python_version": None,  # PEP 440 python version specifier to limit versions
