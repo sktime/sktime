@@ -59,6 +59,12 @@ class MySeriesAnnotator(BaseSeriesAnnotator):
     and so on
     """
 
+    # Change the `task` and `learning_type` as needed
+    _tags = {
+        "task": "segmentation",
+        "learning_type": "unsupervised",
+    }
+
     # todo: add any hyper-parameters and components to constructor
     def __init__(
         self,
@@ -77,8 +83,7 @@ class MySeriesAnnotator(BaseSeriesAnnotator):
         self.paramb = paramb
         self.paramc = paramc
 
-        # Change the `task` and `learning_type` as needed
-        super().__init__(task="segmentation", learning_type="unsupervised")
+        super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc

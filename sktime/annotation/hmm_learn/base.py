@@ -23,11 +23,13 @@ class BaseHMMLearn(BaseSeriesAnnotator):
         "univariate-only": True,
         "fit_is_empty": True,
         "python_dependencies": "hmmlearn",
+        "task": "segmentation",
+        "learning_type": "unsupervised",
     }  # for unit test cases
     _hmm_estimator = None
 
     def __init__(self):
-        super().__init__(task="segmentation", learning_type="unsupervised")
+        super().__init__()
 
     @staticmethod
     def _fix_input(X):
