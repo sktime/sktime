@@ -118,30 +118,24 @@ scenarios_transformers_pairwise = [
     TransformerPairwiseTransformNumpy,
 ]
 
-X = [d, d]
-X2 = [d, d, d]
-
-X1_list_df = make_transformer_problem(
-    n_instances=4, n_columns=4, n_timepoints=5, random_state=1, return_numpy=False
-)
-X2_list_df = make_transformer_problem(
-    n_instances=5, n_columns=4, n_timepoints=5, random_state=2, return_numpy=False
-)
-
-X1_num_pan = convert_to(X1_list_df, to_type="numpy3D")
-X2_num_pan = convert_to(X2_list_df, to_type="numpy3D")
-
 
 class TransformerPairwisePanelTransformSymm(TransformerPairwisePanelTestScenario):
     """Empty fit, one argument in transform."""
 
     _tags = {"symmetric": True, "is_enabled": True}
 
-    args = {
-        "fit": {"X": None, "X2": None},
-        "transform": {"X": X},
-        "transform_diag": {"X": X},
-    }
+    @property
+    def args(self):
+        d = {"col1": [1, 2], "col2": [3, 4]}
+        d = pd.DataFrame(d)
+        X = [d, d]
+
+        return {
+            "fit": {"X": None, "X2": None},
+            "transform": {"X": X},
+            "transform_diag": {"X": X},
+        }
+
     default_method_sequence = ["fit", "transform"]
 
 
@@ -150,11 +144,19 @@ class TransformerPairwisePanelTransformAsymm(TransformerPairwisePanelTestScenari
 
     _tags = {"symmetric": False, "is_enabled": True}
 
-    args = {
-        "fit": {"X": None, "X2": None},
-        "transform": {"X": X, "X2": X2},
-        "transform_diag": {"X": X},
-    }
+    @property
+    def args(self):
+        d = {"col1": [1, 2], "col2": [3, 4]}
+        d = pd.DataFrame(d)
+        X = [d, d]
+        X2 = [d, d, d]
+
+        return {
+            "fit": {"X": None, "X2": None},
+            "transform": {"X": X, "X2": X2},
+            "transform_diag": {"X": X},
+        }
+
     default_method_sequence = ["fit", "transform"]
 
 
@@ -163,11 +165,29 @@ class TransformerPairwisePanelTransformListdf(TransformerPairwisePanelTestScenar
 
     _tags = {"symmetric": False, "is_enabled": True}
 
-    args = {
-        "fit": {"X": None, "X2": None},
-        "transform": {"X": X1_list_df, "X2": X2_list_df},
-        "transform_diag": {"X": X1_list_df},
-    }
+    @property
+    def args(self):
+        X1_list_df = make_transformer_problem(
+            n_instances=4,
+            n_columns=4,
+            n_timepoints=5,
+            random_state=1,
+            return_numpy=False,
+        )
+        X2_list_df = make_transformer_problem(
+            n_instances=5,
+            n_columns=4,
+            n_timepoints=5,
+            random_state=2,
+            return_numpy=False,
+        )
+
+        return {
+            "fit": {"X": None, "X2": None},
+            "transform": {"X": X1_list_df, "X2": X2_list_df},
+            "transform_diag": {"X": X1_list_df},
+        }
+
     default_method_sequence = ["fit", "transform"]
 
 
@@ -176,11 +196,32 @@ class TransformerPairwisePanelTransformNumpy(TransformerPairwisePanelTestScenari
 
     _tags = {"symmetric": False, "is_enabled": True}
 
-    args = {
-        "fit": {"X": None, "X2": None},
-        "transform": {"X": X1_num_pan, "X2": X2_num_pan},
-        "transform_diag": {"X": X1_num_pan},
-    }
+    @property
+    def args(self):
+        X1_list_df = make_transformer_problem(
+            n_instances=4,
+            n_columns=4,
+            n_timepoints=5,
+            random_state=1,
+            return_numpy=False,
+        )
+        X2_list_df = make_transformer_problem(
+            n_instances=5,
+            n_columns=4,
+            n_timepoints=5,
+            random_state=2,
+            return_numpy=False,
+        )
+
+        X1_num_pan = convert_to(X1_list_df, to_type="numpy3D")
+        X2_num_pan = convert_to(X2_list_df, to_type="numpy3D")
+
+        return {
+            "fit": {"X": None, "X2": None},
+            "transform": {"X": X1_num_pan, "X2": X2_num_pan},
+            "transform_diag": {"X": X1_num_pan},
+        }
+
     default_method_sequence = ["fit", "transform"]
 
 
