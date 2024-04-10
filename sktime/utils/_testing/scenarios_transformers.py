@@ -199,6 +199,7 @@ class TransformerFitTransformSeriesUnivariate(TransformerTestScenario):
             "transform": {"X": X_trafo},
             # "inverse_transform": {"X": _make_series(n_timepoints=N_T)},
         }
+
     default_method_sequence = ["fit", "transform"]
 
 
@@ -283,6 +284,7 @@ class TransformerFitTransformPanelUnivariateNumpyWithClassYOnlyFit(
             "fit": {"y": y3, "X": X_np},
             "transform": {"X": X_test_np},
         }
+
     default_method_sequence = ["fit", "transform"]
 
 
@@ -310,6 +312,7 @@ class TransformerFitTransformPanelUnivariate(TransformerTestScenario):
                 )
             },
         }
+
     default_method_sequence = ["fit", "transform"]
 
 
@@ -337,6 +340,7 @@ class TransformerFitTransformPanelMultivariate(TransformerTestScenario):
                 )
             },
         }
+
     default_method_sequence = ["fit", "transform"]
 
 
@@ -375,6 +379,7 @@ class TransformerFitTransformPanelUnivariateWithClassY(TransformerTestScenario):
                 "y": _make_classification_y(n_instances=7, n_classes=2),
             },
         }
+
     default_method_sequence = ["fit", "transform"]
 
 
@@ -399,6 +404,7 @@ class TransformerFitTransformPanelUnivariateWithClassYOnlyFit(TransformerTestSce
             },
             "transform": {"X": X_trafo},
         }
+
     default_method_sequence = ["fit", "transform"]
 
 
@@ -412,10 +418,13 @@ class TransformerFitTransformHierarchicalUnivariate(TransformerTestScenario):
         "has_y": False,
     }
 
-    args = {
-        "fit": {"X": _make_hierarchical(random_state=RAND_SEED)},
-        "transform": {"X": _make_hierarchical(random_state=RAND_SEED + 1)},
-    }
+    @property
+    def args(self):
+        return {
+            "fit": {"X": _make_hierarchical(random_state=RAND_SEED)},
+            "transform": {"X": _make_hierarchical(random_state=RAND_SEED + 1)},
+        }
+
     default_method_sequence = ["fit", "transform"]
 
 
@@ -436,6 +445,7 @@ class TransformerFitTransformHierarchicalMultivariate(TransformerTestScenario):
             "fit": {"X": _make_hierarchical(random_state=RAND_SEED, n_columns=2)},
             "transform": X_trafo,
         }
+
     default_method_sequence = ["fit", "transform"]
 
 
