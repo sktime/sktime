@@ -38,17 +38,53 @@ ESTIMATOR_TAG_LIST - list of string
 check_tag_is_valid(tag_name, tag_value) - checks whether tag_value is valid for tag_name
 """
 
-__author__ = ["fkiraly", "victordremov"]
+import inspect
+import sys
 
 import pandas as pd
 
+from sktime.base import BaseObject
+
+class _BaseTag(BaseObject):
+    """Base class for all tags."""
+
+    _tags = {
+        "tag_name": "fill_this_in",  # name of the tag used in the _tags dictionary
+        "parent_type": "object",  # scitype of the parent object, str or list of str
+        "tag_type": "str",  # type of the tag value
+        "short_descr": "describe the tag here",  # short tag description, max 80 chars
+        "user_facing": True,  # whether the tag is user-facing
+    }
+
+
+class object_type(_BaseTag):
+    """Scientific type of the object.
+
+    In ``sktime``, every object has a scientific type (scitype),
+    determining the type of object and unified interface,
+    e.g., forecaster, time series classifier, time series regressor.
+
+    The ``object_type`` tag of an object is a string, or list of strings,
+    specifying the scitpye of the object.
+    For instance, a forecaster has scitype `"forecaster"`.
+    
+    In case of a list, the object is polymorphic, and can assume (class),
+    or simultaneously satisfy different interfaces (object).
+
+    Valid scitypes are defined in ``sktime.registry.BASE_CLASS_SCITYPE_LIST``,
+    or ``sktime.registry.BASE_CLASS_REGISTER``.
+    """
+
+    _tags = {
+        "tag_name": "object_type",
+        "parent_type": "object",
+        "tag_type": "str",
+        "short_descr": "type of object: estimator, transformer, regressor, etc",
+        "user_facing": True,
+    }
+
+
 ESTIMATOR_TAG_REGISTER = [
-    (
-        "object_type",
-        "object",
-        "str",
-        "type of object: estimator, transformer, regressor, etc",
-    ),
     (
         "ignores-exogeneous-X",
         "forecaster",
@@ -535,6 +571,24 @@ ESTIMATOR_TAG_REGISTER = [
         "list of authors of the object, each author a GitHub handle",
     ),
 ]
+
+# construct the tag register from all classes in this module
+tag_clses = inspect.getmembers(sys.modules[__name__], inspect.isclass)
+for _, cl in tag_clses:
+    # skip the base class
+    if cl.__name__ == "_BaseTag":
+        continue
+
+    cl_tags = cl.get_class_tags()
+
+    tag_name = cl_tags["tag_name"]
+    parent_type = cl_tags["parent_type"]
+    tag_type = cl_tags["tag_type"]
+    short_descr = cl_tags["short_descr"]
+
+    ESTIMATOR_TAG_REGISTER.append(
+        (tag_name, parent_type, tag_type, short_descr)
+    )
 
 ESTIMATOR_TAG_TABLE = pd.DataFrame(ESTIMATOR_TAG_REGISTER)
 ESTIMATOR_TAG_LIST = ESTIMATOR_TAG_TABLE[0].tolist()

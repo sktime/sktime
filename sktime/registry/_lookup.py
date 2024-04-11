@@ -156,6 +156,7 @@ def all_estimators(
         "plotting",
         "_split",
         "test_split",
+        "registry",
     )
 
     ROOT = str(Path(__file__).parent.parent)  # sktime package root directory
