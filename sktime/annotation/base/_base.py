@@ -22,6 +22,8 @@ State:
 __author__ = ["satya-pattnaik ", "fkiraly"]
 __all__ = ["BaseSeriesAnnotator"]
 
+import numpy as np
+
 from sktime.base import BaseEstimator
 from sktime.utils.validation.annotation import check_learning_type, check_task
 from sktime.utils.validation.series import check_series
@@ -321,3 +323,37 @@ class BaseSeriesAnnotator(BaseEstimator):
         self._fit(self._X, self._Y)
 
         return self
+
+    @staticmethod
+    def sparse_to_dense(y_sparse):
+        """Convert the sparse output from the annotator to a dense format.
+
+        Parameters
+        ----------
+        y_sparse : nd.ndarray
+            If `y_sparse` is a 1D array then it should contain the index locations of
+            changepoints/anomalies.
+
+        Returns
+        -------
+        np.ndarray
+            If `y_sparse` is a 1D array of changepoint/anomaly indices then a 1D array
+            of 0's and 1's is returned. The array is one at the indices of the
+            anomalies/changepoints.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> from sktime.annotation.base._base import BaseSeriesAnnotator
+        >>> y_sparse = np.array([2, 5, 7])  # Indices of change points or anomalies
+        >>> BaseSeriesAnnotator.sparse_to_dense(y_sparse)
+        array([0., 0., 1., 0., 0., 1., 0., 1.])
+
+        TODO: Handle the 2D case for segmentation.
+        """
+        if y_sparse.ndim == 1:
+            y_dense = np.zeros(y_sparse[-1] + 1, dtype=np.int32)
+            np.put(y_dense, y_sparse, 1)
+            return y_dense
+        else:
+            raise NotImplementedError("Cannot handle the 2D case yet.")
