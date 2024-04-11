@@ -49,6 +49,7 @@ class _BaseTag(BaseObject):
     """Base class for all tags."""
 
     _tags = {
+        "object_type": "tag",
         "tag_name": "fill_this_in",  # name of the tag used in the _tags dictionary
         "parent_type": "object",  # scitype of the parent object, str or list of str
         "tag_type": "str",  # type of the tag value
