@@ -11,7 +11,7 @@ It describes the classes and functions included in sktime.
 
 For a scientific manual, see the :ref:`user_guide`.
 
-For a list of object and estimator tags, see :ref:`tags`.
+For a list of object and estimator tags, see :ref:`tags_ref`.
 
 .. include:: includes/api_css.rst
 
@@ -35,4 +35,5 @@ For a list of object and estimator tags, see :ref:`tags`.
     api_reference/deployment
     api_reference/utils
     api_reference/exceptions
+    api_reference/tags
     api_reference/pipeline

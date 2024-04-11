@@ -44,6 +44,7 @@ import sys
 import pandas as pd
 
 from sktime.base import BaseObject
+from sktime.registry._base_classes import BASE_CLASS_REGISTER
 
 class _BaseTag(BaseObject):
     """Base class for all tags."""
@@ -74,6 +75,8 @@ class object_type(_BaseTag):
 
     Valid scitypes are defined in ``sktime.registry.BASE_CLASS_SCITYPE_LIST``,
     or ``sktime.registry.BASE_CLASS_REGISTER``.
+
+    The full list of scitypes in the current version is:
     """
 
     _tags = {
@@ -84,6 +87,9 @@ class object_type(_BaseTag):
         "user_facing": True,
     }
 
+
+for name, _, desc in BASE_CLASS_REGISTER:
+    object_type.__doc__ += f"\n    - {name}: {desc}"
 
 ESTIMATOR_TAG_REGISTER = [
     (
