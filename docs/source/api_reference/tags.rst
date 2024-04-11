@@ -56,5 +56,6 @@ These tags are typically used for typing, packaging and documentation purposes.
 .. autosummary::
     :toctree: auto_generated/
     :template: function.rst
+    :nosignatures:
 
     object_type
