@@ -59,3 +59,7 @@ These tags are typically used for typing, packaging and documentation purposes.
     :nosignatures:
 
     object_type
+    maintainers
+    authors
+    python_version
+    python_dependencies

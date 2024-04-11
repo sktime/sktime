@@ -59,6 +59,9 @@ class _BaseTag(BaseObject):
     }
 
 
+# General tags, for all objects
+# -----------------------------
+
 class object_type(_BaseTag):
     """Scientific type of the object.
 
@@ -88,8 +91,187 @@ class object_type(_BaseTag):
     }
 
 
+# dynamically add a pretty printd list of scitypes to the docstring
 for name, _, desc in BASE_CLASS_REGISTER:
-    object_type.__doc__ += f"\n    - {name}: {desc}"
+    object_type.__doc__ += f'\n    - ``"{name}"``: {desc}'
+
+
+class maintainers(_BaseTag):
+    """Current maintainers of the object, GitHub IDs.
+
+    Part of packaging metadata for the object.
+
+    - Public metadata tag
+    - Values:  string or list of strings
+    - Example: ``["benheid", "fkiraly", "yarnabrina"]``
+    - Example 2: ``"yarnabrina"``
+    - Default: ``"sktime developers"``
+
+    The ``maintainers`` tag of an object is a string or list of strings,
+    each string being a GitHub handle of a maintainer of the object.
+
+    Maintenance extends to the specific class in ``sktime`` only,
+    and not interfaced packages or dependencies.
+
+    Maintainers should be tagged on issues and PRs related to the object,
+    and have rights and responsibilities in accordance with
+    the ``sktime`` governance model, see :ref:`algorithm-maintainers`.
+
+    To find an algorithm's maintainer, use ``get_tag("maintainers")`` on the object,
+    or use the search function in the
+    `estimator overview <https://www.sktime.net/en/stable/estimator_overview.html>`_.
+
+    In case of classes not owned by specific algorithm maintainers,
+    the tag defaults to the ``sktime`` core team.
+
+    Maintainers are given prominent visibility in the object's metadata,
+    and in automatically generated documentation.
+    """
+
+    _tags = {
+        "tag_name": "maintainers",
+        "parent_type": "object",
+        "tag_type": ("list", "str"),
+        "short_descr": "current maintainers of the object, each maintainer a GitHub handle",
+        "user_facing": True,
+    }
+
+
+class authors(_BaseTag):
+    """Authors of the object, GitHub IDs.
+
+    Part of packaging metadata for the object.
+
+    - Public metadata tag
+    - Values:  string or list of strings
+    - Example: ``["benheid", "fkiraly", "yarnabrina"]``
+    - Example 2: ``"fkiraly"``
+    - Default: ``"sktime developers"``
+
+    The ``authors`` tag of an object is a string or list of strings,
+    each string being a GitHub handle of an author of the object.
+
+    Authors are credited for the original implementation of the object,
+    and contributions to the object.
+
+    In case of light wrappers around third or second party packages,
+    author credits should include authors of the wrapped object.
+
+    Authors are not necessarily maintainers of the object,
+    and do not need to be tagged on issues and PRs related to the object.
+
+    Authors are given prominent visibility in the object's metadata,
+    and in automatically generated documentation.
+
+    To find an algorithm's authors, use ``get_tag("authors")`` on the object,
+    or use the search function in the
+    `estimator overview <https://www.sktime.net/en/stable/estimator_overview.html>`_.
+    """
+
+    _tags = {
+        "tag_name": "authors",
+        "parent_type": "object",
+        "tag_type": ("list", "str"),
+        "short_descr": "list of authors of the object, each author a GitHub handle",
+        "user_facing": True,
+    }
+
+
+class python_version(_BaseTag):
+    """Python version requirement specifier for the object (PEP 440).
+
+    Part of packaging metadata for the object.
+
+    - Private tag, developer and framework facing
+    - Values: PEP 440 compliant version specifier
+    - Example: ``">=3.10"``
+    - Default: no restriction
+
+    ``sktime`` manages objects and estimators like mini-packages,
+    with their own dependencies and compatibility requirements.
+    Dependencies are specified in the tags:
+
+    - ``"python_version"``: Python version specifier (PEP 440) for the object,
+    - ``"python_dependencies"``: list of required Python packages (PEP 440)
+    - ``"python_dependencies_alias"``: alias for package names,
+      if different from import names
+    - ``"env_marker"`: environment marker for the object (PEP 508)
+    - ``"requires_cython"``: whether the object requires a C compiler present
+
+    The ``python_version`` tag of an object is a PEP 440 compliant version specifier
+    string, specifying python version compatibility of the object.
+
+    The tag is used in packaging metadata for the object,
+    and is used internally to check compatibility of the object with
+    the build environment, to raise informative error messages.
+
+    Developers can use ``_check_python_version`` from ``skbase.utils.dependencies``
+    to check compatibility of the python constraint of the object
+    with the current build environment, or
+    ``_check_estimator_deps`` to check compatibility of the object
+    (including further checks) with the current build environment.
+    """
+
+    _tags = {
+        "tag_name": "python_version",
+        "parent_type": "object",
+        "tag_type": "str",
+        "short_descr": "python version specifier (PEP 440) for estimator, or None = all versions ok",  # noqa: E501
+        "user_facing": False,
+    }
+
+
+class python_dependencies(_BaseTag):
+    """Python package dependency requirement specifiers for the object (PEP 440).
+
+    Part of packaging metadata for the object.
+
+    - Private tag, developer and framework facing
+    - Values: str or list of str, each str a PEP 440 compliant dependency specifier
+    - Example: ``"numpy>=1.20.0"``
+    - Example 2: ``["numpy>=1.20.0", "pandas>=1.3.0"]``
+    - Default: no requirements beyond ``sktime`` core dependencies (``None``)
+
+    ``sktime`` manages objects and estimators like mini-packages,
+    with their own dependencies and compatibility requirements.
+    Dependencies are specified in the tags:
+
+    - ``"python_version"``: Python version specifier (PEP 440) for the object,
+    - ``"python_dependencies"``: list of required Python packages (PEP 440)
+    - ``"python_dependencies_alias"``: alias for package names,
+      if different from import names
+    - ``"env_marker"`: environment marker for the object (PEP 508)
+    - ``"requires_cython"``: whether the object requires a C compiler present
+
+    The ``python_dependencies`` tag of an object is string or list of strings,
+    each string a PEP 440 compliant version specifier,
+    specifying python dependency requirements of the object.
+
+    The tag is used in packaging metadata for the object,
+    and is used internally to check compatibility of the object with
+    the build environment, to raise informative error messages.
+
+    Developers should note that package names in PEP 440 specifier strings
+    are identical with the package names used in ``pip install`` commands,
+    which in general is not the same as the import name of the package,
+    e.g., ``"scikit-learn"`` and not ``"sklearn"``.
+
+    Developers can use ``_check_soft_dependencies`` from ``skbase.utils.dependencies``
+    to check compatibility of the python constraint of the object
+    with the current build environment, or
+    ``_check_estimator_deps`` to check compatibility of the object
+    (including further checks) with the current build environment.
+    """
+
+    _tags = {
+        "tag_name": "python_dependencies",
+        "parent_type": "object",
+        "tag_type": ("list", "str"),
+        "short_descr": "python dependencies of estimator as str or list of str (PEP 440)",  # noqa: E501
+        "user_facing": False,
+    }    
+
+
 
 ESTIMATOR_TAG_REGISTER = [
     (
@@ -451,18 +633,6 @@ ESTIMATOR_TAG_REGISTER = [
         "whether inner _evaluate can deal with multilevel (Panel/Hierarchical)",
     ),
     (
-        "python_version",
-        "estimator",
-        "str",
-        "python version specifier (PEP 440) for estimator, or None = all versions ok",
-    ),
-    (
-        "python_dependencies",
-        "estimator",
-        ("list", "str"),
-        "python dependencies of estimator as str or list of str",
-    ),
-    (
         "python_dependencies_alias",
         "estimator",
         "dict",
@@ -564,18 +734,6 @@ ESTIMATOR_TAG_REGISTER = [
         ["classifier", "regressor"],  # might need to add "early_classifier" here
         "bool",
         "can the estimator handle multioutput data?",
-    ),
-    (
-        "maintainers",
-        "object",
-        ("list", "str"),
-        "list of current maintainers of the object, each maintainer a GitHub handle",
-    ),
-    (
-        "authors",
-        "object",
-        ("list", "str"),
-        "list of authors of the object, each author a GitHub handle",
     ),
 ]
 
