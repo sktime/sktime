@@ -53,7 +53,8 @@ class CtwDistTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["fkiraly"],
+        "authors": ["rtavenar", "ysoullard", "chusloj", "fkiraly"],
+        # rtavenar, ysoullard, chusloj credit for interfaced code
         "python_dependencies": ["tslearn"],
         # estimator type
         # --------------

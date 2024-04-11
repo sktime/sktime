@@ -2116,7 +2116,8 @@
       "profile": "https://www.linkedin.com/in/pranav-prajapati-a5b413226/",
       "contributions": [
         "code",
-        "test"
+        "test",
+        "bug"
       ]
     },
     {
@@ -2342,7 +2343,9 @@
       "profile": "https://github.com/Ram0nB",
       "contributions": [
         "doc",
-        "code"
+        "code",
+        "bug",
+        "test"
       ]
     },
     {
@@ -2750,6 +2753,16 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/90141191?v=4",
       "profile": "https://github.com/Anteemony",
       "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "mobley-trent",
+      "name": "Eddy Oyieko",
+      "avatar_url": "https://avatars.githubusercontent.com/u/67474838?v=4",
+      "profile": "https://github.com/mobley-trent",
+      "contributions": [
+        "code",
         "doc"
       ]
     }
