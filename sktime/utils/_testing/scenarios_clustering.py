@@ -101,14 +101,6 @@ class ClustererFitPredict(ClustererTestScenario):
     default_method_sequence = ["fit", "predict"]
 
 
-X_unequal_length = _make_hierarchical(
-    hierarchy_levels=(10,), min_timepoints=10, max_timepoints=15, random_state=RAND_SEED
-)
-X_unequal_length_test = _make_hierarchical(
-    hierarchy_levels=(5,), min_timepoints=10, max_timepoints=15, random_state=RAND_SEED
-)
-
-
 class ClustererFitPredictUnequalLength(ClustererTestScenario):
     """Fit/predict with univariate panel X, unequal length series."""
 
@@ -118,10 +110,25 @@ class ClustererFitPredictUnequalLength(ClustererTestScenario):
         "is_enabled": True,
     }
 
-    args = {
-        "fit": {"X": X_unequal_length},
-        "predict": {"X": X_unequal_length_test},
-    }
+    @property
+    def args(self):
+        X_unequal_length = _make_hierarchical(
+            hierarchy_levels=(10,),
+            min_timepoints=10,
+            max_timepoints=15,
+            random_state=RAND_SEED,
+        )
+        X_unequal_length_test = _make_hierarchical(
+            hierarchy_levels=(5,),
+            min_timepoints=10,
+            max_timepoints=15,
+            random_state=RAND_SEED,
+        )
+        return {
+            "fit": {"X": X_unequal_length},
+            "predict": {"X": X_unequal_length_test},
+        }
+
     default_method_sequence = ["fit", "predict", "predict_proba", "decision_function"]
     default_arg_sequence = ["fit", "predict", "predict", "predict"]
 
