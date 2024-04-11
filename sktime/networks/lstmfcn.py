@@ -147,7 +147,6 @@ class LSTMFCNNetwork(BaseDeepNetwork):
             {
                 "kernel_sizes": (8, 5, 3),  # Keep standard kernel sizes
                 "filter_sizes": (128, 256, 128),  # Keep standard kernel counts
-                "random_state": 0,
                 "lstm_size": 8,
                 "dropout": 0.25,  # Maintain lower dropout rate for attention model
                 "attention": True,
@@ -156,11 +155,11 @@ class LSTMFCNNetwork(BaseDeepNetwork):
             {
                 "kernel_sizes": (4, 2, 1),  # Reduce kernel sizes
                 "filter_sizes": (32, 64, 32),  # Reduc filter sizes for cheaper model
-                "random_state": 0,
                 "lstm_size": 8,  # Keeping LSTM output size fixed
                 "dropout": 0.75,  # Maintain higher dropout rate for non attention model
                 "attention": False,
             },
+            {},
         ]
 
         return params
