@@ -143,6 +143,28 @@ class BaseSeriesAnnotator(BaseEstimator):
 
         return Y
 
+    def transform(self, X):
+        """Create annotations on test/deployment data.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Data to annotate (time series).
+
+        Returns
+        -------
+        Y : pd.Series
+            Annotations for sequence X. The returned annotations will be in the dense
+            format.
+        """
+        self.check_is_fitted()
+
+        X = check_series(X)
+
+        Y = self.predict(X=X)
+
+        return self.sparse_to_dense(Y)
+
     def predict_scores(self, X):
         """Return scores for predicted annotations on test/deployment data.
 
