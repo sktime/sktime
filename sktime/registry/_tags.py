@@ -577,7 +577,7 @@ ESTIMATOR_TAG_REGISTER = [
 tag_clses = inspect.getmembers(sys.modules[__name__], inspect.isclass)
 for _, cl in tag_clses:
     # skip the base class
-    if cl.__name__ == "_BaseTag":
+    if cl.__name__ == "_BaseTag" or not issubclass(cl, _BaseTag):
         continue
 
     cl_tags = cl.get_class_tags()
