@@ -48,7 +48,7 @@ def all_estimators(
     return_tags=None,
     suppress_import_stdout=True,
 ):
-    """Get a list of all estimators from sktime.
+    """List all estimators or objects in sktime, by scitype or tag.
 
     This function crawls the module and gets all classes that inherit
     from sktime's and sklearn's base classes.
@@ -275,7 +275,7 @@ def all_tags(
     estimator_types=None,
     as_dataframe=False,
 ):
-    """Get a list of all tags from sktime.
+    """List all tags in sktime, for objects of a certain type.
 
     All objects in ``sktime`` are tagged with a set of :term``tag``s.
     This function allows to list all tags, optionally filtered by
