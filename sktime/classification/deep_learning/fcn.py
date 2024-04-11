@@ -82,7 +82,7 @@ class FCNClassifier(BaseDeepClassifier):
         optimizer=None,
     ):
         _check_dl_dependencies(severity="error")
-        super().__init__()
+
         self.callbacks = callbacks
         self.n_epochs = n_epochs
         self.batch_size = batch_size
@@ -94,9 +94,10 @@ class FCNClassifier(BaseDeepClassifier):
         self.use_bias = use_bias
         self.optimizer = optimizer
         self.history = None
-        self._network = FCNNetwork(
-            random_state=self.random_state,
-        )
+
+        super().__init__()
+
+        self._network = FCNNetwork(random_state=self.random_state)
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.

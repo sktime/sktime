@@ -47,6 +47,15 @@ class SimpleRNNRegressor(BaseDeepRegressor):
     ----------
     ..[1] benchmark forecaster in M4 forecasting competition:
     https://github.com/Mcompetitions/M4-methods
+
+    Examples
+    --------
+    >>> from sktime.regression.deep_learning.rnn import SimpleRNNRegressor
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, Y_train = load_unit_test(split="train")
+    >>> clf = SimpleRNNRegressor(n_epochs=20, batch_size=4) # doctest: +SKIP
+    >>> clf.fit(X_train, Y_train) # doctest: +SKIP
+    SimpleRNNRegressor(...)
     """
 
     _tags = {
@@ -74,8 +83,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
     ):
         _check_dl_dependencies(severity="error")
 
-        super().__init__()
-
+        self.n_epochs = n_epochs
         self.batch_size = batch_size
         self.verbose = verbose
         self.units = units
@@ -87,9 +95,11 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         self.activation = activation
         self.use_bias = use_bias
         self.optimizer = optimizer
+
+        super().__init__()
+
         self.history = None
         self._network = RNNNetwork(random_state=random_state, units=units)
-        self.n_epochs = n_epochs
 
     def build_model(self, input_shape, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
@@ -117,7 +127,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         )(output_layer)
 
         self.optimizer_ = (
-            keras.optimizers.RMSprop(lr=0.001)
+            keras.optimizers.RMSprop(learning_rate=0.001)
             if self.optimizer is None
             else self.optimizer
         )

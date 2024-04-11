@@ -2,14 +2,15 @@
 """Implements adapter for NeuralForecast models."""
 import abc
 import functools
-import typing
+from typing import List, Literal, Optional, Union
 
+import numpy as np
 import pandas
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
 __all__ = ["_NeuralForecastAdapter"]
-__author__ = ["yarnabrina"]
+__author__ = ["yarnabrina", "geetu040"]
 
 
 class _NeuralForecastAdapter(BaseForecaster):
@@ -17,8 +18,11 @@ class _NeuralForecastAdapter(BaseForecaster):
 
     Parameters
     ----------
-    freq : str
+    freq : Union[str, int] (default="auto")
         frequency of the data, see available frequencies [1]_ from ``pandas``
+        use int freq when using RangeIndex in ``y``
+
+        default ("auto") interprets freq from ForecastingHorizon in ``fit``
     local_scaler_type : str (default=None)
         scaler to apply per-series to all features before fitting, which is inverted
         after predicting
@@ -66,11 +70,11 @@ class _NeuralForecastAdapter(BaseForecaster):
 
     def __init__(
         self: "_NeuralForecastAdapter",
-        freq: str,
-        local_scaler_type: typing.Optional[
-            typing.Literal["standard", "robust", "robust-iqr", "minmax", "boxcox"]
+        freq: Union[str, int] = "auto",
+        local_scaler_type: Optional[
+            Literal["standard", "robust", "robust-iqr", "minmax", "boxcox"]
         ] = None,
-        futr_exog_list: typing.Optional[typing.List[str]] = None,
+        futr_exog_list: Optional[List[str]] = None,
         verbose_fit: bool = False,
         verbose_predict: bool = False,
     ) -> None:
@@ -83,6 +87,9 @@ class _NeuralForecastAdapter(BaseForecaster):
         self.verbose_predict = verbose_predict
 
         super().__init__()
+
+        # initiate internal variables to avoid AttributeError in future
+        self._freq = None
 
         self.id_col = "unique_id"
         self.time_col = "ds"
@@ -143,7 +150,7 @@ class _NeuralForecastAdapter(BaseForecaster):
         from neuralforecast import NeuralForecast
 
         model = NeuralForecast(
-            [algorithm_instance], self.freq, local_scaler_type=self.local_scaler_type
+            [algorithm_instance], self._freq, local_scaler_type=self.local_scaler_type
         )
 
         return model
@@ -151,7 +158,7 @@ class _NeuralForecastAdapter(BaseForecaster):
     def _fit(
         self: "_NeuralForecastAdapter",
         y: pandas.Series,
-        X: typing.Optional[pandas.DataFrame],
+        X: Optional[pandas.DataFrame],
         fh: ForecastingHorizon,
     ) -> "_NeuralForecastAdapter":
         """Fit forecaster to training data.
@@ -175,13 +182,73 @@ class _NeuralForecastAdapter(BaseForecaster):
         -------
         self : _NeuralForecastAdapter
             reference to self
+
+        Raises
+        ------
+        ValueError
+            When ``freq="auto"`` and cannot be interpreted from ``ForecastingHorizon``
         """
         if not fh.is_all_out_of_sample(cutoff=self.cutoff):
             raise NotImplementedError("in-sample prediction is currently not supported")
 
+        # A. freq is given {use this}
+        # B. freq is auto
+        #     B1. freq is infered from fh {use this}
+        #     B2. freq is not infered from fh
+        #         B2.1. y is date-like {raise exception}
+        #         B2.2. y is not date-like
+        #             B2.2.1 equispaced integers {use diff in time}
+        #             B2.2.2 non-equispaced integers {raise exception}
+
+        # behavior of different indexes when freq="auto"
+        # | Indexes                 | behavior  |
+        # | ----------------------- | --------- |
+        # | PeriodIndex             | B1        |
+        # | PeriodIndex (Missing)   | B1        |
+        # | DatetimeIndex           | B1        |
+        # | DatetimeIndex (Missing) | B2.1      |
+        # | RangeIndex              | B2.2.1    |
+        # | RangeIndex (Missing)    | B2.2.2    |
+        # | Index                   | B2.2.1    |
+        # | Index (Missing)         | B2.2.2    |
+        # | Other                   | unreached |
+
+        if self.freq != "auto":
+            # A
+            self._freq = self.freq
+        else:
+            # B
+            if fh.freq:
+                # B1
+                self._freq = fh.freq
+            else:
+                # B2
+                if isinstance(y.index, pandas.DatetimeIndex):
+                    # B2.1
+                    raise ValueError(
+                        f"Error in {self.__class__.__name__}, "
+                        "could not interpret freq, "
+                        "try passing freq in model initialization "
+                        "or use a valid offset in index"
+                    )
+                else:
+                    # B2.2
+                    diffs = np.unique(np.diff(y.index))
+                    if diffs.shape[0] > 1:
+                        # B2.2.1
+                        raise ValueError(
+                            f"Error in {self.__class__.__name__}, "
+                            "could not interpret freq, "
+                            "try passing integer freq in model initialization "
+                            "or use a valid integer offset in index"
+                        )
+                    else:
+                        # B2.2.2
+                        self._freq = int(diffs[-1])  # converts numpy.int64 to int
+
         train_indices = y.index
         if isinstance(train_indices, pandas.PeriodIndex):
-            train_indices = train_indices.to_timestamp(freq=self.freq)
+            train_indices = train_indices.to_timestamp(freq=self._freq)
 
         train_data = {
             self.id_col: 1,
@@ -207,8 +274,8 @@ class _NeuralForecastAdapter(BaseForecaster):
 
     def _predict(
         self: "_NeuralForecastAdapter",
-        fh: typing.Optional[ForecastingHorizon],
-        X: typing.Optional[pandas.DataFrame],
+        fh: Optional[ForecastingHorizon],
+        X: Optional[pandas.DataFrame],
     ) -> pandas.Series:
         """Forecast time series at future horizon.
 
@@ -252,7 +319,7 @@ class _NeuralForecastAdapter(BaseForecaster):
         if self.futr_exog_list:
             predict_indices = X.index
             if isinstance(predict_indices, pandas.PeriodIndex):
-                predict_indices = predict_indices.to_timestamp(freq=self.freq)
+                predict_indices = predict_indices.to_timestamp(freq=self._freq)
 
             predict_data = {self.id_col: 1, self.time_col: predict_indices.to_numpy()}
 

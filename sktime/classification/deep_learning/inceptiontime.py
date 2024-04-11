@@ -41,6 +41,16 @@ class InceptionTimeClassifier(BaseDeepClassifier):
 
     Adapted from the implementation from Fawaz et. al
     https://github.com/hfawaz/InceptionTime/blob/master/classifiers/inception.py
+
+    Examples
+    --------
+    >>> from sktime.classification.deep_learning import InceptionTimeClassifier
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> X_test, y_test = load_unit_test(split="test")
+    >>> clf = InceptionTimeClassifier()  # doctest: +SKIP
+    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
+    InceptionTimeClassifier(...)
     """
 
     _tags = {
@@ -68,9 +78,6 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         metrics=None,
     ):
         _check_dl_dependencies(severity="error")
-        super().__init__()
-
-        self.verbose = verbose
 
         # predefined
         self.batch_size = batch_size
@@ -86,7 +93,8 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         self.use_bottleneck = use_bottleneck
         self.use_residual = use_residual
         self.verbose = verbose
-        self._is_fitted = False
+
+        super().__init__()
 
         network_params = {
             "n_filters": n_filters,

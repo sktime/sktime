@@ -6,7 +6,7 @@ from sktime.clustering.base import BaseClusterer
 
 
 class TimeSeriesKMeansTslearn(_TslearnAdapter, BaseClusterer):
-    """K-means clustering for time-series data.
+    """K-means clustering for time-series data, from tslearn.
 
     Direct interface to ``tslearn.clustering.TimeSeriesKMeans``.
 
@@ -51,7 +51,7 @@ class TimeSeriesKMeansTslearn(_TslearnAdapter, BaseClusterer):
         parallelization.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See scikit-learns'
-        ``Glossary <https://scikit-learn.org/stable/glossary.html#term-n-jobs>``_
+        `Glossary <https://scikit-learn.org/stable/glossary.html#term-n-jobs>`_
         for more details.
 
     dtw_inertia: bool (default: False)
@@ -102,7 +102,7 @@ class TimeSeriesKMeansTslearn(_TslearnAdapter, BaseClusterer):
     _tags = {
         # packaging info
         # --------------
-        "authors": "fkiraly",
+        "authors": ["rtavenar", "fkiraly"],  # rtavenar credit for interfaced code
         "python_dependencies": "tslearn",
         # estimator type
         # --------------
@@ -177,22 +177,17 @@ class TimeSeriesKMeansTslearn(_TslearnAdapter, BaseClusterer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        # commented since k-means++ does not properly work
-        # errors out with
-        # TypeError:
-        # _kmeans_plusplus() missing 1 required positional argument: 'sample_weight'
-        #
-        # params1 = {
-        #     "n_clusters": 3,
-        #     "max_iter": 3,
-        #     "tol": 0.001,
-        #     "n_init": 2,
-        #     "metric": "euclidean",
-        #     "max_iter_barycenter": 7,
-        #     "verbose": 0,
-        #     "random_state": 42,
-        #     "init": "k-means++",
-        # }
+        params1 = {
+            "n_clusters": 3,
+            "max_iter": 3,
+            "tol": 0.001,
+            "n_init": 2,
+            "metric": "euclidean",
+            "max_iter_barycenter": 7,
+            "verbose": 0,
+            "random_state": 42,
+            "init": "k-means++",
+        }
         params2 = {
             "n_clusters": 2,
             "max_iter": 5,
@@ -204,8 +199,7 @@ class TimeSeriesKMeansTslearn(_TslearnAdapter, BaseClusterer):
             "random_state": None,
             "init": "random",
         }
-        # return [params1, params2]
-        return [params2]
+        return [params1, params2]
 
     def _score(self, X, y=None) -> float:
         return np.abs(self.inertia_)
