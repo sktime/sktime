@@ -369,7 +369,7 @@ class BaseSeriesAnnotator(BaseEstimator):
         >>> from sktime.annotation.base._base import BaseSeriesAnnotator
         >>> y_sparse = np.array([2, 5, 7])  # Indices of change points or anomalies
         >>> BaseSeriesAnnotator.sparse_to_dense(y_sparse)
-        array([0., 0., 1., 0., 0., 1., 0., 1.])
+        array([0, 0, 1, 0, 0, 1, 0, 1], dtype=int32)
 
         TODO: Handle the 2D case for segmentation.
         """
