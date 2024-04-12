@@ -46,6 +46,7 @@ import pandas as pd
 from sktime.base import BaseObject
 from sktime.registry._base_classes import BASE_CLASS_REGISTER
 
+
 class _BaseTag(BaseObject):
     """Base class for all tags."""
 
@@ -72,7 +73,7 @@ class object_type(_BaseTag):
     The ``object_type`` tag of an object is a string, or list of strings,
     specifying the scitpye of the object.
     For instance, a forecaster has scitype `"forecaster"`.
-    
+
     In case of a list, the object is polymorphic, and can assume (class),
     or simultaneously satisfy different interfaces (object).
 
@@ -270,7 +271,6 @@ class python_dependencies(_BaseTag):
         "short_descr": "python dependencies of estimator as str or list of str (PEP 440)",  # noqa: E501
         "user_facing": False,
     }    
-
 
 
 ESTIMATOR_TAG_REGISTER = [
@@ -751,9 +751,7 @@ for _, cl in tag_clses:
     tag_type = cl_tags["tag_type"]
     short_descr = cl_tags["short_descr"]
 
-    ESTIMATOR_TAG_REGISTER.append(
-        (tag_name, parent_type, tag_type, short_descr)
-    )
+    ESTIMATOR_TAG_REGISTER.append((tag_name, parent_type, tag_type, short_descr))
 
 ESTIMATOR_TAG_TABLE = pd.DataFrame(ESTIMATOR_TAG_REGISTER)
 ESTIMATOR_TAG_LIST = ESTIMATOR_TAG_TABLE[0].tolist()
