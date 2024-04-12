@@ -49,10 +49,13 @@ class ClustererFitPredict(ClustererTestScenario):
 
     _tags = {"X_univariate": True, "is_enabled": True}
 
-    args = {
-        "fit": {"X": make_clustering_problem(random_state=RAND_SEED)},
-        "predict": {"X": _make_panel_X(random_state=RAND_SEED)},
-    }
+    @property
+    def args(self):
+        return {
+            "fit": {"X": make_clustering_problem(random_state=RAND_SEED)},
+            "predict": {"X": _make_panel_X(random_state=RAND_SEED)},
+        }
+
     default_method_sequence = ["fit", "predict"]
 
 
