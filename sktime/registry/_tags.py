@@ -192,6 +192,12 @@ ESTIMATOR_TAG_REGISTER = [
         "what is the scitype of y: None (not needed), Primitives, Series, Panel?",
     ),
     (
+        "requires_X",
+        "transformer",
+        "bool",
+        "does this transformer require X to be passed in fit and transform?",
+    ),
+    (
         "requires_y",
         "transformer",
         "bool",
@@ -245,6 +251,12 @@ ESTIMATOR_TAG_REGISTER = [
         "bool",
         "does the classifier implement a non-default predict_proba, "
         "i.e., not just 0/1 probabilities obtained from predict?",
+    ),
+    (
+        "capability:feature_importance",
+        "classifier",
+        "bool",
+        "Can the estimator provide feature importance?",
     ),
     (
         "capability:multivariate",
@@ -449,6 +461,12 @@ ESTIMATOR_TAG_REGISTER = [
         "splitter",
         ("str", ["iloc", "loc", "custom"]),
         "whether split_series uses split (iloc) or split_loc (loc) to split series",
+    ),
+    (
+        "split_type",
+        "splitter",
+        ("str", ["temporal", "instance"]),
+        "whether the splitter splits by time or by instance (panel/hierarchy index)",
     ),
     (
         "capabilities:exact",

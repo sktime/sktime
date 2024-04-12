@@ -417,3 +417,12 @@ def test_naive_sp_greater_1_not_nan(freq):
     null_predictions_count = predictions.isna().sum()
 
     assert null_predictions_count == 0
+
+
+def test_insample_with_numpy_input():
+    """Test insample prediction with numpy input."""
+    y = np.random.random(1000)
+    forecaster = NaiveForecaster()
+    forecaster.fit(y)
+    y_pred = forecaster.predict(np.arange(0, 10))
+    assert len(y_pred) == 10

@@ -215,7 +215,7 @@ html_theme_options = {
     "use_edit_page_button": False,
     "navbar_start": ["navbar-logo"],
     "navbar_center": ["navbar-nav"],
-    "navbar_end": ["navbar-icon-links"],
+    "navbar_end": ["theme-switcher", "navbar-icon-links"],
 }
 html_logo = "images/sktime-logo-text-horizontal.png"
 html_context = {
@@ -226,7 +226,10 @@ html_context = {
 }
 html_favicon = "images/sktime-favicon.ico"
 html_sidebars = {
-    "**": ["search-field.html", "sidebar-nav-bs.html", "sidebar-ethical-ads.html"]
+    "**": ["sidebar-nav-bs.html", "sidebar-ethical-ads.html"],
+    "index": [],
+    "get_started": [],
+    "search": [],
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
@@ -324,13 +327,26 @@ def _make_estimator_overview(app):
         Multiple author names will be separated by a comma,
         with the final name always preceded by "&".
         """
-        if isinstance(author_info, list):
-            if len(author_info) > 1:
-                return ", ".join(author_info[:-1]) + " & " + author_info[-1]
-            else:
-                return author_info[0]
+        if isinstance(author_info, str) and author_info.lower() == "sktime developers":
+            link = (
+                '<a href="https://www.sktime.net/en/stable/about/team.html">'
+                "sktime developers</a>"
+            )
+            return link
+
+        if not isinstance(author_info, list):
+            author_info = [author_info]
+
+        def _add_link(github_id_str):
+            link = '<a href="https://www.github.com/{0}">{0}</a>'.format(github_id_str)
+            return link
+
+        author_info = [_add_link(author) for author in author_info]
+
+        if len(author_info) > 1:
+            return ", ".join(author_info[:-1]) + " & " + author_info[-1]
         else:
-            return author_info
+            return author_info[0]
 
     def _does_not_start_with_underscore(input_string):
         return not input_string.startswith("_")

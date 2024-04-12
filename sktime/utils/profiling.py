@@ -25,7 +25,6 @@ def profile_classifier(
 
     Of each experiment, time spent in fit and time spent in predict is measured.
 
-
     Parameters
     ----------
     est : sktime classifier, BaseClassifier descendant, object or class
