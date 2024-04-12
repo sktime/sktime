@@ -309,7 +309,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
             "drop_last_loader": self.drop_last_loader,
             "optimizer": self.optimizer,
             "optimizer_kwargs": self.optimizer_kwargs,
-            **self._trainer_kwargs,
+            "trainer_kwargs": self._trainer_kwargs,
         }
 
     @classmethod
@@ -673,7 +673,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
             "drop_last_loader": self.drop_last_loader,
             "optimizer": self.optimizer,
             "optimizer_kwargs": self.optimizer_kwargs,
-            **self._trainer_kwargs,
+            "trainer_kwargs": self._trainer_kwargs,
         }
 
     @classmethod
