@@ -134,7 +134,7 @@ class maintainers(_BaseTag):
         "tag_name": "maintainers",
         "parent_type": "object",
         "tag_type": ("list", "str"),
-        "short_descr": "current maintainers of the object, each maintainer a GitHub handle",
+        "short_descr": "current maintainers of the object, each maintainer a GitHub handle",  # noqa: E501
         "user_facing": True,
     }
 
