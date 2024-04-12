@@ -63,6 +63,7 @@ class _BaseTag(BaseObject):
 # General tags, for all objects
 # -----------------------------
 
+
 class object_type(_BaseTag):
     """Scientific type of the object.
 
@@ -270,7 +271,7 @@ class python_dependencies(_BaseTag):
         "tag_type": ("list", "str"),
         "short_descr": "python dependencies of estimator as str or list of str (PEP 440)",  # noqa: E501
         "user_facing": False,
-    }    
+    }
 
 
 ESTIMATOR_TAG_REGISTER = [
