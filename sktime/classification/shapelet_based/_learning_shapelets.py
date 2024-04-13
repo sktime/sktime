@@ -64,9 +64,9 @@ class ShapeletLearningClassifier(_TslearnAdapter, BaseClassifier):
     shapelets_ : numpy.ndarray of objects, each object being a time series
         Set of time-series shapelets.
 
-    shapelets_as_time_series_ : numpy.ndarray of shape (n_shapelets, sz_shp, d) where `sz_shp` is the maximum of all shapelet sizes
-        Set of time-series shapelets formatted as a ``tslearn`` time series
-        dataset.
+    shapelets_as_time_series_ : numpy.ndarray of shape (n_shapelets, sz_shp, d)
+        where ``sz_shp`` is the maximum of all shapelet sizes
+        Set of time-series shapelets formatted as a ``tslearn`` time series dataset.
 
     transformer_model_ : keras.Model
         Transforms an input dataset of timeseries into distances to the
