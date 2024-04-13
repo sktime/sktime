@@ -67,6 +67,15 @@ class _BaseTag(BaseObject):
 class object_type(_BaseTag):
     """Scientific type of the object.
 
+    Typing tag for all objects in ``sktime``.
+
+    - String name: ``"object_type"``
+    - Public metadata tag
+    - Values:  string or list of strings
+    - Example: ``"forecaster"``
+    - Example 2: ``["transformer", "clusterer"]`` (polymorphic object)
+    - Default: ``"object"``
+
     In ``sktime``, every object has a scientific type (scitype),
     determining the type of object and unified interface,
     e.g., forecaster, time series classifier, time series regressor.
@@ -103,6 +112,7 @@ class maintainers(_BaseTag):
 
     Part of packaging metadata for the object.
 
+    - String name: ``"maintainers"``
     - Public metadata tag
     - Values:  string or list of strings
     - Example: ``["benheid", "fkiraly", "yarnabrina"]``
@@ -144,6 +154,7 @@ class authors(_BaseTag):
 
     Part of packaging metadata for the object.
 
+    - String name: ``"authors"``
     - Public metadata tag
     - Values:  string or list of strings
     - Example: ``["benheid", "fkiraly", "yarnabrina"]``
@@ -184,6 +195,7 @@ class python_version(_BaseTag):
 
     Part of packaging metadata for the object.
 
+    - String name: ``"python_version"``
     - Private tag, developer and framework facing
     - Values: PEP 440 compliant version specifier
     - Example: ``">=3.10"``
@@ -228,6 +240,7 @@ class python_dependencies(_BaseTag):
 
     Part of packaging metadata for the object.
 
+    - String name: ``"python_dependencies"``
     - Private tag, developer and framework facing
     - Values: str or list of str, each str a PEP 440 compliant dependency specifier
     - Example: ``"numpy>=1.20.0"``
@@ -274,13 +287,174 @@ class python_dependencies(_BaseTag):
     }
 
 
+# Forecasters
+# -----------
+
+
+class capability__exogeneous(_BaseTag):
+    """Capability: the forecaster can use exogeneous data.
+
+    The tag is currently named ``ignores-exogeneous-X``, and will be renamed.
+
+    ``False`` = does use exogeneous data, ``True`` = does not use exogeneous data.
+
+    - String name: ``"ignores-exogeneous-X"``
+    - Public capability tag
+    - Values: True/False
+    - Example: ``True``
+    - Default: ``False``
+    - Alias: ``capability:exogeneous`` (currently not used)
+
+    Exogeneous data are additional time series,
+    that can be used to improve forecasting accuracy.
+
+    If the forecaster uses exogeneous data (``ignore-exogeneous-X=False``),
+    the ``X`` parmameter in ``fit``, ``predict``, and other methods
+    can be used to pass exogeneous data to the forecaster.
+
+    If the ``X-y-must-have-same-index`` tag is ``True``,
+    then such data must always have an index that contains that of the target series,
+    i.e., ``y`` in ``fit``, or the indices specified by ``fh`` in ``predict``.
+
+    If the tag is ``False``, the forecaster does not make use of exogeneous data.
+    ``X`` parameters can still be passed to methods, to ensure a uniform interface,
+    but the data will be ignored,
+    i.e., not used in the internal logic of the forecaster.
+
+    """
+
+    _tags = {
+        "tag_name": "ignores-exogeneous-X",
+        "parent_type": "forecaster",
+        "tag_type": "bool",
+        "short_descr": "does forecaster make use of exogeneous data?",
+        "user_facing": True,
+    }
+
+
+class capability__insample(_BaseTag):
+    """Capability: the forecaster can make in-sample predictions.
+
+    - String name: ``"capability:insample"``
+    - Public capability tag
+    - Values: True/False
+    - Example: ``True``
+    - Default: ``False``
+
+    If the tag is ``True``, the forecaster can make in-sample predictions,
+    i.e., predict the target series for time points that are part of the training set.
+
+    In-sample predictions are useful for model evaluation,
+    and for making predictions for the training set itself.
+
+    Mechanically, in-sample predictions are made by calling the ``predict`` method
+    and specifying a forecasting horizon ``fh`` such that at least one index
+    is queried that is equal or earlier to the latest index in the training set,
+    i.e., any data previously passed in ``fit`` or ``update``.
+
+    If the tag is ``False``, the forecaster cannot make in-sample predictions,
+    and will raise an error if an in-sample prediction is attempted.
+    """
+
+    _tags = {
+        "tag_name": "capability:insample",
+        "parent_type": "forecaster",
+        "tag_type": "bool",
+        "short_descr": "can the forecaster make in-sample predictions?",
+        "user_facing": True,
+    }
+
+
+class capability__pred_int(_BaseTag):
+    """Capability: the forecaster can make probabilistic or interval forecasts.
+
+    - String name: ``"capability:pred_int"``
+    - Public capability tag
+    - Values: True/False
+    - Example: ``True``
+    - Default: ``False``
+
+    ``sktime`` supports a range of ways to make probabilistic type forecasts,
+    via the following methods of any forecaster:
+
+    * ``predict_interval``: prediction intervals
+    * ``predict_quantiles``: quantile forecasts
+    * ``predict_var``: variance forecasts
+    * ``predict_proba``: distribution forecasts
+
+    If the ``capability:pred_int`` tag is ``True``, the forecaster can make
+    probabilistic type forecasts using all of the above methods.
+
+    Even if the forecaster natively implements only one of the above methods,
+    all are available to the user:
+
+    * interval and quantile forecasts are of equivalent information,
+      with intervals of a coverage assumed symmetric
+    * a forecaster with available distribution forecasts obtains
+      prediction intervals and quantile forecasts from the distribution
+    * a forecaster with available variance forecasts assumes a normal distribution
+      around the ``predict`` output as mean,
+      and derives prediction intervals and quantiles
+      from that normal distribution
+    * a forecaster with available interval or quantile uses the IQR to
+      to derive variance forecasts under normality assumptions.
+      Users should note that this may lead to a distribution forecast which
+      is not consistent with interval or quantile forecasts.
+
+    If the tag is ``False``, the forecaster cannot make probabilistic forecasts,
+    and will raise an error if a probabilistic forecast is attempted.
+    """
+
+    _tags = {
+        "tag_name": "capability:pred_int",
+        "parent_type": "forecaster",
+        "tag_type": "bool",
+        "short_descr": "does the forecaster implement predict_interval or predict_quantiles?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
+class capability__pred_int__insample(_BaseTag):
+    """Capability: the forecaster can make in-sample probabilistic forecasts.
+
+    Only relevant if the ``capability:pred_int`` tag is ``True``,
+    i.e., the forecaster can make probabilistic forecasts.
+
+    - String name: ``"capability:pred_int:insample"``
+    - Public capability tag
+    - Values: True/False
+    - Example: ``False``
+    - Default: ``True``
+
+    If the tag is ``True``, the forecaster can make
+    its probabilistic forecasts in-sample, i.e.,
+    ``predict_interval``, ``predict_quantiles``, ``predict_var``,
+    or ``predict_proba`` can be called with a forecasting horizon ``fh``
+    that includes in-sample indices, i.e., indices that are not later than
+    the latest index in the training set.
+
+    If the tag ``capability:pred_int`` is ``False``,
+    then the tag ``capability:pred_int:insample`` is irrelevant,
+    as the forecaster cannot make probabilistic forecasts at all.
+    In such a case, the tag ``capability:pred_int:insample`` should be ignored.
+
+    If the tag ``capability:pred_int`` is ``True``,
+    and is the tag ``capability:pred_int:insample`` is ``False``,
+    the forecaster can make probabilistic forecasts that are out-of-sample,
+    but cannot make in-sample probabilistic forecasts,
+    and will raise an error if an in-sample probabilistic forecast is attempted.
+    """
+
+    _tags = {
+        "tag_name": "capability:pred_int:insample",
+        "parent_type": "forecaster",
+        "tag_type": "bool",
+        "short_descr": "can the forecaster make in-sample predictions in predict_interval/quantiles?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
 ESTIMATOR_TAG_REGISTER = [
-    (
-        "ignores-exogeneous-X",
-        "forecaster",
-        "bool",
-        "does forecaster ignore exogeneous data (X)?",
-    ),
     (
         "univariate-only",
         "transformer",
@@ -448,28 +622,10 @@ ESTIMATOR_TAG_REGISTER = [
         "whether inverse_transform is expected to be an exact inverse to transform",
     ),
     (
-        "capability:pred_int",
-        "forecaster",
-        "bool",
-        "does the forecaster implement predict_interval or predict_quantiles?",
-    ),
-    (
         "capability:pred_var",
         "forecaster",
         "bool",
         "does the forecaster implement predict_variance?",
-    ),
-    (
-        "capability:insample",
-        "forecaster",
-        "bool",
-        "can the forecaster make in-sample predictions?",
-    ),
-    (
-        "capability:pred_int:insample",
-        "forecaster",
-        "bool",
-        "can the forecaster make in-sample predictions in predict_interval/quantiles?",
     ),
     (
         "capability:predict_proba",
