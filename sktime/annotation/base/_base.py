@@ -157,11 +157,10 @@ class BaseSeriesAnnotator(BaseEstimator):
             Annotations for sequence X. The returned annotations will be in the dense
             format.
         """
-        self.check_is_fitted()
-
-        X = check_series(X)
-
-        Y = self.predict(X=X)
+        if self.task == "anomaly_detection" or self.task == "change_point_detection":
+            Y = self.predict_points(X)
+        elif self.task == "segmentation":
+            Y = self.predict_segments(X)
 
         return self.sparse_to_dense(Y)
 
