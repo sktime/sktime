@@ -228,6 +228,12 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
         "test_multiprocessing_idempotent",
     ],
+    # ShapeletLearningClassifier is non-pickleable due to DL dependencies
+    "ShapeletTransform": [
+        "test_persistence_via_pickle",
+        "test_save_estimators_to_file",
+        "test_fit_idempotent",
+    ],
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish
