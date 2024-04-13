@@ -63,3 +63,26 @@ These tags are typically used for typing, packaging and documentation purposes.
     authors
     python_version
     python_dependencies
+
+
+Forecaster tags
+---------------
+
+
+This section lists tags applying to forecasters.
+These tags are used to describe capabilities, properties, and behavior of forecasters.
+
+The list also includes some developer facing tags that are used to
+control internal behavior of the forecaster.
+
+.. currentmodule:: sktime.registry._tags
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+    :nosignatures:
+
+    capability__exogeneous
+    capability__insample
+    capability__pred_int
+    capability__pred_int__insample
