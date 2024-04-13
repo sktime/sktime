@@ -177,7 +177,9 @@ class _NeuralForecastAdapter(BaseForecaster):
                 f" not found in the __init__ method "
                 f"from {Trainer}. "
                 f"Check your pytorch_lightning version "
-                f"to find out the right API parameters."
+                f"to find out the right API parameters.",
+                obj=self,
+                stacklevel=2,
             )
             filter_params["trainer_kwargs"].pop(invalid_param)
 
@@ -188,7 +190,9 @@ class _NeuralForecastAdapter(BaseForecaster):
                     f" not found in the __init__ method "
                     f"from {self.algorithm_class}. "
                     f"Check your neuralforecast version "
-                    f"to find out the right API parameters."
+                    f"to find out the right API parameters.",
+                    obj=self,
+                    stacklevel=2,
                 )
             filter_params.pop(unsupported_param)
 

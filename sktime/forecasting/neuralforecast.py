@@ -336,6 +336,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
 
         try:
             _check_soft_dependencies("neuralforecast", severity="error")
+            _check_soft_dependencies("torch", severity="error")
         except ModuleNotFoundError:
             params = [
                 {
@@ -358,6 +359,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
             ]
         else:
             from neuralforecast.losses.pytorch import SMAPE, QuantileLoss
+            from torch.optim import Adam
 
             params = [
                 {
@@ -378,6 +380,8 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
                     "max_steps": 4,
                     "val_check_steps": 2,
                     "trainer_kwargs": {"logger": False},
+                    "optimizer": Adam,
+                    "optimizer_kwargs": {"lr": 0.001},
                 },
             ]
 
@@ -696,6 +700,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
 
         try:
             _check_soft_dependencies("neuralforecast", severity="error")
+            _check_soft_dependencies("torch", severity="error")
         except ModuleNotFoundError:
             params = [
                 {
@@ -718,6 +723,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
             ]
         else:
             from neuralforecast.losses.pytorch import SMAPE, QuantileLoss
+            from torch.optim import Adam
 
             params = [
                 {
@@ -738,6 +744,8 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
                     "max_steps": 4,
                     "val_check_steps": 2,
                     "trainer_kwargs": {"logger": False},
+                    "optimizer": Adam,
+                    "optimizer_kwargs": {"lr": 0.001},
                 },
             ]
 
