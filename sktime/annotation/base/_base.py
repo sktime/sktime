@@ -348,11 +348,11 @@ class BaseSeriesAnnotator(BaseEstimator):
 
     @staticmethod
     def sparse_to_dense(y_sparse):
-        """Convert the sparse output from the annotator to a dense format.
+        """Convert the sparse output from an annotator to a dense format.
 
         Parameters
         ----------
-        y_sparse : nd.ndarray
+        y_sparse : np.ndarray
             If `y_sparse` is a 1D array then it should contain the index locations of
             changepoints/anomalies.
 
@@ -360,14 +360,14 @@ class BaseSeriesAnnotator(BaseEstimator):
         -------
         np.ndarray
             If `y_sparse` is a 1D array of changepoint/anomaly indices then a 1D array
-            of 0's and 1's is returned. The array is one at the indices of the
+            of 0's and 1's is returned. The array is 1 at the indices of the
             anomalies/changepoints.
 
         Examples
         --------
         >>> import numpy as np
         >>> from sktime.annotation.base._base import BaseSeriesAnnotator
-        >>> y_sparse = np.array([2, 5, 7])  # Indices of change points or anomalies
+        >>> y_sparse = np.array([2, 5, 7])  # Indices of changepoints/anomalies
         >>> BaseSeriesAnnotator.sparse_to_dense(y_sparse)
         array([0, 0, 1, 0, 0, 1, 0, 1], dtype=int32)
 
