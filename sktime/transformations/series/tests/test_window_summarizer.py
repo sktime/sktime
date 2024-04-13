@@ -196,7 +196,7 @@ def test_wrong_column():
     return Xt
 
 def count_unique(x):
-  return len(np.unique(x))
+    return len(np.unique(x))
 kwargs_custom_function = {
     "lag_feature": {
         count_unique: [[1, 2]],
