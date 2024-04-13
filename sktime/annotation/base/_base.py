@@ -346,6 +346,86 @@ class BaseSeriesAnnotator(BaseEstimator):
 
         return self
 
+    def predict_segments(self, X):
+        """Predict segments on test/deployment data.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Data to annotate, time series.
+
+        Returns
+        -------
+        Y : np.ndarray
+            2D array containing the segments for X. The first column contains the labels
+            of the segments, the second column contains the starting indexes of the
+            segments.
+        """
+        if self.task == "anomaly_detection":
+            raise RuntimeError(
+                "Anomaly detection annotators should not be used for segmentation."
+            )
+        self.check_is_fitted()
+        X = check_series(X)
+
+        if self.task == "change_point_detection":
+            return self.segments_to_change_points(self.predict_points(X))
+        elif self.task == "segmentation":
+            return self._predict_segments(X)
+
+    def predict_points(self, X):
+        """Predict changepoints/anomalies on test/deployment data.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Data to annotate, time series.
+
+        Returns
+        -------
+        Y : np.ndarray
+            1D array containing the indexes of the changepoints/anomalies in X.
+        """
+        self.check_is_fitted()
+        X = check_series(X)
+
+        if self.task == "anomaly_detection" or self.task == "change_point_detection":
+            return self._predict_points(X)
+        elif self.task == "segmentation":
+            return self.segments_to_change_points(self._predict_segments(X))
+
+    def _predict_segments(self, X):
+        """Predict segments on test/deployment data.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Data to annotate, time series.
+
+        Returns
+        -------
+        Y : np.ndarray
+            2D array containing the segments for X. The first column contains the labels
+            of the segments, the second column contains the starting indexes of the
+            segments.
+        """
+        raise NotImplementedError("abstract method")
+
+    def _predict_points(self, X):
+        """Predict changepoints/anomalies on test/deployment data.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Data to annotate, time series.
+
+        Returns
+        -------
+        Y : np.ndarray
+            1D array containing the indexes of the changepoints/anomalies in X.
+        """
+        raise NotImplementedError("abstract method")
+
     @staticmethod
     def sparse_to_dense(y_sparse):
         """Convert the sparse output from an annotator to a dense format.
