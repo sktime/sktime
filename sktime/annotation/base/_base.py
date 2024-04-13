@@ -379,3 +379,48 @@ class BaseSeriesAnnotator(BaseEstimator):
             return y_dense
         else:
             raise NotImplementedError("Cannot handle the 2D case yet.")
+
+    @staticmethod
+    def dense_to_sparse(y_dense):
+        """Convert the dense output from an annotator to a dense format.
+
+        Parameters
+        ----------
+        y_dense : np.ndarray
+            The array must be 1D.
+            * If `y_sparse` contains only 1's and 0's the 1's represent change points
+              or anomalies
+            * If `y_sparse` contains only contains integers greater than 0, it is an
+              an array of segments.
+
+        Returns
+        -------
+        np.ndarray
+            * If `y_sparse` is an array of changepoints/anomalies, the returned array
+              will be 1D and contains the indexes of the the changepoints/anomalies
+            * If `y_sparse` is an array of segments, a 2D array is returned. The first
+              column contains the labels of the segments, the second column contains
+              the starting points of the segments.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> from sktime.annotation.base._base import BaseSeriesAnnotator
+        >>> change_points = np.array([1, 0, 0, 1, 1, 0, 1])
+        >>> BaseSeriesAnnotator.dense_to_sparse(change_points)
+        [1, 2, 5]
+        >>> segments = np.array([1, 2, 2, 3, 3, 2])
+        array([[1, 0], [2, 1], [3, 3], [2, 5]], dtype=int32)
+        [[1 0]
+        [2 1]
+        [3 3]
+        [2 5]]
+        """
+        if y_dense.min() == 0:
+            return np.where(y_dense == 0)[0]
+        elif y_dense.min() == 1:
+            # Prepend zero so the first point is always the start of a segment
+            diff = np.diff(y_dense, prepend=0)
+            segment_start_indexes = np.where(diff != 0)[0]
+            segment_labels = y_dense[diff.astype(bool)]
+            return np.stack([segment_labels, segment_start_indexes]).T
