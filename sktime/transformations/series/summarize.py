@@ -500,9 +500,9 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
                 ).apply(summarizer, raw=True)
             )
         if bfill is False:
-            feat = Z.shift(lag)
+            feat = feat.shift(lag)
         else:
-            feat = Z.shift(lag).bfill()
+            feat = feat.shift(lag).bfill()
 
         feat = pd.DataFrame(feat)
     if bfill is True:
