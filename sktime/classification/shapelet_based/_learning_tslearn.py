@@ -3,7 +3,7 @@ from sktime.base.adapters._tslearn import _TslearnAdapter
 from sktime.classification.base import BaseClassifier
 
 
-class ShapeletLearningClassifier(_TslearnAdapter, BaseClassifier):
+class ShapeletLearningClassifierTslearn(_TslearnAdapter, BaseClassifier):
     """Learning Time Series Shapelets Classifier, from tslearn.
 
     Direct interface to ``tslearn.shapelets.shapelets.LearningShapelets``.
