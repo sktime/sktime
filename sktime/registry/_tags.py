@@ -197,7 +197,7 @@ class python_version(_BaseTag):
     - ``"python_dependencies"``: list of required Python packages (PEP 440)
     - ``"python_dependencies_alias"``: alias for package names,
       if different from import names
-    - ``"env_marker"`: environment marker for the object (PEP 508)
+    - ``"env_marker"``: environment marker for the object (PEP 508)
     - ``"requires_cython"``: whether the object requires a C compiler present
 
     The ``python_version`` tag of an object is a PEP 440 compliant version specifier
