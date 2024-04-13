@@ -500,12 +500,11 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
                 ).apply(summarizer, raw=True)
             )
         else:
-            ValueError("The provided summarizer is not callable. Ensure that the summarizer argument is a function or an object that implements the __call__ method.")
-        
-        if bfill == True:
-          feat = feat.shift(lag).bfill()
+            ValueError("The provided summarizer is not callable.")
+        if bfill is True:
+            feat = feat.shift(lag).bfill()
         else:
-          feat = feat.shift(lag)
+            feat = feat.shift(lag)
 
         feat = pd.DataFrame(feat)
 
