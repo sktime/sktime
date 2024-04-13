@@ -408,13 +408,13 @@ class BaseSeriesAnnotator(BaseEstimator):
         >>> from sktime.annotation.base._base import BaseSeriesAnnotator
         >>> change_points = np.array([1, 0, 0, 1, 1, 0, 1])
         >>> BaseSeriesAnnotator.dense_to_sparse(change_points)
-        [1, 2, 5]
+        array([1, 2, 5])
         >>> segments = np.array([1, 2, 2, 3, 3, 2])
-        array([[1, 0], [2, 1], [3, 3], [2, 5]], dtype=int32)
-        [[1 0]
-        [2 1]
-        [3 3]
-        [2 5]]
+        >>> BaseSeriesAnnotator.dense_to_sparse(segments)
+        array([[1, 0],
+               [2, 1],
+               [3, 3],
+               [2, 5]])
         """
         if y_dense.min() == 0:
             return np.where(y_dense == 0)[0]
