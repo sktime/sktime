@@ -457,3 +457,23 @@ class BaseSeriesAnnotator(BaseEstimator):
             y_sparse = np.insert(y_sparse, 0, 0)
         labels = np.arange(1, len(y_sparse) + 1)
         return np.stack([labels, y_sparse]).T
+
+    @staticmethod
+    def segments_to_change_points(y_sparse):
+        """Convert 2D array of segments to a 1D array of change points.
+
+        Parameters
+        ----------
+        y_sparse : np.ndarray
+            A 2D array of segments. The first column contains the labels of the
+            segments and the second column contains the indexes of the starting points
+            of the segments.
+
+        Returns
+        -------
+        np.ndarray
+            A 1D array containing the indexes of the change points in `y_sparse`.
+        """
+        # The first segment should start at index 0 which is not a change point so we
+        # ignore it
+        return y_sparse[1:, 1]
