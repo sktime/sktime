@@ -487,6 +487,7 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
                     .bfill()
                 )
     else:
+        feat = Z
         if isinstance(Z, pd.core.groupby.generic.SeriesGroupBy) and callable(
             summarizer
         ):
@@ -499,14 +500,15 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
                     window=window_length, min_periods=window_length
                 ).apply(summarizer, raw=True)
             )
-        if bfill is False:
-            feat = feat.shift(lag)
         else:
-            feat = feat.shift(lag).bfill()
+            ValueError("The provided summarizer is not callable. Ensure that the summarizer argument is a function or an object that implements the __call__ method.")
+        
+        if bfill == True:
+          feat = feat.shift(lag).bfill()
+        else:
+          feat = feat.shift(lag)
 
         feat = pd.DataFrame(feat)
-    if bfill is True:
-        feat = feat.bfill()
 
     if callable(summarizer):
         name = summarizer.__name__

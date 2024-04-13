@@ -194,3 +194,30 @@ def test_wrong_column():
     transformer = WindowSummarizer(target_cols=["dummy"])
     Xt = transformer.fit_transform(X_ll_train)
     return Xt
+
+def count_unique(x):
+  return len(np.unique(x))
+kwargs_custom_function = {
+    "lag_feature": {
+        count_unique: [[1, 2]],
+    }
+
+}
+@pytest.mark.parametrize(
+    "kwargs, column_names, y, x_transform, target_cols, truncate",
+    [
+        (kwargs_custom_function, ["a_count_unique_1_2"], y_pd, pd.DataFrame({"a_count_unique_1_2": [np.NAN, np.NAN, 2.0, 2.0]}), None, None),
+    ]
+)
+def test_windowsummarizer_with_output(kwargs, column_names, y, x_transform, target_cols, truncate):
+    """Test x_transform match kwargs arguments."""
+    if kwargs is not None:
+        transformer = WindowSummarizer(
+            **kwargs, target_cols=target_cols, truncate=truncate
+        )
+    else:
+        transformer = WindowSummarizer(target_cols=target_cols, truncate=truncate)
+    Xt = transformer.fit_transform(y)
+    pd.testing.assert_frame_equal(Xt, x_transform)
+   
+
