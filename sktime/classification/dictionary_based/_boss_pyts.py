@@ -108,7 +108,7 @@ class BOSSVSClassifierPyts(_PytsAdapter, BaseClassifier):
         "capability:unequal_length": False,
         "capability:missing_values": True,
         "capability:predict_proba": True,
-        "classifier_type": "distance",
+        "classifier_type": "dictionary",
     }
 
     # defines the name of the attribute containing the pyts estimator
