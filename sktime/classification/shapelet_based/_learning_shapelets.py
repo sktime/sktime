@@ -162,6 +162,7 @@ class ShapeletLearningClassifier(_TslearnAdapter, BaseClassifier):
         params2 = {
             "max_iter": 100,
             "batch_size": 128,
+            "optimizer": "adam",
             "shapelet_length": 0.1,
             "scale": True,
         }
