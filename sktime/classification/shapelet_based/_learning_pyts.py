@@ -209,7 +209,7 @@ class ShapeletLearningClassifierPyts(_PytsAdapter, BaseClassifier):
         penalty="l2",
         tol=0.001,
         C=1000,
-        learning_rate=1.,
+        learning_rate=1.0,
         max_iter=1000,
         multi_class="multinomial",
         alpha=-100,
