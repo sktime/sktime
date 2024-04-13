@@ -451,7 +451,7 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
     """
     lag = window[0]
     window_length = window[1]
-
+    feat = Z
     if summarizer in pd_rolling:
         if isinstance(Z, pd.core.groupby.generic.SeriesGroupBy):
             if bfill is False:
@@ -487,7 +487,7 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
                     .bfill()
                 )
     else:
-        feat = Z
+      
         if isinstance(Z, pd.core.groupby.generic.SeriesGroupBy) and callable(
             summarizer
         ):
