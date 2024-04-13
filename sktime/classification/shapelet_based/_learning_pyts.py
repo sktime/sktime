@@ -11,16 +11,31 @@ from sktime.classification.base import BaseClassifier
 class ShapeletLearningClassifierPyts(_PytsAdapter, BaseClassifier):
     """Learning Shapelets algorithm, from pyts.
 
-    Direct interface to ``pyts.classification.LearningShapelets``,
-    author of the interfaced class is ``johannfaouzi``.
+    Direct interface to ``pyts.classification.LearningShapelets`` or
+    ``pyts.classification.LearningShapeletsCrossEntropy``,
+    author of the interfaced classes is ``johannfaouzi``.
+
+    Dispatches to ``LearningShapelets`` or ``LearningShapeletsCrossEntropy``,
+    depending on the value of the ``loss`` parameter.
 
     This estimator consists of two steps: computing the distances between the
-    shapelets and the time series, then computing a logistic regression using
-    these distances as features. This algorithm learns the shapelets as well as
-    the coefficients of the logistic regression.
+    shapelets and the time series, then carrying out empirical risk minimization
+    using these distances as linear features.
+    The risk is minimized using gradient descent; for ``loss="softmax"``,
+    this is mathematically equivalent to multinomial logistic regression
+    on shapelet features.
+    This algorithm learns the shapelets as well as
+    the coefficients of the classification.
 
     Parameters
     ----------
+    loss : str (default = 'softmax'), "softmax" or "crossentropy"
+        Loss function to use.
+        If "softmax", the loss function is the softmax function (logistic loss).
+        Dispatches to ``LearningShapelets``.
+        If "crossentropy", the loss function is the cross-entropy loss.
+        Dispatches to ``LearningShapeletsCrossEntropy``.
+
     n_shapelets_per_size : int or float (default = 0.2)
         Number of shapelets per size. If float, it represents
         a fraction of the number of timestamps and the number
@@ -60,6 +75,7 @@ class ShapeletLearningClassifierPyts(_PytsAdapter, BaseClassifier):
 
     multi_class : {'multinomial', 'ovr', 'ovo'} (default = 'multinomial')
         Strategy for multiclass classification.
+        Only used if ``loss="softmax"``. The options are as follows:
         'multinomial' stands for multinomial cross-entropy loss.
         'ovr' stands for one-vs-rest strategy.
         'ovo' stands for one-vs-one strategy.
@@ -85,8 +101,8 @@ class ShapeletLearningClassifierPyts(_PytsAdapter, BaseClassifier):
         as ``n_samples / (n_classes * np.bincount(y))``.
 
     n_jobs : None or int (default = None)
-        The number of jobs to use for the computation. Only used if
-        ``multi_class`` is 'ovr' or 'ovo'.
+        The number of jobs to use for the computation.
+        Only used if ``loss="softmax"`` and ``multi_class`` is "ovr" or "ovo".
 
     verbose : int (default = 0)
         Controls the verbosity. It must be a non-negative integer.
@@ -101,9 +117,6 @@ class ShapeletLearningClassifierPyts(_PytsAdapter, BaseClassifier):
 
     Attributes
     ----------
-    classes_ : array, shape = (n_classes,)
-        An array of class labels known to the classifier.
-
     shapelets_ : array shape = (n_tasks, n_shapelets)
         Learned shapelets. Each element of this array is a learned
         shapelet.
@@ -159,13 +172,37 @@ class ShapeletLearningClassifierPyts(_PytsAdapter, BaseClassifier):
 
         should import and return pyts class
         """
-        from pyts.classification import LearningShapelets
+        if self.loss == "crossentropy":
+            from pyts.classification import LearningShapeletsCrossEntropy
 
-        return LearningShapelets
+            return LearningShapeletsCrossEntropy
+        elif self.loss == "softmax":
+            from pyts.classification import LearningShapelets
 
+            return LearningShapelets
+        else:
+            raise ValueError(f"Unknown loss function: {self.loss}")
+
+    def _get_pyts_object(self):
+        """Abstract method to initialize pyts object.
+
+        The default initializes result of _get_pyts_class
+        with self.get_params.
+        """
+        cls = self._get_pyts_class()
+        params = self.get_params()
+        params_inner = params.copy()
+        params_inner.pop("loss")
+
+        if self.loss == "crossentropy":
+            params_inner.pop("multi_class")
+            params_inner.pop("n_jobs")
+
+        return cls(**params_inner)
 
     def __init__(
             self,
+            loss="softmax",  # "softmax" or "crossentropy
             n_shapelets_per_size=0.2,
             min_shapelet_length=0.1,
             shapelet_scale=3,
@@ -184,6 +221,7 @@ class ShapeletLearningClassifierPyts(_PytsAdapter, BaseClassifier):
             random_state=None,
         ):
 
+        self.loss = loss
         self.n_shapelets_per_size = n_shapelets_per_size
         self.min_shapelet_length = min_shapelet_length
         self.shapelet_scale = shapelet_scale
@@ -225,6 +263,7 @@ class ShapeletLearningClassifierPyts(_PytsAdapter, BaseClassifier):
         """
         params1 = {}
         params2 = {
+            "loss": "softmax",
             "n_shapelets_per_size": 0.3,
             "min_shapelet_length": 0.11,
             "shapelet_scale": 4,
@@ -237,4 +276,17 @@ class ShapeletLearningClassifierPyts(_PytsAdapter, BaseClassifier):
             "alpha": -99,
             "fit_intercept": False,
         }
-        return [params1, params2]
+        params3 = {
+            "loss": "crossentropy",
+            "n_shapelets_per_size": 0.3,
+            "min_shapelet_length": 0.11,
+            "shapelet_scale": 4,
+            "penalty": "l1",
+            "tol": 0.01,
+            "C": 100,
+            "learning_rate": 0.9,
+            "max_iter": 500,
+            "alpha": -99,
+            "fit_intercept": False,
+        }
+        return [params1, params2, params3]
