@@ -2765,6 +2765,17 @@
         "code",
         "doc"
       ]
+    },
+    {
+      "login": "toandaominh1997",
+      "name": "Henry Dao",
+      "avatar_url": "https://avatars.githubusercontent.com/u/18400648?v=4",
+      "profile": "https://github.com/toandaominh1997",
+      "contributions": [
+        "bug",
+        "code",
+        "test"
+      ]
     }
   ]
 }
