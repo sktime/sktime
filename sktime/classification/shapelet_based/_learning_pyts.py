@@ -201,26 +201,25 @@ class ShapeletLearningClassifierPyts(_PytsAdapter, BaseClassifier):
         return cls(**params_inner)
 
     def __init__(
-            self,
-            loss="softmax",  # "softmax" or "crossentropy
-            n_shapelets_per_size=0.2,
-            min_shapelet_length=0.1,
-            shapelet_scale=3,
-            penalty="l2",
-            tol=0.001,
-            C=1000,
-            learning_rate=1.,
-            max_iter=1000,
-            multi_class="multinomial",
-            alpha=-100,
-            fit_intercept=True,
-            intercept_scaling=1.0,
-            class_weight=None,
-            n_jobs=None,
-            verbose=0,
-            random_state=None,
-        ):
-
+        self,
+        loss="softmax",  # "softmax" or "crossentropy
+        n_shapelets_per_size=0.2,
+        min_shapelet_length=0.1,
+        shapelet_scale=3,
+        penalty="l2",
+        tol=0.001,
+        C=1000,
+        learning_rate=1.,
+        max_iter=1000,
+        multi_class="multinomial",
+        alpha=-100,
+        fit_intercept=True,
+        intercept_scaling=1.0,
+        class_weight=None,
+        n_jobs=None,
+        verbose=0,
+        random_state=None,
+    ):
         self.loss = loss
         self.n_shapelets_per_size = n_shapelets_per_size
         self.min_shapelet_length = min_shapelet_length
