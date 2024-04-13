@@ -424,3 +424,36 @@ class BaseSeriesAnnotator(BaseEstimator):
             segment_start_indexes = np.where(diff != 0)[0]
             segment_labels = y_dense[diff.astype(bool)]
             return np.stack([segment_labels, segment_start_indexes]).T
+
+    @staticmethod
+    def change_points_to_segments(y_sparse):
+        """Convert an array of change point indexes to segments.
+
+        Parameters
+        ----------
+        y_sparse : np.ndarray
+            A 1D array containing the indexes of change points.
+
+        Returns
+        -------
+        np.ndarray
+            A 2D array where the first column columns that label of segements and the
+            second column contains the starting indexes of the change points.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> from sktime.annotation.base._base import BaseSeriesAnnotator
+        >>> change_points = np.array([1, 2, 5])
+        >>> BaseSeriesAnnotator.change_points_to_segments(change_points)
+        array([[1, 0],
+               [2, 1],
+               [3, 2],
+               [4, 5]])
+        """
+        if y_sparse[0] != 0:
+            # Insert a 0 at the start so the points before the first anomaly are
+            # considered a segment
+            y_sparse = np.insert(y_sparse, 0, 0)
+        labels = np.arange(1, len(y_sparse) + 1)
+        return np.stack([labels, y_sparse]).T
