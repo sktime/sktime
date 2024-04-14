@@ -343,7 +343,6 @@ class WindowSummarizer(BaseTransformer):
             Xt_out.append(Xt)
         Xt_out_df = pd.concat(Xt_out, axis=1)
         Xt_return = pd.concat([Xt_out_df, X.drop(target_cols, axis=1)], axis=1)
-
         Xt_return = Xt_return.loc[idx]
         return Xt_return
 
@@ -487,26 +486,37 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
                     .bfill()
                 )
     else:
+        feat = Z
         if isinstance(Z, pd.core.groupby.generic.SeriesGroupBy) and callable(
             summarizer
         ):
-            feat = Z.rolling(window_length).apply(summarizer, raw=True)
+            if bfill is True:
+                feat = (
+                    feat.shift(lag)
+                    .bfill()
+                    .rolling(window_length)
+                    .apply(summarizer, raw=True)
+                )
+            else:
+                feat = (
+                    feat.shift(lag).rolling(window_length).apply(summarizer, raw=True)
+                )
         elif not isinstance(Z, pd.core.groupby.generic.SeriesGroupBy) and callable(
             summarizer
         ):
-            feat = Z.apply(
-                lambda x: x.rolling(
-                    window=window_length, min_periods=window_length
-                ).apply(summarizer, raw=True)
+            feat = feat.apply(
+                lambda x: x.rolling(window=window_length, min_periods=window_length)
+                .apply(summarizer, raw=True)()
+                .shift(lag)
             )
-        if bfill is False:
-            feat = Z.shift(lag)
         else:
-            feat = Z.shift(lag).bfill()
-
+            if bfill is True:
+                feat = feat.shift(lag).bfill()
+            else:
+                feat = feat.shift(lag)
         feat = pd.DataFrame(feat)
-    if bfill is True:
-        feat = feat.bfill()
+        if bfill is True:
+            feat = feat.bfill()
 
     if callable(summarizer):
         name = summarizer.__name__
