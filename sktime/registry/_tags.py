@@ -287,6 +287,98 @@ class python_dependencies(_BaseTag):
     }
 
 
+class python_dependencies_alias(_BaseTag):
+    """Alias for Python package dependency names for the object.
+
+    Part of packaging metadata for the object.
+
+    - String name: ``"python_dependencies_alias"``
+    - Private tag, developer and framework facing
+    - Values: dict of str, key = PEP 440 package name, value = import name
+    - Example: ``{"scikit-learn": "sklearn"}``
+    - Example 2: ``{"dtw-python": "dtw", "scikit-learn": "sklearn"}``
+    - Default: no aliases (``None``)
+
+    ``sktime`` manages objects and estimators like mini-packages,
+    with their own dependencies and compatibility requirements.
+    Dependencies are specified in the tags:
+
+    - ``"python_version"``: Python version specifier (PEP 440) for the object,
+    - ``"python_dependencies"``: list of required Python packages (PEP 440)
+    - ``"python_dependencies_alias"``: alias for package names,
+      if different from import names
+    - ``"env_marker"``: environment marker for the object (PEP 508)
+    - ``"requires_cython"``: whether the object requires a C compiler present
+
+    The ``python_dependencies_alias`` tag of an object is dict,
+    providing import name aliases for package names in the ``python_dependencies`` tag,
+    if the package name differs from the import name.
+
+    The tag is used in packaging metadata for the object,
+    and is used internally to check compatibility of the object with
+    the build environment, to raise informative error messages.
+
+    This tag is required if the package name of a dependency is different
+    from the import name of the package, e.g., ``"dtw-python"`` and ``"dtw"``.
+    If not set, the package name is assumed to be identical with the import name.
+
+    Developers should note that elements of this ``dict`` are not passed on
+    via field inheritance, unlike the tags themselves.
+    Hence, if multiple aliases are required, they need to be set in the same tag.
+    """
+
+    _tags = {
+        "tag_name": "python_dependencies_alias",
+        "parent_type": "object",
+        "tag_type": "dict",
+        "short_descr": "alias for package names in python_dependencies, key-value pairs are package name, import name",  # noqa: E501
+        "user_facing": False,
+    }
+
+
+class requires_cython(_BaseTag):
+    """Whether the object requires a C compiler present, such as libomp, gcc.
+
+    Part of packaging metadata for the object.
+
+    - String name: ``"requires_cython"``
+    - Private tag, developer and framework facing
+    - Values: bool
+    - Example: ``True``
+    - Default: ``False``
+
+    ``sktime`` manages objects and estimators like mini-packages,
+    with their own dependencies and compatibility requirements.
+    Dependencies are specified in the tags:
+
+    - ``"python_version"``: Python version specifier (PEP 440) for the object,
+    - ``"python_dependencies"``: list of required Python packages (PEP 440)
+    - ``"python_dependencies_alias"``: alias for package names,
+      if different from import names
+    - ``"env_marker"``: environment marker for the object (PEP 508)
+    - ``"requires_cython"``: whether the object requires a C compiler present
+
+    The ``requires_cython`` tag of an object is a boolean,
+    specifying whether the object requires a C compiler present.
+
+    The tag is used in packaging metadata for the object,
+    and primarily in the continuous integration and testing setup of the ``sktime``
+    package, which ensures that objects with this tag are
+    tested in specific environments with a C compiler present.
+
+    It is not used in user facing checks, error messages,
+    or recommended build processes otherwise.
+    """
+
+    _tags = {
+        "tag_name": "requires_cython",
+        "parent_type": "object",
+        "tag_type": "bool",
+        "short_descr": "whether the object requires a C compiler present such as libomp, gcc",  # noqa: E501
+        "user_facing": False,
+    }
+
+
 # Forecasters
 # -----------
 
@@ -452,6 +544,10 @@ class capability__pred_int__insample(_BaseTag):
         "short_descr": "can the forecaster make in-sample predictions in predict_interval/quantiles?",  # noqa: E501
         "user_facing": True,
     }
+
+
+# Forecasters
+# -----------
 
 
 ESTIMATOR_TAG_REGISTER = [
@@ -644,6 +740,7 @@ ESTIMATOR_TAG_REGISTER = [
         "capability:multivariate",
         [
             "classifier",
+            "clusterer",
             "early_classifier",
             "param_est",
             "regressor",
@@ -657,6 +754,7 @@ ESTIMATOR_TAG_REGISTER = [
         "capability:unequal_length",
         [
             "classifier",
+            "clusterer",
             "early_classifier",
             "regressor",
             "transformer",
@@ -672,7 +770,9 @@ ESTIMATOR_TAG_REGISTER = [
         "capability:missing_values",
         [
             "classifier",
+            "clusterer",
             "early_classifier",
+            "forecaster",
             "param_est",
             "regressor",
             "transformer-pairwise",
@@ -788,19 +888,6 @@ ESTIMATOR_TAG_REGISTER = [
         "metric",
         "bool",
         "whether inner _evaluate can deal with multilevel (Panel/Hierarchical)",
-    ),
-    (
-        "python_dependencies_alias",
-        "estimator",
-        "dict",
-        "should be provided if import name differs from package name, \
-        key-value pairs are package name, import name",
-    ),
-    (
-        "requires_cython",
-        "estimator",
-        "bool",
-        "whether the estimator requires a C compiler present such as libomp, gcc",
     ),
     (
         "remember_data",

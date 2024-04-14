@@ -63,11 +63,14 @@ These tags are typically used for typing, packaging and documentation purposes.
     authors
     python_version
     python_dependencies
+    python_dependencies_alias
+    requires_cython
 
+
+.. _forecaster_tags:
 
 Forecaster tags
 ---------------
-
 
 This section lists tags applying to forecasters.
 These tags are used to describe capabilities, properties, and behavior of forecasters.
@@ -86,3 +89,9 @@ control internal behavior of the forecaster.
     capability__insample
     capability__pred_int
     capability__pred_int__insample
+
+
+.. _panel_tags:
+
+Tags for classifiers, regressors, clustering
+--------------------------------------------
