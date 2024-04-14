@@ -198,12 +198,22 @@ def test_wrong_column():
 
 def count_unique(x):
     return len(np.unique(x))
-
+def count_greater_zero(x):
+    return np.sum((x>0)[::-1])
 
 kwargs_custom_function = {
     "lag_feature": {
         count_unique: [[1, 2]],
     }
+}
+
+kwargs_lag_custom_function = {
+    "lag_feature": {
+        count_unique: [[1, 2]],
+        count_greater_zero: [[1, 3]],
+        "lag": [1],
+        "sum": [[1, 2]],
+    },
 }
 
 
@@ -215,6 +225,20 @@ kwargs_custom_function = {
             ["a_count_unique_1_2"],
             y_pd,
             pd.DataFrame({"a_count_unique_1_2": [np.NAN, np.NAN, 2.0, 2.0]}),
+            None,
+            None,
+        ),
+        (
+            kwargs_lag_custom_function,
+            ["a_count_unique_1_2", "a_count_greater_zero_1_3", "a_lag_1", "a_sum_1_2"],
+            y_pd,
+            pd.DataFrame({
+                "a_count_unique_1_2": [np.NAN, np.NAN, 2.0, 2.0],
+                "a_count_greater_zero_1_3": [np.NAN, np.NAN, np.NAN, 3.0],
+                "a_lag_1": [np.NAN, 1.0, 4.0, 0.5],
+                "a_sum_1_2": [np.NAN, np.NAN, 5.0, 4.5]
+                }
+            ),
             None,
             None,
         ),
