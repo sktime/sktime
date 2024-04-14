@@ -273,6 +273,8 @@ dl = [
   'neuralforecast<1.7.0,>=1.6.4; python_version < "3.11"',
   'tensorflow<2.17,>=2; python_version < "3.12"',
   'torch; python_version < "3.12"',
+  'transformers[torch]; python_version < "3.12"',
+  'salesforce-uni2ts @ git+https://github.com/SalesforceAIResearch/uni2ts.git@667356adf0040adde8aefc95b70d99e8c737ac97; python_version < "3.12"',
 ]
 mlflow = [
   "mlflow",
