@@ -421,7 +421,7 @@ class capability__missing_values(_BaseTag):
         "short_descr": "can the estimator handle missing data (NA, np.nan) in inputs?",  # noqa: E501
         "user_facing": True,
     }
- 
+
 
 class capability__feature_importance(_BaseTag):
     """Capability: the estimator can provide feature importance.
