@@ -158,7 +158,7 @@ class ShapeletLearningClassifierTslearn(_TslearnAdapter, BaseClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        params1 = {}
+        params1 = {"max_iter": 120, "batch_size": 64}
         params2 = {
             "max_iter": 100,
             "batch_size": 128,
