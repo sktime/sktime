@@ -174,10 +174,10 @@ class ShapeletLearningClassifierPyts(_PytsAdapter, BaseClassifier):
         """
         if self.loss == "crossentropy":
             from pyts.classification.learning_shapelets import (
-                LearningShapeletsCrossEntropy,
+                CrossEntropyLearningShapelets,
             )
 
-            return LearningShapeletsCrossEntropy
+            return CrossEntropyLearningShapelets
         elif self.loss == "softmax":
             from pyts.classification import LearningShapelets
 
