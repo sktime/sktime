@@ -37,7 +37,8 @@ class GAKernel(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["fkiraly"],
+        "authors": ["rtavenar", "yanncabanes", "fkiraly"],
+        # rtavenar, yanncabanes credit for interfaced code
         "python_dependencies": ["tslearn"],
         # estimator type
         # --------------
