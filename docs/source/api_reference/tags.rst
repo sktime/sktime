@@ -89,9 +89,21 @@ control internal behavior of the forecaster.
     capability__insample
     capability__pred_int
     capability__pred_int__insample
+    capability__missing_values
 
 
 .. _panel_tags:
 
 Tags for classifiers, regressors, clustering
 --------------------------------------------
+
+.. currentmodule:: sktime.registry._tags
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+    :nosignatures:
+
+    capability__multivariate
+    capability__missing_values
+    capability__unequal_length

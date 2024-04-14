@@ -343,7 +343,7 @@ class requires_cython(_BaseTag):
 
     - String name: ``"requires_cython"``
     - Private tag, developer and framework facing
-    - Values: bool
+    - Values: boolean, ``True`` / ``False``
     - Example: ``True``
     - Default: ``False``
 
@@ -360,6 +360,7 @@ class requires_cython(_BaseTag):
 
     The ``requires_cython`` tag of an object is a boolean,
     specifying whether the object requires a C compiler present.
+    True means that a C compiler is required, False means it is not required.
 
     The tag is used in packaging metadata for the object,
     and primarily in the continuous integration and testing setup of the ``sktime``
@@ -379,6 +380,71 @@ class requires_cython(_BaseTag):
     }
 
 
+# Estimator tags
+# --------------
+
+# These tags are applicable to a wide range of objects,
+# most tags in this group apply to estimators
+
+# "capability:missing_values" is same as "handles-missing-data" tag.
+# They are kept distinct intentionally for easier TSC refactoring.
+# Will be merged after refactor completion.
+
+
+class capability__missing_values(_BaseTag):
+    """Capability: the estimator can handle missing data, e.g,, NaNs.
+
+    - String name: ``"capability:missing_values"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+    - Alias: ``handles-missing-data``  (forecasters, transformations)
+
+    If the tag is ``True``, the estimator can handle missing data,
+    e.g., NaNs in input data.
+
+    This applies to main and secondary input data where applicable,
+    e.g., ``X`` in ``fit`` of transformations and classifieres, or ``y`` in forecasters,
+    but not to target labels
+    in the case of labelling of entire time series, such as in
+    classification or regression.
+
+    If the tag is ``False``, the estimator cannot handle missing data,
+    and will raise an error if missing data is encountered.
+    """
+
+    _tags = {
+        "tag_name": "capability:missing_values",
+        "parent_type": "object",
+        "tag_type": "bool",
+        "short_descr": "can the estimator handle missing data (NA, np.nan) in inputs?",  # noqa: E501
+        "user_facing": True,
+    }
+ 
+
+class capability__handles_categorical_features(_BaseTag):
+
+    (
+        "capability:train_estimate",
+        "classifier",
+        "bool",
+        "can the classifier estimate its performance on the training set?",
+    ),
+    (
+        "capability:contractable",
+        "classifier",
+        "bool",
+        "contract time setting, does the estimator support limiting max fit time?",
+    ),
+    (
+        "capability:feature_importance",
+        "classifier",
+        "bool",
+        "Can the estimator provide feature importance?",
+    ),
+
+
 # Forecasters
 # -----------
 
@@ -392,7 +458,7 @@ class capability__exogeneous(_BaseTag):
 
     - String name: ``"ignores-exogeneous-X"``
     - Public capability tag
-    - Values: True/False
+    - Values: boolean, ``True`` / ``False``
     - Example: ``True``
     - Default: ``False``
     - Alias: ``capability:exogeneous`` (currently not used)
@@ -429,7 +495,7 @@ class capability__insample(_BaseTag):
 
     - String name: ``"capability:insample"``
     - Public capability tag
-    - Values: True/False
+    - Values: boolean, ``True`` / ``False``
     - Example: ``True``
     - Default: ``False``
 
@@ -462,7 +528,7 @@ class capability__pred_int(_BaseTag):
 
     - String name: ``"capability:pred_int"``
     - Public capability tag
-    - Values: True/False
+    - Values: boolean, ``True`` / ``False``
     - Example: ``True``
     - Default: ``False``
 
@@ -514,7 +580,7 @@ class capability__pred_int__insample(_BaseTag):
 
     - String name: ``"capability:pred_int:insample"``
     - Public capability tag
-    - Values: True/False
+    - Values: boolean, ``True`` / ``False``
     - Example: ``False``
     - Default: ``True``
 
@@ -546,8 +612,98 @@ class capability__pred_int__insample(_BaseTag):
     }
 
 
-# Forecasters
-# -----------
+# Panel data related tags
+# -----------------------
+
+# tags related to panel data, typically:
+# classification, regression, clustering, and transformations
+
+
+class capability__multivariate(_BaseTag):
+    """Capability: the estimator can handle multivariate time series.
+
+    - String name: ``"capability:multivariate"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    If the tag is ``True``, the estimator can handle multivariate time series,
+    for its main input data, i.e., the ``X`` parameter in ``fit`` of classifiers,
+    regressors, clusterers, ordinary transformers, and pairwise transformers.
+
+    If the tag is ``False``, the estimator can only handle univariate time series,
+    and will broadcast to variables (ordinary transformers), or raise an error (others).
+
+    This condition is specific to the main input data representation,
+    target data (e.g., classifier or transformation ``y``) are not considered.
+
+    The condition is also specific to the data type used, in terms of how
+    being "multivariate" is represented.
+    For instance, a ``pandas`` based time series specification is considered
+    multivariate if it has more than one column.
+    """
+
+    _tags = {
+        "tag_name": "capability:multivariate",
+        "parent_type": [
+            "classifier",
+            "clusterer",
+            "early_classifier",
+            "param_est",
+            "regressor",
+            "transformer-pairwise",
+            "transformer-pairwise-panel",
+        ],
+        "tag_type": "bool",
+        "short_descr": "can the estimator be applied to time series with 2 or more variables?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
+class capability__unequal_length(_BaseTag):
+    """Capability: the estimator can handle unequal length time series.
+
+    - String name: ``"capability:unequal_length"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    Tag applicable to estimators which can accept panel data,
+    i.e., collections of time series.
+
+    If the tag is ``True``, the estimator can handle panels of time series
+    with unequal index set, including panels of time series with
+    unequal length.
+
+    It should be noted that the capability implied by the tag is
+    strictly more general than the capability implied by the name of the tag,
+    as panels of time series of equal length can have unequal index sets.
+
+    If the tag is ``False``, the estimator requires all time series in the panel
+    to have equal length and index set, and will otherwise raise an error.
+    """
+
+    _tags = {
+        "tag_name": "capability:unequal_length",
+        "parent_type": [
+            "classifier",
+            "clusterer",
+            "early_classifier",
+            "regressor",
+            "transformer",
+            "transformer-pairwise-panel",
+        ],
+        "tag_type": "bool",
+        "short_descr": "can the estimator handle unequal length time series?",
+        "user_facing": True,
+    }
+
+
+# Classifiers, regressors, clusterers
+# -----------------------------------
+
 
 
 ESTIMATOR_TAG_REGISTER = [
@@ -731,57 +887,6 @@ ESTIMATOR_TAG_REGISTER = [
         "i.e., not just 0/1 probabilities obtained from predict?",
     ),
     (
-        "capability:feature_importance",
-        "classifier",
-        "bool",
-        "Can the estimator provide feature importance?",
-    ),
-    (
-        "capability:multivariate",
-        [
-            "classifier",
-            "clusterer",
-            "early_classifier",
-            "param_est",
-            "regressor",
-            "transformer-pairwise",
-            "transformer-pairwise-panel",
-        ],
-        "bool",
-        "can the classifier classify time series with 2 or more variables?",
-    ),
-    (
-        "capability:unequal_length",
-        [
-            "classifier",
-            "clusterer",
-            "early_classifier",
-            "regressor",
-            "transformer",
-            "transformer-pairwise-panel",
-        ],
-        "bool",
-        "can the estimator handle unequal length time series?",
-    ),
-    # "capability:missing_values" is same as "handles-missing-data" tag.
-    # They are kept distinct intentionally for easier TSC refactoring.
-    # Will be merged after refactor completion.
-    (
-        "capability:missing_values",
-        [
-            "classifier",
-            "clusterer",
-            "early_classifier",
-            "forecaster",
-            "param_est",
-            "regressor",
-            "transformer-pairwise",
-            "transformer-pairwise-panel",
-        ],
-        "bool",
-        "can the classifier handle missing data (NA, np.nan) in inputs?",
-    ),
-    (
         "capability:unequal_length:removes",
         "transformer",
         "bool",
@@ -792,18 +897,6 @@ ESTIMATOR_TAG_REGISTER = [
         "transformer",
         "bool",
         "is the transformer result guaranteed to have no missing values?",
-    ),
-    (
-        "capability:train_estimate",
-        "classifier",
-        "bool",
-        "can the classifier estimate its performance on the training set?",
-    ),
-    (
-        "capability:contractable",
-        "classifier",
-        "bool",
-        "contract time setting, does the estimator support limiting max fit time?",
     ),
     (
         "capability:multithreading",
