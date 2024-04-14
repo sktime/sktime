@@ -2604,7 +2604,7 @@ class GlobalBaseForecaster(BaseForecaster):
         # check fh and coerce to ForecastingHorizon, if not already passed in fit
         fh = self._check_fh(fh)
 
-        # check global tag
+        # check global forecasting tag
         gf = self.get_tag(
             "capability:global_forecasting", tag_value_default=None, raise_error=False
         )

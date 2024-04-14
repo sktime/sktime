@@ -118,7 +118,9 @@ class _PytorchForecastingAdapter(GlobalBaseForecaster):
         """
         self._dataset_params = _none_check(self.dataset_params, {})
         self._max_prediction_length = fh.to_relative()[-1]
+        # store the target column name
         self.y_name = y.columns[-1]
+        # convert data to pytorch-forecasting datasets
         training, validation = self._Xy_to_dataset(
             X, y, self._dataset_params, self._max_prediction_length
         )
@@ -175,9 +177,11 @@ class _PytorchForecastingAdapter(GlobalBaseForecaster):
             guaranteed to have a single column/variable
             Point predictions
         """
+        # convert data to pytorch-forecasting datasets
         training, validation = self._Xy_to_dataset(
             X, y, self._dataset_params, self._max_prediction_length
         )
+        # load model from checkpoint
         best_model_path = self._trainer.checkpoint_callback.best_model_path
         best_model = self.algorithm_class.load_from_checkpoint(best_model_path)
         predictions = best_model.predict(
@@ -186,6 +190,7 @@ class _PytorchForecastingAdapter(GlobalBaseForecaster):
             return_index=True,
             return_decoder_lengths=True,
         )
+        # convert pytorch-forecasting predictions to dataframe
         output = self._predictions_to_dataframe(
             predictions, self._max_prediction_length
         )
@@ -201,12 +206,16 @@ class _PytorchForecastingAdapter(GlobalBaseForecaster):
     ):
         from pytorch_forecasting.data import TimeSeriesDataSet
 
+        # X, y must have same index
         assert (X.index == y.index).all()
+        # warning! X will be modified
         data = X.join(y, on=X.index.names)
         index_names = data.index.names
         index_lens = index_names.__len__()
+        # reset multi index to normal columns
         data = data.reset_index(level=list(range(index_lens)))
         training_cutoff = data[index_names[-1]].max() - max_prediction_length
+        # infer time_idx column, target column and instances from data
         _dataset_params = {
             "data": data[data[index_names[-1]] <= training_cutoff],
             "time_idx": index_names[-1],
@@ -214,6 +223,7 @@ class _PytorchForecastingAdapter(GlobalBaseForecaster):
             "group_ids": index_names[0:-1],
         }
         _dataset_params.update(dataset_params)
+        # overwrite max_prediction_length
         _dataset_params["max_prediction_length"] = int(max_prediction_length)
         training = TimeSeriesDataSet(**_dataset_params)
         validation = TimeSeriesDataSet.from_dataset(
@@ -222,22 +232,33 @@ class _PytorchForecastingAdapter(GlobalBaseForecaster):
         return training, validation
 
     def _predictions_to_dataframe(self, predictions, max_prediction_length):
+        # output is the predictions
         output = predictions.output.cpu().numpy()
+        # index will be combined with output
         index = predictions.index
+        # in pytorch-forecasting predictions, the first index is the time_idx
         columns_names = index.columns.to_list()
         time_idx = columns_names.pop(0)
+        # make time_idx the last index
         columns_names.append(time_idx)
+        # in pytorch-forecasting predictions,
+        # the index only contains the start timepoint.
         data = index.loc[index.index.repeat(max_prediction_length)].reset_index(
             drop=True
         )
+        # make time_idx the last index
         data = data.reindex(columns=columns_names)
+        # add the target column at the end
         data[self.y_name] = output.flatten()
+        # correct the time_idx after repeating
+        # assume the time_idx column is continuous integers
         for i in range(output.shape[0]):
             start_idx = i * max_prediction_length
             start_time = data.loc[start_idx, time_idx]
             data.loc[
                 start_idx : start_idx + max_prediction_length - 1, time_idx
             ] = list(range(start_time, start_time + max_prediction_length))
+        # set the instance columns to multi index
         data.set_index(columns_names, inplace=True)
         return data
 
