@@ -14,9 +14,10 @@ from sktime.transformations.panel import catch22
 
 
 class Catch22Wrapper(BaseTransformer):
-    """Canonical Time-series Characteristics (Catch22), using pycatch22 package.
+    """Canonical Time-series Characteristics (Catch22 and 24), using pycatch22 package.
 
-    Wraps the pycatch22 implementation for sktime
+    Direct interface to the ``pycatch22`` implementation of Catch-22 and Catch-24
+    feature sets
     (https://github.com/DynamicsAndNeuralSystems/pycatch22).
 
     Overview: Input n series with d dimensions of length m
