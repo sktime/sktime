@@ -107,3 +107,6 @@ Tags for classifiers, regressors, clustering
     capability__multivariate
     capability__missing_values
     capability__unequal_length
+    capability__feature_importance
+    capability__contractable
+    capability__train_estimate

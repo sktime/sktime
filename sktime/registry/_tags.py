@@ -423,26 +423,98 @@ class capability__missing_values(_BaseTag):
     }
  
 
-class capability__handles_categorical_features(_BaseTag):
+class capability__feature_importance(_BaseTag):
+    """Capability: the estimator can provide feature importance.
 
-    (
-        "capability:train_estimate",
-        "classifier",
-        "bool",
-        "can the classifier estimate its performance on the training set?",
-    ),
-    (
-        "capability:contractable",
-        "classifier",
-        "bool",
-        "contract time setting, does the estimator support limiting max fit time?",
-    ),
-    (
-        "capability:feature_importance",
-        "classifier",
-        "bool",
-        "Can the estimator provide feature importance?",
-    ),
+    - String name: ``"capability:feature_importance"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    If the tag is ``True``, the estimator can produce feature importances.
+
+    Feature importances are queriable by the fitted parameter interface
+    via ``get_fitted_params``, after calling ``fit`` of the respective estimator.
+
+    If the tag is ``False``, the estimator does not produce feature importances.
+    The method ``get_fitted_params`` can be called,
+    but the list of fitted parameters will not contain feature importances.
+    """
+
+    _tags = {
+        "tag_name": "capability:feature_importance",
+        "parent_type": "estimator",
+        "tag_type": "bool",
+        "short_descr": "Can the estimator provide feature importance?",
+        "user_facing": True,
+    }
+
+
+class capability__contractable(_BaseTag):
+    """Capability: the estimator can be asked to satisfy a maximum time contract.
+
+    To avoid confusion, users should note that the literature term "contractable"
+    unusually derives its meaning from "contract", i.e., a time contract,
+    and not from "contraction", i.e., reducing the size of something.
+
+    - String name: ``"capability:contractable"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    If the tag is ``True``, the estimator can be contracted in time,
+    by using some of its parameters, to limit the maximum time spent in fitting.
+
+    Currently, there is no unified naming or selection of parameters controlling
+    the contract time setting, as this can apply to different parts of the algorithm.
+    Users should consult the documentation of the specific estimator for details.
+
+    If the tag is ``False``, the estimator does not support a contract time setting.
+    """
+
+    _tags = {
+        "tag_name": "capability:contractable",
+        "parent_type": "estimator",
+        "tag_type": "bool",
+        "short_descr": "contract time setting, does the estimator support limiting max fit time?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
+class capability__train_estimate(_BaseTag):
+    """Capability: the algorithm can estimate its performance on the training set.
+
+    - String name: ``"capability:train_estimate"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    If the tag is ``True``, the estimator can estimate its performance on
+    the training set.
+
+    More precisely, this tag describes algorithms that, when calling ``fit``,
+    produce and store an estimate of their own statistical performance,
+    e.g., via out-of-bag estimates, or cross-validation.
+
+    Training performance estimates are queriable by the fitted parameter interface
+    via ``get_fitted_params``, after calling ``fit`` of the respective estimator.
+
+    If the tag is ``False``, the estimator does not produce
+    training performance estimates.
+    The method ``get_fitted_params`` can be called,
+    but the list of fitted parameters will not contain training performance estimates.
+    """
+
+    _tags = {
+        "tag_name": "capability:train_estimate",
+        "parent_type": "estimator",
+        "tag_type": "bool",
+        "short_descr": "can the estimator estimate its performance on the training set?",  # noqa: E501
+        "user_facing": True,
+    }
 
 
 # Forecasters
@@ -699,11 +771,6 @@ class capability__unequal_length(_BaseTag):
         "short_descr": "can the estimator handle unequal length time series?",
         "user_facing": True,
     }
-
-
-# Classifiers, regressors, clusterers
-# -----------------------------------
-
 
 
 ESTIMATOR_TAG_REGISTER = [
