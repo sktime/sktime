@@ -14,7 +14,7 @@ from sktime.transformations.panel import catch22
 
 
 class Catch22Wrapper(BaseTransformer):
-    """Canonical Time-series Characteristics (Catch22) C Wrapper.
+    """Canonical Time-series Characteristics (Catch22), using pycatch22 package.
 
     Wraps the pycatch22 implementation for sktime
     (https://github.com/DynamicsAndNeuralSystems/pycatch22).
@@ -74,8 +74,8 @@ class Catch22Wrapper(BaseTransformer):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["MatthewMiddlehurst", "fkiraly"],
-        "maintainers": "benfulcher",
+        "authors": ["benfulcher", "jmoo2800", "MatthewMiddlehurst", "fkiraly"],
+        "maintainers": ["benfulcher", "jmoo2800"],
         "python_dependencies": "pycatch22",
         # estimator type
         # --------------
