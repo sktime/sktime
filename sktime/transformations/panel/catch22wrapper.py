@@ -74,8 +74,8 @@ class Catch22Wrapper(BaseTransformer):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["benfulcher", "jmoo2800", "MatthewMiddlehurst", "fkiraly"],
-        "maintainers": ["benfulcher", "jmoo2800"],
+        "authors": ["benfulcher", "jmoo2880", "MatthewMiddlehurst", "fkiraly"],
+        "maintainers": ["benfulcher", "jmoo2880"],
         "python_dependencies": "pycatch22",
         # estimator type
         # --------------
