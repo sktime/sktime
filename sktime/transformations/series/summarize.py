@@ -485,6 +485,7 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
                     .shift(lag)
                     .bfill()
                 )
+            feat = pd.DataFrame(feat)
     else:
         feat = Z
         if isinstance(Z, pd.core.groupby.generic.SeriesGroupBy) and callable(
