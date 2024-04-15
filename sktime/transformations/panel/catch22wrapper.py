@@ -60,7 +60,8 @@ class Catch22Wrapper(BaseTransformer):
 
     See Also
     --------
-    Catch22 Catch22Classifier
+    Catch22
+    Catch22Classifier
 
     References
     ----------
