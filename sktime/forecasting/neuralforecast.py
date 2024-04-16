@@ -6,7 +6,7 @@ from typing import List, Literal, Optional, Union
 from sktime.forecasting.base.adapters._neuralforecast import _NeuralForecastAdapter
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-__author__ = ["yarnabrina", "geetu040"]
+__author__ = ["yarnabrina", "geetu040", "pranavvp16"]
 
 
 class NeuralForecastRNN(_NeuralForecastAdapter):
@@ -96,6 +96,10 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         whether ``TimeSeriesDataLoader`` drops last non-full batch
     trainer_kwargs : dict (default=None)
         keyword trainer arguments inherited from PyTorch Lighning's trainer [6]_
+    optimizer : pytorch optimizer (default=None) [7]_
+        optimizer to use for training, if passed with None defaults to Adam
+    optimizer_kwargs : dict (default=None) [8]_
+        dict of parameters to pass to the user defined optimizer
 
     Notes
     -----
@@ -147,6 +151,8 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
     .. [5] https://nixtlaverse.nixtla.io/neuralforecast/losses.pytorch.html
     .. [6]
     https://lightning.ai/docs/pytorch/stable/api/pytorch_lightning.trainer.trainer.Trainer.html#lightning.pytorch.trainer.trainer.Trainer
+    .. [7] https://pytorch.org/docs/stable/optim.html
+    .. [8] https://pytorch.org/docs/stable/generated/torch.optim.Adam.html#torch.optim.Adam
     """  # noqa: E501
 
     _tags = {
@@ -194,6 +200,8 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         num_workers_loader=0,
         drop_last_loader=False,
         trainer_kwargs: Optional[dict] = None,
+        optimizer=None,
+        optimizer_kwargs: dict = None,
     ):
         self.input_size = input_size
         self.inference_input_size = inference_input_size
@@ -218,6 +226,8 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         self.random_seed = random_seed
         self.num_workers_loader = num_workers_loader
         self.drop_last_loader = drop_last_loader
+        self.optimizer = optimizer
+        self.optimizer_kwargs = optimizer_kwargs
         self.trainer_kwargs = trainer_kwargs
 
         super().__init__(
@@ -297,7 +307,9 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
             "random_seed": self.random_seed,
             "num_workers_loader": self.num_workers_loader,
             "drop_last_loader": self.drop_last_loader,
-            **self._trainer_kwargs,
+            "optimizer": self.optimizer,
+            "optimizer_kwargs": self.optimizer_kwargs,
+            "trainer_kwargs": self._trainer_kwargs,
         }
 
     @classmethod
@@ -324,6 +336,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
 
         try:
             _check_soft_dependencies("neuralforecast", severity="error")
+            _check_soft_dependencies("torch", severity="error")
         except ModuleNotFoundError:
             params = [
                 {
@@ -346,6 +359,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
             ]
         else:
             from neuralforecast.losses.pytorch import SMAPE, QuantileLoss
+            from torch.optim import Adam
 
             params = [
                 {
@@ -366,6 +380,8 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
                     "max_steps": 4,
                     "val_check_steps": 2,
                     "trainer_kwargs": {"logger": False},
+                    "optimizer": Adam,
+                    "optimizer_kwargs": {"lr": 0.001},
                 },
             ]
 
@@ -456,6 +472,10 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         whether `TimeSeriesDataLoader` drops last non-full batch
     trainer_kwargs : dict (default=None)
         keyword trainer arguments inherited from PyTorch Lighning's trainer [6]_
+    optimizer : pytorch optimizer (default=None) [7]_
+        optimizer to use for training, if passed with None defaults to Adam
+    optimizer_kwargs : dict (default=None) [8]_
+        dict of parameters to pass to the user defined optimizer
 
     Notes
     -----
@@ -503,6 +523,8 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
     .. [4] https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
     .. [5] https://nixtlaverse.nixtla.io/neuralforecast/losses.pytorch.html
     .. [6] https://lightning.ai/docs/pytorch/stable/api/pytorch_lightning.trainer.trainer.Trainer.html#lightning.pytorch.trainer.trainer.Trainer
+    .. [7] https://pytorch.org/docs/stable/optim.html
+    .. [8] https://pytorch.org/docs/stable/generated/torch.optim.Adam.html#torch.optim.Adam
     """  # noqa: E501
 
     _tags = {
@@ -549,6 +571,8 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         num_workers_loader=0,
         drop_last_loader=False,
         trainer_kwargs: Optional[dict] = None,
+        optimizer=None,
+        optimizer_kwargs: dict = None,
     ):
         self.input_size = input_size
         self.inference_input_size = inference_input_size
@@ -572,6 +596,8 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         self.random_seed = random_seed
         self.num_workers_loader = num_workers_loader
         self.drop_last_loader = drop_last_loader
+        self.optimizer = optimizer
+        self.optimizer_kwargs = optimizer_kwargs
         self.trainer_kwargs = trainer_kwargs
 
         super().__init__(
@@ -649,7 +675,9 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
             "random_seed": self.random_seed,
             "num_workers_loader": self.num_workers_loader,
             "drop_last_loader": self.drop_last_loader,
-            **self._trainer_kwargs,
+            "optimizer": self.optimizer,
+            "optimizer_kwargs": self.optimizer_kwargs,
+            "trainer_kwargs": self._trainer_kwargs,
         }
 
     @classmethod
@@ -672,6 +700,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
 
         try:
             _check_soft_dependencies("neuralforecast", severity="error")
+            _check_soft_dependencies("torch", severity="error")
         except ModuleNotFoundError:
             params = [
                 {
@@ -694,6 +723,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
             ]
         else:
             from neuralforecast.losses.pytorch import SMAPE, QuantileLoss
+            from torch.optim import Adam
 
             params = [
                 {
@@ -714,6 +744,8 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
                     "max_steps": 4,
                     "val_check_steps": 2,
                     "trainer_kwargs": {"logger": False},
+                    "optimizer": Adam,
+                    "optimizer_kwargs": {"lr": 0.001},
                 },
             ]
 
