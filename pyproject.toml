@@ -145,7 +145,7 @@ all_extras_pandas2 = [
   "skpro<2.3.0,>=2",
   'statsforecast<1.8.0,>=1.0.0; python_version < "3.12"',
   "statsmodels>=0.12.1",
-  'stumpy>=1.5.1; python_version < "3.11"',
+  'stumpy>=1.5.1; python_version < "3P.11"',
   'tbats>=1.1; python_version < "3.12"',
   'temporian<0.9.0,>=0.7.0,!=0.8.0; python_version < "3.12" and sys_platform != "win32"',
   'tensorflow<2.17,>=2; python_version < "3.12"',
@@ -153,6 +153,7 @@ all_extras_pandas2 = [
   'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   "xarray",
+  "ruptures>=1.1.6",
 ]
 
 # single-task dependencies, e.g., forecasting, classification, etc.

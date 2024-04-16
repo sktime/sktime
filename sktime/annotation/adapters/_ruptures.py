@@ -9,6 +9,8 @@ __author__ = ["duydl"]
 import numpy as np
 import pandas as pd
 
+_check_soft_dependencies("ruptures", severity="error")
+
 
 class RupturesKernelCPD(BaseSeriesAnnotator):
     r"""Creates a RupturesKernelCPD instance.
@@ -75,8 +77,6 @@ class RupturesKernelCPD(BaseSeriesAnnotator):
         pen=None,
         params=None,
     ):
-        _check_soft_dependencies("ruptures", severity="error")
-
         import ruptures
 
         self._estimator = ruptures.KernelCPD(
