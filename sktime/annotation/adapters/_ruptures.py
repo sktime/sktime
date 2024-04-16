@@ -6,6 +6,8 @@ from sktime.annotation.base._base import BaseSeriesAnnotator
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 __author__ = ["duydl"]
+import numpy as np
+import pandas as pd
 
 
 class RupturesKernelCPD(BaseSeriesAnnotator):
@@ -49,6 +51,13 @@ class RupturesKernelCPD(BaseSeriesAnnotator):
     --------
     ruptures.KernelCPD : Ruptures library's KernelCPD estimator.
 
+    Examples
+    --------
+    >>> from sktime.annotation.adapters._ruptures import RupturesKernelCPD
+    >>> from sktime.datasets import load_gun_point_segmentation
+    >>> X, true_period_size, cps = load_gun_point_segmentation() # doctest: +SKIP
+    >>> kernelcpd = RupturesKernelCPD(dominant_period_size, n_cps=1) # doctest: +SKIP
+    >>> found_cps = kernelcpd.fit_predict(X) # doctest: +SKIP
     """
 
     _tags = {
@@ -109,8 +118,10 @@ class RupturesKernelCPD(BaseSeriesAnnotator):
         cps : array-like
             A sorted list of change points.
         """
+        if isinstance(X, pd.Series):
+            X = X.to_numpy()
         cps = self._estimator.fit_predict(X, n_bkps=self._n_cps, pen=self._pen)
-        return cps
+        return np.array(cps[:-1])
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -205,9 +216,12 @@ class RupturesBinsegCPD(BaseSeriesAnnotator):
         -------
             list: Sorted list of breakpoints.
         """
-        return self._estimator.fit_predict(
+        if isinstance(X, pd.Series):
+            X = X.to_numpy()
+        cps = self._estimator.fit_predict(
             X, n_bkps=self._n_cps, pen=self._pen, epsilon=self._epsilon
         )
+        return np.array(cps[:-1])
 
 
 class RupturesWindowCPD(BaseSeriesAnnotator):
@@ -264,7 +278,10 @@ class RupturesWindowCPD(BaseSeriesAnnotator):
         -------
             list: Sorted list of breakpoints.
         """
-        return self._estimator.fit_predict(X, n_bkps=self._n_cps, pen=self._pen)
+        if isinstance(X, pd.Series):
+            X = X.to_numpy()
+        cps = self._estimator.fit_predict(X, n_bkps=self._n_cps, pen=self._pen)
+        return np.array(cps[:-1])
 
 
 class RupturesBottomUpCPD(BaseSeriesAnnotator):
@@ -319,4 +336,7 @@ class RupturesBottomUpCPD(BaseSeriesAnnotator):
         -------
             list: Sorted list of breakpoints.
         """
-        return self._estimator.fit_predict(X, n_bkps=self._n_cps, pen=self._pen)
+        # if isinstance(X, pd.Series):
+        #     X = X.to_numpy()
+        cps = self._estimator.fit_predict(X, n_bkps=self._n_cps, pen=self._pen)
+        return np.array(cps[:-1])

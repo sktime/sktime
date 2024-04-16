@@ -1,0 +1,2 @@
+"""Ruptures Adapter test."""
+# TODO
