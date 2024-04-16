@@ -109,7 +109,7 @@ class _PytsAdapter:
         """
         pyts_est = getattr(self, self._estimator_attr)
 
-        self._call_with_y_optional(pyts_est.transform, X, y)
+        return self._call_with_y_optional(pyts_est.transform, X, y)
 
     def _predict(self, X, y=None):
         """Predict method adapter.
@@ -127,7 +127,7 @@ class _PytsAdapter:
         """
         pyts_est = getattr(self, self._estimator_attr)
 
-        self._call_with_y_optional(pyts_est.predict, X, y)
+        return self._call_with_y_optional(pyts_est.predict, X, y)
 
     def _predict_proba(self, X, y=None):
         """Predict_proba method adapter.
@@ -154,4 +154,4 @@ class _PytsAdapter:
         else:
             method = pyts_est.predict_proba
 
-        self._call_with_y_optional(method, X, y)
+        return self._call_with_y_optional(method, X, y)
