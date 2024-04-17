@@ -156,7 +156,7 @@ class ShapeletLearningClassifierPyts(_PytsAdapter, BaseClassifier):
         "python_dependencies": "pyts",
         # estimator type
         # --------------
-        "capability:multioutput": True,
+        "capability:multioutput": False,
         "capability:multivariate": False,
         "capability:unequal_length": False,
         "capability:missing_values": True,
