@@ -2774,6 +2774,15 @@
         "code",
         "doc"
       ]
+    },
+    {
+      "login": "slavik57"
+      "name": "Slava Shpitalny"
+      "avatar_url": "https://avatars.githubusercontent.com/u/6184997?v=4",
+      "profile": "https://github.com/slavik57",
+      "contributions": [
+        "maintenance"
+      ]
     }
   ]
 }
