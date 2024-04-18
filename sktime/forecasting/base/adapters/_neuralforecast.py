@@ -283,38 +283,26 @@ class _NeuralForecastAdapter(BaseForecaster):
         # | Index (Missing)         | B2.2.2    |
         # | Other                   | unreached |
 
-        if self.freq != "auto":
-            # A
+        if self.freq != "auto":  # A: freq is given as non-auto
             self._freq = self.freq
-        else:
-            # B
-            if fh.freq:
-                # B1
-                self._freq = fh.freq
-            else:
-                # B2
-                if isinstance(y.index, pandas.DatetimeIndex):
-                    # B2.1
-                    raise ValueError(
-                        f"Error in {self.__class__.__name__}, "
-                        "could not interpret freq, "
-                        "try passing freq in model initialization "
-                        "or use a valid offset in index"
-                    )
-                else:
-                    # B2.2
-                    diffs = np.unique(np.diff(y.index))
-                    if diffs.shape[0] > 1:
-                        # B2.2.1
-                        raise ValueError(
-                            f"Error in {self.__class__.__name__}, "
-                            "could not interpret freq, "
-                            "try passing integer freq in model initialization "
-                            "or use a valid integer offset in index"
-                        )
-                    else:
-                        # B2.2.2
-                        self._freq = int(diffs[-1])  # converts numpy.int64 to int
+        elif fh.freq:  # B1: freq is infered from fh
+            self._freq = fh.freq
+        elif isinstance(y.index, pandas.DatetimeIndex):  # B2.1: y is date-like
+            raise ValueError(
+                f"Error in {self.__class__.__name__}, could not interpret freq, try "
+                "passing freq in model initialization or use a valid offset in index"
+            )
+        else:  # B2.2: y is not date-like
+            diffs = np.unique(np.diff(y.index))
+
+            if diffs.shape[0] > 1:  # B2.2.1: non-equispaced integers
+                raise ValueError(
+                    f"Error in {self.__class__.__name__}, could not interpret freq, try"
+                    " passing integer freq in model initialization or use a valid "
+                    "integer offset in index"
+                )
+            else:  # B2.2.2: equispaced integers
+                self._freq = int(diffs[-1])  # converts numpy.int64 to int
 
         train_indices = y.index
         if isinstance(train_indices, pandas.PeriodIndex):
