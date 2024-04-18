@@ -15,6 +15,10 @@ from sktime.utils.warnings import warn
 __all__ = ["_NeuralForecastAdapter"]
 __author__ = ["yarnabrina", "geetu040", "pranavvp16"]
 
+_SUPPORTED_LOCAL_SCALAR_TYPES = Literal[
+    "standard", "robust", "robust-iqr", "minmax", "boxcox"
+]
+
 
 class _NeuralForecastAdapter(BaseForecaster):
     """Base adapter class for NeuralForecast models.
@@ -74,9 +78,7 @@ class _NeuralForecastAdapter(BaseForecaster):
     def __init__(
         self: "_NeuralForecastAdapter",
         freq: Union[str, int] = "auto",
-        local_scaler_type: Optional[
-            Literal["standard", "robust", "robust-iqr", "minmax", "boxcox"]
-        ] = None,
+        local_scaler_type: Optional[_SUPPORTED_LOCAL_SCALAR_TYPES] = None,
         futr_exog_list: Optional[List[str]] = None,
         verbose_fit: bool = False,
         verbose_predict: bool = False,
