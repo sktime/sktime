@@ -1769,10 +1769,14 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
 
         if isinstance(multioutput, str):
             if multioutput == "raw_values":
-                return pd.DataFrame(pseudo_values, index=y_true.index, columns=y_true.columns)
+                return pd.DataFrame(
+                    pseudo_values, index=y_true.index, columns=y_true.columns
+                )
             
             if multioutput == "uniform_average":
-                errors = np.maximum(pseudo_values, np.finfo(np.float64).eps)  # Ensure pseudo-values are strictly positive
+                errors = np.maximum(
+                    pseudo_values, np.finfo(np.float64).eps
+                )  # Ensure pseudo-values are strictly positive
                 log_errors = np.log(errors)
                 log_mean = np.mean(log_errors, axis=1)
                 gmae = np.exp(log_mean)
@@ -1781,7 +1785,9 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
         # else, we expect multioutput to be array-like
         weights = np.array(multioutput)
         weighted_pseudo_values = pseudo_values * weights[:, np.newaxis]
-        errors = np.maximum(weighted_pseudo_values, np.finfo(np.float64).eps)  # Ensure pseudo-values are strictly positive
+        errors = np.maximum(
+            weighted_pseudo_values, np.finfo(np.float64).eps
+        )  # Ensure pseudo-values are strictly positive
         log_errors = np.log(errors)
         log_mean = np.mean(log_errors, axis=1)
         gmae = np.exp(log_mean)
