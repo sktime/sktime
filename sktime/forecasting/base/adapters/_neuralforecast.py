@@ -60,7 +60,7 @@ class _NeuralForecastAdapter(BaseForecaster):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["yarnabrina"],
+        "authors": ["yarnabrina", "geetu040", "pranavvp16"],
         "maintainers": ["yarnabrina"],
         "python_version": ">=3.8",
         "python_dependencies": ["neuralforecast"],
