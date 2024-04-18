@@ -139,66 +139,73 @@ class _NeuralForecastAdapter(BaseForecaster):
         - custom model name (``alias``) - used from ``algorithm_name``
         """
 
-    def _get_valid_parameters(self: "_NeuralForecastAdapter") -> dict:
-        """Get valid parameters for the underlying NeuralForecast algorithm class.
+    def _ignore_invalid_parameters(self: "_NeuralForecastAdapter") -> dict:
+        """Skip unsupported parameters for underlying NeuralForecast algorithm class.
 
         Returns
         -------
         dict
-            valid list of arguments for the underlying algorithm class
+            subset of ``self.algorithm_parameters`` with valid parameters
         """
         from pytorch_lightning import Trainer
 
-        # get valid init parameters from the model class and Trainer
-        model_class = self.algorithm_class
-        trainer_params = list(signature(Trainer.__init__).parameters.keys())
-        valid_parameters = list(signature(model_class.__init__).parameters.keys())
-        valid_parameters += trainer_params
+        # get supported parameters from the underlying model class and Trainer
+        algorithm_class_parameters = set(signature(self.algorithm_class).parameters)
+        trainer_class_parameters = set(signature(Trainer).parameters)
 
-        sktime_parameters = self.algorithm_parameters
-        default_parameters = self.get_param_defaults()
+        # get default values for sktime interfaced estimator
+        sktime_default_values = self.get_param_defaults()
 
-        valid_parameters = set(valid_parameters)
-        unsupported_parameters = set(sktime_parameters.keys()) - valid_parameters
+        # get instance parameters
+        instance_algorithm_parameters = deepcopy(self.algorithm_parameters)
+        instance_trainer_parameters = instance_algorithm_parameters.pop(
+            "trainer_kwargs", {}
+        )
 
-        # iterate through neuralforecast parameters and check for non default values
-        user_parameters = [
-            key
-            for key in sktime_parameters
-            if sktime_parameters[key] != default_parameters[key]
-        ]
+        # identify unsupported parameters
+        unsupported_algorithm_parameters = (
+            set(instance_algorithm_parameters) - algorithm_class_parameters
+        )
+        unsupported_trainer_parameters = (
+            set(instance_trainer_parameters) - trainer_class_parameters
+        )
 
-        # filter out unsupported parameters
-        sktime_trainer_params = set(self.algorithm_parameters["trainer_kwargs"])
-        invalid_trainer_params = sktime_trainer_params - set(trainer_params)
+        # detect user provided parameters
+        user_modified_parameters = {
+            parameter_name
+            for parameter_name, parameter_value in instance_algorithm_parameters.items()
+            if parameter_value != sktime_default_values[parameter_name]
+        }
 
-        filter_params = deepcopy(self.algorithm_parameters)
-        for invalid_param in invalid_trainer_params:
-            warn(
-                f"Keyword argument '{invalid_param}' will be omitted as it is"
-                f" not found in the __init__ method "
-                f"from {Trainer}. "
-                f"Check your pytorch_lightning version "
-                f"to find out the right API parameters.",
-                obj=self,
-                stacklevel=2,
-            )
-            filter_params["trainer_kwargs"].pop(invalid_param)
+        # drop unsupported algorithm parameters
+        for parameter in unsupported_algorithm_parameters:
+            del instance_algorithm_parameters[parameter]
 
-        for unsupported_param in unsupported_parameters:
-            if unsupported_param in user_parameters:
+            if parameter in user_modified_parameters:
                 warn(
-                    f"Keyword argument '{unsupported_param}' will be omitted as it is"
-                    f" not found in the __init__ method "
-                    f"from {self.algorithm_class}. "
-                    f"Check your neuralforecast version "
-                    f"to find out the right API parameters.",
+                    f"Keyword argument '{parameter}' will be omitted as it is not found"
+                    f" in the __init__ method from {self.algorithm_class}. Check your "
+                    " neuralforecast version to find out the right API parameters.",
                     obj=self,
                     stacklevel=2,
                 )
-            filter_params.pop(unsupported_param)
 
-        return filter_params
+        # drop unsupported trainer parameters
+        for parameter in unsupported_trainer_parameters:
+            del instance_trainer_parameters[parameter]
+
+            warn(
+                f"Keyword argument '{parameter}' will be omitted as it is not found in "
+                f"the __init__ method from {Trainer}. Check your pytorch_lightning "
+                "version to find out the right API parameters.",
+                obj=self,
+                stacklevel=2,
+            )
+
+        return {
+            **instance_algorithm_parameters,
+            "trainer_kwargs": instance_trainer_parameters,
+        }
 
     def _instantiate_model(self: "_NeuralForecastAdapter", fh: ForecastingHorizon):
         """Instantiate the model."""
@@ -207,12 +214,13 @@ class _NeuralForecastAdapter(BaseForecaster):
         )
 
         # filter params according to neuralforecast version
-        params = self._get_valid_parameters()
-        trainer_kwargs = params.pop("trainer_kwargs")
+        valid_parameters = self._ignore_invalid_parameters()
+        trainer_kwargs = valid_parameters.pop("trainer_kwargs", {})
+
         algorithm_instance = self.algorithm_class(
             fh,
             alias=self.algorithm_name,
-            **params,
+            **valid_parameters,
             **trainer_kwargs,
             **exogenous_parameters,
         )
