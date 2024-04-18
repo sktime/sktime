@@ -155,7 +155,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
     .. [6]
     https://lightning.ai/docs/pytorch/stable/api/pytorch_lightning.trainer.trainer.Trainer.html#lightning.pytorch.trainer.trainer.Trainer
     .. [7] https://pytorch.org/docs/stable/optim.html
-    .. [8] https://pytorch.org/docs/stable/generated/torch.optim.Adam.html#torch.optim.Adam
+    .. [8] https://pytorch.org/docs/stable/optim.html#algorithms
     """  # noqa: E501
 
     _tags = {
@@ -525,7 +525,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
     .. [5] https://nixtlaverse.nixtla.io/neuralforecast/losses.pytorch.html
     .. [6] https://lightning.ai/docs/pytorch/stable/api/pytorch_lightning.trainer.trainer.Trainer.html#lightning.pytorch.trainer.trainer.Trainer
     .. [7] https://pytorch.org/docs/stable/optim.html
-    .. [8] https://pytorch.org/docs/stable/generated/torch.optim.Adam.html#torch.optim.Adam
+    .. [8] https://pytorch.org/docs/stable/optim.html#algorithms
     """  # noqa: E501
 
     _tags = {
