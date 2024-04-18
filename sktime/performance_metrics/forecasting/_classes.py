@@ -1723,17 +1723,16 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
         """
         multioutput = self.multioutput
 
-        pseudo_values = self._compute_pseudo_values(y_true, y_pred)
-
         if isinstance(multioutput, str):
             if multioutput == "raw_values":
-                return pseudo_values
+                return self._compute_pseudo_values(y_true, y_pred)
 
             if multioutput == "uniform_average":
-                return np.mean(pseudo_values)
+                return np.mean(self._compute_pseudo_values(y_true, y_pred))
 
         # else, we expect multioutput to be array-like
         weights = np.array(multioutput)
+        pseudo_values = self._compute_pseudo_values(y_true, y_pred)
         weighted_pseudo_values = pseudo_values * weights
         return np.mean(weighted_pseudo_values)
     
@@ -1766,30 +1765,27 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
                 i,j-th entry is metric at time i, at variable j
         """
         multioutput = self.multioutput
-
-        raw_values = (y_true - y_pred).abs()
+        pseudo_values = self._compute_pseudo_values(y_true, y_pred)
 
         if isinstance(multioutput, str):
             if multioutput == "raw_values":
-                return raw_values
-
+                return pd.DataFrame(pseudo_values, index=y_true.index, columns=y_true.columns)
+            
             if multioutput == "uniform_average":
-                errors = raw_values.to_numpy()
-                errors = np.maximum(errors, np.finfo(np.float64).eps)  # Ensure errors are strictly positive
+                errors = np.maximum(pseudo_values, np.finfo(np.float64).eps)  # Ensure pseudo-values are strictly positive
                 log_errors = np.log(errors)
                 log_mean = np.mean(log_errors, axis=1)
                 gmae = np.exp(log_mean)
-                return gmae
+                return pd.Series(gmae, index=y_true.index)
 
         # else, we expect multioutput to be array-like
         weights = np.array(multioutput)
-        errors = raw_values.to_numpy()
-        errors = np.maximum(errors, np.finfo(np.float64).eps)  # Ensure errors are strictly positive
+        weighted_pseudo_values = pseudo_values * weights[:, np.newaxis]
+        errors = np.maximum(weighted_pseudo_values, np.finfo(np.float64).eps)  # Ensure pseudo-values are strictly positive
         log_errors = np.log(errors)
-        weighted_log_errors = log_errors * weights[:, np.newaxis]
-        log_mean = np.mean(weighted_log_errors, axis=1)
+        log_mean = np.mean(log_errors, axis=1)
         gmae = np.exp(log_mean)
-        return gmae
+        return pd.Series(gmae, index=y_true.index)
 
 
 class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):
