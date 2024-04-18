@@ -1844,10 +1844,12 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
     """
 
     def _compute_pseudo_values(self, y_true, y_pred):
-        """Compute the jackknife pseudo-values for the Geometric Mean Absolute Error (GMAE) metric.
+        """Compute the jackknife pseudo-values for the 
+            Geometric Mean Absolute Error (GMAE) metric.
 
         This private method computes the jackknife pseudo-values for the GMAE metric.
-        The pseudo-values are used to estimate the influence of each observation on the overall metric.
+        The pseudo-values are used to estimate the influence of 
+            each observation on the overall metric.
 
         Parameters
         ----------
@@ -1865,8 +1867,8 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
         -------
         pseudo_values : pd.Series or pd.DataFrame
             Jackknife pseudo-values for the GMAE metric.
-            - If self.multioutput="uniform_average", returns a pd.Series where each entry
-              is the pseudo-value for a time point, averaged over variables.
+            - If self.multioutput="uniform_average", returns a pd.Series where each 
+              entry is the pseudo-value for a time point, averaged over variables.
             - If self.multioutput="raw_values", returns a pd.DataFrame where each entry
               is the pseudo-value for a time point, for each variable.
         """
@@ -1885,7 +1887,8 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
         """Evaluate the Geometric Mean Absolute Error (GMAE) metric on given inputs.
 
         This private method contains core logic for computing the GMAE metric.
-        By default, it uses `_evaluate_by_index` to compute the arithmetic mean over time points.
+        By default, it uses `_evaluate_by_index` to compute the 
+            arithmetic mean over time points.
 
         Parameters
         ----------
@@ -1904,8 +1907,10 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
         -------
         loss : float or np.ndarray
             Calculated metric, averaged or by variable.
-            - If self.multioutput="uniform_average", returns the average GMAE metric over variables.
-            - If self.multioutput="raw_values", returns an array of GMAE values for each variable.
+            - If self.multioutput="uniform_average", returns the 
+                average GMAE metric over variables.
+            - If self.multioutput="raw_values", returns an  
+                array of GMAE values for each variable.
         """
         multioutput = self.multioutput
 
