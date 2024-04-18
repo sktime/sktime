@@ -642,3 +642,39 @@ def test_fallbackforecaster_raises():
     forecaster.fit(y=y, fh=[1, 2, 3])
     with pytest.raises(RuntimeError):
         forecaster.predict()
+
+
+def test_forecastbylevel_nan_predict():
+    from sktime.forecasting.compose import ForecastByLevel
+    from sktime.utils._testing.hierarchical import _make_hierarchical
+
+    df = _make_hierarchical(
+        hierarchy_levels=(2, 2, 2),
+        max_timepoints=10,
+        min_timepoints=10,
+        same_cutoff=True,
+        n_columns=1,
+        all_positive=True,
+        index_type="period",
+        random_state=0,
+        add_nan=False,
+    )
+    forecaster1 = DummyForecaster(raise_at=None, predict_nans=True)
+    forecaster2 = NaiveForecaster()
+    forecaster = ForecastByLevel(
+        FallbackForecaster(
+            [
+                ("forecaster1_pred_nans", forecaster1),
+                ("forecaster2_expected_", forecaster2),
+            ],
+            nan_predict_policy="raise",
+        )
+    )
+    fh = [1, 2, 3]
+    forecaster.fit(y=df, fh=fh)
+    y_pred_actual = forecaster.predict()
+
+    forecaster2.fit(y=df, fh=[1, 2, 3])
+    y_pred_expected = forecaster2.predict()
+
+    pd.testing.assert_frame_equal(y_pred_expected, y_pred_actual)

@@ -2,14 +2,18 @@
 """Implements adapter for NeuralForecast models."""
 import abc
 import functools
-import typing
+from copy import deepcopy
+from inspect import signature
+from typing import List, Literal, Optional, Union
 
+import numpy as np
 import pandas
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.utils.warnings import warn
 
 __all__ = ["_NeuralForecastAdapter"]
-__author__ = ["yarnabrina"]
+__author__ = ["yarnabrina", "geetu040", "pranavvp16"]
 
 
 class _NeuralForecastAdapter(BaseForecaster):
@@ -17,8 +21,9 @@ class _NeuralForecastAdapter(BaseForecaster):
 
     Parameters
     ----------
-    freq : str (default="auto")
+    freq : Union[str, int] (default="auto")
         frequency of the data, see available frequencies [1]_ from ``pandas``
+        use int freq when using RangeIndex in ``y``
 
         default ("auto") interprets freq from ForecastingHorizon in ``fit``
     local_scaler_type : str (default=None)
@@ -68,11 +73,11 @@ class _NeuralForecastAdapter(BaseForecaster):
 
     def __init__(
         self: "_NeuralForecastAdapter",
-        freq: str = "auto",
-        local_scaler_type: typing.Optional[
-            typing.Literal["standard", "robust", "robust-iqr", "minmax", "boxcox"]
+        freq: Union[str, int] = "auto",
+        local_scaler_type: Optional[
+            Literal["standard", "robust", "robust-iqr", "minmax", "boxcox"]
         ] = None,
-        futr_exog_list: typing.Optional[typing.List[str]] = None,
+        futr_exog_list: Optional[List[str]] = None,
         verbose_fit: bool = False,
         verbose_predict: bool = False,
     ) -> None:
@@ -132,16 +137,81 @@ class _NeuralForecastAdapter(BaseForecaster):
         - custom model name (``alias``) - used from ``algorithm_name``
         """
 
+    def _get_valid_parameters(self: "_NeuralForecastAdapter") -> dict:
+        """Get valid parameters for the underlying NeuralForecast algorithm class.
+
+        Returns
+        -------
+        dict
+            valid list of arguments for the underlying algorithm class
+        """
+        from pytorch_lightning import Trainer
+
+        # get valid init parameters from the model class and Trainer
+        model_class = self.algorithm_class
+        trainer_params = list(signature(Trainer.__init__).parameters.keys())
+        valid_parameters = list(signature(model_class.__init__).parameters.keys())
+        valid_parameters += trainer_params
+
+        sktime_parameters = self.algorithm_parameters
+        default_parameters = self.get_param_defaults()
+
+        valid_parameters = set(valid_parameters)
+        unsupported_parameters = set(sktime_parameters.keys()) - valid_parameters
+
+        # iterate through neuralforecast parameters and check for non default values
+        user_parameters = [
+            key
+            for key in sktime_parameters
+            if sktime_parameters[key] != default_parameters[key]
+        ]
+
+        # filter out unsupported parameters
+        sktime_trainer_params = set(self.algorithm_parameters["trainer_kwargs"])
+        invalid_trainer_params = sktime_trainer_params - set(trainer_params)
+
+        filter_params = deepcopy(self.algorithm_parameters)
+        for invalid_param in invalid_trainer_params:
+            warn(
+                f"Keyword argument '{invalid_param}' will be omitted as it is"
+                f" not found in the __init__ method "
+                f"from {Trainer}. "
+                f"Check your pytorch_lightning version "
+                f"to find out the right API parameters.",
+                obj=self,
+                stacklevel=2,
+            )
+            filter_params["trainer_kwargs"].pop(invalid_param)
+
+        for unsupported_param in unsupported_parameters:
+            if unsupported_param in user_parameters:
+                warn(
+                    f"Keyword argument '{unsupported_param}' will be omitted as it is"
+                    f" not found in the __init__ method "
+                    f"from {self.algorithm_class}. "
+                    f"Check your neuralforecast version "
+                    f"to find out the right API parameters.",
+                    obj=self,
+                    stacklevel=2,
+                )
+            filter_params.pop(unsupported_param)
+
+        return filter_params
+
     def _instantiate_model(self: "_NeuralForecastAdapter", fh: ForecastingHorizon):
         """Instantiate the model."""
         exogenous_parameters = (
             {"futr_exog_list": self.futr_exog_list} if self.needs_X else {}
         )
 
+        # filter params according to neuralforecast version
+        params = self._get_valid_parameters()
+        trainer_kwargs = params.pop("trainer_kwargs")
         algorithm_instance = self.algorithm_class(
             fh,
             alias=self.algorithm_name,
-            **self.algorithm_parameters,
+            **params,
+            **trainer_kwargs,
             **exogenous_parameters,
         )
 
@@ -156,7 +226,7 @@ class _NeuralForecastAdapter(BaseForecaster):
     def _fit(
         self: "_NeuralForecastAdapter",
         y: pandas.Series,
-        X: typing.Optional[pandas.DataFrame],
+        X: Optional[pandas.DataFrame],
         fh: ForecastingHorizon,
     ) -> "_NeuralForecastAdapter":
         """Fit forecaster to training data.
@@ -189,15 +259,60 @@ class _NeuralForecastAdapter(BaseForecaster):
         if not fh.is_all_out_of_sample(cutoff=self.cutoff):
             raise NotImplementedError("in-sample prediction is currently not supported")
 
-        if self.freq == "auto" and fh.freq is None:
-            # when freq cannot be interpreted from ForecastingHorizon
-            raise ValueError(
-                f"Error in {self.__class__.__name__}, "
-                f"could not interpret freq, "
-                f"try passing freq in model initialization"
-            )
+        # A. freq is given {use this}
+        # B. freq is auto
+        #     B1. freq is infered from fh {use this}
+        #     B2. freq is not infered from fh
+        #         B2.1. y is date-like {raise exception}
+        #         B2.2. y is not date-like
+        #             B2.2.1 equispaced integers {use diff in time}
+        #             B2.2.2 non-equispaced integers {raise exception}
 
-        self._freq = fh.freq if self.freq == "auto" else self.freq
+        # behavior of different indexes when freq="auto"
+        # | Indexes                 | behavior  |
+        # | ----------------------- | --------- |
+        # | PeriodIndex             | B1        |
+        # | PeriodIndex (Missing)   | B1        |
+        # | DatetimeIndex           | B1        |
+        # | DatetimeIndex (Missing) | B2.1      |
+        # | RangeIndex              | B2.2.1    |
+        # | RangeIndex (Missing)    | B2.2.2    |
+        # | Index                   | B2.2.1    |
+        # | Index (Missing)         | B2.2.2    |
+        # | Other                   | unreached |
+
+        if self.freq != "auto":
+            # A
+            self._freq = self.freq
+        else:
+            # B
+            if fh.freq:
+                # B1
+                self._freq = fh.freq
+            else:
+                # B2
+                if isinstance(y.index, pandas.DatetimeIndex):
+                    # B2.1
+                    raise ValueError(
+                        f"Error in {self.__class__.__name__}, "
+                        "could not interpret freq, "
+                        "try passing freq in model initialization "
+                        "or use a valid offset in index"
+                    )
+                else:
+                    # B2.2
+                    diffs = np.unique(np.diff(y.index))
+                    if diffs.shape[0] > 1:
+                        # B2.2.1
+                        raise ValueError(
+                            f"Error in {self.__class__.__name__}, "
+                            "could not interpret freq, "
+                            "try passing integer freq in model initialization "
+                            "or use a valid integer offset in index"
+                        )
+                    else:
+                        # B2.2.2
+                        self._freq = int(diffs[-1])  # converts numpy.int64 to int
 
         train_indices = y.index
         if isinstance(train_indices, pandas.PeriodIndex):
@@ -227,8 +342,8 @@ class _NeuralForecastAdapter(BaseForecaster):
 
     def _predict(
         self: "_NeuralForecastAdapter",
-        fh: typing.Optional[ForecastingHorizon],
-        X: typing.Optional[pandas.DataFrame],
+        fh: Optional[ForecastingHorizon],
+        X: Optional[pandas.DataFrame],
     ) -> pandas.Series:
         """Forecast time series at future horizon.
 
