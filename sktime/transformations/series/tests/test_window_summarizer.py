@@ -198,8 +198,11 @@ def test_wrong_column():
 
 def count_unique(x):
     return len(np.unique(x))
+
+
 def count_greater_zero(x):
-    return np.sum((x>0)[::-1])
+    return np.sum((x > 0)[::-1])
+
 
 kwargs_custom_function = {
     "lag_feature": {
@@ -218,7 +221,7 @@ kwargs_lag_custom_function = {
 
 
 @pytest.mark.parametrize(
-    "kwargs, column_names, y, x_transform, target_cols, truncate",
+    "kwargs, column_names, y, X, target_cols, truncate",
     [
         (
             kwargs_custom_function,
@@ -232,22 +235,80 @@ kwargs_lag_custom_function = {
             kwargs_lag_custom_function,
             ["a_count_unique_1_2", "a_count_greater_zero_1_3", "a_lag_1", "a_sum_1_2"],
             y_pd,
-            pd.DataFrame({
-                "a_count_unique_1_2": [np.NAN, np.NAN, 2.0, 2.0],
-                "a_count_greater_zero_1_3": [np.NAN, np.NAN, np.NAN, 3.0],
-                "a_lag_1": [np.NAN, 1.0, 4.0, 0.5],
-                "a_sum_1_2": [np.NAN, np.NAN, 5.0, 4.5]
-                }
+            pd.DataFrame(
+                {
+                    "a_count_unique_1_2": [np.NAN, np.NAN, 2.0, 2.0],
+                    "a_count_greater_zero_1_3": [np.NAN, np.NAN, np.NAN, 3.0],
+                    "a_lag_1": [np.NAN, 1.0, 4.0, 0.5],
+                    "a_sum_1_2": [np.NAN, np.NAN, 5.0, 4.5],
+                },
             ),
             None,
+            None,
+        ),
+        (
+            kwargs_lag_custom_function,
+            ["a_count_unique_1_2", "a_count_greater_zero_1_3", "a_lag_1", "a_sum_1_2"],
+            y_multi,
+            pd.DataFrame(
+                {
+                    "var_0_count_unique_1_2": [
+                        np.NAN,
+                        np.NAN,
+                        2.0,
+                        np.NAN,
+                        np.NAN,
+                        2.0,
+                        np.NAN,
+                        np.NAN,
+                        2.0,
+                    ],
+                    "var_0_count_greater_zero_1_3": [
+                        np.NAN,
+                        np.NAN,
+                        np.NAN,
+                        np.NAN,
+                        np.NAN,
+                        np.NAN,
+                        np.NAN,
+                        np.NAN,
+                        np.NAN,
+                    ],
+                    "var_0_lag_1": [
+                        np.NAN,
+                        1.0,
+                        2.0,
+                        np.NAN,
+                        1.0,
+                        2.0,
+                        np.NAN,
+                        1.0,
+                        2.0,
+                    ],
+                    "var_0_sum_1_2": [
+                        np.NAN,
+                        np.NAN,
+                        3.0,
+                        np.NAN,
+                        np.NAN,
+                        3.0,
+                        np.NAN,
+                        np.NAN,
+                        3.0,
+                    ],
+                    "var_1": y_multi["var_1"],
+                },
+                index=y_multi.index,
+            ),
+            ["var_0"],
             None,
         ),
     ],
 )
 def test_windowsummarizer_with_output(
-    kwargs, column_names, y, x_transform, target_cols, truncate
+    kwargs, column_names, y, X, target_cols, truncate
 ):
-    """Test x_transform match kwargs arguments."""
+    """Test X match kwargs arguments."""
     if kwargs is not None:
         transformer = WindowSummarizer(
             **kwargs, target_cols=target_cols, truncate=truncate
@@ -255,4 +316,7 @@ def test_windowsummarizer_with_output(
     else:
         transformer = WindowSummarizer(target_cols=target_cols, truncate=truncate)
     Xt = transformer.fit_transform(y)
-    pd.testing.assert_frame_equal(Xt, x_transform)
+    pd.testing.assert_frame_equal(Xt, X)
+
+    # Checking for duplicate index names
+    assert len(set(Xt.index.names)) == len(X.index.names)
