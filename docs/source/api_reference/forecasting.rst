@@ -415,6 +415,7 @@ Hierarchical reconciliation
     :template: class.rst
 
     ReconcilerForecaster
+    ReconcilerSmoothForecaster
 
 Online and stream forecasting
 -----------------------------
