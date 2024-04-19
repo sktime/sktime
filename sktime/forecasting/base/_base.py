@@ -34,7 +34,7 @@ State:
 
 __author__ = ["mloning", "big-o", "fkiraly", "sveameyer13", "miraep8", "ciaran-g"]
 
-__all__ = ["BaseForecaster", "GlobalBaseForecaster"]
+__all__ = ["BaseForecaster", "BaseGlobalForecaster"]
 
 from copy import deepcopy
 from itertools import product
@@ -2540,7 +2540,7 @@ class BaseForecaster(BaseEstimator):
 BaseForecaster._init_dynamic_doc()
 
 
-class GlobalBaseForecaster(BaseForecaster):
+class BaseGlobalForecaster(BaseForecaster):
     """Base global forecaster template class.
 
     This class is a temporal solution, might be merged into BaseForecaster later.

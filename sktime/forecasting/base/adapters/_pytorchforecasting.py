@@ -7,13 +7,13 @@ from typing import Any, Dict, List, Optional
 
 import pandas
 
-from sktime.forecasting.base import ForecastingHorizon, GlobalBaseForecaster
+from sktime.forecasting.base import BaseGlobalForecaster, ForecastingHorizon
 
 __all__ = ["_PytorchForecastingAdapter"]
 __author__ = ["XinyuWu"]
 
 
-class _PytorchForecastingAdapter(GlobalBaseForecaster):
+class _PytorchForecastingAdapter(BaseGlobalForecaster):
     """Base adapter class for pytorch-forecasting models."""
 
     _tags = {
