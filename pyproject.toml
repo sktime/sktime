@@ -254,7 +254,7 @@ tests = [
   "pytest-cov>=4.1,<5.1",
   "pytest-randomly<3.16,>=3.15",
   "pytest-timeout>=2.1,<2.4",
-  "pytest-xdist>=3.3,<3.6",
+  "pytest-xdist>=3.3,<3.7",
 ]
 
 # CI related soft dependency sets - not for users of sktime, only for developers
