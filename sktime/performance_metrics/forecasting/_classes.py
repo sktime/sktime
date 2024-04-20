@@ -1846,33 +1846,34 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
 
     def _compute_pseudo_values(self, y_true, y_pred):
         """Compute the jackknife pseudo-values for the 
-        Geometric Mean Absolute Error (GMAE) metric.
+                Geometric Mean Absolute Error (GMAE) metric.
 
-        This private method computes the jackknife pseudo-values for the GMAE metric.
-        The pseudo-values are used to estimate the influence of 
-        each observation on the overall metric.
+                This private method computes the jackknife pseudo-values for the GMAE metric.
+                The pseudo-values are used to estimate the influence of 
+                each observation on the overall metric.
 
-        Parameters
-        ----------
-        y_true : pd.Series or pd.DataFrame
-            Ground truth (correct) target values.
-            y can be in one of the following formats:
-            Series scitype: pd.DataFrame
-            Panel scitype: pd.DataFrame with 2-level row MultiIndex
-            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
-        y_pred : pd.Series or pd.DataFrame
-            Forecasted values to evaluate
-            must be of same format as y_true, same indices and columns if indexed
+                Parameters
+                ----------
+                y_true : pd.Series or pd.DataFrame
+                Ground truth (correct) target values.
+                y can be in one of the following formats:
+                Series scitype: pd.DataFrame
+                Panel scitype: pd.DataFrame with 2-level row MultiIndex
+                Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+                y_pred : pd.Series or pd.DataFrame
+                Forecasted values to evaluate
+                must be of same format as y_true, same indices and columns if indexed
 
-        Returns
-        -------
-        pseudo_values : pd.Series or pd.DataFrame
-            Jackknife pseudo-values for the GMAE metric.
-            - If self.multioutput="uniform_average", returns a pd.Series where each 
-              entry is the pseudo-value for a time point, averaged over variables.
-            - If self.multioutput="raw_values", returns a pd.DataFrame where each entry
-              is the pseudo-value for a time point, for each variable.
+                Returns
+                -------
+                pseudo_values : pd.Series or pd.DataFrame
+                Jackknife pseudo-values for the GMAE metric.
+                    - If self.multioutput="uniform_average", returns a pd.Series where each 
+                      entry is the pseudo-value for a time point, averaged over variables.
+                    - If self.multioutput="raw_values", returns a pd.DataFrame where each entry
+                      is the pseudo-value for a time point, for each variable.
         """
+
         raw_values = (y_true - y_pred).abs()
 
         n = raw_values.shape[0]
