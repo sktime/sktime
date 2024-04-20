@@ -1761,6 +1761,7 @@ class MedianSquaredError(BaseForecastingErrorMetricFunc):
 
 class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
     r"""Geometric mean absolute error (GMAE).
+    
     For a univariate, non-hierarchical sample
     of true values :math:`y_1, \dots, y_n` and
     predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n` (in :math:`mathbb{R}`),
@@ -1845,11 +1846,11 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
 
     def _compute_pseudo_values(self, y_true, y_pred):
         """Compute the jackknife pseudo-values for the 
-            Geometric Mean Absolute Error (GMAE) metric.
+        Geometric Mean Absolute Error (GMAE) metric.
 
         This private method computes the jackknife pseudo-values for the GMAE metric.
         The pseudo-values are used to estimate the influence of 
-            each observation on the overall metric.
+        each observation on the overall metric.
 
         Parameters
         ----------
@@ -1888,7 +1889,7 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
 
         This private method contains core logic for computing the GMAE metric.
         By default, it uses `_evaluate_by_index` to compute the 
-            arithmetic mean over time points.
+        arithmetic mean over time points.
 
         Parameters
         ----------
