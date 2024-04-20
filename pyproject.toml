@@ -77,7 +77,7 @@ dependencies = [
 # or "pip install sktime[all_extras_pandas2]", to install only pandas 2 compatible deps
 #
 all_extras = [
-  "arch>=5.6,<6.4.0",
+  "arch>=5.6,<7.1.0",
   "cloudpickle",
   "dash!=2.9.0",
   "dask<2024.4.2; extra == 'dataframe'",
@@ -118,7 +118,7 @@ all_extras = [
 
 # all soft dependencies compatible with pandas 2
 all_extras_pandas2 = [
-  "arch>=5.6,<6.4.0",
+  "arch>=5.6,<7.1.0",
   "cloudpickle",
   "dash!=2.9.0",
   "dask<2024.4.2; extra == 'dataframe'",
@@ -254,7 +254,7 @@ tests = [
   "pytest-cov>=4.1,<5.1",
   "pytest-randomly<3.16,>=3.15",
   "pytest-timeout>=2.1,<2.4",
-  "pytest-xdist>=3.3,<3.6",
+  "pytest-xdist>=3.3,<3.7",
 ]
 
 # CI related soft dependency sets - not for users of sktime, only for developers
