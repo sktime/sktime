@@ -262,3 +262,22 @@ class MultiRocketMultivariate(BaseTransformer):
             num_features_per_dilation,
             biases,
         )
+    def get_test_params(self):
+        return [
+            {
+                "num_kernels": 5_000,
+                "max_dilations_per_kernel": 16,
+                "n_features_per_kernel": 3,
+                "normalise": True,
+                "n_jobs": -1,
+                "random_state": 42,
+            },
+            {
+                "num_kernels": 10_000,
+                "max_dilations_per_kernel": 64,
+                "n_features_per_kernel": 5,
+                "normalise": False,
+                "n_jobs": 2,
+                "random_state": None,
+            },
+        ]
