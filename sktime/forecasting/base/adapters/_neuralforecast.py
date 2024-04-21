@@ -4,7 +4,7 @@ import abc
 import functools
 from copy import deepcopy
 from inspect import signature
-from typing import List, Literal, Optional, Union
+from typing import Callable, List, Literal, Optional, Union
 
 import numpy as np
 import pandas
@@ -12,12 +12,18 @@ import pandas
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.utils.warnings import warn
 
-__all__ = ["_SUPPORTED_LOCAL_SCALAR_TYPES", "_NeuralForecastAdapter"]
+__all__ = [
+    "_SUPPORTED_HYPERPARAMETER_TUNING_BACKENDS",
+    "_SUPPORTED_LOCAL_SCALAR_TYPES",
+    "_NeuralForecastAdapter",
+    "_NeuralForecastAutoAdapter",
+]
 __author__ = ["yarnabrina", "geetu040", "pranavvp16"]
 
 _SUPPORTED_LOCAL_SCALAR_TYPES = Literal[
     "standard", "robust", "robust-iqr", "minmax", "boxcox"
 ]
+_SUPPORTED_HYPERPARAMETER_TUNING_BACKENDS = Literal["ray", "optuna"]
 
 
 class _NeuralForecastAdapter(BaseForecaster):
@@ -421,3 +427,232 @@ class _NeuralForecastAdapter(BaseForecaster):
         )
 
         return final_predictions
+
+
+class _NeuralForecastAutoAdapter(_NeuralForecastAdapter):
+    """Base adapter class for NeuralForecast automatic hyperparameter tuning models.
+
+    Parameters
+    ----------
+    freq : Union[str, int] (default="auto")
+        frequency of the data, see available frequencies [1]_ from ``pandas``
+        use int freq when using RangeIndex in ``y``
+
+        default ("auto") interprets freq from ForecastingHorizon in ``fit``
+    local_scaler_type : str (default=None)
+        scaler to apply per-series to all features before fitting, which is inverted
+        after predicting
+
+        can be one of the following:
+
+        - 'standard'
+        - 'robust'
+        - 'robust-iqr'
+        - 'minmax'
+        - 'boxcox'
+    futr_exog_list : str list, (default=None)
+        future exogenous variables
+    verbose_fit : bool (default=False)
+        print processing steps during fit
+    verbose_predict : bool (default=False)
+        print processing steps during predict
+    loss : pytorch module (default=None)
+        instantiated train loss class from losses collection [2]_
+    valid_loss : pytorch module (default=None)
+        instantiated validation loss class from losses collection [2]_
+    config : dict or callable (default=None)
+        dictionary with ray.tune defined search space or function that takes an optuna
+        trial and returns a configuration dict
+    search_alg : ray.tune.search variant or optuna.sampler (default=None)
+        for ray see tune search algorithms [3]_
+        for optuna see parameter sampling strategies [4]_
+    num_samples : int (default=10)
+        number of hyperparameter optimization steps/samples
+    cpus : int (default=None)
+        number of cpus to use during optimization.
+        only used with ray tune
+    gpus : int (default=None)
+        number of gpus to use during optimization, default all available.
+        only used with ray tune.
+    refit_with_val : bool
+        refit of best model should preserve val_size
+    verbose : bool
+        track progress
+    backend : str (default='ray')
+        backend to use for searching the hyperparameter space
+
+        can be one of the following:
+
+        - 'ray'
+        - 'optuna'
+    callbacks : list of callables (default=None)
+        list of functions to call during the optimization process
+        see [5]_ for ray reference and [6]_ for optuna reference
+
+    Notes
+    -----
+    * Only ``futr_exog_list`` will be considered as exogenous variables.
+    * ``config`` overrides default hyperparameter space and only uses itself as the
+        entire search space.
+    * if ``search_alg`` is unspecified,
+        ``ray.tune.search.basic_variant.BasicVariantGenerator(random_state=1)`` is used.
+    * If ``cpus`` is unspecified, number of logical CPUs in the system is used. It is
+        determined using ``os.cpu_count()``.
+    * If ``gpus`` is unspecified, number of available GPUs is used. It is determined
+        using ``torch.cuda.device_count()``.
+
+    References
+    ----------
+    .. [1] https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
+    .. [2] https://nixtlaverse.nixtla.io/neuralforecast/losses.pytorch.html
+    .. [3] https://docs.ray.io/en/latest/tune/api_docs/suggestion.html
+    .. [4] https://optuna.readthedocs.io/en/stable/reference/samplers/index.html
+    .. [5] https://docs.ray.io/en/latest/tune/tutorials/tune-metrics.html
+    .. [6] https://optuna.readthedocs.io/en/stable/tutorial/20_recipes/007_optuna_callback.html
+    """  # noqa: E501
+
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["yarnabrina"],
+        "maintainers": ["yarnabrina"],
+        "python_version": ">=3.8",
+        "python_dependencies": ["neuralforecast>=1.7.0"],
+        # estimator type
+        # --------------
+        "y_inner_mtype": "pd.Series",
+        "X_inner_mtype": "pd.DataFrame",
+        "scitype:y": "univariate",
+        "requires-fh-in-fit": True,
+        "X-y-must-have-same-index": True,
+        "handles-missing-data": False,
+        "capability:insample": False,
+    }
+
+    def __init__(
+        self: "_NeuralForecastAutoAdapter",
+        freq: str,
+        local_scaler_type: Optional[_SUPPORTED_LOCAL_SCALAR_TYPES] = None,
+        futr_exog_list: Optional[List[str]] = None,
+        verbose_fit: bool = False,
+        verbose_predict: bool = False,
+        loss=None,
+        valid_loss=None,
+        config: Optional[Union[Callable, dict]] = None,
+        search_alg=None,
+        num_samples: int = 10,
+        cpus: Optional[int] = None,
+        gpus: Optional[int] = None,
+        refit_with_val: bool = False,
+        verbose: bool = False,
+        backend: _SUPPORTED_HYPERPARAMETER_TUNING_BACKENDS = "ray",
+        callbacks=None,
+    ) -> None:
+        self.loss = loss
+        self.valid_loss = valid_loss
+        self.config = config
+        self.search_alg = search_alg
+        self.num_samples = num_samples
+        self.cpus = cpus
+        self.gpus = gpus
+        self.refit_with_val = refit_with_val
+        self.verbose = verbose
+        self.backend = backend
+        self.callbacks = callbacks
+
+        super().__init__(
+            freq,
+            local_scaler_type=local_scaler_type,
+            futr_exog_list=futr_exog_list,
+            verbose_fit=verbose_fit,
+            verbose_predict=verbose_predict,
+        )
+
+        self._search_alg = None
+        self._cpus = None
+        self._gpus = None
+
+    @functools.cached_property
+    def common_auto_algorithm_parameters(self: "_NeuralForecastAutoAdapter") -> dict:
+        """Get keyword parameters for underlying automatic hyperparameter tuning class.
+
+        Returns
+        -------
+        dict
+            keyword arguments for the underlying automatic hyperparameter tuning class
+        """
+        if self.search_alg:
+            self._search_alg = self.search_alg
+        else:
+            from ray.tune.search.basic_variant import BasicVariantGenerator
+
+            self._search_alg = BasicVariantGenerator(random_state=1)
+
+        if self.cpus:
+            self._cpus = self.cpus
+        else:
+            import os
+
+            self._cpus = os.cpu_count()
+
+        if self.gpus:
+            self._gpus = self.gpus
+        else:
+            import torch
+
+            self._gpus = torch.cuda.device_count()
+
+        return {
+            "loss": self.loss,
+            "valid_loss": self.valid_loss,
+            "config": self.config,
+            "search_alg": self._search_alg,
+            "num_samples": self.num_samples,
+            "cpus": self._cpus,
+            "gpus": self._gpus,
+            "refit_with_val": self.refit_with_val,
+            "verbose": self.verbose,
+            "backend": self.backend,
+            "callbacks": self.callbacks,
+        }
+
+    def _get_fitted_params(self: "_NeuralForecastAutoAdapter") -> dict:
+        """Get fitted parameters.
+
+        private _get_fitted_params, called from get_fitted_params
+
+        State required:
+            Requires state to be "fitted".
+
+        Returns
+        -------
+        fitted_params : dict with str keys
+            fitted parameters, keyed by names of fitted parameter
+        """
+        tuning_results = {"trials_report": pandas.DataFrame(), "best_trial": {}}
+
+        if self.backend == "ray":
+            from ray import tune
+
+            ray_results: tune.ResultGrid = self._forecaster.models[0].results
+
+            # reported scores and configurations for all trials
+            tuning_results["trials_report"] = ray_results.get_dataframe()
+
+            # winning hyperparameters
+            tuning_results["best_trial"] = ray_results.get_best_result().config
+        elif self.backend == "optuna":
+            from optuna import Study
+
+            optuna_results: Study = self._forecaster.models[0].results
+
+            # reported scores and configurations for all trials
+            tuning_results["trials_report"] = optuna_results.trials_dataframe()
+
+            # winning hyperparameters
+            # for some reason, neuralforecast does not use optuna_results.best_params
+            tuning_results["best_trial"] = optuna_results.best_trial.user_attrs[
+                "ALL_PARAMS"
+            ]
+
+        return tuning_results
