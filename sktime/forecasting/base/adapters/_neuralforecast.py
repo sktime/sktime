@@ -316,7 +316,9 @@ class _NeuralForecastAdapter(BaseForecaster):
 
         train_indices = y.index
         if isinstance(train_indices, pandas.PeriodIndex):
-            train_indices = train_indices.to_timestamp(freq=self._freq)
+            train_indices = train_indices.to_timestamp(
+                freq=pandas.tseries.frequencies.to_offset(self._freq)
+            )
 
         train_data = {
             self.id_col: 1,
@@ -387,7 +389,9 @@ class _NeuralForecastAdapter(BaseForecaster):
         if self.futr_exog_list:
             predict_indices = X.index
             if isinstance(predict_indices, pandas.PeriodIndex):
-                predict_indices = predict_indices.to_timestamp(freq=self._freq)
+                predict_indices = predict_indices.to_timestamp(
+                    freq=pandas.tseries.frequencies.to_offset(self._freq)
+                )
 
             predict_data = {self.id_col: 1, self.time_col: predict_indices.to_numpy()}
 
