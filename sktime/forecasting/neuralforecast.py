@@ -1,9 +1,12 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Interfaces to estimators from neuralforecast by Nixtla."""
 import functools
-from typing import List, Literal, Optional, Union
+from typing import List, Optional, Union
 
-from sktime.forecasting.base.adapters._neuralforecast import _NeuralForecastAdapter
+from sktime.forecasting.base.adapters._neuralforecast import (
+    _SUPPORTED_LOCAL_SCALAR_TYPES,
+    _NeuralForecastAdapter,
+)
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 __author__ = ["yarnabrina", "geetu040", "pranavvp16"]
@@ -152,7 +155,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
     .. [6]
     https://lightning.ai/docs/pytorch/stable/api/pytorch_lightning.trainer.trainer.Trainer.html#lightning.pytorch.trainer.trainer.Trainer
     .. [7] https://pytorch.org/docs/stable/optim.html
-    .. [8] https://pytorch.org/docs/stable/generated/torch.optim.Adam.html#torch.optim.Adam
+    .. [8] https://pytorch.org/docs/stable/optim.html#algorithms
     """  # noqa: E501
 
     _tags = {
@@ -170,9 +173,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
     def __init__(
         self: "NeuralForecastRNN",
         freq: Union[str, int] = "auto",
-        local_scaler_type: Optional[
-            Literal["standard", "robust", "robust-iqr", "minmax", "boxcox"]
-        ] = None,
+        local_scaler_type: Optional[_SUPPORTED_LOCAL_SCALAR_TYPES] = None,
         futr_exog_list: Optional[List[str]] = None,
         verbose_fit: bool = False,
         verbose_predict: bool = False,
@@ -524,7 +525,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
     .. [5] https://nixtlaverse.nixtla.io/neuralforecast/losses.pytorch.html
     .. [6] https://lightning.ai/docs/pytorch/stable/api/pytorch_lightning.trainer.trainer.Trainer.html#lightning.pytorch.trainer.trainer.Trainer
     .. [7] https://pytorch.org/docs/stable/optim.html
-    .. [8] https://pytorch.org/docs/stable/generated/torch.optim.Adam.html#torch.optim.Adam
+    .. [8] https://pytorch.org/docs/stable/optim.html#algorithms
     """  # noqa: E501
 
     _tags = {
@@ -542,9 +543,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
     def __init__(
         self: "NeuralForecastLSTM",
         freq: Union[str, int] = "auto",
-        local_scaler_type: Optional[
-            Literal["standard", "robust", "robust-iqr", "minmax", "boxcox"]
-        ] = None,
+        local_scaler_type: Optional[_SUPPORTED_LOCAL_SCALAR_TYPES] = None,
         futr_exog_list: Optional[List[str]] = None,
         verbose_fit: bool = False,
         verbose_predict: bool = False,
