@@ -12,7 +12,7 @@ import pandas
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.utils.warnings import warn
 
-__all__ = ["_NeuralForecastAdapter"]
+__all__ = ["_SUPPORTED_LOCAL_SCALAR_TYPES", "_NeuralForecastAdapter"]
 __author__ = ["yarnabrina", "geetu040", "pranavvp16"]
 
 _SUPPORTED_LOCAL_SCALAR_TYPES = Literal[
