@@ -1,3 +1,4 @@
+#//Implementation Of Echo State Networks (ESN) for Time Series Classification
 __author__ = ["sharma-kshitij-ks"]
 
 from sklearn.base import BaseEstimator, ClassifierMixin
@@ -141,10 +142,8 @@ class EchoStateNetwork(BaseClassifier):
     parameter_set : str, default="default"
         Name of the set of test parameters to return, for use in tests. If no
         special parameters are defined for a value, will return ``"default"`` set.
-        For classifiers, a "default" set of parameters should be provided for
-        general testing, and a "results_comparison" set for comparing against
-        previously recorded results if the general set does not produce suitable
-        probabilities to compare against.
+        custom test set 1 = "test-param-set-1"
+        custom test set 2 = "test-param-set-2"
 
     Returns
     -------
@@ -161,7 +160,7 @@ class EchoStateNetwork(BaseClassifier):
         {"base_classifier": RandomForestClassifier(n_estimators=100, random_state=99), "n_reservoir": 75, "spectral_radius": 0.95, "leaking_rate": 0.4, "regularization": 1e-5, "random_state": 456}
     ]
 
-    if parameter_set == "test-default":
+    if parameter_set == "default":
       return params[0]
     elif parameter_set == "test-param-set-1":
       return params[1]
