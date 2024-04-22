@@ -248,6 +248,7 @@ docs = [
   "sphinx-gallery<0.16.0",
   "sphinx-issues<5.0.0",
   "tabulate",
+  "mlflow",
 ]
 tests = [
   "pytest>=7.4,<8.2",
