@@ -111,6 +111,8 @@ class ReconcilerSmoothForecaster(BaseForecaster):
 
         n_splits = self.n_splits
         forecaster = self.forecaster.clone()
+
+        # todo - probably needs some glue code due to y format
         W = _generate_weight(y, forecaster, fh_relative, n_splits)
         self.W_ = W
 
@@ -142,6 +144,7 @@ class ReconcilerSmoothForecaster(BaseForecaster):
             )
             return base_fc
 
+        # todo - probably needs some glue code due to y format
         C, d = _generate_constraints_from_equations(
             [],
             base_fc,
@@ -185,13 +188,19 @@ class ReconcilerSmoothForecaster(BaseForecaster):
 
 
 def _generate_weight(y_hist, forecaster, fh_relative, n_splits):
-    """Generate weight matrix for forecast reconciliation from historical data."""
+    """Generate weight matrix for forecast reconciliation from historical data.
+
+    Parameters
+    ----------
+    y_hist : pd.DataFrame
+        Historical data for reconciliation
+    """
     init_window = y_hist.shape[0] - (n_splits - 1)* 4 - fh_relative.shape[0] -1
     cv = ExpandingWindowSplitter(
         fh=fh_relative,
         step_length=4,
         initial_window=init_window,
-    )
+    )  # note: this can probably be more easily replaced by ExpandingGreedySplitter
 
     assert n_splits == cv.get_n_splits(y_hist)
 
@@ -200,7 +209,7 @@ def _generate_weight(y_hist, forecaster, fh_relative, n_splits):
     assert fe.shape == (n_splits,fh_relative.shape[0])
 
     W = _OASD(fe)
-    return W 
+    return W
 
 def _OASD(X):
     """Optimal Average Shrinkage Covariance Estimator."""
