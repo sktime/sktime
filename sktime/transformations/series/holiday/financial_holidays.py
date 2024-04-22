@@ -178,7 +178,7 @@ class FinancialHolidaysTransformer(BaseTransformer):
         
         params = [
             {"market": "XNYS"}, # New York Stock Exchange (Default) 
-            {"market": "ECB"},  # European Central Bank
+            {"market": "ECB"}  # European Central Bank
         ]
 
         if parameter_set == "default" or "XNYS" or None :
