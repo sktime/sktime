@@ -151,20 +151,41 @@ class FinancialHolidaysTransformer(BaseTransformer):
         Parameters
         ----------
         parameter_set : str, default="default"
-            Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return ``"default"`` set.
-            There are currently no reserved values for transformers.
+            Name of the set of test parameters to return. Valid options are:
+            - "default": Returns the default parameter set (New York Stock Exchange).
+            - "ECB": Returns an alternative test parameter set (European Central Bank).
 
         Returns
         -------
+        dict
+            A dictionary containing the specified parameter set.
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
+
+        Raises
+        ------
+        ValueError
+            If an unknown parameter_set is provided.
+
+        Examples
+        --------
+        >>> FinancialHolidaysTransformer.get_test_params()
+        {'market': 'XNYS'}
+        >>> FinancialHolidaysTransformer.get_test_params(parameter_set="test")
+        {'market': 'ECB'}
         """
         del parameter_set  # avoid being detected as unused by ``vulture`` like tools
+        
+        params = [
+            {"market": "XNYS"}, # New York Stock Exchange (Default) 
+            {"market": "ECB"},  # European Central Bank
+        ]
 
-        params = [{"market": "XNYS"}]
-
-        return params
-
+        if parameter_set == "default" or "XNYS" or None :
+            return params[0]
+        elif parameter_set == "ECB" or "test":
+            return params[1]
+        else:
+            raise ValueError(f"Unknown parameter_set: {parameter_set}")
 
 __all__ = ["FinancialHolidaysTransformer"]
