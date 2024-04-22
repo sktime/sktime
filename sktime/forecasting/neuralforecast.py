@@ -1,11 +1,13 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Interfaces to estimators from neuralforecast by Nixtla."""
 import functools
-from typing import List, Optional, Union
+from typing import Callable, List, Optional, Union
 
 from sktime.forecasting.base.adapters._neuralforecast import (
+    _SUPPORTED_HYPERPARAMETER_TUNING_BACKENDS,
     _SUPPORTED_LOCAL_SCALAR_TYPES,
     _NeuralForecastAdapter,
+    _NeuralForecastAutoAdapter,
 )
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
@@ -751,7 +753,231 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         return params
 
 
-__all__ = [
-    "NeuralForecastRNN",
-    "NeuralForecastLSTM",
-]
+class NeuralForecastAutoTFT(_NeuralForecastAutoAdapter):
+    """NeuralForecast AutoTFT model.
+
+    Interface to ``neuralforecast.auto.AutoTFT`` [1]_
+    through ``neuralforecast.NeuralForecast`` [2]_,
+    from ``neuralforecast`` [3]_ by Nixtla.
+    Implements automatic hyperparameter optimisation
+    for ``neuralforecast.models.TFT`` [4]_ model.
+
+    Parameters
+    ----------
+    freq : Union[str, int] (default="auto")
+        frequency of the data, see available frequencies [1]_ from ``pandas``
+        use int freq when using RangeIndex in ``y``
+
+        default ("auto") interprets freq from ForecastingHorizon in ``fit``
+    local_scaler_type : str (default=None)
+        scaler to apply per-series to all features before fitting, which is inverted
+        after predicting
+
+        can be one of the following:
+
+        - 'standard'
+        - 'robust'
+        - 'robust-iqr'
+        - 'minmax'
+        - 'boxcox'
+    futr_exog_list : str list, (default=None)
+        future exogenous variables
+    verbose_fit : bool (default=False)
+        print processing steps during fit
+    verbose_predict : bool (default=False)
+        print processing steps during predict
+    loss : pytorch module (default=None)
+        instantiated train loss class from losses collection [2]_
+    valid_loss : pytorch module (default=None)
+        instantiated validation loss class from losses collection [2]_
+    config : dict or callable (default=None)
+        dictionary with ray.tune defined search space or function that takes an optuna
+        trial and returns a configuration dict
+    search_alg : ray.tune.search variant or optuna.sampler (default=None)
+        for ray see tune search algorithms [3]_
+        for optuna see parameter sampling strategies [4]_
+    num_samples : int (default=10)
+        number of hyperparameter optimization steps/samples
+    cpus : int (default=None)
+        number of cpus to use during optimization.
+        only used with ray tune
+    gpus : int (default=None)
+        number of gpus to use during optimization, default all available.
+        only used with ray tune.
+    refit_with_val : bool
+        refit of best model should preserve val_size
+    verbose : bool
+        track progress
+    backend : str (default='ray')
+        backend to use for searching the hyperparameter space
+
+        can be one of the following:
+
+        - 'ray'
+        - 'optuna'
+    callbacks : list of callables (default=None)
+        list of functions to call during the optimization process
+        see [5]_ for ray reference and [6]_ for optuna reference
+
+    Notes
+    -----
+    * Only ``futr_exog_list`` will be considered as exogenous variables.
+    * ``config`` overrides default hyperparameter space and only uses itself as the
+        entire search space.
+    * if ``search_alg`` is unspecified,
+        ``ray.tune.search.basic_variant.BasicVariantGenerator(random_state=1)`` is used.
+    * If ``cpus`` is unspecified, number of logical CPUs in the system is used. It is
+        determined using ``os.cpu_count()``.
+    * If ``gpus`` is unspecified, number of available GPUs is used. It is determined
+        using ``torch.cuda.device_count()``.
+    * If ``loss`` is unspecified, MAE is used as the loss function for training.
+
+    References
+    ----------
+    .. [1] https://nixtlaverse.nixtla.io/neuralforecast/models.html#autotft
+    .. [2] https://nixtlaverse.nixtla.io/neuralforecast/core.html#neuralforecast
+    .. [3] https://github.com/Nixtla/neuralforecast/
+    .. [4] https://nixtlaverse.nixtla.io/neuralforecast/models.tft.html#tft
+    .. [5] https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
+    .. [6] https://nixtlaverse.nixtla.io/neuralforecast/losses.pytorch.html
+    .. [5] https://docs.ray.io/en/latest/tune/tutorials/tune-metrics.html
+    .. [6] https://optuna.readthedocs.io/en/stable/tutorial/20_recipes/007_optuna_callback.html
+    """  # noqa: E501
+
+    _tags = {
+        # packaging info
+        # --------------
+        # "authors": ["yarnabrina"],
+        # "maintainers": ["yarnabrina"],
+        # "python_dependencies": "neuralforecast"
+        # inherited from _NeuralForecastAdapter
+        # estimator type
+        # --------------
+        "python_dependencies": ["neuralforecast>=1.7.0"],
+    }
+
+    def __init__(
+        self: "NeuralForecastAutoTFT",
+        freq: str,
+        local_scaler_type: Optional[_SUPPORTED_LOCAL_SCALAR_TYPES] = None,
+        futr_exog_list: Optional[List[str]] = None,
+        verbose_fit: bool = False,
+        verbose_predict: bool = False,
+        loss=None,
+        valid_loss=None,
+        config: Optional[Union[Callable, dict]] = None,
+        search_alg=None,
+        num_samples: int = 10,
+        cpus: Optional[int] = None,
+        gpus: Optional[int] = None,
+        refit_with_val: bool = False,
+        verbose: bool = False,
+        backend: _SUPPORTED_HYPERPARAMETER_TUNING_BACKENDS = "ray",
+        callbacks=None,
+    ) -> None:
+        super().__init__(
+            freq,
+            local_scaler_type=local_scaler_type,
+            futr_exog_list=futr_exog_list,
+            verbose_fit=verbose_fit,
+            verbose_predict=verbose_predict,
+            loss=loss,
+            valid_loss=valid_loss,
+            config=config,
+            search_alg=search_alg,
+            num_samples=num_samples,
+            cpus=cpus,
+            gpus=gpus,
+            refit_with_val=refit_with_val,
+            verbose=verbose,
+            backend=backend,
+            callbacks=callbacks,
+        )
+
+        self._loss = None
+        self._valid_loss = None
+
+    @functools.cached_property
+    def algorithm_exogenous_support(self: "NeuralForecastAutoTFT") -> bool:
+        """Set support for exogenous features."""
+        return True
+
+    @functools.cached_property
+    def algorithm_name(self: "NeuralForecastAutoTFT") -> str:
+        """Set custom model name."""
+        return "AutoTFT"
+
+    @functools.cached_property
+    def algorithm_class(self: "NeuralForecastAutoTFT"):
+        """Import underlying NeuralForecast algorithm class."""
+        from neuralforecast.auto import AutoTFT
+
+        return AutoTFT
+
+    @functools.cached_property
+    def algorithm_parameters(self: "NeuralForecastAutoTFT") -> dict:
+        """Get keyword parameters for the underlying NeuralForecast algorithm class.
+
+        Returns
+        -------
+        dict
+            keyword arguments for the underlying algorithm class
+
+        Notes
+        -----
+        This method should not include following parameters:
+        - future exogenous columns (``futr_exog_list``) - used from ``__init__``
+        - historical exogenous columns (``hist_exog_list``) - not supported
+        - statis exogenous columns (``stat_exog_list``) - not supported
+        - custom model name (``alias``) - used from ``algorithm_name``
+        """
+        if self.loss:
+            self._loss = self.loss
+        else:
+            from neuralforecast.losses.pytorch import MAE
+
+            self._loss = MAE()
+
+        if self.valid_loss:
+            self._valid_loss = self.valid_loss
+
+        return {
+            **self.common_auto_algorithm_parameters,
+            "loss": self._loss,
+            "valid_loss": self._valid_loss,
+        }
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for forecasters.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+        """
+        del parameter_set
+
+        try:
+            _check_soft_dependencies("neuralforecast", severity="error")
+        except ModuleNotFoundError:
+            params = [
+                {"freq": "D", "backend": "ray"},
+                {"freq": "D", "backend": "optuna"},
+            ]
+        else:
+            params = [
+                {"freq": "D", "refit_with_val": True, "backend": "ray"},
+                {"freq": "D", "refit_with_val": False, "backend": "optuna"},
+            ]
+
+        return params
+
+
+__all__ = ["NeuralForecastAutoTFT", "NeuralForecastRNN", "NeuralForecastLSTM"]
