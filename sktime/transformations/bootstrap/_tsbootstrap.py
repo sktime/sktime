@@ -83,23 +83,18 @@ class TSBootstrapAdapter(BaseTransformer):
         """
         bootstrapped_samples = self.bootstrap.bootstrap(X, test_ratio=0)
 
-        bootstrapped_samples = [pd.DataFrame(sample) for sample in bootstrapped_samples]
+        def wrap_df(spl):
+            return pd.DataFrame(spl, index=X.index, columns=X.columns)
 
-        bootstrapped_df = pd.concat(
-            bootstrapped_samples,
-            keys=[f"synthetic_{i}" for i in range(len(bootstrapped_samples))],
-        )
+        bootstrapped_samples = [wrap_df(sample) for sample in bootstrapped_samples]
+        spl_keys = [f"synthetic_{i}" for i in range(len(bootstrapped_samples))]
 
-        _X = X.copy()
-        # Ensure that bootstrapped_df has the same index as X
-        _X.index = pd.MultiIndex.from_product([["actual"], range(len(X))])
-        bootstrapped_df.index = pd.MultiIndex.from_product(
-                    [bootstrapped_df.index.levels[0], range(len(X))]
-                )
         if self.include_actual:
-            return pd.concat([_X, bootstrapped_df], axis=0)
-        else:
-            return bootstrapped_df
+            X_actual = X.copy()
+            bootstrapped_samples = [X_actual] + bootstrapped_samples
+            spl_keys = ["actual"] + spl_keys
+
+        return pd.concat(bootstrapped_samples, keys=spl_keys, axis=0)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
