@@ -31,7 +31,14 @@ Testing - required for sktime test framework and check_estimator usage:
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
-import numpy as np
+# todo: write an informative docstring for the file or module, remove the above
+# todo: add an appropriate copyright notice for your estimator
+#       estimators contributed to sktime should have the copyright notice at the top
+#       estimators of your own do not need to have permissive or BSD-3 copyright
+
+# todo: uncomment the following line, enter authors' GitHub IDs
+# __author__ = [authorGitHubID, anotherAuthorGitHubID]
+
 
 from sktime.clustering import BaseClusterer
 
@@ -70,7 +77,10 @@ class MyClusterer(BaseClusterer):
         "authors": ["author1", "author2"],  # authors, GitHub handles
         "maintainers": ["maintainer1", "maintainer2"],  # maintainers, GitHub handles
         # author = significant contribution to code at some point
-        # maintainer = algorithm maintainer role, "owner"
+        #     if interfacing a 3rd party estimator, ensure to give credit to the
+        #     authors of the interfaced estimator
+        # maintainer = algorithm maintainer role, "owner" of the sktime class
+        #     for 3rd party interfaces, the scope is the sktime class only
         # specify one or multiple authors and maintainers, only for sktime contribution
         # remove maintainer tag if maintained by sktime core team
         #
@@ -100,6 +110,8 @@ class MyClusterer(BaseClusterer):
         self.parama = parama
         self.paramb = paramb
         self.paramc = paramc
+        # IMPORTANT: the self.params should never be overwritten or mutated from now on
+        # for handling defaults etc, write to other attributes, e.g., self._parama
 
         # leave this as is
         super().__init__()
@@ -132,7 +144,7 @@ class MyClusterer(BaseClusterer):
 
     # todo: implement this, mandatory
     # at least one of _predict and _get_fitted_params should be implemented
-    def _predict(self, X) -> np.ndarray:
+    def _predict(self, X):
         """Predict the closest cluster each sample in X belongs to.
 
         Parameters

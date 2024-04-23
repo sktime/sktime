@@ -118,6 +118,7 @@ class BaseTransformer(BaseEstimator):
         "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
         # this can be a Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
+        "requires_X": True,  # does X need to be passed in fit?
         "requires_y": False,  # does y need to be passed in fit?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
@@ -467,6 +468,10 @@ class BaseTransformer(BaseEstimator):
         if self.get_tag("fit_is_empty") and not self.get_tag("remember_data", False):
             self._is_fitted = True
             return self
+
+        # if requires_y is set, y is required in fit and update
+        if self.get_tag("requires_X") and X is None:
+            raise ValueError(f"{self.__class__.__name__} requires `X` in `fit`.")
 
         # if requires_y is set, y is required in fit and update
         if self.get_tag("requires_y") and y is None:
@@ -981,24 +986,17 @@ class BaseTransformer(BaseEstimator):
         X_inner_scitype = mtype_to_scitype(X_inner_mtype, return_unique=True)
         y_inner_scitype = mtype_to_scitype(y_inner_mtype, return_unique=True)
 
-        ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
         ALLOWED_MTYPES = self.ALLOWED_INPUT_MTYPES
 
         # checking X
         X_metadata_required = ["is_univariate"]
 
-        X_valid, msg, X_metadata = check_is_scitype(
+        X_valid, msg, X_metadata = check_is_mtype(
             X,
-            scitype=ALLOWED_SCITYPES,
+            mtype=ALLOWED_MTYPES,
             return_metadata=X_metadata_required,
             var_name="X",
         )
-
-        X_scitype = X_metadata["scitype"]
-        X_mtype = X_metadata["mtype"]
-        # remember these for potential back-conversion (in transform etc)
-        metadata["_X_mtype_last_seen"] = X_mtype
-        metadata["_X_input_scitype"] = X_scitype
 
         # raise informative error message if X is in wrong format
         allowed_msg = (
@@ -1010,11 +1008,18 @@ class BaseTransformer(BaseEstimator):
         )
         msg_start = f"Unsupported input data type in {self.__class__.__name__}, input "
         msg_X = msg_start + "X"
-        if not X_valid or X_mtype not in ALLOWED_MTYPES:
+        if not X_valid:
             msg = {k: v for k, v in msg.items() if k in ALLOWED_MTYPES}
             check_is_error_msg(
                 msg, var_name=msg_X, allowed_msg=allowed_msg, raise_exception=True
             )
+
+        X_scitype = X_metadata["scitype"]
+        X_mtype = X_metadata["mtype"]
+
+        # remember these for potential back-conversion (in transform etc)
+        metadata["_X_mtype_last_seen"] = X_mtype
+        metadata["_X_input_scitype"] = X_scitype
 
         if X_scitype in X_inner_scitype:
             case = "case 1: scitype supported"
@@ -1047,8 +1052,6 @@ class BaseTransformer(BaseEstimator):
             y_valid, msg, y_metadata = check_is_scitype(
                 y, scitype=y_possible_scitypes, return_metadata=[], var_name="y"
             )
-            y_scitype = y_metadata["scitype"]
-            y_mtype = y_metadata["mtype"]
 
             # raise informative error message if y is is in wrong format
             if not y_valid:
@@ -1061,6 +1064,9 @@ class BaseTransformer(BaseEstimator):
                 check_is_error_msg(
                     msg, var_name=msg_y, allowed_msg=allowed_msg, raise_exception=True
                 )
+
+            y_scitype = y_metadata["scitype"]
+            y_mtype = y_metadata["mtype"]
 
         else:
             # y_scitype is used below - set to None if y is None
@@ -1226,20 +1232,32 @@ class BaseTransformer(BaseEstimator):
                 else:
                     Xt_metadata_required = []
 
-                valid, msg, metadata = check_is_mtype(
+                ALLOWED_OUT_MTYPES = ["pd.DataFrame", "pd.Series", "np.ndarray"]
+                Xt_valid, Xt_msg, metadata = check_is_mtype(
                     Xt,
-                    ["pd.DataFrame", "pd.Series", "np.ndarray"],
+                    ALLOWED_OUT_MTYPES,
                     msg_return_dict="list",
                     return_metadata=Xt_metadata_required,
                 )
 
-                if not valid:
-                    raise TypeError(
+                if not Xt_valid:
+                    Xtd = {k: v for k, v in Xt_msg.items() if k in ALLOWED_OUT_MTYPES}
+                    msg_start = (
+                        f"Type checking error in output of _transform of "
+                        f"{self.__class__.__name__}, output"
+                    )
+                    msg_out = (
                         f"_transform output of {type(self)} does not comply "
                         "with sktime mtype specifications. See datatypes.MTYPE_REGISTER"
-                        " for mtype specifications. Returned error message:"
-                        f" {msg}. Returned object: {Xt}"
+                        " for mtype specifications."
                     )
+                    check_is_error_msg(
+                        Xtd,
+                        var_name=msg_start,
+                        allowed_msg=msg_out,
+                        raise_exception=True,
+                    )
+
                 if X_input_mtype == "pd.Series" and not metadata["is_univariate"]:
                     X_output_mtype = "pd.DataFrame"
             elif self.get_tags()["scitype:transform-input"] == "Panel":

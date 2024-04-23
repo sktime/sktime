@@ -4,7 +4,7 @@
 
 > A unified interface for machine learning with time series
 
-:rocket: **Version 0.26.0 out now!** [Check out the release notes here](https://www.sktime.net/en/latest/changelog.html).
+:rocket: **Version 0.28.0 out now!** [Check out the release notes here](https://www.sktime.net/en/latest/changelog.html).
 
 sktime is a library for time series analysis in Python. It provides a unified interface for multiple time series learning tasks. Currently, this includes time series classification, regression, clustering, annotation, and forecasting. It comes with [time series algorithms](https://www.sktime.net/en/stable/estimator_overview.html) and [scikit-learn] compatible tools to build, tune and validate time series models.
 
@@ -54,7 +54,7 @@ Questions and feedback are extremely welcome! We strongly believe in the value o
 | :woman_technologist: **Usage Questions**          | [GitHub Discussions] · [Stack Overflow] |
 | :speech_balloon: **General Discussion**        | [GitHub Discussions] |
 | :factory: **Contribution & Development** | `dev-chat` channel · [Discord] |
-| :globe_with_meridians: **Community collaboration session** | [Discord] - Fridays 3 pm UTC, dev/meet-ups channel |
+| :globe_with_meridians: **Meet-ups and collaboration sessions** | [Discord] - Fridays 4 pm UTC, dev/meet-ups channel |
 
 [github issue tracker]: https://github.com/sktime/sktime/issues
 [github discussions]: https://github.com/sktime/sktime/discussions
@@ -226,6 +226,15 @@ There are many ways to join the sktime community. We follow the [all-contributor
 [meetings]: https://calendar.google.com/calendar/u/0/embed?src=sktime.toolbox@gmail.com&ctz=UTC
 [enhancement proposals]: https://github.com/sktime/enhancement-proposals
 [roles]: https://www.sktime.net/en/latest/about/team.html
+
+## :trophy: Hall of fame
+
+Thanks to all our community for all your wonderful contributions, PRs, issues, ideas.
+
+<a href="https://github.com/sktime/sktime/graphs/contributors">
+<img src="https://opencollective.com/sktime/contributors.svg?width=600&button=false" />
+</a>
+<br>
 
 ## :bulb: Project vision
 

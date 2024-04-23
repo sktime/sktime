@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.datatypes import update_data
 from sktime.datatypes._check import check_is_mtype
 from sktime.datatypes._examples import get_examples
 from sktime.datatypes._utilities import (
@@ -261,6 +262,28 @@ def test_get_cutoff_inferred_freq():
     assert cutoff.freq == "D"
 
 
+def test_get_cutoff_inferred_freq_small_series():
+    """Tests that get_cutoff does not fail on series smaller than three elements.
+
+    The purpose of this test is to check that the ValueError raised by pd.infer_freq is
+    not propagated to the user, but rather caught and handled by falling back to None.
+
+    See https://github.com/sktime/sktime/issues/5853
+    and https://github.com/sktime/sktime/pull/6097 for more details.
+    """
+    y = pd.DataFrame(
+        data={"y": [1, 2]},
+        index=pd.to_datetime(["2020-01-01", "2020-01-02"]),
+    )
+    cutoff = get_cutoff(y, return_index=True)
+    assert cutoff.freq is None
+
+    # Check that it also works for multi-indexed DataFrames
+    y = _make_hierarchical(hierarchy_levels=(2,), min_timepoints=2, max_timepoints=3)
+    cutoff = get_cutoff(y, return_index=True)
+    assert cutoff.freq is None
+
+
 @pytest.mark.parametrize("window_length, lag", [(2, 0), (None, 0), (4, 1)])
 @pytest.mark.parametrize("scitype,mtype", SCITYPE_MTYPE_PAIRS)
 def test_get_window_output_type(scitype, mtype, window_length, lag):
@@ -382,3 +405,27 @@ def test_get_slice_expected_result():
 
     X_np = get_examples(mtype="numpy3D")[0]
     assert get_slice(X_np, start=1, end=3).shape == (2, 2, 3)
+
+
+def test_retain_series_freq_on_update():
+    """Tests that the frequency of a series is retained after updating it"""
+    from sktime.datasets import load_airline
+    from sktime.forecasting.model_selection import temporal_train_test_split
+
+    y = load_airline()
+
+    # create dummy index with hourly timestamps and panel data by hour of day
+    ind = pd.date_range(
+        start="1960-01-01 10:00:00", periods=len(y.index), freq="24H", name="datetime"
+    )
+    y = pd.Series(y.values, index=ind, name="passengers")
+    y_train, y_test = temporal_train_test_split(y, test_size=2)
+
+    # update the series with the test data
+    y_new = update_data(y_train, y_test)
+
+    assert y_new.equals(y)
+    assert y_new.index.equals(y.index)
+    assert y_new.index.freq == y.index.freq
+    assert y_new.index.freqstr == y.index.freqstr
+    assert y.index.equals(y_new.index.to_period().to_timestamp())

@@ -13,7 +13,7 @@ def sklearn_to_sktime(estimator):
     The identity transformer acts as adapter and holds sktime base class logic.
 
     Developer note:
-    Type dispatch logic is in the transformer base class, in the `__mul__` dunder.
+    Type dispatch logic is in the transformer base class, in the ``__mul__`` dunder.
 
     Parameters
     ----------

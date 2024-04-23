@@ -56,7 +56,9 @@ def _online_shapelet_distance(series, shapelet, sorted_indices, position, length
             std = math.sqrt((sums2[n] - mean * mean * length) / length)
 
             dist = 0
-            use_std = std != 0
+
+            eps = 1e-8  # numerical eps, to avoid division by zero
+            use_std = std > eps  # use a numerical tolerance to prevent NaN values
             for j in range(length):
                 val = (series[pos + sorted_indices[j]] - mean) / std if use_std else 0
                 temp = shapelet[sorted_indices[j]] - val
@@ -70,7 +72,7 @@ def _online_shapelet_distance(series, shapelet, sorted_indices, position, length
 
         i += 1
 
-    return best_dist if best_dist == 0 else 1 / length * best_dist
+    return 1 / length * best_dist
 
 
 @njit(fastmath=True, cache=True)

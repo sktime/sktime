@@ -3,7 +3,6 @@
 
 __author__ = ["fkiraly"]
 
-from sktime.datatypes import ALL_TIME_SERIES_MTYPES
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 
 
@@ -35,9 +34,7 @@ class IgnoreX(_DelegatedForecaster):
     _delegate_name = "forecaster_"
 
     _tags = {
-        "authors": ["fkiraly", "tpvasconcelos"],
         "ignores-exogeneous-X": True,
-        "scitype:y": "both",
     }
 
     def __init__(self, forecaster, ignore_x=True):
@@ -48,21 +45,8 @@ class IgnoreX(_DelegatedForecaster):
 
         self.forecaster_ = forecaster.clone()
 
-        TAGS_TO_CLONE = [
-            "capability:insample",
-            "capability:pred_int",
-            "capability:pred_int:insample",
-            "handles-missing-data",
-            "requires-fh-in-fit",
-            "X-y-must-have-same-index",
-            "enforce_index_type",
-        ]
-
-        self.clone_tags(forecaster, TAGS_TO_CLONE)
-
-        # this ensures that we convert in the inner estimator, not in the multiplexer
-        self.set_tags(**{"y_inner_mtype": ALL_TIME_SERIES_MTYPES})
-        self.set_tags(**{"X_inner_mtype": ALL_TIME_SERIES_MTYPES})
+        self._set_delegated_tags(self.forecaster_)
+        self.set_tags(**{"ignores-exogeneous-X": True})
 
         if not ignore_x:
             self.set_tags(**{"ignores-exogeneous-X": ignore_x})
@@ -75,7 +59,7 @@ class IgnoreX(_DelegatedForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns

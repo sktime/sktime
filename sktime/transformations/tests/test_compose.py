@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 from sklearn.preprocessing import StandardScaler
 
-from sktime.datasets import load_airline
+from sktime.datasets import load_airline, load_unit_test
 from sktime.datatypes import get_examples
 from sktime.transformations.bootstrap import STLBootstrapTransformer
 from sktime.transformations.compose import (
@@ -171,6 +171,22 @@ def test_featureunion_transform_cols():
     )
 
     assert deep_equals(Xt.columns, expected_cols), msg
+
+
+def test_featureunion_primitives():
+    """Test that FeatureUnion is correctly applied to primitives.
+
+    Failure case of bug #6077.
+    """
+    X, _ = load_unit_test(split="train", return_X_y=True)
+
+    fu = SummaryTransformer() + SummaryTransformer()
+    Xt = fu.fit_transform(X)
+
+    assert isinstance(Xt, pd.DataFrame)
+    assert len(Xt) == len(X)
+    assert Xt.shape[1] == 2 * 9  # 9-feature summary statistics
+    assert Xt.columns[0] == "SummaryTransformer_1__mean"  # unique naming
 
 
 def test_sklearn_after_primitives():
