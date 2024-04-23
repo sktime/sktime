@@ -380,6 +380,12 @@ Deep learning based forecasters
     NeuralForecastRNN
     NeuralForecastLSTM
 
+.. currentmodule:: sktime.forecasting.moirai_forecaster
+    .. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MOIRAIForecaster
 
 Intermittent time series forecasters
 ------------------------------------
