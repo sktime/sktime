@@ -39,6 +39,12 @@ class TSBootstrapAdapter(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "benheid",
+        "python_dependencies": ["tsbootstrap>=0.1.0"],
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Panel",
         "scitype:instancewise": True,  # is this an instance-wise transform?
@@ -51,8 +57,7 @@ class TSBootstrapAdapter(BaseTransformer):
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
-        "transform-returns-same-time-index": False,
-        "python_dependencies": ["tsbootstrap>=0.1.0"],
+        "transform-returns-same-time-index": True,
     }
 
     def __init__(
