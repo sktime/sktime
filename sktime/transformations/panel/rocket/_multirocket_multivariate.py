@@ -263,7 +263,8 @@ class MultiRocketMultivariate(BaseTransformer):
             biases,
         )
 
-    def get_test_params(self, parameter_set="default"):
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
 
         Parameters
