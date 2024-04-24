@@ -30,10 +30,10 @@ Deep learning
     :template: class.rst
 
     CNNRegressor
-    CNTCRRegressor
+    CNTCRegressor
     FCNRegressor
     InceptionTimeRegressor
-    LSTMRegressor
+    LSTMFCNRegressor
     MACNNRegressor
     MCDCNNRegressor
     MLPRegressor
@@ -83,6 +83,7 @@ Kernel-based
     :toctree: auto_generated/
     :template: class.rst
 
+    TimeSeriesSVRTslearn
     RocketRegressor
 
 Base

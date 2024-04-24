@@ -1,12 +1,15 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Interfaces to estimators from neuralforecast by Nixtla."""
 import functools
-import typing
+from typing import List, Optional, Union
 
-from sktime.forecasting.base.adapters._neuralforecast import _NeuralForecastAdapter
+from sktime.forecasting.base.adapters._neuralforecast import (
+    _SUPPORTED_LOCAL_SCALAR_TYPES,
+    _NeuralForecastAdapter,
+)
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-__author__ = ["yarnabrina"]
+__author__ = ["yarnabrina", "geetu040", "pranavvp16"]
 
 
 class NeuralForecastRNN(_NeuralForecastAdapter):
@@ -17,13 +20,16 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
     from ``neuralforecast`` [3]_ by Nixtla.
 
     Multi Layer Elman RNN (RNN), with MLP decoder.
-    The network has `tanh` or `relu` non-linearities, it is trained using
+    The network has ``tanh`` or ``relu`` non-linearities, it is trained using
     ADAM stochastic gradient descent.
 
     Parameters
     ----------
-    freq : str
+    freq : Union[str, int] (default="auto")
         frequency of the data, see available frequencies [4]_ from ``pandas``
+        use int freq when using RangeIndex in ``y``
+
+        default ("auto") interprets freq from ForecastingHorizon in ``fit``
     local_scaler_type : str (default=None)
         scaler to apply per-series to all features before fitting, which is inverted
         after predicting
@@ -54,7 +60,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
     encoder_hidden_size : int (default=200)
         units for the RNN's hidden state size
     encoder_activation : str (default="tanh")
-        type of RNN activation from `tanh` or `relu`
+        type of RNN activation from ``tanh`` or ``relu``
     encoder_bias : bool (default=True)
         whether or not to use biases b_ih, b_hh within RNN units
     encoder_dropout : float (default=0.0)
@@ -81,18 +87,22 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         number of training steps between every validation loss check
     batch_size : int (default=32)
         number of different series in each batch
-    valid_batch_size : typing.Optional[int] (default=None)
+    valid_batch_size : Optional[int] (default=None)
         number of different series in each validation and test batch
     scaler_type : str (default="robust")
         type of scaler for temporal inputs normalization
     random_seed : int (default=1)
         random_seed for pytorch initializer and numpy generators
     num_workers_loader : int (default=0)
-        workers to be used by `TimeSeriesDataLoader`
+        workers to be used by ``TimeSeriesDataLoader``
     drop_last_loader : bool (default=False)
-        whether `TimeSeriesDataLoader` drops last non-full batch
+        whether ``TimeSeriesDataLoader`` drops last non-full batch
     trainer_kwargs : dict (default=None)
         keyword trainer arguments inherited from PyTorch Lighning's trainer [6]_
+    optimizer : pytorch optimizer (default=None) [7]_
+        optimizer to use for training, if passed with None defaults to Adam
+    optimizer_kwargs : dict (default=None) [8]_
+        dict of parameters to pass to the user defined optimizer
 
     Notes
     -----
@@ -119,12 +129,14 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
     >>> # fitting the model
     >>> model.fit(y_train, X=X_train, fh=[1, 2, 3, 4])  # doctest: +SKIP
     Seed set to 1
-    Epoch 4: 100%|█| 1/1 [00:00<00:00, 42.85it/s, v_num=870, train_loss_step=0.589, train_loss_epoc
+    Epoch 4: 100%|█| 1/1 [00:00<00:00, 42.85it/s, v_num=870, train_loss_step=0.589,
+    train_loss_epoc
     NeuralForecastRNN(freq='A-DEC', futr_exog_list=['ARMED', 'POP'], max_steps=5)
     >>>
     >>> # getting point predictions
     >>> model.predict(X=X_test)  # doctest: +SKIP
-    Predicting DataLoader 0: 100%|██████████████████████████████████| 1/1 [00:00<00:00, 198.64it/s]
+    Predicting DataLoader 0: 100%|██████████████████████████████████| 1/1 [00:00<00:00,
+    198.64it/s]
     1959    66241.984375
     1960    66700.125000
     1961    66550.195312
@@ -137,9 +149,13 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
     .. [1] https://nixtlaverse.nixtla.io/neuralforecast/models.rnn.html#rnn
     .. [2] https://nixtlaverse.nixtla.io/neuralforecast/core.html#neuralforecast
     .. [3] https://github.com/Nixtla/neuralforecast/
-    .. [4] https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
+    .. [4]
+    https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
     .. [5] https://nixtlaverse.nixtla.io/neuralforecast/losses.pytorch.html
-    .. [6] https://lightning.ai/docs/pytorch/stable/api/pytorch_lightning.trainer.trainer.Trainer.html#lightning.pytorch.trainer.trainer.Trainer
+    .. [6]
+    https://lightning.ai/docs/pytorch/stable/api/pytorch_lightning.trainer.trainer.Trainer.html#lightning.pytorch.trainer.trainer.Trainer
+    .. [7] https://pytorch.org/docs/stable/optim.html
+    .. [8] https://pytorch.org/docs/stable/optim.html#algorithms
     """  # noqa: E501
 
     _tags = {
@@ -156,11 +172,9 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
 
     def __init__(
         self: "NeuralForecastRNN",
-        freq: str,
-        local_scaler_type: typing.Optional[
-            typing.Literal["standard", "robust", "robust-iqr", "minmax", "boxcox"]
-        ] = None,
-        futr_exog_list: typing.Optional[typing.List[str]] = None,
+        freq: Union[str, int] = "auto",
+        local_scaler_type: Optional[_SUPPORTED_LOCAL_SCALAR_TYPES] = None,
+        futr_exog_list: Optional[List[str]] = None,
         verbose_fit: bool = False,
         verbose_predict: bool = False,
         input_size: int = -1,
@@ -181,12 +195,14 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         early_stop_patience_steps: int = -1,
         val_check_steps: int = 100,
         batch_size=32,
-        valid_batch_size: typing.Optional[int] = None,
+        valid_batch_size: Optional[int] = None,
         scaler_type: str = "robust",
         random_seed=1,
         num_workers_loader=0,
         drop_last_loader=False,
-        trainer_kwargs: typing.Optional[dict] = None,
+        trainer_kwargs: Optional[dict] = None,
+        optimizer=None,
+        optimizer_kwargs: dict = None,
     ):
         self.input_size = input_size
         self.inference_input_size = inference_input_size
@@ -211,6 +227,8 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         self.random_seed = random_seed
         self.num_workers_loader = num_workers_loader
         self.drop_last_loader = drop_last_loader
+        self.optimizer = optimizer
+        self.optimizer_kwargs = optimizer_kwargs
         self.trainer_kwargs = trainer_kwargs
 
         super().__init__(
@@ -290,7 +308,9 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
             "random_seed": self.random_seed,
             "num_workers_loader": self.num_workers_loader,
             "drop_last_loader": self.drop_last_loader,
-            **self._trainer_kwargs,
+            "optimizer": self.optimizer,
+            "optimizer_kwargs": self.optimizer_kwargs,
+            "trainer_kwargs": self._trainer_kwargs,
         }
 
     @classmethod
@@ -301,7 +321,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for forecasters.
 
         Returns
@@ -309,17 +329,19 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
         try:
             _check_soft_dependencies("neuralforecast", severity="error")
+            _check_soft_dependencies("torch", severity="error")
         except ModuleNotFoundError:
             params = [
                 {
-                    "freq": "D",
+                    "freq": "auto",
                     "inference_input_size": 2,
                     "encoder_hidden_size": 2,
                     "decoder_hidden_size": 3,
@@ -327,7 +349,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
                     "trainer_kwargs": {"logger": False},
                 },
                 {
-                    "freq": "D",
+                    "freq": "auto",
                     "inference_input_size": 2,
                     "encoder_hidden_size": 2,
                     "decoder_hidden_size": 3,
@@ -338,10 +360,11 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
             ]
         else:
             from neuralforecast.losses.pytorch import SMAPE, QuantileLoss
+            from torch.optim import Adam
 
             params = [
                 {
-                    "freq": "D",
+                    "freq": "auto",
                     "inference_input_size": 2,
                     "encoder_hidden_size": 2,
                     "decoder_hidden_size": 3,
@@ -349,7 +372,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
                     "trainer_kwargs": {"logger": False},
                 },
                 {
-                    "freq": "D",
+                    "freq": "auto",
                     "inference_input_size": 2,
                     "encoder_hidden_size": 2,
                     "decoder_hidden_size": 3,
@@ -358,6 +381,8 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
                     "max_steps": 4,
                     "val_check_steps": 2,
                     "trainer_kwargs": {"logger": False},
+                    "optimizer": Adam,
+                    "optimizer_kwargs": {"lr": 0.001},
                 },
             ]
 
@@ -376,8 +401,11 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
 
     Parameters
     ----------
-    freq : str
+    freq : Union[str, int] (default="auto")
         frequency of the data, see available frequencies [4]_ from ``pandas``
+        use int freq when using RangeIndex in ``y``
+
+        default ("auto") interprets freq from ForecastingHorizon in ``fit``
     local_scaler_type : str (default=None)
         scaler to apply per-series to all features before fitting, which is inverted
         after predicting
@@ -433,7 +461,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         number of training steps between every validation loss check
     batch_size : int (default=32)
         number of different series in each batch
-    valid_batch_size : typing.Optional[int] (default=None)
+    valid_batch_size : Optional[int] (default=None)
         number of different series in each validation and test batch
     scaler_type : str (default="robust")
         type of scaler for temporal inputs normalization
@@ -445,6 +473,10 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         whether `TimeSeriesDataLoader` drops last non-full batch
     trainer_kwargs : dict (default=None)
         keyword trainer arguments inherited from PyTorch Lighning's trainer [6]_
+    optimizer : pytorch optimizer (default=None) [7]_
+        optimizer to use for training, if passed with None defaults to Adam
+    optimizer_kwargs : dict (default=None) [8]_
+        dict of parameters to pass to the user defined optimizer
 
     Notes
     -----
@@ -492,6 +524,8 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
     .. [4] https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
     .. [5] https://nixtlaverse.nixtla.io/neuralforecast/losses.pytorch.html
     .. [6] https://lightning.ai/docs/pytorch/stable/api/pytorch_lightning.trainer.trainer.Trainer.html#lightning.pytorch.trainer.trainer.Trainer
+    .. [7] https://pytorch.org/docs/stable/optim.html
+    .. [8] https://pytorch.org/docs/stable/optim.html#algorithms
     """  # noqa: E501
 
     _tags = {
@@ -508,11 +542,9 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
 
     def __init__(
         self: "NeuralForecastLSTM",
-        freq: str,
-        local_scaler_type: typing.Optional[
-            typing.Literal["standard", "robust", "robust-iqr", "minmax", "boxcox"]
-        ] = None,
-        futr_exog_list: typing.Optional[typing.List[str]] = None,
+        freq: Union[str, int] = "auto",
+        local_scaler_type: Optional[_SUPPORTED_LOCAL_SCALAR_TYPES] = None,
+        futr_exog_list: Optional[List[str]] = None,
         verbose_fit: bool = False,
         verbose_predict: bool = False,
         input_size: int = -1,
@@ -532,12 +564,14 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         early_stop_patience_steps: int = -1,
         val_check_steps: int = 100,
         batch_size=32,
-        valid_batch_size: typing.Optional[int] = None,
+        valid_batch_size: Optional[int] = None,
         scaler_type: str = "robust",
         random_seed=1,
         num_workers_loader=0,
         drop_last_loader=False,
-        trainer_kwargs: typing.Optional[dict] = None,
+        trainer_kwargs: Optional[dict] = None,
+        optimizer=None,
+        optimizer_kwargs: dict = None,
     ):
         self.input_size = input_size
         self.inference_input_size = inference_input_size
@@ -561,6 +595,8 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         self.random_seed = random_seed
         self.num_workers_loader = num_workers_loader
         self.drop_last_loader = drop_last_loader
+        self.optimizer = optimizer
+        self.optimizer_kwargs = optimizer_kwargs
         self.trainer_kwargs = trainer_kwargs
 
         super().__init__(
@@ -638,7 +674,9 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
             "random_seed": self.random_seed,
             "num_workers_loader": self.num_workers_loader,
             "drop_last_loader": self.drop_last_loader,
-            **self._trainer_kwargs,
+            "optimizer": self.optimizer,
+            "optimizer_kwargs": self.optimizer_kwargs,
+            "trainer_kwargs": self._trainer_kwargs,
         }
 
     @classmethod
@@ -661,10 +699,11 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
 
         try:
             _check_soft_dependencies("neuralforecast", severity="error")
+            _check_soft_dependencies("torch", severity="error")
         except ModuleNotFoundError:
             params = [
                 {
-                    "freq": "D",
+                    "freq": "auto",
                     "inference_input_size": 2,
                     "encoder_hidden_size": 2,
                     "decoder_hidden_size": 3,
@@ -672,7 +711,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
                     "trainer_kwargs": {"logger": False},
                 },
                 {
-                    "freq": "D",
+                    "freq": "auto",
                     "inference_input_size": 2,
                     "encoder_hidden_size": 2,
                     "encode_bias": False,
@@ -683,10 +722,11 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
             ]
         else:
             from neuralforecast.losses.pytorch import SMAPE, QuantileLoss
+            from torch.optim import Adam
 
             params = [
                 {
-                    "freq": "D",
+                    "freq": "auto",
                     "inference_input_size": 2,
                     "encoder_hidden_size": 2,
                     "decoder_hidden_size": 3,
@@ -694,7 +734,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
                     "trainer_kwargs": {"logger": False},
                 },
                 {
-                    "freq": "D",
+                    "freq": "auto",
                     "inference_input_size": 2,
                     "encoder_hidden_size": 2,
                     "decoder_hidden_size": 3,
@@ -703,6 +743,8 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
                     "max_steps": 4,
                     "val_check_steps": 2,
                     "trainer_kwargs": {"logger": False},
+                    "optimizer": Adam,
+                    "optimizer_kwargs": {"lr": 0.001},
                 },
             ]
 
