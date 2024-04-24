@@ -262,7 +262,25 @@ class MultiRocketMultivariate(BaseTransformer):
             num_features_per_dilation,
             biases,
         )
-    def get_test_params(self):
+
+    def get_test_params(self, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for transformers.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
         return [
             {},
             {
@@ -278,4 +296,3 @@ class MultiRocketMultivariate(BaseTransformer):
                 "normalise": False,
             },
         ]
-1
