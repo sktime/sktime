@@ -47,7 +47,7 @@ class _DelegatedForecaster(BaseForecaster):
 
         * data mtype tags are set to the most general value.
           This is to ensure that conversion is left to the inner estimator.
-        * packaging tags such as "author" or "python_depedencies" are not cloned.
+        * packaging tags such as "author" or "python_dependencies" are not cloned.
         * other boilerplate tags are cloned.
 
         Parameters

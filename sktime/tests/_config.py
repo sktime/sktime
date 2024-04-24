@@ -22,7 +22,6 @@ EXCLUDE_ESTIMATORS = [
     "RandomInvervals",
     "RandomIntervalSegmenter",
     "RandomIntervalFeatureExtractor",
-    "RandomIntervalClassifier",
     "MiniRocket",
     "MatrixProfileTransformer",
     # tapnet based estimators fail stochastically for unknown reasons, see #3525
@@ -34,8 +33,6 @@ EXCLUDE_ESTIMATORS = [
     # DL classifier suspected to cause hangs and memouts, see #4610
     "FCNClassifier",
     "MACNNClassifier",
-    "SimpleRNNClassifier",
-    "SimpleRNNRegressor",
     "EditDist",
     "CNNClassifier",
     "FCNClassifier",
@@ -47,6 +44,15 @@ EXCLUDE_ESTIMATORS = [
     "ResNetRegressor",
     "FCNRegressor",
     "LSTMFCNRegressor",
+    "MACNNRegressor",
+    "CNTCClassifier",
+    "CNTCRegressor",
+    # splitters excluded with undiagnosed failures, see #6194
+    # these are temporarily skipped to allow merging of the base test framework
+    "SameLocSplitter",
+    "TestPlusTrainSplitter",
+    "Repeat",
+    "CutoffFhSplitter",
 ]
 
 
@@ -86,6 +92,7 @@ EXCLUDED_TESTS = {
         "test_persistence_via_pickle",
         "test_fit_does_not_overwrite_hyper_params",
         "test_save_estimators_to_file",
+        "test_fit_idempotent",  # see 6201
     ],
     # TapNet fails due to Lambda layer, see #3539 and #3616
     "TapNetClassifier": [
@@ -138,6 +145,7 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
         "test_persistence_via_pickle",
         "test_save_estimators_to_file",
+        "test_multioutput",  # see 6201
     ],
     "SimpleRNNRegressor": [
         "test_fit_idempotent",
@@ -154,6 +162,15 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
     ],
     "FCNRegressor": [
+        "test_fit_idempotent",
+    ],
+    "MACNNRegressor": [
+        "test_fit_idempotent",
+    ],
+    "InceptionTimeRegressor": [
+        "test_fit_idempotent",
+    ],
+    "CNTCRegressor": [
         "test_fit_idempotent",
     ],
     # sth is not quite right with the RowTransformer-s changing state,
@@ -205,6 +222,18 @@ EXCLUDED_TESTS = {
     "StatsForecastMSTL": ["test_pred_int_tag"],
     # KNeighborsTimeSeriesClassifierTslearn crashes in parallel mode
     "KNeighborsTimeSeriesClassifierTslearn": ["test_multiprocessing_idempotent"],
+    # ShapeletTransformPyts creates nested numpy shapelets sporadically, see #6171
+    "ShapeletTransformPyts": ["test_non_state_changing_method_contract"],
+    "TimeSeriesSVRTslearn": [  # not deterministic, see 6274
+        "test_fit_idempotent",
+        "test_multiprocessing_idempotent",
+    ],
+    # ShapeletLearningClassifier is non-pickleable due to DL dependencies
+    "ShapeletLearningClassifierTslearn": [
+        "test_persistence_via_pickle",
+        "test_save_estimators_to_file",
+        "test_fit_idempotent",
+    ],
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish

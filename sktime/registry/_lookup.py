@@ -48,7 +48,7 @@ def all_estimators(
     return_tags=None,
     suppress_import_stdout=True,
 ):
-    """Get a list of all estimators from sktime.
+    """List all estimators or objects in sktime, by scitype or tag.
 
     This function crawls the module and gets all classes that inherit
     from sktime's and sklearn's base classes.
@@ -144,7 +144,7 @@ def all_estimators(
 
     References
     ----------
-    Modified version from scikit-learn's `all_estimators()`.
+    Modified version from scikit-learn's ``all_estimators()``.
     """
     MODULES_TO_IGNORE = (
         "tests",
@@ -156,9 +156,9 @@ def all_estimators(
         "plotting",
         "_split",
         "test_split",
+        "registry",
     )
 
-    result = []
     ROOT = str(Path(__file__).parent.parent)  # sktime package root directory
 
     if estimator_types:
@@ -275,9 +275,9 @@ def all_tags(
     estimator_types=None,
     as_dataframe=False,
 ):
-    """Get a list of all tags from sktime.
+    """List all tags in sktime, for objects of a certain type.
 
-    All objects in ``sktime`` are tagged with a set of :term`tag`s.
+    All objects in ``sktime`` are tagged with a set of :term``tag``s.
     This function allows to list all tags, optionally filtered by
     the object :term:`scitype` they apply to.
 

@@ -180,6 +180,7 @@ Kernel-based
     :template: class.rst
 
     TimeSeriesSVC
+    TimeSeriesSVCTslearn
     Arsenal
     RocketClassifier
 
@@ -193,6 +194,7 @@ Shapelet-based
     :template: class.rst
 
     ShapeletTransformClassifier
+    ShapeletLearningClassifierTslearn
     MrSEQL
     MrSQM
 

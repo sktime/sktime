@@ -80,8 +80,8 @@ def _fh_equals_plugin(x, y, return_msg=False, deep_equals=None):
 
     Parameters
     ----------
-    x: ForcastingHorizon
-    y: ForcastingHorizon
+    x: ForecastingHorizon
+    y: ForecastingHorizon
     return_msg : bool, optional, default=False
         whether to return informative message about what is not equal
 

@@ -62,10 +62,10 @@ class BOSSEnsemble(BaseClassifier):
     ----------
     threshold : float, default=0.92
         Threshold used to determine which classifiers to retain. All classifiers
-        within percentage `threshold` of the best one are retained.
+        within percentage ``threshold`` of the best one are retained.
     max_ensemble_size : int or None, default=500
         Maximum number of classifiers to retain. Will limit number of retained
-        classifiers even if more than `max_ensemble_size` are within threshold.
+        classifiers even if more than ``max_ensemble_size`` are within threshold.
     max_win_len_prop : int or float, default=1
         Maximum window length as a proportion of the series length.
     min_window : int, default=10
@@ -76,7 +76,7 @@ class BOSSEnsemble(BaseClassifier):
     alphabet_size : default = 2
         Number of possible letters (values) for each word.
     n_jobs : int, default=1
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``-1`` means using all processors.
     use_boss_distance : boolean, default=True
         The Boss-distance is an asymmetric distance measure. It provides higher
@@ -98,8 +98,8 @@ class BOSSEnsemble(BaseClassifier):
     n_instances_ : int
         Number of instances. Extracted from the data.
     n_estimators_ : int
-        The final number of classifiers used. Will be <= `max_ensemble_size` if
-        `max_ensemble_size` has been specified.
+        The final number of classifiers used. Will be <= ``max_ensemble_size`` if
+        ``max_ensemble_size`` has been specified.
     series_length_ : int
         Length of all series (assumed equal).
     estimators_ : list
@@ -439,7 +439,7 @@ class BOSSEnsemble(BaseClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -450,8 +450,9 @@ class BOSSEnsemble(BaseClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         if parameter_set == "results_comparison":
             return {
@@ -501,9 +502,9 @@ class IndividualBOSS(BaseClassifier):
         Whether to keep NumPy array of words in SFA transformation even after
         the dictionary of words is returned. If True, the array is saved, which
         can shorten the time to calculate dictionaries using a shorter
-        `word_length` (since the last "n" letters can be removed).
+        ``word_length`` (since the last "n" letters can be removed).
     n_jobs : int, default=1
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``-1`` means using all processors.
     random_state : int or None, default=None
         Seed for random, integer.
@@ -754,7 +755,7 @@ def boss_distance(X, Y, i, XX_all=None, XY_all=None):
     X : sparse matrix
         Base dictionary used in distance measurement.
     Y : sparse matrix
-        Second dictionary that will be used to measure distance from `first`.
+        Second dictionary that will be used to measure distance from ``first``.
     i : int
         index of current element
 

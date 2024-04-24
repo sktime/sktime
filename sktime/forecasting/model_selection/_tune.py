@@ -84,7 +84,7 @@ class BaseGridSearch(_DelegatedForecaster):
         if tune_by_variable:
             self.set_tags(**{"scitype:y": "univariate"})
 
-        # todo 0.28.0: check if this is still necessary
+        # todo 0.29.0: check if this is still necessary
         # n_jobs is deprecated, left due to use in tutorials, books, blog posts
         if n_jobs != "deprecated":
             warn(
@@ -104,7 +104,7 @@ class BaseGridSearch(_DelegatedForecaster):
     def _extend_to_all_scitypes(self, tagname):
         """Ensure mtypes for all scitypes are in the tag with tagname.
 
-        Mutates self tag with name `tagname`.
+        Mutates self tag with name ``tagname``.
         If no mtypes are present of a time series scitype, adds a pandas based one.
         If only univariate pandas scitype is present for Series ("pd.Series"),
         also adds the multivariate one ("pd.DataFrame").
@@ -267,7 +267,10 @@ class BaseGridSearch(_DelegatedForecaster):
         # Select n best forecaster
         self.n_best_forecasters_ = []
         self.n_best_scores_ = []
-        for i in range(self.return_n_best_forecasters):
+        _forecasters_to_return = min(self.return_n_best_forecasters, len(results.index))
+        if _forecasters_to_return == -1:
+            _forecasters_to_return = len(results.index)
+        for i in range(_forecasters_to_return):
             params = results["params"].iloc[i]
             rank = results[f"rank_{scoring_name}"].iloc[i]
             rank = str(int(rank))
@@ -404,7 +407,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
     cv : cross-validation generator or an iterable
         e.g. SlidingWindowSplitter()
     strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
-        data ingestion strategy in fitting cv, passed to `evaluate` internally
+        data ingestion strategy in fitting cv, passed to ``evaluate`` internally
         defines the ingestion mode when the forecaster sees new data when window expands
         "refit" = a new copy of the forecaster is fitted to each training window
         "update" = forecaster is updated with training window data, in sequence provided
@@ -426,7 +429,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         for instance via ``all_estimators("metric", as_dataframe=True)``
 
         * If callable, must have signature
-        `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
+        ``(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float``,
         assuming np.ndarrays being of the same length, and lower being better.
         Metrics in sktime.performance_metrics.forecasting are all of this form.
 
@@ -445,13 +448,15 @@ class ForecastingGridSearchCV(BaseGridSearch):
     verbose: int, optional (default=0)
     return_n_best_forecasters : int, default=1
         In case the n best forecaster should be returned, this value can be set
-        and the n best forecasters will be assigned to n_best_forecasters_
+        and the n best forecasters will be assigned to n_best_forecasters_.
+        Set return_n_best_forecasters to -1 to return all forecasters.
+
     error_score : numeric value or the str 'raise', optional (default=np.nan)
         The test score returned when a forecaster fails to be fitted.
     return_train_score : bool, optional (default=False)
 
     backend : {"dask", "loky", "multiprocessing", "threading"}, by default "loky".
-        Runs parallel evaluate if specified and `strategy` is set as "refit".
+        Runs parallel evaluate if specified and ``strategy`` is set as "refit".
 
         - "None": executes loop sequentally, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
@@ -665,7 +670,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
@@ -724,7 +729,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
     cv : cross-validation generator or an iterable
         e.g. SlidingWindowSplitter()
     strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
-        data ingestion strategy in fitting cv, passed to `evaluate` internally
+        data ingestion strategy in fitting cv, passed to ``evaluate`` internally
         defines the ingestion mode when the forecaster sees new data when window expands
         "refit" = a new copy of the forecaster is fitted to each training window
         "update" = forecaster is updated with training window data, in sequence provided
@@ -736,7 +741,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         "inner_only" = tuning parameters are not re-tuned, inner estimator is updated
         "no_update" = neither tuning parameters nor inner estimator are updated
     param_distributions : dict or list of dicts
-        Dictionary with parameters names (`str`) as keys and distributions
+        Dictionary with parameters names (``str``) as keys and distributions
         or lists of parameters to try. Distributions must provide a ``rvs``
         method for sampling (such as those from scipy.stats.distributions).
         If a list is given, it is sampled uniformly.
@@ -754,7 +759,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         for instance via ``all_estimators("metric", as_dataframe=True)``
 
         * If callable, must have signature
-        `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
+        ``(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float``,
         assuming np.ndarrays being of the same length, and lower being better.
         Metrics in sktime.performance_metrics.forecasting are all of this form.
 
@@ -773,7 +778,9 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
     verbose : int, optional (default=0)
     return_n_best_forecasters: int, default=1
         In case the n best forecaster should be returned, this value can be set
-        and the n best forecasters will be assigned to n_best_forecasters_
+        and the n best forecasters will be assigned to n_best_forecasters_.
+        Set return_n_best_forecasters to -1 to return all forecasters.
+
     random_state : int, RandomState instance or None, default=None
         Pseudo random number generator state used for random uniform sampling
         from lists of possible values instead of scipy.stats distributions.
@@ -781,7 +788,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         function calls.
 
     backend : {"dask", "loky", "multiprocessing", "threading"}, by default "loky".
-        Runs parallel evaluate if specified and `strategy` is set as "refit".
+        Runs parallel evaluate if specified and ``strategy`` is set as "refit".
 
         - "None": executes loop sequentally, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
@@ -912,7 +919,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
@@ -992,7 +999,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         for instance via ``all_estimators("metric", as_dataframe=True)``
 
         * If callable, must have signature
-        `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
+        ``(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float``,
         assuming np.ndarrays being of the same length, and lower being better.
         Metrics in sktime.performance_metrics.forecasting are all of this form.
 
@@ -1006,7 +1013,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
     optimizer_kwargs: dict, optional
         Arguments passed to Optimizer to control the behaviour of the bayesian search.
         For example, {'base_estimator': 'RF'} would use a Random Forest surrogate
-        instead of the default Gaussian Process. Please refer to the `skopt.Optimizer`
+        instead of the default Gaussian Process. Please refer to the ``skopt.Optimizer``
         documentation for more information.
     random_state : int, RandomState instance or None, default=None
         Pseudo random number generator state used for random uniform sampling
@@ -1014,7 +1021,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         Pass an int for reproducible output across multiple
         function calls.
     strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
-        data ingestion strategy in fitting cv, passed to `evaluate` internally
+        data ingestion strategy in fitting cv, passed to ``evaluate`` internally
         defines the ingestion mode when the forecaster sees new data when window expands
         "refit" = a new copy of the forecaster is fitted to each training window
         "update" = forecaster is updated with training window data, in sequence provided
@@ -1037,10 +1044,11 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         FitFailedWarning is raised.
     return_n_best_forecasters: int, default=1
         In case the n best forecaster should be returned, this value can be set
-        and the n best forecasters will be assigned to n_best_forecasters_
+        and the n best forecasters will be assigned to n_best_forecasters_.
+        Set return_n_best_forecasters to -1 to return all forecasters.
 
     backend : {"dask", "loky", "multiprocessing", "threading"}, by default "loky".
-        Runs parallel evaluate if specified and `strategy` is set as "refit".
+        Runs parallel evaluate if specified and ``strategy`` is set as "refit".
 
         - "None": executes loop sequentally, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
@@ -1496,7 +1504,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
