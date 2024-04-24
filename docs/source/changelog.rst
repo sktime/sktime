@@ -18,6 +18,11 @@ available on GitHub.
 For upcoming changes and next releases, see our `milestones <https://github.com/sktime/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
 For our long-term plan, see our :ref:`roadmap`.
 
+Version 0.28.1 - 2024-04-25
+---------------------------
+
+
+
 Version 0.28.0 - 2024-03-27
 ---------------------------
 
