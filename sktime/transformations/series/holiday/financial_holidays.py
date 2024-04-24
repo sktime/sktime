@@ -177,7 +177,7 @@ class FinancialHolidaysTransformer(BaseTransformer):
         del parameter_set  # avoid being detected as unused by ``vulture`` like tools
         
         params = [
-            {"market": "XNYS"}, # New York Stock Exchange (Default) 
+            {"market": "XNYS"}, # New-York Stock Exchange (Default) 
             {"market": "ECB"}  # European Central Bank
         ]
 
