@@ -272,7 +272,7 @@ class MultiRocketMultivariate(BaseTransformer):
                 "normalise": True,
             },
             {
-                "num_kernels": 10_000,
+                "num_kernels": 2_000,
                 "max_dilations_per_kernel": 64,
                 "n_features_per_kernel": 5,
                 "normalise": False,
