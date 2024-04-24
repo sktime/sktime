@@ -104,6 +104,15 @@ class TimeSeriesDBSCAN(BaseClusterer):
             ]
             self.clone_tags(distance, tags_to_clone)
 
+        # numba distance in sktime (indexed by string)
+        # cannot support unequal length data, and require numpy3D input
+        if isinstance(distance, str):
+            tags_to_set = {
+                "X_inner_mtype": "numpy3D",
+                "capability:unequal_length": False,
+            }
+            self.set_tags(**tags_to_set)
+
         self.dbscan_ = None
 
     def _fit(self, X, y=None):
