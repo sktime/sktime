@@ -23,6 +23,7 @@ __author__ = ["satya-pattnaik ", "fkiraly"]
 __all__ = ["BaseSeriesAnnotator"]
 
 import numpy as np
+import pandas as pd
 
 from sktime.base import BaseEstimator
 from sktime.utils.validation.annotation import check_learning_type, check_task
@@ -426,7 +427,7 @@ class BaseSeriesAnnotator(BaseEstimator):
         raise NotImplementedError("abstract method")
 
     @staticmethod
-    def sparse_to_dense(y_sparse):
+    def sparse_to_dense(y_sparse, length=None):
         """Convert the sparse output from an annotator to a dense format.
 
         Parameters
@@ -434,6 +435,12 @@ class BaseSeriesAnnotator(BaseEstimator):
         y_sparse : np.ndarray
             If `y_sparse` is a 1D array then it should contain the index locations of
             changepoints/anomalies.
+        length : {int, None}, optional
+            If `length` is an integer, the returned dense array is right padded to
+            `length`. For change points or anomalies, the array is padded with zeros.
+            For segmentation, the array is padded with the label furthest to the right.
+            If `length` is an `None`, the returned dense array will have the same
+            length as the index of the final changepoint/segment/anomalie.
 
         Returns
         -------
@@ -447,17 +454,27 @@ class BaseSeriesAnnotator(BaseEstimator):
         >>> import numpy as np
         >>> from sktime.annotation.base._base import BaseSeriesAnnotator
         >>> y_sparse = np.array([2, 5, 7])  # Indices of changepoints/anomalies
-        >>> BaseSeriesAnnotator.sparse_to_dense(y_sparse)
-        array([0, 0, 1, 0, 0, 1, 0, 1], dtype=int32)
-
-        TODO: Handle the 2D case for segmentation.
+        >>> BaseSeriesAnnotator.sparse_to_dense(y_sparse, 10)
+        array([0, 0, 1, 0, 0, 1, 0, 1, 0, 0], dtype=int32)
+        >>> y_sparse = np.array([[1, 0], [2, 4], [1, 6]])  # Segments
+        >>> BaseSeriesAnnotator.sparse_to_dense(y_sparse, 10)
+        array([1, 1, 1, 1, 2, 2, 1, 1, 1, 1], dtype=int32)
         """
         if y_sparse.ndim == 1:
-            y_dense = np.zeros(y_sparse[-1] + 1, dtype=np.int32)
+            if length is None:
+                length = y_sparse[-1] + 1
+            y_dense = np.zeros(length, dtype=np.int32)
             np.put(y_dense, y_sparse, 1)
             return y_dense
-        else:
-            raise NotImplementedError("Cannot handle the 2D case yet.")
+        elif y_sparse.ndim == 2:
+            if length is None:
+                length = y_sparse[-1, 1] + 1
+            y_dense = np.full(length, np.nan)
+            np.put(y_dense, y_sparse[:, 1], y_sparse[:, 0])
+
+            # Numpy does not have a ffill function so we convert to a series first
+            y_dense = pd.Series(y_dense).ffill().to_numpy(np.int32)
+            return y_dense
 
     @staticmethod
     def dense_to_sparse(y_dense):
