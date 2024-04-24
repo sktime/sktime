@@ -66,7 +66,7 @@ class MultiRocketMultivariate(BaseTransformer):
 
     Examples
     --------
-     >>> from sktime.transformations.panel.rocket import Rocket
+     >>> from sktime.transformations.panel.rocket import MultiRocketMultivariate
      >>> from sktime.datasets import load_basic_motions
      >>> X_train, y_train = load_basic_motions(split="train") # doctest: +SKIP
      >>> X_test, y_test = load_basic_motions(split="test") # doctest: +SKIP
@@ -264,20 +264,18 @@ class MultiRocketMultivariate(BaseTransformer):
         )
     def get_test_params(self):
         return [
+            {},
             {
                 "num_kernels": 5_000,
                 "max_dilations_per_kernel": 16,
                 "n_features_per_kernel": 3,
                 "normalise": True,
-                "n_jobs": -1,
-                "random_state": 42,
             },
             {
                 "num_kernels": 10_000,
                 "max_dilations_per_kernel": 64,
                 "n_features_per_kernel": 5,
                 "normalise": False,
-                "n_jobs": 2,
-                "random_state": None,
             },
         ]
+1
