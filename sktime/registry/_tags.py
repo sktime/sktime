@@ -350,7 +350,7 @@ class env_marker(_BaseTag):
     ``sktime`` manages objects and estimators like mini-packages,
     with their own dependencies and compatibility requirements.
     Dependencies are specified in the tags:
-    
+
     - ``"python_version"``: Python version specifier (PEP 440) for the object,
     - ``"python_dependencies"``: list of required Python packages (PEP 440)
     - ``"python_dependencies_alias"``: alias for package names,
