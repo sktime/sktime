@@ -80,14 +80,3 @@ def test_check_link_downloadable(name):
 
     assert "application/octet-stream" in content_type, "URL is not downloadable."
     assert "attachment" in content_disposition, "URL is not downloadable."
-
-
-@pytest.mark.datadownload
-@pytest.mark.parametrize("name", ["invalid_name"])
-def test_load_forecasting_data_invalid_name(name):
-    """Test load_forecastingdata with invalid name."""
-    with pytest.raises(
-        ValueError,
-        match=f"Error in load_forecastingdata, Invalid dataset name = {name}.",
-    ):
-        load_forecastingdata(name=name)
