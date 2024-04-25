@@ -1,5 +1,9 @@
+import pandas as pd
+
+from sktime.transformations.base import BaseTransformer
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Feature transformer that returns features of time series to 
+"""Feature transformer that returns features of time series to
 classify them into different types of demand patterns"""
 
 __author__ = ["shlok191"]
@@ -10,18 +14,19 @@ Testing - required for sktime test framework and check_estimator usage:
     get default parameters for test instance(s) - get_test_params()
 """
 
-import pandas as pd
 
-from sktime.transformations.base import BaseTransformer
+class ADICVExtractor(BaseTransformer):
+    """
+    Classifier based on Intermittent Demand Estimates paper by Syntetos/Boylan.
 
+    1. Average Demand Interval (ADI): The average time period between
+    time periods with non-zero demands
 
-class PrimitiveFeatureExtractor(BaseTransformer):
-    """Feature transformer based upon the research paper: "The accuracy of intermittent demand
-    estimates" by A. Syntetos and J. Boylan. The transformer returns 3 features :-
+    2. Variance (CV2): Variance calculated on non-zero values
+    in the time series
 
-    1. Average Demand Interval (ADI): The average time period between time periods with non-zero demands
-    2. Variance (CV2): Variance calculated on non-zero values in the time series
-    3. Class: Classification of time series on basis of ADI threshold and CV2 threshold.
+    3. Class: Classification of time series on basis of ADI threshold
+    and CV2 threshold.
 
     The following are the classes we classify into:
 
@@ -61,7 +66,7 @@ class PrimitiveFeatureExtractor(BaseTransformer):
     }
 
     def __init__(self, adi_threshold=1.32, cv_threshold=0.49, features=None):
-        """Initializes the transformer and processes any provided parameters
+        """Initialize the transformer and processes any provided parameters.
 
         Parameters
         ----------
@@ -74,10 +79,11 @@ class PrimitiveFeatureExtractor(BaseTransformer):
         features : List[str] | None, optional
             List of features to compute. Defaults to None (all features)
 
-        Raises:
-            ValueError: If features is provided and does not contain 'adi', 'cv2', or 'class'.
+        Raises
+        ------
+            ValueError: If features is provided and does not
+            contain 'adi','cv2', or 'class'.
         """
-
         self.adi_threshold = adi_threshold
         self.cv_threshold = cv_threshold
         self.features = features
@@ -86,15 +92,15 @@ class PrimitiveFeatureExtractor(BaseTransformer):
         super().__init__()
 
         # Checking if the features parameter is valid
-        if features != None:
-
+        if features is not None:
             if (
                 "adi" not in features
                 or "cv2" not in features
                 or "class" not in features
             ):
                 raise ValueError(
-                    "The features list must either be None or must include adi, cv2, and class as elements."
+                    "The features list must either be None or include adi "
+                    + "cv2, and class as elements."
                 )
 
         else:
@@ -117,10 +123,9 @@ class PrimitiveFeatureExtractor(BaseTransformer):
         Returns
         -------
         X_transformed : pd.DataFrame
-            Contains columns listed in self.features and 1 row entry of elements
+            Contains columns listed in self.features and 1 row entry of values
 
         """
-
         condition = X != 0
         X_non_zero = X[condition]
 
@@ -135,9 +140,7 @@ class PrimitiveFeatureExtractor(BaseTransformer):
         class_type = ""
 
         if adi_value <= self.adi_threshold:
-
             if cv2_value <= self.cv_threshold:
-
                 class_type = "smooth"
 
             else:
@@ -173,19 +176,16 @@ class PrimitiveFeatureExtractor(BaseTransformer):
         Parameters
         ----------
         parameter_set : str, default="default"
-            Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
-            There are currently no reserved values for transformers.
+            Name of the set of test parameters to return, for use in tests.
+            If no special parameters are defined for a value, will return
+            `"default"` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
-            Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            Each dict are parameters to construct an "interesting" test case
         """
-
         # Testing with 0 thresholds for both thresholds
         # in independent test cases!
 
