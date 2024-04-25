@@ -63,10 +63,11 @@ document.addEventListener("DOMContentLoaded", function () {
     // Event listener for search
     const searchInput = document.getElementById("searchInput");
     searchInput.addEventListener("keyup", function () {
-        var value = this.value.toLowerCase();
-        var rows = document.getElementsByTagName("tr");
+        let value = this.value.toLowerCase();
+        let table = document.getElementById("tableContainer")
+        let rows = table.getElementsByTagName("tr");
 
-        for (var i = 0; i < rows.length; i++) {
+        for (var i = 1; i < rows.length; i++) {
             var rowText = rows[i].textContent.toLowerCase();
             rows[i].style.display = rowText.indexOf(value) > -1 ? "" : "none";
         }
