@@ -353,9 +353,9 @@ class BaseSeriesAnnotator(BaseEstimator):
 
         Returns
         -------
-        Y : np.ndarray
-            2D array containing the segments for X. The first column contains the labels
-            of the segments, the second column contains the starting indexes of the
+        Y : pd.DataFrame
+            Dataframe with two columns: seg_label, and seg_end. seg_label contains the
+            labels of the segments, and seg_start contains the starting indexes of the
             segments.
         """
         if self.task == "anomaly_detection":
@@ -380,8 +380,8 @@ class BaseSeriesAnnotator(BaseEstimator):
 
         Returns
         -------
-        Y : np.ndarray
-            1D array containing the indexes of the changepoints/anomalies in X.
+        Y : pd.Series
+            A series containing the indexes of the changepoints/anomalies in X.
         """
         self.check_is_fitted()
         X = check_series(X)
@@ -401,9 +401,9 @@ class BaseSeriesAnnotator(BaseEstimator):
 
         Returns
         -------
-        Y : np.ndarray
-            2D array containing the segments for X. The first column contains the labels
-            of the segments, the second column contains the starting indexes of the
+        Y : pd.DataFrame
+            Dataframe with two columns: seg_label, and seg_end. seg_label contains the
+            labels of the segments, and seg_start contains the starting indexes of the
             segments.
         """
         raise NotImplementedError("abstract method")
@@ -448,29 +448,50 @@ class BaseSeriesAnnotator(BaseEstimator):
 
         Examples
         --------
-        >>> import numpy as np
+        >>> import pandas as pd
         >>> from sktime.annotation.base._base import BaseSeriesAnnotator
-        >>> y_sparse = np.array([2, 5, 7])  # Indices of changepoints/anomalies
+        >>> y_sparse = pd.Series([2, 5, 7])  # Indices of changepoints/anomalies
         >>> BaseSeriesAnnotator.sparse_to_dense(y_sparse, 10)
-        array([0, 0, 1, 0, 0, 1, 0, 1, 0, 0], dtype=int32)
-        >>> y_sparse = np.array([[1, 0], [2, 4], [1, 6]])  # Segments
+        0    0
+        1    0
+        2    1
+        3    0
+        4    0
+        5    1
+        6    0
+        7    1
+        8    0
+        9    0
+        dtype: int32
+        >>> y_sparse = pd.DataFrame({
+        ...     "seg_label": [1, 2, 1],
+        ...     "seg_start": [0, 4, 6],
+        ... })
         >>> BaseSeriesAnnotator.sparse_to_dense(y_sparse, 10)
-        array([1, 1, 1, 1, 2, 2, 1, 1, 1, 1], dtype=int32)
+        0    1
+        1    1
+        2    1
+        3    1
+        4    2
+        5    2
+        6    1
+        7    1
+        8    1
+        9    1
+        dtype: int32
         """
         if y_sparse.ndim == 1:
             if length is None:
-                length = y_sparse[-1] + 1
-            y_dense = np.zeros(length, dtype=np.int32)
-            np.put(y_dense, y_sparse, 1)
+                length = y_sparse.iloc[-1] + 1
+            y_dense = pd.Series(np.zeros(length, dtype=np.int32))
+            y_dense.iloc[y_sparse] = 1
             return y_dense
         elif y_sparse.ndim == 2:
             if length is None:
-                length = y_sparse[-1, 1] + 1
-            y_dense = np.full(length, np.nan)
-            np.put(y_dense, y_sparse[:, 1], y_sparse[:, 0])
-
-            # Numpy does not have a ffill function so we convert to a series first
-            y_dense = pd.Series(y_dense).ffill().to_numpy(np.int32)
+                length = y_sparse["seg_end"].iat[-1] + 1
+            y_dense = pd.Series(np.full(length, np.nan))
+            y_dense.iloc[y_sparse["seg_start"]] = y_sparse["seg_label"]
+            y_dense = y_dense.ffill().astype("int32")
             return y_dense
 
     @staticmethod
@@ -479,44 +500,52 @@ class BaseSeriesAnnotator(BaseEstimator):
 
         Parameters
         ----------
-        y_dense : np.ndarray
-            The array must be 1D.
+        y_dense : pd.Series
             * If `y_sparse` contains only 1's and 0's the 1's represent change points
-              or anomalies
+              or anomalies.
             * If `y_sparse` contains only contains integers greater than 0, it is an
               an array of segments.
 
         Returns
         -------
-        np.ndarray
-            * If `y_sparse` is an array of changepoints/anomalies, the returned array
-              will be 1D and contains the indexes of the the changepoints/anomalies
-            * If `y_sparse` is an array of segments, a 2D array is returned. The first
-              column contains the labels of the segments, the second column contains
-              the starting points of the segments.
+        pd.DataFrame, pd.Series
+            * If `y_sparse` is a series of changepoints/anomalies, a pandas series
+              will be returned containing the indexes of the changepoints/anomalies
+            * If `y_sparse` is a series of segments, a pandas dataframe will be
+              returned with two columns: seg_label, and seg_start. The seg_label column
+              contains the labels of each segment, and the seg_start column contains
+              the indexes of the start of each segment.
 
         Examples
         --------
-        >>> import numpy as np
+        >>> import pandas as pd
         >>> from sktime.annotation.base._base import BaseSeriesAnnotator
-        >>> change_points = np.array([1, 0, 0, 1, 1, 0, 1])
+        >>> change_points = pd.Series([1, 0, 0, 1, 1, 0, 1])
         >>> BaseSeriesAnnotator.dense_to_sparse(change_points)
-        array([1, 2, 5])
-        >>> segments = np.array([1, 2, 2, 3, 3, 2])
+        0    0
+        1    3
+        2    4
+        3    6
+        dtype: int64
+        >>> segments = pd.Series([1, 2, 2, 3, 3, 2])
         >>> BaseSeriesAnnotator.dense_to_sparse(segments)
-        array([[1, 0],
-               [2, 1],
-               [3, 3],
-               [2, 5]])
+           seg_label  seg_start
+        0          1          0
+        1          2          1
+        2          3          3
+        3          2          5
         """
         if y_dense.min() == 0:
-            return np.where(y_dense == 0)[0]
+            return pd.Series(np.where(y_dense == 1)[0])
         elif y_dense.min() == 1:
             # Prepend zero so the first point is always the start of a segment
             diff = np.diff(y_dense, prepend=0)
             segment_start_indexes = np.where(diff != 0)[0]
             segment_labels = y_dense[diff.astype(bool)]
-            return np.stack([segment_labels, segment_start_indexes]).T
+            y_dense = pd.DataFrame(
+                {"seg_label": segment_labels, "seg_start": segment_start_indexes}
+            )
+            return y_dense
 
     @staticmethod
     def change_points_to_segments(y_sparse):
@@ -524,32 +553,35 @@ class BaseSeriesAnnotator(BaseEstimator):
 
         Parameters
         ----------
-        y_sparse : np.ndarray
-            A 1D array containing the indexes of change points.
+        y_sparse : pd.Series
+            A series containing the indexes of change points.
 
         Returns
         -------
-        np.ndarray
-            A 2D array where the first column columns that label of segements and the
-            second column contains the starting indexes of the change points.
+        pd.DataFrame
+            Dataframe with two columns: seg_label, and seg_end. seg_label contains the
+            labels of the segments, and seg_start contains the starting indexes of the
+            segments.
 
         Examples
         --------
-        >>> import numpy as np
+        >>> import pandas as pd
         >>> from sktime.annotation.base._base import BaseSeriesAnnotator
-        >>> change_points = np.array([1, 2, 5])
+        >>> change_points = pd.Series([1, 2, 5])
         >>> BaseSeriesAnnotator.change_points_to_segments(change_points)
-        array([[1, 0],
-               [2, 1],
-               [3, 2],
-               [4, 5]])
+           seg_label  seg_start
+        0          1          0
+        1          2          1
+        2          3          2
+        3          4          5
         """
         if y_sparse[0] != 0:
             # Insert a 0 at the start so the points before the first anomaly are
             # considered a segment
-            y_sparse = np.insert(y_sparse, 0, 0)
+            y_sparse = pd.concat((pd.Series([0]), y_sparse))
         labels = np.arange(1, len(y_sparse) + 1)
-        return np.stack([labels, y_sparse]).T
+        segments = pd.DataFrame({"seg_label": labels, "seg_start": y_sparse.to_numpy()})
+        return segments
 
     @staticmethod
     def segments_to_change_points(y_sparse):
@@ -557,16 +589,30 @@ class BaseSeriesAnnotator(BaseEstimator):
 
         Parameters
         ----------
-        y_sparse : np.ndarray
-            A 2D array of segments. The first column contains the labels of the
-            segments and the second column contains the indexes of the starting points
-            of the segments.
+        y_sparse : pd.DataFrame
+            Dataframe with two columns: seg_label, and seg_end. seg_label contains the
+            labels of the segments, and seg_start contains the starting indexes of the
+            segments.
 
         Returns
         -------
-        np.ndarray
-            A 1D array containing the indexes of the change points in `y_sparse`.
+        pd.Series
+            A series containing the indexes of the start of each segment.
+
+        Examples
+        --------
+        >>> import pandas as pd
+        >>> from sktime.annotation.base._base import BaseSeriesAnnotator
+        >>> change_points = pd.DataFrame({
+        ...     "seg_label": [1, 2, 1],
+        ...     "seg_start": [2, 5, 6],
+        ... })
+        >>> BaseSeriesAnnotator.segments_to_change_points(change_points)
+        0    2
+        1    5
+        2    6
+        Name: seg_start, dtype: int64
         """
         # The first segment should start at index 0 which is not a change point so we
         # ignore it
-        return y_sparse[1:, 1]
+        return y_sparse["seg_start"]
