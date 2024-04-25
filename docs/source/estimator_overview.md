@@ -232,12 +232,10 @@ function renderTable(data, header) {
             if (Array.isArray(headerItem)) {
                 // Handle the case where headerItem is a list (of Tags)
                 headerItem.forEach(item => {
-                    // i.e [scikit-learn, statsmodels] => scikit-learn<br>statsmodels
-                    // TODO: better way?
-                    rowContent += `<td>${rowData.Tags[item]?.toString().replace(/,/g, '<br>')}</td>`;
+                    rowContent += `<td>${rowData.Tags[item]}</td>`;
                 });
             } else {
-                rowContent += `<td>${rowData[headerItem]?.toString().replace(/,/g, '<br>')}</td>`;
+                rowContent += `<td>${rowData[headerItem]}</td>`;
             }
         });
         rowContent += "</tr>";
@@ -267,6 +265,21 @@ function populateCheckboxes() {
         checkboxContainer.appendChild(checkbox);
         checkboxContainer.appendChild(label);
     }
+}
+
+function go2URL(primaryUrl, fallbackUrl, event) {
+    event.preventDefault(); // Stop the link from navigating directly.
+    fetch(primaryUrl)
+        .then(response => {
+            if (response.ok) {
+                window.location.href = primaryUrl; // If primary URL is valid, go there.
+            } else {
+                window.location.href = fallbackUrl; // Otherwise, use the fallback URL.
+            }
+        })
+        .catch(() => {
+            window.location.href = fallbackUrl; // In case of any fetch error, use fallback.
+        });
 }
 
 </script>
