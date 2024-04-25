@@ -541,7 +541,7 @@ class BaseSeriesAnnotator(BaseEstimator):
             # Prepend zero so the first point is always the start of a segment
             diff = np.diff(y_dense, prepend=0)
             segment_start_indexes = np.where(diff != 0)[0]
-            segment_labels = y_dense[diff.astype(bool)]
+            segment_labels = y_dense[diff.astype(bool)].to_numpy()
             y_dense = pd.DataFrame(
                 {"seg_label": segment_labels, "seg_start": segment_start_indexes}
             )
