@@ -26,7 +26,6 @@ import numpy as np
 import pandas as pd
 
 from sktime.base import BaseEstimator
-from sktime.utils.validation.annotation import check_learning_type, check_task
 from sktime.utils.validation.series import check_series
 
 
@@ -102,8 +101,6 @@ class BaseSeriesAnnotator(BaseEstimator):
         Creates fitted model that updates attributes ending in "_". Sets
         _is_fitted flag to True.
         """
-        check_learning_type(self.learning_type)
-        check_task(self.task)
         X = check_series(X)
 
         if Y is not None:

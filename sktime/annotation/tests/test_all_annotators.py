@@ -10,6 +10,7 @@ import pytest
 from sktime.registry import all_estimators
 from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.annotation import make_annotation_problem
+from sktime.utils.validation.annotation import check_learning_type, check_task
 
 ALL_ANNOTATORS = all_estimators(estimator_types="series-annotator", return_names=False)
 
@@ -31,3 +32,10 @@ def test_output_type(Estimator):
     )
     y_pred = estimator.predict(arg)
     assert isinstance(y_pred, (pd.Series, np.ndarray))
+
+
+@pytest.mark.parametrize("Estimator", ALL_ANNOTATORS)
+def test_annotator_tags(Estimator):
+    """Check the learning_type and task tags are valid."""
+    check_task(Estimator.get_class_tag("task"))
+    check_learning_type(Estimator.get_class_tag("learning_type"))
