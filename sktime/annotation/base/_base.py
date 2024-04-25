@@ -389,7 +389,7 @@ class BaseSeriesAnnotator(BaseEstimator):
         if self.task == "anomaly_detection" or self.task == "change_point_detection":
             return self._predict_points(X)
         elif self.task == "segmentation":
-            return self.segments_to_change_points(self._predict_segments(X))
+            return self.segments_to_change_points(self.predict_segments(X))
 
     def _predict_segments(self, X):
         """Predict segments on test/deployment data.
