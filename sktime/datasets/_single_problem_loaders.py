@@ -36,6 +36,7 @@ __all__ = [
     "load_PBS_dataset",
     "load_gun_point_segmentation",
     "load_electric_devices_segmentation",
+    "load_NAB_dataset",
     "load_macroeconomic",
     "load_unit_test_tsf",
     "load_covid_3month",
@@ -1055,6 +1056,28 @@ def load_electric_devices_segmentation():
     ts = pd.read_csv(path, index_col=0, header=None).squeeze("columns")
 
     return ts, period_length, change_points
+
+
+def load_NAB_dataset(name):
+    """Load the NAB anomaly detection problems and returns X.
+
+    Returns
+    -------
+    X : pd.Series
+        Single time series for segmentation
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_NAB_dataset
+    >>> X = load_NAB_dataset("realTraffic/speed_7578")
+    """
+    dir = "NAB"
+    fname = name + ".csv"
+
+    path = os.path.join(MODULE, DIRNAME, dir, fname)
+    ts = pd.read_csv(path, index_col=0).squeeze("columns")
+
+    return ts
 
 
 def load_PBS_dataset():
