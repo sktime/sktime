@@ -1,1 +1,1 @@
-"""Tests bor bootstrap Transformers."""
+"""Tests bootstrap Transformers."""
