@@ -77,6 +77,7 @@ Dictionary-based
     :toctree: auto_generated/
     :template: class.rst
 
+    BOSSVSClassifierPyts
     BOSSEnsemble
     ContractableBOSS
     IndividualBOSS
