@@ -40,12 +40,23 @@ Dependency changes
 * ``holidays`` (transformations soft dependency) bounds have been updated to ``>=0.29,<0.48``
 * ``mne`` (transformations soft dependency) bounds have been updated to ``>=1.5,<1.8``
 
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+All objects and estimators now can, in addition to the existing PEP 440 package dependency specifier tags,
+specify PEP 508 compatible environment markers for their dependencies,
+via the ``env_marker`` tag. Values should be PEP 508 compliant strings, e.g., ``platform_system!="Windows"``.
+
+This allows for more fine-grained control over the dependencies of estimators, where needed,
+e.g., for estimators that require specific operating systems.
+
 Enhancements
 ~~~~~~~~~~~~
 
 BaseObject and base framework
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* [ENH] PEP 508 environment markers for estimators (:pr:`6144`) :user:`fkiraly`
 * [ENH] enhancements to tag system, systematic API docs for tags (:pr:`6289`) :user:`fkiraly`
 
 Benchmarking, Metrics, Splitters
