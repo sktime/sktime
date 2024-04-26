@@ -164,7 +164,7 @@ class FinancialHolidaysTransformer(BaseTransformer):
 
         params = [
                   {"market": "XNYS"},
-                  {"market": "ECB"}, 
+                  {"market": "ECB"}
                  ]
 
         return params
