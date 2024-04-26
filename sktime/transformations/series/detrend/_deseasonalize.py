@@ -593,7 +593,7 @@ class STLTransformer(BaseTransformer):
         # for inverse transform, we sum up the columns
         # this will be close if return_components=True
         row_sums = X.sum(axis=1)
-        row_sums.columns = self.fit_column_names
+        row_sums.columns = self._X.columns
         return row_sums
 
     def _make_return_object(self, X, stl):
