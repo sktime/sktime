@@ -2,12 +2,16 @@
 __all__ = [
     "MrSEQL",
     "MrSQM",
-    "ShapeletTransformClassifier",
     "ShapeletLearningClassifierPyts",
+    "ShapeletLearningClassifierTslearn",
+    "ShapeletTransformClassifier",
 ]
 
 from sktime.classification.shapelet_based._learning_pyts import (
     ShapeletLearningClassifierPyts,
+)
+from sktime.classification.shapelet_based._learning_tslearn import (
+    ShapeletLearningClassifierTslearn,
 )
 from sktime.classification.shapelet_based._mrseql import MrSEQL
 from sktime.classification.shapelet_based._mrsqm import MrSQM
