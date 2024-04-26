@@ -46,10 +46,12 @@ from sktime.classification.base import BaseClassifier
 
 # todo: add any necessary imports here
 
-# todo: if any imports are sktime soft dependencies:
+# todo: for imports of sktime soft dependencies:
 # make sure to fill in the "python_dependencies" tag with the package import name
+# import soft dependencies only inside methods of the class, not at the top of the file
 
 
+# todo: change class name and write docstring
 class MyTimeSeriesClassifier(BaseClassifier):
     """Custom time series classifier. todo: write docstring.
 
@@ -82,8 +84,11 @@ class MyTimeSeriesClassifier(BaseClassifier):
         "authors": ["author1", "author2"],  # authors, GitHub handles
         "maintainers": ["maintainer1", "maintainer2"],  # maintainers, GitHub handles
         # author = significant contribution to code at some point
-        # maintainer = algorithm maintainer role, "owner"
-        # specify one or multiple authors and maintainers, only for sktime contribution
+        #     if interfacing a 3rd party estimator, ensure to give credit to the
+        #     authors of the interfaced estimator
+        # maintainer = algorithm maintainer role, "owner" of the sktime class
+        #     for 3rd party interfaces, the scope is the sktime class only
+        # specify one or multiple authors and maintainers
         # remove maintainer tag if maintained by sktime core team
         #
         "python_version": None,  # PEP 440 python version specifier to limit versions

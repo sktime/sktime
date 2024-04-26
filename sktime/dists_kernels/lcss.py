@@ -47,7 +47,7 @@ class LcssTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["fkiraly"],
+        "authors": ["danisodu", "rtavenar", "fkiraly"],
         "python_dependencies": ["tslearn"],
         # estimator type
         # --------------

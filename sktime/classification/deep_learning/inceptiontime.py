@@ -44,13 +44,12 @@ class InceptionTimeClassifier(BaseDeepClassifier):
 
     Examples
     --------
-    >>> import sktime.classification.deep_learning as dl_clf  # doctest: +SKIP
-    >>> from dl_clf.inceptiontime import InceptionTimeClassifier  # doctest: +SKIP
-    >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> itc = InceptionTimeClassifier(n_epochs=20,batch_size=4)  # doctest: +SKIP
-    >>> itc.fit(X_train, y_train)  # doctest: +SKIP
+    >>> from sktime.classification.deep_learning import InceptionTimeClassifier
+    >>> from sktime.datasets import load_unit_test  # doctest: +SKIP
+    >>> X_train, y_train = load_unit_test(split="train")  # doctest: +SKIP
+    >>> X_test, y_test = load_unit_test(split="test")  # doctest: +SKIP
+    >>> clf = InceptionTimeClassifier()  # doctest: +SKIP
+    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
     InceptionTimeClassifier(...)
     """
 

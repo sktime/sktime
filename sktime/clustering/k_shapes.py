@@ -9,7 +9,7 @@ from sktime.clustering.base import BaseClusterer
 
 
 class TimeSeriesKShapes(_TslearnAdapter, BaseClusterer):
-    """Kshape clustering for time series.
+    """K-shape clustering for time series, from tslearn.
 
     Direct interface to ``tslearn.clustering.KShape``.
 
@@ -52,12 +52,12 @@ class TimeSeriesKShapes(_TslearnAdapter, BaseClusterer):
     _tags = {
         # packaging info
         # --------------
-        "authors": "fkiraly",
+        "authors": ["rtavenar", "fkiraly"],  # rtavenar credit for interfaced code
         "python_dependencies": "tslearn",
         # estimator type
         # --------------
         "capability:multivariate": True,
-        "capability:unequal_length": True,
+        "capability:unequal_length": False,
     }
 
     # defines the name of the attribute containing the tslearn estimator

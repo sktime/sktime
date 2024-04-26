@@ -174,8 +174,11 @@ def test_neural_forecast_with_auto_freq(model_class) -> None:
     # predict with trained model
     y_pred = model.predict()
 
-    # check interpreted freq
-    assert y_pred.index.freq == "A-DEC"
+    # convert freq str to DateOffset object for comparison
+    offset_freq = pandas.tseries.frequencies.to_offset(y_train.index.freq)
+    offset_auto_freq = pandas.tseries.frequencies.to_offset(y_pred.index.freq)
+
+    assert offset_freq == offset_auto_freq
 
 
 @pytest.mark.parametrize("model_class", [NeuralForecastLSTM, NeuralForecastRNN])
@@ -225,29 +228,100 @@ def test_neural_forecast_with_auto_against_given_freq(model_class, freq) -> None
     assert offset_freq == offset_auto_freq
 
 
+@pytest.mark.parametrize(
+    "index, freq",
+    [
+        # RangeIndex
+        (pandas.RangeIndex(start=0, stop=20), 1),
+        (pandas.RangeIndex(start=0, stop=20, step=3), 3),
+        # Index
+        (pandas.Index(range(20)), 1),
+        (pandas.Index([1, 4, 7, 10, 13, 16]), 3),
+        # DatetimeIndex
+        (pandas.date_range(start="2024-01-01", periods=10), "D"),
+        (pandas.date_range(start="2024-01-01", periods=10, freq="M"), "M"),
+        # PeriodIndex
+        (pandas.period_range(start="2024-01-01", periods=10), "D"),
+        (pandas.period_range(start="2024-01-01", periods=10, freq="M"), "M"),
+        (pandas.period_range(start="2024-01-01", periods=10).drop(["2024-01-02"]), "D"),
+    ],
+)
 @pytest.mark.parametrize("model_class", [NeuralForecastLSTM, NeuralForecastRNN])
 @pytest.mark.skipif(
     not run_test_for_class([NeuralForecastLSTM, NeuralForecastRNN]),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-def test_neural_forecast_fail_with_auto_freq_on_range_index(model_class) -> None:
-    """Test fail with freq set to 'auto' on pd.RangeIndex."""
-    # prepare data
-    y = pandas.Series(data=range(10), index=pandas.RangeIndex(start=0, stop=10))
+def test_neural_forecast_with_auto_freq_on_valid_index(
+    index, freq, model_class
+) -> None:
+    """Test with freq set to 'auto' on valid indexes (equispaced dates)."""
 
-    # should fail to interpret auto freq
+    y = pandas.Series(data=range(len(index)), index=index)
+
+    model = model_class(freq=freq, max_steps=1, trainer_kwargs={"logger": False})
+    model_auto = model_class(freq="auto", max_steps=1, trainer_kwargs={"logger": False})
+
+    model.fit(y, fh=[1, 2, 3])
+    model_auto.fit(y, fh=[1, 2, 3])
+
+    pred = model.predict()
+    pred_auto = model_auto.predict()
+
+    # check prediction
+    pandas.testing.assert_series_equal(pred, pred_auto)
+
+
+@pytest.mark.parametrize(
+    "index",
+    [
+        # RangeIndex is always equispaced
+        # Index
+        pandas.Index([1, 2, 3, 4, 5, 7])
+    ],
+)
+@pytest.mark.parametrize("model_class", [NeuralForecastLSTM, NeuralForecastRNN])
+@pytest.mark.skipif(
+    not run_test_for_class([NeuralForecastLSTM, NeuralForecastRNN]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_neural_forecast_with_auto_freq_on_missing_int_like(index, model_class) -> None:
+    """Test with freq set to 'auto' on int-like index with missing values."""
+
+    y = pandas.Series(data=range(len(index)), index=index)
+
+    model = model_class(freq="auto", max_steps=1, trainer_kwargs={"logger": False})
+
     with pytest.raises(
         ValueError,
-        match="could not interpret freq, try passing freq in model initialization",
+        match="(could not interpret freq).*(use a valid integer offset in index)",
     ):
-        # define model
-        model = model_class(freq="auto", max_steps=5, trainer_kwargs={"logger": False})
+        model.fit(y, fh=[1, 2, 3])
 
-        # attempt train
-        model.fit(y, fh=[1, 2, 3, 4])
 
-    # should work with freq passed as param
-    model = model_class(freq="W", max_steps=5, trainer_kwargs={"logger": False})
+@pytest.mark.parametrize(
+    "index",
+    [
+        # PeriodIndex: freq is preserved in index even in missing data
+        # DatetimeIndex
+        pandas.date_range(start="2024-01-01", periods=5).drop(["2024-01-02"]),
+        pandas.to_datetime(["2000-01-01", "2000-01-02", "2000-01-04", "2000-01-05"]),
+    ],
+)
+@pytest.mark.parametrize("model_class", [NeuralForecastLSTM, NeuralForecastRNN])
+@pytest.mark.skipif(
+    not run_test_for_class([NeuralForecastLSTM, NeuralForecastRNN]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_neural_forecast_with_auto_freq_on_missing_date_like(
+    index, model_class
+) -> None:
+    """Test with freq set to 'auto' on date-like index with missing values."""
 
-    # attempt train
-    model.fit(y, fh=[1, 2, 3, 4])
+    y = pandas.Series(data=range(len(index)), index=index)
+
+    model = model_class(freq="auto", max_steps=1, trainer_kwargs={"logger": False})
+
+    with pytest.raises(
+        ValueError, match="(could not interpret freq).*(use a valid offset in index)"
+    ):
+        model.fit(y, fh=[1, 2, 3])
