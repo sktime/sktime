@@ -65,9 +65,8 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
     >>> X = np.array([1, 2, 3, 4, 5])
     >>> augmenter = WhiteNoiseAugmenter(scale=0.5, random_state=42)
     >>> augmenter.fit(X)
+    WhiteNoiseAugmenter(...)
     >>> X_augmented = augmenter.transform(X)
-    >>> print("Original time series:", X)
-    >>> print("Augmented time series:", X_augmented)
 
     References and Footnotes
     ----------
