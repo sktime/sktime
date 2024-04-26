@@ -8,8 +8,9 @@ import pandas as pd
 import pytest
 from sklearn.preprocessing import StandardScaler
 
-from sktime.datasets import load_airline
+from sktime.datasets import load_airline, load_unit_test
 from sktime.datatypes import get_examples
+from sktime.transformations.bootstrap import STLBootstrapTransformer
 from sktime.transformations.compose import (
     FeatureUnion,
     InvertTransform,
@@ -23,9 +24,9 @@ from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.subset import ColumnSelect
 from sktime.transformations.series.summarize import SummaryTransformer
 from sktime.transformations.series.theta import ThetaLinesTransformer
-from sktime.utils._testing.deep_equals import deep_equals
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.deep_equals import deep_equals
+from sktime.utils.validation._dependencies import _check_estimator_deps
 
 
 def test_dunder_mul():
@@ -85,8 +86,28 @@ def test_dunder_add():
     _assert_array_almost_equal(t123r.fit_transform(X), t123.fit_transform(X))
 
 
+def test_add_sklearn_autoadapt():
+    """Test the add dunder method, with sklearn coercion."""
+    X = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
+
+    t1 = ExponentTransformer(power=2)
+    t2 = StandardScaler()
+    t3 = ExponentTransformer(power=3)
+
+    t123 = t1 + t2 + t3
+    t123r = t1 + (t2 + t3)
+    t123l = (t1 + t2) + t3
+
+    assert isinstance(t123, FeatureUnion)
+    assert isinstance(t123r, FeatureUnion)
+    assert isinstance(t123l, FeatureUnion)
+
+    _assert_array_almost_equal(t123.fit_transform(X), t123l.fit_transform(X))
+    _assert_array_almost_equal(t123r.fit_transform(X), t123l.fit_transform(X))
+
+
 def test_mul_sklearn_autoadapt():
-    """Test auto-adapter for sklearn in mul."""
+    """Test the mul dunder method, with sklearn coercion."""
     X = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
 
     t1 = ExponentTransformer(power=2)
@@ -150,6 +171,22 @@ def test_featureunion_transform_cols():
     )
 
     assert deep_equals(Xt.columns, expected_cols), msg
+
+
+def test_featureunion_primitives():
+    """Test that FeatureUnion is correctly applied to primitives.
+
+    Failure case of bug #6077.
+    """
+    X, _ = load_unit_test(split="train", return_X_y=True)
+
+    fu = SummaryTransformer() + SummaryTransformer()
+    Xt = fu.fit_transform(X)
+
+    assert isinstance(Xt, pd.DataFrame)
+    assert len(Xt) == len(X)
+    assert Xt.shape[1] == 2 * 9  # 9-feature summary statistics
+    assert Xt.columns[0] == "SummaryTransformer_1__mean"  # unique naming
 
 
 def test_sklearn_after_primitives():
@@ -267,7 +304,7 @@ def test_dunder_neg():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodel", severity="none"),
+    not _check_estimator_deps(STLBootstrapTransformer, severity="none"),
     reason="skip test if required soft dependency for statsmodels not available",
 )
 def test_input_output_series_panel_chain():
@@ -276,7 +313,6 @@ def test_input_output_series_panel_chain():
     Failure case of #5624.
     """
     from sktime.datasets import load_airline
-    from sktime.transformations.bootstrap import STLBootstrapTransformer
     from sktime.transformations.series.impute import Imputer
 
     X = load_airline()

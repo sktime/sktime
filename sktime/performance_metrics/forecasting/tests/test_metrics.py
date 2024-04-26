@@ -120,12 +120,27 @@ def test_make_scorer():
     """Test make_forecasting_scorer and the failure case in #4827."""
     import functools
 
-    from sklearn.metrics import mean_squared_log_error
+    from sklearn.metrics import mean_tweedie_deviance
 
     from sktime.performance_metrics.forecasting import make_forecasting_scorer
 
-    rmsle = functools.partial(mean_squared_log_error, squared=False)
+    rmsle = functools.partial(mean_tweedie_deviance, power=1.5)
 
-    scorer = make_forecasting_scorer(rmsle, name="RMSLE")
+    scorer = make_forecasting_scorer(rmsle, name="MTD")
+
+    scorer.evaluate(pd.Series([1, 2, 3]), pd.Series([1, 2, 4]))
+
+
+def test_make_scorer_sklearn():
+    """Test make_forecasting_scorer and the failure case in #5715.
+
+    Naive adaptation fails on newer sklearn versions due to
+    decoration with sklearn's custom input constraint wrapper.
+    """
+    from sklearn.metrics import mean_absolute_error
+
+    from sktime.performance_metrics.forecasting import make_forecasting_scorer
+
+    scorer = make_forecasting_scorer(mean_absolute_error, name="MAE")
 
     scorer.evaluate(pd.Series([1, 2, 3]), pd.Series([1, 2, 4]))

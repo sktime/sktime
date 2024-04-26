@@ -21,7 +21,7 @@ class MiniRocketMultivariate(BaseTransformer):
 
     This transformer fits one set of paramereters per individual series,
     and applies the transform with fitted parameter i to the i-th series in transform.
-    Vanilla use requies same number of series in fit and transform.
+    Vanilla use requires same number of series in fit and transform.
 
     To fit and transform series at the same time,
     without an identification of fit/transform instances,
@@ -35,7 +35,7 @@ class MiniRocketMultivariate(BaseTransformer):
     max_dilations_per_kernel : int, default=32
         maximum number of dilations per kernel.
     n_jobs : int, default=1
-        The number of jobs to run in parallel for `transform`. ``-1`` means using all
+        The number of jobs to run in parallel for ``transform``. ``-1`` means using all
         processors.
     random_state : None or int, default = None
 
@@ -65,6 +65,8 @@ class MiniRocketMultivariate(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["angus924"],
+        "maintainers": ["angus924"],
         "univariate-only": False,
         "fit_is_empty": False,
         "scitype:transform-input": "Series",

@@ -49,6 +49,12 @@ class Aggregator(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "ciaran-g",
+        "maintainers": "ciaran-g",
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:transform-labels": "None",
@@ -191,8 +197,9 @@ class Aggregator(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params = {"flatten_single_levels": True}
 

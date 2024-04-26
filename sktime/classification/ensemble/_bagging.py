@@ -20,14 +20,15 @@ class BaggingClassifier(BaseClassifier):
     On ``predict_proba``, the mean average of probabilistic predictions is returned.
     For a deterministic classifier, this results in majority vote for ``predict``.
 
-    The estimator allows to choose sample sizes fir instances, variables,
+    The estimator allows to choose sample sizes for instances, variables,
     and whether sampling is with or without replacement.
 
     Direct generalization of ``sklearn``'s ``BaggingClassifier``
     to the time series classification task.
 
-    Note: if n_features=1, BaggingClassifier turns a univariate classifier into
-    a multivariate classifier (as slices seen by ``estimator`` are all univariate).
+    Note: if ``n_features=1``, ``BaggingClassifier`` turns a univariate classifier into
+    a multivariate classifier, because slices seen by ``estimator`` are all univariate.
+    This can be used to give a univariate classifier multivariate capabilities.
 
     Parameters
     ----------
@@ -58,7 +59,7 @@ class BaggingClassifier(BaseClassifier):
     Attributes
     ----------
     estimators_ : list of of sktime classifiers
-        clones of classifier in `estimator` fitted in the ensemble
+        clones of classifier in ``estimator`` fitted in the ensemble
 
     Examples
     --------
@@ -77,6 +78,11 @@ class BaggingClassifier(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["fkiraly"],
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:missing_values": True,
         "capability:predict_proba": True,
@@ -217,7 +223,7 @@ class BaggingClassifier(BaseClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -228,8 +234,9 @@ class BaggingClassifier(BaseClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         from sktime.classification.dummy import DummyClassifier
 

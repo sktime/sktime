@@ -1,7 +1,8 @@
 """Testing advanced functionality of the base class."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["fkiraly"]
+__author__ = ["fkiraly", "ciaran-g"]
 
 from functools import reduce
 from operator import mul
@@ -14,23 +15,29 @@ from pandas.testing import assert_series_equal
 from sktime.datatypes import check_is_mtype, convert
 from sktime.datatypes._utilities import get_cutoff, get_window
 from sktime.forecasting.arima import ARIMA
+from sktime.forecasting.compose import YfromX
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.forecasting.var import VAR
+from sktime.split import temporal_train_test_split
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_panel
 from sktime.utils._testing.series import _make_series
+from sktime.utils.parallel import _get_parallel_test_fixtures
 from sktime.utils.validation._dependencies import _check_estimator_deps
 
 PANEL_MTYPES = ["pd-multiindex", "nested_univ", "numpy3D"]
 HIER_MTYPES = ["pd_multiindex_hier"]
+
+# list of parallelization backends to test
+BACKENDS = _get_parallel_test_fixtures("config")
 
 
 @pytest.mark.skipif(
     not _check_estimator_deps(ARIMA, severity="none"),
     reason="skip test if required soft dependency for ARIMA not available",
 )
-@pytest.mark.parametrize("backend", [None, "joblib", "loky", "threading"])
+@pytest.mark.parametrize("backend", BACKENDS)
 @pytest.mark.parametrize("mtype", PANEL_MTYPES)
 def test_vectorization_series_to_panel(mtype, backend):
     """Test that forecaster vectorization works for Panel data.
@@ -43,7 +50,7 @@ def test_vectorization_series_to_panel(mtype, backend):
     y = _make_panel(n_instances=n_instances, random_state=42, return_mtype=mtype)
 
     f = ARIMA()
-    f.set_config(**{"backend:parallel": backend})
+    f.set_config(**backend.copy())
     y_pred = f.fit(y).predict([1, 2, 3])
     valid, _, metadata = check_is_mtype(
         y_pred, mtype, return_metadata=True, msg_return_dict="list"
@@ -83,7 +90,7 @@ def test_vectorization_series_to_panel(mtype, backend):
     not _check_estimator_deps(ARIMA, severity="none"),
     reason="skip test if required soft dependency for ARIMA not available",
 )
-@pytest.mark.parametrize("backend", [None, "joblib", "loky", "threading"])
+@pytest.mark.parametrize("backend", BACKENDS)
 @pytest.mark.parametrize("mtype", HIER_MTYPES)
 def test_vectorization_series_to_hier(mtype, backend):
     """Test that forecaster vectorization works for Hierarchical data.
@@ -98,7 +105,7 @@ def test_vectorization_series_to_hier(mtype, backend):
     y = convert(y, from_type="pd_multiindex_hier", to_type=mtype)
 
     f = ARIMA()
-    f.set_config(**{"backend:parallel": backend})
+    f.set_config(**backend.copy())
     y_pred = f.fit(y).predict([1, 2, 3])
     valid, _, metadata = check_is_mtype(
         y_pred, mtype, return_metadata=True, msg_return_dict="list"
@@ -451,3 +458,62 @@ def test_range_fh_in_predict():
 
     assert isinstance(var_predictions, pd.DataFrame)
     assert var_predictions.shape == (10 * 2, 5)
+
+
+def test_remember_data():
+    """Test that the ``remember_data`` flag works as expected."""
+    from sktime.datasets import load_airline
+
+    y = load_airline()
+    X = load_airline()
+    f = YfromX.create_test_instance()
+
+    # turn off remembering _X, _y by config
+    f.set_config(**{"remember_data": False})
+    f.fit(y, X, fh=[1, 2, 3])
+
+    assert f._X is None
+    assert f._y is None
+
+    f.set_config(**{"remember_data": True})
+    f.fit(y, X, fh=[1, 2, 3])
+
+    assert f._X is not None
+    assert f._y is not None
+
+
+def test_panel_with_inner_freq():
+    """Test that panel data with inner frequency set returns the correct predictions."""
+    from sktime.datasets import load_airline
+
+    y = load_airline()
+    ind = pd.date_range(
+        start="1960-01-01", periods=len(y.index), freq="H", name="datetime"
+    )
+    y = pd.DataFrame(y.values, index=ind, columns=["passengers"])
+
+    y_pan = y.set_index([y.index.hour.rename("hour"), y.index]).sort_index()
+    assert y_pan.loc[0].index.freq == pd.Timedelta("24H"), "Expected 24H frequency"
+
+    fh = [1, 2]
+    y_train, y_test = temporal_train_test_split(y_pan, test_size=len(fh))
+
+    # fit update predict
+    forecaster = NaiveForecaster()
+    forecaster.fit(y_train)
+    forecaster.update(y_test)
+    y_pred_update = forecaster.predict(fh=fh)
+
+    # fit no update
+    forecaster.fit(y_pan)
+    y_pred = forecaster.predict(fh=fh)
+    assert y_pred.equals(y_pred_update), "Expected same predictions after update."
+
+    # test predictions against no panel case (simple here :))
+    forecaster = NaiveForecaster(sp=24)
+    forecaster.fit(y)
+    fh = np.arange(1, 49)
+    y_pred_simple = forecaster.predict(fh=fh)
+
+    msg = "Panel not returning same predictions as simple case."
+    assert y_pred.droplevel("hour").sort_index().equals(y_pred_simple), msg

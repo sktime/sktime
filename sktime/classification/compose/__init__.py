@@ -6,11 +6,13 @@ __all__ = [
     "ClassifierPipeline",
     "ComposableTimeSeriesForestClassifier",
     "ColumnEnsembleClassifier",
+    "MultiplexClassifier",
     "SklearnClassifierPipeline",
     "WeightedEnsembleClassifier",
 ]
 
 from sktime.classification.compose._column_ensemble import ColumnEnsembleClassifier
+from sktime.classification.compose._multiplexer import MultiplexClassifier
 from sktime.classification.compose._pipeline import (
     ClassifierPipeline,
     SklearnClassifierPipeline,

@@ -4,7 +4,7 @@
 
 > A unified interface for machine learning with time series
 
-:rocket: **Version 0.24.2 out now!** [Check out the release notes here](https://www.sktime.net/en/latest/changelog.html).
+:rocket: **Version 0.28.1 out now!** [Check out the release notes here](https://www.sktime.net/en/latest/changelog.html).
 
 sktime is a library for time series analysis in Python. It provides a unified interface for multiple time series learning tasks. Currently, this includes time series classification, regression, clustering, annotation, and forecasting. It comes with [time series algorithms](https://www.sktime.net/en/stable/estimator_overview.html) and [scikit-learn] compatible tools to build, tune and validate time series models.
 
@@ -54,7 +54,7 @@ Questions and feedback are extremely welcome! We strongly believe in the value o
 | :woman_technologist: **Usage Questions**          | [GitHub Discussions] · [Stack Overflow] |
 | :speech_balloon: **General Discussion**        | [GitHub Discussions] |
 | :factory: **Contribution & Development** | `dev-chat` channel · [Discord] |
-| :globe_with_meridians: **Community collaboration session** | [Discord] - Fridays 3 pm UTC, dev/meet-ups channel |
+| :globe_with_meridians: **Meet-ups and collaboration sessions** | [Discord] - Fridays 4 pm UTC, dev/meet-ups channel |
 
 [github issue tracker]: https://github.com/sktime/sktime/issues
 [github discussions]: https://github.com/sktime/sktime/discussions
@@ -65,8 +65,6 @@ Questions and feedback are extremely welcome! We strongly believe in the value o
 Our objective is to enhance the interoperability and usability of the time series analysis ecosystem in its entirety. sktime provides a __unified interface for distinct but related time series learning tasks__. It features [__dedicated time series algorithms__](https://www.sktime.net/en/stable/estimator_overview.html) and __tools for composite model building__  such as pipelining, ensembling, tuning, and reduction, empowering users to apply an algorithm designed for one task to another.
 
 sktime also provides **interfaces to related libraries**, for example [scikit-learn], [statsmodels], [tsfresh], [PyOD], and [fbprophet], among others.
-
-For **deep learning**, see our companion package: [sktime-dl](https://github.com/sktime/sktime-dl).
 
 [statsmodels]: https://www.statsmodels.org/stable/index.html
 [tsfresh]: https://tsfresh.readthedocs.io/en/latest/
@@ -84,6 +82,7 @@ For **deep learning**, see our companion package: [sktime-dl](https://github.com
 | **[Time Series Distances/Kernels]** | maturing | [Tutorial](https://github.com/sktime/sktime/blob/main/examples/03_transformers.ipynb) · [API Reference](https://www.sktime.net/en/latest/api_reference/dists_kernels.html) · [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/dist_kern_panel.py) |
 | **[Time Series Alignment]** | experimental | [API Reference](https://www.sktime.net/en/latest/api_reference/alignment.html) · [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/alignment.py) |
 | **[Annotation]** | experimental | [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/annotation.py) |
+| **[Time Series Splitters]** | maturing | [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/split.py) | |
 | **[Distributions and simulation]** | experimental |  |
 
 [forecasting]: https://github.com/sktime/sktime/tree/main/sktime/forecasting
@@ -95,6 +94,7 @@ For **deep learning**, see our companion package: [sktime-dl](https://github.com
 [time series alignment]: https://github.com/sktime/sktime/tree/main/sktime/alignment
 [transformations]: https://github.com/sktime/sktime/tree/main/sktime/transformations
 [distributions and simulation]: https://github.com/sktime/sktime/tree/main/sktime/proba
+[time series splitters]: https://github.com/sktime/sktime/tree/main/sktime/split
 [parameter fitting]: https://github.com/sktime/sktime/tree/main/sktime/param_est
 
 
@@ -169,8 +169,8 @@ flexible choice of soft dependencies is unavailable via `conda`)
 ``` python
 from sktime.datasets import load_airline
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.theta import ThetaForecaster
+from sktime.split import temporal_train_test_split
 from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 
 y = load_airline()
@@ -226,6 +226,15 @@ There are many ways to join the sktime community. We follow the [all-contributor
 [meetings]: https://calendar.google.com/calendar/u/0/embed?src=sktime.toolbox@gmail.com&ctz=UTC
 [enhancement proposals]: https://github.com/sktime/enhancement-proposals
 [roles]: https://www.sktime.net/en/latest/about/team.html
+
+## :trophy: Hall of fame
+
+Thanks to all our community for all your wonderful contributions, PRs, issues, ideas.
+
+<a href="https://github.com/sktime/sktime/graphs/contributors">
+<img src="https://opencollective.com/sktime/contributors.svg?width=600&button=false" />
+</a>
+<br>
 
 ## :bulb: Project vision
 

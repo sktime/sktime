@@ -73,9 +73,10 @@ class Step:
         self.input_edges = input_edges
         self.params = params
 
-    def reset(self):
+    def reset(self, reset_buffer=True):
         """Reset the step."""
-        self.buffer = None
+        if reset_buffer:
+            self.buffer = None
         self.mode = ""
 
     def get_allowed_method(self):
@@ -212,7 +213,7 @@ class Step:
                     self.mode = result.mode
                 if result.result is not None:
                     all_none = False
-            if len(results) != 0 and not results[0] is None:
+            if len(results) != 0 and results[0] is not None:
                 if len(results) > 1:
                     input_data[step_name] = pd.concat(
                         results, axis=1, keys=transformer_names

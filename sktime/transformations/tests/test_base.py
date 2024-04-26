@@ -35,10 +35,14 @@ from sktime.utils._testing.scenarios_transformers import (
     TransformerFitTransformSeriesUnivariate,
 )
 from sktime.utils._testing.series import _make_series
+from sktime.utils.parallel import _get_parallel_test_fixtures
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 # other scenarios that might be needed later in development:
 # TransformerFitTransformPanelUnivariateWithClassY,
+
+# list of parallelization backends to test
+BACKENDS = _get_parallel_test_fixtures("config")
 
 
 def inner_X_scitypes(est):
@@ -183,7 +187,7 @@ def test_panel_in_panel_out_supported():
     # todo: possibly, add mtype check, use metadata return
 
 
-@pytest.mark.parametrize("backend", [None, "joblib", "loky", "threading"])
+@pytest.mark.parametrize("backend", BACKENDS)
 def test_panel_in_panel_out_not_supported_but_series(backend):
     """Test that fit/transform runs and returns the correct output type.
 
@@ -199,7 +203,7 @@ def test_panel_in_panel_out_not_supported_but_series(backend):
     # one example for a transformer which supports Series internally but not Panel
     cls = BoxCoxTransformer
     est = cls.create_test_instance()
-    est.set_config(**{"backend:parallel": backend})
+    est.set_config(**backend.copy())
     # ensure cls is a good example, if this fails, choose another example
     #   (if this changes, it may be due to implementing more scitypes)
     #   (then this is not a failure of cls, but we need to choose another example)
@@ -253,7 +257,7 @@ def test_series_in_primitives_out_supported_fit_in_transform():
     assert len(Xt) == 1
 
 
-@pytest.mark.parametrize("backend", [None, "joblib", "loky", "threading"])
+@pytest.mark.parametrize("backend", BACKENDS)
 def test_panel_in_primitives_out_not_supported_fit_in_transform(backend):
     """Test that fit/transform runs and returns the correct output type.
 
@@ -269,7 +273,7 @@ def test_panel_in_primitives_out_not_supported_fit_in_transform(backend):
     # one example for a transformer which supports Series internally but not Panel
     cls = SummaryTransformer
     est = cls.create_test_instance()
-    est.set_config(**{"backend:parallel": backend})
+    est.set_config(**backend.copy())
     # ensure cls is a good example, if this fails, choose another example
     #   (if this changes, it may be due to implementing more scitypes)
     #   (then this is not a failure of cls, but we need to choose another example)
@@ -370,7 +374,7 @@ def test_panel_in_primitives_out_supported_with_y_in_fit_but_not_transform():
     assert len(Xt) == 7
 
 
-@pytest.mark.parametrize("backend", [None, "joblib", "loky", "threading"])
+@pytest.mark.parametrize("backend", BACKENDS)
 def test_hierarchical_in_hierarchical_out_not_supported_but_series(backend):
     """Test that fit/transform runs and returns the correct output type.
 
@@ -386,7 +390,7 @@ def test_hierarchical_in_hierarchical_out_not_supported_but_series(backend):
     # one example for a transformer which supports Series internally
     cls = BoxCoxTransformer
     est = cls.create_test_instance()
-    est.set_config(**{"backend:parallel": backend})
+    est.set_config(**backend.copy())
     # ensure cls is a good example, if this fails, choose another example
     #   (if this changes, it may be due to implementing more scitypes)
     #   (then this is not a failure of cls, but we need to choose another example)
@@ -444,7 +448,7 @@ def test_hierarchical_in_hierarchical_out_not_supported_but_series_fit_in_transf
     assert len(Xt) == 2 * 4 * 12
 
 
-@pytest.mark.parametrize("backend", [None, "joblib", "loky", "threading"])
+@pytest.mark.parametrize("backend", BACKENDS)
 def test_vectorization_multivariate_no_row_vectorization(backend):
     """Test that multivariate vectorization of univariate transformers works.
 
@@ -463,7 +467,7 @@ def test_vectorization_multivariate_no_row_vectorization(backend):
     # one example for a transformer which supports Series internally
     cls = BoxCoxTransformer
     est = cls.create_test_instance()
-    est.set_config(**{"backend:parallel": backend})
+    est.set_config(**backend.copy())
     # ensure cls is a good example, if this fails, choose another example
     #   (if this changes, it may be due to implementing multivariate functionality)
     #   (then this is not a failure of cls, but we need to choose another example)
@@ -485,7 +489,7 @@ def test_vectorization_multivariate_no_row_vectorization(backend):
     assert len(Xt.columns) == len(scenario.args["fit"]["X"].columns)
 
 
-@pytest.mark.parametrize("backend", [None, "joblib", "loky", "threading"])
+@pytest.mark.parametrize("backend", BACKENDS)
 def test_vectorization_multivariate_and_hierarchical(backend):
     """Test that fit/transform runs and returns the correct output type.
 
@@ -504,7 +508,7 @@ def test_vectorization_multivariate_and_hierarchical(backend):
     # one example for a transformer which supports Series internally
     cls = BoxCoxTransformer
     est = cls.create_test_instance()
-    est.set_config(**{"backend:parallel": backend})
+    est.set_config(**backend.copy())
     # ensure cls is a good example, if this fails, choose another example
     #   (if this changes, it may be due to implementing more scitypes)
     #   (then this is not a failure of cls, but we need to choose another example)
@@ -528,7 +532,7 @@ def test_vectorization_multivariate_and_hierarchical(backend):
     assert len(Xt.columns) == len(scenario.args["fit"]["X"].columns)
 
 
-@pytest.mark.parametrize("backend", [None, "joblib", "loky", "threading"])
+@pytest.mark.parametrize("backend", BACKENDS)
 def test_vectorization_multivariate_no_row_vectorization_empty_fit(backend):
     """Test that multivariate vectorization of univariate transformers works.
 
@@ -547,7 +551,7 @@ def test_vectorization_multivariate_no_row_vectorization_empty_fit(backend):
     # one example for a transformer which supports Series internally
     cls = BoxCoxTransformer
     est = FitInTransform(cls.create_test_instance())
-    est.set_config(**{"backend:parallel": backend})
+    est.set_config(**backend.copy())
     # ensure cls is a good example, if this fails, choose another example
     #   (if this changes, it may be due to implementing multivariate functionality)
     #   (then this is not a failure of cls, but we need to choose another example)
@@ -569,7 +573,7 @@ def test_vectorization_multivariate_no_row_vectorization_empty_fit(backend):
     assert len(Xt.columns) == len(scenario.args["fit"]["X"].columns)
 
 
-@pytest.mark.parametrize("backend", [None, "joblib", "loky", "threading"])
+@pytest.mark.parametrize("backend", BACKENDS)
 def test_vectorization_multivariate_and_hierarchical_empty_fit(backend):
     """Test that fit/transform runs and returns the correct output type.
 
@@ -588,7 +592,7 @@ def test_vectorization_multivariate_and_hierarchical_empty_fit(backend):
     # one example for a transformer which supports Series internally
     cls = BoxCoxTransformer
     est = FitInTransform(cls.create_test_instance())
-    est.set_config(**{"backend:parallel": backend})
+    est.set_config(**backend.copy())
     # ensure cls is a good example, if this fails, choose another example
     #   (if this changes, it may be due to implementing more scitypes)
     #   (then this is not a failure of cls, but we need to choose another example)

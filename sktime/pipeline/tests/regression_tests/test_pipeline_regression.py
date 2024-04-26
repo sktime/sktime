@@ -2,10 +2,11 @@ import numpy as np
 import pandas as pd
 import pytest
 from skbase.utils.dependencies import _check_soft_dependencies
+from sklearn.linear_model import Ridge
 
 from sktime.classification.dummy import DummyClassifier
-from sktime.datasets import load_arrow_head, load_longley
-from sktime.forecasting.compose import ForecastX
+from sktime.datasets import load_airline, load_arrow_head, load_longley
+from sktime.forecasting.compose import ForecastX, make_reduction
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.sarimax import SARIMAX
 from sktime.pipeline.pipeline import Pipeline
@@ -317,3 +318,20 @@ def test_forecasterX_regression():
     general_pipeline.fit(y=y, X=X, fh=[1, 2, 3])
     result_general = general_pipeline.predict(None, None)
     pd.testing.assert_series_equal(result, result_general)
+
+
+def test_lagged_y_prediction():
+    # regression test for issue 5830
+    y = load_airline()
+    y_train, y_test = temporal_train_test_split(y)
+
+    forecaster = make_reduction(Ridge(), window_length=12, strategy="recursive")
+
+    pipe = Pipeline()
+    pipe = pipe.add_step(Differencer(lags=[1, 3]), "differencer", edges={"X": "y"})
+    pipe = pipe.add_step(
+        forecaster, name="forecaster", edges={"X": "differencer", "y": "y"}
+    )
+    pipe.fit(y=y_train)
+    y_pred = pipe.predict(fh=y_test.index)
+    assert y_pred.shape == y_test.shape

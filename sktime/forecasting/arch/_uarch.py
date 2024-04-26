@@ -152,12 +152,18 @@ class ARCH(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "Vasudeva-bit",
+        "maintainers": "Vasudeva-bit",
+        "python_dependencies": "arch",
+        # estimator type
+        # --------------
         "scitype:y": "univariate",
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
-        "python_dependencies": "arch",
         "capability:pred_int": True,
         "ignores-exogeneous-X": True,
     }
@@ -377,7 +383,7 @@ class ARCH(BaseForecaster):
         pred_int : pd.DataFrame
             Column has multi-index: first level is variable name from y in fit,
                 second level coverage fractions for which intervals were computed.
-                    in the same order as in input `coverage`.
+                    in the same order as in input ``coverage``.
                 Third level is string "lower" or "upper", for lower/upper interval end.
             Row index is fh, with additional (upper) levels equal to instance levels,
                 from y seen in fit, if y_inner_mtype is Panel or Hierarchical.

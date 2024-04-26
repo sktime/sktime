@@ -75,6 +75,16 @@ class MyTransformer(BaseTransformer):
         #   True: inner _fit, _predict, receives only single-column DataFrame
         #   False: inner _predict gets pd.DataFrame series with any number of columns
         #
+        # specify one or multiple authors and maintainers, only for sktime contribution
+        "authors": ["author1", "author2"],  # authors, GitHub handles
+        "maintainers": ["maintainer1", "maintainer2"],  # maintainers, GitHub handles
+        # author = significant contribution to code at some point
+        #     if interfacing a 3rd party estimator, ensure to give credit to the
+        #     authors of the interfaced estimator
+        # maintainer = algorithm maintainer role, "owner" of the sktime class
+        #     for 3rd party interfaces, the scope is the sktime class only
+        # remove maintainer tag if maintained by sktime core team
+        #
         # do not change these:
         # (look at advanced templates if you think these should change)
         "scitype:transform-input": "Series",
@@ -94,6 +104,8 @@ class MyTransformer(BaseTransformer):
         self.parama = parama
         self.paramb = paramb
         self.paramc = paramc
+        # IMPORTANT: the self.params should never be overwritten or mutated from now on
+        # for handling defaults etc, write to other attributes, e.g., self._parama
 
         # leave this as is
         super().__init__()

@@ -64,6 +64,15 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
     Freq: M, Name: Number of airline passengers, dtype: float32
     """
 
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["luca-miniati"],
+        "maintainers": ["luca-miniati"],
+        # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
+        # estimator type vars inherited from BaseDeepNetworkPyTorch
+    }
+
     def __init__(
         self,
         seq_len,
@@ -144,7 +153,7 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -307,7 +316,7 @@ class LTSFDLinearForecaster(BaseDeepNetworkPyTorch):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -470,7 +479,7 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns

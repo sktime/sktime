@@ -14,7 +14,6 @@ from typing import Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
 from sklearn.model_selection import ParameterGrid, ParameterSampler, check_cv
 
 from sktime.datatypes import mtype_to_scitype
@@ -30,6 +29,7 @@ from sktime.utils.warnings import warn
 
 class BaseGridSearch(_DelegatedForecaster):
     _tags = {
+        "authors": ["mloning", "fkiraly", "aiwalter"],
         "scitype:y": "both",
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
@@ -38,14 +38,11 @@ class BaseGridSearch(_DelegatedForecaster):
         "capability:pred_int:insample": True,
     }
 
-    # todo 0.26.0: remove n_jobs, pre_dispatch parameters and all related logic
     def __init__(
         self,
         forecaster,
         cv,
         strategy="refit",
-        n_jobs=None,
-        pre_dispatch=None,
         backend="loky",
         refit=False,
         scoring=None,
@@ -56,12 +53,11 @@ class BaseGridSearch(_DelegatedForecaster):
         tune_by_instance=False,
         tune_by_variable=False,
         backend_params=None,
+        n_jobs="deprecated",
     ):
         self.forecaster = forecaster
         self.cv = cv
         self.strategy = strategy
-        self.n_jobs = n_jobs
-        self.pre_dispatch = pre_dispatch
         self.backend = backend
         self.refit = refit
         self.scoring = scoring
@@ -72,21 +68,13 @@ class BaseGridSearch(_DelegatedForecaster):
         self.tune_by_instance = tune_by_instance
         self.tune_by_variable = tune_by_variable
         self.backend_params = backend_params
+        self.n_jobs = n_jobs
 
         super().__init__()
 
-        tags_to_clone = [
-            "requires-fh-in-fit",
-            "capability:pred_int",
-            "capability:pred_int:insample",
-            "capability:insample",
-            "ignores-exogeneous-X",
-            "handles-missing-data",
-            "y_inner_mtype",
-            "X_inner_mtype",
-            "X-y-must-have-same-index",
-            "enforce_index_type",
-        ]
+        self._set_delegated_tags(forecaster)
+
+        tags_to_clone = ["y_inner_mtype", "X_inner_mtype"]
         self.clone_tags(forecaster, tags_to_clone)
         self._extend_to_all_scitypes("y_inner_mtype")
         self._extend_to_all_scitypes("X_inner_mtype")
@@ -96,6 +84,18 @@ class BaseGridSearch(_DelegatedForecaster):
         if tune_by_variable:
             self.set_tags(**{"scitype:y": "univariate"})
 
+        # todo 0.29.0: check if this is still necessary
+        # n_jobs is deprecated, left due to use in tutorials, books, blog posts
+        if n_jobs != "deprecated":
+            warn(
+                f"Parameter n_jobs of {self.__class__.__name__} has been removed "
+                "in sktime 0.27.0 and is no longer used. It is ignored when passed. "
+                "Instead, the backend and backend_params parameters should be used "
+                "to pass n_jobs or other parallelization parameters.",
+                obj=self,
+                stacklevel=2,
+            )
+
     # attribute for _DelegatedForecaster, which then delegates
     #     all non-overridden methods are same as of getattr(self, _delegate_name)
     #     see further details in _DelegatedForecaster docstring
@@ -104,7 +104,7 @@ class BaseGridSearch(_DelegatedForecaster):
     def _extend_to_all_scitypes(self, tagname):
         """Ensure mtypes for all scitypes are in the tag with tagname.
 
-        Mutates self tag with name `tagname`.
+        Mutates self tag with name ``tagname``.
         If no mtypes are present of a time series scitype, adds a pandas based one.
         If only univariate pandas scitype is present for Series ("pd.Series"),
         also adds the multivariate one ("pd.DataFrame").
@@ -186,53 +186,8 @@ class BaseGridSearch(_DelegatedForecaster):
         scoring = check_scoring(self.scoring, obj=self)
         scoring_name = f"test_{scoring.name}"
 
-        # todo 0.26.0: remove this logic and only use backend_params
         backend = self.backend
         backend_params = self.backend_params if self.backend_params else {}
-        if backend in ["threading", "multiprocessing", "loky"]:
-            n_jobs = self.n_jobs
-            pre_dispatch = self.pre_dispatch
-            backend_params["n_jobs"] = n_jobs
-            backend_params["pre_dispatch"] = pre_dispatch
-            if n_jobs is not None or pre_dispatch is not None:
-                warn(
-                    f"in {self.__class__.__name__}, n_jobs and pre_dispatch "
-                    "parameters are deprecated and will be removed in 0.26.0. "
-                    "Please use n_jobs and pre_dispatch directly in the backend_params "
-                    "argument instead.",
-                    obj=self,
-                    stacklevel=2,
-                )
-
-        def _fit_and_score(params, meta):
-            # Clone forecaster.
-            forecaster = self.forecaster.clone()
-
-            # Set parameters.
-            forecaster.set_params(**params)
-
-            # Evaluate.
-            out = evaluate(
-                forecaster,
-                cv,
-                y,
-                X,
-                strategy=self.strategy,
-                scoring=scoring,
-                error_score=self.error_score,
-            )
-
-            # Filter columns.
-            out = out.filter(items=[scoring_name, "fit_time", "pred_time"], axis=1)
-
-            # Aggregate results.
-            out = out.mean()
-            out = out.add_prefix("mean_")
-
-            # Add parameters to output table.
-            out["params"] = params
-
-            return out
 
         def evaluate_candidates(candidate_params):
             candidate_params = list(candidate_params)
@@ -247,9 +202,21 @@ class BaseGridSearch(_DelegatedForecaster):
                     )
                 )
 
+            # Set meta variables for parallelization.
+            meta = {}
+            meta["forecaster"] = self.forecaster
+            meta["y"] = y
+            meta["X"] = X
+            meta["cv"] = cv
+            meta["strategy"] = self.strategy
+            meta["scoring"] = scoring
+            meta["error_score"] = self.error_score
+            meta["scoring_name"] = scoring_name
+
             out = parallelize(
                 fun=_fit_and_score,
                 iter=candidate_params,
+                meta=meta,
                 backend=backend,
                 backend_params=backend_params,
             )
@@ -300,7 +267,10 @@ class BaseGridSearch(_DelegatedForecaster):
         # Select n best forecaster
         self.n_best_forecasters_ = []
         self.n_best_scores_ = []
-        for i in range(self.return_n_best_forecasters):
+        _forecasters_to_return = min(self.return_n_best_forecasters, len(results.index))
+        if _forecasters_to_return == -1:
+            _forecasters_to_return = len(results.index)
+        for i in range(_forecasters_to_return):
             params = results["params"].iloc[i]
             rank = results[f"rank_{scoring_name}"].iloc[i]
             rank = str(int(rank))
@@ -386,6 +356,35 @@ class BaseGridSearch(_DelegatedForecaster):
         return self
 
 
+def _fit_and_score(params, meta):
+    """Fit and score forecaster with given parameters.
+
+    Root level function for parallelization, called from
+    BaseGridSearchCV._fit, evaluate_candidates, within parallelize.
+    """
+    meta = meta.copy()
+    scoring_name = meta.pop("scoring_name")
+
+    # Set parameters.
+    forecaster = meta.pop("forecaster").clone()
+    forecaster.set_params(**params)
+
+    # Evaluate.
+    out = evaluate(forecaster, **meta)
+
+    # Filter columns.
+    out = out.filter(items=[scoring_name, "fit_time", "pred_time"], axis=1)
+
+    # Aggregate results.
+    out = out.mean()
+    out = out.add_prefix("mean_")
+
+    # Add parameters to output table.
+    out["params"] = params
+
+    return out
+
+
 class ForecastingGridSearchCV(BaseGridSearch):
     """Perform grid-search cross-validation to find optimal model parameters.
 
@@ -401,16 +400,16 @@ class ForecastingGridSearchCV(BaseGridSearch):
 
     Parameters
     ----------
-    forecaster : estimator object
-        The estimator should implement the sktime or scikit-learn estimator
-        interface. Either the estimator must contain a "score" function,
-        or a scoring function must be passed.
+    forecaster : sktime forecaster, BaseForecaster instance or interface compatible
+        The forecaster to tune, must implement the sktime forecaster interface.
+        sklearn regressors can be used, but must first be converted to forecasters
+        via one of the reduction compositors, e.g., via ``make_reduction``
     cv : cross-validation generator or an iterable
         e.g. SlidingWindowSplitter()
     strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
-        data ingestion strategy in fitting cv, passed to `evaluate` internally
+        data ingestion strategy in fitting cv, passed to ``evaluate`` internally
         defines the ingestion mode when the forecaster sees new data when window expands
-        "refit" = forecaster is refitted to each training window
+        "refit" = a new copy of the forecaster is fitted to each training window
         "update" = forecaster is updated with training window data, in sequence provided
         "no-update_params" = fit to first training window, re-used without fit or update
     update_behaviour : str, optional, default = "full_refit"
@@ -430,7 +429,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         for instance via ``all_estimators("metric", as_dataframe=True)``
 
         * If callable, must have signature
-        `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
+        ``(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float``,
         assuming np.ndarrays being of the same length, and lower being better.
         Metrics in sktime.performance_metrics.forecasting are all of this form.
 
@@ -441,10 +440,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
 
         * If None, defaults to MeanAbsolutePercentageError()
 
-    n_jobs: int, optional (default=None)
-        Number of jobs to run in parallel.
-        None means 1 unless in a joblib.parallel_backend context.
-        -1 means using all processors.
     refit : bool, optional (default=True)
         True = refit the forecaster with the best parameters on the entire data in fit
         False = no refitting takes place. The forecaster cannot be used to predict.
@@ -453,14 +448,15 @@ class ForecastingGridSearchCV(BaseGridSearch):
     verbose: int, optional (default=0)
     return_n_best_forecasters : int, default=1
         In case the n best forecaster should be returned, this value can be set
-        and the n best forecasters will be assigned to n_best_forecasters_
-    pre_dispatch : str, optional (default='2*n_jobs')
+        and the n best forecasters will be assigned to n_best_forecasters_.
+        Set return_n_best_forecasters to -1 to return all forecasters.
+
     error_score : numeric value or the str 'raise', optional (default=np.nan)
         The test score returned when a forecaster fails to be fitted.
     return_train_score : bool, optional (default=False)
 
     backend : {"dask", "loky", "multiprocessing", "threading"}, by default "loky".
-        Runs parallel evaluate if specified and `strategy` is set as "refit".
+        Runs parallel evaluate if specified and ``strategy`` is set as "refit".
 
         - "None": executes loop sequentally, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
@@ -544,9 +540,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
     --------
     >>> from sktime.datasets import load_shampoo_sales
     >>> from sktime.forecasting.model_selection import ForecastingGridSearchCV
-    >>> from sktime.split import (
-    ...     ExpandingWindowSplitter,
-    ...     ExpandingWindowSplitter)
+    >>> from sktime.split import ExpandingWindowSplitter
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> y = load_shampoo_sales()
     >>> fh = [1,2,3]
@@ -597,7 +591,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
     ...     },
     ...     ],
     ...     cv=cv,
-    ...     n_jobs=-1)  # doctest: +SKIP
+    ... )  # doctest: +SKIP
     >>> gscv.fit(y)  # doctest: +SKIP
     ForecastingGridSearchCV(...)
     >>> y_pred = gscv.predict(fh=[1,2,3])  # doctest: +SKIP
@@ -610,34 +604,32 @@ class ForecastingGridSearchCV(BaseGridSearch):
         param_grid,
         scoring=None,
         strategy="refit",
-        n_jobs=None,
         refit=True,
         verbose=0,
         return_n_best_forecasters=1,
-        pre_dispatch="2*n_jobs",
         backend="loky",
         update_behaviour="full_refit",
         error_score=np.nan,
         tune_by_instance=False,
         tune_by_variable=False,
         backend_params=None,
+        n_jobs="deprecated",
     ):
         super().__init__(
             forecaster=forecaster,
             scoring=scoring,
-            n_jobs=n_jobs,
             refit=refit,
             cv=cv,
             strategy=strategy,
             verbose=verbose,
             return_n_best_forecasters=return_n_best_forecasters,
-            pre_dispatch=pre_dispatch,
             backend=backend,
             update_behaviour=update_behaviour,
             error_score=error_score,
             tune_by_instance=tune_by_instance,
             tune_by_variable=tune_by_variable,
             backend_params=backend_params,
+            n_jobs=n_jobs,
         )
         self.param_grid = param_grid
 
@@ -678,7 +670,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
@@ -730,16 +722,16 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
 
     Parameters
     ----------
-    forecaster : estimator object
-        The estimator should implement the sktime or scikit-learn estimator
-        interface. Either the estimator must contain a "score" function,
-        or a scoring function must be passed.
+    forecaster : sktime forecaster, BaseForecaster instance or interface compatible
+        The forecaster to tune, must implement the sktime forecaster interface.
+        sklearn regressors can be used, but must first be converted to forecasters
+        via one of the reduction compositors, e.g., via ``make_reduction``
     cv : cross-validation generator or an iterable
         e.g. SlidingWindowSplitter()
     strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
-        data ingestion strategy in fitting cv, passed to `evaluate` internally
+        data ingestion strategy in fitting cv, passed to ``evaluate`` internally
         defines the ingestion mode when the forecaster sees new data when window expands
-        "refit" = forecaster is refitted to each training window
+        "refit" = a new copy of the forecaster is fitted to each training window
         "update" = forecaster is updated with training window data, in sequence provided
         "no-update_params" = fit to first training window, re-used without fit or update
     update_behaviour: str, optional, default = "full_refit"
@@ -749,7 +741,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         "inner_only" = tuning parameters are not re-tuned, inner estimator is updated
         "no_update" = neither tuning parameters nor inner estimator are updated
     param_distributions : dict or list of dicts
-        Dictionary with parameters names (`str`) as keys and distributions
+        Dictionary with parameters names (``str``) as keys and distributions
         or lists of parameters to try. Distributions must provide a ``rvs``
         method for sampling (such as those from scipy.stats.distributions).
         If a list is given, it is sampled uniformly.
@@ -767,7 +759,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         for instance via ``all_estimators("metric", as_dataframe=True)``
 
         * If callable, must have signature
-        `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
+        ``(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float``,
         assuming np.ndarrays being of the same length, and lower being better.
         Metrics in sktime.performance_metrics.forecasting are all of this form.
 
@@ -778,10 +770,6 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
 
         * If None, defaults to MeanAbsolutePercentageError()
 
-    n_jobs : int, optional (default=None)
-        Number of jobs to run in parallel.
-        None means 1 unless in a joblib.parallel_backend context.
-        -1 means using all processors.
     refit : bool, optional (default=True)
         True = refit the forecaster with the best parameters on the entire data in fit
         False = no refitting takes place. The forecaster cannot be used to predict.
@@ -790,16 +778,17 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
     verbose : int, optional (default=0)
     return_n_best_forecasters: int, default=1
         In case the n best forecaster should be returned, this value can be set
-        and the n best forecasters will be assigned to n_best_forecasters_
+        and the n best forecasters will be assigned to n_best_forecasters_.
+        Set return_n_best_forecasters to -1 to return all forecasters.
+
     random_state : int, RandomState instance or None, default=None
         Pseudo random number generator state used for random uniform sampling
         from lists of possible values instead of scipy.stats distributions.
         Pass an int for reproducible output across multiple
         function calls.
-    pre_dispatch : str, optional (default='2*n_jobs')
 
     backend : {"dask", "loky", "multiprocessing", "threading"}, by default "loky".
-        Runs parallel evaluate if specified and `strategy` is set as "refit".
+        Runs parallel evaluate if specified and ``strategy`` is set as "refit".
 
         - "None": executes loop sequentally, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
@@ -882,35 +871,33 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         n_iter=10,
         scoring=None,
         strategy="refit",
-        n_jobs=None,
         refit=True,
         verbose=0,
         return_n_best_forecasters=1,
         random_state=None,
-        pre_dispatch="2*n_jobs",
         backend="loky",
         update_behaviour="full_refit",
         error_score=np.nan,
         tune_by_instance=False,
         tune_by_variable=False,
         backend_params=None,
+        n_jobs="deprecated",
     ):
         super().__init__(
             forecaster=forecaster,
             scoring=scoring,
             strategy=strategy,
-            n_jobs=n_jobs,
             refit=refit,
             cv=cv,
             verbose=verbose,
             return_n_best_forecasters=return_n_best_forecasters,
-            pre_dispatch=pre_dispatch,
             backend=backend,
             update_behaviour=update_behaviour,
             error_score=error_score,
             tune_by_instance=tune_by_instance,
             tune_by_variable=tune_by_variable,
             backend_params=backend_params,
+            n_jobs=n_jobs,
         )
         self.param_distributions = param_distributions
         self.n_iter = n_iter
@@ -932,7 +919,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
@@ -975,10 +962,10 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
 
     Parameters
     ----------
-    forecaster : estimator object.
-        The estimator should implement the sktime or scikit-learn estimator interface.
-        Either the estimator must contain a "score" function,
-        or a scoring function must be passed.
+    forecaster : sktime forecaster, BaseForecaster instance or interface compatible
+        The forecaster to tune, must implement the sktime forecaster interface.
+        sklearn regressors can be used, but must first be converted to forecasters
+        via one of the reduction compositors, e.g., via ``make_reduction``
     cv : cross-validation generator or an iterable
         Splitter used for generating validation folds.
         e.g. SlidingWindowSplitter()
@@ -1012,7 +999,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         for instance via ``all_estimators("metric", as_dataframe=True)``
 
         * If callable, must have signature
-        `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
+        ``(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float``,
         assuming np.ndarrays being of the same length, and lower being better.
         Metrics in sktime.performance_metrics.forecasting are all of this form.
 
@@ -1026,7 +1013,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
     optimizer_kwargs: dict, optional
         Arguments passed to Optimizer to control the behaviour of the bayesian search.
         For example, {'base_estimator': 'RF'} would use a Random Forest surrogate
-        instead of the default Gaussian Process. Please refer to the `skopt.Optimizer`
+        instead of the default Gaussian Process. Please refer to the ``skopt.Optimizer``
         documentation for more information.
     random_state : int, RandomState instance or None, default=None
         Pseudo random number generator state used for random uniform sampling
@@ -1034,9 +1021,9 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         Pass an int for reproducible output across multiple
         function calls.
     strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
-        data ingestion strategy in fitting cv, passed to `evaluate` internally
+        data ingestion strategy in fitting cv, passed to ``evaluate`` internally
         defines the ingestion mode when the forecaster sees new data when window expands
-        "refit" = forecaster is refitted to each training window
+        "refit" = a new copy of the forecaster is fitted to each training window
         "update" = forecaster is updated with training window data, in sequence provided
         "no-update_params" = fit to first training window, re-used without fit or update
     update_behaviour: str, optional, default = "full_refit"
@@ -1057,15 +1044,11 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         FitFailedWarning is raised.
     return_n_best_forecasters: int, default=1
         In case the n best forecaster should be returned, this value can be set
-        and the n best forecasters will be assigned to n_best_forecasters_
-    pre_dispatch : str, optional (default='2*n_jobs')
-    n_jobs : int, optional (default=None)
-        Number of jobs to run in parallel.
-        None means 1 unless in a joblib.parallel_backend context.
-        -1 means using all processors.
+        and the n best forecasters will be assigned to n_best_forecasters_.
+        Set return_n_best_forecasters to -1 to return all forecasters.
 
     backend : {"dask", "loky", "multiprocessing", "threading"}, by default "loky".
-        Runs parallel evaluate if specified and `strategy` is set as "refit".
+        Runs parallel evaluate if specified and ``strategy`` is set as "refit".
 
         - "None": executes loop sequentally, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
@@ -1162,6 +1145,8 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
     """
 
     _tags = {
+        "authors": ["HazrulAkmal"],
+        "maintainers": ["HazrulAkmal"],
         "scitype:y": "both",
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
@@ -1184,17 +1169,16 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         scoring: Optional[List[BaseMetric]] = None,
         optimizer_kwargs: Optional[Dict] = None,
         strategy: Optional[str] = "refit",
-        n_jobs: Optional[int] = None,
         refit: bool = True,
         verbose: int = 0,
         return_n_best_forecasters: int = 1,
-        pre_dispatch: str = "2*n_jobs",
         backend: str = "loky",
         update_behaviour: str = "full_refit",
         error_score=np.nan,
         tune_by_instance=False,
         tune_by_variable=False,
         backend_params=None,
+        n_jobs="deprecated",
     ):
         self.param_distributions = param_distributions
         self.n_iter = n_iter
@@ -1205,18 +1189,17 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
             forecaster=forecaster,
             scoring=scoring,
             strategy=strategy,
-            n_jobs=n_jobs,
             refit=refit,
             cv=cv,
             verbose=verbose,
             return_n_best_forecasters=return_n_best_forecasters,
-            pre_dispatch=pre_dispatch,
             backend=backend,
             update_behaviour=update_behaviour,
             error_score=error_score,
             tune_by_instance=tune_by_instance,
             tune_by_variable=tune_by_variable,
             backend_params=backend_params,
+            n_jobs=n_jobs,
         )
 
     def _fit(self, y, X=None, fh=None):
@@ -1372,56 +1355,32 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         mapping : dict, optional (default=None)
             Mapping of forecaster to estimator instance.
         """
-        from skopt.utils import use_named_args
-
         # Get a list of dimension parameter space with name from optimizer
         dimensions = optimizer.space.dimensions
         test_score_name = f"test_{self._check_scoring.name}"
 
-        @use_named_args(dimensions)  # decorator to convert candidate param list to dict
-        def _fit_and_score(**params):
-            # Clone forecaster.
-            forecaster = self.forecaster.clone()
-
-            # map forecaster back to estimator instance
-            if "forecaster" in params:
-                params["forecaster"] = mapping[params["forecaster"]]
-
-            # Set parameters.
-            forecaster.set_params(**params)
-
-            # Evaluate.
-            out = evaluate(
-                forecaster=forecaster,
-                cv=self._check_cv,
-                y=y,
-                X=X,
-                strategy=self.strategy,
-                scoring=self._check_scoring,
-                error_score=self.error_score,
-            )
-
-            # Filter columns.
-            out = out.filter(
-                items=[test_score_name, "fit_time", "pred_time"],
-                axis=1,
-            )
-
-            # Aggregate results.
-            out = out.mean()
-            out = out.add_prefix("mean_")
-
-            # Add parameters to output table.
-            out["params"] = params
-
-            return out
-
-        parallel = Parallel(
-            n_jobs=self.n_jobs, pre_dispatch=self.pre_dispatch, backend=self.backend
-        )
+        # Set meta variables for parallelization.
+        meta = {}
+        meta["forecaster"] = self.forecaster
+        meta["y"] = y
+        meta["X"] = X
+        meta["mapping"] = mapping
+        meta["cv"] = self._check_cv
+        meta["strategy"] = self.strategy
+        meta["scoring"] = self._check_scoring
+        meta["error_score"] = self.error_score
+        meta["test_score_name"] = test_score_name
+        meta["dimensions"] = dimensions
 
         candidate_params = optimizer.ask(n_points=n_points)
-        out = parallel(delayed(_fit_and_score)(params) for params in candidate_params)
+
+        out = parallelize(
+            fun=_fit_and_score_skopt,
+            iter=candidate_params,
+            meta=meta,
+            backend=self.backend,
+            backend_params=self.backend_params,
+        )
 
         # fetch the mean evaluation metrics and feed them back to optimizer
         results_df = pd.DataFrame(out)
@@ -1545,7 +1504,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
@@ -1574,3 +1533,57 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         }
 
         return [params, params2]
+
+
+def _fit_and_score_skopt(params, meta):
+    from skopt.utils import use_named_args
+
+    y = meta["y"]
+    X = meta["X"]
+    cv = meta["cv"]
+    mapping = meta["mapping"]
+    strategy = meta["strategy"]
+    scoring = meta["scoring"]
+    error_score = meta["error_score"]
+    dimensions = meta["dimensions"]
+    test_score_name = meta["test_score_name"]
+
+    @use_named_args(dimensions)  # decorator to convert candidate param list to dict
+    def _fit_and_score(**params):
+        # Clone forecaster.
+        forecaster = meta["forecaster"].clone()
+
+        # map forecaster back to estimator instance
+        if "forecaster" in params:
+            params["forecaster"] = mapping[params["forecaster"]]
+
+        # Set parameters.
+        forecaster.set_params(**params)
+
+        # Evaluate.
+        out = evaluate(
+            forecaster=forecaster,
+            cv=cv,
+            y=y,
+            X=X,
+            strategy=strategy,
+            scoring=scoring,
+            error_score=error_score,
+        )
+
+        # Filter columns.
+        out = out.filter(
+            items=[test_score_name, "fit_time", "pred_time"],
+            axis=1,
+        )
+
+        # Aggregate results.
+        out = out.mean()
+        out = out.add_prefix("mean_")
+
+        # Add parameters to output table.
+        out["params"] = params
+
+        return out
+
+    return _fit_and_score(**params)

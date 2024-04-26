@@ -87,7 +87,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         Seasonal periodicity to use in the seasonal forecasting. None=1.
 
     window_length : int or None, default=None
-        Window length to use in the `mean` strategy. If None, entire training
+        Window length to use in the ``mean`` strategy. If None, entire training
             series will be used.
 
     References
@@ -108,6 +108,20 @@ class NaiveForecaster(_BaseWindowForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": [
+            "mloning",
+            "piyush1729",
+            "sri1419",
+            "Flix6x",
+            "aiwalter",
+            "IlyasMoutawwakil",
+            "fkiraly",
+            "bethrice44",
+        ],
+        # estimator type
+        # --------------
         "y_inner_mtype": "pd.Series",
         "requires-fh-in-fit": False,
         "handles-missing-data": True,
@@ -191,7 +205,7 @@ class NaiveForecaster(_BaseWindowForecaster):
             )
 
         # check window length
-        if self.window_length_ > len(self._y):
+        if self.window_length_ > len(y):
             param = "sp" if self.strategy == "last" and sp != 1 else "window_length_"
             raise ValueError(
                 f"The {param}: {self.window_length_} is larger than "
@@ -343,7 +357,6 @@ class NaiveForecaster(_BaseWindowForecaster):
         lagger = Lag(1, keep_column_names=True, freq=freq)
 
         expected_index = fh.to_absolute(cutoff).to_pandas()
-
         if strategy == "last" and sp == 1:
             y_old = lagger.fit_transform(_y)
             y_new = pd.DataFrame(index=expected_index, columns=[0], dtype="float64")
@@ -589,15 +602,16 @@ class NaiveForecaster(_BaseWindowForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params_list = [
             {},
@@ -613,7 +627,7 @@ class NaiveForecaster(_BaseWindowForecaster):
 class NaiveVariance(BaseForecaster):
     r"""Compute the prediction variance based on a naive strategy.
 
-    NaiveVariance adds to a `forecaster` the ability to compute the
+    NaiveVariance adds to a ``forecaster`` the ability to compute the
     prediction variance based on naive assumptions about the time series.
     The simple strategy is as follows:
     - Let :math:`y_1,\dots,y_T` be the time series we fit the estimator :math:`f` to.
@@ -628,9 +642,10 @@ class NaiveVariance(BaseForecaster):
     :math:`Cov(y_k, y_l)=\frac{\sum_{i=1}^N \hat{r}_{k,k+i}*\hat{r}_{l,l+i}}{N}`.
 
     The resulting forecaster will implement
-        `predict_interval`, `predict_quantiles`, `predict_var`, and `predict_proba`,
-        even if the wrapped forecaster `forecaster` did not have this capability;
-        for point forecasts (`predict`), behaves like the wrapped forecaster.
+        ``predict_interval``, ``predict_quantiles``, ``predict_var``, and
+        ``predict_proba``,
+        even if the wrapped forecaster ``forecaster`` did not have this capability;
+        for point forecasts (``predict``), behaves like the wrapped forecaster.
 
     Parameters
     ----------
@@ -654,6 +669,11 @@ class NaiveVariance(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["fkiraly", "bethrice44"],
+        # estimator type
+        # --------------
         "scitype:y": "univariate",
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
@@ -875,7 +895,7 @@ class NaiveVariance(BaseForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------

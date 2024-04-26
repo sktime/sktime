@@ -9,28 +9,29 @@ sktime (native) format
 mlflow.pyfunc
     Produced for use by generic pyfunc-based deployment tools and batch inference.
 
-    The `pyfunc` flavor of the model supports sktime predict methods `predict`,
-    `predict_interval`, `predict_proba`, `predict_quantiles`, `predict_var`.
+    The ``pyfunc`` flavor of the model supports sktime predict methods ``predict``,
+    ``predict_interval``, ``predict_proba``, ``predict_quantiles``, ``predict_var``.
 
-    The interface for utilizing a sktime model loaded as a `pyfunc` type for
+    The interface for utilizing a sktime model loaded as a ``pyfunc`` type for
     generating forecasts requires passing an exogenous regressor as Pandas
-    DataFrame to the `pyfunc.predict()` method (an empty DataFrame must be
+    DataFrame to the ``pyfunc.predict()`` method (an empty DataFrame must be
     passed if no exogenous regressor is used). The configuration of predict
     methods and parameter values passed to the predict methods is defined by
     a dictionary to be saved as an attribute of the fitted sktime model
-    instance. If no prediction configuration is defined `pyfunc.predict()`
-    will return output from sktime `predict` method. Note that for `pyfunc`
-    flavor the forecasting horizon `fh` must be passed to the fit method.
+    instance. If no prediction configuration is defined ``pyfunc.predict()``
+    will return output from sktime ``predict`` method. Note that for ``pyfunc``
+    flavor the forecasting horizon ``fh`` must be passed to the fit method.
 
-    Predict methods and parameter values for `pyfunc` flavor can be defined
-    in two ways: `Dict[str, dict]` if parameter values are passed to
-    `pyfunc.predict()`, for example
-    `{"predict_method": {"predict": {}, "predict_interval": {"coverage": [0.1, 0.9]}}`.
-    `Dict[str, list]`, with default parameters in predict method, for example
-    `{"predict_method": ["predict", "predict_interval"}` (Note: when including
-    `predict_proba` method the former appraoch must be followed as `quantiles`
+    Predict methods and parameter values for ``pyfunc`` flavor can be defined
+    in two ways: ``Dict[str, dict]`` if parameter values are passed to
+    ``pyfunc.predict()``, for example
+    ``{"predict_method": {"predict": {}, "predict_interval": {"coverage": [0.1,
+    0.9]}}``.
+    ``Dict[str, list]``, with default parameters in predict method, for example
+    ``{"predict_method": ["predict", "predict_interval"}`` (Note: when including
+    ``predict_proba`` method the former approach must be followed as ``quantiles``
     parameter has to be provided by the user). If no prediction config is defined
-    `pyfunc.predict()` will return output from sktime `predict()` method.
+    ``pyfunc.predict()`` will return output from sktime ``predict()`` method.
 """
 
 __author__ = ["benjaminbluhm", "achieveordie"]
@@ -46,7 +47,6 @@ import logging
 import os
 
 import pandas as pd
-import yaml
 
 import sktime
 from sktime import utils
@@ -55,6 +55,7 @@ from sktime.utils.multiindex import flatten_multiindex
 from sktime.utils.validation._dependencies import _check_mlflow_dependencies
 
 if _check_mlflow_dependencies(severity="warning"):
+    import yaml
     from mlflow import pyfunc
 
 FLAVOR_NAME = "mlflow_sktime"
@@ -169,7 +170,8 @@ def save_model(
           to the Pandas MultiIndex column type when using the these methods.
           ``infer_schema`` will function correctly if using the ``pyfunc`` flavor
           of the model, though.
-    input_example : Union[pandas.core.frame.DataFrame, numpy.ndarray, dict, list, csr_matrix, csc_matrix], optional (default=None)
+    input_example : Union[pandas.core.frame.DataFrame, numpy.ndarray, dict, list, csr_matrix, csc_matrix], optional
+    (default=None)
         Input example provides one or several instances of valid model input.
         The example can be used as a hint of what data to feed the model. The given
         example will be converted to a ``Pandas DataFrame`` and then serialized to json
@@ -190,7 +192,8 @@ def save_model(
 
     References
     ----------
-    .. [1] https://www.mlflow.org/docs/latest/python_api/mlflow.models.html#mlflow.models.Model.save
+    .. [1]
+    https://www.mlflow.org/docs/latest/python_api/mlflow.models.html#mlflow.models.Model.save
 
     Examples
     --------
@@ -364,7 +367,8 @@ def log_model(
           predict methods ``predict``, ``predict_interval``, ``predict_quantiles``
           and ``predict_var`` while ``predict_proba`` and ``predict_residuals`` are
           currently not supported.
-    input_example : Union[pandas.core.frame.DataFrame, numpy.ndarray, dict, list, csr_matrix, csc_matrix], optional (default=None)
+    input_example : Union[pandas.core.frame.DataFrame, numpy.ndarray, dict, list, csr_matrix, csc_matrix], optional
+    (default=None)
         Input example provides one or several instances of valid model input.
         The example can be used as a hint of what data to feed the model. The given
         example will be converted to a ``Pandas DataFrame`` and then serialized to json
@@ -400,7 +404,8 @@ def log_model(
 
     References
     ----------
-    .. [1] https://www.mlflow.org/docs/latest/python_api/mlflow.models.html#mlflow.models.Model.log
+    .. [1]
+    https://www.mlflow.org/docs/latest/python_api/mlflow.models.html#mlflow.models.Model.log
 
     >>> import mlflow  # doctest: +SKIP
     >>> from mlflow.utils.environment import _mlflow_conda_env  # doctest: +SKIP
@@ -473,7 +478,8 @@ def load_model(model_uri, dst_path=None):
 
     References
     ----------
-    .. [1] https://www.mlflow.org/docs/latest/python_api/mlflow.models.html#mlflow.models.Model.load
+    .. [1]
+    https://www.mlflow.org/docs/latest/python_api/mlflow.models.html#mlflow.models.Model.load
 
     Examples
     --------
@@ -566,7 +572,8 @@ def _load_pyfunc(path):
 
     References
     ----------
-    .. [1] https://www.mlflow.org/docs/latest/python_api/mlflow.pyfunc.html#mlflow.pyfunc.load_model
+    .. [1]
+    https://www.mlflow.org/docs/latest/python_api/mlflow.pyfunc.html#mlflow.pyfunc.load_model
     """  # noqa: E501
     _check_mlflow_dependencies(severity="error")
     from mlflow.exceptions import MlflowException

@@ -67,6 +67,14 @@ class CountryHolidaysTransformer(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "yarnabrina",
+        "maintainers": "yarnabrina",
+        "python_version": ">=3.8",
+        "python_dependencies": ["holidays"],
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:instancewise": True,
@@ -79,8 +87,6 @@ class CountryHolidaysTransformer(BaseTransformer):
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
         "handles-missing-data": True,
-        "python_version": ">=3.8",
-        "python_dependencies": ["holidays"],
     }
 
     def __init__(
@@ -168,7 +174,7 @@ class CountryHolidaysTransformer(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns

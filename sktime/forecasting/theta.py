@@ -89,7 +89,13 @@ class ThetaForecaster(ExponentialSmoothing):
 
     _fitted_param_names = ("initial_level", "smoothing_level")
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["big-o", "mloning", "kejsitake", "fkiraly", "GuzalBulatova"],
         "scitype:y": "univariate",
+        # "python_dependencies": "statsmodels" - inherited from _StatsModelsAdapter
+        # estimator type
+        # --------------
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
@@ -225,7 +231,7 @@ class ThetaForecaster(ExponentialSmoothing):
         pred_int : pd.DataFrame
             Column has multi-index: first level is variable name from y in fit,
                 second level coverage fractions for which intervals were computed.
-                    in the same order as in input `coverage`.
+                    in the same order as in input ``coverage``.
                 Third level is string "lower" or "upper", for lower/upper interval end.
             Row index is fh, with additional (upper) levels equal to instance levels,
                 from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
@@ -299,7 +305,7 @@ class ThetaForecaster(ExponentialSmoothing):
         ----------
         parameter_set : str , default = "default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for forecasters.
 
         Returns
@@ -307,8 +313,9 @@ class ThetaForecaster(ExponentialSmoothing):
         params :dict or list of dict , default = {}
             parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in `params
         """
         params0 = {}
         params1 = {"sp": 2, "deseasonalize": True}
@@ -347,12 +354,12 @@ class ThetaModularForecaster(BaseForecaster):
     Overview: Input :term:`univariate series <Univariate time series>` of length
     "n" and decompose with :class:`ThetaLinesTransformer
     <sktime.transformations.series.theta>` by modifying the local curvature of
-    the time series using Theta-coefficient values - `theta_values` parameter.
-    Thansformation gives a pd.DataFrame of shape `len(input series) * len(theta)`.
+    the time series using Theta-coefficient values - ``theta_values`` parameter.
+    Thansformation gives a pd.DataFrame of shape ``len(input series) * len(theta)``.
 
     The resulting transformed series (Theta-lines) are extrapolated separately.
     The forecasts are then aggregated into one prediction - aunivariate series,
-    of `len(fh)`.
+    of ``len(fh)``.
 
     Parameters
     ----------
@@ -363,8 +370,8 @@ class ThetaModularForecaster(BaseForecaster):
         Theta-lines where theta_value equals 0, and ExponentialSmoothing - where
         theta_value is different from 0.
     theta_values: sequence of float, default=(0,2)
-        Theta-coefficients to use in transformation. If `forecasters` parameter
-        is passed, must be the same length as `forecasters`.
+        Theta-coefficients to use in transformation. If ``forecasters`` parameter
+        is passed, must be the same length as ``forecasters``.
     aggfunc: str, default="mean"
         Must be one of ["mean", "median", "min", "max", "gmean"].
         Calls :func:`_aggregate` of
@@ -411,6 +418,7 @@ class ThetaModularForecaster(BaseForecaster):
     """
 
     _tags = {
+        "authors": ["GuzalBulatova", "fkiraly"],
         "univariate-only": False,
         "y_inner_mtype": "pd.Series",
         "requires-fh-in-fit": False,
@@ -494,16 +502,16 @@ class ThetaModularForecaster(BaseForecaster):
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If
             no special parameters are defined for a value, will return
-            `"default"` set.
+            ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test
-            instance, i.e., `MyClass(**params)` or `MyClass(**params[i])`
-            creates a valid test instance. `create_test_instance` uses the first
-            (or only) dictionary in `params`.
+            instance, i.e., ``MyClass(**params)`` or ``MyClass(**params[i])``
+            creates a valid test instance. ``create_test_instance`` uses the first
+            (or only) dictionary in ``params``.
         """
         # imports
         from sktime.forecasting.naive import NaiveForecaster

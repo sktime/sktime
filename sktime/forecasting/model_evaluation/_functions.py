@@ -2,7 +2,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements functions to be used in evaluating forecasting models."""
 
-__author__ = ["aiwalter", "mloning", "fkiraly", "topher-lo"]
+__author__ = ["aiwalter", "mloning", "fkiraly", "topher-lo", "hazrulakmal"]
 __all__ = ["evaluate"]
 
 import time
@@ -318,8 +318,6 @@ def _evaluate_window(x, meta):
         return result
 
 
-# todo 0.25.0: remove compute argument and docstring
-# todo 0.25.0: remove kwargs and docstring
 def evaluate(
     forecaster,
     cv,
@@ -330,10 +328,8 @@ def evaluate(
     return_data: bool = False,
     error_score: Union[str, int, float] = np.nan,
     backend: Optional[str] = None,
-    compute: bool = None,
     cv_X=None,
     backend_params: Optional[dict] = None,
-    **kwargs,
 ):
     r"""Evaluate forecaster using timeseries cross-validation.
 
@@ -371,9 +367,9 @@ def evaluate(
 
     Results returned in this function's return are:
 
-    * results of ``scoring`` calculations, from 4,  in the `i`-th loop
-    * runtimes for fitting and/or predicting, from 2, 3, 7, in the `i`-th loop
-    * cutoff state of ``forecaster``, at 3, in the `i`-th loop
+    * results of ``scoring`` calculations, from 4,  in the ``i``-th loop
+    * runtimes for fitting and/or predicting, from 2, 3, 7, in the ``i``-th loop
+    * cutoff state of ``forecaster``, at 3, in the ``i``-th loop
     * :math:`y_{train, i}`, :math:`y_{test, i}`, ``y_pred`` (optional)
 
     A distributed and-or parallel back-end can be chosen via the ``backend`` parameter.
@@ -409,7 +405,7 @@ def evaluate(
         to "raise", the exception is raised. If a numeric value is given,
         FitFailedWarning is raised.
     backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
-        Runs parallel evaluate if specified and `strategy` is set as "refit".
+        Runs parallel evaluate if specified and ``strategy`` is set as "refit".
 
         - "None": executes loop sequentally, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
@@ -422,9 +418,6 @@ def evaluate(
         "threading" is unlikely to see speed ups due to the GIL and the serialization
         backend (``cloudpickle``) for "dask" and "loky" is generally more robust
         than the standard ``pickle`` library used in "multiprocessing".
-    compute : bool, default=True, deprecated and will be removed in 0.25.0.
-        If backend="dask", whether returned DataFrame is computed.
-        If set to True, returns `pd.DataFrame`, otherwise `dask.dataframe.DataFrame`.
     cv_X : sktime BaseSplitter descendant, optional
         determines split of ``X`` into test and train folds
         default is ``X`` being split to identical ``loc`` indices as ``y``
@@ -454,30 +447,31 @@ def evaluate(
     results : pd.DataFrame or dask.dataframe.DataFrame
         DataFrame that contains several columns with information regarding each
         refit/update and prediction of the forecaster.
-        Row index is splitter index of train/test fold in `cv`.
-        Entries in the i-th row are for the i-th train/test split in `cv`.
+        Row index is splitter index of train/test fold in ``cv``.
+        Entries in the i-th row are for the i-th train/test split in ``cv``.
         Columns are as follows:
 
-        - test_{scoring.name}: (float) Model performance score. If `scoring` is a list,
-        then there is a column withname `test_{scoring.name}` for each scorer.
+        - test_{scoring.name}: (float) Model performance score. If ``scoring`` is a
+        list,
+        then there is a column withname ``test_{scoring.name}`` for each scorer.
 
-        - fit_time: (float) Time in sec for `fit` or `update` on train fold.
-        - pred_time: (float) Time in sec to `predict` from fitted estimator.
+        - fit_time: (float) Time in sec for ``fit`` or ``update`` on train fold.
+        - pred_time: (float) Time in sec to ``predict`` from fitted estimator.
         - len_train_window: (int) Length of train window.
         - cutoff: (int, pd.Timestamp, pd.Period) cutoff = last time index in train fold.
-        - y_train: (pd.Series) only present if see `return_data=True`
-        train fold of the i-th split in `cv`, used to fit/update the forecaster.
+        - y_train: (pd.Series) only present if see ``return_data=True``
+        train fold of the i-th split in ``cv``, used to fit/update the forecaster.
 
-        - y_pred: (pd.Series) present if see `return_data=True`
-        forecasts from fitted forecaster for the i-th test fold indices of `cv`.
+        - y_pred: (pd.Series) present if see ``return_data=True``
+        forecasts from fitted forecaster for the i-th test fold indices of ``cv``.
 
-        - y_test: (pd.Series) present if see `return_data=True`
-        testing fold of the i-th split in `cv`, used to compute the metric.
+        - y_test: (pd.Series) present if see ``return_data=True``
+        testing fold of the i-th split in ``cv``, used to compute the metric.
 
     Examples
     --------
-    The type of evaluation that is done by `evaluate` depends on metrics in
-    param `scoring`. Default is `MeanAbsolutePercentageError`.
+    The type of evaluation that is done by ``evaluate`` depends on metrics in
+    param ``scoring``. Default is ``MeanAbsolutePercentageError``.
 
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.model_evaluation import evaluate
@@ -489,7 +483,8 @@ def evaluate(
     >>> results = evaluate(forecaster=forecaster, y=y, cv=cv)
 
     Optionally, users may select other metrics that can be supplied
-    by `scoring` argument. These can be forecast metrics of any kind as stated `here
+    by ``scoring`` argument. These can be forecast metrics of any kind as stated `here
+
     <https://www.sktime.net/en/stable/api_reference/performance_metrics.html?highlight=metrics>`_
     i.e., point forecast metrics, interval metrics, quantile forecast metrics.
     To evaluate estimators using a specific metric, provide them to the scoring arg.
@@ -498,7 +493,7 @@ def evaluate(
     >>> loss = MeanAbsoluteError()
     >>> results = evaluate(forecaster=forecaster, y=y, cv=cv, scoring=loss)
 
-    Optionally, users can provide a list of metrics to `scoring` argument.
+    Optionally, users can provide a list of metrics to ``scoring`` argument.
 
     >>> from sktime.performance_metrics.forecasting import MeanSquaredError
     >>> results = evaluate(
@@ -508,7 +503,7 @@ def evaluate(
     ...     scoring=[MeanSquaredError(square_root=True), MeanAbsoluteError()],
     ... )
 
-    An example of an interval metric is the `PinballLoss`.
+    An example of an interval metric is the ``PinballLoss``.
     It can be used with all probabilistic forecasters.
 
     >>> from sktime.forecasting.naive import NaiveVariance
@@ -525,40 +520,8 @@ def evaluate(
                 "installed, but dask is not present in the python environment"
             )
 
-    # todo 0.25.0: remove kwargs and this warning
-    if kwargs != {}:
-        warnings.warn(
-            "in evaluate, kwargs will no longer be supported from sktime 0.25.0. "
-            "to pass configuration arguments to the parallelization backend, "
-            "use backend_params instead. "
-            f"The following kwargs were found: {kwargs.keys()}, pass these as "
-            "dict elements to backend_params instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-
-    # todo 0.25.0: remove compute argument and logic, and remove this warning
-    if compute is not None:
-        warnings.warn(
-            "the compute argument of evaluate is deprecated and will be removed "
-            "in sktime 0.25.0. For the same behaviour in the future, "
-            'use backend="dask_lazy"',
-            DeprecationWarning,
-            stacklevel=2,
-        )
-    if compute is None:
-        compute = True
-    if backend == "dask" and not compute:
-        backend = "dask_lazy"
-
     _check_strategy(strategy)
     cv = check_cv(cv, enforce_start_with_window=True)
-    # TODO: remove lines(four lines below) and 599-612 in v0.25.0
-    if isinstance(scoring, list):
-        raise_warn, num = True, len(scoring)
-    else:
-        raise_warn, num = False, 1
-    # removal until here
     scoring = _check_scores(scoring)
 
     ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
@@ -669,21 +632,4 @@ def evaluate(
     # final formatting of results DataFrame
     results = results.reset_index(drop=True)
 
-    # TODO: remove 16 lines below and 451-455 in v0.25.0
-    if raise_warn:
-        warnings.warn(
-            "Starting v0.25.0 model_evaluation.evaluate module will rearrange "
-            "all metric columns to the left of its output result DataFrame. "
-            "Please use loc references when addressing the columns. You can "
-            "safely ignore this warning if you don't use evaluate function directly.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        columns = results.columns.to_list()
-        non_first_metrics = []
-        for _ in range(1, num):
-            metric = columns.pop(1)
-            non_first_metrics.append(metric)
-        results = results.reindex(columns=columns + non_first_metrics)
-    #  removal until here
     return results

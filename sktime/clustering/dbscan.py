@@ -62,6 +62,11 @@ class TimeSeriesDBSCAN(BaseClusterer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "fkiraly",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:unequal_length": True,
         "capability:missing_values": True,
@@ -98,6 +103,15 @@ class TimeSeriesDBSCAN(BaseClusterer):
                 "capability:missing_values",
             ]
             self.clone_tags(distance, tags_to_clone)
+
+        # numba distance in sktime (indexed by string)
+        # cannot support unequal length data, and require numpy3D input
+        if isinstance(distance, str):
+            tags_to_set = {
+                "X_inner_mtype": "numpy3D",
+                "capability:unequal_length": False,
+            }
+            self.set_tags(**tags_to_set)
 
         self.dbscan_ = None
 

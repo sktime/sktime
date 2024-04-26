@@ -14,11 +14,8 @@ from joblib import Parallel, delayed
 from sklearn.ensemble._forest import ForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 
+from sktime.base._panel.forest._tsf import BaseTimeSeriesForest, _transform
 from sktime.classification.base import BaseClassifier
-from sktime.series_as_features.base.estimators.interval_based import (
-    BaseTimeSeriesForest,
-)
-from sktime.series_as_features.base.estimators.interval_based._tsf import _transform
 
 
 class TimeSeriesForestClassifier(
@@ -29,20 +26,30 @@ class TimeSeriesForestClassifier(
     A time series forest is an ensemble of decision trees built on random intervals.
     Overview: Input n series length m.
     For each tree
-        - sample sqrt(m) intervals,
-        - find mean, std and slope for each interval, concatenate to form new
-        data set, if inner series length is set, then intervals are sampled
-        within bins of length inner_series_length.
-        - build decision tree on new data set.
+
+    - sample sqrt(m) intervals,
+    - find mean, std and slope for each interval, concatenate to form new
+    data set, if inner series length is set, then intervals are sampled
+    within bins of length inner_series_length.
+    - build decision tree on new data set.
+
     Ensemble the trees with averaged probability estimates.
 
     This implementation deviates from the original in minor ways. It samples
     intervals with replacement and does not use the splitting criteria tiny
     refinement described in [1].
 
-    This is an intentionally stripped down, non
-    configurable version for use as a hive-cote component. For a configurable
-    tree based ensemble, see sktime.classifiers.ensemble.TimeSeriesForestClassifier
+    This classifier is intentionally written with low configurability,
+    for performance reasons.
+
+    * for a more configurable tree based ensemble,
+      use ``sktime.classification.ensemble.ComposableTimeSeriesForestClassifier``,
+      which also allows switching the base estimator.
+    * to build a a time series forest with configurable ensembling, base estimator,
+      and/or feature extraction, fully from composable blocks,
+      combine ``sktime.classification.ensemble.BaggingClassifier`` with
+      any classifier pipeline, e.g., pipelining any ``sklearn`` classifier
+      with any time series feature extraction, e.g., ``Summarizer``
 
     Parameters
     ----------
@@ -51,7 +58,7 @@ class TimeSeriesForestClassifier(
     min_interval : int, default=3
         Minimum length of an interval.
     n_jobs : int, default=1
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``-1`` means using all processors.
     inner_series_length: int, default=None
         The maximum length of unique segments within X from which we extract
@@ -97,7 +104,16 @@ class TimeSeriesForestClassifier(
     _feature_types = ["mean", "std", "slope"]
     _base_estimator = DecisionTreeClassifier(criterion="entropy")
 
-    _tags = {"capability:predict_proba": True}
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["kkoziara", "luiszugasti", "kanand77"],
+        "maintainers": ["kkoziara", "luiszugasti", "kanand77"],
+        # estimator type
+        # --------------
+        "capability:feature_importance": True,
+        "capability:predict_proba": True,
+    }
 
     def __init__(
         self,
@@ -107,6 +123,9 @@ class TimeSeriesForestClassifier(
         n_jobs=1,
         random_state=None,
     ):
+        self.criterion = "gini"  # needed for BaseForest in sklearn > 1.4.0,
+        # because sklearn tag logic looks at this attribute
+
         super().__init__(
             min_interval=min_interval,
             n_estimators=n_estimators,
@@ -199,7 +218,7 @@ class TimeSeriesForestClassifier(
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -210,8 +229,9 @@ class TimeSeriesForestClassifier(
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         if parameter_set == "results_comparison":
             return {"n_estimators": 10}
@@ -262,13 +282,13 @@ class TimeSeriesForestClassifier(
         """Return the temporal feature importances.
 
         There is an implementation of temporal feature importance in
-        BaseTimeSeriesForest in sktime.series_as_features.base.estimators
+        BaseTimeSeriesForest in sktime.base._panel.forest._composable
         but TimeseriesForestClassifier is inheriting from
-        sktime.series_as_features.base.estimators.interval_base._tsf.py
+        sktime.base._panel.forest._tsf.py
         which does not have feature_importance_.
 
         Other feature importance methods implementation:
-        >>> from sktime.series_as_features.base.estimators import BaseTimeSeriesForest
+        >>> from sktime.base._panel.forest._composable import BaseTimeSeriesForest
 
         Returns
         -------

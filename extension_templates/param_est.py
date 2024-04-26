@@ -35,10 +35,12 @@ from sktime.param_est.base import BaseParamFitter
 
 # todo: add any necessary imports here
 
-# todo: if any imports are sktime soft dependencies:
+# todo: for imports of sktime soft dependencies:
 # make sure to fill in the "python_dependencies" tag with the package import name
+# import soft dependencies only inside methods of the class, not at the top of the file
 
 
+# todo: change class name and write docstring
 class MyTimeSeriesParamFitter(BaseParamFitter):
     """Custom time series parameter fitter. todo: write docstring.
 
@@ -102,6 +104,26 @@ class MyTimeSeriesParamFitter(BaseParamFitter):
         # valid values: boolean True (yes), False (no)
         # if False, raises exception if X passed has more than one variable
         #
+        # ----------------------------------------------------------------------------
+        # packaging info - only required for sktime contribution or 3rd party packages
+        # ----------------------------------------------------------------------------
+        #
+        # ownership and contribution tags
+        # -------------------------------
+        #
+        # author = author(s) of th estimator
+        # an author is anyone with significant contribution to the code at some point
+        "authors": ["author1", "author2"],
+        # valid values: str or list of str, should be GitHub handles
+        # this should follow best scientific contribution practices
+        # scope is the code, not the methodology (method is per paper citation)
+        #
+        # maintainer = current maintainer(s) of the estimator
+        # per algorithm maintainer role, see governance document
+        # this is an "owner" type role, with rights and maintenance duties
+        "maintainers": ["maintainer1", "maintainer2"],
+        # valid values: str or list of str, should be GitHub handles
+        # remove tag if maintained by sktime core team
         #
         # dependency tags: python version and soft dependencies
         # -----------------------------------------------------
@@ -112,8 +134,8 @@ class MyTimeSeriesParamFitter(BaseParamFitter):
         # raises exception at construction if local python version is incompatible
         #
         # soft dependency requirement
-        "python_dependencies": None
-        # valid values: str or list of str
+        "python_dependencies": None,
+        # valid values: str or list of str, PEP 440 valid package version specifiers
         # raises exception at construction if modules at strings cannot be imported
     }
     #  in case of inheritance, concrete class should typically set tags
@@ -129,6 +151,8 @@ class MyTimeSeriesParamFitter(BaseParamFitter):
         self.parama = parama
         self.paramb = paramb
         self.paramc = paramc
+        # IMPORTANT: the self.params should never be overwritten or mutated from now on
+        # for handling defaults etc, write to other attributes, e.g., self._parama
 
         # leave this as is
         super().__init__()

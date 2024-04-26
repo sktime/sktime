@@ -119,16 +119,16 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
 
         if isinstance(multioutput, str):
             if self.score_average and multioutput == "uniform_average":
-                out = float(out.mean(axis=1).iloc[0])  # average over all
+                out = out.mean(axis=1).iloc[0]  # average over all
             if self.score_average and multioutput == "raw_values":
-                out = out.groupby(axis=1, level=0).mean()  # average over scores
+                out = out.T.groupby(level=0).mean().T  # average over scores
             if not self.score_average and multioutput == "uniform_average":
-                out = out.groupby(axis=1, level=1).mean()  # average over variables
+                out = out.T.groupby(level=1).mean().T  # average over variables
             if not self.score_average and multioutput == "raw_values":
                 out = out  # don't average
         else:  # is np.array with weights
             if self.score_average:
-                out_raw = out.groupby(axis=1, level=0).mean()
+                out_raw = out.T.groupby(level=0).mean().T
                 out = out_raw.dot(multioutput)[0]
             else:
                 out = _groupby_dot(out, multioutput)
@@ -215,14 +215,14 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
             if self.score_average and multioutput == "uniform_average":
                 out = out.mean(axis=1)  # average over all
             if self.score_average and multioutput == "raw_values":
-                out = out.groupby(axis=1, level=0).mean()  # average over scores
+                out = out.T.groupby(level=0).mean().T  # average over scores
             if not self.score_average and multioutput == "uniform_average":
-                out = out.groupby(axis=1, level=1).mean()  # average over variables
+                out = out.T.groupby(level=1).mean().T  # average over variables
             if not self.score_average and multioutput == "raw_values":
                 out = out  # don't average
         else:  # numpy array
             if self.score_average:
-                out_raw = out.groupby(axis=1, level=0).mean()
+                out_raw = out.T.groupby(level=0).mean().T
                 out = out_raw.dot(multioutput)
             else:
                 out = _groupby_dot(out, multioutput)
@@ -759,9 +759,9 @@ class LogLoss(_BaseDistrForecastingMetric):
     and a ground truth value :math:`y`, the logarithmic loss is
     defined as :math:`L(y, d) := -\log p_d(y)`.
 
-    `evaluate` computes the average test sample loss.
-    `evaluate_by_index` produces the loss sample by test data point
-    `multivariate` controls averaging over variables.
+    * ``evaluate`` computes the average test sample loss.
+    * ``evaluate_by_index`` produces the loss sample by test data point.
+    * ``multivariate`` controls averaging over variables.
 
     Parameters
     ----------
@@ -814,9 +814,9 @@ class SquaredDistrLoss(_BaseDistrForecastingMetric):
     defined as :math:`L(y, d) := -2 p_d(y) + \|p_d\|^2`,
     where :math:`\|p_d\|^2` is the (function) L2-norm of :math:`p_d`.
 
-    `evaluate` computes the average test sample loss.
-    `evaluate_by_index` produces the loss sample by test data point
-    `multivariate` controls averaging over variables.
+    * ``evaluate`` computes the average test sample loss.
+    * ``evaluate_by_index`` produces the loss sample by test data point.
+    * ``multivariate`` controls averaging over variables.
 
     Parameters
     ----------
@@ -865,11 +865,11 @@ class CRPS(_BaseDistrForecastingMetric):
 
     For a predictive distribution :math:`d` and a ground truth value :math:`y`,
     the CRPS is defined as
-    :math:`L(y, d) := \mathbb{E}_{Y \sim d}|Y-y| - \frac{1}{2} \mathbb{E}_{X,Y \sim d}|X-Y|`.  # noqa: E501
+    :math:`L(y, d) := \mathbb{E}_{Y \sim d}|Y-y| - \frac{1}{2} \mathbb{E}_{X,Y \sim d}|X-Y|`.
 
-    `evaluate` computes the average test sample loss.
-    `evaluate_by_index` produces the loss sample by test data point
-    `multivariate` controls averaging over variables.
+    ``evaluate`` computes the average test sample loss.
+    ``evaluate_by_index`` produces the loss sample by test data point
+    ``multivariate`` controls averaging over variables.
 
     Parameters
     ----------
@@ -884,7 +884,7 @@ class CRPS(_BaseDistrForecastingMetric):
         CRPS is computed for entire row, results one score per row
         if False, is univariate log-loss, per variable
         CRPS is computed per variable marginal, results in many scores per row
-    """
+    """  # noqa: E501
 
     def __init__(self, multioutput="uniform_average", multivariate=False):
         self.multivariate = multivariate

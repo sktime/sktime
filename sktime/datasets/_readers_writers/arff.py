@@ -10,6 +10,7 @@ import textwrap
 import numpy as np
 import pandas as pd
 
+from sktime.datasets._readers_writers.utils import get_path
 from sktime.transformations.base import BaseTransformer
 
 # ==================================================================================================
@@ -17,7 +18,7 @@ from sktime.transformations.base import BaseTransformer
 # ==================================================================================================
 
 
-# TODO: original author didnt add test for this function
+# TODO: original author didn't add test for this function
 # Refactor the nested loops
 def load_from_arff_to_dataframe(
     full_file_path_and_name,
@@ -59,6 +60,9 @@ def load_from_arff_to_dataframe(
     data_started = False
     is_multi_variate = False
     is_first_case = True
+
+    full_file_path_and_name = get_path(full_file_path_and_name, ".arff")
+
     # Parse the file
     # print(full_file_path_and_name)
     with open(full_file_path_and_name, encoding="utf-8") as f:

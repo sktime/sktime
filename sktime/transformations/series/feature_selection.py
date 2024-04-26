@@ -25,13 +25,15 @@ class FeatureSelection(BaseTransformer):
     ----------
     method : str, required
         The method of how to select the features. Implemented methods are:
+
         * "feature-importances": Use feature_importances_ of the regressor (meta-model)
           to select n_columns with highest importance values.
           Requires parameter n_columns.
         * "random": Randomly select n_columns features. Requires parameter n_columns.
         * "columns": Select features by given names.
-        * "none": Remove all columns by setting Z to None.
+        * "none": Remove all columns, transform returns None.
         * "all": Select all given features.
+
     regressor : sklearn-like regressor, optional, default=None.
         Used as meta-model for the method "feature-importances". The given
         regressor must have an attribute "feature_importances_". If None,
@@ -70,6 +72,7 @@ class FeatureSelection(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["aiwalter"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -201,7 +204,7 @@ class FeatureSelection(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -209,7 +212,8 @@ class FeatureSelection(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         return {"method": "all"}

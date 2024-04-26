@@ -44,7 +44,7 @@ class SignatureTransformer(BaseTransformer):
         "post": Rescales the output signature by multiplying the depth-d term by d!.
             Aim is that every term becomes ~O(1).
     sig_tfm: str, one of ``['signature', 'logsignature']``. default: ``'signature'``
-        The type of signature transform to use, plain or logaritmic.
+        The type of signature transform to use, plain or logarithmic.
     depth: int, default=4
         Signature truncation depth.
     backend: str, one of: ``'esig'`` (default), or ``'iisignature'``.
@@ -57,6 +57,14 @@ class SignatureTransformer(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "jambo6",
+        "maintainers": "jambo6",
+        "python_dependencies": "esig",
+        "python_version": "<3.10",
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Primitives",
@@ -65,8 +73,6 @@ class SignatureTransformer(BaseTransformer):
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?#
         "fit_is_empty": False,
-        "python_dependencies": "esig",
-        "python_version": "<3.10",
     }
 
     def __init__(
@@ -149,7 +155,7 @@ class SignatureTransformer(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -157,8 +163,9 @@ class SignatureTransformer(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params = {
             "augmentation_list": ("basepoint", "addtime"),

@@ -134,7 +134,7 @@ class DateTimeFeatures(BaseTransformer):
             1 indicates weekend, 0 indicates it is not a weekend
         * year (special case with no lower frequency).
     keep_original_columns :  boolean, optional, default=False
-        Keep original columns in X passed to `.transform()`.
+        Keep original columns in X passed to ``.transform()``.
 
     Examples
     --------
@@ -142,12 +142,12 @@ class DateTimeFeatures(BaseTransformer):
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
 
-    Returns columns `y`, `year`, `month_of_year`
+    Returns columns ``y``, ``year``, ``month_of_year``
 
     >>> transformer = DateTimeFeatures(ts_freq="M")
     >>> y_hat = transformer.fit_transform(y)
 
-    Returns columns `y`, `month_of_year`
+    Returns columns ``y``, ``month_of_year``
 
     >>> transformer = DateTimeFeatures(ts_freq="M", manual_selection=["month_of_year"])
     >>> y_hat = transformer.fit_transform(y)
@@ -169,6 +169,13 @@ class DateTimeFeatures(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["danbartl", "KishManani", "VyomkeshVyas"],
+        "maintainers": ["VyomkeshVyas"],
+        "python_dependencies": "pandas>=1.2.0",  # from DateTimeProperties
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -187,7 +194,6 @@ class DateTimeFeatures(BaseTransformer):
         "transform-returns-same-time-index": True,
         "enforce_index_type": [pd.DatetimeIndex, pd.PeriodIndex],
         "skip-inverse-transform": True,
-        "python_dependencies": "pandas>=1.2.0",  # from DateTimeProperties
     }
 
     def __init__(
@@ -293,8 +299,9 @@ class DateTimeFeatures(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {"feature_scope": "minimal"}
         params2 = {"feature_scope": "efficient", "keep_original_columns": True}

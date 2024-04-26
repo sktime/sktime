@@ -36,6 +36,8 @@ class BaseClusterer(BaseEstimator):
         "capability:unequal_length": False,
         "capability:missing_values": False,
         "capability:multithreading": False,
+        "authors": "sktime developers",  # author(s) of the object
+        "maintainers": "sktime developers",  # current maintainer(s) of the object
     }
 
     def __init__(self, n_clusters: int = None):
@@ -49,17 +51,18 @@ class BaseClusterer(BaseEstimator):
     def __rmul__(self, other):
         """Magic * method, return concatenated ClustererPipeline, transformers on left.
 
-        Overloaded multiplication operation for clusterers. Implemented for `other`
-        being a transformer, otherwise returns `NotImplemented`.
+        Overloaded multiplication operation for clusterers. Implemented for ``other``
+        being a transformer, otherwise returns ``NotImplemented``.
 
         Parameters
         ----------
-        other: `sktime` transformer, must inherit from BaseTransformer
-            otherwise, `NotImplemented` is returned
+        other: ``sktime`` transformer, must inherit from BaseTransformer
+            otherwise, ``NotImplemented`` is returned
 
         Returns
         -------
-        ClustererPipeline object, concatenation of `other` (first) with `self` (last).
+        ClustererPipeline object, concatenation of ``other`` (first) with ``self``
+        (last).
         """
         from sktime.clustering.compose import ClustererPipeline
         from sktime.transformations.base import BaseTransformer

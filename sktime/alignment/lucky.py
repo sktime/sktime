@@ -30,6 +30,11 @@ class AlignerLuckyDtw(BaseAligner):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["fkiraly", "Krisztian A Buza"],
+        # estimator type
+        # --------------
         "capability:multiple-alignment": False,  # can align more than two sequences?
         "capability:distance": True,  # does compute/return overall distance?
         "capability:distance-matrix": True,  # does compute/return distance matrix?
@@ -145,7 +150,7 @@ class AlignerLuckyDtw(BaseAligner):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for aligners.
 
         Returns
@@ -153,8 +158,9 @@ class AlignerLuckyDtw(BaseAligner):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params0 = {}
         params1 = {"window": 3}

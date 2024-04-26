@@ -11,13 +11,8 @@ from sklearn.utils import check_random_state
 from sktime.networks.rnn import RNNNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.utils.validation._dependencies import _check_dl_dependencies
-from sktime.utils.warnings import warn
 
 
-# todo: 0.26.0 - please remove num_epochs parameter and related logic,
-# because parameter num_epochs usage is deprecated and will be renamed
-# to n_epochs.  Also n_epochs should be moved to become the first
-# argument in the __init__ and super().__init__.
 class SimpleRNNRegressor(BaseDeepRegressor):
     """Simple recurrent neural network.
 
@@ -52,11 +47,28 @@ class SimpleRNNRegressor(BaseDeepRegressor):
     ----------
     ..[1] benchmark forecaster in M4 forecasting competition:
     https://github.com/Mcompetitions/M4-methods
+
+    Examples
+    --------
+    >>> from sktime.regression.deep_learning.rnn import SimpleRNNRegressor
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, Y_train = load_unit_test(split="train")
+    >>> clf = SimpleRNNRegressor(n_epochs=20, batch_size=4) # doctest: +SKIP
+    >>> clf.fit(X_train, Y_train) # doctest: +SKIP
+    SimpleRNNRegressor(...)
     """
+
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["mloning"],
+        "python_dependencies": "tensorflow",
+        # estimator type handled by parent class
+    }
 
     def __init__(
         self,
-        num_epochs=None,
+        n_epochs=100,
         batch_size=1,
         units=6,
         callbacks=None,
@@ -68,26 +80,10 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         activation="linear",
         use_bias=True,
         optimizer=None,
-        n_epochs=100,
     ):
         _check_dl_dependencies(severity="error")
-        super().__init__()
-        # todo: 0.26.0 - remove this, replace by
-        # self._n_epochs = n_epochs
-        # Deprecated Parameter Handling
-        if num_epochs is not None:
-            warn(
-                "In SimpleRNNRegressor, the parameter 'num_epochs' is deprecated "
-                "and will be removed in v0.26.0. It will be renamed to n_epochs. "
-                "To avoid this warning, update your code to use 'n_epochs'. ",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            self._n_epochs = num_epochs
-        else:
-            self._n_epochs = n_epochs
-        self.num_epochs = num_epochs
-        # end remove
+
+        self.n_epochs = n_epochs
         self.batch_size = batch_size
         self.verbose = verbose
         self.units = units
@@ -99,9 +95,11 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         self.activation = activation
         self.use_bias = use_bias
         self.optimizer = optimizer
+
+        super().__init__()
+
         self.history = None
         self._network = RNNNetwork(random_state=random_state, units=units)
-        self.n_epochs = n_epochs
 
     def build_model(self, input_shape, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
@@ -129,7 +127,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         )(output_layer)
 
         self.optimizer_ = (
-            keras.optimizers.RMSprop(lr=0.001)
+            keras.optimizers.RMSprop(learning_rate=0.001)
             if self.optimizer is None
             else self.optimizer
         )
@@ -205,7 +203,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
             X,
             y,
             batch_size=self.batch_size,
-            epochs=self._n_epochs,
+            epochs=self.n_epochs,
             verbose=self.verbose,
             callbacks=self.callbacks_,
         )
@@ -219,7 +217,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             Reserved values for classifiers:
                 "results_comparison" - used for identity testing in some classifiers
                     should contain parameter settings comparable to "TSC bakeoff"
@@ -229,8 +227,9 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
         params2 = {

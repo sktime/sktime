@@ -35,7 +35,7 @@ class MiniRocket(BaseTransformer):
     max_dilations_per_kernel : int, default=32
         maximum number of dilations per kernel.
     n_jobs : int, default=1
-        The number of jobs to run in parallel for `transform`. ``-1`` means using all
+        The number of jobs to run in parallel for ``transform``. ``-1`` means using all
         processors.
     random_state : None or int, default = None
 
@@ -65,6 +65,13 @@ class MiniRocket(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["angus924"],
+        "maintainers": ["angus924"],
+        "python_dependencies": "numba",
+        # estimator tags
+        # --------------
         "univariate-only": True,
         "fit_is_empty": False,
         "scitype:transform-input": "Series",
@@ -74,7 +81,6 @@ class MiniRocket(BaseTransformer):
         "scitype:instancewise": False,  # is this an instance-wise transform?
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
-        "python_dependencies": "numba",
     }
 
     def __init__(

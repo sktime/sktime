@@ -77,6 +77,12 @@ class VECM(_StatsModelsAdapter):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["thayeylolu", "AurumnPegasus"],
+        # "python_dependencies": "statsmodels" - inherited from _StatsModelsAdapter
+        # estimator type
+        # --------------
         "scitype:y": "multivariate",
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",

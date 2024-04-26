@@ -21,6 +21,8 @@ Forecasting users interested in performance evaluation are advised
 to use full backtesting instead of a single split, e.g., via ``evaluate``,
 see :ref:`forecasting API reference <forecasting_ref>`.
 
+.. currentmodule:: sktime.split
+
 .. autosummary::
     :toctree: auto_generated/
     :template: function.rst
@@ -33,6 +35,7 @@ Time index splitters
 
 Time index splitters split one or multiple time series by temporal order.
 They are typically used in both evaluation and tuning of forecasters.
+They have tag ``"split_type"="temporal"``.
 
 .. currentmodule:: sktime.split
 
@@ -54,6 +57,14 @@ Time index splitter composition
 The following splitters are compositions that can be used to create
 more complex time index based splitting strategies.
 
+.. currentmodule:: sktime.split.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Repeat
+
 .. currentmodule:: sktime.split
 
 .. autosummary::
@@ -62,3 +73,20 @@ more complex time index based splitting strategies.
 
     SameLocSplitter
     TestPlusTrainSplitter
+
+
+Instance splitters
+------------------
+
+Instance splitters split panels or hierarchical time series by
+the instance index, i.e., identifiers for entire series.
+Train and test sets contain entire series from the original panel.
+Instance splitters have tag ``"split_type"="instance"``.
+
+.. currentmodule:: sktime.split
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    InstanceSplitter

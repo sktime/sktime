@@ -90,6 +90,7 @@ class MultiplexTransformer(_HeterogenousMetaEstimator, _DelegatedTransformer):
 
     # tags will largely be copied from selected_transformer
     _tags = {
+        "authors": ["miraep8", "fkiraly"],
         "fit_is_empty": False,
         "univariate-only": False,
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
@@ -171,7 +172,7 @@ class MultiplexTransformer(_HeterogenousMetaEstimator, _DelegatedTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
@@ -199,17 +200,18 @@ class MultiplexTransformer(_HeterogenousMetaEstimator, _DelegatedTransformer):
     def __or__(self, other):
         """Magic | (or) method, return (right) concatenated MultiplexTransformer.
 
-        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+        Implemented for ``other`` being a transformer, otherwise returns
+        ``NotImplemented``.
 
         Parameters
         ----------
-        other: `sktime` transformer, must inherit from BaseTransformer
-            otherwise, `NotImplemented` is returned
+        other: ``sktime`` transformer, must inherit from BaseTransformer
+            otherwise, ``NotImplemented`` is returned
 
         Returns
         -------
-        MultiplexTransformer object, concatenation of `self` (first) with `other`
-            (last).not nested, contains only non-MultiplexTransformer `sktime`
+        MultiplexTransformer object, concatenation of ``self`` (first) with ``other``
+            (last).not nested, contains only non-MultiplexTransformer ``sktime``
             transformers
 
         Raises
@@ -228,17 +230,18 @@ class MultiplexTransformer(_HeterogenousMetaEstimator, _DelegatedTransformer):
     def __ror__(self, other):
         """Magic | (or) method, return (left) concatenated MultiplexTransformer.
 
-        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+        Implemented for ``other`` being a transformer, otherwise returns
+        ``NotImplemented``.
 
         Parameters
         ----------
-        other: `sktime` transformer, must inherit from BaseTransformer
-            otherwise, `NotImplemented` is returned
+        other: ``sktime`` transformer, must inherit from BaseTransformer
+            otherwise, ``NotImplemented`` is returned
 
         Returns
         -------
-        MultiplexTransformer object, concatenation of `self` (last) with `other`
-            (first). not nested, contains only non-MultiplexTransformer `sktime`
+        MultiplexTransformer object, concatenation of ``self`` (last) with ``other``
+            (first). not nested, contains only non-MultiplexTransformer ``sktime``
             transformers
         """
         other = _coerce_to_sktime(other)

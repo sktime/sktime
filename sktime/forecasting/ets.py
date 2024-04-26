@@ -2,7 +2,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements automatic and manually exponential time series smoothing models."""
 
-
 __author__ = ["hyang1996"]
 __all__ = ["AutoETS"]
 
@@ -19,12 +18,13 @@ from sktime.forecasting.base.adapters import _StatsModelsAdapter
 class AutoETS(_StatsModelsAdapter):
     """ETS models with both manual and automatic fitting capabilities.
 
-    Manual (fixed parameter) use (`auto=False`, default) is a direct interface
-    to `statsmodels` `ETSModel` [2]_,
-    while automated tuning (`auto=True`) is an adaptation of the R version of ets [3]_,
-    on top of `statsmodels` `ETSModel`.
+    Manual (fixed parameter) use (``auto=False``, default) is a direct interface
+    to ``statsmodels`` ``ETSModel`` [2]_,
+    while automated tuning (``auto=True``) is an adaptation of the R version of ets
+    [3]_,
+    on top of ``statsmodels`` ``ETSModel``.
 
-    The first parameters are direct interfaces to the `statsmodels` parameters
+    The first parameters are direct interfaces to the ``statsmodels`` parameters
     (from ``error`` to ``return_params``) [2]_.
 
     The remaining parameters are adaptations of the parameters of R ets
@@ -46,7 +46,7 @@ class AutoETS(_StatsModelsAdapter):
         The number of periods in a complete seasonal cycle for seasonal
         (Holt-Winters) models. For example, 4 for quarterly data with an
         annual cycle or 7 for daily data with a weekly cycle. Required if
-        `seasonal` is not None.
+        ``seasonal`` is not None.
     initialization_method : str, default='estimated'
         Method for initialization of the state space model. One of:
 
@@ -54,8 +54,8 @@ class AutoETS(_StatsModelsAdapter):
         * 'heuristic'
         * 'known'
 
-        If 'known' initialization is used, then `initial_level` must be
-        passed, as well as `initial_trend` and `initial_seasonal` if
+        If 'known' initialization is used, then ``initial_level`` must be
+        passed, as well as ``initial_trend`` and ``initial_seasonal`` if
         applicable.
         'heuristic' uses a heuristic based on the data to estimate initial
         level, trend, and seasonal state. 'estimated' uses the same heuristic
@@ -66,7 +66,7 @@ class AutoETS(_StatsModelsAdapter):
     initial_trend : float or None, default=None
         The initial trend component. Only used if initialization is 'known'.
     initial_seasonal : array_like or None, default=None
-        The initial seasonal component. An array of length `seasonal_periods`.
+        The initial seasonal component. An array of length ``seasonal_periods``.
         Only used if initialization is 'known'.
     bounds : dict or None, default=None
         A dictionary with parameter names as keys and the respective bounds
@@ -91,18 +91,18 @@ class AutoETS(_StatsModelsAdapter):
         the parameters in the following order, skipping parameters that do
         not exist in the chosen model.
 
-        * `smoothing_level` (alpha)
-        * `smoothing_trend` (beta)
-        * `smoothing_seasonal` (gamma)
-        * `damping_trend` (phi)
+        * ``smoothing_level`` (alpha)
+        * ``smoothing_trend`` (beta)
+        * ``smoothing_seasonal`` (gamma)
+        * ``damping_trend`` (phi)
 
         If ``initialization_method`` was set to ``'estimated'`` (the
         default), additionally, the parameters
 
-        * `initial_level` (:math:`l_{-1}`)
-        * `initial_trend` (:math:`l_{-1}`)
-        * `initial_seasonal.0` (:math:`s_{-1}`)
-        * `initial_seasonal.<m-1>` (:math:`s_{-m}`)
+        * ``initial_level`` (:math:`l_{-1}`)
+        * ``initial_trend`` (:math:`l_{-1}`)
+        * ``initial_seasonal.0`` (:math:`s_{-1}`)
+        * ``initial_seasonal.<m-1>`` (:math:`s_{-m}`)
 
         also have to be specified.
     maxiter : int, default=1000
@@ -154,6 +154,7 @@ class AutoETS(_StatsModelsAdapter):
        principles and practice*, 3rd edition, OTexts: Melbourne,
        Australia. OTexts.com/fpp3. Accessed on April 19th 2020.
     .. [2] Statsmodels ETS:
+
         https://www.statsmodels.org/stable/_modules/statsmodels/tsa/exponential_smoothing/ets.html#ETSModel
     .. [3] R Version of ETS:
         https://www.rdocumentation.org/packages/forecast/versions/8.12/topics/ets
@@ -175,6 +176,13 @@ class AutoETS(_StatsModelsAdapter):
 
     _fitted_param_names = ("aic", "aicc", "bic", "hqic")
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["hyang1996"],
+        "maintainers": ["hyang1996"],
+        # "python_dependencies": "statmodels" - inherited from _StatsModelsAdapter
+        # estimator type
+        # --------------
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
@@ -438,7 +446,7 @@ class AutoETS(_StatsModelsAdapter):
 
     @staticmethod
     def _extract_conf_int(prediction_results, alpha) -> pd.DataFrame:
-        """Construct confidence interval at specified `alpha` for each timestep.
+        """Construct confidence interval at specified ``alpha`` for each timestep.
 
         Parameters
         ----------
@@ -478,7 +486,7 @@ class AutoETS(_StatsModelsAdapter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns

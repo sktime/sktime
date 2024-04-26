@@ -9,7 +9,7 @@ from sktime.clustering.base import BaseClusterer
 
 
 class TimeSeriesKShapes(_TslearnAdapter, BaseClusterer):
-    """Kshape clustering for time series.
+    """K-shape clustering for time series, from tslearn.
 
     Direct interface to ``tslearn.clustering.KShape``.
 
@@ -50,9 +50,14 @@ class TimeSeriesKShapes(_TslearnAdapter, BaseClusterer):
     """
 
     _tags = {
-        "capability:multivariate": True,
-        "capability:unequal_length": True,
+        # packaging info
+        # --------------
+        "authors": ["rtavenar", "fkiraly"],  # rtavenar credit for interfaced code
         "python_dependencies": "tslearn",
+        # estimator type
+        # --------------
+        "capability:multivariate": True,
+        "capability:unequal_length": False,
     }
 
     # defines the name of the attribute containing the tslearn estimator
@@ -110,7 +115,7 @@ class TimeSeriesKShapes(_TslearnAdapter, BaseClusterer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -118,8 +123,9 @@ class TimeSeriesKShapes(_TslearnAdapter, BaseClusterer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {
             "n_clusters": 3,

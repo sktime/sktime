@@ -8,14 +8,22 @@ import pandas
 
 from sktime.forecasting.base import BaseForecaster
 
-__all__ = ["_GeneralisedStatsForecastAdapter"]
-__author__ = ["yarnabrina"]
+__all__ = ["_GeneralisedStatsForecastAdapter", "StatsForecastBackAdapter"]
+__author__ = ["yarnabrina", "arnaujc91", "luca-miniati"]
 
 
 class _GeneralisedStatsForecastAdapter(BaseForecaster):
     """Base adapter class for StatsForecast models."""
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["yarnabrina", "arnaujc91"],
+        "maintainers": ["yarnabrina"],
+        "python_version": ">=3.8",
+        "python_dependencies": ["statsforecast"],
+        # estimator type
+        # --------------
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "scitype:y": "univariate",
@@ -23,8 +31,6 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         # "X-y-must-have-same-index": True,  # TODO: need to check (how?)
         # "enforce_index_type": None,  # TODO: need to check (how?)
         "handles-missing-data": False,
-        "python_version": ">=3.8",
-        "python_dependencies": ["statsforecast"],
     }
 
     def __init__(self):
@@ -450,6 +456,7 @@ class StatsForecastBackAdapter:
         self.prediction_intervals = None
 
     def __repr__(self):
+        """Representation dunder."""
         return "StatsForecastBackAdapter"
 
     def new(self):
@@ -539,6 +546,7 @@ class StatsForecastBackAdapter:
         return self.format_pred_int("fitted", fitted, pred_int, coverage, level)
 
     def format_pred_int(self, y_pred_name, y_pred, pred_int, coverage, level):
+        """Convert prediction intervals into a StatsForecast-format dictionary."""
         pred_int_prefix = "fitted-" if y_pred_name == "fitted" else ""
 
         pred_int_no_lev = pred_int.droplevel(0, axis=1)

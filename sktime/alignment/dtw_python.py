@@ -25,7 +25,7 @@ class AlignerDTW(BaseAligner):
     ----------
     dist_method : str, optional, default = "euclidean"
         distance function to use, a distance on real n-space
-        one of the functions in `scipy.spatial.distance.cdist`
+        one of the functions in ``scipy.spatial.distance.cdist``
     step_pattern : str, optional, or dtw_python stepPattern object, optional
         step pattern to use in time warping
         one of: 'symmetric1', 'symmetric2' (default), 'asymmetric',
@@ -47,12 +47,17 @@ class AlignerDTW(BaseAligner):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["fkiraly"],
+        "python_dependencies": "dtw-python",
+        "python_dependencies_alias": {"dtw-python": "dtw"},
+        # estimator type
+        # --------------
         "capability:multiple-alignment": False,  # can align more than two sequences?
         "capability:distance": True,  # does compute/return overall distance?
         "capability:distance-matrix": True,  # does compute/return distance matrix?
         "alignment_type": "partial",
-        "python_dependencies": "dtw-python",
-        "python_dependencies_alias": {"dtw-python": "dtw"},
     }
 
     def __init__(

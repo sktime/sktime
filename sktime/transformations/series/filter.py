@@ -35,6 +35,12 @@ class Filter(BaseTransformer):
 
     # default tag values for "Series-to-Series"
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["sveameyer13"],
+        "python_dependencies": "mne",
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -43,7 +49,6 @@ class Filter(BaseTransformer):
         "X_inner_mtype": ["np.ndarray", "numpy3D"],
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
-        "python_dependencies": "mne",
     }
 
     def __init__(
@@ -119,14 +124,15 @@ class Filter(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         return {"sfreq": 3}

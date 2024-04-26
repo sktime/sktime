@@ -48,7 +48,7 @@ def all_estimators(
     return_tags=None,
     suppress_import_stdout=True,
 ):
-    """Get a list of all estimators from sktime.
+    """List all estimators or objects in sktime, by scitype or tag.
 
     This function crawls the module and gets all classes that inherit
     from sktime's and sklearn's base classes.
@@ -62,35 +62,46 @@ def all_estimators(
         Which kind of estimators should be returned.
         if None, no filter is applied and all estimators are returned.
         if str or list of str, strings define scitypes specified in search
-                only estimators that are of (at least) one of the scitypes are returned
-            possible str values are entries of registry.BASE_CLASS_REGISTER (first col)
-                for instance 'classifier', 'regressor', 'transformer', 'forecaster'
+        only estimators that are of (at least) one of the scitypes are returned
+        possible str values are entries of registry.BASE_CLASS_REGISTER (first col)
+        for instance 'classifier', 'regressor', 'transformer', 'forecaster'
+
     return_names: bool, optional (default=True)
-        if True, estimator class name is included in the all_estimators()
-            return in the order: name, estimator class, optional tags, either as
-            a tuple or as pandas.DataFrame columns
-        if False, estimator class name is removed from the all_estimators()
-            return.
+
+        if True, estimator class name is included in the ``all_estimators``
+        return in the order: name, estimator class, optional tags, either as
+        a tuple or as pandas.DataFrame columns
+
+        if False, estimator class name is removed from the ``all_estimators`` return.
+
     filter_tags: dict of (str or list of str), optional (default=None)
         For a list of valid tag strings, use the registry.all_tags utility.
-        subsets the returned estimators as follows:
-            each key/value pair is statement in "and"/conjunction
-                key is tag name to sub-set on
-                value str or list of string are tag values
-                condition is "key must be equal to value, or in set(value)"
+
+        ``filter_tags`` subsets the returned estimators as follows:
+
+        * each key/value pair is statement in "and"/conjunction
+        * key is tag name to sub-set on
+        * value str or list of string are tag values
+        * condition is "key must be equal to value, or in set(value)"
+
     exclude_estimators: str, list of str, optional (default=None)
         Names of estimators to exclude.
+
     as_dataframe: bool, optional (default=False)
-        if True, all_estimators will return a pandas.DataFrame with named
-            columns for all of the attributes being returned.
-        if False, all_estimators will return a list (either a list of
-            estimators or a list of tuples, see Returns)
+
+        True: ``all_estimators`` will return a pandas.DataFrame with named
+        columns for all of the attributes being returned.
+
+        False: ``all_estimators`` will return a list (either a list of
+        estimators or a list of tuples, see Returns)
+
     return_tags: str or list of str, optional (default=None)
         Names of tags to fetch and return each estimator's value of.
         For a list of valid tag strings, use the registry.all_tags utility.
         if str or list of str,
-            the tag values named in return_tags will be fetched for each
-            estimator and will be appended as either columns or tuple entries.
+        the tag values named in return_tags will be fetched for each
+        estimator and will be appended as either columns or tuple entries.
+
     suppress_import_stdout : bool, optional. Default=True
         whether to suppress stdout printout upon import.
 
@@ -99,7 +110,7 @@ def all_estimators(
     all_estimators will return one of the following:
         1. list of estimators, if return_names=False, and return_tags is None
         2. list of tuples (optional estimator name, class, ~optional estimator
-                tags), if return_names=True or return_tags is not None.
+          tags), if return_names=True or return_tags is not None.
         3. pandas.DataFrame if as_dataframe = True
         if list of estimators:
             entries are estimators matching the query,
@@ -109,10 +120,10 @@ def all_estimators(
             tags) matching the query, in alphabetical order of estimator name,
             where
             ``name`` is the estimator name as string, and is an
-                optional return
+            optional return
             ``estimator`` is the actual estimator
             ``tags`` are the estimator's values for each tag in return_tags
-                and is an optional return.
+            and is an optional return.
         if dataframe:
             all_estimators will return a pandas.DataFrame.
             column names represent the attributes contained in each column.
@@ -133,7 +144,7 @@ def all_estimators(
 
     References
     ----------
-    Modified version from scikit-learn's `all_estimators()`.
+    Modified version from scikit-learn's ``all_estimators()``.
     """
     MODULES_TO_IGNORE = (
         "tests",
@@ -145,9 +156,9 @@ def all_estimators(
         "plotting",
         "_split",
         "test_split",
+        "registry",
     )
 
-    result = []
     ROOT = str(Path(__file__).parent.parent)  # sktime package root directory
 
     if estimator_types:
@@ -264,37 +275,46 @@ def all_tags(
     estimator_types=None,
     as_dataframe=False,
 ):
-    """Get a list of all tags from sktime.
+    """List all tags in sktime, for objects of a certain type.
 
-    Retrieves tags directly from `_tags`, offers filtering functionality.
+    All objects in ``sktime`` are tagged with a set of :term``tag``s.
+    This function allows to list all tags, optionally filtered by
+    the object :term:`scitype` they apply to.
 
     Parameters
     ----------
     estimator_types: string, list of string, optional (default=None)
-        Which kind of estimators should be returned.
-        - If None, no filter is applied and all estimators are returned.
-        - Possible values are 'classifier', 'regressor', 'transformer' and
-        'forecaster' to get estimators only of these specific types, or a list of
-        these to get the estimators that fit at least one of the types.
+        The object type (:term:`scitype`) for which applicable tags should be listed.
+
+        - If None, no filter is applied and tags for all estimators are returned.
+        - Possible values are identifier strings for object scitypes, such as
+          ``"forecaster"``, ``"classifier", ``"transformer"``, or lists thereof.
+          If list, finds tags applicable to at least one of the listed types.
+          Valid scitype strings are in ``sktime.registry.BASE_CLASS_SCITYPE_LIST``.
+
+
     as_dataframe: bool, optional (default=False)
-                if False, return is as described below;
-                if True, return is converted into a pandas.DataFrame for pretty
-                display
+        if False, return is as described below;
+        if True, return is converted into a pandas.DataFrame for pretty display
 
     Returns
     -------
     tags: list of tuples (a, b, c, d),
         in alphabetical order by a
+
         a : string - name of the tag as used in the _tags dictionary
-        b : string - name of the scitype this tag applies to
-                    must be in _base_classes.BASE_CLASS_SCITYPE_LIST
-        c : string - expected type of the tag value
-            should be one of:
-                "bool" - valid values are True/False
-                "int" - valid values are all integers
-                "str" - valid values are all strings
-                ("str", list_of_string) - any string in list_of_string is valid
-                ("list", list_of_string) - any individual string and sub-list is valid
+
+        b : string - name of the scitype this tag applies to,
+        as in .BASE_CLASS_SCITYPE.LIST
+
+        c : string - expected type of the tag value, one of:
+
+            * ``"bool"`` - valid values are True/False
+            * ``"int"`` - valid values are all integers
+            * ``"str"`` - valid values are all strings
+            * ``("str", "list_of_string")`` - any string in ``list_of_string`` is valid
+            * ``("list", "list_of_string")`` - any string element or sub-list is valid
+
         d : string - plain English description of the tag
     """
 
@@ -304,6 +324,10 @@ def all_tags(
 
         if isinstance(estimator_types, str):
             estimator_types = [estimator_types]
+
+        # also retrieve all tags for topmost base classes
+        # "estimator" has also been used for object tags, so is always included
+        estimator_types += ["estimator", "object"]
 
         tag_types = set(tag_types)
         estimator_types = set(estimator_types)

@@ -45,12 +45,16 @@ class FourierFeatures(BaseTransformer):
     ----------
     sp_list : List[float and/or str]
         List of seasonal periods. Can be defined with the following options:
-        * float : Periodicity defined as number of timesteps since the beginning of the
-        data seen in `fit`.
-        * string : Periodicity defined as a column name in X that contains the
-        :math:`t/sp` values
-        * string : Periodicity defined as a pandas period alias:
-        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#period-aliases
+
+        * | float : Periodicity defined as number of timesteps since the beginning of
+            the data seen in ``fit``.
+
+        * | string : Periodicity defined as a column name in X that contains the
+            :math:`t/sp` values.
+
+        * | string : Periodicity defined as a pandas period alias:
+            https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#period-aliases
+
     fourier_terms_list : List[int]
         List of number of fourier terms (:math:`K`) per corresponding (:math:`sp`); each
         :math:`K` matches to one :math:`sp` of the sp_list. For example, if sp_list =
@@ -61,9 +65,10 @@ class FourierFeatures(BaseTransformer):
         Only used when X has a pd.DatetimeIndex without a specified frequency.
         Specifies the frequency of the index of your data. The string should
         match a pandas offset alias:
+
         https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
     keep_original_columns : boolean, optional, default=False
-        Keep original columns in X passed to `.transform()`
+        Keep original columns in X passed to ``.transform()``
 
     References
     ----------
@@ -84,6 +89,11 @@ class FourierFeatures(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["ltsaprounis", "blazingbhavneek"],
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -116,7 +126,6 @@ class FourierFeatures(BaseTransformer):
         # todo: rename to capability:missing_values
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
-        "python_version": None,  # PEP 440 python version specifier to limit versions
     }
 
     def __init__(
@@ -320,7 +329,7 @@ class FourierFeatures(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -328,8 +337,9 @@ class FourierFeatures(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params = [
             {"sp_list": [12], "fourier_terms_list": [4]},

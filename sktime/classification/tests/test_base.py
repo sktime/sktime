@@ -120,8 +120,6 @@ class _DummyConvertPandas(BaseClassifier):
 multivariate_message = r"multivariate series"
 missing_message = r"missing values"
 unequal_message = r"unequal length series"
-incorrect_X_data_structure = r"must be a np.array or a pd.Series"
-incorrect_y_data_structure = r"must be 1-dimensional"
 
 
 def test_base_classifier_fit():
@@ -144,7 +142,10 @@ def test_base_classifier_fit():
     test_X3 = _create_example_dataframe(cases=cases, dimensions=1, length=length)
     test_X4 = _create_example_dataframe(cases=cases, dimensions=3, length=length)
     test_y1 = np.random.randint(0, 2, size=(cases))
+    test_y2 = pd.DataFrame({"0": [1] * cases, "1": [0] * cases})
     result = dummy.fit(test_X1, test_y1)
+    assert result is dummy
+    result = dummy.fit(test_X3, test_y2)
     assert result is dummy
     with pytest.raises(ValueError, match=multivariate_message):
         result = dummy.fit(test_X2, test_y1)
@@ -154,15 +155,6 @@ def test_base_classifier_fit():
     with pytest.raises(ValueError, match=multivariate_message):
         result = dummy.fit(test_X4, test_y1)
     assert result is dummy
-    # Raise a specific error if y is in a 2D matrix (1,cases)
-    test_y2 = np.array([test_y1])
-    # What if y is in a 2D matrix (cases,1)?
-    test_y2 = np.array([test_y1]).transpose()
-    with pytest.raises(ValueError, match=incorrect_y_data_structure):
-        result = dummy.fit(test_X1, test_y2)
-    # Pass a data fram
-    with pytest.raises(ValueError, match=incorrect_X_data_structure):
-        result = dummy.fit(test_X1, test_X3)
 
 
 TF = [True, False]
@@ -178,36 +170,41 @@ def test_check_capabilities(missing, multivariate, unequal):
     handle it and that cannot. Obvs could loop, but I think its clearer to just
     explicitly test;
     """
+    X_metadata = {
+        "has_nans": missing,
+        "is_univariate": not multivariate,
+        "is_equal_length": not unequal,
+    }
     handles_none = _DummyClassifier()
     handles_none_composite = _DummyComposite(_DummyClassifier())
 
     # checks that errors are raised
     if missing:
         with pytest.raises(ValueError, match=missing_message):
-            handles_none._check_capabilities(missing, multivariate, unequal)
+            handles_none._check_capabilities(X_metadata)
     if multivariate:
         with pytest.raises(ValueError, match=multivariate_message):
-            handles_none._check_capabilities(missing, multivariate, unequal)
+            handles_none._check_capabilities(X_metadata)
     if unequal:
         with pytest.raises(ValueError, match=unequal_message):
-            handles_none._check_capabilities(missing, multivariate, unequal)
+            handles_none._check_capabilities(X_metadata)
     if not missing and not multivariate and not unequal:
-        handles_none._check_capabilities(missing, multivariate, unequal)
+        handles_none._check_capabilities(X_metadata)
 
     if missing:
         with pytest.warns(UserWarning, match=missing_message):
-            handles_none_composite._check_capabilities(missing, multivariate, unequal)
+            handles_none_composite._check_capabilities(X_metadata)
     if multivariate:
         with pytest.warns(UserWarning, match=multivariate_message):
-            handles_none_composite._check_capabilities(missing, multivariate, unequal)
+            handles_none_composite._check_capabilities(X_metadata)
     if unequal:
         with pytest.warns(UserWarning, match=unequal_message):
-            handles_none_composite._check_capabilities(missing, multivariate, unequal)
+            handles_none_composite._check_capabilities(X_metadata)
     if not missing and not multivariate and not unequal:
-        handles_none_composite._check_capabilities(missing, multivariate, unequal)
+        handles_none_composite._check_capabilities(X_metadata)
 
     handles_all = _DummyHandlesAllInput()
-    handles_all._check_capabilities(missing, multivariate, unequal)
+    handles_all._check_capabilities(X_metadata)
 
 
 def test_convert_input():
@@ -228,26 +225,26 @@ def test_convert_input():
     test_X1 = np.random.uniform(-1, 1, size=(cases, length))
     test_X2 = np.random.uniform(-1, 1, size=(cases, 2, length))
     tester = _DummyClassifier()
-    tempX = tester._convert_X(test_X2)
+    tempX = tester._convert_X(test_X2, "numpy3D")
     assert tempX.shape[0] == cases and tempX.shape[1] == 2 and tempX.shape[2] == length
     instance_list = []
     for _ in range(0, cases):
         instance_list.append(pd.Series(np.random.randn(10)))
     test_X3 = _create_example_dataframe(cases=cases, dimensions=1, length=length)
     test_X4 = _create_example_dataframe(cases=cases, dimensions=3, length=length)
-    tempX = tester._convert_X(test_X3)
+    tempX = tester._convert_X(test_X3, "nested_univ")
     assert tempX.shape[0] == cases and tempX.shape[1] == 1 and tempX.shape[2] == length
-    tempX = tester._convert_X(test_X4)
+    tempX = tester._convert_X(test_X4, "nested_univ")
     assert tempX.shape[0] == cases and tempX.shape[1] == 3 and tempX.shape[2] == length
     tester = _DummyConvertPandas()
-    tempX = tester._convert_X(test_X2)
+    tempX = tester._convert_X(test_X2, "numpy3D")
     assert isinstance(tempX, pd.DataFrame)
     assert tempX.shape[0] == cases
     assert tempX.shape[1] == 2
     test_y1 = np.random.randint(0, 1, size=(cases))
     test_y1 = pd.Series(test_y1)
     tempX, tempY = _internal_convert(test_X1, test_y1)
-    assert isinstance(tempY, np.ndarray)
+    assert isinstance(tempY, pd.Series)
     assert isinstance(tempX, np.ndarray)
     assert tempX.ndim == 3
 
@@ -261,9 +258,10 @@ def test__check_classifier_input():
     4. Test incorrect: y as a list
     5. Test incorrect: too few cases or too short a series
     """
+    clf = _DummyClassifier()
 
     def _check_classifier_input(X, y=None, enforce_min_instances=1):
-        return BaseClassifier._check_classifier_input(None, X, y, enforce_min_instances)
+        return clf._check_input(X, y, enforce_min_instances)
 
     # 1. Test correct: X: np.array of 2 and 3 dimensions vs y:np.array and np.Series
     test_X1 = np.random.uniform(-1, 1, size=(5, 10))
@@ -377,10 +375,16 @@ def test_fit_predict_change_state(method):
         assert y_pred.shape[1] == n_cl
 
 
+@pytest.mark.parametrize("y_multivariate", [True, False])
 @pytest.mark.parametrize("method", ["fit_predict", "fit_predict_proba"])
-def test_fit_predict_cv(method):
+def test_fit_predict_cv(method, y_multivariate):
     """Test cv argument in fit_predict, fit_predict_proba."""
     X, y = make_classification_problem()
+    n_cl = len(y.unique())
+
+    if y_multivariate:
+        y = pd.concat([y, y], axis=1)
+        y = pd.DataFrame(y)
 
     clf = KNeighborsTimeSeriesClassifier()
     clf.random_state = 42
@@ -394,9 +398,10 @@ def test_fit_predict_cv(method):
     assert -1 not in y_pred_cv_int
 
     assert len(y) == len(y_pred_cv_int)
-    if method == "fit_predict_proba":
-        n_cl = len(y.unique())
-        assert y_pred_cv_int.shape[1] == n_cl
+
+    n_var = y.shape[1] if y_multivariate else 1
+    if method == "fit_predict_proba" and not y_multivariate:
+        assert y_pred_cv_int.shape[1] == n_cl * n_var
 
     # check that state is same as self.fit(X, y) if change_state=True
     y_pred_cv_obj_fit = getattr(clf, method)(X, y, cv=cv, change_state=True)
@@ -495,9 +500,7 @@ def test_deep_estimator_full(optimizer):
         assert serialize(full_dummy.optimizer) == serialize(deserialized_full.optimizer)
 
         # assert weights of optimizers are same
-        assert (
-            full_dummy.optimizer.variables() == deserialized_full.optimizer.variables()
-        )
+        assert full_dummy.optimizer.variables == deserialized_full.optimizer.variables
 
         # remove optimizers from both to do full dict check,
         # since two different objects

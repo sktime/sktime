@@ -104,6 +104,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     """
 
     _tags = {
+        "authors": ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"],
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
@@ -225,7 +226,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -270,9 +271,9 @@ def _get_weights(regressor):
 class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     """Ensemble of forecasters.
 
-    Overview: Input one series of length `n` and EnsembleForecaster performs
-    fitting and prediction for each estimator passed in `forecasters`. It then
-    applies `aggfunc` aggregation function by row to the predictions dataframe
+    Overview: Input one series of length ``n`` and EnsembleForecaster performs
+    fitting and prediction for each estimator passed in ``forecasters``. It then
+    applies ``aggfunc`` aggregation function by row to the predictions dataframe
     and returns final prediction - one series.
 
     Parameters
@@ -310,6 +311,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     """
 
     _tags = {
+        "authors": ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"],
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
@@ -364,8 +366,14 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         """
         names, _ = self._check_forecasters()
         y_pred = pd.concat(self._predict_forecasters(fh, X), axis=1, keys=names)
-        y_pred = y_pred.groupby(level=1, axis=1).agg(
-            _aggregate, self.aggfunc, self.weights
+        y_pred = (
+            y_pred.T.groupby(level=1)
+            .agg(
+                lambda y, aggfunc, weights: _aggregate(y.T, aggfunc, weights),
+                self.aggfunc,
+                self.weights,
+            )
+            .T
         )
         return y_pred
 
@@ -377,7 +385,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
