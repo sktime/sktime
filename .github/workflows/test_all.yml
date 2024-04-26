@@ -32,7 +32,7 @@ jobs:
           - "3.11"
           - "3.12"
         operating-system:
-          - macos-latest
+          - macos-13
           - ubuntu-latest
           - windows-latest
     runs-on: ${{ matrix.operating-system }}
@@ -64,7 +64,7 @@ jobs:
           - "3.11"
           - "3.12"
         operating-system:
-          - macos-latest
+          - macos-13
           - ubuntu-latest
           - windows-latest
         sktime-component:
@@ -107,7 +107,7 @@ jobs:
           - "3.11"
           - "3.12"
         operating-system:
-          - macos-latest
+          - macos-13
           - ubuntu-latest
           - windows-latest
     runs-on: ${{ matrix.operating-system }}

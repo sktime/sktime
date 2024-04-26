@@ -77,10 +77,10 @@ dependencies = [
 # or "pip install sktime[all_extras_pandas2]", to install only pandas 2 compatible deps
 #
 all_extras = [
-  "arch>=5.6,<6.4.0",
+  "arch>=5.6,<7.1.0",
   "cloudpickle",
   "dash!=2.9.0",
-  "dask<2024.2.2",
+  "dask<2024.4.2; extra == 'dataframe'",
   "dtw-python",
   'esig==0.9.7; python_version < "3.10"',
   'filterpy>=1.4.5; python_version < "3.11"',
@@ -118,10 +118,10 @@ all_extras = [
 
 # all soft dependencies compatible with pandas 2
 all_extras_pandas2 = [
-  "arch>=5.6,<6.4.0",
+  "arch>=5.6,<7.1.0",
   "cloudpickle",
   "dash!=2.9.0",
-  "dask<2024.2.2",
+  "dask<2024.4.2; extra == 'dataframe'",
   "dtw-python",
   'esig==0.9.7; python_version < "3.10"',
   'filterpy>=1.4.5; python_version < "3.11"',
@@ -184,7 +184,7 @@ clustering = [
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.12"',
 ]
 forecasting = [
-  "arch>=5.6,<6.4",
+  "arch>=5.6,<7.1",
   'pmdarima!=1.8.1,<2.1,>=1.8; python_version < "3.12"',
   "prophet<1.2,>=1.1",
   "skpro<2.3.0,>=2",
@@ -207,8 +207,8 @@ regression = [
 transformations = [
   'esig<0.10,>=0.9.7; python_version < "3.11"',
   "filterpy<1.5,>=1.4.5",
-  "holidays>=0.29,<0.47",
-  "mne>=1.5,<1.7",
+  "holidays>=0.29,<0.48",
+  "mne>=1.5,<1.8",
   'numba<0.60,>=0.53',
   "pycatch22>=0.4,<0.4.4",
   "pykalman<0.10,>=0.9.5",
@@ -254,7 +254,7 @@ tests = [
   "pytest-cov>=4.1,<5.1",
   "pytest-randomly<3.16,>=3.15",
   "pytest-timeout>=2.1,<2.4",
-  "pytest-xdist>=3.3,<3.6",
+  "pytest-xdist>=3.3,<3.7",
 ]
 
 # CI related soft dependency sets - not for users of sktime, only for developers
@@ -273,6 +273,7 @@ dl = [
   'neuralforecast<1.8.0,>=1.6.4; python_version < "3.11"',
   'tensorflow<2.17,>=2; python_version < "3.12"',
   'torch; python_version < "3.12"',
+  'transformers[torch]; python_version < "3.12"',
 ]
 mlflow = [
   "mlflow",

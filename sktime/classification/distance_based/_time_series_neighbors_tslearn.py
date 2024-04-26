@@ -4,7 +4,7 @@ from sktime.classification.base import BaseClassifier
 
 
 class KNeighborsTimeSeriesClassifierTslearn(_TslearnAdapter, BaseClassifier):
-    """K-nearest neighbors Time Series Classifier.
+    """K-nearest neighbors Time Series Classifier, from tslearn.
 
     Direct interface to ``tslearn.neighbors.KNeighborsTimeSeriesClassifier``.
 
@@ -60,7 +60,7 @@ class KNeighborsTimeSeriesClassifierTslearn(_TslearnAdapter, BaseClassifier):
     _tags = {
         # packaging info
         # --------------
-        "authors": "fkiraly",
+        "authors": ["rtavenar", "fkiraly"],  # rtavenar credit for interfaced code
         "python_dependencies": "tslearn",
         # estimator type
         # --------------

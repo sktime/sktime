@@ -403,6 +403,22 @@ def test_naive_predict_interval_against_R_naive(strategy, sp, lower, upper):
     pd.testing.assert_frame_equal(y_pred_ints, expected)
 
 
+@pytest.mark.parametrize("freq", ["2D", "W", "W-TUE", "M"])
+def test_naive_sp_greater_1_not_nan(freq):
+    sample_dates = pd.date_range(start="2001-01-01", periods=30, freq=freq)
+    sample_values = np.random.default_rng(seed=0).random(size=len(sample_dates))
+
+    sample_dataset = pd.Series(sample_values, index=sample_dates)
+
+    model = NaiveForecaster(sp=2)
+    model.fit(sample_dataset)
+
+    predictions: pd.Series = model.predict(fh=[1, 2, 3])
+    null_predictions_count = predictions.isna().sum()
+
+    assert null_predictions_count == 0
+
+
 def test_insample_with_numpy_input():
     """Test insample prediction with numpy input."""
     y = np.random.random(1000)
