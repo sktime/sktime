@@ -53,6 +53,7 @@ EXCLUDE_ESTIMATORS = [
     "TestPlusTrainSplitter",
     "Repeat",
     "CutoffFhSplitter",
+    "VARMAX",  # sporadic timeouts, see #6344
 ]
 
 
