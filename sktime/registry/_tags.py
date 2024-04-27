@@ -771,6 +771,7 @@ class capability__multivariate(_BaseTag):
     - Example: ``True``
     - Default: ``False``
     - Alias: ``univariate-only``  (transformations, note: boolean is inverted)
+    - Alias: ``univariate-metric`` (performance metrics, note: boolean is inverted)
 
     If the tag is ``True``, the estimator can handle multivariate time series,
     for its main input data, i.e., the ``X`` parameter in ``fit`` of classifiers,
@@ -883,13 +884,50 @@ class capability__multioutput(_BaseTag):
     }
 
 
+# Transformations
+# ---------------
+
+
+class scitype__transform_input(_BaseTag):
+    """The scitype of the input data for the transformer.
+
+    - String name: ``"scitype:transform-input"``
+    - Public scitype tag
+    - Values: string, one of ``"Series"`` or ``"Panel"``
+    - Example: ``"Series"``
+    - Default: ``"Series"``
+
+    Transformations in ``sktime`` are polymorphic and can have one of multiple
+    input/output behaviours, depending on the scitype of the input data.
+
+    The following tags specify the input/output type:
+
+    - ``"scitype:transform-input"``: the scitype of the input data ``X``.
+    - ``"scitype:transform-output"``: the scitype of the output data, given the input.
+    - ``"scitype:instancewise"``: whether the transformation is instance-wise.
+    - ``"scitype:transform-labels"``: the scitype of the target labels ``y``, if used
+    - ``"requires_X"``: whether ``X`` is mandatory in ``fit`` and ``transform``
+    - ``"requires_y"``: whether ``y`` is mandatory in ``fit`` and ``transform``
+
+    The tags ``"scitype:transform-input"`` and ``"scitype:transform-output"``
+    together specify the input/output behaviour of the transformation.
+
+    The scitype of the input data for the transformer.
+
+    If the tag is ``"Series"``, the input data for the transformer is a single time series.
+
+    If the tag is ``"Panel"``, the input data for the transformer is a panel of time series.
+    """
+
+    _tags = {
+        "tag_name": "scitype:transform-input",
+        "parent_type": "transformer",
+        "tag_type": ["Series", "Panel"],
+        "short_descr": "what is the scitype of the transformer input X?",
+        "user_facing": True,
+    }
+
 ESTIMATOR_TAG_REGISTER = [
-    (
-        "univariate-only",
-        "transformer",
-        "bool",
-        "can transformer handle multivariate series? True = no",
-    ),
     (
         "fit_is_empty",
         "estimator",
@@ -1130,12 +1168,6 @@ ESTIMATOR_TAG_REGISTER = [
         "does metric require a predictive benchmark?",
     ),
     (
-        "univariate-metric",
-        "metric",
-        "bool",
-        "Does the metric only work on univariate y data?",
-    ),
-    (
         "scitype:y_pred",
         "metric",
         "str",
@@ -1236,6 +1268,22 @@ ESTIMATOR_TAG_REGISTER = [
         "distribution",
         "int",
         "max iters for bisection method in ppf",
+    ),
+    # ---------------------
+    # to be renamed/aliased
+    # ---------------------
+    # the following tags are to be renamed or aliased
+    (
+        "univariate-only",  # -> capability:multivariate, invert
+        "transformer",
+        "bool",
+        "can transformer handle multivariate series? True = no",
+    ),
+    (
+        "univariate-metric",  # -> capability:multivariate, invert
+        "metric",
+        "bool",
+        "Does the metric only work on univariate y data?",
     ),
 ]
 
