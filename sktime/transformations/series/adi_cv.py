@@ -1,21 +1,14 @@
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Feature transformer that returns features of time series including categories."""
+
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
 
-# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Feature transformer that returns features of time series to
-classify them into different types of demand patterns"""
-
 __author__ = ["shlok191"]
 
-"""Extension template for transformers, SIMPLE version.
 
-Testing - required for sktime test framework and check_estimator usage:
-    get default parameters for test instance(s) - get_test_params()
-"""
-
-
-class ADICVExtractor(BaseTransformer):
+class ADICVTransformer(BaseTransformer):
     """
     Classifier based on Intermittent Demand Estimates paper by Syntetos/Boylan.
 
@@ -65,19 +58,19 @@ class ADICVExtractor(BaseTransformer):
         "maintainers": ["shlok191"],
     }
 
-    def __init__(self, adi_threshold=1.32, cv_threshold=0.49, features=None):
+    def __init__(self, features=None, adi_threshold=1.32, cv_threshold=0.49):
         """Initialize the transformer and processes any provided parameters.
 
         Parameters
         ----------
+        features : List[str] | None, optional
+            List of features to compute. Defaults to None (all features)
+
         adi_threshold : float, optional
             Threshold for Average Demand Interval. Defaults to 1.32.
 
         cv_threshold : float, optional
             Threshold for Variance. Defaults to 0.49.
-
-        features : List[str] | None, optional
-            List of features to compute. Defaults to None (all features)
 
         Raises
         ------
@@ -130,23 +123,25 @@ class ADICVExtractor(BaseTransformer):
         X_non_zero = X[condition]
 
         # Calculating ADI value based on formula from paper
-        adi_value = len(X) - 1 / (len(X_non_zero) - 1)
+        adi_value = (len(X_non_zero) - 1) / len(X) - 1
 
         # Calculating variance for all non-zero values
         variance = X_non_zero.var()
         cv2_value = variance / len(X_non_zero)
 
         # Calculating the class type
-        class_type = ""
 
-        if adi_value <= self.adi_threshold:
-            if cv2_value <= self.cv_threshold:
+        adi_low = adi_value <= self.adi_threshold
+        cv2_low = cv2_value <= self.cv_threshold
+
+        if adi_low:
+            if cv2_low:
                 class_type = "smooth"
 
             else:
                 class_type = "erratic"
 
-        elif cv2_value <= self.cv_threshold:
+        elif cv2_low:
             class_type = "intermittent"
 
         else:
@@ -165,6 +160,10 @@ class ADICVExtractor(BaseTransformer):
             return_dict["class"] = class_type
 
         df = pd.DataFrame(return_dict)
+
+        # Ordering the dataframe in the correct order
+        df = df.loc[:, self.features]
+
         return df
 
     # todo: return default parameters, so that a test instance can be created

@@ -1413,8 +1413,7 @@ def load_forecastingdata(
         # valid dataset names for classification, regression, forecasting datasets repo
         if name not in list(tsf_all_datasets):
             raise ValueError(
-                {name}
-                + " is not a valid dataset name. \
+                f"{name} is not a valid dataset name. \
                     List of valid dataset names can be found at \
                     sktime.datasets.tsf_dataset_names.tsf_all_datasets"
             )
