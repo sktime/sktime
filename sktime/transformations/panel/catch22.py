@@ -10,7 +10,6 @@ from typing import List, Union
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
 
 from sktime.datatypes import convert_to
 from sktime.transformations.base import BaseTransformer
