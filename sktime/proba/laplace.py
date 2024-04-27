@@ -111,7 +111,7 @@ class Laplace(BaseDistribution):
         pd.DataFrame with same rows, columns as `self`
         variance of distribution (entry-wise)
         """
-        sd_arr = self._scale / np.sqrt(2)
+        sd_arr = self._scale * np.sqrt(2)
         return pd.DataFrame(sd_arr, index=self.index, columns=self.columns) ** 2
 
     def pdf(self, x):

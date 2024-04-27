@@ -131,6 +131,7 @@ class DtwDist(BasePairwiseTransformerPanel):
         # --------------
         "symmetric": True,  # all the distances are symmetric
         "X_inner_mtype": "numpy3D",
+        "capability:unequal_length": False,  # can dist handle unequal length panels?
     }
 
     def __init__(

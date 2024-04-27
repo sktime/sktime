@@ -22,7 +22,6 @@ EXCLUDE_ESTIMATORS = [
     "RandomInvervals",
     "RandomIntervalSegmenter",
     "RandomIntervalFeatureExtractor",
-    "RandomIntervalClassifier",
     "MiniRocket",
     "MatrixProfileTransformer",
     # tapnet based estimators fail stochastically for unknown reasons, see #3525
@@ -54,6 +53,7 @@ EXCLUDE_ESTIMATORS = [
     "TestPlusTrainSplitter",
     "Repeat",
     "CutoffFhSplitter",
+    "VARMAX",  # sporadic timeouts, see #6344
 ]
 
 
@@ -218,6 +218,7 @@ EXCLUDED_TESTS = {
     "LTSFLinearForecaster": ["test_predict_time_index_in_sample_full"],
     "LTSFDLinearForecaster": ["test_predict_time_index_in_sample_full"],
     "LTSFNLinearForecaster": ["test_predict_time_index_in_sample_full"],
+    "HFTransformersForecaster": ["test_predict_time_index_in_sample_full"],
     "WEASEL": ["test_multiprocessing_idempotent"],  # see 5658
     # StatsForecastMSTL is failing in probabistic forecasts, see #5703, #5920
     "StatsForecastMSTL": ["test_pred_int_tag"],
@@ -225,6 +226,16 @@ EXCLUDED_TESTS = {
     "KNeighborsTimeSeriesClassifierTslearn": ["test_multiprocessing_idempotent"],
     # ShapeletTransformPyts creates nested numpy shapelets sporadically, see #6171
     "ShapeletTransformPyts": ["test_non_state_changing_method_contract"],
+    "TimeSeriesSVRTslearn": [  # not deterministic, see 6274
+        "test_fit_idempotent",
+        "test_multiprocessing_idempotent",
+    ],
+    # ShapeletLearningClassifier is non-pickleable due to DL dependencies
+    "ShapeletLearningClassifierTslearn": [
+        "test_persistence_via_pickle",
+        "test_save_estimators_to_file",
+        "test_fit_idempotent",
+    ],
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish
