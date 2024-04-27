@@ -76,7 +76,7 @@ class _TslearnAdapter:
             tslearn_est.fit(X)
 
         # write fitted params to self
-        _clone_fitted_params(pyts_est, self)
+        _clone_fitted_params(tslearn_est, self)
 
         return self
 
