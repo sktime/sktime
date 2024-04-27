@@ -153,12 +153,13 @@ class BaseObject(_BaseObject):
     #  and that 3.9 is the minimum supported version
     # TODO 0.31.0: check whether 3.8 has reached EoL. If so, remove warning altogether
     def __init__(self):
-        from packaging.specifiers import SpecifierSet
+        super().__init__()
+
         import sys
 
-        from sktime.utils.warnings import warn
+        from packaging.specifiers import SpecifierSet
 
-        super().__init__()
+        from sktime.utils.warnings import warn
 
         py39_or_higher = SpecifierSet(">=3.9")
         sys_version = sys.version.split(" ")[0]
