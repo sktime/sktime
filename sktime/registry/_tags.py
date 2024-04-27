@@ -729,6 +729,32 @@ class capability__pred_int__insample(_BaseTag):
     }
 
 
+class requires_fh_in_fit(_BaseTag):
+    """Behaviour flag: forecaster requires forecasting horizon in fit.
+
+    - String name: ``"requires-fh-in-fit"``
+    - Public behaviour flag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``False``
+    - Default: ``True``
+
+    If the tag is ``True``, the forecaster requires the forecasting horizon
+    to be passed in the ``fit`` method, i.e., the ``fh`` argument must be non-``None``.
+
+    If the tag is ``False``, the forecasting horizon can be passed in the ``fit``
+    method, but this is not required. In this case, it must be passed later,
+    whenever ``predict`` or other prediction methods are called.
+    """
+
+    _tags = {
+        "tag_name": "requires-fh-in-fit",
+        "parent_type": "forecaster",
+        "tag_type": "bool",
+        "short_descr": "does the forecaster require the forecasting horizon in fit?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
 # Panel data related tags
 # -----------------------
 
@@ -744,6 +770,7 @@ class capability__multivariate(_BaseTag):
     - Values: boolean, ``True`` / ``False``
     - Example: ``True``
     - Default: ``False``
+    - Alias: ``univariate-only``  (transformations, note: boolean is inverted)
 
     If the tag is ``True``, the estimator can handle multivariate time series,
     for its main input data, i.e., the ``X`` parameter in ``fit`` of classifiers,
@@ -818,6 +845,44 @@ class capability__unequal_length(_BaseTag):
     }
 
 
+class capability__multioutput(_BaseTag):
+    """Capability: the estimator can handle multi-output time series.
+
+    - String name: ``"capability:multioutput"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag  applies to classifiers and regressors.
+
+    If the tag is ``True``, the estimator can handle multivariate target time series,
+    i.e., time series with multiple variables in the target argument ``y``.
+
+    If the tag is ``False``, the estimator can only handle univariate targets natively,
+    and will broadcast to variables (ordinary transformers), or raise an error (others).
+
+    This condition is specific to target data (e.g., classifier or regressor ``y``),
+    primary input data (``X``) is not considered.
+
+    The capability for primary input data is controlled by the tag
+    ``capability:multivariate``.
+
+    The condition is also specific to the data type used, in terms of how
+    being "multivariate" is represented.
+    For instance, a ``pandas`` based time series specification is considered
+    multivariate if it has more than one column.
+    """
+
+    _tags = {
+        "tag_name": "capability:multioutput",
+        "parent_type": ["classifier", "regressor"],
+        "tag_type": "bool",
+        "short_descr": "can the estimator handle multi-output time series?",
+        "user_facing": True,
+    }
+
+
 ESTIMATOR_TAG_REGISTER = [
     (
         "univariate-only",
@@ -848,12 +913,6 @@ ESTIMATOR_TAG_REGISTER = [
         "transformer",
         "bool",
         "behaviour flag: skips inverse_transform when called yes/no",
-    ),
-    (
-        "requires-fh-in-fit",
-        "forecaster",
-        "bool",
-        "does forecaster require fh passed already in fit? yes/no",
     ),
     (
         "X-y-must-have-same-index",
@@ -1177,12 +1236,6 @@ ESTIMATOR_TAG_REGISTER = [
         "distribution",
         "int",
         "max iters for bisection method in ppf",
-    ),
-    (
-        "capability:multioutput",
-        ["classifier", "regressor"],  # might need to add "early_classifier" here
-        "bool",
-        "can the estimator handle multioutput data?",
     ),
 ]
 
