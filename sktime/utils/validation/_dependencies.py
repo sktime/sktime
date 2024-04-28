@@ -2,10 +2,10 @@
 
 __author__ = ["fkiraly", "mloning"]
 
-import io
 import sys
 import warnings
-from importlib import import_module
+from importlib.metadata import version
+from importlib.util import find_spec
 from inspect import isclass
 
 from packaging.markers import InvalidMarker, Marker
@@ -129,19 +129,12 @@ def _check_soft_dependencies(
         else:
             package_import_name = package_name
         # attempt import - if not possible, we know we need to raise warning/exception
-        try:
-            if suppress_import_stdout:
-                # setup text trap, import, then restore
-                sys.stdout = io.StringIO()
-                pkg_ref = import_module(package_import_name)
-                sys.stdout = sys.__stdout__
-            else:
-                pkg_ref = import_module(package_import_name)
-        # if package cannot be imported, make the user aware of installation requirement
-        except ModuleNotFoundError as e:
+        # if package cannot be imported, make the user aware of installation reqs
+        if find_spec(package_import_name) is None:
             if obj is None and msg is None:
                 msg = (
-                    f"{e}. '{package}' is a soft dependency and not included in the "
+                    f"'{package}' not found. "
+                    f"'{package}' is a soft dependency and not included in the "
                     f"base sktime installation. Please run: `pip install {package}` to "
                     f"install the {package} package. "
                     f"To install all soft dependencies, run: `pip install "
@@ -176,7 +169,7 @@ def _check_soft_dependencies(
 
         # now we check compatibility with the version specifier if non-empty
         if package_version_req != SpecifierSet(""):
-            pkg_env_version = pkg_ref.__version__
+            pkg_env_version = version(package_name)
 
             msg = (
                 f"{class_name} requires package '{package}' to be present "
