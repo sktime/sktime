@@ -1012,7 +1012,7 @@ class scitype__transform_input(_BaseTag):
     _tags = {
         "tag_name": "scitype:transform-input",
         "parent_type": "transformer",
-        "tag_type": ["Series", "Panel"],
+        "tag_type": ("str", ["Series", "Panel"]),
         "short_descr": "what is the scitype of the transformer input X?",
         "user_facing": True,
     }
@@ -1142,7 +1142,7 @@ class scitype__transform_output(_BaseTag):
     _tags = {
         "tag_name": "scitype:transform-output",
         "parent_type": "transformer",
-        "tag_type": ["Series", "Panel", "Primitives"],
+        "tag_type": ("str", ["Series", "Panel", "Primitives"]),
         "short_descr": "what is the scitype of the transformer output, the transformed X",  # noqa: E501
         "user_facing": True,
     }
