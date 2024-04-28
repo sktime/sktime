@@ -9,7 +9,6 @@ import subprocess
 from functools import lru_cache
 
 
-
 @lru_cache
 def get_module_from_class(cls):
     """Get full parent module string from class.
