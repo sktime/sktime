@@ -4,7 +4,7 @@ __author__ = ["fkiraly", "mloning"]
 
 import sys
 import warnings
-from importlib.metadata import version
+from importlib.metadata import version, PackageNotFoundError
 from importlib.util import find_spec
 from inspect import isclass
 
@@ -128,9 +128,20 @@ def _check_soft_dependencies(
             package_import_name = package_import_alias[package_name]
         else:
             package_import_name = package_name
-        # attempt import - if not possible, we know we need to raise warning/exception
-        # if package cannot be imported, make the user aware of installation reqs
-        if find_spec(package_import_name) is None:
+
+        # optimized branching to check presence of import
+        # and presence of package distribution
+        # first we check import, then we check distribution
+        # because try/except consumes more runtime
+        pkg_spec = find_spec(package_import_name)
+        if pkg_spec is not None:
+            try:
+                pkg_env_version = version(package_name)
+            except PackageNotFoundError:
+                pkg_spec = None
+
+        # if package not present, make the user aware of installation reqs
+        if pkg_spec is None:
             if obj is None and msg is None:
                 msg = (
                     f"'{package}' not found. "
@@ -169,8 +180,6 @@ def _check_soft_dependencies(
 
         # now we check compatibility with the version specifier if non-empty
         if package_version_req != SpecifierSet(""):
-            pkg_env_version = version(package_name)
-
             msg = (
                 f"{class_name} requires package '{package}' to be present "
                 f"in the python environment, with version {package_version_req}, "
