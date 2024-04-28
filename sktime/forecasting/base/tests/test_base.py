@@ -24,7 +24,7 @@ from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_panel
 from sktime.utils._testing.series import _make_series
 from sktime.utils.parallel import _get_parallel_test_fixtures
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.utils.dependencies._dependencies import _check_estimator_deps
 
 PANEL_MTYPES = ["pd-multiindex", "nested_univ", "numpy3D"]
 HIER_MTYPES = ["pd_multiindex_hier"]

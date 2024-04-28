@@ -18,7 +18,7 @@ from sktime.forecasting.base.adapters._generalised_statsforecast import (
     StatsForecastBackAdapter,
     _GeneralisedStatsForecastAdapter,
 )
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 
 class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):

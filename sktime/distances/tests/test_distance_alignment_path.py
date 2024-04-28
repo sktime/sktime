@@ -4,7 +4,7 @@ import pytest
 
 from sktime.distances._distance import _METRIC_INFOS, distance, distance_alignment_path
 from sktime.distances.tests._utils import create_test_distance_numpy
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 
 def _validate_distance_alignment_path_result(

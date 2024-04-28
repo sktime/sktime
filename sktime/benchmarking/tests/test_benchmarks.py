@@ -7,7 +7,7 @@ import pytest
 from sktime.base import BaseEstimator
 from sktime.benchmarking import benchmarks
 from sktime.forecasting.naive import NaiveForecaster
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 
 def factory_estimator_class_task(**kwargs) -> Callable:

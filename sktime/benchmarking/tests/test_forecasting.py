@@ -13,7 +13,7 @@ from sktime.performance_metrics.forecasting import (
     MeanSquaredPercentageError,
 )
 from sktime.split import ExpandingWindowSplitter
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 EXPECTED_RESULTS_1 = pd.DataFrame(
     data={

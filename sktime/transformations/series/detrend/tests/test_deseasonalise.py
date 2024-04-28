@@ -11,7 +11,7 @@ from sktime.forecasting.tests._config import TEST_SPS
 from sktime.split import temporal_train_test_split
 from sktime.transformations.series.detrend import Deseasonalizer
 from sktime.utils._testing.forecasting import make_forecasting_problem
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 MODELS = ["additive", "multiplicative"]
 

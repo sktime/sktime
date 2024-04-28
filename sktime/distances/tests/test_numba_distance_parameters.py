@@ -12,7 +12,7 @@ from sktime.distances.tests._expected_results import _expected_distance_results_
 from sktime.distances.tests._utils import create_test_distance_numpy
 from sktime.tests.test_switch import run_test_for_class
 from sktime.utils.numba.njit import njit
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(

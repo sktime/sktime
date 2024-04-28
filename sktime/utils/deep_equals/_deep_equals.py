@@ -170,7 +170,7 @@ def _dask_dataframe_equals_plugin(x, y, return_msg=False, deep_equals=None):
     if not hasattr(x, "compute"):
         return None
 
-    from sktime.utils.validation._dependencies import _check_soft_dependencies
+    from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
     dask_available = _check_soft_dependencies("dask", severity="none")
 
@@ -209,7 +209,7 @@ def _polars_equals_plugin(x, y, return_msg=False):
         if unequal, returns string
     returns None if this function does not apply, i.e., x is not polars
     """
-    from sktime.utils.validation._dependencies import _check_soft_dependencies
+    from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
     polars_available = _check_soft_dependencies("polars", severity="none")
 

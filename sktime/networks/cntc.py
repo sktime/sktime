@@ -3,7 +3,7 @@
 __author__ = ["James-Large", "Withington", "TonyBagnall", "AurumnPegasus"]
 
 from sktime.networks.base import BaseDeepNetwork
-from sktime.utils.validation._dependencies import (
+from sktime.utils.dependencies._dependencies import (
     _check_dl_dependencies,
     _check_soft_dependencies,
 )

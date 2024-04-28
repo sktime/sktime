@@ -6,7 +6,7 @@ import numpy as np
 from sklearn.base import clone
 
 from sktime.annotation.base._base import BaseSeriesAnnotator
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 __author__ = ["mloning", "satya-pattnaik", "fkiraly"]
 

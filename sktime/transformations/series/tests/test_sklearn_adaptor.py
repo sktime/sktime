@@ -9,7 +9,7 @@ from sklearn.preprocessing import PowerTransformer
 
 from sktime.datasets import load_airline
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(

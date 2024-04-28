@@ -19,7 +19,7 @@ from sktime.utils._testing.panel import make_classification_problem
 from sktime.utils._testing.scenarios_classification import (
     ClassifierFitPredictMultivariate,
 )
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 
 class ClassifierFixtureGenerator(BaseFixtureGenerator):

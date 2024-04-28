@@ -18,7 +18,7 @@ import pytest
 from sktime.registry import all_estimators
 from sktime.tests._config import EXCLUDE_ESTIMATORS
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
-from sktime.utils.validation._dependencies import (
+from sktime.utils.dependencies._dependencies import (
     _check_python_version,
     _check_soft_dependencies,
 )

@@ -9,7 +9,7 @@ from sktime.classification.distance_based._time_series_neighbors import (
 )
 from sktime.datasets import load_unit_test
 from sktime.tests.test_switch import run_test_for_class
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.utils.dependencies._dependencies import _check_estimator_deps
 
 distance_functions = [
     "euclidean",

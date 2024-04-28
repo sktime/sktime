@@ -10,7 +10,7 @@ from sktime.forecasting.base import ForecastingHorizon
 #
 from sktime.forecasting.var import VAR
 from sktime.split import temporal_train_test_split
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 index = pd.date_range(start="2005", end="2006-12", freq="M")
 df = pd.DataFrame(

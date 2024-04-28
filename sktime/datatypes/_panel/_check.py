@@ -51,7 +51,7 @@ from sktime.datatypes._series._check import (
     _index_equally_spaced,
     check_pddataframe_series,
 )
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 from sktime.utils.validation.series import is_in_valid_index_types, is_integer_index
 
 VALID_MULTIINDEX_TYPES = (pd.RangeIndex, pd.Index)

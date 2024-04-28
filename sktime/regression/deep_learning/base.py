@@ -13,7 +13,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 from sktime.regression.base import BaseRegressor
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 
 class BaseDeepRegressor(BaseRegressor, ABC):

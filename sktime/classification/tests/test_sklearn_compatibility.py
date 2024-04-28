@@ -38,7 +38,7 @@ from sklearn.pipeline import Pipeline
 from sktime.classification.interval_based import CanonicalIntervalForest
 from sktime.transformations.panel.pca import PCATransformer
 from sktime.utils._testing.panel import _make_panel_X, make_classification_problem
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 DATA_ARGS = [
     {"return_numpy": True, "n_columns": 2, "n_instances": 7, "n_timepoints": 12},

@@ -2,7 +2,7 @@
 __author__ = ["danbartl"]
 
 from sktime.tests.test_switch import run_test_for_class
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 # HistGradientBoostingRegressor requires experimental flag in old sklearn versions
 if _check_soft_dependencies("sklearn<1.0", severity="none"):

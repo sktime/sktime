@@ -13,7 +13,7 @@ from sktime.split import ExpandingWindowSplitter
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.series.difference import Differencer
 from sktime.utils._testing.hierarchical import _make_hierarchical
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.utils.dependencies._dependencies import _check_estimator_deps
 
 
 @pytest.mark.skipif(

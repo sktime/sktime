@@ -13,7 +13,7 @@ from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.registry import scitype
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 from sktime.utils.validation.series import check_series
 from sktime.utils.warnings import warn
 

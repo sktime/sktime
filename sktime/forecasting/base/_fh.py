@@ -20,7 +20,7 @@ from sktime.utils.validation import (
     is_int,
     is_timedelta_or_date_offset,
 )
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 from sktime.utils.validation.series import (
     VALID_INDEX_TYPES,
     is_in_valid_absolute_index_types,

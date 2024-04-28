@@ -11,7 +11,7 @@ from sktime.datasets import load_airline
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.split import temporal_train_test_split
 from sktime.utils._testing.forecasting import make_forecasting_problem
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 # load test data
 y = make_forecasting_problem()

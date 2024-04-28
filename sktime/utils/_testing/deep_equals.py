@@ -58,7 +58,7 @@ def deep_equals(x, y, return_msg=False):
             [colname] - if pandas.DataFrame: column with name colname is not equal
             != - call to generic != returns False
     """
-    from sktime.utils.validation._dependencies import _check_soft_dependencies
+    from sktime.utils.dependencies._dependencies import _check_soft_dependencies
     from sktime.utils.warnings import warn
 
     deprec_explain = (

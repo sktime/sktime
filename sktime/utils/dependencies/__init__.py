@@ -1,0 +1,1 @@
+"""Dependency checking utility functionality."""

@@ -8,7 +8,7 @@ from sklearn.preprocessing import FunctionTransformer
 from sktime.datasets import load_basic_motions
 from sktime.transformations.panel.compose import ColumnTransformer
 from sktime.transformations.panel.reduce import Tabularizer
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(

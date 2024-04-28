@@ -9,8 +9,8 @@ import pytest
 
 from sktime.datasets import load_airline
 from sktime.tests.test_switch import run_test_for_class
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 from sktime.utils.plotting import plot_correlations, plot_lags, plot_series
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.series import VALID_DATA_TYPES
 
 ALLOW_NUMPY = False

@@ -10,7 +10,7 @@ from sktime.datasets import load_airline, load_longley
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.structural import UnobservedComponents
 from sktime.split import SlidingWindowSplitter
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 
 class ModelSpec:

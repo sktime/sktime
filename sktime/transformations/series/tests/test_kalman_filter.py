@@ -11,7 +11,7 @@ from sktime.transformations.series.kalman_filter import (
     KalmanFilterTransformerFP,
     KalmanFilterTransformerPK,
 )
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 # ts stands for time steps
 ts = 10

@@ -9,7 +9,7 @@ import pytest
 from sktime.datasets import load_gunpoint
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.transformations.panel.summarize import FittedParamExtractor
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.utils.dependencies._dependencies import _check_estimator_deps
 
 X_train, y_train = load_gunpoint("train", return_X_y=True)
 

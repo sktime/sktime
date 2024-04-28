@@ -229,7 +229,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
         param1 = {
             "n_epochs": 25,

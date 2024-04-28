@@ -55,7 +55,7 @@ from sktime.datatypes import (
 )
 from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.utils.datetime import _shift
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.utils.dependencies._dependencies import _check_estimator_deps
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
 from sktime.utils.validation.series import check_equal_time_index
 from sktime.utils.warnings import warn

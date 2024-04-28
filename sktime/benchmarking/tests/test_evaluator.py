@@ -9,7 +9,7 @@ from sktime.benchmarking.evaluation import Evaluator
 from sktime.benchmarking.metrics import PairwiseMetric
 from sktime.benchmarking.results import RAMResults
 from sktime.series_as_features.model_selection import PresplitFilesCV
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 
 def dummy_results():

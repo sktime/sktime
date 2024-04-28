@@ -16,7 +16,7 @@ from sktime.transformations.bootstrap._mbb import (
     _get_series_name,
     _moving_block_bootstrap,
 )
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 y = load_airline()
 y_index = y.index

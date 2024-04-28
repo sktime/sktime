@@ -7,7 +7,7 @@ from typing import Callable, Optional, Union
 import pandas as pd
 
 from sktime.base import BaseEstimator
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 
 # TODO: typo but need to be deprecated

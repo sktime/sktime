@@ -18,7 +18,7 @@ from sktime.forecasting.compose import make_reduction
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.sarimax import SARIMAX
 from sktime.split import temporal_train_test_split
-from sktime.utils.validation._dependencies import (
+from sktime.utils.dependencies._dependencies import (
     _check_estimator_deps,
     _check_soft_dependencies,
 )

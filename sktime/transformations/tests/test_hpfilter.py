@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 from numpy import array_equal
 
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(

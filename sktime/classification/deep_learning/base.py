@@ -15,7 +15,7 @@ from sklearn.utils import check_random_state
 
 from sktime.base._base import SERIALIZATION_FORMATS
 from sktime.classification.base import BaseClassifier
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 
 class BaseDeepClassifier(BaseClassifier, ABC):

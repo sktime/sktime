@@ -7,7 +7,7 @@ from sktime.utils._maint._show_versions import (
     _get_deps_info,
     show_versions,
 )
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 
 def test_show_versions_runs():

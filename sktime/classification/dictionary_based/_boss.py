@@ -20,7 +20,7 @@ from sklearn.utils.validation import _num_samples
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SFAFast
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 from sktime.utils.validation.panel import check_X_y
 
 # delayed was moved from utils.fixes to utils.parallel in scikit-learn 1.3

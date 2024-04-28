@@ -17,7 +17,7 @@ from sktime.utils.datetime import (
     infer_freq,
     set_hier_freq,
 )
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 
 def test_get_freq():

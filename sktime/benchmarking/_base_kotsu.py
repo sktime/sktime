@@ -4,7 +4,7 @@ import re
 import warnings
 from typing import Callable, Optional, Union
 
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 
 def _check_id_format(id_format: str, id: str) -> None:

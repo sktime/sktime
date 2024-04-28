@@ -7,7 +7,7 @@ import pytest
 from sktime.performance_metrics.forecasting.probabilistic._classes import CRPS, LogLoss
 from sktime.proba.normal import Normal
 from sktime.proba.tfp import TFNormal
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 

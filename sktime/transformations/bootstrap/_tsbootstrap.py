@@ -119,7 +119,7 @@ class TSBootstrapAdapter(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
         deps = cls.get_class_tag("python_dependencies")
 

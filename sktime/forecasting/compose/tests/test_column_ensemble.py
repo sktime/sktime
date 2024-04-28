@@ -11,7 +11,7 @@ import pytest
 from sktime.forecasting.compose import ColumnEnsembleForecaster
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 
 @pytest.mark.parametrize(

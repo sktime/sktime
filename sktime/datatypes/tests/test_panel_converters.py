@@ -20,7 +20,7 @@ from sktime.datatypes._panel._convert import (
     from_nested_to_multi_index,
 )
 from sktime.utils._testing.panel import make_classification_problem
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 N_INSTANCES = [10, 15]
 N_COLUMNS = [3, 5]

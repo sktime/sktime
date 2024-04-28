@@ -9,7 +9,7 @@ import pytest
 
 from sktime.datasets import load_airline
 from sktime.transformations.series.boxcox import BoxCoxTransformer
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(

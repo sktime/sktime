@@ -18,7 +18,7 @@ from sktime.forecasting.online_learning._prediction_weighted_ensembler import (
 )
 from sktime.split import SlidingWindowSplitter, temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 cv = SlidingWindowSplitter(start_with_window=True, window_length=1, fh=1)
 

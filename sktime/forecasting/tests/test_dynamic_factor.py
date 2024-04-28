@@ -4,7 +4,7 @@ from pandas.testing import assert_frame_equal
 
 from sktime.datasets import load_longley
 from sktime.forecasting.dynamic_factor import DynamicFactor
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 __author__ = ["yarnabrina"]
 

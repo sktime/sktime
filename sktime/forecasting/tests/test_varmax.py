@@ -9,7 +9,7 @@ from numpy.testing import assert_allclose
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.varmax import VARMAX
 from sktime.split import temporal_train_test_split
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 np.random.seed(13455)
 index = pd.date_range(start="2020-01", end="2021-12", freq="M")

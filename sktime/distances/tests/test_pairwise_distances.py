@@ -15,7 +15,7 @@ from sktime.distances.tests._shared_tests import (
     _test_metric_parameters,
 )
 from sktime.distances.tests._utils import create_test_distance_numpy
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 
 def _check_symmetric(x: np.ndarray, rtol: float = 1e-05, atol: float = 1e-08) -> bool:

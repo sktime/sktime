@@ -43,7 +43,7 @@ import pandas as pd
 from sklearn.utils.validation import check_random_state
 
 from sktime.annotation.base._base import BaseSeriesAnnotator
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.utils.dependencies._dependencies import _check_estimator_deps
 
 logger = logging.getLogger(__name__)
 

@@ -7,7 +7,7 @@ from sktime.forecasting.base.adapters._neuralforecast import (
     _SUPPORTED_LOCAL_SCALAR_TYPES,
     _NeuralForecastAdapter,
 )
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 __author__ = ["yarnabrina", "geetu040", "pranavvp16"]
 

@@ -15,7 +15,7 @@ __all__ = [
 import numpy as np
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 from sktime.utils.warnings import warn
 
 

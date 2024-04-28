@@ -10,7 +10,7 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.rnn import RNNNetwork
-from sktime.utils.validation._dependencies import _check_dl_dependencies
+from sktime.utils.dependencies._dependencies import _check_dl_dependencies
 
 
 class SimpleRNNClassifier(BaseDeepClassifier):

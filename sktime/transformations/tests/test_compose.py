@@ -26,7 +26,7 @@ from sktime.transformations.series.summarize import SummaryTransformer
 from sktime.transformations.series.theta import ThetaLinesTransformer
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils.deep_equals import deep_equals
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.utils.dependencies._dependencies import _check_estimator_deps
 
 
 def test_dunder_mul():

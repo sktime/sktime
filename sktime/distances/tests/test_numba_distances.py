@@ -17,7 +17,7 @@ from sktime.distances.tests._shared_tests import (
 )
 from sktime.distances.tests._utils import create_test_distance_numpy
 from sktime.tests.test_switch import run_test_for_class
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 _ran_once = False
 

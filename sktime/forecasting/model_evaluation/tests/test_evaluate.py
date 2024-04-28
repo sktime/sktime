@@ -50,7 +50,7 @@ from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.series import _make_series
 from sktime.utils.parallel import _get_parallel_test_fixtures
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 METRICS = [MeanAbsolutePercentageError(symmetric=True), MeanAbsoluteScaledError()]
 PROBA_METRICS = [CRPS(), EmpiricalCoverage(), LogLoss(), PinballLoss()]

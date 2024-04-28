@@ -14,7 +14,7 @@ from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster, TrendForecaster
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.utils._testing.hierarchical import _bottom_hier_datagen, _make_hierarchical
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(

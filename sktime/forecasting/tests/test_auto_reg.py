@@ -7,7 +7,7 @@ from numpy.testing import assert_allclose
 # from sktime.datasets import
 from sktime.forecasting.auto_reg import AutoREG
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.utils.dependencies._dependencies import _check_estimator_deps
 
 
 @pytest.mark.skipif(

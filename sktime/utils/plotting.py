@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.datatypes import convert_to
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_interval_df, check_y
 from sktime.utils.validation.series import check_consistent_index_type
 
