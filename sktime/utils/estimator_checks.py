@@ -3,8 +3,6 @@
 __author__ = ["fkiraly"]
 __all__ = ["check_estimator"]
 
-from sktime.utils.dependencies._dependencies import _check_soft_dependencies
-
 
 def check_estimator(
     estimator,
@@ -94,6 +92,8 @@ def check_estimator(
     All tests PASSED!
     {'test_clone[ExponentTransformer-1]': 'PASSED'}
     """
+    from sktime.utils.dependencies._dependencies import _check_soft_dependencies
+
     msg = (
         "check_estimator is a testing utility for developers, and "
         "requires pytest to be present "
