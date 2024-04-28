@@ -18,6 +18,7 @@ available on GitHub.
 For upcoming changes and next releases, see our `milestones <https://github.com/sktime/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
 For our long-term plan, see our :ref:`roadmap`.
 
+
 Version 0.29.0 - 2024-04-28
 ---------------------------
 
@@ -45,10 +46,8 @@ current location until 0.30.0, when the old name will be removed.
 To prepare for the name change,
 replace any imports of ``cINNForecaster`` with imports of ``CINNForecaster``.
 
-
 Transformations
 ^^^^^^^^^^^^^^^
-
 
 * The ``n_jobs`` parameter in the ``Catch22`` transformer has been removed.
   Users should pass parallelization backend parameters via ``set_config`` instead.
@@ -59,10 +58,17 @@ Transformations
   To retain previous behaviour, with a specific setting of ``n_jobs=x``,
   use ``set_config(**{"backend:parallel": "loky", "backend:parallel:params": {"n_jobs": x}})``.
 
-
 Contents
 ~~~~~~~~
 
+* [MNT] change cycle (0.29.0) for renaming ``cINNForecaster`` to ``CINNForecaster`` (:pr:`6238`) :user:`geetu040`
+* [MNT] 0.29.0 deprecations and change actions (:pr:`6350`) :user:`fkiraly`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`fkiraly`,
+:user:`geetu040`
 
 
 Version 0.28.1 - 2024-04-25
