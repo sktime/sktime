@@ -900,7 +900,7 @@ class scitype__transform_input(_BaseTag):
     Transformations in ``sktime`` are polymorphic and can have one of multiple
     input/output behaviours, depending on the scitype of the input data.
 
-    The following tags specify the input/output type:
+    The following tags specify input/output behaviour:
 
     - ``"scitype:transform-input"``: the scitype of the input data ``X``.
     - ``"scitype:transform-output"``: the scitype of the output data, given the input.
@@ -910,13 +910,101 @@ class scitype__transform_input(_BaseTag):
     - ``"requires_y"``: whether ``y`` is mandatory in ``fit`` and ``transform``
 
     The tags ``"scitype:transform-input"`` and ``"scitype:transform-output"``
-    together specify the input/output behaviour of the transformation.
+    together specify the input/output typing of the transformation.
 
-    The scitype of the input data for the transformer.
+    The possible values for both are from a list of :term:`scitype` strings, which are:
 
-    If the tag is ``"Series"``, the input data for the transformer is a single time series.
+    * ``"Series"``: a single time series.
+    * ``"Panel"``: a panel of time series, i.e., a collection of time series.
+    * ``"Primitives"``: a collection of primitive types, e.g., a collection of scalars.
+      This is an alias for the scitype ``"Table"`` used in the `datatypes` module.
 
-    If the tag is ``"Panel"``, the input data for the transformer is a panel of time series.
+    The combination of the two tags is to be read as:
+
+    * if ``"scitype:transform-input"`` has value ``input_type``,
+      and ``"scitype:transform-output"`` has value ``output_type``,
+    * then, if I pass input data of scitype ``input_type`` to ``transform``
+      of the transformer, I will get output data of scitype ``output_type``.
+
+    For instance, if a transformer has ``"scitype:transform-input"`` being ``"Series"``,
+    and ``"scitype:transform-output"`` being ``"Series"``, then ``transform`` will
+    produce a single time series as output, given a single time series as input.
+
+    Other input types are handled by broadcasting over instances or indices.
+    For instance, in the same case, if the input a panel of time series
+    (of scitype ``"Panel"``), then the transformer will transform each time series
+    and produce an output panel of time series (of scipy ``"Panel"``).
+
+    It should be noted that this is in the case where both tags have value
+    ``"Series"``, the behaviour for ``"Panel"`` is implied by broadcasting.
+
+    The value ``"Panel"`` is used only if the transformation adds index levels,
+    or removes index levels, or changes the number or indices of series in the panel.
+
+    Writing shorthand "Series-to-Series" for the type pair ``"Series"`` to ``"Series"``,
+    and similarly for other types, the possible type pairs are listed below.
+
+    For illustration, it is recommended to try out the transformations mentioned,
+    on the respective input types, to understand the behaviour.
+
+    * Series-to-Series, this transforms individual series to individual series.
+      Panels are transformed to Panel, and Hierarchical series to Hierarchical series.
+      Examples are lagging, ``Lag``, or differencing, ``Differencer``.
+    * Series-to-Primitives, this transforms individual series to a collection of
+      primitives, a single time series is transformed to a single row of a
+      ``pd.DataFrame``. A panel is transformed to a ``pd.DataFrame``, with
+      as many rows as time series in the panel.
+      A hierarchical series is transformed to a ``pd.DataFrame`` with the hierarchy
+      indices retained, one row corresponding to a non-temporal leaf node.
+      Examples are feature extraction or summarization (mean, quantiles, etc), see
+      ``SummaryTransformer``.
+    * Series-to-Panel, this transforms individual series to a panel of time series.
+      Panels are transformed to hierarchical series with added index levels.
+      Examples are time series bootstrapping, where multiple bootstrap samples are
+      produced per input series, see ``STLBootstrapTransformer``,
+      or ``TSBootstrapAdapter``.
+    * Panel-to-Series, this transforms a panel of time series to a single time series.
+      Examples are aggregation with time index retained, e.g., mean per index or bin,
+      see ``Merger``.
+
+    The relationship between input and output types of ``transform`` is
+    summarized in the following table,
+    for the case where ``"scitype:transform-input"`` is ``"Series"``.
+
+    The first column is the type of ``X``, which need not be ``"Series"``,
+    the second column is the value of the ``"scitype:transform-output"`` tag,
+    the third column is the type of the output of ``transform``.
+
+    The output type is obtained from the input type of ``transform``, from
+    broadcasting of the types defined by the tag values.
+
+    .. list-table::
+        :widths: 35 35 40
+        :header-rows: 2
+
+        * -
+            - `transform`
+            -
+        * - `X`
+            - `-output`
+            - type of return
+        * - `Series`
+            - `Primitives`
+            - `pd.DataFrame` (1-row)
+        * - `Panel`
+            - `Primitives`
+            - `pd.DataFrame`
+        * - `Series`
+            - `Series`
+            - `Series`
+        * - `Panel`
+            - `Series`
+            - `Panel`
+        * - `Series`
+            - `Panel`
+            - `Panel`
+
+    The instance indices in the in return correspond to instances in the input ``X``.
     """
 
     _tags = {
@@ -926,6 +1014,135 @@ class scitype__transform_input(_BaseTag):
         "short_descr": "what is the scitype of the transformer input X?",
         "user_facing": True,
     }
+
+
+class scitype__transform_output(_BaseTag):
+    """The scitype of the input data for the transformer.
+
+    - String name: ``"scitype:transform-output"``
+    - Public scitype tag
+    - Values: string, one of ``"Series"``, ``"Panel"``, ``"Primitives"``
+    - Example: ``"Series"``
+    - Default: ``"Series"``
+
+    Transformations in ``sktime`` are polymorphic and can have one of multiple
+    input/output behaviours, depending on the scitype of the input data.
+
+    The following tags specify input/output behaviour:
+
+    - ``"scitype:transform-input"``: the scitype of the input data ``X``.
+    - ``"scitype:transform-output"``: the scitype of the output data, given the input.
+    - ``"scitype:instancewise"``: whether the transformation is instance-wise.
+    - ``"scitype:transform-labels"``: the scitype of the target labels ``y``, if used
+    - ``"requires_X"``: whether ``X`` is mandatory in ``fit`` and ``transform``
+    - ``"requires_y"``: whether ``y`` is mandatory in ``fit`` and ``transform``
+
+    The tags ``"scitype:transform-input"`` and ``"scitype:transform-output"``
+    together specify the input/output typing of the transformation.
+
+    The possible values for both are from a list of :term:`scitype` strings, which are:
+
+    * ``"Series"``: a single time series.
+    * ``"Panel"``: a panel of time series, i.e., a collection of time series.
+    * ``"Primitives"``: a collection of primitive types, e.g., a collection of scalars.
+      This is an alias for the scitype ``"Table"`` used in the `datatypes` module.
+
+    The combination of the two tags is to be read as:
+
+    * if ``"scitype:transform-input"`` has value ``input_type``,
+      and ``"scitype:transform-output"`` has value ``output_type``,
+    * then, if I pass input data of scitype ``input_type`` to ``transform``
+      of the transformer, I will get output data of scitype ``output_type``.
+
+    For instance, if a transformer has ``"scitype:transform-input"`` being ``"Series"``,
+    and ``"scitype:transform-output"`` being ``"Series"``, then ``transform`` will
+    produce a single time series as output, given a single time series as input.
+
+    Other input types are handled by broadcasting over instances or indices.
+    For instance, in the same case, if the input a panel of time series
+    (of scitype ``"Panel"``), then the transformer will transform each time series
+    and produce an output panel of time series (of scipy ``"Panel"``).
+
+    It should be noted that this is in the case where both tags have value
+    ``"Series"``, the behaviour for ``"Panel"`` is implied by broadcasting.
+
+    The value ``"Panel"`` is used only if the transformation adds index levels,
+    or removes index levels, or changes the number or indices of series in the panel.
+
+    Writing shorthand "Series-to-Series" for the type pair ``"Series"`` to ``"Series"``,
+    and similarly for other types, the possible type pairs are listed below.
+
+    For illustration, it is recommended to try out the transformations mentioned,
+    on the respective input types, to understand the behaviour.
+
+    * Series-to-Series, this transforms individual series to individual series.
+      Panels are transformed to Panel, and Hierarchical series to Hierarchical series.
+      Examples are lagging, ``Lag``, or differencing, ``Differencer``.
+    * Series-to-Primitives, this transforms individual series to a collection of
+      primitives, a single time series is transformed to a single row of a
+      ``pd.DataFrame``. A panel is transformed to a ``pd.DataFrame``, with
+      as many rows as time series in the panel.
+      A hierarchical series is transformed to a ``pd.DataFrame`` with the hierarchy
+      indices retained, one row corresponding to a non-temporal leaf node.
+      Examples are feature extraction or summarization (mean, quantiles, etc), see
+      ``SummaryTransformer``.
+    * Series-to-Panel, this transforms individual series to a panel of time series.
+      Panels are transformed to hierarchical series with added index levels.
+      Examples are time series bootstrapping, where multiple bootstrap samples are
+      produced per input series, see ``STLBootstrapTransformer``,
+      or ``TSBootstrapAdapter``.
+    * Panel-to-Series, this transforms a panel of time series to a single time series.
+      Examples are aggregation with time index retained, e.g., mean per index or bin,
+      see ``Merger``.
+
+    The relationship between input and output types of ``transform`` is
+    summarized in the following table,
+    for the case where ``"scitype:transform-input"`` is ``"Series"``.
+
+    The first column is the type of ``X``, which need not be ``"Series"``,
+    the second column is the value of the ``"scitype:transform-output"`` tag,
+    the third column is the type of the output of ``transform``.
+
+    The output type is obtained from the input type of ``transform``, from
+    broadcasting of the types defined by the tag values.
+
+    .. list-table::
+        :widths: 35 35 40
+        :header-rows: 2
+
+        * -
+            - `transform`
+            -
+        * - `X`
+            - `-output`
+            - type of return
+        * - `Series`
+            - `Primitives`
+            - `pd.DataFrame` (1-row)
+        * - `Panel`
+            - `Primitives`
+            - `pd.DataFrame`
+        * - `Series`
+            - `Series`
+            - `Series`
+        * - `Panel`
+            - `Series`
+            - `Panel`
+        * - `Series`
+            - `Panel`
+            - `Panel`
+
+    The instance indices in the in return correspond to instances in the input ``X``.
+    """
+
+    _tags = {
+        "tag_name": "scitype:transform-output",
+        "parent_type": "transformer",
+        "tag_type": ["Series", "Panel", "Primitives"],
+        "short_descr": "what is the scitype of the transformer output, the transformed X",  # noqa: E501
+        "user_facing": True,
+    }
+
 
 ESTIMATOR_TAG_REGISTER = [
     (
@@ -1027,18 +1244,6 @@ ESTIMATOR_TAG_REGISTER = [
             ],
         ),
         "which machine type(s) is the internal _fit/_predict able to deal with?",
-    ),
-    (
-        "scitype:transform-input",
-        "transformer",
-        ("list", ["Series", "Panel"]),
-        "what is the scitype of the transformer input X",
-    ),
-    (
-        "scitype:transform-output",
-        "transformer",
-        ("list", ["Series", "Primitives", "Panel"]),
-        "what is the scitype of the transformer output, the transformed X",
     ),
     (
         "scitype:instancewise",

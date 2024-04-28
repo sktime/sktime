@@ -132,5 +132,7 @@ transform a single time series object (``"transformer"`` type).
     :template: function.rst
     :nosignatures:
 
+    scitype__transform_input
+    scitype__transform_output
     capability__missing_values
     capability__unequal_length
