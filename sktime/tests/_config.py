@@ -33,7 +33,7 @@ EXCLUDE_ESTIMATORS = [
     "TimeSeriesLloyds",  # an abstract class, but does not follow naming convention
     # DL classifier suspected to cause hangs and memouts, see #4610
     "FCNClassifier",
-    #"MACNNClassifier",
+    # "MACNNClassifier",
     "EditDist",
     "CNNClassifier",
     "FCNClassifier",
@@ -45,7 +45,7 @@ EXCLUDE_ESTIMATORS = [
     "ResNetRegressor",
     "FCNRegressor",
     "LSTMFCNRegressor",
-    #"MACNNRegressor",
+    # "MACNNRegressor",
     "CNTCClassifier",
     "CNTCRegressor",
     # splitters excluded with undiagnosed failures, see #6194
