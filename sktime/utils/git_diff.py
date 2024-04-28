@@ -3,11 +3,11 @@
 __author__ = ["fkiraly"]
 __all__ = []
 
-from functools import lru_cache
-
 import importlib.util
 import inspect
 import subprocess
+from functools import lru_cache
+
 
 
 @lru_cache
