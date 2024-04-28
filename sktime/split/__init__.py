@@ -3,6 +3,7 @@
 __all__ = [
     "CutoffSplitter",
     "CutoffFhSplitter",
+    "ExpandingCutoffSplitter",
     "ExpandingGreedySplitter",
     "ExpandingWindowSplitter",
     "InstanceSplitter",
@@ -15,6 +16,7 @@ __all__ = [
 ]
 
 from sktime.split.cutoff import CutoffFhSplitter, CutoffSplitter
+from sktime.split.expandingcutoff import ExpandingCutoffSplitter
 from sktime.split.expandinggreedy import ExpandingGreedySplitter
 from sktime.split.expandingwindow import ExpandingWindowSplitter
 from sktime.split.instance import InstanceSplitter
