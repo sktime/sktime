@@ -30,16 +30,6 @@ def _check_nan_policy_option(nan_predict_policy):
     return nan_predict_policy
 
 
-def _has_nan(array_like):
-    """Return true if an array like variable has any null values."""
-    import pandas as pd
-
-    for i in array_like:
-        if pd.isnull(i):
-            return True
-    return False
-
-
 class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
     """Forecaster that sequentially tries a list of forecasting models.
 
