@@ -109,7 +109,7 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
 
     _tags = {
         "authors": ["mloning", "sajaysurya", "fkiraly"],
-        "python_dependencies": ["scipy", "sklearn<1.4"],
+        "python_dependencies": ["scipy", "scikit-learn<1.4"],
     }
 
     def __init__(
@@ -133,7 +133,13 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
             "ColumnTransformer can simply be replaced by ColumnEnsembleTransformer."
         )
 
-        if not _check_soft_dependencies("sklearn<1.4", severity="none"):
+        sklearn_lneq_14 = _check_soft_dependencies(
+            "scikit-learn<1.4",
+            severity="none",
+            package_import_alias={"scikit-learn": "sklearn"},
+        )
+
+        if not sklearn_lneq_14:
             raise ModuleNotFoundError(
                 "ColumnTransformer is not fully compliant with the sktime interface "
                 "and distributed only for reasons of downwards compatibility. "
