@@ -6,9 +6,11 @@ Module does not contain tests, only test utilities.
 
 __author__ = ["fkiraly"]
 
+from functools import lru_cache
 from inspect import getmro, isclass
 
 
+@lru_cache
 def run_test_for_class(cls):
     """Check if test should run for a class or function.
 
