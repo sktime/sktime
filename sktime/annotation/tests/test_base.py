@@ -19,6 +19,16 @@ from sktime.annotation.base._base import BaseSeriesAnnotator
             pd.Series([1, 1, 1, 2, 2], dtype="int32"),
             None,
         ),
+        (
+            pd.DataFrame({"seg_label": [1, 2], "seg_start": [0, 3], "seg_end": [2, 4]}),
+            pd.Series([1, 1, 1, 2, 2, -1, -1], dtype="int32"),
+            7,
+        ),
+        (
+            pd.DataFrame({"seg_label": [1, 2], "seg_start": [2, 4], "seg_end": [2, 5]}),
+            pd.Series([-1, -1, 1, -1, 2, 2, -1], dtype="int32"),
+            7,
+        ),
     ],
 )
 def test_sparse_to_dense(y_sparse, y_dense_expected, length):

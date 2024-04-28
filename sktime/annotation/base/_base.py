@@ -429,22 +429,29 @@ class BaseSeriesAnnotator(BaseEstimator):
 
         Parameters
         ----------
-        y_sparse : np.ndarray
-            If `y_sparse` is a 1D array then it should contain the index locations of
-            changepoints/anomalies.
+        y_sparse : {pd.DataFrame, pd.Series}
+            * If `y_sparse` is a series, it should contain the integer index locations
+              of anomalies/changepoints.
+            * If `y_sparse` is a dataframe it should contain the following columns:
+              - seg_label, the integer label of the segments.
+              - seg_start, the integer start points of the each segment.
+              - seg_end, the integer end points of the each segment.
         length : {int, None}, optional
-            If `length` is an integer, the returned dense array is right padded to
-            `length`. For change points or anomalies, the array is padded with zeros.
-            For segmentation, the array is padded with the label furthest to the right.
-            If `length` is an `None`, the returned dense array will have the same
-            length as the index of the final changepoint/segment/anomalie.
+            If `length` is an integer, the returned dense series is right padded to
+            `length`. For change points/anomalies, the series is padded with zeros.
+            If y_sparse is an series of anomalies/changepoints, the series is padded
+            with zeros. If y_sparse is a dataframe of segments, the returned series is
+            padded with -1's to represent unlabelled points.
 
         Returns
         -------
-        np.ndarray
-            If `y_sparse` is a 1D array of changepoint/anomaly indices then a 1D array
-            of 0's and 1's is returned. The array is 1 at the indices of the
-            anomalies/changepoints.
+        pd.Series
+            * If `y_sparse` is a series of changepoint/anomaly indices then a series of
+              0's and 1's is returned. 1's represent anomalies/changepoints.
+            * If `y_sparse` is a dataframe with columns: seg_label, seg_start, and
+              seg_end, then a series of segments will be returned. The segments are
+              labelled according to the seg_labels column. Areas which do not fall into
+              a segment are given the -1 label.
 
         Examples
         --------
@@ -466,8 +473,9 @@ class BaseSeriesAnnotator(BaseEstimator):
         >>> y_sparse = pd.DataFrame({
         ...     "seg_label": [1, 2, 1],
         ...     "seg_start": [0, 4, 6],
+        ...     "seg_end": [3, 5, 9],
         ... })
-        >>> BaseSeriesAnnotator.sparse_to_dense(y_sparse, 10)
+        >>> BaseSeriesAnnotator.sparse_to_dense(y_sparse)
         0    1
         1    1
         2    1
@@ -481,18 +489,49 @@ class BaseSeriesAnnotator(BaseEstimator):
         dtype: int32
         """
         if y_sparse.ndim == 1:
+            final_index = y_sparse.iloc[-1]
             if length is None:
                 length = y_sparse.iloc[-1] + 1
-            y_dense = pd.Series(np.zeros(length, dtype=np.int32))
+
+            if length <= final_index:
+                raise RuntimeError(
+                    "The length must be greater than the index of the final point."
+                )
+
+            y_dense = pd.Series(np.zeros(length, dtype="int32"))
             y_dense.iloc[y_sparse] = 1
             return y_dense
         elif y_sparse.ndim == 2:
+            final_index = y_sparse["seg_end"].iloc[-1]
             if length is None:
                 length = y_sparse["seg_end"].iat[-1] + 1
+
+            if length <= final_index:
+                raise RuntimeError(
+                    "The length must be greater than the index of the end point of the"
+                    "final segment."
+                )
             y_dense = pd.Series(np.full(length, np.nan))
-            y_dense.iloc[y_sparse["seg_start"]] = y_sparse["seg_label"]
+            y_dense.iloc[y_sparse["seg_start"]] = y_sparse["seg_label"].astype("int32")
+            y_dense.iloc[y_sparse["seg_end"]] = -y_sparse["seg_label"].astype("int32")
+
+            if np.isnan(y_dense.iat[0]):
+                y_dense.iloc[0] = -1  # -1 represent unlabelled sections
+
+            # The end points of the segments, and unclassified areas will have negative
+            # labels
             y_dense = y_dense.ffill().astype("int32")
-            return y_dense
+
+            # Replace the end points of the segments with correct label
+            y_dense.iloc[y_sparse["seg_end"]] = y_sparse["seg_label"].astype("int32")
+
+            # Areas with negative labels are unclassified so replace them with -1
+            y_dense[y_dense < 0] = -1
+            return y_dense.astype("int32")
+        else:
+            raise TypeError(
+                "The input, y_sparse, must be a 1D pandas series or 2D dataframe."
+            )
 
     @staticmethod
     def dense_to_sparse(y_dense):
