@@ -2,27 +2,72 @@
 
 __author__ = ["jnrusson1"]
 
-from sktime.networks.base import BaseDeepNetwork
-from sktime.utils.validation._dependencies import _check_dl_dependencies
 from tensorflow import keras
 from tensorflow.keras import layers
 
-#Wrapper Layers for using KerasTensor in tf func.
+from sktime.networks.base import BaseDeepNetwork
+from sktime.utils.validation._dependencies import _check_dl_dependencies
+
+
+# Wrapper Layers for using KerasTensor in tf func.
 class ReduceMean(layers.Layer):
+    """Wrapper layer to apply mean reduction along a specified axis.
+
+    This layer computes the mean of the input tensor along the specified axis.
+
+    Parameters
+    ----------
+    axis : int, optional (default=1)
+        The axis along which to compute the mean.
+    **kwargs
+        Additional keyword arguments passed to the base `layers.Layer` class.
+    """
+
     def __init__(self, axis=1, **kwargs):
-        super(ReduceMean, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.axis = axis
 
     def call(self, inputs):
+        """Apply mean reduction along the specified axis.
+
+        Parameters
+        ----------
+        inputs : tensor (input tensor)
+            The input tensor to apply mean reduction.
+        Returns: tensor
+            The tensor after applying mean reduction along the specified axis.
+        """
         return keras.backend.mean(inputs, axis=self.axis)
-    
+
+
 class Reshape(layers.Layer):
+    """Wrapper layer to reshape the input tensor.
+
+    This layer reshapes the input tensor to the specified shape.
+
+    Parameters
+    ----------
+    shape : tuple or list
+        The target shape for the input tensor.
+    **kwargs
+        Additional keyword arguments passed to the base `layers.Layer` class.
+    """
+
     def __init__(self, shape, **kwargs):
-        super(Reshape, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.shape = shape
 
     def call(self, inputs):
+        """Reshape the input tensor.
+
+        Parameters
+        ----------
+        inputs : tensor (input tensor)
+            The input tensor to apply reshape.
+        Returns: tensor
+        """
         return keras.backend.reshape(inputs, self.shape)
+
 
 class MACNNNetwork(BaseDeepNetwork):
     """Base MACNN Network for MACNNClassifier and MACNNRegressor.
@@ -95,7 +140,7 @@ class MACNNNetwork(BaseDeepNetwork):
         block_output: An instance of keras.layers.Layer
             Represents the last layer of a MACNN Block, to be used by the next block.
         """
-        from tensorflow import keras, reduce_mean, reshape
+        from tensorflow import keras
 
         conv_layers = []
         for i in range(len(self.kernel_size)):
@@ -157,7 +202,7 @@ class MACNNNetwork(BaseDeepNetwork):
         output_layer: An instance of keras.layers.Layer
             The output layer of this Network.
         """
-        from tensorflow import keras, reduce_mean
+        from tensorflow import keras
 
         input_layer = keras.layers.Input(shape=input_shape)
 
