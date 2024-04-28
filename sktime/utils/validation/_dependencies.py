@@ -165,7 +165,7 @@ def _check_soft_dependencies(
             # so if msg is passed it overrides the default messages
 
             if severity == "error":
-                raise ModuleNotFoundError(msg) from e
+                raise ModuleNotFoundError(msg)
             elif severity == "warning":
                 warnings.warn(msg, stacklevel=2)
                 return False
@@ -239,12 +239,11 @@ def _check_dl_dependencies(msg=None, severity="error"):
             "tensorflow is required for deep learning functionality in `sktime`. "
             "To install these dependencies, run: `pip install sktime[dl]`"
         )
-    try:
-        import_module("tensorflow")
+    if find_spec("tensorflow") is not None:
         return True
-    except ModuleNotFoundError as e:
+    else:
         if severity == "error":
-            raise ModuleNotFoundError(msg) from e
+            raise ModuleNotFoundError(msg)
         elif severity == "warning":
             warnings.warn(msg, stacklevel=2)
             return False
