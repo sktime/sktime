@@ -574,20 +574,27 @@ class BaseSeriesAnnotator(BaseEstimator):
         2          3          3
         3          2          5
         """
-        if y_dense.min() == 0:
+        if (y_dense == 0).any():
+            # y_dense is a series of changepoints/anomalies
             return pd.Series(np.where(y_dense == 1)[0])
-        elif y_dense.min() == 1:
-            # Prepend zero so the first point is always the start of a segment
-            diff = np.diff(y_dense, prepend=0)
-            segment_start_indexes = np.where(diff != 0)[0]
-            segment_labels = y_dense[diff.astype(bool)].to_numpy()
-            y_dense = pd.DataFrame(
-                {"seg_label": segment_labels, "seg_start": segment_start_indexes}
+        else:
+            segment_start_indexes = np.where(y_dense.diff() != 0)[0]
+            segment_end_indexes = np.where(y_dense.diff(-1) != 0)[0]
+            segment_labels = y_dense.iloc[segment_start_indexes].to_numpy()
+            y_sparse = pd.DataFrame(
+                {
+                    "seg_label": segment_labels,
+                    "seg_start": segment_start_indexes,
+                    "seg_end": segment_end_indexes,
+                }
             )
-            return y_dense
+
+            # -1 represents unclassified regions so we remove them
+            y_sparse = y_sparse.loc[y_sparse["seg_label"] != -1].reset_index(drop=True)
+            return y_sparse
 
     @staticmethod
-    def change_points_to_segments(y_sparse):
+    def change_points_to_segments(y_sparse, length=None):
         """Convert an array of change point indexes to segments.
 
         Parameters
@@ -614,12 +621,32 @@ class BaseSeriesAnnotator(BaseEstimator):
         2          3          2
         3          4          5
         """
-        if y_sparse[0] != 0:
+        if y_sparse.iat[0] != 0:
             # Insert a 0 at the start so the points before the first anomaly are
             # considered a segment
             y_sparse = pd.concat((pd.Series([0]), y_sparse))
+
+        # The final segment will have length 1 if `length` is not provided
+        end_index = length - 1 if length is not None else y_sparse.iat[-1]
+
+        if end_index < y_sparse.iat[-1]:
+            raise RuntimeError(
+                "`length` must be greater than the final index of the last "
+                "changepoint/anomalie."
+            )
+
         labels = np.arange(1, len(y_sparse) + 1)
-        segments = pd.DataFrame({"seg_label": labels, "seg_start": y_sparse.to_numpy()})
+
+        seg_start_indexes = y_sparse.to_numpy()
+        seg_end_indexes = np.append(seg_start_indexes[1:] - 1, end_index)
+
+        segments = pd.DataFrame(
+            {
+                "seg_label": labels,
+                "seg_start": seg_start_indexes,
+                "seg_end": seg_end_indexes,
+            }
+        )
         return segments
 
     @staticmethod
@@ -645,6 +672,7 @@ class BaseSeriesAnnotator(BaseEstimator):
         >>> change_points = pd.DataFrame({
         ...     "seg_label": [1, 2, 1],
         ...     "seg_start": [2, 5, 6],
+        ...     "seg_end": [4, 6, 8],
         ... })
         >>> BaseSeriesAnnotator.segments_to_change_points(change_points)
         0    2
@@ -652,6 +680,8 @@ class BaseSeriesAnnotator(BaseEstimator):
         2    6
         Name: seg_start, dtype: int64
         """
-        # The first segment should start at index 0 which is not a change point so we
-        # ignore it
-        return y_sparse["seg_start"]
+        y_dense = BaseSeriesAnnotator.sparse_to_dense(y_sparse)
+        diff = y_dense.diff()
+        diff.iat[0] = 0  # The first point is never a change point
+        change_points = np.where(diff != 0)[0]
+        return pd.Series(change_points)
