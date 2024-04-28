@@ -925,6 +925,8 @@ class scitype__transform_input(_BaseTag):
       and ``"scitype:transform-output"`` has value ``output_type``,
     * then, if I pass input data of scitype ``input_type`` to ``transform``
       of the transformer, I will get output data of scitype ``output_type``.
+    * further input types are handled by broadcasting over instances or indices,
+      where possible.
 
     For instance, if a transformer has ``"scitype:transform-input"`` being ``"Series"``,
     and ``"scitype:transform-output"`` being ``"Series"``, then ``transform`` will
@@ -1053,6 +1055,8 @@ class scitype__transform_output(_BaseTag):
       and ``"scitype:transform-output"`` has value ``output_type``,
     * then, if I pass input data of scitype ``input_type`` to ``transform``
       of the transformer, I will get output data of scitype ``output_type``.
+    * further input types are handled by broadcasting over instances or indices,
+      where possible.
 
     For instance, if a transformer has ``"scitype:transform-input"`` being ``"Series"``,
     and ``"scitype:transform-output"`` being ``"Series"``, then ``transform`` will
