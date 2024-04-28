@@ -18,6 +18,53 @@ available on GitHub.
 For upcoming changes and next releases, see our `milestones <https://github.com/sktime/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
 For our long-term plan, see our :ref:`roadmap`.
 
+Version 0.29.0 - 2024-04-28
+---------------------------
+
+Maintenance release:
+
+* scheduled deprecations and change actions
+
+For last non-maintenance content updates, see 0.28.1.
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``sktime`` now requires ``scikit-base>=0.6.1`` (core dependency), this has changed
+  from previously no lower bound.
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Forecasting
+^^^^^^^^^^^
+
+``cINNForecaster`` has been renamed to ``CINNForecaster``.
+The estimator is available under its past name at its
+current location until 0.30.0, when the old name will be removed.
+To prepare for the name change,
+replace any imports of ``cINNForecaster`` with imports of ``CINNForecaster``.
+
+
+Transformations
+^^^^^^^^^^^^^^^
+
+
+* The ``n_jobs`` parameter in the ``Catch22`` transformer has been removed.
+  Users should pass parallelization backend parameters via ``set_config`` instead.
+  To specify ``n_jobs``, use any of the backends supporting it in the
+  ``backend:parallel`` configuration, such as ``"loky"`` or ``"multithreading"``.
+  The ``n_jobs`` parameter should be passed via the
+  ``backend:parallel:params`` configuration.
+  To retain previous behaviour, with a specific setting of ``n_jobs=x``,
+  use ``set_config(**{"backend:parallel": "loky", "backend:parallel:params": {"n_jobs": x}})``.
+
+
+Contents
+~~~~~~~~
+
+
+
 Version 0.28.1 - 2024-04-25
 ---------------------------
 
