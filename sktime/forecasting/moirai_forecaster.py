@@ -11,10 +11,16 @@ if _check_soft_dependencies("gluonts", severity="none"):
     from gluonts.dataset.pandas import PandasDataset
 
 if _check_soft_dependencies("uni2ts", severity="none"):
-    from uni2ts.model.moirai import MoiraiForecast
+    from uni2ts.model.moirai import MoiraiForecast, MoiraiFinetune
 
 if _check_soft_dependencies("huggingface_hub", severity="none"):
     from huggingface_hub import hf_hub_download
+
+from uni2ts.data.builder.simple import _from_wide_dataframe
+import datasets
+from peft import LoraConfig, get_peft_model
+
+import transformers
 
 from sktime.forecasting.base import BaseForecaster
 
@@ -120,7 +126,7 @@ class MOIRAIForecaster(BaseForecaster):
             feat_dynamic_real = None
         ds = PandasDataset(df, target=target, feat_dynamic_real=feat_dynamic_real)
 
-        self.model = MoiraiForecast.load_from_checkpoint(
+        self.model = MoiraiFinetune.load_from_checkpoint(
             checkpoint_path=hf_hub_download(
                 repo_id=self.checkpoint_path, filename="model.ckpt"
             ),
@@ -139,10 +145,27 @@ class MOIRAIForecaster(BaseForecaster):
 
         if self.fit_strategy is None:
             return
-        # elif self.fit_strategy == "fft":
-        #     pass # TODO
+        elif self.fit_strategy == "lora":
+            peft_config = LoraConfig(r=8, lora_alpha=32, lora_dropout=0.0, target_modules=["v_proj"])
+            self.model = get_peft_model(self.model, peft_config)
         else:
             raise ValueError(f"Unknown fit strategy: {self.fit_strategy}")
+        
+        training_args = transformers.TrainingArguments(
+            **{
+                    "num_train_epochs": 1,
+                    "output_dir": "test_output",
+                    "per_device_train_batch_size": 32,}
+        )
+
+        hf_dataset = PyTorchDataset(y, 200, 200, X)
+        trainer = transformers.Trainer(
+            model=self.model,
+            args=training_args,
+            train_dataset=hf_dataset,
+            data_collator=None
+        )
+        trainer.train()
 
     def _predict(self, fh, X=None):
         if self.deterministic:
@@ -212,3 +235,79 @@ class MOIRAIForecaster(BaseForecaster):
                 "deterministic": True,
             }
         ]
+
+
+from torch.utils.data import Dataset
+
+# class PyTorchDataset(Dataset):
+#     """Dataset for use in sktime deep learning forecasters."""
+
+#     def __init__(self, df, length):
+#         self.df = df
+#         self.length = length
+
+
+#     def __len__(self):
+#         """Return length of dataset."""
+#         return len(self.df) - self.length
+
+#     def __getitem__(self, idx):
+#         """Return data."""
+#         return {
+#             str(entry): 
+#             torch.from_numpy(self.df[entry][idx: idx + self.length].values) for entry in self.df.columns
+#         }
+        
+class PyTorchDataset(Dataset):
+    """Dataset for use in sktime deep learning forecasters."""
+
+    def __init__(self, y, seq_len, fh=200, X=None):
+        self.y = y.values
+        self.X = X.values if X is not None else X
+        self.seq_len = seq_len
+        self.fh = 1
+
+    def __len__(self):
+        """Return length of dataset."""
+        return max(len(self.y) - self.seq_len - self.fh + 1, 0)
+
+    def __getitem__(self, i):
+        """Return data point."""
+        from torch import from_numpy, tensor
+
+        hist_y = tensor(self.y[i : i + self.seq_len]).float()
+        if self.X is not None:
+            exog_data = tensor(
+                self.X[i + self.seq_len : i + self.seq_len + self.fh]
+            ).float()
+            hist_exog = tensor(self.X[i : i + self.seq_len]).float()
+        else:
+            exog_data = tensor([[]] * self.fh)
+            hist_exog = tensor([[]] * self.seq_len)
+        return {
+            "past_target": hist_y,
+            "past_feat_dynamic_real": hist_exog,
+            "feat_dynamic_real": exog_data,
+            "observed_mask": (~hist_y.isnan()).to(int),
+            "label": from_numpy(
+                self.y[i + self.seq_len : i + self.seq_len + self.fh]
+            ).float(),
+        }
+        # target: Float[torch.Tensor, "*batch seq_len max_patch"],
+        # observed_mask: Bool[torch.Tensor, "*batch seq_len max_patch"],
+        # sample_id: Int[torch.Tensor, "*batch seq_len"],
+        # time_id: Int[torch.Tensor, "*batch seq_len"],
+        # variate_id: Int[torch.Tensor, "*batch seq_len"],
+        # prediction_mask: Bool[torch.Tensor, "*batch seq_len"],
+        # patch_size: Int[torch.Tensor, "*batch seq_len"],
+        # num_samples: Optional[int] = None,
+    # past_target,
+    # past_observed_target,
+    # past_is_pad,
+    # feat_dynamic_real,
+    # observed_feat_dynamic_real,
+    # past_feat_dynamic_real,
+    # past_observed_feat_dynamic_real,
+    # num_samples,
+    # label,
+    # label_ids.
