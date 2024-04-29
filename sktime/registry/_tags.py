@@ -336,6 +336,51 @@ class python_dependencies_alias(_BaseTag):
     }
 
 
+class env_marker(_BaseTag):
+    """Environment marker requirement for the object (PEP 508).
+
+    Part of packaging metadata for the object.
+
+    - String name: ``"env_marker"``
+    - Private tag, developer and framework facing
+    - Values: str, PEP 508 compliant environment marker
+    - Example: ``"platform_system == 'Linux'"``
+    - Default: no environment marker (``None``)
+
+    ``sktime`` manages objects and estimators like mini-packages,
+    with their own dependencies and compatibility requirements.
+    Dependencies are specified in the tags:
+
+    - ``"python_version"``: Python version specifier (PEP 440) for the object,
+    - ``"python_dependencies"``: list of required Python packages (PEP 440)
+    - ``"python_dependencies_alias"``: alias for package names,
+      if different from import names
+    - ``"env_marker"``: environment marker for the object (PEP 508)
+    - ``"requires_cython"``: whether the object requires a C compiler present
+
+    The ``env_marker`` tag of an object is a string,
+    specifying a PEP 508 compliant environment marker for the object.
+
+        The tag is used in packaging metadata for the object,
+    and is used internally to check compatibility of the object with
+    the build environment, to raise informative error messages.
+
+    Developers can use ``_check_env_marker`` from ``skbase.utils.dependencies``
+    to check compatibility of the python constraint of the object
+    with the current build environment, or
+    ``_check_estimator_deps`` to check compatibility of the object
+    (including further checks) with the current build environment.
+    """
+
+    _tags = {
+        "tag_name": "env_marker",
+        "parent_type": "object",
+        "tag_type": "str",
+        "short_descr": "environment marker (PEP 508) requirement for estimator, or None = no marker",  # noqa: E501
+        "user_facing": False,
+    }
+
+
 class requires_cython(_BaseTag):
     """Whether the object requires a C compiler present, such as libomp, gcc.
 
