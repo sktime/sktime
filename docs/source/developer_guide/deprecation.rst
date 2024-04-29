@@ -27,8 +27,13 @@ then no release of ``sktime`` should change, without warning:
 
 * import location of ``BarForecaster``
 * argument signature of ``BarForecaster``, including name, order, and defaults of arguments
-* argument signature of ``fit``, ``predict``, including name, order, and defaults of arguments
-* the algorithm that ``BarForecaster`` carries out for the given arguments
+* the abstract algorithm that ``BarForecaster`` carries out for the given arguments
+
+Changes that can be carried out without warning:
+
+* adding more arguments at the end of the argument list, with a default value that retains prior behaviour
+* refactoring of internal code, as long as the public API remains the same
+* changing the implementation without changing the abstract algorithm, e.g., for performance reasons
 
 The deprecation policy outlined in this document provides details on how to carry out
 such changes in a user-friendly and reliable way.
