@@ -4,13 +4,38 @@
 Deprecation
 ===========
 
-Before we can make changes to sktime's user interface, we need to make sure that users have time to make the necessary adjustments in their code.
-For this reason, we first need to deprecate functionality and change it only in a next release.
+``sktime`` aims to be stable and reliable towards its users.
+Our high-level policy to ensure this is:
 
-.. note::
+"``sktime`` should never break user code without a clear and actionable warning
+given at least one (MINOR) release cycle in advance."
 
-    For upcoming changes and next releases, see our `Milestones <https://github.com/sktime/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
-    For our long-term plan, see our :ref:`roadmap`.
+Here, "break" expressly includes a change to abstract logic, such as the algorithm
+being used, not just changes that lead to exceptions or performance degradation.
+
+For instance, if a user has code
+
+.. code:: python
+
+    from sktime.forecasting.foo import BarForecaster
+
+    bar = BarForecaster(42, x=43)
+    bar.fit(y_train, fh=[1, 2, 3])
+    y_pred = bar.predict()
+
+then no release of ``sktime`` should change, without warning:
+
+* import location of ``BarForecaster``
+* argument signature of ``BarForecaster``, including name, order, and defaults of arguments
+* argument signature of ``fit``, ``predict``, including name, order, and defaults of arguments
+* the algorithm that ``BarForecaster`` carries out for the given arguments
+
+The deprecation policy outlined in this document provides details on how to carry out
+such changes in a user-friendly and reliable way.
+
+It is accompanied by formulaic patterns for developers, with examples,
+and a process for release managers, to make the policy easy to follow.
+
 
 Deprecation policy
 ==================
