@@ -1254,7 +1254,9 @@ def load_solar(
 
         df = (
             pd.read_csv(
-                url, index_col=["gsp_id", "datetime_gmt"], parse_dates=["datetime_gmt"]
+                url,
+                index_col=["gsp_id", "datetime_gmt"],
+                parse_dates=["datetime_gmt"],
             )
             .droplevel(0)
             .sort_index()
@@ -1413,9 +1415,7 @@ def load_forecastingdata(
         # valid dataset names for classification, regression, forecasting datasets repo
         if name not in list(tsf_all_datasets):
             raise ValueError(
-                f"{name} is not a valid dataset name. \
-                    List of valid dataset names can be found at \
-                    sktime.datasets.tsf_dataset_names.tsf_all_datasets"
+                f"Error in load_forecastingdata, Invalid dataset name = {name}."
             )
 
         url = f"https://zenodo.org/record/{tsf_all[name]}/files/{name}.zip"

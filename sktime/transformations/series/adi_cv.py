@@ -39,6 +39,13 @@ class ADICVTransformer(BaseTransformer):
     features : list[str] | None (default = ['adi', 'cv2', 'class'])
         Specifies all of the feature values to be calculated
 
+    Examples
+    --------
+    >>> from sktime.transformations.series.adi_cv import ADICVTransformer
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> transformer = ADICVTransformer()
+    >>> y_hat = transformer.fit_transform(y)
     """
 
     _tags = {
@@ -126,7 +133,7 @@ class ADICVTransformer(BaseTransformer):
         adi_value = (len(X_non_zero) - 1) / len(X) - 1
 
         # Calculating variance for all non-zero values
-        variance = X_non_zero.var()
+        variance = X_non_zero.var().iloc[0]
         cv2_value = variance / len(X_non_zero)
 
         # Calculating the class type
@@ -151,13 +158,13 @@ class ADICVTransformer(BaseTransformer):
         return_dict = {}
 
         if "adi" in self.features:
-            return_dict["adi"] = adi_value
+            return_dict["adi"] = [adi_value]
 
         if "cv2" in self.features:
-            return_dict["cv2"] = cv2_value
+            return_dict["cv2"] = [cv2_value]
 
         if "class" in self.features:
-            return_dict["class"] = class_type
+            return_dict["class"] = [class_type]
 
         df = pd.DataFrame(return_dict)
 
@@ -189,9 +196,9 @@ class ADICVTransformer(BaseTransformer):
         # in independent test cases!
 
         params = [
-            {"adi_threshold": 0.0, "cv_threshold": 0.49, "class": None},
-            {"adi_threshold": 1.32, "cv_threshold": 0.0, "class": None},
-            {"adi_threshold": 0.0, "cv_threshold": 0.0, "class": None},
+            {"features": None, "adi_threshold": 0.0, "cv_threshold": 0.49},
+            {"features": None, "adi_threshold": 1.32, "cv_threshold": 0.0},
+            {"features": None, "adi_threshold": 0.0, "cv_threshold": 0.0},
         ]
 
         return params

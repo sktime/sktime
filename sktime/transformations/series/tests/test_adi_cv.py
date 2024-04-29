@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.transformations.series.adi_cv import ADICVExtractor
+from sktime.transformations.series.adi_cv import ADICVTransformer
 
 
 def _generate_smooth_series(size: int = 750):
@@ -126,7 +126,7 @@ def test_adi_cv_extractor(series_generator, expected_class):
     """
 
     series = series_generator()
-    transformer = ADICVExtractor()
+    transformer = ADICVTransformer()
 
     df = transformer(series)
     assert df["class"].iloc[0] == expected_class
