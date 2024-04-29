@@ -59,6 +59,9 @@ EXCLUDE_ESTIMATORS = [
     "TBATS",
     "AutoARIMA",
     "StatsForecastAutoARIMA",
+    "SARIMAX",
+    "StatsModelsARIMA",
+    "ShapeletLearningClassifierTslearn",
 ]
 
 
