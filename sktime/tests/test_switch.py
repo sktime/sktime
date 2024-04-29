@@ -58,10 +58,12 @@ def run_test_for_class(cls):
     bool : True if class should be tested, False otherwise
         if cls was a list, is True iff True for at least one of the classes in the list
     """
-    if isinstance(cls, list):
+    if isinstance(cls, (list, tuple)):
         return all(_run_test_for_class(x) for x in cls)
-    else:
-        return _run_test_for_class(cls)
+    # if object is passed, obtain the class - objects are not hashable
+    if hasattr(cls, "get_class_tag") and not isclass(cls):
+        cls = cls.__class__
+    return _run_test_for_class(cls)
 
 
 @lru_cache
