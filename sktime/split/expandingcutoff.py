@@ -8,12 +8,13 @@ __all__ = [
     "ExpandingCutoffSplitter",
 ]
 
+from typing import Optional
+
 import numpy as np
 import pandas as pd
-from typing import Optional
+
 from sktime.split.base import BaseSplitter
 from sktime.split.base._common import ACCEPTED_Y_TYPES, _check_fh, _inputs_are_supported
-
 from sktime.utils.validation.forecasting import check_step_length
 
 
@@ -64,7 +65,7 @@ class ExpandingCutoffSplitter(BaseSplitter):
     """
 
     def __init__(self, cutoff, fh, step_length):
-        super(ExpandingCutoffSplitter, self).__init__()
+        super().__init__()
         self.cutoff = cutoff
         self.fh = fh
         self.step_length = step_length
@@ -74,13 +75,15 @@ class ExpandingCutoffSplitter(BaseSplitter):
         """
         Generate indices to split data into training and testing sets.
 
-        Parameters:
+        Parameters
+        ----------
         y : array-like, shape = [n_samples]
             Time series data.
         fh : int, default=None
             Forecast horizon, if None, uses self.fh
 
-        Yields:
+        Yields
+        ------
         train : ndarray
             The training set indices for that split.
         test : ndarray

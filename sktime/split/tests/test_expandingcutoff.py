@@ -5,12 +5,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
-
+from sktime.forecasting.base import ForecastingHorizon
 from sktime.split import ExpandingCutoffSplitter
 from sktime.split.tests.test_split import _check_cv
-from sktime.forecasting.base import ForecastingHorizon
-from sktime.utils._testing.series import _make_series
 from sktime.utils._testing.hierarchical import _make_hierarchical
+from sktime.utils._testing.series import _make_series
 
 
 def test_expandingcutoff_datelike_index_001():
@@ -97,9 +96,9 @@ def test_expandingcutoff_hiearchical_splitloc_005():
 
 def test_expandingcutoff_hiearchical_forecastbylevel_006():
     """Test hiearchical with forecast by level"""
-    from sktime.forecasting.naive import NaiveForecaster
-    from sktime.forecasting.model_selection import ForecastingGridSearchCV
     from sktime.forecasting.compose import ForecastByLevel
+    from sktime.forecasting.model_selection import ForecastingGridSearchCV
+    from sktime.forecasting.naive import NaiveForecaster
     from sktime.utils._testing.hierarchical import _make_hierarchical
 
     y = _make_hierarchical(
