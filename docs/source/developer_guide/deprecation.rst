@@ -37,7 +37,7 @@ Changes that can be carried out without warning:
 * changing the implementation without changing the abstract algorithm, e.g., for performance reasons
 
 The deprecation policy outlined in this document provides details on how to carry out
-such changes in a user-friendly and reliable way.
+changes that need change or deprecation handling, in a user-friendly and reliable way.
 
 It is accompanied by formulaic patterns for developers, with examples,
 and a process for release managers, to make the policy easy to follow.
