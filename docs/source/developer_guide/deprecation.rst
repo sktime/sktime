@@ -31,7 +31,8 @@ then no release of ``sktime`` should change, without warning:
 
 Changes that can be carried out without warning:
 
-* adding more arguments at the end of the argument list, with a default value that retains prior behaviour
+* adding more arguments at the end of the argument list, with a default value that retains prior behaviour,
+  as long as the new arguments are well-documented
 * refactoring of internal code, as long as the public API remains the same
 * changing the implementation without changing the abstract algorithm, e.g., for performance reasons
 
