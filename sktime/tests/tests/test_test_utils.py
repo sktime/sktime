@@ -15,10 +15,12 @@ def test_run_test_for_class():
     """Test that run_test_for_class runs tests for various cases."""
     # estimator on the exception list
     from sktime.classification.hybrid import HIVECOTEV2
-    # estimator without soft deps
-    from sktime.forecasting.naive import NaiveForecaster
+
     # estimator with soft deps
     from sktime.forecasting.fbprophet import Prophet
+
+    # estimator without soft deps
+    from sktime.forecasting.naive import NaiveForecaster
 
     # boolean flag for whether to run tests for all estimators
     from sktime.tests.test_all_estimators import ONLY_CHANGED_MODULES
