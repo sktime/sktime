@@ -141,19 +141,13 @@ class BaseSeriesAnnotator(BaseEstimator):
 
         return Y
 
-    def transform(self, X, length=None):
+    def transform(self, X):
         """Create annotations on test/deployment data.
 
         Parameters
         ----------
         X : pd.DataFrame
             Data to annotate (time series).
-        length : {int, None}, optional
-            If `length` is an integer, the returned dense series is right padded to
-            `length`. For change points/anomalies, the series is padded with zeros.
-            If y_sparse is an series of anomalies/changepoints, the series is padded
-            with zeros. If y_sparse is a dataframe of segments, the returned series is
-            padded with -1's to represent unlabelled points.
 
         Returns
         -------
@@ -166,7 +160,7 @@ class BaseSeriesAnnotator(BaseEstimator):
         elif self.task == "segmentation":
             Y = self.predict_segments(X)
 
-        return self.sparse_to_dense(Y, length)
+        return self.sparse_to_dense(Y, len(X))
 
     def predict_scores(self, X):
         """Return scores for predicted annotations on test/deployment data.
