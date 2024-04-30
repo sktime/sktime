@@ -83,7 +83,7 @@ def run_test_for_class(cls, return_reason=False):
         return run
 
     if isinstance(cls, (list, tuple)):
-        runs = [run_test_for_class(x) for x in cls]
+        runs = [run_test_for_class(x, return_reason=True) for x in cls]
         reasons = [x[1] for x in runs]
 
         # if any of the classes are missing dependencies, return False
