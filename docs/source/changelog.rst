@@ -25,6 +25,7 @@ Version 0.29.0 - 2024-04-28
 Maintenance release:
 
 * scheduled deprecations and change actions
+* optimization of test collection speed
 
 For last non-maintenance content updates, see 0.28.1.
 
@@ -62,13 +63,16 @@ Contents
 ~~~~~~~~
 
 * [MNT] change cycle (0.29.0) for renaming ``cINNForecaster`` to ``CINNForecaster`` (:pr:`6238`) :user:`geetu040`
+* [MNT] speed up test collection - cache differential testing switch utilities (:pr:`6357`) :user:`fkiraly`, :user:`yarnabrina`
+* [MNT] temporary skip of estimators involved in timeouts #6344 (:pr:`6361`) :user:`fkiraly`
 * [MNT] 0.29.0 deprecations and change actions (:pr:`6350`) :user:`fkiraly`
 
 Contributors
 ~~~~~~~~~~~~
 
 :user:`fkiraly`,
-:user:`geetu040`
+:user:`geetu040`,
+:user:`yarnabrina`
 
 
 Version 0.28.1 - 2024-04-25
