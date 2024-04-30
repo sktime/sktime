@@ -9,6 +9,8 @@ __author__ = ["fkiraly"]
 from functools import lru_cache
 from inspect import getmro, isclass
 
+from sktime.tests._config import EXCLUDE_ESTIMATORS
+
 
 def run_test_for_class(cls):
     """Check if test should run for a class or function.
@@ -48,6 +50,10 @@ def run_test_for_class(cls):
       at least one of criteria 2-4 above.
       If ``ONLY_CHANGED_MODULES`` is False, this condition is always True.
 
+    Also checks whether the class or function is on the exclude override list,
+    EXCLUDE_ESTIMATORS in sktime.tests._config (a list of strings, of names).
+    If so, the tests are always skipped, irrespective of the other conditions.
+
     Parameters
     ----------
     cls : class, function or list of classes/functions
@@ -63,6 +69,9 @@ def run_test_for_class(cls):
     # if object is passed, obtain the class - objects are not hashable
     if hasattr(cls, "get_class_tag") and not isclass(cls):
         cls = cls.__class__
+    # check whether estimator is on the exclude override list
+    if cls.__name__ in EXCLUDE_ESTIMATORS:
+        return False
     return _run_test_for_class(cls)
 
 
