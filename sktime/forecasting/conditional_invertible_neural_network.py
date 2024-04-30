@@ -17,7 +17,6 @@ from sktime.networks.cinn import CINNNetwork
 from sktime.transformations.merger import Merger
 from sktime.transformations.series.fourier import FourierFeatures
 from sktime.transformations.series.summarize import WindowSummarizer
-from sktime.utils.warnings import warn
 
 if _check_soft_dependencies("torch", severity="none"):
     import torch
@@ -177,18 +176,6 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         self.delta = delta
         self.val_split = val_split
         super().__init__(num_epochs, batch_size, lr=lr)
-
-        # TODO 0.30.0: remove this warning
-        warn(
-            "cINNForecaster has been renamed to CINNForecaster in sktime 0.29.0, "
-            "The estimator is available under the future name at its "
-            "current location, and will be available under its deprecated name "
-            "until 0.30.0. "
-            "To prepare for the name change, "
-            "replace cINNForecaster with CINNForecaster",
-            DeprecationWarning,
-            obj=self,
-        )
 
     def _fit(self, y, fh, X=None):
         """Fit forecaster to training data.
@@ -620,7 +607,3 @@ class _EarlyStopper:
             if self.counter >= self.patience:
                 return True
         return False
-
-
-# TODO 0.30.0: remove this alias altogether
-cINNForecaster = CINNForecaster
