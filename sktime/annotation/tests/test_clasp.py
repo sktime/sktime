@@ -27,7 +27,7 @@ def test_clasp_sparse():
     clasp = ClaSPSegmentation(period_size, n_cps=1)
     clasp.fit(ts)
     found_cps = clasp.predict(ts)
-    scores = clasp.predict_scores(ts)
+    scores, _ = clasp.predict_scores(ts)
 
     assert len(found_cps) == 1 and found_cps[0] == 893
     assert len(scores) == 1 and scores[0] > 0.74
@@ -46,10 +46,13 @@ def test_clasp_dense():
     ts, period_size, cps = load_gun_point_segmentation()
 
     # compute a ClaSP segmentation
-    clasp = ClaSPSegmentation(period_size, n_cps=1, fmt="dense")
+    clasp = ClaSPSegmentation(period_size, n_cps=1)
     clasp.fit(ts)
-    segmentation = clasp.predict(ts)
-    scores = clasp.predict_scores(ts)
+    segmentation = clasp.transform(ts)
 
-    assert len(segmentation) == 2 and segmentation[0].right == 893
-    assert np.argmax(scores) == 893
+    # Find the index of the first 1
+    cp_index = np.where(segmentation == 1)[0][0]
+    _, profile = clasp.predict_scores(ts)
+
+    assert len(segmentation) == len(ts) and cp_index == 893
+    assert np.argmax(profile) == 893
