@@ -12,7 +12,7 @@ from inspect import getmro, isclass
 from sktime.tests._config import EXCLUDE_ESTIMATORS
 
 
-def run_test_for_class(cls):
+def run_test_for_class(cls, return_reason=False):
     """Check if test should run for a class or function.
 
     This checks the following conditions:
@@ -58,26 +58,98 @@ def run_test_for_class(cls):
     ----------
     cls : class, function or list of classes/functions
         class for which to determine whether it should be tested
+    return_reason: bool, optional, default=False
+        whether to return the reason for running or skipping the test
 
     Returns
     -------
     bool : True if class should be tested, False otherwise
         if cls was a list, is True iff True for at least one of the classes in the list
+    reason: str, reason to run or skip the test, returned only if ``return_reason=True``
+
+        * "False_exclude_list" - skip reason, class is on the exclude list
+        * "False_required_deps_missing" - skip reason, required dependencies are missing
+        * "False_no_change" - skip reason, no change in class or dependencies
+        * "True_run_always" - run reason, run always
+        * "True_pyproject_change" - run reason, dep in ``pyproject.toml`` has changed
+        * "True_changed_tests" - run reason, tests covering class have changed
+        * "True_changed_class" - run reason, module containing class has changed
+
+        If multiple reasons are present, the first one in the above list is returned.
     """
+
+    def _return(run, reason):
+        if return_reason:
+            return run, reason
+        return run
+
     if isinstance(cls, (list, tuple)):
-        return all(run_test_for_class(x) for x in cls)
+        runs = [run_test_for_class(x, return_reason=True) for x in cls]
+        reasons = [x[1] for x in runs]
+
+        # theck the negative reasons that would cause the test to be skipped
+        #
+        # this excludes the "no change" reason, because:
+        # * special negative reasons cause entire list to be skipped
+        # * otherwise, positive reason causes the entire list to be run
+        # * if no positive reason, then list is skipped due to lack of positive reason
+        #
+        # if any of the classes are on the skip list, return False
+        # if any of the classes are missing dependencies, return False
+        NEG_REASONS = [
+            "False_exclude_list",
+            "False_required_deps_missing",
+        ]
+        for neg_reason in NEG_REASONS:
+            if any(reason == neg_reason for reason in reasons):
+                return _return(False, neg_reason)
+
+        # now check the "any of the classes should be tested" condition
+        POS_REASONS = [
+            "True_run_always",
+            "True_pyproject_change",
+            "True_changed_tests",
+            "True_changed_class",
+        ]
+        for pos_reason in POS_REASONS:
+            if any(reason == pos_reason for reason in reasons):
+                return _return(True, pos_reason)
+
+        # otherwise, we do not run, and the reason is "no change"
+        return False, "False_no_change"
+
     # if object is passed, obtain the class - objects are not hashable
     if hasattr(cls, "get_class_tag") and not isclass(cls):
         cls = cls.__class__
     # check whether estimator is on the exclude override list
     if cls.__name__ in EXCLUDE_ESTIMATORS:
-        return False
-    return _run_test_for_class(cls)
+        return False, "False_exclude_list"
+
+    # handle return reason or not
+    run, reason = _run_test_for_class(cls)
+    if return_reason:
+        return run, reason
+    return run
 
 
 @lru_cache
 def _run_test_for_class(cls):
-    """Check if test should run - cached with hashable cls."""
+    """Check if test should run - cached with hashable cls.
+
+    Returns
+    -------
+    bool : True if class should be tested, False otherwise
+    reason : str, reason to run or skip the test, one of:
+
+        * "False_required_deps_missing" - skip reason, required dependencies are missing
+        * "False_no_change" - skip reason, no change in class or dependencies
+        * "True_run_always" - run reason, run always
+        * "True_pyproject_change" - run reason, dep in ``pyproject.toml`` has changed
+        * "True_changed_tests" - run reason, tests covering class have changed
+        * "True_changed_class" - run reason, module containing class has changed
+
+        If multiple reasons are present, the first one in the above list is returned.
+    """
 
     from sktime.tests.test_all_estimators import ONLY_CHANGED_MODULES
     from sktime.utils.git_diff import get_packages_with_changed_specs, is_class_changed
@@ -131,27 +203,37 @@ def _run_test_for_class(cls):
     # Condition 1:
     # if any of the required soft dependencies are not present, do not run the test
     if not _required_deps_present(cls):
-        return False
+        return False, "False_required_deps_missing"
     # otherwise, continue
 
     # if ONLY_CHANGED_MODULES is off: always True
     # tests are always run if soft dependencies are present
     if not ONLY_CHANGED_MODULES:
-        return True
+        return True, "True_run_always"
 
-    # Condition 2:
-    # any of the modules containing any of the classes in the list have changed
-    # or any of the modules containing any parent classes in sktime have changed
-    cond2 = _is_class_changed_or_sktime_parents(cls)
+    # run the test if and only if at least one of the conditions 2-4 are met
+    # conditions are checked in order to minimize runtime due to git diff etc
+
+    # Condition 4:
+    # the package requirements for any dependency in pyproject.toml have changed
+    cond4 = _is_impacted_by_pyproject_change(cls)
+    if cond4:
+        return True, "True_pyproject_change"
 
     # Condition 3:
     # if the object is an sktime BaseObject, and one of the test classes
     # covering the class have changed, then run the test
     cond3 = _tests_covering_class_changed(cls)
+    if cond3:
+        return True, "True_changed_tests"
 
-    # Condition 4:
-    # the package requirements for any dependency in pyproject.toml have changed
-    cond4 = _is_impacted_by_pyproject_change(cls)
+    # Condition 2:
+    # any of the modules containing any of the classes in the list have changed
+    # or any of the modules containing any parent classes in sktime have changed
+    cond2 = _is_class_changed_or_sktime_parents(cls)
+    if cond2:
+        return True, "True_changed_class"
 
-    # run the test if and only if at least one of the conditions 2-4 are met
-    return cond2 or cond3 or cond4
+    # if none of the conditions are met, do not run the test
+    # reason is that there was no change
+    return False, "False_no_change"
