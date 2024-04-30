@@ -162,8 +162,11 @@ class FinancialHolidaysTransformer(BaseTransformer):
         """
         del parameter_set  # avoid being detected as unused by ``vulture`` like tools
 
-        params = [ {"market": "XNYS"}, {"market": "ECB"}, ]
-        return params
+        params = [ {"market": "XNYS"}, {"market": "ECB"} ]
+        if parameter_set="ECB":
+            return params[1]
+        else:
+            return params
 
 
 __all__ = ["FinancialHolidaysTransformer"]
