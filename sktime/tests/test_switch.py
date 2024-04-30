@@ -70,12 +70,18 @@ def run_test_for_class(cls, return_reason=False):
         * "False_exclude_list" - skip reason, class is on the exclude list
         * "False_required_deps_missing" - skip reason, required dependencies are missing
         * "False_no_change" - skip reason, no change in class or dependencies
-        * "True_run_always" - run reason, run always
-        * "True_pyproject_change" - run reason, dep in ``pyproject.toml`` has changed
-        * "True_changed_tests" - run reason, tests covering class have changed
-        * "True_changed_class" - run reason, module containing class has changed
+        * "True_run_always" - run reason, run always, as ``ONLY_CHANGED_MODULES=False``
+        * "True_pyproject_change" - run reason, dep(s) in ``pyproject.toml`` changed
+        * "True_changed_tests" - run reason, test(s) covering class have changed
+        * "True_changed_class" - run reason, module(s) containing class changed
 
         If multiple reasons are present, the first one in the above list is returned.
+
+        If ``cls`` was a list, then:
+
+        * reasons to skip - except "no change" - cause the entire list to be skipped
+        * otherwise, any reasons to run cause the entire list to be run
+        * otherwise, the list is not run due to "no change"
     """
 
     def _return(run, reason):
@@ -87,7 +93,7 @@ def run_test_for_class(cls, return_reason=False):
         runs = [run_test_for_class(x, return_reason=True) for x in cls]
         reasons = [x[1] for x in runs]
 
-        # theck the negative reasons that would cause the test to be skipped
+        # check the negative reasons that would cause the test to be skipped
         #
         # this excludes the "no change" reason, because:
         # * special negative reasons cause entire list to be skipped
@@ -116,25 +122,29 @@ def run_test_for_class(cls, return_reason=False):
                 return _return(True, pos_reason)
 
         # otherwise, we do not run, and the reason is "no change"
-        return False, "False_no_change"
+        return _return(False, "False_no_change")
 
     # if object is passed, obtain the class - objects are not hashable
     if hasattr(cls, "get_class_tag") and not isclass(cls):
         cls = cls.__class__
     # check whether estimator is on the exclude override list
     if cls.__name__ in EXCLUDE_ESTIMATORS:
-        return False, "False_exclude_list"
+        return _return(False, "False_exclude_list")
 
-    # handle return reason or not
+    # now we know that cls is a class or function,
+    # and not on the exclude list
     run, reason = _run_test_for_class(cls)
-    if return_reason:
-        return run, reason
-    return run
+    return _return(run, reason)
 
 
 @lru_cache
 def _run_test_for_class(cls):
     """Check if test should run - cached with hashable cls.
+
+    Parameters
+    ----------
+    cls : class, function or list of classes/functions
+        class for which to determine whether it should be tested
 
     Returns
     -------
@@ -143,10 +153,10 @@ def _run_test_for_class(cls):
 
         * "False_required_deps_missing" - skip reason, required dependencies are missing
         * "False_no_change" - skip reason, no change in class or dependencies
-        * "True_run_always" - run reason, run always
-        * "True_pyproject_change" - run reason, dep in ``pyproject.toml`` has changed
-        * "True_changed_tests" - run reason, tests covering class have changed
-        * "True_changed_class" - run reason, module containing class has changed
+        * "True_run_always" - run reason, run always, as ``ONLY_CHANGED_MODULES=False``
+        * "True_pyproject_change" - run reason, dep(s) in ``pyproject.toml`` changed
+        * "True_changed_tests" - run reason, test(s) covering class have changed
+        * "True_changed_class" - run reason, module(s) containing class changed
 
         If multiple reasons are present, the first one in the above list is returned.
     """
