@@ -568,11 +568,11 @@ class BaseSeriesAnnotator(BaseEstimator):
         dtype: int64
         >>> segments = pd.Series([1, 2, 2, 3, 3, 2])
         >>> BaseSeriesAnnotator.dense_to_sparse(segments)
-           seg_label  seg_start
-        0          1          0
-        1          2          1
-        2          3          3
-        3          2          5
+           seg_label  seg_start  seg_end
+        0          1          0        0
+        1          2          1        2
+        2          3          3        4
+        3          2          5        5
         """
         if (y_dense == 0).any():
             # y_dense is a series of changepoints/anomalies
@@ -615,11 +615,11 @@ class BaseSeriesAnnotator(BaseEstimator):
         >>> from sktime.annotation.base._base import BaseSeriesAnnotator
         >>> change_points = pd.Series([1, 2, 5])
         >>> BaseSeriesAnnotator.change_points_to_segments(change_points)
-           seg_label  seg_start
-        0          1          0
-        1          2          1
-        2          3          2
-        3          4          5
+           seg_label  seg_start  seg_end
+        0          1          0        0
+        1          2          1        1
+        2          3          2        4
+        3          4          5        5
         """
         if y_sparse.iat[0] != 0:
             # Insert a 0 at the start so the points before the first anomaly are
@@ -671,14 +671,14 @@ class BaseSeriesAnnotator(BaseEstimator):
         >>> from sktime.annotation.base._base import BaseSeriesAnnotator
         >>> change_points = pd.DataFrame({
         ...     "seg_label": [1, 2, 1],
-        ...     "seg_start": [2, 5, 6],
+        ...     "seg_start": [2, 5, 7],
         ...     "seg_end": [4, 6, 8],
         ... })
         >>> BaseSeriesAnnotator.segments_to_change_points(change_points)
         0    2
         1    5
-        2    6
-        Name: seg_start, dtype: int64
+        2    7
+        dtype: int64
         """
         y_dense = BaseSeriesAnnotator.sparse_to_dense(y_sparse)
         diff = y_dense.diff()
