@@ -67,6 +67,7 @@ def run_test_for_class(cls, return_reason=False):
         if cls was a list, is True iff True for at least one of the classes in the list
     reason: str, reason to run or skip the test, returned only if ``return_reason=True``
 
+        * "False_exclude_list" - skip reason, class is on the exclude list
         * "False_required_deps_missing" - skip reason, required dependencies are missing
         * "False_no_change" - skip reason, no change in class or dependencies
         * "True_run_always" - run reason, run always
@@ -86,9 +87,22 @@ def run_test_for_class(cls, return_reason=False):
         runs = [run_test_for_class(x, return_reason=True) for x in cls]
         reasons = [x[1] for x in runs]
 
+        # theck the negative reasons that would cause the test to be skipped
+        #
+        # this excludes the "no change" reason, because:
+        # * special negative reasons cause entire list to be skipped
+        # * otherwise, positive reason causes the entire list to be run
+        # * if no positive reason, then list is skipped due to lack of positive reason
+        #
+        # if any of the classes are on the skip list, return False
         # if any of the classes are missing dependencies, return False
-        if any(reason == "False_required_deps_missing" for reason in reasons):
-            return _return(False, "False_required_deps_missing")
+        NEG_REASONS = [
+            "False_exclude_list",
+            "False_required_deps_missing",
+        ]
+        for neg_reason in NEG_REASONS:
+            if any(reason == neg_reason for reason in reasons):
+                return _return(False, neg_reason)
 
         # now check the "any of the classes should be tested" condition
         POS_REASONS = [
@@ -109,7 +123,7 @@ def run_test_for_class(cls, return_reason=False):
         cls = cls.__class__
     # check whether estimator is on the exclude override list
     if cls.__name__ in EXCLUDE_ESTIMATORS:
-        return False
+        return False, "False_exclude_list"
 
     # handle return reason or not
     run, reason = _run_test_for_class(cls)
