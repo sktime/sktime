@@ -162,11 +162,7 @@ class FinancialHolidaysTransformer(BaseTransformer):
         """
         del parameter_set  # avoid being detected as unused by ``vulture`` like tools
 
-        params = [
-                  {"market": "XNYS"},
-                  {"market": "ECB"}
-                 ]
-
+        params = [ {"market": "XNYS"}, {"market": "ECB"}, ]
         return params
 
 
