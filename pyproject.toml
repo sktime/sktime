@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.28.1"
+version = "0.29.0"
 description = "A unified framework for machine learning with time series"
 readme = "README.md"
 keywords = [
@@ -244,12 +244,12 @@ docs = [
   "Sphinx!=7.2.0,<8.0.0",
   "sphinx-copybutton",
   "sphinx-design<0.6.0",
-  "sphinx-gallery<0.16.0",
+  "sphinx-gallery<0.17.0",
   "sphinx-issues<5.0.0",
   "tabulate",
 ]
 tests = [
-  "pytest>=7.4,<8.2",
+  "pytest>=7.4,<8.3",
   "pytest-randomly<3.16,>=3.15",
   "pytest-timeout>=2.1,<2.4",
   "pytest-xdist>=3.3,<3.7",
