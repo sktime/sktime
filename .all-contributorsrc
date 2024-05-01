@@ -2803,6 +2803,16 @@
       "contributions": [
         "maintenance"
       ]
+     {
+      "login": "cedricdonie",
+      "name": "Cedric Donié",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6626593?v=4",
+      "profile": "https://github.com/cedricdonie",
+      "contributions": [
+        "bug",
+        "code"
+      ]
+    },
     }
   ]
 }
