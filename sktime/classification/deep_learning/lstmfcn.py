@@ -178,7 +178,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         """
         check_random_state(self.random_state)
 
-        y_onehot = self.convert_y_to_keras(y)
+        y_onehot = self._convert_y_to_keras(y)
 
         # Remove?
         # Transpose to conform to Keras input style.

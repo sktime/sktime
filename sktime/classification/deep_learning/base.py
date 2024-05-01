@@ -103,7 +103,7 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         probs = probs / probs.sum(axis=1, keepdims=1)
         return probs
 
-    def convert_y_to_keras(self, y):
+    def _convert_y_to_keras(self, y):
         """Convert y to required Keras format."""
         self.label_encoder = LabelEncoder()
         y = self.label_encoder.fit_transform(y)

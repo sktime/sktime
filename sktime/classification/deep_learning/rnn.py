@@ -157,7 +157,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         """
         from tensorflow import keras
 
-        y_onehot = self.convert_y_to_keras(y)
+        y_onehot = self._convert_y_to_keras(y)
         X = X.transpose(0, 2, 1)
 
         check_random_state(self.random_state)
