@@ -22,6 +22,8 @@ For our long-term plan, see our :ref:`roadmap`.
 Version 0.29.0 - 2024-04-28
 ---------------------------
 
+Kindly note the python 3.8 End-of-life warning below.
+
 Maintenance release:
 
 * scheduled deprecations and change actions
@@ -37,6 +39,17 @@ Dependency changes
 
 Deprecations and removals
 ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Python 3.8 End-of-life
+^^^^^^^^^^^^^^^^^^^^^^
+
+From ``sktime`` 0.30.0, sktime will require Python version >=3.9.
+No errors will be raised, but test coverage and support for
+Python 3.8 will be dropped from 0.30.0 onwards.
+
+Kindly note for context: python 3.8 will reach end of life
+in October 2024, and multiple ``sktime`` core dependencies,
+including ``scikit-learn``, have already dropped support for 3.8.
 
 Forecasting
 ^^^^^^^^^^^
@@ -63,6 +76,7 @@ Contents
 ~~~~~~~~
 
 * [MNT] change cycle (0.29.0) for renaming ``cINNForecaster`` to ``CINNForecaster`` (:pr:`6238`) :user:`geetu040`
+* [MNT] ``python 3.8`` End-of-life and ``sktime`` support drop warning (:pr:`6348`) :user:`fkiraly`
 * [MNT] speed up test collection - cache differential testing switch utilities (:pr:`6357`) :user:`fkiraly`, :user:`yarnabrina`
 * [MNT] temporary skip of estimators involved in timeouts #6344 (:pr:`6361`) :user:`fkiraly`
 * [MNT] 0.29.0 deprecations and change actions (:pr:`6350`) :user:`fkiraly`
