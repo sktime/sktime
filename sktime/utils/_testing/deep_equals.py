@@ -16,7 +16,7 @@ import numpy as np
 import pandas as pd
 
 
-# todo 0.29.0: check whether scikit-base>=0.6.1 lower bound is 0.6.1 or higher
+# todo 0.30.0: check whether scikit-base>=0.6.1 lower bound is 0.6.1 or higher
 # if yes, remove this legacy function and use the new one from sktime.utils.deep_equals
 def deep_equals(x, y, return_msg=False):
     """Test two objects for equality in value.
@@ -68,8 +68,7 @@ def deep_equals(x, y, return_msg=False):
     )
 
     removal_schedule = (
-        "The legacy deep_equals is not scheduled for removal yet, this "
-        "warning will change to specify a removal date when it is scheduled."
+        "The legacy deep_equals is scheduled for removal in sktime 0.30.0. "
     )
 
     if _check_soft_dependencies(
