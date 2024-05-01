@@ -169,7 +169,7 @@ class BaseObject(_BaseObject):
                 f"From sktime 0.30.0, sktime will require Python version >=3.9, "
                 f"but found {sys_version}. "
                 "No errors will be raised, but test coverage and support for "
-                "Python 3.8 will be dropped from 0.30.0 onwards."
+                "Python 3.8 will be dropped from 0.30.0 onwards. "
                 "Kindly note for context: python 3.8 will reach end of life "
                 "in October 2024, and multiple sktime core dependencies, "
                 "including scikit-learn, have already dropped support for 3.8. ",
