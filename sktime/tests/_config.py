@@ -57,6 +57,7 @@ EXCLUDE_ESTIMATORS = [
     "VARMAX",
     "BATS",
     "TBATS",
+    "ARIMA",
     "AutoARIMA",
     "StatsForecastAutoARIMA",
     "SARIMAX",
