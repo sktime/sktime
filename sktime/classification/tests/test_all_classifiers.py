@@ -105,7 +105,7 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
 
             X_train = scenario.args["fit"]["X"]
             _, _, X_train_metadata = check_is_scitype(
-                X_train, "Panel", return_metadata=True
+                X_train, "Panel", return_metadata=["n_instances"]
             )
             X_train_len = X_train_metadata["n_instances"]
 
