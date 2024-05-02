@@ -16,7 +16,6 @@ def test_expandingcutoff_datelike_index_001():
     """Test datetime index with _check_cv"""
     y = _make_series(n_timepoints=10)
     cutoff = y.index[3]
-    cutoff.freq = y.index.freq
     fh = ForecastingHorizon([1, 2, 3], freq=y.index.freq)
     cv = ExpandingCutoffSplitter(cutoff=cutoff, fh=fh, step_length=1)
     train_windows, test_windows, cutoffs, n_splits = _check_cv(cv, y)
@@ -47,7 +46,6 @@ def test_expandingcutoff_splitloc_004():
     """Test split loc"""
     y = _make_series(n_timepoints=10)
     cutoff = y.index[3]
-    cutoff.freq = y.index.freq
     fh = ForecastingHorizon([1, 2, 3], freq=y.index.freq)
     cv = ExpandingCutoffSplitter(cutoff=cutoff, fh=fh, step_length=1)
     train_test_values = list(cv.split_loc(y))
