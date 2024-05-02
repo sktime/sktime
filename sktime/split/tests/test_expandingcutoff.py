@@ -123,6 +123,7 @@ def test_expandingcutoff_hiearchical_forecastbylevel_006():
     actual_last_forecast_date = y_pred.index.max()
     assert expected_last_forecast_date, actual_last_forecast_date
 
+
 def test_expandingcutoff_fh_list_007():
     """Test fh as list with _check_cv"""
     y = _make_series(n_timepoints=10)
