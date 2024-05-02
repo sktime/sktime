@@ -16,7 +16,11 @@ from inspect import isclass
 from sktime.base import BaseObject
 from sktime.registry import scitype
 from sktime.utils._testing.hierarchical import _make_hierarchical
-from sktime.utils._testing.panel import _make_classification_y, _make_panel_X
+from sktime.utils._testing.panel import (
+    _make_classification_y,
+    _make_panel,
+    _make_panel_X,
+)
 from sktime.utils._testing.scenarios import TestScenario
 
 # random seed for generating data to keep scenarios exactly reproducible
@@ -106,6 +110,31 @@ class ClassifierFitPredict(ClassifierTestScenario):
     def args(self):
         y = _make_classification_y(n_instances=10, random_state=RAND_SEED)
         X = _make_panel_X(n_instances=10, n_timepoints=20, random_state=RAND_SEED, y=y)
+        X_test = _make_panel_X(n_instances=5, n_timepoints=20, random_state=RAND_SEED)
+
+        return {
+            "fit": {"y": y, "X": X},
+            "predict": {"X": X_test},
+        }
+
+    default_method_sequence = ["fit", "predict", "predict_proba", "decision_function"]
+    default_arg_sequence = ["fit", "predict", "predict", "predict"]
+
+
+class ClassifierFitPredictThreeClasses(ClassifierTestScenario):
+    """Fit/predict with univariate panel X, pd-multiindex mtype, and three classes."""
+
+    _tags = {
+        "X_univariate": True,
+        "X_unequal_length": False,
+        "is_enabled": True,
+        "n_classes": 3,
+    }
+
+    @property
+    def args(self):
+        y = _make_classification_y(n_instances=18, n_classes=3, random_state=RAND_SEED)
+        X = _make_panel(n_instances=18, n_timepoints=20, random_state=RAND_SEED, y=y)
         X_test = _make_panel_X(n_instances=5, n_timepoints=20, random_state=RAND_SEED)
 
         return {
@@ -216,6 +245,7 @@ class ClassifierFitPredictUnequalLength(ClassifierTestScenario):
 
 scenarios_classification = [
     ClassifierFitPredict,
+    ClassifierFitPredictThreeClasses,
     ClassifierFitPredictNumpy,
     ClassifierFitPredictMultivariate,
     ClassifierFitPredictUnequalLength,
@@ -224,6 +254,7 @@ scenarios_classification = [
 # same scenarios used for early classification
 scenarios_early_classification = [
     ClassifierFitPredict,
+    ClassifierFitPredictThreeClasses,
     ClassifierFitPredictNumpy,
     ClassifierFitPredictMultivariate,
     ClassifierFitPredictUnequalLength,
