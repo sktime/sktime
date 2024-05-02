@@ -156,7 +156,7 @@ jobs:
         run: python -m pip list
 
       - name: Run tests
-        run: make test_softdeps_full
+        run: make PYTESTOPTIONS="--cov --matrixdesign=False --timeout=600" test_softdeps_full
 
   test-mlflow:
     needs: test-nosoftdeps
