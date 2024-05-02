@@ -133,8 +133,8 @@ class ClassifierFitPredictThreeClasses(ClassifierTestScenario):
 
     @property
     def args(self):
-        y = _make_classification_y(n_instances=10, n_classes=3, random_state=RAND_SEED)
-        X = _make_panel(n_instances=10, n_timepoints=20, random_state=RAND_SEED, y=y)
+        y = _make_classification_y(n_instances=18, n_classes=3, random_state=RAND_SEED)
+        X = _make_panel(n_instances=18, n_timepoints=20, random_state=RAND_SEED, y=y)
         X_test = _make_panel_X(n_instances=5, n_timepoints=20, random_state=RAND_SEED)
 
         return {
