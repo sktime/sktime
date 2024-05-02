@@ -67,7 +67,7 @@ class ExpandingCutoffSplitter(BaseSplitter):
     def __init__(self, cutoff, fh, step_length):
         super().__init__()
         self.cutoff = cutoff
-        self.fh = fh
+        self.fh = _check_fh(fh)
         self.step_length = step_length
         return
 
@@ -125,7 +125,7 @@ class ExpandingCutoffSplitter(BaseSplitter):
             )
             raise TypeError(msg)
 
-        fh = _check_fh(self.fh)
+        fh = self.fh
         step_length = check_step_length(self.step_length)
         cutoff_index = np.argmax(y == self.cutoff) - 1
         cutoffs = np.array([cutoff_index])
