@@ -57,6 +57,8 @@ pytest_skip_msg = (
     "is currently experimental and not supported everywhere"
 )
 
+RAND_SEED = 42
+
 
 class ForecasterFixtureGenerator(BaseFixtureGenerator):
     """Fixture generator for forecasting tests.
@@ -170,7 +172,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     def test_y_multivariate_raises_error(self, estimator_instance):
         """Test that wrong y scitype raises error (uni/multivariate not supported)."""
         if estimator_instance.get_tag("scitype:y") == "multivariate":
-            y = _make_series(n_columns=1)
+            y = _make_series(n_columns=1, random_state=RAND_SEED)
             with pytest.raises(ValueError, match=r"two or more variables"):
                 estimator_instance.fit(y, fh=FH0)
 
@@ -190,7 +192,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     @pytest.mark.parametrize("X", INVALID_X_INPUT_TYPES)
     def test_X_invalid_type_raises_error(self, estimator_instance, n_columns, X):
         """Test that invalid X input types raise error."""
-        y_train = _make_series(n_columns=n_columns)
+        y_train = _make_series(n_columns=n_columns, random_state=RAND_SEED)
         try:
             with pytest.raises(TypeError, match=r"type"):
                 estimator_instance.fit(y_train, X, fh=FH0)
@@ -219,7 +221,10 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             #     "is currently experimental and not supported everywhere"
             # )
         y_train = _make_series(
-            n_columns=n_columns, index_type=index_type, n_timepoints=50
+            n_columns=n_columns,
+            index_type=index_type,
+            n_timepoints=50,
+            random_state=RAND_SEED,
         )
         cutoff = get_cutoff(y_train, return_index=True)
         fh = _make_fh(cutoff, fh_int, fh_type, is_relative)
@@ -237,7 +242,10 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         _assert_correct_columns(y_pred, y_train)
 
         y_test = _make_series(
-            n_columns=n_columns, index_type=index_type, n_timepoints=len(y_pred)
+            n_columns=n_columns,
+            index_type=index_type,
+            n_timepoints=len(y_pred),
+            random_state=RAND_SEED,
         )
         y_test.index = y_pred.index
         y_res = estimator_instance.predict_residuals(y_test)
@@ -278,7 +286,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         # Some estimators may not support all time index types and fh types, hence we
         # need to catch NotImplementedErrors.
-        y = _make_series(n_columns=n_columns, index_type=index_type)
+        y = _make_series(
+            n_columns=n_columns, index_type=index_type, random_state=RAND_SEED
+        )
         cutoff = get_cutoff(y.iloc[: len(y) // 2], return_index=True)
         fh = _make_fh(cutoff, fh_int_oos, fh_type, is_relative)
 
@@ -314,7 +324,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             #    "ForecastingHorizon with timedelta values "
             #     "is currently experimental and not supported everywhere"
             # )
-        y_train = _make_series(n_columns=n_columns, index_type=index_type)
+        y_train = _make_series(
+            n_columns=n_columns, index_type=index_type, random_state=RAND_SEED
+        )
         cutoff = get_cutoff(y_train, return_index=True)
         steps = -np.arange(len(y_train))
         fh = _make_fh(cutoff, steps, fh_type, is_relative)
@@ -339,7 +351,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         if estimator_instance.get_tag("scitype:y") == "multivariate":
             return None
 
-        y_train = _make_series(n_timepoints=15)
+        y_train = _make_series(n_timepoints=15, random_state=RAND_SEED)
         y_train.name = "foo"
 
         estimator_instance.fit(y_train, fh=[1, 2, 3])
@@ -417,7 +429,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         AssertionError - if Forecaster test instance does not have "capability:pred_int"
                 and no NotImplementedError is raised when calling predict_interval
         """
-        y_train = _make_series(n_columns=n_columns, index_type=index_type)
+        y_train = _make_series(
+            n_columns=n_columns, index_type=index_type, random_state=RAND_SEED
+        )
         estimator_instance.fit(y_train, fh=fh_int_oos)
         if estimator_instance.get_tag("capability:pred_int"):
             pred_ints = estimator_instance.predict_interval(
@@ -506,7 +520,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         AssertionError - if Forecaster test instance does not have "capability:pred_int"
                 and no NotImplementedError is raised when calling predict_quantiles
         """
-        y_train = _make_series(n_columns=n_columns)
+        y_train = _make_series(n_columns=n_columns, random_state=RAND_SEED)
         estimator_instance.fit(y_train, fh=fh_int_oos)
         if estimator_instance.get_tag("capability:pred_int"):
             quantiles = estimator_instance.predict_quantiles(fh=fh_int_oos, alpha=alpha)
@@ -559,7 +573,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         AssertionError - if Forecaster test instance does not have "capability:pred_int"
                 and no NotImplementedError is raised when calling predict_proba
         """
-        y_train = _make_series(n_columns=n_columns)
+        y_train = _make_series(n_columns=n_columns, random_state=RAND_SEED)
         estimator_instance.fit(y_train, fh=fh_int_oos)
 
         if estimator_instance.get_tag("capability:pred_int"):
@@ -632,7 +646,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     )
     def test_score(self, estimator_instance, n_columns, fh_int_oos):
         """Check score method."""
-        y = _make_series(n_columns=n_columns)
+        y = _make_series(n_columns=n_columns, random_state=RAND_SEED)
         y_train, y_test = temporal_train_test_split(y)
         estimator_instance.fit(y_train, fh=fh_int_oos)
         y_pred = estimator_instance.predict()
@@ -653,7 +667,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         self, estimator_instance, n_columns, fh_int_oos, update_params
     ):
         """Check correct time index of update-predict."""
-        y = _make_series(n_columns=n_columns)
+        y = _make_series(n_columns=n_columns, random_state=RAND_SEED)
         y_train, y_test = temporal_train_test_split(y)
         estimator_instance.fit(y_train, fh=fh_int_oos)
         y_pred = estimator_instance.update_predict_single(
@@ -677,7 +691,12 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         update_params,
     ):
         """Check predicted index in update_predict."""
-        y = _make_series(n_columns=n_columns, all_positive=True, index_type="datetime")
+        y = _make_series(
+            n_columns=n_columns,
+            all_positive=True,
+            index_type="datetime",
+            random_state=RAND_SEED,
+        )
         y_train, y_test = temporal_train_test_split(y)
         cv = ExpandingWindowSplitter(
             fh=fh_int_oos,
@@ -700,7 +719,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         # check _y and cutoff is None after construction
         f = estimator_instance
 
-        y = _make_series(n_columns=n_columns)
+        y = _make_series(n_columns=n_columns, random_state=RAND_SEED)
         y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 
         # check that _y and cutoff are empty when estimator is constructed
@@ -728,7 +747,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
     def test__y_when_refitting(self, estimator_instance, n_columns):
         """Test that _y is updated when forecaster is refitted."""
-        y_train = _make_series(n_columns=n_columns)
+        y_train = _make_series(n_columns=n_columns, random_state=RAND_SEED)
         estimator_instance.fit(y_train, fh=FH0)
         estimator_instance.fit(y_train[3:], fh=FH0)
         # using np.squeeze to make the test flexible to shape differences like
@@ -738,7 +757,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     def test_fh_attribute(self, estimator_instance, n_columns):
         """Check fh attribute and error handling if two different fh are passed."""
         f = estimator_instance
-        y_train = _make_series(n_columns=n_columns)
+        y_train = _make_series(n_columns=n_columns, random_state=RAND_SEED)
 
         f.fit(y_train, fh=FH0)
         np.testing.assert_array_equal(f.fh, FH0)
@@ -756,7 +775,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     def test_fh_not_passed_error_handling(self, estimator_instance, n_columns):
         """Check that not passing fh in fit/predict raises correct error."""
         f = estimator_instance
-        y_train = _make_series(n_columns=n_columns)
+        y_train = _make_series(n_columns=n_columns, random_state=RAND_SEED)
 
         if f.get_tag("requires-fh-in-fit"):
             # if fh required in fit, should raise error if not passed in fit
@@ -782,7 +801,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         # if fh is not required in fit, can be overwritten, should not raise error
         if not f.get_tag("requires-fh-in-fit"):
             return None
-        y_train = _make_series(n_columns=n_columns)
+        y_train = _make_series(n_columns=n_columns, random_state=RAND_SEED)
         f.fit(y_train, fh=FH0)
         np.testing.assert_array_equal(f.fh, FH0)
         # changing fh during predict should raise error
@@ -819,6 +838,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             min_timepoints=22,
             max_timepoints=22,
             index_type="period",
+            random_state=RAND_SEED,
         )
         X = _make_hierarchical(
             hierarchy_levels=(2, 4),
@@ -826,6 +846,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             min_timepoints=24,
             max_timepoints=24,
             index_type="period",
+            random_state=RAND_SEED,
         )
         X.columns = ["foo", "bar"]
         X_train = get_window(X, lag=2)
@@ -884,8 +905,8 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         Does not check directly against fit and predict, as either may
         be stochastic and not return the same result each time.
         """
-        y = _make_series(n_columns=n_columns)
-        X = _make_series(n_columns=3)
+        y = _make_series(n_columns=n_columns, random_state=RAND_SEED)
+        X = _make_series(n_columns=3, random_state=RAND_SEED)
 
         fh = ForecastingHorizon([1, 2, 3])
 
