@@ -13,7 +13,6 @@ from copy import deepcopy
 from inspect import getfullargspec, isclass, signature
 from tempfile import TemporaryDirectory
 
-import joblib
 import numpy as np
 import pandas as pd
 import pytest
@@ -1071,6 +1070,21 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
 
         init_params = [param for param in init_params if param.name not in test_params]
 
+        allowed_param_types = [
+            str,
+            int,
+            float,
+            bool,
+            tuple,
+            type(None),
+            np.float64,
+            types.FunctionType,
+        ]
+        if _check_soft_dependencies("joblib", severity="none"):
+            from joblib import Memory
+
+            allowed_param_types += [Memory]
+
         for param in init_params:
             assert param.default != param.empty, (
                 "parameter `%s` for %s has no default value and is not "
@@ -1079,17 +1093,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             if type(param.default) is type:
                 assert param.default in [np.float64, np.int64]
             else:
-                assert type(param.default) in [
-                    str,
-                    int,
-                    float,
-                    bool,
-                    tuple,
-                    type(None),
-                    np.float64,
-                    types.FunctionType,
-                    joblib.Memory,
-                ]
+                assert type(param.default) in allowed_param_types
 
             reserved_params = estimator_class.get_class_tag("reserved_params", [])
             if param.name not in reserved_params:
@@ -1248,8 +1252,10 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             # joblib.hash has problems with pandas objects, so we use deep_equals then
             if isinstance(original_value, (pd.DataFrame, pd.Series)):
                 assert deep_equals(new_value, original_value), msg
-            else:
-                assert joblib.hash(new_value) == joblib.hash(original_value), msg
+            elif _check_soft_dependencies("joblib", severity="none"):
+                from joblib import hash
+
+                assert hash(new_value) == hash(original_value), msg
 
     def test_non_state_changing_method_contract(
         self, estimator_instance, scenario, method_nsc

@@ -11,7 +11,6 @@ from math import floor
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
 from sklearn.base import clone
 
 from sktime.datatypes import MTYPE_LIST_SERIES, convert, convert_to
@@ -122,6 +121,7 @@ class ConformalIntervals(BaseForecaster):
         # packaging info
         # --------------
         "authors": ["fkiraly", "bethrice44"],
+        "python_dependencies": ["joblib"],
         # estimator type
         # --------------
         "scitype:y": "univariate",
@@ -409,6 +409,8 @@ class ConformalIntervals(BaseForecaster):
             if sample_frac is passed this will have NaN values for 1 - sample_frac
             fraction of the matrix
         """
+        from joblib import Parallel, delayed
+
         y = convert_to(y, ["pd.Series", "pd-multiindex", "pd_multiindex_hier"])
 
         # vectorize over multiindex if y is hierarchical

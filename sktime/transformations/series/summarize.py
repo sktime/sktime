@@ -6,7 +6,6 @@ __author__ = ["mloning", "RNKuhns", "danbartl", "grzegorzrut", "BensHamza"]
 __all__ = ["SummaryTransformer", "WindowSummarizer", "SplitterSummarizer"]
 
 import pandas as pd
-from joblib import Parallel, delayed
 
 from sktime.split import ExpandingWindowSplitter, SlidingWindowSplitter
 from sktime.transformations.base import BaseTransformer
@@ -195,6 +194,7 @@ class WindowSummarizer(BaseTransformer):
         # --------------
         "authors": ["danbartl", "grzegorzrut", "ltsaprounis"],
         "maintainers": ["danbartl"],
+        "python_dependencies": ["joblib"],
         # estimator type
         # --------------
         "scitype:transform-input": "Series",
@@ -313,6 +313,8 @@ class WindowSummarizer(BaseTransformer):
         -------
         transformed version of X
         """
+        from joblib import Parallel, delayed
+
         idx = X.index
         X = X.combine_first(self._X)
 

@@ -193,6 +193,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         # --------------
         "authors": ["mloning", "AyushmaanSeth"],
         "maintainers": ["AyushmaanSeth"],
+        "python_dependencies": ["joblib"],
         # estimator type
         # --------------
         "X_inner_mtype": "nested_univ",  # nested pd.DataFrame

@@ -14,7 +14,6 @@ from operator import itemgetter
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
 from sklearn import preprocessing
 from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
@@ -1080,7 +1079,7 @@ class RandomShapeletTransform(BaseTransformer):
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "numpy1D",  # and for y?
         "requires_y": True,
-        "python_dependencies": "numba",
+        "python_dependencies": ["numba", "joblib"],
     }
 
     def __init__(
@@ -1145,6 +1144,7 @@ class RandomShapeletTransform(BaseTransformer):
         self : RandomShapeletTransform
             This estimator.
         """
+        from joblib import Parallel, delayed
         from numba.typed.typedlist import List
 
         from sktime.transformations.panel._shapelet_transform_numba import (
@@ -1298,6 +1298,8 @@ class RandomShapeletTransform(BaseTransformer):
         output : pandas DataFrame
             The transformed dataframe in tabular format.
         """
+        from joblib import Parallel, delayed
+
         from sktime.transformations.panel._shapelet_transform_numba import (
             _online_shapelet_distance,
         )
