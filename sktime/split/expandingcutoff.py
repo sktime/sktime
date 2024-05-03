@@ -67,7 +67,8 @@ class ExpandingCutoffSplitter(BaseSplitter):
     def __init__(self, cutoff, fh, step_length):
         super().__init__()
         self.cutoff = cutoff
-        self.fh = _check_fh(fh)
+        self.fh = fh
+        self._fh = _check_fh(fh)
         self.step_length = step_length
         return
 
@@ -90,7 +91,7 @@ class ExpandingCutoffSplitter(BaseSplitter):
             The testing set indices for that split.
         """
         if fh is None:
-            fh = self.fh
+            fh = self._fh
         offset = fh.to_numpy().max() + 1
         for cutoff in self.get_cutoffs(y):
             train_window = np.arange(0, cutoff + 1, step=self.step_length)
@@ -125,7 +126,7 @@ class ExpandingCutoffSplitter(BaseSplitter):
             )
             raise TypeError(msg)
 
-        fh = self.fh
+        fh = self._fh
         step_length = check_step_length(self.step_length)
         cutoff_index = np.argmax(y == self.cutoff) - 1
         cutoffs = np.array([cutoff_index])

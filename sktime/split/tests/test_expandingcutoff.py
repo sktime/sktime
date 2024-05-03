@@ -128,7 +128,6 @@ def test_expandingcutoff_fh_list_007():
     """Test fh as list with _check_cv"""
     y = _make_series(n_timepoints=10)
     cutoff = y.index[3]
-    cutoff.freq = y.index.freq
     fh = [1, 2, 3]
     cv = ExpandingCutoffSplitter(cutoff=cutoff, fh=fh, step_length=1)
     train_windows, test_windows, cutoffs, n_splits = _check_cv(cv, y)
