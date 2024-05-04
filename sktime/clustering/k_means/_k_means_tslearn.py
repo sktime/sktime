@@ -6,7 +6,7 @@ from sktime.clustering.base import BaseClusterer
 
 
 class TimeSeriesKMeansTslearn(_TslearnAdapter, BaseClusterer):
-    """K-means clustering for time-series data.
+    """K-means clustering for time-series data, from tslearn.
 
     Direct interface to ``tslearn.clustering.TimeSeriesKMeans``.
 
@@ -102,12 +102,12 @@ class TimeSeriesKMeansTslearn(_TslearnAdapter, BaseClusterer):
     _tags = {
         # packaging info
         # --------------
-        "authors": "fkiraly",
+        "authors": ["rtavenar", "fkiraly"],  # rtavenar credit for interfaced code
         "python_dependencies": "tslearn",
         # estimator type
         # --------------
         "capability:multivariate": True,
-        "capability:unequal_length": True,
+        "capability:unequal_length": False,
     }
 
     # defines the name of the attribute containing the tslearn estimator

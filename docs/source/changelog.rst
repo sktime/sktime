@@ -18,6 +18,280 @@ available on GitHub.
 For upcoming changes and next releases, see our `milestones <https://github.com/sktime/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
 For our long-term plan, see our :ref:`roadmap`.
 
+
+Version 0.29.0 - 2024-04-28
+---------------------------
+
+Kindly note the python 3.8 End-of-life warning below.
+
+Maintenance release:
+
+* scheduled deprecations and change actions
+* optimization of test collection speed
+
+For last non-maintenance content updates, see 0.28.1.
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``sktime`` now requires ``scikit-base>=0.6.1`` (core dependency), this has changed
+  from previously no lower bound.
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Python 3.8 End-of-life
+^^^^^^^^^^^^^^^^^^^^^^
+
+From ``sktime`` 0.30.0, sktime will require Python version >=3.9.
+No errors will be raised, but test coverage and support for
+Python 3.8 will be dropped from 0.30.0 onwards.
+
+Kindly note for context: python 3.8 will reach end of life
+in October 2024, and multiple ``sktime`` core dependencies,
+including ``scikit-learn``, have already dropped support for 3.8.
+
+Forecasting
+^^^^^^^^^^^
+
+``cINNForecaster`` has been renamed to ``CINNForecaster``.
+The estimator is available under its past name at its
+current location until 0.30.0, when the old name will be removed.
+To prepare for the name change,
+replace any imports of ``cINNForecaster`` with imports of ``CINNForecaster``.
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* The ``n_jobs`` parameter in the ``Catch22`` transformer has been removed.
+  Users should pass parallelization backend parameters via ``set_config`` instead.
+  To specify ``n_jobs``, use any of the backends supporting it in the
+  ``backend:parallel`` configuration, such as ``"loky"`` or ``"multithreading"``.
+  The ``n_jobs`` parameter should be passed via the
+  ``backend:parallel:params`` configuration.
+  To retain previous behaviour, with a specific setting of ``n_jobs=x``,
+  use ``set_config(**{"backend:parallel": "loky", "backend:parallel:params": {"n_jobs": x}})``.
+
+Contents
+~~~~~~~~
+
+* [MNT] change cycle (0.29.0) for renaming ``cINNForecaster`` to ``CINNForecaster`` (:pr:`6238`) :user:`geetu040`
+* [MNT] ``python 3.8`` End-of-life and ``sktime`` support drop warning (:pr:`6348`) :user:`fkiraly`
+* [MNT] speed up test collection - cache differential testing switch utilities (:pr:`6357`) :user:`fkiraly`, :user:`yarnabrina`
+* [MNT] temporary skip of estimators involved in timeouts #6344 (:pr:`6361`) :user:`fkiraly`
+* [MNT] 0.29.0 deprecations and change actions (:pr:`6350`) :user:`fkiraly`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`fkiraly`,
+:user:`geetu040`,
+:user:`yarnabrina`
+
+
+Version 0.28.1 - 2024-04-25
+---------------------------
+
+Highlights
+~~~~~~~~~~
+
+* Experimental Hugging Face interface for pre-trained forecasters and foundation models (:pr:`5796`) :user:`benHeid`
+* estimator tags are now `systematically documented in the API reference <https://www.sktime.net/en/latest/api_reference/tags.html>`_ (:pr:`6289`) :user:`fkiraly`
+* new classifiers, transformers from ``pyts`` interfaced: BOSSVS, learning shapelets, shapelet transform (:pr:`6296`) :user:`johannfaouzi` (author), :user:`fkiraly` (interface)
+* new classifiers from ``tslearn`` interfaced: time series SVC, SVR, learning shapelets (:pr:`6273`) :user:`rtavenar` (author), :user:`fkiraly` (interface)
+* ``ForecastX`` can now use use future-unknown exogenous variables if passed in ``predict`` (:pr:`6199`) :user:`yarnabrina`
+* bagging/bootstrap forecaster can now be applied to multivariate, exogeneous, hierarchical data and produces fully probabilistic forecasts (:pr:`6052`) :user:`fkiraly`
+* ``neuralforecast`` models now have settings to auto-detect date-time ``freq``, and pass ``optimizer`` (:pr:`6235`, :pr:`6237`) :user:`pranavvp16`, :user:`geetu040`
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``dask`` (data container and parallelization back-end) bounds have been updated to ``<2024.4.2``
+* ``arch`` (transformation and parameter estimation soft dependency) bounds have been updated to ``>=5.6,<7.1.0``
+* ``holidays`` (transformations soft dependency) bounds have been updated to ``>=0.29,<0.48``
+* ``mne`` (transformations soft dependency) bounds have been updated to ``>=1.5,<1.8``
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+All objects and estimators now can, in addition to the existing PEP 440 package dependency specifier tags,
+specify PEP 508 compatible environment markers for their dependencies,
+via the ``env_marker`` tag. Values should be PEP 508 compliant strings, e.g., ``platform_system!="Windows"``.
+
+This allows for more fine-grained control over the dependencies of estimators, where needed,
+e.g., for estimators that require specific operating systems.
+
+Enhancements
+~~~~~~~~~~~~
+
+BaseObject and base framework
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] PEP 508 environment markers for estimators (:pr:`6144`) :user:`fkiraly`
+* [ENH] enhancements to tag system, systematic API docs for tags (:pr:`6289`) :user:`fkiraly`
+
+Benchmarking, Metrics, Splitters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] instance splitter to apply ``sklearn`` splitter to panel data (:pr:`6055`) :user:`fkiraly`
+* [ENH] efficient ``_evaluate_by_index`` for MSE and RMSE (``MeanSquaredError``) (:pr:`6248`) :user:`fkiraly`
+* [ENH] implement efficient ``_evaluate_by_index`` for ``MedianAbsoluteError`` class (:pr:`6251`) :user:`mobley-trent`
+
+Forecasting
+^^^^^^^^^^^
+
+* [ENH] Hugging Face interface for pre-trained forecasters (:pr:`5796`) :user:`benHeid`
+* [ENH] bagging/bootstrap forecaster extended to multivariate, exogeneous, hierarchical data (:pr:`6052`) :user:`fkiraly`
+* [ENH] Minor ``neuralforecast`` related changes (:pr:`6312`) :user:`yarnabrina`
+* [ENH] Option to use future-unknown exogenous variables in ``ForecastX`` if passed in ``predict`` (:pr:`6199`) :user:`yarnabrina`
+* [ENH] Add ``optimizer`` param for ``neuralforecast`` models (:pr:`6235`) :user:`pranavvp16`
+* [ENH] Update behavior of ``freq="auto"`` in ``neuralforecast`` facing estimators (:pr:`6237`) :user:`geetu040`
+* [ENH] ``TBATS`` test parameters to cover doc example (:pr:`6292`) :user:`fkiraly`
+
+Neural networks
+^^^^^^^^^^^^^^^
+
+* [ENH] added test parameters to ``CNNNetwork`` and ``ResnetNetwork`` (:pr:`6209`) :user:`julian-fong`
+* [ENH] added test parameters for the LSTM FCNN network (:pr:`6281`) :user:`shlok191`
+
+Probability distributions and simulators
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] extend ``Empirical`` distribution to hierarchical data (:pr:`6066`) :user:`fkiraly`
+* [ENH] mixture distribution, from ``skpro`` (:pr:`6179`) :user:`vandit98`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] added test parameters for ``MatrixProfileClassifier`` (:pr:`6193`) :user:`MMTrooper`
+* [ENH] interfaces to further ``tslearn`` estimators (:pr:`6273`) :user:`fkiraly`
+* [ENH] interfaces to further ``pyts`` classifiers (:pr:`6296`) :user:`fkiraly`
+
+Time series clustering
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] clusterer test scenario with unequal length time series; fix clusterer tags (:pr:`6277`) :user:`fkiraly`
+
+Time series regression
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] k-nearest neighbors regressor: support for non-brute algorithms and non-precomputed mode to improve memory efficiency (:pr:`6217`) :user:`Z-Fran`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [ENH] make ``TabularToSeriesAdaptor`` compatible with ``sklearn`` transformers that accept only ``y``, e.g., ``LabelEncoder`` (:pr:`5982`) :user:`fkiraly`
+
+Test framework
+^^^^^^^^^^^^^^
+
+* [ENH] make ``get_examples`` side effect safe via ``deepcopy`` (:pr:`6259`) :user:`fkiraly`
+* [ENH] refactor test scenario creation to be lazy rather than on module load (:pr:`6278`) :user:`fkiraly`
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] update installation instructions on ``conda`` soft dependencies (:pr:`6229`) :user:`fkiraly`
+* [DOC] add missing import statements to the ``InvertAugmenter`` docstring example (:pr:`6236`) :user:`Anteemony`
+* [DOC] Adding Usage Example in docstring (:pr:`6264`) :user:`MihirsinhChauhan`
+* [DOC] improve docstring formatting in probabilistic metrics (:pr:`6256`) :user:`fkiraly`
+* [DOC] ``authors`` tag - extension template instructions to credit 3rd party interfaced authors (:pr:`5953`) :user:`fkiraly`
+* [DOC] Refactor examples directory and link to docs/source/examples (:pr:`6210`) :user:`duydl`
+* [DOC] author credits to ``tslearn`` authors (:pr:`6269`) :user:`fkiraly`
+* [DOC] author credits to ``pyts`` authors (:pr:`6270`) :user:`fkiraly`
+* [DOC] Update README.md - time of Friday meetups (:pr:`6293`) :user:`fkiraly`
+* [DOC] systematic API docs for tags (:pr:`6289`) :user:`fkiraly`
+* [DOC] in extension templates, clarify handling of soft dependencies (:pr:`6325`) :user:`fkiraly`
+* [DOC] author credits to ``pycatch22`` authors, fix missing documentation page (:pr:`6300`) :user:`fkiraly`
+* [DOC] added usage examples to multiple estimator docstrings (:pr:`6187`) :user:`MihirsinhChauhan`
+* [DOC] Miscellaneous aesthetic improvements to docs UI (:pr:`6211`) :user:`duydl`
+* [DOC] Remove redundant code in tutorial section 2.2.4 (:pr:`6267`) :user:`iamSathishR`
+* [DOC] Added an example to ``WhiteNoiseAugmenter``  (:pr:`6200`) :user:`SamruddhiNavale`
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] Basic fix and enhancement of doc local build process (:pr:`6128`) :user:`duydl`
+* [MNT] temporary skip for failure #6260 (:pr:`6262`) :user:`fkiraly`
+* [MNT] Update dask requirement from ``<2024.2.2`` to ``<2024.4.2``, add new required ``dataframe`` extra to ``pyproject.toml``. (:pr:`6282`) :user:`yarnabrina`
+* [MNT] fix isolation of ``mlflow`` soft dependencies (:pr:`6285`) :user:`fkiraly`
+* [MNT] add :user:`slavik57` as a maintenance contributor for fixing ``conda-forge`` ``sktime-all-extras 0.28.0`` release (:pr:`6308`) :user:`tm-slavik57`
+* [MNT] set GHA macos runner consistently to ``macos-13`` (:pr:`6328`) :user:`fkiraly`
+* [MNT] [Dependabot](deps-dev): Update ``holidays`` requirement from ``<0.46,>=0.29`` to ``>=0.29,<0.47`` (:pr:`6250`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``holidays`` requirement from ``<0.47,>=0.29`` to ``>=0.29,<0.48`` (:pr:`6302`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``arch`` requirement from ``<6.4.0,>=5.6`` to ``>=5.6,<7.1.0`` (:pr:`6307`, :pr:`6309`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``pytest-xdist`` requirement from ``<3.6,>=3.3`` to ``>=3.3,<3.7`` (:pr:`6316`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``mne`` requirement from ``<1.7,>=1.5`` to ``>=1.5,<1.8`` (:pr:`6317`) :user:`dependabot[bot]`
+* [MNT] Update ``dask`` requirement from ``<2024.2.2`` to ``<2024.4.2``, add new required ``dataframe`` extra to ``pyproject.toml``. (:pr:`6282`) :user:`yarnabrina`
+
+Fixes
+~~~~~
+
+Data loaders
+^^^^^^^^^^^^
+
+* [BUG] Fix ``tsf`` data error log and make it more precise (:pr:`6258`) :user:`pranavvp16`
+
+Forecasting
+^^^^^^^^^^^
+
+* [BUG] Fix ``NaiveForecaster`` with ``sp>1`` (:pr:`5923`) :user:`benHeid`
+* [BUG] fix ``FallbackForecaster`` failing with ``ForecastByLevel`` when ``nan_predict_policy='raise'`` (:pr:`6231`) :user:`ninedigits`
+* [BUG] Add regression test for bug 3177 (:pr:`6246`) :user:`benHeid`
+* [BUG] fix failing test in ``neuralforecast`` auto freq, amid ``pandas`` ``freq`` deprecations (:pr:`6321`) :user:`geetu040`
+
+Probability distributions and simulators
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fix ``var`` of ``Laplace`` distribution (:pr:`6324`) :user:`fkiraly`
+* [BUG] fix ``Empirical`` index to be ``pd.MultiIndex`` for hierarchical data index (:pr:`6341`) :user:`fkiraly`
+
+Time series clustering
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fix dependent tags of ``TimeSeriesDBSCAN`` (:pr:`6322`) :user:`fkiraly`
+
+Time series regression
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] in ``CNNRegressor``, fix ``self.model not found`` error when ``verbose=True`` (:pr:`6232`) :user:`morestart`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [BUG] ``Imputer`` bugfix #6224 (:pr:`6253`) :user:`Ram0nB`
+* [BUG] Fix backfill of custom function in ``window_feature`` (:pr:`6294`) :user:`toandaominh1997`
+* [BUG] fixed indexing of return in ``TSBootstrapAdapter`` (:pr:`6326`) :user:`astrogilda`
+* [BUG] Fix ``STLTransformer.inverse_transform`` for univariate case (:pr:`6338`) :user:`fkiraly`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`Anteemony`,
+:user:`astrogilda`,
+:user:`benHeid`,
+:user:`duydl`,
+:user:`fkiraly`,
+:user:`geetu040`,
+:user:`iamSathishR`,
+:user:`julian-fong`,
+:user:`MihirsinhChauhan`,
+:user:`MMTrooper`,
+:user:`mobley-trent`,
+:user:`morestart`,
+:user:`ninedigits`,
+:user:`pranavvp16`,
+:user:`Ram0nB`,
+:user:`SamruddhiNavale`,
+:user:`shlok191`,
+:user:`slavik57`,
+:user:`tm-slavik57`,
+:user:`toandaominh1997`,
+:user:`vandit98`,
+:user:`yarnabrina`,
+:user:`Z-Fran`
+
+
 Version 0.28.0 - 2024-03-27
 ---------------------------
 

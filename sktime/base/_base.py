@@ -78,6 +78,14 @@ class BaseObject(_BaseObject):
     Extends skbase BaseObject with additional features.
     """
 
+    # global default tags for dependency management
+    _tags = {
+        "python_version": None,  # PEP 440 version specifier, e.g., ">=3.7"
+        "python_dependencies": None,  # PEP 440 dependency strs, e.g., "pandas>=1.0"
+        "python_dependencies_alias": {"scikit-learn": "sklearn"},
+        "env_marker": None,  # PEP 508 environment marker, e.g., "os_name=='posix'"
+    }
+
     _config = {
         "warnings": "on",
         "backend:parallel": None,  # parallelization backend for broadcasting
@@ -140,6 +148,35 @@ class BaseObject(_BaseObject):
               e.g., ``scheduler``
         """,
     }
+
+    # TODO 0.30.0: change warning message to indicate that 3.8 is no longer supported,
+    #  and that 3.9 is the minimum supported version
+    # TODO 0.31.0: check whether 3.8 has reached EoL. If so, remove warning altogether
+    def __init__(self):
+        super().__init__()
+
+        import sys
+
+        from packaging.specifiers import SpecifierSet
+
+        from sktime.utils.warnings import warn
+
+        py39_or_higher = SpecifierSet(">=3.9")
+        sys_version = sys.version.split(" ")[0]
+
+        if sys_version not in py39_or_higher:
+            warn(
+                f"From sktime 0.30.0, sktime will require Python version >=3.9, "
+                f"but found {sys_version}. "
+                "No errors will be raised, but test coverage and support for "
+                "Python 3.8 will be dropped from 0.30.0 onwards. "
+                "Kindly note for context: python 3.8 will reach end of life "
+                "in October 2024, and multiple sktime core dependencies, "
+                "including scikit-learn, have already dropped support for 3.8. ",
+                category=DeprecationWarning,
+                obj=self,
+                stacklevel=2,
+            )
 
     def __eq__(self, other):
         """Equality dunder. Checks equal class and parameters.
@@ -501,9 +538,6 @@ class BaseEstimator(BaseObject):
 
     Extends sktime's BaseObject to include basic functionality for fittable estimators.
     """
-
-    # global dependency alias tag for sklearn dependency management
-    _tags = {"python_dependencies_alias": {"scikit-learn": "sklearn"}}
 
     def __init__(self):
         self._is_fitted = False

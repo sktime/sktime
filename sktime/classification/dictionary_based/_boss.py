@@ -116,7 +116,6 @@ class BOSSEnsemble(BaseClassifier):
     - `TSML <https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/
     tsml/classifiers/dictionary_based/BOSS.java>`_.
 
-
     References
     ----------
     .. [1] Patrick Schäfer, "The BOSS is concerned with time series classification
