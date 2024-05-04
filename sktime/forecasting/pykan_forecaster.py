@@ -22,6 +22,12 @@ class PyKANForecaster(BaseForecaster):
     def __init__(self, ):
         self.hidden_layers =  (5,5)
         self.input_layer_size = 12
+        self.k = 3
+        self.grids = np.array([5,10,20,#50,100
+                               ])
+        self.stop_grid_update_step = 30
+        self.opt = "LBFGS"
+        self.steps=20
         super().__init__()
 
     def _fit(self, y, X, fh):
@@ -47,20 +53,19 @@ class PyKANForecaster(BaseForecaster):
             "test_label":torch.stack(test_target)
         }
 
-
-        grids = np.array([5,10,20,50,100])
-
         train_losses = []
         test_losses = []
-        steps = 20
-        k = 3
 
-        for i in range(grids.shape[0]):
+        for i in range(self.grids.shape[0]):
             if i == 0:
-                self.model = KAN(width=[self.input_layer_size,*self.hidden_layers,output_size], grid=grids[i], k=k)
+                self.model = KAN(width=[self.input_layer_size,*self.hidden_layers,output_size], 
+                                 grid=self.grids[i],
+                                 k=self.k)
             if i != 0:
-                self.model = KAN(width=[self.input_layer_size,*self.hidden_layers,output_size], grid=grids[i], k=k).initialize_from_another_model(self.model, ds_new['train_input'])
-            results = self.model.train(ds_new, opt="LBFGS", steps=steps, stop_grid_update_step=30)
+                self.model = KAN(width=[self.input_layer_size,*self.hidden_layers,output_size], 
+                                 grid=self.grids[i], 
+                                 k=self.k).initialize_from_another_model(self.model, ds_new['train_input'])
+            results = self.model.train(ds_new, opt=self.opt, steps=self.steps, stop_grid_update_step=self.stop_grid_update_step)
             train_losses += results['train_loss']
             test_losses += results['test_loss']
 
@@ -69,8 +74,9 @@ class PyKANForecaster(BaseForecaster):
     def _predict(self, fh, X):
         """
         """
-        input_ = torch.from_numpy(self._y.values[-self.input_layer_size:])
-        return self.model(torch.stack(input_)).detach().numpy()
+        input_ = torch.from_numpy(self._y.values[-self.input_layer_size:]).reshape((1,-1))
+        print(input_.shape)
+        return self.model(input_).detach().numpy().reshape((-1,))
 
   
 
