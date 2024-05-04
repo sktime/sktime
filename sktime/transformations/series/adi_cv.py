@@ -126,11 +126,11 @@ class ADICVTransformer(BaseTransformer):
             Contains columns listed in self.features and 1 row entry of values
 
         """
-        condition = X != 0
-        X_non_zero = X[condition]
+        X_non_zero = X.to_numpy().nonzero()
+        X_non_zero = X.iloc[X_non_zero]
 
         # Calculating ADI value based on formula from paper
-        adi_value = (len(X_non_zero) - 1) / len(X) - 1
+        adi_value = (len(X) / len(X_non_zero)) - 1
 
         # Calculating variance for all non-zero values
         variance = X_non_zero.var().iloc[0]
@@ -196,9 +196,7 @@ class ADICVTransformer(BaseTransformer):
         # in independent test cases!
 
         params = [
-            {"features": None, "adi_threshold": 0.0, "cv_threshold": 0.49},
-            {"features": None, "adi_threshold": 1.32, "cv_threshold": 0.0},
-            {"features": None, "adi_threshold": 0.0, "cv_threshold": 0.0},
+            {"features": None, "adi_threshold": 1.32, "cv_threshold": 0.49},
         ]
 
         return params

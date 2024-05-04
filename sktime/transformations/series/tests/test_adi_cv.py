@@ -69,8 +69,8 @@ def _generate_intermittent_series(size: int = 750):
     # Generating an intermittent series, we keep ADI high by
     # setting only 10% of all values to non-zero values
 
-    intermittent_series = np.zeros(size=size)
-    non_zero_indices = np.random.choice(a=size, size=size // 10, replace=False)
+    intermittent_series = np.zeros(shape=(size,))
+    non_zero_indices = np.random.choice(size, size=size // 10, replace=False)
 
     intermittent_series[non_zero_indices] = np.random.normal(10, 0.25, size=size // 10)
 
@@ -94,8 +94,8 @@ def _generate_lumpy_series(size: int = 750):
     # Generating a lumpy series, we keep ADI high by
     # setting only 10% of all values to non-zero values
 
-    lumpy_series = np.zeros(size)
-    non_zero_indices = np.random.choice(a=size, size=size // 10, replace=False)
+    lumpy_series = np.zeros(shape=(size,))
+    non_zero_indices = np.random.choice(size, size=size // 10, replace=False)
 
     lumpy_series[non_zero_indices] = np.random.normal(10, 1, size=size // 10) ** 2
 
@@ -104,7 +104,7 @@ def _generate_lumpy_series(size: int = 750):
 
 # Defining all of the categories we wish to run tests for
 @pytest.mark.parametrize(
-    "generator_category, expected_class",
+    "series_generator, expected_class",
     [
         (_generate_smooth_series, "smooth"),
         (_generate_erratic_series, "erratic"),
@@ -128,5 +128,5 @@ def test_adi_cv_extractor(series_generator, expected_class):
     series = series_generator()
     transformer = ADICVTransformer()
 
-    df = transformer(series)
+    df = transformer.fit_transform(series)
     assert df["class"].iloc[0] == expected_class

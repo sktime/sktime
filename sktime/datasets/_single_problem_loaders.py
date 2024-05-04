@@ -1254,9 +1254,7 @@ def load_solar(
 
         df = (
             pd.read_csv(
-                url,
-                index_col=["gsp_id", "datetime_gmt"],
-                parse_dates=["datetime_gmt"],
+                url, index_col=["gsp_id", "datetime_gmt"], parse_dates=["datetime_gmt"]
             )
             .droplevel(0)
             .sort_index()
