@@ -2552,6 +2552,10 @@ class BaseGlobalForecaster(BaseForecaster):
 
     """
 
+    def __init__(self):
+        super().__init__()
+        self.set_tags(**{"object_type": ["global_forecaster", "forecaster"]})
+
     def predict(self, fh=None, X=None, y=None):
         """Forecast time series at future horizon.
 
