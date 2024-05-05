@@ -28,7 +28,11 @@ from sktime.split import (
     SlidingWindowSplitter,
     temporal_train_test_split,
 )
-from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
+from sktime.tests.test_all_estimators import (
+    BaseFixtureGenerator,
+    QuickTester,
+    TestAllObjects,
+)
 from sktime.utils._testing.forecasting import (
     _assert_correct_columns,
     _assert_correct_pred_time_index,
@@ -898,3 +902,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         cutoff = get_cutoff(y_train, return_index=True)
         _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
         _assert_correct_columns(y_pred, y_train)
+
+
+class TestAllGlobalForecasters(TestAllObjects):
+    """Module level tests for all global forecasters."""
+
+    estimator_type_filter = "global_forecaster"
