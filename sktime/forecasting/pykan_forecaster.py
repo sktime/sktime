@@ -3,8 +3,8 @@
 
 __author__ = ["bheidri"]
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster
@@ -161,13 +161,13 @@ class PyKANForecaster(BaseForecaster):
                 steps=self.steps,
                 stop_grid_update_step=self.stop_grid_update_step,
             )
-            # if len(self.test_losses) == 0 or min(results["test_loss"]) < min(
-            #     self.test_losses
-            # ):
-            #     best_model = model
+            if len(self.test_losses) == 0 or results["test_loss"][-1] < min(
+                self.test_losses
+            ):
+                best_model = model
             self.train_losses += results["train_loss"]
             self.test_losses += results["test_loss"]
-        self.model = model
+        self.model = best_model
         return self
 
     def _predict(self, fh, X):
@@ -237,8 +237,6 @@ class PyKANForecaster(BaseForecaster):
             },
         ]
         return params
-
-
 
 
 class PyTorchTrainDataset(Dataset):
