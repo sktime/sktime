@@ -3,7 +3,6 @@
 
 __author__ = ["bheidri"]
 
-import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
