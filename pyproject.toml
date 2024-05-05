@@ -274,6 +274,7 @@ dl = [
   'tensorflow<2.17,>=2; python_version < "3.12"',
   'torch; python_version < "3.12"',
   'transformers[torch]; python_version < "3.12"',
+  'pykan; python_version > "3.9.7"'
 ]
 mlflow = [
   "mlflow",
