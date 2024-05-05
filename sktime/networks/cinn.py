@@ -24,8 +24,7 @@ if _check_soft_dependencies("FrEIA", severity="none"):
     import FrEIA.modules as Fm
 
 
-# TODO 0.29.0: rename the class cINNNetwork to CINNNetwork
-class cINNNetwork:
+class CINNNetwork:
     """
     Conditional Invertible Neural Network.
 
@@ -45,7 +44,7 @@ class cINNNetwork:
         Activation function to use in the subnet.
     """
 
-    class _cINNNetwork(NNModule):
+    class _CINNNetwork(NNModule):
         def __init__(
             self,
             horizon,
@@ -196,8 +195,9 @@ class cINNNetwork:
         self.hidden_dim_size = hidden_dim_size
         self.activation = activation if activation is not None else nn.ReLU
 
+        # TODO 0.30.0: remove this warning
         warn(
-            "cINNNetwork will be renamed to CINNNetwork in sktime 0.29.0, "
+            "cINNNetwork has been renamed to CINNNetwork in sktime 0.29.0, "
             "The estimator is available under the future name at its "
             "current location, and will be available under its deprecated name "
             "until 0.30.0. "
@@ -209,7 +209,7 @@ class cINNNetwork:
 
     def build(self):
         """Build the cINN."""
-        return self._cINNNetwork(
+        return self._CINNNetwork(
             self.horizon,
             self.cond_features,
             self.encoded_cond_size,
@@ -219,6 +219,5 @@ class cINNNetwork:
         )
 
 
-# TODO 0.29.0: switch the line to cINNNetwork = CINNNetwork
 # TODO 0.30.0: remove this alias altogether
-CINNNetwork = cINNNetwork
+cINNNetwork = CINNNetwork
