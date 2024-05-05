@@ -25,7 +25,7 @@ from sktime.dists_kernels.base import (
     BasePairwiseTransformerPanel,
 )
 from sktime.exceptions import NotFittedError
-from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base import BaseForecaster, BaseGlobalForecaster
 from sktime.registry import all_estimators
 from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.tests._config import (
@@ -890,9 +890,11 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         assert 2 >= n_base_types >= 1
 
         # If the estimator inherits from more than one base estimator type, we check if
-        # one of them is a transformer base type
+        # one of them is a transformer base type or BaseGlobalForecaster type
         if n_base_types > 1:
-            assert issubclass(estimator_class, VALID_TRANSFORMER_TYPES)
+            assert issubclass(estimator_class, VALID_TRANSFORMER_TYPES) or issubclass(
+                estimator_class, BaseGlobalForecaster
+            )
 
     def test_has_common_interface(self, estimator_class):
         """Check estimator implements the common interface."""
