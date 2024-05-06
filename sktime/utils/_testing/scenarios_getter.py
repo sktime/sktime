@@ -6,6 +6,7 @@ __all__ = ["retrieve_scenarios"]
 
 
 from inspect import isclass
+
 from skbase.base import BaseObject
 
 from sktime.registry import BASE_CLASS_LIST, BASE_CLASS_SCITYPE_LIST, scitype
