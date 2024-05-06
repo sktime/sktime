@@ -3,4 +3,6 @@
 
 __author__ = ["fkiraly"]
 
+__all__ = ["Empirical"]
+
 from skpro.distributions.empirical import Empirical

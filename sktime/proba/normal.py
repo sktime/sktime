@@ -3,4 +3,6 @@
 
 __author__ = ["fkiraly"]
 
+__all__ = ["Normal"]
+
 from skpro.distributions.normal import Normal

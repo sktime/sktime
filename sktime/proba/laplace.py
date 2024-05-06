@@ -3,4 +3,6 @@
 
 __author__ = ["fkiraly"]
 
+__all__ = ["Laplace"]
+
 from skpro.distributions.laplace import Laplace

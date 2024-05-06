@@ -3,4 +3,6 @@
 
 __author__ = ["Alex-JG3", "ivarzap"]
 
+__all__ = ["TDistribution"]
+
 from skpro.distributions.t import TDistribution

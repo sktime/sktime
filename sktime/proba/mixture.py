@@ -3,4 +3,6 @@
 
 __author__ = ["fkiraly"]
 
+__all__ = ["Mixture"]
+
 from skpro.distributions.mixture import Mixture
