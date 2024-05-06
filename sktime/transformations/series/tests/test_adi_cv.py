@@ -47,7 +47,7 @@ def _generate_erratic_series(size: int = 750):
     # Generating an erratic series, we keep variance high by keeping the
     # standard deviation to 1 and then squaring the values
 
-    erratic_series = np.random.normal(loc=10, scale=1, size=size) ** 2
+    erratic_series = np.random.normal(loc=10, scale=2.5, size=size) ** 2
 
     return pd.Series(erratic_series)
 
@@ -97,7 +97,7 @@ def _generate_lumpy_series(size: int = 750):
     lumpy_series = np.zeros(shape=(size,))
     non_zero_indices = np.random.choice(size, size=size // 10, replace=False)
 
-    lumpy_series[non_zero_indices] = np.random.normal(10, 1, size=size // 10) ** 2
+    lumpy_series[non_zero_indices] = np.random.normal(10, 2.5, size=size // 10) ** 2
 
     return pd.Series(lumpy_series)
 

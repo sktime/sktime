@@ -88,6 +88,8 @@ class ADICVTransformer(BaseTransformer):
         self.cv_threshold = cv_threshold
         self.features = features
 
+        self.features_internal = features
+
         # Initialize the parent class
         super().__init__()
 
@@ -105,7 +107,7 @@ class ADICVTransformer(BaseTransformer):
 
         else:
             # Helpful to transform None to default list for transform function
-            self.features = ["adi", "cv2", "class"]
+            self.features_internal = ["adi", "cv2", "class"]
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -157,13 +159,13 @@ class ADICVTransformer(BaseTransformer):
         # Collecting all values together into dict and converting to DF
         return_dict = {}
 
-        if "adi" in self.features:
+        if "adi" in self.features_internal:
             return_dict["adi"] = [adi_value]
 
-        if "cv2" in self.features:
+        if "cv2" in self.features_internal:
             return_dict["cv2"] = [cv2_value]
 
-        if "class" in self.features:
+        if "class" in self.features_internal:
             return_dict["class"] = [class_type]
 
         df = pd.DataFrame(return_dict)
