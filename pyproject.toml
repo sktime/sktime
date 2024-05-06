@@ -59,7 +59,7 @@ dependencies = [
   "scikit-base<0.8.0,>=0.6.1",  # base module for sklearn compatible base API
   "scikit-learn>=0.24,<1.5.0",  # required for estimators and framework layer
   "scipy<2.0.0,>=1.2",  # required for estimators and framework layer
-  "skpro<2.3.0,>=2.2.0",  # sktime internal: probability distributions for forecasting
+  "skpro@git+https://github.com/sktime/skpro",
 ]
 
 [project.optional-dependencies]
