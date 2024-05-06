@@ -59,6 +59,7 @@ dependencies = [
   "scikit-base<0.8.0,>=0.6.1",  # base module for sklearn compatible base API
   "scikit-learn>=0.24,<1.5.0",  # required for estimators and framework layer
   "scipy<2.0.0,>=1.2",  # required for estimators and framework layer
+  "skpro<2.3.0,>=2.2.0",  # sktime internal: probability distributions for forecasting
 ]
 
 [project.optional-dependencies]
@@ -187,7 +188,6 @@ forecasting = [
   "arch>=5.6,<7.1",
   'pmdarima!=1.8.1,<2.1,>=1.8; python_version < "3.12"',
   "prophet<1.2,>=1.1",
-  "skpro<2.3.0,>=2",
   'statsforecast<1.8.0,>=1.0.0; python_version < "3.12"',
   "statsmodels<0.15,>=0.12.1",
   'tbats<1.2,>=1.1; python_version < "3.12"',
