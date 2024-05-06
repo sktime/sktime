@@ -3,6 +3,6 @@
 
 __author__ = ["fkiraly"]
 
-__all__ = ["BaseDistribution"]
+__all__ = ["BaseDistribution", "_BaseTFDistribution"]
 
-from skpro.distributions.base import BaseDistribution
+from skpro.distributions.base import BaseDistribution, _BaseTFDistribution
