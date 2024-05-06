@@ -47,17 +47,6 @@ MODULES_TO_IGNORE = ("sktime._contrib", "sktime.utils._testing")
 EXCEPTED_FROM_NO_DEP_CHECK = []
 
 
-# estimators excepted from checking that get_test_params does not import soft deps
-# this is ok, in general, for adapters to soft dependency frameworks
-# since such adapters will import estimators from the adapted framework
-EXCEPTED_FROM_GET_PARAMS_CHECK = [
-    "PyODAnnotator",  # adapters always require soft dep. Here: pyod
-    "HCrystalBallAdapter",  # adapters always require soft dep. Here: hcrystalball
-    "TSBootstrapAdapter",  # adapters always require soft dep. Here: tsbootstrap
-    "TemporianTransformer",  # adapters always require soft dep. Here: temporian
-]
-
-
 def _is_test(module):
     module_parts = module.split(".")
     return any(part in ("tests", "test") for part in module_parts)
@@ -271,9 +260,6 @@ def test_est_construct_if_softdep_available(estimator):
 @pytest.mark.parametrize("estimator", all_ests)
 def test_est_get_params_without_modulenotfound(estimator):
     """Test that estimator test parameters do not rely on soft dependencies."""
-    if estimator.__name__ in EXCEPTED_FROM_GET_PARAMS_CHECK:
-        return None
-
     try:
         estimator.get_test_params()
     except ModuleNotFoundError as e:
@@ -282,6 +268,10 @@ def test_est_get_params_without_modulenotfound(estimator):
             f"Estimator {estimator.__name__} requires soft dependencies for parameters "
             f"returned by get_test_params. Test parameters should not require "
             f"soft dependencies and use only sktime internal objects. "
+            f"In a case where soft dependencies are required, return a shorter list, "
+            f"or an empty dict, with parameter sets that do not require soft "
+            f"dependencies, gated by a dependency check, for instance using "
+            f"skbase.utils.dependencies_check_soft_dependencies with severity='none'. "
             f"Exception text: {error_msg}"
         ) from e
 
