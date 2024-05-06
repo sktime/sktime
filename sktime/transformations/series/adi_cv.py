@@ -171,7 +171,7 @@ class ADICVTransformer(BaseTransformer):
         df = pd.DataFrame(return_dict)
 
         # Ordering the dataframe in the correct order
-        df = df.loc[:, self.features]
+        df = df.loc[:, self.features_internal]
 
         return df
 
