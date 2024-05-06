@@ -153,4 +153,12 @@ class TBATS(_TbatsAdapter):
             "use_arma_errors": True,
             "n_jobs": 2,
         }
-        return [params1, params2]
+        params3 = {
+            "use_box_cox": False,
+            "use_trend": False,
+            "use_damped_trend": False,
+            "sp": 3,
+            "use_arma_errors": False,
+            "n_jobs": 1,
+        }
+        return [params1, params2, params3]

@@ -95,6 +95,8 @@ class BaseSplitter(BaseObject):
         # split_series_uses: "iloc" or "loc", whether split_series under the hood
         # calls split ("iloc") or split_loc ("loc"). Setting this can give
         # performance advantages, e.g., if "loc" is faster to obtain.
+        "split_type": "temporal",
+        # whether the splitter splits by time, or by instance
         "authors": "sktime developers",  # author(s) of the object
         "maintainers": "sktime developers",  # current maintainer(s) of the object
     }
@@ -306,6 +308,16 @@ class BaseSplitter(BaseObject):
             y_index = y.index
         else:
             y_index = y
+
+        if self.get_tag("split_type") == "instance":
+            if not isinstance(y_index, pd.MultiIndex):
+                cls_name = self.__class__.__name__
+                raise ValueError(
+                    f"Error in {cls_name}.split: "
+                    f"{cls_name} is a splitter of type 'instance', "
+                    f"and requires Panel or Hierarchical time series index."
+                )
+
         return y_index
 
     def _check_y(self, y, allow_index=False):
