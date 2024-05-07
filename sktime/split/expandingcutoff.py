@@ -14,15 +14,25 @@ import numpy as np
 import pandas as pd
 
 from sktime.split.base import BaseSplitter
-from sktime.split.base._common import ACCEPTED_Y_TYPES, _check_fh, _inputs_are_supported
+from sktime.split.base._common import ACCEPTED_Y_TYPES, _check_fh
 from sktime.utils.validation.forecasting import check_step_length
 
 
-def _is_all_args_periodlike(args):
-    for arg in args:
-        if not isinstance(arg, pd.Period):
-            return False
-    return True
+def _is_datetimelike(x):
+    return isinstance(x, (pd.Timestamp, np.datetime64, pd.Period))
+
+
+def _is_int(arg):
+    return isinstance(arg, (int, np.int_))
+
+
+def _validate_cutoff(cutoff):
+    if not (_is_datetimelike(cutoff) or _is_int(cutoff)):
+        raise TypeError(
+            "Cutoff value must be datetime-like or integer but instead "
+            f"found type(cutoff) = {type(cutoff)}"
+        )
+    return cutoff
 
 
 class ExpandingCutoffSplitter(BaseSplitter):
@@ -38,9 +48,11 @@ class ExpandingCutoffSplitter(BaseSplitter):
     The test set is defined by a forecast horizon relative to the last point in the
     training set, containing as many subsequent indices as specified by the `fh`
     parameter.
+
+    Valid y-index and cutoff types are datelike-datelike, datelike-int, and int-int.
                           c
-                          ↓
-    |---------------------|←---fh---→|------|
+                          |
+    |---------------------|----fh----|------|
     | * * * * * * * * * * x x x x x x - - - |
     | * * * * * * * * * * * x x x x x x - - |
     | * * * * * * * * * * * * x x x x x x - |
@@ -66,7 +78,7 @@ class ExpandingCutoffSplitter(BaseSplitter):
 
     def __init__(self, cutoff, fh, step_length):
         super().__init__()
-        self.cutoff = cutoff
+        self.cutoff = _validate_cutoff(cutoff)
         self.fh = fh
         self._fh = _check_fh(fh)
         self.step_length = step_length
@@ -98,6 +110,37 @@ class ExpandingCutoffSplitter(BaseSplitter):
             test_window = np.arange(cutoff + 1, cutoff + offset, step=self.step_length)
             yield train_window, test_window
 
+    def _validate_y(self, y):
+        y = self._coerce_to_index(y)
+        cutoff = self.cutoff
+        y0 = y[0]
+        cond1 = _is_datetimelike(y0) and (_is_datetimelike(cutoff) or _is_int(cutoff))
+        cond2 = _is_int(y0) and _is_int(cutoff)
+        if not (cond1 or cond2):
+            raise TypeError(
+                "Valid combinations for y and cutoff types are "
+                "datelike-datelike, datelike-int, or int-int, but instead "
+                f"found {type(y0)}-{type(cutoff)}"
+            )
+        return y
+
+    def _get_first_cutoff_index(self, y_index):
+        y0 = y_index[0]
+        if _is_int(self.cutoff) and self.cutoff < 0:
+            index = len(y_index) + self.cutoff
+        elif _is_datetimelike(y0) and _is_int(self.cutoff) and (self.cutoff > 0):
+            index = self.cutoff
+        else:
+            index = np.argmax(y_index == self.cutoff) - 1
+            # TODO - program exception message
+            if index == -1:
+                raise TypeError(
+                    "Could not find matching index, make sure that "
+                    f"type(y) {type(y0)} is compatible with type(cutoff) "
+                    f"{type(self.cutoff)}"
+                )
+        return index
+
     def get_cutoffs(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> np.ndarray:
         """Return the cutoff points in .iloc[] context.
 
@@ -115,20 +158,10 @@ class ExpandingCutoffSplitter(BaseSplitter):
             raise ValueError(
                 f"{self.__class__.__name__} requires `y` to compute the cutoffs."
             )
-        y = self._coerce_to_index(y)
-        input_args = [y[0], self.cutoff]
-        if not _inputs_are_supported(input_args) and not _is_all_args_periodlike(
-            input_args
-        ):
-            msg = (
-                "y indicies and cutoff must have the same datatypes, but instead "
-                f"found type(y) = {y.dtype} and type(cutoff) = {type(self.cutoff)}"
-            )
-            raise TypeError(msg)
-
+        y = self._validate_y(y)
         fh = self._fh
         step_length = check_step_length(self.step_length)
-        cutoff_index = np.argmax(y == self.cutoff) - 1
+        cutoff_index = self._get_first_cutoff_index(y)
         cutoffs = np.array([cutoff_index])
         offset = fh.to_numpy().max()
         while cutoff_index + offset < len(y) - 1:
