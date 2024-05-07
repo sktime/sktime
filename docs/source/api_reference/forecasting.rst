@@ -363,13 +363,19 @@ Deep learning based forecasters
     LTSFDLinearForecaster
     LTSFNLinearForecaster
 
+.. currentmodule:: sktime.forecasting.hf_transformers_forecaster
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HFTransformersForecaster
+
 .. currentmodule:: sktime.forecasting.conditional_invertible_neural_network
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    cINNForecaster
+    CINNForecaster
 
 .. currentmodule:: sktime.forecasting.neuralforecast
 

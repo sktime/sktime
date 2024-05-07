@@ -47,7 +47,6 @@ import logging
 import os
 
 import pandas as pd
-import yaml
 
 import sktime
 from sktime import utils
@@ -56,6 +55,7 @@ from sktime.utils.multiindex import flatten_multiindex
 from sktime.utils.validation._dependencies import _check_mlflow_dependencies
 
 if _check_mlflow_dependencies(severity="warning"):
+    import yaml
     from mlflow import pyfunc
 
 FLAVOR_NAME = "mlflow_sktime"
