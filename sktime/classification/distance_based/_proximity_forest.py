@@ -1026,8 +1026,9 @@ class ProximityStump(BaseClassifier):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {"random_state": 0, "backend": "loky"}
-        params2 = {"random_state": 42, "distance_measure": "dtw"}
-        return [params1, params2]
+        params2 = {"random_state": 42, "distance_measure": "dtw", "backend": "dask"}
+        params3 = {"random_state": 35, "backend": "threading"}
+        return [params1, params2, params3]
 
 
 class ProximityTree(BaseClassifier):
@@ -1370,11 +1371,15 @@ class ProximityTree(BaseClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        params1 = {"max_depth": 1, "n_stump_evaluations": 1}
-        params2 = {"max_depth": 5, "n_stump_evaluations": 2, "distance_measure": "dtw"}
-        params3 = {"backend": "loky"}
-        params4 = {"backend": "threading"}
-        return [params1, params2, params3, params4]
+        params1 = {
+            "max_depth": 5,
+            "n_stump_evaluations": 2,
+            "distance_measure": "dtw",
+            "backend": "dask",
+        }
+        params2 = {"backend": "loky"}
+        params3 = {"backend": "threading"}
+        return [params1, params2, params3]
 
 
 class ProximityForest(BaseClassifier):
@@ -1692,8 +1697,8 @@ class ProximityForest(BaseClassifier):
         meta["X"] = X
         if self.backend:
             # ensure it isn't multiprocessing, if it is change to loky
-            # if self.backend == "multiprocessing":
-            #     self.backend = "loky"
+            if self.backend == "multiprocessing":
+                self.backend = "loky"
 
             iters = self.trees
             distributions = parallelize(
@@ -1788,18 +1793,17 @@ class ProximityForest(BaseClassifier):
                 "n_estimators": 2,
                 "max_depth": 1,
                 "n_stump_evaluations": 1,
-            }
-            params2 = {
-                "n_estimators": 4,
-                "max_depth": 2,
-                "n_stump_evaluations": 3,
-                "distance_measure": "dtw",
                 "backend": "threading",
             }
-            params_set = [params1, params2]
+            params_set = [params1]
 
             if _check_soft_dependencies("dask", severity="none"):
-                params3 = {"backend": "dask"}
+                params3 = {
+                    "n_estimators": 2,
+                    "max_depth": 1,
+                    "n_stump_evaluations": 1,
+                    "backend": "dask",
+                }
                 params_set.append(params3)
             return params_set
 
