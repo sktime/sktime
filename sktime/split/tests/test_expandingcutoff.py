@@ -39,9 +39,11 @@ def test_expandingcutoff_ytype_cutofftype_combos_003a():
     y1 = _make_series(n_timepoints=10, index_type="datetime", random_state=42)
     fh = ForecastingHorizon([1, 2, 3])
     cutoffs = [-7, y1.index[i], 5]
+    step_lengths = [1, 2, 3]
     for cutoff in cutoffs:
-        cv1 = ExpandingCutoffSplitter(cutoff=cutoff, fh=fh, step_length=1)
-        _check_cv(cv1, y1)
+        for step_length in step_lengths:
+            cv1 = ExpandingCutoffSplitter(cutoff=cutoff, fh=fh, step_length=step_length)
+            _check_cv(cv1, y1)
 
 
 def test_expandingcutoff_ytype_cutofftype_combos_003b():

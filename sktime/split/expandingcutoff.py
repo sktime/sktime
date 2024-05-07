@@ -132,7 +132,6 @@ class ExpandingCutoffSplitter(BaseSplitter):
             index = self.cutoff
         else:
             index = np.argmax(y_index == self.cutoff) - 1
-            # TODO - program exception message
             if index == -1:
                 raise TypeError(
                     "Could not find matching index, make sure that "
