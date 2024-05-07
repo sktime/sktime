@@ -32,16 +32,6 @@ def test_expandingcutoff_int_index_002():
     np.testing.assert_array_equal(cutoffs, cv.get_cutoffs(y))
 
 
-# def test_expandingcutoff_raises_invalid_param_combos_003():
-#     """Test invalid param combo"""
-#     y = _make_series(n_timepoints=10)
-#     cutoff = 3
-#     fh = ForecastingHorizon([1, 2, 3], freq=y.index.freq)
-#     cv = ExpandingCutoffSplitter(cutoff=cutoff, fh=fh, step_length=1)
-#     with pytest.raises(TypeError):
-#         _check_cv(cv, y)
-
-
 def test_expandingcutoff_ytype_cutofftype_combos_003a():
     """Test invalid param combo"""
     # Datetime cutoff
@@ -60,9 +50,11 @@ def test_expandingcutoff_ytype_cutofftype_combos_003b():
     y1 = _make_series(n_timepoints=10, index_type="int", random_state=42)
     fh = ForecastingHorizon([1, 2, 3])
     cutoffs = [-7, y1.index[3]]
+    step_lengths = [1, 2, 3]
     for cutoff in cutoffs:
-        cv1 = ExpandingCutoffSplitter(cutoff=cutoff, fh=fh, step_length=1)
-        _check_cv(cv1, y1)
+        for step_length in step_lengths:
+            cv1 = ExpandingCutoffSplitter(cutoff=cutoff, fh=fh, step_length=step_length)
+            _check_cv(cv1, y1)
 
 
 def test_expandingcutoff_ytype_cutofftype_combos_003c():
@@ -183,7 +175,7 @@ def test_expanding_cutoff_period_008():
 
     cutoff = pd.Period("2021-Q1")
     fh = ForecastingHorizon([1, 2, 3])
-    cv = ExpandingCutoffSplitter(cutoff=cutoff, fh=fh, step_length=1)
+    cv = ExpandingCutoffSplitter(cutoff=cutoff, fh=fh, step_length=2)
     _check_cv(cv, y)
 
     # pandas periods and timestamps are both datelike but don't work directly

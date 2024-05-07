@@ -106,8 +106,8 @@ class ExpandingCutoffSplitter(BaseSplitter):
             fh = self._fh
         offset = fh.to_numpy().max() + 1
         for cutoff in self.get_cutoffs(y):
-            train_window = np.arange(0, cutoff + 1, step=self.step_length)
-            test_window = np.arange(cutoff + 1, cutoff + offset, step=self.step_length)
+            train_window = np.arange(0, cutoff + 1, step=1)
+            test_window = np.arange(cutoff + 1, cutoff + offset, step=1)
             yield train_window, test_window
 
     def _validate_y(self, y):
