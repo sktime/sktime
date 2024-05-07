@@ -4,16 +4,7 @@ __author__ = ["Withington", "TonyBagnall"]
 
 from abc import ABC, abstractmethod
 
-import numpy as np
-import pandas as pd
-
 from sktime.base import BaseObject
-from sktime.forecasting.base import BaseForecaster
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-
 
 class BaseDeepNetwork(BaseObject, ABC):
     """Abstract base class for deep learning networks."""
