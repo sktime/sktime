@@ -2609,7 +2609,7 @@ class BaseGlobalForecaster(BaseForecaster):
 
         # check global forecasting tag
         gf = self.get_tag(
-            "capability:global_forecasting", tag_value_default=None, raise_error=False
+            "capability:global_forecasting", tag_value_default=False, raise_error=False
         )
         if gf is not True and y is not None:
             ValueError("no global forecasting support!")
