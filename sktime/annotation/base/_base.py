@@ -433,23 +433,22 @@ class BaseSeriesAnnotator(BaseEstimator):
             * If `y_sparse` is a series, it should contain the integer index locations
               of anomalies/changepoints.
             * If `y_sparse` is a dataframe it should contain the following columns:
-              - seg_label, the integer label of the segments.
-              - seg_start, the integer start points of the each segment.
-              - seg_end, the integer end points of the each segment.
+              `seg_label`, `seg_start`, and `seg_end`. `seg_label` contains the integer
+              label of the segment, `seg_start` contains the integer start points of
+              each segment, and `seg_end` contains the integer end points of each
+              segment.
         length : {int, None}, optional
-            If `length` is an integer, the returned dense series is right padded to
-            `length`. For change points/anomalies, the series is padded with zeros.
-            If y_sparse is an series of anomalies/changepoints, the series is padded
-            with zeros. If y_sparse is a dataframe of segments, the returned series is
-            padded with -1's to represent unlabelled points.
+            Right pad the retured dense array so it has `length` elements. If `y_sparse`
+            is dataframe of segments, pad the series with 0's. If the `y_sparse` is a
+            series of changepoints/anomalies, pad the series with -1's.
 
         Returns
         -------
         pd.Series
             * If `y_sparse` is a series of changepoint/anomaly indices then a series of
               0's and 1's is returned. 1's represent anomalies/changepoints.
-            * If `y_sparse` is a dataframe with columns: seg_label, seg_start, and
-              seg_end, then a series of segments will be returned. The segments are
+            * If `y_sparse` is a dataframe with columns: `seg_label`, `seg_start`, and
+              `seg_end`, then a series of segments will be returned. The segments are
               labelled according to the seg_labels column. Areas which do not fall into
               a segment are given the -1 label.
 
@@ -488,6 +487,7 @@ class BaseSeriesAnnotator(BaseEstimator):
         9    1
         dtype: int32
         """
+        # The changepoint/anomly case
         if y_sparse.ndim == 1:
             final_index = y_sparse.iloc[-1]
             if length is None:
@@ -501,6 +501,8 @@ class BaseSeriesAnnotator(BaseEstimator):
             y_dense = pd.Series(np.zeros(length, dtype="int32"))
             y_dense.iloc[y_sparse] = 1
             return y_dense
+
+        # The segmentation case
         elif y_sparse.ndim == 2:
             final_index = y_sparse["seg_end"].iloc[-1]
             if length is None:
@@ -511,12 +513,13 @@ class BaseSeriesAnnotator(BaseEstimator):
                     "The length must be greater than the index of the end point of the"
                     "final segment."
                 )
+
             y_dense = pd.Series(np.full(length, np.nan))
             y_dense.iloc[y_sparse["seg_start"]] = y_sparse["seg_label"].astype("int32")
             y_dense.iloc[y_sparse["seg_end"]] = -y_sparse["seg_label"].astype("int32")
 
             if np.isnan(y_dense.iat[0]):
-                y_dense.iloc[0] = -1  # -1 represent unlabelled sections
+                y_dense.iat[0] = -1  # -1 represent unlabelled sections
 
             # The end points of the segments, and unclassified areas will have negative
             # labels
