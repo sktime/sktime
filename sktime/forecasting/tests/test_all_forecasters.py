@@ -908,3 +908,7 @@ class TestAllGlobalForecasters(TestAllObjects):
     """Module level tests for all global forecasters."""
 
     estimator_type_filter = "global_forecaster"
+
+    def test_global_forecasting_tag(self, estimator_class):
+        global_forecasting_tag = estimator_class._tags["capability:global_forecasting"]
+        assert global_forecasting_tag is True
