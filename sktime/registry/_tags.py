@@ -1184,6 +1184,12 @@ ESTIMATOR_TAG_REGISTER = [
         "bool",
         "can the estimator handle multioutput data?",
     ),
+    (
+        "capability:global_forecasting",
+        ["forecaster"],
+        "bool",
+        "can the estimator make global forecasting?",
+    ),
 ]
 
 # construct the tag register from all classes in this module
