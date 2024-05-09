@@ -662,6 +662,10 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
     use_arma_errors : bool (default=True)
         Whether or not to use a ARMA errors.
         Default is True and this evaluates both models.
+    bc_lower_bound : float (default=0.0)
+        Lower bound for the Box-Cox transformation.
+    bc_upper_bound : float (default=1.0)
+        Upper bound for the Box-Cox transformation.
 
     See Also
     --------
@@ -695,12 +699,16 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
         use_trend: Optional[bool] = None,
         use_damped_trend: Optional[bool] = None,
         use_arma_errors: bool = True,
+        bc_lower_bound: float = 0.0,
+        bc_upper_bound: float = 1.0,
     ):
         self.seasonal_periods = seasonal_periods
         self.use_boxcox = use_boxcox
         self.use_trend = use_trend
         self.use_damped_trend = use_damped_trend
         self.use_arma_errors = use_arma_errors
+        self.bc_lower_bound = bc_lower_bound
+        self.bc_upper_bound = bc_upper_bound
 
         super().__init__()
 
@@ -717,6 +725,8 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
             "use_trend": self.use_trend,
             "use_damped_trend": self.use_damped_trend,
             "use_arma_errors": self.use_arma_errors,
+            "bc_lower_bound": self.bc_lower_bound,
+            "bc_upper_bound": self.bc_upper_bound,
         }
 
     @classmethod
