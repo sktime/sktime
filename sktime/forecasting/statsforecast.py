@@ -720,7 +720,7 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
 
     def _get_statsforecast_params(self) -> dict:
         return {
-            "seasonal_periods": self.seasonal_periods,
+            "season_length": self.seasonal_periods,
             "use_boxcox": self.use_boxcox,
             "use_trend": self.use_trend,
             "use_damped_trend": self.use_damped_trend,
