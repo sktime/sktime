@@ -174,8 +174,11 @@ def test_neural_forecast_with_auto_freq(model_class) -> None:
     # predict with trained model
     y_pred = model.predict()
 
-    # check interpreted freq
-    assert y_pred.index.freq == "A-DEC"
+    # convert freq str to DateOffset object for comparison
+    offset_freq = pandas.tseries.frequencies.to_offset(y_train.index.freq)
+    offset_auto_freq = pandas.tseries.frequencies.to_offset(y_pred.index.freq)
+
+    assert offset_freq == offset_auto_freq
 
 
 @pytest.mark.parametrize("model_class", [NeuralForecastLSTM, NeuralForecastRNN])

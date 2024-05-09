@@ -87,7 +87,7 @@ class RocketPyts(_PytsAdapter, BaseTransformer):
     _tags = {
         # packaging info
         # --------------
-        "authors": "fkiraly",
+        "authors": ["johannfaouzi", "fkiraly"],  # johannfaouzi is author of upstream
         "python_dependencies": "pyts",
         # estimator type
         # --------------

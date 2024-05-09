@@ -9,7 +9,9 @@ from sktime.clustering.base import BaseClusterer
 
 
 class TimeSeriesKernelKMeans(_TslearnAdapter, BaseClusterer):
-    """Kernel algorithm wrapper tslearns implementation.
+    """Kernel k-means clustering, from tslearn.
+
+    Direct interface to ``tslearn.clustering.KernelKMeans``.
 
     Parameters
     ----------
@@ -67,7 +69,7 @@ class TimeSeriesKernelKMeans(_TslearnAdapter, BaseClusterer):
     _tags = {
         # packaging info
         # --------------
-        "authors": "fkiraly",
+        "authors": ["rtavenar", "fkiraly"],  # rtavenar credit for interfaced code
         "python_dependencies": "tslearn",
         # estimator type
         # --------------
