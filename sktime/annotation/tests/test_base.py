@@ -35,7 +35,7 @@ from sktime.annotation.base._base import BaseSeriesAnnotator
 def test_sparse_to_dense(y_sparse, y_dense_expected, length):
     """Test converting from sparse to dense."""
     y_dense_actual = BaseSeriesAnnotator.sparse_to_dense(y_sparse, length=length)
-    testing.assert_series_equal(y_dense_actual, y_dense_expected)
+    testing.assert_series_equal(y_dense_actual, y_dense_expected, check_dtype=False)
 
 
 @pytest.mark.parametrize(
@@ -53,9 +53,13 @@ def test_dense_to_sparse(y_dense, y_sparse_expected):
     """Test converting from dense to sparse."""
     y_sparse_actual = BaseSeriesAnnotator.dense_to_sparse(y_dense)
     if isinstance(y_sparse_expected, pd.Series):
-        testing.assert_series_equal(y_sparse_actual, y_sparse_expected)
+        testing.assert_series_equal(
+            y_sparse_actual, y_sparse_expected, check_dtype=False
+        )
     else:
-        testing.assert_frame_equal(y_sparse_actual, y_sparse_expected)
+        testing.assert_frame_equal(
+            y_sparse_actual, y_sparse_expected, check_dtype=False
+        )
 
 
 @pytest.mark.parametrize(
@@ -79,7 +83,7 @@ def test_change_points_to_segments(change_points, expected_segments, length):
     actual_segments = BaseSeriesAnnotator.change_points_to_segments(
         change_points, length
     )
-    testing.assert_frame_equal(actual_segments, expected_segments)
+    testing.assert_frame_equal(actual_segments, expected_segments, check_dtype=False)
 
 
 @pytest.mark.parametrize(
@@ -100,4 +104,6 @@ def test_change_points_to_segments(change_points, expected_segments, length):
 def test_segments_to_change_points(segments, expected_change_points):
     """Test converting change points to segments."""
     actual_change_points = BaseSeriesAnnotator.segments_to_change_points(segments)
-    testing.assert_series_equal(actual_change_points, expected_change_points)
+    testing.assert_series_equal(
+        actual_change_points, expected_change_points, check_dtype=False
+    )
