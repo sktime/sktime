@@ -12,6 +12,9 @@ class ADICVTransformer(BaseTransformer):
     """
     Classifier based on Intermittent Demand Estimates paper by Syntetos/Boylan.
 
+    We Set the ADI threshold to 1.32 and the CV2 threshold to 0.49 by default.
+    Following is the description of the parameters mentioned above.
+
     1. Average Demand Interval (ADI): The average time period between
     time periods with non-zero demands
 
@@ -46,6 +49,11 @@ class ADICVTransformer(BaseTransformer):
     >>> y = load_airline()
     >>> transformer = ADICVTransformer()
     >>> y_hat = transformer.fit_transform(y)
+
+    References
+    ----------
+    [1]: John E. Boylan, Aris Syntetos: “The Accuracy of Intermittent
+    Demand Estimates.” International Journal of Forecasting, 1 Apr. 2005
     """
 
     _tags = {
@@ -125,8 +133,13 @@ class ADICVTransformer(BaseTransformer):
         Returns
         -------
         X_transformed : pd.DataFrame
-            Contains columns listed in self.features and 1 row entry of values
 
+            The returned DataFrame consists of the columns in the features list passed
+            during initialization. Specifically, the columns include (by default):
+
+                1. Average Demand Interval (ADI)
+                2. Variance (CV2)
+                3. categorical class
         """
         X_non_zero = X.to_numpy().nonzero()
         X_non_zero = X.iloc[X_non_zero]
