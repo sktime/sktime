@@ -5,6 +5,8 @@
 
 __author__ = ["mloning", "kejsitake", "fkiraly"]
 
+from inspect import signature
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -912,3 +914,8 @@ class TestAllGlobalForecasters(TestAllObjects):
     def test_global_forecasting_tag(self, estimator_class):
         global_forecasting_tag = estimator_class._tags["capability:global_forecasting"]
         assert global_forecasting_tag is True
+
+    def test_pridect_signature(self, estimator_class):
+        sig = signature(estimator_class.predict)
+        assert "X" in sig.parameters.keys()
+        assert "y" in sig.parameters.keys()
