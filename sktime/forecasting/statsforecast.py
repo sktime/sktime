@@ -751,7 +751,21 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
         """
         del parameter_set  # to avoid being detected as unused by `vulture` etc.
 
-        params = [{"seasonal_periods": 3}, {"seasonal_periods": [3, 12]}]
+        params = [
+            {
+                "seasonal_periods": 3,
+                "use_boxcox": True,
+                "bc_lower_bound": 0.25,
+                "bc_upper_bound": 0.75,
+            },
+            {
+                "seasonal_periods": [3, 12],
+                "use_boxcox": False,
+                "use_trend": True,
+                "use_damped_trend": True,
+                "use_arma_errors": False,
+            },
+        ]
 
         return params
 
