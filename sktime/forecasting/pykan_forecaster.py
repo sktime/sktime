@@ -31,6 +31,8 @@ class PyKANForecaster(BaseForecaster):
     This forecaster uses the pykan library to create a KAN model to forecast
     time series data. The model is trained on the training data and then used to
     forecast the future values of the time series.
+    **Note** This forecaster is experimental and the used library for implementing
+    the KANs may be exchanged in the future to a more stable and efficient library.
 
     Parameters
     ----------
@@ -42,13 +44,15 @@ class PyKANForecaster(BaseForecaster):
         The number of nearest neighbors to consider.
     grids : np.array, optional (default=np.array([5,10,20, 50, 100]))
         The grid sizes to use in the model.
-    stop_grid_update_step : int, optional (default=30)
-        The number of steps to wait before updating the grid.
-    opt : str, optional (default="LBFGS")
-        The optimization algorithm to use.
-    steps : int, optional (default=5)
-        The number of steps to train the model.
-
+    model_params : dict, optional (default=None)
+        The parameters to pass to the model. See pykan documentation for more details.
+    fit_params : dict, optional (default=None)
+        The parameters to pass to the fit method. See pykan documentation
+        for more details.
+    val_size : float, optional (default=0.5)
+        The size of the validation set to use in the training.
+    device : str, optional (default="cpu")
+        The device to use for training the model.
 
     References
     ----------
@@ -60,12 +64,14 @@ class PyKANForecaster(BaseForecaster):
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "scitype:y": "univariate",
-        "ignores-exogeneous-X": True,
+        "ignores-exogeneous-X": False,
         "requires-fh-in-fit": True,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
         "handles-missing-data": False,
         "capability:pred_int": False,
+        "capability:pred_int:insample": False,
+        "capability:insample": False,
         "python_version": None,
         "python_dependencies": ["kan", "torch"],
     }
@@ -74,20 +80,22 @@ class PyKANForecaster(BaseForecaster):
         self,
         hidden_layers=(5, 5),
         input_layer_size=12,
-        k=3,
         grids=None,
-        stop_grid_update_step=30,
-        opt="LBFGS",
-        steps=5,
+        model_params=None,
+        fit_params=None,
+        val_size=0.5,
+        device="cpu",
     ):
         self.hidden_layers = hidden_layers
         self.input_layer_size = input_layer_size
-        self.k = k
         self.grids = grids
         self._grids = grids if grids is not None else [5, 10, 20, 50, 100]
-        self.stop_grid_update_step = stop_grid_update_step
-        self.opt = opt
-        self.steps = steps
+        self.val_size = val_size
+        self.model_params = model_params
+        self._model_params = model_params if model_params is not None else {}
+        self.fit_params = fit_params
+        self._fit_params = fit_params if fit_params is not None else {}
+        self.device = device
         super().__init__()
 
     def _fit(self, y, X, fh):
@@ -119,54 +127,66 @@ class PyKANForecaster(BaseForecaster):
         -------
         self : reference to self
         """
-        output_size = max(fh._values)
-        y_train, y_test = temporal_train_test_split(y, test_size=36)
-        ds = PyTorchTrainDataset(y_train, self.input_layer_size, output_size)
-        train_y = [ds[i][0] for i in range(len(ds))]
-        train_target = [ds[i][1] for i in range(len(ds))]
-
-        ds = PyTorchTrainDataset(y_test, self.input_layer_size, output_size)
-        test_y = [ds[i][0] for i in range(len(ds))]
-        test_target = [ds[i][1] for i in range(len(ds))]
+        output_size = max(fh.to_relative(self.cutoff)._values)
+        if X is not None:
+            y_train, y_test, X_train, X_test = temporal_train_test_split(
+                y, X=X, test_size=(self.val_size)
+            )
+            ds_train = PyTorchTrainDataset(
+                y_train, self.input_layer_size, output_size, X=X_train
+            )
+            ds_test = PyTorchTrainDataset(
+                y_test, self.input_layer_size, output_size, X=X_test
+            )
+            input_layer_size = self.input_layer_size + X_train.shape[1] * output_size
+        else:
+            y_train, y_test = temporal_train_test_split(y, test_size=(self.val_size))
+            ds_train = PyTorchTrainDataset(y_train, self.input_layer_size, output_size)
+            ds_test = PyTorchTrainDataset(y_test, self.input_layer_size, output_size)
+            input_layer_size = self.input_layer_size
+        train_input = [ds_train[i][0] for i in range(len(ds_train))]
+        train_target = [ds_train[i][1] for i in range(len(ds_train))]
+        test_input = [ds_test[i][0] for i in range(len(ds_test))]
+        test_target = [ds_test[i][1] for i in range(len(ds_test))]
         # no fitting, we already know the forecast values
 
         ds_new = {
-            "train_input": torch.stack(train_y),
-            "train_label": torch.stack(train_target),
-            "test_input": torch.stack(test_y),
-            "test_label": torch.stack(test_target),
+            "train_input": torch.stack(train_input).type(torch.float32).to(self.device),
+            "train_label": torch.stack(train_target)
+            .type(torch.float32)
+            .to(self.device),
+            "test_input": torch.stack(test_input).type(torch.float32).to(self.device),
+            "test_label": torch.stack(test_target).type(torch.float32).to(self.device),
         }
 
         self.train_losses = []
         self.test_losses = []
 
-        best_model = None
+        self._layer_sizes = [input_layer_size, *self.hidden_layers, output_size]
         for i in range(len(self._grids)):
             if i == 0:
                 model = KAN(
-                    width=[self.input_layer_size, *self.hidden_layers, output_size],
+                    width=self._layer_sizes,
                     grid=self.grids[i],
-                    k=self.k,
+                    device=self.device,
+                    **self._model_params,
                 )
             if i != 0:
                 model = KAN(
-                    width=[self.input_layer_size, *self.hidden_layers, output_size],
+                    width=self._layer_sizes,
                     grid=self._grids[i],
-                    k=self.k,
+                    device=self.device,
+                    **self._model_params,
                 ).initialize_from_another_model(model, ds_new["train_input"])
-            results = model.train(
-                ds_new,
-                opt=self.opt,
-                steps=self.steps,
-                stop_grid_update_step=self.stop_grid_update_step,
-            )
+            results = model.train(ds_new, device=self.device, **self._fit_params)
             if len(self.test_losses) == 0 or results["test_loss"][-1] < min(
                 self.test_losses
             ):
-                best_model = model
+                self._state_dict = model.state_dict()
+                self._best_grid = self._grids[i]
             self.train_losses += results["train_loss"]
             self.test_losses += results["test_loss"]
-        self.model = best_model
+        # self.state_dict = best_model.state_dict()
         return self
 
     def _predict(self, fh, X):
@@ -195,13 +215,28 @@ class PyKANForecaster(BaseForecaster):
             should be of the same type as seen in _fit, as in "y_inner_mtype" tag
             Point predictions
         """
-        input_ = torch.from_numpy(self._y.values[-self.input_layer_size :]).reshape(
-            (1, -1)
-        )
-        prediction = self.model(input_).detach().numpy().reshape((-1,))
+        model = KAN(width=self._layer_sizes, grid=self._best_grid, **self._model_params)
+        model.load_state_dict(self._state_dict)
+        if X is not None:
+            input_ = torch.cat(
+                [
+                    torch.from_numpy(self._y.values[-self.input_layer_size :]).reshape(
+                        (1, -1)
+                    ),
+                    torch.from_numpy(X.values).reshape((1, -1)),
+                ],
+                dim=-1,
+            )
+        else:
+            input_ = torch.from_numpy(self._y.values[-self.input_layer_size :]).reshape(
+                (1, -1)
+            )
 
+        prediction = model(input_).detach().numpy().reshape((-1,))
         index = list(fh.to_absolute(self.cutoff))
-        return pd.Series(prediction, index=index)
+        return pd.Series(
+            prediction[fh.to_relative(self._cutoff) - 1], index=index, name=self._y.name
+        )
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -224,14 +259,16 @@ class PyKANForecaster(BaseForecaster):
         """
         params = [
             {
-                "steps": 1,
                 "grids": [10, 20],
-                "k": 2,
+                "model_params": {"k": 2},
+                "fit_params": {"steps": 1},
+                "input_layer_size": 2,
             },
             {
-                "steps": 1,
+                "input_layer_size": 2,
                 "grids": [10],
-                "k": 3,
+                "model_params": {"k": 2},
+                "fit_params": {"steps": 1},
                 "hidden_layers": (2, 2),
             },
         ]
@@ -255,14 +292,18 @@ class PyTorchTrainDataset(Dataset):
         """Return data point."""
         from torch import from_numpy, tensor
 
-        hist_y = tensor(self.y[i : i + self.seq_len]).float()
+        hist_y = tensor(self.y[i : i + self.seq_len]).type(torch.float32)
         if self.X is not None:
-            exog_data = tensor(
-                self.X[i + self.seq_len : i + self.seq_len + self.fh]
-            ).float()
+            exog_data = (
+                tensor(self.X[i + self.seq_len : i + self.seq_len + self.fh])
+                .type(torch.float32)
+                .flatten()
+            )
         else:
             exog_data = tensor([])
         return (
             torch.cat([hist_y, exog_data]),
-            from_numpy(self.y[i + self.seq_len : i + self.seq_len + self.fh]).float(),
+            from_numpy(self.y[i + self.seq_len : i + self.seq_len + self.fh]).type(
+                torch.float32
+            ),
         )
