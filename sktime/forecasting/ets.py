@@ -10,7 +10,6 @@ from itertools import product
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
@@ -180,7 +179,7 @@ class AutoETS(_StatsModelsAdapter):
         # --------------
         "authors": ["hyang1996"],
         "maintainers": ["hyang1996"],
-        # "python_dependencies": "statmodels" - inherited from _StatsModelsAdapter
+        "python_dependencies": ["statsmodels", "joblib"],
         # estimator type
         # --------------
         "ignores-exogeneous-X": True,
@@ -268,6 +267,7 @@ class AutoETS(_StatsModelsAdapter):
                 )
 
     def _fit_forecaster(self, y, X=None):
+        from joblib import Parallel, delayed
         from statsmodels.tsa.exponential_smoothing.ets import ETSModel as _ETSModel
 
         # Select model automatically

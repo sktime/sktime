@@ -5,8 +5,6 @@
 __author__ = ["mloning"]
 __all__ = ["_HeterogenousEnsembleForecaster"]
 
-from joblib import Parallel, delayed
-
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import BaseForecaster
 
@@ -59,6 +57,7 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
 
     def _fit_forecasters(self, forecasters, y, X, fh):
         """Fit all forecasters in parallel."""
+        from joblib import Parallel, delayed
 
         def _fit_forecaster(forecaster, y, X, fh):
             """Fit single forecaster."""
