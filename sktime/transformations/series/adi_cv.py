@@ -41,7 +41,7 @@ class ADICVTransformer(BaseTransformer):
 
     1. Smooth: If ``ADI <= adi_threshold`` and ``CV2 <= cv2_threshold``
     2. Erratic: If ``ADI <= adi_threshold`` and ``CV2 > cv2_threshold``
-    3. Intermittent: If ``ADI > adi_threshold`` and ``cv2 <= CV2_threshold``
+    3. Intermittent: If ``ADI > adi_threshold`` and ``cv2 <= cv2_threshold``
     4. Lumpy: if ``ADI > adi_threshold`` and ``CV2 > cv2_threshold``
 
     Default values for the thresholds are taken from the paper by Syntetos/Boylan [1].
