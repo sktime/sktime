@@ -130,6 +130,9 @@ def test_run_test_for_class():
     if not dep_present:
         assert not run
         assert reason == "False_required_deps_missing"
+    elif not ONLY_CHANGED_MODULES:
+        assert run
+        assert reason == "True_run_always"
     elif run:
         assert reason in POS_REASONS
         assert reason_wdep == reason or reason_nodep == reason
