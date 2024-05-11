@@ -9,27 +9,44 @@ __author__ = ["shlok191"]
 
 
 class ADICVTransformer(BaseTransformer):
-    """
-    Classifier based on Intermittent Demand Estimates paper by Syntetos/Boylan.
+    r"""Transformer categorizing series into ADI-CV2 classes after Syntetos/Boylan.
 
-    We Set the ADI threshold to 1.32 and the CV2 threshold to 0.49 by default.
-    Following is the description of the parameters mentioned above.
+    Transforms a time series into a category label, which is one of:
+    ``"smooth"``, ``"erratic"``, ``"intermittent"``, or ``"lumpy"``.
+
+    The labels are based on the Average Demand Interval (ADI) and the Coefficient of
+    Variation (CV2) of the time series, using simple thresholding.
+    Optionally, the transformer can return the ADI and CV2 values as well.
+
+    Let :math:`x_t` be the value of the time series at times :math:`t = 1, 2, \dots, T`,
+    and let :math:`N` be the number of non-zero values in the time series, i.e.,
+    :math:`N = \text{card}\{t: x_t \neq 0\}`.
+
+    The ADI and CV2 are calculated as follows:
 
     1. Average Demand Interval (ADI): The average time period between
-    time periods with non-zero demands
+      time periods with non-zero demands, mathematically defined as:
+
+    .. math:: ADI = \frac{T}{N - 1}
 
     2. Variance (CV2): Variance calculated on non-zero values
-    in the time series
+    in the time series. Mathematical definition is:
+
+    .. math:: CV2 = \frac{1}{N}\sum_{t=1}^{T} x_t^2 - \left(\frac{1}{N}\sum_{t=1}^{T} x_t\right)^2  # noqa: E501
 
     3. Class: Classification of time series on basis of ADI threshold
     and CV2 threshold.
 
-    The following are the classes we classify into:
+    For thresholds ``ADI_threshold`` and ``CV2_threshold``, the classes are:
 
-    1. Smooth: If ADI <= ADI_threshold and CV2 <= CV2_threshold
-    2. Erratic: If ADI <= ADI_threshold and CV2 > CV2_threshold
-    3. Intermittent: If ADI > ADI_threshold and CV2 <= CV2_threshold
-    4. Lumpy: if ADI > ADI_threshold and CV2 > CV2_threshold
+    1. Smooth: If ``ADI <= adi_threshold`` and ``CV2 <= cv2_threshold``
+    2. Erratic: If ``ADI <= adi_threshold`` and ``CV2 > cv2_threshold``
+    3. Intermittent: If ``ADI > adi_threshold`` and ``cv2 <= CV2_threshold``
+    4. Lumpy: if ``ADI > adi_threshold`` and ``CV2 > cv2_threshold``
+
+    Default values for the thresholds are taken from the paper by Syntetos/Boylan [1].
+    namely, ``adi_threshold = 1.32`` and ``cv2_threshold = 0.49``.
+    They can also be adjusted by passing them as parameters to the transformer.
 
     Parameters
     ----------
@@ -145,7 +162,7 @@ class ADICVTransformer(BaseTransformer):
         X_non_zero = X.iloc[X_non_zero]
 
         # Calculating ADI value based on formula from paper
-        adi_value = (len(X) / len(X_non_zero)) - 1
+        adi_value = len(X) / (len(X_non_zero) - 1)
 
         # Calculating variance for all non-zero values
         variance = X_non_zero.var().iloc[0]
@@ -155,18 +172,19 @@ class ADICVTransformer(BaseTransformer):
 
         adi_low = adi_value <= self.adi_threshold
         cv2_low = cv2_value <= self.cv_threshold
+        adi_high = not adi_low
+        cv2_high = not cv2_low
 
-        if adi_low:
-            if cv2_low:
-                class_type = "smooth"
+        if adi_low and cv2_low:
+            class_type = "smooth"
 
-            else:
-                class_type = "erratic"
+        elif adi_low and cv2_high:
+            class_type = "erratic"
 
-        elif cv2_low:
+        elif adi_high and cv2_low:
             class_type = "intermittent"
 
-        else:
+        elif adi_high and cv2_high:
             class_type = "lumpy"
 
         # Collecting all values together into dict and converting to DF
