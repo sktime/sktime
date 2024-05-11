@@ -120,11 +120,7 @@ class ADICVTransformer(BaseTransformer):
 
         # Checking if the features parameter is valid
         if features is not None:
-            if (
-                "adi" not in features
-                or "cv2" not in features
-                or "class" not in features
-            ):
+            if not all(feature in ["adi", "cv2", "class"] for feature in features):
                 raise ValueError(
                     "Error in ADICVTransformer: Invalid features list provided. "
                     "The features argument must either be None, or a list of str "
