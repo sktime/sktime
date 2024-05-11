@@ -69,8 +69,8 @@ class ADICVTransformer(BaseTransformer):
 
     References
     ----------
-    [1]: John E. Boylan, Aris Syntetos: “The Accuracy of Intermittent
-    Demand Estimates.” International Journal of Forecasting, 1 Apr. 2005
+    [1]: John E. Boylan, Aris Syntetos: The Accuracy of Intermittent
+    Demand Estimates. International Journal of Forecasting, 1 Apr. 2005
     """
 
     _tags = {
