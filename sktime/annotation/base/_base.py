@@ -537,6 +537,44 @@ class BaseSeriesAnnotator(BaseEstimator):
             )
 
     @staticmethod
+    def _sparse_segments_to_dense(y_sparse, index):
+        """Find the label for each index in `index` from sparse segments.
+
+        Parameters
+        ----------
+        y_sparse : pd.Series
+            A sparse representation of segments. The index must be the pandas interval
+            datatype and the values must be the integer labels of the segments.
+        index : array-like
+            List of indexes that are to be labelled according to `y_sparse`.
+
+        Returns
+        -------
+        pd.Series
+            A series with the same index as `index` where each index is labelled
+            according to `y_sparse`. Indexes that do not fall within any index are
+            labelled -1.
+        """
+        if y_sparse.index.is_overlapping:
+            raise NotImplementedError(
+                "Cannot convert overlapping segments to a dense formet yet."
+            )
+
+        interval_indexes = y_sparse.index.get_indexer(index)
+
+        # Negative indexes do not fall within any interval so they are ignored
+        interval_labels = y_sparse.iloc[
+            interval_indexes[interval_indexes >= 0]
+        ].to_numpy()
+
+        # -1 is used to represent points do not fall within a segment
+        labels_dense = interval_indexes.copy()
+        labels_dense[labels_dense >= 0] = interval_labels
+
+        y_dense = pd.Series(labels_dense, index=index)
+        return y_dense
+
+    @staticmethod
     def dense_to_sparse(y_dense):
         """Convert the dense output from an annotator to a dense format.
 
