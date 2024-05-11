@@ -125,3 +125,12 @@ def test_segments_to_change_points(segments, expected_change_points):
 def test_sparse_segments_to_dense(y_sparse, index, y_dense_expected):
     y_dense_actual = BaseSeriesAnnotator._sparse_segments_to_dense(y_sparse, index)
     testing.assert_series_equal(y_dense_expected, y_dense_actual)
+
+
+@pytest.mark.parametrize(
+    "y_sparse, index, y_dense_expected",
+    [(pd.Series([2, 4]), [0, 1, 2, 3, 4, 5, 6], pd.Series([0, 0, 1, 0, 1, 0, 0]))],
+)
+def test_sparse_points_to_dense(y_sparse, index, y_dense_expected):
+    y_dense_actual = BaseSeriesAnnotator._sparse_points_to_dense(y_sparse, index)
+    testing.assert_series_equal(y_dense_actual, y_dense_expected)

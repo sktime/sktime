@@ -537,6 +537,27 @@ class BaseSeriesAnnotator(BaseEstimator):
             )
 
     @staticmethod
+    def _sparse_points_to_dense(y_sparse, index):
+        """Label the points in index as 1 or 0 depending on if they are in index.
+
+        Parameters
+        ----------
+        y_sparse: pd.Series
+            The values of the series must be the indexes of the change points.
+        index: array-like
+            Array of indexes which are to be labelled as
+
+        Returns
+        -------
+        pd.Series
+            A series with an index of `index`. Its value is 1 if the index is in
+            y_sparse and 0 otherwise.
+        """
+        y_dense = pd.Series(np.zeros(len(index)), index=index, dtype="int64")
+        y_dense[y_sparse.values] = 1
+        return y_dense
+
+    @staticmethod
     def _sparse_segments_to_dense(y_sparse, index):
         """Find the label for each index in `index` from sparse segments.
 
