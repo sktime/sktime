@@ -230,8 +230,12 @@ class ADICVTransformer(BaseTransformer):
         # Testing with 0 thresholds for both thresholds
         # in independent test cases!
 
-        params = [
-            {"features": None, "adi_threshold": 1.32, "cv_threshold": 0.49},
-        ]
+        params1 = {}
+        params2 = {"features": None, "adi_threshold": 1.32, "cv_threshold": 0.49}
+        params3 = {
+            "features": ["adi", "class"],
+            "adi_threshold": 1.5,
+            "cv_threshold": 0.2,
+        }
 
-        return params
+        return [params1, params2, params3]
