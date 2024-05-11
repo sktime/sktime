@@ -126,8 +126,10 @@ class ADICVTransformer(BaseTransformer):
                 or "class" not in features
             ):
                 raise ValueError(
-                    "The features list must either be None or include adi "
-                    + "cv2, and class as elements."
+                    "Error in ADICVTransformer: Invalid features list provided. "
+                    "The features argument must either be None, or a list of str "
+                    "containing one or multiple of the valid feature strings "
+                    "('adi', 'cv2', 'class')."
                 )
 
         else:
