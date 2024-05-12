@@ -609,50 +609,28 @@ class BaseSeriesAnnotator(BaseEstimator):
 
         Returns
         -------
-        pd.DataFrame, pd.Series
+        pd.Series
             * If `y_sparse` is a series of changepoints/anomalies, a pandas series
               will be returned containing the indexes of the changepoints/anomalies
-            * If `y_sparse` is a series of segments, a pandas dataframe will be
-              returned with two columns: seg_label, and seg_start. The seg_label column
-              contains the labels of each segment, and the seg_start column contains
-              the indexes of the start of each segment.
-
-        Examples
-        --------
-        >>> import pandas as pd
-        >>> from sktime.annotation.base._base import BaseSeriesAnnotator
-        >>> change_points = pd.Series([1, 0, 0, 1, 1, 0, 1])
-        >>> BaseSeriesAnnotator.dense_to_sparse(change_points)
-        0    0
-        1    3
-        2    4
-        3    6
-        dtype: int64
-        >>> segments = pd.Series([1, 2, 2, 3, 3, 2])
-        >>> BaseSeriesAnnotator.dense_to_sparse(segments)
-           seg_label  seg_start  seg_end
-        0          1          0        0
-        1          2          1        2
-        2          3          3        4
-        3          2          5        5
+            * If `y_sparse` is a series of segments, a series with an interval datatype
+              index will be returned. The avlues of the series will be the labels of
+              segments.
         """
-        if (y_dense == 0).any():
-            # y_dense is a series of changepoints/anomalies
-            return pd.Series(np.where(y_dense == 1)[0])
+        if 0 in y_dense.values:
+            # y_dense is a series of change points
+            change_points = np.where(y_dense.values != 0)[0]
+            return pd.Series(change_points)
         else:
             segment_start_indexes = np.where(y_dense.diff() != 0)[0]
             segment_end_indexes = np.where(y_dense.diff(-1) != 0)[0]
             segment_labels = y_dense.iloc[segment_start_indexes].to_numpy()
-            y_sparse = pd.DataFrame(
-                {
-                    "seg_label": segment_labels,
-                    "seg_start": segment_start_indexes,
-                    "seg_end": segment_end_indexes,
-                }
+            index = pd.IntervalIndex.from_arrays(
+                segment_start_indexes, segment_end_indexes, closed="left"
             )
+            y_sparse = pd.Series(segment_labels, index=index)
 
             # -1 represents unclassified regions so we remove them
-            y_sparse = y_sparse.loc[y_sparse["seg_label"] != -1].reset_index(drop=True)
+            y_sparse = y_sparse.loc[y_sparse != -1]
             return y_sparse
 
     @staticmethod

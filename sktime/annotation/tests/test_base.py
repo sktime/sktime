@@ -45,21 +45,17 @@ def test_sparse_to_dense(y_sparse, y_dense_expected, length):
         (pd.Series([0, 1, 0, 1, 0, 0]), pd.Series([1, 3])),
         (
             pd.Series([-1, -1, -1, 1, 1, -1, 2]),
-            pd.DataFrame({"seg_label": [1, 2], "seg_start": [3, 6], "seg_end": [4, 6]}),
+            pd.Series(
+                [1, 2],
+                index=pd.IntervalIndex.from_arrays([3, 6], [4, 6], closed="left"),
+            ),
         ),
     ],
 )
 def test_dense_to_sparse(y_dense, y_sparse_expected):
     """Test converting from dense to sparse."""
     y_sparse_actual = BaseSeriesAnnotator.dense_to_sparse(y_dense)
-    if isinstance(y_sparse_expected, pd.Series):
-        testing.assert_series_equal(
-            y_sparse_actual, y_sparse_expected, check_dtype=False
-        )
-    else:
-        testing.assert_frame_equal(
-            y_sparse_actual, y_sparse_expected, check_dtype=False
-        )
+    testing.assert_series_equal(y_sparse_actual, y_sparse_expected)
 
 
 @pytest.mark.parametrize(
