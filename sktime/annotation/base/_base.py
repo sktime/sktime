@@ -656,59 +656,58 @@ class BaseSeriesAnnotator(BaseEstimator):
             return y_sparse
 
     @staticmethod
-    def change_points_to_segments(y_sparse, length=None):
-        """Convert an array of change point indexes to segments.
+    def change_points_to_segments(y_sparse, start=None, end=None):
+        """Convert an series of change point indexes to segments.
 
         Parameters
         ----------
         y_sparse : pd.Series
             A series containing the indexes of change points.
+        start : optional
+            Starting point of the first segment.
+        end : optional
+            Ending point of the last segment
 
         Returns
         -------
-        pd.DataFrame
-            Dataframe with two columns: seg_label, and seg_end. seg_label contains the
-            labels of the segments, and seg_start contains the starting indexes of the
-            segments.
+        pd.Series
+            A series with an interval interval index indicating the start and end points
+            of the segments. The values of the series are the labels of the segments.
 
         Examples
         --------
         >>> import pandas as pd
         >>> from sktime.annotation.base._base import BaseSeriesAnnotator
         >>> change_points = pd.Series([1, 2, 5])
-        >>> BaseSeriesAnnotator.change_points_to_segments(change_points)
-           seg_label  seg_start  seg_end
-        0          1          0        0
-        1          2          1        1
-        2          3          2        4
-        3          4          5        5
+        >>> BaseSeriesAnnotator.change_points_to_segments(change_points, 0, 7)
+        [0, 1)   -1
+        [1, 2)    1
+        [2, 5)    2
+        [5, 7)    3
+        dtype: int64
         """
-        if y_sparse.iat[0] != 0:
-            # Insert a 0 at the start so the points before the first anomaly are
-            # considered a segment
-            y_sparse = pd.concat((pd.Series([0]), y_sparse))
+        breaks = y_sparse.values
 
-        # The final segment will have length 1 if `length` is not provided
-        end_index = length - 1 if length is not None else y_sparse.iat[-1]
-
-        if end_index < y_sparse.iat[-1]:
-            raise RuntimeError(
-                "`length` must be greater than the final index of the last "
-                "changepoint/anomalie."
+        if start > breaks.min():
+            raise ValueError(
+                "The starting index must be before the first change point."
             )
+        first_change_point = breaks.min()
 
-        labels = np.arange(1, len(y_sparse) + 1)
+        if start is not None:
+            breaks = np.insert(breaks, 0, start)
+        if end is not None:
+            breaks = np.append(breaks, end)
 
-        seg_start_indexes = y_sparse.to_numpy()
-        seg_end_indexes = np.append(seg_start_indexes[1:] - 1, end_index)
+        index = pd.IntervalIndex.from_breaks(breaks, copy=True, closed="left")
+        segments = pd.Series(0, index=index)
 
-        segments = pd.DataFrame(
-            {
-                "seg_label": labels,
-                "seg_start": seg_start_indexes,
-                "seg_end": seg_end_indexes,
-            }
-        )
+        in_range = index.left >= first_change_point
+
+        number_of_segments = in_range.sum()
+        segments.loc[in_range] = range(1, number_of_segments + 1)
+        segments.loc[~in_range] = -1
+
         return segments
 
     @staticmethod

@@ -63,27 +63,25 @@ def test_dense_to_sparse(y_dense, y_sparse_expected):
 
 
 @pytest.mark.parametrize(
-    "change_points, expected_segments, length",
+    "change_points, expected_segments, start, end",
     [
         (
             pd.Series([1, 2, 5]),
-            pd.DataFrame(
-                {
-                    "seg_label": [1, 2, 3, 4],
-                    "seg_start": [0, 1, 2, 5],
-                    "seg_end": [0, 1, 4, 9],
-                }
+            pd.Series(
+                [-1, 1, 2, 3],
+                index=pd.IntervalIndex.from_breaks([0, 1, 2, 5, 7], closed="left"),
             ),
-            10,
+            0,
+            7,
         )
     ],
 )
-def test_change_points_to_segments(change_points, expected_segments, length):
+def test_change_points_to_segments(change_points, expected_segments, start, end):
     """Test converting change points to segments."""
     actual_segments = BaseSeriesAnnotator.change_points_to_segments(
-        change_points, length
+        change_points, start, end
     )
-    testing.assert_frame_equal(actual_segments, expected_segments, check_dtype=False)
+    testing.assert_series_equal(actual_segments, expected_segments)
 
 
 @pytest.mark.parametrize(
