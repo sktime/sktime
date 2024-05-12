@@ -712,14 +712,13 @@ class BaseSeriesAnnotator(BaseEstimator):
 
     @staticmethod
     def segments_to_change_points(y_sparse):
-        """Convert 2D array of segments to a 1D array of change points.
+        """Convert segments to change points.
 
         Parameters
         ----------
         y_sparse : pd.DataFrame
-            Dataframe with two columns: seg_label, and seg_end. seg_label contains the
-            labels of the segments, and seg_start contains the starting indexes of the
-            segments.
+            A series of segments. The index must be the interval data type and the
+            values should be the integer labels of the segments.
 
         Returns
         -------
@@ -730,19 +729,15 @@ class BaseSeriesAnnotator(BaseEstimator):
         --------
         >>> import pandas as pd
         >>> from sktime.annotation.base._base import BaseSeriesAnnotator
-        >>> change_points = pd.DataFrame({
-        ...     "seg_label": [1, 2, 1],
-        ...     "seg_start": [2, 5, 7],
-        ...     "seg_end": [4, 6, 8],
-        ... })
-        >>> BaseSeriesAnnotator.segments_to_change_points(change_points)
+        >>> segments = pd.Series(
+        ...     [3, -1, 2],
+        ...     index=pd.IntervalIndex.from_breaks([2, 5, 7, 9], closed="left")
+        ... )
+        >>> BaseSeriesAnnotator.segments_to_change_points(segments)
         0    2
         1    5
         2    7
         dtype: int64
         """
-        y_dense = BaseSeriesAnnotator.sparse_to_dense(y_sparse)
-        diff = y_dense.diff()
-        diff.iat[0] = 0  # The first point is never a change point
-        change_points = np.where(diff != 0)[0]
-        return pd.Series(change_points)
+        change_points = pd.Series(y_sparse.index.left)
+        return change_points

@@ -88,14 +88,11 @@ def test_change_points_to_segments(change_points, expected_segments, start, end)
     "segments, expected_change_points",
     [
         (
-            pd.DataFrame(
-                {
-                    "seg_label": [1, 2, 3, 4],
-                    "seg_start": [0, 1, 2, 5],
-                    "seg_end": [0, 1, 4, 9],
-                }
+            pd.Series(
+                [1, -1, 2],
+                index=pd.IntervalIndex.from_breaks([2, 5, 7, 9], closed="left"),
             ),
-            pd.Series([1, 2, 5]),
+            pd.Series([2, 5, 7]),
         )
     ],
 )
