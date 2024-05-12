@@ -185,3 +185,29 @@ def test_expanding_cutoff_period_008():
     with pytest.raises(TypeError):
         cv = ExpandingCutoffSplitter(cutoff=cutoff, fh=fh, step_length=1)
         _check_cv(cv, y)
+
+
+def _make_splits_listlike(splits):
+    splits_new = []
+    for train, test in splits:
+        splits_new.append([train.tolist(), test.tolist()])
+    return splits_new
+
+
+def test_expanding_cutoff_docstring_examples():
+    date_range = pd.date_range(start="2020-Q1", end="2021-Q3", freq="QS")
+    y = pd.DataFrame(index=pd.PeriodIndex(date_range, freq="Q"))
+    cv1 = ExpandingCutoffSplitter(cutoff=pd.Period("2021-Q1"), fh=[1, 2], step_length=1)
+    splits1 = list(cv1.split(y))
+
+    cv2 = ExpandingCutoffSplitter(cutoff=4, fh=[1, 2], step_length=1)
+    splits2 = list(cv2.split(y))
+
+    cv3 = ExpandingCutoffSplitter(cutoff=-3, fh=[1, 2], step_length=1)
+    splits3 = list(cv3.split(y))
+
+    assert (
+        _make_splits_listlike(splits1)
+        == _make_splits_listlike(splits2)
+        == _make_splits_listlike(splits3)
+    )

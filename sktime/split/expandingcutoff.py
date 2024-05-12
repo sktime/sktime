@@ -208,4 +208,7 @@ class ExpandingCutoffSplitter(BaseSplitter):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        return [{"fh": [2, 4], "cutoff": 3, "step_length": 1}]
+        return [
+            {"fh": [2, 4], "cutoff": 3, "step_length": 1},
+            {"fh": [1, 2, 3], "cutoff": 3, "step_length": 2},
+        ]
