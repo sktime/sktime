@@ -143,9 +143,14 @@ class ExpandingCutoffSplitter(BaseSplitter):
     def _get_first_cutoff_index(self, y_index):
         y0 = y_index[0]
         if _is_int(self.cutoff) and self.cutoff < 0:
-            index = len(y_index) + self.cutoff
+            index = len(y_index) + self.cutoff - 1
+            if index < 0:
+                raise IndexError(
+                    f"Cutoff of value {self.cutoff} is out of bounds "
+                    f"for y of length {len(y_index)}"
+                )
         elif _is_datetimelike(y0) and _is_int(self.cutoff) and (self.cutoff > 0):
-            index = self.cutoff
+            index = self.cutoff - 1
         else:
             index = np.argmax(y_index == self.cutoff) - 1
             if index == -1:
