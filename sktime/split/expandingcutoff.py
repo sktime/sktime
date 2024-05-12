@@ -49,7 +49,11 @@ class ExpandingCutoffSplitter(BaseSplitter):
     training set, containing as many subsequent indices as specified by the `fh`
     parameter.
 
-    Valid y-index and cutoff types are datelike-datelike, datelike-int, and int-int.
+    The valid types of y-index and cutoff pairings are datelike-datelike, datelike-int,
+    and int-int. When a datelike index is combined with an int cutoff, the cutoff
+    functions as an iloc indexer. When an int index is paired with a positive int
+    cutoff, the cutoff serves as a loc indexer. If the int cutoff is negative, it
+    functions as an iloc indexer.
                           c
                           |
     |---------------------|----fh----|------|
@@ -66,14 +70,26 @@ class ExpandingCutoffSplitter(BaseSplitter):
 
     Parameters
     ----------
-        cutoff (int or pd.Timestamp):
-            The initial cutoff point in the series, which marks the beginning of the
-            first test set.
-        fh (int, list, or np.array):
-            Forecasting horizon, determining the size and  indices of the test sets.
-            It can be an integer, a list, or an array.
-        step_length (int):
-            The step length to expand the training set size in each split.
+    cutoff (int or pd.Timestamp):
+        The initial cutoff point in the series, which marks the beginning of the
+        first test set.
+    fh (int, list, or np.array):
+        Forecasting horizon, determining the size and  indices of the test sets.
+        It can be an integer, a list, or an array.
+    step_length (int):
+        The step length to expand the training set size in each split.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.split import ExpandingCutoffSplitter
+    >>> date_range = pd.date_range(start='2020-Q1', end='2021-Q3', freq='QS')
+    >>> y = pd.DataFrame(index=pd.PeriodIndex(date_range, freq='Q'))
+    >>> cutoff = pd.Period('2021-Q1')
+    >>> cv = ExpandingCutoffSplitter(cutoff=cutoff, fh=[1, 2], step_length=1)
+    >>> splits = list(cv.split(y))
+    >>> print(splits)
+    [(array([0, 1, 2, 3]), array([4, 5])), (array([0, 1, 2, 3, 4]), array([5, 6]))]
     """
 
     def __init__(self, cutoff, fh, step_length):
