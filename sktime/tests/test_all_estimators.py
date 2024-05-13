@@ -10,7 +10,7 @@ import numbers
 import os
 import types
 from copy import deepcopy
-from inspect import getfullargspec, isclass, signature
+from inspect import getfullargspec, isclass, ismethod, signature
 from tempfile import TemporaryDirectory
 
 import joblib
@@ -1509,6 +1509,59 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             # skip them for the underlying network
             if vars(estimator._network).get(key) is not None:
                 assert vars(estimator._network)[key] == value
+
+    def test_dl_contract_consistency(self, estimator_class):
+        """
+        Test whether all DL estimators follow the required implicit/explicit contract.
+
+        This test checks for the following points:
+            1. The estimator must have a class method called `get_test_params`
+                which returns a list or dict.
+            2. The estimator contains a `._network` attribute after initialization.
+               The estimator must not contain `.network` attribute.
+            3. The estimator must implement a `._fit()` method.
+            4. After calling `.fit()` on the estimator, private attribute
+                `self.model_` (and not `self.model`) must be present.
+                The private attributes `self.optimizer_` and
+                `self.callbacks_` must not be None.
+            5. Following naming convention must be consistent during initialization:
+                a. There must be a `num_epochs` attributes and not `nb_epochs`.
+                b. The `verbose` attribute must be of `bool` type.
+            6. Via code-scanning, the following points are checked:
+                a. The input `X` must be transposed inside `.fit()`.
+                b. `y` should be one-hot-encoded via `self.convert_y_to_keras()`
+                   method in case the estimator is a child class of BaseDeepClassifier
+                c. A parameter called `n_classes` must be present inside
+                   `.build_model()` method in case the estimator
+                   is a child class of BaseDeepClassifier
+                d. The random seed must be passed to TensorFlow via
+                    `tf.random.set_seed()` inside the `.build_model()` method.
+        """
+        estimator = estimator_class
+        if not issubclass(estimator, (BaseDeepClassifier, BaseDeepRegressor)):
+            return None
+
+        # Test whether `get_test_params()` is a classmethod
+        assert ismethod(estimator_class.get_test_params) is True
+
+        # Test whether `get_test_params()` returns a dict/list.
+        test_params = estimator_class.get_test_params()
+        assert type(test_params) in (dict, list)
+
+        # Initialize an instance of this class using test_params
+        test_params = test_params[0] if type(test_params) == list else test_params
+        estimator = estimator(**test_params)
+
+        # Assert `._network` attribute is not None and there's no `network` attribute
+        assert (
+            vars(estimator).get("_network") is not None
+            and vars(estimator).get("network") is None
+        )
+
+        # Assert `._fit()` method is present for the instance
+        assert ismethod(estimator._fit) is True
+
+        # TODO: Complete the remaining contract check
 
     def _get_err_msg(estimator):
         return (

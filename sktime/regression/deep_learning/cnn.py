@@ -166,7 +166,7 @@ class CNNRegressor(BaseDeepRegressor):
         return model
 
     def _fit(self, X, y):
-        """Fit the classifier on the training set (X, y).
+        """Fit the regressor on the training set (X, y).
 
         Parameters
         ----------
