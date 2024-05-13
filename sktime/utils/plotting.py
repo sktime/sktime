@@ -511,7 +511,7 @@ def plot_calibration(y_true, y_pred, ax=None):
 
     Computes the following calibration plot:
 
-    Let :math:`p_1, \dots, p_k` be the quantiles points at which
+    Let :math:`p_1, \dots, p_k` be the quantile points at which
     predictions in ``y_pred`` were queried,
     e.g., via ``alpha`` in ``predict_quantiles``.
 
