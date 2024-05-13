@@ -188,8 +188,12 @@ def _sliding_window_transform(
     if scitype == "tabular-regressor" and transformers is None:
         Xt = Xt.reshape(Xt.shape[0], -1)
 
+    # these are strange conditions, depending on pooling mostly
+    # but they document the status quo
+    # the code should be refactored so all auxiliary functions
+    # return consistent types
     assert Xt.ndim == 2 or Xt.ndim == 3
-    assert yt.ndim == 2
+    assert yt.ndim == 2 or isinstance(yt, pd.Series)
 
     return yt, Xt
 
@@ -288,6 +292,67 @@ class _Reducer(_BaseWindowForecaster):
             f"implemented for {self.__class__.__name__}."
         )
 
+    def _coerce_skl_input(self, X, y=None):
+        """Coerce input to sklearn format.
+
+        Output X is either pd.DataFrame or 2D np.ndarray
+        Output y is alwayws 1D np.ndarray
+
+        X : np.ndarray is coerced to 2D with same shape[0] via rehsape(shape[0], -1)
+        X : pd.DataFrame is guaranteed to have str column names
+        y : np.ndarray is guaranteed to be 1D via flatten
+        y : other is coerced to np.ndarray
+
+        Parameters
+        ----------
+        X : pd.DataFrame or np.ndarray
+            Exogenous time series
+        y : pd.Series or np.ndarray, optional
+            Endogenous time series
+
+        Returns
+        -------
+        X : 2D np.array if X was np.ndarray
+            pd.DataFrame with str index if X was pd.DataFrame
+            Exogenous time series
+        y : 1D np.array if y was np.ndarray or coercible with shape[1] == 1
+            2D np.array if y was np.ndarray or coercible with shape[1] > 1
+            only returned if y is not None
+            Endogenous time series
+        """
+        # handle X
+        if isinstance(X, pd.DataFrame):
+            X = prep_skl_df(X)
+        if isinstance(X, np.ndarray):
+            X = X.reshape(X.shape[0], -1)
+
+        assert isinstance(X, (pd.DataFrame, np.ndarray))
+        assert X.ndim == 2
+
+        if y is None:
+            return X
+
+        # handle y
+        if y.ndim > 1 and y.shape[1] == 1:
+            expected_y_dim = 1
+        elif y.ndim == 1:
+            expected_y_dim = 1
+        else:
+            expected_y_dim = 2
+
+        if isinstance(y, (pd.Series, pd.DataFrame)):
+            y = y.to_numpy()
+        if expected_y_dim == 1:
+            y = y.flatten()
+        else:
+            y = y.reshape(X.shape[0], -1)
+
+        assert isinstance(y, np.ndarray)
+        assert y.ndim == expected_y_dim
+        assert len(X) == len(y)
+
+        return X, y
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -308,9 +373,7 @@ class _Reducer(_BaseWindowForecaster):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sklearn.linear_model import LinearRegression
-        from sklearn.pipeline import make_pipeline
 
-        from sktime.transformations.panel.reduce import Tabularizer
         from sktime.utils.validation._dependencies import _check_soft_dependencies
 
         # naming convention is as follows:
@@ -319,10 +382,15 @@ class _Reducer(_BaseWindowForecaster):
         #       e.g., pipeline of Tabularizer and Linear Regression
         # which of these is the case, we check by checking substring in the class name
         est = LinearRegression()
-        if "TimeSeries" in cls.__name__:
-            est = make_pipeline(Tabularizer(), est)
 
-        params = [{"estimator": est, "window_length": 3}]
+        if "TimeSeries" in cls.__name__:
+            from sktime.transformations.series.summarize import SummaryTransformer
+
+            est = SummaryTransformer() * est
+
+        params_local = {"estimator": est, "window_length": 3}
+        params_global = {"estimator": est, "window_length": 4, "pooling": "global"}
+        params = [params_local, params_global]
 
         PROBA_IMPLEMENTED = ["DirectTabularRegressionForecaster"]
         self_supports_proba = cls.__name__ in PROBA_IMPLEMENTED
@@ -792,6 +860,10 @@ class _MultioutputReducer(_Reducer):
 
         yt, Xt = self._transform(y, X)
 
+        if self._estimator_scitype == "tabular-regressor":
+            # coerce to sklearn expectations
+            Xt, yt = self._coerce_skl_input(Xt, yt)
+
         # Fit a multi-output estimator to the transformed data.
         self.estimator_ = clone(self.estimator)
         self.estimator_.fit(Xt, yt)
@@ -946,11 +1018,9 @@ class _RecursiveReducer(_Reducer):
 
         yt, Xt = self._transform(y, X)
 
-        # Make sure yt is 1d array to avoid DataConversion warning from scikit-learn.
-        if self.transformers_ is not None:
-            yt = yt.to_numpy().ravel()
-        else:
-            yt = yt.ravel()
+        if self._estimator_scitype == "tabular-regressor":
+            # coerce to sklearn expectations
+            Xt, yt = self._coerce_skl_input(Xt, yt)
 
         self.estimator_ = clone(self.estimator)
         self.estimator_.fit(Xt, yt)
@@ -1154,11 +1224,13 @@ class _DirRecReducer(_Reducer):
             # Slice data using expanding window.
             X_fit = X_full[:, :, : n_timepoints + i]
 
-            # Convert to 2d tabular array for reduction to tabular regression.
             if self._estimator_scitype == "tabular-regressor":
-                X_fit = X_fit.reshape(X_fit.shape[0], -1)
+                # coerce to sklearn expectations
+                X_inner, y_inner = self._coerce_skl_input(X_fit, yt[:, i])
+            else:
+                X_inner, y_inner = X_fit, yt[:, i]
 
-            estimator.fit(X_fit, yt[:, i])
+            estimator.fit(X_inner, y_inner)
             self.estimators_.append(estimator)
         return self
 
