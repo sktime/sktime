@@ -27,6 +27,7 @@ __all__ = [
     "FhPlexForecaster",
     "ForecastByLevel",
     "Permute",
+    "SeasonalReducer",
     "YfromX",
     "IgnoreX",
 ]
@@ -62,4 +63,5 @@ from sktime.forecasting.compose._reduce import (
     YfromX,
     make_reduction,
 )
+from sktime.forecasting.compose._seasonal import SeasonalReducer
 from sktime.forecasting.compose._stack import StackingForecaster
