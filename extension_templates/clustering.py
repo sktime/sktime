@@ -44,7 +44,12 @@ from sktime.clustering import BaseClusterer
 
 # todo: add any necessary imports here
 
+# todo: for imports of sktime soft dependencies:
+# make sure to fill in the "python_dependencies" tag with the package import name
+# import soft dependencies only inside methods of the class, not at the top of the file
 
+
+# todo: change class name and write docstring
 class MyClusterer(BaseClusterer):
     """Custom clusterer. todo: write docstring.
 

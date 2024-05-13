@@ -46,10 +46,12 @@ from sktime.classification.base import BaseClassifier
 
 # todo: add any necessary imports here
 
-# todo: if any imports are sktime soft dependencies:
+# todo: for imports of sktime soft dependencies:
 # make sure to fill in the "python_dependencies" tag with the package import name
+# import soft dependencies only inside methods of the class, not at the top of the file
 
 
+# todo: change class name and write docstring
 class MyTimeSeriesClassifier(BaseClassifier):
     """Custom time series classifier. todo: write docstring.
 

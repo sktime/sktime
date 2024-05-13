@@ -224,6 +224,14 @@ These transformers extract larger collections of features.
 
     Catch22
 
+.. currentmodule:: sktime.transformations.panel.catch22wrapper
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Catch22Wrapper
+
 Series-to-series transformers
 -----------------------------
 
