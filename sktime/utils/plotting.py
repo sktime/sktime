@@ -505,9 +505,9 @@ def plot_windows(cv, y, title="", ax=None):
 
 
 def plot_calibration(y_true, y_pred, ax=None):
-    r"""Plot the calibration of a probabilistic forecast.
+    r"""Plot the calibration curve for a sample of quantile predictions.
 
-    Visualizes calibration of the quantile forecasts.
+    Visualizes calibration of the quantile predictions.
 
     Computes the following calibration plot:
 
@@ -531,7 +531,7 @@ def plot_calibration(y_true, y_pred, ax=None):
 
     x-axis: interval from 0 to 1, quantile points
     y-axis: interval from 0 to 1, calibration fractions
-    plot elements: calibration curve of the forecast (blue) and the ideal
+    plot elements: calibration curve of the quantile predictions (blue) and the ideal
         calibration curve (orange), the curve with equation y = x.
         Calibration curve are points :math:`(p_i, \widehat{p}_i), i = 1 \dots, k`;
         Ideal curve is the curve with equation y = x,
@@ -540,9 +540,11 @@ def plot_calibration(y_true, y_pred, ax=None):
     Parameters
     ----------
     y_true : pd.Series, single columned pd.DataFrame, or single columned np.array.
-        The actual values of the forecast
+        The actual values
     y_pred : pd.DataFrame
-        The quantile forecast.
+        The quantile predictions,
+        formatted as returned by ``BaseDistribution.quantile``,
+        or ``predict_quantiles``
     ax : matplotlib.axes.Axes, optional (default=None)
         Axes on which to plot. If None, axes will be created and returned.
 
