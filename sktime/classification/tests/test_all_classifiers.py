@@ -4,6 +4,7 @@ __author__ = ["mloning", "TonyBagnall", "fkiraly"]
 
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from sktime.classification.tests._expected_outputs import (
@@ -207,7 +208,30 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         X, y = make_classification_problem()
         y[:] = 42
 
-        error_msg = "single class label"
+        error_msg = "single label"
 
         with pytest.warns(UserWarning, match=error_msg):
             estimator_instance.fit(X, y)
+
+    def test_multioutput(self, estimator_instance):
+        """Test multioutput classification for all classifiers.
+
+        All classifiers should follow the same interface,
+        those that do not genuinely should vectorize/broadcast over y.
+        """
+        n_instances = 20
+        X, y = make_classification_problem(n_instances=n_instances)
+        y_mult = pd.DataFrame({"a": y, "b": y})
+
+        estimator_instance.fit(X, y_mult)
+        y_pred = estimator_instance.predict(X)
+
+        assert isinstance(y_pred, pd.DataFrame)
+        assert y_pred.shape == y_mult.shape
+
+        # the estimator vectorizes iff it does not have the multioutput capability
+        vectorized = not estimator_instance.get_tag("capability:multioutput")
+        if vectorized:
+            assert hasattr(estimator_instance, "classifiers_")
+            assert isinstance(estimator_instance.classifiers_, pd.DataFrame)
+            assert estimator_instance.classifiers_.shape == (1, 2)

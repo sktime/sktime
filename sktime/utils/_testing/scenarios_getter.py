@@ -50,7 +50,7 @@ def retrieve_scenarios(obj, filter_tags=None):
         If string(s), must be in registry.BASE_CLASS_REGISTER (first col)
             for instance 'classifier', 'regressor', 'transformer', 'forecaster'
     filter_tags: dict of (str or list of str), default=None
-        subsets the returned objectss as follows:
+        subsets the returned objects as follows:
             each key/value pair is statement in "and"/conjunction
                 key is tag name to sub-set on
                 value str or list of string are tag values
@@ -121,7 +121,7 @@ def _check_tag_cond(obj, filter_tags=None):
     ----------
     obj: object inheriting from sktime BaseObject
     filter_tags: dict of (str or list of str), default=None
-        subsets the returned objectss as follows:
+        subsets the returned objects as follows:
             each key/value pair is statement in "and"/conjunction
                 key is tag name to sub-set on
                 value str or list of string are tag values

@@ -11,21 +11,22 @@ __all__ = ["ForecastByLevel"]
 class ForecastByLevel(_DelegatedForecaster):
     """Forecast by instance or panel.
 
-    Used to apply multiple copies of `forecaster` by instance or by panel.
+    Used to apply multiple copies of ``forecaster`` by instance or by panel.
 
-    If `groupby="global"`, behaves like `forecaster`.
-    If `groupby="local"`, fits a clone of `forecaster` per time series instance.
-    If `groupby="panel"`, fits a clone of `forecaster` per panel (first non-time level).
+    If ``groupby="global"``, behaves like ``forecaster``.
+    If ``groupby="local"``, fits a clone of ``forecaster`` per time series instance.
+    If ``groupby="panel"``, fits a clone of ``forecaster`` per panel (first non-time
+    level).
 
-    The fitted forecasters can be accessed in the `forecasters_` attribute,
-    if more than one clone is fitted, otherwise in the `forecaster_` attribute.
+    The fitted forecasters can be accessed in the ``forecasters_`` attribute,
+    if more than one clone is fitted, otherwise in the ``forecaster_`` attribute.
 
     Parameters
     ----------
     forecaster : sktime forecaster used in ForecastByLevel
-        A "blueprint" forecaster, state does not change when `fit` is called.
+        A "blueprint" forecaster, state does not change when ``fit`` is called.
     groupby : str, one of ["local", "global", "panel"], optional, default="local"
-        level on which data are grouped to fit clones of `forecaster`
+        level on which data are grouped to fit clones of ``forecaster``
         "local" = unit/instance level, one reduced model per lowest hierarchy level
         "global" = top level, one reduced model overall, on pooled data ignoring levels
         "panel" = second lowest level, one reduced model per panel level (-2)
@@ -34,10 +35,10 @@ class ForecastByLevel(_DelegatedForecaster):
 
     Attributes
     ----------
-    forecaster_ : sktime forecaster, present only if `groupby` is "global"
-        clone of `forecaster` used for fitting and forecasting
+    forecaster_ : sktime forecaster, present only if ``groupby`` is "global"
+        clone of ``forecaster`` used for fitting and forecasting
     forecasters_ : pd.DataFrame of sktime forecaster, present otherwise
-        entries are clones of `forecaster` used for fitting and forecasting
+        entries are clones of ``forecaster`` used for fitting and forecasting
 
     Examples
     --------
@@ -53,6 +54,7 @@ class ForecastByLevel(_DelegatedForecaster):
     """
 
     _tags = {
+        "authors": ["fkiraly"],
         "requires-fh-in-fit": False,
         "handles-missing-data": True,
         "scitype:y": "both",
@@ -74,7 +76,7 @@ class ForecastByLevel(_DelegatedForecaster):
 
         super().__init__()
 
-        self.clone_tags(self.forecaster_)
+        self._set_delegated_tags(self.forecaster_)
         self.set_tags(**{"fit_is_empty": False})
 
         if groupby == "local":
@@ -105,7 +107,7 @@ class ForecastByLevel(_DelegatedForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------

@@ -3,21 +3,23 @@
 import pandas as pd
 import pytest
 
-from sktime.benchmarking import forecasting
-from sktime.forecasting.model_selection import ExpandingWindowSplitter
+from sktime.benchmarking.benchmarks import coerce_estimator_and_id
+from sktime.benchmarking.forecasting import ForecastingBenchmark
 from sktime.forecasting.naive import NaiveForecaster
+from sktime.forecasting.trend import TrendForecaster
 from sktime.performance_metrics.forecasting import (
     MeanAbsoluteError,
     MeanAbsolutePercentageError,
     MeanSquaredPercentageError,
 )
+from sktime.split import ExpandingWindowSplitter
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-expected_results_df_1 = pd.DataFrame(
+EXPECTED_RESULTS_1 = pd.DataFrame(
     data={
         "validation_id": "[dataset=data_loader_simple]_"
-        + "[cv_splitter=ExpandingWindowSplitter]-v1",
-        "model_id": "NaiveForecaster-v1",
+        + "[cv_splitter=ExpandingWindowSplitter]",
+        "model_id": "NaiveForecaster",
         "MeanSquaredPercentageError_fold_0_test": 0.0,
         "MeanSquaredPercentageError_fold_1_test": 0.111,
         "MeanSquaredPercentageError_mean": 0.0555,
@@ -25,12 +27,11 @@ expected_results_df_1 = pd.DataFrame(
     },
     index=[0],
 )
-
-expected_results_df_2 = pd.DataFrame(
+EXPECTED_RESULTS_2 = pd.DataFrame(
     data={
         "validation_id": "[dataset=data_loader_simple]_"
-        + "[cv_splitter=ExpandingWindowSplitter]-v1",
-        "model_id": "NaiveForecaster-v1",
+        + "[cv_splitter=ExpandingWindowSplitter]",
+        "model_id": "NaiveForecaster",
         "MeanAbsolutePercentageError_fold_0_test": 0.0,
         "MeanAbsolutePercentageError_fold_1_test": 0.333,
         "MeanAbsolutePercentageError_mean": 0.1666,
@@ -42,6 +43,28 @@ expected_results_df_2 = pd.DataFrame(
     },
     index=[0],
 )
+
+COER_CASES = [
+    (
+        NaiveForecaster(),
+        "NaiveForecaster",
+        {"NaiveForecaster": NaiveForecaster()},
+    ),
+    (NaiveForecaster(), None, {"NaiveForecaster": NaiveForecaster()}),
+    (
+        [NaiveForecaster(), TrendForecaster()],
+        None,
+        {
+            "NaiveForecaster": NaiveForecaster(),
+            "TrendForecaster": TrendForecaster(),
+        },
+    ),
+    (
+        {"estimator_1": NaiveForecaster()},
+        None,
+        {"estimator_1": NaiveForecaster()},
+    ),
+]
 
 
 def data_loader_simple() -> pd.DataFrame:
@@ -56,13 +79,13 @@ def data_loader_simple() -> pd.DataFrame:
 @pytest.mark.parametrize(
     "expected_results_df, scorers",
     [
-        (expected_results_df_1, [MeanSquaredPercentageError()]),
-        (expected_results_df_2, [MeanAbsolutePercentageError(), MeanAbsoluteError()]),
+        (EXPECTED_RESULTS_1, [MeanSquaredPercentageError()]),
+        (EXPECTED_RESULTS_2, [MeanAbsolutePercentageError(), MeanAbsoluteError()]),
     ],
 )
 def test_forecastingbenchmark(tmp_path, expected_results_df, scorers):
     """Test benchmarking a forecaster estimator."""
-    benchmark = forecasting.ForecastingBenchmark()
+    benchmark = ForecastingBenchmark()
 
     benchmark.add_estimator(NaiveForecaster(strategy="last"))
 
@@ -81,3 +104,33 @@ def test_forecastingbenchmark(tmp_path, expected_results_df, scorers):
     pd.testing.assert_frame_equal(
         expected_results_df, results_df, check_exact=False, atol=0, rtol=0.001
     )
+
+
+@pytest.mark.parametrize("estimator, estimator_id, expected_output", COER_CASES)
+def test_coerce_estimator_and_id(estimator, estimator_id, expected_output):
+    """Test coerce_estimator_and_id return expected output."""
+    assert (
+        coerce_estimator_and_id(estimator, estimator_id) == expected_output
+    ), "coerce_estimator_and_id does not return the expected output."
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("kotsu", severity="none"),
+    reason="skip test if required soft dependencies not available",
+)
+@pytest.mark.parametrize(
+    "estimators",
+    [
+        ({"N": NaiveForecaster(), "T": TrendForecaster()}),
+        ([NaiveForecaster(), TrendForecaster()]),
+    ],
+)
+def test_multiple_estimators(estimators):
+    """Test add_estimator with multiple estimators."""
+    # single estimator test is checked in test_forecastingbenchmark
+    benchmark = ForecastingBenchmark()
+    benchmark.add_estimator(estimators)
+    registered_estimators = benchmark.estimators.entity_specs.keys()
+    assert len(registered_estimators) == len(
+        estimators
+    ), "add_estimator does not register all estimators."

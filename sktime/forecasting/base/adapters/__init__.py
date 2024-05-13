@@ -8,12 +8,14 @@ __all__ = [
     "_PmdArimaAdapter",
     "_StatsForecastAdapter",
     "_GeneralisedStatsForecastAdapter",
+    "_NeuralForecastAdapter",
 ]
 
 from sktime.forecasting.base.adapters._fbprophet import _ProphetAdapter
 from sktime.forecasting.base.adapters._generalised_statsforecast import (
     _GeneralisedStatsForecastAdapter,
 )
+from sktime.forecasting.base.adapters._neuralforecast import _NeuralForecastAdapter
 from sktime.forecasting.base.adapters._pmdarima import _PmdArimaAdapter
 from sktime.forecasting.base.adapters._statsforecast import _StatsForecastAdapter
 from sktime.forecasting.base.adapters._statsmodels import _StatsModelsAdapter

@@ -49,7 +49,7 @@ class RAMResults(BaseResults):
         y_proba : numpy array
             array of probabilities associated with the predicted values
         index : numpy array
-            dataset indeces of the y_true data points
+            dataset indices of the y_true data points
         fit_estimator_start_time : pandas timestamp (default=None)
             timestamp when fitting the estimator began
         fit_estimator_end_time : pandas timestamp (default=None)
@@ -150,7 +150,7 @@ class HDDResults(HDDBaseResults):
         y_proba : numpy array
             array of probabilities associated with the predicted values
         index : numpy array
-            dataset indeces of the y_true data points
+            dataset indices of the y_true data points
         fit_estimator_start_time : pandas timestamp (default=None)
             timestamp when fitting the estimator began
         fit_estimator_end_time : pandas timestamp (default=None)

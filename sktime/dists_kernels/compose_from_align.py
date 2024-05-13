@@ -4,7 +4,7 @@ __author__ = ["fkiraly"]
 
 import numpy as np
 
-from sktime.dists_kernels._base import BasePairwiseTransformerPanel
+from sktime.dists_kernels.base import BasePairwiseTransformerPanel
 
 
 class DistFromAligner(BasePairwiseTransformerPanel):
@@ -19,6 +19,7 @@ class DistFromAligner(BasePairwiseTransformerPanel):
     """
 
     _tags = {
+        "authors": ["fkiraly"],
         "symmetric": True,  # all the distances are symmetric
         "capability:unequal_length": True,  # aligners can usually handle unequal length
     }

@@ -20,6 +20,7 @@ from sktime.clustering.base import BaseClusterer
 from sktime.datatypes._panel._check import is_nested_dataframe
 from sktime.dists_kernels import BasePairwiseTransformer, BasePairwiseTransformerPanel
 from sktime.forecasting.base import BaseForecaster
+from sktime.registry import scitype
 from sktime.regression.base import BaseRegressor
 from sktime.tests._config import VALID_ESTIMATOR_TYPES
 from sktime.transformations.base import BaseTransformer
@@ -216,6 +217,11 @@ def _has_capability(est, method: str) -> bool:
             return True
         return get_tag(est, "capability:pred_int", False)
     # skip transform for forecasters that have it - pipelines
-    if method == "transform" and isinstance(est, BaseForecaster):
+    if method == "transform" and scitype(est) in (
+        "classifier",
+        "forecaster",
+    ):
+        return False
+    if method == "predict" and scitype(est) == "transformer":
         return False
     return True

@@ -88,7 +88,7 @@ def make_forecasting_problem(
     Parameters
     ----------
     n_timepoints : int, optional
-        Lenght of data, by default 50
+        Length of data, by default 50
     all_positive : bool, optional
         Only positive values or not, by default True
     index_type : e.g. pd.PeriodIndex, optional

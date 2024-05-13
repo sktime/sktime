@@ -4,27 +4,26 @@
 __all__ = ["SquaringResiduals"]
 __author__ = ["kcc-lion"]
 
-from warnings import warn
-
 import pandas as pd
 
 from sktime.datatypes._convert import convert_to
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
-from sktime.forecasting.model_selection import ExpandingWindowSplitter
 from sktime.forecasting.naive import NaiveForecaster
+from sktime.split import ExpandingWindowSplitter
+from sktime.utils.warnings import warn
 
 
 class SquaringResiduals(BaseForecaster):
     r"""Compute the prediction variance based on a separate forecaster.
 
-    Wraps a `forecaster` with another `residual_forecaster` object that
+    Wraps a ``forecaster`` with another ``residual_forecaster`` object that
     allows for quantile and interval estimation by fitting the
-    `residual_forecaster` to the rolling residuals.
+    ``residual_forecaster`` to the rolling residuals.
 
     Fitting proceeds as follows:
     Let :math:`t_1, \dots, t_N` be the train set.
-    Let `steps_ahead` be a positive integer indicating the steps ahead
-    we want to forecast the residuals. Let `initial_window` be
+    Let ``steps_ahead`` be a positive integer indicating the steps ahead
+    we want to forecast the residuals. Let ``initial_window`` be
     the minimal number of observations to which the forecaster is fitted.
 
     1. For :math:`i = initial\_window, \dots, N - steps\_ahead`
@@ -36,13 +35,13 @@ class SquaringResiduals(BaseForecaster):
            - \hat{y}(t_{i+steps\_ahead})`
         d. Compute :math:`e(t_{i+steps\_ahead}) := h(r(t_{i+steps\_ahead}))`
            where :math:`h(x)` is given by :math:`strategy`
-    2. Train `residual_forecaster` on
+    2. Train ``residual_forecaster`` on
        :math:`e(t_{initial\_window+steps\_ahead}), \dots, e(t_{N})`
 
     Prediction for :math:`t_{N+steps\_ahead}` is done as follows:
 
-    1. Use `forecaster` to predict location param :math:`\hat{y}(t_{N+steps\_ahead})`
-    2. Use `residual_forecaster` to predict scale param :math:`e(t_{N+steps\_ahead})`
+    1. Use ``forecaster`` to predict location param :math:`\hat{y}(t_{N+steps\_ahead})`
+    2. Use ``residual_forecaster`` to predict scale param :math:`e(t_{N+steps\_ahead})`
     3. Calculate prediction intervals based on e.g. normal assumption
        :math:`N(\hat{y}(t_{N+steps\_ahead}),  e(t_{N+steps\_ahead}))`
 
@@ -81,6 +80,12 @@ class SquaringResiduals(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["kcc-lion", "fkiraly"],
+        "maintainers": ["kcc-lion"],
+        # estimator type
+        # --------------
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": True,  # does estimator ignore the exogeneous X?
         "handles-missing-data": False,  # can estimator handle missing data?
@@ -92,7 +97,6 @@ class SquaringResiduals(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": True,  # does forecaster implement proba forecasts?
         "capability:pred_int:insample": False,
-        "python_version": None,  # PEP 440 python version specifier to limit versions
     }
 
     def __init__(
@@ -269,9 +273,7 @@ class SquaringResiduals(BaseForecaster):
             forecaster.update(X=X, y=y, update_params=update_params)
         return self
 
-    # todo 0.22.0 - switch legacy_interface default to False
-    # todo 0.23.0 - remove legacy_interface arg
-    def _predict_quantiles(self, fh, X, alpha, legacy_interface=True):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -315,9 +317,7 @@ class SquaringResiduals(BaseForecaster):
 
         errors = [pred_var * z for z in z_scores]
 
-        var_names = self._get_varnames(
-            default="Quantiles", legacy_interface=legacy_interface
-        )
+        var_names = self._get_varnames()
         var_name = var_names[0]
 
         index = pd.MultiIndex.from_product([var_names, alpha])
@@ -353,13 +353,17 @@ class SquaringResiduals(BaseForecaster):
                 a square matrix of size len(fh) with predictive covariance matrix.
         """
         if cov:
-            warn(f"cov={cov} is not supported. Defaulting to cov=False instead.")
+            warn(
+                f"cov={cov} is not supported in SquaringResiduals. "
+                "Defaulting to cov=False instead.",
+                obj=self,
+            )
         fh_abs = fh.to_absolute(self.cutoff)
         fh_rel = fh.to_relative(self.cutoff)
         fh_rel_index = fh_rel.to_pandas()
         pred_var = pd.Series(index=fh_rel_index, dtype="float64")
         for el in fh_rel:
-            pred_var.at[el] = self._res_forecasters[el].predict(fh=el)[0]
+            pred_var.at[el] = self._res_forecasters[el].predict(fh=el)
         if self.strategy == "square":
             pred_var = pred_var**0.5
         pred_var.index = fh_abs.to_pandas()
@@ -373,7 +377,7 @@ class SquaringResiduals(BaseForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for forecasters.
 
         Returns
@@ -381,8 +385,9 @@ class SquaringResiduals(BaseForecaster):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.forecasting.croston import Croston
         from sktime.forecasting.naive import NaiveForecaster

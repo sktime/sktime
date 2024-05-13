@@ -5,12 +5,10 @@ Installation
 
 ``sktime`` currently supports:
 
-* Python versions 3.8, 3.9, 3.10, and 3.11.
+* Python versions 3.8, 3.9, 3.10, 3.11, and 3.12.
 * Operating systems Mac OS X, Unix-like OS, Windows 8.1 and higher
 
 See here for a `full list of precompiled wheels available on PyPI <https://pypi.org/simple/sktime/>`_.
-
-We appreciate community contributions towards compatibility with python 3.10, or other operating systems.
 
 .. contents::
    :local:
@@ -44,17 +42,23 @@ To install ``sktime`` with maximum dependencies, including soft dependencies, in
 
     pip install sktime[all_extras]
 
+``sktime`` also comes with dependency sets specific to learning task, i.e., estimator scitype.
+These are curated selections of the most common soft dependencies for the respective learning task.
+The available dependency sets are of the same names as the respective modules:
+``forecasting``, ``transformations``, ``classification``, ``regression``, ``clustering``, ``param_est``,
+``networks``, ``annotation``, ``alignment``.
+
 .. warning::
-    Some of the dependencies included in ``all_extras`` do not work on mac ARM-based processors, such
-    as M1, M2, M1Pro, M1Max or M1Ultra. This may cause an error during installation. Mode details can
-    be found in the :ref:`troubleshooting section<Dependency error on mac ARM>` below.
+
+    Some of the soft dependencies included in ``all_extras`` and the curated soft dependency sets do not work on mac ARM-based processors, such
+    as M1, M2, M1Pro, M1Max or M1Ultra. This may cause an error during installation. Mode details can be found in the :ref:`troubleshooting section<Dependency error on mac ARM>` below.
 
 .. warning::
     The soft dependencies with ``all_extras`` are only necessary to have all estimators available, or to run all tests.
     However, this slows down the downloads, and multiples test time.
     For most user or developer scenarios, downloading ``all_extras`` will
-    not be necessary.
-
+    not be necessary. If you are unsure, install ``sktime`` with core dependencies, and install soft dependencies as needed.
+    Alternatively, install dependency sets specific to learning task, see above.
 
 Installing sktime from conda
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -73,9 +77,10 @@ To install ``sktime`` with maximum dependencies, including soft dependencies, in
 
     conda install -c conda-forge sktime-all-extras
 
-Note: currently this does not include the dependency ``catch-22``.
-As this package is not available on ``conda-forge``, it must be installed via ``pip`` if desired.
-Contributions to remedy this situation are appreciated.
+Note: not all soft dependencies of ``sktime`` are also available on ``conda-forge``,
+``sktime-all-extras`` includes only the soft dependencies that are available on ``conda-forge``.
+The other soft dependencies can be installed via ``pip``, after ``conda install pip``.
+
 
 Development versions
 --------------------
@@ -170,7 +175,7 @@ In the ``anaconda prompt`` terminal:
 
 3. Navigate to your local sktime folder, :code:`cd sktime` or similar
 
-4. Create new environment with a supported python version: :code:`conda create -n sktime-dev python=3.8` (or :code:`python=3.11` etc)
+4. Create a new environment with a supported python version: :code:`conda create -n sktime-dev python=3.8` (or :code:`python=3.11` etc)
 
    .. warning::
        If you already have an environment called "sktime-dev" from a previous attempt you will first need to remove this.

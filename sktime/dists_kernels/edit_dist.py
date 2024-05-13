@@ -7,7 +7,7 @@ from typing import Union
 import numpy as np
 
 from sktime.distances import pairwise_distance
-from sktime.dists_kernels._base import BasePairwiseTransformerPanel
+from sktime.dists_kernels.base import BasePairwiseTransformerPanel
 
 
 class EditDist(BasePairwiseTransformerPanel):
@@ -59,7 +59,7 @@ class EditDist(BasePairwiseTransformerPanel):
         Gradient of the slope for itakura parallelogram (if using Itakura
         Parallelogram lower bounding)
     bounding_matrix: 2D np.ndarray, optional, default = None
-        if passed, must be of shape (len(X), len(X2)) for X, X2 in `transform`
+        if passed, must be of shape (len(X), len(X2)) for X, X2 in ``transform``
         Custom bounding matrix to use. If defined then other lower_bounding params
         are ignored. The matrix should be structure so that indexes considered in
         bound should be the value 0. and indexes outside the bounding matrix should
@@ -110,13 +110,20 @@ class EditDist(BasePairwiseTransformerPanel):
     >>> distmat = d.transform(X)  # doctest: +SKIP
 
     distances are also callable, this does the same:
+
     >>> distmat = d(X)  # doctest: +SKIP
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["chrisholder", "TonyBagnall", "fkiraly"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "symmetric": True,  # all the distances are symmetric
         "X_inner_mtype": "numpy3D",
-        "python_dependencies": "numba",
+        "capability:unequal_length": False,  # can dist handle unequal length panels?
     }
 
     ALLOWED_DISTANCE_STR = ["lcss", "edr", "erp", "twe"]

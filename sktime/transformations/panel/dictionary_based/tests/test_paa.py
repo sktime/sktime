@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.transformations.panel.dictionary_based._paa import PAA
+from sktime.transformations.panel.dictionary_based._paa import PAAlegacy as PAA
 from sktime.utils._testing.panel import _make_nested_from_array
 
 
@@ -71,7 +71,7 @@ def test_output_dimensions():
     assert num_cols == 5
 
 
-def test_paa_performs_correcly_along_each_dim():
+def test_paa_performs_correctly_along_each_dim():
     """Test that PAA produces the same result along each dimension."""
     X = _make_nested_from_array(
         np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), n_instances=1, n_columns=2

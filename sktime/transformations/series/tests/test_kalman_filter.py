@@ -548,9 +548,10 @@ def test_transform_and_smooth_pk(params, measurements):
 def test_em(classes, params, measurements):
     """Test adapters matrix estimation.
 
-    Call `fit` of input adapter/s, and compare all matrix parameters with `pykalman`'s
-    matrix parameters returned from `em`. This test is useful for both
-    KalmanFilterTransformerPK and KalmanFilterTransformerFP.
+    Call `fit` of input adapter/s, and compare all matrix parameters with
+    `pykalman`'s matrix parameters returned from `em`. This test
+    is useful for both KalmanFilterTransformerPK and
+    KalmanFilterTransformerFP.
     """
     mask_measurements = np.ma.masked_invalid(np.copy(measurements))
 

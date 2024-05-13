@@ -138,7 +138,7 @@ class MyTransformer(BaseTransformer):
         # univariate-only controls whether internal X can be univariate/multivariate
         # if True (only univariate), always applies vectorization over variables
         "univariate-only": False,
-        # valid values: True = inner _fit, _transform receive only univariate serie
+        # valid values: True = inner _fit, _transform receive only univariate series
         #   False = uni- and multivariate series are passed to inner methods
         #
         # requires_y = does y need to be passed in fit?
@@ -172,6 +172,26 @@ class MyTransformer(BaseTransformer):
         "handles-missing-data": False,  # can estimator handle missing data?
         # valid values: boolean True (yes), False (no)
         # if False, may raise exception when passed time series with missing values
+        #
+        # ownership and contribution tags
+        # -------------------------------
+        #
+        # author = author(s) of th estimator
+        # an author is anyone with significant contribution to the code at some point
+        "authors": ["author1", "author2"],
+        # valid values: str or list of str, should be GitHub handles
+        # this should follow best scientific contribution practices
+        # scope is the code, not the methodology (method is per paper citation)
+        # if interfacing a 3rd party estimator, ensure to give credit to the
+        # authors of the interfaced estimator
+        #
+        # maintainer = current maintainer(s) of the estimator
+        # per algorithm maintainer role, see governance document
+        # this is an "owner" type role, with rights and maintenance duties
+        # for 3rd party interfaces, the scope is the sktime class only
+        "maintainers": ["maintainer1", "maintainer2"],
+        # valid values: str or list of str, should be GitHub handles
+        # remove tag if maintained by sktime core team
     }
 
     # todo: add any hyper-parameters and components to constructor
@@ -180,6 +200,8 @@ class MyTransformer(BaseTransformer):
         self.parama = parama
         self.paramb = paramb
         self.paramc = paramc
+        # IMPORTANT: the self.params should never be overwritten or mutated from now on
+        # for handling defaults etc, write to other attributes, e.g., self._parama
 
         # leave this as is
         super().__init__()

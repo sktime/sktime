@@ -17,13 +17,10 @@ import joblib
 import numpy as np
 import pandas as pd
 import pytest
-from sklearn.utils.estimator_checks import (
-    check_get_params_invariance as _check_get_params_invariance,
-)
 
 from sktime.base import BaseEstimator, BaseObject, load
 from sktime.classification.deep_learning.base import BaseDeepClassifier
-from sktime.dists_kernels._base import (
+from sktime.dists_kernels.base import (
     BasePairwiseTransformer,
     BasePairwiseTransformerPanel,
 )
@@ -41,10 +38,10 @@ from sktime.tests._config import (
     VALID_ESTIMATOR_TYPES,
     VALID_TRANSFORMER_TYPES,
 )
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing._conditional_fixtures import (
     create_conditional_fixtures_and_names,
 )
-from sktime.utils._testing.deep_equals import deep_equals
 from sktime.utils._testing.estimator_checks import (
     _assert_array_almost_equal,
     _assert_array_equal,
@@ -53,13 +50,10 @@ from sktime.utils._testing.estimator_checks import (
     _list_required_methods,
 )
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
+from sktime.utils.deep_equals import deep_equals
 from sktime.utils.random_state import set_random_state
 from sktime.utils.sampling import random_partition
-from sktime.utils.validation._dependencies import (
-    _check_dl_dependencies,
-    _check_estimator_deps,
-    _check_soft_dependencies,
-)
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 # whether to subsample estimators per os/version partition matrix design
 # default is False, can be set to True by pytest --matrixdesign True flag
@@ -68,6 +62,10 @@ MATRIXDESIGN = False
 # whether to test only estimators that require cython, C compiler such as gcc
 # default is False, can be set to True by pytest --only_cython_estimators True flag
 CYTHON_ESTIMATORS = False
+
+# whether to test only estimators from modules that are changed w.r.t. main
+# default is False, can be set to True by pytest --only_changed_modules True flag
+ONLY_CHANGED_MODULES = False
 
 
 def subsample_by_version_os(x):
@@ -217,6 +215,13 @@ class BaseFixtureGenerator:
         # but all are tested on every OS at least once, and on every python version once
         if MATRIXDESIGN:
             est_list = subsample_by_version_os(est_list)
+
+        # run_test_for_class selects the estimators to run
+        # based on whether they have changed, and whether they have all dependencies
+        # internally, uses the ONLY_CHANGED_MODULES flag,
+        # and checks the python env against python_dependencies tag
+        est_list = [est for est in est_list if run_test_for_class(est)]
+
         return est_list
 
     def generator_dict(self):
@@ -264,13 +269,6 @@ class BaseFixtureGenerator:
             est
             for est in self._all_estimators()
             if not self.is_excluded(test_name, est)
-        ]
-
-        # exclude classes based on python version compatibility
-        estimator_classes_to_test = [
-            est
-            for est in estimator_classes_to_test
-            if _check_estimator_deps(est, severity="none")
         ]
 
         estimator_names = [est.__name__ for est in estimator_classes_to_test]
@@ -373,10 +371,8 @@ class BaseFixtureGenerator:
         # ensure cls is a class
         if "estimator_class" in kwargs.keys():
             obj = kwargs["estimator_class"]
-            cls = obj
         elif "estimator_instance" in kwargs.keys():
             obj = kwargs["estimator_instance"]
-            cls = type(obj)
         else:
             return []
 
@@ -385,12 +381,6 @@ class BaseFixtureGenerator:
 
         # subset to the methods that x has implemented
         nsc_list = [x for x in nsc_list if _has_capability(obj, x)]
-
-        # remove predict_proba for forecasters, if tensorflow-proba is not installed
-        # this ensures that predict_proba, which requires it, is not called in testing
-        if issubclass(cls, BaseForecaster):
-            if not _check_dl_dependencies(severity="none"):
-                nsc_list = list(set(nsc_list).difference(["predict_proba"]))
 
         return nsc_list
 
@@ -760,13 +750,14 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             else:
                 return []
 
-        # reserved_param_names = estimator_class.get_class_tag(
-        #     "reserved_params", tag_value_default=None
-        # )
-        # reserved_param_names = _coerce_to_list_of_str(reserved_param_names)
+        reserved_param_names = estimator_class.get_class_tag(
+            "reserved_params", tag_value_default=None
+        )
+        reserved_param_names = _coerce_to_list_of_str(reserved_param_names)
         # reserved_set = set(reserved_param_names)
 
         param_names = estimator_class.get_param_names()
+        # unreserved_param_names = set(param_names).difference(reserved_set)
 
         key_list = [x.keys() for x in param_list]
 
@@ -790,6 +781,22 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             "i.e., names of arguments of __init__, "
             f"but found some parameters that are not __init__ args: {notfound_errs}"
         )
+
+        # if len(unreserved_param_names) > 0:
+        #     assert (
+        #         len(param_list) > 1
+        #     ), "get_test_params should return at least two test parameter sets"
+        # params_tested = set()
+        # for params in param_list:
+        #     params_tested = params_tested.union(params.keys())
+
+        # this test is too harsh for the current estimator base
+        # params_not_tested = set(unreserved_param_names).difference(params_tested)
+        # assert len(params_not_tested) == 0, (
+        #     f"get_test_params should set each parameter of {estimator_class} "
+        #     f"to a non-default value at least once, but the following "
+        #     f"parameters are not tested: {params_not_tested}"
+        # )
 
     def test_create_test_instances_and_names(self, estimator_class):
         """Check that create_test_instances_and_names works.
@@ -869,6 +876,10 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
                 f"estimator: {estimator_class} has fit method, but"
                 f"is not a sub-class of BaseEstimator."
             )
+        from sktime.pipeline import Pipeline
+
+        if issubclass(estimator_class, Pipeline):
+            return
 
         # Usually estimators inherit only from one BaseEstimator type, but in some cases
         # they may be predictor and transformer at the same time (e.g. pipelines)
@@ -922,7 +933,13 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         estimator = estimator_instance
         params = estimator.get_params()
         assert isinstance(params, dict)
-        _check_get_params_invariance(estimator.__class__.__name__, estimator)
+
+        e = estimator.clone()
+
+        shallow_params = e.get_params(deep=False)
+        deep_params = e.get_params(deep=True)
+
+        assert all(item in deep_params.items() for item in shallow_params.items())
 
     def test_set_params(self, estimator_instance):
         """Check that set_params works correctly."""
@@ -1244,7 +1261,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             (including hyper-parameters and fitted parameters)
         2. expected output type of the method matches actual output type
             - only for abstract BaseEstimator methods, common to all estimator scitypes
-            list of BaseEstimator methdos tested: get_fitted_params
+            list of BaseEstimator methods tested: get_fitted_params
             scitype specific method outputs are tested in TestAll[estimatortype] class
         """
         estimator = estimator_instance
@@ -1415,8 +1432,6 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 err_msg=msg,
             )
 
-    # todo: this needs to be diagnosed and fixed - temporary skip
-    @pytest.mark.skip(reason="hangs on mac and unix remote tests")
     def test_multiprocessing_idempotent(
         self, estimator_instance, scenario, method_nsc_arraylike
     ):
@@ -1430,29 +1445,39 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         method_nsc = method_nsc_arraylike
         params = estimator_instance.get_params()
 
-        if "n_jobs" in params:
-            # run on a single process
-            # -----------------------
-            estimator = deepcopy(estimator_instance)
-            estimator.set_params(n_jobs=1)
-            set_random_state(estimator)
-            result_single_process = scenario.run(
-                estimator, method_sequence=["fit", method_nsc]
-            )
+        # test runs only if n_jobs is a parameter of the estimator
+        if "n_jobs" not in params:
+            return None
 
-            # run on multiple processes
-            # -------------------------
-            estimator = deepcopy(estimator_instance)
-            estimator.set_params(n_jobs=-1)
-            set_random_state(estimator)
-            result_multiple_process = scenario.run(
-                estimator, method_sequence=["fit", method_nsc]
-            )
-            _assert_array_equal(
-                result_single_process,
-                result_multiple_process,
-                err_msg="Results are not equal for n_jobs=1 and n_jobs=-1",
-            )
+        # skip test for predict_proba
+        # this produces a BaseDistribution object, for which no ready
+        # equality check is implemented
+        if method_nsc == "predict_proba":
+            return None
+
+        # run on a single process
+        # -----------------------
+        estimator = deepcopy(estimator_instance)
+        estimator.set_params(n_jobs=1)
+        set_random_state(estimator)
+        result_single_process = scenario.run(
+            estimator, method_sequence=["fit", method_nsc]
+        )
+
+        # run on multiple processes
+        # -------------------------
+        estimator = deepcopy(estimator_instance)
+        estimator.set_params(n_jobs=-1)
+        set_random_state(estimator)
+        result_multiple_process = scenario.run(
+            estimator, method_sequence=["fit", method_nsc]
+        )
+
+        _assert_array_equal(
+            result_single_process,
+            result_multiple_process,
+            err_msg="Results are not equal for n_jobs=1 and n_jobs=-1",
+        )
 
     def test_dl_constructor_initializes_deeply(self, estimator_class):
         """Test DL estimators that they pass custom parameters to underlying Network."""

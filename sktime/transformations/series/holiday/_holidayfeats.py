@@ -44,8 +44,8 @@ class HolidayFeatures(BaseTransformer):
     return_indicator : bool, default=False
         Whether or not to return an indicator variable equal to 1 if a time
         point is a holiday or not.
-    keep_original_columns : bool, defalut=False
-        Keep original columns in X passed to `.transform()`.
+    keep_original_columns : bool, default=False
+        Keep original columns in X passed to ``.transform()``.
 
     Examples
     --------
@@ -58,6 +58,7 @@ class HolidayFeatures(BaseTransformer):
     >>> X = pd.DataFrame(values, index=index)  # doctest: +SKIP
 
     Returns country holiday features with custom holiday windows
+
     >>> transformer = HolidayFeatures(
     ...    calendar=country_holidays(country="FR"),
     ...    return_categorical=True,
@@ -65,6 +66,7 @@ class HolidayFeatures(BaseTransformer):
     >>> yt = transformer.fit_transform(X)  # doctest: +SKIP
 
     Returns financial holiday features
+
     >>> transformer = HolidayFeatures(
     ...    calendar=financial_holidays(market="NYSE"),
     ...    return_categorical=True,
@@ -72,6 +74,7 @@ class HolidayFeatures(BaseTransformer):
     >>> yt = transformer.fit_transform(X)  # doctest: +SKIP
 
     Returns custom made holiday features
+
     >>> transformer = HolidayFeatures(
     ...    calendar={date(2000,1,14): "Regional Holiday",
     ...              date(2000, 1, 26): "Regional Holiday"},
@@ -85,6 +88,13 @@ class HolidayFeatures(BaseTransformer):
 
     _required_parameters = ["calendar"]
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["mloning", "VyomkeshVyas"],
+        "maintainers": "VyomkeshVyas",
+        "python_dependencies": ["holidays"],
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:transform-labels": "None",
@@ -99,7 +109,6 @@ class HolidayFeatures(BaseTransformer):
         "enforce_index_type": [pd.DatetimeIndex],
         "transform-returns-same-time-index": True,
         "skip-inverse-transform": True,
-        "python_dependencies": ["holidays"],
     }
 
     def __init__(
@@ -175,8 +184,9 @@ class HolidayFeatures(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from datetime import date
 
@@ -247,7 +257,7 @@ def _generate_holidays(
     Returns
     -------
     pd.DataFrame
-        Dataframe with index given by input `index` and holiday columns.
+        Dataframe with index given by input ``index`` and holiday columns.
 
     References
     ----------

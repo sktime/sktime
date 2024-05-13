@@ -7,7 +7,7 @@ import pandas as pd
 from sktime.datatypes import convert
 from sktime.transformations.base import BaseTransformer
 
-__author__ = ["Vincent Nicholson"]
+__author__ = ["vnicholson1"]
 
 
 class DWTTransformer(BaseTransformer):
@@ -22,6 +22,7 @@ class DWTTransformer(BaseTransformer):
     """
 
     _tags = {
+        "authors": "vnicholson1",
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",

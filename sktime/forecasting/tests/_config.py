@@ -18,6 +18,8 @@ __all__ = [
     "INDEX_TYPE_LOOKUP",
     "TEST_RANDOM_SEEDS",
     "TEST_N_ITERS",
+    "TEST_FHS_TIMEDELTA",
+    "TEST_CUTOFFS",
 ]
 
 import numpy as np
