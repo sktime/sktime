@@ -24,6 +24,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         # --------------
         "python_dependencies": ["pytorch_forecasting", "torch", "lightning"],
         "capability:global_forecasting": True,
+        "requires_X": True,
     }
 
     def __init__(
