@@ -8,11 +8,12 @@ If the active forecaster fails during prediction, it proceeds to the next. This 
 a robust forecasting mechanism by providing fallback options.
 """
 
-__author__ = ["ninedigits"]
+__author__ = ["ninedigits", "RikStarmans"]
 __all__ = ["FallbackForecaster"]
 
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES
+from sktime.datatypes._check import check_is_mtype
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.utils.warnings import warn
 
@@ -107,7 +108,7 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
     """
 
     _tags = {
-        "authors": ["ninedigits"],
+        "authors": ["ninedigits", "RikStarmans"],
         "maintainers": ["ninedigits"],
         "handles-missing-data": True,
         "scitype:y": "both",
@@ -145,7 +146,13 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
 
     def _validate_y_pred(self, y_pred):
         if self.nan_predict_policy in ("warn", "raise"):
-            has_nans = y_pred.isnull().any()
+            last_mtype = self._y_mtype_last_seen
+            _, _, metadata = check_is_mtype(
+                y_pred,
+                mtype=last_mtype,
+                return_metadata=["has_nans"],
+            )
+            has_nans = metadata["has_nans"]
             if has_nans:
                 msg = f"Null value presents in predict: {y_pred}"
                 if self.nan_predict_policy == "raise":

@@ -53,6 +53,17 @@ class CNNRegressor(BaseDeepRegressor):
     -----
     Adapted from the implementation from Fawaz et. al
     https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/cnn.py
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_unit_test
+    >>> from sktime.regression.deep_learning.cnn import CNNRegressor
+    >>> X_train, y_train = load_unit_test(return_X_y=True, split="train")
+    >>> X_test, y_test = load_unit_test(return_X_y=True, split="test")
+    >>> regressor = CNNRegressor() # doctest: +SKIP
+    >>> regressor.fit(X_train, y_train) # doctest: +SKIP
+    CNNRegressor(...)
+    >>> y_pred = regressor.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
@@ -81,9 +92,7 @@ class CNNRegressor(BaseDeepRegressor):
         optimizer=None,
     ):
         _check_dl_dependencies(severity="error")
-        super().__init__(
-            batch_size=batch_size,
-        )
+        super().__init__()
         self.n_conv_layers = n_conv_layers
         self.avg_pool_size = avg_pool_size
         self.kernel_size = kernel_size
@@ -177,7 +186,7 @@ class CNNRegressor(BaseDeepRegressor):
         self.input_shape = X.shape[1:]
         self.model_ = self.build_model(self.input_shape)
         if self.verbose:
-            self.model.summary()
+            self.model_.summary()
 
         self.history = self.model_.fit(
             X,
@@ -225,6 +234,7 @@ class CNNRegressor(BaseDeepRegressor):
             "batch_size": 6,
             "kernel_size": 2,
             "n_conv_layers": 1,
+            "verbose": True,
         }
         test_params = [param1, param2]
 

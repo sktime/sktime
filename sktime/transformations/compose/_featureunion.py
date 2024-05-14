@@ -80,9 +80,10 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
         flatten_transform_index=True,
     ):
         self.transformer_list = transformer_list
-        self.transformer_list_ = self._check_estimators(
+        transformer_list_ = self._check_estimators(
             transformer_list, cls_type=BaseTransformer
         )
+        self.transformer_list_ = transformer_list_
 
         self.n_jobs = n_jobs
         self.transformer_weights = transformer_weights
@@ -90,9 +91,11 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
 
         super().__init__()
 
-        # todo: check for transform-input, transform-output
-        #   for now, we assume it's always Series/Series or Series/Panel
-        #   but no error is currently raised
+        t_outs = [t.get_tag("scitype:transform-output") for _, t in transformer_list_]
+        t_ins = [t.get_tag("scitype:transform-input") for _, t in transformer_list_]
+        # todo: error or special case handling if these are not all the same
+        self.set_tags(**{"scitype:transform-output": t_outs[0]})
+        self.set_tags(**{"scitype:transform-input": t_ins[0]})
 
         # abbreviate for readability
         ests = self.transformer_list_

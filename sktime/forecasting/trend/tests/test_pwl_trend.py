@@ -97,8 +97,15 @@ def test_pred_with_explicit_changepoints():
     y_train, y_test = temporal_train_test_split(y)
 
     fh = ForecastingHorizon(y_test.index, is_relative=False)
-    a = ProphetPiecewiseLinearTrendForecaster(changepoints=["1953-05-31"])
-    b = ProphetPiecewiseLinearTrendForecaster()
+    seasonality_params = {
+        "yearly_seasonality": True,
+        "weekly_seasonality": True,
+        "daily_seasonality": True,
+    }
+    a = ProphetPiecewiseLinearTrendForecaster(
+        changepoints=["1953-05-31"], **seasonality_params
+    )
+    b = ProphetPiecewiseLinearTrendForecaster(**seasonality_params)
 
     slope_a = a.fit(y_train).predict(fh).diff().mean()
     slope_b = b.fit(y_train).predict(fh).diff().mean()

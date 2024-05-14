@@ -71,7 +71,7 @@ class FCNRegressor(BaseDeepRegressor):
         optimizer=None,
     ):
         _check_dl_dependencies(severity="error")
-        super().__init__()
+
         self.n_epochs = n_epochs
         self.batch_size = batch_size
         self.callbacks = callbacks
@@ -83,6 +83,9 @@ class FCNRegressor(BaseDeepRegressor):
         self.use_bias = use_bias
         self.optimizer = optimizer
         self.history = None
+
+        super().__init__()
+
         self._network = FCNNetwork(
             random_state=self.random_state,
         )

@@ -4,6 +4,10 @@
 
 __author__ = ["mloning", "fkiraly"]
 
+
+from functools import reduce
+from typing import Dict, List, Union
+
 import numpy as np
 import pytest
 from sklearn.model_selection import ParameterGrid, ParameterSampler
@@ -348,3 +352,76 @@ def test_gscv_backends(backend_set):
         backend_params=backend_params,
     )
     gscv.fit(y, X)
+
+
+TEST_PARAMS_DICT = PIPE_GRID
+
+TEST_PARAMS_LIST = [
+    {
+        "window_length": [1, 2, 3],
+        "strategy": ["last", "mean"],
+        "transformer__degree": [1, 2, 3],
+        "forecaster__strategy": ["last", "mean", "seasonal_last"],
+    },
+    {
+        "window_length": [4, 5, 6],
+        "forecaster__strategy": ["last", "mean"],
+    },
+]
+
+
+@pytest.mark.parametrize("return_n_best_forecasters", [-1, 0, 3])
+@pytest.mark.parametrize(
+    "Forecaster, kwargs",
+    [
+        (ForecastingGridSearchCV, {"param_grid": TEST_PARAMS_DICT}),
+        (ForecastingGridSearchCV, {"param_grid": TEST_PARAMS_LIST}),
+        (ForecastingRandomizedSearchCV, {"param_distributions": TEST_PARAMS_LIST}),
+        (
+            ForecastingRandomizedSearchCV,
+            {"param_distributions": TEST_PARAMS_LIST, "n_iter": 100},
+        ),
+    ],
+)
+def test_return_n_best_forecasters(Forecaster, return_n_best_forecasters, kwargs):
+    y, X = load_longley()
+    searchCV = Forecaster(
+        forecaster=PIPE,
+        cv=CVs[0],
+        **kwargs,
+        return_n_best_forecasters=return_n_best_forecasters,
+    )
+    searchCV.fit(y, X)
+    if return_n_best_forecasters == -1:
+
+        def calculate_total_combinations(param_grid: Union[List[Dict], Dict]):
+            if isinstance(param_grid, dict):
+                return reduce(lambda x, y: x * y, [len(x) for x in param_grid.values()])
+            elif isinstance(param_grid, list):
+                return sum(calculate_total_combinations(i) for i in param_grid)
+            else:
+                error_message = "`param_grid` must be a dict or a list[dict]"
+                raise ValueError(error_message)
+
+        if "param_grid" in kwargs:
+            total_combinations = calculate_total_combinations(kwargs["param_grid"])
+            assert len(searchCV.n_best_forecasters_) == total_combinations
+        else:
+            try:
+                assert len(searchCV.n_best_forecasters_) == searchCV.n_iter
+            except AssertionError:
+                total_combinations = calculate_total_combinations(
+                    kwargs["param_distributions"]
+                )
+                assert len(searchCV.n_best_forecasters_) == total_combinations
+    else:
+        try:
+            assert len(searchCV.n_best_forecasters_) == return_n_best_forecasters
+        except AssertionError:
+            key = (
+                "param_distributions"
+                if "param_distributions" in kwargs
+                else "param_grid"
+            )
+            total_combinations = calculate_total_combinations(kwargs[key])
+            assert len(searchCV.n_best_forecasters_) == total_combinations

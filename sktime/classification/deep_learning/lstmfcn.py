@@ -52,6 +52,17 @@ class LSTMFCNClassifier(BaseDeepClassifier):
     ----------
     .. [1] Karim et al. Multivariate LSTM-FCNs for Time Series Classification, 2019
     https://arxiv.org/pdf/1801.04503.pdf
+
+    Examples
+    --------
+    >>> import sktime.classification.deep_learning as dl_clf  # doctest: +SKIP
+    >>> from dl_clf.lstmfcn import LSTMFCNClassifier  # doctest: +SKIP
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> lstmfcn = FCNClassifier(n_epochs=20,batch_size=4)  # doctest: +SKIP
+    >>> lstmfcn.fit(X_train, y_train)  # doctest: +SKIP
+    FCNClassifier(...)
     """
 
     _tags = {
@@ -76,13 +87,6 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         random_state=None,
         verbose=0,
     ):
-        super().__init__()
-
-        self.classes_ = None
-        self.input_shape = None
-        self.model_ = None
-        self.history = None
-
         # predefined
         self.n_epochs = n_epochs
         self.batch_size = batch_size
@@ -96,6 +100,8 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         self.random_state = random_state
         self.verbose = verbose
 
+        super().__init__()
+
         self._network = LSTMFCNNetwork(
             kernel_sizes=self.kernel_sizes,
             filter_sizes=self.filter_sizes,
@@ -104,7 +110,6 @@ class LSTMFCNClassifier(BaseDeepClassifier):
             dropout=self.dropout,
             attention=self.attention,
         )
-        self._is_fitted = False
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """

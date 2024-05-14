@@ -50,7 +50,7 @@ class Deseasonalizer(BaseTransformer):
     -----
     For further explanation on seasonal components and additive vs.
     multiplicative models see
-    ``Forecasting: Principles and Practice <https://otexts.com/fpp3/components.html>``_.
+    `Forecasting: Principles and Practice <https://otexts.com/fpp3/components.html>`_.
     Seasonal decomposition is computed using `statsmodels
 
     <https://www.statsmodels.org/stable/generated/statsmodels.tsa.seasonal.seasonal_decompose.html>`_.
@@ -286,7 +286,7 @@ class ConditionalDeseasonalizer(Deseasonalizer):
     -----
     For further explanation on seasonal components and additive vs.
     multiplicative models see
-    ``Forecasting: Principles and Practice <https://otexts.com/fpp3/components.html>``_.
+    `Forecasting: Principles and Practice <https://otexts.com/fpp3/components.html>`_.
     Seasonal decomposition is computed using `statsmodels
 
     <https://www.statsmodels.org/stable/generated/statsmodels.tsa.seasonal.seasonal_decompose.html>`_.
@@ -593,7 +593,7 @@ class STLTransformer(BaseTransformer):
         # for inverse transform, we sum up the columns
         # this will be close if return_components=True
         row_sums = X.sum(axis=1)
-        row_sums.columns = self.fit_column_names
+        row_sums.columns = self._X.columns
         return row_sums
 
     def _make_return_object(self, X, stl):
