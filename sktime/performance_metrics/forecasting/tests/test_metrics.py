@@ -159,4 +159,4 @@ def test_metric_coercion_bug():
     metric = mae(y_true, y_pred)
 
     assert isinstance(metric, pd.DataFrame)
-    assert metric.shape = (1, 1)
+    assert metric.shape == (1, 1)
