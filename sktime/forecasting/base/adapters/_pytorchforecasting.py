@@ -6,6 +6,7 @@ import typing
 from typing import Any, Dict, List, Optional
 
 import pandas
+from pandas.api.types import is_numeric_dtype
 
 from sktime.forecasting.base import BaseGlobalForecaster, ForecastingHorizon
 
@@ -209,6 +210,9 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
         # X, y must have same index
         assert (X.index == y.index).all()
         # warning! X will be modified
+        time_varying_known_reals = [
+            c for c in X.columns if is_numeric_dtype(X[c].dtype)
+        ]
         data = X.join(y, on=X.index.names)
         index_names = data.index.names
         index_lens = index_names.__len__()
@@ -221,6 +225,7 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
             "time_idx": index_names[-1],
             "target": data.columns[-1],
             "group_ids": index_names[0:-1],
+            "time_varying_known_reals": time_varying_known_reals,
         }
         _dataset_params.update(dataset_params)
         # overwrite max_prediction_length
