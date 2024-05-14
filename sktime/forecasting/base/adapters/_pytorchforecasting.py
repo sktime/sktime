@@ -26,7 +26,7 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
         "python_dependencies": ["pytorch_forecasting"],
         # estimator type
         # --------------
-        "y_inner_mtype": ["pd-multiindex", "pd_multiindex_hier"],
+        "y_inner_mtype": ["pd-multiindex", "pd_multiindex_hier", "pd.Series"],
         "X_inner_mtype": ["pd-multiindex", "pd_multiindex_hier"],
         "scitype:y": "univariate",
         "requires-fh-in-fit": True,
@@ -119,11 +119,15 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
         """
         self._dataset_params = _none_check(self.dataset_params, {})
         self._max_prediction_length = fh.to_relative()[-1]
+        if isinstance(y, pandas.Series):
+            _y = y.to_frame()
+        else:
+            _y = y
         # store the target column name
-        self.y_name = y.columns[-1]
+        self.y_name = _y.columns[-1]
         # convert data to pytorch-forecasting datasets
         training, validation = self._Xy_to_dataset(
-            X, y, self._dataset_params, self._max_prediction_length
+            X, _y, self._dataset_params, self._max_prediction_length
         )
         self._forecaster, self._trainer = self._instantiate_model(training)
         self._train_to_dataloader_params = {"train": True}
