@@ -160,7 +160,7 @@ class BaseSeriesAnnotator(BaseEstimator):
         elif self.task == "segmentation":
             Y = self.predict_segments(X)
 
-        return self.sparse_to_dense(Y, len(X))
+        return self.sparse_to_dense(Y, X.index)
 
     def predict_scores(self, X):
         """Return scores for predicted annotations on test/deployment data.
@@ -424,23 +424,18 @@ class BaseSeriesAnnotator(BaseEstimator):
         raise NotImplementedError("abstract method")
 
     @staticmethod
-    def sparse_to_dense(y_sparse, length=None):
+    def sparse_to_dense(y_sparse, index):
         """Convert the sparse output from an annotator to a dense format.
 
         Parameters
         ----------
-        y_sparse : {pd.DataFrame, pd.Series}
-            * If `y_sparse` is a series, it should contain the integer index locations
-              of anomalies/changepoints.
-            * If `y_sparse` is a dataframe it should contain the following columns:
-              `seg_label`, `seg_start`, and `seg_end`. `seg_label` contains the integer
-              label of the segment, `seg_start` contains the integer start points of
-              each segment, and `seg_end` contains the integer end points of each
-              segment.
-        length : {int, None}, optional
-            Right pad the retured dense array so it has `length` elements. If `y_sparse`
-            is dataframe of segments, pad the series with 0's. If the `y_sparse` is a
-            series of changepoints/anomalies, pad the series with -1's.
+        y_sparse : pd.Series
+            * If `y_sparse` is a series with an index of intervals, it should represent
+              segments where each value of the series the label of a segment.
+            * If the index of `y_sparse` is not a set of intervals, the values of the
+              series should represent the indexes of changepoints/anomalies.
+        index : array-like
+            Index of the returned dense version of `y_sparse`.
 
         Returns
         -------
@@ -457,7 +452,8 @@ class BaseSeriesAnnotator(BaseEstimator):
         >>> import pandas as pd
         >>> from sktime.annotation.base._base import BaseSeriesAnnotator
         >>> y_sparse = pd.Series([2, 5, 7])  # Indices of changepoints/anomalies
-        >>> BaseSeriesAnnotator.sparse_to_dense(y_sparse, 10)
+        >>> index = range(0, 8)
+        >>> BaseSeriesAnnotator.sparse_to_dense(y_sparse, index=index)
         0    0
         1    0
         2    1
@@ -466,15 +462,15 @@ class BaseSeriesAnnotator(BaseEstimator):
         5    1
         6    0
         7    1
-        8    0
-        9    0
-        dtype: int32
-        >>> y_sparse = pd.DataFrame({
-        ...     "seg_label": [1, 2, 1],
-        ...     "seg_start": [0, 4, 6],
-        ...     "seg_end": [3, 5, 9],
-        ... })
-        >>> BaseSeriesAnnotator.sparse_to_dense(y_sparse)
+        dtype: int64
+        >>> y_sparse = pd.Series(
+        ...     [1, 2, 1],
+        ...     index=pd.IntervalIndex.from_arrays(
+        ...         [0, 4, 6], [4, 6, 10], closed="left"
+        ...     )
+        ... )
+        >>> index = range(10)
+        >>> BaseSeriesAnnotator.sparse_to_dense(y_sparse, index=index)
         0    1
         1    1
         2    1
@@ -485,56 +481,16 @@ class BaseSeriesAnnotator(BaseEstimator):
         7    1
         8    1
         9    1
-        dtype: int32
+        dtype: int64
         """
-        # The changepoint/anomly case
-        if y_sparse.ndim == 1:
-            final_index = y_sparse.iloc[-1]
-            if length is None:
-                length = y_sparse.iloc[-1] + 1
-
-            if length <= final_index:
-                raise RuntimeError(
-                    "The length must be greater than the index of the final point."
-                )
-
-            y_dense = pd.Series(np.zeros(length, dtype="int32"))
-            y_dense.iloc[y_sparse] = 1
+        if isinstance(y_sparse.index.dtype, pd.IntervalDtype):
+            # Segmentation case
+            y_dense = BaseSeriesAnnotator._sparse_segments_to_dense(y_sparse, index)
             return y_dense
-
-        # The segmentation case
-        elif y_sparse.ndim == 2:
-            final_index = y_sparse["seg_end"].iloc[-1]
-            if length is None:
-                length = y_sparse["seg_end"].iat[-1] + 1
-
-            if length <= final_index:
-                raise RuntimeError(
-                    "The length must be greater than the index of the end point of the"
-                    "final segment."
-                )
-
-            y_dense = pd.Series(np.full(length, np.nan))
-            y_dense.iloc[y_sparse["seg_start"]] = y_sparse["seg_label"].astype("int32")
-            y_dense.iloc[y_sparse["seg_end"]] = -y_sparse["seg_label"].astype("int32")
-
-            if np.isnan(y_dense.iat[0]):
-                y_dense.iat[0] = -1  # -1 represent unlabelled sections
-
-            # The end points of the segments, and unclassified areas will have negative
-            # labels
-            y_dense = y_dense.ffill().astype("int32")
-
-            # Replace the end points of the segments with correct label
-            y_dense.iloc[y_sparse["seg_end"]] = y_sparse["seg_label"].astype("int32")
-
-            # Areas with negative labels are unclassified so replace them with -1
-            y_dense[y_dense < 0] = -1
-            return y_dense.astype("int32")
         else:
-            raise TypeError(
-                "The input, y_sparse, must be a 1D pandas series or 2D dataframe."
-            )
+            # Anomaly/changepoint detection case
+            y_dense = BaseSeriesAnnotator._sparse_points_to_dense(y_sparse, index)
+            return y_dense
 
     @staticmethod
     def _sparse_points_to_dense(y_sparse, index):

@@ -51,7 +51,7 @@ def test_clasp_dense():
     segmentation = clasp.transform(ts)
 
     # Find the index of the first 1
-    cp_index = np.where(segmentation == 1)[0][0]
+    cp_index = segmentation.index[segmentation.values == 1][0]
     _, profile = clasp.predict_scores(ts)
 
     assert len(segmentation) == len(ts) and cp_index == 893

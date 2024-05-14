@@ -11,31 +11,40 @@ from sktime.annotation.base._base import BaseSeriesAnnotator
 
 
 @pytest.mark.parametrize(
-    "y_sparse, y_dense_expected, length",
+    "y_sparse, y_dense_expected, index",
     [
-        (pd.Series([1, 3]), pd.Series([0, 1, 0, 1], dtype="int32"), None),
-        (pd.Series([1, 3]), pd.Series([0, 1, 0, 1, 0, 0], dtype="int32"), 6),
+        (pd.Series([1, 3]), pd.Series([0, 1, 0, 1]), pd.RangeIndex(0, 4, 1)),
+        (pd.Series([1, 3]), pd.Series([0, 1, 0, 1, 0, 0]), pd.RangeIndex(0, 6, 1)),
         (
-            pd.DataFrame({"seg_label": [1, 2], "seg_start": [0, 3], "seg_end": [2, 4]}),
-            pd.Series([1, 1, 1, 2, 2], dtype="int32"),
-            None,
+            pd.Series(
+                [1, 2],
+                index=pd.IntervalIndex.from_arrays([0, 3], [3, 5], closed="left"),
+            ),
+            pd.Series([1, 1, 1, 2, 2, -1]),
+            pd.RangeIndex(0, 6, 1),
         ),
         (
-            pd.DataFrame({"seg_label": [1, 2], "seg_start": [0, 3], "seg_end": [2, 4]}),
-            pd.Series([1, 1, 1, 2, 2, -1, -1], dtype="int32"),
-            7,
+            pd.Series(
+                [1, 2],
+                index=pd.IntervalIndex.from_arrays([0, 3], [3, 5], closed="left"),
+            ),
+            pd.Series([1, 1, 1, 2, 2, -1, -1]),
+            pd.RangeIndex(0, 7, 1),
         ),
         (
-            pd.DataFrame({"seg_label": [1, 2], "seg_start": [2, 4], "seg_end": [2, 5]}),
-            pd.Series([-1, -1, 1, -1, 2, 2, -1], dtype="int32"),
-            7,
+            pd.Series(
+                [1, 2],
+                index=pd.IntervalIndex.from_arrays([2, 4], [3, 6], closed="left"),
+            ),
+            pd.Series([-1, -1, 1, -1, 2, 2, -1]),
+            pd.RangeIndex(0, 7, 1),
         ),
     ],
 )
-def test_sparse_to_dense(y_sparse, y_dense_expected, length):
+def test_sparse_to_dense(y_sparse, y_dense_expected, index):
     """Test converting from sparse to dense."""
-    y_dense_actual = BaseSeriesAnnotator.sparse_to_dense(y_sparse, length=length)
-    testing.assert_series_equal(y_dense_actual, y_dense_expected, check_dtype=False)
+    y_dense_actual = BaseSeriesAnnotator.sparse_to_dense(y_sparse, index=index)
+    testing.assert_series_equal(y_dense_actual, y_dense_expected)
 
 
 @pytest.mark.parametrize(
