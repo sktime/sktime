@@ -120,13 +120,6 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         # we only use the first estimator instance for testing
         classname = estimator_class.__name__
 
-        # retrieve expected predict_proba output, and skip test if not available
-        if classname in unit_test_proba.keys():
-            expected_probas = unit_test_proba[classname]
-        else:
-            # skip test if no expected probas are registered
-            return None
-
         # if numba is not installed, some estimators may still try to construct
         # numba dependenct estimators in results_comparison
         # if that is the case, we skip the test
@@ -152,10 +145,18 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
 
         # train classifier and predict probas
         estimator_instance.fit(X_train, y_train)
+
+        y_pred = estimator_instance.predict(X_test.iloc[indices])
+        assert y_pred.dtype == y_train.dtype
+        assert set(y_train).issuperset(set(y_pred))
+
         y_proba = estimator_instance.predict_proba(X_test.iloc[indices])
 
-        # assert probabilities are the same
-        _assert_array_almost_equal(y_proba, expected_probas, decimal=2)
+        # retrieve expected predict_proba output, and skip test if not available
+        if classname in unit_test_proba.keys():
+            expected_probas = unit_test_proba[classname]
+            # assert probabilities are the same
+            _assert_array_almost_equal(y_proba, expected_probas, decimal=2)
 
     def test_classifier_on_basic_motions(self, estimator_class):
         """Test classifier on basic motions data."""
