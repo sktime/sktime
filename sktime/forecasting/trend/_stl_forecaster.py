@@ -327,6 +327,30 @@ class STLForecaster(BaseForecaster):
         self.forecaster_resid_.update(y=self.resid_, X=X, update_params=update_params)
         return self
 
+    def plot_components(self, title=None):
+        """Plot the observed, trend, seasonal, and residual components."""
+        import matplotlib.pyplot as plt
+        from sktime.utils.plotting import plot_series
+        fig, ax = plt.subplots(4, 1, sharex=True)
+        
+        plot_series(self._y, ax=ax[0], markers=[""])
+        plot_series(self.trend_, ax=ax[1], markers=[""])
+        plot_series(self.seasonal_, ax=ax[2], markers=[""])
+        plot_series(self.resid_, ax=ax[3])
+        # Get the lines from the 4th plot and remove them (or at least make them invisible, while keeping the markers)
+        for line in ax[3].lines:
+            line.set_linestyle('None')
+        ax[3].axhline(0, color='black', linestyle='-')
+        ax[0].text(1.02, 0.5, "Obs", transform=ax[0].transAxes, va='center', rotation=-90)
+        ax[1].text(1.02, 0.5, "Trend", transform=ax[1].transAxes, va='center', rotation=-90)
+        ax[2].text(1.02, 0.5, "Season", transform=ax[2].transAxes, va='center', rotation=-90)
+        ax[3].text(1.02, 0.5, "Resid", transform=ax[3].transAxes, va='center', rotation=-90)
+
+        if title is not None:
+            fig.suptitle(title)
+        plt.tight_layout()
+        return fig, ax
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
