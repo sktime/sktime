@@ -219,15 +219,24 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
         ]
         data = X.join(y, on=X.index.names)
         index_names = data.index.names
+        self._time_idx_name = index_names[-1]
         index_lens = index_names.__len__()
+        # add int time_idx as pytorch-forecasting requires
+        time_idx = data.groupby(by=index_names[0:-1]).cumcount().to_frame()
+        time_idx.rename(columns={0: "_auto_time_idx"}, inplace=True)
+        data = data.join(time_idx, on=data.index.names)
         # reset multi index to normal columns
         data = data.reset_index(level=list(range(index_lens)))
-        training_cutoff = data[index_names[-1]].max() - max_prediction_length
+        training_cutoff = data["_auto_time_idx"].max() - max_prediction_length
+        # save origin time idx for prediction
+        self._origin_time_idx = data[index_names + ["_auto_time_idx"]][
+            data["_auto_time_idx"] > training_cutoff
+        ]
         # infer time_idx column, target column and instances from data
         _dataset_params = {
-            "data": data[data[index_names[-1]] <= training_cutoff],
-            "time_idx": index_names[-1],
-            "target": data.columns[-1],
+            "data": data[data["_auto_time_idx"] <= training_cutoff],
+            "time_idx": "_auto_time_idx",
+            "target": data.columns[-2],
             "group_ids": index_names[0:-1],
             "time_varying_known_reals": time_varying_known_reals,
         }
@@ -267,8 +276,22 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
             data.loc[
                 start_idx : start_idx + max_prediction_length - 1, time_idx
             ] = list(range(start_time, start_time + max_prediction_length))
+
         # set the instance columns to multi index
         data.set_index(columns_names, inplace=True)
+        self._origin_time_idx.set_index(columns_names, inplace=True)
+        # add origin time_idx column to data
+        data = data.join(self._origin_time_idx, on=columns_names)
+        # drop _auto_time_idx column
+        data.reset_index(level=list(range(len(columns_names))), inplace=True)
+        data.drop("_auto_time_idx", axis=1, inplace=True)
+        columns_names.remove("_auto_time_idx")
+        # reindex to origin multiindex
+        data.set_index(
+            columns_names + [self._time_idx_name],
+            inplace=True,
+        )
+
         return data
 
 
