@@ -247,16 +247,16 @@ class BaggingClassifier(BaseClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        from sktime.classification.dummy import DummyClassifier
+        from sktime.classification.feature_based import SummaryClassifier
 
-        params1 = {"estimator": DummyClassifier()}
+        params1 = {"estimator": SummaryClassifier()}
         params2 = {
-            "estimator": DummyClassifier(),
+            "estimator": SummaryClassifier(),
             "n_samples": 0.5,
             "n_features": 0.5,
         }
         params3 = {
-            "estimator": DummyClassifier(),
+            "estimator": SummaryClassifier(),
             "n_samples": 7,
             "n_features": 2,
             "bootstrap": False,
@@ -264,7 +264,7 @@ class BaggingClassifier(BaseClassifier):
         }
 
         # force-create a classifier that cannot handle multivariate
-        univariate_dummy = DummyClassifier()
+        univariate_dummy = SummaryClassifier()
         univariate_dummy.set_tags(**{"capability:multivariate": False})
         # this should still result in a multivariate classifier
         params4 = {
