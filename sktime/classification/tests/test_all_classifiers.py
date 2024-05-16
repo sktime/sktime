@@ -123,10 +123,14 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         # if numba is not installed, some estimators may still try to construct
         # numba dependenct estimators in results_comparison
         # if that is the case, we skip the test
+        if classname in unit_test_proba.keys():
+            parameter_set = "results_comparison"
+        else:
+            parameter_set = "default"
         try:
             # we only use the first estimator instance for testing
             estimator_instance = estimator_class.create_test_instance(
-                parameter_set="results_comparison"
+                parameter_set=parameter_set
             )
         except ModuleNotFoundError as e:
             if not _check_soft_dependencies("numba", severity="none"):
