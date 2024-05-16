@@ -1269,10 +1269,10 @@ class ForecastX(BaseForecaster):
         * if "use_forecast", then ``forecaster_y`` uses the ``X`` predicted by
         ``forecaster_X`` as exogenous features in ``fit``
 
-    forecaster_X_exogeneous : optional, str, one of "complement",
-        or ``pandas.Index`` coercible, default = None
+    forecaster_X_exogeneous : optional, str, one of "None" (default), or "complement",
+        or ``pandas.Index`` coercible
 
-        * if ``None``, then ``forecaster_X`` uses no exogenous data.
+        * if "None", then ``forecaster_X`` uses no exogenous data
         * if "complement", then ``forecaster_X`` uses the complement of the
         ``columns`` as exogenous data to forecast. This is typically useful
         if the complement of ``columns`` is known to be available in the future.
@@ -1354,7 +1354,7 @@ class ForecastX(BaseForecaster):
         behaviour="update",
         columns=None,
         fit_behaviour="use_actual",
-        forecaster_X_exogeneous=None,
+        forecaster_X_exogeneous="None",
         predict_behaviour="use_forecasts",
     ):
         if fit_behaviour not in ["use_actual", "use_forecast"]:
@@ -1570,7 +1570,7 @@ class ForecastX(BaseForecaster):
     def _get_X_for_fcX(self, X):
         """Shorthand to obtain X for forecaster_X, depending on parameters."""
         ixx = self.forecaster_X_exogeneous
-        if X is None or ixx is None:
+        if X is None or ixx is None or ixx == "None":
             return None
 
         # if columns is None, then we use all columns
