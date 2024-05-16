@@ -639,7 +639,7 @@ class IndividualBOSS(BaseClassifier):
             Predicted class labels.
         """
         test_bags = self._transformer.transform(X)
-        data_type = type(self._class_vals[0])
+        data_type = self._class_vals.dtype
 
         classes = np.zeros(test_bags.shape[0], dtype=data_type)
 
