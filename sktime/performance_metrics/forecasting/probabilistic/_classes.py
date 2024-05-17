@@ -599,6 +599,70 @@ class EmpiricalCoverage(_BaseProbaForecastingErrorMetric):
         return [params1]
 
 
+class IntervalWidth(_BaseProbaForecastingErrorMetric):
+    """Interval width for interval predictions, sometimes also known as calibration.
+
+    Parameters
+    ----------
+    multioutput : string "uniform_average" or "raw_values" determines how\
+        multioutput results will be treated.
+
+    score_average : bool, optional, default = True
+        specifies whether scores for each quantile should be averaged.
+    """
+
+    _tags = {
+        "scitype:y_pred": "pred_interval",
+        "lower_is_better": True,
+    }
+
+    def __init__(self, multioutput="uniform_average", score_average=True):
+        self.score_average = score_average
+        self.multioutput = multioutput
+        super().__init__(score_average=score_average, multioutput=multioutput)
+
+    def _evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
+        """Logic for finding the metric evaluated at each index.
+
+        y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
+            (fh, n_outputs) where fh is the forecasting horizon
+            Ground truth (correct) target values.
+
+        y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or  \
+            (fh, n_outputs)  where fh is the forecasting horizon
+            Forecasted values.
+
+        multioutput : string "uniform_average" or "raw_values" determines how \
+            multioutput results will be treated.
+        """
+        lower = y_pred.iloc[:, y_pred.columns.get_level_values(2) == "lower"].to_numpy()
+        upper = y_pred.iloc[:, y_pred.columns.get_level_values(2) == "upper"].to_numpy()
+
+        if not isinstance(y_true, np.ndarray):
+            y_true_np = y_true.to_numpy()
+        else:
+            y_true_np = y_true
+        if y_true_np.ndim == 1:
+            y_true_np = y_true.reshape(-1, 1)
+
+        scores = np.unique(np.round(y_pred.columns.get_level_values(1), 7))
+        vars = np.unique(y_pred.columns.get_level_values(0))
+
+        calib_array = upper - lower
+
+        out_df = pd.DataFrame(
+            calib_array, columns=pd.MultiIndex.from_product([vars, scores])
+        )
+
+        return out_df
+
+    @classmethod
+    def get_test_params(self):
+        """Retrieve test parameters."""
+        params1 = {}
+        return [params1]
+
+
 class ConstraintViolation(_BaseProbaForecastingErrorMetric):
     """Percentage of interval constraint violations for interval predictions.
 
