@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 from sktime.forecasting.base.adapters._pytorchforecasting import (
     _PytorchForecastingAdapter,
 )
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 __author__ = ["XinyuWu"]
 
@@ -84,29 +85,57 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
-        from lightning.pytorch.callbacks import EarlyStopping
-        from pytorch_forecasting.metrics import QuantileLoss
 
-        early_stop_callback = EarlyStopping(
-            monitor="val_loss", min_delta=1e-2, patience=3, verbose=False, mode="min"
-        )
-        params = [
-            {
-                "trainer_params": {
-                    "max_epochs": 1,  # for quick test
-                }
-            },
-            {
-                "trainer_params": {
-                    "callbacks": [early_stop_callback],
+        try:
+            _check_soft_dependencies("pytorch_forecasting", severity="error")
+        except ModuleNotFoundError:
+            params = [
+                {
+                    "trainer_params": {
+                        "max_epochs": 1,  # for quick test
+                    }
                 },
-                "model_params": {
-                    "hidden_size": 10,
-                    "dropout": 0.1,
-                    "loss": QuantileLoss(),
-                    "optimizer": "Adam",
+                {
+                    "trainer_params": {
+                        "max_epochs": 1,  # for quick test
+                    },
+                    "model_params": {
+                        "hidden_size": 10,
+                        "dropout": 0.1,
+                        "optimizer": "Adam",
+                        "log_val_interval": 1,
+                    },
                 },
-            },
-        ]
+            ]
+        else:
+            from lightning.pytorch.callbacks import EarlyStopping
+            from pytorch_forecasting.metrics import QuantileLoss
+
+            early_stop_callback = EarlyStopping(
+                monitor="val_loss",
+                min_delta=1e-2,
+                patience=3,
+                verbose=False,
+                mode="min",
+            )
+            params = [
+                {
+                    "trainer_params": {
+                        "max_epochs": 1,  # for quick test
+                    }
+                },
+                {
+                    "trainer_params": {
+                        "callbacks": [early_stop_callback],
+                    },
+                    "model_params": {
+                        "hidden_size": 10,
+                        "dropout": 0.1,
+                        "loss": QuantileLoss(),
+                        "optimizer": "Adam",
+                        "log_val_interval": 1,
+                    },
+                },
+            ]
 
         return params
