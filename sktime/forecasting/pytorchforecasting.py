@@ -62,3 +62,51 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
             keyword arguments for the underlying algorithm class
         """
         return {}
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+            There are currently no reserved values for forecasters.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
+        from lightning.pytorch.callbacks import EarlyStopping
+        from pytorch_forecasting.metrics import QuantileLoss
+
+        early_stop_callback = EarlyStopping(
+            monitor="val_loss", min_delta=1e-2, patience=3, verbose=False, mode="min"
+        )
+        params = [
+            {
+                "trainer_params": {
+                    "max_epochs": 1,  # for quick test
+                }
+            },
+            {
+                "trainer_params": {
+                    "callbacks": [early_stop_callback],
+                },
+                "model_params": {
+                    "hidden_size": 10,
+                    "dropout": 0.1,
+                    "loss": QuantileLoss(),
+                    "optimizer": "Adam",
+                },
+            },
+        ]
+
+        return params
