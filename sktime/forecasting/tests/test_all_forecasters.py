@@ -919,3 +919,30 @@ class TestAllGlobalForecasters(TestAllObjects):
         sig = signature(estimator_class.predict)
         assert "X" in sig.parameters.keys()
         assert "y" in sig.parameters.keys()
+
+    def test_global_fit_predict_insample(self, estimator_instance):
+        from sktime.utils._testing.hierarchical import _make_hierarchical
+
+        data_length = 100
+        data = _make_hierarchical(
+            (5, 100),
+            n_columns=2,
+            max_timepoints=data_length,
+            min_timepoints=data_length,
+        )
+        x = data["c0"].to_frame()
+        y = data["c1"].to_frame()
+
+        max_prediction_length = 3
+        fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
+
+        estimator_instance.fit(y, x, fh=fh)
+        y_pred = estimator_instance.predict(fh, x, y)
+
+        # TODO
+        # cutoff = get_cutoff(y, return_index=True)
+        # _assert_correct_pred_time_index(y.index, cutoff, fh)
+        _assert_correct_columns(y_pred, y)
+
+        assert isinstance(y_pred, pd.DataFrame)
+        assert check_is_mtype(y_pred, "pd_multiindex_hier", msg_return_dict="list")
