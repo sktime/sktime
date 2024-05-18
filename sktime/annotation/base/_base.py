@@ -353,10 +353,9 @@ class BaseSeriesAnnotator(BaseEstimator):
 
         Returns
         -------
-        Y : pd.DataFrame
-            Dataframe with two columns: seg_label, and seg_end. seg_label contains the
-            labels of the segments, and seg_start contains the starting indexes of the
-            segments.
+        Y : pd.Series
+            A series with an index of intervals. Each interval is the range of a
+            segment and the corresponding value is the label of the segment.
         """
         if self.task == "anomaly_detection":
             raise RuntimeError(
@@ -381,7 +380,7 @@ class BaseSeriesAnnotator(BaseEstimator):
         Returns
         -------
         Y : pd.Series
-            A series containing the indexes of the changepoints/anomalies in X.
+            A series whose values are the changepoints/anomalies in X.
         """
         self.check_is_fitted()
         X = check_series(X)
@@ -401,10 +400,9 @@ class BaseSeriesAnnotator(BaseEstimator):
 
         Returns
         -------
-        Y : pd.DataFrame
-            Dataframe with two columns: seg_label, and seg_end. seg_label contains the
-            labels of the segments, and seg_start contains the starting indexes of the
-            segments.
+        Y : pd.Series
+            A series with an index of intervals. Each interval is the range of a
+            segment and the corresponding value is the label of the segment.
         """
         raise NotImplementedError("abstract method")
 
@@ -418,8 +416,8 @@ class BaseSeriesAnnotator(BaseEstimator):
 
         Returns
         -------
-        Y : np.ndarray
-            1D array containing the indexes of the changepoints/anomalies in X.
+        Y : pd.Series
+            A series whose values are the changepoints/anomalies in X.
         """
         raise NotImplementedError("abstract method")
 
@@ -430,22 +428,25 @@ class BaseSeriesAnnotator(BaseEstimator):
         Parameters
         ----------
         y_sparse : pd.Series
-            * If ``y_sparse`` is a series with an index of intervals, it should represent
-              segments where each value of the series the label of a segment.
+            * If ``y_sparse`` is a series with an index of intervals, it should
+              represent segments where each value of the series is label of a segment.
+              Unclassified intervals should be labelled -1. Segments must never have
+              the label 0.
             * If the index of ``y_sparse`` is not a set of intervals, the values of the
               series should represent the indexes of changepoints/anomalies.
         index : array-like
-            Index of the returned dense version of ``y_sparse``.
+            Indices that are to be annotated according to ``y_sparse``.
 
         Returns
         -------
         pd.Series
-            * If ``y_sparse`` is a series of changepoint/anomaly indices then a series of
-              0's and 1's is returned. 1's represent anomalies/changepoints.
-            * If ``y_sparse`` is a dataframe with columns: ``seg_label``, ``seg_start``, and
-              ``seg_end``, then a series of segments will be returned. The segments are
-              labelled according to the seg_labels column. Areas which do not fall into
-              a segment are given the -1 label.
+            A series with an index of ``index`` is returned.
+            * If ``y_sparse`` is a series of changepoints/anomalies then the returned
+              series is labelled 0 and 1 dependendy on whether the index is associated
+              with an anomaly/changepoint. Where 1 means anomaly/changepoint.
+            * If ``y_sparse`` is a series of segments then the returned series is
+              labelled depending on the segment its indexes fall into. Indexes that
+              fall into no segments are labelled -1.
 
         Examples
         --------
@@ -494,19 +495,19 @@ class BaseSeriesAnnotator(BaseEstimator):
 
     @staticmethod
     def _sparse_points_to_dense(y_sparse, index):
-        """Label the points in index as 1 or 0 depending on if they are in index.
+        """Label the indexes in ``index`` if they are in ``y_sparse``.
 
         Parameters
         ----------
         y_sparse: pd.Series
-            The values of the series must be the indexes of the change points.
+            The values of the series must be the indexes of changepoints/anomalies.
         index: array-like
-            Array of indexes which are to be labelled as
+            Array of indexes that are to be labelled according to ``y_sparse``.
 
         Returns
         -------
         pd.Series
-            A series with an index of ``index``. Its value is 1 if the index is in
+            A series with an index of ``index``. Its values are 1 if the index is in
             y_sparse and 0 otherwise.
         """
         y_dense = pd.Series(np.zeros(len(index)), index=index, dtype="int64")
@@ -553,13 +554,13 @@ class BaseSeriesAnnotator(BaseEstimator):
 
     @staticmethod
     def dense_to_sparse(y_dense):
-        """Convert the dense output from an annotator to a dense format.
+        """Convert the dense output from an annotator to a sparse format.
 
         Parameters
         ----------
         y_dense : pd.Series
-            * If ``y_sparse`` contains only 1's and 0's the 1's represent change points
-              or anomalies.
+            * If ``y_sparse`` contains only 1's and 0's, the 1's represent change
+              points or anomalies.
             * If ``y_sparse`` contains only contains integers greater than 0, it is an
               an array of segments.
 
@@ -568,9 +569,9 @@ class BaseSeriesAnnotator(BaseEstimator):
         pd.Series
             * If ``y_sparse`` is a series of changepoints/anomalies, a pandas series
               will be returned containing the indexes of the changepoints/anomalies
-            * If ``y_sparse`` is a series of segments, a series with an interval datatype
-              index will be returned. The avlues of the series will be the labels of
-              segments.
+            * If ``y_sparse`` is a series of segments, a series with an interval
+              datatype index will be returned. The values of the series will be the
+              labels of segments.
         """
         if 0 in y_dense.values:
             # y_dense is a series of change points
@@ -609,8 +610,8 @@ class BaseSeriesAnnotator(BaseEstimator):
         Returns
         -------
         pd.Series
-            A series with an interval interval index indicating the start and end points
-            of the segments. The values of the series are the labels of the segments.
+            A series with an interval index indicating the start and end points of the
+            segments. The values of the series are the labels of the segments.
 
         Examples
         --------
