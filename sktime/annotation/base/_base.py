@@ -578,12 +578,16 @@ class BaseSeriesAnnotator(BaseEstimator):
             return pd.Series(change_points)
         else:
             segment_start_indexes = np.where(y_dense.diff() != 0)[0]
-            segment_end_indexes = np.where(y_dense.diff(-1) != 0)[0]
+            segment_end_indexes = np.roll(segment_start_indexes, -1)
+
+            # The final index is always the end of a segment
+            segment_end_indexes[-1] = y_dense.index[-1]
+
             segment_labels = y_dense.iloc[segment_start_indexes].to_numpy()
-            index = pd.IntervalIndex.from_arrays(
+            interval_index = pd.IntervalIndex.from_arrays(
                 segment_start_indexes, segment_end_indexes, closed="left"
             )
-            y_sparse = pd.Series(segment_labels, index=index)
+            y_sparse = pd.Series(segment_labels, index=interval_index)
 
             # -1 represents unclassified regions so we remove them
             y_sparse = y_sparse.loc[y_sparse != -1]

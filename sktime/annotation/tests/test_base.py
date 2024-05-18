@@ -56,7 +56,7 @@ def test_sparse_to_dense(y_sparse, y_dense_expected, index):
             pd.Series([-1, -1, -1, 1, 1, -1, 2]),
             pd.Series(
                 [1, 2],
-                index=pd.IntervalIndex.from_arrays([3, 6], [4, 6], closed="left"),
+                index=pd.IntervalIndex.from_arrays([3, 6], [5, 6], closed="left"),
             ),
         ),
     ],
