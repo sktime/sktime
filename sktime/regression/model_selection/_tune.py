@@ -420,15 +420,12 @@ class TSRGridSearchCV(_DelegatedRegressor):
         """
         from sklearn.metrics import r2_score
 
-        from sktime.regression.compose import ComposableTimeSeriesForestRegressor
         from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
+        from sktime.regression.interval_based import TimeSeriesForestRegressor
 
         param1 = {
-            "estimator": ComposableTimeSeriesForestRegressor(),
-            "param_grid": {
-                "n_estimators": [100, 150, 200],
-                "min_samples_split": [2, 3, 5],
-            },
+            "estimator": TimeSeriesForestRegressor(),
+            "param_grid": {"n_estimators": [3, 4, 5]},
         }
 
         param2 = {
