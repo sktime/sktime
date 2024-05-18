@@ -39,8 +39,8 @@ class BaseSeriesAnnotator(BaseEstimator):
         * If ``segmentation``, the annotator divides timeseries into discrete chunks
         based on certain criteria. The same label can be applied at mulitple
         disconnected regions of the timeseries.
-        * If ``change_point_detection``, the annotator finds points where the statistical
-        properties of the timeseries change significantly.
+        * If ``change_point_detection``, the annotator finds points where the
+        statistical properties of the timeseries change significantly.
         * If ``anomaly_detection``, the annotator finds points that differ significantly
         from the normal statistical properties of the timeseries.
 
