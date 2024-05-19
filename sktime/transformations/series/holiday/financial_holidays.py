@@ -152,9 +152,9 @@ class FinancialHolidaysTransformer(BaseTransformer):
         Parameters
         ----------
         parameter_set : str, default="default"
-            Name of the set of test parameters to return. Valid options are:
-            - "default": Returns the default parameter set (New York Stock Exchange).
-            - "ECB": Returns an alternative test parameter set (European Central Bank).
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+            There are currently no reserved values for transformers.
 
         Returns
         -------
