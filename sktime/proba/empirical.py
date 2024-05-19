@@ -63,7 +63,7 @@ class Empirical(BaseDistribution):
         self._N = len(_spl_instances)
 
         if index is None:
-            index = pd.Index(_timestamps)
+            index = _timestamps
 
         if columns is None:
             columns = spl.columns
@@ -127,6 +127,7 @@ class Empirical(BaseDistribution):
                 if x is None:
                     x_t = None
                 elif hasattr(x, "loc"):
+                    # x_t = x.at[ix, col]
                     x_t = x.loc[ix, col]
                 else:
                     x_t = x
