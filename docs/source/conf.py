@@ -387,14 +387,16 @@ def _make_estimator_overview(app):
         maintainer_tag = modclass.get_class_tag("maintainers", "sktime developers")
         maintainer_info = _process_author_info(maintainer_tag)
 
-        python_dependencies = modclass.get_class_tag("python_dependencies", [])
-        if isinstance(python_dependencies, list) and len(python_dependencies) == 1:
-            python_dependencies = python_dependencies[0]
+        python_dependencies = list(
+            modclass.get_class_tag("python_dependencies_alias", {}).keys()
+        )
+        more_python_dependencies = modclass.get_class_tag("python_dependencies", [])
+        if isinstance(more_python_dependencies, list):
+            python_dependencies.extend(more_python_dependencies)
+        elif isinstance(more_python_dependencies, str):
+            python_dependencies.append(more_python_dependencies)
 
         algorithm_type = modclass.get_class_tag("object_type", "object")
-        if isinstance(algorithm_type, list):
-            algorithm_type = algorithm_type[0]
-
         tags = {}
 
         for category in tags_by_category:
