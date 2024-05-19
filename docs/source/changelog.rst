@@ -18,6 +18,77 @@ available on GitHub.
 For upcoming changes and next releases, see our `milestones <https://github.com/sktime/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
 For our long-term plan, see our :ref:`roadmap`.
 
+
+Version 0.29.0 - 2024-04-28
+---------------------------
+
+Kindly note the python 3.8 End-of-life warning below.
+
+Maintenance release:
+
+* scheduled deprecations and change actions
+* optimization of test collection speed
+
+For last non-maintenance content updates, see 0.28.1.
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``sktime`` now requires ``scikit-base>=0.6.1`` (core dependency), this has changed
+  from previously no lower bound.
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Python 3.8 End-of-life
+^^^^^^^^^^^^^^^^^^^^^^
+
+From ``sktime`` 0.30.0, sktime will require Python version >=3.9.
+No errors will be raised, but test coverage and support for
+Python 3.8 will be dropped from 0.30.0 onwards.
+
+Kindly note for context: python 3.8 will reach end of life
+in October 2024, and multiple ``sktime`` core dependencies,
+including ``scikit-learn``, have already dropped support for 3.8.
+
+Forecasting
+^^^^^^^^^^^
+
+``cINNForecaster`` has been renamed to ``CINNForecaster``.
+The estimator is available under its past name at its
+current location until 0.30.0, when the old name will be removed.
+To prepare for the name change,
+replace any imports of ``cINNForecaster`` with imports of ``CINNForecaster``.
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* The ``n_jobs`` parameter in the ``Catch22`` transformer has been removed.
+  Users should pass parallelization backend parameters via ``set_config`` instead.
+  To specify ``n_jobs``, use any of the backends supporting it in the
+  ``backend:parallel`` configuration, such as ``"loky"`` or ``"multithreading"``.
+  The ``n_jobs`` parameter should be passed via the
+  ``backend:parallel:params`` configuration.
+  To retain previous behaviour, with a specific setting of ``n_jobs=x``,
+  use ``set_config(**{"backend:parallel": "loky", "backend:parallel:params": {"n_jobs": x}})``.
+
+Contents
+~~~~~~~~
+
+* [MNT] change cycle (0.29.0) for renaming ``cINNForecaster`` to ``CINNForecaster`` (:pr:`6238`) :user:`geetu040`
+* [MNT] ``python 3.8`` End-of-life and ``sktime`` support drop warning (:pr:`6348`) :user:`fkiraly`
+* [MNT] speed up test collection - cache differential testing switch utilities (:pr:`6357`) :user:`fkiraly`, :user:`yarnabrina`
+* [MNT] temporary skip of estimators involved in timeouts #6344 (:pr:`6361`) :user:`fkiraly`
+* [MNT] 0.29.0 deprecations and change actions (:pr:`6350`) :user:`fkiraly`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`fkiraly`,
+:user:`geetu040`,
+:user:`yarnabrina`
+
+
 Version 0.28.1 - 2024-04-25
 ---------------------------
 

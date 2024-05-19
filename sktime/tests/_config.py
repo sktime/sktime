@@ -53,7 +53,16 @@ EXCLUDE_ESTIMATORS = [
     "TestPlusTrainSplitter",
     "Repeat",
     "CutoffFhSplitter",
-    "VARMAX",  # sporadic timeouts, see #6344
+    # sporadic timeouts, see #6344
+    "VARMAX",
+    "BATS",
+    "TBATS",
+    "ARIMA",
+    "AutoARIMA",
+    "StatsForecastAutoARIMA",
+    "SARIMAX",
+    "StatsModelsARIMA",
+    "ShapeletLearningClassifierTslearn",
 ]
 
 
