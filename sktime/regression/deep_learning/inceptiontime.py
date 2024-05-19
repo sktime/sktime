@@ -68,7 +68,6 @@ class InceptionTimeRegressor(BaseDeepRegressor):
         metrics=None,
     ):
         _check_dl_dependencies(severity="error")
-        super().__init__()
 
         self.verbose = verbose
 
@@ -86,7 +85,8 @@ class InceptionTimeRegressor(BaseDeepRegressor):
         self.use_bottleneck = use_bottleneck
         self.use_residual = use_residual
         self.verbose = verbose
-        self._is_fitted = False
+
+        super().__init__()
 
         network_params = {
             "n_filters": n_filters,
@@ -153,7 +153,7 @@ class InceptionTimeRegressor(BaseDeepRegressor):
 
         check_random_state(self.random_state)
         self.input_shape = X.shape[1:]
-        self.model_ = self.build_model(self.input_shape, self.n_classes_)
+        self.model_ = self.build_model(self.input_shape)
         if self.verbose:
             self.model_.summary()
 

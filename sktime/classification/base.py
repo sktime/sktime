@@ -20,7 +20,7 @@ State:
 __all__ = [
     "BaseClassifier",
 ]
-__author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst"]
+__author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst", "ksharma6"]
 
 import time
 
@@ -141,6 +141,27 @@ class BaseClassifier(BasePanelMixin):
                 return ClassifierPipeline(classifier=self, transformers=[other])
         elif is_sklearn_transformer(other):
             return TabularToSeriesAdaptor(other) * self
+        else:
+            return NotImplemented
+
+    def __or__(self, other):
+        """Magic | method, return MultiplexClassifier.
+
+        Implemented for `other` being either a MultiplexClassifier or a classifier.
+
+        Parameters
+        ----------
+        other: `sktime` classifier or sktime MultiplexClassifier
+
+        Returns
+        -------
+        MultiplexClassifier object
+        """
+        from sktime.classification.compose import MultiplexClassifier
+
+        if isinstance(other, MultiplexClassifier) or isinstance(other, BaseClassifier):
+            multiplex_self = MultiplexClassifier([self])
+            return multiplex_self | other
         else:
             return NotImplemented
 

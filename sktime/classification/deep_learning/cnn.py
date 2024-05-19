@@ -91,7 +91,8 @@ class CNNClassifier(BaseDeepClassifier):
         optimizer=None,
     ):
         _check_dl_dependencies(severity="error")
-        super().__init__()
+
+        self.batch_size = batch_size
         self.n_conv_layers = n_conv_layers
         self.avg_pool_size = avg_pool_size
         self.kernel_size = kernel_size
@@ -106,6 +107,9 @@ class CNNClassifier(BaseDeepClassifier):
         self.use_bias = use_bias
         self.optimizer = optimizer
         self.history = None
+
+        super().__init__()
+
         self._network = CNNNetwork(
             kernel_size=self.kernel_size,
             avg_pool_size=self.avg_pool_size,

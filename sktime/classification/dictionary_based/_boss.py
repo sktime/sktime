@@ -112,10 +112,9 @@ class BOSSEnsemble(BaseClassifier):
     Notes
     -----
     For the Java version, see
-    - ``Original Publication <https://github.com/patrickzib/SFA>``_.
+    - `Original Publication <https://github.com/patrickzib/SFA>`_.
     - `TSML <https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/
     tsml/classifiers/dictionary_based/BOSS.java>`_.
-
 
     References
     ----------

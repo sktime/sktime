@@ -55,8 +55,8 @@ class ResNetClassifier(BaseDeepClassifier):
     >>> from sktime.classification.deep_learning.resnet import ResNetClassifier
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train")
-    >>> clf = ResNetClassifier(n_epochs=20, bacth_size=4) # doctest: +SKIP
-    >>> clf.fit(X_train, Y_train) # doctest: +SKIP
+    >>> clf = ResNetClassifier(n_epochs=20) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
     ResNetClassifier(...)
     """
 
@@ -83,7 +83,7 @@ class ResNetClassifier(BaseDeepClassifier):
         optimizer=None,
     ):
         _check_dl_dependencies(severity="error")
-        super().__init__()
+
         self.n_epochs = n_epochs
         self.callbacks = callbacks
         self.verbose = verbose
@@ -94,6 +94,9 @@ class ResNetClassifier(BaseDeepClassifier):
         self.activation = activation
         self.use_bias = use_bias
         self.optimizer = optimizer
+
+        super().__init__()
+
         self.history = None
         self._network = ResNetNetwork(random_state=random_state)
 
