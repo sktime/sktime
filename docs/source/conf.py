@@ -354,7 +354,9 @@ def _make_estimator_overview(app):
     }
 
     for obj_type in tags_by_category:
-        tags_by_category[obj_type] = all_tags(obj_type)
+        tag_tpl = all_tags(obj_type)
+        tags = [tag[0] for tag in tag_tpl]
+        tags_by_category[obj_type] = tags
 
     COLNAMES = [
         "Class Name",
