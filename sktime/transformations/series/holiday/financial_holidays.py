@@ -176,15 +176,7 @@ class FinancialHolidaysTransformer(BaseTransformer):
         {'market': 'ECB'}
         """
         del parameter_set  # avoid being detected as unused by ``vulture`` like tools
-        
-        params = [
-            {"market": "XNYS"}, # New-York Stock Exchange (Default) 
-            {"market": "ECB"}  # European Central Bank
-        ]
 
-        if parameter_set == "default" or "XNYS" or None :
-            return params[0]
-        elif parameter_set == "ECB" or "test":
-            return params[1]
-        else:
-            raise ValueError(f"Unknown parameter_set: {parameter_set}")
+        params = [{"market": "XNYS"}, {"market": "ECB"}]
+
+        return params
