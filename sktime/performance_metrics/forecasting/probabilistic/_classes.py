@@ -600,7 +600,7 @@ class EmpiricalCoverage(_BaseProbaForecastingErrorMetric):
 
 
 class IntervalWidth(_BaseProbaForecastingErrorMetric):
-    """Interval width for interval predictions, sometimes also known as calibration.
+    """Interval width for interval predictions, sometimes also known as sharpness.
 
     Parameters
     ----------
