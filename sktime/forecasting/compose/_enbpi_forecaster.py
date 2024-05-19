@@ -73,8 +73,7 @@ class EnbPIForecaster(BaseForecaster):
     def __init__(
         self, forecaster, bootstrap_transformer, random_state=None, method="conformal"
     ):
-        super(EnbPIForecaster, self).__init__()
-
+        super().__init__()
         self.forecaster = forecaster
         self.forecaster_ = (
             clone(forecaster) if forecaster is not None else NaiveForecaster()
