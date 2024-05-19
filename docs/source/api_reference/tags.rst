@@ -64,6 +64,7 @@ These tags are typically used for typing, packaging and documentation purposes.
     python_version
     python_dependencies
     python_dependencies_alias
+    env_marker
     requires_cython
 
 
