@@ -4,13 +4,13 @@
 # notebooks in example folder
 
 # remove all
-rm -rf source/examples/*
+rm -rf examples/*
 
 # cd into website folder
-cd source/examples/ || return
+cd examples/ || return
 
 # create symbolic links in website folder
-ln -s ../../../examples/* .
+ln -s ../../examples/* .
 
 # return to initial folder
 cd - || exit

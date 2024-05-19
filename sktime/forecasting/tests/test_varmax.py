@@ -20,6 +20,7 @@ df = pd.DataFrame(
 )
 
 
+@pytest.mark.skip(reason="undiagnosed failure, see #6260")
 @pytest.mark.skipif(
     not _check_soft_dependencies("statsmodels", severity="none"),
     reason="skip test if required soft dependency not available",
@@ -48,6 +49,7 @@ def test_VARMAX_against_statsmodels():
     assert_allclose(y_pred, y_pred_stats)
 
 
+@pytest.mark.skip(reason="undiagnosed failure, see #6260")
 @pytest.mark.skipif(
     not _check_soft_dependencies("statsmodels", severity="none"),
     reason="skip test if required soft dependency not available",

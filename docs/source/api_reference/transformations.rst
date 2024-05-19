@@ -137,6 +137,14 @@ These transformers extract simple summary features.
     RandomIntervalFeatureExtractor
     FittedParamExtractor
 
+.. currentmodule:: sktime.transformations.series.adi_cv
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ADICVTransformer
+
 Shapelets, wavelets, and convolution
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -223,6 +231,14 @@ These transformers extract larger collections of features.
     :template: class.rst
 
     Catch22
+
+.. currentmodule:: sktime.transformations.panel.catch22wrapper
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Catch22Wrapper
 
 Series-to-series transformers
 -----------------------------
