@@ -353,21 +353,8 @@ def _make_estimator_overview(app):
         "classifier": [],
     }
 
-    universal_tags = []
-
-    for tag in all_tags():
-        if tag[1] == "estimator":
-            universal_tags.append(tag[0])
-        else:
-            for estimator_type in tags_by_category:
-                if estimator_type in tag[1]:
-                    tags_by_category[estimator_type].append(tag[0])
-
-    # Prepend universal tags to each category list -> appear first
-    for estimator_type in tags_by_category:
-        tags_by_category[estimator_type] = (
-            universal_tags + tags_by_category[estimator_type]
-        )
+    for obj_type in tags_by_category:
+        tags_by_category[obj_type] = all_tags(obj_type)
 
     COLNAMES = [
         "Class Name",
