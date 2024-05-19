@@ -161,12 +161,10 @@ class FinancialHolidaysTransformer(BaseTransformer):
             Parameters to create testing instances of the class
         """
         del parameter_set  # avoid being detected as unused by ``vulture`` like tools
-
+        
         params = [ {"market": "XNYS"}, {"market": "ECB"} ]
-        if parameter_set="ECB":
-            return params[1]
-        else:
-            return params
+        
+        return params
 
 
 __all__ = ["FinancialHolidaysTransformer"]
