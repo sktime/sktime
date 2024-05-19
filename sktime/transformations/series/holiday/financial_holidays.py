@@ -4,6 +4,7 @@ import pandas
 
 from sktime.transformations.base import BaseTransformer
 
+__all__ = ["FinancialHolidaysTransformer"]
 __author__ = ["yarnabrina"]
 
 
@@ -187,5 +188,3 @@ class FinancialHolidaysTransformer(BaseTransformer):
             return params[1]
         else:
             raise ValueError(f"Unknown parameter_set: {parameter_set}")
-
-__all__ = ["FinancialHolidaysTransformer"]
