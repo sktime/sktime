@@ -4,7 +4,6 @@ __author__ = ["danbartl"]
 from sktime.tests.test_switch import run_test_for_class
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-
 # HistGradientBoostingRegressor requires experimental flag in old sklearn versions
 sklearn_zero_x = _check_soft_dependencies(
     "scikit-learn<1.4",
