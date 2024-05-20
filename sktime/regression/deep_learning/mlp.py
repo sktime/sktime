@@ -48,6 +48,17 @@ class MLPRegressor(BaseDeepRegressor):
     .. [1] Wang et. al, Time series classification from
     scratch with deep neural networks: A strong baseline,
     International joint conference on neural networks (IJCNN), 2017.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_unit_test
+    >>> from sktime.regression.deep_learning.mlp import MLPRegressor
+    >>> X_train, y_train = load_unit_test(return_X_y=True, split="train")
+    >>> X_test, y_test = load_unit_test(return_X_y=True, split="test")
+    >>> regressor = MLPRegressor() # doctest: +SKIP
+    >>> regressor.fit(X_train, y_train) # doctest: +SKIP
+    MLPRegressor(...)
+    >>> y_pred = regressor.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
@@ -72,7 +83,7 @@ class MLPRegressor(BaseDeepRegressor):
         optimizer=None,
     ):
         _check_dl_dependencies(severity="error")
-        super().__init__()
+
         self.callbacks = callbacks
         self.n_epochs = n_epochs
         self.batch_size = batch_size
@@ -83,6 +94,9 @@ class MLPRegressor(BaseDeepRegressor):
         self.activation = activation
         self.use_bias = use_bias
         self.optimizer = optimizer
+
+        super().__init__()
+
         self.history = None
         self._network = MLPNetwork(
             random_state=self.random_state,

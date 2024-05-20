@@ -137,6 +137,14 @@ These transformers extract simple summary features.
     RandomIntervalFeatureExtractor
     FittedParamExtractor
 
+.. currentmodule:: sktime.transformations.series.adi_cv
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ADICVTransformer
+
 Shapelets, wavelets, and convolution
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -223,6 +231,14 @@ These transformers extract larger collections of features.
     :template: class.rst
 
     Catch22
+
+.. currentmodule:: sktime.transformations.panel.catch22wrapper
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Catch22Wrapper
 
 Series-to-series transformers
 -----------------------------
@@ -445,7 +461,7 @@ Binning, sampling and segmentation
     :toctree: auto_generated/
     :template: class.rst
 
-    PAA2
+    PAA
 
 .. currentmodule:: sktime.transformations.series.sax
 
@@ -453,7 +469,7 @@ Binning, sampling and segmentation
     :toctree: auto_generated/
     :template: class.rst
 
-    SAX2
+    SAX
 
 .. currentmodule:: sktime.transformations.panel.dictionary_based
 
@@ -461,8 +477,8 @@ Binning, sampling and segmentation
     :toctree: auto_generated/
     :template: class.rst
 
-    PAA
-    SAX
+    PAAlegacy
+    SAXlegacy
 
 Missing value treatment
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -631,6 +647,20 @@ These transformers subset `X` by time points (`pandas` index or index level) or 
 
     ColumnSelect
     IndexSubset
+
+Adapters to other frameworks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Generic framework adapters that expose other frameworks in the ``sktime`` interface.
+
+.. currentmodule:: sktime.transformations.series.temporian
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TemporianTransformer
+
 
 Panel transformers
 ------------------

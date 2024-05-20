@@ -107,7 +107,6 @@ class MACNNClassifier(BaseDeepClassifier):
         verbose=False,
     ):
         _check_dl_dependencies(severity="error")
-        super().__init__()
 
         self.n_epochs = n_epochs
         self.batch_size = batch_size
@@ -126,6 +125,9 @@ class MACNNClassifier(BaseDeepClassifier):
         self.callbacks = callbacks
         self.random_state = random_state
         self.verbose = verbose
+
+        super().__init__()
+
         self.history = None
         self._network = MACNNNetwork(
             padding=self.padding,

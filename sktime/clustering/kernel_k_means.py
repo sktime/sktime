@@ -9,7 +9,9 @@ from sktime.clustering.base import BaseClusterer
 
 
 class TimeSeriesKernelKMeans(_TslearnAdapter, BaseClusterer):
-    """Kernel algorithm wrapper tslearns implementation.
+    """Kernel k-means clustering, from tslearn.
+
+    Direct interface to ``tslearn.clustering.KernelKMeans``.
 
     Parameters
     ----------
@@ -48,7 +50,7 @@ class TimeSeriesKernelKMeans(_TslearnAdapter, BaseClusterer):
         computations.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See scikit-learns'
-        ``Glossary <https://scikit-learn.org/stable/glossary.html#term-n-jobs>``_
+        `Glossary <https://scikit-learn.org/stable/glossary.html#term-n-jobs>`_
         for more details.
     random_state: int or np.random.RandomState instance or None, defaults = None
         Determines random number generation for centroid initialization.
@@ -67,7 +69,7 @@ class TimeSeriesKernelKMeans(_TslearnAdapter, BaseClusterer):
     _tags = {
         # packaging info
         # --------------
-        "authors": "fkiraly",
+        "authors": ["rtavenar", "fkiraly"],  # rtavenar credit for interfaced code
         "python_dependencies": "tslearn",
         # estimator type
         # --------------

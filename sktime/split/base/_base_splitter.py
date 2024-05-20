@@ -95,6 +95,8 @@ class BaseSplitter(BaseObject):
         # split_series_uses: "iloc" or "loc", whether split_series under the hood
         # calls split ("iloc") or split_loc ("loc"). Setting this can give
         # performance advantages, e.g., if "loc" is faster to obtain.
+        "split_type": "temporal",
+        # whether the splitter splits by time, or by instance
         "authors": "sktime developers",  # author(s) of the object
         "maintainers": "sktime developers",  # current maintainer(s) of the object
     }
@@ -156,7 +158,11 @@ class BaseSplitter(BaseObject):
         test : 1D np.ndarray of dtype int
             Test window indices, iloc references to test indices in y
         """
-        raise NotImplementedError("abstract method")
+        for train_loc, test_loc in self.split_loc(y):
+            # default gets iloc index from loc index
+            train_iloc = y.get_indexer(train_loc)
+            test_iloc = y.get_indexer(test_loc)
+            yield train_iloc, test_iloc
 
     def _split_vectorized(self, y: pd.MultiIndex) -> SPLIT_GENERATOR_TYPE:
         """Get iloc references to train/test splits of `y`, for pd.MultiIndex.
@@ -302,6 +308,16 @@ class BaseSplitter(BaseObject):
             y_index = y.index
         else:
             y_index = y
+
+        if self.get_tag("split_type") == "instance":
+            if not isinstance(y_index, pd.MultiIndex):
+                cls_name = self.__class__.__name__
+                raise ValueError(
+                    f"Error in {cls_name}.split: "
+                    f"{cls_name} is a splitter of type 'instance', "
+                    f"and requires Panel or Hierarchical time series index."
+                )
+
         return y_index
 
     def _check_y(self, y, allow_index=False):
