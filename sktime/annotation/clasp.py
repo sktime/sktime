@@ -226,10 +226,11 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
         "python_dependencies": "numba",
     }  # for unit test cases
 
-    def __init__(self, period_length=10, n_cps=1, exclusion_radius=0.05):
+    def __init__(self, period_length=10, n_cps=1, fmt="sparse", exclusion_radius=0.05):
         self.period_length = int(period_length)
         self.n_cps = n_cps
         self.exclusion_radius = exclusion_radius
+        self.fmt = fmt
         super().__init__()
 
     def _fit(self, X, Y=None):
@@ -261,7 +262,12 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
         Y : pd.Series or an IntervalSeries
             Change points in sequence X.
         """
-        return self._predict_points(X)
+        change_points = self._predict_points(X)
+        if self.fmt == "dense":
+            return self.change_points_to_segments(
+                change_points, X.index.min(), X.index.max()
+            )
+        return change_points
 
     def _predict_points(self, X):
         """Predict changepoints on test/deployment data.

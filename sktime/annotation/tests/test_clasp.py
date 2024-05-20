@@ -46,13 +46,11 @@ def test_clasp_dense():
     ts, period_size, cps = load_gun_point_segmentation()
 
     # compute a ClaSP segmentation
-    clasp = ClaSPSegmentation(period_size, n_cps=1)
+    clasp = ClaSPSegmentation(period_size, n_cps=1, fmt="dense")
     clasp.fit(ts)
-    segmentation = clasp.transform(ts)
+    segmentation = clasp.predict(ts)
 
-    # Find the index of the first 1
-    cp_index = segmentation.index[segmentation.values == 1][0]
     _, profile = clasp.predict_scores(ts)
 
-    assert len(segmentation) == len(ts) and cp_index == 893
+    assert len(segmentation) == 2 and segmentation.index[0].right == 893
     assert np.argmax(profile) == 893
