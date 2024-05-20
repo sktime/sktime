@@ -239,6 +239,7 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
             "target": data.columns[-2],
             "group_ids": index_names[0:-1],
             "time_varying_known_reals": time_varying_known_reals,
+            "time_varying_unknown_reals": [data.columns[-2]],
         }
         _dataset_params.update(dataset_params)
         # overwrite max_prediction_length
