@@ -3,7 +3,7 @@
 import abc
 from typing import List, Optional
 
-import pandas
+import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
@@ -30,7 +30,7 @@ class _DartsAdapter(BaseForecaster):
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
-        "enforce_index_type": pandas.DatetimeIndex,
+        "enforce_index_type": pd.DatetimeIndex,
         "handles-missing-data": False,
         "capability:insample": False,
         "python_version": ">=3.8",
@@ -44,14 +44,31 @@ class _DartsAdapter(BaseForecaster):
         num_samples: Optional[int] = 1000,
     ) -> None:
         super().__init__()
-
-        self.past_covariates = [] if past_covariates is None else past_covariates
-        self.num_samples = num_samples
+        if past_covariates is not None and not isinstance(past_covariates, list):
+            raise TypeError(
+                f"Expected past_covariates to be a list, found {type(past_covariates)}."
+            )
+        self._past_covariates = [] if past_covariates is None else past_covariates
+        if not isinstance(num_samples, int):
+            raise TypeError(
+                f"Expected num_samples to be an integer, found {type(num_samples)}."
+            )
+        self._num_samples = num_samples
 
         self._forecaster = None
 
+    @property
+    def past_covariates(self: "_DartsAdapter"):
+        """Return past covariates."""
+        return self._past_covariates
+
+    @property
+    def num_samples(self: "_DartsAdapter"):
+        """Return number of samples."""
+        return self._num_samples
+
     @staticmethod
-    def convert_dataframe_to_timeseries(dataset: pandas.DataFrame):
+    def convert_dataframe_to_timeseries(dataset: pd.DataFrame):
         """Convert dataset for compatibility with ``darts``.
 
         Parameters
@@ -66,10 +83,11 @@ class _DartsAdapter(BaseForecaster):
         """
         import darts
 
+        dataset.index = dataset.index.astype("datetime64[ns]")  # ensure datetime index
         return darts.TimeSeries.from_dataframe(dataset)
 
     def convert_exogenous_dataset(
-        self: "_DartsAdapter", dataset: Optional[pandas.DataFrame]
+        self: "_DartsAdapter", dataset: Optional[pd.DataFrame]
     ):
         """Make exogenous features to ``darts`` compatible, if available.
 
@@ -110,8 +128,8 @@ class _DartsAdapter(BaseForecaster):
 
     def _fit(
         self: "_DartsAdapter",
-        y: pandas.DataFrame,
-        X: Optional[pandas.DataFrame],
+        y: pd.DataFrame,
+        X: Optional[pd.DataFrame],
         fh: Optional[ForecastingHorizon],
     ):
         """Fit forecaster to training data.
@@ -155,7 +173,7 @@ class _DartsAdapter(BaseForecaster):
     def _predict(
         self: "_DartsAdapter",
         fh: Optional[ForecastingHorizon],
-        X: Optional[pandas.DataFrame],
+        X: Optional[pd.DataFrame],
     ):
         """Forecast time series at future horizon.
 
@@ -198,7 +216,7 @@ class _DartsAdapter(BaseForecaster):
     def _predict_quantiles(
         self,
         fh: Optional[ForecastingHorizon],
-        X: Optional[pandas.DataFrame],
+        X: Optional[pd.DataFrame],
         alpha: List[float],
         legacy_interface: Optional[bool] = True,
     ):
