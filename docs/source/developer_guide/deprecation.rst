@@ -4,13 +4,44 @@
 Deprecation
 ===========
 
-Before we can make changes to sktime's user interface, we need to make sure that users have time to make the necessary adjustments in their code.
-For this reason, we first need to deprecate functionality and change it only in a next release.
+``sktime`` aims to be stable and reliable towards its users.
+Our high-level policy to ensure this is:
 
-.. note::
+"``sktime`` should never break user code without a clear and actionable warning
+given at least one (MINOR) release cycle in advance."
 
-    For upcoming changes and next releases, see our `Milestones <https://github.com/sktime/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
-    For our long-term plan, see our :ref:`roadmap`.
+Here, "break" expressly includes a change to abstract logic, such as the algorithm
+being used, not just changes that lead to exceptions or performance degradation.
+
+For instance, if a user has code
+
+.. code:: python
+
+    from sktime.forecasting.foo import BarForecaster
+
+    bar = BarForecaster(42, x=43)
+    bar.fit(y_train, fh=[1, 2, 3])
+    y_pred = bar.predict()
+
+then no release of ``sktime`` should change, without warning:
+
+* import location of ``BarForecaster``
+* argument signature of ``BarForecaster``, including name, order, and defaults of arguments
+* the abstract algorithm that ``BarForecaster`` carries out for the given arguments
+
+Changes that can be carried out without warning:
+
+* adding more arguments at the end of the argument list, with a default value that retains prior behaviour,
+  as long as the new arguments are well-documented
+* pure refactoring of internal code, as long as the public API remains the same
+* changing the implementation without changing the abstract algorithm, e.g., for performance reasons
+
+The deprecation policy outlined in this document provides details on how to carry out
+changes that need change or deprecation handling, in a user-friendly and reliable way.
+
+It is accompanied by formulaic patterns for developers, with examples,
+and a process for release managers, to make the policy easy to follow.
+
 
 Deprecation policy
 ==================
