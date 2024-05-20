@@ -505,22 +505,46 @@ def plot_windows(cv, y, title="", ax=None):
 
 
 def plot_calibration(y_true, y_pred, ax=None):
-    """Plot the calibration of a probabilistic forecast.
+    r"""Plot the calibration curve for a sample of quantile predictions.
 
-    Calculates internally the calibration of the quantile forecast and
-    visualise it.
+    Visualizes calibration of the quantile predictions.
 
-    x-axis: interval from 0 to 1
-    y-axis: interval from 0 to 1
-    plot elements: the calibration fo the forecast (blue) and the ideal
-        calibration (orange)
+    Computes the following calibration plot:
+
+    Let :math:`p_1, \dots, p_k` be the quantile points at which
+    predictions in ``y_pred`` were queried,
+    e.g., via ``alpha`` in ``predict_quantiles``.
+
+    Let :math:`y_1, \dots, y_N` be the actual values in ``y_true``,
+    and let :math:`\widehat{y}_{i,j}`, for `i = 1 \dots N, j = 1 \dota k`
+    be quantile predictions at quantile point :math:`p_j`,
+    of the conditional distribution of :math:`y_i`, as contained in ``y_pred``.
+
+    We compute the calibration indicators :math:`c_{i, j},`
+    as :math:`c_{i, j} = 1, \{ if } y_i \le \widehat{y}_{i,j} \text{ and } 0, \text{otherwise},`  # noqa: E501
+    and calibration fractions as
+
+    .. math:: \widehat{p}_j = \frac{1}{N} \sum_{i = 1}^N c_{i, j}.
+
+    If the quantile predictions are well-calibrated, we expect :math:`\widehat{p}_j`
+    to be close to :math:`p_j`.
+
+    x-axis: interval from 0 to 1, quantile points
+    y-axis: interval from 0 to 1, calibration fractions
+    plot elements: calibration curve of the quantile predictions (blue) and the ideal
+        calibration curve (orange), the curve with equation y = x.
+        Calibration curve are points :math:`(p_i, \widehat{p}_i), i = 1 \dots, k`;
+        Ideal curve is the curve with equation y = x,
+        containing points :math:`(p_i, p_i)`.
 
     Parameters
     ----------
     y_true : pd.Series, single columned pd.DataFrame, or single columned np.array.
-        The actual values of the forecast
+        The actual values
     y_pred : pd.DataFrame
-        The quantile forecast.
+        The quantile predictions,
+        formatted as returned by ``BaseDistribution.quantile``,
+        or ``predict_quantiles``
     ax : matplotlib.axes.Axes, optional (default=None)
         Axes on which to plot. If None, axes will be created and returned.
 
