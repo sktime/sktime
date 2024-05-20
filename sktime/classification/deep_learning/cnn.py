@@ -43,6 +43,12 @@ class CNNClassifier(BaseDeepClassifier):
         whether the layer uses a bias vector.
     optimizer       : keras.optimizers object, default = Adam(lr=0.01)
         specify the optimizer and the learning rate to be used.
+    padding : string, default = "auto"
+        Controls padding logic for the convolutional layers,
+        i.e. whether ``'valid'`` and ``'same'`` are passed to the ``Conv1D`` layer.
+        - "auto": as per original implementation, ``"same"`` is passed if
+          ``input_shape[0] < 60`` in the input layer, and ``"valid"`` otherwise.
+        - "valid", "same", and other values are passed directly to ``Conv1D``
 
     Notes
     -----
@@ -89,6 +95,8 @@ class CNNClassifier(BaseDeepClassifier):
         activation="softmax",
         use_bias=True,
         optimizer=None,
+        filter_sizes=None,
+        padding="auto",
     ):
         _check_dl_dependencies(severity="error")
 
@@ -107,6 +115,8 @@ class CNNClassifier(BaseDeepClassifier):
         self.use_bias = use_bias
         self.optimizer = optimizer
         self.history = None
+        self.filter_sizes = filter_sizes
+        self.padding = padding
 
         super().__init__()
 
@@ -114,7 +124,9 @@ class CNNClassifier(BaseDeepClassifier):
             kernel_size=self.kernel_size,
             avg_pool_size=self.avg_pool_size,
             n_conv_layers=self.n_conv_layers,
+            filter_sizes=self.filter_sizes,
             activation=self.activation,
+            padding=self.padding,
             random_state=self.random_state,
         )
 

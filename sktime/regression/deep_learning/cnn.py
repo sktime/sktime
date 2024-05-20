@@ -42,6 +42,12 @@ class CNNRegressor(BaseDeepRegressor):
     use_bias        : bool, default=True
         whether to use bias in the output layer.
     metrics         : list of strings, default=["accuracy"],
+    padding : string, default = "auto"
+        Controls padding logic for the convolutional layers,
+        i.e. whether ``'valid'`` and ``'same'`` are passed to the ``Conv1D`` layer.
+        - "auto": as per original implementation, ``"same"`` is passed if
+          ``input_shape[0] < 60`` in the input layer, and ``"valid"`` otherwise.
+        - "valid", "same", and other values are passed directly to ``Conv1D``
 
     References
     ----------
@@ -90,6 +96,8 @@ class CNNRegressor(BaseDeepRegressor):
         activation="linear",
         use_bias=True,
         optimizer=None,
+        filter_sizes=None,
+        padding="auto",
     ):
         _check_dl_dependencies(severity="error")
         super().__init__()
@@ -107,11 +115,16 @@ class CNNRegressor(BaseDeepRegressor):
         self.use_bias = use_bias
         self.optimizer = optimizer
         self.history = None
+        self.filter_sizes = filter_sizes
+        self.padding = padding
+
         self._network = CNNNetwork(
             kernel_size=self.kernel_size,
             avg_pool_size=self.avg_pool_size,
             n_conv_layers=self.n_conv_layers,
+            filter_sizes=self.filter_sizes,
             activation=self.activation,
+            padding=self.padding,
             random_state=self.random_state,
         )
 
