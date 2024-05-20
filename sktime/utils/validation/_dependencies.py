@@ -4,7 +4,7 @@ __author__ = ["fkiraly", "mloning"]
 
 import sys
 import warnings
-from importlib.metadata import version, PackageNotFoundError
+from importlib.metadata import PackageNotFoundError, version
 from importlib.util import find_spec
 from inspect import isclass
 

@@ -10,7 +10,6 @@ from sktime.transformations.panel.compose import ColumnTransformer
 from sktime.transformations.panel.reduce import Tabularizer
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-
 sklearn_lneq_14 = _check_soft_dependencies(
     "scikit-learn<1.4",
     severity="none",
