@@ -648,10 +648,10 @@ class IntervalWidth(_BaseProbaForecastingErrorMetric):
         scores = np.unique(np.round(y_pred.columns.get_level_values(1), 7))
         vars = np.unique(y_pred.columns.get_level_values(0))
 
-        calib_array = upper - lower
+        metric_array = upper - lower
 
         out_df = pd.DataFrame(
-            calib_array, columns=pd.MultiIndex.from_product([vars, scores])
+            metric_array, columns=pd.MultiIndex.from_product([vars, scores])
         )
 
         return out_df
