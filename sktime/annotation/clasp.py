@@ -17,7 +17,7 @@ __author__ = ["ermshaua", "patrickzib"]
 __all__ = ["ClaSPSegmentation", "find_dominant_window_sizes"]
 
 from queue import PriorityQueue
-from warnings import DeprecationWarning, warn
+from warnings import warn
 
 import numpy as np
 import pandas as pd

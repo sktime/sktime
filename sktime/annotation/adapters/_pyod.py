@@ -2,7 +2,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements outlier detection from pyOD."""
 
-from warnings import DeprecationWarning, warn
+from warnings import warn
 
 import numpy as np
 from sklearn.base import clone
