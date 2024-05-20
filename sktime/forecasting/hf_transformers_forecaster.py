@@ -21,9 +21,12 @@ if _check_soft_dependencies("transformers", severity="none"):
     import transformers
     from transformers import AutoConfig, Trainer, TrainingArguments
 
+if _check_soft_dependencies("peft", severity="none"):
+    from peft import LoraConfig, LoHaConfig, AdaLoraConfig, get_peft_model
+
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
-__author__ = ["benheid"]
+__author__ = ["benheid", "geetu040"]
 
 
 class HFTransformersForecaster(BaseForecaster):
@@ -40,7 +43,8 @@ class HFTransformersForecaster(BaseForecaster):
         Path to the huggingface model to use for forecasting. Currently,
         Informer, Autoformer, and TimeSeriesTransformer are supported.
     fit_strategy : str, default="minimal"
-        Strategy to use for fitting the model. Can be "minimal" or "full"
+        Strategy to use for fitting the model. Can be one of "minimal", "full",
+        "lora", "loha", or "adalora".
     validation_split : float, default=0.2
         Fraction of the data to use for validation
     config : dict, default={}
@@ -227,6 +231,31 @@ class HFTransformersForecaster(BaseForecaster):
         elif self.fit_strategy == "full":
             for param in self.model.parameters():
                 param.requires_grad = True
+        elif self.fit_strategy == "lora":
+            peft_config = LoraConfig(
+                r=8,
+                lora_alpha=32,
+                target_modules=["q_proj", "v_proj"],
+                lora_dropout=0.01,
+            )
+            self.model = get_peft_model(self.model, peft_config)
+        elif self.fit_strategy == "loha":
+            peft_config = LoHaConfig(
+                r=8,
+                alpha=32,
+                target_modules=["q_proj", "v_proj"],
+                rank_dropout=0.01,
+                module_dropout=0.01,
+            )
+            self.model = get_peft_model(self.model, peft_config)
+        elif self.fit_strategy == "adalora":
+            peft_config = AdaLoraConfig(
+                r=8,
+                lora_alpha=32,
+                target_modules=["q_proj", "v_proj"],
+                lora_dropout=0.01,
+            )
+            self.model = get_peft_model(self.model, peft_config)
         else:
             raise ValueError("Unknown fit strategy")
 
