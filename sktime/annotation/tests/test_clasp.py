@@ -27,7 +27,7 @@ def test_clasp_sparse():
     clasp = ClaSPSegmentation(period_size, n_cps=1)
     clasp.fit(ts)
     found_cps = clasp.predict(ts)
-    scores, _ = clasp.predict_scores(ts)
+    scores = clasp.predict_scores(ts)
 
     assert len(found_cps) == 1 and found_cps[0] == 893
     assert len(scores) == 1 and scores[0] > 0.74
@@ -50,7 +50,7 @@ def test_clasp_dense():
     clasp.fit(ts)
     segmentation = clasp.predict(ts)
 
-    _, profile = clasp.predict_scores(ts)
+    profile = clasp.predict_scores(ts)
 
     assert len(segmentation) == 2 and segmentation.index[0].right == 893
     assert np.argmax(profile) == 893

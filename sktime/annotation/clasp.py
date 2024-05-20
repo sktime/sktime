@@ -297,19 +297,20 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
 
         Returns
         -------
-        Y : tuple[pd.Series, pd.Series]
-            A tuple containing the scores of the change points and the profile.
+        Y : pd.Series
+            Scores for sequence X exact format depends on annotation type.
         """
         self.found_cps, self.profiles, self.scores = self._run_clasp(X)
 
-        # Scores of the Change Points
-        scores = pd.Series(self.scores)
-
-        # ClaSP creates multiple profiles. Hard to map. Thus, we return the main
-        # (first) one
-        profile = pd.Series(self.profiles[0])
-
-        return scores, profile
+        if self.fmt == "sparse":
+            # Scores of the Change Points
+            scores = pd.Series(self.scores)
+            return scores
+        elif self.fmt == "dense":
+            # ClaSP creates multiple profiles. Hard to map. Thus, we return the main
+            # (first) one
+            profile = pd.Series(self.profiles[0])
+            return profile
 
     def get_fitted_params(self):
         """Get fitted parameters.
