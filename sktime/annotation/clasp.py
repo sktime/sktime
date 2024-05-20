@@ -17,6 +17,7 @@ __author__ = ["ermshaua", "patrickzib"]
 __all__ = ["ClaSPSegmentation", "find_dominant_window_sizes"]
 
 from queue import PriorityQueue
+from warnings import DeprecationWarning, warn
 
 import numpy as np
 import pandas as pd
@@ -231,6 +232,7 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
         self.n_cps = n_cps
         self.exclusion_radius = exclusion_radius
         self.fmt = fmt
+        warn("The fmt argument is going to be removed.", DeprecationWarning)
         super().__init__()
 
     def _fit(self, X, Y=None):
