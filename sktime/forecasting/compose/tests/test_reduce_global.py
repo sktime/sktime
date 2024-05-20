@@ -4,20 +4,6 @@ __author__ = ["danbartl"]
 from sktime.tests.test_switch import run_test_for_class
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-# HistGradientBoostingRegressor requires experimental flag in old sklearn versions
-sklearn_zero_x = _check_soft_dependencies(
-    "scikit-learn<1.4",
-    severity="none",
-    package_import_alias={"scikit-learn": "sklearn"},
-)
-
-if _check_soft_dependencies(
-    "scikit-learn<1.0",
-    severity="none",
-    package_import_alias={"scikit-learn": "sklearn"},
-):
-    from sklearn.experimental import enable_hist_gradient_boosting  # noqa
-
 import random
 
 import numpy as np
@@ -40,6 +26,21 @@ from sktime.performance_metrics.forecasting import mean_absolute_percentage_erro
 from sktime.split import temporal_train_test_split
 from sktime.transformations.series.summarize import WindowSummarizer
 from sktime.utils._testing.hierarchical import _make_hierarchical
+
+
+# HistGradientBoostingRegressor requires experimental flag in old sklearn versions
+sklearn_zero_x = _check_soft_dependencies(
+    "scikit-learn<1.4",
+    severity="none",
+    package_import_alias={"scikit-learn": "sklearn"},
+)
+
+if _check_soft_dependencies(
+    "scikit-learn<1.0",
+    severity="none",
+    package_import_alias={"scikit-learn": "sklearn"},
+):
+    from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 
 
 @pytest.fixture
