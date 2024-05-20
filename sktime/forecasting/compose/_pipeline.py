@@ -1583,13 +1583,10 @@ class ForecastX(BaseForecaster):
             return None
 
         if ixx == "complement":
-            if X is None:
-                return None
             all_columns = X.columns
-            if self.columns is not None:
-                complemented_columns = list(set(all_columns) - set(self.columns))
-            else:
-                complemented_columns = all_columns
+            complemented_columns = [
+                column for column in all_columns if column not in self.columns
+            ]
             return X.loc[:, complemented_columns]
 
         ixx_pd = pd.Index(ixx)
