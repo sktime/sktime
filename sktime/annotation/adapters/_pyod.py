@@ -2,6 +2,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements outlier detection from pyOD."""
 
+from warnings import DeprecationWarning, warn
+
 import numpy as np
 from sklearn.base import clone
 
@@ -29,8 +31,11 @@ class PyODAnnotator(BaseSeriesAnnotator):
         "learning_type": "unsupervised",
     }
 
-    def __init__(self, estimator):
+    def __init__(self, estimator, fmt="dense", labels="indicator"):
         self.estimator = estimator  # pyod estimator
+        self.fmt = fmt
+        self.labels = labels
+        warn("The fmt and labels argument are going to be removed.", DeprecationWarning)
         super().__init__()
 
     def _fit(self, X, Y=None):
@@ -73,6 +78,9 @@ class PyODAnnotator(BaseSeriesAnnotator):
         -------
         Y : pd.Series - annotations for sequence X
         """
+        fmt = self.fmt
+        labels = self.labels
+
         X_np = X.to_numpy()
 
         if len(X_np.shape) == 1:
@@ -80,9 +88,16 @@ class PyODAnnotator(BaseSeriesAnnotator):
 
         Y_np = self.estimator_.predict(X_np)
 
-        # Convert the output to a sparse format
-        Y_loc = np.where(Y_np)
-        Y = pd.Series(Y_np[Y_loc], index=X.index[Y_loc])
+        if labels == "score":
+            Y_val_np = self.estimator_.decision_function(X_np)
+        elif labels == "indicator":
+            Y_val_np = Y_np
+
+        if fmt == "dense":
+            Y = pd.Series(Y_val_np, index=X.index)
+        elif fmt == "sparse":
+            Y_loc = np.where(Y_np)
+            Y = pd.Series(Y_val_np[Y_loc], index=X.index[Y_loc])
 
         return Y
 
