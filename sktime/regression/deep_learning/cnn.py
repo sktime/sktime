@@ -17,7 +17,6 @@ class CNNRegressor(BaseDeepRegressor):
 
     Parameters
     ----------
-    should inherited fields be listed here?
     n_epochs       : int, default = 2000
         the number of epochs to train the model
     batch_size      : int, default = 16
@@ -28,20 +27,23 @@ class CNNRegressor(BaseDeepRegressor):
         size of the average pooling windows
     n_conv_layers   : int, default = 2
         the number of convolutional plus average pooling layers
-    filter_sizes    : array of shape (n_conv_layers) default = [6, 12]
-    random_state    : int or None, default=None
-        Seed for random number generation.
+    callbacks       : list of keras.callbacks, default = None
     verbose         : boolean, default = False
         whether to output extra information
     loss            : string, default="mean_squared_error"
         fit parameter for the keras model
-    activation      : keras.activations or string, default ``linear``
-        function to use in the output layer.
-    optimizer       : keras.optimizers or string, default ``None``.
-        when ``None``, internally uses ``keras.optimizers.Adam(0.01)``
-    use_bias        : bool, default=True
-        whether to use bias in the output layer.
     metrics         : list of strings, default=["accuracy"],
+    random_state    : int or None, default=None
+        Seed for random number generation.
+    activation      : string or a tf callable, default="softmax"
+        Activation function used in the output linear layer.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
+    use_bias        : boolean, default = True
+        whether the layer uses a bias vector.
+    optimizer       : keras.optimizers object, default = Adam(lr=0.01)
+        specify the optimizer and the learning rate to be used.
+    filter_sizes    : array of shape (n_conv_layers) default = [6, 12]
     padding : string, default = "auto"
         Controls padding logic for the convolutional layers,
         i.e. whether ``'valid'`` and ``'same'`` are passed to the ``Conv1D`` layer.
