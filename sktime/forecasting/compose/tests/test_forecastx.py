@@ -274,23 +274,19 @@ def test_forecastx_flow_known_unknown_columns(
     np.testing.assert_array_equal(y_test.index, y_test_pred.index)
 
 
-@pytest.mark.skipif(
-    not _check_estimator_deps(ARIMA, severity="none"),
-    reason="skip test if required soft dependency is not available",
-)
-@pytest.mark.parametrize("cols_to_forecast", [["GNPDEFL", "GNP"], ["ARMED", "POP"]])
-def test_forecastx_exog_for_forecaster_x(cols_to_forecast):
+def test_forecastx_exog_for_forecaster_x():
     """Test that ForecastX forecaster_X uses exogenous data as told by parameter."""
     from sklearn.linear_model import LinearRegression
 
     from sktime.forecasting.compose import ForecastX, YfromX
-    from sktime.split import temporal_train_test_split
 
     y, X = load_longley()
 
-    fh = [1, 2, 3, 4]
-    y_train, _, X_train, X_test = temporal_train_test_split(y, X, test_size=max(fh))
+    fh = [1, 2, 3]
+
     model_supporting_exogenous = YfromX(LinearRegression())
+
+    cols_to_forecast = ["GNPDEFL", "GNP"]
 
     model_1 = ForecastX(
         model_supporting_exogenous.clone(),
@@ -308,11 +304,9 @@ def test_forecastx_exog_for_forecaster_x(cols_to_forecast):
         columns=cols_to_forecast,
         forecaster_X_exogeneous="complement",
     )
+
     model_2.fit(y, X=X, fh=fh)
-    if cols_to_forecast == ["GNPDEFL", "GNP"]:
-        assert model_2.forecaster_X_._X.columns.tolist() == ["UNEMP", "ARMED", "POP"]
-    else:
-        assert model_2.forecaster_X_._X.columns.tolist() == ["GNPDEFL", "GNP", "UNEMP"]
+    assert model_2.forecaster_X_._X.columns.tolist() == ["UNEMP", "ARMED", "POP"]
 
     model_3 = ForecastX(
         model_supporting_exogenous.clone(),
@@ -323,27 +317,6 @@ def test_forecastx_exog_for_forecaster_x(cols_to_forecast):
 
     model_3.fit(y, X=X, fh=fh)
     assert model_3.forecaster_X_._X.columns.tolist() == ["UNEMP", "ARMED"]
-
-    forecaster = ARIMA()
-    pipeline1 = ForecastX(
-        forecaster.clone(),
-        forecaster_X=forecaster.clone(),
-        columns=cols_to_forecast,
-        forecaster_X_exogeneous="complement",
-    )
-
-    pipeline1.fit(y_train, X=X_train, fh=fh)
-    y_pred1 = pipeline1.predict(X=X_test.drop(columns=cols_to_forecast))
-
-    pipeline2 = ForecastX(
-        forecaster.clone(),
-        forecaster_X=forecaster.clone(),
-        columns=cols_to_forecast,
-        forecaster_X_exogeneous="None",
-    )
-    pipeline2.fit(y_train, X=X_train, fh=fh)
-    y_pred2 = pipeline2.predict(X=X_test.drop(columns=cols_to_forecast))
-    np.testing.assert_array_equal(y_pred1.index, y_pred2.index)
 
 
 @pytest.mark.skipif(
@@ -418,3 +391,40 @@ def test_use_of_passed_unknown_X(predict_behaviour_option: str) -> None:
             mock_predict.assert_called_once()
         elif predict_behaviour_option == "use_actuals":
             mock_predict.assert_not_called()
+
+
+@pytest.mark.skipif(
+    not _check_estimator_deps(ARIMA, severity="none"),
+    reason="skip test if required soft dependency is not available",
+)
+@pytest.mark.parametrize("cols_to_forecast", [["GNPDEFL", "GNP"], ["ARMED", "POP"]])
+def test_forecaster_X_exogeneous(cols_to_forecast):
+    """Test that ForecastX forecaster_X uses exogenous data as told by parameter."""
+    from sktime.forecasting.compose import ForecastX
+    from sktime.split import temporal_train_test_split
+
+    y, X = load_longley()
+
+    fh = [1, 2, 3, 4]
+    y_train, _, X_train, X_test = temporal_train_test_split(y, X, test_size=max(fh))
+
+    forecaster = ARIMA()
+    pipeline1 = ForecastX(
+        forecaster.clone(),
+        forecaster_X=forecaster.clone(),
+        columns=cols_to_forecast,
+        forecaster_X_exogeneous="complement",
+    )
+
+    pipeline1.fit(y_train, X=X_train, fh=fh)
+    y_pred1 = pipeline1.predict(X=X_test.drop(columns=cols_to_forecast))
+
+    pipeline2 = ForecastX(
+        forecaster.clone(),
+        forecaster_X=forecaster.clone(),
+        columns=cols_to_forecast,
+        forecaster_X_exogeneous="None",
+    )
+    pipeline2.fit(y_train, X=X_train, fh=fh)
+    y_pred2 = pipeline2.predict(X=X_test.drop(columns=cols_to_forecast))
+    np.testing.assert_array_equal(y_pred1.index, y_pred2.index)
