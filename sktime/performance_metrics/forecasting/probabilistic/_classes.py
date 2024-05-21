@@ -994,7 +994,7 @@ class AUCalibration(_BaseDistrForecastingMetric):
     * ``evaluate_by_index`` returns, for the :math:`i`-th test sample, the value
       :math:`\left| c_i - \frac{r_i}{N} \right|`,
       where :math:`r_i` is the rank of :math:`c_i`
-      in the sample of :math:`c_i`.
+      in the sample of :math:`c_i`. In case of ties, tied ranks are averaged.
     * ``multivariate`` controls averaging over variables.
 
     Parameters
