@@ -1854,7 +1854,7 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
         super().__init__(multioutput=multioutput, multilevel=multilevel)
 
     def _compute_pseudo_values(self, y_true, y_pred):
-        """Compututation of jackknife pseudo-values.
+        """Compute the jackknife pseudo-values.
 
         Note
         ----------
