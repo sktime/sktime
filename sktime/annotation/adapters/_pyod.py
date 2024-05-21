@@ -38,8 +38,8 @@ class PyODAnnotator(BaseSeriesAnnotator):
             f"Warning from {type(self).__name__}: fmt argument will be removed in"
             " 0.31.0. For behaviour equivalent to fmt=dense, use transform instead of"
             " predict. In 0.31.0 the behaviour of predict will equivalent to the"
-            " current behaviour of predict when fmt=sparse."
-            , DeprecationWarning
+            " current behaviour of predict when fmt=sparse.",
+            DeprecationWarning,
         )
         super().__init__()
 
