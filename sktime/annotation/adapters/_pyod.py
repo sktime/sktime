@@ -2,13 +2,12 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements outlier detection from pyOD."""
 
-from warnings import warn
-
 import numpy as np
 from sklearn.base import clone
 
 from sktime.annotation.base._base import BaseSeriesAnnotator
 from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.warnings import warn
 
 __author__ = ["mloning", "satya-pattnaik", "fkiraly"]
 
@@ -35,7 +34,13 @@ class PyODAnnotator(BaseSeriesAnnotator):
         self.estimator = estimator  # pyod estimator
         self.fmt = fmt
         self.labels = labels
-        warn("The fmt and labels argument are going to be removed.", DeprecationWarning)
+        warn(
+            f"Warning from {type(self).__name__}: fmt argument will be removed in"
+            " 0.31.0. For behaviour equivalent to fmt=dense, use transform instead of"
+            " predict. In 0.31.0 the behaviour of predict will equivalent to the"
+            " current behaviour of predict when fmt=sparse."
+            , DeprecationWarning
+        )
         super().__init__()
 
     def _fit(self, X, Y=None):

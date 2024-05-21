@@ -17,13 +17,13 @@ __author__ = ["ermshaua", "patrickzib"]
 __all__ = ["ClaSPSegmentation", "find_dominant_window_sizes"]
 
 from queue import PriorityQueue
-from warnings import warn
 
 import numpy as np
 import pandas as pd
 
 from sktime.transformations.series.clasp import ClaSPTransformer
 from sktime.utils.validation.series import check_series
+from sktime.utils.warnings import warn
 
 
 def find_dominant_window_sizes(X, offset=0.05):
@@ -232,7 +232,13 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
         self.n_cps = n_cps
         self.exclusion_radius = exclusion_radius
         self.fmt = fmt
-        warn("The fmt argument is going to be removed.", DeprecationWarning)
+        warn(
+            f"Warning from {type(self).__name__}: fmt argument will be removed in"
+            " 0.31.0. For behaviour equivalent to fmt=dense, use transform instead of"
+            " predict. In 0.31.0 the behaviour of predict will equivalent to the"
+            " current behaviour of predict when fmt=sparse."
+            , DeprecationWarning
+        )
         super().__init__()
 
     def _fit(self, X, Y=None):
