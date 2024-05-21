@@ -1761,7 +1761,7 @@ class MedianSquaredError(BaseForecastingErrorMetricFunc):
 
 class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
     r"""Geometric mean absolute error (GMAE).
-    
+
     For a univariate, non-hierarchical sample
     of true values :math:`y_1, \dots, y_n` and
     predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n` (in :math:`mathbb{R}`),
@@ -1844,13 +1844,23 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
     0.7000014418652152
     """
 
-    def _compute_pseudo_values(self, y_true, y_pred):
-        """Compute the jackknife pseudo-values for the 
-        Geometric Mean Absolute Error (GMAE) metric.
+    func = geometric_mean_absolute_error
 
-        This private method computes the jackknife pseudo-values for the GMAE metric.
-        The pseudo-values are used to estimate the influence of 
-        each observation on the overall metric.
+    def __init__(
+        self,
+        multioutput="uniform_average",
+        multilevel="uniform_average",
+    ):
+        super().__init__(multioutput=multioutput, multilevel=multilevel)
+
+    def _compute_pseudo_values(self, y_true, y_pred):
+        """Compututation of jackknife pseudo-values.
+
+        Note
+        ----------
+        This private method computes the jackknife pseudo-values
+        for the GMAE metric. The pseudo-values are used to estimate
+        the influence of each observation on the overall metric.
 
         Parameters
         ----------
@@ -1868,12 +1878,11 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
         -------
         pseudo_values : pd.Series or pd.DataFrame
             Jackknife pseudo-values for the GMAE metric.
-            - If self.multioutput="uniform_average", returns a pd.Series where each 
+            - If self.multioutput="uniform_average", returns a pd.Series where each
               entry is the pseudo-value for a time point, averaged over variables.
             - If self.multioutput="raw_values", returns a pd.DataFrame where each entry
               is the pseudo-value for a time point, for each variable.
         """
-
         raw_values = (y_true - y_pred).abs()
 
         n = raw_values.shape[0]
@@ -1889,7 +1898,7 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
         """Evaluate the Geometric Mean Absolute Error (GMAE) metric on given inputs.
 
         This private method contains core logic for computing the GMAE metric.
-        By default, it uses `_evaluate_by_index` to compute the 
+        By default, it uses `_evaluate_by_index` to compute the
         arithmetic mean over time points.
 
         Parameters
@@ -1900,18 +1909,18 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
             Series scitype: pd.DataFrame
             Panel scitype: pd.DataFrame with 2-level row MultiIndex
             Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
-            
+
         y_pred : pd.Series or pd.DataFrame
             Forecasted values to evaluate
             must be of same format as y_true, same indices and columns if indexed
-            
+
         Returns
         -------
         loss : float or np.ndarray
             Calculated metric, averaged or by variable.
-            - If self.multioutput="uniform_average", returns the 
+            - If self.multioutput="uniform_average", returns the
                 average GMAE metric over variables.
-            - If self.multioutput="raw_values", returns an  
+            - If self.multioutput="raw_values", returns an
                 array of GMAE values for each variable.
         """
         multioutput = self.multioutput
@@ -1928,7 +1937,7 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
         pseudo_values = self._compute_pseudo_values(y_true, y_pred)
         weighted_pseudo_values = pseudo_values * weights
         return np.mean(weighted_pseudo_values)
-    
+
     def _evaluate_by_index(self, y_true, y_pred, **kwargs):
         """Return the metric evaluated at each time point.
 
@@ -1965,7 +1974,7 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
                 return pd.DataFrame(
                     pseudo_values, index=y_true.index, columns=y_true.columns
                 )
-            
+
             if multioutput == "uniform_average":
                 errors = np.maximum(
                     pseudo_values, np.finfo(np.float64).eps
@@ -1985,6 +1994,28 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
         log_mean = np.mean(log_errors, axis=1)
         gmae = np.exp(log_mean)
         return pd.Series(gmae, index=y_true.index)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        params1 = {}
+        return [params1]
 
 
 class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):
