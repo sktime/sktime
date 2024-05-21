@@ -24,8 +24,8 @@ __all__ = [
 ]
 
 from sktime.performance_metrics.forecasting.probabilistic._classes import (
-    AUCalibration,
     CRPS,
+    AUCalibration,
     ConstraintViolation,
     EmpiricalCoverage,
     IntervalWidth,
