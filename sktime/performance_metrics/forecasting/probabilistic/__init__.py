@@ -20,9 +20,11 @@ __all__ = [
     "IntervalWidth",
     "LogLoss",
     "SquaredDistrLoss",
+    "AUCalibration",
 ]
 
 from sktime.performance_metrics.forecasting.probabilistic._classes import (
+    AUCalibration,
     CRPS,
     ConstraintViolation,
     EmpiricalCoverage,
