@@ -1583,14 +1583,12 @@ class ForecastX(BaseForecaster):
             return None
 
         if ixx == "complement":
-            all_columns = X.columns
-            complemented_columns = [
-                column for column in all_columns if column not in self.columns
-            ]
-            return X.loc[:, complemented_columns]
+            X_for_fcX = X.drop(columns=self.columns, errors="ignore")
 
-        ixx_pd = pd.Index(ixx)
-        return X.loc[:, ixx_pd]
+            if X_for_fcX.shape[1] < 1:
+                return None
+
+            return X_for_fcX
 
     def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
