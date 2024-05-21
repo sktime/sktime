@@ -1590,6 +1590,9 @@ class ForecastX(BaseForecaster):
 
             return X_for_fcX
 
+        ixx_pd = pd.Index(ixx)
+        return X.loc[:, ixx_pd]
+
     def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
 
