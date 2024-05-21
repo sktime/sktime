@@ -990,7 +990,8 @@ class AUCalibration(_BaseDistrForecastingMetric):
 
     .. math:: \frac{1}{N} \sum_{i=1}^N \left| c_{(i)} - \frac{i}{N} \right|.
 
-    * ``evaluate`` computes the above quantity.
+    * ``evaluate`` returns the unsigned area between the calibration curve
+      and the diagonal, i.e., the above quantity.
     * ``evaluate_by_index`` returns, for the :math:`i`-th test sample, the value
       :math:`\left| c_i - \frac{r_i}{N} \right|`,
       where :math:`r_i` is the rank of :math:`c_i`
