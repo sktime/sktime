@@ -164,6 +164,10 @@ class TabularToSeriesAdaptor(BaseTransformer):
         if need_y or pass_y not in ["auto", "no"]:
             self.set_tags(**{"y_inner_mtype": "numpy1D"})
 
+        trafo_has_X = self._trafo_has_param_and_default("fit", "X")[0]
+        if not trafo_has_X:
+            self.set_tags(**{"y_inner_mtype": "None"})
+
     def _trafo_has_param_and_default(self, method="fit", arg="y"):
         """Return if transformer.method has a parameter, and whether it has a default.
 
@@ -196,7 +200,8 @@ class TabularToSeriesAdaptor(BaseTransformer):
 
         The return is a dict which is passed to the method of name method.
         """
-        if not self._trafo_has_param_and_default(method, "X"):
+        trafo_has_X = self._trafo_has_param_and_default(method, "X")[0]
+        if not trafo_has_X:
             return {"y": X}
 
         pass_y = self.pass_y
