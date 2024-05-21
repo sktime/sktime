@@ -72,6 +72,10 @@ def test_convert_pd_multiindex_to_polars():
     assert (result_values == pd_fixture_values).all()
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("polars", severity="none"),
+    reason="skip test if required soft dependency for polars not available",
+)
 @pytest.mark.parametrize("pd_fixture", PANDAS_FIXTURES)
 def test_convert_pd_polars_inverse(pd_fixture):
     """Tests conversions from pandas from/to polars are inverses."""

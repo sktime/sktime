@@ -4,6 +4,11 @@ from sktime.datatypes._common import _req
 from sktime.datatypes._common import _ret as ret
 
 
+def get_mi_cols(obj):
+    """Get multiindex or index cols from a polars object."""
+    return [x for x in obj.columns if isinstance(x, str) and x.startswith("__index__")]
+
+
 def convert_pandas_to_polars(
     obj, schema_overrides=None, rechunk=True, nan_to_null=True
 ):
@@ -63,11 +68,6 @@ def convert_polars_to_pandas(obj):
         and other columns identical to those of obj.
     """
     obj = obj.to_pandas()
-
-    def get_mi_cols(obj):
-        return [
-            x for x in obj.columns if isinstance(x, str) and x.startswith("__index__")
-        ]
 
     def index_name(x):
         return x.split("__index__")[1]
