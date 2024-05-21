@@ -1790,9 +1790,9 @@ class ProximityForest(BaseClassifier):
             return {"n_estimators": 3, "max_depth": 2, "n_stump_evaluations": 2}
         else:
             params1 = {
-                "n_estimators": 2,
-                "max_depth": 1,
-                "n_stump_evaluations": 1,
+                # "n_estimators": 2,
+                # "max_depth": 1,
+                # "n_stump_evaluations": 1,
                 "backend": "threading",
             }
             params_set = [params1]
