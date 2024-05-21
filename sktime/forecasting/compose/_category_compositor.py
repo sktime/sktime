@@ -53,6 +53,7 @@ class CategoryCompositor(BaseForecaster):
         "authors": ["shlok191"],
         "maintainers": ["shlok191"],
         "python_version": None,
+        "python_dependencies": ["statsmodels"],
     }
 
     def __init__(
@@ -229,9 +230,7 @@ class CategoryCompositor(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        param1 = {}
-
-        param2 = {
+        param1 = {
             "forecasters": {
                 "smooth": NaiveForecaster(),
                 "erratic": PolynomialTrendForecaster(),
@@ -243,11 +242,11 @@ class CategoryCompositor(BaseForecaster):
         }
 
         # Attempt to utilize the fallback forecaster
-        param3 = {
+        param2 = {
             "forecasters": {},
             "transformer": ADICVTransformer(features=["class"]),
             "fallback_forecaster": SARIMAX(),
         }
 
-        params = [param1, param2, param3]
+        params = [param1, param2]
         return params
