@@ -130,6 +130,8 @@ class DartsXGBModel(_DartsAdapter):
         self.random_state = random_state
         self.multi_models = multi_models
         self.use_static_covariates = use_static_covariates
+        self.past_covariates = past_covariates
+        self.num_samples = num_samples
         self.kwargs = kwargs
         self.handle_kwargs()
 

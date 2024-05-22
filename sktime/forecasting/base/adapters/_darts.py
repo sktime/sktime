@@ -53,12 +53,12 @@ class _DartsAdapter(BaseForecaster):
             raise TypeError(
                 f"Expected past_covariates to be a list, found {type(past_covariates)}."
             )
-        self.past_covariates = [] if past_covariates is None else past_covariates
+        self._past_covariates = [] if past_covariates is None else past_covariates
         if not isinstance(num_samples, int):
             raise TypeError(
                 f"Expected num_samples to be an integer, found {type(num_samples)}."
             )
-        self.num_samples = num_samples
+        self._num_samples = num_samples
 
         super().__init__()
 
@@ -99,7 +99,7 @@ class _DartsAdapter(BaseForecaster):
         Tuple[darts.TimeSeries, darts.TimeSeries]
             converted data on future known and future unknown exogenous features
         """
-        if dataset is None and self.past_covariates:
+        if dataset is None and self._past_covariates:
             raise ValueError(
                 f"Expected following exogenous features: {self.past_covariates}."
             )
@@ -107,12 +107,12 @@ class _DartsAdapter(BaseForecaster):
         if dataset is None:
             future_known_dataset = None
             future_unknown_dataset = None
-        elif self.past_covariates:
+        elif self._past_covariates:
             future_unknown_dataset = self.convert_dataframe_to_timeseries(
                 dataset[self.past_covariates]
             )
             future_known_dataset = self.convert_dataframe_to_timeseries(
-                dataset.drop(columns=self.past_covariates)
+                dataset.drop(columns=self._past_covariates)
             )
         else:
             future_unknown_dataset = None
