@@ -30,6 +30,7 @@ class PyODAnnotator(BaseSeriesAnnotator):
         "learning_type": "unsupervised",
     }
 
+    # todo 0.31.0: remove fmt argument and warning
     def __init__(self, estimator, fmt="deprecated", labels="indicator"):
         self.estimator = estimator  # pyod estimator
         self.fmt = fmt
