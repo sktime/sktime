@@ -30,18 +30,25 @@ class PyODAnnotator(BaseSeriesAnnotator):
         "learning_type": "unsupervised",
     }
 
-    def __init__(self, estimator, fmt="dense", labels="indicator"):
+    def __init__(self, estimator, fmt="deprecated", labels="indicator"):
         self.estimator = estimator  # pyod estimator
         self.fmt = fmt
         self.labels = labels
-        warn(
-            f"Warning from {type(self).__name__}: fmt argument will be removed in"
-            " 0.31.0. For behaviour equivalent to fmt=dense, use transform instead of"
-            " predict. In 0.31.0 the behaviour of predict will equivalent to the"
-            " current behaviour of predict when fmt=sparse.",
-            DeprecationWarning,
-        )
+
         super().__init__()
+
+        if fmt == "deprecated":
+            self._fmt = "sparse"
+            warn(
+                f"Warning from {type(self).__name__}: fmt argument will be removed in"
+                " 0.31.0. For behaviour equivalent to fmt=dense, use transform instead "
+                "of predict. In 0.31.0 the behaviour of predict will equivalent to the"
+                " current behaviour of predict when fmt=sparse.",
+                DeprecationWarning,
+                obj=self,
+            )
+        else:
+            self._fmt = fmt
 
     def _fit(self, X, Y=None):
         """Fit to training data.
@@ -83,7 +90,7 @@ class PyODAnnotator(BaseSeriesAnnotator):
         -------
         Y : pd.Series - annotations for sequence X
         """
-        fmt = self.fmt
+        fmt = self._fmt
         labels = self.labels
 
         X_np = X.to_numpy()
