@@ -3,6 +3,7 @@
 import abc
 import functools
 import typing
+from copy import deepcopy
 from typing import Any, Dict, Optional
 
 import pandas
@@ -116,15 +117,21 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
         """
         self._dataset_params = _none_check(self.dataset_params, {})
         self._max_prediction_length = fh.to_relative()[-1]
+        # convert series to frame
         if isinstance(y, pandas.Series):
-            _y = y.to_frame()
+            _y = deepcopy(y).to_frame()
         else:
-            _y = y
-        # store the target column name
-        self.y_name = _y.columns[-1]
+            _y = deepcopy(y)
+        # store the target column name and index names(probably [None])
+        self._target_name = _y.columns[-1]
+        self._index_names = _y.index.names
+        self._index_len = len(self._index_names)
+        # store X, y column names (probably None or not str type)
+        if X is not None:
+            self._X_columns = X.columns.tolist()
         # convert data to pytorch-forecasting datasets
         training, validation = self._Xy_to_dataset(
-            X, _y, self._dataset_params, self._max_prediction_length
+            deepcopy(X), _y, self._dataset_params, self._max_prediction_length
         )
         self._forecaster, self._trainer = self._instantiate_model(training)
         self._train_to_dataloader_params = {"train": True}
@@ -179,9 +186,16 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
             guaranteed to have a single column/variable
             Point predictions
         """
+        # convert series to frame
+        if isinstance(y, pandas.Series):
+            _y = deepcopy(y).to_frame()
+            self._convert_to_series = True
+        else:
+            _y = deepcopy(y)
+            self._convert_to_series = False
         # convert data to pytorch-forecasting datasets
         training, validation = self._Xy_to_dataset(
-            X, y, self._dataset_params, self._max_prediction_length
+            deepcopy(X), _y, self._dataset_params, self._max_prediction_length
         )
         # load model from checkpoint
         best_model_path = self._trainer.checkpoint_callback.best_model_path
@@ -208,35 +222,75 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
     ):
         from pytorch_forecasting.data import TimeSeriesDataSet
 
-        # X, y must have same index
-        assert (X.index == y.index).all()
-        # warning! X will be modified
-        time_varying_known_reals = [
-            c for c in X.columns if is_numeric_dtype(X[c].dtype)
+        # X, y must have same index or X is None
+        assert X is None or (X.index == y.index).all()
+        # rename the index to make sure it's not None
+        self._new_index_names = [
+            "_index_name_" + str(i) for i in range(len(self._index_names))
         ]
-        data = X.join(y, on=X.index.names)
-        index_names = data.index.names
-        self._time_idx_name = index_names[-1]
-        index_lens = index_names.__len__()
+        if self._index_len == 1:
+            rename_input = self._new_index_names[0]
+        else:
+            rename_input = self._new_index_names
+        y.index.rename(rename_input, inplace=True)
+        if X is not None:
+            X.index.rename(rename_input, inplace=True)
+        # rename X, y columns names to make sure they are all str type
+        if X is not None:
+            self._new_X_columns = [
+                "_X_column_" + str(i) for i in range(len(self._X_columns))
+            ]
+            X.columns = self._new_X_columns
+        self._new_target_name = "_target_column"
+        y.columns = [self._new_target_name]
+        # combine X and y
+        if X is not None:
+            time_varying_known_reals = [
+                c for c in X.columns if is_numeric_dtype(X[c].dtype)
+            ]
+            data = X.join(y, on=X.index.names)
+        else:
+            time_varying_known_reals = []
+            data = deepcopy(y)
         # add int time_idx as pytorch-forecasting requires
-        time_idx = data.groupby(by=index_names[0:-1]).cumcount().to_frame()
+        if self._index_len > 1:
+            time_idx = (
+                data.groupby(by=self._new_index_names[0:-1]).cumcount().to_frame()
+            )
+        else:
+            time_idx = pandas.DataFrame(range(0, len(data)))
+            time_idx.index = data.index
         time_idx.rename(columns={0: "_auto_time_idx"}, inplace=True)
-        data = data.join(time_idx, on=data.index.names)
+        data = pandas.concat([data, time_idx], axis=1)
         # reset multi index to normal columns
-        data = data.reset_index(level=list(range(index_lens)))
+        data = data.reset_index(level=list(range(self._index_len)))
         training_cutoff = data["_auto_time_idx"].max() - max_prediction_length
+        # add a constant column as group id if data only contains only one timeseries
+        if self._index_len == 1:
+            group_id = pandas.DataFrame([0] * len(data))
+            group_id.index = data.index
+            group_id.rename(columns={0: "_auto_group_id"}, inplace=True)
+            data = pandas.concat([group_id, data], axis=1)
         # save origin time idx for prediction
-        self._origin_time_idx = data[index_names + ["_auto_time_idx"]][
-            data["_auto_time_idx"] > training_cutoff
-        ]
+        self._origin_time_idx = data[
+            (
+                ([] if self._index_len > 1 else ["_auto_group_id"])
+                + self._new_index_names
+                + ["_auto_time_idx"]
+            )
+        ][data["_auto_time_idx"] > training_cutoff]
         # infer time_idx column, target column and instances from data
         _dataset_params = {
             "data": data[data["_auto_time_idx"] <= training_cutoff],
             "time_idx": "_auto_time_idx",
-            "target": data.columns[-2],
-            "group_ids": index_names[0:-1],
+            "target": self._new_target_name,
+            "group_ids": (
+                self._new_index_names[0:-1]
+                if self._index_len > 1
+                else ["_auto_group_id"]
+            ),
             "time_varying_known_reals": time_varying_known_reals,
-            "time_varying_unknown_reals": [data.columns[-2]],
+            "time_varying_unknown_reals": [self._new_target_name],
         }
         _dataset_params.update(dataset_params)
         # overwrite max_prediction_length
@@ -253,19 +307,19 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
         # index will be combined with output
         index = predictions.index
         # in pytorch-forecasting predictions, the first index is the time_idx
-        columns_names = index.columns.to_list()
-        time_idx = columns_names.pop(0)
+        index_names = index.columns.to_list()
+        time_idx = index_names.pop(0)
         # make time_idx the last index
-        columns_names.append(time_idx)
+        index_names.append(time_idx)
         # in pytorch-forecasting predictions,
         # the index only contains the start timepoint.
         data = index.loc[index.index.repeat(max_prediction_length)].reset_index(
             drop=True
         )
         # make time_idx the last index
-        data = data.reindex(columns=columns_names)
+        data = data.reindex(columns=index_names)
         # add the target column at the end
-        data[self.y_name] = output.flatten()
+        data[self._target_name] = output.flatten()
         # correct the time_idx after repeating
         # assume the time_idx column is continuous integers
         for i in range(output.shape[0]):
@@ -276,20 +330,36 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
             ] = list(range(start_time, start_time + max_prediction_length))
 
         # set the instance columns to multi index
-        data.set_index(columns_names, inplace=True)
-        self._origin_time_idx.set_index(columns_names, inplace=True)
+        data.set_index(index_names, inplace=True)
+        self._origin_time_idx.set_index(index_names, inplace=True)
         # add origin time_idx column to data
-        data = data.join(self._origin_time_idx, on=columns_names)
+        data = data.join(self._origin_time_idx, on=index_names)
         # drop _auto_time_idx column
-        data.reset_index(level=list(range(len(columns_names))), inplace=True)
+        data.reset_index(level=list(range(len(index_names))), inplace=True)
         data.drop("_auto_time_idx", axis=1, inplace=True)
-        columns_names.remove("_auto_time_idx")
+        index_names.remove("_auto_time_idx")
+        # drop _auto_group_id column
+        if self._index_len == 1:
+            data.drop("_auto_group_id", axis=1, inplace=True)
+            index_names.remove("_auto_group_id")
         # reindex to origin multiindex
         data.set_index(
-            columns_names + [self._time_idx_name],
+            index_names + [self._new_index_names[-1]],
             inplace=True,
         )
-
+        # set index names back to original input in fit
+        if self._index_len == 1:
+            rename_input = self._index_names[0]
+        else:
+            rename_input = self._index_names
+        data.index.rename(rename_input, inplace=True)
+        # set target name back to original input in fit
+        data.columns = [self._target_name]
+        # convert back to pd.series if needed
+        if self._convert_to_series:
+            data = pandas.Series(
+                data=data[self._target_name], index=data.index, name=self._target_name
+            )
         return data
 
 
