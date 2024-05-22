@@ -4,8 +4,8 @@
 import pytest
 
 from sktime.forecasting.compose import CategoryCompositor
+from sktime.forecasting.croston import Croston
 from sktime.forecasting.naive import NaiveForecaster
-from sktime.forecasting.sarimax import SARIMAX
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.transformations.series.tests.test_adi_cv import (
     _generate_erratic_series,
@@ -19,7 +19,7 @@ from sktime.transformations.series.tests.test_adi_cv import (
         (
             {
                 "smooth": NaiveForecaster(),
-                "intermittent": SARIMAX(),
+                "intermittent": Croston(),
             },
             _generate_smooth_series,
             NaiveForecaster(),
@@ -61,7 +61,7 @@ def test_forecaster_selection(forecasters, series_generator, chosen_forecaster):
         (
             {
                 "smooth": NaiveForecaster(),
-                "intermittent": SARIMAX(),
+                "intermittent": Croston(),
             },
             _generate_erratic_series,
             PolynomialTrendForecaster(),

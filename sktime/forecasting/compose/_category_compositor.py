@@ -4,8 +4,8 @@
 __author__ = ["shlok191"]
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.croston import Croston
 from sktime.forecasting.naive import NaiveForecaster
-from sktime.forecasting.sarimax import SARIMAX
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.series.adi_cv import ADICVTransformer
@@ -16,9 +16,10 @@ adi_cv_transformer = ADICVTransformer(features=["class"])
 class CategoryCompositor(BaseForecaster):
     """Compositor that utilizes varying forecasters by time series data's nature.
 
-    Applies a series-to-primitives transformer on a given time series and utilizes
-    generated primitive value to apply the most appropriate forecaster to the
-    given series.
+    Applies a series-to-primitives transformer on a given time series. Based on the
+    generated value from the transformer, one of multiple forecasters provided by
+    the user in the form of a dictionary (key => category, value => forecaster) is
+    selected. Finally, the chosen forecaster is fit to the data for future predictions.
 
     Parameters
     ----------
@@ -37,23 +38,19 @@ class CategoryCompositor(BaseForecaster):
     Raises
     ------
     AssertionError: If a valid transformer (an instance of BaseTransformer)
-    is not passed or if valid forecasters (instances of BaseForecaster) is not given.
+    is not passed or if valid forecasters (instances of BaseForecaster) are not given.
     """
 
     _tags = {
-        "y_inner_mtype": "pd.Series",
-        "X_inner_mtype": "pd.Series",
-        "scitype:y": "univariate",
-        "ignores-exogeneous-X": True,
+        "y_inner_mtype": "pd.DataFrame",
+        "X_inner_mtype": "pd.DataFrame",
+        "scitype:y": "both",
+        "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
         "enforce_index_type": None,
-        "handles-missing-data": False,
-        "capability:insample": True,
-        "capability:pred_int": False,
         "authors": ["shlok191"],
         "maintainers": ["shlok191"],
         "python_version": None,
-        "python_dependencies": ["statsmodels"],
     }
 
     def __init__(
@@ -76,6 +73,37 @@ class CategoryCompositor(BaseForecaster):
             assert isinstance(forecaster, BaseForecaster)
 
         # All checks OK!
+        # Assigning all capabilities on the basis of the capabilities
+        # of the passed forecasters
+
+        capability_tags = {
+            "ignores-exogeneous-X": False,
+            "requires-fh-in-fit": False,
+            "X-y-must-have-same-index": False,
+            "enforce_index_type": False,
+            "handles-missing-data": False,
+            "capability:insample": False,
+            "capability:pred_int": False,
+            "capability:pred_int:insample": False,
+        }
+
+        # Traversing all capability tags
+        for tag in capability_tags.keys():
+            # Checking the equivalent forecaster tags
+            true_for_all = True
+
+            for forecaster in self.forecasters.values():
+                # Fetching the forecaster tags
+                forecaster_tags = forecaster.get_tags()
+
+                if tag not in forecaster_tags or forecaster_tags[tag] is False:
+                    true_for_all = False
+                    break
+
+            capability_tags[tag] = true_for_all
+
+        # Update the capability tags
+        self.set_tags(**capability_tags)
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -104,6 +132,13 @@ class CategoryCompositor(BaseForecaster):
         ------
         ValueError: If the extrapolated category has no provided forecaster
         and if there is no fallback forecaster provided to the object!
+
+        Example:
+
+        If the passed transformer is an ADICVTransformer(), and the generated
+        series is a lumpy series; however, if there is no key matching "lumpy"
+        in the forecasters parameter, the fallback_forecaster will be used.
+        Additionally, if the fallback_forecaster is None, a ValueError will be thrown.
         """
         # passing time series through the provided transformer!
         self.category_ = self.transformer.fit_transform(X=y).iloc[0, 0]
@@ -234,7 +269,7 @@ class CategoryCompositor(BaseForecaster):
             "forecasters": {
                 "smooth": NaiveForecaster(),
                 "erratic": PolynomialTrendForecaster(),
-                "intermittent": SARIMAX(),
+                "intermittent": Croston(),
                 "lumpy": NaiveForecaster(),
             },
             "transformer": ADICVTransformer(features=["class"]),
@@ -245,7 +280,7 @@ class CategoryCompositor(BaseForecaster):
         param2 = {
             "forecasters": {},
             "transformer": ADICVTransformer(features=["class"]),
-            "fallback_forecaster": SARIMAX(),
+            "fallback_forecaster": Croston(),
         }
 
         params = [param1, param2]
