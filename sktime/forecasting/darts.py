@@ -130,8 +130,6 @@ class DartsXGBModel(_DartsAdapter):
         self.random_state = random_state
         self.multi_models = multi_models
         self.use_static_covariates = use_static_covariates
-        self.past_covariates = past_covariates
-        self.num_samples = num_samples
         self.kwargs = kwargs
         self.handle_kwargs()
 
@@ -142,9 +140,6 @@ class DartsXGBModel(_DartsAdapter):
         if self.kwargs is not None:
             for key, value in self.kwargs.items():
                 setattr(self, key, value)
-        else:
-            # no additional keyword arguments
-            pass
 
     def _create_forecaster(self: "DartsXGBModel"):
         """Create Darts model."""
