@@ -27,8 +27,11 @@ def test_deps_info():
     assert set(deps_info_default.keys()) == set(DEFAULT_DEPS_TO_SHOW)
 
     PKG_IMPORT_ALIAS = {"scikit-learn": "sklearn"}
+    KEY_ALIAS = {"sklearn": "scikit-learn"}
 
     for key in DEFAULT_DEPS_TO_SHOW:
+        if key in KEY_ALIAS:
+            key = KEY_ALIAS[key]
         key_is_available = _check_soft_dependencies(
             key, severity="none", package_import_alias=PKG_IMPORT_ALIAS
         )
