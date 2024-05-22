@@ -195,18 +195,6 @@ class CINNNetwork:
         self.hidden_dim_size = hidden_dim_size
         self.activation = activation if activation is not None else nn.ReLU
 
-        # TODO 0.30.0: remove this warning
-        warn(
-            "cINNNetwork has been renamed to CINNNetwork in sktime 0.29.0, "
-            "The estimator is available under the future name at its "
-            "current location, and will be available under its deprecated name "
-            "until 0.30.0. "
-            "To prepare for the name change, "
-            "replace cINNNetwork with CINNNetwork",
-            DeprecationWarning,
-            obj=self,
-        )
-
     def build(self):
         """Build the cINN."""
         return self._CINNNetwork(
@@ -217,7 +205,3 @@ class CINNNetwork:
             self.hidden_dim_size,
             self.activation,
         )
-
-
-# TODO 0.30.0: remove this alias altogether
-cINNNetwork = CINNNetwork
