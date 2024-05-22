@@ -4,8 +4,6 @@ __author__ = ["benHeid"]
 import numpy as np
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.utils.warnings import warn
-
 if _check_soft_dependencies("torch", severity="none"):
     import torch
     import torch.nn as nn

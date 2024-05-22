@@ -17,7 +17,6 @@ from sktime.networks.cinn import CINNNetwork
 from sktime.transformations.merger import Merger
 from sktime.transformations.series.fourier import FourierFeatures
 from sktime.transformations.series.summarize import WindowSummarizer
-from sktime.utils.warnings import warn
 
 if _check_soft_dependencies("torch", severity="none"):
     import torch
