@@ -7,7 +7,7 @@ import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
-__author__ = ["yarnabrina"]
+__author__ = ["yarnabrina", "fnhirwa"]
 
 
 class _DartsAdapter(BaseForecaster):
@@ -27,15 +27,21 @@ class _DartsAdapter(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["yarnabrina", "fnhirwa"],
+        "maintainers": ["yarnabrina", "fnhirwa"],
+        "python_version": ">=3.8",
+        "python_dependencies": ["u8darts"],
+        "python_dependencies_alias": {"u8darts": "darts"},
+        # estimator type
+        # --------------
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
         "enforce_index_type": pd.DatetimeIndex,
         "handles-missing-data": False,
         "capability:insample": False,
-        "python_version": ">=3.8",
-        "python_dependencies": ["u8darts"],
-        "python_dependencies_alias": {"u8darts": "darts"},
     }
 
     def __init__(
@@ -43,29 +49,21 @@ class _DartsAdapter(BaseForecaster):
         past_covariates: Optional[List[str]] = None,
         num_samples: Optional[int] = 1000,
     ) -> None:
-        super().__init__()
-        if past_covariates is not None and not isinstance(past_covariates, list):
+        if not isinstance(past_covariates, list) and past_covariates is not None:
             raise TypeError(
                 f"Expected past_covariates to be a list, found {type(past_covariates)}."
             )
-        self._past_covariates = [] if past_covariates is None else past_covariates
+        self.past_covariates = [] if past_covariates is None else past_covariates
         if not isinstance(num_samples, int):
             raise TypeError(
                 f"Expected num_samples to be an integer, found {type(num_samples)}."
             )
-        self._num_samples = num_samples
+        self.num_samples = num_samples
 
+        super().__init__()
+
+        # initialize internal variables to avoid AttributeError
         self._forecaster = None
-
-    @property
-    def past_covariates(self: "_DartsAdapter"):
-        """Return past covariates."""
-        return self._past_covariates
-
-    @property
-    def num_samples(self: "_DartsAdapter"):
-        """Return number of samples."""
-        return self._num_samples
 
     @staticmethod
     def convert_dataframe_to_timeseries(dataset: pd.DataFrame):

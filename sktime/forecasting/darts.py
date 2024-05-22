@@ -1,6 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Interfaces to estimators from darts by Unit8."""
-from typing import Any, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 from sktime.forecasting.base.adapters._darts import _DartsAdapter
 
@@ -79,8 +79,9 @@ class DartsXGBModel(_DartsAdapter):
         `series` passed to ``fit()`` contain static covariates. If ``True``, and static
         covariates are available at fitting time, will enforce that all target `series`
         have the same static covariate dimensionality in ``fit()`` and ``predict()``.
-    **kwargs
+    kwargs
         Additional keyword arguments passed to `xgb.XGBRegressor`.
+        Passed as a dictionary to conform to sklearn's API. Default: ``None``.
 
     References
     ----------
@@ -92,6 +93,12 @@ class DartsXGBModel(_DartsAdapter):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["yarnabrina", "fnhirwa"],
+        "maintainers": ["yarnabrina", "fnhirwa"],
+        # estimator type
+        # --------------
         "scitype:y": "both",
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
@@ -111,7 +118,7 @@ class DartsXGBModel(_DartsAdapter):
         random_state: Optional[int] = None,
         multi_models: Optional[bool] = True,
         use_static_covariates: Optional[bool] = True,
-        **kwargs: Any,
+        kwargs: Optional[dict] = None,
     ) -> None:
         self.lags = lags
         self.lags_past_covariates = lags_past_covariates
@@ -124,8 +131,18 @@ class DartsXGBModel(_DartsAdapter):
         self.multi_models = multi_models
         self.use_static_covariates = use_static_covariates
         self.kwargs = kwargs
+        self.handle_kwargs()
 
         super().__init__(past_covariates=past_covariates, num_samples=num_samples)
+
+    def handle_kwargs(self: "DartsXGBModel") -> None:
+        """Handle additional keyword arguments."""
+        if self.kwargs is not None:
+            for key, value in self.kwargs.items():
+                setattr(self, key, value)
+        else:
+            # no additional keyword arguments
+            pass
 
     def _create_forecaster(self: "DartsXGBModel"):
         """Create Darts model."""
@@ -163,8 +180,23 @@ class DartsXGBModel(_DartsAdapter):
         """
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
-        params = [{"lags": 1}]
-
+        params = [
+            {
+                "past_covariates": ["None"],
+                "num_samples": 1000,
+                "lags": None,
+                "lags_past_covariates": None,
+                "lags_future_covariates": None,
+                "output_chunk_length": 1,
+                "add_encoders": None,
+                "likelihood": None,
+                "quantiles": None,
+                "random_state": None,
+                "multi_models": True,
+                "use_static_covariates": True,
+                "kwargs": None,
+            }
+        ]
         return params
 
 
