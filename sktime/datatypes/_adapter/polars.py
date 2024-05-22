@@ -10,7 +10,7 @@ def get_mi_cols(obj):
 
 
 def convert_pandas_to_polars(
-    obj, schema_overrides=None, rechunk=True, nan_to_null=True
+    obj, schema_overrides=None, rechunk=True, nan_to_null=True, lazy=False
 ):
     """Convert pandas DataFrame to polars DataFrame. Preserving MultiIndex.
 
@@ -23,9 +23,11 @@ def convert_pandas_to_polars(
         Make sure that all data is in contiguous memory.
     nan_to_null : bool, optional (default=True)
         If data contains NaN values PyArrow will convert the NaN to None
+    lazy : bool, optional (default=False)
+        If True, return a LazyFrame instead of a DataFrame
     Returns
     -------
-    polars.DataFrame
+    polars.DataFrame or polars.LazyFrame (if lazy=True)
         MultiIndex levels 0 .. -1 of X are converted to columns of name
         __index__[indexname], where indexname is name of multiindex level,
         or the integer index if the level has no name
@@ -50,6 +52,10 @@ def convert_pandas_to_polars(
     obj = from_pandas(
         obj, schema_overrides=schema_overrides, rechunk=rechunk, nan_to_null=nan_to_null
     )
+
+    if lazy:
+        obj = obj.lazy()
+
     return obj
 
 
@@ -58,7 +64,7 @@ def convert_polars_to_pandas(obj):
 
     Parameters
     ----------
-    obj : polars.DataFrame
+    obj : polars.DataFrame, polars.LazyFrame
 
     Returns
     -------
@@ -67,6 +73,12 @@ def convert_polars_to_pandas(obj):
         by converting columns with names __index__[indexname] to MultiIndex levels,
         and other columns identical to those of obj.
     """
+    from polars.lazyframe.frame import LazyFrame
+
+    # convert to DataFrame if LazyFrame
+    if isinstance(obj, LazyFrame):
+        obj = obj.collect()
+
     obj = obj.to_pandas()
 
     def index_name(x):
