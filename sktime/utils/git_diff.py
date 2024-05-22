@@ -126,13 +126,26 @@ def get_changed_lines(file_path, only_indented=True):
         return []
 
 
-@lru_cache
 def get_packages_with_changed_specs():
     """Get packages with changed or added specs.
 
     Returns
     -------
     list of str : names of packages with changed or added specs
+    """
+    return list(_get_packages_with_changed_specs())
+
+
+@lru_cache
+def _get_packages_with_changed_specs():
+    """Get packages with changed or added specs.
+
+    Private version of get_packages_with_changed_specs,
+    to avoid side effects on the list return.
+
+    Returns
+    -------
+    tuple of str : names of packages with changed or added specs
     """
     from packaging.requirements import Requirement
 
@@ -161,6 +174,6 @@ def get_packages_with_changed_specs():
         packages.append(pkg)
 
     # make unique
-    packages = list(set(packages))
+    packages = tuple(set(packages))
 
     return packages
