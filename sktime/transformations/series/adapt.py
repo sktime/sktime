@@ -331,7 +331,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sklearn.feature_selection import VarianceThreshold
-        from sklearn.preprocessing import StandardScaler
+        from sklearn.preprocessing import LabelEncoder, StandardScaler
 
         params1 = {"transformer": StandardScaler(), "fit_in_transform": False}
         params2 = {
@@ -341,8 +341,9 @@ class TabularToSeriesAdaptor(BaseTransformer):
         }
         params3 = {"transformer": VarianceThreshold(), "pass_y": "fit"}
         params4 = {"transformer": VarianceThreshold()}
+        params5 = {"transformer": LabelEncoder(), "fit_in_transform": True}
 
-        return [params1, params2, params3, params4]
+        return [params1, params2, params3, params4, params5]
 
 
 class PandasTransformAdaptor(BaseTransformer):
