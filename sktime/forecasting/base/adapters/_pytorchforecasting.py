@@ -3,7 +3,7 @@
 import abc
 import functools
 import typing
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import pandas
 from pandas.api.types import is_numeric_dtype
@@ -38,7 +38,6 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
     def __init__(
         self: "_PytorchForecastingAdapter",
         model_params: Optional[Dict[str, Any]] = None,
-        allowed_encoder_known_variable_names: Optional[List[str]] = None,
         dataset_params: Optional[Dict[str, Any]] = None,
         train_to_dataloader_params: Optional[Dict[str, Any]] = None,
         validation_to_dataloader_params: Optional[Dict[str, Any]] = None,
@@ -46,7 +45,6 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
     ) -> None:
         super().__init__()
         self.model_params = model_params
-        self.allowed_encoder_known_variable_names = allowed_encoder_known_variable_names
         self.dataset_params = dataset_params
         self.trainer_params = trainer_params
         self.train_to_dataloader_params = train_to_dataloader_params
@@ -74,7 +72,6 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
         self._model_params = _none_check(self.model_params, {})
         algorithm_instance = self.algorithm_class.from_dataset(
             data,
-            self.allowed_encoder_known_variable_names,
             **self.algorithm_parameters,
             **self._model_params,
         )
