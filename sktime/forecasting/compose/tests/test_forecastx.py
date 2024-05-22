@@ -425,6 +425,7 @@ def test_forecaster_X_exogeneous(cols_to_forecast):
         columns=cols_to_forecast,
         forecaster_X_exogeneous="None",
     )
+
     pipeline2.fit(y_train, X=X_train, fh=fh)
     y_pred2 = pipeline2.predict(X=X_test.drop(columns=cols_to_forecast))
     np.testing.assert_array_equal(y_pred1.index, y_pred2.index)
