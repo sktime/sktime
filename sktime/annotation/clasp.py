@@ -225,7 +225,7 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
 
     # todo 0.31.0: remove fmt argument, remove _fmt attribute and warning
     def __init__(
-            self, period_length=10, n_cps=1, fmt="deprecated", exclusion_radius=0.05
+        self, period_length=10, n_cps=1, fmt="deprecated", exclusion_radius=0.05
     ):
         self.period_length = int(period_length)
         self.n_cps = n_cps
