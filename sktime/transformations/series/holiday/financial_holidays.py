@@ -71,7 +71,6 @@ class FinancialHolidaysTransformer(BaseTransformer):
         # --------------
         "authors": "yarnabrina",
         "maintainers": "yarnabrina",
-        "python_version": ">=3.8",
         "python_dependencies": ["holidays"],
         # estimator type
         # --------------

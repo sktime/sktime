@@ -162,6 +162,7 @@ class BaseObject(_BaseObject):
         py39_or_higher = SpecifierSet(">=3.9")
         sys_version = sys.version.split(" ")[0]
 
+        # todo 0.31.0 - check whether 3.9 eol is reached. If yes, remove this msg.
         if sys_version not in py39_or_higher:
             warn(
                 f"From sktime 0.30.0, sktime requires Python version >=3.9, "
