@@ -608,7 +608,7 @@ class BaseClassifier(BasePanelMixin):
         else:  # method == "predict_proba"
             return np.repeat([[1]], n_instances, axis=0)
 
-    def score(self, X, y, multioutput="uniform_average") -> float:
+    def score(self, X, y) -> float:
         """Scores predicted labels against ground truth labels on X.
 
         Parameters
@@ -632,7 +632,7 @@ class BaseClassifier(BasePanelMixin):
 
         Returns
         -------
-        float, accuracy score of predict(X) vs y.
+        float, accuracy score of predict(X) vs y
         """
         from sklearn.metrics import accuracy_score
 
