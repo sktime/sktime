@@ -51,8 +51,8 @@ import pandas as pd
 import sktime
 from sktime import utils
 from sktime.base._serialize import load
-from sktime.utils.multiindex import flatten_multiindex
 from sktime.utils.dependencies._dependencies import _check_mlflow_dependencies
+from sktime.utils.multiindex import flatten_multiindex
 
 if _check_mlflow_dependencies(severity="warning"):
     import yaml

@@ -7,8 +7,8 @@ import warnings
 
 import numpy as np
 
-from sktime.utils.numba.njit import njit
 from sktime.utils.dependencies._dependencies import _check_soft_dependencies
+from sktime.utils.numba.njit import njit
 
 if _check_soft_dependencies("numba", severity="none"):
     from numba.core.errors import NumbaWarning
