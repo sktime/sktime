@@ -761,6 +761,10 @@ class ProximityStump(BaseClassifier):
                 stacklevel=2,
             )
 
+        # ensure it isn't multiprocessing, if it is change to loky
+        if self.backend == "multiprocessing":
+            self.backend = "loky"
+
     def pick_distance_measure(self):
         """Pick a distance measure.
 
@@ -879,10 +883,6 @@ class ProximityStump(BaseClassifier):
         meta["exemplars"] = self.X_exemplar
         meta["distance_measure"] = self._distance_measure()
         if self.backend:
-            # ensure it isn't multiprocessing, if it is change to loky
-            if self.backend == "multiprocessing":
-                self.backend = "loky"
-
             iters = [X.iloc[index, :] for index in range(X.shape[0])]
             distances = parallelize(
                 fun=self._distance_to_exemplars_inst,
@@ -1025,10 +1025,21 @@ class ProximityStump(BaseClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
+
         params1 = {"random_state": 0, "backend": "loky"}
-        params2 = {"random_state": 42, "distance_measure": "dtw", "backend": "dask"}
-        params3 = {"random_state": 35, "backend": "threading"}
-        return [params1, params2, params3]
+        params2 = {
+            "random_state": 42,
+            "distance_measure": "dtw",
+            "backend": "threading",
+        }
+        params_set = [params1, params2]
+        if _check_soft_dependencies("dask", severity="none"):
+            params3 = {
+                "backend": "dask",
+            }
+            params_set.append(params3)
+        return params_set
 
 
 class ProximityTree(BaseClassifier):
@@ -1142,6 +1153,10 @@ class ProximityTree(BaseClassifier):
         self._random_object = None
 
         super().__init__()
+
+        # ensure it isn't multiprocessing, if it is change to loky
+        if self.backend == "multiprocessing":
+            self.backend = "loky"
 
     def pick_distance_measure(self):
         """Pick a distance measure.
@@ -1371,15 +1386,29 @@ class ProximityTree(BaseClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
+
         params1 = {
             "max_depth": 5,
             "n_stump_evaluations": 2,
             "distance_measure": "dtw",
-            "backend": "dask",
+            "backend": "threading",
         }
-        params2 = {"backend": "loky"}
-        params3 = {"backend": "threading"}
-        return [params1, params2, params3]
+        params2 = {
+            "max_depth": 4,
+            "backend": "loky",
+        }
+        params_set = [params1, params2]
+
+        if _check_soft_dependencies("dask", severity="none"):
+            params3 = {
+                "max_depth": 5,
+                "n_stump_evaluations": 2,
+                "distance_measure": "dtw",
+                "backend": "dask",
+            }
+            params_set.append(params3)
+        return params_set
 
 
 class ProximityForest(BaseClassifier):
@@ -1514,6 +1543,10 @@ class ProximityForest(BaseClassifier):
 
         super().__init__()
 
+        # ensure it isn't multiprocessing, if it is change to loky
+        if self.backend == "multiprocessing":
+            self.backend = "loky"
+
     def pick_distance_measure(self):
         """Pick a distance measure.
 
@@ -1600,10 +1633,6 @@ class ProximityForest(BaseClassifier):
         meta["y"] = self.y
         meta["_random_object"] = self._random_object
         if self.backend:
-            # ensure it isn't multiprocessing, if it is change to loky
-            if self.backend == "multiprocessing":
-                self.backend = "loky"
-
             iters = [index for index in range(self.n_estimators)]
             self.trees = parallelize(
                 fun=self._fit_tree,
@@ -1696,10 +1725,6 @@ class ProximityForest(BaseClassifier):
         meta = {}
         meta["X"] = X
         if self.backend:
-            # ensure it isn't multiprocessing, if it is change to loky
-            if self.backend == "multiprocessing":
-                self.backend = "loky"
-
             iters = self.trees
             distributions = parallelize(
                 fun=self._predict_proba_tree,
@@ -1711,6 +1736,7 @@ class ProximityForest(BaseClassifier):
         else:
             iters = self.trees
             distributions = [self._predict_proba_tree(tree, meta) for tree in iters]
+
         distributions = np.array(distributions)
         distributions = np.sum(distributions, axis=0)
         normalize(distributions, copy=False, norm="l1")
@@ -1790,12 +1816,18 @@ class ProximityForest(BaseClassifier):
             return {"n_estimators": 3, "max_depth": 2, "n_stump_evaluations": 2}
         else:
             params1 = {
-                # "n_estimators": 2,
-                # "max_depth": 1,
-                # "n_stump_evaluations": 1,
+                "n_estimators": 2,
+                "max_depth": 3,
+                "n_stump_evaluations": 1,
+                "backend": "loky",
+            }
+            params2 = {
+                "n_estimators": 3,
+                "max_depth": 5,
+                "n_stump_evaluations": 2,
                 "backend": "threading",
             }
-            params_set = [params1]
+            params_set = [params1, params2]
 
             if _check_soft_dependencies("dask", severity="none"):
                 params3 = {
