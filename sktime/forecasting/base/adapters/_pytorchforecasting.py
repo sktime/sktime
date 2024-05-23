@@ -28,7 +28,7 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
         # estimator type
         # --------------
         "y_inner_mtype": ["pd-multiindex", "pd_multiindex_hier", "pd.Series"],
-        "X_inner_mtype": ["pd-multiindex", "pd_multiindex_hier"],
+        "X_inner_mtype": ["pd-multiindex", "pd_multiindex_hier", "pd.Series"],
         "scitype:y": "univariate",
         "requires-fh-in-fit": True,
         "X-y-must-have-same-index": True,
@@ -118,10 +118,8 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
         self._dataset_params = _none_check(self.dataset_params, {})
         self._max_prediction_length = fh.to_relative(self.cutoff)[-1]
         # convert series to frame
-        if isinstance(y, pandas.Series):
-            _y = deepcopy(y).to_frame()
-        else:
-            _y = deepcopy(y)
+        _y, self._convert_to_series = _series_to_frame(y)
+        _X, _ = _series_to_frame(X)
         # store the target column name and index names(probably [None])
         self._target_name = _y.columns[-1]
         self._index_names = _y.index.names
@@ -131,7 +129,7 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
             self._X_columns = X.columns.tolist()
         # convert data to pytorch-forecasting datasets
         training, validation = self._Xy_to_dataset(
-            deepcopy(X), _y, self._dataset_params, self._max_prediction_length
+            _X, _y, self._dataset_params, self._max_prediction_length
         )
         self._forecaster, self._trainer = self._instantiate_model(training)
         self._train_to_dataloader_params = {"train": True}
@@ -187,15 +185,11 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
             Point predictions
         """
         # convert series to frame
-        if isinstance(y, pandas.Series):
-            _y = deepcopy(y).to_frame()
-            self._convert_to_series = True
-        else:
-            _y = deepcopy(y)
-            self._convert_to_series = False
+        _y, self._convert_to_series = _series_to_frame(y)
+        _X, _ = _series_to_frame(X)
         # convert data to pytorch-forecasting datasets
         training, validation = self._Xy_to_dataset(
-            deepcopy(X), _y, self._dataset_params, self._max_prediction_length
+            _X, _y, self._dataset_params, self._max_prediction_length
         )
         # load model from checkpoint
         best_model_path = self._trainer.checkpoint_callback.best_model_path
@@ -365,3 +359,16 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
 
 def _none_check(value, default):
     return value if value is not None else default
+
+
+def _series_to_frame(data):
+    converted = False
+    if data is not None:
+        if isinstance(data, pandas.Series):
+            _data = deepcopy(data).to_frame()
+            converted = True
+        else:
+            _data = deepcopy(data)
+    else:
+        _data = None
+    return _data, converted
