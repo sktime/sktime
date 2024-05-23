@@ -6,6 +6,7 @@ import typing
 from copy import deepcopy
 from typing import Any, Dict, Optional
 
+import numpy as np
 import pandas
 from pandas.api.types import is_numeric_dtype
 
@@ -117,6 +118,8 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
         """
         self._dataset_params = _none_check(self.dataset_params, {})
         self._max_prediction_length = fh.to_relative(self.cutoff)[-1]
+        # check if dummy X is needed
+        X = self._dummy_X(X, y)
         # convert series to frame
         _y, self._convert_to_series = _series_to_frame(y)
         _X, _ = _series_to_frame(X)
@@ -184,6 +187,8 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
             guaranteed to have a single column/variable
             Point predictions
         """
+        # check if dummy X is needed
+        X = self._dummy_X(X, y)
         # convert series to frame
         _y, self._convert_to_series = _series_to_frame(y)
         _X, _ = _series_to_frame(X)
@@ -355,6 +360,16 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
                 data=data[self._target_name], index=data.index, name=self._target_name
             )
         return data
+
+    def _dummy_X(self, X, y):
+        rX = self.algorithm_class.__name__ == "TemporalFusionTransformer"
+        if rX and X is None:
+            print(  # noqa T001
+                "TemporalFusionTransformer requires X!\
+                A constant dummy X with values all zero will be used!"
+            )
+            X = pandas.DataFrame(data=np.zeros(len(y)), index=y.index)
+        return X
 
 
 def _none_check(value, default):
