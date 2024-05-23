@@ -259,17 +259,18 @@ class PyKANForecaster(BaseForecaster):
         """
         params = [
             {
-                "grids": [10, 20],
+                "grids": [2, 3],
                 "model_params": {"k": 2},
                 "fit_params": {"steps": 1},
                 "input_layer_size": 2,
+                "hidden_layers": (1,),
             },
             {
                 "input_layer_size": 2,
-                "grids": [10],
+                "grids": [3],
                 "model_params": {"k": 2},
                 "fit_params": {"steps": 1},
-                "hidden_layers": (2, 2),
+                "hidden_layers": (1, 1),
             },
         ]
         return params
