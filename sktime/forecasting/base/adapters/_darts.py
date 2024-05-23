@@ -1,7 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for Darts models."""
 import abc
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import pandas as pd
 
@@ -46,14 +46,14 @@ class _DartsAdapter(BaseForecaster):
 
     def __init__(
         self: "_DartsAdapter",
-        past_covariates: Optional[List[str]] = None,
+        past_covariates: Optional[Union[List[str], None]] = None,
         num_samples: Optional[int] = 1000,
     ) -> None:
         if not isinstance(past_covariates, list) and past_covariates is not None:
             raise TypeError(
                 f"Expected past_covariates to be a list, found {type(past_covariates)}."
             )
-        self.past_covariates = [] if past_covariates is None else past_covariates
+        self.past_covariates = past_covariates
         if not isinstance(num_samples, int):
             raise TypeError(
                 f"Expected num_samples to be an integer, found {type(num_samples)}."
@@ -107,22 +107,38 @@ class _DartsAdapter(BaseForecaster):
         if dataset is None:
             future_known_dataset = None
             future_unknown_dataset = None
-        elif self.past_covariates:
+
+        elif self.past_covariates is not None and self._lags_past_covariates:
             future_unknown_dataset = self.convert_dataframe_to_timeseries(
                 dataset[self.past_covariates]
             )
             future_known_dataset = self.convert_dataframe_to_timeseries(
                 dataset.drop(columns=self.past_covariates)
             )
-        else:
+        elif self._lags_future_covariates:
             future_unknown_dataset = None
             future_known_dataset = self.convert_dataframe_to_timeseries(dataset)
+        else:
+            future_known_dataset = None
+            future_unknown_dataset = None
 
         return future_known_dataset, future_unknown_dataset
 
     @abc.abstractmethod
     def _create_forecaster(self: "_DartsAdapter"):
         """Create Darts model."""
+
+    @property
+    @abc.abstractmethod
+    def _lags_past_covariates(self):
+        """Get the lags_past_covariates value."""
+        pass
+
+    @property
+    @abc.abstractmethod
+    def _lags_future_covariates(self):
+        """Get the lags_future_covariates value."""
+        pass
 
     def _fit(
         self: "_DartsAdapter",
@@ -157,9 +173,7 @@ class _DartsAdapter(BaseForecaster):
 
         endogenous_actuals = self.convert_dataframe_to_timeseries(y)
         unknown_exogenous, known_exogenous = self.convert_exogenous_dataset(X)
-
         self._forecaster = self._create_forecaster()
-
         self._forecaster.fit(
             endogenous_actuals,
             past_covariates=unknown_exogenous,
@@ -199,7 +213,6 @@ class _DartsAdapter(BaseForecaster):
         unknown_exogenous, known_exogenous = self.convert_exogenous_dataset(X)
 
         maximum_forecast_horizon = fh.to_relative(self.cutoff)[-1]
-
         endogenous_point_predictions = self._forecaster.predict(
             maximum_forecast_horizon,
             past_covariates=unknown_exogenous,
@@ -207,6 +220,14 @@ class _DartsAdapter(BaseForecaster):
             num_samples=1,
         ).pd_dataframe()
 
+        if X is not None and len(X.columns) == len(
+            endogenous_point_predictions.columns
+        ):
+            endogenous_point_predictions.columns = X.columns
+        else:
+            endogenous_point_predictions.columns = range(
+                len(endogenous_point_predictions.columns)
+            )
         return endogenous_point_predictions
 
     # todo 0.22.0 - switch legacy_interface default to False

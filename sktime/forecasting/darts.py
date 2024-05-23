@@ -1,10 +1,12 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Interfaces to estimators from darts by Unit8."""
-from typing import List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
+
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base.adapters._darts import _DartsAdapter
 
-__author__ = ["yarnabrina"]
+__author__ = ["yarnabrina", "fnhirwa"]
 
 
 class DartsXGBModel(_DartsAdapter):
@@ -22,18 +24,26 @@ class DartsXGBModel(_DartsAdapter):
     lags
         Lagged target values used to predict the next time step. If an integer is given
         the last `lags` past lags are used (from -1 backward). Otherwise a list of
-        integers with lags is required (each lag must be < 0).
+        integers with lags is required (each lag must be < 0). If a dictionary is given,
+        keys correspond to the component names
+        (of first series when using multiple series) and
+        the values correspond to the component lags(integer or list of integers).
     lags_past_covariates
         Number of lagged past_covariates values used to predict the next time step. If
         an integer is given the last `lags_past_covariates` past lags are used
         (inclusive, starting from lag -1). Otherwise a list of integers
-        with lags < 0 is required.
+        with lags < 0 is required. If a dictionary is given, keys correspond to the
+        past_covariates component names(of first series when using multiple series)
+        and the values correspond to the component lags(integer or list of integers).
     lags_future_covariates
         Number of lagged future_covariates values used to predict the next time step. If
         a tuple (past, future) is given the last `past` lags in the past are used
         (inclusive, starting from lag -1) along with the first `future` future lags
         (starting from 0 - the prediction time - up to `future - 1` included). Otherwise
-        a list of integers with lags is required.
+        a list of integers with lags is required. If dictionary is given,
+        keys correspond to the future_covariates component names
+        (of first series when using multiple series) and the values
+        correspond to the component lags(integer or list of integers).
     output_chunk_length
         Number of time steps predicted at once by the internal regression model. Does
         not have to equal the forecast horizon `n` used in `predict()`. However, setting
@@ -106,11 +116,22 @@ class DartsXGBModel(_DartsAdapter):
 
     def __init__(
         self: "DartsXGBModel",
-        past_covariates: Optional[List[str]] = None,
+        past_covariates: Optional[Union[List[str], None]] = None,
         num_samples: Optional[int] = 1000,
-        lags: Optional[Union[int, list]] = None,
-        lags_past_covariates: Optional[Union[int, List[int]]] = None,
-        lags_future_covariates: Optional[Union[Tuple[int, int], List[int]]] = None,
+        lags: Optional[
+            Union[int, List[int], Dict[str, Union[int, List[int]]], None]
+        ] = None,
+        lags_past_covariates: Optional[
+            Union[int, List[int], Dict[str, Union[int, List[int]]], None]
+        ] = None,
+        lags_future_covariates: Optional[
+            Union[
+                Tuple[int, int],
+                List[int],
+                Dict[str, Union[Tuple[int, int], List[int]]],
+                None,
+            ]
+        ] = None,
         output_chunk_length: Optional[int] = 1,
         add_encoders: Optional[dict] = None,
         likelihood: Optional[str] = None,
@@ -159,6 +180,20 @@ class DartsXGBModel(_DartsAdapter):
             kwargs=self.kwargs,
         )
 
+    @property
+    def _lags_past_covariates(
+        self: "DartsXGBModel",
+    ) -> Union[int, List[int], Dict[str, Union[int, List[int]]], None]:
+        return self.lags_past_covariates
+
+    @property
+    def _lags_future_covariates(
+        self: "DartsXGBModel",
+    ) -> Union[
+        Tuple[int, int], List[int], Dict[str, Union[Tuple[int, int], List[int]]], None
+    ]:
+        return self.lags_future_covariates
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -177,23 +212,23 @@ class DartsXGBModel(_DartsAdapter):
         """
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
-        params = [
-            {
-                "past_covariates": ["None"],
-                "num_samples": 1000,
-                "lags": None,
-                "lags_past_covariates": None,
-                "lags_future_covariates": None,
-                "output_chunk_length": 1,
-                "add_encoders": None,
-                "likelihood": None,
-                "quantiles": None,
-                "random_state": None,
-                "multi_models": True,
-                "use_static_covariates": True,
-                "kwargs": None,
-            }
-        ]
+        if _check_soft_dependencies("darts"):
+            params = [
+                {
+                    "num_samples": 100,
+                    "lags": 12,
+                    "output_chunk_length": 1,
+                    "add_encoders": None,
+                    "likelihood": "quantile",
+                    "quantiles": None,
+                    "random_state": None,
+                    "multi_models": True,
+                    "use_static_covariates": True,
+                    "kwargs": None,
+                }
+            ]
+        else:
+            params = [{}]
         return params
 
 
