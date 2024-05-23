@@ -85,7 +85,7 @@ class TestAllRegressors(RegressorFixtureGenerator, QuickTester):
         # check predict
         assert isinstance(y_pred, np.ndarray)
         assert y_pred.shape == (X_new_instances,)
-        assert is_float(y_pred)
+        assert np.issubdtype(y_pred.dtype, np.floating)
 
     def test_multioutput(self, estimator_instance):
         """Test multioutput regression for all classifiers.
