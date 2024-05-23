@@ -100,7 +100,10 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                 {
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
-                    }
+                    },
+                    "dataset_params": {
+                        "max_encoder_length": 3,
+                    },
                 },
                 {
                     "trainer_params": {
@@ -111,6 +114,9 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                         "dropout": 0.1,
                         "optimizer": "Adam",
                         "log_val_interval": 1,
+                    },
+                    "dataset_params": {
+                        "max_encoder_length": 3,
                     },
                 },
             ]
@@ -129,7 +135,10 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                 {
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
-                    }
+                    },
+                    "dataset_params": {
+                        "max_encoder_length": 3,
+                    },
                 },
                 {
                     "trainer_params": {
@@ -141,6 +150,9 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                         "loss": QuantileLoss(),
                         "optimizer": "Adam",
                         "log_val_interval": 1,
+                    },
+                    "dataset_params": {
+                        "max_encoder_length": 3,
                     },
                 },
             ]
@@ -228,7 +240,10 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                 {
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
-                    }
+                    },
+                    "dataset_params": {
+                        "max_encoder_length": 3,
+                    },
                 },
                 {
                     "trainer_params": {
@@ -239,6 +254,9 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                         "num_block_layers": [5, 5],
                         "log_interval": 10,
                         "backcast_loss_ratio": 1.0,
+                    },
+                    "dataset_params": {
+                        "max_encoder_length": 3,
                     },
                 },
             ]
@@ -256,7 +274,10 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                 {
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
-                    }
+                    },
+                    "dataset_params": {
+                        "max_encoder_length": 3,
+                    },
                 },
                 {
                     "trainer_params": {
@@ -267,6 +288,9 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                         "num_block_layers": [5, 5],
                         "log_interval": 10,
                         "backcast_loss_ratio": 1.0,
+                    },
+                    "dataset_params": {
+                        "max_encoder_length": 3,
                     },
                 },
             ]
