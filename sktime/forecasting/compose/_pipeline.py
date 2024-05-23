@@ -1376,13 +1376,13 @@ class ForecastX(BaseForecaster):
         self.fh_X = fh_X
         self.behaviour = behaviour
         self.columns = columns
-        self.forecaster_X_exogeneous = forecaster_X_exogeneous
         if isinstance(forecaster_X_exogeneous, str):
             if forecaster_X_exogeneous not in ["None", "complement"]:
                 raise ValueError(
                     'forecaster_X_exogeneous must be one of "None", "complement",'
                     "or a pandas.Index coercible"
                 )
+        self.forecaster_X_exogeneous = forecaster_X_exogeneous
 
         if predict_behaviour not in ["use_forecasts", "use_actuals"]:
             raise ValueError(
@@ -1583,9 +1583,11 @@ class ForecastX(BaseForecaster):
             return None
 
         if ixx == "complement":
-            X_for_fcX = X.drop(columns=self.columns)
+            X_for_fcX = X.drop(columns=self.columns, errors="ignore")
+
             if X_for_fcX.shape[1] < 1:
                 return None
+
             return X_for_fcX
 
         ixx_pd = pd.Index(ixx)
