@@ -2619,8 +2619,7 @@ class BaseGlobalForecaster(BaseForecaster):
             y_pred = self._predict(fh=fh, X=X_inner, y=y_inner)
         else:
             # otherwise we call the vectorized version of predict
-            # TODO add y to _vectorize
-            y_pred = self._vectorize("predict", X=X_inner, fh=fh)
+            y_pred = self._vectorize("predict", y=y_inner, X=X_inner, fh=fh)
 
         # convert to output mtype, identical with last y mtype seen
         y_out = convert_to(
