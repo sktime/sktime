@@ -228,6 +228,7 @@ EXCLUDED_TESTS = {
     "LTSFDLinearForecaster": ["test_predict_time_index_in_sample_full"],
     "LTSFNLinearForecaster": ["test_predict_time_index_in_sample_full"],
     "HFTransformersForecaster": ["test_predict_time_index_in_sample_full"],
+    "PyKANForecaster": ["test_predict_time_index_in_sample_full"],
     "WEASEL": ["test_multiprocessing_idempotent"],  # see 5658
     # StatsForecastMSTL is failing in probabistic forecasts, see #5703, #5920
     "StatsForecastMSTL": ["test_pred_int_tag"],
