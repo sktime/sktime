@@ -116,7 +116,7 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
             When ``freq="auto"`` and cannot be interpreted from ``ForecastingHorizon``
         """
         self._dataset_params = _none_check(self.dataset_params, {})
-        self._max_prediction_length = fh.to_relative()[-1]
+        self._max_prediction_length = fh.to_relative(self.cutoff)[-1]
         # convert series to frame
         if isinstance(y, pandas.Series):
             _y = deepcopy(y).to_frame()
