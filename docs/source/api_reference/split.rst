@@ -47,6 +47,7 @@ They have tag ``"split_type"="temporal"``.
     SingleWindowSplitter
     SlidingWindowSplitter
     ExpandingWindowSplitter
+    ExpandingCutoffSplitter
     ExpandingGreedySplitter
     TemporalTrainTestSplitter
 
