@@ -629,26 +629,16 @@ class BaseClassifier(BasePanelMixin):
             0-th indices correspond to instance indices in X
             1-st indices (if applicable) correspond to multioutput vector indices in X
             supported sktime types: np.ndarray (1D, 2D), pd.Series, pd.DataFrame
-        multioutput : str, optional (default="uniform_average")
-            {"raw_values", "uniform_average"}, array-like of shape
-            (n_outputs,) or None, default="uniform_average".
-            Defines aggregating of multiple output scores. Array-like value defines
-            weights used to average scores.
 
         Returns
         -------
-        float (default) or 1D np.array of float
-            accuracy score of predict(X) vs y.
-            float if multioutput="uniform_average" or y is univariate,
-            1D np.array if multioutput="raw_values" and y is multivariate
+        float, accuracy score of predict(X) vs y.
         """
         from sklearn.metrics import accuracy_score
 
         self.check_is_fitted()
 
-        return accuracy_score(
-            y, self.predict(X), normalize=True, multioutput=multioutput
-        )
+        return accuracy_score(y, self.predict(X), normalize=True)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
