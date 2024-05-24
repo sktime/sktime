@@ -13,7 +13,7 @@ from sktime.transformations.base import BaseTransformer
 class Bollinger(BaseTransformer):
     """Apply Bollinger bounds to a timeseries.
 
-    The transformation works for univariate timeseries.
+    The transformation works for univariate and multivariate timeseries.
 
     Parameters
     ----------
@@ -155,7 +155,7 @@ class Bollinger(BaseTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        return ({"window": 12, "k": 1},)
+        return [{"window": 12, "k": 1}, {"window": 2, "k": 1.2}]
 
 
 def _bollinger_transform(df, window, k):
