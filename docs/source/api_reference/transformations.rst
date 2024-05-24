@@ -585,6 +585,14 @@ These transformers create a series based on a sequence of sliding windows.
 
     HOG1DTransformer
 
+.. currentmodule:: sktime.transformations.series.bollinger
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Bolllinger
+
 Multivariate-to-univariate
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
