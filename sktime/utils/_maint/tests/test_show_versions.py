@@ -30,10 +30,10 @@ def test_deps_info():
     KEY_ALIAS = {"sklearn": "scikit-learn"}
 
     for key in DEFAULT_DEPS_TO_SHOW:
-        if key in KEY_ALIAS:
-            key = KEY_ALIAS[key]
         key_is_available = _check_soft_dependencies(
-            key, severity="none", package_import_alias=PKG_IMPORT_ALIAS
+            KEY_ALIAS.get(key, key),
+            severity="none",
+            package_import_alias=PKG_IMPORT_ALIAS,
         )
         assert (deps_info_default[key] is None) != key_is_available
         if key_is_available:
