@@ -32,19 +32,10 @@ def test_bollinger_against_raw_implementation(window, k):
     )
 
 
-def test_bollinger_window_input_error():
-    y = load_airline()
-    t = Bollinger(window=1, k=1)
+@pytest.mark.parametrize("window", [1, 12])
+@pytest.mark.parametrize("k", [1, 0])
+def test_bollinger_input_error(window, k):
     try:
-        t.fit_transform(y)
-    except AssertionError("window must be greater than 1, passed 1"):
-        return True
-
-
-def test_bollinger_k_input_error():
-    y = load_airline()
-    t = Bollinger(window=12, k=0)
-    try:
-        t.fit_transform(y)
-    except AssertionError("k must be positive, passed 0"):
+        Bollinger(window=window, k=k)
+    except AssertionError:
         return True
