@@ -4,6 +4,8 @@
 __author__ = ["ishanpai"]
 __all__ = ["Bollinger"]
 
+from typing import Union
+
 import pandas as pd
 
 from sktime.datatypes._utilities import get_cutoff, update_data
@@ -62,8 +64,10 @@ class Bollinger(BaseTransformer):
     }
 
     def __init__(self, window, k=1, memory="all"):
-        assert window > 1, f"window must be greater than 1, passed {window}"
-        assert k > 0, f"k must be positive, passed {k}"
+        if window <= 1:
+            raise ValueError(f"window must be greater than 1, passed {window}")
+        if k <= 0:
+            raise ValueError(f"k must be positive, passed {k}")
         self.window = window
         self.k = k
         self.memory = memory
@@ -158,7 +162,9 @@ class Bollinger(BaseTransformer):
         return [{"window": 12, "k": 1}, {"window": 2, "k": 1.2}]
 
 
-def _bollinger_transform(df, window, k):
+def _bollinger_transform(
+    df: Union[pd.Series, pd.DataFrame], window: int, k: float
+) -> pd.DataFrame:
     df_ma = df.rolling(window=window).mean()
     df_std = df.rolling(window=window).std()
     df_upper = df_ma + k * df_std

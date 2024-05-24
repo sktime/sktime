@@ -35,7 +35,5 @@ def test_bollinger_against_raw_implementation(window, k):
 @pytest.mark.parametrize("window", [1, 12])
 @pytest.mark.parametrize("k", [1, 0])
 def test_bollinger_input_error(window, k):
-    try:
+    with pytest.raises(ValueError):
         Bollinger(window=window, k=k)
-    except AssertionError:
-        return True
