@@ -244,7 +244,7 @@ docs = [
   "pydata-sphinx-theme",
   "Sphinx!=7.2.0,<8.0.0",
   "sphinx-copybutton",
-  "sphinx-design<0.6.0",
+  "sphinx-design<0.7.0",
   "sphinx-gallery<0.17.0",
   "sphinx-issues<5.0.0",
   "tabulate",
