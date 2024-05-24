@@ -392,6 +392,14 @@ Filtering and denoising
 
     ThetaLinesTransformer
 
+.. currentmodule:: sktime.transformations.series.bollinger
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Bolllinger
+
 Differencing, slope, kinematics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -584,14 +592,6 @@ These transformers create a series based on a sequence of sliding windows.
     :template: class.rst
 
     HOG1DTransformer
-
-.. currentmodule:: sktime.transformations.series.bollinger
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    Bolllinger
 
 Multivariate-to-univariate
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

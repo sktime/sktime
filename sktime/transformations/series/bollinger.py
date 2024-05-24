@@ -48,7 +48,7 @@ class Bollinger(BaseTransformer):
         # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
-        "scitype:transform-output": "Panel",
+        "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": False,  # is this an instance-wise transform?
         "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
