@@ -659,10 +659,11 @@ class ProximityStump(BaseClassifier):
 
     Parameters
     ----------
-    backend : {"dask", "loky", "multiprocessing", "threading"}, by default "loky".
+    backend : {None, "dask", "loky", "multiprocessing", "threading"}, by default "loky".
         Runs parallel evaluate if specified. For ProximityStump, "multiprocessing"
         will result in an error during parallelization, so it cannot be used.
         If "multiprocessing" is selected, it will default to "loky" instead.
+        Specify None if no parallelization is needed.
 
     backend_params : dict, optional
         additional parameters passed to the backend as config.
@@ -1049,10 +1050,11 @@ class ProximityTree(BaseClassifier):
 
     Parameters
     ----------
-    backend : {"dask", "loky", "multiprocessing", "threading"}, by default "loky".
-        Runs parallel evaluate if specified. For ProximityTree, "multiprocessing"
+    backend : {None, "dask", "loky", "multiprocessing", "threading"}, by default "loky".
+        Runs parallel evaluate if specified. For ProximityStump, "multiprocessing"
         will result in an error during parallelization, so it cannot be used.
         If "multiprocessing" is selected, it will default to "loky" instead.
+        Specify None if no parallelization is needed.
 
     backend_params : dict, optional
         additional parameters passed to the backend as config.
@@ -1419,10 +1421,11 @@ class ProximityForest(BaseClassifier):
 
     Parameters
     ----------
-    backend : {"dask", "loky", "multiprocessing", "threading"}, by default "loky".
-        Runs parallel evaluate if specified. For ProximityForest, "multiprocessing"
+    backend : {None, "dask", "loky", "multiprocessing", "threading"}, by default "loky".
+        Runs parallel evaluate if specified. For ProximityStump, "multiprocessing"
         will result in an error during parallelization, so it cannot be used.
         If "multiprocessing" is selected, it will default to "loky" instead.
+        Specify None if no parallelization is needed.
 
     backend_params : dict, optional
         additional parameters passed to the backend as config.
@@ -1540,7 +1543,6 @@ class ProximityForest(BaseClassifier):
         self.X = None
         self.y = None
         self._random_object = None
-
         super().__init__()
 
         # ensure it isn't multiprocessing, if it is change to loky
@@ -1827,16 +1829,22 @@ class ProximityForest(BaseClassifier):
                 "n_stump_evaluations": 2,
                 "backend": "threading",
             }
-            params_set = [params1, params2]
+            params3 = {
+                "n_estimators": 3,
+                "max_depth": 5,
+                "n_stump_evaluations": 2,
+                "backend": None,
+            }
+            params_set = [params1, params2, params3]
 
             if _check_soft_dependencies("dask", severity="none"):
-                params3 = {
+                params4 = {
                     "n_estimators": 2,
                     "max_depth": 1,
                     "n_stump_evaluations": 1,
                     "backend": "dask",
                 }
-                params_set.append(params3)
+                params_set.append(params4)
             return params_set
 
 
