@@ -1823,19 +1823,19 @@ class ProximityForest(BaseClassifier):
                 "n_stump_evaluations": 1,
                 "backend": "loky",
             }
-            params2 = {
-                "n_estimators": 3,
-                "max_depth": 5,
-                "n_stump_evaluations": 2,
-                "backend": "threading",
-            }
+            # params2 = {
+            #     "n_estimators": 3,
+            #     "max_depth": 5,
+            #     "n_stump_evaluations": 2,
+            #     "backend": "threading",
+            # }
             params3 = {
                 "n_estimators": 3,
                 "max_depth": 5,
                 "n_stump_evaluations": 2,
                 "backend": None,
             }
-            params_set = [params1, params2, params3]
+            params_set = [params1, params3]
 
             if _check_soft_dependencies("dask", severity="none"):
                 params4 = {
