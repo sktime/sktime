@@ -1,7 +1,7 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Class to apply bollinger bounds to a time series."""
-__author__ = ["ishanpaidhungat"]
+__author__ = ["ishanpai"]
 __all__ = ["Bollinger"]
 
 import pandas as pd
@@ -43,14 +43,14 @@ class Bollinger(BaseTransformer):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["ishanpaidhungat"],
+        "authors": ["ishanpai"],
         # estimator type
         # --------------
-        "scitype:transform-input": "Panel",
+        "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Panel",
         # what scitype is returned: Primitives, Series, Panel
-        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "scitype:instancewise": False,  # is this an instance-wise transform?
         "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
@@ -62,6 +62,8 @@ class Bollinger(BaseTransformer):
     }
 
     def __init__(self, window, k=1, memory="all"):
+        assert window > 1, f"window must be greater than 1, passed {window}"
+        assert k > 0, f"k must be positive, passed {k}"
         self.window = window
         self.k = k
         self.memory = memory
