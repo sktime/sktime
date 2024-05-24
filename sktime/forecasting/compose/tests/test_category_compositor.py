@@ -14,7 +14,7 @@ from sktime.transformations.series.tests.test_adi_cv import (
 
 
 @pytest.mark.parametrize(
-    "forecasters, series_generator, chosen_forecaster",
+    "forecasters, series_generator, horizon, chosen_forecaster",
     [
         (
             {
@@ -22,6 +22,7 @@ from sktime.transformations.series.tests.test_adi_cv import (
                 "intermittent": Croston(),
             },
             _generate_smooth_series,
+            50,
             NaiveForecaster(),
         ),
         (
@@ -30,11 +31,14 @@ from sktime.transformations.series.tests.test_adi_cv import (
                 "lumpy": NaiveForecaster(),
             },
             _generate_erratic_series,
+            50,
             PolynomialTrendForecaster(),
         ),
     ],
 )
-def test_forecaster_selection(forecasters, series_generator, chosen_forecaster):
+def test_forecaster_selection(
+    forecasters, series_generator, horizon, chosen_forecaster
+):
     """Tests if the compositor selects the correct forecasters on the basis
     of the output from the transformer.
 
@@ -49,14 +53,14 @@ def test_forecaster_selection(forecasters, series_generator, chosen_forecaster):
 
     # Defining the compositor
     compositor = CategoryCompositor(forecasters=forecasters)
-    compositor.fit(series_generator())
+    compositor.fit(series_generator(), fh=horizon)
 
     # Check if the type of the chosen forecaster matches the provided forecaster type
     assert type(compositor.chosen_forecaster_) is type(chosen_forecaster)
 
 
 @pytest.mark.parametrize(
-    "forecasters, series_generator, fallback_forecaster",
+    "forecasters, series_generator, horizon, fallback_forecaster",
     [
         (
             {
@@ -64,6 +68,7 @@ def test_forecaster_selection(forecasters, series_generator, chosen_forecaster):
                 "intermittent": Croston(),
             },
             _generate_erratic_series,
+            50,
             PolynomialTrendForecaster(),
         ),
         (
@@ -72,11 +77,14 @@ def test_forecaster_selection(forecasters, series_generator, chosen_forecaster):
                 "lumpy": NaiveForecaster(),
             },
             _generate_smooth_series,
+            50,
             None,
         ),
     ],
 )
-def test_fallback_forecaster(forecasters, series_generator, fallback_forecaster):
+def test_fallback_forecaster(
+    forecasters, series_generator, horizon, fallback_forecaster
+):
     """This function tests the validity of the fallback forecaster and what happens
     if it is not present!
 
@@ -101,8 +109,8 @@ def test_fallback_forecaster(forecasters, series_generator, fallback_forecaster)
 
     if fallback_forecaster is None:
         with pytest.raises(ValueError):
-            compositor.fit(y)
+            compositor.fit(y, fh=horizon)
 
     else:
-        compositor.fit(y)
+        compositor.fit(y, fh=horizon)
         assert type(compositor.chosen_forecaster_) is type(fallback_forecaster)
