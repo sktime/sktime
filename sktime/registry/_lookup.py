@@ -140,12 +140,12 @@ def all_estimators(
     >>> # return all forecasters by filtering for estimator type
     >>> all_estimators("forecaster")  # doctest: +SKIP
     >>> # return all forecasters which handle missing data in the input by tag filtering
-    >>> all_estimators("forecaster", filter_tags={"handles-missing-data": True})  # doctest: +SKIP  # noqa: E501
+    >>> all_estimators("forecaster", filter_tags={"handles-missing-data": True})  # doctest: +SKIP
 
     References
     ----------
     Modified version from scikit-learn's ``all_estimators()``.
-    """
+    """  # noqa: E501
     MODULES_TO_IGNORE = (
         "tests",
         "setup",
