@@ -19,6 +19,7 @@ class DistFromAligner(BasePairwiseTransformerPanel):
     """
 
     _tags = {
+        "authors": ["fkiraly"],
         "symmetric": True,  # all the distances are symmetric
         "capability:unequal_length": True,  # aligners can usually handle unequal length
     }

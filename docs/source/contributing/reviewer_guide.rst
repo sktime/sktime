@@ -29,8 +29,8 @@ Code
 
 .. _reviewer_guide_doc:
 
-Documenation
-============
+Documentation
+=============
 
 * Are the docstrings complete and understandable to users?
 * Do they follow the NumPy format and sktime conventions?

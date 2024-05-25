@@ -29,7 +29,7 @@ class PresplitFilesCV:
         Yields
         ------
         train : ndarray
-            Train indicies
+            Train indices
         test : ndarray
             Test indices
         """

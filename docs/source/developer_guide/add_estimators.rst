@@ -193,7 +193,7 @@ and are identical with the test-fixture-strings returned by ``check_estimator``.
 
 To run tests only for a given estimator from the console, the command ``pytest -k "EstimatorName"`` can be used.
 This will typically have the same effect as using ``check_estimator(EstimatorName)``, only via direct ``pytest`` call.
-When using Visual Studio Code or pycharm, tests can also be sub-setted using GUI filter
+When using Visual Studio Code or pycharm, tests can also be sub-set using GUI filter
 functionality - for this, refer to the respecetive IDE documentation on test integration.
 
 To identify codebase locations of tests applying to a specific estimator,
@@ -221,7 +221,7 @@ additional things need to be done:
 *   ensure that code also meets ``sktime's`` :ref:`documentation <developer_guide_documentation>` standards.
 *   add the estimator to the ``sktime`` API reference. This is done by adding a reference to the estimator in the
     correct ``rst`` file inside ``docs/source/api_reference``.
-*   authors of the estimator should add themselves to ``CODEOWNERS``, as owners of the contributed estimator.
+*   authors of the estimator should add themselves to the ``"authors"`` and ``"maintainers"`` tag of the estimator, as owners of the contributed estimator.
 *   if the estimator relies on soft dependencies, or adds new soft dependencies, the steps in the :ref:`"dependencies"
     developer guide <dependencies>` should be followed
 *   ensure that the estimator passes the entire local test suite of ``sktime``, with the estimator in its target location.

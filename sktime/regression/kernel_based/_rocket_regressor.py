@@ -29,11 +29,12 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
     transformer and builds a RidgeCV estimator using the transformed data.
 
     Shorthand for the pipeline
-    `rocket * StandardScaler(with_mean=False) * RidgeCV(alphas)`
-    where `alphas = np.logspace(-3, 3, 10)`, and
-    where `rocket` depends on params `rocket_transform`, `use_multivariate` as follows:
+    ``rocket * StandardScaler(with_mean=False) * RidgeCV(alphas)``
+    where ``alphas = np.logspace(-3, 3, 10)``, and
+    where ``rocket`` depends on params ``rocket_transform``, ``use_multivariate`` as
+    follows:
 
-        | rocket_transform | `use_multivariate` | rocket (class)          |
+        | rocket_transform | ``use_multivariate`` | rocket (class)          |
         |------------------|--------------------|-------------------------|
         | "rocket"         | any                | Rocket                  |
         | "minirocket"     | "yes               | MiniRocketMultivariate  |
@@ -43,8 +44,8 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
 
     classes are sktime classes, other parameters are passed on to the rocket class.
 
-    To build other regressors with rocket transformers, use `make_pipeline` or the
-    pipeline dunder `*`, and different transformers/regressors in combination.
+    To build other regressors with rocket transformers, use ``make_pipeline`` or the
+    pipeline dunder ``*``, and different transformers/regressors in combination.
 
     Parameters
     ----------
@@ -63,7 +64,7 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
         "yes" = always uses multivariate transformers, native multi/univariate
         "no" = always univariate transformers, multivariate by framework vectorization
     n_jobs : int, default=1
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``-1`` means using all processors.
     random_state : int or None, default=None
         Seed for random number generation.
@@ -100,9 +101,14 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "fkiraly",
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:multithreading": True,
-        "python_dependencies": "numba",
     }
 
     # valid rocket strings for input validity checking
@@ -203,14 +209,15 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         return {"num_kernels": 20}

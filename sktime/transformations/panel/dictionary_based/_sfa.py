@@ -83,7 +83,7 @@ class SFA(BaseTransformer):
         automatic test.
 
     n_jobs:              int, optional, default = 1
-        The number of jobs to run in parallel for both `transform`.
+        The number of jobs to run in parallel for both ``transform``.
         ``-1`` means using all processors.
 
     Attributes
@@ -101,6 +101,7 @@ class SFA(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["MatthewMiddlehurst", "patrickzib"],
         "univariate-only": True,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
@@ -284,7 +285,7 @@ class SFA(BaseTransformer):
         if self.save_words:
             self.words = list(words)
 
-        # cant pickle typed dict
+        # can't pickle typed dict
         if self.typed_dict and self.n_jobs != 1:
             nl = [None] * len(dim)
             for i, pdict in enumerate(dim):
@@ -395,7 +396,7 @@ class SFA(BaseTransformer):
                                 skip_gram = (skip_gram << self.level_bits) | 0
                         bag[skip_gram] = bag.get(skip_gram, 0) + 1
 
-        # cant pickle typed dict
+        # can't pickle typed dict
         if self.typed_dict and self.n_jobs != 1:
             pdict = dict()
             for key, val in bag.items():
@@ -658,7 +659,7 @@ class SFA(BaseTransformer):
             delayed(self._shorten_case)(word_len, i) for i in range(len(self.words))
         )
 
-        # cant pickle typed dict
+        # can't pickle typed dict
         if self.typed_dict and self.n_jobs != 1:
             nl = [None] * len(dim)
             for i, pdict in enumerate(dim):
@@ -754,7 +755,7 @@ class SFA(BaseTransformer):
                                 skip_gram = (skip_gram << self.level_bits) | 0
                         new_bag[skip_gram] = new_bag.get(skip_gram, 0) + 1
 
-        # cant pickle typed dict
+        # can't pickle typed dict
         if self.typed_dict and self.n_jobs != 1:
             pdict = dict()
             for key, val in new_bag.items():
@@ -929,7 +930,7 @@ class SFA(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -937,8 +938,9 @@ class SFA(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         # small window size for testing
         params = {"window_size": 4, "return_pandas_data_series": True}

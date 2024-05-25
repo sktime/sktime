@@ -44,11 +44,11 @@ def convert_dask_to_pandas(obj):
 
     Parameters
     ----------
-    obj : pandas.DataFrame
+    obj : dask DataFrame
 
     Returns
     -------
-    dask DataFrame
+    pandas.DataFrame
         MultiIndex levels 0 .. -1 of X are converted to columns of name
         __index__[indexname], where indexname is name of multiindex level,
         or the integer index if the level has no name
@@ -86,7 +86,7 @@ def convert_pandas_to_dask(obj, npartitions=1, chunksize=None, sort=True):
 
     Parameters
     ----------
-    obj : dask DataFrame
+    obj : pandas.DataFrame
     npartitions : int or None, optional, default = 1
         npartitions passed to dask from_pandas when converting obj to dask
     chunksize : int or None, optional, default = None
@@ -96,7 +96,7 @@ def convert_pandas_to_dask(obj, npartitions=1, chunksize=None, sort=True):
 
     Returns
     -------
-    pandas.DataFrame
+    dask DataFrame
         MultiIndex levels 0 .. -1 of X are converted to columns of name
         __index__[indexname], where indexname is name of multiindex level,
         or the integer index if the level has no name
@@ -175,6 +175,10 @@ def check_dask_frame(
         metadata["is_empty"] = len(obj.index) < 1 or len(obj.columns) < 1
     if _req("is_univariate", return_metadata):
         metadata["is_univariate"] = len(obj.columns) == 1
+    if _req("n_features", return_metadata):
+        metadata["n_features"] = len(obj.columns)
+    if _req("feature_names", return_metadata):
+        metadata["feature_names"] = obj.columns.to_list()
 
     # check that columns are unique
     if not obj.columns.is_unique:

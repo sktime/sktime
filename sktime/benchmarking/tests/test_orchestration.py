@@ -81,6 +81,7 @@ def test_automated_orchestration_vs_manual(data_loader):
 
 
 # extensive tests of orchestration and metric evaluation against sklearn
+@pytest.mark.skip(reason="failures since sklearn 1.4.0, see #5797")
 @pytest.mark.parametrize(
     "dataset",
     [
@@ -193,8 +194,8 @@ def test_stat():
     _, sign_test_df = analyse.sign_test()
 
     sign_array = [
-        [sign_test_df["pf"][0], sign_test_df["pf"][1]],
-        [sign_test_df["tsf"][0], sign_test_df["tsf"][1]],
+        [sign_test_df["pf"].iloc[0], sign_test_df["pf"].iloc[1]],
+        [sign_test_df["tsf"].iloc[0], sign_test_df["tsf"].iloc[1]],
     ]
     sign_array_test = [[1, 1], [1, 1]]
     np.testing.assert_equal(

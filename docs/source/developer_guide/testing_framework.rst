@@ -68,7 +68,8 @@ See below for more details, or the `pytest documentation on the topic`_.
 The ``sktime`` plug-in for ``pytest`` generates the tuples of fixture values for this.
 In the above example, we loop over the following fixtures lists:
 
-* ``estimator_instance`` over estimator instances, obtained from all ``sktime`` estimators via ``create_test_instances_and_names``
+* ``estimator_instance`` over estimator instances, obtained from all ``sktime`` estimators via ``create_test_instances_and_names``, which
+  constructs instances from parameter settings in estimator classes' ``get_test_params``.
 
 * ``scenario`` objects, which encodes data inputs and method call sequences to ``estimator_instance`` (explained in further detail below).
 
@@ -299,12 +300,12 @@ This base class defines generics such as ``is_applicable``, or tag handling, for
 Scenarios should usually define:
 
 * an ``args`` parameter: a dictionary, with arbitrary keys (usually names of methods).
-* The ``args`` parameter may be set as a class variable, or set by the contructor.
+* The ``args`` parameter may be set as a class variable, or set by the constructor.
 * optionally, a ``default_method_sequence`` and a ``default_arg_sequence``, lists of strings.
   These define the sequence in which methods are called, with which argument set,
   if ``run`` is called. Both may be class variables, or object variable set in the constructor.
 * side note: a ``method_sequence`` and ``arg_sequence`` can also be specified in ``run``.
-  If not passed, defaulting will take place (first to each other, then to the ``detault_etc`` variables)
+  If not passed, defaulting will take place (first to each other, then to the ``default_etc`` variables)
 * optionally, a ``_tags`` dictionary, which is a ``BaseObject`` tags dictionary and behaves exactly like that of estimators.
 * optionally, a ``get_args`` method which allows to override key retrieval from ``args``.
   For instance, to specify rules such as "if the key starts with ``predict_``, always return ..."

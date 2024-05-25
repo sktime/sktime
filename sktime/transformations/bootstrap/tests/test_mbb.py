@@ -124,7 +124,7 @@ def test_moving_block_bootstrap(block_length, replacement):
 
     1. the output series has the same index as the input
     2. basic checks for the distribution of the bootstrapped values
-       i.e. actual min/max >= bootstapped min/max
+       i.e. actual min/max >= bootstrapped min/max
     """
     y_hat = _moving_block_bootstrap(
         y, block_length=block_length, replacement=replacement

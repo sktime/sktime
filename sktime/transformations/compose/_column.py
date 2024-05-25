@@ -39,7 +39,7 @@ class ColumnEnsembleTransformer(
     ----------
     transformers : sktime trafo, or list of tuples (str, estimator, int or pd.index)
         if tuples, with name = str, estimator is transformer, index as int or index
-        if last element is index, it must be int, str, or pd.Index coercable
+        if last element is index, it must be int, str, or pd.Index coercible
         if last element is int x, and is not in columns, is interpreted as x-th column
         all columns must be present in an index
 
@@ -47,16 +47,16 @@ class ColumnEnsembleTransformer(
         If list of tuples, transformer in tuple is applied to column with int/str index
 
     remainder : {"drop", "passthrough"} or estimator, default "drop"
-        By default, only the specified columns in `transformations` are
+        By default, only the specified columns in ``transformations`` are
         transformed and combined in the output, and the non-specified
         columns are dropped. (default of ``"drop"``).
         By specifying ``remainder="passthrough"``, all remaining columns that
-        were not specified in `transformations` will be automatically passed
+        were not specified in ``transformations`` will be automatically passed
         through. This subset of columns is concatenated with the output of
         the transformations.
         By setting ``remainder`` to be an estimator, the remaining
         non-specified columns will use the ``remainder`` estimator. The
-        estimator must support `fit` and `transform`.
+        estimator must support ``fit`` and ``transform``.
 
     feature_names_out : str, one of "auto" (default), "flat", "multiindex", "original"
         determines how return columns of return DataFrame-s are named
@@ -72,7 +72,7 @@ class ColumnEnsembleTransformer(
     ----------
     transformers_ : list
         The collection of fitted transformations as tuples of
-        (name, fitted_transformer, column). `fitted_transformer` can be an
+        (name, fitted_transformer, column). ``fitted_transformer`` can be an
         estimator, "drop", or "passthrough". In case there were no columns
         selected, this will be the unfitted transformer.
         If there are remaining columns, the final element is a tuple of the
@@ -81,9 +81,46 @@ class ColumnEnsembleTransformer(
         ``remainder`` parameter. If there are remaining columns, then
         ``len(transformers_)==len(transformations)+1``, otherwise
         ``len(transformers_)==len(transformations)``.
+
+    Examples
+    --------
+    .. Doctest::
+
+        >>> import pandas as pd
+        >>> from sktime.transformations.compose import ColumnEnsembleTransformer
+        >>> from sktime.transformations.series.detrend import Detrender
+        >>> from sktime.transformations.series.difference import Differencer
+        >>> from sktime.datasets import load_longley
+
+    Using integers (column iloc references) for indexing:
+
+    .. Doctest::
+
+        >>> y = load_longley()[1][["GNP", "UNEMP"]]
+        >>> transformer = ColumnEnsembleTransformer([("difference", Differencer(), 1),
+        ...                                 ("trend", Detrender(), 0),
+        ...                                 ])
+        >>> y_transformed = transformer.fit_transform(y)
+
+    Using strings for indexing:
+
+    >>> df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+    >>> transformer = ColumnEnsembleTransformer(
+    ...     [("foo", Differencer(), "a"), ("bar", Detrender(), "b")]
+    ... )
+    >>> transformed_df = transformer.fit_transform(df)
+
+    Applying one transformer to multiple columns, multivariate:
+
+    >>> df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6], "c": [7, 8, 9]})
+    >>> transformer = ColumnEnsembleTransformer(
+    ...    [("ab", Differencer(), ["a", 1]), ("c", Detrender(), 2)]
+    ... )
+    >>> transformed_df = transformer.fit_transform(df)
     """
 
     _tags = {
+        "authors": ["fkiraly", "mloning"],
         "X_inner_mtype": PANDAS_MTYPES,
         "y_inner_mtype": PANDAS_MTYPES,
         "fit_is_empty": False,
@@ -121,6 +158,7 @@ class ColumnEnsembleTransformer(
         if isinstance(transformers, BaseTransformer):
             tags_to_clone = [
                 "fit_is_empty",
+                "requires_X",
                 "requires_y",
                 "X-y-must-have-same-index",
                 "transform-returns-same-time-index",
@@ -135,6 +173,7 @@ class ColumnEnsembleTransformer(
         else:
             l_transformers = [(x[0], x[1]) for x in transformers]
             # self._anytagis_then_set("fit_is_empty", False, True, l_transformers)
+            self._anytagis_then_set("requires_X", True, False, l_transformers)
             self._anytagis_then_set("requires_y", True, False, l_transformers)
             self._anytagis_then_set(
                 "X-y-must-have-same-index", True, False, l_transformers
@@ -298,8 +337,9 @@ class ColumnEnsembleTransformer(
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.transformations.series.boxcox import BoxCoxTransformer
         from sktime.transformations.series.exponent import ExponentTransformer
@@ -330,7 +370,7 @@ class ColumnwiseTransformer(BaseTransformer):
     """Apply a transformer columnwise to multivariate series.
 
     Overview: input multivariate time series and the transformer passed
-    in `transformer` parameter is applied to specified `columns`, each
+    in ``transformer`` parameter is applied to specified ``columns``, each
     column is handled as a univariate series. The resulting transformed
     data has the same shape as input data.
 
@@ -461,11 +501,11 @@ class ColumnwiseTransformer(BaseTransformer):
         return X
 
     def _inverse_transform(self, X, y=None):
-        """Logic used by `inverse_transform` to reverse transformation on `X`.
+        """Logic used by ``inverse_transform`` to reverse transformation on ``X``.
 
         Returns an inverse-transformed version of X by iterating over specified
         columns and applying the univariate series transformer to them.
-        Only works if `self.transformer` has an `inverse_transform` method.
+        Only works if ``self.transformer`` has an ``inverse_transform`` method.
 
         Parameters
         ----------
@@ -496,7 +536,7 @@ class ColumnwiseTransformer(BaseTransformer):
 
         Update the parameters of the estimator with new data
         by iterating over specified columns.
-        Only works if `self.transformer` has an `update` method.
+        Only works if ``self.transformer`` has an ``update`` method.
 
         Parameters
         ----------
@@ -528,7 +568,7 @@ class ColumnwiseTransformer(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -536,8 +576,9 @@ class ColumnwiseTransformer(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.transformations.series.detrend import Detrender
 

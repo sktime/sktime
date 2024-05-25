@@ -99,8 +99,8 @@ Again developers are encouraged to add important content to the user guide and l
 See Also
 ~~~~~~~~
 
-This section should reference other ``sktime`` code artifcats related to the code artifact being documented by the docstring. Developers should use
-judgement in determining related code artifcats. For example, rather than listin all other performance metrics, a percentage error based performance metric
+This section should reference other ``sktime`` code artifacts related to the code artifact being documented by the docstring. Developers should use
+judgement in determining related code artifacts. For example, rather than listin all other performance metrics, a percentage error based performance metric
 might only list other percentage error based performance metrics.  Likewise, a distance based classifier might list other distance based classifiers but
 not include other types of time series classifiers.
 
@@ -149,7 +149,7 @@ Examples
 
 Most code artifacts in sktime should include an examples section. At a minimum this should include a single example that illustrates basic functionality.
 The examples should use either a built-in sktime dataset or other simple data (e.g. randomly generated data, etc) generated using an sktime dependency
-(e.g. NumPy, pandas, etc) and whereever possible only depend on sktime or its core dependencies. Examples should also be designed to run quickly where possible.
+(e.g. NumPy, pandas, etc) and wherever possible only depend on sktime or its core dependencies. Examples should also be designed to run quickly where possible.
 For quick running code artifacts, additional examples can be included to illustrate the affect of different parameter settings.
 
 Examples of Good sktime Docstrings
@@ -197,15 +197,36 @@ To build the documentation locally, you need to install a few extra
 dependencies listed in
 `pyproject.toml <https://github.com/sktime/sktime/blob/main/pyproject.toml>`__.
 
-1. To install extra dependencies from the root directory, run:
+1. To install extra dependencies for building documentation, run:
 
    .. code:: bash
 
-      pip install .[docs]
+      pip install --editable .[docs]
 
-2. To build the website locally, run:
+2. To build the website locally, navigate to ``docs/source`` and execute:
 
    .. code:: bash
 
-      cd docs
       make html
+
+   Please note that the initial build may take up to 20 minutes. Subsequent builds for incremental changes will be significantly faster.
+
+3. For a clean build, run:
+
+   .. code:: bash
+
+      make clean html
+
+4. For live-reloading while editing the documentation, you can use ``sphinx-autobuild``.
+
+   First, install ``sphinx-autobuild`` by running:
+
+   .. code:: bash
+
+      pip install sphinx-autobuild
+
+   Then in ``docs/source``, run:
+
+   .. code:: bash
+
+      make autobuild

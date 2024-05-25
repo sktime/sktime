@@ -17,6 +17,7 @@ from sktime.utils.datetime import (
     infer_freq,
     set_hier_freq,
 )
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 def test_get_freq():
@@ -81,7 +82,7 @@ def test_infer_freq() -> None:
 
     index = pd.date_range(start="2021-01-01", periods=1, freq="M")
     y = pd.Series(index=index, dtype=int)
-    assert infer_freq(y) == "M"
+    assert infer_freq(y) in ["M", "ME"]
 
     y = pd.DataFrame({"a": 1}, index=pd.date_range(start="2021-01-01", periods=1))
     assert infer_freq(y) == "D"
@@ -89,57 +90,36 @@ def test_infer_freq() -> None:
     y = pd.DataFrame(
         {"a": 1}, index=pd.date_range(start="2021-01-01", periods=1, freq="M")
     )
-    assert infer_freq(y) == "M"
+    assert infer_freq(y) in ["M", "ME"]
 
     y = _bottom_hier_datagen(no_levels=2)
     y = VectorizedDF(X=y, iterate_as="Series", is_scitype="Hierarchical")
-    assert infer_freq(y) == "M"
-
-
-def test_set_freq() -> None:
-    """Test frequency inference."""
-    assert infer_freq(None) is None
-
-    y = pd.Series(dtype=int)
-    assert infer_freq(y) is None
-
-    index = pd.date_range(start="2021-01-01", periods=1)
-    y = pd.Series(index=index, dtype=int)
-    assert infer_freq(y) == "D"
-
-    index = pd.date_range(start="2021-01-01", periods=1, freq="M")
-    y = pd.Series(index=index, dtype=int)
-    assert infer_freq(y) == "M"
-
-    y = pd.DataFrame({"a": 1}, index=pd.date_range(start="2021-01-01", periods=1))
-    assert infer_freq(y) == "D"
-
-    y = pd.DataFrame(
-        {"a": 1}, index=pd.date_range(start="2021-01-01", periods=1, freq="M")
-    )
-    assert infer_freq(y) == "M"
-
-    y = _bottom_hier_datagen(no_levels=2)
-    y = VectorizedDF(X=y, iterate_as="Series", is_scitype="Hierarchical")
-    assert infer_freq(y) == "M"
+    assert infer_freq(y) in ["M", "ME"]
 
 
 def test_set_freq_hier():
     """Test that setting frequency on a DatetimeIndex MultiIndex works."""
+    # from pandas 2.1.0 on, freq is preserved correctly,
+    # so in that case we artificially destroy the freq attribute
+    pandas_210 = _check_soft_dependencies("pandas>=2.1.0", severity="none")
+
     y = load_airline()
 
     assert get_time_index(y).freq is not None
 
     # Convert to DatetimeIndex
-    y.index = y.index.to_timestamp()
+    y_index = y.index.to_timestamp()
 
     assert get_time_index(y).freq is not None
 
+    if pandas_210:
+        y_index.freq = None
+
     # Create MultiIndex
-    mi = pd.MultiIndex.from_product([[0], y.index], names=["instances", "timepoints"])
+    mi = pd.MultiIndex.from_product([[0], y_index], names=["instances", "timepoints"])
     y_group1 = pd.DataFrame(y.values, index=mi, columns=["y"])
 
-    mi = pd.MultiIndex.from_product([[1], y.index], names=["instances", "timepoints"])
+    mi = pd.MultiIndex.from_product([[1], y_index], names=["instances", "timepoints"])
     y_group2 = pd.DataFrame(y.values, index=mi, columns=["y"])
 
     y_train_grp = pd.concat([y_group1, y_group2])

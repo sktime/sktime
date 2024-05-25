@@ -17,7 +17,7 @@ from sktime.distances import (
 )
 from sktime.distances.tests._utils import create_test_distance_numpy
 
-# Clustering Wtih num custers set to 2 and transpose
+# Clustering With num custers set to 2 and transpose
 expected_rand_unit_test = {
     "euclidean": 0.5210526315789473,
     "dtw": 0.5210526315789473,

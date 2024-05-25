@@ -162,7 +162,7 @@ class _FlagManager:
 
         Notes
         -----
-        Changes object state by settting flag values in flag_dict as dynamic flags
+        Changes object state by setting flag values in flag_dict as dynamic flags
         in self.
         """
         flag_update = deepcopy(flag_dict)

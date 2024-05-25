@@ -23,7 +23,7 @@ We try to keep the number of core dependencies to a minimum and rely on other pa
 Handling soft dependencies
 --------------------------
 
-This section explains how to handle existing soft depencies.
+This section explains how to handle existing soft dependencies.
 For adding a new soft dependency, see the section "adding a new soft dependency".
 
 Soft dependencies in ``sktime`` should usually be isolated to estimators.
@@ -52,14 +52,22 @@ Estimators with a soft dependency need to ensure the following:
    To do this, add a ``# doctest: +SKIP`` to the end of each line in the doctest to skip it entirely.
    See ``forecasting.arima.ARIMA`` as as an example. If concerned that skipping the test will reduce test coverage,
    consider exposing the doctest example as a pytest test function instead, see below how to handle soft dependencies in pytest functions.
-*  Decorate all ``pytest`` tests that import soft dependencies with a ``@pytest.mark.skipif(...)`` conditional on a check to ``_check_soft_dependencies``
-   for your new soft depenency, with ``severity="none"``.  Be sure that all soft dependencies imported for testing are imported within the test function itself,
-   rather than for the whole module!  This decorator will then skip your test, including imports, unless the system has the required packages installed.
-   This prevents crashes for any users running ``check_estimator`` on all estimators, or a full local ``pytest`` run without the required soft dependency.
-   See the tests in ``forecasting.tests.test_pmdarima`` for a concrete example.
+*  Decorate all ``pytest`` tests that import soft dependencies with a ``@pytest.mark.skipif(...)`` conditional on a soft dependency check.
+   If the test is specific to a single estimator or object, use ``run_test_for_class`` from ``sktime.tests.test_switch``
+   to mediate the condition through the class tags.
+   Otherwise, use ``_check_soft_dependencies`` for your new soft dependency, with ``severity="none"``.
+   Be sure that all soft dependencies imported for testing are imported within the test function itself,
+   rather than at root level (at the top) of the module.
+   This decorator will then skip your test, including imports,
+   unless the system has the required packages installed.
+   This prevents crashes for any users running ``check_estimator`` on all estimators,
+   or a full local ``pytest`` run without the required soft dependency.
+   See the tests in ``forecasting.tests.test_pmdarima`` for a concrete example of
+   ``run_test_for_class`` usage to decorate a test. See ``utils.tests.test_plotting``
+   for an example of ``_check_soft_dependencies`` usage.
 
-Adding a new soft dependency
-----------------------------
+Adding and maintaining soft dependencies
+----------------------------------------
 
 When adding a new soft dependency or changing the version of an existing one,
 the following need to be updated:
@@ -76,6 +84,22 @@ It should be checked that new soft dependencies do not imply
 upper bounds on ``sktime`` core dependencies, or severe limitations to the user
 installation workflow.
 In such a case, it is strongly suggested not to add the soft dependency.
+
+For maintenance purposes, it has been decided that all soft-dependencies will have lower
+and upper bounds specified mandatorily. The soft-dependencies will be specified in
+separate extras per each component of ``sktime``, for example ``forecasting``,
+``classification``, ``regression``, etc. It is possible to have different upper and
+lower bounds for a single package when present in different extras, and can be modified in one without affecting the others.
+
+Upper bounds will be preferred to be set up as the next ``minor`` release of the
+packages, as ``patch`` updates should never contain breaking changes by convention of
+semantic versioning. For stable packages, next ``major`` version can be used as well.
+
+Upper bounds will be automatically updated using ``dependabot``, which has been set up
+to run daily based on releases on ``PyPI``. The CI introducing newer upper bound will be
+merged into ``main`` branch only if all unit tests for the affected component(s) pass.
+
+Lower bounds maintenance planning is in progress and will be updated here soon.
 
 Adding a core or developer dependency
 -------------------------------------

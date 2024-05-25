@@ -26,15 +26,12 @@ from sktime.forecasting.compose import (
     make_reduction,
 )
 from sktime.forecasting.compose._reduce import _sliding_window_transform
-from sktime.forecasting.model_selection import (
-    SlidingWindowSplitter,
-    temporal_train_test_split,
-)
-from sktime.forecasting.model_selection.tests.test_split import _get_windows
 from sktime.forecasting.tests._config import TEST_OOS_FHS, TEST_WINDOW_LENGTHS_INT
 from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 from sktime.regression.base import BaseRegressor
 from sktime.regression.interval_based import TimeSeriesForestRegressor
+from sktime.split import SlidingWindowSplitter, temporal_train_test_split
+from sktime.split.tests.test_split import _get_windows
 from sktime.transformations.panel.reduce import Tabularizer
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils.validation.forecasting import check_fh
@@ -567,7 +564,7 @@ def test_direct_vs_recursive():
 
     Test reduction forecasters by making prediction on airline dataset using linear
     estimators. Wenn windows_identical = False, all observations should be considered
-    (see documenation in make_reduction function), so results for direct and recursive
+    (see documentation in make_reduction function), so results for direct and recursive
     forecasting should match for the first forecasting horizon. With the
     windows_identical
     """
@@ -591,3 +588,28 @@ def test_direct_vs_recursive():
     assert pred_dir_max.head(1).equals(pred_rec_max.head(1))
     assert pred_dir_max.head(1).equals(pred_rec_spec.head(1))
     assert not pred_dir_max.head(1).equals(pred_dir_spec.head(1))
+
+
+def test_recursive_reducer_X_not_fit_to_fh():
+    """Test recursive reducer with X that do not fit the fh.
+
+    I.e., either X is longer or smaller than max_fh
+    """
+    y = load_airline()
+    y_train, y_test = temporal_train_test_split(y)
+    X_train = y_train
+    X_test = y_test
+
+    forecaster = make_reduction(
+        LinearRegression(), window_length=2, strategy="recursive"
+    )
+    forecaster.fit(y_train, X_train)
+
+    pred1 = forecaster.predict(X=X_test[:1], fh=[1, 2, 3])
+    assert pred1.shape == (3,)
+    pred2 = forecaster.predict(X=X_test[:2], fh=[1, 2, 3])
+    assert pred2.shape == (3,)
+    pred3 = forecaster.predict(X=X_test[:3], fh=[1, 2, 3])
+    assert pred3.shape == (3,)
+    pred4 = forecaster.predict(X=X_test, fh=[1])
+    assert pred4.shape == (1,)

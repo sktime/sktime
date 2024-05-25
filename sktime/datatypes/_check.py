@@ -92,6 +92,7 @@ def check_is_mtype(
     scitype: str = None,
     return_metadata=False,
     var_name="obj",
+    msg_return_dict="dict",
 ):
     """Check object for compliance with mtype specification, return metadata.
 
@@ -107,14 +108,23 @@ def check_is_mtype(
         if False, returns only "valid" return
         if True, returns all three return objects
         if str, list of str, metadata return dict is subset to keys in return_metadata
-    var_name: str, optional, default="obj" - name of input in error messages
+    var_name: str, optional, default="obj"
+        name of input in error messages
+    msg_return_dict: str, "list" or "dict", optional, default="dict"
+        whether returned msg, if returned is a str, dict or list
+        if "list", msg is str if mtype is str, list of str if mtype is list
+        if "dict", msg is str if mtype is str, dict of str if mtype is list,
+        if dict, has with mtype as key and error message for mtype as value
 
     Returns
     -------
     valid: bool - whether obj is a valid object of mtype/scitype
-    msg: str or list of str - error messages if object is not valid, otherwise None
-            str if mtype is str; list of len(mtype) with message per mtype if list
-            returned only if return_metadata is True or str, list of str
+    msg: str or list/dict of str - error messages if object is not valid, otherwise None
+        list or dict type is controlled via msg_return_dict
+        if str: error message for tested mtype
+        it list: list of len(mtype) with message per mtype if list, same order as mtype
+        if dict: dict with mtype as key and error message for mtype as value
+        returned only if return_metadata is True or str, list of str
     metadata: dict - metadata about obj if valid, otherwise None
             returned only if return_metadata is True or str, list of str
         Keys populated depend on (assumed, otherwise identified) scitype of obj.
@@ -153,7 +163,16 @@ def check_is_mtype(
 
     # we loop through individual mtypes in mtype and see whether they pass the check
     #  for each check we remember whether it passed and what it returned
-    msg = []
+
+    # initialize loop variables
+    if msg_return_dict is None:
+        msg_return_dict = "dict"
+        msg = dict()
+    elif msg_return_dict == "list":
+        msg = []
+    elif msg_return_dict == "dict":
+        msg = dict()
+
     found_mtype = []
     found_scitype = []
 
@@ -179,7 +198,10 @@ def check_is_mtype(
             found_scitype.append(scitype_of_m)
             final_result = res
         elif _metadata_requested(return_metadata):
-            msg.append(res[1])
+            if msg_return_dict == "list":
+                msg.append(res[1])
+            else:
+                msg[m] = res[1]
 
     # there are three options on the result of check_is_mtype:
     # a. two or more mtypes are found - this is unexpected and an error with checks
@@ -200,7 +222,10 @@ def check_is_mtype(
     # c. no mtype is found - then return False and all error messages if requested
     else:
         if len(msg) == 1:
-            msg = msg[0]
+            if msg_return_dict == "list":
+                msg = msg[0]
+            else:
+                msg = list(msg.values())[0]
 
         return _ret(False, msg, None, return_metadata)
 
@@ -237,6 +262,7 @@ def check_raise(obj, mtype: str, scitype: str = None, var_name: str = "input"):
         scitype=scitype,
         return_metadata=[],
         var_name=var_name,
+        msg_return_dict="list",
     )
 
     if valid:
@@ -301,6 +327,7 @@ def mtype(
             mtype=m_plus_scitype[0],
             scitype=m_plus_scitype[1],
             return_metadata=[],
+            msg_return_dict="list",
         )
         if valid:
             mtypes_positive += [m_plus_scitype[0]]
@@ -435,6 +462,46 @@ def check_is_scitype(
     # c. no mtype is found - then return False and all error messages if requested
     else:
         return _ret(False, msg, None, return_metadata)
+
+
+def check_is_error_msg(msg, var_name="obj", allowed_msg=None, raise_exception=False):
+    """Format and possibly raise error message from check_is_mtype or check_is_scitype.
+
+    Parameters
+    ----------
+    msg: dict[str, str]
+        error message from check_is_scitype, or from check_is_mtype with dict return
+    var_name: str, optional, default="obj"
+        name of input in error messages
+    allowed_msg: str, optional, default=None
+        message component detailing allowed mtypes or scitype combinations
+    raise_exception: bool or Exception, optional, default=False
+        whether to raise exception or return error message
+        if False, returns formatted error message
+        if True, raises TypeError with formatted error message
+        if Exception, raises that Exception with formatted error message
+
+    Returns
+    -------
+    str - formatted error message
+    """
+    msg_invalid_input = (
+        f"{var_name} must be in an sktime compatible format. {allowed_msg}"
+        f" See the data format tutorial examples/AA_datatypes_and_datasets.ipynb. "
+        f"If you think the data is already in an sktime supported input format, "
+        f"run sktime.datatypes.check_raise(data, mtype) to diagnose the error, "
+        f"where mtype is the string of the type specification you want. "
+        f"Error message for checked mtypes, in format [mtype: message], as follows:"
+    )
+    for mtype, err in msg.items():
+        msg_invalid_input += f" [{mtype}: {err}] "
+
+    if raise_exception is True:
+        raise TypeError(msg_invalid_input)
+    elif raise_exception is False:
+        return msg_invalid_input
+    else:
+        raise raise_exception(msg_invalid_input)
 
 
 def scitype(obj, candidate_scitypes=SCITYPE_LIST, exclude_mtypes=AMBIGUOUS_MTYPES):

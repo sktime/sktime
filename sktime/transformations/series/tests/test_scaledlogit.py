@@ -3,13 +3,12 @@
 
 __author__ = ["ltsaprounis"]
 
-from warnings import warn
-
 import numpy as np
 import pytest
 
 from sktime.datasets import load_airline
 from sktime.transformations.series.scaledlogit import ScaledLogitTransformer
+from sktime.utils.warnings import warn
 
 TEST_SERIES = np.array([30, 40, 60])
 

@@ -6,16 +6,21 @@ __author__ = ["ciaran-g"]
 
 import pytest
 
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.utils._testing.hierarchical import _bottom_hier_datagen
 
 
 # test for equal output with with named/unnamed indexes
+@pytest.mark.skipif(
+    not run_test_for_class(Aggregator),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("flatten_single_levels", [True, False])
 def test_aggregator_fit_transform_index(flatten_single_levels):
     """Tests fit_transform of aggregator function.
 
-    This test asserts that the output of Aggregator using fit_transfrom() with a named
+    This test asserts that the output of Aggregator using fit_transform() with a named
     multiindex is equal to an unnamed one. It also tests that Aggregator does not change
     the names of the input index in both cases.
     """
@@ -40,6 +45,10 @@ def test_aggregator_fit_transform_index(flatten_single_levels):
 
 
 # test that flatten_single_levels works as expected
+@pytest.mark.skipif(
+    not run_test_for_class(Aggregator),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_aggregator_flatten():
     """Tests Aggregator flattening single levels.
 

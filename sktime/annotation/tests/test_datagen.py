@@ -15,5 +15,5 @@ from sktime.annotation.datagen import piecewise_poisson
     ],
 )
 def test_piecewise_poisson(lambdas, lengths, random_state, output):
-    """Test piecewise_poisson fuction returns the expected Poisson distributed array."""
+    """Test piecewise_poisson function returns expected Poisson distributed array."""
     assert array_equal(piecewise_poisson(lambdas, lengths, random_state), output)

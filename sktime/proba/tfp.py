@@ -30,6 +30,7 @@ class TFNormal(_BaseTFDistribution):
     """
 
     _tags = {
+        "authors": ["fkiraly"],
         "python_dependencies": "tensorflow_probability",
         "capabilities:approx": ["pdfnorm"],
         "capabilities:exact": ["mean", "var", "energy", "pdf", "log_pdf", "cdf"],
@@ -52,7 +53,7 @@ class TFNormal(_BaseTFDistribution):
         # and broadcast of parameters.
         # move this functionality to the base class
         # 0.19.0?
-        self._mu, self._sigma = self._get_bc_params()
+        self._mu, self._sigma = self._get_bc_params(self.mu, self.sigma, dtype="float")
         distr = tfd.Normal(loc=self._mu, scale=self._sigma)
         shape = self._mu.shape
 
@@ -63,16 +64,6 @@ class TFNormal(_BaseTFDistribution):
             columns = pd.RangeIndex(shape[1])
 
         super().__init__(index=index, columns=columns, distr=distr)
-
-    def _get_bc_params(self):
-        """Fully broadcast parameters of self, given param shapes and index, columns."""
-        to_broadcast = [self.mu, self.sigma]
-        if hasattr(self, "index") and self.index is not None:
-            to_broadcast += [self.index.to_numpy().reshape(-1, 1)]
-        if hasattr(self, "columns") and self.columns is not None:
-            to_broadcast += [self.columns.to_numpy()]
-        bc = np.broadcast_arrays(*to_broadcast)
-        return np.array(bc[0], dtype="float"), np.array(bc[1], dtype="float")
 
     def energy(self, x=None):
         r"""Energy of self, w.r.t. self or a constant frame x.

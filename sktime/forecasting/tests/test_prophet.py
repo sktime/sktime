@@ -3,7 +3,9 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
-__author__ = ["fkiraly"]
+__author__ = ["fkiraly", "tpvasconcelos"]
+
+from unittest import mock
 
 import pandas as pd
 import pytest
@@ -77,3 +79,28 @@ def test_prophet_period_fh(convert_to_datetime):
     else:
         assert isinstance(y_pred.index, pd.PeriodIndex)
         assert (y_pred.index == fh_index).all()
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Prophet),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize(
+    "fit_kwargs", [None, {"foo": "bar"}, {"foo1": "bar1", "foo2": "bar2"}]
+)
+def test_prophet_fit_kwargs_are_passed_down(fit_kwargs: dict):
+    """Test that the `fit_kwargs` hyperparameter is passed down to Prophet.fit()."""
+    from sktime.datasets import load_airline
+    from sktime.forecasting.fbprophet import Prophet
+
+    y = load_airline()
+    with mock.patch("prophet.forecaster.Prophet.fit") as mock_fit:
+        forecaster = Prophet(fit_kwargs=fit_kwargs)
+        forecaster.fit(y)
+        mock_fit.assert_called_once()
+        assert mock_fit.call_args.args == ()
+        call_kwargs = mock_fit.call_args.kwargs
+        # `df` should always be one of the arguments but
+        # we don't care about its actual value here
+        call_kwargs.pop("df")
+        assert call_kwargs == (fit_kwargs or {})

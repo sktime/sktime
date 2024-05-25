@@ -51,7 +51,7 @@ class HIVECOTEV1(BaseClassifier):
     verbose : int, default=0
         Level of output printed to the console (for information only).
     n_jobs : int, default=1
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``-1`` means using all processors.
     random_state : int or None, default=None
         Seed for random number generation.
@@ -94,10 +94,15 @@ class HIVECOTEV1(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "MatthewMiddlehurst",
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multithreading": True,
         "capability:predict_proba": True,
         "classifier_type": "hybrid",
-        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -347,7 +352,7 @@ class HIVECOTEV1(BaseClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -358,8 +363,9 @@ class HIVECOTEV1(BaseClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         from sklearn.ensemble import RandomForestClassifier
 

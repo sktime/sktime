@@ -5,7 +5,6 @@ import pytest
 
 from sktime.datasets import load_unit_test
 from sktime.datatypes import check_is_scitype
-from sktime.utils._testing.deep_equals import deep_equals
 from sktime.utils.sampling import random_partition, stratified_resample
 
 NK_FIXTURES = [(10, 3), (15, 5), (19, 6), (3, 1), (1, 2)]
@@ -40,6 +39,8 @@ def test_partition(n, k):
 @pytest.mark.parametrize("n, k", NK_FIXTURES)
 def test_seed(n, k, seed):
     """Test that seed is deterministic."""
+    from sktime.utils.deep_equals import deep_equals
+
     part = random_partition(n, k, seed)
     part2 = random_partition(n, k, seed)
 

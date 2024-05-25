@@ -23,7 +23,7 @@ def test_conformal_standard():
     conformal_forecaster.fit(y, fh=[1, 2, 3])
     pred_int = conformal_forecaster.predict_interval()
 
-    assert check_is_mtype(pred_int, "pred_interval", "Proba")
+    assert check_is_mtype(pred_int, "pred_interval", "Proba", msg_return_dict="list")
 
 
 @pytest.mark.skipif(
@@ -31,12 +31,10 @@ def test_conformal_standard():
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_conformal_with_gscv():
-    """With ForecastingGridSearchCV and parameter plugin"""
-    from sktime.forecasting.model_selection import (
-        ExpandingWindowSplitter,
-        ForecastingGridSearchCV,
-    )
+    """With ForecastingGridSearchCV and parameter plugin."""
+    from sktime.forecasting.model_selection import ForecastingGridSearchCV
     from sktime.param_est.plugin import PluginParamsForecaster
+    from sktime.split import ExpandingWindowSplitter
 
     y = load_airline()
 
@@ -62,4 +60,50 @@ def test_conformal_with_gscv():
 
     y_pred_quantiles = gscv_with_conformal.predict_quantiles()
 
-    assert check_is_mtype(y_pred_quantiles, "pred_quantiles", "Proba")
+    assert check_is_mtype(
+        y_pred_quantiles, "pred_quantiles", "Proba", msg_return_dict="list"
+    )
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(ConformalIntervals),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_conformal_with_hierarchical():
+    """Test ConformalIntervals with a wrapped estimator of hierarchical mtype.
+
+    Failure case of bug #5092.
+    """
+    from sklearn.linear_model import LinearRegression
+
+    from sktime.forecasting.compose import ForecastX, make_reduction
+    from sktime.split import temporal_train_test_split
+    from sktime.utils._testing.hierarchical import _make_hierarchical
+
+    df = _make_hierarchical(
+        hierarchy_levels=(2, 3),
+        max_timepoints=25,
+        min_timepoints=25,
+        n_columns=4,
+        all_positive=True,
+        random_state=0,
+    )
+
+    y = df[["c0", "c1"]]
+    X = df[["c2", "c3"]]
+
+    y_train, y_test, X_train, X_test = temporal_train_test_split(y, X=X, test_size=5)
+
+    regressor = LinearRegression()
+    endogenous_model = make_reduction(regressor, pooling="global")
+
+    exogenous_model = NaiveForecaster()
+
+    forecaster = ConformalIntervals(
+        ForecastX(endogenous_model.clone(), exogenous_model.clone()), initial_window=15
+    )
+
+    forecaster.fit(y_train, X=X_train, fh=range(1, 3))
+
+    forecaster.predict(X=X_test)
+    forecaster.predict_interval(X=X_test)

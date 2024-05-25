@@ -68,10 +68,10 @@ def test_clearsky_trafo_range_exception():
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_clearsky_trafo_nofreq_exception():
-    """Tests clear sky trafo exception with no set/inferrable freq in index."""
+    """Tests clear sky trafo exception with no set/inferable freq in index."""
     y = load_solar(api_version=None)
 
-    # no set or inferrable frequency should not work
+    # no set or inferable frequency should not work
     y = y.drop(pd.to_datetime("2021-05-01 00:30:00", utc=True))
     cs_model = ClearSky()
     with pytest.raises(ValueError):

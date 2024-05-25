@@ -29,7 +29,7 @@ class Hidalgo(BaseTransformer):
         distance used in the nearest neighbors part of the algorithm
     K : int, optional, default=2
         number of manifolds used in algorithm
-    zeta : float, optional, defualt=0.8
+    zeta : float, optional, default=0.8
         "local homogeneity level" used in the algorithm, see equation (4)
     q : int, optional, default=3
         number of points for local Z interaction, "local homogeneity range"
@@ -84,6 +84,7 @@ class Hidalgo(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["KatieBuc"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -144,7 +145,7 @@ class Hidalgo(BaseTransformer):
         N : int
             number of rows of X
         mu : 1D np.ndarray of length N
-            paramerer in Pereto distribtion estimated by r2/r1
+            paramerer in Pereto distribution estimated by r2/r1
         Iin : 1D np.ndarray of length N * q
             encodes the q neighbour index values for point index i in 0:N-1
             e.g. popint i=0 has neighbours 2, 4, 7 and point i=1
@@ -542,7 +543,7 @@ class Hidalgo(BaseTransformer):
     def _fit(self, X, y=None):
         """Run the Hidalgo algorithm.
 
-        Find parameter esimates as distributions in sampling.
+        Find parameter estimates as distributions in sampling.
         Iterate through n_replicas random starts and get posterior
         samples with best max likelihood.
 
@@ -565,7 +566,7 @@ class Hidalgo(BaseTransformer):
             probability of posterior of z_i = k, point i can be safely
             assigned to manifold k if Pi > 0.8
         _Z : 1D np.ndarray of length N
-            base-zero integer values corresponsing to segment (manifold k)
+            base-zero integer values corresponding to segment (manifold k)
 
         Parameters
         ----------
@@ -713,7 +714,7 @@ def binom(N: float, q: float):
     Parameters
     ----------
     N : int, float
-        number of fixed elements from qhich q is chosen
+        number of fixed elements from which q is chosen
     q : int, float
         number of subset q elements chosen from N
     """

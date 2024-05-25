@@ -121,11 +121,8 @@ def test_differencer_cutoff():
     from sktime.datasets import load_longley
     from sktime.forecasting.compose import TransformedTargetForecaster
     from sktime.forecasting.fbprophet import Prophet
-    from sktime.forecasting.model_selection import (
-        ExpandingWindowSplitter,
-        ForecastingGridSearchCV,
-        temporal_train_test_split,
-    )
+    from sktime.forecasting.model_selection import ForecastingGridSearchCV
+    from sktime.split import ExpandingWindowSplitter, temporal_train_test_split
     from sktime.transformations.series.difference import Differencer
 
     y, X = load_longley()
@@ -191,8 +188,8 @@ def test_differencer_inverse_does_not_memorize():
     import numpy as np
 
     from sktime.forecasting.base import ForecastingHorizon
-    from sktime.forecasting.model_selection import temporal_train_test_split
     from sktime.forecasting.naive import NaiveForecaster
+    from sktime.split import temporal_train_test_split
     from sktime.transformations.series.difference import Differencer
 
     y = load_airline()

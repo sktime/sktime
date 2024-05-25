@@ -35,7 +35,7 @@ def _make_hierarchical(
     max_timepoints : int, optional
         maximum time points a series can have, by default 12
     min_timepoints : int, optional
-        minimum time points a seires can have, by default 12
+        minimum time points a series can have, by default 12
     same_cutoff : bool, optional
         If it's True all series will end at the same date, by default True
     n_columns : int, optional
@@ -127,10 +127,10 @@ def _bottom_hier_datagen(
     *_max : int, optional
         Maximum possible value of the coefficient or intercept value.
     random_seed : int, optional
-        Random seed for reproducability.
+        Random seed for reproducibility.
     length : int between 1 and 144, optional, default = 144
         length of base time series. If lowe than 144,
-        the airline dataet is truncated to the specified length, cutting from the end.
+        the airline dataset is truncated to the specified length, cutting from the end.
 
     Returns
     -------

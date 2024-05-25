@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Configuration file for the Sphinx documentation builder."""
 
+import datetime
 import os
 import sys
-from importlib import import_module
 
 import sktime
 
@@ -18,8 +18,9 @@ if not ON_READTHEDOCS:
     sys.path.insert(0, os.path.abspath("../.."))
 
 # -- Project information -----------------------------------------------------
+current_year = datetime.datetime.now().year
 project = "sktime"
-project_copyright = "2019 - present (BSD-3-Clause License)"
+project_copyright = f"2019 - {current_year} (BSD-3-Clause License)"
 author = "sktime developers"
 
 # The full version, including alpha/beta/rc tags
@@ -50,7 +51,7 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_design",
     "sphinx_issues",
-    "versionwarning.extension",
+    "sphinx.ext.doctest",
 ]
 
 # Recommended by sphinx_design when using the MyST Parser
@@ -214,7 +215,7 @@ html_theme_options = {
     "use_edit_page_button": False,
     "navbar_start": ["navbar-logo"],
     "navbar_center": ["navbar-nav"],
-    "navbar_end": ["navbar-icon-links"],
+    "navbar_end": ["theme-switcher", "navbar-icon-links"],
 }
 html_logo = "images/sktime-logo-text-horizontal.png"
 html_context = {
@@ -225,7 +226,10 @@ html_context = {
 }
 html_favicon = "images/sktime-favicon.ico"
 html_sidebars = {
-    "**": ["search-field.html", "sidebar-nav-bs.html", "sidebar-ethical-ads.html"]
+    "**": ["sidebar-nav-bs.html", "sidebar-ethical-ads.html"],
+    "index": [],
+    "get_started": [],
+    "search": [],
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
@@ -323,33 +327,41 @@ def _make_estimator_overview(app):
         Multiple author names will be separated by a comma,
         with the final name always preceded by "&".
         """
-        if isinstance(author_info, list):
-            if len(author_info) > 1:
-                return ", ".join(author_info[:-1]) + " & " + author_info[-1]
-            else:
-                return author_info[0]
+        if isinstance(author_info, str) and author_info.lower() == "sktime developers":
+            link = (
+                '<a href="https://www.sktime.net/en/stable/about/team.html">'
+                "sktime developers</a>"
+            )
+            return link
+
+        if not isinstance(author_info, list):
+            author_info = [author_info]
+
+        def _add_link(github_id_str):
+            link = '<a href="https://www.github.com/{0}">{0}</a>'.format(github_id_str)
+            return link
+
+        author_info = [_add_link(author) for author in author_info]
+
+        if len(author_info) > 1:
+            return ", ".join(author_info[:-1]) + " & " + author_info[-1]
         else:
-            return author_info
+            return author_info[0]
 
     def _does_not_start_with_underscore(input_string):
         return not input_string.startswith("_")
 
     # creates dataframe as df
-    COLNAMES = ["Class Name", "Estimator Type", "Authors"]
+    COLNAMES = ["Class Name", "Estimator Type", "Authors", "Maintainers"]
 
-    df = pd.DataFrame([], columns=COLNAMES)
+    records = []
 
     for modname, modclass in all_estimators():
-        algorithm_type = "::".join(str(modclass).split(".")[1:-2])
-        try:
-            author_info = _process_author_info(modclass.__author__)
-        except AttributeError:
-            try:
-                author_info = _process_author_info(
-                    import_module(modclass.__module__).__author__
-                )
-            except AttributeError:
-                author_info = "no author info"
+        algorithm_type = modclass.get_class_tag("object_type", "object")
+        author_tag = modclass.get_class_tag("authors", "sktime developers")
+        author_info = _process_author_info(author_tag)
+        maintainer_tag = modclass.get_class_tag("maintainers", "sktime developers")
+        maintainer_info = _process_author_info(maintainer_tag)
 
         # includes part of class string
         modpath = str(modclass)[8:-2]
@@ -366,8 +378,9 @@ def _make_estimator_overview(app):
             + "</a>"
         )
 
-        record = pd.DataFrame([modname, algorithm_type, author_info], index=COLNAMES).T
-        df = pd.concat([df, record], ignore_index=True)
+        records.append([modname, algorithm_type, author_info, maintainer_info])
+
+    df = pd.DataFrame(records, columns=COLNAMES)
     with open("estimator_overview_table.md", "w") as file:
         df.to_markdown(file, index=False)
 
@@ -396,7 +409,7 @@ nbsphinx_execute = "never"  # always  # whether to run notebooks
 nbsphinx_allow_errors = False  # False
 nbsphinx_timeout = 600  # seconds, set to -1 to disable timeout
 
-# add Binder launch buttom at the top
+# add Binder launch button at the top
 current_file = "{{ env.doc2path( env.docname, base=None) }}"
 
 # make sure Binder points to latest stable release, not main
@@ -437,18 +450,6 @@ intersphinx_mapping = {
 
 # -- Options for _todo extension ----------------------------------------------
 todo_include_todos = False
-
-# sphinx-version-warning config
-versionwarning_messages = {
-    "latest": (
-        "This document is for the development version. "
-        'For the stable version documentation, see <a href="/en/stable/">here</a>.'
-    )
-}
-
-# Show warning at top of page
-versionwarning_body_selector = "div.document"
-versionwarning_banner_title = ""
 
 copybutton_prompt_text = r">>> |\.\.\. |\$ "
 copybutton_prompt_is_regexp = True

@@ -4,7 +4,7 @@
 Exports
 -------
 convert_to(obj, to_type: str, as_scitype: str, store=None)
-    converts object "obj" to type "to_type", considerd as "as_scitype"
+    converts object "obj" to type "to_type", considered as "as_scitype"
 
 convert(obj, from_type: str, to_type: str, as_scitype: str, store=None)
     same as convert_to, without automatic identification of "from_type"
@@ -93,6 +93,7 @@ def convert(
     as_scitype: str = None,
     store=None,
     store_behaviour: str = None,
+    return_to_mtype: bool = False,
 ):
     """Convert objects between different machine representations, subject to scitype.
 
@@ -114,11 +115,15 @@ def convert(
         "freeze" - store is read-only, may be read/used by conversion but not changed
         "update" - store is updated from conversion and retains previous contents
         None - automatic: "update" if store is empty and not None; "freeze", otherwise
+    return_to_mtype: bool, optional (default=False)
+        if True, also returns the str of the mtype converted to
 
     Returns
     -------
-    converted_obj : to_type - object obj converted to to_type
-                    if obj was None, returns None
+    converted_obj : to_type - object ``obj`` converted to mtype ``to_type``
+        if ``obj`` was ``None``, is ``None``
+    to_type : str, only returned if ``return_to_mtype=True``
+        mtype of ``converted_obj`` - useful of ``to_type`` was a list
 
     Raises
     ------
@@ -171,21 +176,25 @@ def convert(
         pass
     else:
         raise RuntimeError(
-            "bug: unrechable condition error, store_behaviour has unexpected value"
+            "bug: unreachable condition error, store_behaviour has unexpected value"
         )
 
     converted_obj = convert_dict[key](obj, store=store)
 
-    return converted_obj
+    if return_to_mtype:
+        return converted_obj, to_type
+    else:
+        return converted_obj
 
 
-# conversion based on queriable type to specified target
+# conversion based on queryable type to specified target
 def convert_to(
     obj,
     to_type: str,
     as_scitype: str = None,
     store=None,
     store_behaviour: str = None,
+    return_to_mtype: bool = False,
 ):
     """Convert object to a different machine representation, subject to scitype.
 
@@ -207,6 +216,8 @@ def convert_to(
         "freeze" - store is read-only, may be read/used by conversion but not changed
         "update" - store is updated from conversion and retains previous contents
         None - automatic: "update" if store is empty and not None; "freeze", otherwise
+    return_to_mtype: bool, optional (default=False)
+        if True, also returns the str of the mtype converted to
 
     Returns
     -------
@@ -219,6 +230,8 @@ def convert_to(
             converted_obj is converted to the first mtype in to_type
                 that is of same scitype as obj
         case 4: if obj was None, converted_obj is also None
+    to_type : str, only returned if ``return_to_mtype=True``
+        mtype of ``converted_obj`` - useful of ``to_type`` was a list
 
     Raises
     ------
@@ -254,6 +267,7 @@ def convert_to(
         as_scitype=as_scitype,
         store=store,
         store_behaviour=store_behaviour,
+        return_to_mtype=return_to_mtype,
     )
 
     return converted_obj
@@ -272,8 +286,7 @@ def _get_first_mtype_of_same_scitype(from_mtype, to_mtypes, varname="to_mtypes")
     -------
     to_type : str - first mtype in to_mtypes that has same scitype as from_mtype
     """
-    if isinstance(to_mtypes, str):
-        return to_mtypes
+    to_mtypes = _check_str_or_list_of_str(to_mtypes, obj_name=varname)
 
     if not isinstance(to_mtypes, list):
         raise TypeError(f"{varname} must be a str or a list of str")
@@ -288,8 +301,8 @@ def _get_first_mtype_of_same_scitype(from_mtype, to_mtypes, varname="to_mtypes")
     ]
     if len(same_scitype_mtypes) == 0:
         raise TypeError(
-            f"{varname} contains no mtype compatible with the scitype of obj,"
-            f"which is {scitype}"
+            f"{varname} contains no mtype compatible with the scitype of obj, "
+            f"which is {scitype}. Value of {varname} is: {to_mtypes}"
         )
     to_type = same_scitype_mtypes[0]
     return to_type

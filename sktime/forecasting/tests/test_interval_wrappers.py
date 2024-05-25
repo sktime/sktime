@@ -11,12 +11,10 @@ from sktime.datasets import load_airline
 from sktime.datatypes import convert_to, scitype_to_mtype
 from sktime.forecasting.conformal import ConformalIntervals
 from sktime.forecasting.model_evaluation import evaluate
-from sktime.forecasting.model_selection import (
-    ExpandingWindowSplitter,
-    SlidingWindowSplitter,
-)
 from sktime.forecasting.naive import NaiveForecaster, NaiveVariance
 from sktime.performance_metrics.forecasting.probabilistic import PinballLoss
+from sktime.split import ExpandingWindowSplitter, SlidingWindowSplitter
+from sktime.tests.test_switch import run_test_for_class
 
 INTERVAL_WRAPPERS = [ConformalIntervals, NaiveVariance]
 CV_SPLITTERS = [SlidingWindowSplitter, ExpandingWindowSplitter]
@@ -25,6 +23,10 @@ SAMPLE_FRACS = [None, 0.5]
 MTYPES_SERIES = scitype_to_mtype("Series", softdeps="present")
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(INTERVAL_WRAPPERS),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("mtype", MTYPES_SERIES)
 @pytest.mark.parametrize("override_y_mtype", [True, False])
 @pytest.mark.parametrize("wrapper", INTERVAL_WRAPPERS)
@@ -38,7 +40,7 @@ def test_wrapper_series_mtype(wrapper, override_y_mtype, mtype):
 
     We test once with an internal forecaster that needs pd.DataFrame conversion,
     and one that accepts pd.Series.
-    We do this with a trick: the vanilla NaiveForecaster can accept both; we mimick a
+    We do this with a trick: the vanilla NaiveForecaster can accept both; we mimic a
     "pd.DataFrame only" forecaster by restricting its y_inner_mtype tag to pd.Series.
     """
     y = load_airline()
@@ -62,6 +64,10 @@ def test_wrapper_series_mtype(wrapper, override_y_mtype, mtype):
     assert len(pred_var) == 3
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(INTERVAL_WRAPPERS + [evaluate]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("wrapper", INTERVAL_WRAPPERS)
 @pytest.mark.parametrize("splitter", CV_SPLITTERS)
 @pytest.mark.parametrize("strategy", EVALUATE_STRATEGY)

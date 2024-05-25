@@ -12,11 +12,9 @@ from sklearn.base import clone
 from sktime.datasets import load_shampoo_sales
 from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.model_evaluation import evaluate
-from sktime.forecasting.model_selection import (
-    ExpandingWindowSplitter,
-    ForecastingGridSearchCV,
-)
+from sktime.forecasting.model_selection import ForecastingGridSearchCV
 from sktime.forecasting.naive import NaiveForecaster
+from sktime.split import ExpandingWindowSplitter
 from sktime.transformations.compose import MultiplexTransformer
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.utils.validation.forecasting import check_scoring

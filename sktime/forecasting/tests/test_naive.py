@@ -213,7 +213,7 @@ def test_strategy_mean_and_last_seasonal_additional_combinations(
     # For selected cases, remove a redundant data point by making it NaN
     if window_length > sp:
         # create a trailing NaN value in the training set
-        data[window_length - 1] = np.nan
+        data.iloc[window_length - 1] = np.nan
 
     # Split into train and test data
     train_data = data[:window_length]
@@ -301,7 +301,7 @@ def test_naive_predict_var_backwards(strategy, sp, window_length, n_periods):
 
     T = len(y.dropna())
     if strategy == "last":
-        # This is trival because square root of (h) when h=1 is just 1
+        # This is trivial because square root of (h) when h=1 is just 1
         sigma_res = sigma / np.sqrt(h)
     elif strategy == "mean":
         sigma_res = sigma / np.sqrt(1 + (1 / T))
@@ -393,13 +393,36 @@ def test_naive_predict_interval_against_R_naive(strategy, sp, lower, upper):
     y_pred_ints = forecaster.fit(y).predict_interval(fh=h, coverage=coverage)
 
     expected = pd.DataFrame(
-        columns=pd.MultiIndex.from_product(
-            [["Coverage"], [coverage], ["lower", "upper"]]
-        ),
+        columns=pd.MultiIndex.from_product([[0], [coverage], ["lower", "upper"]]),
         index=y_pred_ints.index,
     )
 
-    expected[("Coverage", coverage, "lower")] = lower
-    expected[("Coverage", coverage, "upper")] = upper
+    expected[(0, coverage, "lower")] = lower
+    expected[(0, coverage, "upper")] = upper
 
     pd.testing.assert_frame_equal(y_pred_ints, expected)
+
+
+@pytest.mark.parametrize("freq", ["2D", "W", "W-TUE", "M"])
+def test_naive_sp_greater_1_not_nan(freq):
+    sample_dates = pd.date_range(start="2001-01-01", periods=30, freq=freq)
+    sample_values = np.random.default_rng(seed=0).random(size=len(sample_dates))
+
+    sample_dataset = pd.Series(sample_values, index=sample_dates)
+
+    model = NaiveForecaster(sp=2)
+    model.fit(sample_dataset)
+
+    predictions: pd.Series = model.predict(fh=[1, 2, 3])
+    null_predictions_count = predictions.isna().sum()
+
+    assert null_predictions_count == 0
+
+
+def test_insample_with_numpy_input():
+    """Test insample prediction with numpy input."""
+    y = np.random.random(1000)
+    forecaster = NaiveForecaster()
+    forecaster.fit(y)
+    y_pred = forecaster.predict(np.arange(0, 10))
+    assert len(y_pred) == 10

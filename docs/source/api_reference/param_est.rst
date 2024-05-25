@@ -14,10 +14,6 @@ All parameter estimators in ``sktime`` can be listed using the
 using ``estimator_types="param_est"``, optionally filtered by tags.
 Valid tags can be listed using ``sktime.registry.all_tags``.
 
-.. automodule:: sktime.param_est
-    :no-members:
-    :no-inherited-members:
-
 Parameter estimators
 --------------------
 
@@ -32,6 +28,12 @@ Composition
 
     ParamFitterPipeline
 
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    FunctionParamFitter
+
 .. currentmodule:: sktime.param_est.plugin
 
 .. autosummary::
@@ -39,6 +41,7 @@ Composition
     :template: class.rst
 
     PluginParamsForecaster
+    PluginParamsTransformer
 
 Naive
 ~~~~~
@@ -75,3 +78,9 @@ Stationarity estimators
 
     StationarityADF
     StationarityKPSS
+    StationarityADFArch
+    StationarityDFGLS
+    StationarityPhillipsPerron
+    StationarityKPSSArch
+    StationarityZivotAndrews
+    StationarityVarianceRatio

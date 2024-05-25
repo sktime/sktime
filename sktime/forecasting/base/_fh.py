@@ -85,7 +85,7 @@ def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
     Raises
     ------
     TypeError :
-        Raised if `values` type is not supported
+        Raised if ``values`` type is not supported
 
     Returns
     -------
@@ -208,14 +208,14 @@ class ForecastingHorizon:
             absolute, if not relative and values of supported absolute index type
     freq : str, pd.Index, pandas offset, or sktime forecaster, optional (default=None)
         object carrying frequency information on values
-        ignored unless values is without inferrable freq
+        ignored unless values is without inferable freq
 
     Examples
     --------
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.split import temporal_train_test_split
     >>> import numpy as np
     >>> y = load_airline()
     >>> y_train, y_test = temporal_train_test_split(y, test_size=6)
@@ -381,6 +381,9 @@ class ForecastingHorizon:
         if hasattr(self, "_freq") and hasattr(self._freq, "freqstr"):
             # _freq is a pandas offset, frequency string is obtained via freqstr
             return self._freq.freqstr
+        elif hasattr(self, "_freq") and isinstance(self._freq, str):
+            # _freq is a string, frequency string is obtained directly
+            return self._freq
         else:
             return None
 
@@ -415,8 +418,12 @@ class ForecastingHorizon:
                     f"Current: {freq_from_self}, from update: {freq_from_obj}."
                 )
         elif freq_from_obj is not None:  # only freq_from_obj is not None
+            if freq_from_obj == "ME":
+                freq_from_obj = "M"
             self._freq = freq_from_obj
         else:
+            if freq_from_obj == "ME":
+                freq_from_obj = "M"
             # leave self._freq as freq_from_self, or set to None if does not exist yet
             self._freq = freq_from_self
 
@@ -436,12 +443,12 @@ class ForecastingHorizon:
         Parameters
         ----------
         **kwargs : dict of kwargs
-            kwargs passed to `to_numpy()` of wrapped pandas index.
+            kwargs passed to ``to_numpy()`` of wrapped pandas index.
 
         Returns
         -------
         fh : np.ndarray
-            NumPy array containg forecasting horizon's underlying values.
+            NumPy array containing forecasting horizon's underlying values.
         """
         return self.to_pandas().to_numpy(**kwargs)
 
@@ -491,10 +498,10 @@ class ForecastingHorizon:
     def to_absolute_index(self, cutoff=None):
         """Return absolute values of the horizon as a pandas.Index.
 
-        For a forecaster `f` that has `fh` being `self`,
-        the return of this method with `cutoff=f.cutoff` is the same
+        For a forecaster ``f`` that has ``fh`` being ``self``,
+        the return of this method with ``cutoff=f.cutoff`` is the same
         as the expected index of the return of the forecaster's predict methods,
-        e.g., `f.predict` or `f.predict_interval`
+        e.g., ``f.predict`` or ``f.predict_interval``
 
         Parameters
         ----------
@@ -513,7 +520,7 @@ class ForecastingHorizon:
         return fh_abs.to_pandas()
 
     def to_absolute_int(self, start, cutoff=None):
-        """Return absolute values as zero-based integer index starting from `start`.
+        """Return absolute values as zero-based integer index starting from ``start``.
 
         Parameters
         ----------
@@ -536,7 +543,7 @@ class ForecastingHorizon:
         absolute = self.to_absolute_index(cutoff)
 
         if isinstance(absolute, pd.DatetimeIndex):
-            # coerce to pd.Period for reliable arithmetics and computations of
+            # coerce to pd.Period for reliable arithmetic and computations of
             # time deltas
             absolute = _coerce_to_period(absolute, freq=freq)
 
@@ -674,6 +681,87 @@ class ForecastingHorizon:
             relative = self.to_relative(cutoff)
             return relative - relative.to_pandas()[0]
 
+    def get_expected_pred_idx(self, y=None, cutoff=None, sort_by_time=False):
+        """Construct DataFrame Index expected in y_pred, return of _predict.
+
+        Parameters
+        ----------
+        y : pd.DataFrame, pd.Series, pd.Index, or None
+            data to compute fh relative to,
+            assumed in sktime pandas based mtype or index thereof
+            if None, assumes no MultiIndex
+        cutoff : pd.Period, pd.Timestamp, int, or pd.Index, optional (default=None)
+            Cutoff value to use in computing resulting index.
+            If cutoff is not provided, is computed from ``y`` via ``get_cutoff``.
+        sort_by_time : bool, optional (default=False)
+            for MultiIndex returns, whether to sort by time index (level -1)
+            - If True, result Index is sorted by time index (level -1)
+            - If False, result Index is sorted overall
+
+        Returns
+        -------
+        fh_idx : pd.Index, expected index of y_pred returned by predict
+            assumes pandas based return mtype
+        """
+        from sktime.datatypes import get_cutoff
+
+        def _make_y_pred(y_single):
+            """Make y_pred from single instance y, used in list comprehension."""
+            cutoff = get_cutoff(y_single)
+            return pd.Index(self.to_absolute_index(cutoff))
+
+        if hasattr(y, "index"):
+            y_index = y.index
+        elif isinstance(y, pd.Index):
+            y_index = y
+            y = pd.DataFrame(index=y_index)
+        elif cutoff is None:
+            y_index = pd.Index(y)
+            y = pd.DataFrame(index=y_index)
+        else:
+            y_index = None
+
+        if cutoff is None and not isinstance(y_index, pd.MultiIndex):
+            _cutoff = get_cutoff(y)
+        else:
+            _cutoff = cutoff
+
+        if cutoff is not None or not isinstance(y_index, pd.MultiIndex):
+            fh_idx = pd.Index(self.to_absolute_index(_cutoff))
+
+        if cutoff is not None and isinstance(y_index, pd.MultiIndex):
+            y_inst_idx = y_index.droplevel(-1).unique().sort_values()
+            if isinstance(y_inst_idx, pd.MultiIndex) and sort_by_time:
+                fh_list = [x + (y,) for y in fh_idx for x in y_inst_idx]
+            elif isinstance(y_inst_idx, pd.MultiIndex) and not sort_by_time:
+                fh_list = [x + (y,) for x in y_inst_idx for y in fh_idx]
+            elif sort_by_time:  # and not isinstance(y_inst_idx, pd.MultiIndex):
+                fh_list = [(x, y) for y in fh_idx for x in y_inst_idx]
+            else:  # not sort_by_time and not isinstance(y_inst_idx, pd.MultiIndex):
+                fh_list = [(x, y) for x in y_inst_idx for y in fh_idx]
+
+            fh_idx = pd.Index(fh_list)
+
+        elif isinstance(y_index, pd.MultiIndex):
+            y_inst_idx = y_index.droplevel(-1).unique()
+
+            if isinstance(y_inst_idx, pd.MultiIndex):
+                fh_list = [x + (z,) for x in y_inst_idx for z in _make_y_pred(y.loc[x])]
+            else:
+                fh_list = [(x, z) for x in y_inst_idx for z in _make_y_pred(y.loc[x])]
+
+            fh_idx = pd.Index(fh_list)
+
+            if sort_by_time:
+                fh_df = pd.DataFrame(index=fh_idx)
+                fh_idx = fh_df.sort_index(level=-1).index
+
+        # replicating index names
+        if hasattr(y_index, "names") and y_index.names is not None:
+            fh_idx.names = y_index.names
+
+        return fh_idx
+
     def __repr__(self):
         """Generate repr based on wrapped index repr."""
         class_name = self.__class__.__name__
@@ -723,12 +811,12 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
         _check_cutoff(cutoff, absolute)
 
         if isinstance(absolute, pd.DatetimeIndex):
-            # coerce to pd.Period for reliable arithmetics and computations of
+            # coerce to pd.Period for reliable arithmetic and computations of
             # time deltas
             absolute = _coerce_to_period(absolute, freq=fh.freq)
             cutoff = _coerce_to_period(cutoff, freq=fh.freq)
 
-        # TODO: 0.22.0:
+        # TODO: 0.30.0:
         # Check at every minor release whether lower pandas bound >=0.15.0
         # if yes, can remove the workaround in the "else" condition and the check
         #
@@ -792,6 +880,12 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
         _check_cutoff(cutoff, relative)
         is_timestamp = isinstance(cutoff, pd.DatetimeIndex)
 
+        # remember timezone to restore it later
+        if hasattr(cutoff, "tz"):
+            old_tz = cutoff.tz
+        else:
+            old_tz = None
+
         if is_timestamp:
             # coerce to pd.Period for reliable arithmetic operations and
             # computations of time deltas
@@ -805,6 +899,9 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
         if is_timestamp:
             # coerce back to DatetimeIndex after operation
             absolute = absolute.to_timestamp(fh.freq)
+
+        if old_tz is not None:
+            absolute = absolute.tz_localize(old_tz)
 
         return fh._new(absolute, is_relative=False, freq=fh.freq)
 
