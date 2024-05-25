@@ -18,8 +18,7 @@ import tarfile
 import tempfile
 import warnings
 import pandas as pd
-import requests
-import rdata
+
 
 # from sktime.datasets._data_io import (
 #     _download_and_extract,
@@ -29,7 +28,7 @@ import rdata
 # )
 # from sktime.datasets._readers_writers.tsf import load_tsf_to_dataframe
 # from sktime.datasets.tsf_dataset_names import tsf_all, tsf_all_datasets
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+
 
 MODULE = os.path.dirname(__file__)
 
@@ -57,6 +56,7 @@ def _get_dataset_url(dataset_name):
     return (False, None)
 
 def _decompress_file_to_temp(url, temp_folder="/tmp"):
+    import requests    
     temp_dir = tempfile.mkdtemp(dir=temp_folder)
     response = requests.get(url)
     temp_file = os.path.join(temp_dir, "foo.tar.gz")
@@ -87,6 +87,8 @@ def _date_constructor(obj, attrs):
     return pd.to_datetime(obj, origin='1970-01-01', unit='D')
 
 def _import_rda(path):
+    import rdata
+
     constructor_dict = {
         **rdata.conversion.DEFAULT_CLASS_MAP,
         "Date": _date_constructor,
@@ -263,8 +265,9 @@ def load_fpp3(dataset, temp_folder="/tmp"):
     status: - logical - True on success, False on failure
     y : if status is True, then a pd.DataFrame, else None
     """
+    from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-    dependencies_met = _check_soft_dependencies(["shutil","tarfile","tempfile","requests","rdata"])
+    dependencies_met = _check_soft_dependencies(["requests","rdata"])
     if not dependencies_met:
         return (False, None)
     status, y = _process_dataset(dataset, temp_folder)
