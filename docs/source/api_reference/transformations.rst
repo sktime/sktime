@@ -398,7 +398,7 @@ Filtering and denoising
     :toctree: auto_generated/
     :template: class.rst
 
-    Bolllinger
+    Bollinger
 
 Differencing, slope, kinematics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
