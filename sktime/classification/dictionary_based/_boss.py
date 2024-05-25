@@ -116,7 +116,6 @@ class BOSSEnsemble(BaseClassifier):
     - `TSML <https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/
     tsml/classifiers/dictionary_based/BOSS.java>`_.
 
-
     References
     ----------
     .. [1] Patrick Schäfer, "The BOSS is concerned with time series classification
@@ -640,9 +639,7 @@ class IndividualBOSS(BaseClassifier):
             Predicted class labels.
         """
         test_bags = self._transformer.transform(X)
-        data_type = type(self._class_vals[0])
-        if data_type == np.str_ or data_type == str:
-            data_type = "object"
+        data_type = self._class_vals.dtype
 
         classes = np.zeros(test_bags.shape[0], dtype=data_type)
 

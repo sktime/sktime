@@ -155,7 +155,7 @@ class BaseDeepRegressor(BaseRegressor, ABC):
         if hasattr(self, "history"):
             self.__dict__["history"] = self.history
 
-    def save(self, path=None, legacy_save=True):
+    def save(self, path=None, legacy_save=False):
         """Save serialized self to bytes-like object or to (.zip) file.
 
         Behaviour:
@@ -177,11 +177,10 @@ class BaseDeepRegressor(BaseRegressor, ABC):
                 path="/home/stored/estimator" then a zip file ``estimator.zip`` will be
                 stored in ``/home/stored/``.
 
-        legacy_save : bool, default = True
+        legacy_save : bool, default = False
             whether to use the legacy saving method for the model. If
             tensorflow >= 2.16.0 is installed, this is ignored.
-            The default will switch to False in sktime 0.28.0, and the
-            legacy saving method will be removed in sktime 0.29.0.
+            The legacy saving method will be removed in sktime 0.30.0.
 
         Returns
         -------
@@ -189,7 +188,6 @@ class BaseDeepRegressor(BaseRegressor, ABC):
         if ``path`` is file location - ZipFile with reference to the file
         """
         # TODO 0.30.0 - remove the legacy_save parameter in sktime 0.30.0
-        # TODO 0.29.0 - change the default value of legacy_save to False
         import pickle
         import shutil
         from pathlib import Path

@@ -98,6 +98,7 @@ Distribution forecasts
     :toctree: auto_generated/
     :template: class_with_call.rst
 
+    AUCalibration
     CRPS
     LogLoss
     SquaredDistrLoss
