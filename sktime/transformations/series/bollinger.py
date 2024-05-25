@@ -22,7 +22,7 @@ class Bollinger(BaseTransformer):
 
     k: float, default = 1
         Multiplier to determine how many stds the upper and lower bounds are from the
-            moving average.
+        moving average.
 
     memory : str, optional, default = "all"
         how much of previously seen X to remember, for exact reconstruction of inverse
