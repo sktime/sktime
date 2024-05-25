@@ -4,8 +4,6 @@
 __author__ = ["ishanpai"]
 __all__ = ["Bollinger"]
 
-from typing import Union
-
 import pandas as pd
 
 from sktime.datatypes._utilities import get_cutoff, update_data
@@ -153,9 +151,7 @@ class Bollinger(BaseTransformer):
         return [{"window": 12, "k": 1}, {"window": 2, "k": 1.2}]
 
 
-def _bollinger_transform(
-    df: Union[pd.Series, pd.DataFrame], window: int, k: float
-) -> pd.DataFrame:
+def _bollinger_transform(df: pd.Series, window: int, k: float) -> pd.DataFrame:
     df_ma = df.rolling(window=window).mean()
     df_std = df.rolling(window=window).std()
     df_upper = df_ma + k * df_std
