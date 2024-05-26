@@ -147,11 +147,8 @@ def VMD(f, alpha, tau, K, DC, init, tol):
 
         # update first omega if not held at 0
         if not DC:
-            o_pl_enum = np.dot(
-                freqs[T // 2 : T], abs(u_hat_plus[n + 1, T // 2 : T, k]) ** 2
-            )
-            o_pl_denom = np.sum(abs(u_hat_plus[n + 1, T // 2 : T, k]) ** 2)
-            omega_plus[n + 1, k] = o_pl_enum / o_pl_denom
+            wts = abs(u_hat_plus[n + 1, T // 2 : T, k]) ** 2
+            omega_plus[n + 1, k] = np.average(freqs[T // 2 : T], weights=wts)
 
         # update of any other mode
         for k in np.arange(1, K):
@@ -162,11 +159,8 @@ def VMD(f, alpha, tau, K, DC, init, tol):
             u_hat_plus_denominator = 1.0 + Alpha[k] * (freqs - omega_plus[n, k]) ** 2
             u_hat_plus[n + 1, :, k] = u_hat_plus_enumerator / u_hat_plus_denominator
             # center frequencies
-            o_pl_enum = np.dot(
-                freqs[T // 2 : T], abs(u_hat_plus[n + 1, T // 2 : T, k]) ** 2
-            )
-            o_pl_denom = np.sum(abs(u_hat_plus[n + 1, T // 2 : T, k]) ** 2)
-            omega_plus[n + 1, k] = o_pl_enum / o_pl_denom
+            wts = abs(u_hat_plus[n + 1, T // 2 : T, k]) ** 2
+            omega_plus[n + 1, k] = np.average(freqs[T // 2 : T], weights=wts)
 
         # Dual ascent
         lambda_update = tau * (np.sum(u_hat_plus[n + 1, :, :], axis=1) - f_hat_plus)
