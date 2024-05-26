@@ -117,10 +117,13 @@ class MyForecaster(BaseForecaster):
         # valid values: str or list of str, should be GitHub handles
         # this should follow best scientific contribution practices
         # scope is the code, not the methodology (method is per paper citation)
+        # if interfacing a 3rd party estimator, ensure to give credit to the
+        # authors of the interfaced estimator
         #
         # maintainer = current maintainer(s) of the estimator
         # per algorithm maintainer role, see governance document
         # this is an "owner" type role, with rights and maintenance duties
+        # for 3rd party interfaces, the scope is the sktime class only
         "maintainers": ["maintainer1", "maintainer2"],
         # valid values: str or list of str, should be GitHub handles
         # remove tag if maintained by sktime core team

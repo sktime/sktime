@@ -44,6 +44,12 @@ class TestAllSplitters(SplitterFixtureGenerator, QuickTester):
             y = _make_hierarchical()
         else:
             y = _make_series()
+            # instance splitters do not support single series
+            # and should raise informative error message instead
+            if splitter.get_tag("split_type") == "instance":
+                with pytest.raises(ValueError, match="requires Panel"):
+                    list(splitter.split(y))
+                return None
 
         n_splits = splitter.get_n_splits(y)
 
@@ -83,6 +89,12 @@ class TestAllSplitters(SplitterFixtureGenerator, QuickTester):
             y = _make_hierarchical()
         else:
             y = _make_series()
+            # instance splitters do not support single series
+            # and should raise informative error message instead
+            if splitter.get_tag("split_type") == "instance":
+                with pytest.raises(ValueError, match="requires Panel"):
+                    list(splitter.split(y))
+                return None
 
         n_splits = splitter.get_n_splits(y)
 
@@ -118,6 +130,12 @@ class TestAllSplitters(SplitterFixtureGenerator, QuickTester):
             y = _make_hierarchical()
         else:
             y = _make_series()
+            # instance splitters do not support single series
+            # and should raise informative error message instead
+            if splitter.get_tag("split_type") == "instance":
+                with pytest.raises(ValueError, match="requires Panel"):
+                    list(splitter.split(y))
+                return None
 
         n_splits = splitter.get_n_splits(y)
 
