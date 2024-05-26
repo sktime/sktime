@@ -128,9 +128,10 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         from sktime.utils.warnings import warn
 
         warn(
-            "WARNING: convert_y_to_keras of sktime deep learning estimators is"
-            "deprecated and will be removed in 0.31.0. For equivalent behaviour,"
-            "please use sklearn OneHotEncoder.fit_transform directly.",
+            "convert_y_to_keras of sktime deep learning estimators is "
+            "deprecated and will be removed in 0.31.0. For equivalent "
+            "behaviour, please use sklearn OneHotEncoder.fit_transform "
+            "directly.",
             obj=self,
         )
         return self._convert_y_to_keras(y=y)
