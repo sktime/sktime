@@ -89,6 +89,7 @@ class EnbPIForecaster(BaseForecaster):
         self.random_state = random_state
         self.random_state = random_state
         self.method = method
+        self.loo = False
 
     def _fit(self, X, y, fh=None):
         self._fh = fh
@@ -138,9 +139,18 @@ class EnbPIForecaster(BaseForecaster):
             self.preds.append(prediction)
 
         # Calculate Residuals using Leave-One-Out Cross Validation
-        for i in range(len(self.preds)):
-            pred = np.stack(self.preds[:i] + self.preds[i + 1 :], axis=0).mean(axis=0)
-            self.residuals.append(y_fit_cp - pred)
+        if self.loo:
+            for i in range(len(self.preds)):
+                pred = np.stack(self.preds[:i] + self.preds[i + 1 :], axis=0).mean(axis=0)
+                self.residuals.append(y_fit_cp.values - pred)
+        else:
+            for i in range(len(self.preds)):
+                pred = self.preds[i]
+                self.residuals.append(y_fit_cp.values - pred)
+
+
+        for forecaster in self.forecasters:
+            forecaster.update(y=y_fit_cp, X=x_fit_cp)
 
         return self
 
