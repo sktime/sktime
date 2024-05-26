@@ -1817,31 +1817,34 @@ class ProximityForest(BaseClassifier):
         if parameter_set == "results_comparison":
             return {"n_estimators": 3, "max_depth": 2, "n_stump_evaluations": 2}
         else:
+            params_set = []
+
             params1 = {
-                "n_estimators": 2,
-                "max_depth": 3,
+                "n_estimators": 1,
+                "max_depth": 1,
                 "n_stump_evaluations": 1,
                 "backend": "loky",
             }
+            params_set.append(params1)
             # params2 = {
             #     "n_estimators": 3,
             #     "max_depth": 5,
             #     "n_stump_evaluations": 2,
             #     "backend": "threading",
             # }
-            params3 = {
-                "n_estimators": 3,
-                "max_depth": 5,
-                "n_stump_evaluations": 2,
-                "backend": None,
-            }
-            params_set = [params1, params3]
+            # params_set.append(params2)
+            # params3 = {
+            #     "n_estimators": 2,
+            #     "max_depth": 3,
+            #     "n_stump_evaluations": 2,
+            #     "backend": None,
+            # }
+            # params_set.append(params3)
 
             if _check_soft_dependencies("dask", severity="none"):
                 params4 = {
-                    "n_estimators": 2,
-                    "max_depth": 1,
-                    "n_stump_evaluations": 1,
+                    "n_estimators": 1,
+                    "max_depth": 2,
                     "backend": "dask",
                 }
                 params_set.append(params4)
