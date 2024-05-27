@@ -6,7 +6,7 @@ __all__ = [
     "HierarchyEnsembleForecaster",
     "ColumnEnsembleForecaster",
     "EnsembleForecaster",
-    "CategoryCompositor",
+    "ByGroupForecaster",
     "FallbackForecaster",
     "AutoEnsembleForecaster",
     "TransformedTargetForecaster",
@@ -33,7 +33,7 @@ __all__ = [
 ]
 
 from sktime.forecasting.compose._bagging import BaggingForecaster
-from sktime.forecasting.compose._category_compositor import CategoryCompositor
+from sktime.forecasting.compose._by_group_forecaster import ByGroupForecaster
 from sktime.forecasting.compose._column_ensemble import ColumnEnsembleForecaster
 from sktime.forecasting.compose._ensemble import (
     AutoEnsembleForecaster,
@@ -42,7 +42,9 @@ from sktime.forecasting.compose._ensemble import (
 from sktime.forecasting.compose._fallback import FallbackForecaster
 from sktime.forecasting.compose._fhplex import FhPlexForecaster
 from sktime.forecasting.compose._grouped import ForecastByLevel
-from sktime.forecasting.compose._hierarchy_ensemble import HierarchyEnsembleForecaster
+from sktime.forecasting.compose._hierarchy_ensemble import (
+    HierarchyEnsembleForecaster,
+)
 from sktime.forecasting.compose._ignore_x import IgnoreX
 from sktime.forecasting.compose._multiplexer import MultiplexForecaster
 from sktime.forecasting.compose._pipeline import (

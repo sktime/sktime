@@ -3,7 +3,7 @@
 
 import pytest
 
-from sktime.forecasting.compose import CategoryCompositor
+from sktime.forecasting.compose import ByGroupForecaster
 from sktime.forecasting.croston import Croston
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
@@ -52,7 +52,7 @@ def test_forecaster_selection(
     """
 
     # Defining the compositor
-    compositor = CategoryCompositor(forecasters=forecasters)
+    compositor = ByGroupForecaster(forecasters=forecasters)
     compositor.fit(series_generator(), fh=horizon)
 
     # Check if the type of the chosen forecaster matches the provided forecaster type
@@ -100,7 +100,7 @@ def test_fallback_forecaster(
         A forecaster to choose if no options from `forecasters` is viable
     """
     # Creating our compositor
-    compositor = CategoryCompositor(
+    compositor = ByGroupForecaster(
         forecasters=forecasters, fallback_forecaster=fallback_forecaster
     )
 
