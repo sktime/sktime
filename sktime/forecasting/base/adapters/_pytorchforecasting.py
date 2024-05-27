@@ -35,6 +35,8 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
         "X-y-must-have-same-index": True,
         "handles-missing-data": False,
         "capability:insample": False,
+        "capability:pred_int": False,
+        "capability:pred_int:insample": False,
     }
 
     def __init__(
