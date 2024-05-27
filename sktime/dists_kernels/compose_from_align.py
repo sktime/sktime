@@ -29,6 +29,8 @@ class DistFromAligner(BasePairwiseTransformerPanel):
 
         super().__init__()
 
+        self.clone_tags(aligner, "capability:unequal_length")
+
     def _transform(self, X, X2=None):
         """Compute distance/kernel matrix.
 
