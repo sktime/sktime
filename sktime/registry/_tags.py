@@ -805,6 +805,7 @@ class capability__unequal_length(_BaseTag):
     _tags = {
         "tag_name": "capability:unequal_length",
         "parent_type": [
+            "aligner",
             "classifier",
             "clusterer",
             "early_classifier",
