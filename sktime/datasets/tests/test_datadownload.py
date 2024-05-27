@@ -6,7 +6,9 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import load_forecastingdata, load_solar, load_UCR_UEA_dataset
+from sktime.datasets import load_fpp3
 from sktime.datasets.tsf_dataset_names import tsf_all, tsf_all_datasets
+from sktime.datatypes import check_is_mtype
 
 # test tsf download only on a random uniform subsample of datasets
 N_TSF_SUBSAMPLE = 3
@@ -91,3 +93,12 @@ def test_load_forecasting_data_invalid_name(name):
         match=f"Error in load_forecastingdata, Invalid dataset name = {name}.",
     ):
         load_forecastingdata(name=name)
+
+@pytest.mark.datadownload
+def test_load_fpp3():
+    """Test loading downloaded dataset from ."""
+    status, olympic_running = load_fpp3("olympic_running")
+    assert status is True
+    assert isinstance(olympic_running, pd.DataFrame)
+    ret = check_is_mtype(olympic_running, mtype="pd_multiindex_hier")
+    assert ret is True
