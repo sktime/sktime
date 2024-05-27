@@ -406,7 +406,10 @@ def _groupby_dot(df, weights):
     out : pd.DataFrame
         dataframe with weighted groupby dot product
     """
-    out = df.groupby(axis=1, level=1).apply(lambda x: x.dot(weights))
+    out = df.T.groupby(level=1).apply(lambda x: x.T.dot(weights)).T
+    # formerly
+    # out = df.groupby(axis=1, level=1).apply(lambda x: x.dot(weights))
+    # but groupby(axis=1) is deprecated
     return out
 
 
