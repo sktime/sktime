@@ -101,7 +101,9 @@ def convert_polars_to_pandas(obj):
     return obj
 
 
-def check_polars_frame(obj, return_metadata=False, var_name="obj", lazy=False):
+def check_polars_frame(
+    obj, return_metadata=False, var_name="obj", lazy=False, scitype="Series"
+):
     """Check polars frame, generic format."""
     import polars as pl
 
@@ -119,6 +121,35 @@ def check_polars_frame(obj, return_metadata=False, var_name="obj", lazy=False):
         return ret(False, msg, None, return_metadata)
 
     # we now know obj is a polars DataFrame or LazyFrame
+    index_cols = get_mi_cols(obj)
+
+    if scitype == "Series":
+        cols_msg = (
+            f"{var_name} must have exactly one index column, "
+            f"found {len(index_cols)}, namely: {index_cols}"
+        )
+        right_no_index_cols = len(index_cols) <= 1
+    elif scitype == "Panel":
+        cols_msg = (
+            f"{var_name} must have exactly two index columns, "
+            f"found {len(index_cols)}, namely: {index_cols}"
+        )
+        right_no_index_cols = len(index_cols) == 2
+    elif scitype == "Hierarchical":
+        cols_msg = (
+            f"{var_name} must have three or more index columns, "
+            f"found {len(index_cols)}, namely: {index_cols}"
+        )
+        right_no_index_cols = len(index_cols) >= 3
+    else:
+        return RuntimeError(
+            'scitype arg of check_dask_frame must be one of strings "Series", '
+            f'"Panel", or "Hierarchical", but found {scitype}'
+        )
+
+    if not right_no_index_cols:
+        return ret(False, cols_msg, None, return_metadata)
+
     if _req("is_empty", return_metadata):
         metadata["is_empty"] = obj.width < 1
     if _req("is_univariate", return_metadata):

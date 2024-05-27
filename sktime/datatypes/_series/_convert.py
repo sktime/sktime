@@ -258,3 +258,37 @@ if _check_soft_dependencies("dask", severity="none"):
     _extend_conversions(
         "dask_series", "pd.DataFrame", convert_dict, mtype_universe=MTYPE_LIST_SERIES
     )
+
+if _check_soft_dependencies("polars", severity="none"):
+    from sktime.datatypes._adapter.polars import (
+        convert_pandas_to_polars,
+        convert_polars_to_pandas,
+    )
+
+    def convert_polars_to_mvs_as_series(obj):
+        return convert_polars_to_pandas(obj)
+
+    convert_dict[
+        ("polars.DataFrame", "pd.DataFrame", "Series")
+    ] = convert_polars_to_mvs_as_series
+
+    def convert_mvs_to_polars_as_series(obj):
+        return convert_pandas_to_polars(obj)
+
+    convert_dict[
+        ("pd.DataFrame", "polars.DataFrame", "Series")
+    ] = convert_mvs_to_polars_as_series
+
+    def convert_polars_lazy_to_mvs_as_series(obj):
+        return convert_polars_to_pandas(obj)
+
+    convert_dict[
+        ("polars.LazyFrame", "pd.DataFrame", "Series")
+    ] = convert_polars_lazy_to_mvs_as_series
+
+    def convert_mvs_to_polars_lazy_as_series(obj):
+        return convert_pandas_to_polars(obj, lazy=True)
+
+    convert_dict[
+        ("pd.DataFrame", "polars.LazyFrame", "Series")
+    ] = convert_mvs_to_polars_lazy_as_series
