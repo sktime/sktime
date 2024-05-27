@@ -122,7 +122,8 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
             ]
         else:
             from lightning.pytorch.callbacks import EarlyStopping
-            from pytorch_forecasting.metrics import QuantileLoss
+
+            # from pytorch_forecasting.metrics import QuantileLoss
 
             early_stop_callback = EarlyStopping(
                 monitor="val_loss",
@@ -147,7 +148,9 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                     "model_params": {
                         "hidden_size": 10,
                         "dropout": 0.1,
-                        "loss": QuantileLoss(),
+                        # "loss": QuantileLoss(),
+                        # can not pass test_set_params and test_set_params_sklearn
+                        # QuantileLoss() != QuantileLoss()
                         "optimizer": "Adam",
                         "log_val_interval": 1,
                     },
