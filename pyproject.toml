@@ -165,7 +165,7 @@ all_extras_pandas2 = [
 # users can install via "pip install sktime[forecasting,transformations]" etc
 #
 alignment = [
-  "dtw-python>=1.3,<1.5",
+  "dtw-python>=1.3,<1.6",
   'numba<0.60,>=0.53',
 ]
 annotation = [
@@ -244,7 +244,7 @@ docs = [
   "pydata-sphinx-theme",
   "Sphinx!=7.2.0,<8.0.0",
   "sphinx-copybutton",
-  "sphinx-design<0.6.0",
+  "sphinx-design<0.7.0",
   "sphinx-gallery<0.17.0",
   "sphinx-issues<5.0.0",
   "tabulate",
@@ -274,6 +274,7 @@ dl = [
   'tensorflow<2.17,>=2; python_version < "3.12"',
   'torch; python_version < "3.12"',
   'transformers[torch]<4.41.0; python_version < "3.12"',
+  'pykan; python_version > "3.9.7"'
 ]
 mlflow = [
   "mlflow",
