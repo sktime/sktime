@@ -45,7 +45,6 @@ class ByGroupForecaster(BaseForecaster, _HeterogenousMetaEstimator):
 
     Examples
     --------
-
     This example showcases how the ByGroupForecaster can be utilized to select
     appropriate forecasters on the basis of the time series category determined by
     the ADICVTransformer!
@@ -105,7 +104,6 @@ class ByGroupForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         transformer=None,
         fallback_forecaster=None,
     ):
-
         # saving arguments to object storage
         if transformer is not None:
             self.transformer = transformer
@@ -381,7 +379,6 @@ class ByGroupForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             The list of forecasters which is returned. Also includes the
             fallback forecaster with the category: "fallback_forecaster"
         """
-
         return list(self.forecasters.values()) + [
             "fallback_forecaster",
             self.fallback_forecaster,
@@ -389,17 +386,15 @@ class ByGroupForecaster(BaseForecaster, _HeterogenousMetaEstimator):
 
     @_forecasters.setter
     def _forecasters(self, new_forecasters):
-        """Provides new values for the forecasters
+        """Provide new values for the forecasters.
 
         Parameters
         ----------
         new_forecasters : list[tuple[str, strsktime forecasters]]
             The list of new forecasters to update the object's forecasters with
         """
-
         # Accepting in possible new forecasters
         for category, forecaster in new_forecasters:
-
             # We assign this in a different way
             if category != "fallback_forecaster":
                 self.forecasters[category] = forecaster
@@ -460,9 +455,7 @@ def _predict_interval(self, fh, X, coverage):
             quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
     """
     # Call this function for the chosen forecaster
-    return self.chosen_forecaster_.predict_interval(
-        fh=fh, X=X, coverage=coverage
-    )
+    return self.chosen_forecaster_.predict_interval(fh=fh, X=X, coverage=coverage)
 
 
 def _predict_var(self, fh, X=None, cov=False):
