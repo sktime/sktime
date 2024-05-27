@@ -2596,7 +2596,8 @@ class BaseGlobalForecaster(BaseForecaster):
         """
         # handle inputs
         self.check_is_fitted()
-
+        if y is None:
+            y = deepcopy(self._y)
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
