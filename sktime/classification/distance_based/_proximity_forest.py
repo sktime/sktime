@@ -900,33 +900,6 @@ class ProximityStump(BaseClassifier):
         self.entropy = gini_gain(self.y, self.y_branches)
         return self
 
-    def _predict(self, X) -> np.ndarray:
-        """Predicts labels for sequences in X.
-
-        Parameters
-        ----------
-        X : array-like or sparse matrix of shape = [n_instances, n_columns]
-            The training input samples.
-            If a Pandas data frame is passed (sktime format)
-            If a Pandas data frame is passed, a check is performed that it
-            only has one column.
-            If not, an exception is thrown, since this classifier does not
-            yet have
-            multivariate capability.
-
-        Returns
-        -------
-        y : array-like, shape =  [n_instances] - predicted class labels
-        """
-        distributions = self._predict_proba(X)
-        predictions = []
-        for instance_index in range(0, X.shape[0]):
-            distribution = distributions[instance_index]
-            prediction = np.argmax(distribution)
-            predictions.append(prediction)
-
-        return np.array(predictions)
-
     def _predict_proba(self, X) -> np.ndarray:
         """Find probability estimates for each class for all cases in X.
 
@@ -1117,33 +1090,6 @@ class ProximityTree(BaseClassifier):
                     sub_tree.fit(sub_X, sub_y)
 
         return self
-
-    def _predict(self, X) -> np.ndarray:
-        """Predicts labels for sequences in X.
-
-        Parameters
-        ----------
-        X : array-like or sparse matrix of shape = [n_instances, n_columns]
-            The training input samples.
-            If a Pandas data frame is passed (sktime format)
-            If a Pandas data frame is passed, a check is performed that it
-            only has one column.
-            If not, an exception is thrown, since this classifier does not
-            yet have
-            multivariate capability.
-
-        Returns
-        -------
-        y : array-like, shape =  [n_instances] - predicted class labels
-        """
-        distributions = self._predict_proba(X)
-        predictions = []
-        for instance_index in range(0, X.shape[0]):
-            distribution = distributions[instance_index]
-            prediction = np.argmax(distribution)
-            predictions.append(prediction)
-
-        return np.array(predictions)
 
     def _predict_proba(self, X) -> np.ndarray:
         """Find probability estimates for each class for all cases in X.
@@ -1493,33 +1439,6 @@ class ProximityForest(BaseClassifier):
         output : array of shape = [n_instances, n_classes] of probabilities
         """
         return tree.predict_proba(X)
-
-    def _predict(self, X) -> np.ndarray:
-        """Predicts labels for sequences in X.
-
-        Parameters
-        ----------
-        X : array-like or sparse matrix of shape = [n_instances, n_columns]
-            The training input samples.
-            If a Pandas data frame is passed (sktime format)
-            If a Pandas data frame is passed, a check is performed that it
-            only has one column.
-            If not, an exception is thrown, since this classifier does not
-            yet have
-            multivariate capability.
-
-        Returns
-        -------
-        y : array-like, shape =  [n_instances] - predicted class labels
-        """
-        distributions = self._predict_proba(X)
-        predictions = []
-        for instance_index in range(0, X.shape[0]):
-            distribution = distributions[instance_index]
-            prediction = np.argmax(distribution)
-            predictions.append(prediction)
-
-        return np.array(predictions)
 
     def _predict_proba(self, X) -> np.ndarray:
         """Find probability estimates for each class for all cases in X.

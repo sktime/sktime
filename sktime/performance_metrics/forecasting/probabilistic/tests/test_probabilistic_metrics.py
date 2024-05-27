@@ -8,6 +8,7 @@ import pytest
 from sktime.performance_metrics.forecasting.probabilistic import (
     ConstraintViolation,
     EmpiricalCoverage,
+    IntervalWidth,
     PinballLoss,
 )
 from sktime.split import temporal_train_test_split
@@ -20,8 +21,9 @@ quantile_metrics = [
 ]
 
 interval_metrics = [
-    EmpiricalCoverage,
     ConstraintViolation,
+    EmpiricalCoverage,
+    IntervalWidth,
 ]
 
 all_metrics = interval_metrics + quantile_metrics
