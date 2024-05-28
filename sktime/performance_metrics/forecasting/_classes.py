@@ -582,6 +582,56 @@ class BaseForecastingErrorMetric(BaseMetric):
             )
         return sample_weight
 
+    def _get_weighted_df(self, df, **kwargs):
+        """Get weighted DataFrame.
+
+        For n x m df, and kwargs containing sample_weight of length n,
+        returns df * sample_weight.reshape(-1, 1), i.e., weights
+        multiplied to each row of the DataFrame.
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            DataFrame to be weighted.
+
+        Returns
+        -------
+        df : pd.DataFrame
+            Weighted DataFrame.
+        """
+        sample_weight = self._get_sample_weight(**kwargs)
+        if sample_weight is not None:
+            df = df.mul(sample_weight, axis=0)
+        return df
+
+    def _handle_multioutput(self, df, multioutput):
+        """Handle multioutput parameter.
+
+        If multioutput is "raw_values", returns df unchanged.
+        If multioutput is "uniform_average", returns df.mean(axis=1) for pd.DataFrame,
+        or df.mean() for pd.Series.
+        If multioutput is array-like, returns df.dot(multioutput).
+
+        Parameters
+        ----------
+        df : pd.DataFrame or pd.Series
+            DataFrame to be handled, assumed result of metric calculation.
+        multioutput : str or array-like
+            Multioutput parameter.
+        """
+        if isinstance(multioutput, str):
+            if multioutput == "raw_values":
+                return df
+
+            if multioutput == "uniform_average":
+                if isinstance(df, pd.Series):
+                    return df.mean()
+                else:
+                    return df.mean(axis=1)
+
+        # else, we expect multioutput to be array-like
+        return df.dot(multioutput)
+
 
 class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
     """Adapter for numpy metrics."""
@@ -1315,16 +1365,9 @@ class MeanAbsoluteError(BaseForecastingErrorMetric):
         multioutput = self.multioutput
 
         raw_values = (y_true - y_pred).abs()
+        raw_values = self._get_weighted_df(raw_values, **kwargs)
 
-        if isinstance(multioutput, str):
-            if multioutput == "raw_values":
-                return raw_values
-
-            if multioutput == "uniform_average":
-                return raw_values.mean(axis=1)
-
-        # else, we expect multioutput to be array-like
-        return raw_values.dot(multioutput)
+        return self._handle_multioutput(raw_values, multioutput)
 
 
 class MedianAbsoluteError(BaseForecastingErrorMetricFunc):
@@ -1587,20 +1630,13 @@ class MeanSquaredError(BaseForecastingErrorMetric):
         multioutput = self.multioutput
 
         raw_values = (y_true - y_pred) ** 2
+        raw_values = self._get_weighted_df(raw_values, **kwargs)
         msqe = raw_values.mean()
 
         if self.square_root:
             msqe = msqe.pow(0.5)
 
-        if isinstance(multioutput, str):
-            if multioutput == "raw_values":
-                return msqe
-
-            if multioutput == "uniform_average":
-                return msqe.mean()
-
-        # else, we expect multioutput to be array-like
-        return msqe.dot(multioutput)
+        return self._handle_multioutput(msqe, multioutput)
 
     def _evaluate_by_index(self, y_true, y_pred, **kwargs):
         """Return the metric evaluated at each time point.
@@ -1644,6 +1680,8 @@ class MeanSquaredError(BaseForecastingErrorMetric):
             pseudo_values = n * rmse - (n - 1) * rmse_jackknife
         else:
             pseudo_values = raw_values
+
+        pseudo_values = self._get_weighted_df(pseudo_values, **kwargs)
 
         if isinstance(multioutput, str):
             if multioutput == "raw_values":
