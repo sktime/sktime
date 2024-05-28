@@ -563,10 +563,10 @@ class capability__train_estimate(_BaseTag):
 
 
 class fit_is_empty(_BaseTag):
-    """Whether the estimator has an empty fit method.
+    """Property: Whether the estimator has an empty fit method.
 
     - String name: ``"fit_is_empty"``
-    - Public capability tag
+    - Public property tag
     - Values: boolean, ``True`` / ``False``
     - Example: ``True``
     - Default: ``True`` (transformations), ``False`` (other estimators)
@@ -1416,13 +1416,49 @@ class capability__inverse_transform__exact(_BaseTag):
     }
 
 
+class transform_returns_same_time_index(_BaseTag):
+    """Behaviour flag: transformer returns same time index as input.
+
+    - String name: ``"transform-returns-same-time-index"``
+    - Public behaviour flag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to transformations.
+
+    If the tag is ``True``, the transformer returns a transformed series
+    with the same time index as the input series ``X``.
+
+    This tag applies only to transformers that return time series as output, i.e.,
+    the tag ``scitype:transform-output`` is ``"Series"`` or ``"Panel"``.
+
+    In cases where input and output :term:`mtype` do not have explicit time index,
+    the tag applies to the implicit time index, i.e., the index of the abstract series
+    representation, for instance, integer index in case of ``numpy`` arrays,
+    in which case the implication is that an an array is returned with
+    equal length in the dimension corresponding to the time index.
+
+    If the tag is ``False``, the returned series will in general have a different
+    time index than the input series.
+
+    If ``sciptye:transform-output`` is ``"Primitives"``, this tag is irrelevant
+    and will have value ``False``.
+
+    Besides being informative to the user, this tag is also used internally
+    by the framework to track guarantees on the data index.
+    """
+
+    _tags = {
+        "tag_name": "transform-returns-same-time-index",
+        "parent_type": "transformer",
+        "tag_type": "bool",
+        "short_descr": "does transform return same time index as input?",
+        "user_facing": True,
+    }
+
+
 ESTIMATOR_TAG_REGISTER = [
-    (
-        "transform-returns-same-time-index",
-        "transformer",
-        "bool",
-        "does transform return same time index as input?",
-    ),
     (
         "skip-inverse-transform",
         "transformer",
