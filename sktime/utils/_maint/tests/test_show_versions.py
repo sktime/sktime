@@ -26,8 +26,8 @@ def test_deps_info():
     assert isinstance(deps_info_default, dict)
     assert set(deps_info_default.keys()) == set(DEFAULT_DEPS_TO_SHOW)
 
-    PKG_IMPORT_ALIAS = {"scikit-learn": "sklearn"}
-    KEY_ALIAS = {"sklearn": "scikit-learn"}
+    PKG_IMPORT_ALIAS = {"scikit-learn": "sklearn", "scikit-base": "skbase"}
+    KEY_ALIAS = {"sklearn": "scikit-learn", "skbase": "scikit-base"}
 
     for key in DEFAULT_DEPS_TO_SHOW:
         pkg_name = KEY_ALIAS.get(key, key)
