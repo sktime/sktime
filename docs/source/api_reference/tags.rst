@@ -89,6 +89,7 @@ These tags are used to describe capabilities, properties, and behavior of foreca
     capability__pred_int__insample
     capability__missing_values
     requires_fh_in_fit
+    fit_is_empty
 
 
 .. _panel_tags:
@@ -134,5 +135,9 @@ transform a single time series object (``"transformer"`` type).
 
     scitype__transform_input
     scitype__transform_output
+    scitype__transform_labels
+    requires_x
+    requires_y
     capability__missing_values
     capability__unequal_length
+    fit_is_empty

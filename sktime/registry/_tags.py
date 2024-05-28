@@ -562,6 +562,38 @@ class capability__train_estimate(_BaseTag):
     }
 
 
+class fit_is_empty(_BaseTag):
+    """Whether the estimator has an empty fit method.
+
+    - String name: ``"fit_is_empty"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``True`` (transformations), ``False`` (other estimators)
+
+    If the tag is ``True``, the estimator has an empty ``fit`` method,
+    i.e., the method does not perform any calculations or learning.
+    If the tag is ``False``, the estimator has a non-empty ``fit`` method.
+
+    In both cases, calling ``fit`` is necessary for calling further methods
+    such as ``predict`` or ``transform``, for API consistency.
+
+    The tag may be inspected by the user to distinguish between estimators
+    that do not learn from data from those that do.
+
+    The tag is also used internally by ``sktime`` to short cut boilerplate
+    code, e.g., in the ``fit`` methods.
+    """
+
+    _tags = {
+        "tag_name": "fit_is_empty",
+        "parent_type": "estimator",
+        "tag_type": "bool",
+        "short_descr": "does the estimator have an empty fit method?",
+        "user_facing": True,
+    }
+
+
 # Forecasters
 # -----------
 
@@ -855,7 +887,7 @@ class capability__multioutput(_BaseTag):
     - Example: ``True``
     - Default: ``False``
 
-    This tag  applies to classifiers and regressors.
+    This tag applies to classifiers and regressors.
 
     If the tag is ``True``, the estimator can handle multivariate target time series,
     i.e., time series with multiple variables in the target argument ``y``.
@@ -1148,24 +1180,123 @@ class scitype__transform_output(_BaseTag):
     }
 
 
+class requires_x(_BaseTag):
+    """Behaviour flag: transformer requires X in fit and transform.
+
+    - String name: ``"requires_X"``
+    - Public behaviour flag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``True``
+
+    This tag applies to transformations.
+
+    If the tag is ``True``, the transformer requires the input data argument ``X``
+    to be passed in both the ``fit`` and ``transform`` methods, as well as in
+    other methods that require input data, if available.
+
+    If the tag is ``False``, the transformer does not require the
+    input data argument ``X`` to be passed in any method.
+    """
+
+    _tags = {
+        "tag_name": "requires_X",
+        "parent_type": "transformer",
+        "tag_type": "bool",
+        "short_descr": "does the transformer require X to be passed in fit and transform?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
+class requires_y(_BaseTag):
+    """Behaviour flag: transformer requires y in fit.
+
+    - String name: ``"requires_y"``
+    - Public behaviour flag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to transformations.
+
+    If the tag is ``True``, the transformer requires the target data argument ``y``
+    to be passed in the ``fit`` method, as well as in the ``update`` method.
+    The type of ``y`` required is specified by the tag ``scitype:transform-labels``.
+    The requirement to pass ``y`` is usually in addition to passing ``X``.
+
+    If the tag is ``True``, it does not necessarily imply that ``y`` is also
+    required in the ``transform`` or ``inverse_transform`` methods. This may
+    be the case, but is not implied by this tag.
+    Usually, ``y`` is not required in ``transform`` or ``inverse_transform``.
+    There is currently no tag to specify this requirement, users should
+    consult the documentation of the transformer.
+
+    If the tag is ``False``, the transformer does not require the
+    target data argument ``y`` to be passed in any method.
+    """
+
+    _tags = {
+        "tag_name": "requires_y",
+        "parent_type": "transformer",
+        "tag_type": "bool",
+        "short_descr": "does the transformer require y to be passed in fit and transform?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
+class scitype__transform_labels(_BaseTag):
+    """The scitype of the target data for the transformer, if required.
+
+    - String name: ``"scitype:transform-labels"``
+    - Public scitype tag
+    - Values: string, one of ``"None"``, ``"Series"``, ``"Primitives"``, ``"Panel"``
+    - Example: ``"Series"``
+    - Default: ``"None"``
+    - Alias: ``"scitype:y"``
+
+    This tag applies to transformations.
+
+    The tag specifies the scitype of the target data ``y`` that is required,
+    in a case where the transformer requires target data, i.e., the
+    tag ``requires_y`` is ``True``.
+
+    The possible values are:
+
+    * ``"None"``: no target data is required. This value is used if and only if
+      the transformer does not require target data, i.e., the tag ``requires_y``
+      is ``False``.
+    * ``"Series"``: a single time series, in ``Series`` :term:`scitype`.
+      If the tag ``X-y-must-have-same-index`` is ``True``, then the index, or implied
+      index, of the target series must be the same as the index of the
+      input series ``X``.
+    * ``"Primitives"``: a collection of primitive types, e.g., a collection of scalars,
+      in ``Table`` :term:`scitype`. In this case, the number of rows (=instances)
+      in ``y`` must always equal the number of instances in ``X``, which typically
+      will be of :mtype:`scitype` ``Panel`` in this case.
+    * ``"Panel"``: a panel of time series, in ``Panel`` :term:`scitype`.
+
+    The tag ``scitype:transform-labels`` is used in conjunction with the tag
+    ``requires_y``, which specifies whether target data is required by the transformer.
+
+    If the tag ``requires_y`` is ``False``, then the tag ``scitype:transform-labels``
+    will be ``"None"``.
+    """
+
+    _tags = {
+        "tag_name": "scitype:transform-labels",
+        "parent_type": "transformer",
+        "tag_type": ("str", ["None", "Series", "Primitives", "Panel"]),
+        "short_descr": "what is the scitype of the target labels y, if required?",
+        "user_facing": True,
+    }
+
+
 ESTIMATOR_TAG_REGISTER = [
-    (
-        "fit_is_empty",
-        "estimator",
-        "bool",
-        "fit contains no logic and can be skipped? Yes=True, No=False",
-    ),
     (
         "transform-returns-same-time-index",
         "transformer",
         "bool",
         "does transform return same time index as input?",
-    ),
-    (
-        "handles-missing-data",
-        "estimator",
-        "bool",
-        "can the estimator handle missing data (NA, np.nan) in inputs?",
     ),
     (
         "skip-inverse-transform",
@@ -1175,7 +1306,7 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "X-y-must-have-same-index",
-        ["forecaster", "regressor"],
+        ["forecaster", "regressor", "transformer"],
         "bool",
         "do X/y in fit/update and X/fh in predict have to be same indices?",
     ),
@@ -1260,18 +1391,6 @@ ESTIMATOR_TAG_REGISTER = [
         "transformer",
         ("list", ["None", "Series", "Primitives", "Panel"]),
         "what is the scitype of y: None (not needed), Primitives, Series, Panel?",
-    ),
-    (
-        "requires_X",
-        "transformer",
-        "bool",
-        "does this transformer require X to be passed in fit and transform?",
-    ),
-    (
-        "requires_y",
-        "transformer",
-        "bool",
-        "does this transformer require y to be passed in fit and transform?",
     ),
     (
         "capability:inverse_transform",
@@ -1493,6 +1612,12 @@ ESTIMATOR_TAG_REGISTER = [
         "metric",
         "bool",
         "Does the metric only work on univariate y data?",
+    ),
+    (
+        "handles-missing-data",  # -> capability:missing_values
+        "estimator",
+        "bool",
+        "can the estimator handle missing data (NA, np.nan) in inputs?",
     ),
 ]
 
