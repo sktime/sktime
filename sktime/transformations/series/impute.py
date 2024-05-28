@@ -362,7 +362,7 @@ class Imputer(BaseTransformer):
                 )
 
                 # replace missing values with predicted values
-                X[col][na_index] = self._forecaster.predict(fh=fh, X=y)
+                X.loc[col, na_index] = self._forecaster.predict(fh=fh, X=y)
         return X
 
     @classmethod
