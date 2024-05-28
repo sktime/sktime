@@ -731,7 +731,7 @@ class ProximityStump(BaseClassifier):
         random_state=None,
         distance_measure=None,
         verbosity=0,
-        n_jobs="deprecated",
+        n_jobs=None,
     ):
         self.backend = backend
         self.backend_params = backend_params
@@ -751,8 +751,7 @@ class ProximityStump(BaseClassifier):
         self.entropy = None
         self._random_object = None
         super().__init__()
-
-        if n_jobs != "deprecated":
+        if self.n_jobs != "deprecated":
             warn(
                 f"Parameter n_jobs of {self.__class__.__name__} has been removed "
                 "in sktime 0.27.0 and is no longer used. It is ignored when passed. "
@@ -1105,7 +1104,7 @@ class ProximityTree(BaseClassifier):
         max_depth=math.inf,
         is_leaf=pure,
         verbosity=0,
-        n_jobs="deprecated",
+        n_jobs=None,
         n_stump_evaluations=5,
     ):
         self.backend = backend
@@ -1128,7 +1127,15 @@ class ProximityTree(BaseClassifier):
         self._random_object = None
 
         super().__init__()
-
+        if self.n_jobs != "deprecated":
+            warn(
+                f"Parameter n_jobs of {self.__class__.__name__} has been removed "
+                "in sktime 0.27.0 and is no longer used. It is ignored when passed. "
+                "Instead, the backend and backend_params parameters should be used "
+                "to pass n_jobs or other parallelization parameters.",
+                obj=self,
+                stacklevel=2,
+            )
         # ensure it isn't multiprocessing, if it is change to loky
         if self.backend == "multiprocessing":
             self.backend = "loky"
@@ -1469,8 +1476,8 @@ class ProximityForest(BaseClassifier):
         verbosity=0,
         max_depth=math.inf,
         is_leaf=pure,
+        n_jobs=None,
         n_stump_evaluations=5,
-        n_jobs="deprecated",
     ):
         self.backend = backend
         self.backend_params = backend_params
@@ -1490,7 +1497,15 @@ class ProximityForest(BaseClassifier):
         self.y = None
         self._random_object = None
         super().__init__()
-
+        if self.n_jobs != "deprecated":
+            warn(
+                f"Parameter n_jobs of {self.__class__.__name__} has been removed "
+                "in sktime 0.27.0 and is no longer used. It is ignored when passed. "
+                "Instead, the backend and backend_params parameters should be used "
+                "to pass n_jobs or other parallelization parameters.",
+                obj=self,
+                stacklevel=2,
+            )
         # ensure it isn't multiprocessing, if it is change to loky
         if self.backend == "multiprocessing":
             self.backend = "loky"
