@@ -558,6 +558,30 @@ class BaseForecastingErrorMetric(BaseMetric):
 
         return y_true, y_pred, multioutput, multilevel, kwargs
 
+    def _get_sample_weight(self, **kwargs):
+        """Get sample weights from kwargs.
+
+        Assumes that either ``sample_weight`` is passed, or not.
+        If ``sample_weight`` is passed, it is coerced to 1D numpy array and returned.
+        Otherwise, returns None.
+
+        Parameters
+        ----------
+        kwargs : dict
+            Dictionary of keyword arguments passed to the metric.
+
+        Returns
+        -------
+        sample_weight : 1D np.ndarray or None
+            1D numpy array of sample weights, or None if not passed.
+        """
+        sample_weight = kwargs.get("sample_weight", None)
+        if sample_weight is not None:
+            sample_weight = check_array(
+                sample_weight, ensure_2d=False, input_name="sample_weight"
+            )
+        return sample_weight
+
 
 class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
     """Adapter for numpy metrics."""
@@ -576,6 +600,13 @@ class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
 
         # adding kwargs to the metric, should not overwrite params (but does if clashes)
         params.update(kwargs)
+
+        # aliasing of sample_weight and horizon_weight keys
+        # this is for downwards compatibility with earlier sktime versions
+        if "sample_weight" in params.keys() and "horizon_weight" not in params.keys():
+            params["horizon_weight"] = params["sample_weight"]
+        if "horizon_weight" in params.keys() and "sample_weight" not in params.keys():
+            params["sample_weight"] = params["horizon_weight"]
 
         # calls class variable func, if available, or dynamic (object) variable
         # we need to call type since we store func as a class attribute
