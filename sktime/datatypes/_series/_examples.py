@@ -82,6 +82,7 @@ example_dict_metadata[("Series", 0)] = {
     "has_nans": False,
     "n_features": 1,
     "feature_names": ["a"],
+    "feature_kind": ["float64"],
 }
 
 ###
@@ -125,6 +126,7 @@ example_dict_metadata[("Series", 1)] = {
     "has_nans": False,
     "n_features": 2,
     "feature_names": ["a", "b"],
+    "feature_kind": ["float64", "float64"],
 }
 
 
@@ -171,6 +173,7 @@ example_dict_metadata[("Series", 2)] = {
     "has_nans": False,
     "n_features": 2,
     "feature_names": ["a", "b"],
+    "feature_kind": ["float64", "float64"],
 }
 
 ###
@@ -209,4 +212,5 @@ example_dict_metadata[("Series", 3)] = {
     "has_nans": False,
     "n_features": 1,
     "feature_names": ["a"],
+    "feature_kind": ["float64"],
 }

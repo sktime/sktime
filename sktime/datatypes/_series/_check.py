@@ -73,6 +73,8 @@ def check_pddataframe_series(obj, return_metadata=False, var_name="obj"):
         metadata["n_features"] = len(obj.columns)
     if _req("feature_names", return_metadata):
         metadata["feature_names"] = obj.columns.to_list()
+    if _req("feature_kind", return_metadata):
+        metadata["feature_kind"] = obj.dtypes.to_list()
 
     # check that columns are unique
     if not obj.columns.is_unique:
@@ -138,6 +140,8 @@ def check_pdseries_series(obj, return_metadata=False, var_name="obj"):
             metadata["feature_names"] = [0]
         else:
             metadata["feature_names"] = [obj.name]
+    if _req("feature_kind", return_metadata):
+        metadata["feature_kind"] = [obj.dtype]
 
     # check that dtype is not object
     if "object" == obj.dtypes:
