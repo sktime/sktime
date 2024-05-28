@@ -131,8 +131,8 @@ def test_differencer_cutoff():
     fh = [1, 2]
     train_model, _ = temporal_train_test_split(y, fh=fh)
     X_train = X[X.index.isin(train_model.index)]
-    train_model.index = train_model.index.to_timestamp(freq="A")
-    X_train.index = X_train.index.to_timestamp(freq="A")
+    train_model.index = train_model.index.to_timestamp(freq="Y")
+    X_train.index = X_train.index.to_timestamp(freq="Y")
 
     # pipeline
     pipe = TransformedTargetForecaster(
