@@ -1512,12 +1512,6 @@ ESTIMATOR_TAG_REGISTER = [
         "does the transformer transform instances independently?",
     ),
     (
-        "capability:pred_var",
-        "forecaster",
-        "bool",
-        "does the forecaster implement predict_variance?",
-    ),
-    (
         "capability:predict_proba",
         "classifier",
         "bool",
@@ -1621,12 +1615,6 @@ ESTIMATOR_TAG_REGISTER = [
         "whether estimator remembers all data seen as self._X, self._y, etc",
     ),
     (
-        "distribution_type",
-        "estimator",
-        "str",
-        "distribution type of data as str",
-    ),
-    (
         "reserved_params",
         "estimator",
         ("list", "str"),
@@ -1649,6 +1637,17 @@ ESTIMATOR_TAG_REGISTER = [
         "splitter",
         ("str", ["temporal", "instance"]),
         "whether the splitter splits by time or by instance (panel/hierarchy index)",
+    ),
+    # -------------------------
+    # tags to be moved to skpro
+    # -------------------------
+    # these tags will be moved to skpro
+    # some to be converted to configs, see skpro issue #269
+    (
+        "distribution_type",
+        "estimator",
+        "str",
+        "distribution type of data as str",
     ),
     (
         "capabilities:exact",
@@ -1719,6 +1718,17 @@ ESTIMATOR_TAG_REGISTER = [
         "estimator",
         "bool",
         "can the estimator handle missing data (NA, np.nan) in inputs?",
+    ),
+    # ---------------------------
+    # to be deprecated or removed
+    # ---------------------------
+    # the following tags are to be deprecated or removed
+    (
+        "capability:pred_var",  # redundant with capability:pred_int
+        # because if one of the proba methods is available, all others are too
+        "forecaster",
+        "bool",
+        "does the forecaster implement predict_variance?",
     ),
 ]
 
