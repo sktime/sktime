@@ -1291,6 +1291,131 @@ class scitype__transform_labels(_BaseTag):
     }
 
 
+class capability__inverse_transform(_BaseTag):
+    """Capability: the transformer can carry out an inverse transform.
+
+    - String name: ``"capability:inverse_transform"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+    - Alias: ``"inverse-transform"``
+
+    This tag applies to transformations.
+
+    If the tag is ``True``, the transformer can carry out an inverse transform,
+    i.e., the transformer can carry out the operation that is an inverse,
+    pseudo-inverse, or approximate inverse (such as denoising inverse) of
+    the operation carried out by the ``transform`` method.
+
+    The inverse transform is available via the method ``inverse_transform``.
+
+    If ``inverse_transform`` is available, the
+    following tags specify additional properties and behaviour of the inverse transform:
+
+    * ``"capability:inverse_transform:range"``: the domain of invertibility of
+      the transform.
+    * ``"capability:inverse_transform:exact"``: whether the inverse transform is
+      expected to be an exact inverse to the transform.
+    * ``"skip-inverse-transform"``: if used in a pipeline, the transformer will
+      skip the inverse transform, if the tag is ``True``.
+
+    If the ``capability:inverse_transform`` tag is ``False``,
+    the transformer cannot carry out an inverse transform,
+    and will raise an error if an inverse transform is attempted.
+    """
+
+    _tags = {
+        "tag_name": "capability:inverse_transform",
+        "parent_type": "transformer",
+        "tag_type": "bool",
+        "short_descr": "is the transformer capable of carrying out an inverse transform?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
+class capability__inverse_transform__range(_BaseTag):
+    """Capability: the domain of invertibility of the transform.
+
+    - String name: ``"capability:inverse_transform:range"``
+    - Public capability tag
+    - Values: list, [lower, upper], of float
+    - Example: [0.0, 1.0]
+    - Default: ``None``
+
+    This tag applies to transformations that possess an ``inverse_transform`` method,
+    as specified by the tag ``capability:inverse_transform``.
+    It is one of the tags that specify the properties of the inverse transform.
+
+    The tag specifies the domain of invertibility of the transform, i.e.,
+    the range of values for which the inverse transform is mathematically defined.
+
+    This is the same as the subset of the domain of the transform for which
+    the transform is invertible. In general, the domain of invertibility
+    will be smaller than the domain of the transform, but may be equal.
+
+    The tag value is a list of two floats, [lower, upper], where:
+
+    * ``lower``: the lower bound of the domain of invertibility.
+    * ``upper``: the upper bound of the domain of invertibility.
+
+    These two values may depend on hyper-parameters of the transformer,
+    as well as the data seen in the ``fit`` method.
+
+    If the tag value is ``None``, the domain of invertibility is assumed to be
+    the entire domain of the transform.
+
+    If ``"capability:inverse_transform"`` is ``False``, this tag is irrelevant
+    and will also have value ``None``.
+    """
+
+    _tags = {
+        "tag_name": "capability:inverse_transform:range",
+        "parent_type": "transformer",
+        "tag_type": "list",
+        "short_descr": "domain of invertibility of transform, must be list [lower, upper] of float",  # noqa: E501
+        "user_facing": True,
+    }
+
+
+class capability__inverse_transform__exact(_BaseTag):
+    """Capability: whether the inverse transform is an exact inverse to the transform.
+
+    - String name: ``"capability:inverse_transform:exact"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to transformations that possess an ``inverse_transform`` method,
+    as specified by the tag ``capability:inverse_transform``.
+    It is one of the tags that specify the properties of the inverse transform.
+
+    The tag specifies whether the inverse transform is expected to be an exact inverse
+    to the transform, i.e., whether the inverse transform is mathematically defined
+    as the exact inverse of the transform.
+
+    If the tag is ``True``, applying ``inverse_transform`` to the
+    output of ``transform`` should yield the original input data,
+    up to numerical precision.
+
+    If the tag is ``False``, the inverse transform is not expected to be an exact
+    inverse of the transform, and may be an approximate inverse, pseudo-inverse,
+    or denoising inverse.
+    While there is a general expectation that the inverse transform should be
+    close to a reasonable inverse, if it is well-defined,
+    this is not a strict requirement of the interface.
+    """
+
+    _tags = {
+        "tag_name": "capability:inverse_transform:exact",
+        "parent_type": "transformer",
+        "tag_type": "bool",
+        "short_descr": "whether inverse_transform is expected to be an exact inverse to transform",  # noqa: E501
+        "user_facing": True,
+    }
+
+
 ESTIMATOR_TAG_REGISTER = [
     (
         "transform-returns-same-time-index",
@@ -1385,30 +1510,6 @@ ESTIMATOR_TAG_REGISTER = [
         "transformer",
         "bool",
         "does the transformer transform instances independently?",
-    ),
-    (
-        "scitype:transform-labels",
-        "transformer",
-        ("list", ["None", "Series", "Primitives", "Panel"]),
-        "what is the scitype of y: None (not needed), Primitives, Series, Panel?",
-    ),
-    (
-        "capability:inverse_transform",
-        "transformer",
-        "bool",
-        "is the transformer capable of carrying out an inverse transform?",
-    ),
-    (
-        "capability:inverse_transform:range",
-        "transformer",
-        "list",
-        "domain of invertibility of transform, must be list [lower, upper] of float",
-    ),
-    (
-        "capability:inverse_transform:exact",
-        "transformer",
-        "bool",
-        "whether inverse_transform is expected to be an exact inverse to transform",
     ),
     (
         "capability:pred_var",

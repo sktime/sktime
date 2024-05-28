@@ -140,4 +140,7 @@ transform a single time series object (``"transformer"`` type).
     requires_y
     capability__missing_values
     capability__unequal_length
+    capability__inverse_transform
+    capability__inverse_transform__exact
+    capability__inverse_transform__range
     fit_is_empty
