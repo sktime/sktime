@@ -159,6 +159,7 @@ def test_differencer_cutoff():
         cv=cv,
         param_grid=param_grid,
         verbose=1,
+        error_score="raise",
     )
 
     # fit
