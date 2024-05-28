@@ -727,6 +727,9 @@ class BaseClassifier(BasePanelMixin):
         y_proba = self._predict_proba(X)
         y_pred = y_proba.argmax(axis=1)
 
+        # restore class labels if they were not originally integer
+        y_pred = self.classes_[y_pred]
+
         return y_pred
 
     def _predict_proba(self, X) -> np.ndarray:
