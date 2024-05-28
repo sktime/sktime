@@ -9,15 +9,16 @@ __all__ = [
 ]
 
 import os
-# import zipfile
-# from urllib.error import HTTPError, URLError
-# from warnings import warn
-
 import shutil
 import tarfile
 import tempfile
 import warnings
+
 import pandas as pd
+
+# import zipfile
+# from urllib.error import HTTPError, URLError
+# from warnings import warn
 
 
 # from sktime.datasets._data_io import (
