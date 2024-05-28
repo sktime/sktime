@@ -116,20 +116,15 @@ class DartsXGBModel(_DartsAdapter):
 
     def __init__(
         self: "DartsXGBModel",
-        past_covariates: Optional[Union[List[str], None]] = None,
+        past_covariates: Optional[List[str]] = None,
         num_samples: Optional[int] = 1000,
-        lags: Optional[
-            Union[int, List[int], Dict[str, Union[int, List[int]]], None]
-        ] = None,
+        lags: Optional[Union[int, List[int], Dict[str, Union[int, List[int]]]]] = None,
         lags_past_covariates: Optional[
-            Union[int, List[int], Dict[str, Union[int, List[int]]], None]
+            Union[int, List[int], Dict[str, Union[int, List[int]]]]
         ] = None,
         lags_future_covariates: Optional[
             Union[
-                Tuple[int, int],
-                List[int],
-                Dict[str, Union[Tuple[int, int], List[int]]],
-                None,
+                Tuple[int, int], List[int], Dict[str, Union[Tuple[int, int], List[int]]]
             ]
         ] = None,
         output_chunk_length: Optional[int] = 1,
@@ -212,7 +207,9 @@ class DartsXGBModel(_DartsAdapter):
         """
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
-        if _check_soft_dependencies("darts"):
+        if _check_soft_dependencies(
+            "u8darts", package_import_alias={"u8darts": "darts"}, severity="error"
+        ):
             params = [
                 {
                     "num_samples": 100,

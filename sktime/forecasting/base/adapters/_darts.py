@@ -1,7 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for Darts models."""
 import abc
-from typing import List, Optional, Union
+from typing import List, Optional
 
 import pandas as pd
 
@@ -46,15 +46,15 @@ class _DartsAdapter(BaseForecaster):
 
     def __init__(
         self: "_DartsAdapter",
-        past_covariates: Optional[Union[List[str], None]] = None,
+        past_covariates: Optional[List[str]] = None,
         num_samples: Optional[int] = 1000,
     ) -> None:
-        if not isinstance(past_covariates, list) and past_covariates is not None:
+        if past_covariates is not None and not isinstance(past_covariates, list):
             raise TypeError(
                 f"Expected past_covariates to be a list, found {type(past_covariates)}."
             )
         self.past_covariates = past_covariates
-        if not isinstance(num_samples, int):
+        if num_samples is not None and not isinstance(num_samples, int):
             raise TypeError(
                 f"Expected num_samples to be an integer, found {type(num_samples)}."
             )
@@ -230,14 +230,11 @@ class _DartsAdapter(BaseForecaster):
             )
         return endogenous_point_predictions
 
-    # todo 0.22.0 - switch legacy_interface default to False
-    # todo 0.23.0 - remove legacy_interface arg
     def _predict_quantiles(
         self,
         fh: Optional[ForecastingHorizon],
         X: Optional[pd.DataFrame],
         alpha: List[float],
-        legacy_interface: Optional[bool] = True,
     ):
         """Compute/return prediction quantiles for a forecast.
 
