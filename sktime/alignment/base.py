@@ -369,9 +369,12 @@ class BaseAligner(BaseEstimator):
         X_equal_length = X_metadata["is_equal_length"]
         if not self.get_tag("capability:unequal-length", True) and not X_equal_length:
             raise ValueError(
-                f"Aligner {self.__class__.__name__} does not support "
+                f"Aligner {self.__class__.__name__} instance does not support "
                 "alignment of unequal length sequences, but X passed "
-                "had unequal length."
+                "had unequal length. "
+                "Presence or lack of this capability may be depend on "
+                "hyper-parameters, especially for composites. Please consult the "
+                "documentation of the aligner for more information."
             )
 
         # if aligner does not support multiple alignment
@@ -379,7 +382,10 @@ class BaseAligner(BaseEstimator):
         n_instances = X_metadata["n_instances"]
         if not self.get_tag("capability:multiple-alignment", False) and n_instances > 2:
             raise ValueError(
-                f"Aligner {self.__class__.__name__} does not support "
+                f"Aligner {self.__class__.__name__} instance does not support "
                 "alignment of multiple sequences, but X passed "
-                f"had {n_instances} sequences."
+                f"had {n_instances} sequences. "
+                "Presence or lack of this capability may be depend on "
+                "hyper-parameters, especially for composites. Please consult the "
+                "documentation of the aligner for more information."
             )
