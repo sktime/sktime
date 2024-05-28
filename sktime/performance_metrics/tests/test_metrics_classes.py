@@ -256,3 +256,18 @@ def test_uniform_average_time(metric):
     )
 
     assert np.allclose(res, res_noix)
+
+
+@pytest.mark.parametrize("metric", metrics, ids=names)
+def test_metric_weights(metric):
+    """Test that weights are correctly applied to the metric."""
+    y_true = np.array([3, -0.5, 2, 7, 2])
+    y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    wts = np.array([0.1, 0.2, 0.1, 0.3, 0.4])
+
+    metric_obj = metric()
+    assert metric_obj(y_true, y_pred) != metric_obj(y_true, y_pred, sample_weight=wts)
+
+    wt_metr = metric(sample_weight=wts)
+    res_wt = wt_metr(y_true, y_pred)
+    assert np.allclose(res_wt, metric_obj(y_true, y_pred, sample_weight=wts))
