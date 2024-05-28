@@ -1846,11 +1846,7 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
 
     func = geometric_mean_absolute_error
 
-    def __init__(
-        self,
-        multioutput="uniform_average",
-        multilevel="uniform_average",
-    ):
+    def __init__(self, multioutput="uniform_average", multilevel="uniform_average"):
         super().__init__(multioutput=multioutput, multilevel=multilevel)
 
     def _compute_pseudo_values(self, y_true, y_pred):
@@ -1884,15 +1880,16 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
               is the pseudo-value for a time point, for each variable.
         """
         raw_values = (y_true - y_pred).abs()
-
         n = raw_values.shape[0]
-        gmae_values = []
-        for i in range(n):
-            excluded_error = np.delete(raw_values, i, axis=0)  # Exclude i-th error
-            excluded_product = np.prod(excluded_error)
-            gmae_values.append(excluded_product ** (1 / (n - 1)))
+        product = np.prod(raw_values, axis=0)
+        pseudo_values = []
 
-        return np.array(gmae_values)
+        for i in range(n):
+            excluded_product = product / raw_values.iloc[i]
+            gmae = excluded_product ** (1 / (n - 1))
+            pseudo_values.append(gmae)
+
+        return np.array(pseudo_values)
 
     def _evaluate(self, y_true, y_pred, **kwargs):
         """Evaluate the Geometric Mean Absolute Error (GMAE) metric on given inputs.
