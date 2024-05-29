@@ -538,7 +538,7 @@ class ForecastingHorizon:
             integer index.
         """
         cutoff = self._coerce_cutoff_to_index(cutoff)
-        freq = self.freq
+        freq = self._freq
 
         absolute = self.to_absolute_index(cutoff)
 
@@ -813,8 +813,8 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
         if isinstance(absolute, pd.DatetimeIndex):
             # coerce to pd.Period for reliable arithmetic and computations of
             # time deltas
-            absolute = _coerce_to_period(absolute, freq=fh.freq)
-            cutoff = _coerce_to_period(cutoff, freq=fh.freq)
+            absolute = _coerce_to_period(absolute, freq=fh._freq)
+            cutoff = _coerce_to_period(cutoff, freq=fh._freq)
 
         # TODO: 0.30.0:
         # Check at every minor release whether lower pandas bound >=0.15.0
@@ -840,6 +840,7 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
             "pandas>=1.5.0", severity="none"
         )
         if pandas_version_with_bugfix:
+            print(absolute, cutoff)
             relative = absolute - cutoff
         else:
             relative = pd.Index([date - cutoff[0] for date in absolute])
@@ -889,7 +890,7 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
         if is_timestamp:
             # coerce to pd.Period for reliable arithmetic operations and
             # computations of time deltas
-            cutoff = _coerce_to_period(cutoff, freq=fh.freq)
+            cutoff = _coerce_to_period(cutoff, freq=fh._freq)
 
         if isinstance(cutoff, pd.Index):
             cutoff = cutoff[[0] * len(relative)]
@@ -898,7 +899,7 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
 
         if is_timestamp:
             # coerce back to DatetimeIndex after operation
-            absolute = absolute.to_timestamp()
+            absolute = absolute.to_timestamp(fh._freq)
 
         if old_tz is not None:
             absolute = absolute.tz_localize(old_tz)
@@ -955,10 +956,7 @@ def _coerce_to_period(x, freq=None):
         raise ValueError(
             "_coerce_to_period requires freq argument to be passed if x is pd.Timestamp"
         )
-    elif x.freq is None:
-        return x.to_period(freq)
-    else:
-        return x.to_period()
+    return x.to_period(freq)
 
 
 def _index_range(relative, cutoff):
