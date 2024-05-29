@@ -357,7 +357,11 @@ class BOSSEnsemble(BaseClassifier):
         return min_acc, min_acc_idx
 
     def _get_train_probs(self, X, y):
+        from sktime.datatypes import convert_to
+
         self.check_is_fitted()
+        if not isinstance(X, np.ndarray):
+            X = convert_to(X, "numpy3D")
         X, y = check_X_y(X, y, coerce_to_numpy=True, enforce_univariate=True)
 
         n_instances, _, series_length = X.shape
