@@ -5,8 +5,12 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.datasets import load_forecastingdata, load_solar, load_UCR_UEA_dataset
-from sktime.datasets import load_fpp3
+from sktime.datasets import (
+    load_forecastingdata,
+    load_fpp3,
+    load_solar,
+    load_UCR_UEA_dataset,
+)
 from sktime.datasets.tsf_dataset_names import tsf_all, tsf_all_datasets
 from sktime.datatypes import check_is_mtype
 

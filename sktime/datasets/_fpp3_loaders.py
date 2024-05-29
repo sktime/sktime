@@ -34,14 +34,36 @@ import pandas as pd
 MODULE = os.path.dirname(__file__)
 
 def _get_dataset_url(dataset_name):
-    fpp3 = ["aus_accommodation", "aus_airpassengers", "aus_arrivals", "bank_calls", \
-               "boston_marathon", "canadian_gas", "guinea_rice", "insurance", "prices", \
-               "souvenirs", "us_change", "us_employment", "us_gasoline"]
+    fpp3 = [
+        "aus_accommodation",
+        "aus_airpassengers",
+        "aus_arrivals",
+        "bank_calls",
+        "boston_marathon",
+        "canadian_gas",
+        "guinea_rice",
+        "insurance",
+        "prices",
+        "souvenirs",
+        "us_change",
+        "us_employment",
+        "us_gasoline",
+    ]
     tsibble = ["pedestrian", "tourism"]
 
-    tsibbledata = ["ansett", "aus_livestock", "aus_production", "aus_retail", "gafa_stock", \
-                   "global_economy", "hh_budget", "nyc_bikes", "olympic_running", "PBS", "pelt", \
-                   "vic_elec"]
+    tsibbledata = [
+        "ansett",
+        "aus_livestock",
+        "aus_production",
+        "aus_retail",
+        "gafa_stock",
+        "global_economy",
+        "hh_budget",
+        "nyc_bikes",
+        "olympic_running",
+        "PBS","pelt",
+        "vic_elec",
+    ]
 
     url_fpp3 = "https://cran.r-project.org/src/contrib/fpp3_0.5.tar.gz"
     url_tsibble = "https://cran.r-project.org/src/contrib/tsibble_1.1.4.tar.gz"
@@ -111,119 +133,159 @@ def _import_rda(path):
     return (False, obj)
 
 def _dataset_to_mtype(dataset_name, obj):
-    if dataset_name in ["aus_airpassengers", "guinea_rice", "pelt", "prices", "olympic_running", \
-                        "boston_marathon", "global_economy", "hh_budget"]:
+    if dataset_name in [
+        "aus_airpassengers",
+        "guinea_rice",
+        "pelt",
+        "prices",
+        "olympic_running",
+        "boston_marathon",
+        "global_economy",
+        "hh_budget"
+    ]:
         if dataset_name in ["prices"]:
-            obj.rename(columns={'year': 'Year'}, inplace=True)
-        obj['Year'] = pd.to_datetime(obj['Year'].astype(int), format='%Y').dt.to_period('Y')
+            obj.rename(columns={"year": "Year"}, inplace=True)
+        obj["Year"] = pd.to_datetime(obj["Year"].astype(int), format="%Y").dt.to_period(
+            "Y"
+        )
         obj.set_index("Year", inplace=True)
         if dataset_name in ["prices"]:
-            obj.index.rename('year', inplace=True)
+            obj.index.rename("year", inplace=True)
 
     if dataset_name == "bank_calls":
-        obj['DateTime'] = pd.to_datetime(obj['DateTime'], unit='s')
-        obj.set_index('DateTime', inplace=True)
+        obj["DateTime"] = pd.to_datetime(obj["DateTime"], unit="s")
+        obj.set_index("DateTime", inplace=True)
 
     if dataset_name == "vic_elec":
-        obj['Time'] = pd.to_datetime(obj['Time'], unit='s')
-        obj.set_index('Time', inplace=True)
+        obj["Time"] = pd.to_datetime(obj["Time"], unit="s")
+        obj.set_index("Time", inplace=True)
 
-    if dataset_name in ["canadian_gas", "souvenirs", "insurance", "aus_livestock", \
-                        "us_employment", "aus_retail", "PBS.csv"]:
-        obj['Month'] = pd.to_datetime(obj['Month'], format='%Y-%m').dt.to_period('M')
+    if dataset_name in [
+        "canadian_gas",
+        "souvenirs",
+        "insurance",
+        "aus_livestock",
+        "us_employment",
+        "aus_retail",
+        "PBS.csv",
+    ]:
+        obj["Month"] = pd.to_datetime(obj["Month"], format="%Y-%m").dt.to_period("M")
         obj.set_index("Month", inplace=True)
 
     if dataset_name in ["us_gasoline", "ansett"]:
-        obj.set_index('Week', inplace=True)
+        obj.set_index("Week", inplace=True)
         # Extract the start date of each week
-        start_dates = obj.index.str.split('/').str[0]
-        obj.index = pd.PeriodIndex(start_dates, freq='W-SUN')
+        start_dates = obj.index.str.split("/").str[0]
+        obj.index = pd.PeriodIndex(start_dates, freq="W-SUN")
 
     if dataset_name in ["aus_production", "us_change", "tourism"]:
-        obj.set_index('Quarter', inplace=True)
-        obj.index = pd.PeriodIndex(obj.index, freq='Q')
+        obj.set_index("Quarter", inplace=True)
+        obj.index = pd.PeriodIndex(obj.index, freq="Q")
 
-    if dataset_name in ["aus_airpassengers", "guinea_rice", "bank_calls", "canadian_gas", \
-                        "souvenirs", "us_gasoline"]:
+    if dataset_name in [
+        "aus_airpassengers",
+        "guinea_rice",
+        "bank_calls",
+        "canadian_gas",
+        "souvenirs",
+        "us_gasoline",
+    ]:
         obj = obj.squeeze()
 
     if dataset_name == "aus_arrivals":
-        obj.set_index('Quarter', inplace=True)
-        obj.index = pd.PeriodIndex(obj.index, freq='Q')
+        obj.set_index("Quarter", inplace=True)
+        obj.index = pd.PeriodIndex(obj.index, freq="Q")
         obj.reset_index(inplace=True)
-        obj.set_index(['Origin', 'Quarter'], inplace=True)
+        obj.set_index(["Origin", "Quarter"], inplace=True)
 
     if dataset_name == "ansett":
         obj.reset_index(inplace=True)
-        obj.set_index(['Airports', 'Class', 'Week'], inplace=True)
+        obj.set_index(["Airports", "Class", "Week"], inplace=True)
 
     if dataset_name == "aus_livestock":
         obj.reset_index(inplace=True)
-        obj.set_index(['Animal', 'State', 'Month'], inplace=True)
+        obj.set_index(["Animal", "State", "Month"], inplace=True)
 
     if dataset_name == "olympic_running":
         obj.reset_index(inplace=True)
-        obj.columns = ['Year', 'Length', 'Sex', 'Time']
-        obj.set_index(['Length', 'Sex', 'Year'], inplace=True)
+        obj.columns = ["Year", "Length", "Sex", "Time"]
+        obj.set_index(["Length", "Sex", "Year"], inplace=True)
 
     if dataset_name == "tourism":
         obj.reset_index(inplace=True)
-        obj.columns = ['Quarter', 'Region', 'State', 'Purpose', 'Trips']
-        obj.set_index(['Region', 'State', 'Purpose', 'Quarter'], inplace=True)
+        obj.columns = ["Quarter", "Region", "State", "Purpose", "Trips"]
+        obj.set_index(["Region", "State", "Purpose", "Quarter"], inplace=True)
 
     if dataset_name == "aus_accommodation":
-        obj.set_index('Date', inplace=True)
-        obj.index = pd.PeriodIndex(obj.index, freq='Q')
+        obj.set_index("Date", inplace=True)
+        obj.index = pd.PeriodIndex(obj.index, freq="Q")
         obj.reset_index(inplace=True)
-        obj.columns = ['Date', 'State', 'Takings', 'Occupancy', 'CPI']
-        obj.set_index(['State', 'Date'], inplace=True)
+        obj.columns = ["Date", "State", "Takings", "Occupancy", "CPI"]
+        obj.set_index(["State", "Date"], inplace=True)
 
     if dataset_name == "boston_marathon":
         obj.reset_index(inplace=True)
-        obj.columns = ['Year', 'Event', 'Champion', 'Country', 'Time']
-        obj['Time'] = obj['Time'] / 60
-        obj.set_index(['Event', 'Year'], inplace=True)
+        obj.columns = ["Year", "Event", "Champion", "Country", "Time"]
+        obj["Time"] = obj["Time"] / 60
+        obj.set_index(["Event", "Year"], inplace=True)
 
     if dataset_name == "gafa_stock":
         obj.reset_index(inplace=True)
-        obj.set_index(['Symbol', 'Date'], inplace=True)
+        obj.set_index(["Symbol", "Date"], inplace=True)
 
     if dataset_name == "global_economy":
         obj.reset_index(inplace=True)
-        obj.columns = ['Year', 'Country', 'Code', 'GDP', 'Growth', 'CPI', 'Imports', \
-                       'Exports', 'Population']
-        obj.set_index(['Country', 'Year'], inplace=True)
+        obj.columns = [
+            "Year",
+            "Country",
+            "Code",
+            "GDP",
+            "Growth",
+            "CPI",
+            "Imports",
+            "Exports",
+            "Population",
+        ]
+        obj.set_index(["Country", "Year"], inplace=True)
 
     if dataset_name == "hh_budget":
         obj.reset_index(inplace=True)
-        obj.columns = ['Year', 'Country', 'Debt', 'DI', 'Expenditure', 'Savings', \
-                       'Wealth', 'Unemployment']
-        obj.set_index(['Country', 'Year'], inplace=True)
+        obj.columns = [
+            "Year",
+            "Country",
+            "Debt",
+            "DI",
+            "Expenditure",
+            "Savings",
+            "Wealth",
+            "Unemployment",
+        ]
+        obj.set_index(["Country", "Year"], inplace=True)
 
     if dataset_name == "nyc_bikes":
-        obj['start_time'] = pd.to_datetime(obj['start_time'], unit='s')
-        obj.set_index('start_time', inplace=True)
+        obj["start_time"] = pd.to_datetime(obj["start_time"], unit="s")
+        obj.set_index("start_time", inplace=True)
         obj.reset_index(inplace=True)
-        obj.set_index(['bike_id', 'start_time'], inplace=True)
+        obj.set_index(["bike_id", "start_time"], inplace=True)
 
     if dataset_name == "pedestrian":
-        obj['Date_Time'] = pd.to_datetime(obj['Date_Time'], unit='s')
-        obj.set_index('Date_Time', inplace=True)
+        obj["Date_Time"] = pd.to_datetime(obj["Date_Time"], unit="s")
+        obj.set_index("Date_Time", inplace=True)
         obj.reset_index(inplace=True)
-        obj['Date'] = pd.to_datetime(obj['Date'])
-        obj.set_index(['Sensor', 'Date_Time'], inplace=True)
+        obj["Date"] = pd.to_datetime(obj["Date"])
+        obj.set_index(["Sensor", "Date_Time"], inplace=True)
 
     if dataset_name == "us_employment":
         obj.reset_index(inplace=True)
-        obj.set_index(['Series_ID', 'Month'], inplace=True)
+        obj.set_index(["Series_ID", "Month"], inplace=True)
 
     if dataset_name == "aus_retail":
         obj.reset_index(inplace=True)
-        obj.set_index(['State', 'Industry', 'Month'], inplace=True)
+        obj.set_index(["State", "Industry", "Month"], inplace=True)
 
     if dataset_name == "PBS":
         obj.reset_index(inplace=True)
-        obj.set_index(['Concession', 'Type', 'ATC1', 'ATC2', 'Month'], inplace=True)
+        obj.set_index(["Concession", "Type", "ATC1", "ATC2", "Month"], inplace=True)
 
     return (True, obj)
 
@@ -237,7 +299,7 @@ def _process_dataset(dataset_name, temp_folder="/tmp"):
         else:
             return (False, None)
 
-        shutil.rmtree(temp_dir) ## cleanup
+        shutil.rmtree(temp_dir)  ## cleanup
 
         if not ret:
             return (False, None)
@@ -268,7 +330,7 @@ def load_fpp3(dataset, temp_folder="/tmp"):
     """
     from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-    dependencies_met = _check_soft_dependencies(["requests","rdata"])
+    dependencies_met = _check_soft_dependencies(["requests", "rdata"])
     if not dependencies_met:
         return (False, None)
     status, y = _process_dataset(dataset, temp_folder)
