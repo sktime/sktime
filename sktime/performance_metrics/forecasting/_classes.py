@@ -103,18 +103,23 @@ class BaseForecastingErrorMetric(BaseMetric):
 
     Parameters
     ----------
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines whether and how to aggregate metric for across variables.
-        If 'uniform_average' (default), errors are mean-averaged across variables.
-        If array-like, errors are weighted averaged across variables, values as weights.
-        If 'raw_values', does not average errors across variables, columns are retained.
+
+        * If 'uniform_average' (default), errors are mean-averaged across variables.
+        * If array-like, errors are weighted averaged across variables,
+          values as weights.
+        * If 'raw_values', does not average errors across variables,
+          columns are retained.
 
     multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
         Defines how to aggregate metric for hierarchical data (with levels).
-        If 'uniform_average' (default), errors are mean-averaged across levels.
-        If 'uniform_average_time', metric is applied to all data, ignoring level index.
-        If 'raw_values', does not average errors across levels, hierarchy is retained.
+
+        * If 'uniform_average' (default), errors are mean-averaged across levels.
+        * If 'uniform_average_time', metric is applied to all data,
+          ignoring level index.
+        * If 'raw_values', does not average errors across levels, hierarchy is retained.
     """
 
     _tags = {
@@ -141,31 +146,75 @@ class BaseForecastingErrorMetric(BaseMetric):
 
         Parameters
         ----------
-        y_true : time series in sktime compatible data container format
-            Ground truth (correct) target values
-            y can be in one of the following formats:
-            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
-                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
-            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
-        y_pred :time series in sktime compatible data container format
-            Forecasted values to evaluate
-            must be of same format as y_true, same indices and columns if indexed
+        y_true : time series in ``sktime`` compatible data container format.
+            Ground truth (correct) target values.
+
+            Individual data formats in ``sktime`` are so-called :term:`mtype`
+            specifications, each mtype implements an abstract :term:`scitype`.
+
+            * ``Series`` scitype = individual time series, vanilla forecasting.
+              ``pd.DataFrame``, ``pd.Series``, or ``np.ndarray`` (1D or 2D)
+
+            * ``Panel`` scitype = collection of time series, global/panel forecasting.
+              ``pd.DataFrame`` with 2-level row ``MultiIndex`` ``(instance, time)``,
+              ``3D np.ndarray`` ``(instance, variable, time)``,
+              ``list`` of ``Series`` typed ``pd.DataFrame``
+
+            * ``Hierarchical`` scitype = hierarchical collection, for
+              hierarchical forecasting. ``pd.DataFrame`` with 3 or more level row
+              ``MultiIndex`` ``(hierarchy_1, ..., hierarchy_n, time)``
+
+            For further details on data format, see glossary on :term:`mtype`.
+            For usage, see forecasting tutorial ``examples/01_forecasting.ipynb``
+
+        y_pred : time series in ``sktime`` compatible data container format
+            Predicted values to evaluate against ground truth.
+            Must be of same format as ``y_true``, same indices and columns if indexed.
+
+        y_pred_benchmark : optional, time series in ``sktime`` compatible data container format  # noqa: E501
+            Benchmark predictions to compare ``y_pred`` to, used for relative metrics.
+            Required only if metric requires benchmark predictions,
+            as indicated by tag ``requires-y-pred-benchmark``.
+            Otherwise, can be passed to ensure interface consistency, but is ignored.
+            Must be of same format as ``y_true``, same indices and columns if indexed.
+
+        y_train : optional, time series in ``sktime`` compatible data container format
+            Training data used to normalize the error metric.
+            Required only if metric requires training data,
+            as indicated by tag ``requires-y-train``.
+            Otherwise, can be passed to ensure interface consistency, but is ignored.
+            Must be of same format as ``y_true``, same columns if indexed,
+            but not necessarily same indices.
+
+        sample_weight : optional, 1D array-like, default=None
+            Sample weights for each time point.
+
+            * If ``None``, the time indices are considered equally weighted.
+            * If an array, must be 1D.
+              If ``y_true`` and ``y_pred``are a single time series,
+              ``sample_weight`` must be of the same length as ``y_true``.
+              If the time series are panel or hierarchical, the length of all
+              individual time
+              series must be the same, and equal to the length of ``sample_weight``,
+              for all instances of time series passed.
 
         Returns
         -------
         loss : float, np.ndarray, or pd.DataFrame
             Calculated metric, averaged or by variable.
-            float if self.multioutput="uniform_average" or array-like
-                and self.multilevel="uniform_average" or "uniform_average_time"
-                value is metric averaged over variables and levels (see class docstring)
-            np.ndarray of shape (y_true.columns,) if self.multioutput="raw_values"
-                and self.multilevel="uniform_average" or "uniform_average_time"
-                i-th entry is metric calculated for i-th variable
-            pd.DataFrame if self.multilevel=raw.values
-                of shape (n_levels, ) if self.multioutput = "uniform_average" or array
-                of shape (n_levels, y_true.columns) if self.multioutput="raw_values"
-                metric is applied per level, row averaging (yes/no) as in multioutput
+            Weighted by ``sample_weight`` if provided.
+
+            * float if ``multioutput="uniform_average" or array-like,
+              and ``multilevel="uniform_average"`` or "uniform_average_time"``.
+              Value is metric averaged over variables and levels (see class docstring)
+            * ``np.ndarray`` of shape ``(y_true.columns,)``
+              if `multioutput="raw_values"``
+              and ``multilevel="uniform_average"`` or ``"uniform_average_time"``.
+              i-th entry is the, metric calculated for i-th variable
+            * ``pd.DataFrame`` if ``multilevel="raw_values"``.
+              of shape ``(n_levels, )``, if ``multioutput="uniform_average"``;
+              of shape ``(n_levels, y_true.columns)`` if ``multioutput="raw_values"``.
+              metric is applied per level, row averaging (yes/no) as in ``multioutput``.
         """
         return self.evaluate(y_true, y_pred, **kwargs)
 
@@ -174,31 +223,75 @@ class BaseForecastingErrorMetric(BaseMetric):
 
         Parameters
         ----------
-        y_true : time series in sktime compatible data container format
-            Ground truth (correct) target values
-            y can be in one of the following formats:
-            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
-                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
-            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
-        y_pred :time series in sktime compatible data container format
-            Forecasted values to evaluate
-            must be of same format as y_true, same indices and columns if indexed
+        y_true : time series in ``sktime`` compatible data container format.
+            Ground truth (correct) target values.
+
+            Individual data formats in ``sktime`` are so-called :term:`mtype`
+            specifications, each mtype implements an abstract :term:`scitype`.
+
+            * ``Series`` scitype = individual time series, vanilla forecasting.
+              ``pd.DataFrame``, ``pd.Series``, or ``np.ndarray`` (1D or 2D)
+
+            * ``Panel`` scitype = collection of time series, global/panel forecasting.
+              ``pd.DataFrame`` with 2-level row ``MultiIndex`` ``(instance, time)``,
+              ``3D np.ndarray`` ``(instance, variable, time)``,
+              ``list`` of ``Series`` typed ``pd.DataFrame``
+
+            * ``Hierarchical`` scitype = hierarchical collection, for
+              hierarchical forecasting. ``pd.DataFrame`` with 3 or more level row
+              ``MultiIndex`` ``(hierarchy_1, ..., hierarchy_n, time)``
+
+            For further details on data format, see glossary on :term:`mtype`.
+            For usage, see forecasting tutorial ``examples/01_forecasting.ipynb``
+
+        y_pred : time series in ``sktime`` compatible data container format
+            Predicted values to evaluate against ground truth.
+            Must be of same format as ``y_true``, same indices and columns if indexed.
+
+        y_pred_benchmark : optional, time series in ``sktime`` compatible data container format  # noqa: E501
+            Benchmark predictions to compare ``y_pred`` to, used for relative metrics.
+            Required only if metric requires benchmark predictions,
+            as indicated by tag ``requires-y-pred-benchmark``.
+            Otherwise, can be passed to ensure interface consistency, but is ignored.
+            Must be of same format as ``y_true``, same indices and columns if indexed.
+
+        y_train : optional, time series in ``sktime`` compatible data container format
+            Training data used to normalize the error metric.
+            Required only if metric requires training data,
+            as indicated by tag ``requires-y-train``.
+            Otherwise, can be passed to ensure interface consistency, but is ignored.
+            Must be of same format as ``y_true``, same columns if indexed,
+            but not necessarily same indices.
+
+        sample_weight : optional, 1D array-like, default=None
+            Sample weights for each time point.
+
+            * If ``None``, the time indices are considered equally weighted.
+            * If an array, must be 1D.
+              If ``y_true`` and ``y_pred``are a single time series,
+              ``sample_weight`` must be of the same length as ``y_true``.
+              If the time series are panel or hierarchical, the length of all
+              individual time
+              series must be the same, and equal to the length of ``sample_weight``,
+              for all instances of time series passed.
 
         Returns
         -------
         loss : float, np.ndarray, or pd.DataFrame
             Calculated metric, averaged or by variable.
-            float if self.multioutput="uniform_average" or array-like
-                and self.multilevel="uniform_average" or "uniform_average_time"
-                value is metric averaged over variables and levels (see class docstring)
-            np.ndarray of shape (y_true.columns,) if self.multioutput="raw_values"
-                and self.multilevel="uniform_average" or "uniform_average_time"
-                i-th entry is metric calculated for i-th variable
-            pd.DataFrame if self.multilevel=raw.values
-                of shape (n_levels, ) if self.multioutput = "uniform_average" or array
-                of shape (n_levels, y_true.columns) if self.multioutput="raw_values"
-                metric is applied per level, row averaging (yes/no) as in multioutput
+            Weighted by ``sample_weight`` if provided.
+
+            * float if ``multioutput="uniform_average" or array-like,
+              and ``multilevel="uniform_average"`` or "uniform_average_time"``.
+              Value is metric averaged over variables and levels (see class docstring)
+            * ``np.ndarray`` of shape ``(y_true.columns,)``
+              if `multioutput="raw_values"``
+              and ``multilevel="uniform_average"`` or ``"uniform_average_time"``.
+              i-th entry is the, metric calculated for i-th variable
+            * ``pd.DataFrame`` if ``multilevel="raw_values"``.
+              of shape ``(n_levels, )``, if ``multioutput="uniform_average"``;
+              of shape ``(n_levels, y_true.columns)`` if ``multioutput="raw_values"``.
+              metric is applied per level, row averaging (yes/no) as in ``multioutput``.
         """
         multioutput = self.multioutput
         multilevel = self.multilevel
@@ -333,27 +426,70 @@ class BaseForecastingErrorMetric(BaseMetric):
 
         Parameters
         ----------
-        y_true : time series in sktime compatible data container format
-            Ground truth (correct) target values
-            y can be in one of the following formats:
-            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
-                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
-            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
-        y_pred :time series in sktime compatible data container format
-            Forecasted values to evaluate
-            must be of same format as y_true, same indices and columns if indexed
+        y_true : time series in ``sktime`` compatible data container format.
+            Ground truth (correct) target values.
+
+            Individual data formats in ``sktime`` are so-called :term:`mtype`
+            specifications, each mtype implements an abstract :term:`scitype`.
+
+            * ``Series`` scitype = individual time series, vanilla forecasting.
+              ``pd.DataFrame``, ``pd.Series``, or ``np.ndarray`` (1D or 2D)
+
+            * ``Panel`` scitype = collection of time series, global/panel forecasting.
+              ``pd.DataFrame`` with 2-level row ``MultiIndex`` ``(instance, time)``,
+              ``3D np.ndarray`` ``(instance, variable, time)``,
+              ``list`` of ``Series`` typed ``pd.DataFrame``
+
+            * ``Hierarchical`` scitype = hierarchical collection, for
+              hierarchical forecasting. ``pd.DataFrame`` with 3 or more level row
+              ``MultiIndex`` ``(hierarchy_1, ..., hierarchy_n, time)``
+
+            For further details on data format, see glossary on :term:`mtype`.
+            For usage, see forecasting tutorial ``examples/01_forecasting.ipynb``
+
+        y_pred : time series in ``sktime`` compatible data container format
+            Predicted values to evaluate against ground truth.
+            Must be of same format as ``y_true``, same indices and columns if indexed.
+
+        y_pred_benchmark : optional, time series in ``sktime`` compatible data container format  # noqa: E501
+            Benchmark predictions to compare ``y_pred`` to, used for relative metrics.
+            Required only if metric requires benchmark predictions,
+            as indicated by tag ``requires-y-pred-benchmark``.
+            Otherwise, can be passed to ensure interface consistency, but is ignored.
+            Must be of same format as ``y_true``, same indices and columns if indexed.
+
+        y_train : optional, time series in ``sktime`` compatible data container format
+            Training data used to normalize the error metric.
+            Required only if metric requires training data,
+            as indicated by tag ``requires-y-train``.
+            Otherwise, can be passed to ensure interface consistency, but is ignored.
+            Must be of same format as ``y_true``, same columns if indexed,
+            but not necessarily same indices.
+
+        sample_weight : optional, 1D array-like, default=None
+            Sample weights for each time point.
+
+            * If ``None``, the time indices are considered equally weighted.
+            * If an array, must be 1D.
+              If ``y_true`` and ``y_pred``are a single time series,
+              ``sample_weight`` must be of the same length as ``y_true``.
+              If the time series are panel or hierarchical, the length of all
+              individual time
+              series must be the same, and equal to the length of ``sample_weight``,
+              for all instances of time series passed.
 
         Returns
         -------
         loss : pd.Series or pd.DataFrame
             Calculated metric, by time point (default=jackknife pseudo-values).
-            pd.Series if self.multioutput="uniform_average" or array-like
-                index is equal to index of y_true
-                entry at index i is metric at time i, averaged over variables
-            pd.DataFrame if self.multioutput="raw_values"
-                index and columns equal to those of y_true
-                i,j-th entry is metric at time i, at variable j
+            Weighted by ``sample_weight`` if provided.
+
+            * ``pd.Series`` if ``multioutput="uniform_average"`` or array-like.
+              index is equal to index of ``y_true``;
+              entry at index i is metric at time i, averaged over variables
+            * ``pd.DataFrame`` if ``multioutput="raw_values"``.
+              index and columns equal to those of ``y_true``;
+              i,j-th entry is metric at time i, at variable j
         """
         multioutput = self.multioutput
         multilevel = self.multilevel
