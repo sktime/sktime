@@ -898,7 +898,7 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
 
         if is_timestamp:
             # coerce back to DatetimeIndex after operation
-            absolute = absolute.to_timestamp(fh.freq)
+            absolute = absolute.to_timestamp()
 
         if old_tz is not None:
             absolute = absolute.tz_localize(old_tz)
@@ -955,19 +955,10 @@ def _coerce_to_period(x, freq=None):
         raise ValueError(
             "_coerce_to_period requires freq argument to be passed if x is pd.Timestamp"
         )
-    try:
+    elif x.freq is None:
         return x.to_period(freq)
-    except (ValueError, AttributeError) as e:
-        msg = str(e)
-        if "Invalid frequency" in msg or "_period_dtype_code" in msg:
-            raise ValueError(
-                "Invalid frequency. Please select a frequency that can "
-                "be converted to a regular `pd.PeriodIndex`. For other "
-                "frequencies, basic arithmetic operation to compute "
-                "durations currently do not work reliably."
-            )
-        else:
-            raise
+    else:
+        return x.to_period()
 
 
 def _index_range(relative, cutoff):
