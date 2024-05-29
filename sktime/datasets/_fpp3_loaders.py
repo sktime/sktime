@@ -100,7 +100,7 @@ def _decompress_file_to_temp(url, temp_folder="/tmp"):
 
 def _find_dataset(temp_folder, dataset_name):
     dataset = dataset_name + ".rda"
-    for root, dirs, files in os.walk(temp_folder):
+    for root, _, files in os.walk(temp_folder):
         if dataset in files:
             return (True, os.path.join(root, dataset))
     return (False, None)
