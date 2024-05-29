@@ -70,7 +70,6 @@ DATASET_NAMES_FPP3 = fpp3 + tsibble + tsibbledata
 
 
 def _get_dataset_url(dataset_name):
-
     url_fpp3 = "https://cran.r-project.org/src/contrib/fpp3_0.5.tar.gz"
     url_tsibble = "https://cran.r-project.org/src/contrib/tsibble_1.1.4.tar.gz"
     url_tsibbledata = "https://cran.r-project.org/src/contrib/tsibbledata_0.4.1.tar.gz"
@@ -120,7 +119,7 @@ def _yearquarter_constructor(obj, attrs):
 
 
 def _date_constructor(obj, attrs):
-    return pd.to_datetime(obj, origin="1970-01-01", unit="D")
+    return pd.to_datetime(obj, origin="1970-01-01", unit="D')
 
 
 def _import_rda(path):
@@ -156,7 +155,7 @@ def _dataset_to_mtype(dataset_name, obj):
         "olympic_running",
         "boston_marathon",
         "global_economy",
-        "hh_budget"
+        "hh_budget",
     ]:
         if dataset_name in ["prices"]:
             obj.rename(columns={"year": "Year"}, inplace=True)
