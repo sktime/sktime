@@ -31,7 +31,7 @@ class AlignerNaive(BaseAligner):
         # estimator type
         # --------------
         "capability:multiple-alignment": True,  # can align more than two sequences?
-        "capability:unequal-length": True,  # can align sequences of unequal length?
+        "capability:unequal_length": True,  # can align sequences of unequal length?
     }
 
     def __init__(self, strategy="start-end"):

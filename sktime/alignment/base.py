@@ -39,7 +39,7 @@ class BaseAligner(BaseEstimator):
         "capability:multiple-alignment": False,  # can align more than two sequences?
         "capability:distance": False,  # does compute/return overall distance?
         "capability:distance-matrix": False,  # does compute/return distance matrix?
-        "capability:unequal-length": True,  # can align sequences of unequal length?
+        "capability:unequal_length": True,  # can align sequences of unequal length?
         "alignment_type": "full",  # does the aligner produce full or partial alignment
         "X_inner_mtype": "df-list",  # mtype of X expected by _fit
     }
@@ -367,7 +367,7 @@ class BaseAligner(BaseEstimator):
         # if aligner does not support unequal length sequences
         # and X has unequal length, raise error
         X_equal_length = X_metadata["is_equal_length"]
-        if not self.get_tag("capability:unequal-length", True) and not X_equal_length:
+        if not self.get_tag("capability:unequal_length", True) and not X_equal_length:
             raise ValueError(
                 f"Aligner {self.__class__.__name__} instance does not support "
                 "alignment of unequal length sequences, but X passed "
