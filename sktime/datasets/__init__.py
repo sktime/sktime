@@ -40,13 +40,14 @@ __all__ = [
     "write_tabular_transformation_to_arff",
     "load_tecator",
     "load_fpp3",
+    "DATASET_NAMES_FPP3",
 ]
 
 from sktime.datasets._data_io import (
     generate_example_long_table,
     make_multi_index_dataframe,
 )
-from sktime.datasets._fpp3_loaders import load_fpp3
+from sktime.datasets._fpp3_loaders import DATASET_NAMES_FPP3, load_fpp3
 from sktime.datasets._readers_writers.arff import (
     load_from_arff_to_dataframe,
     write_tabular_transformation_to_arff,

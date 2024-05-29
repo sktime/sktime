@@ -98,6 +98,7 @@ def test_load_forecasting_data_invalid_name(name):
     ):
         load_forecastingdata(name=name)
 
+
 @pytest.mark.datadownload
 def test_load_fpp3():
     """Test loading downloaded dataset from ."""

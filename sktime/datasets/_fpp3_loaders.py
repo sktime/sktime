@@ -33,37 +33,43 @@ import pandas as pd
 
 MODULE = os.path.dirname(__file__)
 
-def _get_dataset_url(dataset_name):
-    fpp3 = [
-        "aus_accommodation",
-        "aus_airpassengers",
-        "aus_arrivals",
-        "bank_calls",
-        "boston_marathon",
-        "canadian_gas",
-        "guinea_rice",
-        "insurance",
-        "prices",
-        "souvenirs",
-        "us_change",
-        "us_employment",
-        "us_gasoline",
-    ]
-    tsibble = ["pedestrian", "tourism"]
 
-    tsibbledata = [
-        "ansett",
-        "aus_livestock",
-        "aus_production",
-        "aus_retail",
-        "gafa_stock",
-        "global_economy",
-        "hh_budget",
-        "nyc_bikes",
-        "olympic_running",
-        "PBS","pelt",
-        "vic_elec",
-    ]
+fpp3 = [
+    "aus_accommodation",
+    "aus_airpassengers",
+    "aus_arrivals",
+    "bank_calls",
+    "boston_marathon",
+    "canadian_gas",
+    "guinea_rice",
+    "insurance",
+    "prices",
+    "souvenirs",
+    "us_change",
+    "us_employment",
+    "us_gasoline",
+]
+tsibble = ["pedestrian", "tourism"]
+
+tsibbledata = [
+    "ansett",
+    "aus_livestock",
+    "aus_production",
+    "aus_retail",
+    "gafa_stock",
+    "global_economy",
+    "hh_budget",
+    "nyc_bikes",
+    "olympic_running",
+    "PBS",
+    "pelt",
+    "vic_elec",
+]
+
+DATASET_NAMES_FPP3 = fpp3 + tsibble + tsibbledata
+
+
+def _get_dataset_url(dataset_name):
 
     url_fpp3 = "https://cran.r-project.org/src/contrib/fpp3_0.5.tar.gz"
     url_tsibble = "https://cran.r-project.org/src/contrib/tsibble_1.1.4.tar.gz"
@@ -78,17 +84,20 @@ def _get_dataset_url(dataset_name):
 
     return (False, None)
 
+
 def _decompress_file_to_temp(url, temp_folder="/tmp"):
-    import requests    
+    import requests
+
     temp_dir = tempfile.mkdtemp(dir=temp_folder)
     response = requests.get(url)
     temp_file = os.path.join(temp_dir, "foo.tar.gz")
-    with open(temp_file, 'wb') as f:
+    with open(temp_file, "wb") as f:
         f.write(response.content)
     tar = tarfile.open(temp_file)
     tar.extractall(path=temp_dir)
     tar.close()
     return temp_dir
+
 
 def _find_dataset(temp_folder, dataset_name):
     dataset = dataset_name + ".rda"
@@ -97,17 +106,22 @@ def _find_dataset(temp_folder, dataset_name):
             return (True, os.path.join(root, dataset))
     return (False, None)
 
+
 def _yearweek_constructor(obj, attrs):
-    return pd.to_datetime(obj, origin='1970-01-01', unit='D').to_period('W').astype(str)
+    return pd.to_datetime(obj, origin="1970-01-01", unit="D").to_period("W").astype(str)
+
 
 def _yearmonth_constructor(obj, attrs):
-    return pd.to_datetime(obj, origin='1970-01-01', unit='D').to_period('M').astype(str)
+    return pd.to_datetime(obj, origin="1970-01-01", unit="D").to_period("M").astype(str)
+
 
 def _yearquarter_constructor(obj, attrs):
-    return pd.to_datetime(obj, origin='1970-01-01', unit='D').to_period('Q').astype(str)
+    return pd.to_datetime(obj, origin="1970-01-01", unit="D").to_period("Q").astype(str)
+
 
 def _date_constructor(obj, attrs):
-    return pd.to_datetime(obj, origin='1970-01-01', unit='D')
+    return pd.to_datetime(obj, origin="1970-01-01", unit="D")
+
 
 def _import_rda(path):
     import rdata
@@ -131,6 +145,7 @@ def _import_rda(path):
         return (True, next(iter(obj.values())))
 
     return (False, obj)
+
 
 def _dataset_to_mtype(dataset_name, obj):
     if dataset_name in [
@@ -289,6 +304,7 @@ def _dataset_to_mtype(dataset_name, obj):
 
     return (True, obj)
 
+
 def _process_dataset(dataset_name, temp_folder="/tmp"):
     known, url = _get_dataset_url(dataset_name)
     if known:
@@ -299,7 +315,7 @@ def _process_dataset(dataset_name, temp_folder="/tmp"):
         else:
             return (False, None)
 
-        shutil.rmtree(temp_dir)  ## cleanup
+        shutil.rmtree(temp_dir)  # cleanup
 
         if not ret:
             return (False, None)
@@ -319,19 +335,41 @@ def load_fpp3(dataset, temp_folder="/tmp"):
 
     Parameters
     ----------
-    dataset : str - The name of the dataset to load
-    temp_folder: str - name of folder where temporary folder can be created
-         and ultimately deleted before this function returns
-    
-    Returns a 2-tuple
-    -----------------
-    status: - logical - True on success, False on failure
-    y : if status is True, then a pd.DataFrame, else None
+    dataset : str
+        The name of the dataset to load.
+        Valid values are listed in ``datasets.DATASET_NAMES_FPP3``.
+    temp_folder: str, optional, default = '/tmp'
+        Location of temporary data folder for downloading and extracting the dataset.
+        Deleted if the operation is successful.
+
+    Returns
+    -------
+    y : pd.DataFrame
+        The loaded data.
+        The mtype format is  ``pd.DataFrame`` for single time series,
+        ``pd-multiindex`` for collections of time series,
+        and ``pd_multiindex_hier`` for hierarchical time series.
+
+    Raises
+    ------
+    ValueError
+        If the dataset is not known.
+    RuntimeError
+        If there is an error loading the dataset.
     """
     from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-    dependencies_met = _check_soft_dependencies(["requests", "rdata"])
-    if not dependencies_met:
-        return (False, None)
+    _check_soft_dependencies(["requests", "rdata"])
+
+    if dataset not in DATASET_NAMES_FPP3:
+        raise ValueError(
+            f"Unknown dataset name in load_fpp3: {dataset}. "
+            f"Valid datasets are: {DATASET_NAMES_FPP3}"
+        )
+
     status, y = _process_dataset(dataset, temp_folder)
-    return (status, y)
+
+    if not status:
+        raise RuntimeError(f"Error in load_fpp3, dataset = {dataset}.")
+
+    return y
