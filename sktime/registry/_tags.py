@@ -1447,10 +1447,10 @@ class capability__inverse_transform__exact(_BaseTag):
 
 
 class transform_returns_same_time_index(_BaseTag):
-    """Behaviour flag: transformer returns same time index as input.
+    """Property: transformer returns same time index as input.
 
     - String name: ``"transform-returns-same-time-index"``
-    - Public behaviour flag
+    - Public property tag
     - Values: boolean, ``True`` / ``False``
     - Example: ``True``
     - Default: ``False``
