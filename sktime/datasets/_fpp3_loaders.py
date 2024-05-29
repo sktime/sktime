@@ -119,7 +119,7 @@ def _yearquarter_constructor(obj, attrs):
 
 
 def _date_constructor(obj, attrs):
-    return pd.to_datetime(obj, origin="1970-01-01", unit="D')
+    return pd.to_datetime(obj, origin="1970-01-01", unit="D")
 
 
 def _import_rda(path):
