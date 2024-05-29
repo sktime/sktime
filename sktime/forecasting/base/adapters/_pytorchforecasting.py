@@ -212,7 +212,11 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
             predictions, self._max_prediction_length
         )
 
-        return output
+        absolute_horizons = self.fh.to_absolute_index(self.cutoff)
+        dateindex = output.index.get_level_values(-1).map(
+            lambda x: x in absolute_horizons
+        )
+        return output.loc[dateindex]
 
     def _Xy_to_dataset(
         self,
