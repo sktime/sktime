@@ -113,6 +113,7 @@ these types of objects.
     capability__multioutput
     capability__missing_values
     capability__unequal_length
+    capability__predict_proba
     capability__feature_importance
     capability__contractable
     capability__train_estimate
