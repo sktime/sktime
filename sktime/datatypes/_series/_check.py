@@ -44,6 +44,7 @@ import pandas as pd
 
 from sktime.datatypes._common import _req
 from sktime.datatypes._common import _ret as ret
+from sktime.datatypes._dtypekind import DtypeKind
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.series import is_in_valid_index_types
 
@@ -73,8 +74,23 @@ def check_pddataframe_series(obj, return_metadata=False, var_name="obj"):
         metadata["n_features"] = len(obj.columns)
     if _req("feature_names", return_metadata):
         metadata["feature_names"] = obj.columns.to_list()
+
     if _req("feature_kind", return_metadata):
-        metadata["feature_kind"] = obj.dtypes.to_list()
+        col_dtypes = obj.dtypes.to_list()
+        for i, dtype in enumerate(col_dtypes):
+            if dtype == float:
+                col_dtypes[i] = DtypeKind.FLOAT
+            elif dtype == int:
+                col_dtypes[i] = DtypeKind.INT
+            elif dtype == np.uint:
+                col_dtypes[i] = DtypeKind.UINT
+            elif dtype == object:
+                col_dtypes[i] = DtypeKind.CATEGORICAL
+            elif dtype == bool:
+                col_dtypes[i] = DtypeKind.BOOL
+            elif dtype == pd.DatetimeIndex:
+                col_dtypes[i] = DtypeKind.DATETIME
+        metadata["feature_kind"] = col_dtypes
 
     # check that columns are unique
     if not obj.columns.is_unique:
