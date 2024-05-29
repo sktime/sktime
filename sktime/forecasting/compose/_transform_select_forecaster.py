@@ -230,7 +230,7 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         """
         # passing time series through the provided transformer!
 
-        self.category_ = self.transformer_.fit_transform(X=y).iloc[0, 0]
+        self.category_ = self.transformer_.fit_transform(X=y, y=X).iloc[0, 0]
 
         # check if we have an available forecaster
         if self.category_ not in self.forecasters:
