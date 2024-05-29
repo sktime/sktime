@@ -12,7 +12,6 @@ import pytest
 from sktime.datasets import load_airline
 from sktime.transformations.series.difference import Differencer
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 y_airline = load_airline()
 y_airline_df = pd.concat([y_airline, y_airline], axis=1)
@@ -107,10 +106,6 @@ def test_differencer_prediction(y, lags, index_type):
     _assert_array_almost_equal(y_true, y_pred_inv)
 
 
-@pytest.mark.skipif(
-    not _check_soft_dependencies("prophet", severity="none"),
-    reason="requires Prophet forecaster in the example",
-)
 def test_differencer_cutoff():
     """Tests a special case that triggers freq inference.
 
@@ -119,8 +114,7 @@ def test_differencer_cutoff():
     on line "fh = ForecastingHorizon(etc" in Differencer._check_inverse_transform_index
     """
     from sktime.datasets import load_longley
-    from sktime.forecasting.compose import TransformedTargetForecaster
-    from sktime.forecasting.fbprophet import Prophet
+    from sktime.forecasting.compose import TransformedTargetForecaster, YfromX
     from sktime.forecasting.model_selection import ForecastingGridSearchCV
     from sktime.split import ExpandingWindowSplitter, temporal_train_test_split
     from sktime.transformations.series.difference import Differencer
@@ -131,14 +125,12 @@ def test_differencer_cutoff():
     fh = [1, 2]
     train_model, _ = temporal_train_test_split(y, fh=fh)
     X_train = X[X.index.isin(train_model.index)]
-    train_model.index = train_model.index.to_timestamp(freq="A")
-    X_train.index = X_train.index.to_timestamp(freq="A")
 
     # pipeline
     pipe = TransformedTargetForecaster(
         steps=[
             ("differencer", Differencer(na_handling="fill_zero")),
-            ("myforecaster", Prophet()),
+            ("myforecaster", YfromX.create_test_instance()),
         ]
     )
 
@@ -159,6 +151,7 @@ def test_differencer_cutoff():
         cv=cv,
         param_grid=param_grid,
         verbose=1,
+        error_score="raise",
     )
 
     # fit
