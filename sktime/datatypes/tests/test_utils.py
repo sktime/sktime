@@ -410,7 +410,7 @@ def test_get_slice_expected_result():
 def test_retain_series_freq_on_update():
     """Tests that the frequency of a series is retained after updating it"""
     from sktime.datasets import load_airline
-    from sktime.forecasting.model_selection import temporal_train_test_split
+    from sktime.split import temporal_train_test_split
 
     y = load_airline()
 
