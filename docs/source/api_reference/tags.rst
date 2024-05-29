@@ -145,3 +145,27 @@ transform a single time series object (``"transformer"`` type).
     capability__inverse_transform__range
     fit_is_empty
     transform_returns_same_time_index
+
+
+.. _dev_common_tags:
+
+Common developer tags
+---------------------
+
+This section lists tags that are used to control internal behaviour of objects,
+e.g., the boilerplate layer.
+
+These are primarily useful for power users using the extension
+templates to create ``sktime`` compatible objects.
+
+The tags below have limited use in retrieval or inspection of objects.
+
+.. currentmodule:: sktime.registry._tags
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+    :nosignatures:
+
+    x_inner_mtype
+    y_inner_mtype
