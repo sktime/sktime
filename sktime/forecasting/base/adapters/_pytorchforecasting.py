@@ -189,11 +189,19 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
             guaranteed to have a single column/variable
             Point predictions
         """
-        # check if dummy X is needed
-        X = self._dummy_X(X, y)
+        if y is None:
+            y = deepcopy(self._y)
+        if X is None:
+            X = deepcopy(self._X)
+        if X is not None and not self._global_forecasting:
+            X = pandas.concat([self._X, X])
         # convert series to frame
         _y, self._convert_to_series = _series_to_frame(y)
         _X, _ = _series_to_frame(X)
+        # extend index of y
+        _y = self._extend_y(_y, fh)
+        # check if dummy X is needed
+        _X = self._dummy_X(_X, _y)
         # convert data to pytorch-forecasting datasets
         training, validation = self._Xy_to_dataset(
             _X, _y, self._dataset_params, self._max_prediction_length
@@ -228,7 +236,8 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
         from pytorch_forecasting.data import TimeSeriesDataSet
 
         # X, y must have same index or X is None
-        assert X is None or (X.index == y.index).all()
+        # assert X is None or (X.index == y.index).all()
+        # might not the same order
         # rename the index to make sure it's not None
         self._new_index_names = [
             "_index_name_" + str(i) for i in range(len(self._index_names))
@@ -376,6 +385,20 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
             )
             X = pandas.DataFrame(data=np.zeros(len(y)), index=y.index)
         return X
+
+    def _extend_y(self, y: pandas.DataFrame, fh):
+        index = fh.to_absolute_index(self.cutoff)
+        _y = pandas.DataFrame(index=index, columns=y.columns)
+        _y.index.rename(y.index.names[-1], inplace=True)
+        _y.fillna(0, inplace=True)
+        len_levels = len(y.index.names)
+        if len_levels == 1:
+            _y = pandas.concat([y, _y])
+        else:
+            _y = y.groupby(level=list(range(len_levels - 1))).apply(
+                lambda x: pandas.concat([x.droplevel(list(range(len_levels - 1))), _y])
+            )
+        return _y
 
 
 def _none_check(value, default):
