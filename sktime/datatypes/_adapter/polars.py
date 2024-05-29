@@ -9,6 +9,28 @@ def get_mi_cols(obj):
     return [x for x in obj.columns if isinstance(x, str) and x.startswith("__index__")]
 
 
+def is_monotonically_increasing(obj, scitype="Series"):
+    """Check is polars frame columns(__index__) is monotonically increasing."""
+    index_cols = get_mi_cols(obj)
+    if scitype == "Series":
+        if obj[index_cols[0]].is_sorted():
+            return True
+
+    elif scitype == "Panel" or scitype == "Hierarchical":
+        import polars as pl
+
+        index_df = obj.with_columns(index_cols)
+        grouped = index_df.groupby(index_cols[:-1]).agg([pl.col(index_cols[-1])])
+        last_index_col = grouped.select([index_cols[-1]])
+        for val in last_index_col.iter_rows():
+            # iter rows returns a list of tuples
+            if not pl.Series(val[0]).is_sorted():
+                return False
+        return True
+
+    return False
+
+
 def convert_pandas_to_polars(
     obj, schema_overrides=None, rechunk=True, nan_to_null=True, lazy=False
 ):
@@ -149,6 +171,18 @@ def check_polars_frame(
 
     if not right_no_index_cols:
         return ret(False, cols_msg, None, return_metadata)
+
+    # check if index columns are monotonically increasing
+    if not is_monotonically_increasing(obj, scitype=scitype):
+        msg = (
+            f"The (time) index of {var_name} must be sorted monotonically "
+            f"increasing. Use {var_name}.sort() on columns representing "
+            f"index(__index__) to sort the index, or {var_name}.is_duplicated() "
+            f"to find duplicates."
+        )
+        return ret(False, msg, None, return_metadata)
+
+    # columns in polars are unique, no check required
 
     if _req("is_empty", return_metadata):
         metadata["is_empty"] = obj.width < 1
