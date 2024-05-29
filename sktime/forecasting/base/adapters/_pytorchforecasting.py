@@ -386,7 +386,7 @@ def _series_to_frame(data):
     converted = False
     if data is not None:
         if isinstance(data, pandas.Series):
-            _data = deepcopy(data).to_frame()
+            _data = deepcopy(data).to_frame(name=data.name)
             converted = True
         else:
             _data = deepcopy(data)
