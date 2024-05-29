@@ -139,7 +139,7 @@ class Mixture(_HeterogenousMetaEstimator, BaseDistribution):
         n_df = len(df_list)
         df_weighted = [df * w for df, w in zip(df_list, weights)]
         df_concat = pd.concat(df_weighted, axis=1, keys=range(n_df))
-        df_res = df_concat.groupby(level=-1, axis=1).sum()
+        df_res = df_concat.T.groupby(level=-1).sum().T
         return df_res
 
     def pdf(self, x):
