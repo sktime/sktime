@@ -50,7 +50,7 @@ Pipelines can also be constructed using ``*``, ``+``, and ``|`` dunders.
     ForecastByLevel
     Permute
     HierarchyEnsembleForecaster
-    CategoryCompositor
+    TransformSelectForecaster
     FhPlexForecaster
     IgnoreX
     FallbackForecaster

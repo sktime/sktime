@@ -1,5 +1,5 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implements a compositor to utilize forecasters based on ADI/CV categorization."""
+"""Implements a compositor that selects an ideal forecaster from a given transformer."""
 
 __author__ = ["shlok191"]
 
@@ -12,7 +12,7 @@ from sktime.transformations.base import BaseTransformer
 from sktime.transformations.series.adi_cv import ADICVTransformer
 
 
-class ByGroupForecaster(BaseForecaster, _HeterogenousMetaEstimator):
+class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
     """Compositor that utilizes varying forecasters by time series data's nature.
 
     Applies a series-to-primitives transformer on a given time series. Based on the
@@ -45,11 +45,12 @@ class ByGroupForecaster(BaseForecaster, _HeterogenousMetaEstimator):
 
     Examples
     --------
-    This example showcases how the ByGroupForecaster can be utilized to select
+    This example showcases how the TransformSelectForecaster can be utilized to select
     appropriate forecasters on the basis of the time series category determined by
     the ADICVTransformer!
 
-    >>> from sktime.forecasting.compose._by_group_forecaster import ByGroupForecaster
+    >>> from sktime.forecasting.compose._transform_select_forecaster import (
+    ...    TransformSelectForecaster)
     >>> from sktime.forecasting.croston import Croston
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
     >>> from sktime.forecasting.naive import NaiveForecaster
@@ -64,7 +65,7 @@ class ByGroupForecaster(BaseForecaster, _HeterogenousMetaEstimator):
     # The forecaster is defined which accepts a dictionary of forecasters,
     a transformer and optionally a fallback_forecaster
 
-    >>> group_forecaster = ByGroupForecaster(
+    >>> group_forecaster = TransformSelectForecaster(
     ...     forecasters =
     ...         {"smooth": NaiveForecaster(),
     ...         "erratic": Croston(),
@@ -184,7 +185,6 @@ class ByGroupForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         # Finally, dynamically adding implementation of probabilistic
         # functions depending on the tags set.
         if self.get_tags()["capability:pred_int"]:
-            self._update_predict_single = _update_predict_single
             self._predict_interval = _predict_interval
             self._predict_var = _predict_var
             self._predict_proba = _predict_proba
@@ -379,7 +379,7 @@ class ByGroupForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             The list of forecasters which is returned. Also includes the
             fallback forecaster with the category: "fallback_forecaster"
         """
-        return list(self.forecasters.values()) + [
+        return list(self.forecasters.items()) + [
             "fallback_forecaster",
             self.fallback_forecaster,
         ]
@@ -405,17 +405,6 @@ class ByGroupForecaster(BaseForecaster, _HeterogenousMetaEstimator):
 
 # Function implementations that will be added dynamically
 # if the conditions are met. explained further above!
-def _update_predict_single(self, y, fh, X=None, update_params=True):
-    """Update forecaster and then make forecasts.
-
-    Implements default behaviour of calling update and predict sequentially, but can
-    be overwritten by subclasses to implement more efficient updating algorithms
-    when available.
-    """
-    self.update(y, X, update_params=update_params)
-    return self.predict(fh, X)
-
-
 def _predict_interval(self, fh, X, coverage):
     """Compute/return prediction quantiles for a forecast.
 
