@@ -659,6 +659,15 @@ class ProximityStump(BaseClassifier):
 
     Parameters
     ----------
+    random_state: integer, the random state
+
+    distance_measure: ``None`` (default) or str; if str, one of
+        "euclidean", "dtw", "ddtw", "wdtw", "wddtw", "msm", "lcss", "erp"
+        distance measure to use
+        if ``None``, selects distances randomly from the list of available distances
+
+    verbosity: logging verbosity
+
     backend : {None, "dask", "loky", "multiprocessing", "threading"}, by default "loky".
         Runs parallel evaluate if specified. For ProximityStump, "multiprocessing"
         will result in an error during parallelization, so it cannot be used.
@@ -692,15 +701,6 @@ class ProximityStump(BaseClassifier):
         backend (``cloudpickle``) for "dask" and "loky" is generally more robust
         than the standard ``pickle`` library used in "multiprocessing".
 
-    random_state: integer, the random state
-
-    distance_measure: ``None`` (default) or str; if str, one of
-        "euclidean", "dtw", "ddtw", "wdtw", "wddtw", "msm", "lcss", "erp"
-        distance measure to use
-        if ``None``, selects distances randomly from the list of available distances
-
-    verbosity: logging verbosity
-
     Examples
     --------
     >>> from sktime.classification.distance_based import ProximityStump
@@ -725,20 +725,21 @@ class ProximityStump(BaseClassifier):
     }
 
     def __init__(
+        # move newer params to the end and order of docstring to match this
         self,
-        backend="loky",
-        backend_params=None,
         random_state=None,
         distance_measure=None,
         verbosity=0,
-        n_jobs=None,
+        n_jobs="deprecated",
+        backend="loky",
+        backend_params=None,
     ):
-        self.backend = backend
-        self.backend_params = backend_params
         self.random_state = random_state
         self.distance_measure = distance_measure
         self.verbosity = verbosity
         self.n_jobs = n_jobs
+        self.backend = backend
+        self.backend_params = backend_params
 
         # set in fit
         self.label_encoder = None
@@ -751,19 +752,22 @@ class ProximityStump(BaseClassifier):
         self.entropy = None
         self._random_object = None
         super().__init__()
-        if self.n_jobs != "deprecated":
+
+        # TODO, 0.31.0 remove n_jobs parameter and below logic
+        if n_jobs != "deprecated":
+            self.backend_params = {"n_jobs": n_jobs}
             warn(
                 f"Parameter n_jobs of {self.__class__.__name__} has been removed "
-                "in sktime 0.27.0 and is no longer used. It is ignored when passed. "
-                "Instead, the backend and backend_params parameters should be used "
-                "to pass n_jobs or other parallelization parameters.",
+                "in sktime 0.31.0 and is no longer used. It is ignored when passed. "
+                "Instead, the backend and backend_params parameters should be used. "
+                "If n_jobs is required, set it as a parameter of backend_params"
+                "to pass n_jobs or other parallelization parameters. ",
+                FutureWarning,
                 obj=self,
                 stacklevel=2,
             )
 
-        # ensure it isn't multiprocessing, if it is change to loky
-        if self.backend == "multiprocessing":
-            self.backend = "loky"
+            # write an error if there are issues with multiprocessesing
 
     def pick_distance_measure(self):
         """Pick a distance measure.
@@ -1005,6 +1009,7 @@ class ProximityStump(BaseClassifier):
             "random_state": 42,
             "distance_measure": "dtw",
             "backend": "threading",
+            # "n_jobs": 1,
         }
         params_set = [params1, params2]
         if _check_soft_dependencies("dask", severity="none"):
@@ -1022,6 +1027,21 @@ class ProximityTree(BaseClassifier):
 
     Parameters
     ----------
+    random_state: int or np.RandomState, default=0
+        random seed for the random number generator
+    distance_measure: ``None`` (default) or str; if str, one of
+        ``euclidean``, ``dtw``, ``ddtw``, ``wdtw``, ``wddtw``, ``msm``,
+        ``lcss``, ``erp`` distance measure to use
+        if ``None``, selects distances randomly from the list of available distances
+    max_depth: int or math.inf, default=math.inf
+        maximum depth of the tree
+    is_leaf : function, default=pure
+        decide when to mark a node as a leaf node
+    verbosity: 0 or 1
+        number reflecting the verbosity of logging
+        0 = no logging, 1 = verbose logging
+    n_stump_evaluations: number of stump evaluations to do if find_stump method is None
+
     backend : {None, "dask", "loky", "multiprocessing", "threading"}, by default "loky".
         Runs parallel evaluate if specified. For ProximityStump, "multiprocessing"
         will result in an error during parallelization, so it cannot be used.
@@ -1055,21 +1075,6 @@ class ProximityTree(BaseClassifier):
         backend (``cloudpickle``) for "dask" and "loky" is generally more robust
         than the standard ``pickle`` library used in "multiprocessing".
 
-    random_state: int or np.RandomState, default=0
-        random seed for the random number generator
-    distance_measure: ``None`` (default) or str; if str, one of
-        ``euclidean``, ``dtw``, ``ddtw``, ``wdtw``, ``wddtw``, ``msm``,
-        ``lcss``, ``erp`` distance measure to use
-        if ``None``, selects distances randomly from the list of available distances
-    max_depth: int or math.inf, default=math.inf
-        maximum depth of the tree
-    is_leaf : function, default=pure
-        decide when to mark a node as a leaf node
-    verbosity: 0 or 1
-        number reflecting the verbosity of logging
-        0 = no logging, 1 = verbose logging
-    n_stump_evaluations: number of stump evaluations to do if find_stump method is None
-
     Examples
     --------
     >>> from sktime.classification.distance_based import ProximityTree
@@ -1097,8 +1102,6 @@ class ProximityTree(BaseClassifier):
 
     def __init__(
         self,
-        backend="loky",
-        backend_params=None,
         random_state=None,
         distance_measure=None,
         max_depth=math.inf,
@@ -1106,9 +1109,9 @@ class ProximityTree(BaseClassifier):
         verbosity=0,
         n_jobs=None,
         n_stump_evaluations=5,
+        backend="loky",
+        backend_params=None,
     ):
-        self.backend = backend
-        self.backend_params = backend_params
         self.verbosity = verbosity
         self.n_stump_evaluations = n_stump_evaluations
         self.max_depth = max_depth
@@ -1117,6 +1120,8 @@ class ProximityTree(BaseClassifier):
         self.distance_measure = distance_measure
         self.n_jobs = n_jobs
         self.depth = 0
+        self.backend = backend
+        self.backend_params = backend_params
 
         # below set in fit method
         self.label_encoder = None
@@ -1127,18 +1132,16 @@ class ProximityTree(BaseClassifier):
         self._random_object = None
 
         super().__init__()
-        if self.n_jobs != "deprecated":
+        if n_jobs != "deprecated":
             warn(
                 f"Parameter n_jobs of {self.__class__.__name__} has been removed "
-                "in sktime 0.27.0 and is no longer used. It is ignored when passed. "
+                "in sktime 0.30.0 and is no longer used. It is ignored when passed. "
                 "Instead, the backend and backend_params parameters should be used "
                 "to pass n_jobs or other parallelization parameters.",
                 obj=self,
                 stacklevel=2,
             )
-        # ensure it isn't multiprocessing, if it is change to loky
-        if self.backend == "multiprocessing":
-            self.backend = "loky"
+            self.backend_params.update(**{"n_jobs": n_jobs})
 
     def pick_distance_measure(self):
         """Pick a distance measure.
@@ -1352,6 +1355,7 @@ class ProximityTree(BaseClassifier):
         params2 = {
             "max_depth": 4,
             "backend": "loky",
+            "n_jobs": 1,
         }
         params_set = [params1, params2]
 
@@ -1374,6 +1378,25 @@ class ProximityForest(BaseClassifier):
 
     Parameters
     ----------
+    random_state: int or np.RandomState, default=None
+        random seed for the random number generator
+    n_estimators: int, default=100
+        The number of trees in the forest.
+    distance_measure: ``None`` (default) or str; if str, one of
+        ``euclidean``, ``dtw``, ``ddtw``, ``wdtw``, ``wddtw``, ``msm``,
+        ``lcss``, ``erp`` distance measure to use
+        if ``None``, selects distances randomly from the list of available distances
+    verbosity: 0 or 1
+        number reflecting the verbosity of logging
+        0 = no logging, 1 = verbose logging
+    max_depth: int or math.inf, default=math.inf
+        maximum depth of the tree
+    is_leaf: function, default=pure
+        function to decide when to mark a node as a leaf node
+        number of jobs to run in parallel *across threads"
+    n_stump_evaluations: int, default=5
+        number of stump evaluations to do if find_stump method is None
+
     backend : {None, "dask", "loky", "multiprocessing", "threading"}, by default "loky".
         Runs parallel evaluate if specified. For ProximityStump, "multiprocessing"
         will result in an error during parallelization, so it cannot be used.
@@ -1406,25 +1429,6 @@ class ProximityForest(BaseClassifier):
         "threading" is unlikely to see speed ups due to the GIL and the serialization
         backend (``cloudpickle``) for "dask" and "loky" is generally more robust
         than the standard ``pickle`` library used in "multiprocessing".
-
-    random_state: int or np.RandomState, default=None
-        random seed for the random number generator
-    n_estimators: int, default=100
-        The number of trees in the forest.
-    distance_measure: ``None`` (default) or str; if str, one of
-        ``euclidean``, ``dtw``, ``ddtw``, ``wdtw``, ``wddtw``, ``msm``,
-        ``lcss``, ``erp`` distance measure to use
-        if ``None``, selects distances randomly from the list of available distances
-    verbosity: 0 or 1
-        number reflecting the verbosity of logging
-        0 = no logging, 1 = verbose logging
-    max_depth: int or math.inf, default=math.inf
-        maximum depth of the tree
-    is_leaf: function, default=pure
-        function to decide when to mark a node as a leaf node
-        number of jobs to run in parallel *across threads"
-    n_stump_evaluations: int, default=5
-        number of stump evaluations to do if find_stump method is None
 
     References
     ----------
@@ -1468,8 +1472,6 @@ class ProximityForest(BaseClassifier):
 
     def __init__(
         self,
-        backend="loky",
-        backend_params=None,
         random_state=None,
         n_estimators=100,
         distance_measure=None,
@@ -1478,9 +1480,9 @@ class ProximityForest(BaseClassifier):
         is_leaf=pure,
         n_jobs=None,
         n_stump_evaluations=5,
+        backend="loky",
+        backend_params=None,
     ):
-        self.backend = backend
-        self.backend_params = backend_params
         self.is_leaf = is_leaf
         self.verbosity = verbosity
         self.max_depth = max_depth
@@ -1489,6 +1491,8 @@ class ProximityForest(BaseClassifier):
         self.n_jobs = n_jobs
         self.n_stump_evaluations = n_stump_evaluations
         self.distance_measure = distance_measure
+        self.backend = backend
+        self.backend_params = backend_params
 
         # set in fit method
         self.label_encoder = None
@@ -1497,18 +1501,15 @@ class ProximityForest(BaseClassifier):
         self.y = None
         self._random_object = None
         super().__init__()
-        if self.n_jobs != "deprecated":
+        if n_jobs != "deprecated":
             warn(
-                f"Parameter n_jobs of {self.__class__.__name__} has been removed "
-                "in sktime 0.27.0 and is no longer used. It is ignored when passed. "
+                f"Parameter n_jobs of {self.__class__.__name__} has been deprecation "
+                "in sktime 0.30.0 and will no longer be used. "
                 "Instead, the backend and backend_params parameters should be used "
                 "to pass n_jobs or other parallelization parameters.",
                 obj=self,
                 stacklevel=2,
             )
-        # ensure it isn't multiprocessing, if it is change to loky
-        if self.backend == "multiprocessing":
-            self.backend = "loky"
 
     def pick_distance_measure(self):
         """Pick a distance measure.

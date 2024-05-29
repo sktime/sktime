@@ -250,7 +250,7 @@ class BaseClassifier(BasePanelMixin):
         # Convert data as dictated by the classifier tags
         X = self._convert_X(X, X_mtype)
         multithread = self.get_tag("capability:multithreading")
-        if multithread:
+        if multithread and self.n_jobs != "deprecated":
             try:
                 self._threads_to_use = check_n_jobs(self.n_jobs)
             except NameError:
