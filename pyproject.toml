@@ -95,7 +95,7 @@ all_extras = [
   'numba<0.60,>=0.53',
   'pmdarima!=1.8.1,<3.0.0,>=1.8; python_version < "3.12"',
   'prophet>=1.1; python_version < "3.12"',
-  "pycatch22<0.4.4",
+  "pycatch22<0.4.6",
   "pykalman<0.10,>=0.9.5",
   'pyod>=0.8; python_version < "3.11"',
   "pyts<0.14.0; python_version < '3.12'",
@@ -136,7 +136,7 @@ all_extras_pandas2 = [
   'numba<0.60,>=0.53',
   'pmdarima!=1.8.1,<3.0.0,>=1.8; python_version < "3.12"',
   'prophet>=1.1; python_version < "3.12"',
-  "pycatch22<0.4.4",
+  "pycatch22<0.4.6",
   "pykalman<0.10,>=0.9.5",
   'pyod>=0.8; python_version < "3.11"',
   "scikit_posthocs>=0.6.5",
@@ -165,7 +165,7 @@ all_extras_pandas2 = [
 # users can install via "pip install sktime[forecasting,transformations]" etc
 #
 alignment = [
-  "dtw-python>=1.3,<1.5",
+  "dtw-python>=1.3,<1.6",
   'numba<0.60,>=0.53',
 ]
 annotation = [
@@ -207,7 +207,7 @@ regression = [
 transformations = [
   'esig<0.10,>=0.9.7; python_version < "3.11"',
   "filterpy<1.5,>=1.4.5",
-  "holidays>=0.29,<0.49",
+  "holidays>=0.29,<0.50",
   "mne>=1.5,<1.8",
   'numba<0.60,>=0.53',
   "pycatch22>=0.4,<0.4.6",
@@ -244,7 +244,7 @@ docs = [
   "pydata-sphinx-theme",
   "Sphinx!=7.2.0,<8.0.0",
   "sphinx-copybutton",
-  "sphinx-design<0.6.0",
+  "sphinx-design<0.7.0",
   "sphinx-gallery<0.17.0",
   "sphinx-issues<5.0.0",
   "tabulate",
@@ -274,6 +274,7 @@ dl = [
   'tensorflow<2.17,>=2; python_version < "3.12"',
   'torch; python_version < "3.12"',
   'transformers[torch]<4.41.0; python_version < "3.12"',
+  'pykan; python_version > "3.9.7"'
 ]
 mlflow = [
   "mlflow",
