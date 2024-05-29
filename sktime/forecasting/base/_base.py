@@ -2601,9 +2601,11 @@ class BaseGlobalForecaster(BaseForecaster):
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
-        # set internal X/y to the new X/y
-        # this also updates cutoff from y
-        self._update_y_X(y_inner, X_inner)
+        # # set internal X/y to the new X/y
+        # # this also updates cutoff from y
+        # self._update_y_X(y_inner, X_inner)
+        if y_inner is not None:
+            self._set_cutoff_from_y(y_inner)
 
         # check fh and coerce to ForecastingHorizon, if not already passed in fit
         fh = self._check_fh(fh)
