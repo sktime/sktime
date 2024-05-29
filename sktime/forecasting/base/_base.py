@@ -2594,6 +2594,13 @@ class BaseGlobalForecaster(BaseForecaster):
             ``y_pred`` has same type as the ``y`` that has been passed most recently:
             ``Series``, ``Panel``, ``Hierarchical`` scitype, same format (see above)
         """
+        # check global forecasting tag
+        gf = self.get_tag(
+            "capability:global_forecasting", tag_value_default=False, raise_error=False
+        )
+        if gf is not True and y is not None:
+            ValueError("no global forecasting support!")
+
         # handle inputs
         self.check_is_fitted()
         if y is None:
@@ -2609,13 +2616,6 @@ class BaseGlobalForecaster(BaseForecaster):
 
         # check fh and coerce to ForecastingHorizon, if not already passed in fit
         fh = self._check_fh(fh)
-
-        # check global forecasting tag
-        gf = self.get_tag(
-            "capability:global_forecasting", tag_value_default=False, raise_error=False
-        )
-        if gf is not True and y is not None:
-            ValueError("no global forecasting support!")
 
         # we call the ordinary _predict if no looping/vectorization needed
         if not self._is_vectorized:
