@@ -44,7 +44,7 @@ import pandas as pd
 
 from sktime.datatypes._common import _req
 from sktime.datatypes._common import _ret as ret
-from sktime.datatypes._dtypekind import DtypeKind
+from sktime.datatypes._dtypekind import _get_series_dtypekind
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.series import is_in_valid_index_types
 
@@ -74,23 +74,8 @@ def check_pddataframe_series(obj, return_metadata=False, var_name="obj"):
         metadata["n_features"] = len(obj.columns)
     if _req("feature_names", return_metadata):
         metadata["feature_names"] = obj.columns.to_list()
-
     if _req("feature_kind", return_metadata):
-        col_dtypes = obj.dtypes.to_list()
-        for i, dtype in enumerate(col_dtypes):
-            if dtype == float:
-                col_dtypes[i] = DtypeKind.FLOAT
-            elif dtype == int:
-                col_dtypes[i] = DtypeKind.INT
-            elif dtype == np.uint:
-                col_dtypes[i] = DtypeKind.UINT
-            elif dtype == object:
-                col_dtypes[i] = DtypeKind.CATEGORICAL
-            elif dtype == bool:
-                col_dtypes[i] = DtypeKind.BOOL
-            elif dtype == pd.DatetimeIndex:
-                col_dtypes[i] = DtypeKind.DATETIME
-        metadata["feature_kind"] = col_dtypes
+        metadata["feature_kind"] = _get_series_dtypekind(obj, pd.DataFrame)
 
     # check that columns are unique
     if not obj.columns.is_unique:
@@ -157,7 +142,7 @@ def check_pdseries_series(obj, return_metadata=False, var_name="obj"):
         else:
             metadata["feature_names"] = [obj.name]
     if _req("feature_kind", return_metadata):
-        metadata["feature_kind"] = [obj.dtype]
+        metadata["feature_kind"] = _get_series_dtypekind(obj, pd.Series)
 
     # check that dtype is not object
     if "object" == obj.dtypes:
@@ -215,6 +200,8 @@ def check_numpy_series(obj, return_metadata=False, var_name="obj"):
             metadata["n_features"] = obj.shape[1]
         if _req("feature_names", return_metadata):
             metadata["feature_names"] = list(range(obj.shape[1]))
+        if _req("feature_kind", return_metadata):
+            metadata["feature_kind"] = _get_series_dtypekind(obj, np.ndarray)
     elif len(obj.shape) == 1:
         # we now know obj is a 1D np.ndarray
         if _req("is_empty", return_metadata):
@@ -225,6 +212,8 @@ def check_numpy_series(obj, return_metadata=False, var_name="obj"):
             metadata["n_features"] = 1
         if _req("feature_names", return_metadata):
             metadata["feature_names"] = [0]
+        if _req("feature_kind", return_metadata):
+            metadata["feature_kind"] = _get_series_dtypekind(obj, np.ndarray)
     else:
         msg = f"{var_name} must be 1D or 2D numpy.ndarray, but found {len(obj.shape)}D"
         return ret(False, msg, None, return_metadata)

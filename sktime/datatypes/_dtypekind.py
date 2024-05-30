@@ -1,5 +1,8 @@
 from enum import IntEnum
 
+import numpy as np
+import pandas as pd
+
 
 class DtypeKind(IntEnum):
     """
@@ -30,3 +33,37 @@ class DtypeKind(IntEnum):
     STRING = 21  # UTF-8
     DATETIME = 22
     CATEGORICAL = 23
+
+
+def _simplify_dtype(col_dtypes):
+    for i, dtype in enumerate(col_dtypes):
+        if dtype == float:
+            col_dtypes[i] = DtypeKind.FLOAT
+        elif dtype == int:
+            col_dtypes[i] = DtypeKind.INT
+        elif dtype == np.uint:
+            col_dtypes[i] = DtypeKind.UINT
+        elif dtype == object:
+            col_dtypes[i] = DtypeKind.CATEGORICAL
+        elif dtype == bool:
+            col_dtypes[i] = DtypeKind.BOOL
+        elif dtype == pd.DatetimeIndex:
+            col_dtypes[i] = DtypeKind.DATETIME
+    return col_dtypes
+
+
+# function for series scitype
+def _get_series_dtypekind(obj, mtype):
+    if mtype == np.ndarray:
+        if len(obj.shape) == 2:
+            col_dtypes = [float] * obj.shape[1]
+        else:
+            col_dtypes = [float]
+    elif mtype == pd.Series:
+        col_dtypes = [obj.dtypes]
+    elif mtype == pd.DataFrame:
+        col_dtypes = obj.dtypes.to_list()
+
+    col_DtypeKinds = _simplify_dtype(col_dtypes)
+
+    return col_DtypeKinds
