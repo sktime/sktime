@@ -19,6 +19,11 @@ For upcoming changes and next releases, see our `milestones <https://github.com/
 For our long-term plan, see our :ref:`roadmap`.
 
 
+Version 0.29.1 - 2024-05-30
+---------------------------
+
+
+
 Version 0.29.0 - 2024-04-28
 ---------------------------
 
