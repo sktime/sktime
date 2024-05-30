@@ -406,7 +406,10 @@ def _groupby_dot(df, weights):
     out : pd.DataFrame
         dataframe with weighted groupby dot product
     """
-    out = df.groupby(axis=1, level=1).apply(lambda x: x.dot(weights))
+    out = df.T.groupby(level=1).apply(lambda x: x.T.dot(weights)).T
+    # formerly
+    # out = df.groupby(axis=1, level=1).apply(lambda x: x.dot(weights))
+    # but groupby(axis=1) is deprecated
     return out
 
 
@@ -790,6 +793,21 @@ class _BaseDistrForecastingMetric(_BaseProbaForecastingErrorMetric):
         y_pred : sktime BaseDistribution of same shape as y_true
             Predictive distribution.
             Must have same index and columns as y_true.
+
+        Returns
+        -------
+        loss : ``pd.Series`` or ``pd.DataFrame``
+            Calculated metric, by time point (default=jackknife pseudo-values).
+
+            ``pd.Series`` if ``self.multioutput="uniform_average"`` or array-like
+
+            * index is equal to index of ``y_true``
+            * entry at index i is metric at time i, averaged over variables
+
+            ``pd.DataFrame`` if ``self.multioutput="raw_values"``
+
+            * index and columns equal to those of ``y_true``
+            * i,j-th entry is metric at time i, at variable j
         """
         multivariate = self.multivariate
 

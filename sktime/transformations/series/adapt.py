@@ -142,6 +142,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
         self.transformer_ = clone(self.transformer)
         self.fit_in_transform = fit_in_transform
         self.pass_y = pass_y
+        self._trafo_has_X = self._trafo_has_param_and_default("fit", "X")[0]
 
         super().__init__()
 
@@ -163,6 +164,10 @@ class TabularToSeriesAdaptor(BaseTransformer):
         need_y = trafo_has_y and not trafo_has_y_default
         if need_y or pass_y not in ["auto", "no"]:
             self.set_tags(**{"y_inner_mtype": "numpy1D"})
+
+        if not self._trafo_has_X:
+            self.set_tags(**{"y_inner_mtype": "None"})
+            self.set_tags(**{"univariate-only": True})
 
     def _trafo_has_param_and_default(self, method="fit", arg="y"):
         """Return if transformer.method has a parameter, and whether it has a default.
@@ -196,7 +201,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
 
         The return is a dict which is passed to the method of name method.
         """
-        if not self._trafo_has_param_and_default(method, "X"):
+        if not self._trafo_has_X:
             return {"y": X}
 
         pass_y = self.pass_y
@@ -326,7 +331,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sklearn.feature_selection import VarianceThreshold
-        from sklearn.preprocessing import StandardScaler
+        from sklearn.preprocessing import LabelEncoder, StandardScaler
 
         params1 = {"transformer": StandardScaler(), "fit_in_transform": False}
         params2 = {
@@ -336,8 +341,9 @@ class TabularToSeriesAdaptor(BaseTransformer):
         }
         params3 = {"transformer": VarianceThreshold(), "pass_y": "fit"}
         params4 = {"transformer": VarianceThreshold()}
+        params5 = {"transformer": LabelEncoder(), "fit_in_transform": True}
 
-        return [params1, params2, params3, params4]
+        return [params1, params2, params3, params4, params5]
 
 
 class PandasTransformAdaptor(BaseTransformer):
