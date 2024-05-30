@@ -1661,7 +1661,7 @@ class ProximityForest(BaseClassifier):
                 iter=iters,
                 meta=meta,
                 backend=self.backend,
-                backend_params=self.backend_params,
+                backend_params=self._backend_params,
             )
         else:
             self.trees = [
@@ -1726,7 +1726,7 @@ class ProximityForest(BaseClassifier):
                 iter=iters,
                 meta=meta,
                 backend=self.backend,
-                backend_params=self.backend_params,
+                backend_params=self._backend_params,
             )
         else:
             iters = self.trees
