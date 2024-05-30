@@ -270,7 +270,10 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=T
         "is_equally_spaced",
     ]
     if _req(requires_series_grps, return_metadata):
-        series_groups = obj.groupby(level=list(range(index.nlevels - 1)), sort=False)
+        levels = list(range(index.nlevels - 1))
+        if len(levels) == 1:
+            levels = levels[0]
+        series_groups = obj.groupby(level=levels, sort=False)
         n_series = series_groups.ngroups
 
         if _req("n_instances", return_metadata):
