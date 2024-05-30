@@ -804,15 +804,22 @@ def test_tz_preserved():
     assert fh_absolute[0].tz == cutoff.tz
 
 
-@pytest.mark.parametrize("freq", ["Y", "2Y", "M", "YE", "2YE", "ME", "2ME"])
-def test_pandas222_freq(freq):
+# the "XE" frequencies are not supported by pandas 1
+FREQ_STR_FOR_PD22 = ["Y", "2Y", "M", "3M"]
+
+if _check_soft_dependencies("pandas>=2.0.0", severity="none"):
+    FREQ_STR_FOR_PD22 += ["YE", "2YE", "ME", "3ME"]
+
+
+@pytest.mark.parametrize("freq", FREQ_STR_FOR_PD22)
+def test_pandas22_freq(freq):
     """Test that to_absolute and to_relative conversions work with all freqs.
 
     Failure cas in bug #6499.
     """
     fh = ForecastingHorizon([1, 2, 3])
 
-    datetime_ = pd.date_range("1/1/1870", periods=20, freq="YE")
+    datetime_ = pd.date_range("1/1/1870", periods=20, freq=freq)
     cutoff = datetime_[[-1]]
     cutoff.freq = datetime_.freq
 
