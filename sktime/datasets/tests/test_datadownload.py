@@ -102,8 +102,8 @@ def test_load_forecasting_data_invalid_name(name):
 @pytest.mark.datadownload
 def test_load_fpp3():
     """Test loading downloaded dataset from ."""
-    status, olympic_running = load_fpp3("olympic_running")
-    assert status is True
+    olympic_running = load_fpp3("olympic_running")
+
     assert isinstance(olympic_running, pd.DataFrame)
     ret = check_is_mtype(olympic_running, mtype="pd_multiindex_hier")
     assert ret is True
