@@ -332,6 +332,13 @@ def _process_dataset(dataset_name, temp_folder="/tmp"):
 def load_fpp3(dataset, temp_folder="/tmp"):
     """Load a dataset from the fpp3 package.
 
+    Returns ``pd.DataFrame`` in one of the valid sktime :term:`mtype` formats,
+    depending on the dataset.
+
+    Valid datasets are listed in ``datasets.DATASET_NAMES_FPP3``.
+
+    Requires ``rdata`` and ``requests`` packages in the environment.
+
     Parameters
     ----------
     dataset : str
