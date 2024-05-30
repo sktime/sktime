@@ -113,7 +113,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                         "hidden_size": 10,
                         "dropout": 0.1,
                         "optimizer": "Adam",
-                        "log_val_interval": 1,
+                        "log_val_interval": -1,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
@@ -126,7 +126,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
             # from pytorch_forecasting.metrics import QuantileLoss
 
             early_stop_callback = EarlyStopping(
-                monitor="val_loss",
+                monitor="train_loss",
                 min_delta=1e-2,
                 patience=3,
                 verbose=False,
@@ -152,7 +152,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                         # can not pass test_set_params and test_set_params_sklearn
                         # QuantileLoss() != QuantileLoss()
                         "optimizer": "Adam",
-                        "log_val_interval": 1,
+                        "log_val_interval": -1,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
