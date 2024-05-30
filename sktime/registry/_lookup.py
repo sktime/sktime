@@ -136,16 +136,16 @@ def all_estimators(
     --------
     >>> from sktime.registry import all_estimators
     >>> # return a complete list of estimators as pd.Dataframe
-    >>> all_estimators(as_dataframe=True)
+    >>> all_estimators(as_dataframe=True)  # doctest: +SKIP
     >>> # return all forecasters by filtering for estimator type
-    >>> all_estimators("forecaster")
+    >>> all_estimators("forecaster")  # doctest: +SKIP
     >>> # return all forecasters which handle missing data in the input by tag filtering
-    >>> all_estimators("forecaster", filter_tags={"handles-missing-data": True})
+    >>> all_estimators("forecaster", filter_tags={"handles-missing-data": True})  # doctest: +SKIP
 
     References
     ----------
     Modified version from scikit-learn's ``all_estimators()``.
-    """
+    """  # noqa: E501
     MODULES_TO_IGNORE = (
         "tests",
         "setup",
