@@ -39,6 +39,7 @@ __all__ = [
     "write_results_to_uea_format",
     "write_tabular_transformation_to_arff",
     "load_tecator",
+    "load_fpp3",
 ]
 
 from sktime.datasets._data_io import (
@@ -85,4 +86,7 @@ from sktime.datasets._single_problem_loaders import (
     load_unit_test,
     load_unit_test_tsf,
     load_uschange,
+)
+from sktime.datasets._fpp3_loaders import (
+    load_fpp3,
 )
