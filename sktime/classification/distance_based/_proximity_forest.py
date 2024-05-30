@@ -668,7 +668,7 @@ class ProximityStump(BaseClassifier):
 
     verbosity: logging verbosity
 
-    backend : {None, "dask", "loky", "multiprocessing", "threading"}, by default "loky".
+    backend : {None, "dask", "loky", "threading"}, by default "loky".
         Runs parallel evaluate if specified. For ProximityStump, "multiprocessing"
         will result in an error during parallelization, so it cannot be used.
         If "multiprocessing" is selected, it will default to "loky" instead.
@@ -757,8 +757,8 @@ class ProximityStump(BaseClassifier):
         if n_jobs != "deprecated":
             self.backend_params = {"n_jobs": n_jobs}
             warn(
-                f"Parameter n_jobs of {self.__class__.__name__} has been removed "
-                "in sktime 0.31.0 and is no longer used. It is ignored when passed. "
+                f"Parameter n_jobs of {self.__class__.__name__} will be removed "
+                "in sktime 0.31.0 and will be no longer used. "
                 "Instead, the backend and backend_params parameters should be used. "
                 "If n_jobs is required, set it as a parameter of backend_params"
                 "to pass n_jobs or other parallelization parameters. ",
@@ -766,8 +766,24 @@ class ProximityStump(BaseClassifier):
                 obj=self,
                 stacklevel=2,
             )
+            if backend_params is None:
+                self._backend_params = {}
+            else:
+                self._backend_params = backend_params
+            self._backend_params.update(**{"n_jobs": n_jobs})
+        else:
+            self._backend_params = backend_params
 
-            # write an error if there are issues with multiprocessesing
+        if self.backend == "multiprocessing":
+            warn(
+                "Parallelization method multiprocessing has some incompatability "
+                "issues with the pickles library. Some of the functions inside "
+                "proximity forest may not work as intended "
+                "For a more compatible or valid parallelization method,"
+                "see the docstring for the 'backend' parameter",
+                UserWarning,
+                obj=self,
+            )
 
     def pick_distance_measure(self):
         """Pick a distance measure.
@@ -893,7 +909,7 @@ class ProximityStump(BaseClassifier):
                 iter=iters,
                 meta=meta,
                 backend=self.backend,
-                backend_params=self.backend_params,
+                backend_params=self._backend_params,
             )
         else:
             distances = [
@@ -1009,7 +1025,6 @@ class ProximityStump(BaseClassifier):
             "random_state": 42,
             "distance_measure": "dtw",
             "backend": "threading",
-            # "n_jobs": 1,
         }
         params_set = [params1, params2]
         if _check_soft_dependencies("dask", severity="none"):
@@ -1042,7 +1057,7 @@ class ProximityTree(BaseClassifier):
         0 = no logging, 1 = verbose logging
     n_stump_evaluations: number of stump evaluations to do if find_stump method is None
 
-    backend : {None, "dask", "loky", "multiprocessing", "threading"}, by default "loky".
+    backend : {None, "dask", "loky", "threading"}, by default "loky".
         Runs parallel evaluate if specified. For ProximityStump, "multiprocessing"
         will result in an error during parallelization, so it cannot be used.
         If "multiprocessing" is selected, it will default to "loky" instead.
@@ -1107,7 +1122,7 @@ class ProximityTree(BaseClassifier):
         max_depth=math.inf,
         is_leaf=pure,
         verbosity=0,
-        n_jobs=None,
+        n_jobs="deprecated",
         n_stump_evaluations=5,
         backend="loky",
         backend_params=None,
@@ -1132,16 +1147,37 @@ class ProximityTree(BaseClassifier):
         self._random_object = None
 
         super().__init__()
+        # TODO, 0.31.0 remove n_jobs parameter and below logic
         if n_jobs != "deprecated":
+            self.backend_params = {"n_jobs": n_jobs}
             warn(
-                f"Parameter n_jobs of {self.__class__.__name__} has been removed "
-                "in sktime 0.30.0 and is no longer used. It is ignored when passed. "
-                "Instead, the backend and backend_params parameters should be used "
-                "to pass n_jobs or other parallelization parameters.",
+                f"Parameter n_jobs of {self.__class__.__name__} will be removed "
+                "in sktime 0.31.0 and will be no longer used. "
+                "Instead, the backend and backend_params parameters should be used. "
+                "If n_jobs is required, set it as a parameter of backend_params"
+                "to pass n_jobs or other parallelization parameters. ",
+                FutureWarning,
                 obj=self,
                 stacklevel=2,
             )
-            self.backend_params.update(**{"n_jobs": n_jobs})
+            if backend_params is None:
+                self._backend_params = {}
+            else:
+                self._backend_params = backend_params
+            self._backend_params.update(**{"n_jobs": n_jobs})
+        else:
+            self._backend_params = backend_params
+
+        if self.backend == "multiprocessing":
+            warn(
+                "Parallelization method multiprocessing has some incompatability "
+                "issues with the pickles library. Some of the functions inside "
+                "proximity forest may not work as intended "
+                "For a more compatible or valid parallelization method,"
+                "see the docstring for the 'backend' parameter",
+                UserWarning,
+                obj=self,
+            )
 
     def pick_distance_measure(self):
         """Pick a distance measure.
@@ -1196,7 +1232,7 @@ class ProximityTree(BaseClassifier):
                 if not self.is_leaf(sub_y):
                     sub_tree = ProximityTree(
                         backend=self.backend,
-                        backend_params=self.backend_params,
+                        backend_params=self._backend_params,
                         random_state=self.random_state,
                         distance_measure=self.distance_measure,
                         is_leaf=self.is_leaf,
@@ -1355,7 +1391,6 @@ class ProximityTree(BaseClassifier):
         params2 = {
             "max_depth": 4,
             "backend": "loky",
-            "n_jobs": 1,
         }
         params_set = [params1, params2]
 
@@ -1397,7 +1432,7 @@ class ProximityForest(BaseClassifier):
     n_stump_evaluations: int, default=5
         number of stump evaluations to do if find_stump method is None
 
-    backend : {None, "dask", "loky", "multiprocessing", "threading"}, by default "loky".
+    backend : {None, "dask", "loky", "threading"}, by default "loky".
         Runs parallel evaluate if specified. For ProximityStump, "multiprocessing"
         will result in an error during parallelization, so it cannot be used.
         If "multiprocessing" is selected, it will default to "loky" instead.
@@ -1478,7 +1513,7 @@ class ProximityForest(BaseClassifier):
         verbosity=0,
         max_depth=math.inf,
         is_leaf=pure,
-        n_jobs=None,
+        n_jobs="deprecated",
         n_stump_evaluations=5,
         backend="loky",
         backend_params=None,
@@ -1501,14 +1536,37 @@ class ProximityForest(BaseClassifier):
         self.y = None
         self._random_object = None
         super().__init__()
+
+        # TODO, 0.31.0 remove n_jobs parameter and below logic
         if n_jobs != "deprecated":
+            self.backend_params = {"n_jobs": n_jobs}
             warn(
-                f"Parameter n_jobs of {self.__class__.__name__} has been deprecation "
-                "in sktime 0.30.0 and will no longer be used. "
-                "Instead, the backend and backend_params parameters should be used "
-                "to pass n_jobs or other parallelization parameters.",
+                f"Parameter n_jobs of {self.__class__.__name__} will be removed "
+                "in sktime 0.31.0 and will be no longer used. "
+                "Instead, the backend and backend_params parameters should be used. "
+                "If n_jobs is required, set it as a parameter of backend_params"
+                "to pass n_jobs or other parallelization parameters. ",
+                FutureWarning,
                 obj=self,
                 stacklevel=2,
+            )
+            if backend_params is None:
+                self._backend_params = {}
+            else:
+                self._backend_params = backend_params
+            self._backend_params.update(**{"n_jobs": n_jobs})
+        else:
+            self._backend_params = backend_params
+
+        if self.backend == "multiprocessing":
+            warn(
+                "Parallelization method multiprocessing has some incompatability "
+                "issues with the pickles library. Some of the functions inside "
+                "proximity forest may not work as intended "
+                "For a more compatible or valid parallelization method,"
+                "see the docstring for the 'backend' parameter",
+                UserWarning,
+                obj=self,
             )
 
     def pick_distance_measure(self):
@@ -1562,7 +1620,7 @@ class ProximityForest(BaseClassifier):
             print("tree " + str(index) + " building")  # noqa
         tree = ProximityTree(
             backend=self.backend,
-            backend_params=self.backend_params,
+            backend_params=self._backend_params,
             random_state=random_state,
             verbosity=self.verbosity,
             distance_measure=self.distance_measure,
