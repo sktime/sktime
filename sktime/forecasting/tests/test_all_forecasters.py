@@ -962,3 +962,47 @@ class TestAllGlobalForecasters(TestAllObjects):
 
         # check consistency of forecast hierarchy with training data
         assert set(y_pred.index).issubset(X_test.index)
+
+    def test_global_forecasting_multiindex(self, estimator_instance):
+        from sktime.utils._testing.hierarchical import _make_hierarchical
+
+        data_length = 100
+        data = _make_hierarchical(
+            (500, 1),
+            n_columns=2,
+            max_timepoints=data_length,
+            min_timepoints=data_length,
+        )
+        data = data.droplevel(1)
+        X_train = data["c0"].to_frame()
+        y_train = data["c1"].to_frame()
+
+        max_prediction_length = 3
+        fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
+
+        estimator_instance.fit(y_train, X_train, fh=fh)
+
+        X_test = X_train
+        len_levels = len(y_train.index.names)
+        y_test = y_train.groupby(level=list(range(len_levels - 1))).apply(
+            lambda x: x.droplevel(list(range(len_levels - 1))).iloc[
+                :-max_prediction_length
+            ]
+        )
+        y_pred = estimator_instance.predict(fh, X_test, y_test)
+
+        # TODO
+        # cutoff = get_cutoff(_y, return_index=True)
+        # _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
+        _assert_correct_columns(y_pred, y_test)
+
+        assert isinstance(y_pred, pd.DataFrame)
+        assert check_is_mtype(y_pred, "pd-multiindex", msg_return_dict="list")
+        msg = (
+            "returned columns after predict are not as expected. "
+            f"expected: {y_test.columns}. Found: {y_pred.columns}"
+        )
+        assert np.all(y_pred.columns == y_test.columns), msg
+
+        # check consistency of forecast hierarchy with training data
+        assert set(y_pred.index).issubset(X_test.index)
