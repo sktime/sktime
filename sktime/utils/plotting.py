@@ -5,12 +5,12 @@
 __all__ = ["plot_series", "plot_correlations", "plot_windows", "plot_calibration"]
 __author__ = ["mloning", "RNKuhns", "Dbhasin1", "chillerobscuro", "benheid"]
 
+import copy
 import math
 from warnings import simplefilter, warn
 
 import numpy as np
 import pandas as pd
-import copy
 
 from sktime.datatypes import convert_to
 from sktime.utils.validation._dependencies import _check_soft_dependencies
@@ -85,8 +85,6 @@ def plot_series(
     _check_soft_dependencies("matplotlib", "seaborn")
     import matplotlib.pyplot as plt
     import seaborn as sns
-    from matplotlib.cbook import flatten
-    from matplotlib.ticker import FuncFormatter, MaxNLocator
 
     for y in series:
         check_y(y)
@@ -98,10 +96,10 @@ def plot_series(
             l_series[i].name = list(series)[i].columns[0]
         elif isinstance(list(series)[i], pd.Series):
             l_series[i].name = list(series)[i].name
-    
+
     n_series = len(l_series)
     _ax_kwarg_is_none = True if ax is None else False
-    
+
     # labels
     if labels is not None:
         if n_series != len(labels):
@@ -126,14 +124,13 @@ def plot_series(
     else:
         markers = ["o" for _ in range(n_series)]
 
-
     for y in l_series[1:]:
         check_consistent_index_type(l_series[0].index, y.index)
 
     if isinstance(l_series[0].index, pd.core.indexes.period.PeriodIndex):
-        tmp = copy.deepcopy(l_series) ## local copy
+        tmp = copy.deepcopy(l_series)  # local copy
         l_series = tmp
-        
+
     for y in l_series:
         # check index types
         if isinstance(y.index, pd.core.indexes.period.PeriodIndex):
@@ -150,10 +147,12 @@ def plot_series(
     # plot series
     for y, color, label, marker in zip(l_series, colors, labels, markers):
         # scatter if little data is available or index is not complete
-        if len(y) <= 3: # or not np.array_equal(np.arange(x[0], x[-1] + 1), x):
-            ax.scatter(y.index, y.values, marker=marker, label=label, color=color, markersize=4)
+        if len(y) <= 3:  # or not np.array_equal(np.arange(x[0], x[-1] + 1), x):
+            ax.scatter(y.index, y.values, marker=marker, label=label, color=color, s=4)
         else:
-            ax.plot(y.index, y.values, marker=marker, label=label, color=color, markersize=4)
+            ax.plot(
+                y.index, y.values, marker=marker, label=label, color=color, markersize=4
+            )
 
     # Set the axes title
     if title is not None:
@@ -172,15 +171,17 @@ def plot_series(
         if isinstance(pred_interval.index, pd.core.indexes.period.PeriodIndex):
             pred_interval.index = pred_interval.index.to_timestamp()
         check_interval_df(pred_interval, l_series[-1].index)
-        
+
         ax = plot_interval(ax, pred_interval)
     if _ax_kwarg_is_none:
         return fig, ax
     else:
         return ax
 
+
 def plot_interval(ax, interval_df):
     import seaborn as sns
+
     var_name = interval_df.columns.levels[0][0]
 
     n = len(interval_df.columns.levels[1])
@@ -200,6 +201,7 @@ def plot_interval(ax, interval_df):
         )
     ax.legend()
     return ax
+
 
 def plot_lags(series, lags=1, suptitle=None):
     """Plot one or more lagged versions of a time series.
