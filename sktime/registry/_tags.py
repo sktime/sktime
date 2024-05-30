@@ -562,6 +562,38 @@ class capability__train_estimate(_BaseTag):
     }
 
 
+class fit_is_empty(_BaseTag):
+    """Property: Whether the estimator has an empty fit method.
+
+    - String name: ``"fit_is_empty"``
+    - Public property tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``True`` (transformations), ``False`` (other estimators)
+
+    If the tag is ``True``, the estimator has an empty ``fit`` method,
+    i.e., the method does not perform any calculations or learning.
+    If the tag is ``False``, the estimator has a non-empty ``fit`` method.
+
+    In both cases, calling ``fit`` is necessary for calling further methods
+    such as ``predict`` or ``transform``, for API consistency.
+
+    The tag may be inspected by the user to distinguish between estimators
+    that do not learn from data from those that do.
+
+    The tag is also used internally by ``sktime`` to short cut boilerplate
+    code, e.g., in the ``fit`` methods.
+    """
+
+    _tags = {
+        "tag_name": "fit_is_empty",
+        "parent_type": "estimator",
+        "tag_type": "bool",
+        "short_descr": "does the estimator have an empty fit method?",
+        "user_facing": True,
+    }
+
+
 # Forecasters
 # -----------
 
@@ -729,6 +761,32 @@ class capability__pred_int__insample(_BaseTag):
     }
 
 
+class requires_fh_in_fit(_BaseTag):
+    """Behaviour flag: forecaster requires forecasting horizon in fit.
+
+    - String name: ``"requires-fh-in-fit"``
+    - Public behaviour flag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``False``
+    - Default: ``True``
+
+    If the tag is ``True``, the forecaster requires the forecasting horizon
+    to be passed in the ``fit`` method, i.e., the ``fh`` argument must be non-``None``.
+
+    If the tag is ``False``, the forecasting horizon can be passed in the ``fit``
+    method, but this is not required. In this case, it must be passed later,
+    whenever ``predict`` or other prediction methods are called.
+    """
+
+    _tags = {
+        "tag_name": "requires-fh-in-fit",
+        "parent_type": "forecaster",
+        "tag_type": "bool",
+        "short_descr": "does the forecaster require the forecasting horizon in fit?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
 # Panel data related tags
 # -----------------------
 
@@ -744,6 +802,8 @@ class capability__multivariate(_BaseTag):
     - Values: boolean, ``True`` / ``False``
     - Example: ``True``
     - Default: ``False``
+    - Alias: ``univariate-only``  (transformations, note: boolean is inverted)
+    - Alias: ``univariate-metric`` (performance metrics, note: boolean is inverted)
 
     If the tag is ``True``, the estimator can handle multivariate time series,
     for its main input data, i.e., the ``X`` parameter in ``fit`` of classifiers,
@@ -805,6 +865,7 @@ class capability__unequal_length(_BaseTag):
     _tags = {
         "tag_name": "capability:unequal_length",
         "parent_type": [
+            "aligner",
             "classifier",
             "clusterer",
             "early_classifier",
@@ -818,31 +879,587 @@ class capability__unequal_length(_BaseTag):
     }
 
 
+class capability__multioutput(_BaseTag):
+    """Capability: the estimator can handle multi-output time series.
+
+    - String name: ``"capability:multioutput"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to classifiers and regressors.
+
+    If the tag is ``True``, the estimator can handle multivariate target time series,
+    i.e., time series with multiple variables in the target argument ``y``.
+
+    If the tag is ``False``, the estimator can only handle univariate targets natively,
+    and will broadcast to variables (ordinary transformers), or raise an error (others).
+
+    This condition is specific to target data (e.g., classifier or regressor ``y``),
+    primary input data (``X``) is not considered.
+
+    The capability for primary input data is controlled by the tag
+    ``capability:multivariate``.
+
+    The condition is also specific to the data type used, in terms of how
+    being "multivariate" is represented.
+    For instance, a ``pandas`` based time series specification is considered
+    multivariate if it has more than one column.
+    """
+
+    _tags = {
+        "tag_name": "capability:multioutput",
+        "parent_type": ["classifier", "regressor"],
+        "tag_type": "bool",
+        "short_descr": "can the estimator handle multi-output time series?",
+        "user_facing": True,
+    }
+
+
+# Transformations
+# ---------------
+
+
+class scitype__transform_input(_BaseTag):
+    """The scitype of the input data for the transformer.
+
+    - String name: ``"scitype:transform-input"``
+    - Public scitype tag
+    - Values: string, one of ``"Series"`` or ``"Panel"``
+    - Example: ``"Series"``
+    - Default: ``"Series"``
+
+    Transformations in ``sktime`` are polymorphic and can have one of multiple
+    input/output behaviours, depending on the scitype of the input data.
+
+    The following tags specify input/output behaviour:
+
+    - ``"scitype:transform-input"``: the scitype of the input data ``X``.
+    - ``"scitype:transform-output"``: the scitype of the output data, given the input.
+    - ``"scitype:instancewise"``: whether the transformation is instance-wise.
+    - ``"scitype:transform-labels"``: the scitype of the target labels ``y``, if used
+    - ``"requires_X"``: whether ``X`` is mandatory in ``fit`` and ``transform``
+    - ``"requires_y"``: whether ``y`` is mandatory in ``fit`` and ``transform``
+
+    The tags ``"scitype:transform-input"`` and ``"scitype:transform-output"``
+    together specify the input/output typing of the transformation.
+
+    The possible values for both are from a list of :term:`scitype` strings, which are:
+
+    * ``"Series"``: a single time series.
+    * ``"Panel"``: a panel of time series, i.e., a collection of time series.
+    * ``"Primitives"``: a collection of primitive types, e.g., a collection of scalars.
+      This is an alias for the scitype ``"Table"`` used in the `datatypes` module.
+
+    The combination of the two tags is to be read as:
+
+    * if ``"scitype:transform-input"`` has value ``input_type``,
+      and ``"scitype:transform-output"`` has value ``output_type``,
+    * then, if I pass input data of scitype ``input_type`` to ``transform``
+      of the transformer, I will get output data of scitype ``output_type``.
+    * further input types are handled by broadcasting over instances or indices,
+      where possible.
+
+    For instance, if a transformer has ``"scitype:transform-input"`` being ``"Series"``,
+    and ``"scitype:transform-output"`` being ``"Series"``, then ``transform`` will
+    produce a single time series as output, given a single time series as input.
+
+    Other input types are handled by broadcasting over instances or indices.
+    For instance, in the same case, if the input a panel of time series
+    (of scitype ``"Panel"``), then the transformer will transform each time series
+    and produce an output panel of time series (of scipy ``"Panel"``).
+
+    It should be noted that this is in the case where both tags have value
+    ``"Series"``, the behaviour for ``"Panel"`` is implied by broadcasting.
+
+    The value ``"Panel"`` is used only if the transformation adds index levels,
+    or removes index levels, or changes the number or indices of series in the panel.
+
+    Writing shorthand "Series-to-Series" for the type pair ``"Series"`` to ``"Series"``,
+    and similarly for other types, the possible type pairs are listed below.
+
+    For illustration, it is recommended to try out the transformations mentioned,
+    on the respective input types, to understand the behaviour.
+
+    * Series-to-Series, this transforms individual series to individual series.
+      Panels are transformed to Panel, and Hierarchical series to Hierarchical series.
+      Examples are lagging, ``Lag``, or differencing, ``Differencer``.
+    * Series-to-Primitives, this transforms individual series to a collection of
+      primitives, a single time series is transformed to a single row of a
+      ``pd.DataFrame``. A panel is transformed to a ``pd.DataFrame``, with
+      as many rows as time series in the panel.
+      A hierarchical series is transformed to a ``pd.DataFrame`` with the hierarchy
+      indices retained, one row corresponding to a non-temporal leaf node.
+      Examples are feature extraction or summarization (mean, quantiles, etc), see
+      ``SummaryTransformer``.
+    * Series-to-Panel, this transforms individual series to a panel of time series.
+      Panels are transformed to hierarchical series with added index levels.
+      Examples are time series bootstrapping, where multiple bootstrap samples are
+      produced per input series, see ``STLBootstrapTransformer``,
+      or ``TSBootstrapAdapter``.
+    * Panel-to-Series, this transforms a panel of time series to a single time series.
+      Examples are aggregation with time index retained, e.g., mean per index or bin,
+      see ``Merger``.
+
+    The relationship between input and output types of ``transform`` is
+    summarized in the following table,
+    for the case where ``"scitype:transform-input"`` is ``"Series"``.
+
+    The first column is the type of ``X``, which need not be ``"Series"``,
+    the second column is the value of the ``"scitype:transform-output"`` tag,
+    the third column is the type of the output of ``transform``.
+
+    The output type is obtained from the input type of ``transform``, from
+    broadcasting of the types defined by the tag values.
+
+    .. list-table::
+        :widths: 35 35 40
+        :header-rows: 2
+
+        * -
+            - `transform`
+            -
+        * - `X`
+            - `-output`
+            - type of return
+        * - `Series`
+            - `Primitives`
+            - `pd.DataFrame` (1-row)
+        * - `Panel`
+            - `Primitives`
+            - `pd.DataFrame`
+        * - `Series`
+            - `Series`
+            - `Series`
+        * - `Panel`
+            - `Series`
+            - `Panel`
+        * - `Series`
+            - `Panel`
+            - `Panel`
+
+    The instance indices in the in return correspond to instances in the input ``X``.
+    """
+
+    _tags = {
+        "tag_name": "scitype:transform-input",
+        "parent_type": "transformer",
+        "tag_type": ("str", ["Series", "Panel"]),
+        "short_descr": "what is the scitype of the transformer input X?",
+        "user_facing": True,
+    }
+
+
+class scitype__transform_output(_BaseTag):
+    """The scitype of the input data for the transformer.
+
+    - String name: ``"scitype:transform-output"``
+    - Public scitype tag
+    - Values: string, one of ``"Series"``, ``"Panel"``, ``"Primitives"``
+    - Example: ``"Series"``
+    - Default: ``"Series"``
+
+    Transformations in ``sktime`` are polymorphic and can have one of multiple
+    input/output behaviours, depending on the scitype of the input data.
+
+    The following tags specify input/output behaviour:
+
+    - ``"scitype:transform-input"``: the scitype of the input data ``X``.
+    - ``"scitype:transform-output"``: the scitype of the output data, given the input.
+    - ``"scitype:instancewise"``: whether the transformation is instance-wise.
+    - ``"scitype:transform-labels"``: the scitype of the target labels ``y``, if used
+    - ``"requires_X"``: whether ``X`` is mandatory in ``fit`` and ``transform``
+    - ``"requires_y"``: whether ``y`` is mandatory in ``fit`` and ``transform``
+
+    The tags ``"scitype:transform-input"`` and ``"scitype:transform-output"``
+    together specify the input/output typing of the transformation.
+
+    The possible values for both are from a list of :term:`scitype` strings, which are:
+
+    * ``"Series"``: a single time series.
+    * ``"Panel"``: a panel of time series, i.e., a collection of time series.
+    * ``"Primitives"``: a collection of primitive types, e.g., a collection of scalars.
+      This is an alias for the scitype ``"Table"`` used in the `datatypes` module.
+
+    The combination of the two tags is to be read as:
+
+    * if ``"scitype:transform-input"`` has value ``input_type``,
+      and ``"scitype:transform-output"`` has value ``output_type``,
+    * then, if I pass input data of scitype ``input_type`` to ``transform``
+      of the transformer, I will get output data of scitype ``output_type``.
+    * further input types are handled by broadcasting over instances or indices,
+      where possible.
+
+    For instance, if a transformer has ``"scitype:transform-input"`` being ``"Series"``,
+    and ``"scitype:transform-output"`` being ``"Series"``, then ``transform`` will
+    produce a single time series as output, given a single time series as input.
+
+    Other input types are handled by broadcasting over instances or indices.
+    For instance, in the same case, if the input a panel of time series
+    (of scitype ``"Panel"``), then the transformer will transform each time series
+    and produce an output panel of time series (of scipy ``"Panel"``).
+
+    It should be noted that this is in the case where both tags have value
+    ``"Series"``, the behaviour for ``"Panel"`` is implied by broadcasting.
+
+    The value ``"Panel"`` is used only if the transformation adds index levels,
+    or removes index levels, or changes the number or indices of series in the panel.
+
+    Writing shorthand "Series-to-Series" for the type pair ``"Series"`` to ``"Series"``,
+    and similarly for other types, the possible type pairs are listed below.
+
+    For illustration, it is recommended to try out the transformations mentioned,
+    on the respective input types, to understand the behaviour.
+
+    * Series-to-Series, this transforms individual series to individual series.
+      Panels are transformed to Panel, and Hierarchical series to Hierarchical series.
+      Examples are lagging, ``Lag``, or differencing, ``Differencer``.
+    * Series-to-Primitives, this transforms individual series to a collection of
+      primitives, a single time series is transformed to a single row of a
+      ``pd.DataFrame``. A panel is transformed to a ``pd.DataFrame``, with
+      as many rows as time series in the panel.
+      A hierarchical series is transformed to a ``pd.DataFrame`` with the hierarchy
+      indices retained, one row corresponding to a non-temporal leaf node.
+      Examples are feature extraction or summarization (mean, quantiles, etc), see
+      ``SummaryTransformer``.
+    * Series-to-Panel, this transforms individual series to a panel of time series.
+      Panels are transformed to hierarchical series with added index levels.
+      Examples are time series bootstrapping, where multiple bootstrap samples are
+      produced per input series, see ``STLBootstrapTransformer``,
+      or ``TSBootstrapAdapter``.
+    * Panel-to-Series, this transforms a panel of time series to a single time series.
+      Examples are aggregation with time index retained, e.g., mean per index or bin,
+      see ``Merger``.
+
+    The relationship between input and output types of ``transform`` is
+    summarized in the following table,
+    for the case where ``"scitype:transform-input"`` is ``"Series"``.
+
+    The first column is the type of ``X``, which need not be ``"Series"``,
+    the second column is the value of the ``"scitype:transform-output"`` tag,
+    the third column is the type of the output of ``transform``.
+
+    The output type is obtained from the input type of ``transform``, from
+    broadcasting of the types defined by the tag values.
+
+    .. list-table::
+        :widths: 35 35 40
+        :header-rows: 2
+
+        * -
+            - `transform`
+            -
+        * - `X`
+            - `-output`
+            - type of return
+        * - `Series`
+            - `Primitives`
+            - `pd.DataFrame` (1-row)
+        * - `Panel`
+            - `Primitives`
+            - `pd.DataFrame`
+        * - `Series`
+            - `Series`
+            - `Series`
+        * - `Panel`
+            - `Series`
+            - `Panel`
+        * - `Series`
+            - `Panel`
+            - `Panel`
+
+    The instance indices in the in return correspond to instances in the input ``X``.
+    """
+
+    _tags = {
+        "tag_name": "scitype:transform-output",
+        "parent_type": "transformer",
+        "tag_type": ("str", ["Series", "Panel", "Primitives"]),
+        "short_descr": "what is the scitype of the transformer output, the transformed X",  # noqa: E501
+        "user_facing": True,
+    }
+
+
+class requires_x(_BaseTag):
+    """Behaviour flag: transformer requires X in fit and transform.
+
+    - String name: ``"requires_X"``
+    - Public behaviour flag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``True``
+
+    This tag applies to transformations.
+
+    If the tag is ``True``, the transformer requires the input data argument ``X``
+    to be passed in both the ``fit`` and ``transform`` methods, as well as in
+    other methods that require input data, if available.
+
+    If the tag is ``False``, the transformer does not require the
+    input data argument ``X`` to be passed in any method.
+    """
+
+    _tags = {
+        "tag_name": "requires_X",
+        "parent_type": "transformer",
+        "tag_type": "bool",
+        "short_descr": "does the transformer require X to be passed in fit and transform?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
+class requires_y(_BaseTag):
+    """Behaviour flag: transformer requires y in fit.
+
+    - String name: ``"requires_y"``
+    - Public behaviour flag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to transformations.
+
+    If the tag is ``True``, the transformer requires the target data argument ``y``
+    to be passed in the ``fit`` method, as well as in the ``update`` method.
+    The type of ``y`` required is specified by the tag ``scitype:transform-labels``.
+    The requirement to pass ``y`` is usually in addition to passing ``X``.
+
+    If the tag is ``True``, it does not necessarily imply that ``y`` is also
+    required in the ``transform`` or ``inverse_transform`` methods. This may
+    be the case, but is not implied by this tag.
+    Usually, ``y`` is not required in ``transform`` or ``inverse_transform``.
+    There is currently no tag to specify this requirement, users should
+    consult the documentation of the transformer.
+
+    If the tag is ``False``, the transformer does not require the
+    target data argument ``y`` to be passed in any method.
+    """
+
+    _tags = {
+        "tag_name": "requires_y",
+        "parent_type": "transformer",
+        "tag_type": "bool",
+        "short_descr": "does the transformer require y to be passed in fit and transform?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
+class scitype__transform_labels(_BaseTag):
+    """The scitype of the target data for the transformer, if required.
+
+    - String name: ``"scitype:transform-labels"``
+    - Public scitype tag
+    - Values: string, one of ``"None"``, ``"Series"``, ``"Primitives"``, ``"Panel"``
+    - Example: ``"Series"``
+    - Default: ``"None"``
+    - Alias: ``"scitype:y"``
+
+    This tag applies to transformations.
+
+    The tag specifies the scitype of the target data ``y`` that is required,
+    in a case where the transformer requires target data, i.e., the
+    tag ``requires_y`` is ``True``.
+
+    The possible values are:
+
+    * ``"None"``: no target data is required. This value is used if and only if
+      the transformer does not require target data, i.e., the tag ``requires_y``
+      is ``False``.
+    * ``"Series"``: a single time series, in ``Series`` :term:`scitype`.
+      If the tag ``X-y-must-have-same-index`` is ``True``, then the index, or implied
+      index, of the target series must be the same as the index of the
+      input series ``X``.
+    * ``"Primitives"``: a collection of primitive types, e.g., a collection of scalars,
+      in ``Table`` :term:`scitype`. In this case, the number of rows (=instances)
+      in ``y`` must always equal the number of instances in ``X``, which typically
+      will be of :mtype:`scitype` ``Panel`` in this case.
+    * ``"Panel"``: a panel of time series, in ``Panel`` :term:`scitype`.
+
+    The tag ``scitype:transform-labels`` is used in conjunction with the tag
+    ``requires_y``, which specifies whether target data is required by the transformer.
+
+    If the tag ``requires_y`` is ``False``, then the tag ``scitype:transform-labels``
+    will be ``"None"``.
+    """
+
+    _tags = {
+        "tag_name": "scitype:transform-labels",
+        "parent_type": "transformer",
+        "tag_type": ("str", ["None", "Series", "Primitives", "Panel"]),
+        "short_descr": "what is the scitype of the target labels y, if required?",
+        "user_facing": True,
+    }
+
+
+class capability__inverse_transform(_BaseTag):
+    """Capability: the transformer can carry out an inverse transform.
+
+    - String name: ``"capability:inverse_transform"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+    - Alias: ``"inverse-transform"``
+
+    This tag applies to transformations.
+
+    If the tag is ``True``, the transformer can carry out an inverse transform,
+    i.e., the transformer can carry out the operation that is an inverse,
+    pseudo-inverse, or approximate inverse (such as denoising inverse) of
+    the operation carried out by the ``transform`` method.
+
+    The inverse transform is available via the method ``inverse_transform``.
+
+    If ``inverse_transform`` is available, the
+    following tags specify additional properties and behaviour of the inverse transform:
+
+    * ``"capability:inverse_transform:range"``: the domain of invertibility of
+      the transform.
+    * ``"capability:inverse_transform:exact"``: whether the inverse transform is
+      expected to be an exact inverse to the transform.
+    * ``"skip-inverse-transform"``: if used in a pipeline, the transformer will
+      skip the inverse transform, if the tag is ``True``.
+
+    If the ``capability:inverse_transform`` tag is ``False``,
+    the transformer cannot carry out an inverse transform,
+    and will raise an error if an inverse transform is attempted.
+    """
+
+    _tags = {
+        "tag_name": "capability:inverse_transform",
+        "parent_type": "transformer",
+        "tag_type": "bool",
+        "short_descr": "is the transformer capable of carrying out an inverse transform?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
+class capability__inverse_transform__range(_BaseTag):
+    """Capability: the domain of invertibility of the transform.
+
+    - String name: ``"capability:inverse_transform:range"``
+    - Public capability tag
+    - Values: list, [lower, upper], of float
+    - Example: [0.0, 1.0]
+    - Default: ``None``
+
+    This tag applies to transformations that possess an ``inverse_transform`` method,
+    as specified by the tag ``capability:inverse_transform``.
+    It is one of the tags that specify the properties of the inverse transform.
+
+    The tag specifies the domain of invertibility of the transform, i.e.,
+    the range of values for which the inverse transform is mathematically defined.
+
+    This is the same as the subset of the domain of the transform for which
+    the transform is invertible. In general, the domain of invertibility
+    will be smaller than the domain of the transform, but may be equal.
+
+    The tag value is a list of two floats, [lower, upper], where:
+
+    * ``lower``: the lower bound of the domain of invertibility.
+    * ``upper``: the upper bound of the domain of invertibility.
+
+    These two values may depend on hyper-parameters of the transformer,
+    as well as the data seen in the ``fit`` method.
+
+    If the tag value is ``None``, the domain of invertibility is assumed to be
+    the entire domain of the transform.
+
+    If ``"capability:inverse_transform"`` is ``False``, this tag is irrelevant
+    and will also have value ``None``.
+    """
+
+    _tags = {
+        "tag_name": "capability:inverse_transform:range",
+        "parent_type": "transformer",
+        "tag_type": "list",
+        "short_descr": "domain of invertibility of transform, must be list [lower, upper] of float",  # noqa: E501
+        "user_facing": True,
+    }
+
+
+class capability__inverse_transform__exact(_BaseTag):
+    """Capability: whether the inverse transform is an exact inverse to the transform.
+
+    - String name: ``"capability:inverse_transform:exact"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to transformations that possess an ``inverse_transform`` method,
+    as specified by the tag ``capability:inverse_transform``.
+    It is one of the tags that specify the properties of the inverse transform.
+
+    The tag specifies whether the inverse transform is expected to be an exact inverse
+    to the transform, i.e., whether the inverse transform is mathematically defined
+    as the exact inverse of the transform.
+
+    If the tag is ``True``, applying ``inverse_transform`` to the
+    output of ``transform`` should yield the original input data,
+    up to numerical precision.
+
+    If the tag is ``False``, the inverse transform is not expected to be an exact
+    inverse of the transform, and may be an approximate inverse, pseudo-inverse,
+    or denoising inverse.
+    While there is a general expectation that the inverse transform should be
+    close to a reasonable inverse, if it is well-defined,
+    this is not a strict requirement of the interface.
+    """
+
+    _tags = {
+        "tag_name": "capability:inverse_transform:exact",
+        "parent_type": "transformer",
+        "tag_type": "bool",
+        "short_descr": "whether inverse_transform is expected to be an exact inverse to transform",  # noqa: E501
+        "user_facing": True,
+    }
+
+
+class transform_returns_same_time_index(_BaseTag):
+    """Behaviour flag: transformer returns same time index as input.
+
+    - String name: ``"transform-returns-same-time-index"``
+    - Public behaviour flag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to transformations.
+
+    If the tag is ``True``, the transformer returns a transformed series
+    with the same time index as the input series ``X``.
+
+    This tag applies only to transformers that return time series as output, i.e.,
+    the tag ``scitype:transform-output`` is ``"Series"`` or ``"Panel"``.
+
+    In cases where input and output :term:`mtype` do not have explicit time index,
+    the tag applies to the implicit time index, i.e., the index of the abstract series
+    representation, for instance, integer index in case of ``numpy`` arrays,
+    in which case the implication is that an an array is returned with
+    equal length in the dimension corresponding to the time index.
+
+    If the tag is ``False``, the returned series will in general have a different
+    time index than the input series.
+
+    If ``sciptye:transform-output`` is ``"Primitives"``, this tag is irrelevant
+    and will have value ``False``.
+
+    Besides being informative to the user, this tag is also used internally
+    by the framework to track guarantees on the data index.
+    """
+
+    _tags = {
+        "tag_name": "transform-returns-same-time-index",
+        "parent_type": "transformer",
+        "tag_type": "bool",
+        "short_descr": "does transform return same time index as input?",
+        "user_facing": True,
+    }
+
+
 ESTIMATOR_TAG_REGISTER = [
-    (
-        "univariate-only",
-        "transformer",
-        "bool",
-        "can transformer handle multivariate series? True = no",
-    ),
-    (
-        "fit_is_empty",
-        "estimator",
-        "bool",
-        "fit contains no logic and can be skipped? Yes=True, No=False",
-    ),
-    (
-        "transform-returns-same-time-index",
-        "transformer",
-        "bool",
-        "does transform return same time index as input?",
-    ),
-    (
-        "handles-missing-data",
-        "estimator",
-        "bool",
-        "can the estimator handle missing data (NA, np.nan) in inputs?",
-    ),
     (
         "skip-inverse-transform",
         "transformer",
@@ -850,14 +1467,8 @@ ESTIMATOR_TAG_REGISTER = [
         "behaviour flag: skips inverse_transform when called yes/no",
     ),
     (
-        "requires-fh-in-fit",
-        "forecaster",
-        "bool",
-        "does forecaster require fh passed already in fit? yes/no",
-    ),
-    (
         "X-y-must-have-same-index",
-        ["forecaster", "regressor"],
+        ["forecaster", "regressor", "transformer"],
         "bool",
         "do X/y in fit/update and X/fh in predict have to be same indices?",
     ),
@@ -932,64 +1543,10 @@ ESTIMATOR_TAG_REGISTER = [
         "which machine type(s) is the internal _fit/_predict able to deal with?",
     ),
     (
-        "scitype:transform-input",
-        "transformer",
-        ("list", ["Series", "Panel"]),
-        "what is the scitype of the transformer input X",
-    ),
-    (
-        "scitype:transform-output",
-        "transformer",
-        ("list", ["Series", "Primitives", "Panel"]),
-        "what is the scitype of the transformer output, the transformed X",
-    ),
-    (
         "scitype:instancewise",
         "transformer",
         "bool",
         "does the transformer transform instances independently?",
-    ),
-    (
-        "scitype:transform-labels",
-        "transformer",
-        ("list", ["None", "Series", "Primitives", "Panel"]),
-        "what is the scitype of y: None (not needed), Primitives, Series, Panel?",
-    ),
-    (
-        "requires_X",
-        "transformer",
-        "bool",
-        "does this transformer require X to be passed in fit and transform?",
-    ),
-    (
-        "requires_y",
-        "transformer",
-        "bool",
-        "does this transformer require y to be passed in fit and transform?",
-    ),
-    (
-        "capability:inverse_transform",
-        "transformer",
-        "bool",
-        "is the transformer capable of carrying out an inverse transform?",
-    ),
-    (
-        "capability:inverse_transform:range",
-        "transformer",
-        "list",
-        "domain of invertibility of transform, must be list [lower, upper] of float",
-    ),
-    (
-        "capability:inverse_transform:exact",
-        "transformer",
-        "bool",
-        "whether inverse_transform is expected to be an exact inverse to transform",
-    ),
-    (
-        "capability:pred_var",
-        "forecaster",
-        "bool",
-        "does the forecaster implement predict_variance?",
     ),
     (
         "capability:predict_proba",
@@ -1071,12 +1628,6 @@ ESTIMATOR_TAG_REGISTER = [
         "does metric require a predictive benchmark?",
     ),
     (
-        "univariate-metric",
-        "metric",
-        "bool",
-        "Does the metric only work on univariate y data?",
-    ),
-    (
         "scitype:y_pred",
         "metric",
         "str",
@@ -1101,12 +1652,6 @@ ESTIMATOR_TAG_REGISTER = [
         "whether estimator remembers all data seen as self._X, self._y, etc",
     ),
     (
-        "distribution_type",
-        "estimator",
-        "str",
-        "distribution type of data as str",
-    ),
-    (
         "reserved_params",
         "estimator",
         ("list", "str"),
@@ -1129,6 +1674,17 @@ ESTIMATOR_TAG_REGISTER = [
         "splitter",
         ("str", ["temporal", "instance"]),
         "whether the splitter splits by time or by instance (panel/hierarchy index)",
+    ),
+    # -------------------------
+    # tags to be moved to skpro
+    # -------------------------
+    # these tags will be moved to skpro
+    # some to be converted to configs, see skpro issue #269
+    (
+        "distribution_type",
+        "estimator",
+        "str",
+        "distribution type of data as str",
     ),
     (
         "capabilities:exact",
@@ -1178,11 +1734,38 @@ ESTIMATOR_TAG_REGISTER = [
         "int",
         "max iters for bisection method in ppf",
     ),
+    # ---------------------
+    # to be renamed/aliased
+    # ---------------------
+    # the following tags are to be renamed or aliased
     (
-        "capability:multioutput",
-        ["classifier", "regressor"],  # might need to add "early_classifier" here
+        "univariate-only",  # -> capability:multivariate, invert
+        "transformer",
         "bool",
-        "can the estimator handle multioutput data?",
+        "can transformer handle multivariate series? True = no",
+    ),
+    (
+        "univariate-metric",  # -> capability:multivariate, invert
+        "metric",
+        "bool",
+        "Does the metric only work on univariate y data?",
+    ),
+    (
+        "handles-missing-data",  # -> capability:missing_values
+        "estimator",
+        "bool",
+        "can the estimator handle missing data (NA, np.nan) in inputs?",
+    ),
+    # ---------------------------
+    # to be deprecated or removed
+    # ---------------------------
+    # the following tags are to be deprecated or removed
+    (
+        "capability:pred_var",  # redundant with capability:pred_int
+        # because if one of the proba methods is available, all others are too
+        "forecaster",
+        "bool",
+        "does the forecaster implement predict_variance?",
     ),
 ]
 

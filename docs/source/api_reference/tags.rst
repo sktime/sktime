@@ -73,11 +73,8 @@ These tags are typically used for typing, packaging and documentation purposes.
 Forecaster tags
 ---------------
 
-This section lists tags applying to forecasters.
+This section lists tags applying to forecasters (``"forecaster"`` type).
 These tags are used to describe capabilities, properties, and behavior of forecasters.
-
-The list also includes some developer facing tags that are used to
-control internal behavior of the forecaster.
 
 .. currentmodule:: sktime.registry._tags
 
@@ -91,12 +88,19 @@ control internal behavior of the forecaster.
     capability__pred_int
     capability__pred_int__insample
     capability__missing_values
+    requires_fh_in_fit
+    fit_is_empty
 
 
 .. _panel_tags:
 
 Tags for classifiers, regressors, clustering
 --------------------------------------------
+
+This section lists tags applying to time series classifiers, regressors,
+and clusterers  (``"classifier"``, ``"regressor"``, ``"clusterer"`` types).
+These tags are used to describe capabilities, properties, and behavior of
+these types of objects.
 
 .. currentmodule:: sktime.registry._tags
 
@@ -106,8 +110,38 @@ Tags for classifiers, regressors, clustering
     :nosignatures:
 
     capability__multivariate
+    capability__multioutput
     capability__missing_values
     capability__unequal_length
     capability__feature_importance
     capability__contractable
     capability__train_estimate
+
+
+.. _transformer_tags:
+
+Tags for ordinary transformers
+------------------------------
+
+This section lists tags applying to ordinary transformers, i.e., objects that
+transform a single time series object (``"transformer"`` type).
+
+.. currentmodule:: sktime.registry._tags
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+    :nosignatures:
+
+    scitype__transform_input
+    scitype__transform_output
+    scitype__transform_labels
+    requires_x
+    requires_y
+    capability__missing_values
+    capability__unequal_length
+    capability__inverse_transform
+    capability__inverse_transform__exact
+    capability__inverse_transform__range
+    fit_is_empty
+    transform_returns_same_time_index
