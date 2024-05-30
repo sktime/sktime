@@ -840,7 +840,6 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
             "pandas>=1.5.0", severity="none"
         )
         if pandas_version_with_bugfix:
-            print(absolute, cutoff)
             relative = absolute - cutoff
         else:
             relative = pd.Index([date - cutoff[0] for date in absolute])
