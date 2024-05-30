@@ -1006,3 +1006,38 @@ class TestAllGlobalForecasters(TestAllObjects):
 
         # check consistency of forecast hierarchy with training data
         assert set(y_pred.index).issubset(X_test.index)
+
+    @pytest.mark.parametrize("n_columns", (1, 10))
+    def test_global_forecasting_series(self, estimator_instance, n_columns):
+        from sktime.utils._testing.series import _make_series
+
+        data = _make_series(n_columns=n_columns)
+        y_train = data
+
+        max_prediction_length = 3
+        fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
+
+        estimator_instance.fit(y=y_train, fh=fh)
+
+        y_test = y_train.iloc[:-max_prediction_length]
+        y_pred = estimator_instance.predict(fh, y=y_test)
+
+        # TODO
+        # cutoff = get_cutoff(_y, return_index=True)
+        # _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
+        _assert_correct_columns(y_pred, y_test)
+
+        if isinstance(y_test, pd.Series):
+            assert isinstance(y_pred, pd.Series)
+            assert check_is_mtype(y_pred, "pd.Series", msg_return_dict="list")
+        elif isinstance(y_test, pd.DataFrame):
+            assert isinstance(y_pred, pd.DataFrame)
+            assert check_is_mtype(y_pred, "pd.DataFrame", msg_return_dict="list")
+            msg = (
+                "returned columns after predict are not as expected. "
+                f"expected: {y_test.columns}. Found: {y_pred.columns}"
+            )
+            assert np.all(y_pred.columns == y_test.columns), msg
+
+        # check consistency of forecast hierarchy with training data
+        assert set(y_test.index.names).issubset(y_pred.index.names)
