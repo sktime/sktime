@@ -804,10 +804,10 @@ def test_tz_preserved():
     assert fh_absolute[0].tz == cutoff.tz
 
 
-# the "XE" frequencies are not supported by pandas 1
+# the "XE" frequencies are not supported by pandas 1 or 2.0.X
 FREQ_STR_FOR_PD22 = ["Y", "2Y", "M", "3M"]
 
-if _check_soft_dependencies("pandas>=2.0.0", severity="none"):
+if _check_soft_dependencies("pandas>=2.1.0", severity="none"):
     FREQ_STR_FOR_PD22 += ["YE", "2YE", "ME", "3ME"]
 
 
