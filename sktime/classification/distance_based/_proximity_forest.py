@@ -1302,7 +1302,7 @@ class ProximityTree(BaseClassifier):
         for _ in range(self.n_stump_evaluations):
             stump = ProximityStump(
                 backend=self.backend,
-                backend_params=self.backend_params,
+                backend_params=self._backend_params,
                 random_state=self.random_state,
                 distance_measure=self.distance_measure,
                 verbosity=self.verbosity,
