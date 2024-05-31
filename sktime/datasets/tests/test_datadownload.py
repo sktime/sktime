@@ -3,9 +3,9 @@ import sys
 from urllib.request import Request, urlopen
 
 import numpy as np
-from packaging.specifiers import SpecifierSet
 import pandas as pd
 import pytest
+from packaging.specifiers import SpecifierSet
 
 from sktime.datasets import (
     load_forecastingdata,
