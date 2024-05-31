@@ -1812,13 +1812,13 @@ class ProximityForest(BaseClassifier):
         else:
             params_set = []
 
-            params1 = {
-                "n_estimators": 1,
-                "max_depth": 1,
-                "n_stump_evaluations": 1,
-                "backend": "loky",
-            }
-            params_set.append(params1)
+            # params1 = {
+            #     "n_estimators": 1,
+            #     "max_depth": 1,
+            #     "n_stump_evaluations": 1,
+            #     "backend": "loky",
+            # }
+            # params_set.append(params1)
             # params2 = {
             #     "n_estimators": 3,
             #     "max_depth": 5,
