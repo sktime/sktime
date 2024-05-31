@@ -1,4 +1,4 @@
-"""Implements adapter for sklearn models."""
+"""Implements adapter for sklearn distance related estimators."""
 
 __author__ = ["Z-Fran"]
 __all__ = ["KNeighborsSklearnAdapter"]
