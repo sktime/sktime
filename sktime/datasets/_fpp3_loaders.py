@@ -84,9 +84,11 @@ def _get_dataset_url(dataset_name):
     return (False, None)
 
 
-def _decompress_file_to_temp(url, temp_folder="/tmp"):
+def _decompress_file_to_temp(url, temp_folder=None):
     import requests
 
+    if temp_folder is None:
+        temp_folder = tempfile.gettempdir()
     temp_dir = tempfile.mkdtemp(dir=temp_folder)
     response = requests.get(url)
     temp_file = os.path.join(temp_dir, "foo.tar.gz")
