@@ -167,7 +167,7 @@ class PyKANForecaster(BaseForecaster):
             if i == 0:
                 model = KAN(
                     width=self._layer_sizes,
-                    grid=self.grids[i],
+                    grid=self._grids[i],
                     device=self.device,
                     **self._model_params,
                 )
@@ -258,6 +258,7 @@ class PyKANForecaster(BaseForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params = [
+            {},  # default parameters
             {
                 "grids": [2, 3],
                 "model_params": {"k": 2},
