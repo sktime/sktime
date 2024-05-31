@@ -42,7 +42,7 @@ class PyKANForecaster(BaseForecaster):
         The size of the input layer.
     k : int, optional (default=3)
         The number of nearest neighbors to consider.
-    grids : np.array, optional (default=np.array([5,10,20, 50, 100]))
+    grids : np.array, optional (default=np.array([2, 3, 5, 10]))
         The grid sizes to use in the model.
     model_params : dict, optional (default=None)
         The parameters to pass to the model. See pykan documentation for more details.
@@ -89,7 +89,7 @@ class PyKANForecaster(BaseForecaster):
         self.hidden_layers = hidden_layers
         self.input_layer_size = input_layer_size
         self.grids = grids
-        self._grids = grids if grids is not None else [5, 10, 20, 50, 100]
+        self._grids = grids if grids is not None else [2, 3, 5, 10]
         self.val_size = val_size
         self.model_params = model_params
         self._model_params = model_params if model_params is not None else {}
