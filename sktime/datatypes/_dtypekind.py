@@ -2,6 +2,14 @@ from enum import IntEnum
 
 import numpy as np
 import pandas as pd
+from pandas.api.types import (
+    is_bool_dtype,
+    is_datetime64_any_dtype,
+    is_float_dtype,
+    is_signed_integer_dtype,
+    is_string_dtype,
+    is_unsigned_integer_dtype,
+)
 
 
 class DtypeKind(IntEnum):
@@ -35,20 +43,22 @@ class DtypeKind(IntEnum):
     CATEGORICAL = 23
 
 
-def _simplify_dtype(col_dtypes):
+def _dtype_to_kind(col_dtypes):
     for i, dtype in enumerate(col_dtypes):
-        if dtype == float:
+        if is_float_dtype(dtype):
             col_dtypes[i] = DtypeKind.FLOAT
-        elif dtype == int:
+        elif is_signed_integer_dtype(dtype):
             col_dtypes[i] = DtypeKind.INT
-        elif dtype == np.uint:
+        elif is_unsigned_integer_dtype(dtype):
             col_dtypes[i] = DtypeKind.UINT
-        elif dtype == object:
+        elif dtype == "object" or dtype == "category":
             col_dtypes[i] = DtypeKind.CATEGORICAL
-        elif dtype == bool:
+        elif is_bool_dtype(dtype):
             col_dtypes[i] = DtypeKind.BOOL
-        elif dtype == pd.DatetimeIndex:
+        elif is_datetime64_any_dtype(dtype):
             col_dtypes[i] = DtypeKind.DATETIME
+        elif is_string_dtype(dtype):
+            col_dtypes[i] = DtypeKind.STRING
     return col_dtypes
 
 
@@ -64,6 +74,6 @@ def _get_series_dtypekind(obj, mtype):
     elif mtype == pd.DataFrame:
         col_dtypes = obj.dtypes.to_list()
 
-    col_DtypeKinds = _simplify_dtype(col_dtypes)
+    col_DtypeKinds = _dtype_to_kind(col_dtypes)
 
     return col_DtypeKinds
