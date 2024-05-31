@@ -1,7 +1,9 @@
 """Test data loaders that download from external sources."""
+import sys
 from urllib.request import Request, urlopen
 
 import numpy as np
+from packaging.specifiers import SpecifierSet
 import pandas as pd
 import pytest
 
@@ -99,6 +101,10 @@ def test_load_forecasting_data_invalid_name(name):
         load_forecastingdata(name=name)
 
 
+@pytest.mark.skipif(
+    sys.version.split(" ")[0] in SpecifierSet("<3.9"),
+    reason="rdata loader does not work on python 3.8",
+)
 @pytest.mark.datadownload
 def test_load_fpp3():
     """Test loading downloaded dataset from ."""
