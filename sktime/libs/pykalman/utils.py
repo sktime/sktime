@@ -34,7 +34,6 @@ Utility functions taken from scikit-learn
 """
 
 import inspect
-import itertools
 
 import numpy as np
 from scipy import linalg
@@ -109,7 +108,7 @@ def get_params(obj):
         # get values for each of the above in the object
         argdict = dict([(arg, obj.__getattribute__(arg)) for arg in args])
         return argdict
-    except:
+    except Exception:
         raise ValueError("object has no __init__ method")
 
 
@@ -132,7 +131,7 @@ def preprocess_arguments(argsets, converters):
     for argset in argsets:
         for argname, argval in argset.items():
             # check that this argument is necessary
-            if not argname in converters:
+            if argname not in converters:
                 raise ValueError("Unrecognized argument: {0}".format(argname))
 
             # potentially use this argument

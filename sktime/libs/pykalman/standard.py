@@ -1461,7 +1461,7 @@ class KalmanFilter(object):
 
         # If a parameter is time varying, print a warning
         for k, v in get_params(self).items():
-            if k in DIM and (not k in given) and len(v.shape) != DIM[k]:
+            if k in DIM and (k not in given) and len(v.shape) != DIM[k]:
                 warn_str = (
                     "{0} has {1} dimensions now; after fitting, "
                     + "it will have dimension {2}"

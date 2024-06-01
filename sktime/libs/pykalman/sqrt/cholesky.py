@@ -16,14 +16,13 @@ from ..standard import (
     DIM,
     KalmanFilter,
     _arg_or_default,
-    _determine_dimensionality,
     _em,
     _last_dims,
     _loglikelihoods,
     _smooth,
     _smooth_pair,
 )
-from ..utils import array1d, array2d, check_random_state, get_params
+from ..utils import get_params
 
 
 def _reconstruct_covariances(covariance2s):
@@ -255,7 +254,6 @@ def _filter(
     """
     n_timesteps = observations.shape[0]
     n_dim_state = len(initial_state_mean)
-    n_dim_obs = observations.shape[1]
 
     predicted_state_means = np.zeros((n_timesteps, n_dim_state))
     predicted_state_covariance2s = np.zeros((n_timesteps, n_dim_state, n_dim_state))
@@ -667,7 +665,7 @@ class CholeskyKalmanFilter(KalmanFilter):
 
         # If a parameter is time varying, print a warning
         for k, v in get_params(self).items():
-            if k in DIM and (not k in given) and len(v.shape) != DIM[k]:
+            if k in DIM and (k not in given) and len(v.shape) != DIM[k]:
                 warn_str = (
                     "{0} has {1} dimensions now; after fitting, "
                     + "it will have dimension {2}"

@@ -8,7 +8,7 @@ import numpy as np
 from numpy import ma
 from scipy import io
 
-from ..utils import Bunch, check_random_state
+from ..utils import Bunch
 
 
 def load_robot():

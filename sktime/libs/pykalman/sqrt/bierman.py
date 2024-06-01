@@ -17,14 +17,13 @@ from ..standard import (
     DIM,
     KalmanFilter,
     _arg_or_default,
-    _determine_dimensionality,
     _em,
     _last_dims,
     _loglikelihoods,
     _smooth,
     _smooth_pair,
 )
-from ..utils import array1d, array2d, check_random_state, get_params
+from ..utils import get_params
 
 
 def _reconstruct_covariances(covariances):
@@ -197,8 +196,6 @@ def _filter_predict(
     * Gibbs, Bruce P. Advanced Kalman Filtering, Least-Squares, and Modeling: A
       Practical Handbook. Page 401.
     """
-    n_dim_state = len(current_state_mean)
-
     # predict new mean
     predicted_state_mean = (
         np.dot(transition_matrix, current_state_mean) + transition_offset
@@ -344,8 +341,6 @@ def _filter_correct(
         n_dim_state = len(predicted_state_mean)
         n_dim_obs = len(observation)
 
-        kalman_gain = np.zeros((n_dim_state, n_dim_obs))
-
         corrected_state_mean = predicted_state_mean
         corrected_state_covariance = predicted_state_covariance
 
@@ -414,7 +409,6 @@ def _filter(
     """
     n_timesteps = observations.shape[0]
     n_dim_state = len(initial_state_mean)
-    n_dim_obs = observations.shape[1]
 
     # construct containers for outputs
     predicted_state_means = np.zeros((n_timesteps, n_dim_state))
@@ -841,7 +835,7 @@ class BiermanKalmanFilter(KalmanFilter):
 
         # If a parameter is time varying, print a warning
         for k, v in get_params(self).items():
-            if k in DIM and (not k in given) and len(v.shape) != DIM[k]:
+            if k in DIM and (k not in given) and len(v.shape) != DIM[k]:
                 warn_str = (
                     "{0} has {1} dimensions now; after fitting,"
                     + " it will have dimension {2}"

@@ -6,7 +6,6 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal
 from pykalman import KalmanFilter
 from pykalman.datasets import load_robot
-from scipy import linalg
 
 
 class KalmanFilterTests(object):
@@ -190,7 +189,6 @@ class KalmanFilterTests(object):
         # pickle Kalman Filter
         store = BytesIO()
         pickle.dump(kf, store)
-        clf = pickle.load(BytesIO(store.getvalue()))
 
         # check that parameters came out already
         np.testing.assert_almost_equal(loglikelihood, kf.loglikelihood(X))

@@ -15,11 +15,11 @@ def build_unscented_filter(cls):
     A = np.array([[1, 1], [0, 1]])
     C = np.array([[0.5, -0.3]])
     if cls == UnscentedKalmanFilter:
-        f = lambda x, y: A.dot(x) + y
-        g = lambda x, y: C.dot(x) + y
+        f = lambda x, y: A.dot(x) + y  # noqa: E731
+        g = lambda x, y: C.dot(x) + y  # noqa: E731
     elif cls == AdditiveUnscentedKalmanFilter:
-        f = lambda x: A.dot(x)
-        g = lambda x: C.dot(x)
+        f = lambda x: A.dot(x)  # noqa: E731
+        g = lambda x: C.dot(x)  # noqa: E731
     else:
         raise ValueError(
             "How do I make transition functions for {0}?".format(
@@ -62,7 +62,7 @@ def check_dims(n_dim_state, n_dim_obs, n_func_args, kf_cls, kwargs):
 
     assert (
         transition_functions.shape == (1,)
-        if not "transition_functions" in kwargs
+        if "transition_functions" not in kwargs
         else (len(kwargs["transition_functions"]),)
     )
     assert all(
@@ -74,7 +74,7 @@ def check_dims(n_dim_state, n_dim_obs, n_func_args, kf_cls, kwargs):
     assert transition_covariance.shape == (n_dim_state, n_dim_state)
     assert (
         observation_functions.shape == (1,)
-        if not "observation_functions" in kwargs
+        if "observation_functions" not in kwargs
         else (len(kwargs["observation_functions"]),)
     )
     assert all(
