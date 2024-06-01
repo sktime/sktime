@@ -12,7 +12,6 @@ standard counterparts.
 
 References
 ----------
-
 * Terejanu, G.A. Towards a Decision-Centric Framework for Uncertainty
   Propagation and Data Assimilation. 2010. Page 108.
 * Van Der Merwe, R. and Wan, E.A. The Square-Root Unscented Kalman Filter for
@@ -65,7 +64,6 @@ def cholupdate(A2, X, weight):
 
     Notes
     -----
-
     Code based on the following MATLAB snippet taken from Wikipedia on
     August 14, 2012::
 
@@ -554,7 +552,8 @@ def _additive_unscented_smoother(mu_filt, sigma2_filt, f, Q):
 
 
 class AdditiveUnscentedKalmanFilter(AUKF):
-    r"""Implements the Unscented Kalman Filter with additive noise.
+    r"""Unscented Kalman Filter with additive noise.
+
     Observations are assumed to be generated from the following process,
 
     .. math::

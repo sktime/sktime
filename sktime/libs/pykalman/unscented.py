@@ -751,8 +751,9 @@ class UnscentedMixin:
 
 
 class UnscentedKalmanFilter(UnscentedMixin):
-    r"""Implements the General (aka Augmented) Unscented Kalman Filter governed
-    by the following equations,
+    r"""General (aka Augmented) Unscented Kalman Filter.
+
+    The General Unscented Kalman Filter is governed by the following equations:
 
     .. math::
 
