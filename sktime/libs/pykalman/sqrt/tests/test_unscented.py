@@ -15,7 +15,7 @@ def build_unscented_filter(cls):
         f = lambda x: A.dot(x)  # noqa: E731
         g = lambda x: C.dot(x)  # noqa: E731
     else:
-        raise ValueError("How do I make transition functions for {}?".format(cls))
+        raise ValueError(f"How do I make transition functions for {cls}?")
 
     x = np.array([1, 1])
     P = np.array([[1, 0.1], [0.1, 1]])

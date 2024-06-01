@@ -275,9 +275,6 @@ def _unscented_correct(cross_sigma, moments_pred, obs_moments_pred, z):
     mu_pred, sigma2_pred = moments_pred
     obs_mu_pred, obs_sigma2_pred = obs_moments_pred
 
-    n_dim_state = len(mu_pred)
-    n_dim_obs = len(obs_mu_pred)
-
     if not np.any(ma.getmask(z)):
         ##############################################
         # Same as this, but more stable (supposedly) #
@@ -440,7 +437,6 @@ def _additive_unscented_filter(mu_0, sigma_0, f, g, Q, R, Z):
     # extract size of key components
     T = Z.shape[0]
     n_dim_state = Q.shape[-1]
-    n_dim_obs = R.shape[-1]
 
     # construct container for results
     mu_filt = np.zeros((T, n_dim_state))

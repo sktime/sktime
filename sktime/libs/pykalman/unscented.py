@@ -1054,13 +1054,14 @@ class UnscentedKalmanFilter(UnscentedMixin):
         ) = self._initialize_parameters()
 
         (filtered_state_means, filtered_state_covariances) = self.filter(Z)
-        (smoothed_state_means, smoothed_state_covariances) = (
-            augmented_unscented_smoother(
-                filtered_state_means,
-                filtered_state_covariances,
-                transition_functions,
-                transition_covariance,
-            )
+        (
+            smoothed_state_means,
+            smoothed_state_covariances,
+        ) = augmented_unscented_smoother(
+            filtered_state_means,
+            filtered_state_covariances,
+            transition_functions,
+            transition_covariance,
         )
 
         return (smoothed_state_means, smoothed_state_covariances)
@@ -1321,15 +1322,16 @@ class AdditiveUnscentedKalmanFilter(UnscentedMixin):
         points_pred = moments2points(moments_pred)
 
         # correct
-        (next_filtered_state_mean, next_filtered_state_covariance) = (
-            unscented_filter_correct(
-                observation_function,
-                moments_pred,
-                points_pred,
-                observation,
-                sigma_observation=observation_covariance,
-            )
-        )
+        (
+            next_filtered_state_mean,
+            next_filtered_state_covariance,
+        ) = unscented_filter_correct(
+            observation_function,
+            moments_pred,
+            points_pred,
+            observation,
+            sigma_observation=observation_covariance,
+         )
 
         return (next_filtered_state_mean, next_filtered_state_covariance)
 
@@ -1364,13 +1366,14 @@ class AdditiveUnscentedKalmanFilter(UnscentedMixin):
         ) = self._initialize_parameters()
 
         (filtered_state_means, filtered_state_covariances) = self.filter(Z)
-        (smoothed_state_means, smoothed_state_covariances) = (
-            additive_unscented_smoother(
-                filtered_state_means,
-                filtered_state_covariances,
-                transition_functions,
-                transition_covariance,
-            )
+        (
+           smoothed_state_means,
+           smoothed_state_covariances,
+        ) = additive_unscented_smoother(
+            filtered_state_means,
+            filtered_state_covariances,
+            transition_functions,
+            transition_covariance,
         )
 
         return (smoothed_state_means, smoothed_state_covariances)

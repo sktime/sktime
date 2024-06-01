@@ -64,7 +64,7 @@ P_filt
 % ipdb> sigma_est
 % array([[[ 1.        ,  0.1       ],
 %         [ 0.1       ,  1.        ]],
-% 
+%
 %        [[ 2.09738255,  1.51577181],
 %         [ 1.51577181,  2.91778523]],
 %
@@ -113,7 +113,7 @@ for k=1:length(Z)
     mu_filt(:,k)  = x0;
     P_filt(:,:,k) = P0;
   end
-  
+
   % predict
   [mu_pred(:,k), P_pred(:,:,k), X(:,:,k), w{k}] = ukf_predict3(mu_filt(:,k), P_filt(:,:,k), f, Q, R, {}, alpha, beta, kappa);
 end

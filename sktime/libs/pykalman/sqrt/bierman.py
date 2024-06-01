@@ -312,7 +312,6 @@ def _filter_correct(
     """
     if not np.any(np.ma.getmask(observation)):
         # extract size of state space
-        n_dim_state = len(predicted_state_mean)
         n_dim_obs = len(observation)
 
         # calculate corrected state mean, covariance

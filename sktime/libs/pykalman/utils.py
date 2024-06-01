@@ -106,7 +106,7 @@ def get_params(obj):
         args.pop(0)  # remove "self"
 
         # get values for each of the above in the object
-        argdict = dict([(arg, obj.__getattribute__(arg)) for arg in args])
+        argdict = {arg: obj.__getattribute__(arg) for arg in args}
         return argdict
     except Exception:
         raise ValueError("object has no __init__ method")
@@ -132,7 +132,7 @@ def preprocess_arguments(argsets, converters):
         for argname, argval in argset.items():
             # check that this argument is necessary
             if argname not in converters:
-                raise ValueError("Unrecognized argument: {0}".format(argname))
+                raise ValueError(f"Unrecognized argument: {argname}")
 
             # potentially use this argument
             if argname not in result and argval is not None:
@@ -145,7 +145,7 @@ def preprocess_arguments(argsets, converters):
     # check that all arguments are covered
     if not len(converters.keys()) == len(result.keys()):
         missing = set(converters.keys()) - set(result.keys())
-        s = "The following arguments are missing: {0}".format(list(missing))
+        s = f"The following arguments are missing: {list(missing)}"
         raise ValueError(s)
 
     return result

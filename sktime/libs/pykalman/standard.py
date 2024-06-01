@@ -957,7 +957,7 @@ def _em_observation_offset(observation_matrices, smoothed_state_means, observati
         return observation_offset
 
 
-class KalmanFilter(object):
+class KalmanFilter:
     """Implements the Kalman Filter, Kalman Smoother, and EM algorithm.
 
     This class implements the Kalman Filter, Kalman Smoother, and EM Algorithm
