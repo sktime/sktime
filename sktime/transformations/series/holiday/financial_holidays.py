@@ -158,8 +158,6 @@ class FinancialHolidaysTransformer(BaseTransformer):
 
         Returns
         -------
-        dict
-            A dictionary containing the specified parameter set.
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
 
@@ -167,13 +165,6 @@ class FinancialHolidaysTransformer(BaseTransformer):
         ------
         ValueError
             If an unknown parameter_set is provided.
-
-        Examples
-        --------
-        >>> FinancialHolidaysTransformer.get_test_params()
-        {'market': 'XNYS'}
-        >>> FinancialHolidaysTransformer.get_test_params(parameter_set="test")
-        {'market': 'ECB'}
         """
         del parameter_set  # avoid being detected as unused by ``vulture`` like tools
 
