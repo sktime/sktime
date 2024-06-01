@@ -182,6 +182,7 @@ Neural networks
 Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* [BUG] Resolve ``LSTMFCNClassifier`` changing ``callback`` parameter (:pr:`6239`) :user:`ArthrowAbstract`
 * [BUG] fix ``_get_train_probs`` in some classifiers to accept any input data type (:pr:`6377`) :user:`fkiraly`
 * [BUG] fix ``BaggingClassifier`` for column subsampling case (:pr:`6429`) :user:`fkiraly`
 * [BUG] fix ``ProximityForest``, tree, stump, and ``IndividualBOSS`` returning ``y`` of different type in ``predict`` (:pr:`6432`) :user:`fkiraly`
@@ -192,6 +193,7 @@ Time series classification
 Time series regression
 ^^^^^^^^^^^^^^^^^^^^^^
 
+* [BUG] Resolve ``LSTMFCNRegressor`` changing ``callback`` parameter (:pr:`6239`) :user:`ArthrowAbstract`
 * [BUG] in ``CNNRegressor``, ensure ``filter_sizes`` and ``padding`` is passed on (:pr:`6452`) :user:`fkiraly`
 
 Transformations
@@ -215,6 +217,7 @@ Contributors
 ~~~~~~~~~~~~
 
 :user:`Abhay-Lejith`,
+:user:`ArthrowAbstract`,
 :user:`benHeid`,
 :user:`cedricdonie`,
 :user:`ericjb`,
