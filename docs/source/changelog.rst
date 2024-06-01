@@ -34,6 +34,8 @@ For last major feature update, see 0.29.1.
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
 
+* ``scikit-learn`` (core dependency) bounds have been updated to ``>=0.24,<1.6.0``
+* ``scikit-base`` (core dependency) bounds have been updated to ``>=0.6.1,<0.9.0``
 * ``skpro`` (soft dependency) bounds have been updated to ``<2.4.0``
 
 Deprecations and removals
