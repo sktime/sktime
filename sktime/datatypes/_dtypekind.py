@@ -77,3 +77,19 @@ def _get_series_dtypekind(obj, mtype):
     col_DtypeKinds = _dtype_to_kind(col_dtypes)
 
     return col_DtypeKinds
+
+
+def _get_panel_dtypekind(obj, mtype):
+    if mtype == "numpy3D":
+        col_dtypes = [float] * obj.shape[1]
+    elif mtype == "numpyflat":
+        col_dtypes = [float]
+    elif mtype == "pd-multiindex":
+        col_dtypes = obj.dtypes.to_list()
+    elif mtype == "nested_univ":
+        col_names = obj.columns.to_list()
+        col_dtypes = [obj[col][0].dtype for col in col_names]
+
+    col_DtypeKinds = _dtype_to_kind(col_dtypes)
+
+    return col_DtypeKinds

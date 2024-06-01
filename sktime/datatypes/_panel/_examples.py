@@ -24,6 +24,7 @@ overall, conversions from non-lossy representations to any other ones
 import numpy as np
 import pandas as pd
 
+from sktime.datatypes._dtypekind import DtypeKind
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 example_dict = dict()
@@ -33,12 +34,7 @@ example_dict_metadata = dict()
 ###
 # example 0: multivariate, equally sampled
 
-X = np.array(
-    [[[1, 2, 3], [4, 5, 6]], [[1, 2, 3], [4, 55, 6]], [[1, 2, 3], [42, 5, 6]]],
-    dtype=np.int64,
-)
-
-example_dict[("numpy3D", "Panel", 0)] = X
+example_dict[("numpy3D", "Panel", 0)] = None
 example_dict_lossy[("numpy3D", "Panel", 0)] = True
 
 example_dict[("numpyflat", "Panel", 0)] = None
@@ -103,22 +99,16 @@ example_dict_metadata[("Panel", 0)] = {
     "n_instances": 3,
     "n_features": 2,
     "feature_names": ["var_0", "var_1"],
+    "feature_kind": [DtypeKind.INT, DtypeKind.INT],
 }
 
 ###
 # example 1: univariate, equally sampled
 
-X = np.array(
-    [[[4, 5, 6]], [[4, 55, 6]], [[42, 5, 6]]],
-    dtype=np.int64,
-)
-
-example_dict[("numpy3D", "Panel", 1)] = X
+example_dict[("numpy3D", "Panel", 1)] = None
 example_dict_lossy[("numpy3D", "Panel", 1)] = True
 
-X = np.array([[4, 5, 6], [4, 55, 6], [42, 5, 6]], dtype=np.int64)
-
-example_dict[("numpyflat", "Panel", 1)] = X
+example_dict[("numpyflat", "Panel", 1)] = None
 example_dict_lossy[("numpyflat", "Panel", 1)] = True
 
 cols = [f"var_{i}" for i in range(1)]
@@ -177,22 +167,16 @@ example_dict_metadata[("Panel", 1)] = {
     "n_instances": 3,
     "n_features": 1,
     "feature_names": ["var_0"],
+    "feature_kind": [DtypeKind.INT],
 }
 
 ###
 # example 2: univariate, equally sampled, one series
 
-X = np.array(
-    [[[4, 5, 6]]],
-    dtype=np.int64,
-)
-
-example_dict[("numpy3D", "Panel", 2)] = X
+example_dict[("numpy3D", "Panel", 2)] = None
 example_dict_lossy[("numpy3D", "Panel", 2)] = True
 
-X = np.array([[4, 5, 6]], dtype=np.int64)
-
-example_dict[("numpyflat", "Panel", 2)] = X
+example_dict[("numpyflat", "Panel", 2)] = None
 example_dict_lossy[("numpyflat", "Panel", 2)] = True
 
 cols = [f"var_{i}" for i in range(1)]
@@ -244,11 +228,18 @@ example_dict_metadata[("Panel", 2)] = {
     "n_instances": 1,
     "n_features": 1,
     "feature_names": ["var_0"],
+    "feature_kind": [DtypeKind.INT],
 }
 
 ###
 # example 3: univariate, equally sampled, lossy,
 # targets #4299 pd-multiindex panel incorrect is_equally_spaced
+
+example_dict[("numpy3D", "Panel", 3)] = None
+example_dict_lossy[("numpy3D", "Panel", 3)] = True
+
+example_dict[("numpyflat", "Panel", 3)] = None
+example_dict_lossy[("numpyflat", "Panel", 3)] = True
 
 X_instances = [0, 0, 0, 1, 1, 1, 2, 2, 2]
 X_timepoints = pd.to_datetime([0, 1, 2, 4, 5, 6, 9, 10, 11], unit="s")
@@ -274,4 +265,67 @@ example_dict_metadata[("Panel", 3)] = {
     "n_instances": 3,
     "n_features": 1,
     "feature_names": ["var_0"],
+    "feature_kind": [DtypeKind.INT],
+}
+
+###
+# example 4: for numpy, multivariate, equally sampled
+
+X = np.array(
+    [[[1, 2, 3], [4, 5, 6]], [[1, 2, 3], [4, 55, 6]], [[1, 2, 3], [42, 5, 6]]],
+    dtype=np.int64,
+)
+
+example_dict[("numpy3D", "Panel", 4)] = X
+example_dict_lossy[("numpy3D", "Panel", 4)] = True
+
+example_dict[("numpyflat", "Panel", 4)] = None
+example_dict_lossy[("numpyflat", "Panel", 4)] = True
+
+example_dict_metadata[("Panel", 4)] = {
+    "is_univariate": False,
+    "is_one_series": False,
+    "n_panels": 1,
+    "is_one_panel": True,
+    "is_equally_spaced": True,
+    "is_equal_length": True,
+    "is_equal_index": True,
+    "is_empty": False,
+    "has_nans": False,
+    "n_instances": 3,
+    "n_features": 2,
+    "feature_names": ["var_0", "var_1"],
+    "feature_kind": [DtypeKind.FLOAT, DtypeKind.FLOAT],
+}
+
+###
+# example 5: for numpy, univariate, equally sampled
+
+X = np.array(
+    [[[4, 5, 6]], [[4, 55, 6]], [[42, 5, 6]]],
+    dtype=np.int64,
+)
+
+example_dict[("numpy3D", "Panel", 5)] = X
+example_dict_lossy[("numpy3D", "Panel", 5)] = True
+
+X = np.array([[4, 5, 6], [4, 55, 6], [42, 5, 6]], dtype=np.int64)
+
+example_dict[("numpyflat", "Panel", 5)] = X
+example_dict_lossy[("numpyflat", "Panel", 5)] = True
+
+example_dict_metadata[("Panel", 5)] = {
+    "is_univariate": True,
+    "is_one_series": False,
+    "n_panels": 1,
+    "is_one_panel": True,
+    "is_equally_spaced": True,
+    "is_equal_length": True,
+    "is_equal_index": True,
+    "is_empty": False,
+    "has_nans": False,
+    "n_instances": 3,
+    "n_features": 1,
+    "feature_names": ["var_0"],
+    "feature_kind": [DtypeKind.FLOAT],
 }

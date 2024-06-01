@@ -23,6 +23,7 @@ overall, conversions from non-lossy representations to any other ones
 
 import pandas as pd
 
+from sktime.datatypes._dtypekind import DtypeKind
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 example_dict = dict()
@@ -116,6 +117,7 @@ example_dict_metadata[("Hierarchical", 0)] = {
     "n_panels": 2,
     "n_features": 2,
     "feature_names": ["var_0", "var_1"],
+    "feature_kind": [DtypeKind.INT, DtypeKind.INT],
 }
 
 
@@ -160,4 +162,5 @@ example_dict_metadata[("Hierarchical", 1)] = {
     "n_panels": 2,
     "n_features": 1,
     "feature_names": ["var_0"],
+    "feature_kind": [DtypeKind.INT],
 }
