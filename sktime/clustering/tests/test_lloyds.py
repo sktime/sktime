@@ -15,7 +15,7 @@ from sktime.clustering.partitioning._lloyds import (
 from sktime.datasets import load_arrow_head
 from sktime.datatypes import convert_to
 from sktime.distances.tests._utils import create_test_distance_numpy
-from sktime.tests._config import run_test_for_class
+from sktime.tests.test_switch import run_test_for_class
 
 
 class _test_class(TimeSeriesLloyds):

@@ -16,7 +16,7 @@ from sktime.utils._testing.forecasting import make_forecasting_problem
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(PolynomialTrendForecaster, _get_X_numpy_int_from_pandas),
+    not run_test_for_class([PolynomialTrendForecaster, _get_X_numpy_int_from_pandas]),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_get_X_numpy():
@@ -74,6 +74,10 @@ def get_expected_polynomial_coefs(y, degree, with_intercept=True):
     return np.linalg.lstsq(poly_matrix, y.to_numpy(), rcond=None)[0]
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([PolynomialTrendForecaster, _get_X_numpy_int_from_pandas]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def _test_trend(degree, with_intercept):
     """Check trend, helper function."""
     y = make_forecasting_problem()
@@ -88,7 +92,7 @@ def _test_trend(degree, with_intercept):
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(PolynomialTrendForecaster, _get_X_numpy_int_from_pandas),
+    not run_test_for_class([PolynomialTrendForecaster, _get_X_numpy_int_from_pandas]),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("degree", [1, 3])
@@ -100,7 +104,7 @@ def test_trend(degree, with_intercept):
 
 # zero trend does not work without intercept
 @pytest.mark.skipif(
-    not run_test_for_class(PolynomialTrendForecaster, _get_X_numpy_int_from_pandas),
+    not run_test_for_class([PolynomialTrendForecaster, _get_X_numpy_int_from_pandas]),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_zero_trend():
@@ -125,9 +129,7 @@ def test_constant_trend():
 
 @pytest.mark.skipif(
     not run_test_for_class(
-        PolynomialTrendForecaster,
-        TrendForecaster,
-        _get_X_numpy_int_from_pandas,
+        [PolynomialTrendForecaster, TrendForecaster, _get_X_numpy_int_from_pandas]
     ),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
