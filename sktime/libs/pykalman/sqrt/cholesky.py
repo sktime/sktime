@@ -674,7 +674,7 @@ class CholeskyKalmanFilter(KalmanFilter):
                 warnings.warn(warn_str, stacklevel=2)
 
         # Actual EM iterations
-        for i in range(n_iter):
+        for _ in range(n_iter):
             # run filter
             (
                 predicted_state_means,
