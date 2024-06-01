@@ -1,4 +1,5 @@
-"""
+"""Kalman Filter in "Square Root" form (Cholesky factorization).
+
 =====================================
 Inference for Linear-Gaussian Systems
 =====================================
@@ -26,7 +27,7 @@ from ..utils import get_params
 
 
 def _reconstruct_covariances(covariance2s):
-    """Reconstruct covariance matrices given their cholesky factors"""
+    """Reconstruct covariance matrices given their cholesky factors."""
     if len(covariance2s.shape) == 2:
         covariance2s = covariance2s[np.newaxis, :, :]
 
@@ -47,7 +48,7 @@ def _filter_predict(
     current_state_mean,
     current_state_covariance2,
 ):
-    r"""Calculate the mean and covariance of :math:`P(x_{t+1} | z_{0:t})`
+    r"""Calculate the mean and covariance of :math:`P(x_{t+1} | z_{0:t})`.
 
     Using the mean and covariance of :math:`P(x_t | z_{0:t})`, calculate the
     mean and covariance of :math:`P(x_{t+1} | z_{0:t})`.
@@ -114,7 +115,7 @@ def _filter_correct(
     predicted_state_covariance2,
     observation,
 ):
-    r"""Correct a predicted state with a Kalman Filter update
+    r"""Correct a predicted state with a Kalman Filter update.
 
     Incorporate observation `observation` from time `t` to turn
     :math:`P(x_t | z_{0:t-1})` into :math:`P(x_t | z_{0:t})`
@@ -202,7 +203,7 @@ def _filter(
     initial_state_covariance,
     observations,
 ):
-    """Apply the Kalman Filter
+    """Apply the Kalman Filter.
 
     Calculate posterior distribution over hidden states given observations up
     to and including the current time step.
@@ -348,7 +349,7 @@ class CholeskyKalmanFilter(KalmanFilter):
     """
 
     def filter(self, X):
-        """Apply the Kalman Filter
+        """Apply the Kalman Filter.
 
         Apply the Kalman Filter to estimate the hidden state at time :math:`t`
         for :math:`t = [0...n_{\\text{timesteps}}-1]` given observations up to
@@ -418,7 +419,7 @@ class CholeskyKalmanFilter(KalmanFilter):
         observation_offset=None,
         observation_covariance=None,
     ):
-        r"""Update a Kalman Filter state estimate
+        r"""Update a Kalman Filter state estimate.
 
         Perform a one-step update to estimate the state at time :math:`t+1`
         give an observation at time :math:`t+1` and the previous estimate for
@@ -538,7 +539,7 @@ class CholeskyKalmanFilter(KalmanFilter):
         return (next_filtered_state_mean, next_filtered_state_covariance)
 
     def smooth(self, X):
-        """Apply the Kalman Smoother
+        """Apply the Kalman Smoother.
 
         Apply the Kalman Smoother to estimate the hidden state at time
         :math:`t` for :math:`t = [0...n_{\\text{timesteps}}-1]` given all
@@ -609,7 +610,7 @@ class CholeskyKalmanFilter(KalmanFilter):
         return (smoothed_state_means, smoothed_state_covariances)
 
     def em(self, X, y=None, n_iter=10, em_vars=None):
-        """Apply the EM algorithm
+        """Apply the EM algorithm.
 
         Apply the EM algorithm to estimate all parameters specified by
         `em_vars`.  Note that all variables estimated are assumed to be
@@ -738,7 +739,7 @@ class CholeskyKalmanFilter(KalmanFilter):
         return self
 
     def loglikelihood(self, X):
-        """Calculate the log likelihood of all observations
+        """Calculate the log-likelihood of all observations.
 
         Parameters
         ----------

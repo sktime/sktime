@@ -1,4 +1,5 @@
-"""
+"""Square Root Unscented Kalman Filter.
+
 =========================================
 Inference for Non-Linear Gaussian Systems
 =========================================
@@ -29,7 +30,7 @@ from ..utils import array2d
 
 
 def _reconstruct_covariances(covariance2s):
-    """Reconstruct covariance matrices given their cholesky factors"""
+    """Reconstruct covariance matrices given their cholesky factors."""
     if len(covariance2s.shape) == 2:
         covariance2s = covariance2s[np.newaxis, :, :]
 
@@ -44,7 +45,7 @@ def _reconstruct_covariances(covariance2s):
 
 
 def cholupdate(A2, X, weight):
-    """Calculate chol(A + w x x')
+    """Calculate chol(A + w x x').
 
     Parameters
     ----------
@@ -108,7 +109,7 @@ def cholupdate(A2, X, weight):
 
 
 def qr(A):
-    """Get square upper triangular matrix of QR decomposition of matrix A"""
+    """Get square upper triangular matrix of QR decomposition of matrix A."""
     N, L = A.shape
     if not N >= L:
         raise ValueError("Number of columns must exceed number of rows")
@@ -117,7 +118,7 @@ def qr(A):
 
 
 def points2moments(points, sigma2_noise=None):
-    """Calculate estimated mean and covariance of sigma points
+    """Calculate estimated mean and covariance of sigma points.
 
     Parameters
     ----------
@@ -148,7 +149,7 @@ def points2moments(points, sigma2_noise=None):
 
 
 def moments2points(moments, alpha=None, beta=None, kappa=None):
-    """Calculate "sigma points" used in Unscented Kalman Filter
+    """Calculate "sigma points" used in Unscented Kalman Filter.
 
     Parameters
     ----------
@@ -250,7 +251,7 @@ def _unscented_transform(points, f=None, points_noise=None, sigma2_noise=None):
 
 
 def _unscented_correct(cross_sigma, moments_pred, obs_moments_pred, z):
-    """Correct predicted state estimates with an observation
+    """Correct predicted state estimates with an observation.
 
     Parameters
     ----------
@@ -306,7 +307,7 @@ def _unscented_correct(cross_sigma, moments_pred, obs_moments_pred, z):
 def unscented_filter_predict(
     transition_function, points_state, points_transition=None, sigma2_transition=None
 ):
-    """Predict next state distribution
+    """Predict next state distribution.
 
     Using the sigma points representing the state at time t given observations
     from time steps 0...t, calculate the predicted mean, covariance, and sigma
@@ -356,7 +357,7 @@ def unscented_filter_correct(
     points_observation=None,
     sigma2_observation=None,
 ):
-    """Integrate new observation to correct state estimates
+    """Integrate new observation to correct state estimates.
 
     Parameters
     ----------
@@ -406,7 +407,7 @@ def unscented_filter_correct(
 
 
 def _additive_unscented_filter(mu_0, sigma_0, f, g, Q, R, Z):
-    """Apply the Unscented Kalman Filter with additive noise
+    """Apply the Unscented Kalman Filter with additive noise.
 
     Parameters
     ----------
@@ -474,7 +475,7 @@ def _additive_unscented_filter(mu_0, sigma_0, f, g, Q, R, Z):
 
 
 def _additive_unscented_smoother(mu_filt, sigma2_filt, f, Q):
-    """Apply the Unscented Kalman Filter assuming additiven noise
+    """Apply the Unscented Kalman Filter assuming additiven noise.
 
     Parameters
     ----------
@@ -597,7 +598,7 @@ class AdditiveUnscentedKalmanFilter(AUKF):
     """
 
     def filter(self, Z):
-        """Run Unscented Kalman Filter
+        """Run Unscented Kalman Filter.
 
         Parameters
         ----------
@@ -656,7 +657,7 @@ class AdditiveUnscentedKalmanFilter(AUKF):
         observation_function=None,
         observation_covariance=None,
     ):
-        r"""Update a Kalman Filter state estimate
+        r"""Update a Kalman Filter state estimate.
 
         Perform a one-step update to estimate the state at time :math:`t+1`
         give an observation at time :math:`t+1` and the previous estimate for
@@ -769,7 +770,7 @@ class AdditiveUnscentedKalmanFilter(AUKF):
         return (next_filtered_state_mean, next_filtered_state_covariance)
 
     def smooth(self, Z):
-        """Run Unscented Kalman Smoother
+        """Run Unscented Kalman Smoother.
 
         Parameters
         ----------
