@@ -134,7 +134,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         )
         # .get_params() returns an empty list for callback.
         # inconsistent with function initial run where callbacks was set to None
-        self.callbacks = self.callbacks or None
+        self._callbacks = self.callbacks or None
 
         return model
 
@@ -189,10 +189,8 @@ class LSTMFCNClassifier(BaseDeepClassifier):
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
-            callbacks=deepcopy(self.callbacks) if self.callbacks else None,
+            callbacks=deepcopy(self._callbacks) if self._callbacks else None,
         )
-
-        self._is_fitted = True
 
         return self
 
