@@ -438,9 +438,11 @@ def augmented_unscented_filter(mu_0, sigma_0, f, g, Q, R, Z):
             mu, sigma = mu_filt[t - 1], sigma_filt[t - 1]
 
         # extract sigma points using augmented representation
-        (points_state, points_transition, points_observation) = (
-            augmented_unscented_filter_points(mu, sigma, Q, R)
-        )
+        (
+            points_state,
+            points_transition,
+            points_observation,
+        ) = augmented_unscented_filter_points(mu, sigma, Q, R)
 
         # Calculate E[x_t | z_{0:t-1}], Var(x_t | z_{0:t-1}) and sigma points
         # for P(x_t | z_{0:t-1})
@@ -671,7 +673,7 @@ def additive_unscented_smoother(mu_filt, sigma_filt, f, Q):
     return (mu_smooth, sigma_smooth)
 
 
-class UnscentedMixin(object):
+class UnscentedMixin:
     """Methods shared by all Unscented Kalman Filter implementations."""
 
     def __init__(
@@ -686,7 +688,6 @@ class UnscentedMixin(object):
         n_dim_obs=None,
         random_state=None,
     ):
-
         # determine size of state and observation space
         n_dim_state = _determine_dimensionality(
             [
@@ -992,13 +993,15 @@ class UnscentedKalmanFilter(UnscentedMixin):
             observation = np.ma.asarray(observation)
 
         # make sigma points
-        (points_state, points_transition, points_observation) = (
-            augmented_unscented_filter_points(
-                filtered_state_mean,
-                filtered_state_covariance,
-                transition_covariance,
-                observation_covariance,
-            )
+        (
+            points_state,
+            points_transition,
+            points_observation,
+        ) = augmented_unscented_filter_points(
+            filtered_state_mean,
+            filtered_state_covariance,
+            transition_covariance,
+            observation_covariance,
         )
 
         # predict
@@ -1007,14 +1010,15 @@ class UnscentedKalmanFilter(UnscentedMixin):
         )
 
         # correct
-        next_filtered_state_mean, next_filtered_state_covariance = (
-            unscented_filter_correct(
-                observation_function,
-                moments_pred,
-                points_pred,
-                observation,
-                points_observation=points_observation,
-            )
+        (
+            next_filtered_state_mean,
+            next_filtered_state_covariance,
+        ) = unscented_filter_correct(
+            observation_function,
+            moments_pred,
+            points_pred,
+            observation,
+            points_observation=points_observation,
         )
 
         return (next_filtered_state_mean, next_filtered_state_covariance)

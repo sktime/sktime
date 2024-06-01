@@ -8,7 +8,7 @@ from pykalman import KalmanFilter
 from pykalman.datasets import load_robot
 
 
-class KalmanFilterTests(object):
+class KalmanFilterTests:
     """All of the actual tests to check against an implementation of the usual
     Kalman Filter. Abstract so that sister implementations can re-use these
     tests.

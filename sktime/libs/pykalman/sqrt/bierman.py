@@ -41,7 +41,7 @@ def _reconstruct_covariances(covariances):
     return result
 
 
-class UDU_decomposition(object):
+class UDU_decomposition:
     """Represents a UDU' decomposition of a matrix"""
 
     def __init__(self, U, D):

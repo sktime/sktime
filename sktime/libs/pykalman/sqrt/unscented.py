@@ -755,14 +755,15 @@ class AdditiveUnscentedKalmanFilter(AUKF):
         points_pred = moments2points(moments_pred)
 
         # correct
-        (next_filtered_state_mean, next_filtered_state_covariance2) = (
-            unscented_filter_correct(
-                observation_function,
-                moments_pred,
-                points_pred,
-                observation,
-                sigma2_observation=observation_covariance2,
-            )
+        (
+            next_filtered_state_mean,
+            next_filtered_state_covariance2,
+        ) = unscented_filter_correct(
+            observation_function,
+            moments_pred,
+            points_pred,
+            observation,
+            sigma2_observation=observation_covariance2,
         )
 
         next_filtered_state_covariance = _reconstruct_covariances(

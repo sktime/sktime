@@ -393,15 +393,17 @@ def _filter(
         observation_matrix = _last_dims(observation_matrices, t)
         observation_covariance = _last_dims(observation_covariance, t)
         observation_offset = _last_dims(observation_offsets, t, ndims=1)
-        (kalman_gains[t], filtered_state_means[t], filtered_state_covariances[t]) = (
-            _filter_correct(
-                observation_matrix,
-                observation_covariance,
-                observation_offset,
-                predicted_state_means[t],
-                predicted_state_covariances[t],
-                observations[t],
-            )
+        (
+            kalman_gains[t],
+            filtered_state_means[t],
+            filtered_state_covariances[t],
+        ) = _filter_correct(
+            observation_matrix,
+            observation_covariance,
+            observation_offset,
+            predicted_state_means[t],
+            predicted_state_covariances[t],
+            observations[t],
         )
 
     return (
