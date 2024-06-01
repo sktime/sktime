@@ -17,6 +17,7 @@ import joblib
 import numpy as np
 import pandas as pd
 import pytest
+from _pytest.outcomes import Skipped
 
 from sktime.base import BaseEstimator, BaseObject, load
 from sktime.classification.deep_learning.base import BaseDeepClassifier
@@ -599,6 +600,8 @@ class QuickTester:
                     try:
                         test_fun(**deepcopy(args))
                         results[key] = "PASSED"
+                    except Skipped as err:
+                        results[key] = f"SKIPPED: {err.msg}"
                     except Exception as err:
                         results[key] = err
                 else:
