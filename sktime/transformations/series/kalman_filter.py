@@ -417,7 +417,7 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
     an up-to-date maintenance fork of the ``pykalman`` package.
 
     The maintenance fork can also be directly accessed in
-    ``sktime.lib.pykalman``.
+    ``sktime.libs.pykalman``.
 
     Parameters
     ----------
@@ -729,7 +729,7 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
             X_transformed : np.ndarray
                 transformed version of X
         """
-        from sktime.lib.pykalman import KalmanFilter
+        from sktime.libs.pykalman import KalmanFilter
 
         X_masked = np.ma.masked_invalid(X)
 
@@ -812,7 +812,7 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
             F, H, Q, R, transition_offsets, measurement_offsets,
             X0, P0 as np.ndarray.
         """
-        from sktime.lib.pykalman import KalmanFilter
+        from sktime.libs.pykalman import KalmanFilter
 
         X_masked = np.ma.masked_invalid(X)
         estimate_matrices_ = self._get_estimate_matrices()
