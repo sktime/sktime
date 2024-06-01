@@ -123,6 +123,7 @@ Transformations
 Test framework
 ^^^^^^^^^^^^^^
 
+* [ENH] enable ``check_estimator`` and ``QuickTester.run_tests`` to work with skip marked ``pytest`` tests (:pr:`6233`) :user:`YelenaYY`
 * [ENH] make ``get_packages_with_changed_specs`` safe to mutation of return (:pr:`6451`) :user:`fkiraly`
 
 Visualization
