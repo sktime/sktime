@@ -397,11 +397,14 @@ class BaseKalmanFilter:
 
 
 class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
-    """Kalman Filter is used for denoising data, or inferring the hidden state of data.
+    """Kalman Filter, from pykalman (sktime native maintenance fork).
 
     The Kalman Filter is an unsupervised algorithm, consisting of
     several mathematical equations which are used to create
     an estimate of the state of a process.
+
+    The Kalman Filter is typically used for denoising data,
+    or inferring the hidden state of data.
 
     This class is the adapter for the ``pykalman`` package into ``sktime``.
     ``KalmanFilterTransformerPK`` implements hidden inferred states and
@@ -409,6 +412,12 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
     In addition, ``KalmanFilterTransformerPK`` provides parameter
     optimization via Expectation-Maximization (EM) algorithm [2]_,
     implemented by ``pykalman``.
+
+    As the ``pykalman`` package is no longer maintained, ``sktime`` now contains
+    an up-to-date maintenance fork of the ``pykalman`` package.
+
+    The maintenance fork can also be directly accessed in
+    ``sktime.transformations.series.kalman_filter.pykalman``.
 
     Parameters
     ----------
@@ -1089,28 +1098,6 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
         -------
             self: reference to self
         """
-        # The below call to `_check_conditional_dependency` checks the installation
-        # of `pykalman` package, if needed. `pykalman`
-        # is used when the user requires matrices estimation
-        # (`estimate_matrices` is not None).
-        # This conditioned dependency check can be performed in
-        # `__init__` for early user feedback.
-        _check_conditional_dependency(
-            obj=self,
-            condition=(self.estimate_matrices is not None),
-            package="pykalman",
-            package_import_alias={"pykalman": "pykalman"},
-            severity="error",
-            msg=(
-                f"{self.__class__.__name__}'s matrix parameter estimation "
-                f"is performed when `estimate_matrices` "
-                f"is {self.estimate_matrices}, "
-                f"and requires `pykalman` installed. Please run: "
-                f"`pip install pykalman` to "
-                f"install the `pykalman` package. "
-            ),
-        )
-
         measurement_dim = X.shape[1]
         time_steps = X.shape[0]
         shapes = self._get_shapes(

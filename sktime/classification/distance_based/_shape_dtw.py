@@ -108,6 +108,22 @@ class ShapeDTW(BaseClassifier):
     .. [1] Jiaping Zhao and Laurent Itti, "shapeDTW: Shape Dynamic Time Warping",
         Pattern Recognition, 74, pp 171-184, 2018
         http://www.sciencedirect.com/science/article/pii/S0031320317303710,
+
+    Examples
+    --------
+    >>> from sktime.classification.distance_based import ShapeDTW
+    >>> from sktime.datasets import load_unit_test  # doctest: +SKIP
+    >>> X_train, y_train = load_unit_test(split="train")  # doctest: +SKIP
+    >>> X_test, y_test = load_unit_test(split="test")  # doctest: +SKIP
+    >>> clf = ShapeDTW(n_neighbors=1,
+    ...     subsequence_length=30,
+    ...     shape_descriptor_function="raw",
+    ...     shape_descriptor_functions=None,
+    ...     metric_params=None,
+    ... )  # doctest: +SKIP
+    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
+    ShapeDTW(...)
+    >>> y_pred = clf.predict(X_test)  # doctest: +SKIP
     """
 
     _tags = {

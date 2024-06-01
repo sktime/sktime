@@ -33,7 +33,12 @@ def _detect_knee_point(values, indices):
     all_coords = np.vstack((range(n_points), values)).T
     first_point = all_coords[0]
     line_vec = all_coords[-1] - all_coords[0]
-    line_vec_norm = line_vec / np.sqrt(np.sum(line_vec**2))
+
+    line_vec_abs = np.sqrt(np.sum(line_vec**2))
+    if line_vec_abs == 0:  # ensuring normalization is correct in case of zero vector
+        line_vec_abs = 1
+    line_vec_norm = line_vec / line_vec_abs
+
     vec_from_first = all_coords - first_point
     scalar_prod = np.sum(vec_from_first * np.tile(line_vec_norm, (n_points, 1)), axis=1)
     vec_from_first_parallel = np.outer(scalar_prod, line_vec_norm)

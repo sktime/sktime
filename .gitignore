@@ -168,3 +168,5 @@ examples/local/
 
 # py-spy profiler output
 profile.svg
+test_output/*
+mlruns/*
