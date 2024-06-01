@@ -546,7 +546,10 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["NoaBenAmi", "lielleravid"],
+        "authors": ["duckworthd", "NoaBenAmi", "lielleravid", "mbalatsko", "gliptak"],
+        # duckworthd for the original pykalman package (abandoned later)
+        # mbalatsko, gliptak for fixes and updates
+        # NoaBenAmi, lielleravid for the sktime adapter
         "maintainers": ["NoaBenAmi"],
         # estimator type
         # --------------
