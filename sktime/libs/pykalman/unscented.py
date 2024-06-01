@@ -715,7 +715,6 @@ class UnscentedMixin:
 
     def _initialize_parameters(self):
         """Retrieve parameters if they exist, else replace with defaults."""
-
         arguments = get_params(self)
         defaults = self._default_parameters()
         converters = self._converters()
@@ -1080,7 +1079,8 @@ class UnscentedKalmanFilter(UnscentedMixin):
 
 
 class AdditiveUnscentedKalmanFilter(UnscentedMixin):
-    r"""Implements the Unscented Kalman Filter with additive noise.
+    r"""Unscented Kalman Filter with additive noise.
+
     Observations are assumed to be generated from the following process,
 
     .. math::

@@ -6,8 +6,7 @@ from pykalman.tests.test_standard import KalmanFilterTests
 
 
 class CholeskyKalmanFilterTestSuite(TestCase, KalmanFilterTests):
-    """Run Kalman Filter tests on the Cholesky Factorization-based Kalman
-    Filter"""
+    """Run tests for the Cholesky Factorization-based Kalman Filter."""
 
     def setUp(self):
         self.KF = CholeskyKalmanFilter

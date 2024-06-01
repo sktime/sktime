@@ -1,6 +1,4 @@
-"""
-Dataset
-"""
+"""Datasets loaders for pykalman."""
 
 from os.path import dirname, join
 
@@ -12,7 +10,7 @@ from ..utils import Bunch
 
 
 def load_robot():
-    """Load and return synthetic robot state data (state estimation)
+    """Load and return synthetic robot state data (state estimation).
 
     =================================
     Number of time steps          501
@@ -35,7 +33,7 @@ def load_robot():
     """
 
     def pad_and_mask(X):
-        """Pad X's first index with zeros and mask it"""
+        """Pad X's first index with zeros and mask it."""
         zeros = np.zeros(X.shape[1:])[np.newaxis]
         X = np.vstack([zeros, X])
         mask = np.zeros(X.shape)

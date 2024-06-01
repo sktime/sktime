@@ -209,7 +209,7 @@ def _unscented_transform(points, f=None, points_noise=None, sigma2_noise=None):
     """Apply the Unscented Transform.
 
     Parameters
-    ==========
+    ----------
     points : [n_points, n_dim_1] array
         points representing state to pass through `f`
     f : [n_dim_1, n_dim_3] -> [n_dim_2] function
@@ -220,7 +220,7 @@ def _unscented_transform(points, f=None, points_noise=None, sigma2_noise=None):
         square root of covariance matrix for additive noise
 
     Returns
-    =======
+    -------
     points_pred : [n_points, n_dim_2] array
         points passed through f
     mu_pred : [n_dim_2] array

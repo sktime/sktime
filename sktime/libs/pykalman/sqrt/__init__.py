@@ -1,4 +1,5 @@
-"""
+"""Kalman module for state-space estimation in continuous spaces.
+
 =============
 Kalman Module
 =============

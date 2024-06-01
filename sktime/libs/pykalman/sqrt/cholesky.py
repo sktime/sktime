@@ -299,7 +299,7 @@ def _filter(
 
 
 class CholeskyKalmanFilter(KalmanFilter):
-    """Kalman Filter based on Cholesky decomposition
+    r"""Kalman Filter based on Cholesky decomposition.
 
     Parameters
     ----------
@@ -349,7 +349,7 @@ class CholeskyKalmanFilter(KalmanFilter):
     """
 
     def filter(self, X):
-        """Apply the Kalman Filter.
+        r"""Apply the Kalman Filter.
 
         Apply the Kalman Filter to estimate the hidden state at time :math:`t`
         for :math:`t = [0...n_{\\text{timesteps}}-1]` given observations up to
