@@ -57,7 +57,7 @@ dependencies = [
   "packaging",  # for estimator specific dependency parsing
   "pandas<2.3.0,>=1.1",  # pandas is the main in-memory data container
   "scikit-base<0.8.0,>=0.6.1",  # base module for sklearn compatible base API
-  "scikit-learn>=0.24,<1.5.0",  # required for estimators and framework layer
+  "scikit-learn>=0.24,<1.6.0",  # required for estimators and framework layer
   "scipy<2.0.0,>=1.2",  # required for estimators and framework layer
 ]
 
