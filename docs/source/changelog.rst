@@ -19,6 +19,59 @@ For upcoming changes and next releases, see our `milestones <https://github.com/
 For our long-term plan, see our :ref:`roadmap`.
 
 
+Version 0.30.0 - 2024-06-02
+---------------------------
+
+Major upgrade to the time series anomaly, changepoints, segmentation API.
+Users should review the section in the release notes.
+
+Kindly also note the python 3.8 End-of-life warning below.
+
+Also includes scheduled deprecations and change actions.
+
+For last major feature update, see 0.29.1.
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``skpro`` (soft dependency) bounds have been updated to ``<2.4.0``
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Python 3.8 End-of-life
+^^^^^^^^^^^^^^^^^^^^^^
+
+``sktime`` now requires Python version >=3.9.
+No errors will be raised on Python 3.8, but test coverage and support for
+Python 3.8 has been dropped.
+
+Kindly note for context: python 3.8 will reach end of life
+in October 2024, and multiple ``sktime`` core dependencies,
+including ``scikit-learn``, have already dropped support for 3.8.
+
+Forecasting
+^^^^^^^^^^^
+
+``cINNForecaster`` has been renamed to ``CINNForecaster``.
+The estimator is no longer available under its old name,
+after the deprecation period.
+Users should replace any imports of ``cINNForecaster``
+with imports of ``CINNForecaster``.
+
+Contents
+~~~~~~~~
+
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`fkiraly`,
+:user:`geetu040`,
+:user:`yarnabrina`
+
+
+
 Version 0.29.1 - 2024-05-30
 ---------------------------
 
