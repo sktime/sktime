@@ -107,9 +107,10 @@ class CNTCClassifier(BaseDeepClassifier):
         self.loss = loss
         self.metrics = metrics
         self.random_state = random_state
-        self._network = CNTCNetwork()
 
-        super().__init__(batch_size=batch_size, random_state=random_state)
+        super().__init__()
+
+        self._network = CNTCNetwork()
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
@@ -228,7 +229,7 @@ class CNTCClassifier(BaseDeepClassifier):
         """
         if self.callbacks is None:
             self._callbacks = []
-        y_onehot = self.convert_y_to_keras(y)
+        y_onehot = self._convert_y_to_keras(y)
         # Transpose to conform to Keras input style.
         X = X.transpose(0, 2, 1)
 

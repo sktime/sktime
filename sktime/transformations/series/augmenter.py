@@ -58,6 +58,16 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
             If None, rely on ``self.random_state``.
             Default is None." [3]
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.transformations.series.augmenter import WhiteNoiseAugmenter
+    >>> X = np.array([1, 2, 3, 4, 5])
+    >>> augmenter = WhiteNoiseAugmenter(scale=0.5, random_state=42)
+    >>> augmenter.fit(X)
+    WhiteNoiseAugmenter(...)
+    >>> X_augmented = augmenter.transform(X)
+
     References and Footnotes
     ----------
 
@@ -135,6 +145,8 @@ class InvertAugmenter(_AugmenterTags, BaseTransformer):
 
     Examples
     --------
+    >>> from sktime.transformations.series.augmenter import InvertAugmenter
+    >>> import pandas as pd
     >>> X = pd.Series([1,2,3,4,5])
     >>> augmenter = InvertAugmenter()
     >>> Xt = augmenter.fit_transform(X)

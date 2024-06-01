@@ -82,7 +82,7 @@ def test_infer_freq() -> None:
 
     index = pd.date_range(start="2021-01-01", periods=1, freq="M")
     y = pd.Series(index=index, dtype=int)
-    assert infer_freq(y) == "M"
+    assert infer_freq(y) in ["M", "ME"]
 
     y = pd.DataFrame({"a": 1}, index=pd.date_range(start="2021-01-01", periods=1))
     assert infer_freq(y) == "D"
@@ -90,39 +90,11 @@ def test_infer_freq() -> None:
     y = pd.DataFrame(
         {"a": 1}, index=pd.date_range(start="2021-01-01", periods=1, freq="M")
     )
-    assert infer_freq(y) == "M"
+    assert infer_freq(y) in ["M", "ME"]
 
     y = _bottom_hier_datagen(no_levels=2)
     y = VectorizedDF(X=y, iterate_as="Series", is_scitype="Hierarchical")
-    assert infer_freq(y) == "M"
-
-
-def test_set_freq() -> None:
-    """Test frequency inference."""
-    assert infer_freq(None) is None
-
-    y = pd.Series(dtype=int)
-    assert infer_freq(y) is None
-
-    index = pd.date_range(start="2021-01-01", periods=1)
-    y = pd.Series(index=index, dtype=int)
-    assert infer_freq(y) == "D"
-
-    index = pd.date_range(start="2021-01-01", periods=1, freq="M")
-    y = pd.Series(index=index, dtype=int)
-    assert infer_freq(y) == "M"
-
-    y = pd.DataFrame({"a": 1}, index=pd.date_range(start="2021-01-01", periods=1))
-    assert infer_freq(y) == "D"
-
-    y = pd.DataFrame(
-        {"a": 1}, index=pd.date_range(start="2021-01-01", periods=1, freq="M")
-    )
-    assert infer_freq(y) == "M"
-
-    y = _bottom_hier_datagen(no_levels=2)
-    y = VectorizedDF(X=y, iterate_as="Series", is_scitype="Hierarchical")
-    assert infer_freq(y) == "M"
+    assert infer_freq(y) in ["M", "ME"]
 
 
 def test_set_freq_hier():

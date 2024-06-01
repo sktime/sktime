@@ -451,61 +451,26 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
     """
     lag = window[0]
     window_length = window[1]
-
+    feat: pd.DataFrame = pd.DataFrame()
     if summarizer in pd_rolling:
-        if isinstance(Z, pd.core.groupby.generic.SeriesGroupBy):
-            if bfill is False:
-                feat = getattr(
-                    Z.shift(lag).rolling(
-                        window=window_length, min_periods=window_length
-                    ),
-                    summarizer,
-                )()
-            else:
-                feat = getattr(
-                    Z.shift(lag)
-                    .bfill()
-                    .rolling(window=window_length, min_periods=window_length),
-                    summarizer,
-                )()
-            feat = pd.DataFrame(feat)
-        else:
-            if bfill is False:
-                feat = Z.apply(
-                    lambda x: getattr(
-                        x.shift(lag).rolling(
-                            window=window_length, min_periods=window_length
-                        ),
-                        summarizer,
-                    )()
-                )
-            else:
-                feat = Z.apply(
-                    lambda x: getattr(
-                        x.shift(lag)
-                        .bfill()
-                        .rolling(window=window_length, min_periods=window_length),
-                        summarizer,
-                    )()
-                )
+        feat = Z.transform(
+            lambda x: getattr(
+                x.rolling(window=window_length, min_periods=window_length), summarizer
+            )().shift(lag)
+        )
+    elif summarizer == "lag":
+        feat = Z.transform(lambda x: x.shift(lag))
+    elif callable(summarizer):
+        feat = Z.transform(
+            lambda x: x.rolling(window=window_length, min_periods=window_length)
+            .apply(summarizer, raw=True)
+            .shift(lag)
+        )
     else:
-        if bfill is False:
-            feat = Z.shift(lag)
-        else:
-            feat = Z.shift(lag).bfill()
-        if isinstance(Z, pd.core.groupby.generic.SeriesGroupBy) and callable(
-            summarizer
-        ):
-            feat = feat.rolling(window_length).apply(summarizer, raw=True)
-        elif not isinstance(Z, pd.core.groupby.generic.SeriesGroupBy) and callable(
-            summarizer
-        ):
-            feat = feat.apply(
-                lambda x: x.rolling(
-                    window=window_length, min_periods=window_length
-                ).apply(summarizer, raw=True)
-            )
-        feat = pd.DataFrame(feat)
+        raise ValueError("The provided summarizer is not callable.")
+    feat = pd.DataFrame(feat)
+
+    # Handle backfill
     if bfill is True:
         feat = feat.bfill()
 

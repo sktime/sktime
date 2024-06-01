@@ -41,6 +41,7 @@ from sktime.utils.datetime import (
     _shift,
     infer_freq,
 )
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.series import is_in_valid_index_types, is_integer_index
 
 
@@ -326,11 +327,16 @@ FREQUENCY_STRINGS = [*FIXED_FREQUENCY_STRINGS, *NON_FIXED_FREQUENCY_STRINGS]
 
 def _get_expected_freqstr(freqstr):
     # special case for 10min, T is being deprecated and replaced by min
-    if freqstr == "10min":
-        fh_freqstr_expected = "10T"
-    else:
-        fh_freqstr_expected = freqstr
-    return fh_freqstr_expected
+    if _check_soft_dependencies("pandas<2.2.0", severity="none"):
+        if freqstr == "10min":
+            return "10T"
+        return freqstr
+    # on more recent pandas versions, >=2.2.0
+    if freqstr == "H":
+        return "h"
+    if freqstr == "M":
+        return "ME"
+    return freqstr
 
 
 @pytest.mark.parametrize("freqstr", FREQUENCY_STRINGS)
@@ -796,3 +802,26 @@ def test_tz_preserved():
     fh_absolute = ForecastingHorizon(range(100), freq="h").to_absolute(cutoff)
 
     assert fh_absolute[0].tz == cutoff.tz
+
+
+# the "XE" frequencies are not supported by pandas 1 or 2.0.X
+FREQ_STR_FOR_PD22 = ["Y", "2Y", "M", "3M"]
+
+if _check_soft_dependencies("pandas>=2.1.0", severity="none"):
+    FREQ_STR_FOR_PD22 += ["YE", "2YE", "ME", "3ME"]
+
+
+@pytest.mark.parametrize("freq", FREQ_STR_FOR_PD22)
+def test_pandas22_freq(freq):
+    """Test that to_absolute and to_relative conversions work with all freqs.
+
+    Failure cas in bug #6499.
+    """
+    fh = ForecastingHorizon([1, 2, 3])
+
+    datetime_ = pd.date_range("1/1/1870", periods=20, freq=freq)
+    cutoff = datetime_[[-1]]
+    cutoff.freq = datetime_.freq
+
+    fh.to_absolute(cutoff)  # failure 1
+    fh.to_absolute(cutoff).to_relative(cutoff)  # failure 2

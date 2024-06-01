@@ -107,7 +107,6 @@ class MCDCNNClassifier(BaseDeepClassifier):
         random_state=0,
     ):
         _check_dl_dependencies(severity="error")
-        super().__init__()
 
         self.n_epochs = n_epochs
         self.batch_size = batch_size
@@ -125,6 +124,9 @@ class MCDCNNClassifier(BaseDeepClassifier):
         self.optimizer = optimizer
         self.verbose = verbose
         self.random_state = random_state
+
+        super().__init__()
+
         self.history = None
         self._network = MCDCNNNetwork(
             kernel_size=self.kernel_size,
@@ -204,7 +206,7 @@ class MCDCNNClassifier(BaseDeepClassifier):
         -------
         self : object
         """
-        y_onehot = self.convert_y_to_keras(y)
+        y_onehot = self._convert_y_to_keras(y)
         X = X.transpose(0, 2, 1)
         self.input_shape = X.shape[1:]
         X = self._network._prepare_input(X)

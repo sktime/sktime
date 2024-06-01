@@ -381,6 +381,9 @@ class ForecastingHorizon:
         if hasattr(self, "_freq") and hasattr(self._freq, "freqstr"):
             # _freq is a pandas offset, frequency string is obtained via freqstr
             return self._freq.freqstr
+        elif hasattr(self, "_freq") and isinstance(self._freq, str):
+            # _freq is a string, frequency string is obtained directly
+            return self._freq
         else:
             return None
 
@@ -415,8 +418,12 @@ class ForecastingHorizon:
                     f"Current: {freq_from_self}, from update: {freq_from_obj}."
                 )
         elif freq_from_obj is not None:  # only freq_from_obj is not None
+            if freq_from_obj == "ME":
+                freq_from_obj = "M"
             self._freq = freq_from_obj
         else:
+            if freq_from_obj == "ME":
+                freq_from_obj = "M"
             # leave self._freq as freq_from_self, or set to None if does not exist yet
             self._freq = freq_from_self
 
@@ -531,7 +538,7 @@ class ForecastingHorizon:
             integer index.
         """
         cutoff = self._coerce_cutoff_to_index(cutoff)
-        freq = self.freq
+        freq = self._freq
 
         absolute = self.to_absolute_index(cutoff)
 
@@ -806,10 +813,10 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
         if isinstance(absolute, pd.DatetimeIndex):
             # coerce to pd.Period for reliable arithmetic and computations of
             # time deltas
-            absolute = _coerce_to_period(absolute, freq=fh.freq)
-            cutoff = _coerce_to_period(cutoff, freq=fh.freq)
+            absolute = _coerce_to_period(absolute, freq=fh._freq)
+            cutoff = _coerce_to_period(cutoff, freq=fh._freq)
 
-        # TODO: 0.28.0:
+        # TODO: 0.30.0:
         # Check at every minor release whether lower pandas bound >=0.15.0
         # if yes, can remove the workaround in the "else" condition and the check
         #
@@ -882,7 +889,7 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
         if is_timestamp:
             # coerce to pd.Period for reliable arithmetic operations and
             # computations of time deltas
-            cutoff = _coerce_to_period(cutoff, freq=fh.freq)
+            cutoff = _coerce_to_period(cutoff, freq=fh._freq)
 
         if isinstance(cutoff, pd.Index):
             cutoff = cutoff[[0] * len(relative)]
@@ -891,7 +898,7 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
 
         if is_timestamp:
             # coerce back to DatetimeIndex after operation
-            absolute = absolute.to_timestamp(fh.freq)
+            absolute = absolute.to_timestamp(fh._freq)
 
         if old_tz is not None:
             absolute = absolute.tz_localize(old_tz)
@@ -948,19 +955,7 @@ def _coerce_to_period(x, freq=None):
         raise ValueError(
             "_coerce_to_period requires freq argument to be passed if x is pd.Timestamp"
         )
-    try:
-        return x.to_period(freq)
-    except (ValueError, AttributeError) as e:
-        msg = str(e)
-        if "Invalid frequency" in msg or "_period_dtype_code" in msg:
-            raise ValueError(
-                "Invalid frequency. Please select a frequency that can "
-                "be converted to a regular `pd.PeriodIndex`. For other "
-                "frequencies, basic arithmetic operation to compute "
-                "durations currently do not work reliably."
-            )
-        else:
-            raise
+    return x.to_period(freq)
 
 
 def _index_range(relative, cutoff):

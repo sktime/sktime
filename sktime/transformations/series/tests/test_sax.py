@@ -2,7 +2,7 @@
 import numpy as np
 import pytest
 
-from sktime.transformations.series.sax import SAX2
+from sktime.transformations.series.sax import SAX
 
 
 # Check that exception is raised for bad size values.
@@ -13,7 +13,7 @@ def test_bad_input_types(bad_size):
     """Test that exception is raised for bad sizes."""
     for attribute in ["word_size", "alphabet_size", "frame_size"]:
         with pytest.raises(TypeError):
-            SAX2(**{attribute: bad_size})
+            SAX(**{attribute: bad_size})
 
 
 @pytest.mark.parametrize(
@@ -27,7 +27,7 @@ def test_bad_input_types(bad_size):
 def test_bad_input_values(attribute, bad_size):
     """Test that word_size is at least 1 (if frame_size is not set)."""
     with pytest.raises(ValueError):
-        SAX2(**{attribute: bad_size})
+        SAX(**{attribute: bad_size})
 
 
 @pytest.mark.parametrize(
@@ -42,7 +42,7 @@ def test_bad_input_values(attribute, bad_size):
 def test_output_of_transformer(word_size, alphabet_size, frame_size, expected):
     """Test that the transformer has changed the data correctly."""
     X = np.arange(10).T
-    sax = SAX2(word_size, alphabet_size, frame_size)
+    sax = SAX(word_size, alphabet_size, frame_size)
     res = sax.fit_transform(X)
     want = np.array(expected, dtype=np.float64).T
     np.testing.assert_array_equal(res, want)

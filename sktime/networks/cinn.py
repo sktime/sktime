@@ -4,6 +4,8 @@ __author__ = ["benHeid"]
 import numpy as np
 from skbase.utils.dependencies import _check_soft_dependencies
 
+from sktime.utils.warnings import warn
+
 if _check_soft_dependencies("torch", severity="none"):
     import torch
     import torch.nn as nn
@@ -22,7 +24,7 @@ if _check_soft_dependencies("FrEIA", severity="none"):
     import FrEIA.modules as Fm
 
 
-class cINNNetwork:
+class CINNNetwork:
     """
     Conditional Invertible Neural Network.
 
@@ -42,7 +44,7 @@ class cINNNetwork:
         Activation function to use in the subnet.
     """
 
-    class _cINNNetwork(NNModule):
+    class _CINNNetwork(NNModule):
         def __init__(
             self,
             horizon,
@@ -193,9 +195,21 @@ class cINNNetwork:
         self.hidden_dim_size = hidden_dim_size
         self.activation = activation if activation is not None else nn.ReLU
 
+        # TODO 0.30.0: remove this warning
+        warn(
+            "cINNNetwork has been renamed to CINNNetwork in sktime 0.29.0, "
+            "The estimator is available under the future name at its "
+            "current location, and will be available under its deprecated name "
+            "until 0.30.0. "
+            "To prepare for the name change, "
+            "replace cINNNetwork with CINNNetwork",
+            DeprecationWarning,
+            obj=self,
+        )
+
     def build(self):
         """Build the cINN."""
-        return self._cINNNetwork(
+        return self._CINNNetwork(
             self.horizon,
             self.cond_features,
             self.encoded_cond_size,
@@ -203,3 +217,7 @@ class cINNNetwork:
             self.hidden_dim_size,
             self.activation,
         )
+
+
+# TODO 0.30.0: remove this alias altogether
+cINNNetwork = CINNNetwork

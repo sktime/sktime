@@ -119,7 +119,6 @@ class TapNetClassifier(BaseDeepClassifier):
         verbose=False,
     ):
         _check_dl_dependencies(severity="error")
-        super().__init__()
 
         self.batch_size = batch_size
         self.random_state = random_state
@@ -147,6 +146,8 @@ class TapNetClassifier(BaseDeepClassifier):
         # parameters for random projection
         self.use_rp = use_rp
         self.rp_params = rp_params
+
+        super().__init__()
 
         self._network = TapNetNetwork(
             dropout=self.dropout,
@@ -227,7 +228,7 @@ class TapNetClassifier(BaseDeepClassifier):
         -------
         self: object
         """
-        y_onehot = self.convert_y_to_keras(y)
+        y_onehot = self._convert_y_to_keras(y)
         # Transpose to conform to expectation format by keras
         X = X.transpose(0, 2, 1)
 
