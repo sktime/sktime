@@ -1,4 +1,4 @@
-'''
+"""
 =========================================
 Inference for Non-Linear Gaussian Systems
 =========================================
@@ -16,7 +16,8 @@ References
   Propagation and Data Assimilation. 2010. Page 108.
 * Van Der Merwe, R. and Wan, E.A. The Square-Root Unscented Kalman Filter for
   State and Parameter-Estimation. 2001.
-'''
+"""
+
 import numpy as np
 from numpy import ma
 from scipy import linalg
@@ -24,12 +25,11 @@ from scipy import linalg
 from ..utils import array1d, array2d, check_random_state
 
 from ..standard import _last_dims, _arg_or_default
-from ..unscented import AdditiveUnscentedKalmanFilter as AUKF, \
-    SigmaPoints, Moments
+from ..unscented import AdditiveUnscentedKalmanFilter as AUKF, SigmaPoints, Moments
 
 
 def _reconstruct_covariances(covariance2s):
-    '''Reconstruct covariance matrices given their cholesky factors'''
+    """Reconstruct covariance matrices given their cholesky factors"""
     if len(covariance2s.shape) == 2:
         covariance2s = covariance2s[np.newaxis, :, :]
 
@@ -44,7 +44,7 @@ def _reconstruct_covariances(covariance2s):
 
 
 def cholupdate(A2, X, weight):
-    '''Calculate chol(A + w x x')
+    """Calculate chol(A + w x x')
 
     Parameters
     ----------
@@ -80,7 +80,7 @@ def cholupdate(A2, X, weight):
                 x(k+1:p) = c*x(k+1:p) - s*L(k, k+1:p);
             end
         end
-    '''
+    """
     # make copies
     X = X.copy()
     A2 = A2.copy()
@@ -102,13 +102,13 @@ def cholupdate(A2, X, weight):
             c = r / A2[k, k]
             s = x[k] / A2[k, k]
             A2[k, k] = r
-            A2[k, k + 1:] = (A2[k, k + 1:] + sign * s * x[k + 1:]) / c
-            x[k + 1:] = c * x[k + 1:] - s * A2[k, k + 1:]
+            A2[k, k + 1 :] = (A2[k, k + 1 :] + sign * s * x[k + 1 :]) / c
+            x[k + 1 :] = c * x[k + 1 :] - s * A2[k, k + 1 :]
     return A2
 
 
 def qr(A):
-    '''Get square upper triangular matrix of QR decomposition of matrix A'''
+    """Get square upper triangular matrix of QR decomposition of matrix A"""
     N, L = A.shape
     if not N >= L:
         raise ValueError("Number of columns must exceed number of rows")
@@ -117,7 +117,7 @@ def qr(A):
 
 
 def points2moments(points, sigma2_noise=None):
-    '''Calculate estimated mean and covariance of sigma points
+    """Calculate estimated mean and covariance of sigma points
 
     Parameters
     ----------
@@ -130,7 +130,7 @@ def points2moments(points, sigma2_noise=None):
     -------
     moments : Moments object of size [n_dim_state]
         Mean and covariance estimated using points
-    '''
+    """
     (points, weights_mu, weights_sigma) = points
     mu = points.T.dot(weights_mu)
 
@@ -143,12 +143,12 @@ def points2moments(points, sigma2_noise=None):
     if sigma2_noise is not None:
         qr_points.append(sigma2_noise)
     sigma2 = qr(np.hstack(qr_points).T)
-    #sigma2 = cholupdate(sigma2, points[0] - mu, weights_sigma[0])
+    # sigma2 = cholupdate(sigma2, points[0] - mu, weights_sigma[0])
     return Moments(mu.ravel(), sigma2)
 
 
 def moments2points(moments, alpha=None, beta=None, kappa=None):
-    '''Calculate "sigma points" used in Unscented Kalman Filter
+    """Calculate "sigma points" used in Unscented Kalman Filter
 
     Parameters
     ----------
@@ -166,17 +166,17 @@ def moments2points(moments, alpha=None, beta=None, kappa=None):
     -------
     points : [2*n_dim+1, n_dim] SigmaPoints
         sigma points and associated weights
-    '''
+    """
     (mu, sigma2) = moments
     n_dim = len(mu)
     mu = array2d(mu, dtype=float)
 
     if alpha is None:
-      alpha = 1.0
+        alpha = 1.0
     if beta is None:
-      beta = 0.0
+        beta = 0.0
     if kappa is None:
-      kappa = 3.0 - n_dim
+        kappa = 3.0 - n_dim
 
     # just because I saw it in the MATLAB implementation
     sigma2 = sigma2.T
@@ -191,8 +191,8 @@ def moments2points(moments, alpha=None, beta=None, kappa=None):
     #   mu - each column of sigma2 * sqrt(c)
     # Each column of points is one of these.
     points = np.tile(mu.T, (1, 2 * n_dim + 1))
-    points[:, 1:(n_dim + 1)] += sigma2 * np.sqrt(c)
-    points[:, (n_dim + 1):] -= sigma2 * np.sqrt(c)
+    points[:, 1 : (n_dim + 1)] += sigma2 * np.sqrt(c)
+    points[:, (n_dim + 1) :] -= sigma2 * np.sqrt(c)
 
     # Calculate weights
     weights_mean = np.ones(2 * n_dim + 1)
@@ -205,7 +205,7 @@ def moments2points(moments, alpha=None, beta=None, kappa=None):
 
 
 def _unscented_transform(points, f=None, points_noise=None, sigma2_noise=None):
-    '''Apply the Unscented Transform.
+    """Apply the Unscented Transform.
 
     Parameters
     ==========
@@ -226,7 +226,7 @@ def _unscented_transform(points, f=None, points_noise=None, sigma2_noise=None):
         empirical mean
     sigma2_pred : [n_dim_2, n_dim_2] array
         R s.t. R' R = empirical covariance
-    '''
+    """
     n_points, n_dim_state = points.points.shape
     (points, weights_mean, weights_covariance) = points
 
@@ -244,15 +244,13 @@ def _unscented_transform(points, f=None, points_noise=None, sigma2_noise=None):
     points_pred = SigmaPoints(points_pred, weights_mean, weights_covariance)
 
     # calculate approximate mean, covariance
-    moments_pred = points2moments(
-        points_pred, sigma2_noise=sigma2_noise
-    )
+    moments_pred = points2moments(points_pred, sigma2_noise=sigma2_noise)
 
     return (points_pred, moments_pred)
 
 
 def _unscented_correct(cross_sigma, moments_pred, obs_moments_pred, z):
-    '''Correct predicted state estimates with an observation
+    """Correct predicted state estimates with an observation
 
     Parameters
     ----------
@@ -273,7 +271,7 @@ def _unscented_correct(cross_sigma, moments_pred, obs_moments_pred, z):
     moments_filt : [n_dim_state] Moments
         mean and covariance of state at time t given observations from time
         steps [0, t]
-    '''
+    """
     mu_pred, sigma2_pred = moments_pred
     obs_mu_pred, obs_sigma2_pred = obs_moments_pred
 
@@ -308,9 +306,9 @@ def _unscented_correct(cross_sigma, moments_pred, obs_moments_pred, z):
     return Moments(mu_filt, sigma2_filt)
 
 
-def unscented_filter_predict(transition_function, points_state,
-                             points_transition=None,
-                             sigma2_transition=None):
+def unscented_filter_predict(
+    transition_function, points_state, points_transition=None, sigma2_transition=None
+):
     """Predict next state distribution
 
     Using the sigma points representing the state at time t given observations
@@ -341,21 +339,26 @@ def unscented_filter_predict(transition_function, points_state,
         mean and covariance corresponding to time step t+1 given observations
         from time steps 0...t
     """
-    assert points_transition is not None or sigma2_transition is not None, \
-        "Your system is noiseless? really?"
-    (points_pred, moments_pred) = (
-        _unscented_transform(
-            points_state, transition_function,
-            points_noise=points_transition, sigma2_noise=sigma2_transition
-        )
+    assert (
+        points_transition is not None or sigma2_transition is not None
+    ), "Your system is noiseless? really?"
+    (points_pred, moments_pred) = _unscented_transform(
+        points_state,
+        transition_function,
+        points_noise=points_transition,
+        sigma2_noise=sigma2_transition,
     )
     return (points_pred, moments_pred)
 
 
-def unscented_filter_correct(observation_function, moments_pred,
-                             points_pred, observation,
-                             points_observation=None,
-                             sigma2_observation=None):
+def unscented_filter_correct(
+    observation_function,
+    moments_pred,
+    points_pred,
+    observation,
+    points_observation=None,
+    sigma2_observation=None,
+):
     """Integrate new observation to correct state estimates
 
     Parameters
@@ -384,11 +387,11 @@ def unscented_filter_correct(observation_function, moments_pred,
         steps 0...t+1
     """
     # Calculate E[z_t | z_{0:t-1}], Var(z_t | z_{0:t-1})
-    (obs_points_pred, obs_moments_pred) = (
-        _unscented_transform(
-            points_pred, observation_function,
-            points_noise=points_observation, sigma2_noise=sigma2_observation
-        )
+    (obs_points_pred, obs_moments_pred) = _unscented_transform(
+        points_pred,
+        observation_function,
+        points_noise=points_observation,
+        sigma2_noise=sigma2_observation,
     )
 
     # Calculate Cov(x_t, z_t | z_{0:t-1})
@@ -399,12 +402,14 @@ def unscented_filter_correct(observation_function, moments_pred,
     )
 
     # Calculate E[x_t | z_{0:t}], Var(x_t | z_{0:t})
-    moments_filt = _unscented_correct(sigma_pair, moments_pred, obs_moments_pred, observation)
+    moments_filt = _unscented_correct(
+        sigma_pair, moments_pred, obs_moments_pred, observation
+    )
     return moments_filt
 
 
 def _additive_unscented_filter(mu_0, sigma_0, f, g, Q, R, Z):
-    '''Apply the Unscented Kalman Filter with additive noise
+    """Apply the Unscented Kalman Filter with additive noise
 
     Parameters
     ----------
@@ -431,7 +436,7 @@ def _additive_unscented_filter(mu_0, sigma_0, f, g, Q, R, Z):
     sigma2_filt : [T, n_dim_state, n_dim_state] array
         sigma2_filt[t] = square root of the covariance of state at time t given
         observations from times [0, t]
-    '''
+    """
     # extract size of key components
     T = Z.shape[0]
     n_dim_state = Q.shape[-1]
@@ -458,25 +463,22 @@ def _additive_unscented_filter(mu_0, sigma_0, f, g, Q, R, Z):
             moments_pred = points2moments(points_pred)
         else:
             transition_function = _last_dims(f, t - 1, ndims=1)[0]
-            (_, moments_pred) = (
-                unscented_filter_predict(
-                    transition_function, points_state, sigma2_transition=Q2
-                )
+            (_, moments_pred) = unscented_filter_predict(
+                transition_function, points_state, sigma2_transition=Q2
             )
             points_pred = moments2points(moments_pred)
 
         # Calculate E[z_t | z_{0:t-1}], Var(z_t | z_{0:t-1})
         observation_function = _last_dims(g, t, ndims=1)[0]
         mu_filt[t], sigma2_filt[t] = unscented_filter_correct(
-            observation_function, moments_pred, points_pred,
-            Z[t], sigma2_observation=R2
+            observation_function, moments_pred, points_pred, Z[t], sigma2_observation=R2
         )
 
     return (mu_filt, sigma2_filt)
 
 
 def _additive_unscented_smoother(mu_filt, sigma2_filt, f, Q):
-    '''Apply the Unscented Kalman Filter assuming additiven noise
+    """Apply the Unscented Kalman Filter assuming additiven noise
 
     Parameters
     ----------
@@ -500,7 +502,7 @@ def _additive_unscented_smoother(mu_filt, sigma2_filt, f, Q):
     sigma2_smooth : [T, n_dim_state, n_dim_state] array
         sigma2_smooth[t] = square root of the covariance of state at time t
         given observations from times [0, T-1]
-    '''
+    """
     # extract size of key parts of problem
     T, n_dim_state = mu_filt.shape
 
@@ -520,15 +522,16 @@ def _additive_unscented_smoother(mu_filt, sigma2_filt, f, Q):
 
         # compute E[x_{t+1} | z_{0:t}], Var(x_{t+1} | z_{0:t})
         transition_function = _last_dims(f, t, ndims=1)[0]
-        (points_pred, moments_pred) = (
-            _unscented_transform(points_state, transition_function, sigma2_noise=Q2)
+        (points_pred, moments_pred) = _unscented_transform(
+            points_state, transition_function, sigma2_noise=Q2
         )
 
         # Calculate Cov(x_{t+1}, x_t | z_{0:t-1})
         sigma_pair = (
-            (points_pred.points - moments_pred.mean).T
-            .dot(np.diag(points_pred.weights_covariance))
-            .dot(points_state.points - moments_state.mean).T
+            (points_pred.points - moments_pred.mean)
+            .T.dot(np.diag(points_pred.weights_covariance))
+            .dot(points_state.points - moments_state.mean)
+            .T
         )
 
         # compute smoothed mean, covariance
@@ -544,21 +547,17 @@ def _additive_unscented_smoother(mu_filt, sigma2_filt, f, Q):
         smoother_gain = linalg.lstsq(moments_pred.covariance, smoother_gain)[0]
         smoother_gain = smoother_gain.T
 
-        mu_smooth[t] = (
-            mu_filt[t]
-            + smoother_gain
-              .dot(mu_smooth[t + 1] - moments_pred.mean)
+        mu_smooth[t] = mu_filt[t] + smoother_gain.dot(
+            mu_smooth[t + 1] - moments_pred.mean
         )
         U = cholupdate(moments_pred.covariance, sigma2_smooth[t + 1], -1.0)
-        sigma2_smooth[t] = (
-            cholupdate(sigma2_filt[t], smoother_gain.dot(U.T).T, -1.0)
-        )
+        sigma2_smooth[t] = cholupdate(sigma2_filt[t], smoother_gain.dot(U.T).T, -1.0)
 
     return (mu_smooth, sigma2_smooth)
 
 
 class AdditiveUnscentedKalmanFilter(AUKF):
-    r'''Implements the Unscented Kalman Filter with additive noise.
+    r"""Implements the Unscented Kalman Filter with additive noise.
     Observations are assumed to be generated from the following process,
 
     .. math::
@@ -599,9 +598,10 @@ class AdditiveUnscentedKalmanFilter(AUKF):
         do not specify initial values for `observation_covariance`.
     random_state : optional, int or RandomState
         seed for random sample generation
-    '''
+    """
+
     def filter(self, Z):
-        '''Run Unscented Kalman Filter
+        """Run Unscented Kalman Filter
 
         Parameters
         ----------
@@ -618,25 +618,29 @@ class AdditiveUnscentedKalmanFilter(AUKF):
         filtered_state_covariances : [n_timesteps, n_dim_state, n_dim_state] array
             filtered_state_covariances[t] = covariance of state distribution at
             time t given observations from times [0, t]
-        '''
+        """
         Z = self._parse_observations(Z)
 
-        (transition_functions, observation_functions,
-         transition_covariance, observation_covariance,
-         initial_state_mean, initial_state_covariance) = (
-            self._initialize_parameters()
-        )
+        (
+            transition_functions,
+            observation_functions,
+            transition_covariance,
+            observation_covariance,
+            initial_state_mean,
+            initial_state_covariance,
+        ) = self._initialize_parameters()
 
         n_timesteps = Z.shape[0]
 
         # run square root filter
-        (filtered_state_means, sigma2_filt) = (
-            _additive_unscented_filter(
-                initial_state_mean, initial_state_covariance,
-                transition_functions, observation_functions,
-                transition_covariance, observation_covariance,
-                Z
-            )
+        (filtered_state_means, sigma2_filt) = _additive_unscented_filter(
+            initial_state_mean,
+            initial_state_covariance,
+            transition_functions,
+            observation_functions,
+            transition_covariance,
+            observation_covariance,
+            Z,
         )
 
         # reconstruct covariance matrices
@@ -646,11 +650,16 @@ class AdditiveUnscentedKalmanFilter(AUKF):
 
         return (filtered_state_means, filtered_state_covariances)
 
-    def filter_update(self,
-                      filtered_state_mean, filtered_state_covariance,
-                      observation=None,
-                      transition_function=None, transition_covariance=None,
-                      observation_function=None, observation_covariance=None):
+    def filter_update(
+        self,
+        filtered_state_mean,
+        filtered_state_covariance,
+        observation=None,
+        transition_function=None,
+        transition_covariance=None,
+        observation_function=None,
+        observation_covariance=None,
+    ):
         r"""Update a Kalman Filter state estimate
 
         Perform a one-step update to estimate the state at time :math:`t+1`
@@ -694,11 +703,14 @@ class AdditiveUnscentedKalmanFilter(AUKF):
             from times [1...t+1]
         """
         # initialize parameters
-        (transition_functions, observation_functions,
-         transition_cov, observation_cov,
-         _, _) = (
-            self._initialize_parameters()
-        )
+        (
+            transition_functions,
+            observation_functions,
+            transition_cov,
+            observation_cov,
+            _,
+            _,
+        ) = self._initialize_parameters()
 
         def default_function(f, arr):
             if f is None:
@@ -713,12 +725,10 @@ class AdditiveUnscentedKalmanFilter(AUKF):
             observation_function, observation_functions
         )
         transition_covariance = _arg_or_default(
-            transition_covariance, transition_cov,
-            2, "transition_covariance"
+            transition_covariance, transition_cov, 2, "transition_covariance"
         )
         observation_covariance = _arg_or_default(
-            observation_covariance, observation_cov,
-            2, "observation_covariance"
+            observation_covariance, observation_cov, 2, "observation_covariance"
         )
 
         # Make a masked observation if necessary
@@ -739,30 +749,30 @@ class AdditiveUnscentedKalmanFilter(AUKF):
         points_state = moments2points(moments_state)
 
         # predict
-        (_, moments_pred) = (
-            unscented_filter_predict(
-                transition_function, points_state,
-                sigma2_transition=transition_covariance2
-            )
+        (_, moments_pred) = unscented_filter_predict(
+            transition_function, points_state, sigma2_transition=transition_covariance2
         )
         points_pred = moments2points(moments_pred)
 
         # correct
         (next_filtered_state_mean, next_filtered_state_covariance2) = (
             unscented_filter_correct(
-                observation_function, moments_pred, points_pred,
-                observation, sigma2_observation=observation_covariance2
+                observation_function,
+                moments_pred,
+                points_pred,
+                observation,
+                sigma2_observation=observation_covariance2,
             )
         )
 
-        next_filtered_state_covariance = (
-            _reconstruct_covariances(next_filtered_state_covariance2)
+        next_filtered_state_covariance = _reconstruct_covariances(
+            next_filtered_state_covariance2
         )
 
         return (next_filtered_state_mean, next_filtered_state_covariance)
 
     def smooth(self, Z):
-        '''Run Unscented Kalman Smoother
+        """Run Unscented Kalman Smoother
 
         Parameters
         ----------
@@ -779,38 +789,40 @@ class AdditiveUnscentedKalmanFilter(AUKF):
         smoothed_state_covariances : [n_timesteps, n_dim_state, n_dim_state] array
             smoothed_state_covariances[t] = covariance of state distribution at
             time t given observations from times [0, n_timesteps-1]
-        '''
+        """
         Z = self._parse_observations(Z)
 
-        (transition_functions, observation_functions,
-         transition_covariance, observation_covariance,
-         initial_state_mean, initial_state_covariance) = (
-            self._initialize_parameters()
-        )
+        (
+            transition_functions,
+            observation_functions,
+            transition_covariance,
+            observation_covariance,
+            initial_state_mean,
+            initial_state_covariance,
+        ) = self._initialize_parameters()
 
         n_timesteps = Z.shape[0]
 
         # run filter, then smoother
-        (filtered_state_means, sigma2_filt) = (
-            _additive_unscented_filter(
-                initial_state_mean, initial_state_covariance,
-                transition_functions, observation_functions,
-                transition_covariance, observation_covariance,
-                Z
-            )
+        (filtered_state_means, sigma2_filt) = _additive_unscented_filter(
+            initial_state_mean,
+            initial_state_covariance,
+            transition_functions,
+            observation_functions,
+            transition_covariance,
+            observation_covariance,
+            Z,
         )
-        (smoothed_state_means, sigma2_smooth) = (
-            _additive_unscented_smoother(
-                filtered_state_means, sigma2_filt,
-                transition_functions, transition_covariance
-            )
+        (smoothed_state_means, sigma2_smooth) = _additive_unscented_smoother(
+            filtered_state_means,
+            sigma2_filt,
+            transition_functions,
+            transition_covariance,
         )
 
         # reconstruction covariance matrices
         smoothed_state_covariances = np.zeros(sigma2_smooth.shape)
         for t in range(n_timesteps):
-            smoothed_state_covariances[t] = (
-                sigma2_smooth[t].T.dot(sigma2_smooth[t])
-            )
+            smoothed_state_covariances[t] = sigma2_smooth[t].T.dot(sigma2_smooth[t])
 
         return (smoothed_state_means, smoothed_state_covariances)

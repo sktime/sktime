@@ -25,7 +25,8 @@ class KalmanFilterTests(object):
             self.data.transition_offsets,
             self.data.observation_offset,
             self.data.initial_state_mean,
-            self.data.initial_state_covariance)
+            self.data.initial_state_covariance,
+        )
 
         (x, z) = kf.sample(100)
         assert x.shape == (100, self.data.transition_matrix.shape[0])
@@ -40,7 +41,8 @@ class KalmanFilterTests(object):
             self.data.transition_offsets,
             self.data.observation_offset,
             self.data.initial_state_mean,
-            self.data.initial_state_covariance)
+            self.data.initial_state_covariance,
+        )
 
         # use Kalman Filter
         (x_filt, V_filt) = kf.filter(X=self.data.observations)
@@ -56,14 +58,15 @@ class KalmanFilterTests(object):
                 x_filt2[0] = self.data.initial_state_mean
                 V_filt2[0] = self.data.initial_state_covariance
             (x_filt2[t + 1], V_filt2[t + 1]) = kf2.filter_update(
-                x_filt2[t], V_filt2[t],
+                x_filt2[t],
+                V_filt2[t],
                 observation=self.data.observations[t + 1],
                 transition_matrix=self.data.transition_matrix,
                 transition_offset=self.data.transition_offsets[t],
                 transition_covariance=self.data.transition_covariance,
                 observation_matrix=self.data.observation_matrix,
                 observation_offset=self.data.observation_offset,
-                observation_covariance=self.data.observation_covariance
+                observation_covariance=self.data.observation_covariance,
             )
         assert_array_almost_equal(x_filt, x_filt2)
         assert_array_almost_equal(V_filt, V_filt2)
@@ -77,18 +80,15 @@ class KalmanFilterTests(object):
             self.data.transition_offsets,
             self.data.observation_offset,
             self.data.initial_state_mean,
-            self.data.initial_state_covariance)
+            self.data.initial_state_covariance,
+        )
 
         (x_filt, V_filt) = kf.filter(X=self.data.observations)
         assert_array_almost_equal(
-            x_filt[:500],
-            self.data.filtered_state_means[:500],
-            decimal=7
+            x_filt[:500], self.data.filtered_state_means[:500], decimal=7
         )
         assert_array_almost_equal(
-            V_filt[:500],
-            self.data.filtered_state_covariances[:500],
-            decimal=7
+            V_filt[:500], self.data.filtered_state_covariances[:500], decimal=7
         )
 
     def test_kalman_predict(self):
@@ -100,13 +100,12 @@ class KalmanFilterTests(object):
             self.data.transition_offsets,
             self.data.observation_offset,
             self.data.initial_state_mean,
-            self.data.initial_state_covariance)
+            self.data.initial_state_covariance,
+        )
 
         x_smooth = kf.smooth(X=self.data.observations)[0]
         assert_array_almost_equal(
-            x_smooth[:501],
-            self.data.smoothed_state_means[:501],
-            decimal=7
+            x_smooth[:501], self.data.smoothed_state_means[:501], decimal=7
         )
 
     def test_kalman_fit(self):
@@ -120,7 +119,8 @@ class KalmanFilterTests(object):
             self.data.observation_offset,
             self.data.initial_state_mean,
             self.data.initial_state_covariance,
-            em_vars=['transition_covariance', 'observation_covariance'])
+            em_vars=["transition_covariance", "observation_covariance"],
+        )
 
         loglikelihoods = np.zeros(5)
         for i in range(len(loglikelihoods)):
@@ -130,7 +130,7 @@ class KalmanFilterTests(object):
         assert np.allclose(loglikelihoods, self.data.loglikelihoods[:5])
 
         # check that EM for all parameters is working
-        kf.em_vars = 'all'
+        kf.em_vars = "all"
         n_timesteps = 30
         for i in range(len(loglikelihoods)):
             kf.em(X=self.data.observations[0:n_timesteps], n_iter=1)
@@ -139,20 +139,28 @@ class KalmanFilterTests(object):
             assert (loglikelihoods[i] < loglikelihoods[i + 1]).all()
 
     def test_kalman_initialize_parameters(self):
-        self.check_dims(5, 1, {'transition_matrices': np.eye(5)})
-        self.check_dims(1, 3, {'observation_offsets': np.zeros(3)})
-        self.check_dims(2, 3, {'transition_covariance': np.eye(2),
-                          'observation_offsets': np.zeros(3)})
-        self.check_dims(3, 2, {'n_dim_state': 3, 'n_dim_obs': 2})
-        self.check_dims(4, 1, {'initial_state_mean': np.zeros(4)})
+        self.check_dims(5, 1, {"transition_matrices": np.eye(5)})
+        self.check_dims(1, 3, {"observation_offsets": np.zeros(3)})
+        self.check_dims(
+            2,
+            3,
+            {"transition_covariance": np.eye(2), "observation_offsets": np.zeros(3)},
+        )
+        self.check_dims(3, 2, {"n_dim_state": 3, "n_dim_obs": 2})
+        self.check_dims(4, 1, {"initial_state_mean": np.zeros(4)})
 
     def check_dims(self, n_dim_state, n_dim_obs, kwargs):
         kf = self.KF(**kwargs)
-        (transition_matrices, transition_offsets, transition_covariance,
-         observation_matrices, observation_offsets, observation_covariance,
-         initial_state_mean, initial_state_covariance) = (
-            kf._initialize_parameters()
-        )
+        (
+            transition_matrices,
+            transition_offsets,
+            transition_covariance,
+            observation_matrices,
+            observation_offsets,
+            observation_covariance,
+            initial_state_mean,
+            initial_state_covariance,
+        ) = kf._initialize_parameters()
         assert transition_matrices.shape == (n_dim_state, n_dim_state)
         assert transition_offsets.shape == (n_dim_state,)
         assert transition_covariance.shape == (n_dim_state, n_dim_state)
@@ -172,7 +180,8 @@ class KalmanFilterTests(object):
             self.data.observation_offset,
             self.data.initial_state_mean,
             self.data.initial_state_covariance,
-            em_vars='all')
+            em_vars="all",
+        )
 
         # train and get log likelihood
         X = self.data.observations[0:10]
@@ -196,4 +205,3 @@ class KalmanFilterTestSuite(TestCase, KalmanFilterTests):
     def setUp(self):
         self.KF = KalmanFilter
         self.data = load_robot()
-
