@@ -278,7 +278,7 @@ class BaseObject(_BaseObject):
         from pathlib import Path
         from zipfile import ZipFile
 
-        from sktime.utils.dependencies._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         if serialization_format not in SERIALIZATION_FORMATS:
             raise ValueError(

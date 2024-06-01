@@ -92,7 +92,7 @@ def check_estimator(
     All tests PASSED!
     {'test_clone[ExponentTransformer-1]': 'PASSED'}
     """
-    from sktime.utils.dependencies._dependencies import _check_soft_dependencies
+    from sktime.utils.dependencies import _check_soft_dependencies
 
     msg = (
         "check_estimator is a testing utility for developers, and "

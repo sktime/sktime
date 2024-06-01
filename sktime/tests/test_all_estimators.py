@@ -52,7 +52,7 @@ from sktime.utils._testing.estimator_checks import (
 )
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
 from sktime.utils.deep_equals import deep_equals
-from sktime.utils.dependencies._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.random_state import set_random_state
 from sktime.utils.sampling import random_partition
 

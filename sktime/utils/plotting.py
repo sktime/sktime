@@ -80,7 +80,7 @@ def plot_series(
     >>> y = load_airline()
     >>> fig, ax = plot_series(y)  # doctest: +SKIP
     """
-    from sktime.utils.dependencies._dependencies import _check_soft_dependencies
+    from sktime.utils.dependencies import _check_soft_dependencies
 
     _check_soft_dependencies("matplotlib", "seaborn")
     import matplotlib.pyplot as plt
@@ -235,7 +235,7 @@ def plot_lags(series, lags=1, suptitle=None):
     >>> fig, ax = plot_lags(y, lags=2) # plot of y(t) with y(t-2)  # doctest: +SKIP
     >>> fig, ax = plot_lags(y, lags=[1,2,3]) # y(t) & y(t-1), y(t-2).. # doctest: +SKIP
     """
-    from sktime.utils.dependencies._dependencies import _check_soft_dependencies
+    from sktime.utils.dependencies import _check_soft_dependencies
 
     _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
@@ -347,7 +347,7 @@ def plot_correlations(
     >>> y = load_airline()
     >>> fig, ax = plot_correlations(y)  # doctest: +SKIP
     """
-    from sktime.utils.dependencies._dependencies import _check_soft_dependencies
+    from sktime.utils.dependencies import _check_soft_dependencies
 
     _check_soft_dependencies("matplotlib", "statsmodels")
     import matplotlib.pyplot as plt
@@ -444,7 +444,7 @@ def plot_windows(cv, y, title="", ax=None):
     ax : matplotlib.axes.Axes
         matplotlib axes object with the figure
     """
-    from sktime.utils.dependencies._dependencies import _check_soft_dependencies
+    from sktime.utils.dependencies import _check_soft_dependencies
 
     _check_soft_dependencies("matplotlib", "seaborn")
     import matplotlib.pyplot as plt
