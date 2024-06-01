@@ -117,6 +117,7 @@ Time series classification
 Transformations
 ^^^^^^^^^^^^^^^
 
+* [ENH] Test Parameters for `FinancialHolidaysTransformer` (:pr:`6334`) :user:`sharma-kshitij-ks`
 * [ENH] ADI/CV feature extractor (:pr:`6336`) :user:`shlok191`
 * [ENH] Bollinger Bands (:pr:`6473`) :user:`ishanpai`
 
@@ -230,6 +231,7 @@ Contributors
 :user:`meraldoantonio`,
 :user:`ninedigits`,
 :user:`pranavvp16`,
+:user:`sharma-kshitij-ks`,
 :user:`shlok191`,
 :user:`yarnabrina`,
 :user:`YelenaYY`
