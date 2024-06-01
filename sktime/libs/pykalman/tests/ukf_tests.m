@@ -42,7 +42,7 @@ for k=1:length(Z)
     mu_filt(:,k)  = x0;
     P_filt(:,:,k) = P0;
   end
-  
+
   % predict
   [mu_pred(:,k), P_pred(:,:,k)] = ukf_predict1(mu_filt(:,k), P_filt(:,:,k), f, Q);
 end

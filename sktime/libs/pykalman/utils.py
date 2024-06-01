@@ -29,9 +29,7 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 # DAMAGE.
-"""
-Utility functions taken from scikit-learn
-"""
+"""Utility functions taken from scikit-learn."""
 
 import inspect
 
@@ -40,12 +38,12 @@ from scipy import linalg
 
 
 def array1d(X, dtype=None, order=None):
-    """Returns at least 1-d array with data from X"""
+    """Return at least 1-d array with data from X."""
     return np.asarray(np.atleast_1d(X), dtype=dtype, order=order)
 
 
 def array2d(X, dtype=None, order=None):
-    """Returns at least 2-d array with data from X"""
+    """Return at least 2-d array with data from X."""
     return np.asarray(np.atleast_2d(X), dtype=dtype, order=order)
 
 
@@ -71,7 +69,7 @@ def log_multivariate_normal_density(X, means, covars, min_covar=1.0e-7):
 
 
 def check_random_state(seed):
-    """Turn seed into a np.random.RandomState instance
+    """Turn seed into a np.random.RandomState instance.
 
     If seed is None, return the RandomState singleton used by np.random.
     If seed is an int, return a new RandomState instance seeded with seed.
@@ -90,8 +88,10 @@ def check_random_state(seed):
 
 
 class Bunch(dict):
-    """Container object for datasets: dictionary-like object that exposes its
-    keys as attributes."""
+    """Container object for datasets.
+
+    Dictionary-like object that exposes its keys as attributes.
+    """
 
     def __init__(self, **kwargs):
         dict.__init__(self, kwargs)
@@ -99,7 +99,7 @@ class Bunch(dict):
 
 
 def get_params(obj):
-    """Get names and values of all parameters in `obj`'s __init__"""
+    """Get names and values of all parameters in `obj`'s __init__."""
     try:
         # get names of every variable in the argument
         args = inspect.getfullargspec(obj.__init__)[0]
@@ -113,7 +113,7 @@ def get_params(obj):
 
 
 def preprocess_arguments(argsets, converters):
-    """convert and collect arguments in order of priority
+    """Convert and collect arguments in order of priority.
 
     Parameters
     ----------

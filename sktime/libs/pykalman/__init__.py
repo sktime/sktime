@@ -1,4 +1,5 @@
-"""
+"""Package - pykalman.
+
 =============
 Kalman Module
 =============

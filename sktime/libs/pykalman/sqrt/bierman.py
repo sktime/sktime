@@ -50,11 +50,12 @@ class UDU_decomposition:
         self.D = D
 
     def reconstruct(self):
+        """Reconstruct the original matrix from the UDU' decomposition."""
         return self.U.dot(np.diag(self.D)).dot(self.U.T)
 
 
 def udu(M):
-    """Construct the UDU' decomposition of a positive, semidefinite matrix M,
+    """Construct the UDU' decomposition of a positive, semidefinite matrix M.
 
     Parameters
     ----------
@@ -461,7 +462,7 @@ def _filter(
 
 
 class BiermanKalmanFilter(KalmanFilter):
-    """Kalman Filter based on UDU' decomposition
+    r"""Kalman Filter based on UDU' decomposition.
 
     Parameters
     ----------
@@ -511,7 +512,7 @@ class BiermanKalmanFilter(KalmanFilter):
     """
 
     def filter(self, X):
-        """Apply the Kalman Filter.
+        r"""Apply the Kalman Filter.
 
         Apply the Kalman Filter to estimate the hidden state at time :math:`t`
         for :math:`t = [0...n_{\\text{timesteps}}-1]` given observations up to
@@ -707,7 +708,7 @@ class BiermanKalmanFilter(KalmanFilter):
         return (next_filtered_state_mean, next_filtered_state_covariance)
 
     def smooth(self, X):
-        """Apply the Kalman Smoother.
+        r"""Apply the Kalman Smoother.
 
         Apply the Kalman Smoother to estimate the hidden state at time
         :math:`t` for :math:`t = [0...n_{\\text{timesteps}}-1]` given all

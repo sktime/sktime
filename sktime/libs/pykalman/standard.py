@@ -881,7 +881,6 @@ def _em_initial_state_mean(smoothed_state_means):
 
         \mu_0 = \mathbb{E}[x_0]
     """
-
     return smoothed_state_means[0]
 
 
@@ -959,7 +958,7 @@ def _em_observation_offset(observation_matrices, smoothed_state_means, observati
 
 
 class KalmanFilter:
-    """Implements the Kalman Filter, Kalman Smoother, and EM algorithm.
+    r"""Implements the Kalman Filter, Kalman Smoother, and EM algorithm.
 
     This class implements the Kalman Filter, Kalman Smoother, and EM Algorithm
     for a Linear Gaussian model specified by,
@@ -1064,7 +1063,6 @@ class KalmanFilter:
         n_dim_obs=None,
     ):
         """Initialize Kalman Filter."""
-
         # determine size of state space
         n_dim_state = _determine_dimensionality(
             [
@@ -1110,7 +1108,7 @@ class KalmanFilter:
             self._em_vars = em_vars
 
     def sample(self, n_timesteps, initial_state=None, random_state=None):
-        """Sample a state sequence :math:`n_{\\text{timesteps}}` timesteps in length.
+        r"""Sample a state sequence :math:`n_{\\text{timesteps}}` timesteps in length.
 
         Parameters
         ----------
@@ -1182,7 +1180,7 @@ class KalmanFilter:
         return (states, np.ma.array(observations))
 
     def filter(self, X):
-        """Apply the Kalman Filter.
+        r"""Apply the Kalman Filter.
 
         Apply the Kalman Filter to estimate the hidden state at time :math:`t`
         for :math:`t = [0...n_{\\text{timesteps}}-1]` given observations up to
@@ -1352,7 +1350,7 @@ class KalmanFilter:
         return (next_filtered_state_mean, next_filtered_state_covariance)
 
     def smooth(self, X):
-        """Apply the Kalman Smoother.
+        r"""Apply the Kalman Smoother.
 
         Apply the Kalman Smoother to estimate the hidden state at time
         :math:`t` for :math:`t = [0...n_{\\text{timesteps}}-1]` given all

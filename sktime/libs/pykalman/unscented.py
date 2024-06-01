@@ -1332,7 +1332,7 @@ class AdditiveUnscentedKalmanFilter(UnscentedMixin):
             points_pred,
             observation,
             sigma_observation=observation_covariance,
-         )
+        )
 
         return (next_filtered_state_mean, next_filtered_state_covariance)
 
@@ -1368,8 +1368,8 @@ class AdditiveUnscentedKalmanFilter(UnscentedMixin):
 
         (filtered_state_means, filtered_state_covariances) = self.filter(Z)
         (
-           smoothed_state_means,
-           smoothed_state_covariances,
+            smoothed_state_means,
+            smoothed_state_covariances,
         ) = additive_unscented_smoother(
             filtered_state_means,
             filtered_state_covariances,
