@@ -12,9 +12,9 @@ from sktime.forecasting.compose import ColumnEnsembleForecaster
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.sarimax import SARIMAX
 from sktime.forecasting.trend import PolynomialTrendForecaster
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.hierarchical.reconcile import Reconciler
-from sktime.tests.test_switch import run_test_for_class
 
 
 @pytest.mark.skipif(

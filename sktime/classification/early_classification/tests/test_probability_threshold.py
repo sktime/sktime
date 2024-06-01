@@ -1,7 +1,7 @@
 """ProbabilityThresholdEarlyClassifier test code."""
 import numpy as np
-from numpy import testing
 import pytest
+from numpy import testing
 
 from sktime.classification.early_classification import (
     ProbabilityThresholdEarlyClassifier,

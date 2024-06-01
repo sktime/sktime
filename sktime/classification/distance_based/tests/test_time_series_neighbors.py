@@ -88,7 +88,7 @@ def test_knn_bounding_matrix(distance_key):
 
 
 @pytest.mark.skipif(
-    not run_test_for_class([KNeighborsTimeSeriesClassifier,  AlignerDTW]),
+    not run_test_for_class([KNeighborsTimeSeriesClassifier, AlignerDTW]),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_knn_with_aligner():
