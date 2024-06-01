@@ -144,7 +144,7 @@ class LSTMFCNRegressor(BaseDeepRegressor):
             metrics=["accuracy"],
         )
 
-        self.callbacks = self.callbacks or []
+        self._callbacks = self.callbacks or None
 
         return model
 
@@ -185,10 +185,8 @@ class LSTMFCNRegressor(BaseDeepRegressor):
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
-            callbacks=deepcopy(self.callbacks) if self.callbacks else [],
+            callbacks=deepcopy(self._callbacks) if self._callbacks else None,
         )
-
-        self._is_fitted = True
 
         return self
 
