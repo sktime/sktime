@@ -34,6 +34,9 @@ For last major feature update, see 0.29.1.
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
 
+* ``joblib`` is now an explicit core dependency, with bounds ``<1.5,>=1.2.0``.
+  Previously, ``joblib`` was an indirect core dependency, via ``scikit-learn``.
+  Due to direct imports, this was changed to an explicit dependency.
 * ``scikit-learn`` (core dependency) bounds have been updated to ``>=0.24,<1.6.0``
 * ``scikit-base`` (core dependency) bounds have been updated to ``>=0.6.1,<0.9.0``
 * ``skpro`` (soft dependency) bounds have been updated to ``<2.4.0``
