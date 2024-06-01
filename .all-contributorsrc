@@ -2749,12 +2749,22 @@
       ]
     },
     {
+      "login": "ArthrowAbstract",
+      "name": "Devanshu Sinha",
+      "avatar_url": "https://avatars.githubusercontent.com/u/38614120?v=4",
+      "profile": "https://github.com/ArthrowAbstract",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
       "login": "morestart",
       "name": "ctl",
       "avatar_url": "https://avatars.githubusercontent.com/u/35556811",
       "profile": "https://github.com/morestart",
       "contributions": [
-        "bug"
+        "bug",
+        "code"
       ]
     },
     {
