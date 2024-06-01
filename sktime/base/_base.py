@@ -149,8 +149,6 @@ class BaseObject(_BaseObject):
         """,
     }
 
-    # TODO 0.30.0: change warning message to indicate that 3.8 is no longer supported,
-    #  and that 3.9 is the minimum supported version
     # TODO 0.31.0: check whether 3.8 has reached EoL. If so, remove warning altogether
     def __init__(self):
         super().__init__()
@@ -164,12 +162,14 @@ class BaseObject(_BaseObject):
         py39_or_higher = SpecifierSet(">=3.9")
         sys_version = sys.version.split(" ")[0]
 
+        # todo 0.31.0 - check whether 3.9 eol is reached. If yes, remove this msg.
         if sys_version not in py39_or_higher:
             warn(
-                f"From sktime 0.30.0, sktime will require Python version >=3.9, "
+                f"From sktime 0.30.0, sktime requires Python version >=3.9, "
                 f"but found {sys_version}. "
-                "No errors will be raised, but test coverage and support for "
-                "Python 3.8 will be dropped from 0.30.0 onwards. "
+                "The package can still be installed, until 3.8 end of life "
+                "is reached, "
+                "but some functionality may not work as test coverage is dropped."
                 "Kindly note for context: python 3.8 will reach end of life "
                 "in October 2024, and multiple sktime core dependencies, "
                 "including scikit-learn, have already dropped support for 3.8. ",
