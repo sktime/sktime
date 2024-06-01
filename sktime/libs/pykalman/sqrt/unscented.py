@@ -25,7 +25,7 @@ from scipy import linalg
 from ..standard import _arg_or_default, _last_dims
 from ..unscented import AdditiveUnscentedKalmanFilter as AUKF
 from ..unscented import Moments, SigmaPoints
-from ..utils import array1d, array2d, check_random_state
+from ..utils import array2d
 
 
 def _reconstruct_covariances(covariance2s):

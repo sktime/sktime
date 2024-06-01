@@ -12,8 +12,8 @@ def build_unscented_filter(cls):
     A = np.array([[1, 1], [0, 1]])
     C = np.array([[0.5, -0.3]])
     if cls == AdditiveUnscentedKalmanFilter:
-        f = lambda x: A.dot(x)
-        g = lambda x: C.dot(x)
+        f = lambda x: A.dot(x)  # noqa: E731
+        g = lambda x: C.dot(x)  # noqa: E731
     else:
         raise ValueError("How do I make transition functions for {0}?".format(cls))
 

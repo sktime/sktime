@@ -338,7 +338,6 @@ def _filter_correct(
             )
 
     else:
-        n_dim_state = len(predicted_state_mean)
         n_dim_obs = len(observation)
 
         corrected_state_mean = predicted_state_mean
@@ -840,10 +839,10 @@ class BiermanKalmanFilter(KalmanFilter):
                     "{0} has {1} dimensions now; after fitting,"
                     + " it will have dimension {2}"
                 ).format(k, len(v.shape), DIM[k])
-                warnings.warn(warn_str)
+                warnings.warn(warn_str, stacklevel=2)
 
         # Actual EM iterations
-        for i in range(n_iter):
+        for _ in range(n_iter):
             # run filter
             (
                 predicted_state_means,

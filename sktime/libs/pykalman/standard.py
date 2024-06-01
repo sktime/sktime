@@ -583,7 +583,7 @@ def _em(
     smoothed_state_means,
     smoothed_state_covariances,
     pairwise_covariances,
-    given={},
+    given=None,
 ):
     """Apply the EM Algorithm to the Linear-Gaussian model
 
@@ -635,6 +635,8 @@ def _em(
     initial_state_covariance : [n_dim_state] array
         estimated covariance of initial state distribution
     """
+    if given is None:
+        given = {}
     if "observation_matrices" in given:
         observation_matrix = given["observation_matrices"]
     else:
@@ -1054,12 +1056,7 @@ class KalmanFilter(object):
         initial_state_mean=None,
         initial_state_covariance=None,
         random_state=None,
-        em_vars=[
-            "transition_covariance",
-            "observation_covariance",
-            "initial_state_mean",
-            "initial_state_covariance",
-        ],
+        em_vars=None,
         n_dim_state=None,
         n_dim_obs=None,
     ):
@@ -1098,6 +1095,16 @@ class KalmanFilter(object):
         self.em_vars = em_vars
         self.n_dim_state = n_dim_state
         self.n_dim_obs = n_dim_obs
+
+        if em_vars is None:
+            self._em_vars = [
+                "transition_covariance",
+                "observation_covariance",
+                "initial_state_mean",
+                "initial_state_covariance",
+            ]
+        else:
+            self._em_vars = em_vars
 
     def sample(self, n_timesteps, initial_state=None, random_state=None):
         """Sample a state sequence :math:`n_{\\text{timesteps}}` timesteps in
@@ -1439,7 +1446,7 @@ class KalmanFilter(object):
 
         # Create dictionary of variables not to perform EM on
         if em_vars is None:
-            em_vars = self.em_vars
+            em_vars = self._em_vars
 
         if em_vars == "all":
             given = {}
@@ -1466,10 +1473,10 @@ class KalmanFilter(object):
                     "{0} has {1} dimensions now; after fitting, "
                     + "it will have dimension {2}"
                 ).format(k, len(v.shape), DIM[k])
-                warnings.warn(warn_str)
+                warnings.warn(warn_str, stacklevel=2)
 
         # Actual EM iterations
-        for i in range(n_iter):
+        for _ in range(n_iter):
             (
                 predicted_state_means,
                 predicted_state_covariances,

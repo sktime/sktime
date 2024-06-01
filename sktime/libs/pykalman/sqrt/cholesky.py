@@ -670,7 +670,7 @@ class CholeskyKalmanFilter(KalmanFilter):
                     "{0} has {1} dimensions now; after fitting, "
                     + "it will have dimension {2}"
                 ).format(k, len(v.shape), DIM[k])
-                warnings.warn(warn_str)
+                warnings.warn(warn_str, stacklevel=2)
 
         # Actual EM iterations
         for i in range(n_iter):
