@@ -36,9 +36,9 @@ class PyKANForecaster(BaseForecaster):
 
     Parameters
     ----------
-    hidden_layers : tuple, optional (default=(5,5))
+    hidden_layers : tuple, optional (default=(1, 1))
         The number of hidden layers in the network.
-    input_layer_size : int, optional (default=12)
+    input_layer_size : int, optional (default=2)
         The size of the input layer.
     k : int, optional (default=3)
         The number of nearest neighbors to consider.
@@ -78,8 +78,8 @@ class PyKANForecaster(BaseForecaster):
 
     def __init__(
         self,
-        hidden_layers=(5, 5),
-        input_layer_size=12,
+        hidden_layers=(1, 1),
+        input_layer_size=2,
         grids=None,
         model_params=None,
         fit_params=None,
