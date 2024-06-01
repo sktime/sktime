@@ -231,7 +231,8 @@ Contributors
 :user:`ninedigits`,
 :user:`pranavvp16`,
 :user:`shlok191`,
-:user:`yarnabrina`
+:user:`yarnabrina`,
+:user:`YelenaYY`
 
 
 Version 0.29.0 - 2024-04-28
