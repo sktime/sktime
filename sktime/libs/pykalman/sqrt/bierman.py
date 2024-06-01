@@ -14,15 +14,15 @@ import numpy as np
 from scipy import linalg
 
 from ..standard import (
+    DIM,
+    KalmanFilter,
     _arg_or_default,
     _determine_dimensionality,
+    _em,
     _last_dims,
     _loglikelihoods,
     _smooth,
     _smooth_pair,
-    _em,
-    KalmanFilter,
-    DIM,
 )
 from ..utils import array1d, array2d, check_random_state, get_params
 

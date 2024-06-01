@@ -1,10 +1,9 @@
 import numpy as np
 from numpy import ma
 from numpy.testing import assert_array_almost_equal
-from scipy import linalg
-
 from pykalman.sqrt import AdditiveUnscentedKalmanFilter
 from pykalman.sqrt.unscented import cholupdate, qr
+from scipy import linalg
 
 
 def build_unscented_filter(cls):

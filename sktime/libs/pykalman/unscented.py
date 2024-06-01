@@ -13,17 +13,14 @@ import numpy as np
 from numpy import ma
 from scipy import linalg
 
+from .standard import _arg_or_default, _determine_dimensionality, _last_dims
 from .utils import (
     array1d,
     array2d,
     check_random_state,
     get_params,
     preprocess_arguments,
-    check_random_state,
 )
-
-from .standard import _last_dims, _determine_dimensionality, _arg_or_default
-
 
 # represents a collection of sigma points and their associated weights. one
 # point per row

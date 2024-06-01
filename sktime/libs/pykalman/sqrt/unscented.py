@@ -22,10 +22,10 @@ import numpy as np
 from numpy import ma
 from scipy import linalg
 
+from ..standard import _arg_or_default, _last_dims
+from ..unscented import AdditiveUnscentedKalmanFilter as AUKF
+from ..unscented import Moments, SigmaPoints
 from ..utils import array1d, array2d, check_random_state
-
-from ..standard import _last_dims, _arg_or_default
-from ..unscented import AdditiveUnscentedKalmanFilter as AUKF, SigmaPoints, Moments
 
 
 def _reconstruct_covariances(covariance2s):

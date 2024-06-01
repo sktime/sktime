@@ -1,8 +1,8 @@
 from unittest import TestCase
 
+from pykalman.datasets import load_robot
 from pykalman.sqrt import CholeskyKalmanFilter
 from pykalman.tests.test_standard import KalmanFilterTests
-from pykalman.datasets import load_robot
 
 
 class CholeskyKalmanFilterTestSuite(TestCase, KalmanFilterTests):
