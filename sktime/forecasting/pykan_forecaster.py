@@ -44,9 +44,9 @@ class PyKANForecaster(BaseForecaster):
         The number of nearest neighbors to consider.
     grids : np.array, optional (default=np.array([2, 3]))
         The grid sizes to use in the model.
-    model_params : dict, optional (default=None)
+    model_params : dict, optional (default={"k": 2})
         The parameters to pass to the model. See pykan documentation for more details.
-    fit_params : dict, optional (default=None)
+    fit_params : dict, optional (default={"steps": 1})
         The parameters to pass to the fit method. See pykan documentation
         for more details.
     val_size : float, optional (default=0.5)
@@ -92,9 +92,9 @@ class PyKANForecaster(BaseForecaster):
         self._grids = grids if grids is not None else [2, 3]
         self.val_size = val_size
         self.model_params = model_params
-        self._model_params = model_params if model_params is not None else {}
+        self._model_params = model_params if model_params is not None else {"k": 2}
         self.fit_params = fit_params
-        self._fit_params = fit_params if fit_params is not None else {}
+        self._fit_params = fit_params if fit_params is not None else {"steps": 1}
         self.device = device
         super().__init__()
 
