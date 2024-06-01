@@ -1736,7 +1736,7 @@ def _create_fcst_df(target_date, origin_df, fill=None):
     else:
         values = fill
 
-    res = pd.DataFrame(values, index=index, columns=columns)
+    res = pd.DataFrame(values, index=index, columns=columns, dtype="float64")
 
     if isinstance(origin_df, pd.Series) and not isinstance(index, pd.MultiIndex):
         res = res.iloc[:, 0]
