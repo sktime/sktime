@@ -3,6 +3,7 @@
 The reason for this class between BaseClassifier and deep_learning classifiers is
 because we can generalise tags, _predict and _predict_proba
 """
+
 __author__ = ["James-Large", "ABostrom", "TonyBagnall", "aurunmpegasus", "achieveordie"]
 __all__ = ["BaseDeepClassifier"]
 
@@ -103,7 +104,7 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         probs = probs / probs.sum(axis=1, keepdims=1)
         return probs
 
-    def convert_y_to_keras(self, y):
+    def _convert_y_to_keras(self, y):
         """Convert y to required Keras format."""
         self.label_encoder = LabelEncoder()
         y = self.label_encoder.fit_transform(y)
@@ -121,6 +122,19 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         # categories='auto' to get rid of FutureWarning
         y = self.onehot_encoder.fit_transform(y)
         return y
+
+    def convert_y_to_keras(self, y):
+        """Convert y to required Keras format."""
+        from sktime.utils.warnings import warn
+
+        warn(
+            "convert_y_to_keras of sktime deep learning estimators is "
+            "deprecated and will be removed in 0.31.0. For equivalent "
+            "behaviour, please use sklearn OneHotEncoder.fit_transform "
+            "directly.",
+            obj=self,
+        )
+        return self._convert_y_to_keras(y=y)
 
     def __getstate__(self):
         """Get Dict config that will be used when a serialization method is called.

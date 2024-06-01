@@ -294,7 +294,9 @@ class PeakTimeFeature(BaseTransformer):
         df = self._extract_peaktime_features(calendar_features, datetime_freq)
 
         if self.keep_original_columns:
-            Xt = pd.concat([X, df], axis=1, copy=True)
+            to_concat = [X, df]
+            to_concat = [df for df in to_concat if not df.empty]
+            Xt = pd.concat(to_concat, axis=1, copy=True)
         else:
             Xt = df
 

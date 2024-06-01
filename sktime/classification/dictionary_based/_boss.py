@@ -357,7 +357,11 @@ class BOSSEnsemble(BaseClassifier):
         return min_acc, min_acc_idx
 
     def _get_train_probs(self, X, y):
+        from sktime.datatypes import convert_to
+
         self.check_is_fitted()
+        if not isinstance(X, np.ndarray):
+            X = convert_to(X, "numpy3D")
         X, y = check_X_y(X, y, coerce_to_numpy=True, enforce_univariate=True)
 
         n_instances, _, series_length = X.shape
@@ -639,9 +643,7 @@ class IndividualBOSS(BaseClassifier):
             Predicted class labels.
         """
         test_bags = self._transformer.transform(X)
-        data_type = type(self._class_vals[0])
-        if data_type == np.str_ or data_type == str:
-            data_type = "object"
+        data_type = self._class_vals.dtype
 
         classes = np.zeros(test_bags.shape[0], dtype=data_type)
 

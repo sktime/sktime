@@ -391,3 +391,41 @@ def test_use_of_passed_unknown_X(predict_behaviour_option: str) -> None:
             mock_predict.assert_called_once()
         elif predict_behaviour_option == "use_actuals":
             mock_predict.assert_not_called()
+
+
+@pytest.mark.skipif(
+    not _check_estimator_deps(ARIMA, severity="none"),
+    reason="skip test if required soft dependency is not available",
+)
+@pytest.mark.parametrize("cols_to_forecast", [["GNPDEFL", "GNP"], ["ARMED", "POP"]])
+def test_forecaster_X_exogeneous(cols_to_forecast):
+    """Test that ForecastX forecaster_X uses exogenous data as told by parameter."""
+    from sktime.forecasting.compose import ForecastX
+    from sktime.split import temporal_train_test_split
+
+    y, X = load_longley()
+
+    fh = [1, 2, 3, 4]
+    y_train, _, X_train, X_test = temporal_train_test_split(y, X, test_size=max(fh))
+
+    forecaster = ARIMA()
+    pipeline1 = ForecastX(
+        forecaster.clone(),
+        forecaster_X=forecaster.clone(),
+        columns=cols_to_forecast,
+        forecaster_X_exogeneous="complement",
+    )
+
+    pipeline1.fit(y_train, X=X_train, fh=fh)
+    y_pred1 = pipeline1.predict(X=X_test.drop(columns=cols_to_forecast))
+
+    pipeline2 = ForecastX(
+        forecaster.clone(),
+        forecaster_X=forecaster.clone(),
+        columns=cols_to_forecast,
+        forecaster_X_exogeneous="None",
+    )
+
+    pipeline2.fit(y_train, X=X_train, fh=fh)
+    y_pred2 = pipeline2.predict(X=X_test.drop(columns=cols_to_forecast))
+    np.testing.assert_array_equal(y_pred1.index, y_pred2.index)
