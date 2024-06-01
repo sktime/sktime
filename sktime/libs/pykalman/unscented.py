@@ -1,4 +1,5 @@
-"""
+"""Unscented Kalman Filter.
+
 =========================================
 Inference for Non-Linear Gaussian Systems
 =========================================
@@ -34,7 +35,7 @@ Moments = namedtuple("Moments", ["mean", "covariance"])
 
 
 def points2moments(points, sigma_noise=None):
-    """Calculate estimated mean and covariance of sigma points
+    """Calculate estimated mean and covariance of sigma points.
 
     Parameters
     ----------
@@ -58,7 +59,7 @@ def points2moments(points, sigma_noise=None):
 
 
 def moments2points(moments, alpha=None, beta=None, kappa=None):
-    """Calculate "sigma points" used in Unscented Kalman Filter
+    """Calculate "sigma points" used in Unscented Kalman Filter.
 
     Parameters
     ----------
@@ -115,7 +116,7 @@ def moments2points(moments, alpha=None, beta=None, kappa=None):
 
 
 def unscented_transform(points, f=None, points_noise=None, sigma_noise=None):
-    """Apply the Unscented Transform to a set of points
+    """Apply the Unscented Transform to a set of points.
 
     Apply f to points (with secondary argument points_noise, if available),
     then approximate the resulting mean and covariance. If sigma_noise is
@@ -165,7 +166,7 @@ def unscented_transform(points, f=None, points_noise=None, sigma_noise=None):
 
 
 def unscented_correct(cross_sigma, moments_pred, obs_moments_pred, z):
-    """Correct predicted state estimates with an observation
+    """Correct predicted state estimates with an observation.
 
     Parameters
     ----------
@@ -205,7 +206,7 @@ def unscented_correct(cross_sigma, moments_pred, obs_moments_pred, z):
 
 
 def augmented_points(momentses):
-    """Calculate sigma points for augmented UKF
+    """Calculate sigma points for augmented UKF.
 
     Parameters
     ----------
@@ -247,7 +248,7 @@ def augmented_points(momentses):
 def augmented_unscented_filter_points(
     mean_state, covariance_state, covariance_transition, covariance_observation
 ):
-    """Extract sigma points using augmented state representation
+    """Extract sigma points using augmented state representation.
 
     Primarily used as a pre-processing step before predicting and updating in
     the Augmented UKF.
@@ -292,7 +293,7 @@ def augmented_unscented_filter_points(
 def unscented_filter_predict(
     transition_function, points_state, points_transition=None, sigma_transition=None
 ):
-    """Predict next state distribution
+    """Predict next state distribution.
 
     Using the sigma points representing the state at time t given observations
     from time steps 0...t, calculate the predicted mean, covariance, and sigma
@@ -342,7 +343,7 @@ def unscented_filter_correct(
     points_observation=None,
     sigma_observation=None,
 ):
-    """Integrate new observation to correct state estimates
+    """Integrate new observation to correct state estimates.
 
     Parameters
     ----------
@@ -392,7 +393,7 @@ def unscented_filter_correct(
 
 
 def augmented_unscented_filter(mu_0, sigma_0, f, g, Q, R, Z):
-    """Apply the Unscented Kalman Filter with arbitrary noise
+    """Apply the Unscented Kalman Filter with arbitrary noise.
 
     Parameters
     ----------
@@ -469,7 +470,7 @@ def augmented_unscented_filter(mu_0, sigma_0, f, g, Q, R, Z):
 
 
 def augmented_unscented_smoother(mu_filt, sigma_filt, f, Q):
-    """Apply the Unscented Kalman Smoother with arbitrary noise
+    """Apply the Unscented Kalman Smoother with arbitrary noise.
 
     Parameters
     ----------
@@ -540,7 +541,7 @@ def augmented_unscented_smoother(mu_filt, sigma_filt, f, Q):
 
 
 def additive_unscented_filter(mu_0, sigma_0, f, g, Q, R, Z):
-    """Apply the Unscented Kalman Filter with additive noise
+    """Apply the Unscented Kalman Filter with additive noise.
 
     Parameters
     ----------
@@ -606,7 +607,7 @@ def additive_unscented_filter(mu_0, sigma_0, f, g, Q, R, Z):
 
 
 def additive_unscented_smoother(mu_filt, sigma_filt, f, Q):
-    """Apply the Unscented Kalman Filter assuming additiven noise
+    """Apply the Unscented Kalman Filter assuming additive noise.
 
     Parameters
     ----------
@@ -713,7 +714,7 @@ class UnscentedMixin:
         self.random_state = random_state
 
     def _initialize_parameters(self):
-        """Retrieve parameters if they exist, else replace with defaults"""
+        """Retrieve parameters if they exist, else replace with defaults."""
 
         arguments = get_params(self)
         defaults = self._default_parameters()
@@ -730,7 +731,7 @@ class UnscentedMixin:
         )
 
     def _parse_observations(self, obs):
-        """Safely convert observations to their expected format"""
+        """Safely convert observations to their expected format."""
         obs = ma.atleast_2d(obs)
         if obs.shape[0] == 1 and obs.shape[1] > 1:
             obs = obs.T
@@ -802,7 +803,7 @@ class UnscentedKalmanFilter(UnscentedMixin):
     """
 
     def sample(self, n_timesteps, initial_state=None, random_state=None):
-        """Sample from model defined by the Unscented Kalman Filter
+        """Sample from model defined by the Unscented Kalman Filter.
 
         Parameters
         ----------
@@ -862,7 +863,7 @@ class UnscentedKalmanFilter(UnscentedMixin):
         return (x, ma.asarray(z))
 
     def filter(self, Z):
-        """Run Unscented Kalman Filter
+        """Run Unscented Kalman Filter.
 
         Parameters
         ----------
@@ -913,7 +914,7 @@ class UnscentedKalmanFilter(UnscentedMixin):
         observation_function=None,
         observation_covariance=None,
     ):
-        r"""Update a Kalman Filter state estimate
+        r"""Update a Kalman Filter state estimate.
 
         Perform a one-step update to estimate the state at time :math:`t+1`
         give an observation at time :math:`t+1` and the previous estimate for
@@ -1024,7 +1025,7 @@ class UnscentedKalmanFilter(UnscentedMixin):
         return (next_filtered_state_mean, next_filtered_state_covariance)
 
     def smooth(self, Z):
-        """Run Unscented Kalman Smoother
+        """Run Unscented Kalman Smoother.
 
         Parameters
         ----------
@@ -1123,7 +1124,7 @@ class AdditiveUnscentedKalmanFilter(UnscentedMixin):
     """
 
     def sample(self, n_timesteps, initial_state=None, random_state=None):
-        """Sample from model defined by the Unscented Kalman Filter
+        """Sample from model defined by the Unscented Kalman Filter.
 
         Parameters
         ----------
@@ -1181,7 +1182,7 @@ class AdditiveUnscentedKalmanFilter(UnscentedMixin):
         return (x, ma.asarray(z))
 
     def filter(self, Z):
-        """Run Unscented Kalman Filter
+        """Run Unscented Kalman Filter.
 
         Parameters
         ----------
@@ -1232,7 +1233,7 @@ class AdditiveUnscentedKalmanFilter(UnscentedMixin):
         observation_function=None,
         observation_covariance=None,
     ):
-        r"""Update a Kalman Filter state estimate
+        r"""Update a Kalman Filter state estimate.
 
         Perform a one-step update to estimate the state at time :math:`t+1`
         give an observation at time :math:`t+1` and the previous estimate for
@@ -1336,7 +1337,7 @@ class AdditiveUnscentedKalmanFilter(UnscentedMixin):
         return (next_filtered_state_mean, next_filtered_state_covariance)
 
     def smooth(self, Z):
-        """Run Unscented Kalman Smoother
+        """Run Unscented Kalman Smoother.
 
         Parameters
         ----------

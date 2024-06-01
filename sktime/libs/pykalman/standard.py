@@ -1,4 +1,5 @@
-"""
+"""Kalman Filter, Kalman Smoother, and EM Algorithm for Linear-Gaussian Systems.
+
 =====================================
 Inference for Linear-Gaussian Systems
 =====================================
@@ -48,7 +49,7 @@ def _arg_or_default(arg, default, dim, name):
 
 
 def _determine_dimensionality(variables, default):
-    """Derive the dimensionality of the state space
+    """Derive the dimensionality of the state space.
 
     Parameters
     ----------
@@ -88,7 +89,7 @@ def _determine_dimensionality(variables, default):
 
 
 def _last_dims(X, t, ndims=2):
-    """Extract the final dimensions of `X`
+    """Extract the final dimensions of `X`.
 
     Extract the final `ndim` dimensions at index `t` if `X` has >= `ndim` + 1
     dimensions, otherwise return `X`.
@@ -126,7 +127,7 @@ def _loglikelihoods(
     predicted_state_covariances,
     observations,
 ):
-    """Calculate log likelihood of all observations
+    """Calculate log-likelihood of all observations.
 
     Parameters
     ----------
@@ -188,7 +189,7 @@ def _filter_predict(
     current_state_mean,
     current_state_covariance,
 ):
-    r"""Calculate the mean and covariance of :math:`P(x_{t+1} | z_{0:t})`
+    r"""Calculate the mean and covariance of :math:`P(x_{t+1} | z_{0:t})`.
 
     Using the mean and covariance of :math:`P(x_t | z_{0:t})`, calculate the
     mean and covariance of :math:`P(x_{t+1} | z_{0:t})`.
@@ -235,7 +236,7 @@ def _filter_correct(
     predicted_state_covariance,
     observation,
 ):
-    r"""Correct a predicted state with a Kalman Filter update
+    r"""Correct a predicted state with a Kalman Filter update.
 
     Incorporate observation `observation` from time `t` to turn
     :math:`P(x_t | z_{0:t-1})` into :math:`P(x_t | z_{0:t})`
@@ -314,7 +315,7 @@ def _filter(
     initial_state_covariance,
     observations,
 ):
-    """Apply the Kalman Filter
+    """Apply the Kalman Filter.
 
     Calculate posterior distribution over hidden states given observations up
     to and including the current time step.
@@ -424,7 +425,7 @@ def _smooth_update(
     next_smoothed_state_mean,
     next_smoothed_state_covariance,
 ):
-    r"""Correct a predicted state with a Kalman Smoother update
+    r"""Correct a predicted state with a Kalman Smoother update.
 
     Calculates posterior distribution of the hidden state at time `t` given the
     observations all observations via Kalman Smoothing.
@@ -489,7 +490,7 @@ def _smooth(
     predicted_state_means,
     predicted_state_covariances,
 ):
-    """Apply the Kalman Smoother
+    """Apply the Kalman Smoother.
 
     Estimate the hidden state at time for each time step given all
     observations.
@@ -551,7 +552,7 @@ def _smooth(
 
 
 def _smooth_pair(smoothed_state_covariances, kalman_smoothing_gain):
-    r"""Calculate pairwise covariance between hidden states
+    r"""Calculate pairwise covariance between hidden states.
 
     Calculate covariance between hidden states at :math:`t` and :math:`t-1` for
     all time step pairs
@@ -587,7 +588,7 @@ def _em(
     pairwise_covariances,
     given=None,
 ):
-    """Apply the EM Algorithm to the Linear-Gaussian model
+    """Apply the EM Algorithm to the Linear-Gaussian model.
 
     Estimate Linear-Gaussian model parameters by maximizing the expected log
     likelihood of all observations.
@@ -722,7 +723,7 @@ def _em(
 def _em_observation_matrix(
     observations, observation_offsets, smoothed_state_means, smoothed_state_covariances
 ):
-    r"""Apply the EM algorithm to parameter `observation_matrix`
+    r"""Apply the EM algorithm to parameter `observation_matrix`.
 
     Maximize expected log likelihood of observations with respect to the
     observation matrix `observation_matrix`.
@@ -756,7 +757,7 @@ def _em_observation_covariance(
     smoothed_state_means,
     smoothed_state_covariances,
 ):
-    r"""Apply the EM algorithm to parameter `observation_covariance`
+    r"""Apply the EM algorithm to parameter `observation_covariance`.
 
     Maximize expected log likelihood of observations with respect to the
     observation covariance matrix `observation_covariance`.
@@ -798,7 +799,7 @@ def _em_transition_matrix(
     smoothed_state_covariances,
     pairwise_covariances,
 ):
-    r"""Apply the EM algorithm to parameter `transition_matrix`
+    r"""Apply the EM algorithm to parameter `transition_matrix`.
 
     Maximize expected log likelihood of observations with respect to the state
     transition matrix `transition_matrix`.
@@ -832,7 +833,7 @@ def _em_transition_covariance(
     smoothed_state_covariances,
     pairwise_covariances,
 ):
-    r"""Apply the EM algorithm to parameter `transition_covariance`
+    r"""Apply the EM algorithm to parameter `transition_covariance`.
 
     Maximize expected log likelihood of observations with respect to the
     transition covariance matrix `transition_covariance`.
@@ -871,7 +872,7 @@ def _em_transition_covariance(
 
 
 def _em_initial_state_mean(smoothed_state_means):
-    r"""Apply the EM algorithm to parameter `initial_state_mean`
+    r"""Apply the EM algorithm to parameter `initial_state_mean`.
 
     Maximize expected log likelihood of observations with respect to the
     initial state distribution mean `initial_state_mean`.
@@ -887,7 +888,7 @@ def _em_initial_state_mean(smoothed_state_means):
 def _em_initial_state_covariance(
     initial_state_mean, smoothed_state_means, smoothed_state_covariances
 ):
-    r"""Apply the EM algorithm to parameter `initial_state_covariance`
+    r"""Apply the EM algorithm to parameter `initial_state_covariance`.
 
     Maximize expected log likelihood of observations with respect to the
     covariance of the initial state distribution `initial_state_covariance`.
@@ -908,7 +909,7 @@ def _em_initial_state_covariance(
 
 
 def _em_transition_offset(transition_matrices, smoothed_state_means):
-    r"""Apply the EM algorithm to parameter `transition_offset`
+    r"""Apply the EM algorithm to parameter `transition_offset`.
 
     Maximize expected log likelihood of observations with respect to the
     state transition offset `transition_offset`.
@@ -932,7 +933,7 @@ def _em_transition_offset(transition_matrices, smoothed_state_means):
 
 
 def _em_observation_offset(observation_matrices, smoothed_state_means, observations):
-    r"""Apply the EM algorithm to parameter `observation_offset`
+    r"""Apply the EM algorithm to parameter `observation_offset`.
 
     Maximize expected log likelihood of observations with respect to the
     observation offset `observation_offset`.
@@ -1062,7 +1063,7 @@ class KalmanFilter:
         n_dim_state=None,
         n_dim_obs=None,
     ):
-        """Initialize Kalman Filter"""
+        """Initialize Kalman Filter."""
 
         # determine size of state space
         n_dim_state = _determine_dimensionality(
@@ -1109,8 +1110,7 @@ class KalmanFilter:
             self._em_vars = em_vars
 
     def sample(self, n_timesteps, initial_state=None, random_state=None):
-        """Sample a state sequence :math:`n_{\\text{timesteps}}` timesteps in
-        length.
+        """Sample a state sequence :math:`n_{\\text{timesteps}}` timesteps in length.
 
         Parameters
         ----------
@@ -1182,7 +1182,7 @@ class KalmanFilter:
         return (states, np.ma.array(observations))
 
     def filter(self, X):
-        """Apply the Kalman Filter
+        """Apply the Kalman Filter.
 
         Apply the Kalman Filter to estimate the hidden state at time :math:`t`
         for :math:`t = [0...n_{\\text{timesteps}}-1]` given observations up to
@@ -1247,7 +1247,7 @@ class KalmanFilter:
         observation_offset=None,
         observation_covariance=None,
     ):
-        r"""Update a Kalman Filter state estimate
+        r"""Update a Kalman Filter state estimate.
 
         Perform a one-step update to estimate the state at time :math:`t+1`
         give an observation at time :math:`t+1` and the previous estimate for
@@ -1352,7 +1352,7 @@ class KalmanFilter:
         return (next_filtered_state_mean, next_filtered_state_covariance)
 
     def smooth(self, X):
-        """Apply the Kalman Smoother
+        """Apply the Kalman Smoother.
 
         Apply the Kalman Smoother to estimate the hidden state at time
         :math:`t` for :math:`t = [0...n_{\\text{timesteps}}-1]` given all
@@ -1414,7 +1414,7 @@ class KalmanFilter:
         return (smoothed_state_means, smoothed_state_covariances)
 
     def em(self, X, y=None, n_iter=10, em_vars=None):
-        """Apply the EM algorithm
+        """Apply the EM algorithm.
 
         Apply the EM algorithm to estimate all parameters specified by
         `em_vars`.  Note that all variables estimated are assumed to be
@@ -1531,7 +1531,7 @@ class KalmanFilter:
         return self
 
     def loglikelihood(self, X):
-        """Calculate the log likelihood of all observations
+        """Calculate the log likelihood of all observations.
 
         Parameters
         ----------
@@ -1589,7 +1589,7 @@ class KalmanFilter:
         return np.sum(loglikelihoods)
 
     def _initialize_parameters(self):
-        """Retrieve parameters if they exist, else replace with defaults"""
+        """Retrieve parameters if they exist, else replace with defaults."""
         n_dim_state, n_dim_obs = self.n_dim_state, self.n_dim_obs
 
         arguments = get_params(self)
@@ -1639,7 +1639,7 @@ class KalmanFilter:
         )
 
     def _parse_observations(self, obs):
-        """Safely convert observations to their expected format"""
+        """Safely convert observations to their expected format."""
         obs = np.ma.atleast_2d(obs)
         if obs.shape[0] == 1 and obs.shape[1] > 1:
             obs = obs.T
