@@ -29,7 +29,7 @@ Highlights
 * Kolmogorov-Arnold Network (KAN) forecaster (:pr:`6386`) :user:`benHeid`
 * New probabilistic forecast metrics: interval width (sharpness), area under the
   calibration curve (:pr:`6437`, :pr:`6460`) :user:`fkiraly`
-* Data loader for fpp3 forecasting datasets via ``rdata`` package, to ``sktime`` data formats (:pr:`6477`) :user:`ericjb`
+* Data loader for fpp3 (Forecasting, Princniples and Practice) datasets via ``rdata`` package, in ``sktime`` data formats (:pr:`6477`) :user:`ericjb`
 * Bollinger Bands transformation (:pr:`6473`) :user:`ishanpai`
 * ADI/CV2 (Syntetos/Boylan) feature extractor (:pr:`6336`) :user:`shlok191`
 * ``ExpandingCutoffSplitter`` - splitter by moving cutoff (:pr:`6360`) :user:`ninedigits`
