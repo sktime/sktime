@@ -306,7 +306,7 @@ def _dataset_to_mtype(dataset_name, obj):
     return (True, obj)
 
 
-def _process_dataset(dataset_name, temp_folder="/tmp"):
+def _process_dataset(dataset_name, temp_folder=None):
     known, url = _get_dataset_url(dataset_name)
     if known:
         temp_dir = _decompress_file_to_temp(url=url, temp_folder=temp_folder)
@@ -331,7 +331,7 @@ def _process_dataset(dataset_name, temp_folder="/tmp"):
         return (False, None)
 
 
-def load_fpp3(dataset, temp_folder="/tmp"):
+def load_fpp3(dataset, temp_folder=None):
     """Load a dataset from the fpp3 package.
 
     Returns ``pd.DataFrame`` in one of the valid sktime :term:`mtype` formats,
@@ -346,7 +346,7 @@ def load_fpp3(dataset, temp_folder="/tmp"):
     dataset : str
         The name of the dataset to load.
         Valid values are listed in ``datasets.DATASET_NAMES_FPP3``.
-    temp_folder: str, optional, default = '/tmp'
+    temp_folder: str, optional
         Location of temporary data folder for downloading and extracting the dataset.
         Deleted if the operation is successful.
 
