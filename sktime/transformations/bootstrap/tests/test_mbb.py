@@ -8,6 +8,7 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import load_airline
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.bootstrap import (
     MovingBlockBootstrapTransformer,
     STLBootstrapTransformer,
@@ -16,7 +17,6 @@ from sktime.transformations.bootstrap._mbb import (
     _get_series_name,
     _moving_block_bootstrap,
 )
-from sktime.tests.test_switch import run_test_for_class
 
 y = load_airline()
 y_index = y.index

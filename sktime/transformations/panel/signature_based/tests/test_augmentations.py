@@ -12,7 +12,6 @@ from sktime.transformations.panel.signature_based._augmentations import (
     _make_augmentation_pipeline,
 )
 
-
 OBJS_TO_TEST = [
     _AddTime,
     _BasePoint,

@@ -8,8 +8,8 @@ import pytest
 
 from sktime.datasets import load_gunpoint
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
-from sktime.transformations.panel.summarize import FittedParamExtractor
 from sktime.tests.test_switch import run_test_for_class
+from sktime.transformations.panel.summarize import FittedParamExtractor
 
 X_train, y_train = load_gunpoint("train", return_X_y=True)
 

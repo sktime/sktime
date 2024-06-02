@@ -6,9 +6,9 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer
 
 from sktime.datasets import load_basic_motions
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.panel.compose import ColumnTransformer
 from sktime.transformations.panel.reduce import Tabularizer
-from sktime.tests.test_switch import run_test_for_class
 
 
 @pytest.mark.skipif(

@@ -3,8 +3,8 @@
 __author__ = ["KatieBuc"]
 
 import numpy as np
-from sklearn.preprocessing import MinMaxScaler, RobustScaler
 import pytest
+from sklearn.preprocessing import MinMaxScaler, RobustScaler
 
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.dobin import DOBIN
