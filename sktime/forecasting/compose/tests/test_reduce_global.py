@@ -1,13 +1,6 @@
 """Test extraction of features across (shifted) windows."""
 __author__ = ["danbartl"]
 
-from sktime.tests.test_switch import run_test_for_class
-from sktime.utils.dependencies import _check_soft_dependencies
-
-# HistGradientBoostingRegressor requires experimental flag in old sklearn versions
-if _check_soft_dependencies("sklearn<1.0", severity="none"):
-    from sklearn.experimental import enable_hist_gradient_boosting  # noqa
-
 import random
 
 import numpy as np
@@ -31,7 +24,7 @@ from sktime.split import temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.summarize import WindowSummarizer
 from sktime.utils._testing.hierarchical import _make_hierarchical
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 # HistGradientBoostingRegressor requires experimental flag in old sklearn versions
 sklearn_zero_x = _check_soft_dependencies(
