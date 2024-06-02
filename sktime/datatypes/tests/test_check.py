@@ -90,7 +90,7 @@ def pytest_generate_tests(metafunc):
         for tuple in keys:
             ids += [f"{tuple[0]}-{tuple[1]}-fixture:{tuple[2]}"]
 
-        # parameterize test with from-mtpes
+        # parameterize test with from-mytpes
         metafunc.parametrize("scitype,mtype,fixture_index", keys, ids=ids)
 
     elif {"scitype", "mtype"}.issubset(fixturenames):

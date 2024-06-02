@@ -143,8 +143,9 @@ class LSTMFCNClassifier(BaseDeepClassifier):
             optimizer="adam",
             metrics=["accuracy"],
         )
-
-        self.callbacks = self.callbacks or []
+        # .get_params() returns an empty list for callback.
+        # inconsistent with function initial run where callbacks was set to None
+        self._callbacks = self.callbacks or None
 
         return model
 
@@ -178,7 +179,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         """
         check_random_state(self.random_state)
 
-        y_onehot = self.convert_y_to_keras(y)
+        y_onehot = self._convert_y_to_keras(y)
 
         # Remove?
         # Transpose to conform to Keras input style.
@@ -199,10 +200,8 @@ class LSTMFCNClassifier(BaseDeepClassifier):
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
-            callbacks=deepcopy(self.callbacks) if self.callbacks else [],
+            callbacks=deepcopy(self._callbacks) if self._callbacks else None,
         )
-
-        self._is_fitted = True
 
         return self
 
