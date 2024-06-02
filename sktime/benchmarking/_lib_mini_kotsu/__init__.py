@@ -1,5 +1,7 @@
 """Minimal library of kotsu methods still used in sktime.
 
+PRIVATE MODULE: NOT FOR USE OUTSIDE OF DIRECT CALLS FROM SKTIME.
+
 This library is a minimal, stripped down version of the kotsu library
 that covers remaining imports from sktime's benchmarking module.
 
