@@ -99,87 +99,28 @@ class EnbPIForecaster(BaseForecaster):
         self.random_state_ = check_random_state(self.random_state)
 
         # Temporal Split
-        if X is None:
-            y_train, y_fit_cp = temporal_train_test_split(
-                y, fh=list(fh.to_relative(self.cutoff))
-            )
-            x_fit_cp = None
-        else:
-            y_train, y_fit_cp, X_train, x_fit_cp = temporal_train_test_split(
-                y, X=X, fh=list(fh.to_relative(self.cutoff))
-            )
+        indexes = np.arange(len(y))
 
         # fit/transform the transformer to obtain bootstrap samples
-        y_bootstraps = self.bootstrap_transformer_.fit_transform(X=y_train)
-        self._y_bs_ix = y_bootstraps.index
+        bs_ts_index = list(self.bootstrap_transformer_.bootstrap(y, test_ratio=0, return_indices=True))
+        self.indexes = np.stack(list(map(lambda x: x[1], bs_ts_index)))
+        bootstapped_ts = list(map(lambda x: x[0], bs_ts_index))
 
-        if X is not None:
-            # generate replicates of exogenous data for bootstrap
-            X_inner = self._gen_X_bootstraps(X_train)
-        else:
-            X_inner = None
 
         self.forecasters = []
         self.preds = []
-        self.residuals = []
         # Fit Models per Bootstrap Sample
-        for bootstrap_ix in y_bootstraps.index.levels[0]:
-            y_bootstrap = y_bootstraps.loc[bootstrap_ix]
-            if X is not None:
-                X_bootstrap = X_inner.loc[bootstrap_ix]
-            else:
-                X_bootstrap = None
-
+        for bs_ts in bootstapped_ts:
+            bs_df = pd.DataFrame(bs_ts, index=y.index)
             forecaster = clone(self.forecaster_)
-            forecaster.fit(y=y_bootstrap, fh=fh, X=X_bootstrap)
+            forecaster.fit(y=bs_df, fh=fh, X=X)
             self.forecasters.append(forecaster)
             prediction = forecaster.predict(
-                fh=list(fh.to_relative(self.cutoff)), X=x_fit_cp
+                fh=y.index, X=X
             )
             self.preds.append(prediction)
 
-        # Calculate Residuals using Leave-One-Out Cross Validation
-        if self.loo:
-            for i in range(len(self.preds)):
-                pred = np.stack(self.preds[:i] + self.preds[i + 1 :], axis=0).mean(axis=0)
-                self.residuals.append(y_fit_cp.values - pred)
-        else:
-            for i in range(len(self.preds)):
-                pred = self.preds[i]
-                self.residuals.append(y_fit_cp.values - pred)
-
-
-        for forecaster in self.forecasters:
-            forecaster.update(y=y_fit_cp, X=x_fit_cp)
-
         return self
-
-    def _gen_X_bootstraps(self, X):
-        """Generate replicates of exogenous data for bootstrap.
-
-        Accesses self._y_bs_ix to obtain the index of the bootstrapped time series.
-
-        Parameters
-        ----------
-        X : pd.DataFrame
-            Exogenous time series, non-hierarchical
-
-        Returns
-        -------
-        X_bootstraps : pd.DataFrame
-            Bootstrapped exogenous data
-        """
-        # Copied from BaggingForecaster -> Need to be refactored
-        if X is None:
-            return None
-
-        y_bs_ix = self._y_bs_ix
-
-        # bootstrap instance index ends up at level -2
-        inst_ix = y_bs_ix.get_level_values(-2).unique()
-        X_repl = [X] * len(inst_ix)
-        X_bootstraps = pd.concat(X_repl, keys=inst_ix)
-        return X_bootstraps
 
     def _predict(self, X, fh=None):
         # Calculate Prediction Intervals using Bootstrap Samples
@@ -195,58 +136,27 @@ class EnbPIForecaster(BaseForecaster):
         )
 
     def _predict_interval(self, fh, X, coverage):
-        y_pred = self.predict(fh=fh, X=X)
 
-        return self._predict_interval_series(
-            fh=fh,
-            coverage=coverage,
-            y_pred=y_pred,
+        from fortuna.conformal import EnbPI
+
+        preds = []
+        for forecaster in self.forecasters:
+            preds.append(forecaster.predict(fh=fh, X=X))
+
+        conformal_intervals = EnbPI().conformal_interval(
+            bootstrap_indices=self.indexes,
+            bootstrap_train_preds=np.stack(self.preds),
+            bootstrap_test_preds=np.stack(preds),
+            train_targets=self._y,
+            error=0.05,
         )
 
-    def _predict_interval_series(self, fh, coverage, y_pred):
-        """Compute prediction intervals predict_interval for series scitype."""
+        cols = pd.MultiIndex.from_product([self._y.columns, coverage, ["lower", "upper"]])
         fh_absolute = fh.to_absolute(self.cutoff)
         fh_absolute_idx = fh_absolute.to_pandas()
+        pred_int = pd.DataFrame(conformal_intervals, index=fh_absolute_idx, columns=cols)
+        return pred_int
 
-        residuals_matrix = np.stack(self.residuals)
-
-        ABS_RESIDUAL_BASED = ["conformal", "conformal_bonferroni", "empirical_residual"]
-
-        var_names = self._get_varnames()
-
-        cols = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
-        pred_int = pd.DataFrame(index=fh_absolute_idx, columns=cols)
-        for i, fh_ind in enumerate(fh_absolute):
-            resids = residuals_matrix[:, i]
-            abs_resids = np.abs(resids)
-            coverage2 = np.repeat(coverage, 2)
-            if self.method == "empirical":
-                quantiles = 0.5 + np.tile([-0.5, 0.5], len(coverage)) * coverage2
-                pred_int_row = np.quantile(resids, quantiles)
-            if self.method == "empirical_residual":
-                quantiles = 0.5 - 0.5 * coverage2
-                pred_int_row = np.quantile(abs_resids, quantiles)
-            elif self.method == "conformal_bonferroni":
-                alphas = 1 - coverage2
-                quantiles = 1 - alphas / len(fh)
-                pred_int_row = np.quantile(abs_resids, quantiles)
-            elif self.method == "conformal":
-                quantiles = coverage2
-                pred_int_row = np.quantile(abs_resids, quantiles)
-
-            pred_int.loc[fh_ind] = pred_int_row
-
-        y_pred = convert(y_pred, from_type=self._y_mtype_last_seen, to_type="pd.Series")
-        y_pred.index = fh_absolute_idx
-
-        for col in cols:
-            if self.method in ABS_RESIDUAL_BASED:
-                sign = 1 - 2 * (col[2] == "lower")
-            else:
-                sign = 1
-            pred_int[col] = y_pred + sign * pred_int[col]
-
-        return pred_int.convert_dtypes()
 
     def _update(self, y, X=None, update_params=True):
         """Update cutoff value and, optionally, fitted parameters.
