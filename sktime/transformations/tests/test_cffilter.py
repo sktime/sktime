@@ -6,11 +6,11 @@ import pandas as pd
 import pytest
 from numpy import array_equal
 
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels.api", severity="none"),
+    not _check_soft_dependencies("statsmodels", severity="none"),
     reason="skip test if required soft dependency for statsmodels.api not available",
 )
 def test_CFFilter_wrapper():

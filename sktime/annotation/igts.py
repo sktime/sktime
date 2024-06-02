@@ -23,7 +23,7 @@ import numpy.typing as npt
 import pandas as pd
 
 from sktime.base import BaseEstimator
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.utils.dependencies import _check_estimator_deps
 
 __all__ = ["InformationGainSegmentation"]
 __author__ = ["lmmentel"]

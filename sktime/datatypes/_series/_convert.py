@@ -39,7 +39,7 @@ import pandas as pd
 from sktime.datatypes._convert_utils._coerce import _coerce_df_dtypes
 from sktime.datatypes._convert_utils._convert import _extend_conversions
 from sktime.datatypes._registry import MTYPE_LIST_SERIES
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 convert_dict = dict()
 

@@ -13,7 +13,6 @@ import numpy as np
 import pandas as pd
 
 from sktime.datatypes import convert_to
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_interval_df, check_y
 from sktime.utils.validation.series import check_consistent_index_type
 
@@ -80,8 +79,9 @@ def plot_series(
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> fig, ax = plot_series(y)  # doctest: +SKIP
-
     """
+    from sktime.utils.dependencies import _check_soft_dependencies
+
     _check_soft_dependencies("matplotlib", "seaborn")
     import matplotlib.pyplot as plt
     import seaborn as sns
@@ -235,6 +235,8 @@ def plot_lags(series, lags=1, suptitle=None):
     >>> fig, ax = plot_lags(y, lags=2) # plot of y(t) with y(t-2)  # doctest: +SKIP
     >>> fig, ax = plot_lags(y, lags=[1,2,3]) # y(t) & y(t-1), y(t-2).. # doctest: +SKIP
     """
+    from sktime.utils.dependencies import _check_soft_dependencies
+
     _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
 
@@ -345,6 +347,8 @@ def plot_correlations(
     >>> y = load_airline()
     >>> fig, ax = plot_correlations(y)  # doctest: +SKIP
     """
+    from sktime.utils.dependencies import _check_soft_dependencies
+
     _check_soft_dependencies("matplotlib", "statsmodels")
     import matplotlib.pyplot as plt
     from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
@@ -440,6 +444,8 @@ def plot_windows(cv, y, title="", ax=None):
     ax : matplotlib.axes.Axes
         matplotlib axes object with the figure
     """
+    from sktime.utils.dependencies import _check_soft_dependencies
+
     _check_soft_dependencies("matplotlib", "seaborn")
     import matplotlib.pyplot as plt
     import seaborn as sns

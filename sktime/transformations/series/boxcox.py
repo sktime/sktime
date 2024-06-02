@@ -7,8 +7,8 @@ __all__ = ["BoxCoxTransformer", "LogTransformer"]
 import numpy as np
 
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.validation import is_int
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 # copy-pasted from scipy 1.7.3 since it moved in 1.8.0 and broke this estimator
