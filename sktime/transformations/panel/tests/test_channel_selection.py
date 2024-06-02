@@ -8,7 +8,7 @@ from sktime.transformations.panel.channel_selection import ElbowClassPairwise
 
 @pytest.mark.skipif(
     not run_test_for_class(ElbowClassPairwise),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_cs_basic_motions():
     """Test channel selection on basic motions dataset."""

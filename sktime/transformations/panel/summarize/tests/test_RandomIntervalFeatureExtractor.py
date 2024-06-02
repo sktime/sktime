@@ -20,7 +20,7 @@ from sktime.utils.slope_and_trend import _slope
 
 @pytest.mark.skipif(
     not run_test_for_class(RandomIntervalFeatureExtractor),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("n_instances", [1, 3])
 @pytest.mark.parametrize("n_timepoints", [10, 20])
@@ -43,7 +43,7 @@ def test_output_format_dim(n_instances, n_timepoints, n_intervals, features):
 
 @pytest.mark.skipif(
     not run_test_for_class(RandomIntervalFeatureExtractor),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("bad_n_intervals", [0, "abc", 1.1, -1])
 def test_bad_n_intervals(bad_n_intervals):
@@ -55,7 +55,7 @@ def test_bad_n_intervals(bad_n_intervals):
 
 @pytest.mark.skipif(
     not run_test_for_class(RandomIntervalFeatureExtractor),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize(
     "bad_features", [0, "abc", {"a": 1}, (np.median, np.mean), [0, "abc"]]
@@ -69,7 +69,7 @@ def test_bad_features(bad_features):
 
 @pytest.mark.skipif(
     not run_test_for_class(RandomIntervalFeatureExtractor),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("n_instances", [3, 5])
 @pytest.mark.parametrize("n_timepoints", [10, 20])
@@ -99,7 +99,7 @@ def test_results(n_instances, n_timepoints, n_intervals):
 
 @pytest.mark.skipif(
     not run_test_for_class([RandomIntervalFeatureExtractor, RandomIntervalSegmenter]),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_different_implementations():
     """Test against equivalent pipelines."""
@@ -122,7 +122,7 @@ def test_different_implementations():
 
 @pytest.mark.skipif(
     not run_test_for_class([RandomIntervalFeatureExtractor, RandomIntervalSegmenter]),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.xfail(reason="SeriesToPrimitivesTransformer will be deprecated, see 2179")
 def test_different_pipelines():

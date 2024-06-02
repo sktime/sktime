@@ -9,7 +9,7 @@ from sktime.transformations.panel.summarize import PlateauFinder
 
 @pytest.mark.skipif(
     not run_test_for_class(PlateauFinder),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("value", [np.nan, -10, 10, -0.5, 0.5])
 def test_PlateauFinder(value):

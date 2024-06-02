@@ -17,7 +17,7 @@ from sktime.utils._testing.panel import _make_nested_from_array
 # correct input is meant to be a positive integer of 1 or more.
 @pytest.mark.skipif(
     not run_test_for_class(HOG1DTransformer),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("bad_num_intervals", ["str", 1.2, -1.2, -1, {}, 11, 0])
 def test_bad_num_intervals(bad_num_intervals):
@@ -38,7 +38,7 @@ def test_bad_num_intervals(bad_num_intervals):
 # correct input is meant to be a positive integer of 1 or more.
 @pytest.mark.skipif(
     not run_test_for_class(HOG1DTransformer),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("bad_num_bins", ["str", 1.2, -1.2, -1, {}, 0])
 def test_bad_num_bins(bad_num_bins):
@@ -60,7 +60,7 @@ def test_bad_num_bins(bad_num_bins):
 # ints shouldn't raise an error).
 @pytest.mark.skipif(
     not run_test_for_class(HOG1DTransformer),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("bad_scaling_factor", ["str", 1.2, -1.2, -1, {}, 0])
 def test_bad_scaling_factor(bad_scaling_factor):
@@ -76,7 +76,7 @@ def test_bad_scaling_factor(bad_scaling_factor):
 
 @pytest.mark.skipif(
     not run_test_for_class(HOG1DTransformer),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_output_of_transformer():
     """Test that the transformer has changed the data correctly."""
@@ -103,7 +103,7 @@ def test_output_of_transformer():
 # (num_intervals is 2 by default)
 @pytest.mark.skipif(
     not run_test_for_class(HOG1DTransformer),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("num_bins,corr_series_length", [(4, 8), (8, 16), (12, 24)])
 def test_output_dimensions(num_bins, corr_series_length):
@@ -125,7 +125,7 @@ def test_output_dimensions(num_bins, corr_series_length):
 
 @pytest.mark.skipif(
     not run_test_for_class(HOG1DTransformer),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_hog1d_performs_correctly_along_each_dim():
     """Test that HOG1D produces the same result along each dimension."""

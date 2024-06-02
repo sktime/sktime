@@ -9,7 +9,7 @@ from sktime.utils._testing.panel import _make_nested_from_array
 
 @pytest.mark.skipif(
     not run_test_for_class(PCATransformer),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("bad_components", ["str", 1.2, -1.2, -1, 11])
 def test_bad_input_args(bad_components):

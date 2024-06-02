@@ -17,7 +17,7 @@ from sktime.utils._testing.panel import _make_nested_from_array
 # correct input is meant to be a positive integer of 1 or more.
 @pytest.mark.skipif(
     not run_test_for_class(SlidingWindowSegmenter),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("bad_window_length", ["str", 1.2, -1.2, -1, {}])
 def test_bad_input_args(bad_window_length):
@@ -35,7 +35,7 @@ def test_bad_input_args(bad_window_length):
 # Check the transformer has changed the data correctly.
 @pytest.mark.skipif(
     not run_test_for_class(SlidingWindowSegmenter),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_output_of_transformer():
     """Test correct output of SlidingWindowSegmenter."""
@@ -80,7 +80,7 @@ def test_output_of_transformer():
 
 @pytest.mark.skipif(
     not run_test_for_class(SlidingWindowSegmenter),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize(
     "time_series_length,window_length", [(5, 1), (10, 5), (15, 9), (20, 13), (25, 19)]

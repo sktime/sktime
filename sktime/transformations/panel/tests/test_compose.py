@@ -13,7 +13,7 @@ from sktime.tests.test_switch import run_test_for_class
 
 @pytest.mark.skipif(
     not run_test_for_class(ColumnTransformer),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_ColumnTransformer_pipeline():
     """Test pipeline with ColumnTransformer."""

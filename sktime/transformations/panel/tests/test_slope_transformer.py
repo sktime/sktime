@@ -16,7 +16,7 @@ from sktime.utils._testing.panel import _make_nested_from_array
 # correct input is meant to be a positive integer of 1 or more.
 @pytest.mark.skipif(
     not run_test_for_class(SlopeTransformer),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("bad_num_intervals", ["str", 1.2, -1.2, -1, {}, 0])
 def test_bad_input_args(bad_num_intervals):
@@ -33,7 +33,7 @@ def test_bad_input_args(bad_num_intervals):
 
 @pytest.mark.skipif(
     not run_test_for_class(SlopeTransformer),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_output_of_transformer():
     """Test that the transformer has changed the data correctly."""
@@ -68,7 +68,7 @@ def test_output_of_transformer():
 
 @pytest.mark.skipif(
     not run_test_for_class(SlopeTransformer),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("num_intervals,corr_series_length", [(2, 2), (5, 5), (8, 8)])
 def test_output_dimensions(num_intervals, corr_series_length):
@@ -90,7 +90,7 @@ def test_output_dimensions(num_intervals, corr_series_length):
 
 @pytest.mark.skipif(
     not run_test_for_class(SlopeTransformer),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_slope_performs_correctly_along_each_dim():
     """Test that Slope produces the same result along each dimension."""

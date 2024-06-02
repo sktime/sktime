@@ -25,7 +25,7 @@ cv = SlidingWindowSplitter(start_with_window=True, window_length=1, fh=1)
 
 @pytest.mark.skipif(
     not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.skipif(
     not run_test_for_class(OnlineEnsembleForecaster),

@@ -10,7 +10,7 @@ from sktime.transformations.panel.compose import ColumnConcatenator
 
 @pytest.mark.skipif(
     not run_test_for_class(ColumnConcatenator),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_TimeSeriesConcatenator():
     """Test the time series concatenator."""

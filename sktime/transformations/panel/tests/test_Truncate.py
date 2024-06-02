@@ -10,7 +10,7 @@ from sktime.transformations.panel.truncation import TruncationTransformer
 
 @pytest.mark.skipif(
     not run_test_for_class(TruncationTransformer),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_truncation_transformer():
     """Test truncation to the shortest series length."""
@@ -28,7 +28,7 @@ def test_truncation_transformer():
 
 @pytest.mark.skipif(
     not run_test_for_class(TruncationTransformer),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_truncation_parameterised_transformer():
     """Test truncation to the a user defined length."""
@@ -46,7 +46,7 @@ def test_truncation_parameterised_transformer():
 
 @pytest.mark.skipif(
     not run_test_for_class(TruncationTransformer),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_truncation_pd_multiindex():
     """Test that column and index names in a pd-multiindex container are preserved."""

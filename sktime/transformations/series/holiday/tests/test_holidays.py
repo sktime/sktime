@@ -9,8 +9,8 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.holiday._holidayfeats import HolidayFeatures
-from sktime.utils.dependencies import _check_soft_dependencies
 
 
 @pytest.fixture
@@ -22,8 +22,8 @@ def calendar():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("holidays", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(HolidayFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_return_dummies(calendar):
     """Tests return_dummies param."""
@@ -38,8 +38,8 @@ def test_return_dummies(calendar):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("holidays", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(HolidayFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_return_categorical(calendar):
     """Tests return_categorical param."""
@@ -63,8 +63,8 @@ def test_return_categorical(calendar):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("holidays", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(HolidayFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_return_indicator(calendar):
     """Test return_indicator param."""
@@ -81,8 +81,8 @@ def test_return_indicator(calendar):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("holidays", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(HolidayFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_keep_original_column(calendar):
     """Tests keep_original_column param."""
@@ -108,8 +108,8 @@ def test_keep_original_column(calendar):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("holidays", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(HolidayFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_include_weekend(calendar):
     """Tests include_weekend param."""

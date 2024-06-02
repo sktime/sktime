@@ -16,7 +16,7 @@ N_ITER = 10
 
 @pytest.mark.skipif(
     not run_test_for_class(RandomIntervalSegmenter),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("n_instances", [1, 3])
 @pytest.mark.parametrize("n_timepoints", [10, 20])
@@ -48,7 +48,7 @@ def test_output_format_dim(n_timepoints, n_instances, n_intervals):
 
 @pytest.mark.skipif(
     not run_test_for_class(RandomIntervalSegmenter),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("bad_interval", [0, -0, "str", 1.2, -1.2, -1])
 def test_bad_input_args(bad_interval):
@@ -60,7 +60,7 @@ def test_bad_input_args(bad_interval):
 
 @pytest.mark.skipif(
     not run_test_for_class(RandomIntervalSegmenter),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize(
     "random_state", list(np.random.randint(100, size=10))
@@ -86,7 +86,7 @@ def test_rand_intervals_fixed_n(random_state, n_intervals):
 
 @pytest.mark.skipif(
     not run_test_for_class(RandomIntervalSegmenter),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize(
     "random_state", list(np.random.randint(100, size=10))
@@ -111,7 +111,7 @@ def test_rand_intervals_rand_n(random_state):
 
 @pytest.mark.skipif(
     not run_test_for_class(RandomIntervalSegmenter),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("min_length", [1, 3])
 @pytest.mark.parametrize("max_length", [4, 5])

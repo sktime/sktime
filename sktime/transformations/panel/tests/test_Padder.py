@@ -9,7 +9,7 @@ from sktime.transformations.panel.padder import PaddingTransformer
 
 @pytest.mark.skipif(
     not run_test_for_class(PaddingTransformer),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_padding_transformer():
     """Test the dimensions after padding."""
@@ -27,7 +27,7 @@ def test_padding_transformer():
 
 @pytest.mark.skipif(
     not run_test_for_class(PaddingTransformer),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_padding_parameterised_transformer():
     """Test padding to user determined length."""
@@ -45,7 +45,7 @@ def test_padding_parameterised_transformer():
 
 @pytest.mark.skipif(
     not run_test_for_class(PaddingTransformer),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_padding_fill_value_transformer():
     """Test full fill padding."""

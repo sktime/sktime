@@ -16,7 +16,7 @@ from sktime.utils._testing.panel import _make_nested_from_array
 # correct input is meant to be a positive integer of 0 or more.
 @pytest.mark.skipif(
     not run_test_for_class(DWTTransformer),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("bad_num_levels", ["str", 1.2, -1.2, -1, {}])
 def test_bad_input_args(bad_num_levels):
@@ -33,7 +33,7 @@ def test_bad_input_args(bad_num_levels):
 
 @pytest.mark.skipif(
     not run_test_for_class(DWTTransformer),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_output_of_transformer():
     """Test that the transformer has changed the data correctly."""
@@ -76,7 +76,7 @@ def test_output_of_transformer():
 
 @pytest.mark.skipif(
     not run_test_for_class(DWTTransformer),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_no_levels_does_no_change():
     """Test that if num_levels = 0 then no change occurs."""
@@ -90,7 +90,7 @@ def test_no_levels_does_no_change():
 
 @pytest.mark.skipif(
     not run_test_for_class(DWTTransformer),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("num_levels,corr_series_length", [(2, 12), (3, 11), (4, 12)])
 def test_output_dimensions(num_levels, corr_series_length):
@@ -112,7 +112,7 @@ def test_output_dimensions(num_levels, corr_series_length):
 
 @pytest.mark.skipif(
     not run_test_for_class(DWTTransformer),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_dwt_performs_correctly_along_each_dim():
     """Test that DWT produces the same result along each dimension."""

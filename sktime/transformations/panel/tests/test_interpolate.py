@@ -19,7 +19,7 @@ def cut_X_ts(X):
 
 @pytest.mark.skipif(
     not run_test_for_class(TSInterpolator),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_resizing():
     """Test TSInterpolator resizing.
