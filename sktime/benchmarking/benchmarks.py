@@ -81,11 +81,11 @@ class BaseBenchmark:
     """
 
     def __init__(self, id_format: Optional[str] = None):
-        from sktime.benchmarking._lib_mini_kotsu.run import run
         from sktime.benchmarking._base_kotsu import (
             SktimeModelRegistry,
             SktimeValidationRegistry,
         )
+        from sktime.benchmarking._lib_mini_kotsu.run import run
 
         self.estimators = SktimeModelRegistry(id_format)
         self.validations = SktimeValidationRegistry(id_format)
