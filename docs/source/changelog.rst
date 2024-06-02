@@ -37,9 +37,27 @@ Dependency changes
 * ``joblib`` is now an explicit core dependency, with bounds ``<1.5,>=1.2.0``.
   Previously, ``joblib`` was an indirect core dependency, via ``scikit-learn``.
   Due to direct imports, this was changed to an explicit dependency.
+
 * ``scikit-learn`` (core dependency) bounds have been updated to ``>=0.24,<1.6.0``
+
 * ``scikit-base`` (core dependency) bounds have been updated to ``>=0.6.1,<0.9.0``
+
 * ``skpro`` (soft dependency) bounds have been updated to ``<2.4.0``
+
+* ``kotsu`` is not longer a soft dependency required by the forecasting benchmark.
+  The package is no longer maintained, and its necessary imports have beend moved
+  to ``sktime`` as private utilities until refactor.
+
+* ``pykalman`` (transformations soft dependency) has been forked into ``sktime``,
+  as ``sktime.libs.pykalman``, as the original package is no longer maintained,
+  see ``sktime`` issue 5414 or ``pykalman`` issue 109.
+
+  * The package fork will be maintained in ``sktime``.
+  * Direct users of ``pykalman`` can replace imports ``from pykalman import x``
+    with equivalent imports ``from sktime.libs.pykalman import x``.
+  * Indirect users via the transformer ``KalmanFilterTransformerPK`` will not be
+    impacted as APIs do not change, except that they no longer require
+    the original ``pykalman`` package in their python environment.
 
 Deprecations and removals
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -47,7 +65,7 @@ Deprecations and removals
 Python 3.8 End-of-life
 ^^^^^^^^^^^^^^^^^^^^^^
 
-``sktime`` now requires Python version >=3.9.
+``sktime`` now requires Python version ``>=3.9``.
 No errors will be raised on Python 3.8, but test coverage and support for
 Python 3.8 has been dropped.
 
