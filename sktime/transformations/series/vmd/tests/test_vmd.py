@@ -10,7 +10,7 @@ import pytest
 from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.trend import TrendForecaster
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.series.vmd import VmdTransformer
+from sktime.transformations.series.vmd._vmd import VmdTransformer
 from sktime.transformations.series.vmd._vmdpy import VMD
 
 
