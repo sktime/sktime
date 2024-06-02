@@ -9,13 +9,13 @@ import pytest
 from sktime.datasets import load_gunpoint
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.transformations.panel.summarize import FittedParamExtractor
-from sktime.utils.dependencies import _check_estimator_deps
+from sktime.tests.test_switch import run_test_for_class
 
 X_train, y_train = load_gunpoint("train", return_X_y=True)
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(ExponentialSmoothing, severity="none"),
+    not run_test_for_class([ExponentialSmoothing, FittedParamExtractor]),
     reason="skip test if required soft dependency for hmmlearn not available",
 )
 @pytest.mark.parametrize("param_names", ["initial_level"])

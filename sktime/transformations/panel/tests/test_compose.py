@@ -8,12 +8,12 @@ from sklearn.preprocessing import FunctionTransformer
 from sktime.datasets import load_basic_motions
 from sktime.transformations.panel.compose import ColumnTransformer
 from sktime.transformations.panel.reduce import Tabularizer
-from sktime.utils.dependencies import _check_soft_dependencies
+from sktime.tests.test_switch import run_test_for_class
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("sklearn<1.4", severity="none"),
-    reason="ColumnTransformer requires sklearn<1.4 due to reliance on private methods",
+    not run_test_for_class(ColumnTransformer),
+    reason="skip test if required soft dependency for hmmlearn not available",
 )
 def test_ColumnTransformer_pipeline():
     """Test pipeline with ColumnTransformer."""
