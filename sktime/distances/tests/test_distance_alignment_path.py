@@ -4,8 +4,8 @@ import pytest
 
 from sktime.distances._distance import _METRIC_INFOS, distance, distance_alignment_path
 from sktime.distances.tests._utils import create_test_distance_numpy
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils.dependencies import _check_soft_dependencies
-from sktime.utils.git_diff import is_module_changed
 
 
 def _validate_distance_alignment_path_result(
@@ -72,7 +72,7 @@ def _validate_distance_alignment_path_result(
 
 @pytest.mark.skipif(
     not _check_soft_dependencies("numba", severity="none")
-    or not is_module_changed("sktime.distances"),  # noqa: E501
+    or not run_test_module_changed("sktime.distances"),
     reason="skip test if required soft dependency not available",
 )
 @pytest.mark.parametrize("dist", _METRIC_INFOS)
