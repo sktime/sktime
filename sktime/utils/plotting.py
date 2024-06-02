@@ -5,6 +5,7 @@
 __all__ = ["plot_series", "plot_correlations", "plot_windows", "plot_calibration"]
 __author__ = ["mloning", "RNKuhns", "Dbhasin1", "chillerobscuro", "benheid"]
 
+import copy
 import math
 from warnings import simplefilter, warn
 
@@ -84,17 +85,21 @@ def plot_series(
     _check_soft_dependencies("matplotlib", "seaborn")
     import matplotlib.pyplot as plt
     import seaborn as sns
-    from matplotlib.cbook import flatten
-    from matplotlib.ticker import FuncFormatter, MaxNLocator
 
     for y in series:
         check_y(y)
 
-    series = list(series)
-    series = [convert_to(y, "pd.Series", "Series") for y in series]
+    l_series = list(series)
+    l_series = [convert_to(y, "pd.Series", "Series") for y in l_series]
+    for i in range(len(l_series)):
+        if isinstance(list(series)[i], pd.DataFrame):
+            l_series[i].name = list(series)[i].columns[0]
+        elif isinstance(list(series)[i], pd.Series):
+            l_series[i].name = list(series)[i].name
 
-    n_series = len(series)
+    n_series = len(l_series)
     _ax_kwarg_is_none = True if ax is None else False
+
     # labels
     if labels is not None:
         if n_series != len(labels):
@@ -119,15 +124,17 @@ def plot_series(
     else:
         markers = ["o" for _ in range(n_series)]
 
-    # create combined index
-    index = series[0].index
-    for y in series[1:]:
-        # check index types
-        check_consistent_index_type(index, y.index)
-        index = index.union(y.index)
+    for y in l_series[1:]:
+        check_consistent_index_type(l_series[0].index, y.index)
 
-    # generate integer x-values
-    xs = [np.argwhere(index.isin(y.index)).ravel() for y in series]
+    if isinstance(l_series[0].index, pd.core.indexes.period.PeriodIndex):
+        tmp = copy.deepcopy(l_series)  # local copy
+        l_series = tmp
+
+    for y in l_series:
+        # check index types
+        if isinstance(y.index, pd.core.indexes.period.PeriodIndex):
+            y.index = y.index.to_timestamp()
 
     # create figure if no ax provided for plotting
     if _ax_kwarg_is_none:
@@ -138,65 +145,60 @@ def plot_series(
         colors = sns.color_palette("colorblind", n_colors=n_series)
 
     # plot series
-    for x, y, color, label, marker in zip(xs, series, colors, labels, markers):
+    for y, color, label, marker in zip(l_series, colors, labels, markers):
         # scatter if little data is available or index is not complete
-        if len(x) <= 3 or not np.array_equal(np.arange(x[0], x[-1] + 1), x):
-            plot_func = sns.scatterplot
+        if len(y) <= 3:  # or not np.array_equal(np.arange(x[0], x[-1] + 1), x):
+            ax.scatter(y.index, y.values, marker=marker, label=label, color=color, s=4)
         else:
-            plot_func = sns.lineplot
+            ax.plot(
+                y.index, y.values, marker=marker, label=label, color=color, markersize=4
+            )
 
-        plot_func(x=x, y=y, ax=ax, marker=marker, label=label, color=color)
-
-    # combine data points for all series
-    xs_flat = list(flatten(xs))
-
-    # set x label of data point to the matching index
-    def format_fn(tick_val, tick_pos):
-        if int(tick_val) in xs_flat:
-            return index[int(tick_val)]
-        else:
-            return ""
-
-    # dynamically set x label ticks and spacing from index labels
-    ax.xaxis.set_major_formatter(FuncFormatter(format_fn))
-    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-
-    # Set the figure's title
+    # Set the axes title
     if title is not None:
-        fig.suptitle(title, size="xx-large")
+        ax.set_title(title, size="xx-large")
 
     # Label the x and y axes
     if x_label is not None:
         ax.set_xlabel(x_label)
 
-    _y_label = y_label if y_label is not None else series[0].name
+    _y_label = y_label if y_label is not None else l_series[0].name
     ax.set_ylabel(_y_label)
 
     if legend:
         ax.legend()
     if pred_interval is not None:
-        check_interval_df(pred_interval, series[-1].index)
-        ax = plot_interval(ax, pred_interval, index)
+        if isinstance(pred_interval.index, pd.core.indexes.period.PeriodIndex):
+            pred_interval.index = pred_interval.index.to_timestamp()
+        check_interval_df(pred_interval, l_series[-1].index)
+
+        ax = plot_interval(ax, pred_interval)
     if _ax_kwarg_is_none:
         return fig, ax
     else:
         return ax
 
 
-def plot_interval(ax, interval_df, ix=None):
-    cov = interval_df.columns.levels[1][0]
-    var_name = interval_df.columns.levels[0][0]
-    x_ix = np.argwhere(ix.isin(interval_df.index)).ravel()
-    x_ix = np.array(x_ix)
+def plot_interval(ax, interval_df):
+    import seaborn as sns
 
-    ax.fill_between(
-        x_ix,
-        interval_df[var_name][cov]["lower"].astype("float64").to_numpy(),
-        interval_df[var_name][cov]["upper"].astype("float64").to_numpy(),
-        alpha=0.2,
-        color=ax.get_lines()[-1].get_c(),
-        label=f"{int(cov * 100)}% prediction interval",
-    )
+    var_name = interval_df.columns.levels[0][0]
+
+    n = len(interval_df.columns.levels[1])
+    if n == 1:
+        colors = [ax.get_lines()[-1].get_c()]
+    else:
+        colors = sns.color_palette("colorblind", n_colors=n)
+
+    for i, cov in enumerate(interval_df.columns.levels[1]):
+        ax.fill_between(
+            interval_df.index,
+            interval_df[var_name][cov]["lower"].astype("float64").to_numpy(),
+            interval_df[var_name][cov]["upper"].astype("float64").to_numpy(),
+            alpha=0.2,
+            color=colors[i],
+            label=f"{int(cov * 100)}% prediction interval",
+        )
     ax.legend()
     return ax
 
