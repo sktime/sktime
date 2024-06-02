@@ -1,9 +1,11 @@
 import numpy as np
+import pytest
 from numpy import ma
 from numpy.testing import assert_array_almost_equal
 from scipy import linalg
 
 from ..unscented import AdditiveUnscentedKalmanFilter, cholupdate, qr
+from sktime.utils.git_diff import is_module_changed
 
 
 def build_unscented_filter(cls):
@@ -39,6 +41,10 @@ def check_unscented_prediction(method, mu_true, sigma_true):
     assert_array_almost_equal(sigma_true, sigma_est, decimal=8)
 
 
+@pytest.mark.skipif(
+    not is_module_changed("sktime.libs.pykalman"),
+    reason="Execute tests for pykalman iff anything in the module has changed",
+)
 def test_additive_sample():
     kf = build_unscented_filter(AdditiveUnscentedKalmanFilter)
     (x, z) = kf.sample(100)
@@ -47,6 +53,10 @@ def test_additive_sample():
     assert z.shape == (100, 1)
 
 
+@pytest.mark.skipif(
+    not is_module_changed("sktime.libs.pykalman"),
+    reason="Execute tests for pykalman iff anything in the module has changed",
+)
 def test_additive_filter():
     # true unscented mean, covariance, as calculated by a MATLAB ukf_predict1
     # and ukf_update1 available from
@@ -77,6 +87,10 @@ def test_additive_filter():
     )
 
 
+@pytest.mark.skipif(
+    not is_module_changed("sktime.libs.pykalman"),
+    reason="Execute tests for pykalman iff anything in the module has changed",
+)
 def test_additive_filter_update():
     kf = build_unscented_filter(AdditiveUnscentedKalmanFilter)
     Z = ma.array([0, 1, 2, 3], mask=[True, False, False, False])
@@ -95,6 +109,10 @@ def test_additive_filter_update():
     assert_array_almost_equal(sigma_filt, sigma_filt2)
 
 
+@pytest.mark.skipif(
+    not is_module_changed("sktime.libs.pykalman"),
+    reason="Execute tests for pykalman iff anything in the module has changed",
+)
 def test_additive_smoother():
     # true unscented mean, covariance, as calculated by a MATLAB urts_smooth1
     # available in http://becs.aalto.fi/en/research/bayes/ekfukf/
@@ -124,6 +142,10 @@ def test_additive_smoother():
     )
 
 
+@pytest.mark.skipif(
+    not is_module_changed("sktime.libs.pykalman"),
+    reason="Execute tests for pykalman iff anything in the module has changed",
+)
 def test_cholupdate():
     M = np.array([[1, 0.2], [0.2, 0.8]])
     x = np.array([[0.3, 0.5], [0.01, 0.09]])
@@ -140,6 +162,10 @@ def test_cholupdate():
     assert_array_almost_equal(R1, R2)
 
 
+@pytest.mark.skipif(
+    not is_module_changed("sktime.libs.pykalman"),
+    reason="Execute tests for pykalman iff anything in the module has changed",
+)
 def test_qr():
     A = np.array([[1, 0.2, 1], [0.2, 0.8, 2]]).T
     R = qr(A)
