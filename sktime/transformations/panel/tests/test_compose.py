@@ -6,20 +6,14 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer
 
 from sktime.datasets import load_basic_motions
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.panel.compose import ColumnTransformer
 from sktime.transformations.panel.reduce import Tabularizer
-from sktime.utils.dependencies import _check_soft_dependencies
-
-sklearn_lneq_14 = _check_soft_dependencies(
-    "scikit-learn<1.4",
-    severity="none",
-    package_import_alias={"scikit-learn": "sklearn"},
-)
 
 
 @pytest.mark.skipif(
-    not sklearn_lneq_14,
-    reason="ColumnTransformer requires sklearn<1.4 due to reliance on private methods",
+    not run_test_for_class(ColumnTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_ColumnTransformer_pipeline():
     """Test pipeline with ColumnTransformer."""

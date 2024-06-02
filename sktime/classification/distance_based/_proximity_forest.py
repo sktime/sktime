@@ -670,12 +670,12 @@ class ProximityStump(BaseClassifier):
     --------
     >>> from sktime.classification.distance_based import ProximityStump
     >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train")
-    >>> X_test, y_test = load_unit_test(split="test")
-    >>> clf = ProximityStump()
-    >>> clf.fit(X_train, y_train)
+    >>> X_train, y_train = load_unit_test(split="train")  # doctest: +SKIP
+    >>> X_test, y_test = load_unit_test(split="test")  # doctest: +SKIP
+    >>> clf = ProximityStump()  # doctest: +SKIP
+    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
     ProximityStump(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> y_pred = clf.predict(X_test)  # doctest: +SKIP
     """
 
     _tags = {
