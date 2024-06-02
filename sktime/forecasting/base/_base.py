@@ -2610,9 +2610,8 @@ class BaseGlobalForecaster(BaseForecaster):
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
-        # # set internal X/y to the new X/y
-        # # this also updates cutoff from y
-        # self._update_y_X(y_inner, X_inner)
+        # this also updates cutoff from y
+        # be cautious, in fit self._X and self._y is also updated but not here!
         if y_inner is not None:
             self._set_cutoff_from_y(y_inner)
 

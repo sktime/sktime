@@ -891,6 +891,10 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
 
         # If the estimator inherits from more than one base estimator type, we check if
         # one of them is a transformer base type or BaseGlobalForecaster type
+        # Global forecasters inherit from BaseGlobalForecaster,
+        # BaseGlobalForecaster inherit from BaseForecaster
+        # therefor, global forecasters is subclass of
+        # BaseGlobalForecaster and BaseForecaster
         if n_base_types > 1:
             assert issubclass(estimator_class, VALID_TRANSFORMER_TYPES) or issubclass(
                 estimator_class, BaseGlobalForecaster

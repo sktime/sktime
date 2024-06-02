@@ -17,7 +17,29 @@ __author__ = ["XinyuWu"]
 
 
 class _PytorchForecastingAdapter(BaseGlobalForecaster):
-    """Base adapter class for pytorch-forecasting models."""
+    """Base adapter class for pytorch-forecasting models.
+
+    Parameters
+    ----------
+    model_params :  Dict[str, Any] (default=None)
+        parameters to be passed to initialize the underlying pytorch-forecasting model
+        for example: {"lstm_layers": 3, "hidden_continuous_size": 10} for TFT model
+    dataset_params : Dict[str, Any] (default=None)
+        parameters to initialize `TimeSeriesDataSet` [1]_ from `pandas.DataFrame`
+        max_prediction_length will be overwrite according to fh
+        time_idx, target, group_ids, time_varying_known_reals, time_varying_unknown_reals
+        will be infered from data, so you do not have to pass them
+    train_to_dataloader_params : Dict[str, Any] (default=None)
+        parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
+        by default {"train": True}
+    validation_to_dataloader_params : Dict[str, Any] (default=None)
+        parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
+        by default {"train": False}
+
+    References
+    ----------
+    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries.TimeSeriesDataSet.html
+    """  # noqa: E501
 
     _tags = {
         # packaging info
@@ -47,12 +69,12 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
         validation_to_dataloader_params: Optional[Dict[str, Any]] = None,
         trainer_params: Optional[Dict[str, Any]] = None,
     ) -> None:
-        super().__init__()
         self.model_params = model_params
         self.dataset_params = dataset_params
         self.trainer_params = trainer_params
         self.train_to_dataloader_params = train_to_dataloader_params
         self.validation_to_dataloader_params = validation_to_dataloader_params
+        super().__init__()
 
     @functools.cached_property
     @abc.abstractmethod
@@ -112,31 +134,31 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
         -------
         self : _PytorchForecastingAdapter
             reference to self
-
-        Raises
-        ------
-        ValueError
-            When ``freq="auto"`` and cannot be interpreted from ``ForecastingHorizon``
         """
         self._dataset_params = _none_check(self.dataset_params, {})
         self._max_prediction_length = fh.to_relative(self.cutoff)[-1]
         # check if dummy X is needed
+        # only the TFT model need X to fit, probably a bug in pytorch-forecasting
         X = self._dummy_X(X, y)
         # convert series to frame
         _y, self._convert_to_series = _series_to_frame(y)
         _X, _ = _series_to_frame(X)
-        # store the target column name and index names(probably [None])
+        # store the target column names and index names (probably [None])
+        # will be renamed !
         self._target_name = _y.columns[-1]
         self._index_names = _y.index.names
         self._index_len = len(self._index_names)
         # store X, y column names (probably None or not str type)
+        # will be renamed !
         if X is not None:
             self._X_columns = X.columns.tolist()
         # convert data to pytorch-forecasting datasets
         training, validation = self._Xy_to_dataset(
             _X, _y, self._dataset_params, self._max_prediction_length
         )
+        # instantiate forecaster and trainer
         self._forecaster, self._trainer = self._instantiate_model(training)
+        # convert dataset to dataloader
         self._train_to_dataloader_params = {"train": True}
         self._train_to_dataloader_params.update(
             _none_check(self.train_to_dataloader_params, {})
@@ -145,6 +167,7 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
         self._validation_to_dataloader_params.update(
             _none_check(self.validation_to_dataloader_params, {})
         )
+        # call the fit function of the pytorch-forecasting model
         self._trainer.fit(
             self._forecaster,
             train_dataloaders=training.to_dataloader(
@@ -259,6 +282,7 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
         y.columns = [self._new_target_name]
         # combine X and y
         if X is not None:
+            # only numeric columns
             time_varying_known_reals = [
                 c for c in X.columns if is_numeric_dtype(X[c].dtype)
             ]
@@ -266,7 +290,7 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
         else:
             time_varying_known_reals = []
             data = deepcopy(y)
-        # add int time_idx as pytorch-forecasting requires
+        # add integer time_idx column as pytorch-forecasting requires
         if self._index_len > 1:
             time_idx = (
                 data.groupby(by=self._new_index_names[0:-1]).cumcount().to_frame()
@@ -316,7 +340,7 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
         return training, validation
 
     def _predictions_to_dataframe(self, predictions, max_prediction_length):
-        # output is the predictions
+        # output is the actual predictions points but without index
         output = predictions.output.cpu().numpy()
         # index will be combined with output
         index = predictions.index
@@ -336,6 +360,8 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
         data[self._target_name] = output.flatten()
         # correct the time_idx after repeating
         # assume the time_idx column is continuous integers
+        # it's always true as a new time_idx column is added
+        # to the data before it's passed to underlying model
         for i in range(output.shape[0]):
             start_idx = i * max_prediction_length
             start_time = data.loc[start_idx, time_idx]
@@ -357,6 +383,7 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
             data.drop("_auto_group_id", axis=1, inplace=True)
             index_names.remove("_auto_group_id")
         # reindex to origin multiindex
+        # the last of self._new_index_names is the time index
         data.set_index(
             index_names + [self._new_index_names[-1]],
             inplace=True,

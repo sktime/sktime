@@ -939,6 +939,7 @@ class TestAllGlobalForecasters(TestAllObjects):
         estimator_instance.fit(y_train, X_train, fh=fh)
 
         X_test = X_train
+        # remove max_prediction_length from the end of y_train
         len_levels = len(y_train.index.names)
         y_test = y_train.groupby(level=list(range(len_levels - 1))).apply(
             lambda x: x.droplevel(list(range(len_levels - 1))).iloc[
@@ -983,6 +984,7 @@ class TestAllGlobalForecasters(TestAllObjects):
         estimator_instance.fit(y_train, X_train, fh=fh)
 
         X_test = X_train
+        # remove max_prediction_length from the end of y_train
         len_levels = len(y_train.index.names)
         y_test = y_train.groupby(level=list(range(len_levels - 1))).apply(
             lambda x: x.droplevel(list(range(len_levels - 1))).iloc[
@@ -1019,6 +1021,7 @@ class TestAllGlobalForecasters(TestAllObjects):
 
         estimator_instance.fit(y=y_train, fh=fh)
 
+        # remove max_prediction_length from the end of y_train
         y_test = y_train.iloc[:-max_prediction_length]
         y_pred = estimator_instance.predict(fh, y=y_test)
 
@@ -1060,6 +1063,7 @@ class TestAllGlobalForecasters(TestAllObjects):
 
         estimator_instance.fit(y=y_train, fh=fh)
 
+        # remove max_prediction_length from the end of y_train
         len_levels = len(y_train.index.names)
         y_test = y_train.groupby(level=list(range(len_levels - 1))).apply(
             lambda x: x.droplevel(list(range(len_levels - 1))).iloc[

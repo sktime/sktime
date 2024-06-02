@@ -12,7 +12,30 @@ __author__ = ["XinyuWu"]
 
 
 class PytorchForecastingTFT(_PytorchForecastingAdapter):
-    """pytorch-forecasting Temporal Fusion Transformer model."""
+    """pytorch-forecasting Temporal Fusion Transformer model.
+
+    Parameters
+    ----------
+    model_params :  Dict[str, Any] (default=None)
+        parameters to be passed to initialize the pytorch-forecasting TFT model [1]_
+        for example: {"lstm_layers": 3, "hidden_continuous_size": 10}
+    dataset_params : Dict[str, Any] (default=None)
+        parameters to initialize `TimeSeriesDataSet` [2]_ from `pandas.DataFrame`
+        max_prediction_length will be overwrite according to fh
+        time_idx, target, group_ids, time_varying_known_reals, time_varying_unknown_reals
+        will be infered from data, so you do not have to pass them
+    train_to_dataloader_params : Dict[str, Any] (default=None)
+        parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
+        by default {"train": True}
+    validation_to_dataloader_params : Dict[str, Any] (default=None)
+        parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
+        by default {"train": False}
+
+    References
+    ----------
+    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.temporal_fusion_transformer.TemporalFusionTransformer.html
+    .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries.TimeSeriesDataSet.html
+    """  # noqa: E501
 
     _tags = {
         # packaging info
@@ -23,9 +46,8 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         # inherited from _PytorchForecastingAdapter
         # estimator type
         # --------------
-        "python_dependencies": ["pytorch_forecasting", "torch", "lightning"],
+        "python_dependencies": ["pytorch_forecasting>=1.0.0", "torch", "lightning"],
         "capability:global_forecasting": True,
-        "requires_X": True,
     }
 
     def __init__(
@@ -113,6 +135,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                         "hidden_size": 10,
                         "dropout": 0.1,
                         "optimizer": "Adam",
+                        # avoid jdb78/pytorch-forecasting#1571 bug in the CI
                         "log_val_interval": -1,
                     },
                     "dataset_params": {
@@ -152,6 +175,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                         # can not pass test_set_params and test_set_params_sklearn
                         # QuantileLoss() != QuantileLoss()
                         "optimizer": "Adam",
+                        # avoid jdb78/pytorch-forecasting#1571 bug in the CI
                         "log_val_interval": -1,
                     },
                     "dataset_params": {
@@ -164,7 +188,30 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
 
 
 class PytorchForecastingNBeats(_PytorchForecastingAdapter):
-    """pytorch-forecasting Temporal Fusion Transformer model."""
+    """pytorch-forecasting NBeats model.
+
+    Parameters
+    ----------
+    model_params :  Dict[str, Any] (default=None)
+        parameters to be passed to initialize the pytorch-forecasting NBeats model [1]_
+        for example: {"num_blocks": [5, 5], "widths": [128, 1024]}
+    dataset_params : Dict[str, Any] (default=None)
+        parameters to initialize `TimeSeriesDataSet` [2]_ from `pandas.DataFrame`
+        max_prediction_length will be overwrite according to fh
+        time_idx, target, group_ids, time_varying_known_reals, time_varying_unknown_reals
+        will be infered from data, so you do not have to pass them
+    train_to_dataloader_params : Dict[str, Any] (default=None)
+        parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
+        by default {"train": True}
+    validation_to_dataloader_params : Dict[str, Any] (default=None)
+        parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
+        by default {"train": False}
+
+    References
+    ----------
+    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.nbeats.NBeats.html
+    .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries.TimeSeriesDataSet.html
+    """  # noqa: E501
 
     _tags = {
         # packaging info
@@ -175,7 +222,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         # inherited from _PytorchForecastingAdapter
         # estimator type
         # --------------
-        "python_dependencies": ["pytorch_forecasting", "torch", "lightning"],
+        "python_dependencies": ["pytorch_forecasting>=1.0.0", "torch", "lightning"],
         "capability:global_forecasting": True,
         "ignores-exogeneous-X": True,
     }
