@@ -4,7 +4,7 @@ import re
 import warnings
 from typing import Callable, Optional, Union
 
-from sktime.benchmarking.lib_mini_kotsu.registration import _Registry, _Spec
+from sktime.benchmarking._lib_mini_kotsu.registration import _Registry, _Spec
 
 
 def _check_id_format(id_format: str, id: str) -> None:
