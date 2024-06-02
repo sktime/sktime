@@ -1,13 +1,14 @@
 import inspect
 
 import numpy as np
+import pytest
 from numpy import ma
 from numpy.testing import assert_array_almost_equal
-import pytest
+
+from sktime.utils.git_diff import is_module_changed
 
 from ..datasets import load_robot
 from ..unscented import AdditiveUnscentedKalmanFilter, UnscentedKalmanFilter
-from sktime.utils.git_diff import is_module_changed
 
 data = load_robot()
 

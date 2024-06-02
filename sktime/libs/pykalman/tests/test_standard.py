@@ -2,14 +2,14 @@ import pickle
 from io import BytesIO
 
 import numpy as np
-from numpy.testing import assert_array_almost_equal
 import pytest
+from numpy.testing import assert_array_almost_equal
+
+from sktime.utils.git_diff import is_module_changed
 
 from ..datasets import load_robot
 from ..sqrt import BiermanKalmanFilter, CholeskyKalmanFilter
 from ..standard import KalmanFilter
-from sktime.utils.git_diff import is_module_changed
-
 
 KALMAN_FILTERS = [KalmanFilter, BiermanKalmanFilter, CholeskyKalmanFilter]
 

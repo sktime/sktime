@@ -4,8 +4,9 @@ from numpy import ma
 from numpy.testing import assert_array_almost_equal
 from scipy import linalg
 
-from ..unscented import AdditiveUnscentedKalmanFilter, cholupdate, qr
 from sktime.utils.git_diff import is_module_changed
+
+from ..unscented import AdditiveUnscentedKalmanFilter, cholupdate, qr
 
 
 def build_unscented_filter(cls):
