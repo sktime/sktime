@@ -66,7 +66,6 @@ def is_module_changed(module_str):
     """
     module_file_path = get_path_from_module(module_str)
     cmd = f"git diff remotes/origin/main -- {module_file_path}"
-    print(cmd)
     try:
         output = subprocess.check_output(cmd, shell=True, text=True)
         return bool(output)
