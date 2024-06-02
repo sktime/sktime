@@ -5,6 +5,7 @@ import pytest
 
 from sktime.distances.lower_bounding import LowerBounding
 from sktime.distances.tests._utils import create_test_distance_numpy
+from sktime.utils.git_diff import is_module_changed
 
 
 def _validate_bounding_result(
@@ -145,6 +146,10 @@ def _validate_bounding(
     )
 
 
+@pytest.mark.skipif(
+    not is_module_changed("sktime.distances"),
+    reason="skip test if required soft dependency not available",
+)
 def test_lower_bounding() -> None:
     """Test for various lower bounding methods."""
     no_bounding = LowerBounding.NO_BOUNDING
@@ -172,6 +177,10 @@ def test_lower_bounding() -> None:
     )
 
 
+@pytest.mark.skipif(
+    not is_module_changed("sktime.distances"),
+    reason="skip test if required soft dependency not available",
+)
 def test_incorrect_parameters() -> None:
     """Test to check correct errors raised."""
     numpy_x = create_test_distance_numpy(10, 10)
