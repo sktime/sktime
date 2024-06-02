@@ -28,6 +28,7 @@ runs:
       uses: actions/setup-python@v5
       with:
         python-version: ${{ inputs.python-version-identifier }}
+        cache: 'pip'
 
     - name: Display Python version
       run: python -c "import sys; print(sys.version)"

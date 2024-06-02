@@ -51,16 +51,25 @@ jobs:
     steps:
       - name: checkout pull request branch
         uses: actions/checkout@v4
+
       - name: update local git tracking reference
         run: git remote set-branches origin main
+
       - name: update local shallow clone
         run: git fetch --depth 1
+
       - name: create python virtual environment
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
       - name: install core, test and all soft dependencies
         run: python3 -m pip install .[all_extras_pandas2,tests]
+
+      - name: Show dependencies
+        run: python -m pip list
+
       - name: run unit tests
         run: >-
           python3
@@ -79,6 +88,7 @@ jobs:
           --ignore sktime/transformations
           --matrixdesign True
           --only_changed_modules True
+
       - name: upload coverage
         uses: codecov/codecov-action@v4
         with:
