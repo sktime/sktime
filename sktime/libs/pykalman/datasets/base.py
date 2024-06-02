@@ -21,14 +21,14 @@ def load_robot():
     Returns
     -------
     data : Bunch
-        Dictionary-like object containing all data.  Access attributes as you
+        Dictionary-like object containing all data. Access attributes as you
         would the contents of a dictionary or of an object.
 
     Examples
     --------
     >>> from sktime.libs.pykalman.datasets import load_robot
     >>> data = load_robot()
-    >>> data.data.shape
+    >>> data.observations.shape
     (501, 2)
     """
 
