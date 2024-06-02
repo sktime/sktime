@@ -71,7 +71,8 @@ def _validate_distance_alignment_path_result(
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("numba", severity="none") or not is_module_changed("sktime.distances"),  # noqa: E501
+    not _check_soft_dependencies("numba", severity="none")
+    or not is_module_changed("sktime.distances"),  # noqa: E501
     reason="skip test if required soft dependency not available",
 )
 @pytest.mark.parametrize("dist", _METRIC_INFOS)

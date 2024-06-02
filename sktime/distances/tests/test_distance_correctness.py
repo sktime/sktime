@@ -65,7 +65,8 @@ basic_motions_distances = {
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("numba", severity="none") or not is_module_changed("sktime.distances"),  # noqa: E501
+    not _check_soft_dependencies("numba", severity="none")
+    or not is_module_changed("sktime.distances"),  # noqa: E501
     reason="skip test if required soft dependency not available",
 )
 @pytest.mark.parametrize("uni_multi", ["uni", "multi"])

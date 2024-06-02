@@ -210,7 +210,8 @@ def _test_pw_equal_single_dists(
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("numba", severity="none") or not is_module_changed("sktime.distances"),  # noqa: E501
+    not _check_soft_dependencies("numba", severity="none")
+    or not is_module_changed("sktime.distances"),  # noqa: E501
     reason="skip test if required soft dependency not available",
 )
 @pytest.mark.parametrize("dist", _METRIC_INFOS)
@@ -275,7 +276,8 @@ def test_pairwise_distance(dist: MetricInfo) -> None:
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("numba", severity="none") or not is_module_changed("sktime.distances"),  # noqa: E501
+    not _check_soft_dependencies("numba", severity="none")
+    or not is_module_changed("sktime.distances"),  # noqa: E501
     reason="skip test if required soft dependency not available",
 )
 def test_metric_parameters():
@@ -284,7 +286,8 @@ def test_metric_parameters():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("numba", severity="none") or not is_module_changed("sktime.distances"),  # noqa: E501
+    not _check_soft_dependencies("numba", severity="none")
+    or not is_module_changed("sktime.distances"),  # noqa: E501
     reason="skip test if required soft dependency not available",
 )
 def test_incorrect_parameters():
