@@ -4,7 +4,7 @@
 
 __author__ = ["fkiraly", "khrapovs", "mateuja", "mloning"]
 
-from typing import Iterator
+from collections.abc import Iterator
 from typing import Optional
 
 import numpy as np

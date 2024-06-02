@@ -2,7 +2,7 @@
 """Common utilities and constants for time series splitter module."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-from typing import Iterator
+from collections.abc import Iterator
 from typing import Optional, Union
 
 import numpy as np
