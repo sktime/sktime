@@ -1,13 +1,11 @@
 """Interface for running a registry of models on a registry of validations."""
-from typing import List, Optional, Union
-
 import functools
 import logging
 import os
 import time
+from typing import List, Optional, Union
 
 import pandas as pd
-
 
 logger = logging.getLogger(__name__)
 
@@ -180,10 +178,8 @@ def _add_meta_data_to_results(
     }
     if bool(set(results) & set(results_meta_data)):
         raise ValueError(
-            (
-                f"Validation:{validation_spec.id} on model:{model_spec.id} "
-                f"returned results:{results} which contains a privileged key name."
-            )
+            f"Validation:{validation_spec.id} on model:{model_spec.id} "
+            f"returned results:{results} which contains a privileged key name."
         )
     return {**results, **results_meta_data}
 

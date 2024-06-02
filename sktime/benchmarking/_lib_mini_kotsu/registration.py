@@ -5,12 +5,11 @@ under a unique ID, which can be passed to kotsu's run interface.
 
 Based on: https://github.com/openai/gym/blob/master/gym/envs/registration.py
 """
-from typing import Callable, Generic, Optional, TypeVar, Union
-
 import importlib
 import logging
 import re
 import warnings
+from typing import Callable, Generic, Optional, TypeVar, Union
 
 
 logger = logging.getLogger(__name__)
@@ -28,8 +27,10 @@ entity_id_re = re.compile(r"^(?:[\w:-]+\/)?([\w:.\-{}=\[\]]+)-v([\d.]+)$")
 def _load(name: str):
     """Load a python object from string.
 
-    Args:
-        name: of the form `path.to.module:object`
+    Parameters
+    ----------
+    name: str
+        of the form `path.to.module:object`
     """
     mod_name, attr_name = name.split(":")
     mod = importlib.import_module(mod_name)
@@ -84,7 +85,7 @@ class _Spec(Generic[Entity]):
             )
 
     def make(self, **kwargs) -> Entity:
-        """Instantiates an instance of the entity."""
+        """Instantiate an instance of the entity."""
         if self.deprecated:
             raise RuntimeError(
                 f"Attempting to make deprecated entity {self.id}. "
@@ -101,7 +102,7 @@ class _Spec(Generic[Entity]):
         return entity
 
     def __repr__(self):
-        return "Spec({})".format(self.id)
+        return f"Spec({self.id})"
 
 
 class _Registry(Generic[Entity]):
