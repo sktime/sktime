@@ -10,7 +10,7 @@ from sktime.utils.dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels.api", severity="none"),
+    not _check_soft_dependencies("statsmodels", severity="none"),
     reason="skip test if required soft dependency for statsmodels.api not available",
 )
 def test_CFFilter_wrapper():
