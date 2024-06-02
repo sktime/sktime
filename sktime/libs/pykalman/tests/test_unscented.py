@@ -5,7 +5,7 @@ import pytest
 from numpy import ma
 from numpy.testing import assert_array_almost_equal
 
-from sktime.utils.git_diff import is_module_changed
+from sktime.tests.test_switch import run_test_module_changed
 
 from ..datasets import load_robot
 from ..unscented import AdditiveUnscentedKalmanFilter, UnscentedKalmanFilter
@@ -89,7 +89,7 @@ def check_dims(n_dim_state, n_dim_obs, n_func_args, kf_cls, kwargs):
 
 
 @pytest.mark.skipif(
-    not is_module_changed("sktime.libs.pykalman"),
+    not run_test_module_changed("sktime.libs.pykalman"),
     reason="Execute tests for pykalman iff anything in the module has changed",
 )
 def test_unscented_sample():
@@ -101,7 +101,7 @@ def test_unscented_sample():
 
 
 @pytest.mark.skipif(
-    not is_module_changed("sktime.libs.pykalman"),
+    not run_test_module_changed("sktime.libs.pykalman"),
     reason="Execute tests for pykalman iff anything in the module has changed",
 )
 def test_unscented_filter():
@@ -133,7 +133,7 @@ def test_unscented_filter():
 
 
 @pytest.mark.skipif(
-    not is_module_changed("sktime.libs.pykalman"),
+    not run_test_module_changed("sktime.libs.pykalman"),
     reason="Execute tests for pykalman iff anything in the module has changed",
 )
 def test_unscented_filter_update():
@@ -155,7 +155,7 @@ def test_unscented_filter_update():
 
 
 @pytest.mark.skipif(
-    not is_module_changed("sktime.libs.pykalman"),
+    not run_test_module_changed("sktime.libs.pykalman"),
     reason="Execute tests for pykalman iff anything in the module has changed",
 )
 def test_unscented_smoother():
@@ -186,7 +186,7 @@ def test_unscented_smoother():
 
 
 @pytest.mark.skipif(
-    not is_module_changed("sktime.libs.pykalman"),
+    not run_test_module_changed("sktime.libs.pykalman"),
     reason="Execute tests for pykalman iff anything in the module has changed",
 )
 def test_additive_sample():
@@ -198,7 +198,7 @@ def test_additive_sample():
 
 
 @pytest.mark.skipif(
-    not is_module_changed("sktime.libs.pykalman"),
+    not run_test_module_changed("sktime.libs.pykalman"),
     reason="Execute tests for pykalman iff anything in the module has changed",
 )
 def test_additive_filter():
@@ -232,7 +232,7 @@ def test_additive_filter():
 
 
 @pytest.mark.skipif(
-    not is_module_changed("sktime.libs.pykalman"),
+    not run_test_module_changed("sktime.libs.pykalman"),
     reason="Execute tests for pykalman iff anything in the module has changed",
 )
 def test_additive_filter_update():
@@ -254,7 +254,7 @@ def test_additive_filter_update():
 
 
 @pytest.mark.skipif(
-    not is_module_changed("sktime.libs.pykalman"),
+    not run_test_module_changed("sktime.libs.pykalman"),
     reason="Execute tests for pykalman iff anything in the module has changed",
 )
 def test_additive_smoother():
@@ -287,7 +287,7 @@ def test_additive_smoother():
 
 
 @pytest.mark.skipif(
-    not is_module_changed("sktime.libs.pykalman"),
+    not run_test_module_changed("sktime.libs.pykalman"),
     reason="Execute tests for pykalman iff anything in the module has changed",
 )
 def test_unscented_initialize_parameters():
@@ -304,7 +304,7 @@ def test_unscented_initialize_parameters():
 
 
 @pytest.mark.skipif(
-    not is_module_changed("sktime.libs.pykalman"),
+    not run_test_module_changed("sktime.libs.pykalman"),
     reason="Execute tests for pykalman iff anything in the module has changed",
 )
 def test_additive_initialize_parameters():
