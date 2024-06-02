@@ -8,6 +8,7 @@ import pytest
 from ..datasets import load_robot
 from ..sqrt import BiermanKalmanFilter, CholeskyKalmanFilter
 from ..standard import KalmanFilter
+from sktime.utils.git_diff import is_module_changed
 
 
 KALMAN_FILTERS = [KalmanFilter, BiermanKalmanFilter, CholeskyKalmanFilter]
@@ -23,6 +24,10 @@ def data():
     return load_robot()
 
 
+@pytest.mark.skipif(
+    not is_module_changed("sktime.libs.pykalman"),
+    reason="Execute tests for pykalman iff anything in the module has changed",
+)
 class TestKalmanFilter:
     """All of the actual tests to check against an implementation of the usual
     Kalman Filter. Abstract so that sister implementations can re-use these
