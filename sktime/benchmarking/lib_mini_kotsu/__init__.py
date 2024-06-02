@@ -11,7 +11,7 @@ The module is currently undergoing a refactor with the following targets:
   to sklearn's estimator API (e.g., no separation of class and params).
 * the refactor should cover both the time series classification benchmarks module,
   which is a native sktime implementation,
-  and the newer forecasting benchmarks module, which used kostu.
+  and the newer forecasting benchmarks module, which used kotsu.
 * retain proper credit to the original authors of kotsu, beyond their direct
   contributions to sktime, following open source and academic standards of crediting.
 
