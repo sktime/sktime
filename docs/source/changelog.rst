@@ -44,9 +44,10 @@ Dependency changes
 
 * ``skpro`` (soft dependency) bounds have been updated to ``<2.4.0``
 
-* ``kotsu`` is not longer a soft dependency required by the forecasting benchmark.
-  The package is no longer maintained, and its necessary imports have beend moved
-  to ``sktime`` as private utilities until refactor.
+* ``kotsu`` is not longer a soft dependency required by the forecasting benchmarking
+  framework. The ``kotsu`` package is no longer maintained,
+  and its necessary imports have beend moved
+  to ``sktime`` as private utilities until refactor. See :pr:`6514`.
 
 * ``pykalman`` (transformations soft dependency) has been forked into ``sktime``,
   as ``sktime.libs.pykalman``, as the original package is no longer maintained,
