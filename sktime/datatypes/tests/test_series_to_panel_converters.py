@@ -2,6 +2,7 @@
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from sktime.datatypes._series_as_panel import (
     convert_Panel_to_Series,
@@ -9,8 +10,13 @@ from sktime.datatypes._series_as_panel import (
 )
 from sktime.utils._testing.panel import _make_panel
 from sktime.utils._testing.series import _make_series
+from sktime.utils.git_diff import is_module_changed
 
 
+@pytest.mark.skipif(
+    is_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
 def test_convert_numpy_series_to_panel():
     """Test output format of series-to-panel for numpy type input."""
     X_series = _make_series(n_columns=2, return_mtype="np.ndarray")
@@ -23,6 +29,10 @@ def test_convert_numpy_series_to_panel():
     assert X_panel.shape == (1, n_var, n_time)
 
 
+@pytest.mark.skipif(
+    is_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
 def test_convert_numpy_panel_to_series():
     """Test output format of panel-to-series for numpy type input."""
     X_panel = _make_panel(n_instances=1, n_columns=2, return_mtype="numpy3D")
@@ -35,6 +45,10 @@ def test_convert_numpy_panel_to_series():
     assert X_series.shape == (n_time, n_var)
 
 
+@pytest.mark.skipif(
+    is_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
 def test_convert_df_series_to_panel():
     """Test output format of series-to-panel for dataframe type input."""
     X_series = _make_series(n_columns=2, return_mtype="pd.DataFrame")
@@ -46,6 +60,10 @@ def test_convert_df_series_to_panel():
     assert X_panel[0].equals(X_series)
 
 
+@pytest.mark.skipif(
+    is_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
 def test_convert_df_panel_to_series():
     """Test output format of panel-to-series for dataframe type input."""
     X_panel = _make_panel(n_instances=1, n_columns=2, return_mtype="pd-multiindex")
