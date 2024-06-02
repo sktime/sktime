@@ -72,7 +72,6 @@ def plot_series(
     >>> y = load_airline()
     >>> fig, ax = plot_series(y)  # doctest: +SKIP
     """
-
     from sktime.utils.dependencies import _check_soft_dependencies
 
     _check_soft_dependencies("matplotlib", "seaborn")
