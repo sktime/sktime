@@ -75,7 +75,7 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.mark.skipif(
-    run_test_module_changed("sktime.datatypes"),
+    not run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 def test_convert(scitype, from_mtype, to_mtype, fixture_index):

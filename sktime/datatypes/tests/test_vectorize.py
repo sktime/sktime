@@ -156,7 +156,7 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.mark.skipif(
-    run_test_module_changed("sktime.datatypes"),
+    not run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes has been changed",
 )
 def test_construct_vectorizeddf(
@@ -189,7 +189,7 @@ def test_construct_vectorizeddf(
 
 
 @pytest.mark.skipif(
-    run_test_module_changed("sktime.datatypes"),
+    not run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes has been changed",
 )
 def test_construct_vectorizeddf_errors(scitype, mtype, fixture_index):
@@ -219,7 +219,7 @@ def test_construct_vectorizeddf_errors(scitype, mtype, fixture_index):
 
 
 @pytest.mark.skipif(
-    run_test_module_changed("sktime.datatypes"),
+    not run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes has been changed",
 )
 def test_item_len(scitype, mtype, fixture_index, iterate_as, iterate_cols):
@@ -279,7 +279,7 @@ def test_item_len(scitype, mtype, fixture_index, iterate_as, iterate_cols):
 
 
 @pytest.mark.skipif(
-    run_test_module_changed(["sktime.datatypes", "sktime.utils.parallel"]),
+    not run_test_module_changed(["sktime.datatypes", "sktime.utils.parallel"]),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 def test_iteration(scitype, mtype, fixture_index, iterate_as, iterate_cols):
@@ -323,7 +323,7 @@ def test_iteration(scitype, mtype, fixture_index, iterate_as, iterate_cols):
 
 
 @pytest.mark.skipif(
-    run_test_module_changed(["sktime.datatypes", "sktime.utils.parallel"]),
+    not run_test_module_changed(["sktime.datatypes", "sktime.utils.parallel"]),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 def test_series_item_mtype(scitype, mtype, fixture_index, iterate_as, iterate_cols):
@@ -375,7 +375,7 @@ def test_series_item_mtype(scitype, mtype, fixture_index, iterate_as, iterate_co
 
 
 @pytest.mark.skipif(
-    run_test_module_changed(["sktime.datatypes", "sktime.utils.parallel"]),
+    not run_test_module_changed(["sktime.datatypes", "sktime.utils.parallel"]),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 def test_reconstruct_identical(scitype, mtype, fixture_index, iterate_as, iterate_cols):
@@ -424,7 +424,7 @@ def test_reconstruct_identical(scitype, mtype, fixture_index, iterate_as, iterat
 
 
 @pytest.mark.skipif(
-    run_test_module_changed("sktime.datatypes"),
+    not run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes has been changed",
 )
 @pytest.mark.parametrize(
@@ -466,7 +466,7 @@ def test_enforce_index_freq(item, freq):
 
 
 @pytest.mark.skipif(
-    run_test_module_changed(["sktime.datatypes", "sktime.utils.parallel"]),
+    not run_test_module_changed(["sktime.datatypes", "sktime.utils.parallel"]),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 @pytest.mark.parametrize("backend", BACKENDS)

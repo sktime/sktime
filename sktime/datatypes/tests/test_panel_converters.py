@@ -30,7 +30,7 @@ N_CLASSES = [2, 5]
 
 
 @pytest.mark.skipif(
-    run_test_module_changed("sktime.datatypes"),
+    not run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 @pytest.mark.parametrize("n_instances", N_INSTANCES)
@@ -50,7 +50,7 @@ def test_are_columns_nested(n_instances, n_columns, n_timepoints):
 
 
 @pytest.mark.skipif(
-    run_test_module_changed("sktime.datatypes"),
+    not run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 @pytest.mark.parametrize("n_instances", N_INSTANCES)
@@ -70,7 +70,7 @@ def test_from_nested_to_3d_numpy(n_instances, n_columns, n_timepoints):
 
 
 @pytest.mark.skipif(
-    run_test_module_changed("sktime.datatypes"),
+    not run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 @pytest.mark.parametrize("n_instances", N_INSTANCES)
@@ -91,7 +91,7 @@ def test_from_3d_numpy_to_nested(n_instances, n_columns, n_timepoints):
 
 
 @pytest.mark.skipif(
-    run_test_module_changed("sktime.datatypes"),
+    not run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 @pytest.mark.parametrize("n_instances", N_INSTANCES)
@@ -107,7 +107,7 @@ def test_from_nested_to_2d_array(n_instances, n_columns, n_timepoints):
 
 
 @pytest.mark.skipif(
-    run_test_module_changed("sktime.datatypes"),
+    not run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 @pytest.mark.parametrize("n_instances", N_INSTANCES)
@@ -122,7 +122,7 @@ def test_from_3d_numpy_to_2d_array(n_instances, n_columns, n_timepoints):
 
 
 @pytest.mark.skipif(
-    run_test_module_changed("sktime.datatypes"),
+    not run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 @pytest.mark.parametrize("n_instances", N_INSTANCES)
@@ -141,7 +141,7 @@ def test_from_multi_index_to_3d_numpy(n_instances, n_columns, n_timepoints):
 
 
 @pytest.mark.skipif(
-    run_test_module_changed("sktime.datatypes"),
+    not run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 @pytest.mark.parametrize("n_instances", N_INSTANCES)
@@ -170,7 +170,7 @@ def test_from_3d_numpy_to_multi_index(n_instances, n_columns, n_timepoints):
 
 
 @pytest.mark.skipif(
-    run_test_module_changed("sktime.datatypes"),
+    not run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 @pytest.mark.parametrize("n_instances", N_INSTANCES)
@@ -191,7 +191,7 @@ def test_from_multi_index_to_nested(n_instances, n_columns, n_timepoints):
 
 
 @pytest.mark.skipif(
-    run_test_module_changed("sktime.datatypes"),
+    not run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 @pytest.mark.parametrize("n_instances", N_INSTANCES)
@@ -212,7 +212,7 @@ def test_from_nested_to_multi_index(n_instances, n_columns, n_timepoints):
 
 
 @pytest.mark.skipif(
-    run_test_module_changed("sktime.datatypes"),
+    not run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 @pytest.mark.parametrize("n_instances", N_INSTANCES)
@@ -236,7 +236,7 @@ def test_is_nested_dataframe(n_instances, n_columns, n_timepoints):
 
 
 @pytest.mark.skipif(
-    run_test_module_changed("sktime.datatypes"),
+    not run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 @pytest.mark.parametrize("n_instances", N_INSTANCES)
@@ -253,7 +253,7 @@ def test_from_2d_array_to_nested(n_instances, n_columns, n_timepoints):
 
 
 @pytest.mark.skipif(
-    run_test_module_changed("sktime.datatypes"),
+    not run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 @pytest.mark.parametrize("n_instances", N_INSTANCES)
@@ -271,7 +271,7 @@ def test_from_long_to_nested(n_instances, n_columns, n_timepoints):
 
 
 @pytest.mark.skipif(
-    run_test_module_changed("sktime.datatypes"),
+    not run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 @pytest.mark.parametrize("n_instances", N_INSTANCES)

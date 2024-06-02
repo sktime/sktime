@@ -32,7 +32,7 @@ SCITYPE_MTYPE_PAIRS = [
 
 
 @pytest.mark.skipif(
-    run_test_module_changed("sktime.datatypes"),
+    not run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 @pytest.mark.parametrize("scitype,mtype", SCITYPE_MTYPE_PAIRS)
@@ -89,7 +89,7 @@ def test_get_time_index(scitype, mtype):
 
 
 @pytest.mark.skipif(
-    run_test_module_changed("sktime.datatypes"),
+    not run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 @pytest.mark.parametrize("convert_input", [True, False])
@@ -173,7 +173,7 @@ def test_get_cutoff(scitype, mtype, return_index, reverse_order, convert_input):
 
 
 @pytest.mark.skipif(
-    run_test_module_changed("sktime.datatypes"),
+    not run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 @pytest.mark.parametrize("reverse_order", [True, False])
@@ -230,7 +230,7 @@ def test_get_cutoff_from_index(reverse_order):
 
 
 @pytest.mark.skipif(
-    run_test_module_changed("sktime.datatypes"),
+    not run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 @pytest.mark.parametrize("bad_inputs", ["foo", 12345, [[[]]]])
@@ -250,7 +250,7 @@ def test_get_cutoff_wrong_input(bad_inputs):
 
 
 @pytest.mark.skipif(
-    run_test_module_changed("sktime.datatypes"),
+    not run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 def test_get_cutoff_inferred_freq():
@@ -284,7 +284,7 @@ def test_get_cutoff_inferred_freq():
 
 
 @pytest.mark.skipif(
-    run_test_module_changed("sktime.datatypes"),
+    not run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 def test_get_cutoff_inferred_freq_small_series():
@@ -310,7 +310,7 @@ def test_get_cutoff_inferred_freq_small_series():
 
 
 @pytest.mark.skipif(
-    run_test_module_changed("sktime.datatypes"),
+    not run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 @pytest.mark.parametrize("window_length, lag", [(2, 0), (None, 0), (4, 1)])
@@ -346,7 +346,7 @@ def test_get_window_output_type(scitype, mtype, window_length, lag):
 
 
 @pytest.mark.skipif(
-    run_test_module_changed("sktime.datatypes"),
+    not run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 def test_get_window_expected_result():
@@ -395,7 +395,7 @@ def test_get_window_expected_result():
 
 
 @pytest.mark.skipif(
-    run_test_module_changed("sktime.datatypes"),
+    not run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 @pytest.mark.parametrize("scitype,mtype", SCITYPE_MTYPE_PAIRS)
@@ -428,7 +428,7 @@ def test_get_slice_output_type(scitype, mtype):
 
 
 @pytest.mark.skipif(
-    run_test_module_changed("sktime.datatypes"),
+    not run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 def test_get_slice_expected_result():
@@ -449,7 +449,7 @@ def test_get_slice_expected_result():
 
 
 @pytest.mark.skipif(
-    run_test_module_changed("sktime.datatypes"),
+    not run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 def test_retain_series_freq_on_update():
