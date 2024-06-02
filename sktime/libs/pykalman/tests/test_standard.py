@@ -4,8 +4,9 @@ from unittest import TestCase
 
 import numpy as np
 from numpy.testing import assert_array_almost_equal
-from pykalman import KalmanFilter
-from pykalman.datasets import load_robot
+
+from ..datasets import load_robot
+from ..standard import KalmanFilter
 
 
 class KalmanFilterTests:

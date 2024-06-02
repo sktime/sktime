@@ -3,8 +3,9 @@ import inspect
 import numpy as np
 from numpy import ma
 from numpy.testing import assert_array_almost_equal
-from pykalman import AdditiveUnscentedKalmanFilter, UnscentedKalmanFilter
-from pykalman.datasets import load_robot
+
+from ..datasets import load_robot
+from ..unscented import AdditiveUnscentedKalmanFilter, UnscentedKalmanFilter
 
 data = load_robot()
 
