@@ -11,7 +11,6 @@ import re
 import warnings
 from typing import Callable, Generic, Optional, TypeVar, Union
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -161,6 +160,7 @@ class _Registry(Generic[Entity]):
                 f"Entity with ID [id={id}] already registered, now registering "
                 "entity of the same ID, OVERWRITING previous registered entity.",
                 UserWarning,
+                stacklevel=2,
             )
         self.entity_specs[id] = _Spec(
             id,
