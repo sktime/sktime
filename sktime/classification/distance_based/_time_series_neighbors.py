@@ -23,9 +23,10 @@ from inspect import signature
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
 
+from sktime.base._panel.knn import BaseKnnTimeSeriesEstimator
 from sktime.classification.base import BaseClassifier
 from sktime.distances import pairwise_distance
-from sktime.distances.adapters.sklearn import KNeighborsSklearnAdapter
+from sktime.dists_kernels.base.adapters._sklearn import _SklearnKnnAdapter
 
 # add new distance string codes here
 DISTANCES_SUPPORTED = [
@@ -44,7 +45,9 @@ DISTANCES_SUPPORTED = [
 ]
 
 
-class KNeighborsTimeSeriesClassifier(KNeighborsSklearnAdapter, BaseClassifier):
+class KNeighborsTimeSeriesClassifier(
+    _SklearnKnnAdapter, BaseKnnTimeSeriesEstimator, BaseClassifier
+):
     """KNN Time Series Classifier.
 
     An adapted version of the scikit-learn KNeighborsClassifier for time series data.

@@ -13,8 +13,9 @@ __all__ = ["KNeighborsTimeSeriesRegressor"]
 
 from sklearn.neighbors import KNeighborsRegressor
 
+from sktime.base._panel.knn import BaseKnnTimeSeriesEstimator
 from sktime.distances import pairwise_distance
-from sktime.distances.adapters.sklearn import KNeighborsSklearnAdapter
+from sktime.dists_kernels.base.adapters._sklearn import _SklearnKnnAdapter
 from sktime.regression.base import BaseRegressor
 
 # add new distance string codes here
@@ -32,7 +33,9 @@ DISTANCES_SUPPORTED = [
 ]
 
 
-class KNeighborsTimeSeriesRegressor(KNeighborsSklearnAdapter, BaseRegressor):
+class KNeighborsTimeSeriesRegressor(
+    _SklearnKnnAdapter, BaseKnnTimeSeriesEstimator, BaseRegressor
+):
     """KNN Time Series Regressor.
 
     An adapted version of the scikit-learn KNeighborsRegressor for time series data.
