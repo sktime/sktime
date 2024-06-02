@@ -26,7 +26,7 @@ def load_robot():
 
     Examples
     --------
-    >>> from pykalman.datasets import load_robot
+    >>> from sktime.libs.pykalman.datasets import load_robot
     >>> data = load_robot()
     >>> data.data.shape
     (501, 2)
