@@ -47,7 +47,7 @@ __all__ = ["check_dict"]
 import numpy as np
 
 from sktime.datatypes._panel._check import check_pdmultiindex_panel
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 def _list_all_equal(obj):

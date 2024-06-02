@@ -37,11 +37,8 @@ from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.outlier_detection import HampelFilter
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.series import _make_series
+from sktime.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 from sktime.utils.estimators import MockForecaster
-from sktime.utils.validation._dependencies import (
-    _check_estimator_deps,
-    _check_soft_dependencies,
-)
 
 
 def test_pipeline():
