@@ -308,6 +308,10 @@ ARIMA_MODELS = [ARIMA, AutoARIMA]
 # ARIMA_MODELS = [ARIMA, AutoARIMA, SARIMAX]
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([evaluate]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("cls", ARIMA_MODELS)
 def test_evaluate_bigger_X(cls):
     """Check that evaluating ARIMA models with exogeneous X works.
