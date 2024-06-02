@@ -7,8 +7,8 @@ import pytest
 from sktime.datatypes import SCITYPE_REGISTER, scitype_to_mtype
 from sktime.datatypes._convert import _conversions_defined, convert
 from sktime.datatypes._examples import get_examples
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils.deep_equals import deep_equals
-from sktime.utils.git_diff import is_module_changed
 
 SCITYPES = [sci[0] for sci in SCITYPE_REGISTER]
 
@@ -75,7 +75,7 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.mark.skipif(
-    is_module_changed("sktime.datatypes"),
+    run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 def test_convert(scitype, from_mtype, to_mtype, fixture_index):

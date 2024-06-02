@@ -6,8 +6,8 @@ import pytest
 
 from sktime.datatypes._convert import convert_to
 from sktime.datatypes._examples import get_examples
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils.deep_equals import deep_equals
-from sktime.utils.git_diff import is_module_changed
 
 # hard-coded scitypes/mtypes to use in test_convert_to
 #   easy to change in case the strings change
@@ -17,7 +17,7 @@ MTYPES_PANEL = ["pd-multiindex", "df-list", "numpy3D"]
 
 
 @pytest.mark.skipif(
-    is_module_changed("sktime.datatypes"),
+    run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 def test_convert_to_simple():
@@ -37,7 +37,7 @@ def test_convert_to_simple():
 
 
 @pytest.mark.skipif(
-    is_module_changed("sktime.datatypes"),
+    run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 def test_convert_to_without_scitype():
@@ -57,7 +57,7 @@ def test_convert_to_without_scitype():
 
 
 @pytest.mark.skipif(
-    is_module_changed("sktime.datatypes"),
+    run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 def test_convert_to_mtype_list():
@@ -87,7 +87,7 @@ def test_convert_to_mtype_list():
 
 
 @pytest.mark.skipif(
-    is_module_changed("sktime.datatypes"),
+    run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 def test_convert_to_mtype_list_different_scitype():

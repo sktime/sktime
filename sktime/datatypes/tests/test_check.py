@@ -15,7 +15,7 @@ from sktime.datatypes._check import mtype as infer_mtype
 from sktime.datatypes._check import scitype as infer_scitype
 from sktime.datatypes._examples import get_examples
 from sktime.datatypes._registry import SCITYPE_LIST, scitype_to_mtype
-from sktime.utils.git_diff import is_module_changed
+from sktime.tests.test_switch import run_test_module_changed
 
 SCITYPES = SCITYPE_LIST
 
@@ -107,7 +107,7 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.mark.skipif(
-    is_module_changed("sktime.datatypes"),
+    run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 def test_check_positive(scitype, mtype, fixture_index):
@@ -159,7 +159,7 @@ def test_check_positive(scitype, mtype, fixture_index):
 
 
 @pytest.mark.skipif(
-    is_module_changed("sktime.datatypes"),
+    run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 def test_check_positive_check_scitype(scitype, mtype, fixture_index):
@@ -212,7 +212,7 @@ def test_check_positive_check_scitype(scitype, mtype, fixture_index):
 
 
 @pytest.mark.skipif(
-    is_module_changed("sktime.datatypes"),
+    run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 def test_check_metadata_inference(scitype, mtype, fixture_index):
@@ -320,7 +320,7 @@ def test_check_metadata_inference(scitype, mtype, fixture_index):
 
 
 @pytest.mark.skipif(
-    is_module_changed("sktime.datatypes"),
+    run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 def test_check_negative(scitype, mtype):
@@ -386,7 +386,7 @@ def test_check_negative(scitype, mtype):
 
 
 @pytest.mark.skipif(
-    is_module_changed("sktime.datatypes"),
+    run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 def test_mtype_infer(scitype, mtype, fixture_index):
@@ -438,7 +438,7 @@ SCITYPES_FOR_INFER_TEST = list(set(SCITYPE_LIST).difference(SKIP_SCITYPES))
 
 
 @pytest.mark.skipif(
-    is_module_changed("sktime.datatypes"),
+    run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 def test_scitype_infer(scitype, mtype, fixture_index):

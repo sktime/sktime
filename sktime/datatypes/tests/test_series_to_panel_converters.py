@@ -8,13 +8,13 @@ from sktime.datatypes._series_as_panel import (
     convert_Panel_to_Series,
     convert_Series_to_Panel,
 )
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.panel import _make_panel
 from sktime.utils._testing.series import _make_series
-from sktime.utils.git_diff import is_module_changed
 
 
 @pytest.mark.skipif(
-    is_module_changed("sktime.datatypes"),
+    run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 def test_convert_numpy_series_to_panel():
@@ -30,7 +30,7 @@ def test_convert_numpy_series_to_panel():
 
 
 @pytest.mark.skipif(
-    is_module_changed("sktime.datatypes"),
+    run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 def test_convert_numpy_panel_to_series():
@@ -46,7 +46,7 @@ def test_convert_numpy_panel_to_series():
 
 
 @pytest.mark.skipif(
-    is_module_changed("sktime.datatypes"),
+    run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 def test_convert_df_series_to_panel():
@@ -61,7 +61,7 @@ def test_convert_df_series_to_panel():
 
 
 @pytest.mark.skipif(
-    is_module_changed("sktime.datatypes"),
+    run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 def test_convert_df_panel_to_series():
