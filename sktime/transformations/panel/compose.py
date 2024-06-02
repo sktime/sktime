@@ -14,8 +14,8 @@ import pandas as pd
 from sklearn.compose import ColumnTransformer as _ColumnTransformer
 
 from sktime.transformations.base import BaseTransformer, _PanelToPanelTransformer
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.multiindex import flatten_multiindex
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.panel import check_X
 
 

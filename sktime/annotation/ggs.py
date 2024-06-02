@@ -43,7 +43,7 @@ import pandas as pd
 from sklearn.utils.validation import check_random_state
 
 from sktime.annotation.base._base import BaseSeriesAnnotator
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.utils.dependencies import _check_estimator_deps
 
 logger = logging.getLogger(__name__)
 
@@ -425,7 +425,11 @@ class GreedyGaussianSegmentation(BaseSeriesAnnotator):
        https://doi.org/10.1007/s11634-018-0335-0
     """
 
-    _tags = {"fit_is_empty": True}
+    _tags = {
+        "fit_is_empty": True,
+        "task": "segmentation",
+        "learning_type": "unsupervised",
+    }
 
     def __init__(
         self,
@@ -443,7 +447,7 @@ class GreedyGaussianSegmentation(BaseSeriesAnnotator):
         self.random_state = random_state
 
         _check_estimator_deps(self)
-        super().__init__(fmt="dense", labels="int_label")
+        super().__init__()
 
         self._adaptee = GGS(
             k_max=k_max,

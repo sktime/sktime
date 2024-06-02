@@ -13,6 +13,7 @@ import pandas as pd
 from pandas.tseries.frequencies import to_offset
 
 from sktime.utils.datetime import _coerce_duration_to_int
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.validation import (
     array_is_int,
     array_is_timedelta_or_date_offset,
@@ -20,7 +21,6 @@ from sktime.utils.validation import (
     is_int,
     is_timedelta_or_date_offset,
 )
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.series import (
     VALID_INDEX_TYPES,
     is_in_valid_absolute_index_types,
@@ -538,7 +538,7 @@ class ForecastingHorizon:
             integer index.
         """
         cutoff = self._coerce_cutoff_to_index(cutoff)
-        freq = self.freq
+        freq = self._freq
 
         absolute = self.to_absolute_index(cutoff)
 
@@ -813,10 +813,10 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
         if isinstance(absolute, pd.DatetimeIndex):
             # coerce to pd.Period for reliable arithmetic and computations of
             # time deltas
-            absolute = _coerce_to_period(absolute, freq=fh.freq)
-            cutoff = _coerce_to_period(cutoff, freq=fh.freq)
+            absolute = _coerce_to_period(absolute, freq=fh._freq)
+            cutoff = _coerce_to_period(cutoff, freq=fh._freq)
 
-        # TODO: 0.30.0:
+        # TODO: 0.31.0:
         # Check at every minor release whether lower pandas bound >=0.15.0
         # if yes, can remove the workaround in the "else" condition and the check
         #
@@ -889,7 +889,7 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
         if is_timestamp:
             # coerce to pd.Period for reliable arithmetic operations and
             # computations of time deltas
-            cutoff = _coerce_to_period(cutoff, freq=fh.freq)
+            cutoff = _coerce_to_period(cutoff, freq=fh._freq)
 
         if isinstance(cutoff, pd.Index):
             cutoff = cutoff[[0] * len(relative)]
@@ -898,7 +898,7 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
 
         if is_timestamp:
             # coerce back to DatetimeIndex after operation
-            absolute = absolute.to_timestamp(fh.freq)
+            absolute = absolute.to_timestamp(fh._freq)
 
         if old_tz is not None:
             absolute = absolute.tz_localize(old_tz)
@@ -955,19 +955,7 @@ def _coerce_to_period(x, freq=None):
         raise ValueError(
             "_coerce_to_period requires freq argument to be passed if x is pd.Timestamp"
         )
-    try:
-        return x.to_period(freq)
-    except (ValueError, AttributeError) as e:
-        msg = str(e)
-        if "Invalid frequency" in msg or "_period_dtype_code" in msg:
-            raise ValueError(
-                "Invalid frequency. Please select a frequency that can "
-                "be converted to a regular `pd.PeriodIndex`. For other "
-                "frequencies, basic arithmetic operation to compute "
-                "durations currently do not work reliably."
-            )
-        else:
-            raise
+    return x.to_period(freq)
 
 
 def _index_range(relative, cutoff):
