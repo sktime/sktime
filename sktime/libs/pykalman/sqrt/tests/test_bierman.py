@@ -1,8 +1,8 @@
 from unittest import TestCase
 
 from ...datasets import load_robot
-from .. import BiermanKalmanFilter
 from ...tests.test_standard import KalmanFilterTests
+from ..bierman import BiermanKalmanFilter
 
 
 class BiermanKalmanFilterTestSuite(TestCase, KalmanFilterTests):

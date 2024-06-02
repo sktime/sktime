@@ -3,8 +3,7 @@ from numpy import ma
 from numpy.testing import assert_array_almost_equal
 from scipy import linalg
 
-from ..unscented import AdditiveUnscentedKalmanFilter
-from ..unscented import cholupdate, qr
+from ..unscented import AdditiveUnscentedKalmanFilter, cholupdate, qr
 
 
 def build_unscented_filter(cls):
