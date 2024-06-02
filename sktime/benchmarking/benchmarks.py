@@ -82,8 +82,7 @@ class BaseBenchmark:
     """
 
     def __init__(self, id_format: Optional[str] = None):
-        _check_soft_dependencies("kotsu")
-        import kotsu
+        import sktime.benchmarking.lib_mini_kotsu as kotsu
 
         from sktime.benchmarking._base_kotsu import (
             SktimeModelRegistry,
