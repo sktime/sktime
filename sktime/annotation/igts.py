@@ -16,7 +16,6 @@ References
 """
 
 from dataclasses import asdict, dataclass, field
-from typing import Dict, List
 
 import numpy as np
 import numpy.typing as npt
@@ -33,7 +32,7 @@ __author__ = ["lmmentel"]
 class ChangePointResult:
     k: int
     score: float
-    change_points: List[int]
+    change_points: list[int]
 
 
 def entropy(X: npt.ArrayLike) -> float:
@@ -57,7 +56,7 @@ def entropy(X: npt.ArrayLike) -> float:
     return -np.sum(p * np.log(p))
 
 
-def generate_segments(X: npt.ArrayLike, change_points: List[int]) -> npt.ArrayLike:
+def generate_segments(X: npt.ArrayLike, change_points: list[int]) -> npt.ArrayLike:
     """Generate separate segments from time series based on change points.
 
     Parameters
@@ -79,7 +78,7 @@ def generate_segments(X: npt.ArrayLike, change_points: List[int]) -> npt.ArrayLi
         yield X[start:end, :]
 
 
-def generate_segments_pandas(X: npt.ArrayLike, change_points: List) -> npt.ArrayLike:
+def generate_segments_pandas(X: npt.ArrayLike, change_points: list) -> npt.ArrayLike:
     """Generate separate segments from time series based on change points.
 
     Parameters
@@ -171,13 +170,13 @@ class IGTS:
     step: int = 5
 
     # computed attributes
-    intermediate_results_: List = field(init=False, default_factory=list)
+    intermediate_results_: list = field(init=False, default_factory=list)
 
-    def identity(self, X: npt.ArrayLike) -> List[int]:
+    def identity(self, X: npt.ArrayLike) -> list[int]:
         """Return identity segmentation, i.e. terminal indexes of the data."""
         return sorted([0, X.shape[0]])
 
-    def get_candidates(self, n_samples: int, change_points: List[int]) -> List[int]:
+    def get_candidates(self, n_samples: int, change_points: list[int]) -> list[int]:
         """Generate candidate change points.
 
         Also exclude existing change points.
@@ -198,7 +197,7 @@ class IGTS:
         )
 
     @staticmethod
-    def information_gain_score(X: npt.ArrayLike, change_points: List[int]) -> float:
+    def information_gain_score(X: npt.ArrayLike, change_points: list[int]) -> float:
         """Calculate the information gain score.
 
         The formula is based on equation (2) from [1]_.
@@ -226,7 +225,7 @@ class IGTS:
         ]
         return entropy(X) - sum(segment_entropies) / X.shape[0]
 
-    def find_change_points(self, X: npt.ArrayLike) -> List[int]:
+    def find_change_points(self, X: npt.ArrayLike) -> list[int]:
         """Find change points.
 
         Using a top-down search method, iteratively identify at most
@@ -283,7 +282,7 @@ class IGTS:
 class SegmentationMixin:
     """Mixin with methods useful for segmentation problems."""
 
-    def to_classification(self, change_points: List[int]) -> npt.ArrayLike:
+    def to_classification(self, change_points: list[int]) -> npt.ArrayLike:
         """Convert change point locations to a classification vector.
 
         Change point detection results can be treated as classification
@@ -296,7 +295,7 @@ class SegmentationMixin:
         """
         return np.bincount(change_points[1:-1], minlength=change_points[-1])
 
-    def to_clusters(self, change_points: List[int]) -> npt.ArrayLike:
+    def to_clusters(self, change_points: list[int]) -> npt.ArrayLike:
         """Convert change point locations to a clustering vector.
 
         Change point detection results can be treated as clustering
@@ -461,7 +460,7 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
         """
         return self.fit(X=X, y=y).predict(X=X, y=y)
 
-    def get_params(self, deep: bool = True) -> Dict:
+    def get_params(self, deep: bool = True) -> dict:
         """Return initialization parameters.
 
         Parameters

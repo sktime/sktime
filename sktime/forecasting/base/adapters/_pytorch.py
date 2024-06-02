@@ -15,8 +15,6 @@ else:
     class Dataset:
         """Dummy class if torch is unavailable."""
 
-        pass
-
 
 class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
     """Abstract base class for deep learning networks using torch.nn."""

@@ -1,7 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for StatsForecast models."""
 from inspect import signature
-from typing import Dict
 from warnings import warn
 
 import pandas
@@ -363,7 +362,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
 
         return final_interval_predictions
 
-    def _check_supports_pred_int(self) -> Dict[str, bool]:
+    def _check_supports_pred_int(self) -> dict[str, bool]:
         """
         Check if prediction intervals will work with forecaster.
 

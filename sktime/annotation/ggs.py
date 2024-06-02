@@ -35,7 +35,6 @@ References
 import logging
 import math
 from dataclasses import dataclass, field
-from typing import List, Tuple
 
 import numpy as np
 import numpy.typing as npt
@@ -117,10 +116,10 @@ class GGS:
     random_state: int = None
 
     change_points_: npt.ArrayLike = field(init=False, default_factory=list)
-    _intermediate_change_points: List[List[int]] = field(
+    _intermediate_change_points: list[list[int]] = field(
         init=False, default_factory=list
     )
-    _intermediate_ll: List[float] = field(init=False, default_factory=list)
+    _intermediate_ll: list[float] = field(init=False, default_factory=list)
 
     def initialize_intermediates(self) -> None:
         """Initialize the state for the estimator."""
@@ -151,7 +150,7 @@ class GGS:
         )
 
     def cumulative_log_likelihood(
-        self, data: npt.ArrayLike, change_points: List[int]
+        self, data: npt.ArrayLike, change_points: list[int]
     ) -> float:
         """Calculate cumulative GGS log-likelihood for all segments.
 
@@ -175,7 +174,7 @@ class GGS:
             log_likelihood -= self.log_likelihood(segment)
         return log_likelihood
 
-    def add_new_change_point(self, data: npt.ArrayLike) -> Tuple[int, float]:
+    def add_new_change_point(self, data: npt.ArrayLike) -> tuple[int, float]:
         """Add change point.
 
         This methods finds a new change point by that splits the segment and
@@ -239,8 +238,8 @@ class GGS:
         return new_index, min_ll - orig_ll
 
     def adjust_change_points(
-        self, data: npt.ArrayLike, change_points: List[int], new_index: List[int]
-    ) -> List[int]:
+        self, data: npt.ArrayLike, change_points: list[int], new_index: list[int]
+    ) -> list[int]:
         """Adjust change points.
 
         This method adjusts the positions of all change points until the
@@ -310,11 +309,11 @@ class GGS:
                 return bp
         return bp
 
-    def identity_segmentation(self, data: npt.ArrayLike) -> List[int]:
+    def identity_segmentation(self, data: npt.ArrayLike) -> list[int]:
         """Initialize change points."""
         return [0, data.shape[0] + 1]
 
-    def find_change_points(self, data: npt.ArrayLike) -> List[int]:
+    def find_change_points(self, data: npt.ArrayLike) -> list[int]:
         """
         Search iteratively  for up to ``k_max`` change points.
 
@@ -458,7 +457,7 @@ class GreedyGaussianSegmentation(BaseSeriesAnnotator):
         )
 
     @property
-    def _intermediate_change_points(self) -> List[List[int]]:
+    def _intermediate_change_points(self) -> list[list[int]]:
         """Intermediate values of change points for each value of k = 1...k_max.
 
         Default value is an empty list.
@@ -466,7 +465,7 @@ class GreedyGaussianSegmentation(BaseSeriesAnnotator):
         return self._adaptee._intermediate_change_points
 
     @property
-    def _intermediate_ll(self) -> List[float]:
+    def _intermediate_ll(self) -> list[float]:
         """Intermediate values for log-likelihood for each value of k = 1...k_max.
 
         Default value is an empty list.
