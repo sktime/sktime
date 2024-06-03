@@ -395,7 +395,7 @@ Deep learning based forecasters
     :toctree: auto_generated/
     :template: class.rst
 
-    NeuralForecastRNN
+    PytorchForecastingTFT
     PytorchForecastingNBeats
 
 .. currentmodule:: sktime.forecasting.pykan_forecaster
