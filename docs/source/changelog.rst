@@ -42,7 +42,7 @@ Dependency changes
 
 * ``scikit-base`` (core dependency) bounds have been updated to ``>=0.6.1,<0.9.0``
 
-* ``skpro`` (soft dependency) bounds have been updated to ``<2.4.0``
+* ``skpro`` (soft dependency) bounds have been updated to ``>=2,<2.4.0``
 
 * ``kotsu`` is not longer a soft dependency required by the forecasting benchmarking
   framework. The ``kotsu`` package is no longer maintained,
