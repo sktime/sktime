@@ -160,10 +160,9 @@ def _run_test_for_class(cls):
 
         If multiple reasons are present, the first one in the above list is returned.
     """
-
     from sktime.tests.test_all_estimators import ONLY_CHANGED_MODULES
+    from sktime.utils.dependencies import _check_estimator_deps
     from sktime.utils.git_diff import get_packages_with_changed_specs, is_class_changed
-    from sktime.utils.validation._dependencies import _check_estimator_deps
 
     PACKAGE_REQ_CHANGED = get_packages_with_changed_specs()
 
@@ -247,3 +246,42 @@ def _run_test_for_class(cls):
     # if none of the conditions are met, do not run the test
     # reason is that there was no change
     return False, "False_no_change"
+
+
+def run_test_module_changed(module):
+    """Check if test should run based on module changes
+
+    This switch can be used to decorate tests not pertaining to a specific class.
+
+    The function can be used to switch tests on and off
+    based on whether a target module has changed.
+
+    This checks whether the module ``module``, or any of its child modules,
+    have changed.
+
+    If ``ONLY_CHANGED_MODULES`` is False, the test is always run,
+    i.e., this function always returns True.
+
+    Parameters
+    ----------
+    module : string, or list of strings
+        modules to check for changes, e.g., ``sktime.forecasting``
+
+    Returns
+    -------
+    bool : switch to run or skip the test
+        True iff: at least one of the modules or its submodules have changed,
+        or if ``ONLY_CHANGED_MODULES`` is False
+    """
+    from sktime.tests.test_all_estimators import ONLY_CHANGED_MODULES
+    from sktime.utils.git_diff import is_module_changed
+
+    # if ONLY_CHANGED_MODULES is off: always True
+    # tests are always run if soft dependencies are present
+    if not ONLY_CHANGED_MODULES:
+        return True
+
+    if not isinstance(module, (list, tuple)):
+        module = [module]
+
+    return any(is_module_changed(mod) for mod in module)
