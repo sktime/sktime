@@ -60,6 +60,28 @@ Dependency changes
     impacted as APIs do not change, except that they no longer require
     the original ``pykalman`` package in their python environment.
 
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+The time series annotation, anomalies, changepoints, segmentation API has been
+fully reworked to be in line with ``scikit-base`` patterns, ``sktime`` tags,
+and to provide a more consistent and flexible interface.
+
+* the API provides ``predict`` methods for annotation labels, e.g., segments,
+  outlier points, and a ``transform`` method for indicator series, for instance
+  1/0 indicator whether an anomaly is present at the time stamp.
+* the ``fmt`` argument used in some estimators is now deprecated,
+  in favour of using ``predict`` or ``transform``.
+* The type of annotation, e.g., change points or segmentation, is
+  encoded by the new tag ``task`` used in time series annotators,
+  with values ``anomaly_detection``, ``segmentation``, ``changepoint_detection``.
+* Low-level methods allow polymorphic use of annotators, e.g., a changepoint detector
+  to be used for segmentation, via ``predict_points`` or ``predict_segments``.
+  The ``predict`` method defaults to the type of annotation defined by ``task``.
+
+A full tutorial with examples will be created over the next release cycles,
+and further enhancements are planned.
+
 Deprecations and removals
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
