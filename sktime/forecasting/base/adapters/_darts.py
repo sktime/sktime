@@ -219,10 +219,10 @@ class _DartsAdapter(BaseForecaster):
             future_covariates=known_exogenous,
             num_samples=1,
         )
-        original_index = X.index if X is not None else fh.to_absolute_index(self.cutoff)
+        original_index = fh.get_expected_pred_idx(self.cutoff)
         if self.get_class_tag("y_inner_mtype") == "pd.Series":
             endogenous_point_predictions = endogenous_point_predictions.pd_series()
-            if isinstance(self._y.index, pd.RangeIndex):
+            if isinstance(original_index, pd.RangeIndex):
                 endogenous_point_predictions.index = pd.RangeIndex(
                     start=0, stop=len(endogenous_point_predictions)
                 )
@@ -305,11 +305,7 @@ class _DartsAdapter(BaseForecaster):
         multi_index = pd.MultiIndex.from_product(
             [variable_names, alpha], names=["variable", "quantile"]
         )
-        original_index = (
-            X.index
-            if X is not None
-            else absolute_fh.to_pandas().astype(self.cutoff.dtype)
-        )
+        original_index = fh.get_expected_pred_idx(self.cutoff)
         endogenous_quantile_predictions.index = (
             endogenous_quantile_predictions.index.astype(original_index.dtype)
         )
