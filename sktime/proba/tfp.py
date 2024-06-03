@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.proba.base import _BaseTFDistribution
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.utils.dependencies import _check_estimator_deps
 
 
 class TFNormal(_BaseTFDistribution):

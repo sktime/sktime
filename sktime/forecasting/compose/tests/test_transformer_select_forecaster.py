@@ -7,6 +7,7 @@ from sktime.forecasting.compose import TransformSelectForecaster
 from sktime.forecasting.croston import Croston
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.adi_cv import ADICVTransformer
 from sktime.transformations.series.tests.test_adi_cv import (
     _generate_erratic_series,
@@ -15,6 +16,10 @@ from sktime.transformations.series.tests.test_adi_cv import (
 )
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(TransformSelectForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "forecasters, series_generator, horizon, chosen_forecaster",
     [
@@ -66,6 +71,10 @@ def test_forecaster_selection(
     assert type(forecaster.chosen_forecaster_) is type(chosen_forecaster)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(TransformSelectForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "forecasters, series_generator, horizon, fallback_forecaster",
     [
@@ -126,6 +135,10 @@ def test_fallback_forecaster(
         assert type(forecaster.chosen_forecaster_) is type(fallback_forecaster)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(TransformSelectForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "forecasters, fallback_forecaster, transformer, horizon, series_generator, params",
     [
