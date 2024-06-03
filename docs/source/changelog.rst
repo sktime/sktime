@@ -136,12 +136,18 @@ Maintenance
 * [MNT] refactor ``pykalman`` tests to ``pytest`` and conditional execution (:pr:`6519`) :user:`fkiraly`
 * [MNT] conditional execution of tests in ``datatypes`` module (:pr:`6520`) :user:`fkiraly`
 
+Fixes
+~~~~~
+
+* [BUG] Remove dict unpacking on list in tuning skopt (:pr:`6521`) :user:`gareth-brown-86`
+
 Contributors
 ~~~~~~~~~~~~
 
 :user:`Alex-JG3`,
 :user:`dependabot[bot]`,
 :user:`fkiraly`,
+:user:`gareth-brown-86`,
 :user:`geetu040`,
 :user:`yarnabrina`
 
