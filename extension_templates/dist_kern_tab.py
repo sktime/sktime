@@ -27,10 +27,12 @@ from sktime.dists_kernels import BasePairwiseTransformer
 
 # todo: add any necessary imports here
 
-# todo: if any imports are sktime soft dependencies:
+# todo: for imports of sktime soft dependencies:
 # make sure to fill in the "python_dependencies" tag with the package import name
+# import soft dependencies only inside methods of the class, not at the top of the file
 
 
+# todo: change class name and write docstring
 class MyTrafoPw(BasePairwiseTransformer):
     """Custom distance/kernel (on data frame rows). todo: write docstring.
 
