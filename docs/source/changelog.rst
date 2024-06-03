@@ -83,17 +83,45 @@ after the deprecation period.
 Users should replace any imports of ``cINNForecaster``
 with imports of ``CINNForecaster``.
 
-Contents
-~~~~~~~~
+Enhancements
+~~~~~~~~~~~~
 
+* [ENH] Rework of base series annotator API (:pr:`6265`) :user:`Alex-JG3`
+* [ENH] upgrade ``is_module_changed`` test utility for paths (:pr:`6518`) :user:`fkiraly`
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] updated ``all_estimators`` docstring for ``re.Pattern`` support (:pr:`6478`) :user:`fkiraly`
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] [Dependabot](deps): Update skpro requirement from ``<2.3.0,>=2`` to ``>=2,<2.4.0`` (:pr:`6443`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update scikit-learn requirement from ``<1.5.0,>=0.24`` to ``>=0.24,<1.6.0`` (:pr:`6462`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update scikit-base requirement from ``<0.8.0,>=0.6.1`` to ``>=0.6.1,<0.9.0`` (:pr:`6488`) :user:`dependabot[bot]`
+* [MNT] drop test coverage on python 3.8 in CI (:pr:`6329`) :user:`yarnabrina`
+* [MNT] final change cycle (0.30.0) for renaming ``cINNForecaster`` to ``CINNForecaster`` (:pr:`6367`) :user:`geetu040`
+* [MNT] added ``joblib`` as core dependency (:pr:`6384`) :user:`yarnabrina`
+* [MNT] 0.30.0 deprecations and change actions (:pr:`6468`) :user:`fkiraly`
+* [MNT] modified CRLF line endings to LF line endings (:pr:`6512`) :user:`yarnabrina`
+* [MNT] Move dependency checkers to separate module in ``utils`` (:pr:`6354`) :user:`fkiraly`
+* [MNT] resolution to ``pykalman`` issue - ``sktime`` local pykalman fork (:pr:`6188`) :user:`fkiraly`
+* [MNT] add systematic differential test switch to low-level tests (:pr:`6511`) :user:`fkiraly`
+* [MNT] isolate ``utils`` module init and ``sktime`` init from external imports (:pr:`6516`) :user:`fkiraly`
+* [MNT] preparing refactor of benchmark framework: folding minimal ``kotsu`` library into ``sktime`` (:pr:`6514`) :user:`fkiraly`
+* [MNT] run tests in ``distances`` module only if it has changed (:pr:`6517`) :user:`fkiraly`
+* [MNT] refactor ``pykalman`` tests to ``pytest`` and conditional execution (:pr:`6519`) :user:`fkiraly`
+* [MNT] conditional execution of tests in ``datatypes`` module (:pr:`6520`) :user:`fkiraly`
 
 Contributors
 ~~~~~~~~~~~~
 
+:user:`Alex-JG3`,
+:user:`dependabot[bot]`,
 :user:`fkiraly`,
 :user:`geetu040`,
 :user:`yarnabrina`
-
 
 
 Version 0.29.1 - 2024-05-30
