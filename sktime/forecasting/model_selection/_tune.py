@@ -1586,4 +1586,4 @@ def _fit_and_score_skopt(params, meta):
 
         return out
 
-    return _fit_and_score(**params)
+    return _fit_and_score(params)
