@@ -6,6 +6,7 @@ import pytest
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer
 
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.compose import FeatureUnion
 from sktime.transformations.panel.reduce import Tabularizer
 from sktime.transformations.panel.segment import RandomIntervalSegmenter
@@ -17,6 +18,10 @@ from sktime.utils._testing.panel import (
 from sktime.utils.slope_and_trend import _slope
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(RandomIntervalFeatureExtractor),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("n_instances", [1, 3])
 @pytest.mark.parametrize("n_timepoints", [10, 20])
 @pytest.mark.parametrize("n_intervals", [1, 3, "log", "sqrt", "random"])
@@ -36,6 +41,10 @@ def test_output_format_dim(n_instances, n_timepoints, n_intervals, features):
     assert np.array_equal(Xt.values, np.ones(Xt.shape))
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(RandomIntervalFeatureExtractor),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("bad_n_intervals", [0, "abc", 1.1, -1])
 def test_bad_n_intervals(bad_n_intervals):
     """Check that exception is raised for bad input args."""
@@ -44,6 +53,10 @@ def test_bad_n_intervals(bad_n_intervals):
         RandomIntervalFeatureExtractor(n_intervals=bad_n_intervals).fit(X)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(RandomIntervalFeatureExtractor),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "bad_features", [0, "abc", {"a": 1}, (np.median, np.mean), [0, "abc"]]
 )
@@ -54,6 +67,10 @@ def test_bad_features(bad_features):
         RandomIntervalFeatureExtractor(n_intervals=bad_features).fit(X)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(RandomIntervalFeatureExtractor),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("n_instances", [3, 5])
 @pytest.mark.parametrize("n_timepoints", [10, 20])
 @pytest.mark.parametrize("n_intervals", [1, 3, "log", "sqrt", "random"])
@@ -80,6 +97,10 @@ def test_results(n_instances, n_timepoints, n_intervals):
         np.testing.assert_array_equal(actual_stds, expected_std)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([RandomIntervalFeatureExtractor, RandomIntervalSegmenter]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_different_implementations():
     """Test against equivalent pipelines."""
     random_state = 1233
@@ -99,6 +120,10 @@ def test_different_implementations():
     np.testing.assert_array_almost_equal(A, B)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([RandomIntervalFeatureExtractor, RandomIntervalSegmenter]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.xfail(reason="SeriesToPrimitivesTransformer will be deprecated, see 2179")
 def test_different_pipelines():
     """Compare with transformer pipeline using TSFeatureUnion."""

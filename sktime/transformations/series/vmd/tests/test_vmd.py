@@ -5,10 +5,13 @@ __author__ = ["fkiraly", "DaneLyttinen"]
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.trend import TrendForecaster
-from sktime.transformations.series.vmd import VmdTransformer
+from sktime.tests.test_switch import run_test_for_class
+from sktime.transformations.series.vmd._vmd import VmdTransformer
+from sktime.transformations.series.vmd._vmdpy import VMD
 
 
 def _generate_vmd_testdata(T=1000, f_1=2, f_2=24, f_3=288, noise=0.1):
@@ -42,6 +45,10 @@ def _generate_vmd_testdata(T=1000, f_1=2, f_2=24, f_3=288, noise=0.1):
     return pd.DataFrame(data={"y": f})
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([VmdTransformer, VMD]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_vmd_in_pipeline():
     """Test vmd as part of a TransformedTargetForecaster pipeline."""
     y = _generate_vmd_testdata()

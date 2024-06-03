@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.panel.slope import SlopeTransformer
 from sktime.utils._testing.panel import _make_nested_from_array
 
@@ -13,6 +14,10 @@ from sktime.utils._testing.panel import _make_nested_from_array
 # Check that exception is raised for bad num levels.
 # input types - string, float, negative int, negative float, empty dict.
 # correct input is meant to be a positive integer of 1 or more.
+@pytest.mark.skipif(
+    not run_test_for_class(SlopeTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("bad_num_intervals", ["str", 1.2, -1.2, -1, {}, 0])
 def test_bad_input_args(bad_num_intervals):
     """Test that exception is raised for bad num levels."""
@@ -26,6 +31,10 @@ def test_bad_input_args(bad_num_intervals):
             SlopeTransformer(num_intervals=bad_num_intervals).fit(X).transform(X)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(SlopeTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_output_of_transformer():
     """Test that the transformer has changed the data correctly."""
     X = _make_nested_from_array(
@@ -57,6 +66,10 @@ def test_output_of_transformer():
     assert check_if_dataframes_are_equal(res, orig)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(SlopeTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("num_intervals,corr_series_length", [(2, 2), (5, 5), (8, 8)])
 def test_output_dimensions(num_intervals, corr_series_length):
     """Test output dimensions."""
@@ -75,6 +88,10 @@ def test_output_dimensions(num_intervals, corr_series_length):
     assert num_cols == 1
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(SlopeTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_slope_performs_correctly_along_each_dim():
     """Test that Slope produces the same result along each dimension."""
     X = _make_nested_from_array(
