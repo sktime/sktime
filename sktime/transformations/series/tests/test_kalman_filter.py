@@ -151,7 +151,7 @@ def init_kf_pykalman(
     denoising=False,
 ):
     """Initiate instance of `pykalman`'s `KalmanFilter`."""
-    from pykalman.standard import KalmanFilter
+    from sktime.libs.pykalman.standard import KalmanFilter
 
     em_vars = get_params_mapping(params=estimate_matrices)
     kf_pykalman = KalmanFilter(
