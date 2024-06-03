@@ -218,16 +218,47 @@ class _DartsAdapter(BaseForecaster):
             past_covariates=unknown_exogenous,
             future_covariates=known_exogenous,
             num_samples=1,
-        ).pd_dataframe()
-
-        if X is not None and len(X.columns) == len(
-            endogenous_point_predictions.columns
-        ):
-            endogenous_point_predictions.columns = X.columns
+        )
+        original_index = X.index if X is not None else fh.to_absolute_index(self.cutoff)
+        if self.get_class_tag("y_inner_mtype") == "pd.Series":
+            endogenous_point_predictions = endogenous_point_predictions.pd_series()
+            if isinstance(self._y.index, pd.RangeIndex):
+                endogenous_point_predictions.index = pd.RangeIndex(
+                    start=0, stop=len(endogenous_point_predictions)
+                )
+            elif isinstance(original_index, pd.PeriodIndex):
+                endogenous_point_predictions.index = (
+                    endogenous_point_predictions.index.to_period(original_index.freqstr)
+                )
+            else:
+                endogenous_point_predictions.columns = [
+                    "c" + str(i) for i in range(endogenous_point_predictions.shape[1])
+                ]
         else:
-            endogenous_point_predictions.columns = range(
-                len(endogenous_point_predictions.columns)
-            )
+            endogenous_point_predictions = endogenous_point_predictions.pd_dataframe()
+            if X is not None:
+                if isinstance(original_index, pd.RangeIndex):
+                    endogenous_point_predictions.index = pd.RangeIndex(
+                        start=0, stop=len(endogenous_point_predictions)
+                    )
+                elif isinstance(original_index, pd.PeriodIndex):
+                    endogenous_point_predictions.index = (
+                        endogenous_point_predictions.index.to_period(
+                            original_index.freqstr
+                        )
+                    )
+
+                elif (
+                    isinstance(original_index, pd.DatetimeIndex)
+                    and len(endogenous_point_predictions.columns) > 1
+                ):
+                    endogenous_point_predictions.columns = pd.RangeIndex(
+                        start=0, stop=len(endogenous_point_predictions.columns), step=1
+                    )
+            else:
+                endogenous_point_predictions.columns = [
+                    "c" + str(i) for i in range(endogenous_point_predictions.shape[1])
+                ]
         return endogenous_point_predictions
 
     def _predict_quantiles(
@@ -262,17 +293,30 @@ class _DartsAdapter(BaseForecaster):
                 at quantile probability in second col index, for the row index.
         """
         unknown_exogenous, known_exogenous = self.convert_exogenous_dataset(X)
-
         maximum_forecast_horizon = fh.to_relative(self.cutoff)[-1]
-
+        absolute_fh = fh.to_absolute(self.cutoff)
         endogenous_quantile_predictions = self._forecaster.predict(
             maximum_forecast_horizon,
             past_covariates=unknown_exogenous,
             future_covariates=known_exogenous,
             num_samples=self.num_samples,
         ).quantiles_df(quantiles=alpha)
+        variable_names = self._get_varnames()
+        multi_index = pd.MultiIndex.from_product(
+            [variable_names, alpha], names=["variable", "quantile"]
+        )
+        original_index = (
+            X.index
+            if X is not None
+            else absolute_fh.to_pandas().astype(self.cutoff.dtype)
+        )
+        endogenous_quantile_predictions.index = (
+            endogenous_quantile_predictions.index.astype(original_index.dtype)
+        )
 
-        return endogenous_quantile_predictions
+        abs_idx = absolute_fh.to_pandas().astype(original_index.dtype)
+        endogenous_quantile_predictions.columns = multi_index
+        return endogenous_quantile_predictions.loc[abs_idx]
 
 
 __all__ = ["_DartsAdapter"]
