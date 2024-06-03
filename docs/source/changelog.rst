@@ -19,7 +19,7 @@ For upcoming changes and next releases, see our `milestones <https://github.com/
 For our long-term plan, see our :ref:`roadmap`.
 
 
-Version 0.30.0 - 2024-06-02
+Version 0.30.0 - 2024-06-03
 ---------------------------
 
 Major upgrade to the time series anomaly, changepoints, segmentation API (:user:`Alex-JG3`).
@@ -59,6 +59,10 @@ Dependency changes
   * Indirect users via the transformer ``KalmanFilterTransformerPK`` will not be
     impacted as APIs do not change, except that they no longer require
     the original ``pykalman`` package in their python environment.
+
+* ``dask`` (data container and parallelization back-end) bounds have been updated to ``<2024.5.3``
+
+* ``holidays`` (transformations soft dependency) bounds have been updated to ``>=0.29,<0.51``
 
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -122,6 +126,8 @@ Maintenance
 * [MNT] [Dependabot](deps): Update skpro requirement from ``<2.3.0,>=2`` to ``>=2,<2.4.0`` (:pr:`6443`) :user:`dependabot[bot]`
 * [MNT] [Dependabot](deps): Update scikit-learn requirement from ``<1.5.0,>=0.24`` to ``>=0.24,<1.6.0`` (:pr:`6462`) :user:`dependabot[bot]`
 * [MNT] [Dependabot](deps): Update scikit-base requirement from ``<0.8.0,>=0.6.1`` to ``>=0.6.1,<0.9.0`` (:pr:`6488`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``dask`` requirement from ``<2024.5.2`` to ``<2024.5.3`` (:pr:`6526`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``holidays`` requirement from ``<0.50,>=0.29`` to ``>=0.29,<0.51`` (:pr:`6525`) :user:`dependabot[bot]`
 * [MNT] drop test coverage on python 3.8 in CI (:pr:`6329`) :user:`yarnabrina`
 * [MNT] final change cycle (0.30.0) for renaming ``cINNForecaster`` to ``CINNForecaster`` (:pr:`6367`) :user:`geetu040`
 * [MNT] added ``joblib`` as core dependency (:pr:`6384`) :user:`yarnabrina`
