@@ -208,7 +208,7 @@ class DartsXGBModel(_DartsAdapter):
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
         if _check_soft_dependencies(
-            "u8darts", package_import_alias={"u8darts": "darts"}, severity="error"
+            "u8darts", package_import_alias={"u8darts": "darts"}, severity="none"
         ):
             params = [
                 {
