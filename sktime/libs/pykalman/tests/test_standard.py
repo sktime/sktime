@@ -156,7 +156,7 @@ class TestKalmanFilter:
         for i in range(len(loglikelihoods) - 1):
             assert (loglikelihoods[i] < loglikelihoods[i + 1]).all()
 
-    def test_kalman_initialize_parameters(self, kf_cls, data):
+    def test_kalman_initialize_parameters(self, kf_cls):
         self.check_dims(5, 1, {"transition_matrices": np.eye(5)})
         self.check_dims(1, 3, {"observation_offsets": np.zeros(3)})
         self.check_dims(
@@ -164,10 +164,10 @@ class TestKalmanFilter:
             3,
             {"transition_covariance": np.eye(2), "observation_offsets": np.zeros(3)},
         )
-        self.check_dims(3, 2, {"n_dim_state": 3, "n_dim_obs": 2})
-        self.check_dims(4, 1, {"initial_state_mean": np.zeros(4)})
+        self.check_dims(3, 2, {"n_dim_state": 3, "n_dim_obs": 2}, kf_cls)
+        self.check_dims(4, 1, {"initial_state_mean": np.zeros(4)}, kf_cls)
 
-    def check_dims(self, n_dim_state, n_dim_obs, kwargs):
+    def check_dims(self, n_dim_state, n_dim_obs, kwargs, kf_cls):
         kf = kf_cls(**kwargs)
         (
             transition_matrices,
