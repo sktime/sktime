@@ -32,7 +32,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.datatypes._dtypekind import DtypeKind
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 example_dict = dict()
 example_dict_lossy = dict()

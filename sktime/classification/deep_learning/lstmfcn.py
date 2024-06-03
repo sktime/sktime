@@ -143,8 +143,9 @@ class LSTMFCNClassifier(BaseDeepClassifier):
             optimizer="adam",
             metrics=["accuracy"],
         )
-
-        self.callbacks = self.callbacks or []
+        # .get_params() returns an empty list for callback.
+        # inconsistent with function initial run where callbacks was set to None
+        self._callbacks = self.callbacks or None
 
         return model
 
@@ -199,10 +200,8 @@ class LSTMFCNClassifier(BaseDeepClassifier):
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
-            callbacks=deepcopy(self.callbacks) if self.callbacks else [],
+            callbacks=deepcopy(self._callbacks) if self._callbacks else None,
         )
-
-        self._is_fitted = True
 
         return self
 
@@ -229,7 +228,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         param1 = {
             "n_epochs": 25,

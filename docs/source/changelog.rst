@@ -19,6 +19,230 @@ For upcoming changes and next releases, see our `milestones <https://github.com/
 For our long-term plan, see our :ref:`roadmap`.
 
 
+Version 0.29.1 - 2024-05-30
+---------------------------
+
+Highlights
+~~~~~~~~~~
+
+* ``TransformSelectForecaster`` to apply different forecasters depending on series type (e.g., intermittent, lumpy) (:pr:`6453`) :user:`shlok191`
+* Kolmogorov-Arnold Network (KAN) forecaster (:pr:`6386`) :user:`benHeid`
+* New probabilistic forecast metrics: interval width (sharpness), area under the
+  calibration curve (:pr:`6437`, :pr:`6460`) :user:`fkiraly`
+* Data loader for fpp3 (Forecasting, Princniples and Practice) datasets via ``rdata`` package, in ``sktime`` data formats (:pr:`6477`) :user:`ericjb`
+* Bollinger Bands transformation (:pr:`6473`) :user:`ishanpai`
+* ADI/CV2 (Syntetos/Boylan) feature extractor (:pr:`6336`) :user:`shlok191`
+* ``ExpandingCutoffSplitter`` - splitter by moving cutoff (:pr:`6360`) :user:`ninedigits`
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``holidays`` (transformations soft dependency) bounds have been updated to ``>=0.29,<0.50``
+* ``pycatch22`` (transformations soft dependency) bounds have been updated to ``<0.4.6``
+* ``dtw-python`` (distances and alignment soft dependency) bounds have been updated to ``>=1.3,<1.6``
+* ``dask`` (data container and parallelization back-end) bounds have been updated to ``<2024.5.2``
+* ``transformers`` (forecasting soft dependency) bounds have been updated to ``<4.41.0``
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+Benchmarking, Metrics, Splitters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* all metrics for point forecasts now support weighting, via the ``sample_weight`` parameter.
+  If passed, the metric will be weighted by the sample weights.
+  For hierarchical data, the weights are applied to the series level,
+  in this case all series need to have same length.
+  Probabilistic metrics do not support weighting yet, this will be added in a future release.
+
+Time series alignment
+^^^^^^^^^^^^^^^^^^^^^
+
+* all time series aligners now possess the ``capability:unequal_length`` tag,
+  which is ``True`` if the aligner can handle time series of unequal length,
+  and ``False`` otherwise. An informative error message, based on the tag,
+  is now raised if an aligner not supporting unequal length time series is used on such data.
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* The ``convert_y_to_keras`` method in deep learning classifiers has been deprecated and
+  will be removed in 0.31.0. Users who have been using this method should
+  instead use ``OneHotEncoder`` from ``sklearn`` directly, as ``convert_y_to_keras``
+  is a simple wrapper around ``OneHotEncoder`` with default settings.
+
+Enhancements
+~~~~~~~~~~~~
+
+BaseObject and base framework
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Benchmarking, Metrics, Splitters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] ``ExpandingCutoffSplitter`` - splitter by moving cutoff (:pr:`6360`) :user:`ninedigits`
+* [ENH] Interval width (sharpness) metric (:pr:`6437`) :user:`fkiraly`
+* [ENH] unsigned area under the calibration curve metric for distribution forecasts (:pr:`6460`) :user:`fkiraly`
+* [ENH] forecasting metrics: ensure uniform support and testing for ``sample_weight`` parameter (:pr:`6495`) :user:`fkiraly`
+
+Data loaders
+^^^^^^^^^^^^
+
+* [ENH] data loader for fpp3 datasets from CRAN via ``rdata`` package, to ``sktime`` data formats (:pr:`6477`) :user:`ericjb`
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Polars conversion utilities (:pr:`6455`) :user:`pranavvp16`
+
+Forecasting
+^^^^^^^^^^^
+
+* [ENH] Kolmogorov-Arnold Network (KAN) forecaster (:pr:`6386`) :user:`benHeid`
+* [ENH] Compositor to apply forecasters depending on series type (e.g., intermittent) (:pr:`6453`) :user:`shlok191`
+* [ENH] compatibility of ``ForecastingHorizon`` with ``pandas`` ``freq`` ``2Y`` on ``pandas 2.2.0`` and above (:pr:`6500`) :user:`fkiraly`
+* [ENH] add test case for ``ForecastingHorizon``  ``pandas 2.2.X`` compatibility, failure case #6499 (:pr:`6503`) :user:`fkiraly`
+* [ENH] remove ``Prophet`` from ``test_differencer_cutoff`` (:pr:`6492`) :user:`fkiraly`
+* [ENH] address deprecation and raise error in ``test_differencer_cutoff`` (:pr:`6493`) :user:`fkiraly`
+
+Time series alignment
+^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] time series aligners capability check at input, tag for unequal length capability (:pr:`6486`) :user:`fkiraly`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Make deep classifier's ``convert_y_to_keras`` private (:pr:`6373`) :user:`cedricdonie`
+* [ENH] classification test scenario with three classes and ``pd-multiindex`` mtype (:pr:`6374`) :user:`fkiraly`
+* [ENH] test classifiers on str dtype ``y``, ensure ``predict`` returns same type and labels (:pr:`6428`) :user:`fkiraly`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [ENH] Test Parameters for `FinancialHolidaysTransformer` (:pr:`6334`) :user:`sharma-kshitij-ks`
+* [ENH] ADI/CV feature extractor (:pr:`6336`) :user:`shlok191`
+* [ENH] Bollinger Bands (:pr:`6473`) :user:`ishanpai`
+
+Test framework
+^^^^^^^^^^^^^^
+
+* [ENH] enable ``check_estimator`` and ``QuickTester.run_tests`` to work with skip marked ``pytest`` tests (:pr:`6233`) :user:`YelenaYY`
+* [ENH] make ``get_packages_with_changed_specs`` safe to mutation of return (:pr:`6451`) :user:`fkiraly`
+
+Visualization
+^^^^^^^^^^^^^
+
+* [ENH] ``plot_series`` improved to use ``matplotlib`` conventions;
+  ``plot_interval`` can now plot multiple overlaid intervals (:pr:`6416`, :pr:`6501`) :user:`ericjb`
+
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] remove redundant/duplicative classification tutorial notebooks (:pr:`6401`) :user:`fkiraly`
+* [DOC] update meetup time to new 1pm slot (:pr:`6402`) :user:`fkiraly`
+* [DOC] explanation of ``get_test_params`` in test framework example (:pr:`6434`) :user:`fkiraly`
+* [DOC] fix download badges in README (:pr:`6479`) :user:`fkiraly`
+* [DOC] improved formatting of transformation docstrings (:pr:`6489`) :user:`fkiraly`
+* [DOC] document more tags: transformations (:pr:`6351`) :user:`fkiraly`
+* [DOC] Improve docstrings for metrics (:pr:`6419`) :user:`fkiraly`
+* [DOC] fixed wrong sentence in the documentation (:pr:`6375`) :user:`helloplayer1`
+* [DOC] Correct docstring for conversion functions of ``dask_to_pd`` (:pr:`6439`) :user:`pranavvp16`
+* [DOC] Fix hugging face transformers documentation (:pr:`6450``) :user:`benheid`
+* [DOC] ``plot_calibration`` docstring - formal explanation of the plot (:pr:`6414`) :user:`fkiraly`
+* [DOC] high-level explanation of deprecation policy principles (:pr:`6464`) :user:`fkiraly`
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] [Dependabot](deps): Update holidays requirement from ``<0.49,>=0.29`` to ``>=0.29,<0.50`` (:pr:`6456`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update pycatch22 requirement from ``<0.4.4`` to <0.4.6`` (:pr:`6442`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update sphinx-design requirement from ``<0.6.0`` to ``<0.7.0`` (:pr:`6471`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update dask requirement from ``<2024.5.1`` to ``<2024.5.2`` (:pr:`6444`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update dtw-python requirement from ``<1.5,>=1.3`` to ``>=1.3,<1.6`` (:pr:`6474`) :user:`dependabot[bot]`
+* [MNT] include unit tests in ``sktime/tests`` in per module tests (:pr:`6353`) :user:`yarnabrina`
+* [MNT] maintenance changes for ``AutoTBATS`` (:pr:`6400`) :user:`yarnabrina`
+* [MNT] bound ``transformers<4.41.0`` (:pr:`6447`) :user:`fkiraly`
+* [MNT] ``sklearn 1.5.0`` compatibility patch (:pr:`6464`) :user:`fkiraly`
+* [MNT] skip doctest for ``all_estimators`` (:pr:`6476`) :user:`fkiraly`
+* [MNT] address various deprecation and computation warnings (:pr:`6482`) :user:`fkiraly`
+* [MNT] address further deprecation warnings from ``pandas`` (:pr:`6494`) :user:`fkiraly`
+* [MNT] fix the docs local build failure due to corrupt notebook (:pr:`6426`) :user:`fnhirwa`
+
+Fixes
+~~~~~
+
+Forecasting
+^^^^^^^^^^^
+
+* [BUG] fix ``ForecastX`` when ``forecaster_X_exogeneous="complement"`` (:pr:`6433`) :user:`fnhirwa`
+* [BUG] Modified VAR code to allow ``predict_quantiles`` of 0.5 (fixes #4742) (:pr:`6441`) :user:`meraldoantonio`
+
+Neural networks
+^^^^^^^^^^^^^^^
+
+* [BUG] Remove duplicated ``BaseDeepNetworkPyTorch`` in ``networks.base`` (:pr:`6398`) :user:`luca-miniati`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] Resolve ``LSTMFCNClassifier`` changing ``callback`` parameter (:pr:`6239`) :user:`ArthrowAbstract`
+* [BUG] fix ``_get_train_probs`` in some classifiers to accept any input data type (:pr:`6377`) :user:`fkiraly`
+* [BUG] fix ``BaggingClassifier`` for column subsampling case (:pr:`6429`) :user:`fkiraly`
+* [BUG] fix ``ProximityForest``, tree, stump, and ``IndividualBOSS`` returning ``y`` of different type in ``predict`` (:pr:`6432`) :user:`fkiraly`
+* [BUG] fix classifier default ``_predict`` returning integer labels always, even if ``fit`` ``y`` was not integer (:pr:`6430`) :user:`fkiraly`
+* [BUG] in ``CNNClassifier``, ensure ``filter_sizes`` and ``padding`` is passed on (:pr:`6452`) :user:`fkiraly`
+* [BUG] fix ``BaseClassifier.fit_predict`` and ``fit_predict_proba`` for ``pd-multiindex`` mtype (:pr:`6491`) :user:`fkiraly`
+
+Time series regression
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] Resolve ``LSTMFCNRegressor`` changing ``callback`` parameter (:pr:`6239`) :user:`ArthrowAbstract`
+* [BUG] in ``CNNRegressor``, ensure ``filter_sizes`` and ``padding`` is passed on (:pr:`6452`) :user:`fkiraly`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [BUG] fix to make ``LabelEncoder`` compatible with ``sktime`` pipelines (:pr:`6458`) :user:`Abhay-Lejith`
+
+Test framework
+^^^^^^^^^^^^^^
+
+* [BUG] allow metric classes to be called with ``multilevel`` arg if series is not hierarchical (:pr:`6418`) :user:`fkiraly`
+* [BUG] fix ``test_run_test_for_class`` logic check if ``ONLY_CHANGED_MODULES`` flag is ``False`` and all estimator dependencies are present (:pr:`6383`) :user:`fkiraly`
+* [BUG] fix ``test_run_test_for_class`` test logic (:pr:`6448`) :user:`fkiraly`
+
+Visualization
+^^^^^^^^^^^^^
+
+* [BUG] fix ``xticks`` fore date-like data in ``plot_series`` (:pr:`6416`, :pr:`6501`) :user:`ericjb`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`Abhay-Lejith`,
+:user:`ArthrowAbstract`,
+:user:`benHeid`,
+:user:`cedricdonie`,
+:user:`ericjb`,
+:user:`fkiraly`,
+:user:`fnhirwa`,
+:user:`helloplayer1`,
+:user:`ishanpai`,
+:user:`luca-miniati`,
+:user:`meraldoantonio`,
+:user:`ninedigits`,
+:user:`pranavvp16`,
+:user:`sharma-kshitij-ks`,
+:user:`shlok191`,
+:user:`yarnabrina`,
+:user:`YelenaYY`
+
+
 Version 0.29.0 - 2024-04-28
 ---------------------------
 

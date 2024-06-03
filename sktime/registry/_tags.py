@@ -865,6 +865,7 @@ class capability__unequal_length(_BaseTag):
     _tags = {
         "tag_name": "capability:unequal_length",
         "parent_type": [
+            "aligner",
             "classifier",
             "clusterer",
             "early_classifier",
@@ -1649,6 +1650,24 @@ ESTIMATOR_TAG_REGISTER = [
         ["forecaster", "transformer"],
         "bool",
         "whether estimator remembers all data seen as self._X, self._y, etc",
+    ),
+    (
+        "distribution_type",
+        "estimator",
+        "str",
+        "distribution type of data as str",
+    ),
+    (
+        "task",
+        "series-annotator",
+        "str",
+        "subtype of series annotator, e.g., 'anomaly_detection', 'segmentation'",
+    ),
+    (
+        "learning_type",
+        "series-annotator",
+        "str",
+        "type of learning, e.g., 'supervised', 'unsupervised'",
     ),
     (
         "reserved_params",
