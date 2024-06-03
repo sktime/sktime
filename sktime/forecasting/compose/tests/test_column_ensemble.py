@@ -10,10 +10,17 @@ import pytest
 
 from sktime.forecasting.compose import ColumnEnsembleForecaster
 from sktime.forecasting.naive import NaiveForecaster
+from sktime.forecasting.sarimax import SARIMAX
 from sktime.forecasting.trend import PolynomialTrendForecaster
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.tests.test_switch import run_test_for_class
+from sktime.transformations.hierarchical.aggregate import Aggregator
+from sktime.transformations.hierarchical.reconcile import Reconciler
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ColumnEnsembleForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "forecasters",
     [
@@ -36,6 +43,10 @@ def test_column_ensemble_shape(forecasters, fh):
     assert actual.shape == (len(fh), y.shape[1])
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ColumnEnsembleForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "forecasters",
     [
@@ -55,6 +66,10 @@ def test_invalid_forecasters_indices(forecasters):
         forecaster.fit(y, fh=[1, 2])
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ColumnEnsembleForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_column_ensemble_string_cols():
     """Check that ColumnEnsembleForecaster works with string columns."""
     df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
@@ -65,6 +80,10 @@ def test_column_ensemble_string_cols():
     fc.predict()
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ColumnEnsembleForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_column_ensemble_multivariate_and_int():
     """Check that ColumnEnsembleForecaster works with string columns."""
     df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6], "c": [7, 8, 9]})
@@ -76,16 +95,13 @@ def test_column_ensemble_multivariate_and_int():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependencies not available",
+    not run_test_for_class([ColumnEnsembleForecaster, SARIMAX, Aggregator, Reconciler]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_column_ensemble_hierarchical():
     """Tests column ensemble with hierarchical reconciliation, see bug #3784."""
     from sktime.datatypes import get_examples
     from sktime.datatypes._utilities import get_window
-    from sktime.forecasting.sarimax import SARIMAX
-    from sktime.transformations.hierarchical.aggregate import Aggregator
-    from sktime.transformations.hierarchical.reconcile import Reconciler
 
     X = get_examples("pd_multiindex_hier")[0]
     y = get_examples("pd_multiindex_hier")[1]
