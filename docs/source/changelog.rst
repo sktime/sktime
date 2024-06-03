@@ -22,7 +22,7 @@ For our long-term plan, see our :ref:`roadmap`.
 Version 0.30.0 - 2024-06-02
 ---------------------------
 
-Major upgrade to the time series anomaly, changepoints, segmentation API.
+Major upgrade to the time series anomaly, changepoints, segmentation API (:user:`Alex-JG3`).
 Users should review the section in the release notes.
 
 Kindly also note the python 3.8 End-of-life warning below.
