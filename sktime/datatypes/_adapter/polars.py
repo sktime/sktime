@@ -9,14 +9,16 @@ def get_mi_cols(obj):
     return [x for x in obj.columns if isinstance(x, str) and x.startswith("__index__")]
 
 
-def is_monotonically_increasing(obj, scitype="Series"):
+def is_monotonically_increasing(obj):
     """Check is polars frame columns(__index__) is monotonically increasing."""
     index_cols = get_mi_cols(obj)
-    if scitype == "Series":
+    # check for Series scitype
+    if len(index_cols) == 1:
         if obj[index_cols[0]].is_sorted():
             return True
 
-    elif scitype == "Panel" or scitype == "Hierarchical":
+    # check for Panel and Hierarchical scitype
+    else:
         import polars as pl
 
         index_df = obj.with_columns(index_cols)
@@ -124,7 +126,7 @@ def convert_polars_to_pandas(obj):
 
 
 def check_polars_frame(
-    obj, return_metadata=False, var_name="obj", lazy=False, scitype="Series"
+    obj, return_metadata=False, var_name="obj", lazy=False, scitype="Table"
 ):
     """Check polars frame, generic format."""
     import polars as pl
@@ -145,58 +147,53 @@ def check_polars_frame(
     # we now know obj is a polars DataFrame or LazyFrame
     index_cols = get_mi_cols(obj)
 
-    if scitype == "Series":
-        cols_msg = (
-            f"{var_name} must have exactly one index column, "
-            f"found {len(index_cols)}, namely: {index_cols}"
-        )
-        right_no_index_cols = len(index_cols) <= 1
-    elif scitype == "Panel":
-        cols_msg = (
-            f"{var_name} must have exactly two index columns, "
-            f"found {len(index_cols)}, namely: {index_cols}"
-        )
-        right_no_index_cols = len(index_cols) == 2
-    elif scitype == "Hierarchical":
-        cols_msg = (
-            f"{var_name} must have three or more index columns, "
-            f"found {len(index_cols)}, namely: {index_cols}"
-        )
-        right_no_index_cols = len(index_cols) >= 3
-    else:
+    scitypes = {
+        "Series": len(index_cols) == 1,
+        "Panel": len(index_cols) == 2,
+        "Hierarchical": len(index_cols) >= 3,
+    }
+
+    if scitype != "Table" and scitype in scitypes:
+        if not scitypes[scitype]:
+            cols_msg = (
+                f"{var_name} must have correct number of index columns for scitype,"
+                f"Series: 1, Panel: 2, Hierarchical: >= 3,"
+                f"found {len(index_cols)}, namely: {index_cols}"
+            )
+            return ret(False, cols_msg, None, return_metadata)
+
+        # check if index columns are monotonically increasing
+        if not is_monotonically_increasing(obj):
+            msg = (
+                f"The (time) index of {var_name} must be sorted monotonically "
+                f"increasing. Use {var_name}.sort() on columns representing "
+                f"index(__index__) to sort the index, or {var_name}.is_duplicated() "
+                f"to find duplicates."
+            )
+            return ret(False, msg, None, return_metadata)
+
+    elif scitype != "Table":
         return RuntimeError(
-            'scitype arg of check_dask_frame must be one of strings "Series", '
-            f'"Panel", or "Hierarchical", but found {scitype}'
+            'scitype arg of check_polars_frame must be one of strings "Table", '
+            f'"Series", "Panel", or "Hierarchical", but found {scitype}'
         )
-
-    if not right_no_index_cols:
-        return ret(False, cols_msg, None, return_metadata)
-
-    # check if index columns are monotonically increasing
-    if not is_monotonically_increasing(obj, scitype=scitype):
-        msg = (
-            f"The (time) index of {var_name} must be sorted monotonically "
-            f"increasing. Use {var_name}.sort() on columns representing "
-            f"index(__index__) to sort the index, or {var_name}.is_duplicated() "
-            f"to find duplicates."
-        )
-        return ret(False, msg, None, return_metadata)
 
     # columns in polars are unique, no check required
 
     if _req("is_empty", return_metadata):
         metadata["is_empty"] = obj.width < 1
     if _req("is_univariate", return_metadata):
-        metadata["is_univariate"] = obj.width == 1
+        metadata["is_univariate"] = obj.width - len(index_cols) == 1
     if _req("n_instances", return_metadata):
         if hasattr(obj, "height"):
             metadata["n_instances"] = obj.height
         else:
             metadata["n_instances"] = "NA"
     if _req("n_features", return_metadata):
-        metadata["n_features"] = obj.width
+        metadata["n_features"] = obj.width - len(index_cols)
     if _req("feature_names", return_metadata):
-        metadata["feature_names"] = obj.columns
+        feature_columns = [x for x in obj.columns if x not in index_cols]
+        metadata["feature_names"] = feature_columns
 
     # check if there are any nans
     #   compute only if needed
