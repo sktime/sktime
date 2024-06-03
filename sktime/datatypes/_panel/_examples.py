@@ -36,7 +36,7 @@ example_dict_metadata = dict()
 
 X = np.array(
     [[[1, 2, 3], [4, 5, 6]], [[1, 2, 3], [4, 55, 6]], [[1, 2, 3], [42, 5, 6]]],
-    dtype=np.int64,
+    dtype=np.float64,
 )
 
 example_dict[("numpy3D", "Panel", 0)] = X
@@ -47,9 +47,9 @@ example_dict_lossy[("numpyflat", "Panel", 0)] = True
 
 cols = [f"var_{i}" for i in range(2)]
 Xlist = [
-    pd.DataFrame([[1, 4], [2, 5], [3, 6]], columns=cols, dtype=np.float32),
-    pd.DataFrame([[1, 4], [2, 55], [3, 6]], columns=cols, dtype=np.float32),
-    pd.DataFrame([[1, 42], [2, 5], [3, 6]], columns=cols, dtype=np.float32),
+    pd.DataFrame([[1, 4], [2, 5], [3, 6]], columns=cols, dtype=np.float64),
+    pd.DataFrame([[1, 4], [2, 55], [3, 6]], columns=cols, dtype=np.float64),
+    pd.DataFrame([[1, 42], [2, 5], [3, 6]], columns=cols, dtype=np.float64),
 ]
 
 example_dict[("df-list", "Panel", 0)] = Xlist
@@ -112,22 +112,22 @@ example_dict_metadata[("Panel", 0)] = {
 
 X = np.array(
     [[[4, 5, 6]], [[4, 55, 6]], [[42, 5, 6]]],
-    dtype=np.int64,
+    dtype=np.float64,
 )
 
 example_dict[("numpy3D", "Panel", 1)] = X
 example_dict_lossy[("numpy3D", "Panel", 1)] = True
 
-X = np.array([[4, 5, 6], [4, 55, 6], [42, 5, 6]], dtype=np.int64)
+X = np.array([[4, 5, 6], [4, 55, 6], [42, 5, 6]], dtype=np.float64)
 
 example_dict[("numpyflat", "Panel", 1)] = X
 example_dict_lossy[("numpyflat", "Panel", 1)] = True
 
 cols = [f"var_{i}" for i in range(1)]
 Xlist = [
-    pd.DataFrame([[4], [5], [6]], columns=cols, dtype=np.float32),
-    pd.DataFrame([[4], [55], [6]], columns=cols, dtype=np.float32),
-    pd.DataFrame([[42], [5], [6]], columns=cols, dtype=np.float32),
+    pd.DataFrame([[4], [5], [6]], columns=cols, dtype=np.float64),
+    pd.DataFrame([[4], [55], [6]], columns=cols, dtype=np.float64),
+    pd.DataFrame([[42], [5], [6]], columns=cols, dtype=np.float64),
 ]
 
 example_dict[("df-list", "Panel", 1)] = Xlist
@@ -149,7 +149,7 @@ example_dict_lossy[("pd-multiindex", "Panel", 1)] = False
 cols = [f"var_{i}" for i in range(1)]
 X = pd.DataFrame(columns=cols, index=pd.RangeIndex(3))
 X["var_0"] = pd.Series(
-    [pd.Series([4, 5.0, 6]), pd.Series([4.0, 55, 6]), pd.Series([42, 5, 6.0])]
+    [pd.Series([4.0, 5, 6]), pd.Series([4.0, 55, 6]), pd.Series([42.0, 5, 6])]
 )
 
 example_dict[("nested_univ", "Panel", 1)] = X
@@ -187,20 +187,20 @@ example_dict_metadata[("Panel", 1)] = {
 
 X = np.array(
     [[[4, 5, 6]]],
-    dtype=np.int64,
+    dtype=np.float64,
 )
 
 example_dict[("numpy3D", "Panel", 2)] = X
 example_dict_lossy[("numpy3D", "Panel", 2)] = True
 
-X = np.array([[4, 5, 6]], dtype=np.int64)
+X = np.array([[4, 5, 6]], dtype=np.float64)
 
 example_dict[("numpyflat", "Panel", 2)] = X
 example_dict_lossy[("numpyflat", "Panel", 2)] = True
 
 cols = [f"var_{i}" for i in range(1)]
 Xlist = [
-    pd.DataFrame([[4], [5], [6]], columns=cols, dtype=np.float32),
+    pd.DataFrame([[4], [5], [6]], columns=cols, dtype=np.float64),
 ]
 
 example_dict[("df-list", "Panel", 2)] = Xlist
