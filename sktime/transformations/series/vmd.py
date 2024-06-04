@@ -3,8 +3,8 @@
 import numpy as np
 import pandas as pd
 
-from sktime.transformations.base import BaseTransformer
 from sktime.libs.vmdpy import VMD
+from sktime.transformations.base import BaseTransformer
 
 __author__ = ["DaneLyttinen", "vrcarva"]
 
