@@ -26,7 +26,6 @@ __all__ = [
 ]
 __author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst"]
 
-from abc import ABC, abstractmethod
 from typing import Tuple
 
 import numpy as np
@@ -35,7 +34,7 @@ from sktime.base import BaseEstimator
 from sktime.classification import BaseClassifier
 
 
-class BaseEarlyClassifier(BaseEstimator, ABC):
+class BaseEarlyClassifier(BaseEstimator):
     """Abstract base class for early time series classifiers.
 
     The base classifier specifies the methods and method signatures that all
@@ -373,7 +372,6 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         inv_dec = np.invert(decisions)
         return X[inv_dec], indices[inv_dec], indices[decisions]
 
-    @abstractmethod
     def _fit(self, X, y):
         """Fit time series classifier to training data.
 
@@ -401,9 +399,8 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
-        ...
+        raise RuntimeError("abstract method")
 
-    @abstractmethod
     def _predict(self, X) -> Tuple[np.ndarray, np.ndarray]:
         """Predicts labels for sequences in X.
 
@@ -433,9 +430,8 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
             safe to use or not.
             i-th entry is the classifier decision that i-th instance safe to use
         """
-        ...
+        raise RuntimeError("abstract method")
 
-    @abstractmethod
     def _update_predict(self, X) -> Tuple[np.ndarray, np.ndarray]:
         """Update label prediction for sequences in X at a larger series length.
 
@@ -466,7 +462,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
             safe to use or not.
             i-th entry is the classifier decision that i-th instance safe to use
         """
-        ...
+        raise RuntimeError("abstract method")
 
     def _predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray]:
         """Predicts labels probabilities for sequences in X.
@@ -555,7 +551,6 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
 
         return dists, decisions
 
-    @abstractmethod
     def _score(self, X, y) -> Tuple[float, float, float]:
         """Scores predicted labels against ground truth labels on X.
 
@@ -577,7 +572,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         -------
         Tuple of floats, harmonic mean, accuracy and earliness scores of predict(X) vs y
         """
-        ...
+        raise RuntimeError("abstract method")
 
     def _check_convert_X_for_predict(self, X):
         """Input checks, capability checks, repeated in all predict/score methods.

@@ -2,17 +2,14 @@
 
 __author__ = ["Withington", "TonyBagnall"]
 
-from abc import ABC, abstractmethod
-
 from sktime.base import BaseObject
 
 
-class BaseDeepNetwork(BaseObject, ABC):
+class BaseDeepNetwork(BaseObject):
     """Abstract base class for deep learning networks."""
 
     _tags = {"object_type": "network"}
 
-    @abstractmethod
     def build_network(self, input_shape, **kwargs):
         """Construct a network and return its input and output layers.
 
@@ -26,4 +23,4 @@ class BaseDeepNetwork(BaseObject, ABC):
         input_layer : a keras layer
         output_layer : a keras layer
         """
-        ...
+        raise RuntimeError("abstract method")

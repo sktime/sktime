@@ -1,6 +1,5 @@
 __author__ = ["chrisholder", "TonyBagnall"]
 
-from abc import ABC, abstractmethod
 from typing import Callable, Tuple, Union
 
 import numpy as np
@@ -154,7 +153,7 @@ def _kmeans_plus_plus(
     return centers
 
 
-class TimeSeriesLloyds(BaseClusterer, ABC):
+class TimeSeriesLloyds(BaseClusterer):
     """Abstract class that implements time series Lloyds algorithm.
 
     Parameters
@@ -470,7 +469,6 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
     def _score(self, X, y=None):
         return -self.inertia_
 
-    @abstractmethod
     def _compute_new_cluster_centers(
         self, X: np.ndarray, assignment_indexes: np.ndarray
     ) -> np.ndarray:
@@ -488,4 +486,4 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
         np.ndarray (3d of shape (n_clusters, n_dimensions, series_length)
             New cluster center values.
         """
-        ...
+        raise RuntimeError("abstract method")
