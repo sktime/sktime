@@ -96,8 +96,8 @@ class SubLOF(BaseSeriesAnnotator):
     _tags = {
         "task": "anomaly_detection",
         "learning_type": "unsupervised",
-        "univariate-only": True,
-        "fit_is_empty": True,
+        "univariate-only": False,
+        "fit_is_empty": False,
     }
 
     def __init__(
