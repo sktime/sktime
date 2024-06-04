@@ -20,7 +20,7 @@ from sktime.tests.test_switch import run_test_for_class
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(CutoffSplitter),
+    not run_test_for_class([CutoffSplitter, ForecastingHorizon]),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("y", TEST_YS)
