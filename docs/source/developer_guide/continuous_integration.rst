@@ -111,10 +111,6 @@ Running docstring examples via ``doctest``
 ``sktime``'s Python modules are equipped with docstrings that include examples
 demonstrating the usage of specific classes within each module.
 
-``sktime`` does not run ``doctest`` on the CI, so developers should ensure that
-test cases are covered by ``pytest``, e.g., by executing docstring examples
-verbatim as a ``pytest`` test.
-
 Docstring examples can be executed in bulk using ``doctest``,
 to ensure that this is indeed the case.
 
