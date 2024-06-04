@@ -13,6 +13,7 @@ from sktime.utils.dependencies import _check_soft_dependencies
 def test_readme_example():
     """Tests the example from the README.md"""
     import numpy as np
+
     from sktime.libs.vmdpy import VMD
 
     # Time Domain 0 to T
