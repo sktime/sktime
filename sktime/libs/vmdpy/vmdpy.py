@@ -1,4 +1,5 @@
 """Python implementation of the Variational Mode Decomposition method."""
+
 import numpy as np
 
 __author__ = ["vrcarva"]
