@@ -9,6 +9,8 @@ the original [VMD MATLAB toolbox](https://www.mathworks.com/matlabcentral/fileex
 
 ## Installation 
 
+`vmdpy` is distributed with `sktime`.
+
 Install ``sktime`` via ``pip`` or ``conda``, i.e.,
 
 ```
