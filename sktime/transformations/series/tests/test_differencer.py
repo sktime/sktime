@@ -10,6 +10,7 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import load_airline
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.difference import Differencer
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 
@@ -29,6 +30,10 @@ y_simple_expected_diff = {
 }
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(Differencer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("na_handling", Differencer.VALID_NA_HANDLING_STR)
 def test_differencer_produces_expected_results(na_handling):
     """Test that Differencer produces expected results on a simple DataFrame."""
@@ -39,6 +44,10 @@ def test_differencer_produces_expected_results(na_handling):
     _assert_array_almost_equal(y_transformed, y_expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(Differencer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("y", test_cases)
 @pytest.mark.parametrize("lags", lags_to_test)
 @pytest.mark.parametrize("index_type", ["int", "datetime"])
@@ -55,6 +64,10 @@ def test_differencer_same_series(y, lags, index_type):
     _assert_array_almost_equal(y.loc[y_reconstructed.index], y_reconstructed)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(Differencer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("na_handling", ["keep_na", "fill_zero"])
 @pytest.mark.parametrize("y", test_cases)
 @pytest.mark.parametrize("lags", lags_to_test)
@@ -77,6 +90,10 @@ def test_differencer_remove_missing_false(y, lags, na_handling, index_type):
     _assert_array_almost_equal(y, y_reconstructed)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(Differencer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("y", test_cases)
 @pytest.mark.parametrize("lags", lags_to_test)
 @pytest.mark.parametrize("index_type", ["int", "datetime"])
@@ -106,6 +123,10 @@ def test_differencer_prediction(y, lags, index_type):
     _assert_array_almost_equal(y_true, y_pred_inv)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(Differencer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_differencer_cutoff():
     """Tests a special case that triggers freq inference.
 
@@ -158,6 +179,10 @@ def test_differencer_cutoff():
     gscv.fit(train_model, X=X_train)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(Differencer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("lags", lags_to_test)
 @pytest.mark.parametrize("index_type", ["int", "datetime"])
 def test_inverse_train_data_fill_zero(lags, index_type):
@@ -169,6 +194,10 @@ def test_inverse_train_data_fill_zero(lags, index_type):
     _assert_array_almost_equal(result, y)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(Differencer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_differencer_inverse_does_not_memorize():
     """Tests that differencer inverse always computes inverse via cumsum.
 

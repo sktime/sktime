@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.panel.dictionary_based._paa import PAAlegacy as PAA
 from sktime.utils._testing.panel import _make_nested_from_array
 
@@ -12,6 +13,10 @@ from sktime.utils._testing.panel import _make_nested_from_array
 # input types - string, float, negative int, negative float, empty dict
 # and an int that is larger than the time series length.
 # correct input is meant to be a positive integer of 1 or more.
+@pytest.mark.skipif(
+    not run_test_for_class(PAA),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("bad_num_intervals", ["str", 1.2, -1.2, -1, {}, 11, 0])
 def test_bad_input_args(bad_num_intervals):
     """Test that exception is raised for bad num intervals."""
@@ -25,6 +30,10 @@ def test_bad_input_args(bad_num_intervals):
             PAA(num_intervals=bad_num_intervals).fit(X).transform(X)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(PAA),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_output_of_transformer():
     """Test that the transformer has changed the data correctly."""
     X = _make_nested_from_array(
@@ -38,6 +47,10 @@ def test_output_of_transformer():
     assert check_if_dataframes_are_equal(res, orig)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(PAA),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_output_dimensions():
     """Test output dimensions."""
     # test with univariate
@@ -71,6 +84,10 @@ def test_output_dimensions():
     assert num_cols == 5
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(PAA),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_paa_performs_correctly_along_each_dim():
     """Test that PAA produces the same result along each dimension."""
     X = _make_nested_from_array(

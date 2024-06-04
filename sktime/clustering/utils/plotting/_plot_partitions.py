@@ -9,7 +9,7 @@ import pandas as pd
 from sktime.clustering.base import TimeSeriesInstances
 from sktime.clustering.partitioning import TimeSeriesLloyds
 from sktime.datatypes import convert_to
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 def _plot(cluster_values, center, axes):

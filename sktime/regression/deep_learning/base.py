@@ -8,15 +8,14 @@ __author__ = ["AurumnPegasus", "achieveordie"]
 __all__ = ["BaseDeepRegressor"]
 
 import os
-from abc import ABC, abstractmethod
 
 import numpy as np
 
 from sktime.regression.base import BaseRegressor
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
-class BaseDeepRegressor(BaseRegressor, ABC):
+class BaseDeepRegressor(BaseRegressor):
     """Abstract base class for deep learning time series regression.
 
     The base classifier provides a deep learning default method for
@@ -39,7 +38,6 @@ class BaseDeepRegressor(BaseRegressor, ABC):
         "python_dependencies": "tensorflow",
     }
 
-    @abstractmethod
     def build_model(self, input_shape, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
 
@@ -52,7 +50,7 @@ class BaseDeepRegressor(BaseRegressor, ABC):
         -------
         A compiled Keras Model
         """
-        ...
+        raise RuntimeError("abstract method")
 
     def _predict(self, X, **kwargs):
         """Find regression estimate for all cases in X.

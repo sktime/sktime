@@ -1,6 +1,5 @@
 __author__ = ["chrisholder", "TonyBagnall"]
 
-from abc import ABC, abstractmethod
 from typing import Callable, NamedTuple
 
 import numpy as np
@@ -12,7 +11,7 @@ from sktime.distances.base._types import (
 )
 
 
-class NumbaDistance(ABC):
+class NumbaDistance:
     """Abstract class to define a numba compatible distance metric."""
 
     def distance(self, x: np.ndarray, y: np.ndarray, **kwargs: dict) -> float:
@@ -190,7 +189,6 @@ class NumbaDistance(ABC):
                 f"again."
             )
 
-    @abstractmethod
     def _distance_factory(
         self, x: np.ndarray, y: np.ndarray, **kwargs: dict
     ) -> DistanceCallable:
@@ -216,7 +214,7 @@ class NumbaDistance(ABC):
             a float is then returned that represents the distance between x and y.
             This callable will be no_python compiled.
         """
-        ...
+        raise RuntimeError("abstract method")
 
     def _distance_alignment_path_factory(
         self,

@@ -10,13 +10,14 @@ from sktime.distances._numba_utils import to_numba_timeseries
 from sktime.distances.base import MetricInfo
 from sktime.distances.tests._expected_results import _expected_distance_results_params
 from sktime.distances.tests._utils import create_test_distance_numpy
-from sktime.tests.test_switch import run_test_for_class
+from sktime.tests.test_switch import run_test_for_class, run_test_module_changed
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.numba.njit import njit
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("numba", severity="none"),
+    not _check_soft_dependencies("numba", severity="none")
+    or not run_test_module_changed("sktime.distances"),
     reason="skip test if required soft dependency not available",
 )
 def _test_distance_params(
@@ -80,7 +81,8 @@ DIST_PARAMS = {
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("numba", severity="none"),
+    not _check_soft_dependencies("numba", severity="none")
+    or not run_test_module_changed("sktime.distances"),  # noqa: E501
     reason="skip test if required soft dependency not available",
 )
 @pytest.mark.parametrize("dist", _METRIC_INFOS)

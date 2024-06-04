@@ -19,6 +19,145 @@ For upcoming changes and next releases, see our `milestones <https://github.com/
 For our long-term plan, see our :ref:`roadmap`.
 
 
+Version 0.30.0 - 2024-06-03
+---------------------------
+
+Major upgrade to the time series anomaly, changepoints, segmentation API (:user:`Alex-JG3`).
+Users should review the section in the release notes.
+
+Kindly also note the python 3.8 End-of-life warning below.
+
+Also includes scheduled deprecations and change actions.
+
+For last major feature update, see 0.29.1.
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``joblib`` is now an explicit core dependency, with bounds ``<1.5,>=1.2.0``.
+  Previously, ``joblib`` was an indirect core dependency, via ``scikit-learn``.
+  Due to direct imports, this was changed to an explicit dependency.
+
+* ``scikit-learn`` (core dependency) bounds have been updated to ``>=0.24,<1.6.0``
+
+* ``scikit-base`` (core dependency) bounds have been updated to ``>=0.6.1,<0.9.0``
+
+* ``skpro`` (soft dependency) bounds have been updated to ``>=2,<2.4.0``
+
+* ``kotsu`` is not longer a soft dependency required by the forecasting benchmarking
+  framework. The ``kotsu`` package is no longer maintained,
+  and its necessary imports have beend moved
+  to ``sktime`` as private utilities until refactor. See :pr:`6514`.
+
+* ``pykalman`` (transformations soft dependency) has been forked into ``sktime``,
+  as ``sktime.libs.pykalman``, as the original package is no longer maintained,
+  see ``sktime`` issue 5414 or ``pykalman`` issue 109.
+
+  * The package fork will be maintained in ``sktime``.
+  * Direct users of ``pykalman`` can replace imports ``from pykalman import x``
+    with equivalent imports ``from sktime.libs.pykalman import x``.
+  * Indirect users via the transformer ``KalmanFilterTransformerPK`` will not be
+    impacted as APIs do not change, except that they no longer require
+    the original ``pykalman`` package in their python environment.
+
+* ``dask`` (data container and parallelization back-end) bounds have been updated to ``<2024.5.3``
+
+* ``holidays`` (transformations soft dependency) bounds have been updated to ``>=0.29,<0.51``
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+The time series annotation, anomalies, changepoints, segmentation API has been
+fully reworked to be in line with ``scikit-base`` patterns, ``sktime`` tags,
+and to provide a more consistent and flexible interface.
+
+* the API provides ``predict`` methods for annotation labels, e.g., segments,
+  outlier points, and a ``transform`` method for indicator series, for instance
+  1/0 indicator whether an anomaly is present at the time stamp.
+* the ``fmt`` argument used in some estimators is now deprecated,
+  in favour of using ``predict`` or ``transform``.
+* The type of annotation, e.g., change points or segmentation, is
+  encoded by the new tag ``task`` used in time series annotators,
+  with values ``anomaly_detection``, ``segmentation``, ``changepoint_detection``.
+* Low-level methods allow polymorphic use of annotators, e.g., a changepoint detector
+  to be used for segmentation, via ``predict_points`` or ``predict_segments``.
+  The ``predict`` method defaults to the type of annotation defined by ``task``.
+
+A full tutorial with examples will be created over the next release cycles,
+and further enhancements are planned.
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Python 3.8 End-of-life
+^^^^^^^^^^^^^^^^^^^^^^
+
+``sktime`` now requires Python version ``>=3.9``.
+No errors will be raised on Python 3.8, but test coverage and support for
+Python 3.8 has been dropped.
+
+Kindly note for context: python 3.8 will reach end of life
+in October 2024, and multiple ``sktime`` core dependencies,
+including ``scikit-learn``, have already dropped support for 3.8.
+
+Forecasting
+^^^^^^^^^^^
+
+``cINNForecaster`` has been renamed to ``CINNForecaster``.
+The estimator is no longer available under its old name,
+after the deprecation period.
+Users should replace any imports of ``cINNForecaster``
+with imports of ``CINNForecaster``.
+
+Enhancements
+~~~~~~~~~~~~
+
+* [ENH] Rework of base series annotator API (:pr:`6265`) :user:`Alex-JG3`
+* [ENH] upgrade ``is_module_changed`` test utility for paths (:pr:`6518`) :user:`fkiraly`
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] updated ``all_estimators`` docstring for ``re.Pattern`` support (:pr:`6478`) :user:`fkiraly`
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] [Dependabot](deps): Update skpro requirement from ``<2.3.0,>=2`` to ``>=2,<2.4.0`` (:pr:`6443`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update scikit-learn requirement from ``<1.5.0,>=0.24`` to ``>=0.24,<1.6.0`` (:pr:`6462`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update scikit-base requirement from ``<0.8.0,>=0.6.1`` to ``>=0.6.1,<0.9.0`` (:pr:`6488`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``dask`` requirement from ``<2024.5.2`` to ``<2024.5.3`` (:pr:`6526`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``holidays`` requirement from ``<0.50,>=0.29`` to ``>=0.29,<0.51`` (:pr:`6525`) :user:`dependabot[bot]`
+* [MNT] drop test coverage on python 3.8 in CI (:pr:`6329`) :user:`yarnabrina`
+* [MNT] final change cycle (0.30.0) for renaming ``cINNForecaster`` to ``CINNForecaster`` (:pr:`6367`) :user:`geetu040`
+* [MNT] added ``joblib`` as core dependency (:pr:`6384`) :user:`yarnabrina`
+* [MNT] 0.30.0 deprecations and change actions (:pr:`6468`) :user:`fkiraly`
+* [MNT] modified CRLF line endings to LF line endings (:pr:`6512`) :user:`yarnabrina`
+* [MNT] Move dependency checkers to separate module in ``utils`` (:pr:`6354`) :user:`fkiraly`
+* [MNT] resolution to ``pykalman`` issue - ``sktime`` local pykalman fork (:pr:`6188`) :user:`fkiraly`
+* [MNT] add systematic differential test switch to low-level tests (:pr:`6511`) :user:`fkiraly`
+* [MNT] isolate ``utils`` module init and ``sktime`` init from external imports (:pr:`6516`) :user:`fkiraly`
+* [MNT] preparing refactor of benchmark framework: folding minimal ``kotsu`` library into ``sktime`` (:pr:`6514`) :user:`fkiraly`
+* [MNT] run tests in ``distances`` module only if it has changed (:pr:`6517`) :user:`fkiraly`
+* [MNT] refactor ``pykalman`` tests to ``pytest`` and conditional execution (:pr:`6519`) :user:`fkiraly`
+* [MNT] conditional execution of tests in ``datatypes`` module (:pr:`6520`) :user:`fkiraly`
+
+Fixes
+~~~~~
+
+* [BUG] Remove dict unpacking on list in tuning skopt (:pr:`6521`) :user:`gareth-brown-86`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`Alex-JG3`,
+:user:`dependabot[bot]`,
+:user:`fkiraly`,
+:user:`gareth-brown-86`,
+:user:`geetu040`,
+:user:`yarnabrina`
+
+
 Version 0.29.1 - 2024-05-30
 ---------------------------
 

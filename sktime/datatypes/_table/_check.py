@@ -42,7 +42,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.datatypes._common import _req, _ret
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 check_dict = dict()
 
