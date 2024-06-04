@@ -99,6 +99,37 @@ class HFTransformersForecaster(BaseForecaster):
     >>> forecaster.fit(y) # doctest: +SKIP
     >>> fh = [1, 2, 3]
     >>> y_pred = forecaster.predict(fh) # doctest: +SKIP
+
+    >>> from sktime.forecasting.hf_transformers_forecaster import (
+    ...     HFTransformersForecaster,
+    ... )
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> forecaster = HFTransformersForecaster(
+    ...    model_path="huggingface/autoformer-tourism-monthly",
+    ...    fit_strategy="lora",
+    ...    training_args={
+    ...        "num_train_epochs": 20,
+    ...        "output_dir": "test_output",
+    ...        "per_device_train_batch_size": 32,
+    ...    },
+    ...    config={
+    ...         "lags_sequence": [1, 2, 3],
+    ...         "context_length": 2,
+    ...         "prediction_length": 4,
+    ...         "use_cpu": True,
+    ...         "label_length": 2,
+    ...    },
+    ...    peft_config_dict={
+    ...         "r": 8,
+    ...         "lora_alpha": 32,
+    ...         "target_modules": ["q_proj", "v_proj"],
+    ...         "lora_dropout": 0.01,
+    ...    },
+    ... ) # doctest: +SKIP
+    >>> forecaster.fit(y) # doctest: +SKIP
+    >>> fh = [1, 2, 3]
+    >>> y_pred = forecaster.predict(fh) # doctest: +SKIP
     """
 
     _tags = {
