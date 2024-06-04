@@ -705,7 +705,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         """Runs doctests for estimator class."""
         import doctest
 
-        doctest.run_docstring_examples(estimator_class, raise_on_error=True)
+        doctest.testmod(estimator_class, raise_on_error=True)
 
     def test_create_test_instance(self, estimator_class):
         """Check create_test_instance logic and basic constructor functionality.
