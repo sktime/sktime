@@ -1,11 +1,11 @@
 """Tests for using sklearn FeatureUnion with sktime."""
 
 import numpy as np
+import pytest
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import FeatureUnion, Pipeline
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.tree import DecisionTreeClassifier
-import pytest
 
 from sktime.datasets import load_gunpoint
 from sktime.tests.test_switch import run_test_module_changed

@@ -5,8 +5,8 @@
 __author__ = ["aiwalter"]
 __all__ = []
 
-from pandas.testing import assert_series_equal
 import pytest
+from pandas.testing import assert_series_equal
 
 from sktime.split import temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class

@@ -20,7 +20,6 @@ from sktime.transformations.compose import MultiplexTransformer
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.utils.validation.forecasting import check_scoring
 
-
 RELEVANT_MODULES = ["sktime.transformations", "sktime.forecasting", "sktime.split"]
 
 
