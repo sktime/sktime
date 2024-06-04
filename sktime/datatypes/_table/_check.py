@@ -40,6 +40,7 @@ __all__ = ["check_dict"]
 
 import numpy as np
 import pandas as pd
+from gluonts.dataset.common import ListDataset
 
 from sktime.datatypes._common import _req, _ret
 from sktime.utils.dependencies import _check_soft_dependencies
@@ -234,6 +235,82 @@ def check_list_of_dict_table(obj, return_metadata=False, var_name="obj"):
 
 check_dict[("list_of_dict", "Table")] = check_list_of_dict_table
 
+
+def check_gluon_ListDataset_table(obj, return_metadata=False, var_name="obj"):
+
+    # Defining our metadata
+    metadata = dict()
+
+    # Check if the object is of the correct type
+    if not isinstance(obj, ListDataset):
+
+        msg = f"{var_name} must be a GluonTS ListDataset, but found type {type(obj)}"
+        return _ret(False, msg, None, return_metadata)
+
+    # Check for emptiness
+    if _req("is_empty", metadata):
+        metadata["is_empty"] = len(obj) == 0
+
+    # Check for univariance/multivariance
+    if _req("is_univariate", metadata):
+
+        metadata["is_univariate"] = True
+
+        for series in obj:
+
+            # Found a multivariate time series in the ListDataset!
+            if len(series["target"] > 1):
+                metadata["is_univariate"] = False
+                break
+
+    # Check for NaN values
+    if _req("has_nans", metadata):
+
+        metadata["hash_nans"] = False
+
+        for series in obj:
+            target = series["target"]
+
+            # Found an NaN value
+            if np.isnan(target).any():
+
+                metadata["hash_nans"] = True
+                break
+
+    # Count total time series in the ListDataset
+    if _req("n_instances", metadata):
+        metadata["n_instances"] = len(obj)
+
+    # Count total features in each time series
+    if _req("n_features", metadata):
+        max_features = 0
+
+        for series in obj:
+            max_features = max(max_features, len(series["target"]))
+
+        metadata["n_features"] = max_features
+
+    # Fetch feature names
+    if _req("feature_names", metadata):
+
+        feature_names = []
+
+        for series in obj:
+
+            # This time series has associated features!
+            if series["feat_static_cat"] is not None:
+                feature_names.append(series["feat_static_cat"])
+
+            # Let None denote no given feature names
+            else:
+                feature_names.append(None)
+
+        metadata["feature_names"] = feature_names
+
+    return _ret(True, None, metadata, return_metadata)
+
+
+check_dict[("gluonts_ListDataset", "Table")] = check_gluon_ListDataset_table
 
 if _check_soft_dependencies(["polars", "pyarrow"], severity="none"):
     from sktime.datatypes._adapter.polars import check_polars_frame
