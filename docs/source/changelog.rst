@@ -22,9 +22,15 @@ For our long-term plan, see our :ref:`roadmap`.
 Version 0.30.1 - 2024-06-04
 ---------------------------
 
-Minimal maintenance update with additions to onboard packages.
+Minimal maintenance update with actions consolidating onboard packages.
 
 For last major feature update, see 0.29.1.
+
+Contents
+~~~~~~~~
+
+* [MNT] reorganization of onboard libs - ``pykalman``, ``vmdpy`` (:pr:`6535`) :user:`fkiraly`
+* [MNT] differential testing for ``split`` module (:pr:`6532`) :user:`fkiraly`
 
 
 Version 0.30.0 - 2024-06-03
