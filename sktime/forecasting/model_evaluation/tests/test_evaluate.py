@@ -49,8 +49,8 @@ from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.series import _make_series
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.parallel import _get_parallel_test_fixtures
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 METRICS = [MeanAbsolutePercentageError(symmetric=True), MeanAbsoluteScaledError()]
 PROBA_METRICS = [CRPS(), EmpiricalCoverage(), LogLoss(), PinballLoss()]
@@ -308,6 +308,10 @@ ARIMA_MODELS = [ARIMA, AutoARIMA]
 # ARIMA_MODELS = [ARIMA, AutoARIMA, SARIMAX]
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([evaluate]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("cls", ARIMA_MODELS)
 def test_evaluate_bigger_X(cls):
     """Check that evaluating ARIMA models with exogeneous X works.

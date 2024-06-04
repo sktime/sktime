@@ -117,7 +117,7 @@ class TimeBinAggregate(BaseTransformer):
         """
         bins = self.bins
         idx_cut = pd.cut(X.index, bins=self._bins, include_lowest=True)
-        Xt = X.groupby(idx_cut).apply(self._aggfunc)
+        Xt = X.groupby(idx_cut, observed=False).apply(self._aggfunc)
 
         if self.return_index == "range":
             Xt = Xt.reset_index(drop=True)

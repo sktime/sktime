@@ -49,7 +49,8 @@ def test_clasp_dense():
     clasp = ClaSPSegmentation(period_size, n_cps=1, fmt="dense")
     clasp.fit(ts)
     segmentation = clasp.predict(ts)
-    scores = clasp.predict_scores(ts)
 
-    assert len(segmentation) == 2 and segmentation[0].right == 893
-    assert np.argmax(scores) == 893
+    profile = clasp.predict_scores(ts)
+
+    assert len(segmentation) == 2 and segmentation.index[0].right == 893
+    assert np.argmax(profile) == 893

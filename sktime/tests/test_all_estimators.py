@@ -17,6 +17,7 @@ import joblib
 import numpy as np
 import pandas as pd
 import pytest
+from _pytest.outcomes import Skipped
 
 from sktime.base import BaseEstimator, BaseObject, load
 from sktime.classification.deep_learning.base import BaseDeepClassifier
@@ -51,9 +52,9 @@ from sktime.utils._testing.estimator_checks import (
 )
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
 from sktime.utils.deep_equals import deep_equals
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.random_state import set_random_state
 from sktime.utils.sampling import random_partition
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 # whether to subsample estimators per os/version partition matrix design
 # default is False, can be set to True by pytest --matrixdesign True flag
@@ -599,6 +600,8 @@ class QuickTester:
                     try:
                         test_fun(**deepcopy(args))
                         results[key] = "PASSED"
+                    except Skipped as err:
+                        results[key] = f"SKIPPED: {err.msg}"
                     except Exception as err:
                         results[key] = err
                 else:

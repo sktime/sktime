@@ -16,6 +16,7 @@ from sktime.datatypes._utilities import (
     get_time_index,
     get_window,
 )
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.hierarchical import _make_hierarchical
 
 SCITYPE_MTYPE_PAIRS = [
@@ -30,6 +31,10 @@ SCITYPE_MTYPE_PAIRS = [
 ]
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
 @pytest.mark.parametrize("scitype,mtype", SCITYPE_MTYPE_PAIRS)
 def test_get_time_index(scitype, mtype):
     """Tests that get_time_index returns the expected output.
@@ -83,6 +88,10 @@ def test_get_time_index(scitype, mtype):
             assert (idx == exp_idx).all()
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
 @pytest.mark.parametrize("convert_input", [True, False])
 @pytest.mark.parametrize("reverse_order", [True, False])
 @pytest.mark.parametrize("return_index", [True, False])
@@ -163,6 +172,10 @@ def test_get_cutoff(scitype, mtype, return_index, reverse_order, convert_input):
                 assert cutoff_val == time_idx.max()
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
 @pytest.mark.parametrize("reverse_order", [True, False])
 def test_get_cutoff_from_index(reverse_order):
     """Tests that _get_cutoff_from_index has correct output.
@@ -216,6 +229,10 @@ def test_get_cutoff_from_index(reverse_order):
         assert idx == 3
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
 @pytest.mark.parametrize("bad_inputs", ["foo", 12345, [[[]]]])
 def test_get_cutoff_wrong_input(bad_inputs):
     """Tests that get_cutoff raises error on bad input when input checks are enabled.
@@ -232,6 +249,10 @@ def test_get_cutoff_wrong_input(bad_inputs):
         get_cutoff(bad_inputs, check_input=True)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
 def test_get_cutoff_inferred_freq():
     """Tests that get_cutoff infers the freq in a case where it is not directly set.
 
@@ -262,6 +283,10 @@ def test_get_cutoff_inferred_freq():
     assert cutoff.freq == "D"
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
 def test_get_cutoff_inferred_freq_small_series():
     """Tests that get_cutoff does not fail on series smaller than three elements.
 
@@ -284,6 +309,10 @@ def test_get_cutoff_inferred_freq_small_series():
     assert cutoff.freq is None
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
 @pytest.mark.parametrize("window_length, lag", [(2, 0), (None, 0), (4, 1)])
 @pytest.mark.parametrize("scitype,mtype", SCITYPE_MTYPE_PAIRS)
 def test_get_window_output_type(scitype, mtype, window_length, lag):
@@ -316,6 +345,10 @@ def test_get_window_output_type(scitype, mtype, window_length, lag):
     assert valid, msg
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
 def test_get_window_expected_result():
     """Tests that get_window produces return of the right length.
 
@@ -361,6 +394,10 @@ def test_get_window_expected_result():
     assert get_window(X_np3d, None, None).shape == (3, 2, 3)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
 @pytest.mark.parametrize("scitype,mtype", SCITYPE_MTYPE_PAIRS)
 def test_get_slice_output_type(scitype, mtype):
     """Tests that get_slice runs for all mtypes, and returns output of same mtype.
@@ -390,6 +427,10 @@ def test_get_slice_output_type(scitype, mtype):
     assert valid, msg
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
 def test_get_slice_expected_result():
     """Tests that get_slice produces return of the right length.
 
@@ -407,10 +448,14 @@ def test_get_slice_expected_result():
     assert get_slice(X_np, start=1, end=3).shape == (2, 2, 3)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
 def test_retain_series_freq_on_update():
     """Tests that the frequency of a series is retained after updating it"""
     from sktime.datasets import load_airline
-    from sktime.forecasting.model_selection import temporal_train_test_split
+    from sktime.split import temporal_train_test_split
 
     y = load_airline()
 
