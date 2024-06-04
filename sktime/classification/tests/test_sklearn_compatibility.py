@@ -36,8 +36,8 @@ from sklearn.model_selection import (
 from sklearn.pipeline import Pipeline
 
 from sktime.classification.interval_based import CanonicalIntervalForest
-from sktime.transformations.panel.pca import PCATransformer
 from sktime.tests.test_switch import run_test_module_changed
+from sktime.transformations.panel.pca import PCATransformer
 from sktime.utils._testing.panel import _make_panel_X, make_classification_problem
 from sktime.utils.dependencies import _check_soft_dependencies
 

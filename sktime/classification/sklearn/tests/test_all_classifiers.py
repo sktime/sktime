@@ -2,12 +2,11 @@
 
 __author__ = ["MatthewMiddlehurst"]
 
-from sklearn.utils.estimator_checks import parametrize_with_checks
 import pytest
+from sklearn.utils.estimator_checks import parametrize_with_checks
 
 from sktime.classification.sklearn import ContinuousIntervalTree, RotationForest
 from sktime.tests.test_switch import run_test_for_class
-
 
 ALL_SKLEARN_CLASSIFIERS = [RotationForest, ContinuousIntervalTree]
 
