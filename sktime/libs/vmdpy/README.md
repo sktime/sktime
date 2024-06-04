@@ -39,7 +39,8 @@ Volume 62,
 ISSN 1746-8094,
 https://doi.org/10.1016/j.bspc.2020.102073.  
 
-If you developed a new funcionality or fixed anything in the code, just provide me the corresponding files and which credit should I include in this readme file. 
+For contributing new functionality or fixing anything in the package,
+kindly make a PR to the ``sktime`` repository (``libs.vmdpy`` module).
 
 For suggestions, questions, comments:
 
