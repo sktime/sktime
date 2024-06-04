@@ -6,14 +6,14 @@ import pandas as pd
 from sktime.transformations.base import BaseTransformer
 from sktime.libs.vmdpy import VMD
 
-__author__ = ["DaneLyttinen", "vcarvo"]
+__author__ = ["DaneLyttinen", "vrcarva"]
 
 
 class VmdTransformer(BaseTransformer):
     """Variational Mode Decomposition transformer.
 
     An implementation of the Variational Mode Decomposition method (2014) [1]_,
-    based on the ``vmdpy`` package [3]_ by ``vcarvo``, which in turn is based
+    based on the ``vmdpy`` package [3]_ by ``vrcarva``, which in turn is based
     on the original MATLAB implementation by Dragomiretskiy and Zosso [1]_.
 
     This transformer is the official continuation of the ``vmdpy`` package,
@@ -99,8 +99,8 @@ class VmdTransformer(BaseTransformer):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["DaneLyttinen", "vcarvo"],
-        "maintainers": ["DaneLyttinen", "vcarvo"],
+        "authors": ["DaneLyttinen", "vrcarva"],
+        "maintainers": ["DaneLyttinen", "vrcarva"],
         # estimator type
         # --------------
         "scitype:transform-input": "Series",
