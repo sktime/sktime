@@ -388,6 +388,73 @@ class HFTransformersForecaster(BaseForecaster):
                 },
                 "deterministic": True,
             },
+            {
+                "model_path": "huggingface/autoformer-tourism-monthly",
+                "fit_strategy": "lora",
+                "training_args": {
+                    "num_train_epochs": 1,
+                    "output_dir": "test_output",
+                    "per_device_train_batch_size": 32,
+                },
+                "config": {
+                    "lags_sequence": [1, 2, 3],
+                    "context_length": 2,
+                    "prediction_length": 4,
+                    "label_length": 2,
+                },
+                "peft_config_dict": {
+                    "r": 8,
+                    "lora_alpha": 32,
+                    "target_modules": ["q_proj", "v_proj"],
+                    "lora_dropout": 0.01,
+                },
+                "deterministic": True,
+            },
+            {
+                "model_path": "huggingface/autoformer-tourism-monthly",
+                "fit_strategy": "loha",
+                "training_args": {
+                    "num_train_epochs": 1,
+                    "output_dir": "test_output",
+                    "per_device_train_batch_size": 32,
+                },
+                "config": {
+                    "lags_sequence": [1, 2, 3],
+                    "context_length": 2,
+                    "prediction_length": 4,
+                    "label_length": 2,
+                },
+                "peft_config_dict": {
+                    "r": 8,
+                    "alpha": 32,
+                    "target_modules": ["q_proj", "v_proj"],
+                    "rank_dropout": 0.01,
+                    "module_dropout": 0.01,
+                },
+                "deterministic": True,
+            },
+            {
+                "model_path": "huggingface/autoformer-tourism-monthly",
+                "fit_strategy": "adalora",
+                "training_args": {
+                    "num_train_epochs": 1,
+                    "output_dir": "test_output",
+                    "per_device_train_batch_size": 32,
+                },
+                "config": {
+                    "lags_sequence": [1, 2, 3],
+                    "context_length": 2,
+                    "prediction_length": 4,
+                    "label_length": 2,
+                },
+                "peft_config_dict": {
+                    "r": 8,
+                    "lora_alpha": 32,
+                    "target_modules": ["q_proj", "v_proj"],
+                    "lora_dropout": 0.01,
+                },
+                "deterministic": True,
+            },
         ]
 
 
