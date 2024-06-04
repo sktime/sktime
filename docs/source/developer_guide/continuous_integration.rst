@@ -108,20 +108,25 @@ via the embedded graphical user interface.
 Running docstring examples via ``doctest``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-sktime's Python modules are equipped with docstrings that include examples
-demonstrating the usage of specific classes within each module. These examples
-can be executed using doctest to ensure the expected functionality of the
-modules after making modifications, thereby identifying any unforeseen bugs.
+``sktime``'s Python modules are equipped with docstrings that include examples
+demonstrating the usage of specific classes within each module.
 
-To run doctest on all the files with ``pytest``, navigate to the root directory and execute
-the following command:
+``sktime`` does not run ``doctest`` on the CI, so developers should ensure that
+test cases are covered by ``pytest``, e.g., by executing docstring examples
+verbatim as a ``pytest`` test.
+
+Docstring examples can be executed in bulk using ``doctest``,
+to ensure that this is indeed the case.
+
+To run doctest on all the files with ``pytest``,
+navigate to the root directory and execute the following command:
 
   .. code:: bash
 
       pytest --doctest-modules
 
-To run doctest on all the files without ``pytest``, navigate to the root directory and execute
-the following command:
+To run doctest on all the files without ``pytest``,
+navigate to the root directory and execute the following command:
 
 (for ``UNIX`` based OS)
   .. code:: bash
