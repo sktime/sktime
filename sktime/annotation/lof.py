@@ -195,6 +195,43 @@ class SubLOF(BaseSeriesAnnotator):
 
         return pd.concat(y_all, ignore_index=True).reset_index(drop=True)
 
+    def fit_predict(self, X, Y=None):
+        """Fit to data, then predict it.
+
+        Fits model to X and Y with given annotation parameters
+        and returns the annotations made by the model.
+
+        Parameters
+        ----------
+        X : pd.DataFrame or pd.Series
+            Data to be transformed
+        Y : pd.Series or np.ndarray, optional (default=None)
+            Unused, defaults to none.
+
+        Returns
+        -------
+        self : pd.Series
+            Series containing the locations of the anomalies in X.
+        """
+        if isinstance(X, pd.Series):
+            X = X.to_frame()
+
+        y_all = []
+        for interval, model in self.models.items():
+            X_subset = X.loc[(X.index >= interval.left) & (X.index < interval.right)]
+
+            if len(X_subset) == 0:
+                continue
+
+            y_subset = model.fit_predict(X_subset)
+            anomaly_indexes = X_subset.index[y_subset == -1].tolist()
+            y_all += anomaly_indexes
+
+        if len(y_all) == 0:
+            return pd.Series()
+
+        return pd.Series(y_all)
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
