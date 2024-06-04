@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.series.vmd._vmdpy import VMD
+from sktime.libs.vmdpy import VMD
 
 __author__ = ["DaneLyttinen", "vcarvo"]
 

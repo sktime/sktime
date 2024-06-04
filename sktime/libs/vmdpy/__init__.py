@@ -32,3 +32,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 __author__ = ["vcarvo"]
+
+from sktime.libs.vmdpy.vmdpy import VMD
+
+__all__ = ["VMD"]
