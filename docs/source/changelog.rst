@@ -19,6 +19,14 @@ For upcoming changes and next releases, see our `milestones <https://github.com/
 For our long-term plan, see our :ref:`roadmap`.
 
 
+Version 0.30.1 - 2024-06-04
+---------------------------
+
+Minimal maintenance update with additions to onboard packages.
+
+For last major feature update, see 0.29.1.
+
+
 Version 0.30.0 - 2024-06-03
 ---------------------------
 
