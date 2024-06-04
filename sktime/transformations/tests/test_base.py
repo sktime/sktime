@@ -36,7 +36,7 @@ from sktime.utils._testing.scenarios_transformers import (
     TransformerFitTransformSeriesUnivariate,
 )
 from sktime.utils._testing.series import _make_series
-from sktime.utils.dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 from sktime.utils.parallel import _get_parallel_test_fixtures
 
 # other scenarios that might be needed later in development:
@@ -326,7 +326,7 @@ def test_panel_in_primitives_out_not_supported_fit_in_transform(backend):
 
 @pytest.mark.skipif(
     not run_test_module_changed("sktime.transformations")
-    and not run_test_for_class(TSFreshFeatureExtractor),
+    or not _check_estimator_deps(TSFreshFeatureExtractor, severity="none"),
     reason="run test only if anything in sktime.transformations module has changed",
 )
 @pytest.mark.skipif(
@@ -370,7 +370,7 @@ def test_series_in_primitives_out_not_supported_fit_in_transform():
 
 @pytest.mark.skipif(
     not run_test_module_changed("sktime.transformations")
-    and not run_test_for_class(TSFreshRelevantFeatureExtractor),
+    or not _check_estimator_deps(TSFreshFeatureExtractor, severity="none"),
     reason="run test only if anything in sktime.transformations module has changed",
 )
 def test_panel_in_primitives_out_supported_with_y_in_fit_but_not_transform():
