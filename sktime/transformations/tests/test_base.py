@@ -17,7 +17,7 @@ import pandas as pd
 import pytest
 
 from sktime.datatypes import check_is_scitype, get_examples, mtype_to_scitype
-from sktime.tests.test_switch import run_test_for_class, run_test_module_changed
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.transformations.compose import FitInTransform
 from sktime.transformations.panel.padder import PaddingTransformer
 from sktime.transformations.panel.tsfresh import (
