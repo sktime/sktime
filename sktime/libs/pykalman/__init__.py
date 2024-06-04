@@ -3,8 +3,8 @@
 Unofficial fork of the ``pykalman`` package, maintained in ``sktime``.
 
 sktime migration: 2024, June
-Version 0.9.7 release: 2024, Mar 25
-Version 0.9.5 release: 2013, Jul 7
+Version 0.9.7 release: 2024, Mar 25 (mbalatsko, fkiraly)
+Version 0.9.5 release: 2013, Jul 7 (duckworthd)
 
 Original authors: Daniel Duckworth
 
