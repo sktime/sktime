@@ -1,7 +1,7 @@
 """Python implementation of the Variational Mode Decomposition method."""
 import numpy as np
 
-__author__ = ["vcarvo"]
+__author__ = ["vrcarva"]
 
 
 def VMD(f, alpha, tau, K, DC, init, tol):
