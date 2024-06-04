@@ -43,22 +43,25 @@ class HFTransformersForecaster(BaseForecaster):
         Path to the huggingface model to use for forecasting. Currently,
         Informer, Autoformer, and TimeSeriesTransformer are supported.
     fit_strategy : str, default="minimal"
-        Strategy to use for fitting (fine-tuning) the model. This can be one of 
+        Strategy to use for fitting (fine-tuning) the model. This can be one of
         the following:
-        - "minimal": Fine-tunes only a small subset of the model parameters, 
+        - "minimal": Fine-tunes only a small subset of the model parameters,
           allowing for quick adaptation with limited computational resources.
-        - "full": Fine-tunes all model parameters, which may result in better 
+        - "full": Fine-tunes all model parameters, which may result in better
           performance but requires more computational power and time.
-        - "lora": Uses the LoRA (Low-Rank Adaptation) technique to fine-tune the 
+        - "lora": Uses the LoRA (Low-Rank Adaptation) technique to fine-tune the
           model efficiently with low-rank updates.
         - "loha": Similar to LoRA, but with higher-rank adaptations.
-        - "adalora": An adaptive version of LoRA that adjusts the rank 
+        - "adalora": An adaptive version of LoRA that adjusts the rank
           dynamically during fine-tuning.
     validation_split : float, default=0.2
         Fraction of the data to use for validation
     config : dict, default={}
         Configuration to use for the model. See the `transformers`
         documentation for details.
+    peft_config_dict : dict, default={}
+        Configuration dictionary specifying parameters and settings relevant to
+        the chosen PEFT strategy (e.g., LoRA, LoHA, AdaLoRA).
     training_args : dict, default={}
         Training arguments to use for the model. See `transformers.TrainingArguments`
         for details.
@@ -118,6 +121,7 @@ class HFTransformersForecaster(BaseForecaster):
         fit_strategy="minimal",
         validation_split=0.2,
         config=None,
+        peft_config_dict=None,
         training_args=None,
         compute_metrics=None,
         deterministic=False,
@@ -129,6 +133,10 @@ class HFTransformersForecaster(BaseForecaster):
         self.validation_split = validation_split
         self.config = config
         self._config = config if config is not None else {}
+        self.peft_config_dict = peft_config_dict
+        self._peft_config_dict = (
+            peft_config_dict if peft_config_dict is not None else {}
+        )
         self.training_args = training_args
         self._training_args = training_args if training_args is not None else {}
         self.compute_metrics = compute_metrics
@@ -241,29 +249,13 @@ class HFTransformersForecaster(BaseForecaster):
             for param in self.model.parameters():
                 param.requires_grad = True
         elif self.fit_strategy == "lora":
-            peft_config = LoraConfig(
-                r=8,
-                lora_alpha=32,
-                target_modules=["q_proj", "v_proj"],
-                lora_dropout=0.01,
-            )
+            peft_config = LoraConfig(**self._peft_config_dict)
             self.model = get_peft_model(self.model, peft_config)
         elif self.fit_strategy == "loha":
-            peft_config = LoHaConfig(
-                r=8,
-                alpha=32,
-                target_modules=["q_proj", "v_proj"],
-                rank_dropout=0.01,
-                module_dropout=0.01,
-            )
+            peft_config = LoHaConfig(**self._peft_config_dict)
             self.model = get_peft_model(self.model, peft_config)
         elif self.fit_strategy == "adalora":
-            peft_config = AdaLoraConfig(
-                r=8,
-                lora_alpha=32,
-                target_modules=["q_proj", "v_proj"],
-                lora_dropout=0.01,
-            )
+            peft_config = AdaLoraConfig(**self._peft_config_dict)
             self.model = get_peft_model(self.model, peft_config)
         else:
             raise ValueError("Unknown fit strategy")
