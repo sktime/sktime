@@ -371,4 +371,4 @@ if _check_soft_dependencies("polars", severity="none"):
             scitype="Series",
         )
 
-    check_dict[("polars", "Series")] = check_polars_series
+    check_dict[("pl.DataFrame", "Series")] = check_polars_series

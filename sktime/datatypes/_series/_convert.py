@@ -265,30 +265,45 @@ if _check_soft_dependencies("polars", severity="none"):
         convert_polars_to_pandas,
     )
 
-    def convert_polars_to_mvs_as_series(obj):
+    def convert_polars_to_uvs_as_series(obj, store=None):
+        pd_df = convert_polars_to_pandas(obj)
+        return convert_MvS_to_UvS_as_Series(pd_df, store=store)
+
+    convert_dict[
+        ("pl.DataFrame", "pd.Series", "Series")
+    ] = convert_polars_to_uvs_as_series
+
+    def convert_polars_to_mvs_as_series(obj, store=None):
         return convert_polars_to_pandas(obj)
 
     convert_dict[
-        ("polars.DataFrame", "pd.DataFrame", "Series")
+        ("pl.DataFrame", "pd.DataFrame", "Series")
     ] = convert_polars_to_mvs_as_series
 
-    def convert_mvs_to_polars_as_series(obj):
+    def convert_mvs_to_polars_as_series(obj, store=None):
         return convert_pandas_to_polars(obj)
 
     convert_dict[
-        ("pd.DataFrame", "polars.DataFrame", "Series")
+        ("pd.DataFrame", "pl.DataFrame", "Series")
     ] = convert_mvs_to_polars_as_series
 
-    def convert_polars_lazy_to_mvs_as_series(obj):
+    def convert_uvs_to_polars_as_series(obj, store=None):
+        return convert_pandas_to_polars(obj)
+
+    convert_dict[
+        ("pd.Series", "pl.DataFrame", "Series")
+    ] = convert_uvs_to_polars_as_series
+
+    def convert_polars_lazy_to_mvs_as_series(obj, store=None):
         return convert_polars_to_pandas(obj)
 
     convert_dict[
-        ("polars.LazyFrame", "pd.DataFrame", "Series")
+        ("pl.LazyFrame", "pd.DataFrame", "Series")
     ] = convert_polars_lazy_to_mvs_as_series
 
-    def convert_mvs_to_polars_lazy_as_series(obj):
+    def convert_mvs_to_polars_lazy_as_series(obj, store=None):
         return convert_pandas_to_polars(obj, lazy=True)
 
     convert_dict[
-        ("pd.DataFrame", "polars.LazyFrame", "Series")
+        ("pd.DataFrame", "pl.LazyFrame", "Series")
     ] = convert_mvs_to_polars_lazy_as_series
