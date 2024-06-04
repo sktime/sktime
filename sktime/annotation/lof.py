@@ -140,7 +140,7 @@ class SubLOF(BaseSeriesAnnotator):
         if isinstance(X, pd.Series):
             X = X.to_frame()
 
-        intervals = self.split_into_intervals(X.index, self.window_size)
+        intervals = self._split_into_intervals(X.index, self.window_size)
         self.models = {
             interval: LocalOutlierFactor(**self.model_params) for interval in intervals
         }
@@ -150,7 +150,7 @@ class SubLOF(BaseSeriesAnnotator):
             model.fit(X.loc[mask])
 
     @staticmethod
-    def split_into_intervals(x, interval_size):
+    def _split_into_intervals(x, interval_size):
         """Split the range of ``x`` into equally sized intervals."""
         x_max = x.max()
         x_min = x.min()
