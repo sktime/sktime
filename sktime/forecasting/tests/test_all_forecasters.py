@@ -924,27 +924,29 @@ class TestAllGlobalForecasters(TestAllObjects):
             max_timepoints=data_length,
             min_timepoints=data_length,
         )
-        X_train = data["c0"].to_frame()
-        y_train = data["c1"].to_frame()
+        l1 = data.index.get_level_values(1).map(lambda x: int(x[3:]))
+        X_train = data.loc[l1 < 90, "c0"].to_frame()
+        y_train = data.loc[l1 < 90, "c1"].to_frame()
+        X_test = data.loc[l1 >= 80, "c0"].to_frame()
+        y_test = data.loc[l1 >= 80, "c1"].to_frame()
 
         max_prediction_length = 3
         fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
 
         estimator_instance.fit(y_train, X_train, fh=fh)
 
-        X_test = X_train
-        # remove max_prediction_length from the end of y_train
-        len_levels = len(y_train.index.names)
-        y_test = y_train.groupby(level=list(range(len_levels - 1))).apply(
+        # remove max_prediction_length from the end of y_test
+        len_levels = len(y_test.index.names)
+        y_test = y_test.groupby(level=list(range(len_levels - 1))).apply(
             lambda x: x.droplevel(list(range(len_levels - 1))).iloc[
                 :-max_prediction_length
             ]
         )
         y_pred = estimator_instance.predict(fh, X_test, y_test)
 
-        # TODO
-        # cutoff = get_cutoff(_y, return_index=True)
-        # _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
+        cutoff = get_cutoff(y_test, return_index=True)
+        index_pred = y_pred.iloc[:max_prediction_length].index.get_level_values(2)
+        _assert_correct_pred_time_index(index_pred, cutoff, fh)
         _assert_correct_columns(y_pred, y_test)
 
         assert isinstance(y_pred, pd.DataFrame)
@@ -969,27 +971,29 @@ class TestAllGlobalForecasters(TestAllObjects):
             min_timepoints=data_length,
         )
         data = data.droplevel(1)
-        X_train = data["c0"].to_frame()
-        y_train = data["c1"].to_frame()
+        l0 = data.index.get_level_values(0).map(lambda x: int(x[3:]))
+        X_train = data[l0 < 450]["c0"].to_frame()
+        y_train = data[l0 < 450]["c1"].to_frame()
+        X_test = data[l0 >= 400]["c0"].to_frame()
+        y_test = data[l0 >= 400]["c1"].to_frame()
 
         max_prediction_length = 3
         fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
 
         estimator_instance.fit(y_train, X_train, fh=fh)
 
-        X_test = X_train
-        # remove max_prediction_length from the end of y_train
-        len_levels = len(y_train.index.names)
-        y_test = y_train.groupby(level=list(range(len_levels - 1))).apply(
+        # remove max_prediction_length from the end of y_test
+        len_levels = len(y_test.index.names)
+        y_test = y_test.groupby(level=list(range(len_levels - 1))).apply(
             lambda x: x.droplevel(list(range(len_levels - 1))).iloc[
                 :-max_prediction_length
             ]
         )
         y_pred = estimator_instance.predict(fh, X_test, y_test)
 
-        # TODO
-        # cutoff = get_cutoff(_y, return_index=True)
-        # _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
+        cutoff = get_cutoff(y_test, return_index=True)
+        index_pred = y_pred.iloc[:max_prediction_length].index.get_level_values(1)
+        _assert_correct_pred_time_index(index_pred, cutoff, fh)
         _assert_correct_columns(y_pred, y_test)
 
         assert isinstance(y_pred, pd.DataFrame)
@@ -1016,12 +1020,12 @@ class TestAllGlobalForecasters(TestAllObjects):
         estimator_instance.fit(y=y_train, fh=fh)
 
         # remove max_prediction_length from the end of y_train
-        y_test = y_train.iloc[:-max_prediction_length]
+        y_test = _make_series(n_columns=n_columns).iloc[:-max_prediction_length]
+        y_test.rename({0: "renamed"})
         y_pred = estimator_instance.predict(fh, y=y_test)
 
-        # TODO
-        # cutoff = get_cutoff(_y, return_index=True)
-        # _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
+        cutoff = get_cutoff(y_test, return_index=True)
+        _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
         _assert_correct_columns(y_pred, y_test)
 
         if isinstance(y_test, pd.Series):
@@ -1050,25 +1054,27 @@ class TestAllGlobalForecasters(TestAllObjects):
             min_timepoints=data_length,
         )
         data = data.droplevel(1)
-        y_train = data["c0"].to_frame()
+        l0 = data.index.get_level_values(0).map(lambda x: int(x[3:]))
+        y_train = data[l0 < 450]["c0"].to_frame()
+        y_test = data[l0 >= 400]["c0"].to_frame()
 
         max_prediction_length = 3
         fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
 
         estimator_instance.fit(y=y_train, fh=fh)
 
-        # remove max_prediction_length from the end of y_train
-        len_levels = len(y_train.index.names)
-        y_test = y_train.groupby(level=list(range(len_levels - 1))).apply(
+        # remove max_prediction_length from the end of y_test
+        len_levels = len(y_test.index.names)
+        y_test = y_test.groupby(level=list(range(len_levels - 1))).apply(
             lambda x: x.droplevel(list(range(len_levels - 1))).iloc[
                 :-max_prediction_length
             ]
         )
         y_pred = estimator_instance.predict(fh, y=y_test)
 
-        # TODO
-        # cutoff = get_cutoff(_y, return_index=True)
-        # _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
+        cutoff = get_cutoff(y_test, return_index=True)
+        index_pred = y_pred.iloc[:max_prediction_length].index.get_level_values(1)
+        _assert_correct_pred_time_index(index_pred, cutoff, fh)
         _assert_correct_columns(y_pred, y_test)
 
         assert isinstance(y_pred, pd.DataFrame)
