@@ -43,8 +43,17 @@ class HFTransformersForecaster(BaseForecaster):
         Path to the huggingface model to use for forecasting. Currently,
         Informer, Autoformer, and TimeSeriesTransformer are supported.
     fit_strategy : str, default="minimal"
-        Strategy to use for fitting the model. Can be one of "minimal", "full",
-        "lora", "loha", or "adalora".
+        Strategy to use for fitting (fine-tuning) the model. This can be one of 
+        the following:
+        - "minimal": Fine-tunes only a small subset of the model parameters, 
+          allowing for quick adaptation with limited computational resources.
+        - "full": Fine-tunes all model parameters, which may result in better 
+          performance but requires more computational power and time.
+        - "lora": Uses the LoRA (Low-Rank Adaptation) technique to fine-tune the 
+          model efficiently with low-rank updates.
+        - "loha": Similar to LoRA, but with higher-rank adaptations.
+        - "adalora": An adaptive version of LoRA that adjusts the rank 
+          dynamically during fine-tuning.
     validation_split : float, default=0.2
         Fraction of the data to use for validation
     config : dict, default={}
