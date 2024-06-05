@@ -776,6 +776,16 @@ class requires_fh_in_fit(_BaseTag):
     If the tag is ``False``, the forecasting horizon can be passed in the ``fit``
     method, but this is not required. In this case, it must be passed later,
     whenever ``predict`` or other prediction methods are called.
+
+    Whether the ``fh`` is required in ``fit`` is an intrinsic property of the
+    forecasting algorithm and not a user setting.
+
+    For instance, direct reduction to tabular regression
+    requires the ``fh`` as it is used by the fitting algorithm to lag the endogeneous
+    against the exogeneous data. In contrast, recursive reduction to tabular regression
+    does not require the ``fh`` in ``fit``, as only the prediction step
+    requires the forecasting horizon, when applying the fitted tabular regression model
+    by sliding it forward over the ``fh`` steps.
     """
 
     _tags = {
@@ -1473,7 +1483,7 @@ class transform_returns_same_time_index(_BaseTag):
     If the tag is ``False``, the returned series will in general have a different
     time index than the input series.
 
-    If ``sciptye:transform-output`` is ``"Primitives"``, this tag is irrelevant
+    If ``scitype:transform-output`` is ``"Primitives"``, this tag is irrelevant
     and will have value ``False``.
 
     Besides being informative to the user, this tag is also used internally
