@@ -145,18 +145,19 @@ def check_polars_frame(
         return ret(False, msg, None, return_metadata)
 
     # we now know obj is a polars DataFrame or LazyFrame
-    index_cols = get_mi_cols(obj)
+    index_cols = []
 
-    scitypes = {
-        "Series": len(index_cols) == 1,
-        "Panel": len(index_cols) == 2,
-        "Hierarchical": len(index_cols) >= 3,
-    }
+    if scitype in ["Series", "Panel", "Hierarchical"]:
+        index_cols = get_mi_cols(obj)
+        scitypes = {
+            "Series": len(index_cols) == 1,
+            "Panel": len(index_cols) == 2,
+            "Hierarchical": len(index_cols) >= 3,
+        }
 
-    if scitype != "Table" and scitype in scitypes:
         if not scitypes[scitype]:
             cols_msg = (
-                f"{var_name} must have correct number of index columns for scitype,"
+                f"{var_name} must have correct number of index columns for scitype, "
                 f"Series: 1, Panel: 2, Hierarchical: >= 3,"
                 f"found {len(index_cols)}, namely: {index_cols}"
             )

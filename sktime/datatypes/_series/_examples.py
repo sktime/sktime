@@ -75,9 +75,9 @@ if _check_soft_dependencies("dask", severity="none"):
     example_dict_lossy[("dask_series", "Series", 0)] = False
 
 if _check_soft_dependencies("polars", severity="none"):
-    from polars import from_pandas
+    from polars import DataFrame
 
-    pl_df = from_pandas(example_dict[("pd.DataFrame", "Series", 0)])
+    pl_df = DataFrame({"__index__1": [0, 1, 2, 3], "a": [1, 4, 0.5, -3]})
 
     example_dict[("pl.DataFrame", "Series", 0)] = pl_df
     example_dict_lossy[("pl.DataFrame", "Series", 0)] = False
@@ -126,9 +126,11 @@ if _check_soft_dependencies("dask", severity="none"):
     example_dict_lossy[("dask_series", "Series", 1)] = False
 
 if _check_soft_dependencies("polars", severity="none"):
-    from polars import from_pandas
+    from polars import DataFrame
 
-    pl_df = from_pandas(example_dict[("pd.DataFrame", "Series", 1)])
+    pl_df = DataFrame(
+        {"__index__a": [0, 1, 2, 3], "a": [1, 4, 0.5, -3], "b": [3, 7, 2, -3 / 7]}
+    )
 
     example_dict[("pl.DataFrame", "Series", 1)] = pl_df
     example_dict_lossy[("pl.DataFrame", "Series", 1)] = False
@@ -179,9 +181,11 @@ if _check_soft_dependencies("dask", severity="none"):
     example_dict_lossy[("dask_series", "Series", 2)] = False
 
 if _check_soft_dependencies("polars", severity="none"):
-    from polars import from_pandas
+    from polars import DataFrame
 
-    pl_df = from_pandas(example_dict[("pd.DataFrame", "Series", 2)])
+    pl_df = DataFrame(
+        {"__index__1": [0, 1, 2, 3], "a": [1, 4, 0.5, 3], "b": [3, 7, 2, 3 / 7]}
+    )
 
     example_dict[("pl.DataFrame", "Series", 2)] = pl_df
     example_dict_lossy[("pl.DataFrame", "Series", 2)] = False
@@ -226,9 +230,9 @@ if _check_soft_dependencies("xarray", severity="none"):
     example_dict_lossy[("xr.DataArray", "Series", 3)] = False
 
 if _check_soft_dependencies("polars", severity="none"):
-    from polars import from_pandas
+    from polars import DataFrame
 
-    pl_df = from_pandas(example_dict[("pd.DataFrame", "Series", 3)])
+    pl_df = DataFrame({"__index__1": [0, 1, 2, 3], "a": [1, 4, 0.5, 3]})
 
     example_dict[("pl.DataFrame", "Series", 3)] = pl_df
     example_dict_lossy[("pl.DataFrame", "Series", 3)] = False
