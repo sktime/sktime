@@ -44,11 +44,11 @@ def X1_X2():
     X2_list_df = make_transformer_problem(
         n_instances=5, n_columns=4, n_timepoints=5, random_state=2, return_numpy=False
     )
-    yield X1_list_df, X2_list_df
 
     X1_num_pan = convert_to(X1_list_df, to_type="numpy3D")
     X2_num_pan = convert_to(X2_list_df, to_type="numpy3D")
-    yield X1_num_pan, X2_num_pan
+
+    yield from [(X1_list_df, X2_list_df), (X1_num_pan, X2_num_pan)]
 
 
 @pytest.mark.skipif(
