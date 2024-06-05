@@ -36,8 +36,8 @@ __all__ = [
 from sktime.datatypes._convert_utils._coerce import _coerce_df_dtypes
 from sktime.datatypes._convert_utils._convert import _extend_conversions
 from sktime.datatypes._panel._registry import MTYPE_LIST_PANEL
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.pandas import df_map
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 # dictionary indexed by triples of types
 #  1st element = convert from - type

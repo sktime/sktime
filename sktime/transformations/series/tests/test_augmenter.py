@@ -6,6 +6,7 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import load_basic_motions
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series import augmenter as aug
 
 
@@ -37,6 +38,10 @@ def test_loaded_data():
 expected_checksums_white_noise = [7.373241, -3.01141, 12.565567, 5.86128]
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(aug.WhiteNoiseAugmenter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "parameter",
     [
@@ -64,6 +69,10 @@ def test_white_noise(parameter):
 expected_checksum_reverse = 17.757893
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(aug.ReverseAugmenter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_reverse():
     """Test of the White Noise Augmenter."""
     X = _load_test_data()
@@ -77,6 +86,10 @@ def test_reverse():
 expected_checksum_invert = -17.757893
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(aug.InvertAugmenter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_invert():
     """Test of the White Noise Augmenter."""
     X = _load_test_data()
@@ -96,6 +109,10 @@ expected_checksums_random_samples = [
 ]
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(aug.RandomSamplesAugmenter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "parameter",
     [
