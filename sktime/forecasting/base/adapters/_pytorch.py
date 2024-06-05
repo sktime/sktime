@@ -1,6 +1,4 @@
-import abc
-from abc import ABC
-
+"""PyTorch adapter for deep learning forecasters."""
 import numpy as np
 import pandas as pd
 
@@ -15,10 +13,8 @@ else:
     class Dataset:
         """Dummy class if torch is unavailable."""
 
-        pass
 
-
-class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
+class BaseDeepNetworkPyTorch(BaseForecaster):
     """Abstract base class for deep learning networks using torch.nn."""
 
     _tags = {
@@ -210,9 +206,8 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
         y_true = [y.flatten().numpy() for _, y in dataloader]
         return np.concatenate(y_true, axis=0)
 
-    @abc.abstractmethod
     def _build_network(self, fh):
-        pass
+        raise RuntimeError("abstract method")
 
 
 class PyTorchTrainDataset(Dataset):

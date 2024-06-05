@@ -1,6 +1,6 @@
 __author__ = ["chrisholder", "TonyBagnall"]
 
-from typing import Any, List, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -99,7 +99,7 @@ class _TweDistance(NumbaDistance):
             def numba_twe_distance_alignment_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
-            ) -> Tuple[List, float, np.ndarray]:
+            ) -> tuple[list, float, np.ndarray]:
                 cost_matrix = _twe_cost_matrix(_x, _y, _bounding_matrix, lmbda, nu, p)
                 path = compute_twe_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1], cost_matrix
@@ -110,7 +110,7 @@ class _TweDistance(NumbaDistance):
             def numba_twe_distance_alignment_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
-            ) -> Tuple[List, float]:
+            ) -> tuple[list, float]:
                 cost_matrix = _twe_cost_matrix(_x, _y, _bounding_matrix, lmbda, nu, p)
                 path = compute_twe_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1]

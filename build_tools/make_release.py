@@ -93,7 +93,6 @@ class Step:
 
     def pre(self, context):
         """Pre-step."""
-        pass
 
     def post(self, context):
         """Post-step."""

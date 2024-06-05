@@ -33,13 +33,9 @@ def get_tag(obj, tag_name):
 class TransformerPairwiseTestScenario(TestScenario, BaseObject):
     """Generic test scenario for pairwise transformers."""
 
-    pass
-
 
 class TransformerPairwisePanelTestScenario(TestScenario, BaseObject):
     """Generic test scenario for pairwise panel transformers."""
-
-    pass
 
 
 class TransformerPairwiseTransformSymm(TransformerPairwiseTestScenario):

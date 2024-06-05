@@ -19,8 +19,6 @@ RAND_SEED = 42
 class AlignerTestScenario(TestScenario, BaseObject):
     """Generic test scenario for aligners."""
 
-    pass
-
 
 class AlignerPairwiseMultivariateEqual(AlignerTestScenario):
     """Align multivariate series, pairwise alignment, equal length."""

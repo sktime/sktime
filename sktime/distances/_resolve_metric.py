@@ -1,7 +1,7 @@
 __author__ = ["chrisholder", "TonyBagnall"]
 
 import inspect
-from typing import Callable, List, Union
+from typing import Callable, Union
 
 import numpy as np
 
@@ -12,7 +12,7 @@ def _resolve_dist_instance(
     metric: Union[str, Callable, NumbaDistance],
     x: np.ndarray,
     y: np.ndarray,
-    known_metric_dict: List[MetricInfo],
+    known_metric_dict: list[MetricInfo],
     **kwargs: dict,
 ):
     """Resolve a metric from a string, callable or NumbaDistance instance.
@@ -78,7 +78,7 @@ def _resolve_metric_to_factory(
     metric: Union[str, Callable, NumbaDistance],
     x: np.ndarray,
     y: np.ndarray,
-    known_metric_dict: List[MetricInfo],
+    known_metric_dict: list[MetricInfo],
     **kwargs: dict,
 ) -> DistanceCallable:
     """Resolve a metric from a string, callable or NumbaDistance instance.
@@ -141,7 +141,7 @@ def _resolve_metric_to_factory(
 
 
 def _resolve_str_metric(
-    metric: str, known_metric_dict: List[MetricInfo]
+    metric: str, known_metric_dict: list[MetricInfo]
 ) -> NumbaDistance:
     """Resolve a string to a NumbaDistance.
 

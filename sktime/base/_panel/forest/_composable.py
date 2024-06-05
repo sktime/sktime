@@ -5,7 +5,6 @@
 __author__ = ["mloning", "AyushmaanSeth"]
 __all__ = ["BaseTimeSeriesForest"]
 
-from abc import abstractmethod
 from warnings import catch_warnings, simplefilter
 
 import numpy as np
@@ -74,7 +73,6 @@ def _parallel_build_trees(
 class BaseTimeSeriesForest(BaseForest):
     """Base class for forests of trees."""
 
-    @abstractmethod
     def __init__(
         self,
         base_estimator,

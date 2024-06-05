@@ -14,8 +14,6 @@ else:
     class Dataset:
         """Dummy class if torch is unavailable."""
 
-        pass
-
 
 if _check_soft_dependencies("transformers", severity="none"):
     import transformers

@@ -2,7 +2,6 @@
 
 import os
 from collections import defaultdict
-from typing import Dict, List
 
 import httpx
 from dateutil import parser
@@ -19,7 +18,7 @@ REPO = "sktime"
 GITHUB_REPOS = "https://api.github.com/repos"
 
 
-def fetch_merged_pull_requests(page: int = 1) -> List[Dict]:  # noqa
+def fetch_merged_pull_requests(page: int = 1) -> list[dict]:  # noqa
     "Fetch a page of pull requests"
     params = {
         "base": "main",
@@ -48,7 +47,7 @@ def fetch_latest_release():  # noqa
         raise ValueError(response.text, response.status_code)
 
 
-def fetch_pull_requests_since_last_release() -> List[Dict]:  # noqa
+def fetch_pull_requests_since_last_release() -> list[dict]:  # noqa
     "Fetch pull requests and filter based on merged date"
 
     release = fetch_latest_release()
@@ -81,7 +80,7 @@ def github_compare_tags(tag_left: str, tag_right: str = "HEAD"):  # noqa
         raise ValueError(response.text, response.status_code)
 
 
-def render_contributors(prs: List, fmt: str = "rst"):  # noqa
+def render_contributors(prs: list, fmt: str = "rst"):  # noqa
     "Find unique authors and print a list in  given format"
     authors = sorted({pr["user"]["login"] for pr in prs}, key=lambda x: x.lower())
 
@@ -95,7 +94,7 @@ def render_contributors(prs: List, fmt: str = "rst"):  # noqa
         print(",\n".join(f":user:`{user}`" for user in authors))  # noqa
 
 
-def assign_prs(prs, categs: List[Dict[str, List[str]]]):  # noqa
+def assign_prs(prs, categs: list[dict[str, list[str]]]):  # noqa
     "Assign PR to categories based on labels"
     assigned = defaultdict(list)
 

@@ -16,9 +16,7 @@ os.environ["OMP_NUM_THREADS"] = "1"  # must be done before numpy import!!
 import sktime.datasets.tsc_dataset_names as dataset_lists
 from sktime._contrib.set_classifier import set_classifier
 from sktime.benchmarking.experiments import load_and_run_classification_experiment
-from sktime.classification.deep_learning import CNNClassifier
 from sktime.classification.feature_based import FreshPRINCE
-from sktime.classification.interval_based import CanonicalIntervalForest
 from sktime.datasets import load_from_tsfile_to_dataframe as load_ts
 
 """Prototype mechanism for testing classifiers on the UCR format. This mirrors the

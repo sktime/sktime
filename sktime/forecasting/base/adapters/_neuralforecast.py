@@ -1,10 +1,9 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for NeuralForecast models."""
-import abc
 import functools
 from copy import deepcopy
 from inspect import signature
-from typing import List, Literal, Optional, Union
+from typing import Literal, Optional, Union
 
 import numpy as np
 import pandas
@@ -79,7 +78,7 @@ class _NeuralForecastAdapter(BaseForecaster):
         self: "_NeuralForecastAdapter",
         freq: Union[str, int] = "auto",
         local_scaler_type: Optional[_SUPPORTED_LOCAL_SCALAR_TYPES] = None,
-        futr_exog_list: Optional[List[str]] = None,
+        futr_exog_list: Optional[list[str]] = None,
         verbose_fit: bool = False,
         verbose_predict: bool = False,
     ) -> None:
@@ -105,22 +104,21 @@ class _NeuralForecastAdapter(BaseForecaster):
         self.set_tags(**{"ignores-exogeneous-X": not self.needs_X})
 
     @functools.cached_property
-    @abc.abstractmethod
     def algorithm_exogenous_support(self: "_NeuralForecastAdapter") -> bool:
         """Set support for exogenous features."""
+        raise RuntimeError("abstract method")
 
     @functools.cached_property
-    @abc.abstractmethod
     def algorithm_name(self: "_NeuralForecastAdapter") -> str:
         """Set custom model name."""
+        raise RuntimeError("abstract method")
 
     @functools.cached_property
-    @abc.abstractmethod
     def algorithm_class(self: "_NeuralForecastAdapter"):
         """Import underlying NeuralForecast algorithm class."""
+        raise RuntimeError("abstract method")
 
     @functools.cached_property
-    @abc.abstractmethod
     def algorithm_parameters(self: "_NeuralForecastAdapter") -> dict:
         """Get keyword parameters for the underlying NeuralForecast algorithm class.
 
@@ -138,6 +136,7 @@ class _NeuralForecastAdapter(BaseForecaster):
         - statis exogenous columns (``stat_exog_list``) - not supported
         - custom model name (``alias``) - used from ``algorithm_name``
         """
+        raise RuntimeError("abstract method")
 
     def _ignore_invalid_parameters(self: "_NeuralForecastAdapter") -> dict:
         """Skip unsupported parameters for underlying NeuralForecast algorithm class.

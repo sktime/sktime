@@ -1,6 +1,6 @@
 __author__ = ["chrisholder", "TonyBagnall"]
 
-from typing import Any, List, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -100,7 +100,7 @@ class _EdrDistance(NumbaDistance):
             @njit(cache=True)
             def numba_edr_distance_alignment_path(
                 _x: np.ndarray, _y: np.ndarray
-            ) -> Tuple[List, float, np.ndarray]:
+            ) -> tuple[list, float, np.ndarray]:
                 if epsilon is None:
                     _epsilon = max(np.std(_x), np.std(_y)) / 4
                 else:
@@ -115,7 +115,7 @@ class _EdrDistance(NumbaDistance):
             @njit(cache=True)
             def numba_edr_distance_alignment_path(
                 _x: np.ndarray, _y: np.ndarray
-            ) -> Tuple[List, float]:
+            ) -> tuple[list, float]:
                 if epsilon is None:
                     _epsilon = max(np.std(_x), np.std(_y)) / 4
                 else:
