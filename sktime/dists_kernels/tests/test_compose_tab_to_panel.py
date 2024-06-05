@@ -31,13 +31,8 @@ AGGFUNCS = [
 ]
 
 
-@pytest.fixture
-def aggfunc():
-    yield from AGGFUNCS
-
-
-@pytest.fixture
-def X1_X2():
+@pytest.fixture(params=["list_df", "num_pan"])
+def X1_X2(request):
     X1_list_df = make_transformer_problem(
         n_instances=4, n_columns=4, n_timepoints=5, random_state=1, return_numpy=False
     )
@@ -48,13 +43,17 @@ def X1_X2():
     X1_num_pan = convert_to(X1_list_df, to_type="numpy3D")
     X2_num_pan = convert_to(X2_list_df, to_type="numpy3D")
 
-    yield from [(X1_list_df, X2_list_df), (X1_num_pan, X2_num_pan)]
+    if request.param == "list_df":
+        return (X1_list_df, X2_list_df)
+    elif request.param == "num_pan":
+        return (X1_num_pan, X2_num_pan)
 
 
 @pytest.mark.skipif(
     not run_test_module_changed("sktime.dists_kernels"),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
+@pytest.mark.parametrize("aggfunc", AGGFUNCS)
 def test_aggr(X1_X2, pw_trafo_tab, aggfunc):
     """Test that AggrDist produces expected pre-computed result on fixtures."""
     x, y = X1_X2
