@@ -33,7 +33,7 @@ AGGFUNCS = [
 
 @pytest.fixture
 def aggfunc():
-    yield from AGGFUNCS:
+    yield from AGGFUNCS
 
 
 @pytest.fixture
