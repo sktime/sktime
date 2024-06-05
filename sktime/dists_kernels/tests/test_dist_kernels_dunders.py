@@ -27,7 +27,7 @@ def X2():
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.dists_kernelst"),
+    not run_test_module_changed("sktime.dists_kernels"),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_mul_algebra_dunder(X1, X2):
@@ -66,7 +66,7 @@ def test_mul_algebra_dunder(X1, X2):
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.dists_kernelst"),
+    not run_test_module_changed("sktime.dists_kernels"),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_add_algebra_dunder(X1, X2):
@@ -105,7 +105,7 @@ def test_add_algebra_dunder(X1, X2):
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.dists_kernelst"),
+    not run_test_module_changed("sktime.dists_kernels"),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_mixed_algebra_dunders(X1, X2):
@@ -132,7 +132,7 @@ def test_mixed_algebra_dunders(X1, X2):
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.dists_kernelst"),
+    not run_test_module_changed("sktime.dists_kernels"),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_pw_trafo_pipeline_mul_dunder(X1, X2):
@@ -165,7 +165,7 @@ def test_pw_trafo_pipeline_mul_dunder(X1, X2):
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.dists_kernelst"),
+    not run_test_module_changed("sktime.dists_kernels"),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("constant", [0, 1, -0.25])
@@ -195,7 +195,7 @@ def test_dunders_with_constants(constant, X1, X2):
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.dists_kernelst"),
+    not run_test_module_changed("sktime.dists_kernels"),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_getitem_dunder(X1, X2):

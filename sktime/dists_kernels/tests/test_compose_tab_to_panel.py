@@ -52,7 +52,7 @@ def X1_X2():
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.dists_kernelst"),
+    not run_test_module_changed("sktime.dists_kernels"),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_aggr(X1_X2, pw_trafo_tab, aggfunc):
