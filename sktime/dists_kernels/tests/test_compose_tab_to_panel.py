@@ -12,10 +12,9 @@ from sktime.utils._testing.panel import make_transformer_problem
 
 @pytest.fixture
 def pw_trafo_tab():
-    for transformer in all_estimators(
+    yield from all_estimators(
         estimator_types="transformer-pairwise", return_names=False
-    ):
-        yield transformer
+    )
 
 
 AGGFUNCS = [
@@ -34,8 +33,7 @@ AGGFUNCS = [
 
 @pytest.fixture
 def aggfunc():
-    for aggfunc in AGGFUNCS:
-        yield aggfunc
+    yield from AGGFUNCS:
 
 
 @pytest.fixture

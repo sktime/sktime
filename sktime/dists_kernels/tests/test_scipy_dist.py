@@ -1,11 +1,10 @@
 """Tests for scipy interface."""
 import numpy as np
+import pytest
 
 from sktime.dists_kernels.scipy_dist import ScipyDist
 from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.panel import make_transformer_problem
-
-import pytest
 
 
 @pytest.fixture
