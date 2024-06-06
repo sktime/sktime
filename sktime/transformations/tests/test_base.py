@@ -329,10 +329,6 @@ def test_panel_in_primitives_out_not_supported_fit_in_transform(backend):
     or not _check_estimator_deps(TSFreshFeatureExtractor, severity="none"),
     reason="run test only if anything in sktime.transformations module has changed",
 )
-@pytest.mark.skipif(
-    not _check_soft_dependencies("tsfresh", severity="none"),
-    reason="skip test if required soft dependency tsfresh not available",
-)
 def test_series_in_primitives_out_not_supported_fit_in_transform():
     """Test that fit/transform runs and returns the correct output type.
 
