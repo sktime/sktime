@@ -489,7 +489,7 @@ def _make_estimator_overview(app):
 
     with open("_static/table_all.html", "w") as file:
         df[
-            ["Class Name", "Object Type", "Authors", "Maintainers", "Dependencies"]
+            ["Class Name", "Estimator Type", "Authors", "Maintainers", "Dependencies"]
         ].to_html(file, classes="pre-rendered", index=False, border=0, escape=False)
 
     with open("_static/estimator_overview_db.json", "w") as file:
