@@ -352,3 +352,340 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
             ]
 
         return params
+
+
+class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
+    """pytorch-forecasting DeepAR model.
+
+    Parameters
+    ----------
+    model_params :  Dict[str, Any] (default=None)
+        parameters to be passed to initialize the pytorch-forecasting NBeats model [1]_
+        for example: {"cell_type": "GRU", "rnn_layers": 3}
+    dataset_params : Dict[str, Any] (default=None)
+        parameters to initialize `TimeSeriesDataSet` [2]_ from `pandas.DataFrame`
+        max_prediction_length will be overwrite according to fh
+        time_idx, target, group_ids, time_varying_known_reals, time_varying_unknown_reals
+        will be infered from data, so you do not have to pass them
+    train_to_dataloader_params : Dict[str, Any] (default=None)
+        parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
+        by default {"train": True}
+    validation_to_dataloader_params : Dict[str, Any] (default=None)
+        parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
+        by default {"train": False}
+
+    References
+    ----------
+    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.nbeats.NBeats.html
+    .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries.TimeSeriesDataSet.html
+    """  # noqa: E501
+
+    _tags = {
+        # packaging info
+        # --------------
+        # "authors": ["XinyuWu"],
+        # "maintainers": ["XinyuWu"],
+        # "python_dependencies": "pytorch_forecasting"
+        # inherited from _PytorchForecastingAdapter
+        # estimator type
+        # --------------
+        "python_dependencies": ["pytorch_forecasting>=1.0.0", "torch", "lightning"],
+        "capability:global_forecasting": True,
+    }
+
+    def __init__(
+        self: "PytorchForecastingDeepAR",
+        model_params: Optional[Dict[str, Any]] = None,
+        allowed_encoder_known_variable_names: Optional[List[str]] = None,
+        dataset_params: Optional[Dict[str, Any]] = None,
+        train_to_dataloader_params: Optional[Dict[str, Any]] = None,
+        validation_to_dataloader_params: Optional[Dict[str, Any]] = None,
+        trainer_params: Optional[Dict[str, Any]] = None,
+        model_path: Optional[str] = None,
+    ) -> None:
+        self.allowed_encoder_known_variable_names = allowed_encoder_known_variable_names
+        super().__init__(
+            model_params,
+            dataset_params,
+            train_to_dataloader_params,
+            validation_to_dataloader_params,
+            trainer_params,
+            model_path,
+        )
+
+    @functools.cached_property
+    def algorithm_class(self: "PytorchForecastingDeepAR"):
+        """Import underlying pytorch-forecasting algorithm class."""
+        from pytorch_forecasting import DeepAR
+
+        return DeepAR
+
+    @functools.cached_property
+    def algorithm_parameters(self: "PytorchForecastingDeepAR") -> dict:
+        """Get keyword parameters for the DeepAR class.
+
+        Returns
+        -------
+        dict
+            keyword arguments for the underlying algorithm class
+        """
+        return (
+            {}
+            if self.allowed_encoder_known_variable_names is None
+            else {
+                "allowed_encoder_known_variable_names\
+                    ": self.allowed_encoder_known_variable_names,
+            }
+        )
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+            There are currently no reserved values for forecasters.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
+
+        try:
+            _check_soft_dependencies("pytorch_forecasting", severity="error")
+        except ModuleNotFoundError:
+            params = [
+                {
+                    "trainer_params": {
+                        "max_epochs": 1,  # for quick test
+                    },
+                    "dataset_params": {
+                        "max_encoder_length": 3,
+                    },
+                },
+                {
+                    "trainer_params": {
+                        "max_epochs": 1,  # for quick test
+                    },
+                    "model_params": {
+                        "cell_type": "GRU",
+                        "rnn_layers": 3,
+                    },
+                    "dataset_params": {
+                        "max_encoder_length": 3,
+                    },
+                },
+            ]
+        else:
+            from lightning.pytorch.callbacks import EarlyStopping
+
+            early_stop_callback = EarlyStopping(
+                monitor="val_loss",
+                min_delta=1e-2,
+                patience=3,
+                verbose=False,
+                mode="min",
+            )
+            params = [
+                {
+                    "trainer_params": {
+                        "max_epochs": 1,  # for quick test
+                    },
+                    "dataset_params": {
+                        "max_encoder_length": 3,
+                    },
+                },
+                {
+                    "trainer_params": {
+                        "callbacks": [early_stop_callback],
+                        "max_epochs": 1,  # for quick test
+                    },
+                    "model_params": {
+                        "cell_type": "GRU",
+                        "rnn_layers": 3,
+                    },
+                    "dataset_params": {
+                        "max_encoder_length": 3,
+                    },
+                },
+            ]
+
+        return params
+
+
+class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
+    """pytorch-forecasting NHiTS model.
+
+    Parameters
+    ----------
+    model_params :  Dict[str, Any] (default=None)
+        parameters to be passed to initialize the pytorch-forecasting NBeats model [1]_
+        for example: {"interpolation_mode": "nearest", "activation": "Tanh"}
+    dataset_params : Dict[str, Any] (default=None)
+        parameters to initialize `TimeSeriesDataSet` [2]_ from `pandas.DataFrame`
+        max_prediction_length will be overwrite according to fh
+        time_idx, target, group_ids, time_varying_known_reals, time_varying_unknown_reals
+        will be infered from data, so you do not have to pass them
+    train_to_dataloader_params : Dict[str, Any] (default=None)
+        parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
+        by default {"train": True}
+    validation_to_dataloader_params : Dict[str, Any] (default=None)
+        parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
+        by default {"train": False}
+
+    References
+    ----------
+    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.nbeats.NBeats.html
+    .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries.TimeSeriesDataSet.html
+    """  # noqa: E501
+
+    _tags = {
+        # packaging info
+        # --------------
+        # "authors": ["XinyuWu"],
+        # "maintainers": ["XinyuWu"],
+        # "python_dependencies": "pytorch_forecasting"
+        # inherited from _PytorchForecastingAdapter
+        # estimator type
+        # --------------
+        "python_dependencies": ["pytorch_forecasting>=1.0.0", "torch", "lightning"],
+        "capability:global_forecasting": True,
+    }
+
+    def __init__(
+        self: "PytorchForecastingNHiTS",
+        model_params: Optional[Dict[str, Any]] = None,
+        dataset_params: Optional[Dict[str, Any]] = None,
+        train_to_dataloader_params: Optional[Dict[str, Any]] = None,
+        validation_to_dataloader_params: Optional[Dict[str, Any]] = None,
+        trainer_params: Optional[Dict[str, Any]] = None,
+        model_path: Optional[str] = None,
+    ) -> None:
+        super().__init__(
+            model_params,
+            dataset_params,
+            train_to_dataloader_params,
+            validation_to_dataloader_params,
+            trainer_params,
+            model_path,
+        )
+
+    @functools.cached_property
+    def algorithm_class(self: "PytorchForecastingNHiTS"):
+        """Import underlying pytorch-forecasting algorithm class."""
+        from pytorch_forecasting import NHiTS
+
+        return NHiTS
+
+    @functools.cached_property
+    def algorithm_parameters(self: "PytorchForecastingNHiTS") -> dict:
+        """Get keyword parameters for the NHiTS class.
+
+        Returns
+        -------
+        dict
+            keyword arguments for the underlying algorithm class
+        """
+        if "n_blocks" in self._model_params.keys():
+            stacks = len(self._model_params["n_blocks"])
+        else:
+            stacks = 3  # default value in pytorch-forecasting
+        if self._max_prediction_length == 1:
+            # avoid the bug in https://github.com/jdb78/pytorch-forecasting/issues/1571
+            return {
+                "downsample_frequencies": [1] * stacks,
+                "pooling_sizes": [1] * stacks,
+            }
+        return {}
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+            There are currently no reserved values for forecasters.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
+
+        try:
+            _check_soft_dependencies("pytorch_forecasting", severity="error")
+        except ModuleNotFoundError:
+            params = [
+                {
+                    "trainer_params": {
+                        "max_epochs": 1,  # for quick test
+                    },
+                    "dataset_params": {
+                        "max_encoder_length": 3,
+                    },
+                },
+                {
+                    "trainer_params": {
+                        "max_epochs": 1,  # for quick test
+                    },
+                    "model_params": {
+                        "interpolation_mode": "nearest",
+                        "activation": "Tanh",
+                    },
+                    "dataset_params": {
+                        "max_encoder_length": 3,
+                    },
+                },
+            ]
+        else:
+            from lightning.pytorch.callbacks import EarlyStopping
+
+            early_stop_callback = EarlyStopping(
+                monitor="val_loss",
+                min_delta=1e-2,
+                patience=3,
+                verbose=False,
+                mode="min",
+            )
+            params = [
+                {
+                    "trainer_params": {
+                        "max_epochs": 1,  # for quick test
+                    },
+                    "dataset_params": {
+                        "max_encoder_length": 3,
+                    },
+                },
+                {
+                    "trainer_params": {
+                        "callbacks": [early_stop_callback],
+                        "max_epochs": 1,  # for quick test
+                    },
+                    "model_params": {
+                        "interpolation_mode": "nearest",
+                        "activation": "Tanh",
+                    },
+                    "dataset_params": {
+                        "max_encoder_length": 3,
+                    },
+                },
+            ]
+
+        return params
