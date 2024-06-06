@@ -13,6 +13,7 @@ build:
   os: ubuntu-22.04
   tools:
     python: "3.11"
+  timeout: 1800 # 30 minutes
 
 sphinx:
   configuration: docs/source/conf.py
