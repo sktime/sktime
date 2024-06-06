@@ -26,7 +26,7 @@ ValueError and TypeError, if requested conversion is not possible
                             (depending on conversion logic)
 """
 
-__author__ = ["fkiraly"]
+__author__ = ["fkiraly", "shlok191"]
 
 __all__ = ["convert_dict"]
 
@@ -300,3 +300,61 @@ if _check_soft_dependencies(["polars", "pyarrow"], severity="none"):
     _extend_conversions(
         "polars_lazy_table", "pd_DataFrame_Table", convert_dict, MTYPE_LIST_TABLE
     )
+
+if _check_soft_dependencies(["gluonts"], severity=None):
+    from gluonts.dataset.common import ListDataset
+    from gluonts.dataset.field_names import FieldName
+
+    def convert_gluonts_listDataset_to_pandas(obj, store=None):
+        dfs = []
+
+        # Processing each given time series
+        for i, time_series in enumerate(obj):
+            # Extracting important features
+            target = time_series["target"]
+            timestamp = time_series["start"]
+            freq = timestamp.freq
+
+            # Creating new indices based on the start time and the frequency
+            index = pd.date_range(
+                start=timestamp.to_timestamp(), freq=freq, periods=len(target)
+            )
+            df = pd.DataFrame(target, index=index)
+
+            df = df.reset_index().rename(columns={"index": "time"})
+
+            # Adding 'series_id' column as the first column
+            df.insert(0, "series_id", i)
+            dfs.append(df)
+
+        # Concatenating all the given dataframes
+        dfs = pd.concat(dfs, ignore_index=False)
+
+        return dfs
+
+    def convert_pandas_to_gluonts_listDataset(obj, store=None):
+        time_series_list = []
+
+        # Assert correct type of the object
+        if not isinstance(obj, pd.DataFrame):
+            raise TypeError("The passed object must be a valid pandas DataFrame!")
+
+        for _, group_data in obj.groupby("series_id"):
+            time_series_list.append(
+                {
+                    FieldName.START: group_data["time"].iloc[0],
+                    FieldName.TARGET: group_data.iloc[:, 2:].values,
+                }
+            )
+
+        dataset = ListDataset(time_series_list, freq="D", one_dim_target=False)
+        return dataset
+
+    # Add the functions to convert_dict
+    convert_dict[
+        ("gluonTS_ListDataset", "pd_DataFrame_Table", "Table")
+    ] = convert_gluonts_listDataset_to_pandas
+
+    convert_dict[
+        ("pd_DataFrame_Table", "gluonTS_ListDataset", "Table")
+    ] = convert_pandas_to_gluonts_listDataset

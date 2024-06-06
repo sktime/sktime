@@ -18,7 +18,6 @@ MTYPE_REGISTER_TABLE = [
     ("polars_eager_table", "Table", "polars.DataFrame representation of a data table"),
     ("polars_lazy_table", "Table", "polars.LazyFrame representation of a data table"),
     ("gluonTS_ListDataset", "Table", "gluonts.ListDataset representation of data"),
-    ("gluonTS_FileDataset", "Table", "gluonts.FileDataset representation of data"),
 ]
 
 MTYPE_LIST_TABLE = [x[0] for x in MTYPE_REGISTER_TABLE]
