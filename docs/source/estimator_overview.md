@@ -26,11 +26,18 @@
 
 /* Checkbox container styling */
 #checkboxContainer {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* Four columns */
+    gap: 10px;
     width: 100%;
     padding: 10px;
     border: 1px solid #ccc;
     margin-bottom: 10px;
     box-sizing: border-box;
+}
+
+#checkboxContainer input[type="checkbox"] {
+    margin-right: 5px;
 }
 
 /* Table container styling */
@@ -75,7 +82,7 @@ The table below gives an overview of all estimators in sktime.
     </div>
 </div>
 
-<p id="checkboxContainer"></p>
+<div id="checkboxContainer"></div>
 
 
 <div class="table-container">
@@ -275,11 +282,12 @@ function renderTable(data, header) {
 function populateCheckboxes() {
 
     const filter = document.getElementById("filterOptions").value;
+    const tags = Object.entries(visibleTagsOfTypes[filter];
 
     const checkboxContainer = document.getElementById("checkboxContainer");
     checkboxContainer.innerHTML = "Check to Show Tags:";
 
-    for (const [key, value] of Object.entries(visibleTagsOfTypes[filter])) {
+    for (const [key, value] of tags) {
         const checkbox = document.createElement("input");
         checkbox.type = "checkbox";
         checkbox.id = key;
@@ -290,8 +298,11 @@ function populateCheckboxes() {
         label.htmlFor = key;
         label.textContent = key;
 
-        checkboxContainer.appendChild(checkbox);
-        checkboxContainer.appendChild(label);
+        const checkboxWrapper = document.createElement("div");
+        checkboxWrapper.appendChild(checkbox);
+        checkboxWrapper.appendChild(label);
+
+        checkboxContainer.appendChild(checkboxWrapper);
     }
 }
 
