@@ -45,7 +45,10 @@ def get_path_from_module(module_str):
             raise ImportError(
                 f"Error in get_path_from_module, module '{module_str}' not found."
             )
-        return module_spec.origin
+        module_path = module_spec.origin
+        if module_path.endswith("__init__.py"):
+            return module_path[:-11]
+        return module_path
     except Exception as e:
         raise ImportError(f"Error finding module '{module_str}'") from e
 
@@ -53,6 +56,8 @@ def get_path_from_module(module_str):
 @lru_cache
 def is_module_changed(module_str):
     """Check if a module has changed compared to the main branch.
+
+    If a child module has changed, the parent module is considered changed as well.
 
     Parameters
     ----------

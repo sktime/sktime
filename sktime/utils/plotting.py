@@ -5,17 +5,8 @@
 __all__ = ["plot_series", "plot_correlations", "plot_windows", "plot_calibration"]
 __author__ = ["mloning", "RNKuhns", "Dbhasin1", "chillerobscuro", "benheid"]
 
-import copy
 import math
 from warnings import simplefilter, warn
-
-import numpy as np
-import pandas as pd
-
-from sktime.datatypes import convert_to
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-from sktime.utils.validation.forecasting import check_interval_df, check_y
-from sktime.utils.validation.series import check_consistent_index_type
 
 
 def plot_series(
@@ -80,11 +71,17 @@ def plot_series(
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> fig, ax = plot_series(y)  # doctest: +SKIP
-
     """
+    from sktime.utils.dependencies import _check_soft_dependencies
+
     _check_soft_dependencies("matplotlib", "seaborn")
     import matplotlib.pyplot as plt
+    import pandas as pd
     import seaborn as sns
+
+    from sktime.datatypes import convert_to
+    from sktime.utils.validation.forecasting import check_interval_df, check_y
+    from sktime.utils.validation.series import check_consistent_index_type
 
     for y in series:
         check_y(y)
@@ -128,7 +125,9 @@ def plot_series(
         check_consistent_index_type(l_series[0].index, y.index)
 
     if isinstance(l_series[0].index, pd.core.indexes.period.PeriodIndex):
-        tmp = copy.deepcopy(l_series)  # local copy
+        from copy import deepcopy
+
+        tmp = deepcopy(l_series)  # local copy
         l_series = tmp
 
     for y in l_series:
@@ -235,8 +234,14 @@ def plot_lags(series, lags=1, suptitle=None):
     >>> fig, ax = plot_lags(y, lags=2) # plot of y(t) with y(t-2)  # doctest: +SKIP
     >>> fig, ax = plot_lags(y, lags=[1,2,3]) # y(t) & y(t-1), y(t-2).. # doctest: +SKIP
     """
+    from sktime.utils.dependencies import _check_soft_dependencies
+
     _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
+    import numpy as np
+    import pandas as pd
+
+    from sktime.utils.validation.forecasting import check_y
 
     check_y(series)
 
@@ -345,9 +350,15 @@ def plot_correlations(
     >>> y = load_airline()
     >>> fig, ax = plot_correlations(y)  # doctest: +SKIP
     """
+    from sktime.utils.dependencies import _check_soft_dependencies
+
     _check_soft_dependencies("matplotlib", "statsmodels")
     import matplotlib.pyplot as plt
+    import numpy as np
     from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+
+    from sktime.datatypes import convert_to
+    from sktime.utils.validation.forecasting import check_y
 
     series = check_y(series)
     series = convert_to(series, "pd.Series", "Series")
@@ -440,8 +451,11 @@ def plot_windows(cv, y, title="", ax=None):
     ax : matplotlib.axes.Axes
         matplotlib axes object with the figure
     """
+    from sktime.utils.dependencies import _check_soft_dependencies
+
     _check_soft_dependencies("matplotlib", "seaborn")
     import matplotlib.pyplot as plt
+    import numpy as np
     import seaborn as sns
     from matplotlib.ticker import MaxNLocator
 
@@ -557,7 +571,13 @@ def plot_calibration(y_true, y_pred, ax=None):
     ax : matplotlib.axes.Axes
         matplotlib axes object with the figure
     """
+    from sktime.utils.dependencies import _check_soft_dependencies
+
+    _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
+    import pandas as pd
+
+    from sktime.datatypes import convert_to
 
     series = convert_to(y_true, "pd.Series", "Series")
 
