@@ -12,14 +12,14 @@ from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.panel import _make_panel_X
 
 
-@pytest.fixture
+@pytest.fixture()
 def X1():
     return _make_panel_X(
         n_instances=5, n_columns=5, n_timepoints=5, random_state=1, all_positive=True
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def X2():
     return _make_panel_X(
         n_instances=6, n_columns=5, n_timepoints=5, random_state=2, all_positive=True
@@ -27,8 +27,8 @@ def X2():
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.dists_kernels"),
-    reason="run test only if softdeps are present and incrementally (if requested)",
+    not run_test_module_changed(["sktime.distances", "sktime.dists_kernels"]),
+    reason="test only if anything in sktime.classification module has changed",
 )
 def test_mul_algebra_dunder(X1, X2):
     """Test multiplication dunder, algebraic case (two panel distances)."""
@@ -66,8 +66,8 @@ def test_mul_algebra_dunder(X1, X2):
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.dists_kernels"),
-    reason="run test only if softdeps are present and incrementally (if requested)",
+    not run_test_module_changed(["sktime.distances", "sktime.dists_kernels"]),
+    reason="test only if anything in sktime.classification module has changed",
 )
 def test_add_algebra_dunder(X1, X2):
     """Test addition dunder, algebraic case (two panel distances)."""
@@ -105,8 +105,8 @@ def test_add_algebra_dunder(X1, X2):
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.dists_kernels"),
-    reason="run test only if softdeps are present and incrementally (if requested)",
+    not run_test_module_changed(["sktime.distances", "sktime.dists_kernels"]),
+    reason="test only if anything in sktime.classification module has changed",
 )
 def test_mixed_algebra_dunders(X1, X2):
     """Test mix of algebraic dunders."""
@@ -132,8 +132,8 @@ def test_mixed_algebra_dunders(X1, X2):
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.dists_kernels"),
-    reason="run test only if softdeps are present and incrementally (if requested)",
+    not run_test_module_changed(["sktime.distances", "sktime.dists_kernels"]),
+    reason="test only if anything in sktime.classification module has changed",
 )
 def test_pw_trafo_pipeline_mul_dunder(X1, X2):
     """Tests creation of pairwise panel trafo pipelines using mul dunder."""
@@ -165,8 +165,8 @@ def test_pw_trafo_pipeline_mul_dunder(X1, X2):
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.dists_kernels"),
-    reason="run test only if softdeps are present and incrementally (if requested)",
+    not run_test_module_changed(["sktime.distances", "sktime.dists_kernels"]),
+    reason="test only if anything in sktime.classification module has changed",
 )
 @pytest.mark.parametrize("constant", [0, 1, -0.25])
 def test_dunders_with_constants(constant, X1, X2):
@@ -195,8 +195,8 @@ def test_dunders_with_constants(constant, X1, X2):
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.dists_kernels"),
-    reason="run test only if softdeps are present and incrementally (if requested)",
+    not run_test_module_changed(["sktime.distances", "sktime.dists_kernels"]),
+    reason="test only if anything in sktime.classification module has changed",
 )
 def test_getitem_dunder(X1, X2):
     """Tests creation of pairwise panel trafo pipelines using mul dunder."""
