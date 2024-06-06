@@ -7,12 +7,39 @@
     display: none;
 }
 
-/* .table-container {
+/* Container for search and dropdown */
+.top-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     width: 100%;
     padding: 10px;
-    overflow-x: auto;
-} */
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+}
 
+/* Dropdown container styling */
+#dropdownContainer {
+    flex: 1;
+}
+
+/* Checkbox container styling */
+#checkboxContainer {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+}
+
+/* Table container styling */
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+/* Table styling */
 #tableContainer {
     float: left;
     table-layout: fixed;
@@ -33,27 +60,27 @@
 
 The table below gives an overview of all estimators in sktime.
 
-<input type="text" id="searchInput" placeholder="Search the table ..." />
-
-<div id="dropdownContainer">
-<select id="filterOptions">
-    <option value="all" selected>ALL</option>
-    <option value="forecaster">Forecaster</option>
-    <option value="transformer">Transformer</option>
-    <option value="regressor">Regressor</option>
-    <option value="aligner">Aligner</option>
-    <option value="clusterer">Clusterer</option>
-    <option value="classifier">Classifier</option>
-</select>
-
-<p>
-<span id="checkboxContainer"></span>
-</p>
+<div class="top-container">
+    <input type="text" id="searchInput" placeholder="Search the table ..." />
+    <div id="dropdownContainer">
+        <select id="filterOptions">
+            <option value="all" selected>ALL</option>
+            <option value="forecaster">Forecaster</option>
+            <option value="transformer">Transformer</option>
+            <option value="regressor">Regressor</option>
+            <option value="aligner">Aligner</option>
+            <option value="clusterer">Clusterer</option>
+            <option value="classifier">Classifier</option>
+        </select>
+    </div>
 </div>
 
+<p id="checkboxContainer"></p>
+
+
 <div class="table-container">
-<!-- Table to render estimators overview -->
-<table id="tableContainer"></table>
+    <!-- Table to render estimators overview -->
+    <table id="tableContainer"></table>
 </div>
 
 <script>
