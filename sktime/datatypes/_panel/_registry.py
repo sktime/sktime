@@ -40,6 +40,11 @@ MTYPE_REGISTER_PANEL = [
         "Panel",
         "dask frame with one instance and one time index, as per dask_to_pd convention",
     ),
+    (
+        "polars_panel",
+        "Panel",
+        "Polars frame representing a Panel, with one instance and one time index",
+    ),
 ]
 
 MTYPE_SOFT_DEPS_PANEL = {"xr.DataArray": "xarray", "dask_panel": "dask"}
