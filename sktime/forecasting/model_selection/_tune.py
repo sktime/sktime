@@ -25,7 +25,17 @@ from sktime.split.base import BaseSplitter
 from sktime.utils.parallel import parallelize
 from sktime.utils.validation.forecasting import check_scoring
 from sktime.utils.warnings import warn
-
+from sktime.forecasting.compose import TransformedTargetForecaster
+from sktime.split import ExpandingWindowSplitter
+from sktime.forecasting.naive import NaiveForecaster
+from sklearn.model_selection import ParameterGrid, ParameterSampler, check_cv
+from sktime.forecasting.model_evaluation import evaluate
+from sktime.utils.validation.forecasting import check_scoring
+from sktime.datasets import load_shampoo_sales
+from sklearn.model_selection import ParameterGrid
+from sklearn.exceptions import NotFittedError
+import optuna
+import numpy as np
 
 class BaseGridSearch(_DelegatedForecaster):
     _tags = {
@@ -1587,3 +1597,104 @@ def _fit_and_score_skopt(params, meta):
         return out
 
     return _fit_and_score(params)
+
+
+class TuneForecastingOptunaCV(BaseGridSearch):
+    def __init__(
+        self,
+        forecaster,
+        cv,
+        param_grid,
+        scoring=None,
+        strategy="refit",
+        refit=True,
+        verbose=0,
+        return_n_best_forecasters=1,
+        backend="loky",
+        update_behaviour="full_refit",
+        error_score=np.nan,
+        n_evals=100,
+    ):
+        super(TuneForecastingOptunaCV, self).__init__(
+            forecaster=forecaster,
+            scoring=scoring,
+            refit=refit,
+            cv=cv,
+            strategy=strategy,
+            verbose=verbose,
+            return_n_best_forecasters=return_n_best_forecasters,
+            backend=backend,
+            update_behaviour=update_behaviour,
+            error_score=error_score,
+        )
+        self.param_grid = param_grid
+        self.n_evals = n_evals
+
+    def _fit(self, y, X=None, fh=None):
+        cv = check_cv(self.cv)
+        scoring = check_scoring(self.scoring, obj=self)
+        scoring_name = f"test_{scoring.name}"
+
+        def _optuna_fit_and_score(trial):
+            forecaster = self.forecaster.clone()
+            params = {name: trial.suggest_categorical(name, v) for name, v in self.param_grid.items()}
+            forecaster.set_params(**params)
+
+            out = evaluate(
+                forecaster,
+                cv,
+                y,
+                X,
+                strategy=self.strategy,
+                scoring=scoring,
+                error_score=self.error_score,
+            )
+            out = out.filter(items=[scoring_name, "fit_time", "pred_time"], axis=1)
+            out = out.mean().add_prefix("mean_")
+
+            return out[f"mean_{scoring_name}"]
+
+        study = optuna.create_study(direction='minimize')
+        study.optimize(_optuna_fit_and_score, n_trials=self.n_evals)
+
+        # Store parameters of each trial in a list
+        params_list = [trial.params for trial in study.trials]
+
+        results = study.trials_dataframe()
+
+        # Add the parameters as a new column to the DataFrame
+        results["params"] = params_list
+        results[f"rank_{scoring_name}"] = results["value"].rank(ascending=scoring.get_tag("lower_is_better"))
+        self.cv_results_ = results
+        self.best_index_ = results["value"].idxmin()
+        if self.best_index_ == -1:
+            raise NotFittedError(
+                f"""All fits of forecaster failed,
+                set error_score='raise' to see the exceptions.
+                Failed forecaster: {self.forecaster}"""
+            )
+        self.best_score_ = results.loc[self.best_index_, "value"]
+        self.best_params_ = results.loc[self.best_index_, "params"]
+        self.best_forecaster_ = self.forecaster.clone().set_params(**self.best_params_)
+
+        if self.refit:
+            self.best_forecaster_.fit(y, X, fh)
+
+        results = results.sort_values(by="value", ascending=scoring.get_tag("lower_is_better"))
+        self.n_best_forecasters_ = []
+        self.n_best_scores_ = []
+        for i in range(self.return_n_best_forecasters):
+            params = results["params"].iloc[i]
+            rank = results[f"rank_{scoring_name}"].iloc[i]
+            rank = str(int(rank))
+            forecaster = self.forecaster.clone().set_params(**params)
+            if self.refit:
+                forecaster.fit(y, X, fh)
+            self.n_best_forecasters_.append((rank, forecaster))
+            score = results["value"].iloc[i]
+            self.n_best_scores_.append(score)
+
+        return self
+
+    def _run_search(self, evaluate_candidates):
+        return evaluate_candidates(ParameterGrid(self.param_grid))
