@@ -282,7 +282,7 @@ function renderTable(data, header) {
 function populateCheckboxes() {
 
     const filter = document.getElementById("filterOptions").value;
-    const tags = Object.entries(visibleTagsOfTypes[filter];
+    const tags = Object.entries(visibleTagsOfTypes[filter]);
 
     const checkboxContainer = document.getElementById("checkboxContainer");
     checkboxContainer.innerHTML = "Check to Show Tags:";
