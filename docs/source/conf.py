@@ -305,7 +305,7 @@ def _make_estimator_overview(app):
     """Make estimator overview table."""
     import pandas as pd
 
-    from sktime.registry import all_estimators, all_tags
+    from sktime.registry import all_estimators
 
     def _process_author_info(author_info):
         """Process author information from source code files.
