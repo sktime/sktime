@@ -40,8 +40,7 @@ sscv = TuneForecastingOptunaCV(
     param_grid=params_distributions,
     cv=cv,
     n_evals=5,
-    # n_points=2,
-    # n_iter=2,
+
 )
 sscv.fit(y, X)
 print(sscv.cv_results_.params)
