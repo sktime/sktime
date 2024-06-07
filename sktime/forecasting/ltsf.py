@@ -499,3 +499,153 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
         ]
 
         return params
+
+
+class LTSFTransfomer(BaseDeepNetworkPyTorch):
+    """LTSF-Transformer Forecaster."""
+
+    def __init__(
+        self,
+        seq_len,
+        pred_len,
+        *,
+        num_epochs=16,
+        batch_size=8,
+        in_channels=1,
+        individual=False,
+        criterion=None,
+        criterion_kwargs=None,
+        optimizer=None,
+        optimizer_kwargs=None,
+        lr=0.001,
+        custom_dataset_train=None,
+        custom_dataset_pred=None,
+        output_attention=False,
+        embed_type=0,
+        embed="fixed",
+        enc_in=7,
+        dec_in=7,
+        d_model=512,
+        n_heads=8,
+        d_ff=2048,
+        e_layers=3,
+        d_layers=2,
+        factor=5,
+        dropout=0.1,
+        activation="relu",
+        c_out=7,
+        freq='h',
+    ):
+        self.seq_len = seq_len
+        self.pred_len = pred_len
+        self.individual = individual
+        self.in_channels = in_channels
+        self.criterion = criterion
+        self.optimizer = optimizer
+        self.criterion_kwargs = criterion_kwargs
+        self.optimizer_kwargs = optimizer_kwargs
+        self.lr = lr
+        self.num_epochs = num_epochs
+        self.custom_dataset_train = custom_dataset_train
+        self.custom_dataset_pred = custom_dataset_pred
+        self.batch_size = batch_size
+
+        self.output_attention = output_attention
+        self.embed_type = embed_type
+        self.embed = embed
+        self.enc_in = enc_in
+        self.dec_in = dec_in
+        self.d_model = d_model
+        self.n_heads = n_heads
+        self.d_ff = d_ff
+        self.e_layers = e_layers
+        self.d_layers = d_layers
+        self.factor = factor
+        self.dropout = dropout
+        self.activation = activation
+        self.c_out = c_out
+        self.freq = freq
+
+        super().__init__(
+            num_epochs=num_epochs,
+            batch_size=batch_size,
+            in_channels=in_channels,
+            individual=individual,
+            criterion_kwargs=criterion_kwargs,
+            optimizer=optimizer,
+            optimizer_kwargs=optimizer_kwargs,
+            lr=lr,
+        )
+
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+        if _check_soft_dependencies("torch"):
+            import torch
+
+            self.criterions = {
+                "MSE": torch.nn.MSELoss,
+                "L1": torch.nn.L1Loss,
+                "SmoothL1": torch.nn.SmoothL1Loss,
+                "Huber": torch.nn.HuberLoss,
+            }
+
+            self.optimizers = {
+                "Adadelta": torch.optim.Adadelta,
+                "Adagrad": torch.optim.Adagrad,
+                "Adam": torch.optim.Adam,
+                "AdamW": torch.optim.AdamW,
+                "SGD": torch.optim.SGD,
+            }
+
+    def _build_network(self, fh):
+        from sktime.networks.ltsf._ltsf import LTSFTransformerNetwork
+
+        class Configs:
+            def __init__(self_config):
+                self_config.pred_len = self.pred_len
+                self_config.output_attention = self.output_attention
+                self_config.embed_type = self.embed_type
+                self_config.embed = self.embed
+                self_config.enc_in = self.enc_in
+                self_config.dec_in = self.dec_in
+                self_config.d_model = self.d_model
+                self_config.n_heads = self.n_heads
+                self_config.d_ff = self.d_ff
+                self_config.e_layers = self.e_layers
+                self_config.d_layers = self.d_layers
+                self_config.factor = self.factor
+                self_config.dropout = self.dropout
+                self_config.activation = self.activation
+                self_config.c_out = self.c_out
+                self_config.freq = self.freq
+
+        return LTSFTransformerNetwork(Configs())._build()
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        params = [
+            {
+                "seq_len": 2,
+                "pred_len": 1,
+                "lr": 0.005,
+                "optimizer": "Adam",
+                "batch_size": 1,
+                "num_epochs": 1,
+                "individual": True,
+            }
+        ]
+
+        return params
