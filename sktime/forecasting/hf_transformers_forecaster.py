@@ -59,9 +59,41 @@ class HFTransformersForecaster(BaseForecaster):
     config : dict, default={}
         Configuration to use for the model. See the `transformers`
         documentation for details.
-    peft_config_dict : dict, default={}
+    peft_config_dict : dict, default={"target_modules": ["q_proj", "v_proj"]}
         Configuration dictionary specifying parameters and settings relevant to
-        the chosen PEFT strategy (e.g., LoRA, LoHA, AdaLoRA).
+        the chosen PEFT strategy (e.g., lora, loha, adalora). Below are the
+        parameters that can be used for each PEFT method:
+
+        - LoRA:
+          - `r` (int): Lora attention dimension (the "rank").
+          - `target_modules` (Optional[Union[List[str], str]]): The names of the modules
+            to apply the adapter to.
+          - `lora_alpha` (int): The alpha parameter for Lora scaling.
+          - `lora_dropout` (float): The dropout probability for Lora layers.
+        For more parameters visit
+        https://huggingface.co/docs/peft/en/package_reference/lora#peft.LoraConfig
+
+        - LoHA:
+          - `r` (int): LoHa rank.
+          - `alpha` (int): The alpha parameter for LoHa scaling.
+          - `target_modules` (Optional[Union[List[str], str]]): The names of the modules
+            to apply the adapter to.
+          - `rank_dropout` (float): The dropout probability for rank dimension
+            during training.
+          - `module_dropout` (float): The dropout probability for disabling LoHa modules
+            during training.
+        For more parameters visit
+        https://huggingface.co/docs/peft/en/package_reference/loha#peft.LoHaConfig
+
+        - AdaLoRA:
+          - `r` (int): Lora attention dimension (the "rank").
+          - `target_modules` (Optional[Union[List[str], str]]): The names of the modules
+            to apply the adapter to.
+          - `lora_alpha` (int): The alpha parameter for Lora scaling.
+          - `lora_dropout` (float): The dropout probability for Lora layers.
+        For more parameters visit
+        https://huggingface.co/docs/peft/en/package_reference/adalora#peft.AdaLoraConfig
+
     training_args : dict, default={}
         Training arguments to use for the model. See `transformers.TrainingArguments`
         for details.
@@ -166,7 +198,9 @@ class HFTransformersForecaster(BaseForecaster):
         self._config = config if config is not None else {}
         self.peft_config_dict = peft_config_dict
         self._peft_config_dict = (
-            peft_config_dict if peft_config_dict is not None else {}
+            peft_config_dict
+            if peft_config_dict is not None
+            else {"target_modules": ["q_proj", "v_proj"]}
         )
         self.training_args = training_args
         self._training_args = training_args if training_args is not None else {}
