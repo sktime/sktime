@@ -27,7 +27,7 @@
 /* Checkbox container styling */
 #checkboxContainer {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Number of columns maximal without causing wrap */
+    grid-template-columns: repeat(3, 1fr); /* Three columns */
     gap: 10px;
     width: 100%;
     padding: 10px;
