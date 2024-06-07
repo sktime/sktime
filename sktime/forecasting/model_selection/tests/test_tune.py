@@ -21,6 +21,7 @@ from sktime.forecasting.model_selection import (
     ForecastingGridSearchCV,
     ForecastingRandomizedSearchCV,
     ForecastingSkoptSearchCV,
+    TuneForecastingOptunaCV,
 )
 from sktime.forecasting.model_selection._tune import BaseGridSearch
 from sktime.forecasting.naive import NaiveForecaster
@@ -51,6 +52,7 @@ TUNER_CLASSES = [
     ForecastingGridSearchCV,
     ForecastingRandomizedSearchCV,
     ForecastingSkoptSearchCV,
+    TuneForecastingOptunaCV,
 ]
 
 
@@ -325,6 +327,41 @@ def test_skoptcv_multiple_forecaster():
     )
     sscv.fit(y, X)
     assert len(sscv.cv_results_) == 5
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(TuneForecastingOptunaCV),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize(
+    "forecaster, param_grid", [(NAIVE, NAIVE_GRID), (PIPE, PIPE_GRID)]
+)
+@pytest.mark.parametrize("scoring", TEST_METRICS)
+@pytest.mark.parametrize("error_score", ERROR_SCORES)
+@pytest.mark.parametrize("cv", CVs)
+@pytest.mark.parametrize("n_iter", TEST_N_ITERS)
+@pytest.mark.parametrize("random_state", TEST_RANDOM_SEEDS)
+def test_optuna(forecaster, param_grid, cv, scoring, error_score, n_iter, random_state):
+    """Test TuneForecastingOptunaCV.
+
+    Tests that TuneForecastingOptunaCV successfully searches the parameter
+    distributions to identify the best parameter set
+    """
+    y, X = load_longley()
+    rscv = TuneForecastingOptunaCV(
+        forecaster,
+        param_grid=param_grid,
+        cv=cv,
+        scoring=scoring,
+        error_score=error_score,
+    )
+    rscv.fit(y, X)
+
+    param_distributions = list(
+        ParameterSampler(param_grid, n_iter, random_state=random_state)
+    )
+    _check_cv(forecaster, rscv, cv, param_distributions, y, X, scoring)
+    _check_fitted_params_keys(rscv.get_fitted_params())
 
 
 BACKEND_TEST = _get_parallel_test_fixtures("estimator")
