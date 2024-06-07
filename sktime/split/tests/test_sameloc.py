@@ -2,11 +2,17 @@
 """Tests for SameLoc splitter."""
 
 import numpy as np
+import pytest
 
 from sktime.split import ExpandingWindowSplitter, SameLocSplitter
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.hierarchical import _make_hierarchical
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([ExpandingWindowSplitter, SameLocSplitter]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_same_loc_splitter():
     """Test that SameLocSplitter works as intended."""
     from sktime.datasets import load_airline
@@ -35,6 +41,10 @@ def test_same_loc_splitter():
         assert np.all(tt1 == tt2)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([ExpandingWindowSplitter, SameLocSplitter]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_same_loc_splitter_hierarchical():
     """Test that SameLocSplitter works as intended for hierarchical data."""
     hierarchy_levels1 = (2, 2)

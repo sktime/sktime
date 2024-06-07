@@ -450,7 +450,7 @@ class FittedParamExtractor(BaseTransformer):
         """
         from sktime.forecasting.exp_smoothing import ExponentialSmoothing
         from sktime.forecasting.trend import TrendForecaster
-        from sktime.utils.validation._dependencies import _check_estimator_deps
+        from sktime.utils.dependencies import _check_estimator_deps
 
         # accessing a nested parameter
         params = [

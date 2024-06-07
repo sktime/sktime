@@ -8,6 +8,7 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.time_since import TimeSince
 from sktime.utils._testing.hierarchical import _make_hierarchical
 
@@ -60,6 +61,10 @@ def df_datetime_daily_idx_panel():
     return _make_hierarchical(hierarchy_levels=(2,), min_timepoints=3, max_timepoints=3)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(TimeSince),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_fit_transform_int_idx_output(df_int_idx):
     """Tests that we get the expected outputs."""
     transformer = TimeSince(
@@ -74,6 +79,10 @@ def test_fit_transform_int_idx_output(df_int_idx):
     assert_frame_equal(Xt, expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(TimeSince),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_fit_transform_datetime_15mins_idx_numeric_output(df_datetime_15mins_idx):
     """Tests that we get the expected outputs."""
     transformer = TimeSince(
@@ -89,6 +98,10 @@ def test_fit_transform_datetime_15mins_idx_numeric_output(df_datetime_15mins_idx
     assert_frame_equal(Xt, expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(TimeSince),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_fit_transform_datetime_weekly_wed_idx_numeric_output(
     df_datetime_weekly_wed_idx,
 ):
@@ -106,6 +119,10 @@ def test_fit_transform_datetime_weekly_wed_idx_numeric_output(
     assert_frame_equal(Xt, expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(TimeSince),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_fit_transform_datetime_monthly_idx_numeric_output(df_datetime_monthly_idx):
     """Tests that we get the expected outputs."""
     transformer = TimeSince(
@@ -120,6 +137,10 @@ def test_fit_transform_datetime_monthly_idx_numeric_output(df_datetime_monthly_i
     assert_frame_equal(Xt, expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(TimeSince),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_fit_transform_datetime_monthly_idx_datetime_output(df_datetime_monthly_idx):
     """Tests that we get the expected outputs."""
     transformer = TimeSince(
@@ -138,6 +159,10 @@ def test_fit_transform_datetime_monthly_idx_datetime_output(df_datetime_monthly_
     assert_frame_equal(Xt, expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(TimeSince),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_fit_transform_period_monthly_idx_numeric_output(df_period_monthly_idx):
     """Tests that we get the expected outputs."""
     transformer = TimeSince(
@@ -151,6 +176,10 @@ def test_fit_transform_period_monthly_idx_numeric_output(df_period_monthly_idx):
     assert_frame_equal(Xt, expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(TimeSince),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_fit_transform_period_monthly_idx_period_output(df_period_monthly_idx):
     """Tests that we get the expected outputs."""
     transformer = TimeSince(
@@ -171,6 +200,10 @@ def test_fit_transform_period_monthly_idx_period_output(df_period_monthly_idx):
     assert_frame_equal(Xt, expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(TimeSince),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_fit_transform_datetime_monthly_idx_multiple_starts_output(
     df_datetime_monthly_idx,
 ):
@@ -193,6 +226,10 @@ def test_fit_transform_datetime_monthly_idx_multiple_starts_output(
     assert_frame_equal(Xt, expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(TimeSince),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_fit_transform_datetime_monthly_idx_multiple_starts_positive_only_output(
     df_datetime_monthly_idx,
 ):
@@ -215,6 +252,10 @@ def test_fit_transform_datetime_monthly_idx_multiple_starts_positive_only_output
     assert_frame_equal(Xt, expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(TimeSince),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_fit_transform_datetime_daily_idx_panel_output(
     df_datetime_daily_idx_panel,
 ):
@@ -238,6 +279,10 @@ def test_fit_transform_datetime_daily_idx_panel_output(
     assert_frame_equal(Xt, expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(TimeSince),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_fit_transform_datetime_daily_idx_panel_multiple_starts_output(
     df_datetime_daily_idx_panel,
 ):
