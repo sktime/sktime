@@ -8,7 +8,8 @@ import pytest
 from sktime.datasets import load_airline
 from sktime.datatypes._utilities import get_cutoff
 from sktime.forecasting.tests._config import TEST_OOS_FHS, VALID_INDEX_FH_COMBINATIONS
-from sktime.split import temporal_train_test_split
+from sktime.split import TemporalTrainTestSplitter, temporal_train_test_split
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.forecasting import _make_fh
 from sktime.utils._testing.series import _make_series
 
@@ -29,6 +30,10 @@ def _check_train_test_split_y(fh, split):
     np.testing.assert_array_equal(test.index, fh.to_absolute(cutoff).to_numpy())
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([TemporalTrainTestSplitter, temporal_train_test_split]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "index_type, fh_type, is_relative", VALID_INDEX_FH_COMBINATIONS
 )
@@ -47,6 +52,10 @@ def test_split_by_fh(index_type, fh_type, is_relative, values):
     _check_train_test_split_y(fh, split)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([TemporalTrainTestSplitter, temporal_train_test_split]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_temporal_train_test_split_float_only_y():
     """Test temporal_train_test_split expected output on float size inputs."""
     y = load_airline()
@@ -79,6 +88,10 @@ def test_temporal_train_test_split_float_only_y():
     assert (y[43 : (43 + 29)] == y_test).all()
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([TemporalTrainTestSplitter, temporal_train_test_split]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_temporal_train_test_split_int_only_y():
     """Test temporal_train_test_split expected output on float size inputs."""
     y = load_airline()
@@ -111,6 +124,10 @@ def test_temporal_train_test_split_int_only_y():
     assert (y[43 : (43 + 29)] == y_test).all()
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([TemporalTrainTestSplitter, temporal_train_test_split]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_temporal_train_test_split_hierarchical():
     """Test correctness of temporal_train_test_split for hierarchical data.
 

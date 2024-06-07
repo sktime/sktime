@@ -1153,7 +1153,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        "python_dependencies": ["numpy<1.24", "scikit-optimize"],
+        "python_dependencies": ["scikit-optimize"],
         "python_version": ">= 3.6",
         "python_dependencies_alias": {"scikit-optimize": "skopt"},
     }
@@ -1586,4 +1586,4 @@ def _fit_and_score_skopt(params, meta):
 
         return out
 
-    return _fit_and_score(**params)
+    return _fit_and_score(params)
