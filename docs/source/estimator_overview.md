@@ -27,7 +27,7 @@
 /* Checkbox container styling */
 #checkboxContainer {
     display: grid;
-    grid-template-columns: repeat(4, 1fr); /* Four columns */
+    grid-template-columns: repeat(3, 1fr); /* Three columns */
     gap: 10px;
     width: 100%;
     padding: 10px;
@@ -65,19 +65,29 @@
 
 # Estimator Overview
 
-The table below gives an overview of all estimators in sktime.
+Use the below search table to find estimators by property.
+
+* type into the search box to subset rows by substring search
+* choose a type (forecaster, classifier, ...) in the dropdown
+* if type is selected, check object tags to display in table
+* for explanation of tags, see the [tags reference](https://www.sktime.net/en/latest/api_reference/tags.html)
+
 
 <div class="top-container">
     <input type="text" id="searchInput" placeholder="Search the table ..." />
     <div id="dropdownContainer">
         <select id="filterOptions">
             <option value="all" selected>ALL</option>
-            <option value="forecaster">Forecaster</option>
-            <option value="transformer">Transformer</option>
-            <option value="regressor">Regressor</option>
             <option value="aligner">Aligner</option>
-            <option value="clusterer">Clusterer</option>
             <option value="classifier">Classifier</option>
+            <option value="clusterer">Clusterer</option>
+            <option value="transformer-pairwise-panel">Distance/Kernel</option>
+            <option value="forecaster">Forecaster</option>
+            <option value="metric">Metric</option>
+            <option value="param_est">Param.Estimator</option>
+            <option value="regressor">Regressor</option>
+            <option value="splitter">Splitter</option>
+            <option value="transformer">Transformer</option>
         </select>
     </div>
 </div>
@@ -159,7 +169,7 @@ function filterTable() {
     if (filter != "all") {
         const cachedData = sessionStorage.getItem("jsonData");
         if (cachedData) {
-            let dynamicHeader = ["Class Name", "Dependencies", "Maintainers"];
+            let dynamicHeader = ["Class Name"];
             const data = JSON.parse(cachedData);
             const filteredData = data.filter(row => row["Estimator Type"] === filter);
             const tags = visibleTagsOfTypes[filter]

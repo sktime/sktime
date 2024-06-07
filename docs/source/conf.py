@@ -357,6 +357,7 @@ def _make_estimator_overview(app):
             "X-y-must-have-same-index",
             "python_dependencies",
             "authors",
+            "maintainers",
         ],
         "transformer": [
             "scitype:transform-input",
@@ -374,6 +375,7 @@ def _make_estimator_overview(app):
             "X-y-must-have-same-index",
             "python_dependencies",
             "authors",
+            "maintainers",
         ],
         "aligner": [
             "alignment-type",
@@ -384,6 +386,7 @@ def _make_estimator_overview(app):
             "capability:unequal_length",
             "python_dependencies",
             "authors",
+            "maintainers",
         ],
         "clusterer": [
             "capability:multivariate",
@@ -392,6 +395,7 @@ def _make_estimator_overview(app):
             "capability:contractable",
             "python_dependencies",
             "authors",
+            "maintainers",
         ],
         "regressor": [
             "capability:multivariate",
@@ -403,6 +407,7 @@ def _make_estimator_overview(app):
             "capability:contractable",
             "python_dependencies",
             "authors",
+            "maintainers",
         ],
         "classifier": [
             "capability:multivariate",
@@ -414,6 +419,40 @@ def _make_estimator_overview(app):
             "capability:contractable",
             "python_dependencies",
             "authors",
+            "maintainers",
+        ],
+        "transformer-pairwise-panel": [
+            "capability:multivariate",
+            "capability:unequal_length",
+            "capability:missing_values",
+            "pwtrafo_type",
+            "symmetric",
+            "python_dependencies",
+            "authors",
+            "maintainers",
+        ],
+        "param_est": [
+            "capability:multivariate",
+            "capability:missing_values",
+            "python_dependencies",
+            "authors",
+            "maintainers",
+        ],
+        "splitter": [
+            "split_type",
+            "python_dependencies",
+            "authors",
+            "maintainers",
+        ],
+        "metric": [
+            "lower_is_better",
+            "requires-y-train",
+            "requires-y-pred-benchmark",
+            "univariate-only",
+            "scitype:y_pred",
+            "python_dependencies",
+            "authors",
+            "maintainers",
         ],
     }
 
