@@ -10,7 +10,7 @@ from sktime.datatypes._adapter.polars import (
     convert_pandas_to_polars,
     convert_polars_to_pandas,
 )
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 # simple pd.DataFrame fixture
 pd_fixture_simple = pd.DataFrame({"foo": [2, 3, 4], "bar": [3, 4, 5]})
