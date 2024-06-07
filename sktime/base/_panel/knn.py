@@ -1,22 +1,11 @@
 """KNeighbors Time Series Estimator base class."""
 
 __author__ = ["fkiraly", "Z-Fran"]
-__all__ = ["BaseKnnTimeSeriesEstimator"]
+__all__ = ["_BaseKnnTimeSeriesEstimator"]
 
 
-class BaseKnnTimeSeriesEstimator:
+class _BaseKnnTimeSeriesEstimator:
     """Base KNeighbors Time Series Estimator."""
-
-    _tags = {
-        # packaging info
-        # --------------
-        "authors": ["fkiraly", "Z-Fran"],
-        # estimator type
-        # --------------
-        "capability:multivariate": True,
-        "capability:unequal_length": True,
-        "capability:missing_values": True,
-    }
 
     def _fit(self, X, y):
         """Fit the model using X as training data and y as target values.

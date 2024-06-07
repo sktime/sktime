@@ -23,10 +23,10 @@ from inspect import signature
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
 
-from sktime.base._panel.knn import BaseKnnTimeSeriesEstimator
+from sktime.base._panel.knn import _BaseKnnTimeSeriesEstimator
 from sktime.classification.base import BaseClassifier
 from sktime.distances import pairwise_distance
-from sktime.dists_kernels.base.adapters._sklearn import _SklearnKnnAdapter
+from sktime.dists_kernels.base.adapters._sklearn import _SklearnDistMixin
 
 # add new distance string codes here
 DISTANCES_SUPPORTED = [
@@ -46,7 +46,7 @@ DISTANCES_SUPPORTED = [
 
 
 class KNeighborsTimeSeriesClassifier(
-    _SklearnKnnAdapter, BaseKnnTimeSeriesEstimator, BaseClassifier
+    _SklearnDistMixin, _BaseKnnTimeSeriesEstimator, BaseClassifier
 ):
     """KNN Time Series Classifier.
 
@@ -239,6 +239,7 @@ class KNeighborsTimeSeriesClassifier(
         # sktime distance classes are Panel x Panel -> numpy2D
         # and the numba distances are numpy3D x numpy3D -> numpy2D
         # so we need to wrap the sktime distances
+        self._X = X
         if isinstance(self.distance, str):
             # numba distances
             metric = self._one_element_distance_npdist

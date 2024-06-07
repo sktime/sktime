@@ -2,7 +2,7 @@
 """Implements adapter for sklearn distances."""
 
 __author__ = ["fkiraly", "Z-Fran"]
-__all__ = ["_SklearnKnnAdapter"]
+__all__ = ["_SklearnDistMixin"]
 
 import numpy as np
 import pandas as pd
@@ -10,19 +10,8 @@ import pandas as pd
 from sktime.datatypes import convert
 
 
-class _SklearnKnnAdapter:
+class _SklearnDistMixin:
     """Base adapter mixin for sklearn distances of KNeighbors."""
-
-    _tags = {
-        # packaging info
-        # --------------
-        "authors": ["fkiraly", "Z-Fran"],
-        # estimator type
-        # --------------
-        "capability:multivariate": True,
-        "capability:unequal_length": True,
-        "capability:missing_values": True,
-    }
 
     def _one_element_distance_npdist(self, x, y, n_vars=None):
         if n_vars is None:
