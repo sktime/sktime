@@ -40,6 +40,11 @@
     margin-right: 5px;
 }
 
+/* Prevent text breaks in the checkbox labels */
+#checkboxContainer label {
+    white-space: nowrap;
+}
+
 /* Table container styling */
 .table-container {
     width: 100%;
