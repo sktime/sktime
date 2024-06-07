@@ -6,6 +6,7 @@ __all__ = [
     "ForecastingGridSearchCV",
     "ForecastingRandomizedSearchCV",
     "ForecastingSkoptSearchCV",
+    "TuneForecastingOptunaCV",
     "ExpandingWindowSplitter",
     "SlidingWindowSplitter",
     "temporal_train_test_split",
@@ -15,6 +16,7 @@ from sktime.forecasting.model_selection._tune import (
     ForecastingGridSearchCV,
     ForecastingRandomizedSearchCV,
     ForecastingSkoptSearchCV,
+    TuneForecastingOptunaCV,
 )
 
 
