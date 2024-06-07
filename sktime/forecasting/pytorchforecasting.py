@@ -58,15 +58,17 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         train_to_dataloader_params: Optional[Dict[str, Any]] = None,
         validation_to_dataloader_params: Optional[Dict[str, Any]] = None,
         trainer_params: Optional[Dict[str, Any]] = None,
+        model_path: Optional[str] = None,
     ) -> None:
+        self.allowed_encoder_known_variable_names = allowed_encoder_known_variable_names
         super().__init__(
             model_params,
             dataset_params,
             train_to_dataloader_params,
             validation_to_dataloader_params,
             trainer_params,
+            model_path,
         )
-        self.allowed_encoder_known_variable_names = allowed_encoder_known_variable_names
 
     @functools.cached_property
     def algorithm_class(self: "PytorchForecastingTFT"):
@@ -167,6 +169,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                 {
                     "trainer_params": {
                         "callbacks": [early_stop_callback],
+                        "max_epochs": 1,  # for quick test
                     },
                     "model_params": {
                         "hidden_size": 10,
@@ -234,6 +237,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         train_to_dataloader_params: Optional[Dict[str, Any]] = None,
         validation_to_dataloader_params: Optional[Dict[str, Any]] = None,
         trainer_params: Optional[Dict[str, Any]] = None,
+        model_path: Optional[str] = None,
     ) -> None:
         super().__init__(
             model_params,
@@ -241,6 +245,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
             train_to_dataloader_params,
             validation_to_dataloader_params,
             trainer_params,
+            model_path,
         )
 
     @functools.cached_property
@@ -332,6 +337,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                 {
                     "trainer_params": {
                         "callbacks": [early_stop_callback],
+                        "max_epochs": 1,  # for quick test
                     },
                     "model_params": {
                         "num_blocks": [5, 5],

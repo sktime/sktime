@@ -274,7 +274,7 @@ dl = [
   'torch; python_version < "3.12"',
   'transformers[torch]<4.41.0; python_version < "3.12"',
   'pykan; python_version > "3.9.7"',
-  'pytorch-forecasting>=1.0.0; python_version <= "3.10"',
+  'pytorch-forecasting>=1.0.0; python_version < "3.11"',
 ]
 mlflow = [
   "mlflow",

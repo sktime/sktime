@@ -7,7 +7,7 @@ from copy import deepcopy
 from typing import Any, Dict, Optional
 
 import numpy as np
-import pandas
+import pandas as pd
 from pandas.api.types import is_numeric_dtype
 
 from sktime.forecasting.base import BaseGlobalForecaster, ForecastingHorizon
@@ -35,6 +35,8 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
     validation_to_dataloader_params : Dict[str, Any] (default=None)
         parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
         by default {"train": False}
+    model_path: string (default=None)
+        try to load a existing model without fitting.
 
     References
     ----------
@@ -46,8 +48,8 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
         # --------------
         "authors": ["XinyuWu"],
         "maintainers": ["XinyuWu"],
-        "python_version": ">=3.8",
-        "python_dependencies": ["pytorch_forecasting"],
+        "python_version": ">3.8, <3.11",
+        "python_dependencies": ["pytorch_forecasting>=1.0.0"],
         # estimator type
         # --------------
         "y_inner_mtype": ["pd-multiindex", "pd_multiindex_hier", "pd.Series"],
@@ -68,12 +70,31 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
         train_to_dataloader_params: Optional[Dict[str, Any]] = None,
         validation_to_dataloader_params: Optional[Dict[str, Any]] = None,
         trainer_params: Optional[Dict[str, Any]] = None,
+        model_path: Optional[str] = None,
     ) -> None:
         self.model_params = model_params
         self.dataset_params = dataset_params
         self.trainer_params = trainer_params
         self.train_to_dataloader_params = train_to_dataloader_params
         self.validation_to_dataloader_params = validation_to_dataloader_params
+        self.model_path = model_path
+        self._model_params = deepcopy(model_params) if model_params is not None else {}
+        self._dataset_params = (
+            deepcopy(dataset_params) if dataset_params is not None else {}
+        )
+        self._trainer_params = (
+            deepcopy(trainer_params) if trainer_params is not None else {}
+        )
+        self._train_to_dataloader_params = (
+            deepcopy(train_to_dataloader_params)
+            if train_to_dataloader_params is not None
+            else {}
+        )
+        self._validation_to_dataloader_params = (
+            deepcopy(validation_to_dataloader_params)
+            if validation_to_dataloader_params is not None
+            else {}
+        )
         super().__init__()
 
     @functools.cached_property
@@ -95,22 +116,20 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
 
     def _instantiate_model(self: "_PytorchForecastingAdapter", data):
         """Instantiate the model."""
-        self._model_params = _none_check(self.model_params, {})
         algorithm_instance = self.algorithm_class.from_dataset(
             data,
             **self.algorithm_parameters,
             **self._model_params,
         )
-        self._trainer_params = _none_check(self.trainer_params, {})
         import lightning.pytorch as pl
 
-        traner_instance = pl.Trainer(**self._trainer_params)
-        return algorithm_instance, traner_instance
+        trainer_instance = pl.Trainer(**self._trainer_params)
+        return algorithm_instance, trainer_instance
 
     def _fit(
         self: "_PytorchForecastingAdapter",
-        y: pandas.DataFrame,
-        X: typing.Optional[pandas.DataFrame],
+        y: pd.DataFrame,
+        X: typing.Optional[pd.DataFrame],
         fh: ForecastingHorizon,
     ) -> "_PytorchForecastingAdapter":
         """Fit forecaster to training data.
@@ -135,8 +154,7 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
         self : _PytorchForecastingAdapter
             reference to self
         """
-        self._dataset_params = _none_check(self.dataset_params, {})
-        self._max_prediction_length = fh.to_relative(self.cutoff)[-1]
+        self._max_prediction_length = np.max(fh.to_relative(self.cutoff))
         # check if dummy X is needed
         # only the TFT model need X to fit, probably a bug in pytorch-forecasting
         X = self._dummy_X(X, y)
@@ -149,42 +167,45 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
         self._index_names = _y.index.names
         self._index_len = len(self._index_names)
         # store X, y column names (probably None or not str type)
-        # will be renamed !
+        # The target column and the index will be renamed
+        # before being passed to the underlying model
+        # because those names could be None or non-string type.
         if X is not None:
             self._X_columns = X.columns.tolist()
         # convert data to pytorch-forecasting datasets
         training, validation = self._Xy_to_dataset(
             _X, _y, self._dataset_params, self._max_prediction_length
         )
-        # instantiate forecaster and trainer
-        self._forecaster, self._trainer = self._instantiate_model(training)
-        # convert dataset to dataloader
-        self._train_to_dataloader_params = {"train": True}
-        self._train_to_dataloader_params.update(
-            _none_check(self.train_to_dataloader_params, {})
-        )
-        self._validation_to_dataloader_params = {"train": False}
-        self._validation_to_dataloader_params.update(
-            _none_check(self.validation_to_dataloader_params, {})
-        )
-        # call the fit function of the pytorch-forecasting model
-        self._trainer.fit(
-            self._forecaster,
-            train_dataloaders=training.to_dataloader(
-                **self._train_to_dataloader_params
-            ),
-            val_dataloaders=validation.to_dataloader(
-                **self._validation_to_dataloader_params
-            ),
-        )
+        if self.model_path is None:
+            # instantiate forecaster and trainer
+            self._forecaster, self._trainer = self._instantiate_model(training)
+            # convert dataset to dataloader
+            self._train_to_dataloader_params["train"] = True
+            self._validation_to_dataloader_params["train"] = False
+            # call the fit function of the pytorch-forecasting model
+            self._trainer.fit(
+                self._forecaster,
+                train_dataloaders=training.to_dataloader(
+                    **self._train_to_dataloader_params
+                ),
+                val_dataloaders=validation.to_dataloader(
+                    **self._validation_to_dataloader_params
+                ),
+            )
+            # load model from checkpoint
+            best_model_path = self._trainer.checkpoint_callback.best_model_path
+            self.best_model = self.algorithm_class.load_from_checkpoint(best_model_path)
+        else:
+            # load model from disk
+            self.best_model = self.algorithm_class.load_from_checkpoint(self.model_path)
         return self
 
     def _predict(
         self: "_PytorchForecastingAdapter",
         fh: typing.Optional[ForecastingHorizon],
-        X: typing.Optional[pandas.DataFrame],
-        y: typing.Optional[pandas.DataFrame],
-    ) -> pandas.Series:
+        X: typing.Optional[pd.DataFrame],
+        y: typing.Optional[pd.DataFrame],
+    ) -> pd.Series:
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -217,7 +238,7 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
         if X is None:
             X = deepcopy(self._X)
         if X is not None and not self._global_forecasting:
-            X = pandas.concat([self._X, X])
+            X = pd.concat([self._X, X])
         # convert series to frame
         _y, self._convert_to_series = _series_to_frame(y)
         _X, _ = _series_to_frame(X)
@@ -229,10 +250,7 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
         training, validation = self._Xy_to_dataset(
             _X, _y, self._dataset_params, self._max_prediction_length
         )
-        # load model from checkpoint
-        best_model_path = self._trainer.checkpoint_callback.best_model_path
-        best_model = self.algorithm_class.load_from_checkpoint(best_model_path)
-        predictions = best_model.predict(
+        predictions = self.best_model.predict(
             validation.to_dataloader(**self._validation_to_dataloader_params),
             return_x=True,
             return_index=True,
@@ -251,8 +269,8 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
 
     def _Xy_to_dataset(
         self,
-        X: pandas.DataFrame,
-        y: pandas.DataFrame,
+        X: pd.DataFrame,
+        y: pd.DataFrame,
         dataset_params: Dict[str, Any],
         max_prediction_length,
     ):
@@ -296,19 +314,19 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
                 data.groupby(by=self._new_index_names[0:-1]).cumcount().to_frame()
             )
         else:
-            time_idx = pandas.DataFrame(range(0, len(data)))
+            time_idx = pd.DataFrame(range(0, len(data)))
             time_idx.index = data.index
         time_idx.rename(columns={0: "_auto_time_idx"}, inplace=True)
-        data = pandas.concat([data, time_idx], axis=1)
+        data = pd.concat([data, time_idx], axis=1)
         # reset multi index to normal columns
         data = data.reset_index(level=list(range(self._index_len)))
         training_cutoff = data["_auto_time_idx"].max() - max_prediction_length
         # add a constant column as group id if data only contains only one timeseries
         if self._index_len == 1:
-            group_id = pandas.DataFrame([0] * len(data))
+            group_id = pd.DataFrame([0] * len(data))
             group_id.index = data.index
             group_id.rename(columns={0: "_auto_group_id"}, inplace=True)
-            data = pandas.concat([group_id, data], axis=1)
+            data = pd.concat([group_id, data], axis=1)
         # save origin time idx for prediction
         self._origin_time_idx = data[
             (
@@ -398,7 +416,7 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
         data.columns = [self._target_name]
         # convert back to pd.series if needed
         if self._convert_to_series:
-            data = pandas.Series(
+            data = pd.Series(
                 data=data[self._target_name], index=data.index, name=self._target_name
             )
         return data
@@ -410,32 +428,28 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
                 "TemporalFusionTransformer requires X!\
                 A constant dummy X with values all zero will be used!"
             )
-            X = pandas.DataFrame(data=np.zeros(len(y)), index=y.index)
+            X = pd.DataFrame(data=np.zeros(len(y)), index=y.index)
         return X
 
-    def _extend_y(self, y: pandas.DataFrame, fh):
+    def _extend_y(self, y: pd.DataFrame, fh):
         index = fh.to_absolute_index(self.cutoff)
-        _y = pandas.DataFrame(index=index, columns=y.columns)
+        _y = pd.DataFrame(index=index, columns=y.columns)
         _y.index.rename(y.index.names[-1], inplace=True)
         _y.fillna(0, inplace=True)
         len_levels = len(y.index.names)
         if len_levels == 1:
-            _y = pandas.concat([y, _y])
+            _y = pd.concat([y, _y])
         else:
             _y = y.groupby(level=list(range(len_levels - 1))).apply(
-                lambda x: pandas.concat([x.droplevel(list(range(len_levels - 1))), _y])
+                lambda x: pd.concat([x.droplevel(list(range(len_levels - 1))), _y])
             )
         return _y
-
-
-def _none_check(value, default):
-    return value if value is not None else default
 
 
 def _series_to_frame(data):
     converted = False
     if data is not None:
-        if isinstance(data, pandas.Series):
+        if isinstance(data, pd.Series):
             _data = deepcopy(data).to_frame(name=data.name)
             converted = True
         else:

@@ -2583,9 +2583,13 @@ class BaseGlobalForecaster(BaseForecaster):
             as ``y`` in ``fit``.
             If ``self.get_tag("X-y-must-have-same-index")``,
             ``X.index`` must contain ``fh`` index reference.
+            If ``y`` is passed (performing global forecasting), ``X`` must contain
+            all historical values and the time points to be predicted.
 
         y : time series in ``sktime`` compatible format, optional (default=None)
             Historical values of the time series that should be predicted.
+            If not None, global forecasting will be performed.
+            Only pass the historical values not the time points to be predicted.
 
         Returns
         -------
@@ -2598,7 +2602,7 @@ class BaseGlobalForecaster(BaseForecaster):
         gf = self.get_tag(
             "capability:global_forecasting", tag_value_default=False, raise_error=False
         )
-        if gf is not True and y is not None:
+        if not gf and y is not None:
             ValueError("no global forecasting support!")
 
         # handle inputs
