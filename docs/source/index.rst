@@ -42,6 +42,7 @@ Contents
 
    get_started
    users
+   installation
    api_reference
    get_involved
    developers
