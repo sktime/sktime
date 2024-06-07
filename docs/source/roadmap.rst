@@ -1,78 +1,96 @@
 .. _roadmap:
 
-=======
-Roadmap
-=======
+The roadmap for ``sktime`` is managed through:
 
-Welcome to sktime's roadmap.
+* yearly or half-yearly roadmaps planned at roadmap planning events
+* issues with "roadmap" label, used for discussion and asynchronous consolidation
 
-Contributors: :user:`mloning`, :user:`fkiraly`, :user:`sveameyer13`, :user:`lovkush-a`, :user:`bilal-196`, :user:`GuzalBulatova`, :user:`chrisholder`, :user:`satya-pattnaik`, :user:`aiwalter`
+Follow the below link to the roadmap issues:
 
-Created during the 2021 sktime dev days, 25/06/2021.
+`sktime roadmap issues <https://github.com/sktime/sktime/issues/4691>`_
 
-----
+Roadmap planning events are announced on the ``sktime`` discord and on social media.
 
-Project aims
-------------
-The aim of sktime is to:
+If you are interested in contributing to the roadmap,
+please join the `discord <https://discord.com/invite/54ACzaFsn7>`_ and participate in the planning events,
+or engage asynchronously through the roadmap issues.
 
-* Develop a unified framework for machine learning with time series in Python
-* Advance research on algorithm development and software design for machine learning toolboxes
-* Build a more connected community of researchers and domain experts who work with time series
-* Create and deliver educational material including documentation and user guides
 
-Work streams
-------------
+..
 
-Documentation
-~~~~~~~~~~~~~
-* Core documentation needs to be created "properly"
-* Improve tutorials, examples
-* Improve extension guidelines
-* For research algorithms, possibly pairing up researchers with 'engineer' to improve readability/documentation
+    =======
+    Roadmap
+    =======
 
-Community building
-~~~~~~~~~~~~~~~~~~
-- Integrate "off-line" contributors
-- For research algorithms, possibly pairing up researchers with "engineer" to improve readability/documentation
-- Establish regular technical and social meetings
+    Welcome to sktime's roadmap.
 
-Refactoring and extending existing modules
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* Support for data input types and conversion (e.g. awkward-array)
-* Distance metrics
-* Reduction interface
-* Advanced pipelining
-* Forecasting
-    * Prediction intervals and probabilistic forecasting
-    * Streaming data interface, "update" capability of estimators
-    * multivariate/vector forecasting
-    * consistent handling of exogeneous variables
-    * fitted parameter interface
-* Time series classification/regression/clustering
-    * add support for unequal length time series
-    * add data simulators for algorithm comparison and unit testing
-* Clustering
-    * interface scikit-learn estimators
-    * implement time series specific estimators (e.g. k-shapes)
-* Series annotation
-    * implement more estimators for outlier anomaly/detection and segmentation
+    Contributors: :user:`mloning`, :user:`fkiraly`, :user:`sveameyer13`, :user:`lovkush-a`, :user:`bilal-196`, :user:`GuzalBulatova`, :user:`chrisholder`, :user:`satya-pattnaik`, :user:`aiwalter`
 
-Adding new modules and algorithms
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* Panel annotation
-* Probabilistic interface, event modelling(time-to-event modeling, survival analysis)
-* Panel & supervised forecasting
-* Time series regression
-* Sequence-similarity tasks
-* Uniform reduction interface between tasks
+    Created during the 2021 sktime dev days, 25/06/2021.
 
-Software engineering & dev ops
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* Improve dependency management
-* Create template repository for companion packages
-* Improve continuous integration & deployment
-    - Refactoring unit tests
-    - Extending unit tests
-    - Speed up unit tests
-    - Make unit tests for estimators importable from other packages
+    ----
+
+    Project aims
+    ------------
+    The aim of sktime is to:
+
+    * Develop a unified framework for machine learning with time series in Python
+    * Advance research on algorithm development and software design for machine learning toolboxes
+    * Build a more connected community of researchers and domain experts who work with time series
+    * Create and deliver educational material including documentation and user guides
+
+    Work streams
+    ------------
+
+    Documentation
+    ~~~~~~~~~~~~~
+    * Core documentation needs to be created "properly"
+    * Improve tutorials, examples
+    * Improve extension guidelines
+    * For research algorithms, possibly pairing up researchers with 'engineer' to improve readability/documentation
+
+    Community building
+    ~~~~~~~~~~~~~~~~~~
+    - Integrate "off-line" contributors
+    - For research algorithms, possibly pairing up researchers with "engineer" to improve readability/documentation
+    - Establish regular technical and social meetings
+
+    Refactoring and extending existing modules
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * Support for data input types and conversion (e.g. awkward-array)
+    * Distance metrics
+    * Reduction interface
+    * Advanced pipelining
+    * Forecasting
+        * Prediction intervals and probabilistic forecasting
+        * Streaming data interface, "update" capability of estimators
+        * multivariate/vector forecasting
+        * consistent handling of exogeneous variables
+        * fitted parameter interface
+    * Time series classification/regression/clustering
+        * add support for unequal length time series
+        * add data simulators for algorithm comparison and unit testing
+    * Clustering
+        * interface scikit-learn estimators
+        * implement time series specific estimators (e.g. k-shapes)
+    * Series annotation
+        * implement more estimators for outlier anomaly/detection and segmentation
+
+    Adding new modules and algorithms
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * Panel annotation
+    * Probabilistic interface, event modelling(time-to-event modeling, survival analysis)
+    * Panel & supervised forecasting
+    * Time series regression
+    * Sequence-similarity tasks
+    * Uniform reduction interface between tasks
+
+    Software engineering & dev ops
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * Improve dependency management
+    * Create template repository for companion packages
+    * Improve continuous integration & deployment
+        - Refactoring unit tests
+        - Extending unit tests
+        - Speed up unit tests
+        - Make unit tests for estimators importable from other packages
