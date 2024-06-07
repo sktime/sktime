@@ -237,13 +237,11 @@ check_dict[("list_of_dict", "Table")] = check_list_of_dict_table
 
 
 def check_gluon_ListDataset_table(obj, return_metadata=False, var_name="obj"):
-
     # Defining our metadata
     metadata = dict()
 
     # Check if the object is of the correct type
     if not isinstance(obj, ListDataset):
-
         msg = f"{var_name} must be a GluonTS ListDataset, but found type {type(obj)}"
         return _ret(False, msg, None, return_metadata)
 
@@ -253,11 +251,9 @@ def check_gluon_ListDataset_table(obj, return_metadata=False, var_name="obj"):
 
     # Check for univariance/multivariance
     if _req("is_univariate", metadata):
-
         metadata["is_univariate"] = True
 
         for series in obj:
-
             # Found a multivariate time series in the ListDataset!
             if len(series["target"] > 1):
                 metadata["is_univariate"] = False
@@ -265,7 +261,6 @@ def check_gluon_ListDataset_table(obj, return_metadata=False, var_name="obj"):
 
     # Check for NaN values
     if _req("has_nans", metadata):
-
         metadata["hash_nans"] = False
 
         for series in obj:
@@ -273,7 +268,6 @@ def check_gluon_ListDataset_table(obj, return_metadata=False, var_name="obj"):
 
             # Found an NaN value
             if np.isnan(target).any():
-
                 metadata["hash_nans"] = True
                 break
 
@@ -292,11 +286,9 @@ def check_gluon_ListDataset_table(obj, return_metadata=False, var_name="obj"):
 
     # Fetch feature names
     if _req("feature_names", metadata):
-
         feature_names = []
 
         for series in obj:
-
             # This time series has associated features!
             if series["feat_static_cat"] is not None:
                 feature_names.append(series["feat_static_cat"])
