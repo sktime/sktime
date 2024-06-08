@@ -163,6 +163,7 @@ class BaggingClassifier(BaseClassifier):
             n_features_ = n_features
 
         self.estimators_ = []
+        self._col_ixis = []
         for _i in range(n_estimators):
             esti = estimator.clone()
             row_iloc = pd.RangeIndex(n)
@@ -183,6 +184,7 @@ class BaggingClassifier(BaseClassifier):
 
             yi = y[row_ss]
             self.estimators_ += [esti.fit(Xi, yi)]
+            self._col_ixis += [col_ix_i]
 
         return self
 
@@ -200,7 +202,14 @@ class BaggingClassifier(BaseClassifier):
             Predicted probabilities using the ordering in classes_.
         """
         classes = pd.Index(self.classes_)
-        y_probas = [est.predict_proba(X) for est in self.estimators_]
+
+        y_probas = []
+        for esti, col_ix_i in zip(self.estimators_, self._col_ixis):
+            Xi = X.loc[:, col_ix_i]
+            if self.bootstrap_features:
+                Xi.columns = pd.RangeIndex(len(col_ix_i))
+
+            y_probas += [esti.predict_proba(Xi)]
 
         est_shape = (len(y_probas[0]), len(classes))
         y_proba_np = np.zeros((len(y_probas), est_shape[0], est_shape[1]))
@@ -238,16 +247,16 @@ class BaggingClassifier(BaseClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        from sktime.classification.dummy import DummyClassifier
+        from sktime.classification.feature_based import SummaryClassifier
 
-        params1 = {"estimator": DummyClassifier()}
+        params1 = {"estimator": SummaryClassifier()}
         params2 = {
-            "estimator": DummyClassifier(),
+            "estimator": SummaryClassifier(),
             "n_samples": 0.5,
             "n_features": 0.5,
         }
         params3 = {
-            "estimator": DummyClassifier(),
+            "estimator": SummaryClassifier(),
             "n_samples": 7,
             "n_features": 2,
             "bootstrap": False,
@@ -255,7 +264,7 @@ class BaggingClassifier(BaseClassifier):
         }
 
         # force-create a classifier that cannot handle multivariate
-        univariate_dummy = DummyClassifier()
+        univariate_dummy = SummaryClassifier()
         univariate_dummy.set_tags(**{"capability:multivariate": False})
         # this should still result in a multivariate classifier
         params4 = {

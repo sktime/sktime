@@ -7,6 +7,7 @@ __all__ = [
     "ColumnEnsembleForecaster",
     "EnbPIForecaster",
     "EnsembleForecaster",
+    "TransformSelectForecaster",
     "FallbackForecaster",
     "AutoEnsembleForecaster",
     "TransformedTargetForecaster",
@@ -65,3 +66,6 @@ from sktime.forecasting.compose._reduce import (
     make_reduction,
 )
 from sktime.forecasting.compose._stack import StackingForecaster
+from sktime.forecasting.compose._transform_select_forecaster import (
+    TransformSelectForecaster,
+)

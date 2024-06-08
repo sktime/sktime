@@ -16,8 +16,13 @@ from sktime.forecasting.compose import (
     RecursiveTabularRegressionForecaster,
 )
 from sktime.split import temporal_train_test_split
+from sktime.tests.test_switch import run_test_for_class
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(AutoEnsembleForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "forecasters",
     [

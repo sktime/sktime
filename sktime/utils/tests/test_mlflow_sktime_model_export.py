@@ -16,8 +16,8 @@ from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.split import temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.multiindex import flatten_multiindex
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("mlflow", "boto3", "moto", "botocore", severity="none"):
     import boto3

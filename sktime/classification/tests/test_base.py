@@ -13,13 +13,14 @@ from sktime.classification.base import BaseClassifier
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 from sktime.classification.dummy import DummyClassifier
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.panel import (
     _make_classification_y,
     _make_panel,
     make_classification_problem,
 )
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 class _DummyClassifier(BaseClassifier):
@@ -122,6 +123,10 @@ missing_message = r"missing values"
 unequal_message = r"unequal length series"
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.classification"),
+    reason="test only if anything in sktime.classification module has changed",
+)
 def test_base_classifier_fit():
     """Test function for the BaseClassifier class fit.
 
@@ -160,6 +165,10 @@ def test_base_classifier_fit():
 TF = [True, False]
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.classification"),
+    reason="test only if anything in sktime.classification module has changed",
+)
 @pytest.mark.parametrize("missing", TF)
 @pytest.mark.parametrize("multivariate", TF)
 @pytest.mark.parametrize("unequal", TF)
@@ -207,6 +216,10 @@ def test_check_capabilities(missing, multivariate, unequal):
     handles_all._check_capabilities(X_metadata)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.classification"),
+    reason="test only if anything in sktime.classification module has changed",
+)
 def test_convert_input():
     """Test the conversions from dataframe to numpy.
 
@@ -249,6 +262,10 @@ def test_convert_input():
     assert tempX.ndim == 3
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.classification"),
+    reason="test only if anything in sktime.classification module has changed",
+)
 def test__check_classifier_input():
     """Test for valid estimator format.
 
@@ -328,6 +345,10 @@ def _create_unequal_length_nested_dataframe(cases=5, dimensions=1, length=10):
 MTYPES = ["numpy3D", "pd-multiindex", "df-list", "numpyflat", "nested_univ"]
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.classification"),
+    reason="test only if anything in sktime.classification module has changed",
+)
 @pytest.mark.parametrize("mtype", MTYPES)
 def test_input_conversion_fit_predict(mtype):
     """Test that base class lets all Panel mtypes through."""
@@ -343,6 +364,10 @@ def test_input_conversion_fit_predict(mtype):
     clf.predict(X)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.classification"),
+    reason="test only if anything in sktime.classification module has changed",
+)
 @pytest.mark.parametrize("method", ["fit_predict", "fit_predict_proba"])
 def test_fit_predict_change_state(method):
     """Test change_state flag in fit_predict, fit_predict_proba works as intended."""
@@ -375,6 +400,10 @@ def test_fit_predict_change_state(method):
         assert y_pred.shape[1] == n_cl
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.classification"),
+    reason="test only if anything in sktime.classification module has changed",
+)
 @pytest.mark.parametrize("y_multivariate", [True, False])
 @pytest.mark.parametrize("method", ["fit_predict", "fit_predict_proba"])
 def test_fit_predict_cv(method, y_multivariate):
@@ -415,6 +444,10 @@ def test_fit_predict_cv(method, y_multivariate):
     _assert_array_almost_equal(y_pred_normal, y_pred_cv_obj_fit)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.classification"),
+    reason="test only if anything in sktime.classification module has changed",
+)
 @pytest.mark.parametrize("method", ["predict", "predict_proba"])
 def test_predict_single_class(method):
     """Test return of predict/_proba in case only single class seen in fit."""
@@ -440,6 +473,10 @@ def test_predict_single_class(method):
         assert all(list(y_pred == 1))
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.classification"),
+    reason="test only if anything in sktime.classification module has changed",
+)
 @pytest.mark.parametrize("cv", [None, KFold(3, random_state=42, shuffle=True)])
 @pytest.mark.parametrize("method", ["fit_predict", "fit_predict_proba"])
 def test_fit_predict_single_class(method, cv):
@@ -465,7 +502,8 @@ def test_fit_predict_single_class(method, cv):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("tensorflow", severity="none"),
+    not _check_soft_dependencies("tensorflow", severity="none")
+    or not run_test_module_changed("sktime.classification"),
     reason="skip test if required soft dependency not available",
 )
 def test_deep_estimator_empty():
@@ -477,7 +515,8 @@ def test_deep_estimator_empty():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("tensorflow", severity="none"),
+    not _check_soft_dependencies("tensorflow", severity="none")
+    or not run_test_module_changed("sktime.classification"),
     reason="skip test if required soft dependency not available",
 )
 @pytest.mark.parametrize("optimizer", [None, "adam", "object-adamax"])
@@ -515,7 +554,8 @@ DUMMY_EST_PARAMETERS_FOO = [None, 10.3, "string", {"key": "value"}, lambda x: x*
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("cloudpickle", severity="none"),
+    not _check_soft_dependencies("cloudpickle", severity="none")
+    or not run_test_module_changed("sktime.classification"),
     reason="skip test if required soft dependency not available",
 )
 @pytest.mark.parametrize("foo", DUMMY_EST_PARAMETERS_FOO)
