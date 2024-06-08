@@ -62,7 +62,6 @@ class EnbPIForecaster(BaseForecaster):
     }
 
     def __init__(self, forecaster=None, bootstrap_transformer=None, random_state=None):
-        super().__init__()
         self.forecaster = forecaster
         self.forecaster_ = (
             clone(forecaster) if forecaster is not None else NaiveForecaster()
@@ -76,6 +75,7 @@ class EnbPIForecaster(BaseForecaster):
             else MovingBlockBootstrap()
         )
         self.random_state = random_state
+        super().__init__()
 
     def _fit(self, X, y, fh=None):
         self._fh = fh
@@ -124,13 +124,15 @@ class EnbPIForecaster(BaseForecaster):
         for forecaster in self.forecasters:
             preds.append(forecaster.predict(fh=fh, X=X))
 
+        train_targets = self._y.copy()
+        train_targets.index = pd.RangeIndex(len(train_targets))
         intervals = []
         for cov in coverage:
             conformal_intervals = EnbPI().conformal_interval(
                 bootstrap_indices=self.indexes,
                 bootstrap_train_preds=np.stack(self.preds),
                 bootstrap_test_preds=np.stack(preds),
-                train_targets=self._y,
+                train_targets=train_targets,
                 error=1 - cov,
             )
             intervals.append(conformal_intervals)
@@ -182,13 +184,13 @@ class EnbPIForecaster(BaseForecaster):
         deps = cls.get_class_tag("python_dependencies")
 
         if _check_soft_dependencies(deps, severity="none"):
-            from tsbootstrap import BlockResidualBootstrap
+            from tsbootstrap import BlockBootstrap
 
             params = [
                 {},
                 {
                     "forecaster": NaiveForecaster(),
-                    "bootstrap_transformer": BlockResidualBootstrap(),
+                    "bootstrap_transformer": BlockBootstrap(),
                 },
             ]
         else:
