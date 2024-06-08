@@ -14,7 +14,7 @@ from sktime.tests.test_switch import run_test_module_changed
 EXCLUDE_MODULES_STARTING_WITH = ("all", "test", "contrib", "mlflow")
 
 
-@lru_cache()
+@lru_cache
 def _all_functions(module_name):
     """Get all functions from a module, including submodules.
 
@@ -42,10 +42,10 @@ def _all_functions(module_name):
     # Walk through the package's modules
     package_path = package.__path__[0]
     for _, modname, _ in pkgutil.walk_packages(
-        path=[package_path], prefix=package.__name__ + '.'
+        path=[package_path], prefix=package.__name__ + ""."
     ):
         # Skip modules starting with 'all' or 'test'
-        if modname.split('.')[-1].startswith(EXCLUDE_MODULES_STARTING_WITH):
+        if modname.split("".")[-1].startswith(EXCLUDE_MODULES_STARTING_WITH):
             continue
 
         print(modname)
