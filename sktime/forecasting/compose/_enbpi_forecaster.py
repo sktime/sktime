@@ -72,6 +72,7 @@ class EnbPIForecaster(BaseForecaster):
         super().__init__()
 
         from tsbootstrap import MovingBlockBootstrap
+
         self.bootstrap_transformer_ = (
             clone(bootstrap_transformer)
             if bootstrap_transformer is not None
