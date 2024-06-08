@@ -3,49 +3,39 @@ import pandas as pd
 from sklearn.base import clone
 from sklearn.utils import check_random_state
 
-from sktime.datatypes import convert
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.naive import NaiveForecaster
-from sktime.split import temporal_train_test_split
-from sktime.transformations.bootstrap import MovingBlockBootstrapTransformer
 
 
 class EnbPIForecaster(BaseForecaster):
     """
     Ensemble Bootstrap Prediction Interval Forecaster.
 
-    The forecaster is inspired by the EnbPI algorithm proposed in [1].
+    The forecaster combines sktime forecasters, with tsbootratp bootsrappers
+    and the EnbPI algorithm implemented in fortuna.
+
     The forecaster is based upon the bagging forecaster and performs
     internally the following steps:
     For training:
         1. Fit a forecaster to each bootstrap sample
         2. Predict on the holdout set using each fitted forecaster
-        3. Calculate the residuals using leave-one-out ensembles
-
 
     For Prediction:
         1. Average the predictions of each fitted forecaster
 
     For Probabilistic Forecasting:
         1. Average the prediction of each fitted forecaster
-        2. Calculate conformal intervals using the residuals
+        2. Use the EnbPI algorithm to calculate the prediction intervals
 
 
     Parameters
     ----------
     forecaster : estimator
         The base forecaster to fit to each bootstrap sample.
-    bootstrap_transformer : transformer
+    bootstrap_transformer : tsbootstrap.BootstrapTransformer
         The transformer to fit to the target series to generate bootstrap samples.
     random_state : int, RandomState instance or None, default=None
         Random state for reproducibility.
-    method : str, default="conformal"
-        The method to use for calculating prediction intervals. Options are:
-        - "conformal": Use the conformal prediction intervals
-        - "conformal_bonferroni": Use the conformal prediction intervals with
-            Bonferroni correction
-        - "empirical_residual": Use the empirical prediction intervals
-        - "empirical": Use the empirical prediction intervals
 
     References
     ----------
@@ -55,6 +45,7 @@ class EnbPIForecaster(BaseForecaster):
 
     _tags = {
         "authors": ["benheid"],
+        "python_dependencies": ["tsbootstrap>=0.1.0", "fortuna", "jax"],
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
         "handles-missing-data": False,  # can estimator handle missing data?
@@ -70,26 +61,21 @@ class EnbPIForecaster(BaseForecaster):
         "capability:pred_int:insample": False,  # ... for in-sample horizons?
     }
 
-    def __init__(
-        self, forecaster, bootstrap_transformer, random_state=None, method="conformal"
-    ):
+    def __init__(self, forecaster=None, bootstrap_transformer=None, random_state=None):
         super().__init__()
         self.forecaster = forecaster
         self.forecaster_ = (
             clone(forecaster) if forecaster is not None else NaiveForecaster()
         )
+        from tsbootstrap import MovingBlockBootstrap
 
         self.bootstrap_transformer = bootstrap_transformer
         self.bootstrap_transformer_ = (
             clone(bootstrap_transformer)
             if bootstrap_transformer is not None
-            else MovingBlockBootstrapTransformer()
+            else MovingBlockBootstrap()
         )
-
         self.random_state = random_state
-        self.random_state = random_state
-        self.method = method
-        self.loo = False
 
     def _fit(self, X, y, fh=None):
         self._fh = fh
@@ -98,14 +84,12 @@ class EnbPIForecaster(BaseForecaster):
         # random state handling passed into input estimators
         self.random_state_ = check_random_state(self.random_state)
 
-        # Temporal Split
-        indexes = np.arange(len(y))
-
         # fit/transform the transformer to obtain bootstrap samples
-        bs_ts_index = list(self.bootstrap_transformer_.bootstrap(y, test_ratio=0, return_indices=True))
+        bs_ts_index = list(
+            self.bootstrap_transformer_.bootstrap(y, test_ratio=0, return_indices=True)
+        )
         self.indexes = np.stack(list(map(lambda x: x[1], bs_ts_index)))
         bootstapped_ts = list(map(lambda x: x[0], bs_ts_index))
-
 
         self.forecasters = []
         self.preds = []
@@ -115,9 +99,7 @@ class EnbPIForecaster(BaseForecaster):
             forecaster = clone(self.forecaster_)
             forecaster.fit(y=bs_df, fh=fh, X=X)
             self.forecasters.append(forecaster)
-            prediction = forecaster.predict(
-                fh=y.index, X=X
-            )
+            prediction = forecaster.predict(fh=y.index, X=X)
             self.preds.append(prediction)
 
         return self
@@ -136,27 +118,32 @@ class EnbPIForecaster(BaseForecaster):
         )
 
     def _predict_interval(self, fh, X, coverage):
-
         from fortuna.conformal import EnbPI
 
         preds = []
         for forecaster in self.forecasters:
             preds.append(forecaster.predict(fh=fh, X=X))
 
-        conformal_intervals = EnbPI().conformal_interval(
-            bootstrap_indices=self.indexes,
-            bootstrap_train_preds=np.stack(self.preds),
-            bootstrap_test_preds=np.stack(preds),
-            train_targets=self._y,
-            error=0.05,
-        )
+        intervals = []
+        for cov in coverage:
+            conformal_intervals = EnbPI().conformal_interval(
+                bootstrap_indices=self.indexes,
+                bootstrap_train_preds=np.stack(self.preds),
+                bootstrap_test_preds=np.stack(preds),
+                train_targets=self._y,
+                error=1 - cov,
+            )
+            intervals.append(conformal_intervals)
 
-        cols = pd.MultiIndex.from_product([self._y.columns, coverage, ["lower", "upper"]])
+        cols = pd.MultiIndex.from_product(
+            [self._y.columns, coverage, ["lower", "upper"]]
+        )
         fh_absolute = fh.to_absolute(self.cutoff)
         fh_absolute_idx = fh_absolute.to_pandas()
-        pred_int = pd.DataFrame(conformal_intervals, index=fh_absolute_idx, columns=cols)
+        pred_int = pd.DataFrame(
+            np.concatenate(intervals, axis=1), index=fh_absolute_idx, columns=cols
+        )
         return pred_int
-
 
     def _update(self, y, X=None, update_params=True):
         """Update cutoff value and, optionally, fitted parameters.
@@ -190,17 +177,22 @@ class EnbPIForecaster(BaseForecaster):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        from sktime.forecasting.naive import NaiveForecaster
-        from sktime.transformations.bootstrap import MovingBlockBootstrapTransformer
 
-        return [
-            {
-                "forecaster": NaiveForecaster(),
-                "bootstrap_transformer": MovingBlockBootstrapTransformer(),
-            },
-            {
-                "forecaster": NaiveForecaster(),
-                "bootstrap_transformer": MovingBlockBootstrapTransformer(),
-                "method": "empirical_residual",
-            },
-        ]
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+        deps = cls.get_class_tag("python_dependencies")
+
+        if _check_soft_dependencies(deps, severity="none"):
+            from tsbootstrap import BlockResidualBootstrap
+
+            params = [
+                {},
+                {
+                    "forecaster": NaiveForecaster(),
+                    "bootstrap_transformer": BlockResidualBootstrap(),
+                },
+            ]
+        else:
+            params = {}
+
+        return params
