@@ -176,7 +176,7 @@ def test_pipeline_with_detrender():
             OptionalPassthrough,
             ForecastingPipeline,
             TabularToSeriesAdaptor,
-            make_reduction
+            make_reduction,
         ]
     ),
     reason="run test only if softdeps are present and incrementally (if requested)",
@@ -408,9 +408,7 @@ def test_forecasting_pipeline_dunder_exog():
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(
-        [TransformedTargetForecaster, ForecastingPipeline, Imputer]
-    ),
+    not run_test_for_class([TransformedTargetForecaster, ForecastingPipeline, Imputer]),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_tag_handles_missing_data():
@@ -501,7 +499,7 @@ def test_featurizer_forecastingpipeline_logic():
 
     lagged_y_trafo = YtoX() * Lag(1, index_out="original") * Imputer()
     # we need to specify index_out="original" as otherwise ARIMA gets 1 and 2 ahead
-    forecaster = lagged_y_trafo ** f  # this uses lagged_y_trafo to generate X
+    forecaster = lagged_y_trafo**f  # this uses lagged_y_trafo to generate X
 
     forecaster.fit(y_train, X=X_train, fh=[1])  # try to forecast next year
     forecaster.predict(X=X_test)  # dummy X to predict next year
