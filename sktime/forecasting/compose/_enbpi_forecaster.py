@@ -66,16 +66,17 @@ class EnbPIForecaster(BaseForecaster):
         self.forecaster_ = (
             clone(forecaster) if forecaster is not None else NaiveForecaster()
         )
-        from tsbootstrap import MovingBlockBootstrap
-
         self.bootstrap_transformer = bootstrap_transformer
+        self.random_state = random_state
+
+        super().__init__()
+
+        from tsbootstrap import MovingBlockBootstrap
         self.bootstrap_transformer_ = (
             clone(bootstrap_transformer)
             if bootstrap_transformer is not None
             else MovingBlockBootstrap()
         )
-        self.random_state = random_state
-        super().__init__()
 
     def _fit(self, X, y, fh=None):
         self._fh = fh
@@ -179,7 +180,7 @@ class EnbPIForecaster(BaseForecaster):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         deps = cls.get_class_tag("python_dependencies")
 
