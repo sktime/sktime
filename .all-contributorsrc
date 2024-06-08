@@ -2852,6 +2852,17 @@
         "code",
         "bug"
       ]
+    },
+    {
+      "login": "duydl",
+      "name": "Duy Do Le",
+      "avatar_url": "https://avatars.githubusercontent.com/u/56506156?v=4",
+      "profile": "https://github.com/duydl",
+      "contributions": [
+        "code",
+        "doc",
+        "maintenance"
+      ]
     }
   ]
 }
