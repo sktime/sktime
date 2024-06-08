@@ -203,7 +203,8 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator
+        """Return testing parameter settings for the estimator.
+
         Parameters
         ----------
         parameter_set : str, default="default"
