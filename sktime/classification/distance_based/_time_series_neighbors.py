@@ -239,7 +239,6 @@ class KNeighborsTimeSeriesClassifier(
         # sktime distance classes are Panel x Panel -> numpy2D
         # and the numba distances are numpy3D x numpy3D -> numpy2D
         # so we need to wrap the sktime distances
-        self._X = X
         if isinstance(self.distance, str):
             # numba distances
             metric = self._one_element_distance_npdist
