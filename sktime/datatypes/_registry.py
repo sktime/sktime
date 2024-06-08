@@ -230,7 +230,7 @@ def scitype_to_mtype(scitype: str, softdeps: str = "exclude"):
         return mtypes
 
     if softdeps == "present":
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         def present(x):
             """Return True if x has satisfied soft dependency or has no soft dep."""
