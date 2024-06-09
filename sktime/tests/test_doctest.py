@@ -48,9 +48,6 @@ def _all_functions(module_name):
         if modname.split(".")[-1].startswith(EXCLUDE_MODULES_STARTING_WITH):
             continue
 
-        print(modname)
-        print(run_test_module_changed(modname))
-
         # Skip modules that have not changed
         if ONLY_CHANGED_MODULES and not run_test_module_changed(modname):
             continue
