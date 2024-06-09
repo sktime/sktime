@@ -12,7 +12,8 @@ class EnbPIForecaster(BaseForecaster):
     Ensemble Bootstrap Prediction Interval Forecaster.
 
     The forecaster combines sktime forecasters, with tsbootratp bootsrappers
-    and the EnbPI algorithm implemented in fortuna.
+    and the EnbPI algorithm [1] implemented in fortuna using the
+    tutorial from this blogpost [2].
 
     The forecaster is based upon the bagging forecaster and performs
     internally the following steps:
@@ -37,10 +38,29 @@ class EnbPIForecaster(BaseForecaster):
     random_state : int, RandomState instance or None, default=None
         Random state for reproducibility.
 
+    Examples
+    --------
+    >>> from tsbootstrap import MovingBlockBootstrap # doctest: +SKIP
+    >>> from sktime.forecasting.compose import EnbPIForecaster # doctest: +SKIP
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.transformations.series.difference import Differencer
+    >>> from sktime.transformations.series.detrend import Deseasonalizer
+    >>> y = load_airline()
+    >>> forecaster = Differencer(lags=[1]) * Deseasonalizer(sp=12) * EnbPIForecaster(
+    ...    forecaster=NaiveForecaster(sp=12),
+    ...    bootstrap_transformer=MovingBlockBootstrap(n_bootstraps=10)) # doctest: +SKIP
+    >>> forecaster.fit(y, fh=range(12)) # doctest: +SKIP
+    >>> res = forecaster.predict() # doctest: +SKIP
+    >>> res_int = forecaster.predict_interval(coverage=[0.5]) # doctest: +SKIP
+
+
     References
     ----------
     .. [1] Chen Xu & Yao Xie (2021). Conformal Prediction Interval for Dynamic
     Time-Series.
+    .. [2] Valeriy Manokhin, PhD, MBA, CQF. Demystifying EnbPI: Mastering Conformal
+    Prediction Forecasting
     """
 
     _tags = {
