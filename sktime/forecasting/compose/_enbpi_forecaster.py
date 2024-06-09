@@ -129,9 +129,7 @@ class EnbPIForecaster(BaseForecaster):
     def _predict(self, X, fh=None):
         # Calculate Prediction Intervals using Bootstrap Samples
 
-        preds = []
-        for forecaster in self.forecasters:
-            preds.append(forecaster.predict(fh=fh, X=X))
+        preds = [forecaster.predict(fh=fh, X=X) for forecaster in self.forecasters]
 
         return pd.DataFrame(
             np.stack(preds, axis=0).mean(axis=0),
