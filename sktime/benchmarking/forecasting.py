@@ -14,6 +14,8 @@ def forecasting_validation(
     cv_splitter: BaseSplitter,
     scorers: List[BaseMetric],
     estimator: BaseForecaster,
+    backend=None,
+    backend_parms=None,
     **kwargs,
 ) -> Dict[str, Union[float, str]]:
     """Run validation for a forecasting estimator.
@@ -28,14 +30,46 @@ def forecasting_validation(
         Each BaseMetric output will be included in the results.
     estimator : BaseForecaster object
         Estimator to benchmark.
+    backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
+        Runs parallel evaluate for each task if specified.
 
+        - "None": executes loop sequentally, simple list comprehension
+        - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
+        - "dask": uses ``dask``, requires ``dask`` package in environment
+        - "dask_lazy": same as "dask",
+        but changes the return to (lazy) ``dask.dataframe.DataFrame``.
+
+        Recommendation: Use "dask" or "loky" for parallel evaluate.
+        "threading" is unlikely to see speed ups due to the GIL and the serialization
+        backend (``cloudpickle``) for "dask" and "loky" is generally more robust
+        than the standard ``pickle`` library used in "multiprocessing".
+
+    backend_params : dict, optional
+        additional parameters passed to the backend as config.
+        Directly passed to ``utils.parallel.parallelize``.
+        Valid keys depend on the value of ``backend``:
+
+        - "None": no additional parameters, ``backend_params`` is ignored
+        - "loky", "multiprocessing" and "threading": default ``joblib`` backends
+        any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+        with the exception of ``backend`` which is directly controlled by ``backend``.
+        If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+        will default to ``joblib`` defaults.
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``.
+        any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+        ``backend`` must be passed as a key of ``backend_params`` in this case.
+        If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+        will default to ``joblib`` defaults.
+        - "dask": any valid keys for ``dask.compute`` can be passed,
+        e.g., ``scheduler``
     Returns
     -------
     Dictionary of benchmark results for that forecaster
     """
     y = dataset_loader()
     results = {}
-    scores_df = evaluate(forecaster=estimator, y=y, cv=cv_splitter, scoring=scorers)
+    scores_df = evaluate(forecaster=estimator, y=y, cv=cv_splitter, scoring=scorers, backend=backend, backend_parms=backend_parms)
     for scorer in scorers:
         scorer_name = scorer.name
         for ix, row in scores_df.iterrows():
@@ -49,6 +83,8 @@ def _factory_forecasting_validation(
     dataset_loader: Callable,
     cv_splitter: BaseSplitter,
     scorers: List[BaseMetric],
+    backend=None,
+    backend_parms=None,
 ) -> Callable:
     """Build validation func which just takes a forecasting estimator."""
     return functools.partial(
@@ -56,6 +92,8 @@ def _factory_forecasting_validation(
         dataset_loader,
         cv_splitter,
         scorers,
+        backend=backend,
+        backend_parms=backend_parms,
     )
 
 
@@ -82,6 +120,8 @@ class ForecastingBenchmark(BaseBenchmark):
         cv_splitter: BaseSplitter,
         scorers: List[BaseMetric],
         task_id: Optional[str] = None,
+        backend=None,
+        backend_parms=None,
     ):
         """Register a forecasting task to the benchmark.
 
@@ -96,7 +136,39 @@ class ForecastingBenchmark(BaseBenchmark):
         task_id : str, optional (default=None)
             Identifier for the benchmark task. If none given then uses dataset loader
             name combined with cv_splitter class name.
+        backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
+            Runs parallel evaluate for each task if specified.
 
+            - "None": executes loop sequentally, simple list comprehension
+            - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
+            - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
+            - "dask": uses ``dask``, requires ``dask`` package in environment
+            - "dask_lazy": same as "dask",
+            but changes the return to (lazy) ``dask.dataframe.DataFrame``.
+
+            Recommendation: Use "dask" or "loky" for parallel evaluate.
+            "threading" is unlikely to see speed ups due to the GIL and the serialization
+            backend (``cloudpickle``) for "dask" and "loky" is generally more robust
+            than the standard ``pickle`` library used in "multiprocessing".
+
+        backend_params : dict, optional
+            additional parameters passed to the backend as config.
+            Directly passed to ``utils.parallel.parallelize``.
+            Valid keys depend on the value of ``backend``:
+
+            - "None": no additional parameters, ``backend_params`` is ignored
+            - "loky", "multiprocessing" and "threading": default ``joblib`` backends
+            any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+            with the exception of ``backend`` which is directly controlled by ``backend``.
+            If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+            will default to ``joblib`` defaults.
+            - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``.
+            any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+            ``backend`` must be passed as a key of ``backend_params`` in this case.
+            If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+            will default to ``joblib`` defaults.
+            - "dask": any valid keys for ``dask.compute`` can be passed,
+            e.g., ``scheduler``
         Returns
         -------
         A dictionary of benchmark results for that forecaster
@@ -111,4 +183,5 @@ class ForecastingBenchmark(BaseBenchmark):
                 f"[dataset={dataset_loader.__name__}]"
                 f"_[cv_splitter={cv_splitter.__class__.__name__}]"
             )
-        self._add_task(_factory_forecasting_validation, task_kwargs, task_id=task_id)
+        self._add_task(_factory_forecasting_validation, task_kwargs, task_id=task_id,
+                       backend=self.backend, backend_parms=self.backend_parms)
