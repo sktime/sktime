@@ -58,7 +58,7 @@ from sktime.datasets._data_io import (
 )
 from sktime.datasets._readers_writers.tsf import load_tsf_to_dataframe
 from sktime.datasets.tsf_dataset_names import tsf_all, tsf_all_datasets
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 DIRNAME = "data"
 MODULE = os.path.dirname(__file__)
@@ -1413,10 +1413,7 @@ def load_forecastingdata(
         # valid dataset names for classification, regression, forecasting datasets repo
         if name not in list(tsf_all_datasets):
             raise ValueError(
-                {name}
-                + " is not a valid dataset name. \
-                    List of valid dataset names can be found at \
-                    sktime.datasets.tsf_dataset_names.tsf_all_datasets"
+                f"Error in load_forecastingdata, Invalid dataset name = {name}."
             )
 
         url = f"https://zenodo.org/record/{tsf_all[name]}/files/{name}.zip"

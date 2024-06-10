@@ -55,7 +55,7 @@ from sktime.datatypes import (
 )
 from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.utils.datetime import _shift
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
 from sktime.utils.validation.series import check_equal_time_index
 from sktime.utils.warnings import warn
@@ -2297,16 +2297,8 @@ class BaseForecaster(BaseEstimator):
 
         if implements_proba:
             # todo: this works only univariate now, need to implement multivariate
-            pred_var = self._predict_proba(fh=fh, X=X)
-            pred_var = pd.DataFrame(pred_var)
-
-            # ensure index and columns are as expected
-            if fh.is_relative:
-                fh = fh.to_absolute(self.cutoff)
-            pred_var.index = fh.to_pandas()
-
-            if isinstance(pred_var, pd.DataFrame):
-                pred_var.columns = self._get_columns(method="predict_var")
+            pred_dist = self.predict_proba(fh=fh, X=X)
+            pred_var = pred_dist.var()
 
             return pred_var
 

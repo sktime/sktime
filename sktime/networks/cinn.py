@@ -22,7 +22,7 @@ if _check_soft_dependencies("FrEIA", severity="none"):
     import FrEIA.modules as Fm
 
 
-class cINNNetwork:
+class CINNNetwork:
     """
     Conditional Invertible Neural Network.
 
@@ -42,7 +42,7 @@ class cINNNetwork:
         Activation function to use in the subnet.
     """
 
-    class _cINNNetwork(NNModule):
+    class _CINNNetwork(NNModule):
         def __init__(
             self,
             horizon,
@@ -195,7 +195,7 @@ class cINNNetwork:
 
     def build(self):
         """Build the cINN."""
-        return self._cINNNetwork(
+        return self._CINNNetwork(
             self.horizon,
             self.cond_features,
             self.encoded_cond_size,

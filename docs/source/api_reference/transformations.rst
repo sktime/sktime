@@ -137,6 +137,14 @@ These transformers extract simple summary features.
     RandomIntervalFeatureExtractor
     FittedParamExtractor
 
+.. currentmodule:: sktime.transformations.series.adi_cv
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ADICVTransformer
+
 Shapelets, wavelets, and convolution
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -223,6 +231,14 @@ These transformers extract larger collections of features.
     :template: class.rst
 
     Catch22
+
+.. currentmodule:: sktime.transformations.panel.catch22wrapper
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Catch22Wrapper
 
 Series-to-series transformers
 -----------------------------
@@ -376,6 +392,14 @@ Filtering and denoising
 
     ThetaLinesTransformer
 
+.. currentmodule:: sktime.transformations.series.bollinger
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Bollinger
+
 Differencing, slope, kinematics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -445,7 +469,7 @@ Binning, sampling and segmentation
     :toctree: auto_generated/
     :template: class.rst
 
-    PAA2
+    PAA
 
 .. currentmodule:: sktime.transformations.series.sax
 
@@ -453,7 +477,7 @@ Binning, sampling and segmentation
     :toctree: auto_generated/
     :template: class.rst
 
-    SAX2
+    SAX
 
 .. currentmodule:: sktime.transformations.panel.dictionary_based
 
@@ -461,8 +485,8 @@ Binning, sampling and segmentation
     :toctree: auto_generated/
     :template: class.rst
 
-    PAA
-    SAX
+    PAAlegacy
+    SAXlegacy
 
 Missing value treatment
 ~~~~~~~~~~~~~~~~~~~~~~~~

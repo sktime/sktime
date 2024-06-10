@@ -52,6 +52,7 @@ runs:
       run: >-
         python3
         -m pytest
+        sktime/tests
         sktime/${{ inputs.sktime-component-identifier }}
         --matrixdesign ${{ inputs.sub-sample-estimators }}
         --only_changed_modules ${{ inputs.test-affected-estimators }}
