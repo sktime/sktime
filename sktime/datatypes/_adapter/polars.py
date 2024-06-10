@@ -9,6 +9,24 @@ def get_mi_cols(obj):
     return [x for x in obj.columns if isinstance(x, str) and x.startswith("__index__")]
 
 
+def _pl_Series_to_DataFrame(obj):
+    """Add index column to pl.Series type or pl.DataFrame containing no index column."""
+    import polars as pl
+
+    # Add index column if data is pl.Series type
+    if isinstance(obj, pl.Series):
+        index = pl.Series("__index__0", range(len(obj)))
+        obj = pl.DataFrame({index.name: index, obj.name: obj})
+
+    # Add index_column if it does not exist
+    index_cols = get_mi_cols(obj)
+    if len(index_cols) == 0:
+        index = pl.Series("__index__0", range(len(obj)))
+        obj = obj.with_columns(index)
+
+    return obj
+
+
 def is_monotonically_increasing(obj):
     """Check is polars frame columns(__index__) is monotonically increasing."""
     index_cols = get_mi_cols(obj)
@@ -137,8 +155,8 @@ def check_polars_frame(
         exp_type = pl.LazyFrame
         exp_type_str = "LazyFrame"
     else:
-        exp_type = pl.DataFrame
-        exp_type_str = "DataFrame"
+        exp_type = (pl.DataFrame, pl.Series)
+        exp_type_str = "DataFrame or Series"
 
     if not isinstance(obj, exp_type):
         msg = f"{var_name} must be a polars {exp_type_str}, found {type(obj)}"
@@ -148,6 +166,9 @@ def check_polars_frame(
     index_cols = []
 
     if scitype in ["Series", "Panel", "Hierarchical"]:
+        if scitype == "Series":
+            obj = _pl_Series_to_DataFrame(obj)
+
         index_cols = get_mi_cols(obj)
         scitypes = {
             "Series": len(index_cols) == 1,
@@ -185,16 +206,18 @@ def check_polars_frame(
         metadata["is_empty"] = obj.width < 1
     if _req("is_univariate", return_metadata):
         metadata["is_univariate"] = obj.width - len(index_cols) == 1
-    if _req("n_instances", return_metadata):
-        if hasattr(obj, "height"):
-            metadata["n_instances"] = obj.height
-        else:
-            metadata["n_instances"] = "NA"
     if _req("n_features", return_metadata):
         metadata["n_features"] = obj.width - len(index_cols)
     if _req("feature_names", return_metadata):
         feature_columns = [x for x in obj.columns if x not in index_cols]
         metadata["feature_names"] = feature_columns
+
+    if scitype in ["Panel", "Hierarchical", "Table"]:
+        if _req("n_instances", return_metadata):
+            if hasattr(obj, "height"):
+                metadata["n_instances"] = obj.height
+            else:
+                metadata["n_instances"] = "NA"
 
     # check if there are any nans
     #   compute only if needed
