@@ -534,7 +534,7 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
         dropout=0.1,
         activation="relu",
         c_out=7,
-        freq='h',
+        freq="h",
     ):
         self.seq_len = seq_len
         self.pred_len = pred_len
