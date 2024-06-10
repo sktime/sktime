@@ -31,7 +31,6 @@ __all__ = [
     "YfromX",
     "SkforecastAutoreg",
     "IgnoreX",
-    "SkforecastAutoreg",
 ]
 
 from sktime.forecasting.compose._bagging import BaggingForecaster
