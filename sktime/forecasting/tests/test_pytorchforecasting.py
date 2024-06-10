@@ -1,0 +1,103 @@
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Tests for interfacing estimators from pytorch-forecasting."""
+import time
+
+import pytest
+
+from sktime.datatypes._utilities import get_cutoff
+from sktime.forecasting.base._fh import ForecastingHorizon
+from sktime.forecasting.pytorchforecasting import (
+    PytorchForecastingDeepAR,
+    PytorchForecastingNBeats,
+    PytorchForecastingNHiTS,
+    PytorchForecastingTFT,
+)
+from sktime.tests.test_switch import run_test_for_class
+from sktime.utils._testing.forecasting import (
+    _assert_correct_columns,
+    _assert_correct_pred_time_index,
+)
+from sktime.utils._testing.hierarchical import _make_hierarchical
+
+__author__ = ["XinyuWu"]
+
+
+@pytest.mark.parametrize(
+    "model_class",
+    [
+        PytorchForecastingDeepAR,
+        PytorchForecastingNBeats,
+        PytorchForecastingNHiTS,
+        PytorchForecastingTFT,
+    ],
+)
+@pytest.mark.skipif(
+    not run_test_for_class(
+        [
+            PytorchForecastingDeepAR,
+            PytorchForecastingNBeats,
+            PytorchForecastingNHiTS,
+            PytorchForecastingTFT,
+        ]
+    ),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_load_model_from_disk(model_class) -> None:
+    """Test load fitted model from disk with refit."""
+    # define model
+    model = model_class(**(model_class.get_test_params()[0]))
+
+    # generate data
+    data_length = 100
+    data = _make_hierarchical(
+        (5, 100),
+        n_columns=2,
+        max_timepoints=data_length,
+        min_timepoints=data_length,
+    )
+    l1 = data.index.get_level_values(1).map(lambda x: int(x[3:]))
+    X_train = data.loc[l1 < 90, "c0"].to_frame()
+    y_train = data.loc[l1 < 90, "c1"].to_frame()
+    X_test = data.loc[l1 >= 80, "c0"].to_frame()
+    y_test = data.loc[l1 >= 80, "c1"].to_frame()
+    max_prediction_length = 3
+    fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
+
+    # fit the model and log the time
+    time_start = time.time()
+    model.fit(y_train, X_train, fh=fh)
+    time_end = time.time()
+    real_fit_time = time_end - time_start
+
+    # get the best model path
+    best_model_path = model._trainer.checkpoint_callback.best_model_path
+
+    # reload the model from best_model_path
+    model = model_class(model_path=best_model_path, **model_class.get_test_params()[0])
+    # call fit function and log the time
+    time_start = time.time()
+    model.fit(y_train, X_train, fh=fh)
+    time_end = time.time()
+    # verify the actual fit is skiped by checking the time duration
+    assert time_end - time_start < 0.1 * real_fit_time
+    # verify the actual fit is skiped by checking the _trainer attribute
+    try:
+        model._trainer
+        raise AssertionError("Trainer should not be initialized")
+    except AttributeError:
+        pass
+
+    # remove max_prediction_length from the end of y_test
+    len_levels = len(y_test.index.names)
+    y_test = y_test.groupby(level=list(range(len_levels - 1))).apply(
+        lambda x: x.droplevel(list(range(len_levels - 1))).iloc[:-max_prediction_length]
+    )
+
+    # predict with model loaded from disk
+    y_pred = model.predict(fh=fh, X=X_test, y=y_test)
+
+    # check prediction index and column names
+    cutoff = get_cutoff(y_test, return_index=True)
+    index_pred = y_pred.iloc[:max_prediction_length].index.get_level_values(2)
+    _assert_correct_pred_time_index(index_pred, cutoff, fh)
+    _assert_correct_columns(y_pred, y_test)
