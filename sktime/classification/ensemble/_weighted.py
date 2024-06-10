@@ -258,7 +258,7 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         from sktime.classification.dummy import DummyClassifier
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         params0 = {"classifiers": [DummyClassifier()]}
 

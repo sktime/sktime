@@ -2110,10 +2110,10 @@ def pairwise_distance(
     Examples
     --------
     >>> import numpy as np
-    >>> from sktime.distances import pairwise_distance
+    >>> from sktime.distances import pairwise_distance  # doctest: +SKIP
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
-    >>> pairwise_distance(x_1d, y_1d, metric='dtw')
+    >>> pairwise_distance(x_1d, y_1d, metric='dtw')  # doctest: +SKIP
     array([[16., 25., 36., 49.],
            [ 9., 16., 25., 36.],
            [ 4.,  9., 16., 25.],
@@ -2121,19 +2121,19 @@ def pairwise_distance(
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
-    >>> pairwise_distance(x_2d, y_2d, metric='dtw')
+    >>> pairwise_distance(x_2d, y_2d, metric='dtw')  # doctest: +SKIP
     array([[256., 576.],
            [ 58., 256.]])
 
     >>> x_3d = np.array([[[1], [2], [3], [4]], [[5], [6], [7], [8]]])  # 3d array
     >>> y_3d = np.array([[[9], [10], [11], [12]], [[13], [14], [15], [16]]])  # 3d array
-    >>> pairwise_distance(x_3d, y_3d, metric='dtw')
+    >>> pairwise_distance(x_3d, y_3d, metric='dtw')  # doctest: +SKIP
     array([[256., 576.],
            [ 64., 256.]])
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
-    >>> pairwise_distance(x_2d, y_2d, metric='dtw', window=0.5)
+    >>> pairwise_distance(x_2d, y_2d, metric='dtw', window=0.5)  # doctest: +SKIP
     array([[256., 576.],
            [ 58., 256.]])
     """

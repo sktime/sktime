@@ -45,7 +45,10 @@ def get_path_from_module(module_str):
             raise ImportError(
                 f"Error in get_path_from_module, module '{module_str}' not found."
             )
-        return module_spec.origin
+        module_path = module_spec.origin
+        if module_path.endswith("__init__.py"):
+            return module_path[:-11]
+        return module_path
     except Exception as e:
         raise ImportError(f"Error finding module '{module_str}'") from e
 
@@ -53,6 +56,8 @@ def get_path_from_module(module_str):
 @lru_cache
 def is_module_changed(module_str):
     """Check if a module has changed compared to the main branch.
+
+    If a child module has changed, the parent module is considered changed as well.
 
     Parameters
     ----------
@@ -126,13 +131,26 @@ def get_changed_lines(file_path, only_indented=True):
         return []
 
 
-@lru_cache
 def get_packages_with_changed_specs():
     """Get packages with changed or added specs.
 
     Returns
     -------
     list of str : names of packages with changed or added specs
+    """
+    return list(_get_packages_with_changed_specs())
+
+
+@lru_cache
+def _get_packages_with_changed_specs():
+    """Get packages with changed or added specs.
+
+    Private version of get_packages_with_changed_specs,
+    to avoid side effects on the list return.
+
+    Returns
+    -------
+    tuple of str : names of packages with changed or added specs
     """
     from packaging.requirements import Requirement
 
@@ -161,6 +179,6 @@ def get_packages_with_changed_specs():
         packages.append(pkg)
 
     # make unique
-    packages = list(set(packages))
+    packages = tuple(set(packages))
 
     return packages

@@ -245,7 +245,9 @@ class VAR(_StatsModelsAdapter):
 
         for cov in coverage:
             alpha = 1 - cov
-
+            # A hacky way to coerce error-inducing alpha==1 into its approximant
+            if alpha >= 0.99999:
+                alpha = 0.99999
             fcast_interval = model.forecast_interval(
                 self._y.values[-n_lags:], steps=steps, alpha=alpha
             )

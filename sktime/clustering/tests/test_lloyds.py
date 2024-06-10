@@ -15,6 +15,7 @@ from sktime.clustering.partitioning._lloyds import (
 from sktime.datasets import load_arrow_head
 from sktime.datatypes import convert_to
 from sktime.distances.tests._utils import create_test_distance_numpy
+from sktime.tests.test_switch import run_test_for_class
 
 
 class _test_class(TimeSeriesLloyds):
@@ -27,6 +28,10 @@ class _test_class(TimeSeriesLloyds):
         super().__init__(random_state=1, n_init=2)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(TimeSeriesLloyds),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_lloyds():
     """Test implementation of Lloyds."""
     X_train = create_test_distance_numpy(20, 10, 10)
@@ -53,6 +58,10 @@ CENTER_INIT_ALGO = [
 ]
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(TimeSeriesLloyds),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("center_init_callable", CENTER_INIT_ALGO)
 def test_center_init(center_init_callable: Callable[[np.ndarray], np.ndarray]):
     """Test center initialisation algorithms."""

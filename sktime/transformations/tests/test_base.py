@@ -17,6 +17,7 @@ import pandas as pd
 import pytest
 
 from sktime.datatypes import check_is_scitype, get_examples, mtype_to_scitype
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.transformations.compose import FitInTransform
 from sktime.transformations.panel.padder import PaddingTransformer
 from sktime.transformations.panel.tsfresh import (
@@ -35,8 +36,8 @@ from sktime.utils._testing.scenarios_transformers import (
     TransformerFitTransformSeriesUnivariate,
 )
 from sktime.utils._testing.series import _make_series
+from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.parallel import _get_parallel_test_fixtures
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 # other scenarios that might be needed later in development:
 # TransformerFitTransformPanelUnivariateWithClassY,
@@ -57,6 +58,10 @@ def inner_X_scitypes(est):
     return X_inner_scitypes
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
 def test_series_in_series_out_supported():
     """Test that fit/transform runs and returns the correct output type.
 
@@ -89,6 +94,10 @@ def test_series_in_series_out_supported():
     # todo: possibly, add mtype check, use metadata return
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
 def test_series_in_series_out_supported_fit_in_transform():
     """Test that fit/transform runs and returns the correct output type.
 
@@ -121,6 +130,10 @@ def test_series_in_series_out_supported_fit_in_transform():
     # todo: possibly, add mtype check, use metadata return
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
 def test_series_in_series_out_not_supported_but_panel():
     """Test that fit/transform runs and returns the correct output type.
 
@@ -155,6 +168,10 @@ def test_series_in_series_out_not_supported_but_panel():
     # todo: possibly, add mtype check, use metadata return
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
 def test_panel_in_panel_out_supported():
     """Test that fit/transform runs and returns the correct output type.
 
@@ -187,6 +204,10 @@ def test_panel_in_panel_out_supported():
     # todo: possibly, add mtype check, use metadata return
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
 @pytest.mark.parametrize("backend", BACKENDS)
 def test_panel_in_panel_out_not_supported_but_series(backend):
     """Test that fit/transform runs and returns the correct output type.
@@ -223,6 +244,10 @@ def test_panel_in_panel_out_not_supported_but_series(backend):
     # todo: possibly, add mtype check, use metadata return
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
 def test_series_in_primitives_out_supported_fit_in_transform():
     """Test that fit/transform runs and returns the correct output type.
 
@@ -257,6 +282,10 @@ def test_series_in_primitives_out_supported_fit_in_transform():
     assert len(Xt) == 1
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
 @pytest.mark.parametrize("backend", BACKENDS)
 def test_panel_in_primitives_out_not_supported_fit_in_transform(backend):
     """Test that fit/transform runs and returns the correct output type.
@@ -296,8 +325,9 @@ def test_panel_in_primitives_out_not_supported_fit_in_transform(backend):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("tsfresh", severity="none"),
-    reason="skip test if required soft dependency tsfresh not available",
+    not run_test_module_changed("sktime.transformations")
+    or not _check_estimator_deps(TSFreshFeatureExtractor, severity="none"),
+    reason="run test only if anything in sktime.transformations module has changed",
 )
 def test_series_in_primitives_out_not_supported_fit_in_transform():
     """Test that fit/transform runs and returns the correct output type.
@@ -335,8 +365,9 @@ def test_series_in_primitives_out_not_supported_fit_in_transform():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("tsfresh", severity="none"),
-    reason="skip test if required soft dependency tsfresh not available",
+    not run_test_module_changed("sktime.transformations")
+    or not _check_estimator_deps(TSFreshFeatureExtractor, severity="none"),
+    reason="run test only if anything in sktime.transformations module has changed",
 )
 def test_panel_in_primitives_out_supported_with_y_in_fit_but_not_transform():
     """Test that fit/transform runs and returns the correct output type.
@@ -374,6 +405,10 @@ def test_panel_in_primitives_out_supported_with_y_in_fit_but_not_transform():
     assert len(Xt) == 7
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
 @pytest.mark.parametrize("backend", BACKENDS)
 def test_hierarchical_in_hierarchical_out_not_supported_but_series(backend):
     """Test that fit/transform runs and returns the correct output type.
@@ -412,6 +447,10 @@ def test_hierarchical_in_hierarchical_out_not_supported_but_series(backend):
     assert len(Xt) == 2 * 4 * 12
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
 def test_hierarchical_in_hierarchical_out_not_supported_but_series_fit_in_transform():
     """Test that fit/transform runs and returns the correct output type.
 
@@ -448,6 +487,10 @@ def test_hierarchical_in_hierarchical_out_not_supported_but_series_fit_in_transf
     assert len(Xt) == 2 * 4 * 12
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
 @pytest.mark.parametrize("backend", BACKENDS)
 def test_vectorization_multivariate_no_row_vectorization(backend):
     """Test that multivariate vectorization of univariate transformers works.
@@ -489,6 +532,10 @@ def test_vectorization_multivariate_no_row_vectorization(backend):
     assert len(Xt.columns) == len(scenario.args["fit"]["X"].columns)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
 @pytest.mark.parametrize("backend", BACKENDS)
 def test_vectorization_multivariate_and_hierarchical(backend):
     """Test that fit/transform runs and returns the correct output type.
@@ -532,6 +579,10 @@ def test_vectorization_multivariate_and_hierarchical(backend):
     assert len(Xt.columns) == len(scenario.args["fit"]["X"].columns)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
 @pytest.mark.parametrize("backend", BACKENDS)
 def test_vectorization_multivariate_no_row_vectorization_empty_fit(backend):
     """Test that multivariate vectorization of univariate transformers works.
@@ -573,6 +624,10 @@ def test_vectorization_multivariate_no_row_vectorization_empty_fit(backend):
     assert len(Xt.columns) == len(scenario.args["fit"]["X"].columns)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
 @pytest.mark.parametrize("backend", BACKENDS)
 def test_vectorization_multivariate_and_hierarchical_empty_fit(backend):
     """Test that fit/transform runs and returns the correct output type.
@@ -616,6 +671,10 @@ def test_vectorization_multivariate_and_hierarchical_empty_fit(backend):
     assert len(Xt.columns) == len(scenario.args["fit"]["X"].columns)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
 def test_vectorize_reconstruct_unique_columns():
     """Tests that vectorization on multivariate output yields unique columns.
 
@@ -648,6 +707,10 @@ def test_vectorize_reconstruct_unique_columns():
     assert set(Xt.columns) == {0, 1}
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
 def test_vectorize_reconstruct_correct_hierarchy():
     """Tests correct transform return index in hierarchical case for primitives output.
 

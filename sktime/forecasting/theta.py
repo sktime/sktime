@@ -15,8 +15,8 @@ from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.transformations.series.detrend import Deseasonalizer
 from sktime.transformations.series.theta import ThetaLinesTransformer
+from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.slope_and_trend import _fit_trend
-from sktime.utils.validation._dependencies import _check_estimator_deps
 from sktime.utils.validation.forecasting import check_sp
 from sktime.utils.warnings import warn
 

@@ -3,7 +3,7 @@
 __author__ = ["James-Large", "AurumnPegasus"]
 
 from sktime.networks.base import BaseDeepNetwork
-from sktime.utils.validation._dependencies import _check_dl_dependencies
+from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class FCNNetwork(BaseDeepNetwork):
@@ -80,3 +80,29 @@ class FCNNetwork(BaseDeepNetwork):
         gap_layer = keras.layers.GlobalAveragePooling1D()(conv3)
 
         return input_layer, gap_layer
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+            Reserved values for classifiers:
+                "results_comparison" - used for identity testing in some classifiers
+                    should contain parameter settings comparable to "TSC bakeoff"
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        params1 = {}
+        params2 = {"random_state": 42}
+        return [params1, params2]

@@ -15,8 +15,8 @@ import pandas as pd
 from sktime.datatypes import check_is_scitype, convert_to
 from sktime.exceptions import FitFailedWarning
 from sktime.forecasting.base import ForecastingHorizon
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.parallel import parallelize
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_cv, check_scoring
 
 PANDAS_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hier"]
