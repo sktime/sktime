@@ -29,8 +29,8 @@ from sktime.datatypes import (
     scitype_to_mtype,
     update_data,
 )
+from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.sklearn import is_sklearn_transformer
-from sktime.utils.validation._dependencies import _check_estimator_deps
 from sktime.utils.warnings import warn
 
 

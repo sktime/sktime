@@ -49,6 +49,20 @@ class RandomIntervalClassifier(BaseClassifier):
     See Also
     --------
     RandomIntervals
+
+    Examples
+    --------
+    >>> from sktime.classification.feature_based import RandomIntervalClassifier
+    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
+    >>> clf = RandomIntervalClassifier(
+    ...     estimator=RandomForestClassifier(n_estimators=5)
+    ... )  # doctest: +SKIP
+    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
+    RandomIntervalClassifier(...)
+    >>> y_pred = clf.predict(X_test)  # doctest: +SKIP
     """
 
     _tags = {

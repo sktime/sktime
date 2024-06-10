@@ -9,7 +9,7 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.mcdcnn import MCDCNNNetwork
-from sktime.utils.validation._dependencies import _check_dl_dependencies
+from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class MCDCNNClassifier(BaseDeepClassifier):
@@ -206,7 +206,7 @@ class MCDCNNClassifier(BaseDeepClassifier):
         -------
         self : object
         """
-        y_onehot = self.convert_y_to_keras(y)
+        y_onehot = self._convert_y_to_keras(y)
         X = X.transpose(0, 2, 1)
         self.input_shape = X.shape[1:]
         X = self._network._prepare_input(X)

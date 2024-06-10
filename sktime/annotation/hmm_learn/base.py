@@ -23,6 +23,8 @@ class BaseHMMLearn(BaseSeriesAnnotator):
         "univariate-only": True,
         "fit_is_empty": True,
         "python_dependencies": "hmmlearn",
+        "task": "segmentation",
+        "learning_type": "unsupervised",
     }  # for unit test cases
     _hmm_estimator = None
 

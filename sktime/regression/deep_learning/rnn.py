@@ -10,7 +10,7 @@ from sklearn.utils import check_random_state
 
 from sktime.networks.rnn import RNNNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
-from sktime.utils.validation._dependencies import _check_dl_dependencies
+from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class SimpleRNNRegressor(BaseDeepRegressor):

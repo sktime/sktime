@@ -6,8 +6,10 @@ __all__ = []
 import importlib.util
 import inspect
 import subprocess
+from functools import lru_cache
 
 
+@lru_cache
 def get_module_from_class(cls):
     """Get full parent module string from class.
 
@@ -24,6 +26,7 @@ def get_module_from_class(cls):
     return module.__name__ if module else None
 
 
+@lru_cache
 def get_path_from_module(module_str):
     r"""Get local path string from module string.
 
@@ -42,13 +45,19 @@ def get_path_from_module(module_str):
             raise ImportError(
                 f"Error in get_path_from_module, module '{module_str}' not found."
             )
-        return module_spec.origin
+        module_path = module_spec.origin
+        if module_path.endswith("__init__.py"):
+            return module_path[:-11]
+        return module_path
     except Exception as e:
         raise ImportError(f"Error finding module '{module_str}'") from e
 
 
+@lru_cache
 def is_module_changed(module_str):
     """Check if a module has changed compared to the main branch.
+
+    If a child module has changed, the parent module is considered changed as well.
 
     Parameters
     ----------
@@ -64,6 +73,7 @@ def is_module_changed(module_str):
         return True
 
 
+@lru_cache
 def is_class_changed(cls):
     """Check if a class' parent module has changed compared to the main branch.
 
@@ -128,6 +138,20 @@ def get_packages_with_changed_specs():
     -------
     list of str : names of packages with changed or added specs
     """
+    return list(_get_packages_with_changed_specs())
+
+
+@lru_cache
+def _get_packages_with_changed_specs():
+    """Get packages with changed or added specs.
+
+    Private version of get_packages_with_changed_specs,
+    to avoid side effects on the list return.
+
+    Returns
+    -------
+    tuple of str : names of packages with changed or added specs
+    """
     from packaging.requirements import Requirement
 
     changed_lines = get_changed_lines("pyproject.toml")
@@ -155,6 +179,6 @@ def get_packages_with_changed_specs():
         packages.append(pkg)
 
     # make unique
-    packages = list(set(packages))
+    packages = tuple(set(packages))
 
     return packages
