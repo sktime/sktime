@@ -808,7 +808,9 @@ def test_tz_preserved():
 FREQ_STR_FOR_PD22 = ["Y", "2Y", "M", "3M"]
 
 if _check_soft_dependencies("pandas>=2.1.0", severity="none"):
-    FREQ_STR_FOR_PD22 += ["YE", "2YE", "ME", "3ME"]
+    FREQ_STR_FOR_PD22 += [
+        "YE", "2YE", "ME", "3ME", "MS", "3MS", "QS", "3QS", "YS", "3YS"
+    ]
 
 
 @pytest.mark.parametrize("freq", FREQ_STR_FOR_PD22)
@@ -827,13 +829,15 @@ def test_pandas22_freq(freq):
     fh.to_absolute(cutoff).to_relative(cutoff)  # failure 2
 
 
-def test_pandas22_freq_roundtrip():
-    """Test that to_absolute and to_relative conversions work with all freqs.
+@pytest.mark.parametrize("ts", [True, False])
+def test_pandas22_freq_roundtrip(ts=True):
+    """Test that to_absolute and to_relative conversions work with the airline data.
 
     Failure case in bug #6572.
     """
     y = load_airline()
-    y.index = y.index.to_timestamp()
+    if ts:
+        y.index = y.index.to_timestamp()
 
     f = NaiveForecaster(strategy="last")
     f.fit(y)
