@@ -421,11 +421,11 @@ class TSRGridSearchCV(_DelegatedRegressor):
         from sklearn.metrics import r2_score
 
         from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
-        from sktime.regression.interval_based import TimeSeriesForestRegressor
+        from sktime.regression.kernel_based import TimeSeriesSVRTslearn
 
         param1 = {
-            "estimator": TimeSeriesForestRegressor(),
-            "param_grid": {"n_estimators": [3, 4, 5]},
+            "estimator": TimeSeriesSVRTslearn(),
+            "param_grid": {"C": [1.0, 0.1, 0.01]},
         }
 
         param2 = {
