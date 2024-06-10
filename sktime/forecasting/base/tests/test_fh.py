@@ -809,7 +809,16 @@ FREQ_STR_FOR_PD22 = ["Y", "2Y", "M", "3M"]
 
 if _check_soft_dependencies("pandas>=2.1.0", severity="none"):
     FREQ_STR_FOR_PD22 += [
-        "YE", "2YE", "ME", "3ME", "MS", "3MS", "QS", "3QS", "YS", "3YS"
+        "YE",
+        "2YE",
+        "ME",
+        "3ME",
+        "MS",
+        "3MS",
+        "QS",
+        "3QS",
+        "YS",
+        "3YS",
     ]
 
 
