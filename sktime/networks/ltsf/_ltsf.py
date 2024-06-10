@@ -342,6 +342,7 @@ class LTSFTransformerNetwork:
 
             super().__init__()
             self.pred_len = configs.pred_len
+            self.seq_len = configs.seq_len
             self.output_attention = configs.output_attention
 
             # Embedding
@@ -479,7 +480,35 @@ class LTSFTransformerNetwork:
                 projection=nn.Linear(configs.d_model, configs.c_out, bias=True),
             )._build()
 
-        def forward(
+        def forward(self, x):
+            """Forward pass for LSTF-Transformer Network.
+
+            Parameters
+            ----------
+            x : torch.Tensor
+                torch.Tensor of shape [Batch, Input Sequence Length, Channel]
+
+            Returns
+            -------
+            x : torch.Tensor
+                output of Linear Model. x.shape = [Batch, Output Length, Channel]
+            """
+            from torch import ones
+
+            batch_size = x.size(0)
+            seq_len = self.seq_len
+            pred_len = self.pred_len
+            num_features = x.size(2)
+            num_X_features = 5
+
+            x_enc = x
+            x_mark_enc = ones(batch_size, seq_len, num_X_features)
+            x_dec = ones(batch_size, pred_len, num_features)
+            x_mark_dec = ones(batch_size, pred_len, num_X_features)
+
+            return self._forward(x_enc, x_mark_enc, x_dec, x_mark_dec)
+
+        def _forward(
             self,
             x_enc,
             x_mark_enc,

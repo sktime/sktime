@@ -577,7 +577,7 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
             lr=lr,
         )
 
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         if _check_soft_dependencies("torch"):
             import torch
@@ -602,6 +602,7 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
 
         class Configs:
             def __init__(self_config):
+                self_config.seq_len = self.seq_len
                 self_config.pred_len = self.pred_len
                 self_config.output_attention = self.output_attention
                 self_config.embed_type = self.embed_type
