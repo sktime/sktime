@@ -180,26 +180,28 @@ class SkforecastAutoreg(BaseForecaster):
 
     @staticmethod
     def _coerce_int_to_range_index(df):
-        if df is not None:
-            new_index = pd.RangeIndex(df.index[0], df.index[-1] + 1)
+        new_df = df.copy(deep=True)
+        if new_df is not None:
+            new_index = pd.RangeIndex(new_df.index[0], new_df.index[-1] + 1)
             try:
-                np.testing.assert_array_equal(df.index, new_index)
+                np.testing.assert_array_equal(new_df.index, new_index)
             except AssertionError:
                 raise ValueError(
                     "Coercion of integer pd.Index to pd.RangeIndex "
                     "failed. Please provide  with a "
                     "pd.RangeIndex."
                 )
-            df.index = new_index
-        return df
+            new_df.index = new_index
+        return new_df
 
     @staticmethod
     def _coerce_period_to_datetime_index(df):
         if df is not None:
-            period_freq = df.index.freq
-            df.index = df.index.to_timestamp(how="e").normalize()
-            df.index.freq = period_freq
-        return df
+            new_df = df.copy(deep=True)
+            period_freq = new_df.index.freq
+            new_df.index = new_df.index.to_timestamp(how="e").normalize()
+            new_df.index.freq = period_freq
+        return new_df
 
     def _fit(
         self: "SkforecastAutoreg",
@@ -232,15 +234,17 @@ class SkforecastAutoreg(BaseForecaster):
 
         self._forecaster = self._create_forecaster()
 
+        y_new = y
+        X_new = X
         if not isinstance(y.index, (pd.RangeIndex, pd.DatetimeIndex)):
             if isinstance(y.index, pd.PeriodIndex):
-                y = self._coerce_period_to_datetime_index(y)
+                y_new = self._coerce_period_to_datetime_index(y)
                 if X is not None:
-                    X = self._coerce_period_to_datetime_index(X)
+                    X_new = self._coerce_period_to_datetime_index(X)
             elif pd.api.types.is_integer_dtype(y.index):
-                y = self._coerce_int_to_range_index(y)
+                y_new = self._coerce_int_to_range_index(y)
                 if X is not None:
-                    X = self._coerce_int_to_range_index(X)
+                    X_new = self._coerce_int_to_range_index(X)
             else:
                 raise ValueError(
                     f"""y and X must have one of the following index types:
@@ -248,8 +252,8 @@ class SkforecastAutoreg(BaseForecaster):
                     (int dtype). Found index of type: {type(y.index)}"""
                 )
 
-        self._new_cutoff = get_cutoff(y, return_index=True)
-        self._forecaster.fit(y, exog=self._coerce_column_names(X))
+        self._new_cutoff = get_cutoff(y_new, return_index=True)
+        self._forecaster.fit(y_new, exog=self._coerce_column_names(X_new))
 
         return self
 
@@ -307,12 +311,13 @@ class SkforecastAutoreg(BaseForecaster):
             horizon_positions,
         ) = self._get_horizon_details(fh)
 
+        X_new = X
         if X is not None:
             if not isinstance(X.index, (pd.RangeIndex, pd.DatetimeIndex)):
                 if isinstance(X.index, pd.PeriodIndex):
-                    X = self._coerce_period_to_datetime_index(X)
+                    X_new = self._coerce_period_to_datetime_index(X)
                 elif pd.api.types.is_integer_dtype(X.index):
-                    X = self._coerce_int_to_range_index(X)
+                    X_new = self._coerce_int_to_range_index(X)
                 else:
                     raise ValueError(
                         f"""X must have one of the following index types:
@@ -321,11 +326,11 @@ class SkforecastAutoreg(BaseForecaster):
                     )
 
         point_predictions = self._forecaster.predict(
-            maximum_forecast_horizon, exog=self._coerce_column_names(X)
+            maximum_forecast_horizon, exog=self._coerce_column_names(X_new)
         ).to_numpy()
         final_point_predictions = pd.Series(
             point_predictions[horizon_positions],
-            index=fh.get_expected_pred_idx(self._new_cutoff),
+            index=absolute_horizons,
             name=None if self._y.name is None else str(self._y.name),
         )
 
@@ -376,6 +381,9 @@ class SkforecastAutoreg(BaseForecaster):
         ) = self._get_horizon_details(fh)
 
         var_names = list(map(str, self._get_varnames()))
+        if len(var_names) == 1:
+            if var_names[0] == "0":
+                var_names[0] = 0
         var_name = var_names[0]
 
         quantile_predictions_indices = pd.MultiIndex.from_product([var_names, alpha])
@@ -383,8 +391,22 @@ class SkforecastAutoreg(BaseForecaster):
             index=absolute_horizons, columns=quantile_predictions_indices
         )
 
+        X_new = X
+        if X is not None:
+            if not isinstance(X.index, (pd.RangeIndex, pd.DatetimeIndex)):
+                if isinstance(X.index, pd.PeriodIndex):
+                    X_new = self._coerce_period_to_datetime_index(X)
+                elif pd.api.types.is_integer_dtype(X.index):
+                    X_new = self._coerce_int_to_range_index(X)
+                else:
+                    raise ValueError(
+                        f"""X must have one of the following index types:
+                        pd.RangeIndex, pd.DatetimeIndex, pd.PeriodIndex, pd.Index
+                        (int dtype). Found index of type: {type(X.index)}"""
+                    )
+
         bootstrap_predictions = self._forecaster.predict_bootstrapping(
-            maximum_forecast_horizon, exog=self._coerce_column_names(X)
+            maximum_forecast_horizon, exog=self._coerce_column_names(X_new)
         )
         bootstrap_quantiles = bootstrap_predictions.quantile(
             q=alpha, axis=1
@@ -394,8 +416,6 @@ class SkforecastAutoreg(BaseForecaster):
             quantile_predictions[(var_name, quantile)] = bootstrap_quantiles.to_numpy()[
                 horizon_positions
             ]
-
-        quantile_predictions.index = fh.get_expected_pred_idx(self._new_cutoff)
 
         return quantile_predictions
 
