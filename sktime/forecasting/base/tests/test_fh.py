@@ -815,7 +815,7 @@ if _check_soft_dependencies("pandas>=2.1.0", severity="none"):
 def test_pandas22_freq(freq):
     """Test that to_absolute and to_relative conversions work with all freqs.
 
-    Failure cas in bug #6499.
+    Failure case in bug #6499.
     """
     fh = ForecastingHorizon([1, 2, 3])
 
@@ -825,3 +825,19 @@ def test_pandas22_freq(freq):
 
     fh.to_absolute(cutoff)  # failure 1
     fh.to_absolute(cutoff).to_relative(cutoff)  # failure 2
+
+
+def test_pandas22_freq_roundtrip():
+    """Test that to_absolute and to_relative conversions work with all freqs.
+
+    Failure case in bug #6572.
+    """
+    y = load_airline()
+    y.index = y.index.to_timestamp()
+
+    f = NaiveForecaster(strategy="last")
+    f.fit(y)
+
+    fh = ForecastingHorizon([0], is_relative=True)
+    fh.to_absolute(f.cutoff)
+    fh.to_absolute(f.cutoff).to_relative(f.cutoff)
