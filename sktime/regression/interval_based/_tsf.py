@@ -1,6 +1,13 @@
 """Time Series Forest Regressor (TSF)."""
 
-__author__ = ["TonyBagnall", "kkoziara", "luiszugasti", "kanand77", "mloning"]
+__author__ = [
+    "TonyBagnall",
+    "kkoziara",
+    "luiszugasti",
+    "kanand77",
+    "mloning",
+    "ksharma6",
+]
 __all__ = ["TimeSeriesForestRegressor"]
 
 import numpy as np
