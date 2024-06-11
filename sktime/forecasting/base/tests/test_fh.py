@@ -839,7 +839,7 @@ def test_pandas22_freq(freq):
 
 
 @pytest.mark.parametrize("ts", [True, False])
-def test_pandas22_freq_roundtrip(ts=True):
+def test_pandas22_freq_roundtrip(ts):
     """Test that to_absolute and to_relative conversions work with the airline data.
 
     Failure case in bug #6572.
