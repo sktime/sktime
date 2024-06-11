@@ -23,10 +23,10 @@ CVs = [
     SlidingWindowSplitter(fh=1, initial_window=12, step_length=3),
 ]
 params_distributions = {
-    "forecaster": [NaiveForecaster()],
-    "forecaster__window_length": [1, 5],
-    "forecaster__strategy": ["drift", "last", "mean"],
-    "imputer__method": ["mean", "median"],
+    #"forecaster": [NaiveForecaster()],
+    "forecaster__window_length": optuna.distributions.IntDistribution(1, 5),
+    "forecaster__strategy": optuna.distributions.CategoricalDistribution(["drift", "last", "mean"]),
+    "imputer__method": optuna.distributions.CategoricalDistribution(["mean", "median"]),
 }
 
 
