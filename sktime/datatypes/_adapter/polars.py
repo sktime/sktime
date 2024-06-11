@@ -9,27 +9,14 @@ def get_mi_cols(obj):
     return [x for x in obj.columns if isinstance(x, str) and x.startswith("__index__")]
 
 
-def _pl_Series_to_DataFrame(obj):
-    """Add index column to pl.Series type or pl.DataFrame containing no index column."""
-    import polars as pl
-
-    # Add index column if data is pl.Series type
-    if isinstance(obj, pl.Series):
-        index = pl.Series("__index__0", range(len(obj)))
-        obj = pl.DataFrame({index.name: index, obj.name: obj})
-
-    # Add index_column if it does not exist
-    index_cols = get_mi_cols(obj)
-    if len(index_cols) == 0:
-        index = pl.Series("__index__0", range(len(obj)))
-        obj = obj.with_columns(index)
-
-    return obj
-
-
 def is_monotonically_increasing(obj):
     """Check is polars frame columns(__index__) is monotonically increasing."""
     index_cols = get_mi_cols(obj)
+
+    # Series with no index columns
+    if len(index_cols) == 0:
+        return True
+
     # check for Series scitype
     if len(index_cols) == 1:
         if obj[index_cols[0]].is_sorted():
@@ -86,6 +73,7 @@ def convert_pandas_to_polars(
                 col[i] = f"__index__{name}"
         return col
 
+    obj = obj.copy()
     index_names = obj.index.names
     index_names = polars_index_columns(index_names)
     obj.index.names = index_names
@@ -155,8 +143,8 @@ def check_polars_frame(
         exp_type = pl.LazyFrame
         exp_type_str = "LazyFrame"
     else:
-        exp_type = (pl.DataFrame, pl.Series)
-        exp_type_str = "DataFrame or Series"
+        exp_type = pl.DataFrame
+        exp_type_str = "DataFrame"
 
     if not isinstance(obj, exp_type):
         msg = f"{var_name} must be a polars {exp_type_str}, found {type(obj)}"
@@ -166,12 +154,9 @@ def check_polars_frame(
     index_cols = []
 
     if scitype in ["Series", "Panel", "Hierarchical"]:
-        if scitype == "Series":
-            obj = _pl_Series_to_DataFrame(obj)
-
         index_cols = get_mi_cols(obj)
         scitypes = {
-            "Series": len(index_cols) == 1,
+            "Series": len(index_cols) == 1 or len(index_cols) == 0,
             "Panel": len(index_cols) == 2,
             "Hierarchical": len(index_cols) >= 3,
         }
@@ -179,7 +164,7 @@ def check_polars_frame(
         if not scitypes[scitype]:
             cols_msg = (
                 f"{var_name} must have correct number of index columns for scitype, "
-                f"Series: 1, Panel: 2, Hierarchical: >= 3,"
+                f"Series: 0 or 1, Panel: 2, Hierarchical: >= 3,"
                 f"found {len(index_cols)}, namely: {index_cols}"
             )
             return ret(False, cols_msg, None, return_metadata)
