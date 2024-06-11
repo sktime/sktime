@@ -838,6 +838,10 @@ def test_pandas22_freq(freq):
     fh.to_absolute(cutoff).to_relative(cutoff)  # failure 2
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("pandas>=2.1.0", severity="none"),
+    reason="frequency logic requires pandas>=2.1.0",
+)
 @pytest.mark.parametrize("ts", [True, False])
 def test_pandas22_freq_roundtrip(ts):
     """Test that to_absolute and to_relative conversions work with the airline data.
