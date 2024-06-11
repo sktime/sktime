@@ -1635,9 +1635,33 @@ class TuneForecastingOptunaCV(BaseGridSearch):
         scoring = check_scoring(self.scoring, obj=self)
         scoring_name = f"test_{scoring.name}"
 
-        def _optuna_fit_and_score(trial):
+        # def _optuna_fit_and_score(trial):
+        #     forecaster = self.forecaster.clone()
+        #     params = {name: trial.suggest_categorical(name, v) for name, v in self.param_grid.items()}
+        #     print(params)
+        #     forecaster.set_params(**params)
+
+        #     out = evaluate(
+        #         forecaster,
+        #         cv,
+        #         y,
+        #         X,
+        #         strategy=self.strategy,
+        #         scoring=scoring,
+        #         error_score=self.error_score,
+        #     )
+        #     out = out.filter(items=[scoring_name, "fit_time", "pred_time"], axis=1)
+        #     out = out.mean().add_prefix("mean_")
+
+        #     return out[f"mean_{scoring_name}"]
+
+        # study = optuna.create_study(direction='minimize')
+        # study.optimize(_optuna_fit_and_score, n_trials=self.n_evals)
+        def _optuna_fit_and_score(temp):
             forecaster = self.forecaster.clone()
-            params = {name: trial.suggest_categorical(name, v) for name, v in self.param_grid.items()}
+            trial = self.study.ask(self.param_grid)
+            params = {name: trial.params[name] for name, v in self.param_grid.items()}            
+            print(params)
             forecaster.set_params(**params)
 
             out = evaluate(
@@ -1654,13 +1678,12 @@ class TuneForecastingOptunaCV(BaseGridSearch):
 
             return out[f"mean_{scoring_name}"]
 
-        study = optuna.create_study(direction='minimize')
-        study.optimize(_optuna_fit_and_score, n_trials=self.n_evals)
-
+        self.study = optuna.create_study(direction='minimize')
+        self.study.optimize(_optuna_fit_and_score, n_trials=self.n_evals)
         # Store parameters of each trial in a list
-        params_list = [trial.params for trial in study.trials]
+        params_list = [trial.params for trial in self.study.trials]
 
-        results = study.trials_dataframe()
+        results = self.study.trials_dataframe()
 
         # Add the parameters as a new column to the DataFrame
         results["params"] = params_list
