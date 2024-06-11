@@ -405,6 +405,9 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
         # --------------
         "python_dependencies": ["pytorch_forecasting>=1.0.0", "torch", "lightning"],
         "capability:global_forecasting": True,
+        "capability:insample": False,
+        "X-y-must-have-same-index": True,
+        "scitype:y": "univariate",
     }
 
     def __init__(
@@ -481,6 +484,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                 {
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
+                        "limit_train_batches": 10,  # for quick test
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
@@ -488,7 +492,8 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                 },
                 {
                     "trainer_params": {
-                        "max_epochs": 1,  # for quick test
+                        "max_epochs": 3,  # for quick test
+                        "limit_train_batches": 10,  # for quick test
                     },
                     "model_params": {
                         "cell_type": "GRU",
@@ -513,6 +518,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                 {
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
+                        "limit_train_batches": 10,  # for quick test
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
@@ -521,7 +527,8 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                 {
                     "trainer_params": {
                         "callbacks": [early_stop_callback],
-                        "max_epochs": 1,  # for quick test
+                        "max_epochs": 3,  # for quick test
+                        "limit_train_batches": 10,  # for quick test
                     },
                     "model_params": {
                         "cell_type": "GRU",
@@ -573,6 +580,9 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
         # --------------
         "python_dependencies": ["pytorch_forecasting>=1.0.0", "torch", "lightning"],
         "capability:global_forecasting": True,
+        "capability:insample": False,
+        "X-y-must-have-same-index": True,
+        "scitype:y": "univariate",
     }
 
     def __init__(
@@ -650,6 +660,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                 {
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
+                        "limit_train_batches": 10,  # for quick test
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
@@ -657,7 +668,8 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                 },
                 {
                     "trainer_params": {
-                        "max_epochs": 1,  # for quick test
+                        "max_epochs": 3,  # for quick test
+                        "limit_train_batches": 10,  # for quick test
                     },
                     "model_params": {
                         "interpolation_mode": "nearest",
@@ -682,6 +694,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                 {
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
+                        "limit_train_batches": 10,  # for quick test
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
@@ -690,7 +703,8 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                 {
                     "trainer_params": {
                         "callbacks": [early_stop_callback],
-                        "max_epochs": 1,  # for quick test
+                        "max_epochs": 3,  # for quick test
+                        "limit_train_batches": 10,  # for quick test
                     },
                     "model_params": {
                         "interpolation_mode": "nearest",
