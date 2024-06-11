@@ -155,6 +155,10 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
             reference to self
         """
         self._max_prediction_length = np.max(fh.to_relative(self.cutoff))
+        assert (
+            np.min(fh.to_relative(self.cutoff)) > 0
+        ), f"No in sample predict support, \
+        but found fh with in sample index: {fh}"
         # check if dummy X is needed
         # only the TFT model need X to fit, probably a bug in pytorch-forecasting
         X = self._dummy_X(X, y)
@@ -224,14 +228,34 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
         X : sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
+            If ``y`` is not passed (not performing global forecasting), ``X`` should
+            only contain the time points to be predicted.
+            If ``y`` is passed (performing global forecasting), ``X`` must contain
+            all historical values and the time points to be predicted.
         y : sktime time series object, optional (default=None)
             Historical values of the time series that should be predicted.
+            If not None, global forecasting will be performed.
+            Only pass the historical values not the time points to be predicted.
 
         Returns
         -------
         y_pred : sktime time series object
             guaranteed to have a single column/variable
             Point predictions
+
+        Notes
+        -----
+        If ``y`` is not None, global forecast will be performed.
+        In global forecast mode,
+        ``X`` should contain all historical values and the time points to be predicted,
+        while ``y`` should only contain historical values
+        not the time points to be predicted.
+
+        If ``y`` is None, non global forecast will be performed.
+        In non global forecast mode,
+        ``X`` should only contain the time points to be predicted,
+        while ``y`` should only contain historical values
+        not the time points to be predicted.
         """
         if y is None:
             y = deepcopy(self._y)
