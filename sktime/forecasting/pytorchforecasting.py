@@ -48,6 +48,9 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         # --------------
         "python_dependencies": ["pytorch_forecasting>=1.0.0", "torch", "lightning"],
         "capability:global_forecasting": True,
+        "capability:insample": False,
+        "X-y-must-have-same-index": True,
+        "scitype:y": "univariate",
     }
 
     def __init__(
@@ -124,6 +127,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                 {
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
+                        "limit_train_batches": 10,  # for quick test
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
@@ -131,7 +135,8 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                 },
                 {
                     "trainer_params": {
-                        "max_epochs": 1,  # for quick test
+                        "max_epochs": 3,  # for quick test
+                        "limit_train_batches": 10,  # for quick test
                     },
                     "model_params": {
                         "hidden_size": 10,
@@ -161,6 +166,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                 {
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
+                        "limit_train_batches": 10,  # for quick test
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
@@ -169,7 +175,8 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                 {
                     "trainer_params": {
                         "callbacks": [early_stop_callback],
-                        "max_epochs": 1,  # for quick test
+                        "max_epochs": 3,  # for quick test
+                        "limit_train_batches": 10,  # for quick test
                     },
                     "model_params": {
                         "hidden_size": 10,
@@ -228,6 +235,9 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         "python_dependencies": ["pytorch_forecasting>=1.0.0", "torch", "lightning"],
         "capability:global_forecasting": True,
         "ignores-exogeneous-X": True,
+        "capability:insample": False,
+        "X-y-must-have-same-index": True,
+        "scitype:y": "univariate",
     }
 
     def __init__(
@@ -295,6 +305,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                 {
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
+                        "limit_train_batches": 10,  # for quick test
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
@@ -302,7 +313,8 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                 },
                 {
                     "trainer_params": {
-                        "max_epochs": 1,  # for quick test
+                        "max_epochs": 3,  # for quick test
+                        "limit_train_batches": 10,  # for quick test
                     },
                     "model_params": {
                         "num_blocks": [5, 5],
@@ -329,6 +341,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                 {
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
+                        "limit_train_batches": 10,  # for quick test
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
@@ -337,7 +350,8 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                 {
                     "trainer_params": {
                         "callbacks": [early_stop_callback],
-                        "max_epochs": 1,  # for quick test
+                        "max_epochs": 3,  # for quick test
+                        "limit_train_batches": 10,  # for quick test
                     },
                     "model_params": {
                         "num_blocks": [5, 5],

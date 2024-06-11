@@ -155,6 +155,10 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
             reference to self
         """
         self._max_prediction_length = np.max(fh.to_relative(self.cutoff))
+        assert (
+            np.min(fh.to_relative(self.cutoff)) > 0
+        ), f"No in sample predict support, \
+        but found fh with in sample index: {fh}"
         # check if dummy X is needed
         # only the TFT model need X to fit, probably a bug in pytorch-forecasting
         X = self._dummy_X(X, y)
