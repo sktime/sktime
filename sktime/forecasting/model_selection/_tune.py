@@ -1635,32 +1635,11 @@ class TuneForecastingOptunaCV(BaseGridSearch):
         scoring = check_scoring(self.scoring, obj=self)
         scoring_name = f"test_{scoring.name}"
 
-        # def _optuna_fit_and_score(trial):
-        #     forecaster = self.forecaster.clone()
-        #     params = {name: trial.suggest_categorical(name, v) for name, v in self.param_grid.items()}
-        #     print(params)
-        #     forecaster.set_params(**params)
-
-        #     out = evaluate(
-        #         forecaster,
-        #         cv,
-        #         y,
-        #         X,
-        #         strategy=self.strategy,
-        #         scoring=scoring,
-        #         error_score=self.error_score,
-        #     )
-        #     out = out.filter(items=[scoring_name, "fit_time", "pred_time"], axis=1)
-        #     out = out.mean().add_prefix("mean_")
-
-        #     return out[f"mean_{scoring_name}"]
-
-        # study = optuna.create_study(direction='minimize')
-        # study.optimize(_optuna_fit_and_score, n_trials=self.n_evals)
-        def _optuna_fit_and_score(temp):
+        study = optuna.create_study(direction="minimize")
+        for _ in range(self.n_evals):
             forecaster = self.forecaster.clone()
-            trial = self.study.ask(self.param_grid)
-            params = {name: trial.params[name] for name, v in self.param_grid.items()}            
+            trial = study.ask(self.param_grid)  # pass the pre-defined distributions.
+            params = {name: trial.params[name] for name, v in self.param_grid.items()}
             print(params)
             forecaster.set_params(**params)
 
@@ -1671,23 +1650,22 @@ class TuneForecastingOptunaCV(BaseGridSearch):
                 X,
                 strategy=self.strategy,
                 scoring=scoring,
-                error_score=self.error_score,
+                error_score="raise",
             )
             out = out.filter(items=[scoring_name, "fit_time", "pred_time"], axis=1)
             out = out.mean().add_prefix("mean_")
 
-            return out[f"mean_{scoring_name}"]
+            study.tell(trial, out[f"mean_{scoring_name}"])
 
-        self.study = optuna.create_study(direction='minimize')
-        self.study.optimize(_optuna_fit_and_score, n_trials=self.n_evals)
-        # Store parameters of each trial in a list
-        params_list = [trial.params for trial in self.study.trials]
+        params_list = [trial.params for trial in study.trials]
 
-        results = self.study.trials_dataframe()
+        results = study.trials_dataframe()
 
         # Add the parameters as a new column to the DataFrame
         results["params"] = params_list
-        results[f"rank_{scoring_name}"] = results["value"].rank(ascending=scoring.get_tag("lower_is_better"))
+        results[f"rank_{scoring_name}"] = results["value"].rank(
+            ascending=scoring.get_tag("lower_is_better")
+        )
         self.cv_results_ = results
         self.best_index_ = results["value"].idxmin()
         if self.best_index_ == -1:
@@ -1703,7 +1681,9 @@ class TuneForecastingOptunaCV(BaseGridSearch):
         if self.refit:
             self.best_forecaster_.fit(y, X, fh)
 
-        results = results.sort_values(by="value", ascending=scoring.get_tag("lower_is_better"))
+        results = results.sort_values(
+            by="value", ascending=scoring.get_tag("lower_is_better")
+        )
         self.n_best_forecasters_ = []
         self.n_best_scores_ = []
         for i in range(self.return_n_best_forecasters):
