@@ -69,7 +69,14 @@ def forecasting_validation(
     """
     y = dataset_loader()
     results = {}
-    scores_df = evaluate(forecaster=estimator, y=y, cv=cv_splitter, scoring=scorers, backend=backend, backend_parms=backend_parms)
+    scores_df = evaluate(
+        forecaster=estimator,
+        y=y,
+        cv=cv_splitter,
+        scoring=scorers,
+        backend=backend,
+        backend_parms=backend_parms,
+    )
     for scorer in scorers:
         scorer_name = scorer.name
         for ix, row in scores_df.iterrows():
@@ -147,9 +154,10 @@ class ForecastingBenchmark(BaseBenchmark):
             but changes the return to (lazy) ``dask.dataframe.DataFrame``.
 
             Recommendation: Use "dask" or "loky" for parallel evaluate.
-            "threading" is unlikely to see speed ups due to the GIL and the serialization
-            backend (``cloudpickle``) for "dask" and "loky" is generally more robust
-            than the standard ``pickle`` library used in "multiprocessing".
+            "threading" is unlikely to see speed ups due to the GIL and the
+            serialization backend (``cloudpickle``) for "dask" and "loky" is
+            generally more robust than the standard ``pickle`` library used
+            in "multiprocessing".
 
         backend_params : dict, optional
             additional parameters passed to the backend as config.
@@ -159,9 +167,9 @@ class ForecastingBenchmark(BaseBenchmark):
             - "None": no additional parameters, ``backend_params`` is ignored
             - "loky", "multiprocessing" and "threading": default ``joblib`` backends
             any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
-            with the exception of ``backend`` which is directly controlled by ``backend``.
-            If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
-            will default to ``joblib`` defaults.
+            with the exception of ``backend`` which is directly controlled by
+            ``backend``. If ``n_jobs`` is not passed, it will default to ``-1``, other
+            parameters will default to ``joblib`` defaults.
             - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``.
             any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
             ``backend`` must be passed as a key of ``backend_params`` in this case.
@@ -183,5 +191,10 @@ class ForecastingBenchmark(BaseBenchmark):
                 f"[dataset={dataset_loader.__name__}]"
                 f"_[cv_splitter={cv_splitter.__class__.__name__}]"
             )
-        self._add_task(_factory_forecasting_validation, task_kwargs, task_id=task_id,
-                       backend=self.backend, backend_parms=self.backend_parms)
+        self._add_task(
+            _factory_forecasting_validation,
+            task_kwargs,
+            task_id=task_id,
+            backend=self.backend,
+            backend_parms=self.backend_parms,
+        )
