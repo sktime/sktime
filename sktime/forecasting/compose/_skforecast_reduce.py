@@ -380,10 +380,7 @@ class SkforecastAutoreg(BaseForecaster):
             horizon_positions,
         ) = self._get_horizon_details(fh)
 
-        var_names = list(map(str, self._get_varnames()))
-        if len(var_names) == 1:
-            if var_names[0] == "0":
-                var_names[0] = 0
+        var_names = self._get_varnames()
         var_name = var_names[0]
 
         quantile_predictions_indices = pd.MultiIndex.from_product([var_names, alpha])
