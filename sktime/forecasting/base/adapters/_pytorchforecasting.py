@@ -10,13 +10,13 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
 
-from sktime.forecasting.base import BaseGlobalForecaster, ForecastingHorizon
+from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 
 __all__ = ["_PytorchForecastingAdapter"]
 __author__ = ["XinyuWu"]
 
 
-class _PytorchForecastingAdapter(BaseGlobalForecaster):
+class _PytorchForecastingAdapter(_BaseGlobalForecaster):
     """Base adapter class for pytorch-forecasting models.
 
     Parameters
