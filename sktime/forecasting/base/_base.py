@@ -2552,8 +2552,7 @@ class _BaseGlobalForecaster(BaseForecaster):
 
     """
 
-    _tags = deepcopy(BaseForecaster._tags)
-    _tags["object_type"] = ["global_forecaster", "forecaster"]
+    _tags = {"object_type": ["global_forecaster", "forecaster"]}
 
     def predict(self, fh=None, X=None, y=None):
         """Forecast time series at future horizon.
