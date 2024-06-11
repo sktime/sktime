@@ -17,6 +17,7 @@ from sktime.transformations.series.difference import Differencer
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.lag import Lag
 from sktime.utils._testing.hierarchical import _bottom_hier_datagen, _make_hierarchical
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(
@@ -84,7 +85,8 @@ def test_classifier_regression():
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed(
+    not _check_soft_dependencies("skpro", severity="none")
+    or not run_test_module_changed(
         ["sktime.pipeline", "sktime.forecasting", "sktime.transformations"]
     ),
     reason="Run test only if relevant modules have changed",
@@ -102,8 +104,10 @@ def test_forecaster_regression(method):
     y, X = load_longley()
     y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
 
-    # fast forecaster that can use exogenous variables
-    yfromx = YfromX.create_test_instance()
+    # fast forecaster that can use exogenous variables and make proba forecasts
+    from skpro.regression.residual import ResidualDouble
+
+    yfromx = YfromX(ResidualDouble.create_test_instance())
 
     pipe = Differencer() * yfromx
     pipe.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4])
@@ -132,7 +136,8 @@ def test_forecaster_regression(method):
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed(
+    not _check_soft_dependencies("skpro", severity="none")
+    or not run_test_module_changed(
         ["sktime.pipeline", "sktime.forecasting", "sktime.transformations"]
     ),
     reason="Run test only if relevant modules have changed",
@@ -142,8 +147,10 @@ def test_exogenous_transform_regression():
     y, X = load_longley()
     y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
 
-    # fast forecaster that can use exogenous variables
-    yfromx = YfromX.create_test_instance()
+    # fast forecaster that can use exogenous variables and make proba forecasts
+    from skpro.regression.residual import ResidualDouble
+
+    yfromx = YfromX(ResidualDouble.create_test_instance())
 
     pipe = ExponentTransformer() ** yfromx
     pipe.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4])
@@ -173,7 +180,8 @@ def test_exogenous_transform_regression():
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed(
+    not _check_soft_dependencies("skpro", severity="none")
+    or not run_test_module_changed(
         ["sktime.pipeline", "sktime.forecasting", "sktime.transformations"]
     ),
     reason="Run test only if relevant modules have changed",
@@ -183,8 +191,10 @@ def test_endogenous_exogenous_transform_regression():
     y, X = load_longley()
     y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
 
-    # fast forecaster that can use exogenous variables
-    yfromx = YfromX.create_test_instance()
+    # fast forecaster that can use exogenous variables and make proba forecasts
+    from skpro.regression.residual import ResidualDouble
+
+    yfromx = YfromX(ResidualDouble.create_test_instance())
 
     pipe = Differencer() * ExponentTransformer() ** yfromx
     pipe.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4])
