@@ -144,3 +144,19 @@ def test_make_scorer_sklearn():
     scorer = make_forecasting_scorer(mean_absolute_error, name="MAE")
 
     scorer.evaluate(pd.Series([1, 2, 3]), pd.Series([1, 2, 4]))
+
+
+def test_metric_coercion_bug():
+    """Tests for sensible output when using hierarchical arg with non-hierarchical data.
+
+    Failure case in bug #6413.
+    """
+    from sktime.performance_metrics.forecasting import MeanAbsoluteError
+
+    y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+    mae = MeanAbsoluteError(multilevel="raw_values", multioutput=[0.4, 0.6])
+    metric = mae(y_true, y_pred)
+
+    assert isinstance(metric, pd.DataFrame)
+    assert metric.shape == (1, 1)

@@ -74,7 +74,7 @@ def all_estimators(
 
         if False, estimator class name is removed from the ``all_estimators`` return.
 
-    filter_tags: dict of (str or list of str), optional (default=None)
+    filter_tags: dict of (str or list of str or re.Pattern), optional (default=None)
         For a list of valid tag strings, use the registry.all_tags utility.
 
         ``filter_tags`` subsets the returned estimators as follows:
@@ -84,12 +84,35 @@ def all_estimators(
         * value str or list of string are tag values
         * condition is "key must be equal to value, or in set(value)"
 
+        In detail, he return will be filtered to keep exactly the classes
+        where tags satisfy all the filter conditions specified by ``filter_tags``.
+        Filter conditions are as follows, for ``tag_name: search_value`` pairs in
+        the ``filter_tags`` dict, applied to a class ``klass``:
+
+        - If ``klass`` does not have a tag with name ``tag_name``, it is excluded.
+          Otherwise, let ``tag_value`` be the value of the tag with name ``tag_name``.
+        - If ``search_value`` is a string, and ``tag_value`` is a string,
+          the filter condition is that ``search_value`` must match the tag value.
+        - If ``search_value`` is a string, and ``tag_value`` is a list,
+          the filter condition is that ``search_value`` is contained in ``tag_value``.
+        - If ``search_value`` is a ``re.Pattern``, and ``tag_value`` is a string,
+          the filter condition is that ``search_value.fullmatch(tag_value)``
+          is true, i.e., the regex matches the tag value.
+        - If ``search_value`` is a ``re.Pattern``, and ``tag_value`` is a list,
+          the filter condition is that at least one element of ``tag_value``
+          matches the regex.
+        - If ``search_value`` is iterable, then the filter condition is that
+          at least one element of ``search_value`` satisfies the above conditions,
+          applied to ``tag_value``.
+
+        Note: ``re.Pattern`` is supported only from ``scikit-base`` version 0.8.0.
+
     exclude_estimators: str, list of str, optional (default=None)
         Names of estimators to exclude.
 
     as_dataframe: bool, optional (default=False)
 
-        True: ``all_estimators`` will return a pandas.DataFrame with named
+        True: ``all_estimators`` will return a ``pandas.DataFrame`` with named
         columns for all of the attributes being returned.
 
         False: ``all_estimators`` will return a list (either a list of
@@ -97,7 +120,7 @@ def all_estimators(
 
     return_tags: str or list of str, optional (default=None)
         Names of tags to fetch and return each estimator's value of.
-        For a list of valid tag strings, use the registry.all_tags utility.
+        For a list of valid tag strings, use the ``registry.all_tags`` utility.
         if str or list of str,
         the tag values named in return_tags will be fetched for each
         estimator and will be appended as either columns or tuple entries.
@@ -136,16 +159,16 @@ def all_estimators(
     --------
     >>> from sktime.registry import all_estimators
     >>> # return a complete list of estimators as pd.Dataframe
-    >>> all_estimators(as_dataframe=True)
+    >>> all_estimators(as_dataframe=True)  # doctest: +SKIP
     >>> # return all forecasters by filtering for estimator type
-    >>> all_estimators("forecaster")
+    >>> all_estimators("forecaster")  # doctest: +SKIP
     >>> # return all forecasters which handle missing data in the input by tag filtering
-    >>> all_estimators("forecaster", filter_tags={"handles-missing-data": True})
+    >>> all_estimators("forecaster", filter_tags={"handles-missing-data": True})  # doctest: +SKIP
 
     References
     ----------
-    Modified version from scikit-learn's ``all_estimators()``.
-    """
+    Modified version of ``scikit-learn``'s ``all_estimators``.
+    """  # noqa: E501
     MODULES_TO_IGNORE = (
         "tests",
         "setup",

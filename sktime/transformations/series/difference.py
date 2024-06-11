@@ -156,12 +156,12 @@ def _inverse_diff(X, lags, X_diff_seq=None):
         # shifted original time series that are available in the differenced time
         # series (intersection). These are the indices for which no valid differenced
         # values exist.
-        X.loc[
-            X_diff_orig.index.difference(
-                _shift(X_diff_orig.index, sum(lags) + lag_last)
-            ).intersection(X.index)
-        ] = np.nan
-        X = X.combine_first(X_update)
+        mask = X_diff_orig.index.difference(
+            _shift(X_diff_orig.index, sum(lags) + lag_last)
+        ).intersection(X.index)
+        X_ = X.copy()
+        X_.loc[mask] = np.nan
+        X = X_.combine_first(X_update)
 
     X_diff_last = X.copy()
 
