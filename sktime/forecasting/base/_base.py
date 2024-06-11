@@ -2583,6 +2583,8 @@ class BaseGlobalForecaster(BaseForecaster):
             as ``y`` in ``fit``.
             If ``self.get_tag("X-y-must-have-same-index")``,
             ``X.index`` must contain ``fh`` index reference.
+            If ``y`` is not passed (not performing global forecasting), ``X`` should
+            only contain the time points to be predicted.
             If ``y`` is passed (performing global forecasting), ``X`` must contain
             all historical values and the time points to be predicted.
 
@@ -2597,6 +2599,20 @@ class BaseGlobalForecaster(BaseForecaster):
             Point forecasts at ``fh``, with same index as ``fh``.
             ``y_pred`` has same type as the ``y`` that has been passed most recently:
             ``Series``, ``Panel``, ``Hierarchical`` scitype, same format (see above)
+
+        Notes
+        -----
+        If ``y`` is not None, global forecast will be performed.
+        In global forecast mode,
+        ``X`` should contain all historical values and the time points to be predicted,
+        while ``y`` should only contain historical values
+        not the time points to be predicted.
+
+        If ``y`` is None, non global forecast will be performed.
+        In non global forecast mode,
+        ``X`` should only contain the time points to be predicted,
+        while ``y`` should only contain historical values
+        not the time points to be predicted.
         """
         # check global forecasting tag
         gf = self.get_tag(
