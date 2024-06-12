@@ -407,5 +407,5 @@ def _get_fcst_with_exog_and_proba():
     from sklearn.linear_model import LinearRegression
     from skpro.regression.residual import ResidualDouble
 
-    yfromx = YfromX(ResidualDouble(LinearRegression())
+    yfromx = YfromX(ResidualDouble(LinearRegression()))
     return yfromx
