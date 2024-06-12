@@ -13,11 +13,19 @@ class DtwDtaidistUniv(BasePairwiseTransformerPanel):
     Direct interface to ``dtaidistance.dtw.distance_matrix`` and
     ``dtaidistance.dtw.distance_matrix_fast``.
 
+    This distance is specifically for univariate time series.
+    While mathematically equivalent for using the multivariate
+    ``DtwDtaidistMultiv`` for univariate data, this class
+    uses a more efficient implementation and a different internal API.
+
+    To specify an inner scalar distance, use ``DtwDtaidistMultiv`` with
+    the ``inner_dist`` parameter set to the desired scalar distance.
+
     Parameters
     ----------
     use_c: bool, optional, default=False
-        Use the faster C variant.
-        Require a C compiled installation of ``dtaidistance``.
+        Whether to use the faster C variant: ``True`` for C, ``False`` for Python.
+        ``True`` requires a C compiled installation of ``dtaidistance``.
 
         * If False, uses ``dtaidistance.dtw.distance_matrix``.
         * If True, uses ``dtaidistance.dtw.distance_matrix_fast``.
@@ -175,14 +183,19 @@ class DtwDtaidistUniv(BasePairwiseTransformerPanel):
 class DtwDtaidistMultiv(BasePairwiseTransformerPanel):
     """Multivariate dynamic time warping distance, from dtaidistance.
 
-    Direct interface to ``dtaidistance.dtw.distance_matrix`` and
-    ``dtaidistance.dtw.distance_matrix_fast``.
+    Direct interface to ``dtaidistance.dtw_ndim.distance_matrix`` and
+    ``dtaidistance.dtw_ndim.distance_matrix_fast``.
+
+    This distance is covers multivariate data and
+    arbitrary scalar distances as components. 
+    For univariate data and the default euclidean distance,
+    ``DtwDtaidistUniv`` is mathematically equivalent but may be more efficient.
 
     Parameters
     ----------
     use_c: bool, optional, default=False
-        Use the faster C variant.
-        Require a C compiled installation of ``dtaidistance``.
+        Whether to use the faster C variant: ``True`` for C, ``False`` for Python.
+        ``True`` requires a C compiled installation of ``dtaidistance``.
 
         * If False, uses ``dtaidistance.dtw_ndim.distance_matrix``.
         * If True, uses ``dtaidistance.dtw_ndim.distance_matrix_fast``.
@@ -218,6 +231,13 @@ class DtwDtaidistMultiv(BasePairwiseTransformerPanel):
     use_pruning: bool, optional, default=False
         Prune values based on Euclidean distance.
 
+    inner_dist: str, or sktime BasePairwiseTransformer, default="squared euclidean"
+        Distance between two points in the time series.
+
+        * If str, must be one of 'squared euclidean' (default), 'euclidean'.
+        * if estimator, must follow sktime BasePairwiseTransformer API.
+          For a range of distances from scipy, see ``ScipyDist``.
+
     References
     ----------
     .. [1] H. Sakoe, S. Chiba, "Dynamic programming algorithm optimization for
@@ -250,6 +270,7 @@ class DtwDtaidistMultiv(BasePairwiseTransformerPanel):
         penalty=None,
         psi=None,
         use_c=False,
+        inner_dist="squared euclidean",
     ):
         self.window = window
         self.use_pruning = use_pruning
@@ -259,6 +280,7 @@ class DtwDtaidistMultiv(BasePairwiseTransformerPanel):
         self.penalty = penalty
         self.psi = psi
         self.use_c = use_c
+        self.inner_dist = inner_dist
 
         super().__init__()
 
