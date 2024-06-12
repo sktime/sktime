@@ -130,7 +130,9 @@ class DtwDtaidistUniv(BasePairwiseTransformerPanel):
             distmat = distance_matrix(X_np, **dtai_params)
             return distmat
 
-        # else we know X, X2 are lists of df
+        # else X2 is not none
+        # and know X, X2 are lists of df
+        # dtaidistance handles X2 via the "block" parameter, so we need to translate
         X_np = [x.values.flatten() for x in X]
         X2_np = [x.values.flatten() for x in X2]
 
@@ -300,6 +302,7 @@ class DtwDtaidistMultiv(BasePairwiseTransformerPanel):
         # sktime expects (instance, variable, time)
         if isinstance(X, np.ndarray):
             X = np.swapaxes(X, 1, 2)
+            # handle X2 - dtaidistance does this via the "block" parameter
             if X2 is not None:
                 X2 = np.swapaxes(X2, 1, 2)
                 X_all = np.concatenate((X, X2), axis=0)
@@ -307,11 +310,13 @@ class DtwDtaidistMultiv(BasePairwiseTransformerPanel):
                 X_all = X
             return distance_matrix(X_all, **dtai_params)
 
-        # X is a list of df
+        # else: X is a list of df, because if X_inner_mtype options
         # for unequal length, dtaidistance expects
         # list of 2D arrays, (time, variable)
         # sktime list-of-df is (time, variable), but pandas
+        # so al we need to do is coerce to numpy
         X = [x.values for x in X]
+        # handle X2 - dtaidistance does this via the "block" parameter
         if X2 is not None:
             X2 = [x.values for x in X2]
             X_all = X + X2
