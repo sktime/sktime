@@ -5,7 +5,7 @@ __author__ = ["fkiraly"]
 from sktime.dists_kernels.base import BasePairwiseTransformerPanel
 
 
-class DtwDistTslearn(BasePairwiseTransformerPanel):
+class DtwDtaidistUniv(BasePairwiseTransformerPanel):
     """Univariate dynamic time warping distance, from dtaidistance.
 
     Direct interface to ``dtaidistance.dtw.distance_matrix`` and
