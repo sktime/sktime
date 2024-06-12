@@ -93,3 +93,22 @@ def _get_panel_dtypekind(obj, mtype):
     col_DtypeKinds = _dtype_to_kind(col_dtypes)
 
     return col_DtypeKinds
+
+
+# This function is to broadly classify all dtypekinds into CATEGORICAL or FLOAT
+def _simple_dtypekind(col_dtypekind):
+    simple_dtypekind_map = {
+        DtypeKind.CATEGORICAL: DtypeKind.CATEGORICAL,
+        DtypeKind.STRING: DtypeKind.CATEGORICAL,
+        DtypeKind.BOOL: DtypeKind.CATEGORICAL,
+        DtypeKind.DATETIME: DtypeKind.CATEGORICAL,
+        DtypeKind.FLOAT: DtypeKind.FLOAT,
+        DtypeKind.INT: DtypeKind.FLOAT,
+        DtypeKind.UINT: DtypeKind.FLOAT,
+    }
+
+    simple_dtypekind = []
+    for dtype in col_dtypekind:
+        simple_dtypekind.append(simple_dtypekind_map[dtype])
+
+    return simple_dtypekind

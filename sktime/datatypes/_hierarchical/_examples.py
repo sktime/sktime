@@ -117,7 +117,7 @@ example_dict_metadata[("Hierarchical", 0)] = {
     "n_panels": 2,
     "n_features": 2,
     "feature_names": ["var_0", "var_1"],
-    "feature_kind": [DtypeKind.INT, DtypeKind.INT],
+    "simple_feature_kind": [DtypeKind.FLOAT, DtypeKind.FLOAT],
 }
 
 
@@ -162,5 +162,5 @@ example_dict_metadata[("Hierarchical", 1)] = {
     "n_panels": 2,
     "n_features": 1,
     "feature_names": ["var_0"],
-    "feature_kind": [DtypeKind.INT],
+    "simple_feature_kind": [DtypeKind.FLOAT],
 }
