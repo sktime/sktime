@@ -151,9 +151,12 @@ class ForecastingBenchmark(BaseBenchmark):
         e.g., ``scheduler``
     """
 
-    def __init__(self, id_format: Optional[str] = None,
+    def __init__(
+        self,
+        id_format: Optional[str] = None,
         backend=None,
-        backend_parms=None,):
+        backend_parms=None,
+    ):
         super().__init__(id_format)
         self.backend = backend
         self.backend_parms = backend_parms
@@ -178,7 +181,7 @@ class ForecastingBenchmark(BaseBenchmark):
         task_id : str, optional (default=None)
             Identifier for the benchmark task. If none given then uses dataset loader
             name combined with cv_splitter class name.
-        
+
         Returns
         -------
         A dictionary of benchmark results for that forecaster
