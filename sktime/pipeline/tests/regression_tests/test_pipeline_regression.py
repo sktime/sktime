@@ -105,11 +105,9 @@ def test_forecaster_regression(method):
     y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
 
     # fast forecaster that can use exogenous variables and make proba forecasts
-    from skpro.regression.residual import ResidualDouble
+    f = _get_fcst_with_exog_and_proba()
 
-    yfromx = YfromX(ResidualDouble.create_test_instance())
-
-    pipe = Differencer() * yfromx
+    pipe = Differencer() * f
     pipe.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4])
     result = getattr(pipe, method)(X=X_test)
     differencer = Differencer()
@@ -148,11 +146,9 @@ def test_exogenous_transform_regression():
     y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
 
     # fast forecaster that can use exogenous variables and make proba forecasts
-    from skpro.regression.residual import ResidualDouble
+    f = _get_fcst_with_exog_and_proba()
 
-    yfromx = YfromX(ResidualDouble.create_test_instance())
-
-    pipe = ExponentTransformer() ** yfromx
+    pipe = ExponentTransformer() ** f
     pipe.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4])
     result = pipe.predict(X=X_test)
     result_pi = pipe.predict_interval(X=X_test)
@@ -192,11 +188,9 @@ def test_endogenous_exogenous_transform_regression():
     y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
 
     # fast forecaster that can use exogenous variables and make proba forecasts
-    from skpro.regression.residual import ResidualDouble
+    f = _get_fcst_with_exog_and_proba()
 
-    yfromx = YfromX(ResidualDouble.create_test_instance())
-
-    pipe = Differencer() * ExponentTransformer() ** yfromx
+    pipe = Differencer() * ExponentTransformer() ** f
     pipe.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4])
     result = pipe.predict(X=X_test)
     result_pi = pipe.predict_interval(X=X_test)
@@ -406,3 +400,13 @@ def test_lagged_y_prediction():
     pipe.fit(y=y_train)
     y_pred = pipe.predict(fh=y_test.index)
     assert y_pred.shape == y_test.shape
+
+
+def _get_fcst_with_exog_and_proba():
+    """Helper function to get a forecaster with exogenous and proba capability."""
+    from skpro.regression.residual import ResidualDouble
+
+    from sklearn.linear_model import LinearRegression
+
+    yfromx = YfromX(ResidualDouble(LinearRegression())
+    return yfromx
