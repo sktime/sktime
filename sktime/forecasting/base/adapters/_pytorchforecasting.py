@@ -10,13 +10,13 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
 
-from sktime.forecasting.base import BaseGlobalForecaster, ForecastingHorizon
+from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 
 __all__ = ["_PytorchForecastingAdapter"]
 __author__ = ["XinyuWu"]
 
 
-class _PytorchForecastingAdapter(BaseGlobalForecaster):
+class _PytorchForecastingAdapter(_BaseGlobalForecaster):
     """Base adapter class for pytorch-forecasting models.
 
     Parameters
@@ -52,8 +52,18 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
         "python_dependencies": ["pytorch_forecasting>=1.0.0"],
         # estimator type
         # --------------
-        "y_inner_mtype": ["pd-multiindex", "pd_multiindex_hier", "pd.Series"],
-        "X_inner_mtype": ["pd-multiindex", "pd_multiindex_hier", "pd.Series"],
+        "y_inner_mtype": [
+            "pd-multiindex",
+            "pd_multiindex_hier",
+            "pd.Series",
+            "pd.DataFrame",
+        ],
+        "X_inner_mtype": [
+            "pd-multiindex",
+            "pd_multiindex_hier",
+            "pd.Series",
+            "pd.DataFrame",
+        ],
         "scitype:y": "univariate",
         "requires-fh-in-fit": True,
         "X-y-must-have-same-index": True,
@@ -155,10 +165,10 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
             reference to self
         """
         self._max_prediction_length = np.max(fh.to_relative(self.cutoff))
-        assert (
-            np.min(fh.to_relative(self.cutoff)) > 0
-        ), f"No in sample predict support, \
-        but found fh with in sample index: {fh}"
+        if not np.min(fh.to_relative(self.cutoff)) > 0:
+            raise NotImplementedError(
+                f"No in sample predict support, but found fh with in sample index: {fh}"
+            )
         # check if dummy X is needed
         # only the TFT model need X to fit, probably a bug in pytorch-forecasting
         X = self._dummy_X(X, y)
@@ -332,6 +342,8 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
         else:
             time_varying_known_reals = []
             data = deepcopy(y)
+        # if fh is not continuous, there will be NaN after extend_y in prediect
+        data["_target_column"].fillna(0, inplace=True)
         # add integer time_idx column as pytorch-forecasting requires
         if self._index_len > 1:
             time_idx = (

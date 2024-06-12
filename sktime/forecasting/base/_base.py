@@ -34,7 +34,7 @@ State:
 
 __author__ = ["mloning", "big-o", "fkiraly", "sveameyer13", "miraep8", "ciaran-g"]
 
-__all__ = ["BaseForecaster", "BaseGlobalForecaster"]
+__all__ = ["BaseForecaster", "_BaseGlobalForecaster"]
 
 from copy import deepcopy
 from itertools import product
@@ -2540,7 +2540,7 @@ class BaseForecaster(BaseEstimator):
 BaseForecaster._init_dynamic_doc()
 
 
-class BaseGlobalForecaster(BaseForecaster):
+class _BaseGlobalForecaster(BaseForecaster):
     """Base global forecaster template class.
 
     This class is a temporal solution, might be merged into BaseForecaster later.
@@ -2552,8 +2552,7 @@ class BaseGlobalForecaster(BaseForecaster):
 
     """
 
-    _tags = deepcopy(BaseForecaster._tags)
-    _tags["object_type"] = ["global_forecaster", "forecaster"]
+    _tags = {"object_type": ["global_forecaster", "forecaster"]}
 
     def predict(self, fh=None, X=None, y=None):
         """Forecast time series at future horizon.
