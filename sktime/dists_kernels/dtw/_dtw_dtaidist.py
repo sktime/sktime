@@ -134,7 +134,7 @@ class DtwDtaidistUniv(BasePairwiseTransformerPanel):
 
         len_X = len(X)
         len_X2 = len(X2)
-        block = ((0, len_X - 1), (len_X, len_X + len_X2 - 1))
+        block = ((0, len_X), (len_X, len_X + len_X2))
         X_all = X_np + X2_np
 
         distmat = distance_matrix(X_all, block=block, **dtai_params)
