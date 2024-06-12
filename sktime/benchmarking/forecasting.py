@@ -115,11 +115,48 @@ class ForecastingBenchmark(BaseBenchmark):
     ----------
     id_format: str, optional (default=None)
         A regex used to enforce task/estimator ID to match a certain format
+    backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
+        Runs parallel evaluate for each task if specified.
 
+        - "None": executes loop sequentally, simple list comprehension
+        - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
+        - "dask": uses ``dask``, requires ``dask`` package in environment
+        - "dask_lazy": same as "dask",
+        but changes the return to (lazy) ``dask.dataframe.DataFrame``.
+
+        Recommendation: Use "dask" or "loky" for parallel evaluate.
+        "threading" is unlikely to see speed ups due to the GIL and the
+        serialization backend (``cloudpickle``) for "dask" and "loky" is
+        generally more robust than the standard ``pickle`` library used
+        in "multiprocessing".
+
+    backend_params : dict, optional
+        additional parameters passed to the backend as config.
+        Directly passed to ``utils.parallel.parallelize``.
+        Valid keys depend on the value of ``backend``:
+
+        - "None": no additional parameters, ``backend_params`` is ignored
+        - "loky", "multiprocessing" and "threading": default ``joblib`` backends
+        any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+        with the exception of ``backend`` which is directly controlled by
+        ``backend``. If ``n_jobs`` is not passed, it will default to ``-1``, other
+        parameters will default to ``joblib`` defaults.
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``.
+        any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+        ``backend`` must be passed as a key of ``backend_params`` in this case.
+        If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+        will default to ``joblib`` defaults.
+        - "dask": any valid keys for ``dask.compute`` can be passed,
+        e.g., ``scheduler``
     """
 
-    def __init__(self, id_format: Optional[str] = None):
+    def __init__(self, id_format: Optional[str] = None,
+        backend=None,
+        backend_parms=None,):
         super().__init__(id_format)
+        self.backend = backend
+        self.backend_parms = backend_parms
 
     def add_task(
         self,
@@ -127,8 +164,6 @@ class ForecastingBenchmark(BaseBenchmark):
         cv_splitter: BaseSplitter,
         scorers: List[BaseMetric],
         task_id: Optional[str] = None,
-        backend=None,
-        backend_parms=None,
     ):
         """Register a forecasting task to the benchmark.
 
@@ -143,40 +178,7 @@ class ForecastingBenchmark(BaseBenchmark):
         task_id : str, optional (default=None)
             Identifier for the benchmark task. If none given then uses dataset loader
             name combined with cv_splitter class name.
-        backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
-            Runs parallel evaluate for each task if specified.
-
-            - "None": executes loop sequentally, simple list comprehension
-            - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
-            - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
-            - "dask": uses ``dask``, requires ``dask`` package in environment
-            - "dask_lazy": same as "dask",
-            but changes the return to (lazy) ``dask.dataframe.DataFrame``.
-
-            Recommendation: Use "dask" or "loky" for parallel evaluate.
-            "threading" is unlikely to see speed ups due to the GIL and the
-            serialization backend (``cloudpickle``) for "dask" and "loky" is
-            generally more robust than the standard ``pickle`` library used
-            in "multiprocessing".
-
-        backend_params : dict, optional
-            additional parameters passed to the backend as config.
-            Directly passed to ``utils.parallel.parallelize``.
-            Valid keys depend on the value of ``backend``:
-
-            - "None": no additional parameters, ``backend_params`` is ignored
-            - "loky", "multiprocessing" and "threading": default ``joblib`` backends
-            any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
-            with the exception of ``backend`` which is directly controlled by
-            ``backend``. If ``n_jobs`` is not passed, it will default to ``-1``, other
-            parameters will default to ``joblib`` defaults.
-            - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``.
-            any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
-            ``backend`` must be passed as a key of ``backend_params`` in this case.
-            If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
-            will default to ``joblib`` defaults.
-            - "dask": any valid keys for ``dask.compute`` can be passed,
-            e.g., ``scheduler``
+        
         Returns
         -------
         A dictionary of benchmark results for that forecaster
