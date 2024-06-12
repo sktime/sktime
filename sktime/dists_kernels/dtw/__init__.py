@@ -6,10 +6,11 @@ __all__ = [
     "DtwPythonDist",
     "DtwDistTslearn",
     "SoftDtwDistTslearn",
+    "DtwDtaidistMultiv",
     "DtwDtaidistUniv",
 ]
 
-from sktime.dists_kernels.dtw._dtw_dtaidist import DtwDtaidistUniv
+from sktime.dists_kernels.dtw._dtw_dtaidist import DtwDtaidistMultiv, DtwDtaidistUniv
 from sktime.dists_kernels.dtw._dtw_python import DtwPythonDist
 from sktime.dists_kernels.dtw._dtw_sktime import DtwDist
 from sktime.dists_kernels.dtw._dtw_tslearn import DtwDistTslearn, SoftDtwDistTslearn
