@@ -21,7 +21,7 @@ from sktime.forecasting.model_selection import (
     ForecastingGridSearchCV,
     ForecastingRandomizedSearchCV,
     ForecastingSkoptSearchCV,
-    TuneForecastingOptunaCV,
+    ForecastingOptunaSearchCV,
 )
 from sktime.forecasting.model_selection._tune import BaseGridSearch
 from sktime.forecasting.naive import NaiveForecaster
@@ -52,7 +52,7 @@ TUNER_CLASSES = [
     ForecastingGridSearchCV,
     ForecastingRandomizedSearchCV,
     ForecastingSkoptSearchCV,
-    TuneForecastingOptunaCV,
+    ForecastingOptunaSearchCV,
 ]
 
 
@@ -330,7 +330,7 @@ def test_skoptcv_multiple_forecaster():
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(TuneForecastingOptunaCV),
+    not run_test_for_class(ForecastingOptunaSearchCV),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize(
@@ -348,7 +348,7 @@ def test_optuna(forecaster, param_grid, cv, scoring, error_score, n_iter, random
     distributions to identify the best parameter set
     """
     y, X = load_longley()
-    rscv = TuneForecastingOptunaCV(
+    rscv = ForecastingOptunaSearchCV(
         forecaster,
         param_grid=param_grid,
         cv=cv,

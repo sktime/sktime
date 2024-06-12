@@ -37,6 +37,7 @@ from sklearn.exceptions import NotFittedError
 import optuna
 import numpy as np
 
+
 class BaseGridSearch(_DelegatedForecaster):
     _tags = {
         "authors": ["mloning", "fkiraly", "aiwalter"],
@@ -1599,7 +1600,7 @@ def _fit_and_score_skopt(params, meta):
     return _fit_and_score(params)
 
 
-class TuneForecastingOptunaCV(BaseGridSearch):
+class ForecastingOptunaSearchCV(BaseGridSearch):
     def __init__(
         self,
         forecaster,
@@ -1615,7 +1616,7 @@ class TuneForecastingOptunaCV(BaseGridSearch):
         error_score=np.nan,
         n_evals=100,
     ):
-        super(TuneForecastingOptunaCV, self).__init__(
+        super(ForecastingOptunaSearchCV, self).__init__(
             forecaster=forecaster,
             scoring=scoring,
             refit=refit,

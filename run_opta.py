@@ -11,7 +11,7 @@ from sktime.forecasting.tests._config import (
 from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.transformations.series.impute import Imputer
 from sktime.forecasting.model_selection import (
-    TuneForecastingOptunaCV,
+    ForecastingOptunaSearchCV,
     ForecastingGridSearchCV,
 )
 import pandas as pd
@@ -45,7 +45,7 @@ y, X = load_longley()
 pipe = TransformedTargetForecaster(
     steps=[("imputer", Imputer()), ("forecaster", NaiveForecaster())]
 )
-sscv = TuneForecastingOptunaCV(
+sscv = ForecastingOptunaSearchCV(
     forecaster=pipe,
     param_grid=params_distributions,
     cv=cv,
@@ -59,5 +59,9 @@ sscv = TuneForecastingOptunaCV(
 
 sscv.fit(y, X)
 print(pd.DataFrame(sscv.cv_results_))
-print(pd.DataFrame(sscv.cv_results_)[['params','rank_test_MeanAbsolutePercentageError', 'value']])
+print(
+    pd.DataFrame(sscv.cv_results_)[
+        ["params", "rank_test_MeanAbsolutePercentageError", "value"]
+    ]
+)
 print(cv)
