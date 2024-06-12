@@ -1123,7 +1123,7 @@ if _check_soft_dependencies("dask", severity="none"):
         "dask_panel", "pd-multiindex", convert_dict, mtype_universe=MTYPE_LIST_PANEL
     )
 
-if _check_soft_dependencies("gluonts", severity=None):
+if _check_soft_dependencies("gluonts", severity="none"):
     from sktime.datatypes._adapter.gluonts import (
         convert_listDataset_to_pandas,
         convert_pandas_to_listDataset,

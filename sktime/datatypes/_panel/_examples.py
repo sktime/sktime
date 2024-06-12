@@ -93,9 +93,21 @@ if _check_soft_dependencies("dask", severity="none"):
 if _check_soft_dependencies("gluonts", severity="none"):
     from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
 
-    list_dataset = convert_pandas_to_listDataset(
-        example_dict[("pd-multiindex", "Panel", 0)], is_single=False
-    )
+    df = example_dict[("pd-multiindex", "Panel", 0)]
+
+    # Updating the DF to have pandas Datetime objects
+    dfs = [
+        df.assign(
+            series_id=series_id,
+            timepoints=pd.date_range(start="2023-01-01", periods=len(df), freq="D"),
+        ).set_index(["series_id", "timepoints"])
+        for series_id, df in enumerate(Xlist)
+    ]
+
+    # Updating the DataFrame
+    df = pd.concat(dfs, names=["series_id", "timestamp"])
+
+    list_dataset = convert_pandas_to_listDataset(df, is_single=False)
 
     example_dict[("gluonts_listDataset", "Panel", 0)] = list_dataset
     example_dict_lossy[("gluonts_listDataset", "Panel", 0)] = True
@@ -176,9 +188,21 @@ if _check_soft_dependencies("dask", severity="none"):
 if _check_soft_dependencies("gluonts", severity="none"):
     from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
 
-    list_dataset = convert_pandas_to_listDataset(
-        example_dict[("pd-multiindex", "Panel", 1)], is_single=False
-    )
+    df = example_dict[("pd-multiindex", "Panel", 0)]
+
+    # Updating the DF to have pandas Datetime objects
+    dfs = [
+        df.assign(
+            series_id=series_id,
+            timepoints=pd.date_range(start="2023-01-01", periods=len(df), freq="D"),
+        ).set_index(["series_id", "timepoints"])
+        for series_id, df in enumerate(Xlist)
+    ]
+
+    # Updating the DataFrame
+    df = pd.concat(dfs, names=["series_id", "timestamp"])
+
+    list_dataset = convert_pandas_to_listDataset(df, is_single=False)
 
     example_dict[("gluonts_listDataset", "Panel", 1)] = list_dataset
     example_dict_lossy[("gluonts_listDataset", "Panel", 1)] = True
@@ -254,9 +278,21 @@ if _check_soft_dependencies("dask", severity="none"):
 if _check_soft_dependencies("gluonts", severity="none"):
     from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
 
-    list_dataset = convert_pandas_to_listDataset(
-        example_dict[("pd-multiindex", "Panel", 2)], is_single=False
-    )
+    df = example_dict[("pd-multiindex", "Panel", 0)]
+
+    # Updating the DF to have pandas Datetime objects
+    dfs = [
+        df.assign(
+            series_id=series_id,
+            timepoints=pd.date_range(start="2023-01-01", periods=len(df), freq="D"),
+        ).set_index(["series_id", "timepoints"])
+        for series_id, df in enumerate(Xlist)
+    ]
+
+    # Updating the DataFrame
+    df = pd.concat(dfs, names=["series_id", "timestamp"])
+
+    list_dataset = convert_pandas_to_listDataset(df, is_single=False)
 
     example_dict[("gluonts_listDataset", "Panel", 2)] = list_dataset
     example_dict_lossy[("gluonts_listDataset", "Panel", 2)] = True
