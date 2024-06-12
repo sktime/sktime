@@ -301,7 +301,7 @@ class DtwDtaidistMultiv(BasePairwiseTransformerPanel):
         distmat: np.array of shape [n, m]
             (i,j)-th entry contains distance/kernel between X.iloc[i] and X2.iloc[j]
         """
-        from dtaidistance.dtw import distance_matrix
+        from dtaidistance.dtw_ndim import distance_matrix
 
         dtai_params = self._dtai_params
 
@@ -323,22 +323,29 @@ class DtwDtaidistMultiv(BasePairwiseTransformerPanel):
                 X_all = np.concatenate((X, X2), axis=0)
             else:
                 X_all = X
-            return distance_matrix(X_all, **dtai_params)
 
-        # else: X is a list of df, because if X_inner_mtype options
-        # for unequal length, dtaidistance expects
-        # list of 2D arrays, (time, variable)
-        # sktime list-of-df is (time, variable), but pandas
-        # so al we need to do is coerce to numpy
-        X = [x.values for x in X]
-        # handle X2 - dtaidistance does this via the "block" parameter
-        if X2 is not None:
-            X2 = [x.values for x in X2]
-            X_all = X + X2
-        else:
-            X_all = X
+        else:  # X is a list of df, because if X_inner_mtype options
+            # for unequal length, dtaidistance expects
+            # list of 2D arrays, (time, variable)
+            # sktime list-of-df is (time, variable), but pandas
+            # so al we need to do is coerce to numpy
+            X = [x.values for x in X]
+            # handle X2 - dtaidistance does this via the "block" parameter
+            if X2 is not None:
+                X2 = [x.values for x in X2]
+                X_all = X + X2
+            else:
+                X_all = X
 
-        return distance_matrix(X_all, **dtai_params)
+        distmat = distance_matrix(X_all, **dtai_params)
+
+        if X2 is None:
+            return distmat
+
+        # else, the matrix is for X_all, and we need to extract the submatrix
+        # the matrix outside the block will contain nans
+        distmat_ss = distmat[:len_X, -len_X2:]
+        return distmat_ss
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
