@@ -52,8 +52,18 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         "python_dependencies": ["pytorch_forecasting>=1.0.0"],
         # estimator type
         # --------------
-        "y_inner_mtype": ["pd-multiindex", "pd_multiindex_hier", "pd.Series"],
-        "X_inner_mtype": ["pd-multiindex", "pd_multiindex_hier", "pd.Series"],
+        "y_inner_mtype": [
+            "pd-multiindex",
+            "pd_multiindex_hier",
+            "pd.Series",
+            "pd.DataFrame",
+        ],
+        "X_inner_mtype": [
+            "pd-multiindex",
+            "pd_multiindex_hier",
+            "pd.Series",
+            "pd.DataFrame",
+        ],
         "scitype:y": "univariate",
         "requires-fh-in-fit": True,
         "X-y-must-have-same-index": True,
