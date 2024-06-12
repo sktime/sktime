@@ -85,14 +85,14 @@ class DtwDtaidistUniv(BasePairwiseTransformerPanel):
 
     def __init__(
         self,
+        use_c=False,
         window=None,
-        use_pruning=False,
         max_dist=None,
         max_step=None,
         max_length_diff=None,
         penalty=None,
         psi=None,
-        use_c=False,
+        use_pruning=False,
     ):
         self.window = window
         self.use_pruning = use_pruning
@@ -262,14 +262,14 @@ class DtwDtaidistMultiv(BasePairwiseTransformerPanel):
 
     def __init__(
         self,
+        use_c=False,
         window=None,
-        use_pruning=False,
         max_dist=None,
         max_step=None,
         max_length_diff=None,
         penalty=None,
         psi=None,
-        use_c=False,
+        use_pruning=False,
         inner_dist="squared euclidean",
     ):
         self.window = window
