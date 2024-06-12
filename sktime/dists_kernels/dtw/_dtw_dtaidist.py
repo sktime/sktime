@@ -187,7 +187,7 @@ class DtwDtaidistMultiv(BasePairwiseTransformerPanel):
     ``dtaidistance.dtw_ndim.distance_matrix_fast``.
 
     This distance is covers multivariate data and
-    arbitrary scalar distances as components. 
+    arbitrary scalar distances as components.
     For univariate data and the default euclidean distance,
     ``DtwDtaidistUniv`` is mathematically equivalent but may be more efficient.
 
@@ -312,7 +312,7 @@ class DtwDtaidistMultiv(BasePairwiseTransformerPanel):
 
         dtai_params = self._dtai_params
 
-        if X2 is not None:                
+        if X2 is not None:
             len_X = len(X)
             len_X2 = len(X2)
             block = ((0, len_X), (len_X, len_X + len_X2))
