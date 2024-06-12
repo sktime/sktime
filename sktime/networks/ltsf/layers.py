@@ -749,6 +749,7 @@ class LTSFTemporalEmbedding:
                 self.month_embed = nn.Embedding(month_size, d_model)
 
         def forward(self, x):
+            return 0.0
             x = x.long()
 
             minute_x = (
