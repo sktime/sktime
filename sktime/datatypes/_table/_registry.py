@@ -17,7 +17,6 @@ MTYPE_REGISTER_TABLE = [
     ("list_of_dict", "Table", "list of dictionaries with primitive entries"),
     ("polars_eager_table", "Table", "polars.DataFrame representation of a data table"),
     ("polars_lazy_table", "Table", "polars.LazyFrame representation of a data table"),
-    ("gluonTS_ListDataset", "Table", "gluonts.ListDataset representation of data"),
 ]
 
 MTYPE_LIST_TABLE = [x[0] for x in MTYPE_REGISTER_TABLE]

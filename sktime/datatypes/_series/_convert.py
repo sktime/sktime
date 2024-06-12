@@ -258,3 +258,33 @@ if _check_soft_dependencies("dask", severity="none"):
     _extend_conversions(
         "dask_series", "pd.DataFrame", convert_dict, mtype_universe=MTYPE_LIST_SERIES
     )
+
+if _check_soft_dependencies("gluonts", severity=None):
+    from sktime.datatypes._adapter.gluonts import (
+        convert_listDataset_to_pandas,
+        convert_pandas_to_listDataset,
+    )
+
+    # Utilizing functions defined in _adapter/gluonts.py
+    def convert_gluonts_listDataset_to_pandas(obj, store=None):
+        return convert_listDataset_to_pandas(obj)
+
+    def convert_pandas_to_gluonts_listDataset(obj, store=None):
+        return convert_pandas_to_listDataset(obj, is_single=True)
+
+    # Storing functions in convert_dict
+    convert_dict[
+        ("pd.DataFrame", "gluonts_listDataset", "Series")
+    ] = convert_pandas_to_gluonts_listDataset
+
+    convert_dict[
+        ("gluonts_listDataset", "pd.DataFrame", "Series")
+    ] = convert_gluonts_listDataset_to_pandas
+
+    # Extending conversions
+    _extend_conversions(
+        "gluonts_listDataset",
+        "pd.DataFrame",
+        convert_dict,
+        mtype_universe=MTYPE_LIST_SERIES,
+    )

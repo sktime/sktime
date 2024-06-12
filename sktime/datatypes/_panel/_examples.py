@@ -90,6 +90,16 @@ if _check_soft_dependencies("dask", severity="none"):
     example_dict[("dask_panel", "Panel", 0)] = df_dask
     example_dict_lossy[("dask_panel", "Panel", 0)] = False
 
+if _check_soft_dependencies("gluonts", severity="none"):
+    from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
+
+    list_dataset = convert_pandas_to_listDataset(
+        example_dict[("pd-multiindex", "Panel", 0)], is_single=False
+    )
+
+    example_dict[("gluonts_listDataset", "Panel", 0)] = list_dataset
+    example_dict_lossy[("gluonts_listDataset", "Panel", 0)] = True
+
 example_dict_metadata[("Panel", 0)] = {
     "is_univariate": False,
     "is_one_series": False,
@@ -163,6 +173,16 @@ if _check_soft_dependencies("dask", severity="none"):
     example_dict[("dask_panel", "Panel", 1)] = df_dask
     example_dict_lossy[("dask_panel", "Panel", 1)] = False
 
+if _check_soft_dependencies("gluonts", severity="none"):
+    from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
+
+    list_dataset = convert_pandas_to_listDataset(
+        example_dict[("pd-multiindex", "Panel", 1)], is_single=False
+    )
+
+    example_dict[("gluonts_listDataset", "Panel", 1)] = list_dataset
+    example_dict_lossy[("gluonts_listDataset", "Panel", 1)] = True
+
 
 example_dict_metadata[("Panel", 1)] = {
     "is_univariate": True,
@@ -230,6 +250,16 @@ if _check_soft_dependencies("dask", severity="none"):
 
     example_dict[("dask_panel", "Panel", 2)] = df_dask
     example_dict_lossy[("dask_panel", "Panel", 2)] = False
+
+if _check_soft_dependencies("gluonts", severity="none"):
+    from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
+
+    list_dataset = convert_pandas_to_listDataset(
+        example_dict[("pd-multiindex", "Panel", 2)], is_single=False
+    )
+
+    example_dict[("gluonts_listDataset", "Panel", 2)] = list_dataset
+    example_dict_lossy[("gluonts_listDataset", "Panel", 2)] = True
 
 example_dict_metadata[("Panel", 2)] = {
     "is_univariate": True,

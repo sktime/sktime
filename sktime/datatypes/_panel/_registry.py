@@ -36,12 +36,16 @@ MTYPE_REGISTER_PANEL = [
     ),
     ("df-list", "Panel", "list of pd.DataFrame"),
     (
-        "dask_panel",
+        "gluonts_listDataset",
         "Panel",
-        "dask frame with one instance and one time index, as per dask_to_pd convention",
+        "gluonTS representation of univariate and multivariate time series",
     ),
 ]
 
-MTYPE_SOFT_DEPS_PANEL = {"xr.DataArray": "xarray", "dask_panel": "dask"}
+MTYPE_SOFT_DEPS_PANEL = {
+    "xr.DataArray": "xarray",
+    "dask_panel": "dask",
+    "gluonts_listDataset": "gluonts",
+}
 
 MTYPE_LIST_PANEL = [x[0] for x in MTYPE_REGISTER_PANEL]
