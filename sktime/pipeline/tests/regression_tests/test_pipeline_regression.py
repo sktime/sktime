@@ -404,9 +404,8 @@ def test_lagged_y_prediction():
 
 def _get_fcst_with_exog_and_proba():
     """Helper function to get a forecaster with exogenous and proba capability."""
-    from skpro.regression.residual import ResidualDouble
-
     from sklearn.linear_model import LinearRegression
+    from skpro.regression.residual import ResidualDouble
 
     yfromx = YfromX(ResidualDouble(LinearRegression())
     return yfromx
