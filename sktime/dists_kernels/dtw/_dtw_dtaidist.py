@@ -186,10 +186,12 @@ class DtwDtaidistMultiv(BasePairwiseTransformerPanel):
     Direct interface to ``dtaidistance.dtw_ndim.distance_matrix`` and
     ``dtaidistance.dtw_ndim.distance_matrix_fast``.
 
-    This distance is covers multivariate data and
-    arbitrary scalar distances as components.
+    This distance is covers multivariate data.
     For univariate data and the default euclidean distance,
     ``DtwDtaidistUniv`` is mathematically equivalent but may be more efficient.
+
+    To specify the internal distance to be separate from squared euclidean,
+    use ``AlignerDtwDtai`` inside a ``DistFromAligner``.
 
     Parameters
     ----------
@@ -231,13 +233,6 @@ class DtwDtaidistMultiv(BasePairwiseTransformerPanel):
     use_pruning: bool, optional, default=False
         Prune values based on Euclidean distance.
 
-    inner_dist: str, or sktime BasePairwiseTransformer, default="squared euclidean"
-        Distance between two points in the time series.
-
-        * If str, must be one of 'squared euclidean' (default), 'euclidean'.
-        * if estimator, must follow sktime BasePairwiseTransformer API.
-          For a range of distances from scipy, see ``ScipyDist``.
-
     References
     ----------
     .. [1] H. Sakoe, S. Chiba, "Dynamic programming algorithm optimization for
@@ -270,7 +265,6 @@ class DtwDtaidistMultiv(BasePairwiseTransformerPanel):
         penalty=None,
         psi=None,
         use_pruning=False,
-        inner_dist="squared euclidean",
     ):
         self.window = window
         self.use_pruning = use_pruning
@@ -280,7 +274,6 @@ class DtwDtaidistMultiv(BasePairwiseTransformerPanel):
         self.penalty = penalty
         self.psi = psi
         self.use_c = use_c
-        self.inner_dist = inner_dist
 
         super().__init__()
 
