@@ -20,9 +20,9 @@ from sktime.forecasting.compose import (
     YfromX,
     make_reduction,
 )
+from sktime.forecasting.ets import AutoETS
 from sktime.forecasting.model_selection import ForecastingGridSearchCV
 from sktime.forecasting.naive import NaiveForecaster
-from sktime.forecasting.sarimax import SARIMAX
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.split import ExpandingWindowSplitter, temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
@@ -111,6 +111,7 @@ def test_skip_inverse_transform():
 @pytest.mark.skipif(
     not run_test_for_class(
         [
+            AutoETS,
             TransformedTargetForecaster,
             OptionalPassthrough,
             ForecastingPipeline,
@@ -120,26 +121,22 @@ def test_skip_inverse_transform():
 )
 def test_nesting_pipelines():
     """Test that nesting of pipelines works."""
-    from sktime.forecasting.compose import YfromX
-    from sktime.transformations.compose import OptionalPassthrough
     from sktime.transformations.series.boxcox import LogTransformer
     from sktime.transformations.series.detrend import Detrender
     from sktime.utils._testing.scenarios_forecasting import (
         ForecasterFitPredictUnivariateWithX,
     )
 
-    yfromx = YfromX.create_test_instance()
-
     pipe = ForecastingPipeline(
         steps=[
             ("logX", OptionalPassthrough(LogTransformer())),
-            ("detrenderX", OptionalPassthrough(Detrender(forecaster=yfromx))),
+            ("detrenderX", OptionalPassthrough(Detrender(forecaster=AutoETS()))),
             (
                 "etsforecaster",
                 TransformedTargetForecaster(
                     steps=[
                         ("log", OptionalPassthrough(LogTransformer())),
-                        ("yfromx", yfromx),
+                        ("autoETS", AutoETS()),
                     ]
                 ),
             ),
