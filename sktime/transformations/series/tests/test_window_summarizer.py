@@ -74,7 +74,8 @@ def get_test_data(var_name):
 
 
 # index is used in one of the fixtures
-y_multi_index = get_examples(mtype="pd-multiindex", as_scitype="Panel")[0].index
+y_multi = get_examples(mtype="pd-multiindex", as_scitype="Panel")[0]
+y_multi_index = y_multi.index
 
 # Get different WindowSummarizer functions
 kwargs = WindowSummarizer.get_test_params()[0]
@@ -318,7 +319,7 @@ kwargs_lag_custom_function = {
                         np.NAN,
                         3.0,
                     ],
-                    "var_1": "y_multi"["var_1"],
+                    "var_1": y_multi["var_1"],
                 },
                 index=y_multi_index,
             ),
