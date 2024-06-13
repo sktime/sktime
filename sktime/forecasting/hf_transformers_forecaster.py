@@ -4,6 +4,7 @@ from copy import deepcopy
 import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
+import pytest
 
 if _check_soft_dependencies("torch", severity="none"):
     import torch
@@ -15,7 +16,8 @@ else:
 
 if _check_soft_dependencies("transformers", severity="none"):
     import transformers
-    from transformers import AutoConfig, AutoModelForSeq2SeqLM, Trainer, TrainingArguments
+    from transformers import AutoConfig, Trainer, TrainingArguments
+    from transformers import InformerModel, AutoformerModel, TimeSeriesTransformerModel
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
@@ -32,8 +34,8 @@ class HFTransformersForecaster(BaseForecaster):
     Parameters
     ----------
     model_path : str or transformers.PreTrainedModel
-        Path to the huggingface model to use for forecasting. Alternatively,
-        a pre-loaded Huggingface model object can be passed.
+        Path to the huggingface model to use for forecasting. Should be in the format "huggingface/{model-name}". 
+        Alternatively, a pre-loaded Huggingface model object can be passed.
     fit_strategy : str, default="minimal"
         Strategy to use for fitting the model. Can be "minimal" or "full"
     validation_split : float, default=0.2
@@ -53,9 +55,15 @@ class HFTransformersForecaster(BaseForecaster):
     callbacks : list, default=[]
         List of callbacks to use during training. See `transformers.Trainer`
 
+    Supported Architectures
+    -----------------------
+    - Informer
+    - Autoformer
+    - TimeSeriesTransformer
+
     Examples
     --------
-    >>> from transformers import AutoModelForSeq2SeqLM
+    >>> from transformers import InformerModel
     >>> from sktime.forecasting.hf_transformers_forecaster import HFTransformersForecaster
 
     # Using a model path
@@ -76,7 +84,7 @@ class HFTransformersForecaster(BaseForecaster):
     ... )
 
     # Using a pre-loaded model object
-    >>> model = AutoModelForSeq2SeqLM.from_pretrained("huggingface/informer-tourism-monthly")
+    >>> model = InformerModel.from_pretrained("huggingface/informer-tourism-monthly")
     >>> forecaster_with_model_obj = HFTransformersForecaster(
     ...     model_path=model,
     ...     fit_strategy="minimal",
@@ -106,6 +114,18 @@ class HFTransformersForecaster(BaseForecaster):
         "y_inner_mtype": "pd.Series",
         "capability:insample": False,
         "capability:pred_int:insample": False,
+    }
+
+    SUPPORTED_ARCHITECTURES = [
+        "Informer",
+        "Autoformer",
+        "TimeSeriesTransformer"
+    ]
+    
+    MODEL_CLASSES = {
+        "Informer": InformerModel,
+        "Autoformer": AutoformerModel,
+        "TimeSeriesTransformer": TimeSeriesTransformerModel
     }
 
     def __init__(
@@ -162,24 +182,14 @@ class HFTransformersForecaster(BaseForecaster):
         config = config.from_dict(_config)
 
         if isinstance(self.model_path, str):
-            prediction_model_class = None
-            if hasattr(config, "architectures") and config.architectures is not None:
-                prediction_model_class = config.architectures[0]
-            elif hasattr(config, "model_type"):
-                prediction_model_class = (
-                    "".join(x.capitalize() for x in config.model_type.lower().split("_"))
-                    + "ForPrediction"
-                )
-            else:
+            model_class = self.MODEL_CLASSES.get(config.architectures[0], None)
+            if model_class is None:
                 raise ValueError(
-                    "The model type is not inferrable from the config."
-                    "Thus, the model cannot be loaded."
+                    f"The model architecture {config.architectures[0]} is not supported."
                 )
 
             # Load model with the updated config
-            self.model, info = getattr(
-                transformers, prediction_model_class
-            ).from_pretrained(
+            self.model, info = model_class.from_pretrained(
                 self.model_path,
                 config=config,
                 output_loading_info=True,
@@ -197,7 +207,7 @@ class HFTransformersForecaster(BaseForecaster):
         for param in self.model.model.parameters():
             param.clamp_(-1000, 1000)
 
-        # Reininit the weights of all layers that have mismatched sizes
+        # Reinit the weights of all layers that have mismatched sizes
         for key, _, _ in info["mismatched_keys"]:
             _model = self.model
             for attr_name in key.split(".")[:-1]:
@@ -234,27 +244,18 @@ class HFTransformersForecaster(BaseForecaster):
             eval_dataset = None
 
         training_args = deepcopy(self.training_args)
-        training_args["label_names"] = ["future_values"]
+        training_args.update(self._training_args)
         training_args = TrainingArguments(**training_args)
 
-        if self.fit_strategy == "minimal":
-            if len(info["mismatched_keys"]) == 0:
-                return  # No need to fit
-        elif self.fit_strategy == "full":
-            for param in self.model.parameters():
-                param.requires_grad = True
-        else:
-            raise ValueError("Unknown fit strategy")
-
-        trainer = Trainer(
+        self.trainer = Trainer(
             model=self.model,
-            args=training_args,
+                        args=training_args,
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
             compute_metrics=self._compute_metrics,
             callbacks=self._callbacks,
         )
-        trainer.train()
+        self.trainer.train()
 
     def _predict(self, fh, X=None):
         if self.deterministic:
@@ -385,3 +386,14 @@ class PyTorchDataset(Dataset):
                 self.y[i + self.seq_len : i + self.seq_len + self.fh]
             ).float(),
         }
+# # Pytest test function to ensure the new feature is tested
+# def test_hf_transformers_forecaster():
+#     params = HFTransformersForecaster.get_test_params()
+#     for param_set in params:
+#         forecaster = HFTransformersForecaster(**param_set)
+#         y = pd.Series(np.random.rand(100))
+#         X = pd.DataFrame(np.random.rand(100, 3))
+#         fh = ForecastingHorizon([1, 2, 3])
+#         forecaster.fit(y, X, fh)
+#         y_pred = forecaster.predict(fh)
+#         assert len(y_pred) == len(fh)
