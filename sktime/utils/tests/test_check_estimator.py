@@ -7,9 +7,14 @@ import pytest
 from sktime.classification.dummy import DummyClassifier
 from sktime.forecasting.dummy import ForecastKnownValues
 from sktime.transformations.series.exponent import ExponentTransformer
-from sktime.utils.estimator_checks import check_estimator
+from sktime.utils.estimator_checks import (
+    _get_test_names_for_obj,
+    check_estimator,
+    parametrize_with_checks,
+)
 
 EXAMPLE_CLASSES = [DummyClassifier, ForecastKnownValues, ExponentTransformer]
+EXAMPLE_INSTANCES = [cls.create_test_instance() for cls in EXAMPLE_CLASSES]
 
 
 @pytest.mark.parametrize("estimator_class", EXAMPLE_CLASSES)
@@ -76,3 +81,31 @@ def test_check_estimator_subset_tests():
     results_tests = {x.split("[")[0] for x in results.keys()}
 
     assert results_tests == expected_tests
+
+
+def test_get_test_names():
+    """Test that get_test_names returns the correct test names."""
+    expected_tests = [
+        "test_get_params",
+        "test_set_params",
+        "test_clone",
+        "test_repr",
+        "test_capability_inverse_tag_is_correct",
+        "test_remember_data_tag_is_correct",
+    ]
+
+    test_names = _get_test_names_for_obj(ExponentTransformer)
+
+    assert set(expected_tests).issubset(test_names)
+
+
+@parametrize_with_checks(EXAMPLE_CLASSES)
+def test_parametrize_with_checks_objects(obj, test_name):
+    """Test that parametrize_with_checks works as intended - classes."""
+    check_estimator(obj, verbose=False, raise_exceptions=True, tests_to_run=test_name)
+
+
+@parametrize_with_checks(EXAMPLE_INSTANCES, obj_varname="foo", check_varname="bar")
+def test_parametrize_with_checks_instances(foo, bar):
+    """Test that parametrize_with_checks works as intended - instances, var names."""
+    check_estimator(foo, verbose=False, raise_exceptions=True, tests_to_run=bar)
