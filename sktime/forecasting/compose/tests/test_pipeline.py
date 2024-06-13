@@ -20,9 +20,9 @@ from sktime.forecasting.compose import (
     YfromX,
     make_reduction,
 )
-from sktime.forecasting.ets import AutoETS
 from sktime.forecasting.model_selection import ForecastingGridSearchCV
 from sktime.forecasting.naive import NaiveForecaster
+from sktime.forecasting.sarimax import SARIMAX
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.split import ExpandingWindowSplitter, temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
@@ -111,7 +111,6 @@ def test_skip_inverse_transform():
 @pytest.mark.skipif(
     not run_test_for_class(
         [
-            AutoETS,
             TransformedTargetForecaster,
             OptionalPassthrough,
             ForecastingPipeline,
@@ -121,22 +120,26 @@ def test_skip_inverse_transform():
 )
 def test_nesting_pipelines():
     """Test that nesting of pipelines works."""
+    from sktime.forecasting.compose import YfromX
+    from sktime.transformations.compose import OptionalPassthrough
     from sktime.transformations.series.boxcox import LogTransformer
     from sktime.transformations.series.detrend import Detrender
     from sktime.utils._testing.scenarios_forecasting import (
         ForecasterFitPredictUnivariateWithX,
     )
 
+    yfromx = YfromX.create_test_instance()
+
     pipe = ForecastingPipeline(
         steps=[
             ("logX", OptionalPassthrough(LogTransformer())),
-            ("detrenderX", OptionalPassthrough(Detrender(forecaster=AutoETS()))),
+            ("detrenderX", OptionalPassthrough(Detrender(forecaster=yfromx))),
             (
                 "etsforecaster",
                 TransformedTargetForecaster(
                     steps=[
                         ("log", OptionalPassthrough(LogTransformer())),
-                        ("autoETS", AutoETS()),
+                        ("yfromx", yfromx),
                     ]
                 ),
             ),
@@ -368,11 +371,11 @@ def test_forecasting_pipeline_dunder_exog():
     assert isinstance(forecaster, ForecastingPipeline)
     assert isinstance(forecaster.steps[0], ExponentTransformer)
     assert isinstance(forecaster.steps[1], TabularToSeriesAdaptor)
-    assert isinstance(forecaster.steps[2], YfromX)
+    assert isinstance(forecaster.steps[2], SARIMAX)
     assert isinstance(forecaster_alt, ForecastingPipeline)
     assert isinstance(forecaster_alt.steps[0], ExponentTransformer)
     assert isinstance(forecaster_alt.steps[1], TabularToSeriesAdaptor)
-    assert isinstance(forecaster_alt.steps[2], YfromX)
+    assert isinstance(forecaster_alt.steps[2], SARIMAX)
 
     fh = np.arange(len(y_test)) + 1
     forecaster.fit(y_train, fh=fh, X=X_train)
@@ -389,7 +392,7 @@ def test_forecasting_pipeline_dunder_exog():
         Xt = t1.fit_transform(Xt)
         t2 = TabularToSeriesAdaptor(MinMaxScaler())
         Xt = t2.fit_transform(Xt)
-        forecaster = YfromX.create_test_instance()
+        forecaster = SARIMAX(random_state=3)
         forecaster.fit(yt, fh=fh, X=Xt)
 
         # predicting
