@@ -4,6 +4,7 @@ import abc
 import functools
 import typing
 from copy import deepcopy
+from time import sleep
 from typing import Any, Dict, Optional
 
 import numpy as np
@@ -208,7 +209,15 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
             )
             # load model from checkpoint
             best_model_path = self._trainer.checkpoint_callback.best_model_path
-            self.best_model = self.algorithm_class.load_from_checkpoint(best_model_path)
+            try:
+                self.best_model = self.algorithm_class.load_from_checkpoint(
+                    best_model_path
+                )
+            except FileNotFoundError:
+                sleep(0.1)
+                self.best_model = self.algorithm_class.load_from_checkpoint(
+                    best_model_path
+                )
         else:
             # load model from disk
             self.best_model = self.algorithm_class.load_from_checkpoint(self.model_path)
