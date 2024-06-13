@@ -4,7 +4,6 @@ from copy import deepcopy
 import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
-import pytest
 
 if _check_soft_dependencies("torch", severity="none"):
     import torch
@@ -64,7 +63,10 @@ class HFTransformersForecaster(BaseForecaster):
     Examples
     --------
     >>> from transformers import InformerModel
-    >>> from sktime.forecasting.hf_transformers_forecaster import HFTransformersForecaster
+    >>> from sktime.forecasting.hf_transformers_forecaster import (
+    ...     HFTransformersForecaster,
+    )
+    >>> from sktime.datasetsimport load_airline
 
     # Using a model path
     >>> forecaster = HFTransformersForecaster(
@@ -79,9 +81,15 @@ class HFTransformersForecaster(BaseForecaster):
     ...         "lags_sequence": [1, 2, 3],
     ...         "context_length": 2,
     ...         "prediction_length": 4,
+    ...         "use_cpu": True,
+    ...         "label_length": 2,
     ...     },
+    ...    
     ...     deterministic=True,
+    ...     # doctest: +SKIP
     ... )
+    >>> forecaster.fit(y)
+    >>> y_pred = forecaster.predict(fh) # doctest: +SKIP
 
     # Using a pre-loaded model object
     >>> model = InformerModel.from_pretrained("huggingface/informer-tourism-monthly")
@@ -97,9 +105,14 @@ class HFTransformersForecaster(BaseForecaster):
     ...         "lags_sequence": [1, 2, 3],
     ...         "context_length": 2,
     ...         "prediction_length": 4,
+    ...         "use_cpu": True,
+    ...         "label_length": 2,
     ...     },
     ...     deterministic=True,
+    ...     # doctest: +SKIP
     ... )
+    >>> forecaster_with_model_obj.fit(y)
+    >>> y_pred = forecaster_with_model_obj.predict(fh) # doctest: +SKIP 
     """
 
     _tags = {
@@ -386,7 +399,8 @@ class PyTorchDataset(Dataset):
                 self.y[i + self.seq_len : i + self.seq_len + self.fh]
             ).float(),
         }
-# # Pytest test function to ensure the new feature is tested
+
+# Pytest test function to ensure the new feature is tested
 # def test_hf_transformers_forecaster():
 #     params = HFTransformersForecaster.get_test_params()
 #     for param_set in params:
