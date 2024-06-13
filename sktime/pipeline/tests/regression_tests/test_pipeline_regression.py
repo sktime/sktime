@@ -116,14 +116,14 @@ def test_forecaster_regression(method):
         [
             {"skobject": differencer, "name": "differencer", "edges": {"X": "y"}},
             {
-                "skobject": yfromx,
-                "name": "yfromx",
+                "skobject": f,
+                "name": "fcst",
                 "edges": {"X": "X", "y": "differencer"},
             },
             {
                 "skobject": differencer,
                 "name": "differencer_inverse",
-                "edges": {"X": "yfromx"},
+                "edges": {"X": "fcst"},
                 "method": "inverse_transform",
             },
         ]
@@ -161,8 +161,8 @@ def test_exogenous_transform_regression():
                 "edges": {"X": "X"},
             },
             {
-                "skobject": yfromx,
-                "name": "yfromx",
+                "skobject": f,
+                "name": "fcst",
                 "edges": {"X": "exponent", "y": "y"},
             },
         ]
@@ -205,14 +205,14 @@ def test_endogenous_exogenous_transform_regression():
                 "edges": {"X": "X"},
             },
             {
-                "skobject": yfromx,
-                "name": "yfromx",
+                "skobject": f,
+                "name": "fcst",
                 "edges": {"X": "exponent", "y": "differencer"},
             },
             {
                 "skobject": differencer,
                 "name": "differencer_inverse",
-                "edges": {"X": "yfromx"},
+                "edges": {"X": "fcst"},
                 "method": "inverse_transform",
             },
         ]
