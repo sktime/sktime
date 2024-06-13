@@ -72,9 +72,13 @@ def pytest_generate_tests(metafunc):
     """
     # we assume all four arguments are present in the test below
     funcs_and_names = _all_functions("sktime")
-    funcs, names = zip(*funcs_and_names)
 
-    metafunc.parametrize("func", funcs, ids=names)
+    if len(funcs_and_names) > 0:
+        funcs, names = zip(*funcs_and_names)
+
+        metafunc.parametrize("func", funcs, ids=names)
+    else:
+        metafunc.parametrize("func", [])
 
 
 def test_all_functions_doctest(func):
