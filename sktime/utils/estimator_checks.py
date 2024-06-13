@@ -183,11 +183,10 @@ def _get_test_names_for_obj(obj):
 def parametrize_with_checks(objs, obj_varname="obj", check_varname="test_name"):
     """Pytest specific decorator for parametrizing estimator checks.
 
-    The `id` of each check is set to be a pprint version of the estimator
-    and the name of the check with its keyword arguments.
-    This allows to use `pytest -k` to specify which tests to run::
+    Designed for setting up API compliance checks in compatible 2nd and 3rd party
+    libraries, using ``pytest.mark.parametrize``.
 
-        pytest test_check_estimators.py -k check_estimators_fit_returns_self
+    Inspired by the ``sklearn`` utility of the same name.
 
     Parameters
     ----------
@@ -213,11 +212,11 @@ def parametrize_with_checks(objs, obj_varname="obj", check_varname="test_name"):
 
     >>> @parametrize_with_checks(NaiveForecaster, obj_varname='estimator')
     ... def test_sktime_compatible_estimator(estimator, test_name):
-    ...     check_estimator(estimator, tests_to_run=test_name)
+    ...     check_estimator(estimator, tests_to_run=test_name, raise_exceptions=True)
 
     >>> @parametrize_with_checks([NaiveForecaster, ExponentialSmoothing])
     ... def test_sktime_compatible_estimators(obj, test_name):
-    ...     check_estimator(obj, tests_to_run=test_name)
+    ...     check_estimator(obj, tests_to_run=test_name, raise_exceptions=True)
     """
     import pytest
 
