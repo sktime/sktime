@@ -1,6 +1,13 @@
 """Time Series Forest Regressor (TSF)."""
 
-__author__ = ["TonyBagnall", "kkoziara", "luiszugasti", "kanand77", "mloning"]
+__author__ = [
+    "TonyBagnall",
+    "kkoziara",
+    "luiszugasti",
+    "kanand77",
+    "mloning",
+    "ksharma6",
+]
 __all__ = ["TimeSeriesForestRegressor"]
 
 import numpy as np
@@ -76,7 +83,14 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
     _tags = {
         # packaging info
         # --------------
-        "authors": ["TonyBagnall", "kkoziara", "luiszugasti", "kanand77", "mloning"],
+        "authors": [
+            "TonyBagnall",
+            "kkoziara",
+            "luiszugasti",
+            "kanand77",
+            "mloning",
+            "ksharma6",
+        ],
         "maintainers": ["kkoziara", "luiszugasti", "kanand77"],
         # estimator type
         # --------------
@@ -93,6 +107,9 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
         n_jobs=1,
         random_state=None,
     ):
+        self.criterion = "gini"  # needed for BaseForest in sklearn > 1.4.0,
+        # because sklearn tag logic looks at this attribute
+
         super().__init__(
             min_interval=min_interval,
             n_estimators=n_estimators,

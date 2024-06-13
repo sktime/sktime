@@ -50,6 +50,7 @@ Pipelines can also be constructed using ``*``, ``+``, and ``|`` dunders.
     ForecastByLevel
     Permute
     HierarchyEnsembleForecaster
+    TransformSelectForecaster
     FhPlexForecaster
     IgnoreX
     FallbackForecaster
@@ -363,13 +364,21 @@ Deep learning based forecasters
     LTSFDLinearForecaster
     LTSFNLinearForecaster
 
+.. currentmodule:: sktime.forecasting.hf_transformers_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HFTransformersForecaster
+
 .. currentmodule:: sktime.forecasting.conditional_invertible_neural_network
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    cINNForecaster
+    CINNForecaster
 
 .. currentmodule:: sktime.forecasting.neuralforecast
 
@@ -379,6 +388,14 @@ Deep learning based forecasters
 
     NeuralForecastRNN
     NeuralForecastLSTM
+
+.. currentmodule:: sktime.forecasting.pykan_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    PyKANForecaster
 
 
 Intermittent time series forecasters

@@ -55,11 +55,14 @@ class ParamFitterUnivariate(ParamFitterTestScenario):
 
     _tags = {"X_univariate": False, "is_enabled": True}
 
-    args = {
-        "fit": {
-            "X": _make_series(n_timepoints=20, n_columns=1, random_state=RAND_SEED)
-        },
-    }
+    @property
+    def args(self):
+        return {
+            "fit": {
+                "X": _make_series(n_timepoints=20, n_columns=1, random_state=RAND_SEED)
+            },
+        }
+
     default_method_sequence = ["fit", "get_fitted_params"]
 
 
@@ -68,11 +71,14 @@ class ParamFitterMultivariate(ParamFitterTestScenario):
 
     _tags = {"X_univariate": False, "is_enabled": True}
 
-    args = {
-        "fit": {
-            "X": _make_series(n_timepoints=20, n_columns=2, random_state=RAND_SEED)
-        },
-    }
+    @property
+    def args(self):
+        return {
+            "fit": {
+                "X": _make_series(n_timepoints=20, n_columns=2, random_state=RAND_SEED)
+            },
+        }
+
     default_method_sequence = ["fit", "get_fitted_params"]
 
 

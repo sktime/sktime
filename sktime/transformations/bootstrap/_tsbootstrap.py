@@ -39,6 +39,12 @@ class TSBootstrapAdapter(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "benheid",
+        "python_dependencies": ["tsbootstrap>=0.1.0"],
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Panel",
         "scitype:instancewise": True,  # is this an instance-wise transform?
@@ -51,8 +57,7 @@ class TSBootstrapAdapter(BaseTransformer):
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
-        "transform-returns-same-time-index": False,
-        "python_dependencies": ["tsbootstrap>=0.1.0"],
+        "transform-returns-same-time-index": True,
     }
 
     def __init__(
@@ -83,19 +88,18 @@ class TSBootstrapAdapter(BaseTransformer):
         """
         bootstrapped_samples = self.bootstrap.bootstrap(X, test_ratio=0)
 
-        bootstrapped_samples = [pd.DataFrame(sample) for sample in bootstrapped_samples]
+        def wrap_df(spl):
+            return pd.DataFrame(spl, index=X.index, columns=X.columns)
 
-        boostrapped_df = pd.concat(
-            bootstrapped_samples,
-            keys=[f"synthetic_{i}" for i in range(len(bootstrapped_samples))],
-        )
+        bootstrapped_samples = [wrap_df(sample) for sample in bootstrapped_samples]
+        spl_keys = [f"synthetic_{i}" for i in range(len(bootstrapped_samples))]
 
-        _X = X.copy()
         if self.include_actual:
-            _X.index = pd.MultiIndex.from_product([["actual"], range(len(X))])
-            return pd.concat([_X, boostrapped_df], axis=0)
-        else:
-            return boostrapped_df
+            X_actual = X.copy()
+            bootstrapped_samples = [X_actual] + bootstrapped_samples
+            spl_keys = ["actual"] + spl_keys
+
+        return pd.concat(bootstrapped_samples, keys=spl_keys, axis=0)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -107,7 +111,6 @@ class TSBootstrapAdapter(BaseTransformer):
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return `"default"` set.
 
-
         Returns
         -------
         params : dict or list of dict, default = {}
@@ -116,7 +119,7 @@ class TSBootstrapAdapter(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         deps = cls.get_class_tag("python_dependencies")
 
