@@ -371,11 +371,11 @@ def test_forecasting_pipeline_dunder_exog():
     assert isinstance(forecaster, ForecastingPipeline)
     assert isinstance(forecaster.steps[0], ExponentTransformer)
     assert isinstance(forecaster.steps[1], TabularToSeriesAdaptor)
-    assert isinstance(forecaster.steps[2], SARIMAX)
+    assert isinstance(forecaster.steps[2], YfromX)
     assert isinstance(forecaster_alt, ForecastingPipeline)
     assert isinstance(forecaster_alt.steps[0], ExponentTransformer)
     assert isinstance(forecaster_alt.steps[1], TabularToSeriesAdaptor)
-    assert isinstance(forecaster_alt.steps[2], SARIMAX)
+    assert isinstance(forecaster_alt.steps[2], YfromX)
 
     fh = np.arange(len(y_test)) + 1
     forecaster.fit(y_train, fh=fh, X=X_train)
@@ -392,7 +392,7 @@ def test_forecasting_pipeline_dunder_exog():
         Xt = t1.fit_transform(Xt)
         t2 = TabularToSeriesAdaptor(MinMaxScaler())
         Xt = t2.fit_transform(Xt)
-        forecaster = SARIMAX(random_state=3)
+        forecaster = YfromX.create_test_instance()
         forecaster.fit(yt, fh=fh, X=Xt)
 
         # predicting
