@@ -21,9 +21,6 @@ if _check_soft_dependencies("transformers", severity="none"):
     import transformers
     from transformers import AutoConfig, Trainer, TrainingArguments
 
-if _check_soft_dependencies("peft", severity="none"):
-    from peft import LoraConfig, LoHaConfig, AdaLoraConfig, get_peft_model
-
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
 __author__ = ["benheid", "geetu040"]
@@ -49,51 +46,18 @@ class HFTransformersForecaster(BaseForecaster):
           allowing for quick adaptation with limited computational resources.
         - "full": Fine-tunes all model parameters, which may result in better
           performance but requires more computational power and time.
-        - "lora": Uses the LoRA (Low-Rank Adaptation) technique to fine-tune the
-          model efficiently with low-rank updates.
-        - "loha": Similar to LoRA, but with higher-rank adaptations.
-        - "adalora": An adaptive version of LoRA that adjusts the rank
-          dynamically during fine-tuning.
+        - "peft": Applies Parameter-Efficient Fine-Tuning (PEFT) techniques to adapt
+          the model with fewer trainable parameters, saving computational resources.
     validation_split : float, default=0.2
         Fraction of the data to use for validation
     config : dict, default={}
         Configuration to use for the model. See the `transformers`
         documentation for details.
-    peft_config_dict : dict, default={"target_modules": ["q_proj", "v_proj"]}
-        Configuration dictionary specifying parameters and settings relevant to
-        the chosen PEFT strategy (e.g., lora, loha, adalora). Below are the
-        parameters that can be used for each PEFT method:
-
-        - LoRA:
-          - `r` (int): Lora attention dimension (the "rank").
-          - `target_modules` (Optional[Union[List[str], str]]): The names of the modules
-            to apply the adapter to.
-          - `lora_alpha` (int): The alpha parameter for Lora scaling.
-          - `lora_dropout` (float): The dropout probability for Lora layers.
-        For more parameters visit
-        https://huggingface.co/docs/peft/en/package_reference/lora#peft.LoraConfig
-
-        - LoHA:
-          - `r` (int): LoHa rank.
-          - `alpha` (int): The alpha parameter for LoHa scaling.
-          - `target_modules` (Optional[Union[List[str], str]]): The names of the modules
-            to apply the adapter to.
-          - `rank_dropout` (float): The dropout probability for rank dimension
-            during training.
-          - `module_dropout` (float): The dropout probability for disabling LoHa modules
-            during training.
-        For more parameters visit
-        https://huggingface.co/docs/peft/en/package_reference/loha#peft.LoHaConfig
-
-        - AdaLoRA:
-          - `r` (int): Lora attention dimension (the "rank").
-          - `target_modules` (Optional[Union[List[str], str]]): The names of the modules
-            to apply the adapter to.
-          - `lora_alpha` (int): The alpha parameter for Lora scaling.
-          - `lora_dropout` (float): The dropout probability for Lora layers.
-        For more parameters visit
-        https://huggingface.co/docs/peft/en/package_reference/adalora#peft.AdaLoraConfig
-
+    peft_config : peft.PeftConfig, default=None
+        Configuration for Parameter-Efficient Fine-Tuning.
+        When `fit_strategy` is set to "peft",
+        this will be used to set up PEFT parameters for the model.
+        See the `peft` documentation for details.
     training_args : dict, default={}
         Training arguments to use for the model. See `transformers.TrainingArguments`
         for details.
@@ -136,10 +100,11 @@ class HFTransformersForecaster(BaseForecaster):
     ...     HFTransformersForecaster,
     ... )
     >>> from sktime.datasets import load_airline
+    >>> from peft import LoraConfig
     >>> y = load_airline()
     >>> forecaster = HFTransformersForecaster(
     ...    model_path="huggingface/autoformer-tourism-monthly",
-    ...    fit_strategy="lora",
+    ...    fit_strategy="peft",
     ...    training_args={
     ...        "num_train_epochs": 20,
     ...        "output_dir": "test_output",
@@ -152,12 +117,12 @@ class HFTransformersForecaster(BaseForecaster):
     ...         "use_cpu": True,
     ...         "label_length": 2,
     ...    },
-    ...    peft_config_dict={
-    ...         "r": 8,
-    ...         "lora_alpha": 32,
-    ...         "target_modules": ["q_proj", "v_proj"],
-    ...         "lora_dropout": 0.01,
-    ...    },
+    ...    peft_config=LoraConfig(
+    ...        r=8,
+    ...        lora_alpha=32,
+    ...        target_modules=["q_proj", "v_proj"],
+    ...        lora_dropout=0.01,
+    ...    )
     ... ) # doctest: +SKIP
     >>> forecaster.fit(y) # doctest: +SKIP
     >>> fh = [1, 2, 3]
@@ -184,7 +149,7 @@ class HFTransformersForecaster(BaseForecaster):
         fit_strategy="minimal",
         validation_split=0.2,
         config=None,
-        peft_config_dict=None,
+        peft_config=None,
         training_args=None,
         compute_metrics=None,
         deterministic=False,
@@ -196,12 +161,7 @@ class HFTransformersForecaster(BaseForecaster):
         self.validation_split = validation_split
         self.config = config
         self._config = config if config is not None else {}
-        self.peft_config_dict = peft_config_dict
-        self._peft_config_dict = (
-            peft_config_dict
-            if peft_config_dict is not None
-            else {"target_modules": ["q_proj", "v_proj"]}
-        )
+        self.peft_config = peft_config
         self.training_args = training_args
         self._training_args = training_args if training_args is not None else {}
         self.compute_metrics = compute_metrics
@@ -313,14 +273,10 @@ class HFTransformersForecaster(BaseForecaster):
         elif self.fit_strategy == "full":
             for param in self.model.parameters():
                 param.requires_grad = True
-        elif self.fit_strategy == "lora":
-            peft_config = LoraConfig(**self._peft_config_dict)
-            self.model = get_peft_model(self.model, peft_config)
-        elif self.fit_strategy == "loha":
-            peft_config = LoHaConfig(**self._peft_config_dict)
-            self.model = get_peft_model(self.model, peft_config)
-        elif self.fit_strategy == "adalora":
-            peft_config = AdaLoraConfig(**self._peft_config_dict)
+        elif self.fit_strategy == "peft":
+            if _check_soft_dependencies("peft", severity="none"):
+                from peft import get_peft_model
+            peft_config = deepcopy(self.peft_config)
             self.model = get_peft_model(self.model, peft_config)
         else:
             raise ValueError("Unknown fit strategy")
@@ -421,7 +377,7 @@ class HFTransformersForecaster(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        return [
+        test_params = [
             {
                 "model_path": "huggingface/informer-tourism-monthly",
                 "fit_strategy": "minimal",
@@ -453,74 +409,37 @@ class HFTransformersForecaster(BaseForecaster):
                 },
                 "deterministic": True,
             },
-            {
-                "model_path": "huggingface/autoformer-tourism-monthly",
-                "fit_strategy": "lora",
-                "training_args": {
-                    "num_train_epochs": 1,
-                    "output_dir": "test_output",
-                    "per_device_train_batch_size": 32,
-                },
-                "config": {
-                    "lags_sequence": [1, 2, 3],
-                    "context_length": 2,
-                    "prediction_length": 4,
-                    "label_length": 2,
-                },
-                "peft_config_dict": {
-                    "r": 8,
-                    "lora_alpha": 32,
-                    "target_modules": ["q_proj", "v_proj"],
-                    "lora_dropout": 0.01,
-                },
-                "deterministic": True,
-            },
-            {
-                "model_path": "huggingface/autoformer-tourism-monthly",
-                "fit_strategy": "loha",
-                "training_args": {
-                    "num_train_epochs": 1,
-                    "output_dir": "test_output",
-                    "per_device_train_batch_size": 32,
-                },
-                "config": {
-                    "lags_sequence": [1, 2, 3],
-                    "context_length": 2,
-                    "prediction_length": 4,
-                    "label_length": 2,
-                },
-                "peft_config_dict": {
-                    "r": 8,
-                    "alpha": 32,
-                    "target_modules": ["q_proj", "v_proj"],
-                    "rank_dropout": 0.01,
-                    "module_dropout": 0.01,
-                },
-                "deterministic": True,
-            },
-            {
-                "model_path": "huggingface/autoformer-tourism-monthly",
-                "fit_strategy": "adalora",
-                "training_args": {
-                    "num_train_epochs": 1,
-                    "output_dir": "test_output",
-                    "per_device_train_batch_size": 32,
-                },
-                "config": {
-                    "lags_sequence": [1, 2, 3],
-                    "context_length": 2,
-                    "prediction_length": 4,
-                    "label_length": 2,
-                },
-                "peft_config_dict": {
-                    "r": 8,
-                    "lora_alpha": 32,
-                    "target_modules": ["q_proj", "v_proj"],
-                    "lora_dropout": 0.01,
-                },
-                "deterministic": True,
-            },
         ]
+
+        if _check_soft_dependencies("peft", severity="none"):
+            from peft import LoraConfig
+
+            test_params.append(
+                {
+                    "model_path": "huggingface/autoformer-tourism-monthly",
+                    "fit_strategy": "peft",
+                    "training_args": {
+                        "num_train_epochs": 1,
+                        "output_dir": "test_output",
+                        "per_device_train_batch_size": 32,
+                    },
+                    "config": {
+                        "lags_sequence": [1, 2, 3],
+                        "context_length": 2,
+                        "prediction_length": 4,
+                        "label_length": 2,
+                    },
+                    "peft_config": LoraConfig(
+                        r=8,
+                        lora_alpha=32,
+                        target_modules=["q_proj", "v_proj"],
+                        lora_dropout=0.01,
+                    ),
+                    "deterministic": True,
+                }
+            )
+
+        return test_params
 
 
 class PyTorchDataset(Dataset):
