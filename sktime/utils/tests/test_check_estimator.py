@@ -24,22 +24,33 @@ def test_check_estimator_passed(estimator_class):
 
     result_class = check_estimator(estimator_class, verbose=False)
 
-    # Check there are no failures.
-    assert not any(x == "FAILED" for x in result_class.values())
-
-    # Check less than 10% are skipped.
-    skip_ratio = sum(list(x[:4] == "SKIP" for x in result_class.values()))
-    skip_ratio = skip_ratio / len(result_class.values())
-    assert skip_ratio < 0.1
+    _check_none_failed_and_only_few_skipped(result_class)
 
     result_instance = check_estimator(estimator_instance, verbose=False)
 
-    # Check there are no failures.
-    assert not any(x == "FAILED" for x in result_instance.values())
+    _check_none_failed_and_only_few_skipped(result_instance)
+
+
+def _check_none_failed_and_only_few_skipped(result):
+    """Check that no tests failed and only a few were skipped.
+
+    Parameters
+    ----------
+    result : dict
+        Dictionary of results from check_estimator.
+
+    Raises
+    ------
+    AssertionError
+
+        * If any tests failed, i.e., return is not "PASSED".
+        * If more than 10% of tests were skipped, i.e., return is "SKIP".
+    """
+    assert not any(x == "FAILED" for x in result.values())
 
     # Check less than 10% are skipped.
-    skip_ratio = sum(list(x[:4] == "SKIP" for x in result_instance.values()))
-    skip_ratio = skip_ratio / len(result_instance.values())
+    skip_ratio = sum(list(x[:4] == "SKIP" for x in result.values()))
+    skip_ratio = skip_ratio / len(result.values())
     assert skip_ratio < 0.1
 
 
