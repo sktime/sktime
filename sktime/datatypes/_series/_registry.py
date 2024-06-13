@@ -42,7 +42,7 @@ MTYPE_REGISTER_SERIES = [
 MTYPE_SOFT_DEPS_SERIES = {
     "xr.DataArray": "xarray",
     "dask_series": "dask",
-    "gluonts_listDataset": "gluonts",
+    "gluonts_listDataset_series": "gluonts",
 }
 
 MTYPE_LIST_SERIES = [x[0] for x in MTYPE_REGISTER_SERIES]

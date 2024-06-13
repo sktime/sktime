@@ -361,12 +361,15 @@ if _check_soft_dependencies("dask", severity="none"):
     check_dict[("dask_series", "Series")] = check_dask_series
 
 if _check_soft_dependencies("gluonts", severity="none"):
-    from gluonts.dataset.common import ListDataset
 
     def check_gluonTS_listDataset_series(obj, return_metadata=False, var_name="obj"):
         metadata = dict()
 
-        if not isinstance(obj, ListDataset):
+        if (
+            not isinstance(obj, list)
+            or not isinstance(obj[0], dict)
+            or "target" not in obj[0]
+        ):
             msg = f"{var_name} must be a gluonts.ListDataset, found {type(obj)}"
             return ret(False, msg, None, return_metadata)
 
@@ -428,4 +431,6 @@ if _check_soft_dependencies("gluonts", severity="none"):
 
         return ret(True, None, metadata, return_metadata)
 
-    check_dict[("gluonts.ListDataset", "Series")] = check_gluonTS_listDataset_series
+    check_dict[
+        ("gluonts_ListDataset_series", "Series")
+    ] = check_gluonTS_listDataset_series

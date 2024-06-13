@@ -508,12 +508,15 @@ if _check_soft_dependencies("dask", severity="none"):
     check_dict[("dask_panel", "Panel")] = check_dask_panel
 
 if _check_soft_dependencies("gluonts", severity="none"):
-    from gluonts.dataset.common import ListDataset
 
     def check_gluonTS_listDataset_panel(obj, return_metadata=False, var_name="obj"):
         metadata = dict()
 
-        if not isinstance(obj, ListDataset):
+        if (
+            not isinstance(obj, list)
+            or not isinstance(obj[0], dict)
+            or "target" not in obj[0]
+        ):
             msg = f"{var_name} must be a gluonts.ListDataset, found {type(obj)}"
             return _ret(False, msg, None, return_metadata)
 

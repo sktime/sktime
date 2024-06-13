@@ -1138,16 +1138,16 @@ if _check_soft_dependencies("gluonts", severity="none"):
 
     # Storing functions in convert_dict
     convert_dict[
-        ("pd-multiindex", "gluonts_listDataset", "Panel")
+        ("pd-multiindex", "gluonts_listDataset_panel", "Panel")
     ] = convert_pandas_to_gluonts_listDataset
 
     convert_dict[
-        ("gluonts_listDataset", "pd-multiindex", "Panel")
+        ("gluonts_listDataset_panel", "pd-multiindex", "Panel")
     ] = convert_gluonts_listDataset_to_pandas
 
     # Extending conversions
     _extend_conversions(
-        "gluonts_listDataset",
+        "gluonts_listDataset_panel",
         "pd-multiindex",
         convert_dict,
         mtype_universe=MTYPE_LIST_PANEL,
