@@ -10,7 +10,6 @@ from typing import List, Union
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
 
 from sktime.datatypes import convert_to
 from sktime.transformations.base import BaseTransformer
@@ -259,14 +258,12 @@ class Catch22(BaseTransformer):
         "fit_is_empty": True,
     }
 
-    # todo 0.29.0: remove n_jobs parameter
     def __init__(
         self,
         features: Union[int, str, List[Union[int, str]]] = "all",
         catch24: bool = False,
         outlier_norm: bool = False,
         replace_nans: bool = False,
-        n_jobs="deprecated",
         col_names: str = "range",
     ):
         self.features = features
@@ -278,19 +275,6 @@ class Catch22(BaseTransformer):
 
         # todo: remove this unimplemented logic
         self._transform_features = None
-        # todo 0.29.0: remove this warning and logic
-        self.n_jobs = n_jobs
-        if n_jobs != "deprecated":
-            warn(
-                "In Catch22, the parameter "
-                "n_jobs is deprecated and will be removed in v0.29.0. "
-                "Instead, use set_config with the backend and backend:params "
-                "config fields, and set backend to 'joblib' and pass n_jobs "
-                "as a parameter of backend_params. ",
-                FutureWarning,
-                obj=self,
-            )
-            self.set_config(backend="joblib", backend_params={"n_jobs": n_jobs})
 
         super().__init__()
 
@@ -375,10 +359,7 @@ class Catch22(BaseTransformer):
 
         # todo: remove Parallel in future versions, left for
         # compatibility with `CanonicalIntervalForest`
-        n_jobs = self.n_jobs if isinstance(self.n_jobs, int) else 1
-        c22_list = Parallel(n_jobs=n_jobs)(
-            delayed(self._transform_case)(X[i], [feature]) for i in range(n_instances)
-        )
+        c22_list = [self._transform_case(X[i], [feature]) for i in range(n_instances)]
 
         if self.replace_nans:
             c22_list = np.nan_to_num(c22_list, False, 0, 0, 0)

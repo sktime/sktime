@@ -13,11 +13,10 @@ from sktime.forecasting.base.adapters._pytorch import (
     PyTorchTrainDataset,
 )
 from sktime.forecasting.trend import CurveFitForecaster
-from sktime.networks.cinn import cINNNetwork
+from sktime.networks.cinn import CINNNetwork
 from sktime.transformations.merger import Merger
 from sktime.transformations.series.fourier import FourierFeatures
 from sktime.transformations.series.summarize import WindowSummarizer
-from sktime.utils.warnings import warn
 
 if _check_soft_dependencies("torch", severity="none"):
     import torch
@@ -42,8 +41,7 @@ def default_sine(x, amplitude, phase, offset, amplitude2, amplitude3, phase2):
     return sbase + s1 + s2
 
 
-# TODO 0.29.0: rename the class cINNForecaster to CINNForecaster
-class cINNForecaster(BaseDeepNetworkPyTorch):
+class CINNForecaster(BaseDeepNetworkPyTorch):
     """
     Conditional Invertible Neural Network (cINN) Forecaster.
 
@@ -107,13 +105,13 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
     Examples
     --------
     >>> from sktime.forecasting.conditional_invertible_neural_network import (
-    ...     cINNForecaster,
+    ...     CINNForecaster,
     ... )
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> model = cINNForecaster() # doctest: +SKIP
+    >>> model = CINNForecaster() # doctest: +SKIP
     >>> model.fit(y) # doctest: +SKIP
-    cINNForecaster(...)
+    CINNForecaster(...)
     >>> y_pred = model.predict(fh=[1,2,3]) # doctest: +SKIP
     """
 
@@ -178,17 +176,6 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
         self.delta = delta
         self.val_split = val_split
         super().__init__(num_epochs, batch_size, lr=lr)
-
-        warn(
-            "cINNForecaster will be renamed to CINNForecaster in sktime 0.29.0, "
-            "The estimator is available under the future name at its "
-            "current location, and will be available under its deprecated name "
-            "until 0.30.0. "
-            "To prepare for the name change, "
-            "replace cINNForecaster with CINNForecaster",
-            DeprecationWarning,
-            obj=self,
-        )
 
     def _fit(self, y, fh, X=None):
         """Fit forecaster to training data.
@@ -279,7 +266,7 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
         self.z_std_ = self.z_.std()
 
     def _build_network(self, fh):
-        return cINNNetwork(
+        return CINNNetwork(
             horizon=self.sample_dim,
             cond_features=self.n_cond_features,
             encoded_cond_size=self.encoded_cond_size,
@@ -511,7 +498,7 @@ class cINNForecaster(BaseDeepNetworkPyTorch):
 
         cinn_forecaster = pickle.loads(serial)
         if hasattr(cinn_forecaster, "_state_dict"):
-            cinn_forecaster.network = cINNNetwork(
+            cinn_forecaster.network = CINNNetwork(
                 horizon=cinn_forecaster.sample_dim,
                 cond_features=cinn_forecaster.n_cond_features,
                 encoded_cond_size=cinn_forecaster.encoded_cond_size,
@@ -620,8 +607,3 @@ class _EarlyStopper:
             if self.counter >= self.patience:
                 return True
         return False
-
-
-# TODO 0.29.0: switch the line to cINNForecaster = CINNForecaster
-# TODO 0.30.0: remove this alias altogether
-CINNForecaster = cINNForecaster

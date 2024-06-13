@@ -18,7 +18,7 @@ from sktime.forecasting.base.adapters._generalised_statsforecast import (
     StatsForecastBackAdapter,
     _GeneralisedStatsForecastAdapter,
 )
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
@@ -655,10 +655,6 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
         Number of observations per unit of time. Ex: 24 Hourly data.
     use_boxcox : bool (default=None)
         Whether or not to use a Box-Cox transformation. By default tries both.
-    bc_lower_bound : float (default=0.0)
-        Lower bound for the Box-Cox transformation.
-    bc_upper_bound : float (default=1.5)
-        Upper bound for the Box-Cox transformation.
     use_trend : bool (default=None)
         Whether or not to use a trend component. By default tries both.
     use_damped_trend : bool (default=None)
@@ -666,6 +662,10 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
     use_arma_errors : bool (default=True)
         Whether or not to use a ARMA errors.
         Default is True and this evaluates both models.
+    bc_lower_bound : float (default=0.0)
+        Lower bound for the Box-Cox transformation.
+    bc_upper_bound : float (default=1.0)
+        Upper bound for the Box-Cox transformation.
 
     See Also
     --------
@@ -699,12 +699,16 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
         use_trend: Optional[bool] = None,
         use_damped_trend: Optional[bool] = None,
         use_arma_errors: bool = True,
+        bc_lower_bound: float = 0.0,
+        bc_upper_bound: float = 1.0,
     ):
         self.seasonal_periods = seasonal_periods
         self.use_boxcox = use_boxcox
         self.use_trend = use_trend
         self.use_damped_trend = use_damped_trend
         self.use_arma_errors = use_arma_errors
+        self.bc_lower_bound = bc_lower_bound
+        self.bc_upper_bound = bc_upper_bound
 
         super().__init__()
 
@@ -716,11 +720,13 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
 
     def _get_statsforecast_params(self) -> dict:
         return {
-            "seasonal_periods": self.seasonal_periods,
+            "season_length": self.seasonal_periods,
             "use_boxcox": self.use_boxcox,
             "use_trend": self.use_trend,
             "use_damped_trend": self.use_damped_trend,
             "use_arma_errors": self.use_arma_errors,
+            "bc_lower_bound": self.bc_lower_bound,
+            "bc_upper_bound": self.bc_upper_bound,
         }
 
     @classmethod
@@ -745,7 +751,21 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
         """
         del parameter_set  # to avoid being detected as unused by `vulture` etc.
 
-        params = [{"seasonal_periods": 3}, {"seasonal_periods": [3, 12]}]
+        params = [
+            {
+                "seasonal_periods": 3,
+                "use_boxcox": True,
+                "bc_lower_bound": 0.25,
+                "bc_upper_bound": 0.75,
+            },
+            {
+                "seasonal_periods": [3, 12],
+                "use_boxcox": False,
+                "use_trend": True,
+                "use_damped_trend": True,
+                "use_arma_errors": False,
+            },
+        ]
 
         return params
 
