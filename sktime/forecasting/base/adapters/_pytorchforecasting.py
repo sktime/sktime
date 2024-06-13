@@ -4,19 +4,20 @@ import abc
 import functools
 import typing
 from copy import deepcopy
+from time import sleep
 from typing import Any, Dict, Optional
 
 import numpy as np
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
 
-from sktime.forecasting.base import BaseGlobalForecaster, ForecastingHorizon
+from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 
 __all__ = ["_PytorchForecastingAdapter"]
 __author__ = ["XinyuWu"]
 
 
-class _PytorchForecastingAdapter(BaseGlobalForecaster):
+class _PytorchForecastingAdapter(_BaseGlobalForecaster):
     """Base adapter class for pytorch-forecasting models.
 
     Parameters
@@ -52,8 +53,18 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
         "python_dependencies": ["pytorch_forecasting>=1.0.0"],
         # estimator type
         # --------------
-        "y_inner_mtype": ["pd-multiindex", "pd_multiindex_hier", "pd.Series"],
-        "X_inner_mtype": ["pd-multiindex", "pd_multiindex_hier", "pd.Series"],
+        "y_inner_mtype": [
+            "pd-multiindex",
+            "pd_multiindex_hier",
+            "pd.Series",
+            "pd.DataFrame",
+        ],
+        "X_inner_mtype": [
+            "pd-multiindex",
+            "pd_multiindex_hier",
+            "pd.Series",
+            "pd.DataFrame",
+        ],
         "scitype:y": "univariate",
         "requires-fh-in-fit": True,
         "X-y-must-have-same-index": True,
@@ -155,6 +166,10 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
             reference to self
         """
         self._max_prediction_length = np.max(fh.to_relative(self.cutoff))
+        if not np.min(fh.to_relative(self.cutoff)) > 0:
+            raise NotImplementedError(
+                f"No in sample predict support, but found fh with in sample index: {fh}"
+            )
         # check if dummy X is needed
         # only the TFT model need X to fit, probably a bug in pytorch-forecasting
         X = self._dummy_X(X, y)
@@ -194,7 +209,15 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
             )
             # load model from checkpoint
             best_model_path = self._trainer.checkpoint_callback.best_model_path
-            self.best_model = self.algorithm_class.load_from_checkpoint(best_model_path)
+            try:
+                self.best_model = self.algorithm_class.load_from_checkpoint(
+                    best_model_path
+                )
+            except FileNotFoundError:
+                sleep(0.1)
+                self.best_model = self.algorithm_class.load_from_checkpoint(
+                    best_model_path
+                )
         else:
             # load model from disk
             self.best_model = self.algorithm_class.load_from_checkpoint(self.model_path)
@@ -224,14 +247,34 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
         X : sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
+            If ``y`` is not passed (not performing global forecasting), ``X`` should
+            only contain the time points to be predicted.
+            If ``y`` is passed (performing global forecasting), ``X`` must contain
+            all historical values and the time points to be predicted.
         y : sktime time series object, optional (default=None)
             Historical values of the time series that should be predicted.
+            If not None, global forecasting will be performed.
+            Only pass the historical values not the time points to be predicted.
 
         Returns
         -------
         y_pred : sktime time series object
             guaranteed to have a single column/variable
             Point predictions
+
+        Notes
+        -----
+        If ``y`` is not None, global forecast will be performed.
+        In global forecast mode,
+        ``X`` should contain all historical values and the time points to be predicted,
+        while ``y`` should only contain historical values
+        not the time points to be predicted.
+
+        If ``y`` is None, non global forecast will be performed.
+        In non global forecast mode,
+        ``X`` should only contain the time points to be predicted,
+        while ``y`` should only contain historical values
+        not the time points to be predicted.
         """
         if y is None:
             y = deepcopy(self._y)
@@ -308,6 +351,8 @@ class _PytorchForecastingAdapter(BaseGlobalForecaster):
         else:
             time_varying_known_reals = []
             data = deepcopy(y)
+        # if fh is not continuous, there will be NaN after extend_y in prediect
+        data["_target_column"].fillna(0, inplace=True)
         # add integer time_idx column as pytorch-forecasting requires
         if self._index_len > 1:
             time_idx = (
