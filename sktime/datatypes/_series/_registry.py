@@ -33,7 +33,7 @@ MTYPE_REGISTER_SERIES = [
         "xdas representation of a uni- or multivariate series",
     ),
     (
-        "gluonts_listDataset",
+        "gluonts_ListDataset_series",
         "Series",
         "gluonTS representation of univariate and multivariate series",
     ),
@@ -42,7 +42,7 @@ MTYPE_REGISTER_SERIES = [
 MTYPE_SOFT_DEPS_SERIES = {
     "xr.DataArray": "xarray",
     "dask_series": "dask",
-    "gluonts_listDataset_series": "gluonts",
+    "gluonts_ListDataset_series": "gluonts",
 }
 
 MTYPE_LIST_SERIES = [x[0] for x in MTYPE_REGISTER_SERIES]

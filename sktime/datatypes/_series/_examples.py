@@ -83,8 +83,8 @@ if _check_soft_dependencies("gluonts", severity="none"):
         [{FieldName.TARGET: s, FieldName.START: pd.Timestamp(2023, 1, 1)}], freq="D"
     )
 
-    example_dict[("gluonts_listDataset_series", "Series", 0)] = list_dataset
-    example_dict_lossy[("gluonts_listDataset_series", "Series", 0)] = True
+    example_dict[("gluonts_ListDataset_series", "Series", 0)] = list_dataset
+    example_dict_lossy[("gluonts_ListDataset_series", "Series", 0)] = True
 
 example_dict_metadata[("Series", 0)] = {
     "is_univariate": True,
@@ -144,8 +144,8 @@ if _check_soft_dependencies("gluonts", severity="none"):
         one_dim_target=False,  # Must be specified for multivariate datasets
     )
 
-    example_dict[("gluonts_listDataset_series", "Series", 1)] = list_dataset
-    example_dict_lossy[("gluonts_listDataset_series", "Series", 1)] = True
+    example_dict[("gluonts_ListDataset_series", "Series", 1)] = list_dataset
+    example_dict_lossy[("gluonts_ListDataset_series", "Series", 1)] = True
 
 example_dict_metadata[("Series", 1)] = {
     "is_univariate": False,
@@ -206,8 +206,8 @@ if _check_soft_dependencies("gluonts", severity="none"):
         one_dim_target=False,  # Must be specified for multivariate datasets
     )
 
-    example_dict[("gluonts_listDataset_series", "Series", 2)] = list_dataset
-    example_dict_lossy[("gluonts_listDataset_series", "Series", 2)] = True
+    example_dict[("gluonts_ListDataset_series", "Series", 2)] = list_dataset
+    example_dict_lossy[("gluonts_ListDataset_series", "Series", 2)] = True
 
 example_dict_metadata[("Series", 2)] = {
     "is_univariate": False,
@@ -262,8 +262,8 @@ if _check_soft_dependencies("gluonts", severity="none"):
         one_dim_target=False,  # Must be specified for multivariate datasets
     )
 
-    example_dict[("gluonts_listDataset_series", "Series", 3)] = list_dataset
-    example_dict_lossy[("gluonts_listDataset_series", "Series", 3)] = True
+    example_dict[("gluonts_ListDataset_series", "Series", 3)] = list_dataset
+    example_dict_lossy[("gluonts_ListDataset_series", "Series", 3)] = True
 
 
 example_dict_metadata[("Series", 3)] = {

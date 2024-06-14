@@ -369,6 +369,7 @@ if _check_soft_dependencies("gluonts", severity="none"):
             not isinstance(obj, list)
             or not isinstance(obj[0], dict)
             or "target" not in obj[0]
+            or len(obj[0]["target"]) > 1
         ):
             msg = f"{var_name} must be a gluonts.ListDataset, found {type(obj)}"
             return ret(False, msg, None, return_metadata)
@@ -393,6 +394,9 @@ if _check_soft_dependencies("gluonts", severity="none"):
 
             else:
                 metadata["n_features"] = obj[0]["target"].shape[1]
+
+        if _req("n_instances", return_metadata):
+            metadata["n_instances"] = 1
 
         if _req("feature_names", return_metadata):
             # Check first if the ListDataset is empty
@@ -423,7 +427,7 @@ if _check_soft_dependencies("gluonts", severity="none"):
 
         if _req("has_nans", return_metadata):
             for series in obj:
-                metadata["has_nans"] = series["target"].isna().values.any()
+                metadata["has_nans"] = pd.isnull(series["target"]).any()
 
                 # Break out if at least 1 time series has NaN values
                 if metadata["has_nans"]:

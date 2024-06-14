@@ -109,8 +109,8 @@ if _check_soft_dependencies("gluonts", severity="none"):
 
     list_dataset = convert_pandas_to_listDataset(df, is_single=False)
 
-    example_dict[("gluonts_listDataset_panel", "Panel", 0)] = list_dataset
-    example_dict_lossy[("gluonts_listDataset_panel", "Panel", 0)] = True
+    example_dict[("gluonts_ListDataset_panel", "Panel", 0)] = list_dataset
+    example_dict_lossy[("gluonts_ListDataset_panel", "Panel", 0)] = True
 
 example_dict_metadata[("Panel", 0)] = {
     "is_univariate": False,
@@ -188,7 +188,7 @@ if _check_soft_dependencies("dask", severity="none"):
 if _check_soft_dependencies("gluonts", severity="none"):
     from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
 
-    df = example_dict[("pd-multiindex", "Panel", 0)]
+    df = example_dict[("pd-multiindex", "Panel", 1)]
 
     # Updating the DF to have pandas Datetime objects
     dfs = [
@@ -204,8 +204,8 @@ if _check_soft_dependencies("gluonts", severity="none"):
 
     list_dataset = convert_pandas_to_listDataset(df, is_single=False)
 
-    example_dict[("gluonts_listDataset_panel", "Panel", 1)] = list_dataset
-    example_dict_lossy[("gluonts_listDataset_panel", "Panel", 1)] = True
+    example_dict[("gluonts_ListDataset_panel", "Panel", 1)] = list_dataset
+    example_dict_lossy[("gluonts_ListDataset_panel", "Panel", 1)] = True
 
 
 example_dict_metadata[("Panel", 1)] = {
@@ -278,7 +278,7 @@ if _check_soft_dependencies("dask", severity="none"):
 if _check_soft_dependencies("gluonts", severity="none"):
     from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
 
-    df = example_dict[("pd-multiindex", "Panel", 0)]
+    df = example_dict[("pd-multiindex", "Panel", 2)]
 
     # Updating the DF to have pandas Datetime objects
     dfs = [
@@ -294,8 +294,8 @@ if _check_soft_dependencies("gluonts", severity="none"):
 
     list_dataset = convert_pandas_to_listDataset(df, is_single=False)
 
-    example_dict[("gluonts_listDataset_panel", "Panel", 2)] = list_dataset
-    example_dict_lossy[("gluonts_listDataset_panel", "Panel", 2)] = True
+    example_dict[("gluonts_ListDataset_panel", "Panel", 2)] = list_dataset
+    example_dict_lossy[("gluonts_ListDataset_panel", "Panel", 2)] = True
 
 example_dict_metadata[("Panel", 2)] = {
     "is_univariate": True,
