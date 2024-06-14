@@ -509,6 +509,7 @@ class LTSFTransfomer(BaseFormerNetworkPyTorch):
         seq_len,
         pred_len,
         *,
+        label_len=2,
         num_epochs=16,
         batch_size=8,
         in_channels=1,
@@ -538,6 +539,7 @@ class LTSFTransfomer(BaseFormerNetworkPyTorch):
     ):
         self.seq_len = seq_len
         self.pred_len = pred_len
+        self.label_len = label_len
         self.individual = individual
         self.in_channels = in_channels
         self.criterion = criterion
@@ -604,6 +606,7 @@ class LTSFTransfomer(BaseFormerNetworkPyTorch):
             def __init__(self_config):
                 self_config.seq_len = self.seq_len
                 self_config.pred_len = self.pred_len
+                self_config.label_len = self.label_len
                 self_config.output_attention = self.output_attention
                 self_config.embed_type = self.embed_type
                 self_config.embed = self.embed

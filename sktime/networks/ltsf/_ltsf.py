@@ -380,6 +380,7 @@ class LTSFTransformerNetwork:
             super().__init__()
             self.pred_len = configs.pred_len
             self.seq_len = configs.seq_len
+            self.label_len = configs.label_len
             self.output_attention = configs.output_attention
 
             # Embedding

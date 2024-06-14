@@ -11,7 +11,7 @@ import os
 import torch
 from torch.utils.data import Dataset, DataLoader
 from sklearn.preprocessing import StandardScaler
-from utils.timefeatures import time_features
+from sktime.networks.ltsf.utils.timefeatures import time_features
 import warnings
 
 
@@ -28,7 +28,11 @@ class Dataset_Custom(Dataset):
 		else:
 			self.seq_len = size[0]
 			self.label_len = size[1]
-			self.pred_len = size[2]
+			self.pred_len = size[2] - self.label_len
+			# size = [6, 3, 2]
+			# [1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1]
+			# seq [1, 2, 3, 4, 5, 6], label [7, 8, 9], pred [0, 1]
+			# x [1, 2, 3, 4, 5, 6], y[7, 8, 9, 0, 0]
 		# init
 		assert flag in ['train', 'test', 'val']
 		type_map = {'train': 0, 'val': 1, 'test': 2}
@@ -46,13 +50,29 @@ class Dataset_Custom(Dataset):
 
 		self.__read_data__()
 
+	def create_df(self):
+		"""
+		this function converts self.X and self.y to DataFrame of
+		['date', ...(other features), target feature]
+		"""
+		df = pd.concat([
+			self.X,
+			self.y
+		], axis=1)
+		df.index = df.index.to_timestamp()
+		df.index.rename("date", inplace=True)
+		df.reset_index(inplace=True)
+		df.rename(columns={'index': 'date'}, inplace=True)
+		self.target = df.columns[-1]
+
+		return df
+
+
 	def __read_data__(self):
 		self.scaler = StandardScaler()
 		# df_raw = pd.read_csv(os.path.join(self.root_path,
 		# 								self.data_path))
-
-		# create df_raw from X and y
-		df_raw = None
+		df_raw = self.create_df()
 
 		'''
 		df_raw.columns: ['date', ...(other features), target feature]
@@ -109,12 +129,23 @@ class Dataset_Custom(Dataset):
 		r_begin = s_end - self.label_len
 		r_end = r_begin + self.label_len + self.pred_len
 
-		seq_x = self.data_x[s_begin:s_end]
-		seq_y = self.data_y[r_begin:r_end]
-		seq_x_mark = self.data_stamp[s_begin:s_end]
-		seq_y_mark = self.data_stamp[r_begin:r_end]
+		seq_x = torch.tensor(self.data_x[s_begin:s_end]).float()
+		seq_y = torch.tensor(self.data_y[r_begin:r_end]).float()
+		seq_x_mark = torch.tensor(self.data_stamp[s_begin:s_end]).float()
+		seq_y_mark = torch.tensor(self.data_stamp[r_begin:r_end]).float()
 
-		return seq_x, seq_y, seq_x_mark, seq_y_mark
+		dec_inp = torch.zeros_like(seq_y[-self.pred_len:, :])
+		dec_inp = torch.cat([seq_y[:self.label_len, :], dec_inp], dim=0)
+
+		return (
+			{
+				"x_enc": seq_x,
+				"x_mark_enc": seq_x_mark,
+				"x_dec": dec_inp,
+				"x_mark_dec": seq_y_mark,
+			},
+			seq_y[-self.pred_len:],
+		)
 
 	def __len__(self):
 		return len(self.data_x) - self.seq_len - self.pred_len + 1
@@ -185,7 +216,7 @@ class Dataset_Pred(Dataset):
 			data = df_data.values
 
 		tmp_stamp = df_raw[['date']][border1:border2]
-		tmp_stamp['date'] = pd.to_datetime(tmp_stamp.date)
+		# tmp_stamp['date'] = pd.to_datetime(tmp_stamp.date)
 		pred_dates = pd.date_range(tmp_stamp.date.values[-1], periods=self.pred_len + 1, freq=self.freq)
 
 		df_stamp = pd.DataFrame(columns=['date'])
@@ -231,3 +262,18 @@ class Dataset_Pred(Dataset):
 
 	def inverse_transform(self, data):
 		return self.scaler.inverse_transform(data)
+
+
+
+# from sktime.datasets import load_longley
+# y, X = load_longley()
+
+# # print(pd.to_datetime(y.index.to_timestamp()))
+# # print(pd.to_datetime(y.index[0]))
+
+# seq_len, label_len, pred_len = 6, 2, 3
+
+
+# dataset = Dataset_Custom(X, y, target="target", scale=False, size=[seq_len, label_len, pred_len])
+
+# print(len(dataset))

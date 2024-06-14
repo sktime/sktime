@@ -6,6 +6,7 @@ import pandas as pd
 from copy import deepcopy
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.networks.ltsf.data.dataset import Dataset_Custom
 from sktime.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("torch", severity="none"):
@@ -336,6 +337,7 @@ class BaseFormerNetworkPyTorch(BaseForecaster, ABC):
     def _run_epoch(self, epoch, dataloader):
         for x, y in dataloader:
             y_pred = self.network(x)
+            y = torch.squeeze(y, -1)
             loss = self._criterion(y_pred, y)
             self._optimizer.zero_grad()
             loss.backward()
@@ -426,14 +428,18 @@ class BaseFormerNetworkPyTorch(BaseForecaster, ABC):
                     "documentation."
                 )
         else:
-            dataset = PyTorchFormerTrainDataset(
-                y=y,
+            dataset = Dataset_Custom(
                 X=X,
-                seq_len=self.network.seq_len,
-                fh=self._fh.to_relative(self.cutoff)._values[-1],
+                y=y,
+                target="target", scale=False, size=[self.network.seq_len, self.label_len, self.network.pred_len],
             )
+            # dataset = PyTorchFormerTrainDataset(
+            #     y=y,
+            #     X=X,
+            #     seq_len=self.network.seq_len,
+            #     fh=self._fh.to_relative(self.cutoff)._values[-1],
+            # )
 
-        print(dataset)
         return DataLoader(dataset, self.batch_size, shuffle=False)
 
     def build_pytorch_pred_dataloader(self, y, fh):
