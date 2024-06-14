@@ -674,6 +674,16 @@ class ProximityStump(BaseClassifier):
         If "multiprocessing" is selected, it will default to "loky" instead.
         Specify None if no parallelization is needed.
 
+        - "None": executes loop sequentally, simple list comprehension
+        - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
+        - "dask": uses ``dask``, requires ``dask`` package in environment
+
+        Recommendation: Use "dask" or "loky" for parallelization.
+        "threading" is unlikely to see speed ups due to the GIL and the serialization
+        backend (``cloudpickle``) for "dask" and "loky" is generally more robust
+        than the standard ``pickle`` library used in "multiprocessing".
+
     backend_params : dict, optional
         additional parameters passed to the backend as config.
         Directly passed to ``utils.parallel.parallelize``.
@@ -691,15 +701,6 @@ class ProximityStump(BaseClassifier):
           If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
           will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed, e.g., ``scheduler``
-        - "None": executes loop sequentally, simple list comprehension
-        - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
-        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
-        - "dask": uses ``dask``, requires ``dask`` package in environment
-
-        Recommendation: Use "dask" or "loky" for parallel evaluate.
-        "threading" is unlikely to see speed ups due to the GIL and the serialization
-        backend (``cloudpickle``) for "dask" and "loky" is generally more robust
-        than the standard ``pickle`` library used in "multiprocessing".
 
     Examples
     --------
@@ -753,12 +754,12 @@ class ProximityStump(BaseClassifier):
         self._random_object = None
         super().__init__()
 
-        # TODO, 0.31.0 remove n_jobs parameter and below logic
+        # TODO, 0.32.0 remove n_jobs parameter and below logic
         if n_jobs != "deprecated":
             self.backend_params = {"n_jobs": n_jobs}
             warn(
                 f"Parameter n_jobs of {self.__class__.__name__} will be removed "
-                "in sktime 0.31.0 and will be no longer used. "
+                "in sktime 0.32.0 and will be no longer used. "
                 "Instead, the backend and backend_params parameters should be used. "
                 "If n_jobs is required, set it as a parameter of backend_params"
                 "to pass n_jobs or other parallelization parameters. ",
@@ -1063,6 +1064,16 @@ class ProximityTree(BaseClassifier):
         If "multiprocessing" is selected, it will default to "loky" instead.
         Specify None if no parallelization is needed.
 
+        - "None": executes loop sequentally, simple list comprehension
+        - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
+        - "dask": uses ``dask``, requires ``dask`` package in environment
+
+        Recommendation: Use "dask" or "loky" for parallelization.
+        "threading" is unlikely to see speed ups due to the GIL and the serialization
+        backend (``cloudpickle``) for "dask" and "loky" is generally more robust
+        than the standard ``pickle`` library used in "multiprocessing".
+
     backend_params : dict, optional
         additional parameters passed to the backend as config.
         Directly passed to ``utils.parallel.parallelize``.
@@ -1080,15 +1091,6 @@ class ProximityTree(BaseClassifier):
           If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
           will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed, e.g., ``scheduler``
-        - "None": executes loop sequentally, simple list comprehension
-        - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
-        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
-        - "dask": uses ``dask``, requires ``dask`` package in environment
-
-        Recommendation: Use "dask" or "loky" for parallel evaluate.
-        "threading" is unlikely to see speed ups due to the GIL and the serialization
-        backend (``cloudpickle``) for "dask" and "loky" is generally more robust
-        than the standard ``pickle`` library used in "multiprocessing".
 
     Examples
     --------
@@ -1147,12 +1149,12 @@ class ProximityTree(BaseClassifier):
         self._random_object = None
 
         super().__init__()
-        # TODO, 0.31.0 remove n_jobs parameter and below logic
+        # TODO, 0.32.0 remove n_jobs parameter and below logic
         if n_jobs != "deprecated":
             self.backend_params = {"n_jobs": n_jobs}
             warn(
                 f"Parameter n_jobs of {self.__class__.__name__} will be removed "
-                "in sktime 0.31.0 and will be no longer used. "
+                "in sktime 0.32.0 and will be no longer used. "
                 "Instead, the backend and backend_params parameters should be used. "
                 "If n_jobs is required, set it as a parameter of backend_params"
                 "to pass n_jobs or other parallelization parameters. ",
@@ -1438,10 +1440,20 @@ class ProximityForest(BaseClassifier):
         If "multiprocessing" is selected, it will default to "loky" instead.
         Specify None if no parallelization is needed.
 
+        - "None": executes loop sequentally, simple list comprehension
+        - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
+        - "dask": uses ``dask``, requires ``dask`` package in environment
+
     backend_params : dict, optional
         additional parameters passed to the backend as config.
         Directly passed to ``utils.parallel.parallelize``.
         Valid keys depend on the value of ``backend``:
+
+        Recommendation: Use "dask" or "loky" for parallelization.
+        "threading" is unlikely to see speed ups due to the GIL and the serialization
+        backend (``cloudpickle``) for "dask" and "loky" is generally more robust
+        than the standard ``pickle`` library used in "multiprocessing".
 
         - "None": no additional parameters, ``backend_params`` is ignored
         - "loky", "multiprocessing" and "threading": default ``joblib`` backends
@@ -1455,15 +1467,6 @@ class ProximityForest(BaseClassifier):
           If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
           will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed, e.g., ``scheduler``
-        - "None": executes loop sequentally, simple list comprehension
-        - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
-        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
-        - "dask": uses ``dask``, requires ``dask`` package in environment
-
-        Recommendation: Use "dask" or "loky" for parallel evaluate.
-        "threading" is unlikely to see speed ups due to the GIL and the serialization
-        backend (``cloudpickle``) for "dask" and "loky" is generally more robust
-        than the standard ``pickle`` library used in "multiprocessing".
 
     References
     ----------
@@ -1537,12 +1540,12 @@ class ProximityForest(BaseClassifier):
         self._random_object = None
         super().__init__()
 
-        # TODO, 0.31.0 remove n_jobs parameter and below logic
+        # TODO, 0.32.0 remove n_jobs parameter and below logic
         if n_jobs != "deprecated":
             self.backend_params = {"n_jobs": n_jobs}
             warn(
                 f"Parameter n_jobs of {self.__class__.__name__} will be removed "
-                "in sktime 0.31.0 and will be no longer used. "
+                "in sktime 0.32.0 and will be no longer used. "
                 "Instead, the backend and backend_params parameters should be used. "
                 "If n_jobs is required, set it as a parameter of backend_params"
                 "to pass n_jobs or other parallelization parameters. ",
