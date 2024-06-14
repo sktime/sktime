@@ -6,7 +6,7 @@ import pytest
 from numpy import array_equal
 
 from sktime.annotation.datagen import piecewise_normal, piecewise_poisson
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(

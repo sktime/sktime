@@ -370,6 +370,10 @@ TEST_PARAMS_LIST = [
 ]
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([ForecastingGridSearchCV, ForecastingRandomizedSearchCV]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("return_n_best_forecasters", [-1, 0, 3])
 @pytest.mark.parametrize(
     "Forecaster, kwargs",

@@ -49,8 +49,10 @@ class SquaringResiduals(BaseForecaster):
     ----------
     forecaster : sktime forecaster, BaseForecaster descendant, optional
         Estimator to which probabilistic forecasts are being added
+        Default = NaiveForecaster()
     residual_forecaster : sktime forecaster, BaseForecaster descendant, optional
         Estimator which is fitted to the residuals of forecaster
+        Default = NaiveForecaster()
     initial_window : int, optional, default=2
         Size of initial_window to which forecaster is fitted
     steps_ahead : int, optional, default=1
