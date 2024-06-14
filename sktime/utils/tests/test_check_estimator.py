@@ -6,6 +6,7 @@ import pytest
 
 from sktime.classification.dummy import DummyClassifier
 from sktime.forecasting.dummy import ForecastKnownValues
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.utils.estimator_checks import (
     _get_test_names_for_obj,
@@ -83,6 +84,10 @@ def test_check_estimator_subset_tests():
     assert results_tests == expected_tests
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(_get_test_names_for_obj),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_get_test_names():
     """Test that get_test_names returns the correct test names."""
     expected_tests = [
@@ -99,12 +104,20 @@ def test_get_test_names():
     assert set(expected_tests).issubset(test_names)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(parametrize_with_checks),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @parametrize_with_checks(EXAMPLE_CLASSES)
 def test_parametrize_with_checks_objects(obj, test_name):
     """Test that parametrize_with_checks works as intended - classes."""
     check_estimator(obj, verbose=False, raise_exceptions=True, tests_to_run=test_name)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(parametrize_with_checks),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @parametrize_with_checks(EXAMPLE_INSTANCES, obj_varname="foo", check_varname="bar")
 def test_parametrize_with_checks_instances(foo, bar):
     """Test that parametrize_with_checks works as intended - instances, var names."""
