@@ -221,7 +221,7 @@ the ``sktime`` test suite can be imported and extended in the following ways:
         from sktime.utils.estimator_checks import parametrize_with_checks
 
         @parametrize_with_checks(OBJS_TO_TEST)
-        def test_estimator_interface_compliance(obj, test_name):
+        def test_sktime_api_compliance(obj, test_name):
             check_estimator(obj, tests_to_run=test_name, raise_exceptions=True)
 
 *   importing test classes, e.g., ``test_all_estimators.TestAllEstimators`` or
