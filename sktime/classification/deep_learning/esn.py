@@ -171,14 +171,7 @@ class EchoStateNetwork(BaseClassifier):
         from sklearn.tree import DecisionTreeClassifier
 
         params = [
-            {
-                "base_classifier": None,
-                "n_reservoir": None,
-                "spectral_radius": None,
-                "leaking_rate": None,
-                "regularization": None,
-                "random_state": None,
-            },
+            {},
             {
                 "base_classifier": DecisionTreeClassifier(max_depth=5, random_state=42),
                 "n_reservoir": 50,
@@ -199,11 +192,4 @@ class EchoStateNetwork(BaseClassifier):
             },
         ]
 
-        if parameter_set == "default":
-            return params[0]
-        elif parameter_set == "test-param-set-1":
-            return params[1]
-        elif parameter_set == "test-param-set-2":
-            return params[2]
-        else:
-            raise ValueError(f"Unknown parameter_set: {parameter_set}")
+        return params
