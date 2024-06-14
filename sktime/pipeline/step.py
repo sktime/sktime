@@ -73,9 +73,10 @@ class Step:
         self.input_edges = input_edges
         self.params = params
 
-    def reset(self):
+    def reset(self, reset_buffer=True):
         """Reset the step."""
-        self.buffer = None
+        if reset_buffer:
+            self.buffer = None
         self.mode = ""
 
     def get_allowed_method(self):

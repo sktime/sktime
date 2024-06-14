@@ -22,7 +22,7 @@ class TrendForecaster(BaseForecaster):
 
     In ``fit``, for input time series :math:`(v_i, t_i), i = 1, \dots, T`,
     where :math:`v_i` are values and :math:`t_i` are time stamps,
-    fits an `sklearn` model :math:`v_i = f(t_i) + \epsilon_i`, where :math:`f` is
+    fits an ``sklearn`` model :math:`v_i = f(t_i) + \epsilon_i`, where :math:`f` is
     the model fitted when ``regressor.fit`` is passed ``X`` = vector of :math:`t_i`,
     and ``y`` = vector of :math:`v_i`.
 
@@ -132,15 +132,16 @@ class TrendForecaster(BaseForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sklearn.ensemble import RandomForestRegressor
 

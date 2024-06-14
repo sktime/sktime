@@ -3,8 +3,6 @@
 __author__ = ["fkiraly"]
 __all__ = ["check_estimator"]
 
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
 
 def check_estimator(
     estimator,
@@ -28,7 +26,7 @@ def check_estimator(
     raise_exceptions : bool, optional, default=False
         whether to return exceptions/failures in the results dict, or raise them
 
-        * if False: returns exceptions in returned `results` dict
+        * if False: returns exceptions in returned ``results`` dict
         * if True: raises exceptions as they occur
 
     tests_to_run : str or list of str, optional. Default = run all tests.
@@ -94,6 +92,8 @@ def check_estimator(
     All tests PASSED!
     {'test_clone[ExponentTransformer-1]': 'PASSED'}
     """
+    from sktime.utils.dependencies import _check_soft_dependencies
+
     msg = (
         "check_estimator is a testing utility for developers, and "
         "requires pytest to be present "

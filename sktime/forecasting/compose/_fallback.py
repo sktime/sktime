@@ -8,16 +8,29 @@ If the active forecaster fails during prediction, it proceeds to the next. This 
 a robust forecasting mechanism by providing fallback options.
 """
 
-__author__ = ["ninedigits"]
+__author__ = ["ninedigits", "RikStarmans"]
 __all__ = ["FallbackForecaster"]
 
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES
-from sktime.forecasting.base import BaseForecaster
+from sktime.datatypes._check import check_is_mtype
+from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.utils.warnings import warn
 
 
-class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
+def _check_nan_policy_option(nan_predict_policy):
+    """Ensure user selects correct ``nan_predict_policy`` option."""
+    nan_predict_policy_options = ["ignore", "raise", "warn"]
+    if nan_predict_policy not in nan_predict_policy_options:
+        raise AttributeError(
+            f"`nan_predict_policy` must choose from "
+            f"{nan_predict_policy_options} but instead got "
+            f"{nan_predict_policy}"
+        )
+    return nan_predict_policy
+
+
+class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
     """Forecaster that sequentially tries a list of forecasting models.
 
     Attempts to fit the provided forecasters in the order they are given. If a
@@ -31,10 +44,28 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         list of tuples (str, estimator) of sktime forecasters
         Forecasters to be tried sequentially.
         These are "blueprint" transformers resp forecasters,
-        forecaster states do not change when `fit` is called
+        forecaster states do not change when ``fit`` is called
 
-    warn : bool, default=False
+    verbose : bool, default=False
         If True, raises warnings when a forecaster fails to fit or predict.
+
+    nan_predict_policy: str, default='ignore'
+        Determines the action to take if NaN values are found in the predictions.
+        Available options:
+
+        * "ignore"
+        * "raise"
+        * "warn"
+
+        When set to 'raise', this policy treats NaN predictions as errors, prompting the
+        FallbackForecaster to sequentially try the next forecaster in the queue. This
+        process continues until a NaN-free prediction is obtained or all forecasters
+        have been attempted, in which case the operation fails. Conversely, the 'warn'
+        option alerts to the presence of NaNs in predictions with a warning, but does
+        not alter the forecasting sequence. The default 'ignore' mode takes no action,
+        permitting the forecasting process to proceed uninterrupted and without issuing
+        warnings or errors, regardless of NaN occurrences in predictions.
+
 
     Attributes
     ----------
@@ -77,7 +108,7 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
     """
 
     _tags = {
-        "authors": ["ninedigits"],
+        "authors": ["ninedigits", "RikStarmans"],
         "maintainers": ["ninedigits"],
         "handles-missing-data": True,
         "scitype:y": "both",
@@ -85,7 +116,6 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "fit_is_empty": False,
     }
-
     # for default get_params/set_params from _HeterogenousMetaEstimator
     # _steps_attr points to the attribute of self
     # which contains the heterogeneous set of estimators
@@ -97,13 +127,14 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
     # this must be an iterable of (name: str, estimator, ...) tuples for the default
     _steps_fitted_attr = "forecasters_"
 
-    def __init__(self, forecasters, verbose=False):
+    def __init__(self, forecasters, verbose=False, nan_predict_policy="ignore"):
         super().__init__()
 
         self.forecasters = forecasters
         self.current_forecaster_ = None
         self.current_name_ = None
         self.verbose = verbose
+        self.nan_predict_policy = _check_nan_policy_option(nan_predict_policy)
 
         self._forecasters = self._check_estimators(
             forecasters, "forecasters", clone_ests=False
@@ -111,6 +142,30 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         self.forecasters_ = self._check_estimators(forecasters, "forecasters")
 
         self._anytagis_then_set("requires-fh-in-fit", True, False, self._forecasters)
+        self._anytagis_then_set("capability:pred_int", False, True, self._forecasters)
+
+    def _validate_y_pred(self, y_pred):
+        if self.nan_predict_policy in ("warn", "raise"):
+            last_mtype = self._y_mtype_last_seen
+            _, _, metadata = check_is_mtype(
+                y_pred,
+                mtype=last_mtype,
+                return_metadata=["has_nans"],
+            )
+            has_nans = metadata["has_nans"]
+            if has_nans:
+                msg = f"Null value presents in predict: {y_pred}"
+                if self.nan_predict_policy == "raise":
+                    raise ValueError(msg)
+                else:
+                    warn(
+                        msg,
+                        stacklevel=2,
+                        obj=self,
+                    )
+
+    def _get_delegate(self):
+        return self.current_forecaster_
 
     def _fit(self, y, X=None, fh=None):
         """Fit the forecasters in the given order until one succeeds.
@@ -142,7 +197,7 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         Attempt to fit the forecasters in sequence until one succeeds.
 
         This method iterates over the forecasters starting from the index
-        `first_nonfailing_forecaster_index_`. For each forecaster, it tries to fit it
+        ``first_nonfailing_forecaster_index_``. For each forecaster, it tries to fit it
         with the current data. If the fit method of a forecaster raises an exception,
         it records the exception and proceeds to the next forecaster. If a forecaster
         fits successfully, it updates the current forecaster and its name.
@@ -206,7 +261,9 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
             raise RuntimeError("No forecaster has been successfully fitted yet.")
 
         try:
-            return self.current_forecaster_.predict(fh, X)
+            y_pred = self.current_forecaster_.predict(fh, X)
+            self._validate_y_pred(y_pred)
+            return y_pred
         except Exception as e:
             self.exceptions_raised_[self.first_nonfailing_forecaster_index_] = {
                 "failed_at_step": "predict",
@@ -224,7 +281,9 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
             # Fit the next forecaster and retry prediction
             self.current_forecaster_ = None
             self._try_fit_forecasters(self._y, self._X, self._fh)
-            return self.predict(fh, X)
+            y_pred = self.predict(fh, X)
+            self._validate_y_pred(y_pred)
+            return y_pred
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -234,7 +293,7 @@ class FallbackForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------

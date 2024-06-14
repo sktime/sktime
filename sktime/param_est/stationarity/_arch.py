@@ -151,7 +151,7 @@ class StationarityADFArch(BaseParamFitter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are no reserved values for parameter estimators.
 
         Returns
@@ -159,8 +159,9 @@ class StationarityADFArch(BaseParamFitter):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
         params2 = {
@@ -300,7 +301,7 @@ class StationarityDFGLS(BaseParamFitter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are no reserved values for parameter estimators.
 
         Returns
@@ -308,8 +309,9 @@ class StationarityDFGLS(BaseParamFitter):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
         params2 = {
@@ -440,7 +442,7 @@ class StationarityPhillipsPerron(BaseParamFitter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are no reserved values for parameter estimators.
 
         Returns
@@ -448,8 +450,9 @@ class StationarityPhillipsPerron(BaseParamFitter):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
         params2 = {
@@ -572,7 +575,7 @@ class StationarityKPSSArch(BaseParamFitter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are no reserved values for parameter estimators.
 
         Returns
@@ -580,8 +583,9 @@ class StationarityKPSSArch(BaseParamFitter):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
         params2 = {
@@ -596,7 +600,7 @@ class StationarityKPSSArch(BaseParamFitter):
 class StationarityZivotAndrews(BaseParamFitter):
     """Test for stationarity via the Zivot-Andrews Unit Root Test.
 
-    Direct interface to ``ZivotAndrews`` test from the `arch` package.
+    Direct interface to ``ZivotAndrews`` test from the ``arch`` package.
 
     Uses ``arch.unitroot.ZivotAndrews`` as a test for unit roots,
     and derives a boolean statement whether a series is stationary.
@@ -608,7 +612,7 @@ class StationarityZivotAndrews(BaseParamFitter):
     lags : int, optional
         The number of lags to use in the ADF regression. If omitted or None,
         ``method`` is used to automatically select the lag length with no more
-        than `max_lags` are included.
+        than ``max_lags`` are included.
     trend : {"c", "t", "ct"}, optional
         The trend component to include in the test
 
@@ -630,7 +634,7 @@ class StationarityZivotAndrews(BaseParamFitter):
 
     Attributes
     ----------
-    stationary_ : bool, whether the series in `fit` has a unit root
+    stationary_ : bool, whether the series in ``fit`` has a unit root
         (with structural break)
         more precisely, whether the null of the Zivot-Andrews test is rejected at
         ``p_threshold``
@@ -723,7 +727,7 @@ class StationarityZivotAndrews(BaseParamFitter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are no reserved values for parameter estimators.
 
         Returns
@@ -731,8 +735,9 @@ class StationarityZivotAndrews(BaseParamFitter):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
         params2 = {
@@ -750,7 +755,7 @@ class StationarityZivotAndrews(BaseParamFitter):
 class StationarityVarianceRatio(BaseParamFitter):
     """Test for stationarity via the variance ratio test for random walks.
 
-    Direct interface to ``VarianceRatio`` test from the `arch` package.
+    Direct interface to ``VarianceRatio`` test from the ``arch`` package.
 
     Uses ``arch.unitroot.VarianceRatio`` as a test for unit roots,
     and derives a boolean statement whether a series is stationary.
@@ -872,7 +877,7 @@ class StationarityVarianceRatio(BaseParamFitter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are no reserved values for parameter estimators.
 
         Returns
@@ -880,8 +885,9 @@ class StationarityVarianceRatio(BaseParamFitter):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
         params2 = {

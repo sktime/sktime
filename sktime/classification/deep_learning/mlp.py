@@ -9,7 +9,7 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.mlp import MLPNetwork
-from sktime.utils.validation._dependencies import _check_dl_dependencies
+from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class MLPClassifier(BaseDeepClassifier):
@@ -82,7 +82,7 @@ class MLPClassifier(BaseDeepClassifier):
         optimizer=None,
     ):
         _check_dl_dependencies(severity="error")
-        super().__init__()
+
         self.callbacks = callbacks
         self.n_epochs = n_epochs
         self.batch_size = batch_size
@@ -93,6 +93,9 @@ class MLPClassifier(BaseDeepClassifier):
         self.activation = activation
         self.use_bias = use_bias
         self.optimizer = optimizer
+
+        super().__init__()
+
         self.history = None
         self._network = MLPNetwork(
             random_state=self.random_state,
@@ -160,7 +163,7 @@ class MLPClassifier(BaseDeepClassifier):
         -------
         self : object
         """
-        y_onehot = self.convert_y_to_keras(y)
+        y_onehot = self._convert_y_to_keras(y)
         # Transpose to conform to Keras input style.
         X = X.transpose(0, 2, 1)
 
@@ -187,7 +190,7 @@ class MLPClassifier(BaseDeepClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -198,10 +201,11 @@ class MLPClassifier(BaseDeepClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         param1 = {
             "n_epochs": 10,

@@ -1,7 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Student's t-distribution."""
 
-__author__ = ["Alex-JG3"]
+__author__ = ["Alex-JG3", "ivarzap"]
 
 import numpy as np
 import pandas as pd
@@ -32,7 +32,7 @@ class TDistribution(BaseDistribution):
     """
 
     _tags = {
-        "authors": ["Alex-JG3"],
+        "authors": ["Alex-JG3", "ivarzap"],
         "maintainers": ["Alex-JG3"],
         "capabilities:approx": ["pdfnorm", "energy"],
         "capabilities:exact": ["mean", "var", "pdf", "log_pdf", "cdf", "ppf"],
@@ -100,7 +100,7 @@ class TDistribution(BaseDistribution):
         df_arr = df_arr.astype(np.float32)
         df_arr[df_arr <= 2] = np.inf
         mask = (df_arr > 2) & (df_arr != np.inf)
-        df_arr[mask] = df_arr[mask] / (df_arr[mask] - 2)
+        df_arr[mask] = self._sigma[mask] ** 2 * df_arr[mask] / (df_arr[mask] - 2)
         return pd.DataFrame(df_arr, index=self.index, columns=self.columns)
 
     def pdf(self, x):
@@ -108,7 +108,10 @@ class TDistribution(BaseDistribution):
         d = self.loc[x.index, x.columns]
         pdf_arr = gamma((d._df + 1) / 2)
         pdf_arr = pdf_arr / (np.sqrt(np.pi * d._df) * gamma(d._df / 2))
-        pdf_arr = pdf_arr * (1 + x**2 / d._df) ** (-(d._df + 1) / 2)
+        pdf_arr = pdf_arr * (1 + ((x - d._mu) / d._sigma) ** 2 / d._df) ** (
+            -(d._df + 1) / 2
+        )
+        pdf_arr = pdf_arr / d._sigma
         return pd.DataFrame(pdf_arr, index=x.index, columns=x.columns)
 
     def log_pdf(self, x):
@@ -117,14 +120,18 @@ class TDistribution(BaseDistribution):
         lpdf_arr = loggamma((d._df + 1) / 2)
         lpdf_arr = lpdf_arr - 0.5 * np.log(d._df * np.pi)
         lpdf_arr = lpdf_arr - loggamma(d._df / 2)
-        lpdf_arr = lpdf_arr - ((d._df + 1) / 2) * np.log(1 + x**2 / d._df)
+        lpdf_arr = lpdf_arr - ((d._df + 1) / 2) * np.log(
+            1 + ((x - d._mu) / d._sigma) ** 2 / d._df
+        )
+        lpdf_arr = lpdf_arr - np.log(d._sigma)
         return pd.DataFrame(lpdf_arr, index=x.index, columns=x.columns)
 
     def cdf(self, x):
         """Cumulative distribution function."""
         d = self.loc[x.index, x.columns]
-        cdf_arr = x * gamma((d._df + 1) / 2)
-        cdf_arr = cdf_arr * hyp2f1(0.5, (d._df + 1) / 2, 3 / 2, -(x**2) / d._df)
+        x_ = (x - d._mu) / d._sigma
+        cdf_arr = x_ * gamma((d._df + 1) / 2)
+        cdf_arr = cdf_arr * hyp2f1(0.5, (d._df + 1) / 2, 3 / 2, -(x_**2) / d._df)
         cdf_arr = 0.5 + cdf_arr / (np.sqrt(np.pi * d._df) * gamma(d._df / 2))
         return pd.DataFrame(cdf_arr, index=x.index, columns=x.columns)
 
@@ -145,6 +152,7 @@ class TDistribution(BaseDistribution):
         ppf_arr[mask1 | mask2] = np.sqrt(ppf_arr[mask1 | mask2] - 1)
         ppf_arr[mask1 | mask2] = np.sqrt(d._df[mask1 | mask2]) * ppf_arr[mask1 | mask2]
         ppf_arr[mask1] = -ppf_arr[mask1]
+        ppf_arr = d._sigma * ppf_arr + d._mu
         return pd.DataFrame(ppf_arr, index=p.index, columns=p.columns)
 
     @classmethod

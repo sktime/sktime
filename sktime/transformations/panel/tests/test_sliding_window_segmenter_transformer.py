@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.panel.segment import SlidingWindowSegmenter
 from sktime.utils._testing.panel import _make_nested_from_array
 
@@ -14,6 +15,10 @@ from sktime.utils._testing.panel import _make_nested_from_array
 # Check that exception is raised for bad window length.
 # input types - string, float, negative int, negative float and empty dict
 # correct input is meant to be a positive integer of 1 or more.
+@pytest.mark.skipif(
+    not run_test_for_class(SlidingWindowSegmenter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("bad_window_length", ["str", 1.2, -1.2, -1, {}])
 def test_bad_input_args(bad_window_length):
     """Test that bad inputs raise value error."""
@@ -28,6 +33,10 @@ def test_bad_input_args(bad_window_length):
 
 
 # Check the transformer has changed the data correctly.
+@pytest.mark.skipif(
+    not run_test_for_class(SlidingWindowSegmenter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_output_of_transformer():
     """Test correct output of SlidingWindowSegmenter."""
     X = _make_nested_from_array(
@@ -69,6 +78,10 @@ def test_output_of_transformer():
     assert check_if_dataframes_are_equal(res, orig)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(SlidingWindowSegmenter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "time_series_length,window_length", [(5, 1), (10, 5), (15, 9), (20, 13), (25, 19)]
 )

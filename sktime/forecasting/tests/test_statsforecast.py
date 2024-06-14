@@ -36,6 +36,10 @@ def test_statsforecast_mstl(mock_autoets):
     }
 
     model = StatsForecastMSTL(season_length=[12])
+
+    if not model.get_tag("capability:pred_int"):
+        return
+
     model.fit(y)
     fh_index = pd.PeriodIndex(pd.date_range("1961-01", periods=36, freq="M"))
     fh = ForecastingHorizon(fh_index, is_relative=False)

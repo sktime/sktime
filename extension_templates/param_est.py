@@ -35,10 +35,12 @@ from sktime.param_est.base import BaseParamFitter
 
 # todo: add any necessary imports here
 
-# todo: if any imports are sktime soft dependencies:
+# todo: for imports of sktime soft dependencies:
 # make sure to fill in the "python_dependencies" tag with the package import name
+# import soft dependencies only inside methods of the class, not at the top of the file
 
 
+# todo: change class name and write docstring
 class MyTimeSeriesParamFitter(BaseParamFitter):
     """Custom time series parameter fitter. todo: write docstring.
 
@@ -149,6 +151,8 @@ class MyTimeSeriesParamFitter(BaseParamFitter):
         self.parama = parama
         self.paramb = paramb
         self.paramc = paramc
+        # IMPORTANT: the self.params should never be overwritten or mutated from now on
+        # for handling defaults etc, write to other attributes, e.g., self._parama
 
         # leave this as is
         super().__init__()

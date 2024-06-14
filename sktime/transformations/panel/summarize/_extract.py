@@ -142,7 +142,10 @@ class DerivativeSlopeTransformer(BaseTransformer):
         def get_der(x):
             der = []
             for i in range(1, len(x) - 1):
-                der.append(((x[i] - x[i - 1]) + ((x[i + 1] - x[i - 1]) / 2)) / 2)
+                xi = x.iloc[i]
+                xim1 = x.iloc[i - 1]
+                xip1 = x.iloc[i + 1]
+                der.append(0.5 * ((xi - xim1) + 0.5 * (xip1 - xim1)))
             return pd.Series([der[0]] + der + [der[-1]])
 
         return [get_der(x) for x in X]
@@ -190,7 +193,7 @@ class RandomIntervalFeatureExtractor(BaseTransformer):
         - If int, random_state is the seed used by the random number generator;
         - If RandomState instance, random_state is the random number generator;
         - If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
     """
 
     _tags = {
@@ -252,7 +255,7 @@ class RandomIntervalFeatureExtractor(BaseTransformer):
 
         Transform X, segments time-series in each column into random
         intervals using interval indices generated
-        during `fit` and extracts features from each interval.
+        during ``fit`` and extracts features from each interval.
 
         Parameters
         ----------
@@ -434,19 +437,20 @@ class FittedParamExtractor(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.forecasting.exp_smoothing import ExponentialSmoothing
         from sktime.forecasting.trend import TrendForecaster
-        from sktime.utils.validation._dependencies import _check_estimator_deps
+        from sktime.utils.dependencies import _check_estimator_deps
 
         # accessing a nested parameter
         params = [

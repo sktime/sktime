@@ -43,7 +43,7 @@ import pandas as pd
 from sklearn.utils.validation import check_random_state
 
 from sktime.annotation.base._base import BaseSeriesAnnotator
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.utils.dependencies import _check_estimator_deps
 
 logger = logging.getLogger(__name__)
 
@@ -133,7 +133,7 @@ class GGS:
         Parameters
         ----------
         data: array_like
-            2D `array_like` representing time series with sequence index along
+            2D ``array_like`` representing time series with sequence index along
             the first dimension and value series as columns.
 
         Returns
@@ -158,7 +158,7 @@ class GGS:
         Args
         ----
         data: array_like
-            2D `array_like` representing time series with sequence index along
+            2D ``array_like`` representing time series with sequence index along
             the first dimension and value series as columns.
         change_points: list of ints
             Locations of change points as integer indexes.
@@ -185,7 +185,7 @@ class GGS:
         Parameters
         ----------
         data: array_like
-            2D `array_like` representing time series with sequence index along
+            2D ``array_like`` representing time series with sequence index along
             the first dimension and value series as columns.
 
         Returns
@@ -250,7 +250,7 @@ class GGS:
         Parameters
         ----------
         data: array_like
-            2D `array_like` representing time series with sequence index along
+            2D ``array_like`` representing time series with sequence index along
             the first dimension and value series as columns.
         change_points: list of ints
             Locations of change points as integer indexes.
@@ -321,7 +321,7 @@ class GGS:
         Parameters
         ----------
         data: array_like
-            2D `array_like` representing time series with sequence index along
+            2D ``array_like`` representing time series with sequence index along
             the first dimension and value series as columns.
 
         Returns
@@ -425,7 +425,11 @@ class GreedyGaussianSegmentation(BaseSeriesAnnotator):
        https://doi.org/10.1007/s11634-018-0335-0
     """
 
-    _tags = {"fit_is_empty": True}
+    _tags = {
+        "fit_is_empty": True,
+        "task": "segmentation",
+        "learning_type": "unsupervised",
+    }
 
     def __init__(
         self,
@@ -443,7 +447,7 @@ class GreedyGaussianSegmentation(BaseSeriesAnnotator):
         self.random_state = random_state
 
         _check_estimator_deps(self)
-        super().__init__(fmt="dense", labels="int_label")
+        super().__init__()
 
         self._adaptee = GGS(
             k_max=k_max,
@@ -548,7 +552,7 @@ class GreedyGaussianSegmentation(BaseSeriesAnnotator):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------

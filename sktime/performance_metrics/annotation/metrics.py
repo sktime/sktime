@@ -51,7 +51,7 @@ def hausdorff_error(
     pred_change_points: array_like
         Integer indexes (positions) of predicted change points
     symmetric: bool
-        If `True` symmetric Hausdorff distance will be used
+        If ``True`` symmetric Hausdorff distance will be used
     seed: int, default=0
         Local numpy.random.RandomState seed. Default is 0, a random
         shuffling of u and v that guarantees reproducibility.

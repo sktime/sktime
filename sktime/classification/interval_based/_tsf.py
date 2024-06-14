@@ -40,14 +40,14 @@ class TimeSeriesForestClassifier(
     refinement described in [1].
 
     This classifier is intentionally written with low configurability,
-    for performace reasons.
+    for performance reasons.
 
     * for a more configurable tree based ensemble,
-      use ``sktime.classication.ensemble.ComposableTimeSeriesForestClassifier``,
+      use ``sktime.classification.ensemble.ComposableTimeSeriesForestClassifier``,
       which also allows switching the base estimator.
     * to build a a time series forest with configurable ensembling, base estimator,
       and/or feature extraction, fully from composable blocks,
-      combine ``sktime.classication.ensemble.BaggingClassifier`` with
+      combine ``sktime.classification.ensemble.BaggingClassifier`` with
       any classifier pipeline, e.g., pipelining any ``sklearn`` classifier
       with any time series feature extraction, e.g., ``Summarizer``
 
@@ -58,7 +58,7 @@ class TimeSeriesForestClassifier(
     min_interval : int, default=3
         Minimum length of an interval.
     n_jobs : int, default=1
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``-1`` means using all processors.
     inner_series_length: int, default=None
         The maximum length of unique segments within X from which we extract
@@ -111,6 +111,7 @@ class TimeSeriesForestClassifier(
         "maintainers": ["kkoziara", "luiszugasti", "kanand77"],
         # estimator type
         # --------------
+        "capability:feature_importance": True,
         "capability:predict_proba": True,
     }
 
@@ -217,7 +218,7 @@ class TimeSeriesForestClassifier(
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -228,8 +229,9 @@ class TimeSeriesForestClassifier(
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         if parameter_set == "results_comparison":
             return {"n_estimators": 10}

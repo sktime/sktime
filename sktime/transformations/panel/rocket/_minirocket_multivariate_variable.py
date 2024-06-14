@@ -42,13 +42,13 @@ class MiniRocketMultivariateVariable(BaseTransformer):
        (2*n_features_per_kernel(default 4)*num_kernels(default 10,000)).
     max_dilations_per_kernel : int, default=32
         maximum number of dilations per kernel.
-    reference_length : int or str, default = `'max'`
+    reference_length : int or str, default = ``'max'``
         series-length of reference, str defines how to infer from X during 'fit'.
-        options are `'max'`, `'mean'`, `'median'`, `'min'`.
+        options are ``'max'``, ``'mean'``, ``'median'``, ``'min'``.
     pad_value_short_series : float or None, default=None
         if padding series with len<9 to value. if None, not padding is performed.
     n_jobs : int, default=1
-        The number of jobs to run in parallel for `transform`. ``-1`` means using all
+        The number of jobs to run in parallel for ``transform``. ``-1`` means using all
         processors.
     random_state : None or int, default = None
 
@@ -153,7 +153,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         X : pd.DataFrame
             Dataframe with n_instances-rows and n_dimensions-columns,
             each cell containing a series_length-long array.
-            n_dimensions is equal across all instances in `X`, and
+            n_dimensions is equal across all instances in ``X``, and
             series_length is constant within each instance.
         y : ignored argument for interface compatibility
 

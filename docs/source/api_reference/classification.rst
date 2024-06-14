@@ -77,6 +77,7 @@ Dictionary-based
     :toctree: auto_generated/
     :template: class.rst
 
+    BOSSVSClassifierPyts
     BOSSEnsemble
     ContractableBOSS
     IndividualBOSS
@@ -96,6 +97,8 @@ Distance-based
 
     ElasticEnsemble
     KNeighborsTimeSeriesClassifier
+    KNeighborsTimeSeriesClassifierPyts
+    KNeighborsTimeSeriesClassifierTslearn
     ProximityForest
     ProximityStump
     ProximityTree
@@ -178,6 +181,7 @@ Kernel-based
     :template: class.rst
 
     TimeSeriesSVC
+    TimeSeriesSVCTslearn
     Arsenal
     RocketClassifier
 
@@ -191,6 +195,8 @@ Shapelet-based
     :template: class.rst
 
     ShapeletTransformClassifier
+    ShapeletLearningClassifierPyts
+    ShapeletLearningClassifierTslearn
     MrSEQL
     MrSQM
 

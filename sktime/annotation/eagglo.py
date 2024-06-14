@@ -30,25 +30,25 @@ class EAgglo(BaseTransformer):
     ----------
     member : array_like (default=None)
         Assigns points to to the initial cluster membership, therefore the first
-        dimension should be the same as for data. If `None` it will be initialized
+        dimension should be the same as for data. If ``None`` it will be initialized
         to dummy vector where each point is assigned to separate cluster.
     alpha : float (default=1.0)
         Fixed constant alpha in (0, 2] used in the divergence measure, as the
         alpha-th absolute moment, see equation (4) in [1]_.
     penalty : str or callable or None (default=None)
         Function that defines a penalization of the sequence of goodness-of-fit
-        statistic, when overfitting is a concern. If `None` not penalty is applied.
-        Could also be an existing penalty name, either `len_penalty` or
-        `mean_diff_penalty`.
+        statistic, when overfitting is a concern. If ``None`` not penalty is applied.
+        Could also be an existing penalty name, either ``len_penalty`` or
+        ``mean_diff_penalty``.
 
     Attributes
     ----------
     merged_ : array_like
-        2D `array_like` outlining which clusters were merged_ at each step.
+        2D ``array_like`` outlining which clusters were merged_ at each step.
     gof_ : float
         goodness-of-fit statistic for current clsutering.
     cluster_ : array_like
-        1D `array_like` specifying which cluster each row of input data
+        1D ``array_like`` specifying which cluster each row of input data
         X belongs to.
 
     Notes

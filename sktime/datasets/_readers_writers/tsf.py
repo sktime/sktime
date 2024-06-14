@@ -9,6 +9,7 @@ from typing import Dict
 
 import pandas as pd
 
+from sktime.datasets._readers_writers.utils import get_path
 from sktime.datatypes import MTYPE_LIST_HIERARCHICAL, convert
 from sktime.utils.strtobool import strtobool
 
@@ -104,7 +105,7 @@ def load_tsf_to_dataframe(
     return_type : str - "pd_multiindex_hier" (default), "tsf_default", or valid sktime
         mtype string for in-memory data container format specification of the
         return type:
-        - "pd_multiindex_hier" = pd.DataFrame of sktime type `pd_multiindex_hier`
+        - "pd_multiindex_hier" = pd.DataFrame of sktime type ``pd_multiindex_hier``
         - "tsf_default" = container that faithfully mirrors tsf format from the original
             implementation in: https://github.com/rakshitha123/TSForecasting/
             blob/master/utils/data_loader.py.
@@ -134,6 +135,8 @@ def load_tsf_to_dataframe(
     found_data_tag = False
     found_data_section = False
     started_reading_data_section = False
+
+    full_file_path_and_name = get_path(full_file_path_and_name, ".tsf")
 
     with open(full_file_path_and_name, encoding="cp1252") as file:
         for line in file:

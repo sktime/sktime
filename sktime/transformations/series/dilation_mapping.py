@@ -24,7 +24,8 @@ class DilationMappingTransformer(BaseTransformer):
 
     Mathematically, the mapping operates on sequences :math:`x_1, \dots, x_k`.
     The dilation with factor :math:`d` is defined as the sequence
-    :math:`x_1, x_{1+d}, x_{1+2d}, \dots, x_2, x_{2+d}, x_{2+2d}, \dots, x_d, x_{2d}, \dots`,
+    :math:`x_1, x_{1+d}, x_{1+2d}, \dots, x_2, x_{2+d}, x_{2+2d}, \dots, x_d, x_{2d},
+    \dots`,
     where the subsequences with grid spacing :math:`d` are maximal.
 
     The resulting sequence is of equal length to the input sequence.
@@ -118,7 +119,7 @@ class DilationMappingTransformer(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -126,8 +127,9 @@ class DilationMappingTransformer(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params = [{"dilation": 2}]
         return params

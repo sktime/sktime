@@ -13,7 +13,7 @@ from sktime.performance_metrics.forecasting import (
     MeanSquaredPercentageError,
 )
 from sktime.split import ExpandingWindowSplitter
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.tests.test_switch import run_test_module_changed
 
 EXPECTED_RESULTS_1 = pd.DataFrame(
     data={
@@ -73,8 +73,8 @@ def data_loader_simple() -> pd.DataFrame:
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("kotsu", severity="none"),
-    reason="skip test if required soft dependencies not available",
+    not run_test_module_changed("sktime.benchmarking"),
+    reason="run test only if benchmarking module has changed",
 )
 @pytest.mark.parametrize(
     "expected_results_df, scorers",
@@ -106,6 +106,10 @@ def test_forecastingbenchmark(tmp_path, expected_results_df, scorers):
     )
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.benchmarking"),
+    reason="run test only if benchmarking module has changed",
+)
 @pytest.mark.parametrize("estimator, estimator_id, expected_output", COER_CASES)
 def test_coerce_estimator_and_id(estimator, estimator_id, expected_output):
     """Test coerce_estimator_and_id return expected output."""
@@ -115,8 +119,8 @@ def test_coerce_estimator_and_id(estimator, estimator_id, expected_output):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("kotsu", severity="none"),
-    reason="skip test if required soft dependencies not available",
+    not run_test_module_changed("sktime.benchmarking"),
+    reason="run test only if benchmarking module has changed",
 )
 @pytest.mark.parametrize(
     "estimators",

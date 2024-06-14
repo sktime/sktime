@@ -6,7 +6,7 @@ from sktime.annotation.plotting.utils import (
     plot_time_series_with_change_points,
     plot_time_series_with_profiles,
 )
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 @pytest.fixture

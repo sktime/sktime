@@ -27,8 +27,8 @@ class PluginParamsForecaster(_DelegatedForecaster):
 
     Then, fits ``forecaster`` to the data passed in ``fit``.
 
-    After that, behaves identically to `forecaster` with those parameters set.
-    `update` behaviour is controlled by the `update_params` parameter.
+    After that, behaves identically to ``forecaster`` with those parameters set.
+    ``update`` behaviour is controlled by the ``update_params`` parameter.
 
     Example: ``param_est`` seasonality test to determine ``sp`` parameter;
     ``forecaster`` a forecaster with an ``sp`` parameter,
@@ -38,10 +38,10 @@ class PluginParamsForecaster(_DelegatedForecaster):
     ----------
     param_est : sktime estimator object with a fit method, inheriting from BaseEstimator
         e.g., estimator inheriting from BaseParamFitter or forecaster
-        this is a "blueprint" estimator, state does not change when `fit` is called
+        this is a "blueprint" estimator, state does not change when ``fit`` is called
 
     forecaster : sktime forecaster, i.e., estimator inheriting from BaseForecaster
-        this is a "blueprint" estimator, state does not change when `fit` is called
+        this is a "blueprint" estimator, state does not change when ``fit`` is called
 
     params : None, str, list of str, dict with str values/keys, optional, default=None
         determines which parameters from ``param_est`` are plugged into forecaster where
@@ -128,10 +128,19 @@ class PluginParamsForecaster(_DelegatedForecaster):
         self.update_params = update_params
 
         super().__init__()
-        self.clone_tags(self.forecaster_)
+
+        self._set_delegated_tags(self.forecaster_)
+
+        # parameter estimators that are univariate do not broadcast,
+        # so broadcasting needs to be done by the composite (i.e., self)
+        if param_est.get_tags()["object_type"] == "param_est":
+            if not param_est.get_tags()["capability:multivariate"]:
+                self.set_tags(**{"scitype:y": "univariate"})
+
         self.set_tags(**{"fit_is_empty": False})
         # todo: only works for single series now
         #   think about how to deal with vectorization later
+        self.set_tags(**{"X_inner_mtype": ["pd.DataFrame", "pd.Series", "np.ndarray"]})
         self.set_tags(**{"y_inner_mtype": ["pd.DataFrame", "pd.Series", "np.ndarray"]})
 
     def _fit(self, y, X, fh):
@@ -260,7 +269,7 @@ class PluginParamsForecaster(_DelegatedForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for forecasters.
 
         Returns
@@ -268,13 +277,14 @@ class PluginParamsForecaster(_DelegatedForecaster):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.param_est.fixed import FixedParams
         from sktime.param_est.seasonality import SeasonalityACF
-        from sktime.utils.validation._dependencies import _check_estimator_deps
+        from sktime.utils.dependencies import _check_estimator_deps
 
         # use of dictionary to plug "foo" parameter into "sp", uses mock param_est
         params1 = {

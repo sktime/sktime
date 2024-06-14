@@ -14,7 +14,7 @@ from sktime.forecasting.reconcile import ReconcilerForecaster
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.utils._testing.hierarchical import _bottom_hier_datagen, _make_hierarchical
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 # get all the methods
 METHOD_LIST = ReconcilerForecaster.METHOD_LIST

@@ -18,12 +18,14 @@ class Imputer(BaseTransformer):
     """Missing value imputation.
 
     The Imputer transforms input series by replacing missing values according
-    to an imputation strategy specified by `method`.
+    to an imputation strategy specified by ``method``.
 
     Parameters
     ----------
     method : str, default="drift"
-        Method to fill the missing values.
+        Method to fill the missing values. Not all methods can extrapolate, so after
+        ``method`` is applied the remaining missing values are filled with ``ffill``
+        then ``bfill``.
 
         * "drift" : drift/trend values by sktime.PolynomialTrendForecaster(degree=1)
           first, X in transform() is filled with ffill then bfill
@@ -231,22 +233,26 @@ class Imputer(BaseTransformer):
         elif self.method == "constant":
             return X.fillna(value=self.value)
         elif isinstance(index, pd.MultiIndex):
-            X_grouped = X.groupby(level=list(range(index.nlevels - 1)))
+            X_group_levels = list(range(index.nlevels - 1))
 
             if self.method in ["backfill", "bfill"]:
-                X = X_grouped.bfill()
-                # fill trailing NAs of panel instances with reverse method
-                return X.ffill()
+                X = X.groupby(level=X_group_levels).bfill()
             elif self.method in ["pad", "ffill"]:
-                X = X_grouped.ffill()
-                # fill leading NAs of panel instances with reverse method
-                return X.bfill()
+                X = X.groupby(level=X_group_levels).ffill()
             elif self.method == "mean":
-                return X_grouped.fillna(value=self._mean)
+                X = X.groupby(level=X_group_levels).fillna(value=self._mean)
             elif self.method == "median":
-                return X_grouped.fillna(value=self._median)
+                X = X.groupby(level=X_group_levels).fillna(value=self._median)
             else:
                 raise AssertionError("Code should not be reached")
+
+            # fill first/last elements of series,
+            # as some methods can't impute those
+            X = X.groupby(level=X_group_levels).ffill()
+            X = X.groupby(level=X_group_levels).bfill()
+
+            return X
+
         else:
             if self.method in ["backfill", "bfill"]:
                 X = X.bfill()
@@ -356,7 +362,7 @@ class Imputer(BaseTransformer):
                 )
 
                 # replace missing values with predicted values
-                X[col][na_index] = self._forecaster.predict(fh=fh, X=y)
+                X.loc[na_index, col] = self._forecaster.predict(fh=fh, X=y)
         return X
 
     @classmethod
@@ -367,7 +373,7 @@ class Imputer(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -375,8 +381,9 @@ class Imputer(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sklearn.linear_model import LinearRegression
 

@@ -10,9 +10,9 @@ import pandas as pd
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_scitype, convert_to, scitype_to_mtype
+from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.validation import check_n_jobs
-from sktime.utils.validation._dependencies import _check_estimator_deps
 
 # Valid input types for clustering
 TimeSeriesInstances = Union[pd.DataFrame, np.ndarray]
@@ -51,17 +51,18 @@ class BaseClusterer(BaseEstimator):
     def __rmul__(self, other):
         """Magic * method, return concatenated ClustererPipeline, transformers on left.
 
-        Overloaded multiplication operation for clusterers. Implemented for `other`
-        being a transformer, otherwise returns `NotImplemented`.
+        Overloaded multiplication operation for clusterers. Implemented for ``other``
+        being a transformer, otherwise returns ``NotImplemented``.
 
         Parameters
         ----------
-        other: `sktime` transformer, must inherit from BaseTransformer
-            otherwise, `NotImplemented` is returned
+        other: ``sktime`` transformer, must inherit from BaseTransformer
+            otherwise, ``NotImplemented`` is returned
 
         Returns
         -------
-        ClustererPipeline object, concatenation of `other` (first) with `self` (last).
+        ClustererPipeline object, concatenation of ``other`` (first) with ``self``
+        (last).
         """
         from sktime.clustering.compose import ClustererPipeline
         from sktime.transformations.base import BaseTransformer

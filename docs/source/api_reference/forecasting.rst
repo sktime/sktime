@@ -50,6 +50,7 @@ Pipelines can also be constructed using ``*``, ``+``, and ``|`` dunders.
     ForecastByLevel
     Permute
     HierarchyEnsembleForecaster
+    TransformSelectForecaster
     FhPlexForecaster
     IgnoreX
     FallbackForecaster
@@ -232,6 +233,7 @@ All "ARIMA" and "Auto-ARIMA" models below include SARIMAX capability.
     :template: class.rst
 
     ARIMA
+    StatsModelsARIMA
 
 .. currentmodule:: sktime.forecasting.sarimax
 
@@ -293,6 +295,14 @@ ARCH models
 Structural time series models
 -----------------------------
 
+.. currentmodule:: sktime.forecasting.ardl
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ARDL
+
 .. currentmodule:: sktime.forecasting.bats
 
 .. autosummary::
@@ -308,6 +318,14 @@ Structural time series models
     :template: class.rst
 
     TBATS
+
+.. currentmodule:: sktime.forecasting.statsforecast
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    StatsForecastAutoTBATS
 
 .. currentmodule:: sktime.forecasting.fbprophet
 
@@ -333,7 +351,7 @@ Structural time series models
 
     DynamicFactor
 
-Transformer (deep learning) based forecasters
+Deep learning based forecasters
 ---------------------------------------------
 
 .. currentmodule:: sktime.forecasting.ltsf
@@ -345,6 +363,39 @@ Transformer (deep learning) based forecasters
     LTSFLinearForecaster
     LTSFDLinearForecaster
     LTSFNLinearForecaster
+
+.. currentmodule:: sktime.forecasting.hf_transformers_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HFTransformersForecaster
+
+.. currentmodule:: sktime.forecasting.conditional_invertible_neural_network
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    CINNForecaster
+
+.. currentmodule:: sktime.forecasting.neuralforecast
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    NeuralForecastRNN
+    NeuralForecastLSTM
+
+.. currentmodule:: sktime.forecasting.pykan_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    PyKANForecaster
 
 
 Intermittent time series forecasters
