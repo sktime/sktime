@@ -208,13 +208,14 @@ def parametrize_with_checks(objs, obj_varname="obj", check_varname="test_name"):
     Examples
     --------
     >>> from sktime.utils.estimator_checks import parametrize_with_checks
+    >>> from sktime.forecasting.croston import Croston
     >>> from sktime.forecasting.naive import NaiveForecaster
 
     >>> @parametrize_with_checks(NaiveForecaster, obj_varname='estimator')
     ... def test_sktime_compatible_estimator(estimator, test_name):
     ...     check_estimator(estimator, tests_to_run=test_name, raise_exceptions=True)
 
-    >>> @parametrize_with_checks([NaiveForecaster, ExponentialSmoothing])
+    >>> @parametrize_with_checks([NaiveForecaster, Croston])
     ... def test_sktime_compatible_estimators(obj, test_name):
     ...     check_estimator(obj, tests_to_run=test_name, raise_exceptions=True)
     """
