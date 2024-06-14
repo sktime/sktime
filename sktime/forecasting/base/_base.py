@@ -1812,6 +1812,16 @@ class BaseForecaster(BaseEstimator):
             f"depends on `fh`. "
         )
 
+        in_sample_pred = self.get_tag("capability:insample")
+        if not in_sample_pred and not fh.is_all_out_of_sample():
+            msg = (
+                f"Forecaster {self.__class__.__name__} "
+                f"can not perform in sample predicting! "
+                f"Found fh with in sample index: "
+                f"{fh}"
+            )
+            raise NotImplementedError(msg)
+
         # below loop treats four cases from three conditions:
         #  A. forecaster is fitted yes/no - self.is_fitted
         #  B. no fh is passed yes/no - fh is None
