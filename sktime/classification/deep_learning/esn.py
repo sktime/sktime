@@ -3,7 +3,7 @@ __author__ = ["sharma-kshitij-ks"]
 
 import numpy as np
 from scipy.sparse import random
-from sklearn.base import BaseEstimator
+from sklearn.base import clone
 from sklearn.linear_model import RidgeClassifier
 
 from sktime.classification.base import BaseClassifier
@@ -59,7 +59,7 @@ class EchoStateNetwork(BaseClassifier):
 
     def __init__(
         self,
-        base_classifier=RidgeClassifier(alpha=1.0, random_state=None),
+        base_classifier=None,
         n_reservoir=100,
         spectral_radius=0.99,
         leaking_rate=0.3,
@@ -77,6 +77,11 @@ class EchoStateNetwork(BaseClassifier):
         self.W_res_ = None
         self.W_out_ = None
 
+        if base_classifier is None:
+            self.base_classifier_ = RidgeClassifier(alpha=1.0, random_state=None)
+        else:
+            self.base_classifier_ = clone(base_classifier)
+
     def _fit(self, X, y):
         """Fit the Echo State Network classifier.
 
@@ -89,8 +94,8 @@ class EchoStateNetwork(BaseClassifier):
 
         Returns:
         -------
-        self: object"""
-
+        self: object
+        """
         X = check_array(X, ensure_min_features=1, ensure_min_samples=2, dtype="float64")
         y = check_series(y, enforce_univariate=True, coerce_to_numpy=True)
 
@@ -110,13 +115,6 @@ class EchoStateNetwork(BaseClassifier):
             X_reservoir[t] = np.tanh(
                 np.dot(self.W_in_, X[t]) + np.dot(self.W_res_, X_reservoir[t - 1])
             )
-
-        if not isinstance(self.base_classifier, BaseEstimator):
-            self.base_classifier_ = self.base_classifier(
-                alpha=self.regularization, random_state=self.random_state
-            )
-        else:
-            self.base_classifier_ = self.base_classifier
 
         self.base_classifier_.fit(X_reservoir, y)
         return self
