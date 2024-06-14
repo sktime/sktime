@@ -107,7 +107,15 @@ class MultiRocketMultivariate(BaseTransformer):
     ):
         self.max_dilations_per_kernel = max_dilations_per_kernel
         self.n_features_per_kernel = n_features_per_kernel
-        self.num_kernels = num_kernels
+        
+        if num_kernels < 84:
+    	    raise ValueError(
+    	        f"num_kernels in MultiRocketMultivariate must be at least 84, "
+    	        f"but received {num_kernels}"
+    	        )
+        else:
+            self.num_kernels = num_kernels
+        
         self.normalise = normalise
         self.n_jobs = n_jobs
         self.random_state = random_state if isinstance(random_state, int) else None

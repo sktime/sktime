@@ -113,7 +113,14 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         n_jobs=1,
         random_state=None,
     ):
-        self.num_kernels = num_kernels
+        if num_kernels < 84:
+    	    raise ValueError(
+    	        f"num_kernels in MiniRocketMultivariateVariable must be at least 84, "
+    	        f"but received {num_kernels}"
+    	        )
+        else:
+            self.num_kernels = num_kernels
+
         self.max_dilations_per_kernel = max_dilations_per_kernel
         self.reference_length = reference_length
         self._fitted_reference_length = None
