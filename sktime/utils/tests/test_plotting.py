@@ -74,7 +74,7 @@ def valid_data_types():
     or not _check_soft_dependencies("matplotlib", severity="none"),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-def test_plot_series_runs_without_error(series_to_plo):
+def test_plot_series_runs_without_error(series_to_plot):
     """Test whether plot_series runs without error."""
     _check_soft_dependencies("matplotlib")
     import matplotlib
@@ -99,9 +99,11 @@ def test_plot_series_runs_without_error(series_to_plo):
     or not _check_soft_dependencies("matplotlib", severity="none"),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-@pytest.mark.parametrize("series_to_plot", invalid_input_types)
-def test_plot_series_invalid_input_type_raises_error(series_to_plot, valid_data_types):
+def test_plot_series_invalid_input_type_raises_error(
+    invalid_input_types, valid_data_types
+):
     """Tests whether plot_series raises error for invalid input types."""
+    series_to_plot = invalid_input_types
     series_type = type(series_to_plot)
 
     if not isinstance(series_to_plot, (pd.Series, pd.DataFrame)):
