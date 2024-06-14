@@ -671,7 +671,6 @@ class ProximityStump(BaseClassifier):
     backend : {None, "dask", "loky", "threading"}, by default "loky".
         Runs parallel evaluate if specified. For ProximityStump, "multiprocessing"
         will result in an error during parallelization, so it cannot be used.
-        If "multiprocessing" is selected, it will default to "loky" instead.
         Specify None if no parallelization is needed.
 
         - "None": executes loop sequentally, simple list comprehension
@@ -1019,7 +1018,7 @@ class ProximityStump(BaseClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         params1 = {"random_state": 0, "backend": "loky"}
         params2 = {
@@ -1061,7 +1060,6 @@ class ProximityTree(BaseClassifier):
     backend : {None, "dask", "loky", "threading"}, by default "loky".
         Runs parallel evaluate if specified. For ProximityStump, "multiprocessing"
         will result in an error during parallelization, so it cannot be used.
-        If "multiprocessing" is selected, it will default to "loky" instead.
         Specify None if no parallelization is needed.
 
         - "None": executes loop sequentally, simple list comprehension
@@ -1382,7 +1380,7 @@ class ProximityTree(BaseClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         params1 = {
             "max_depth": 5,
@@ -1437,7 +1435,6 @@ class ProximityForest(BaseClassifier):
     backend : {None, "dask", "loky", "threading"}, by default "loky".
         Runs parallel evaluate if specified. For ProximityStump, "multiprocessing"
         will result in an error during parallelization, so it cannot be used.
-        If "multiprocessing" is selected, it will default to "loky" instead.
         Specify None if no parallelization is needed.
 
         - "None": executes loop sequentally, simple list comprehension
@@ -1808,7 +1805,7 @@ class ProximityForest(BaseClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         if parameter_set == "results_comparison":
             return {"n_estimators": 3, "max_depth": 2, "n_stump_evaluations": 2}
