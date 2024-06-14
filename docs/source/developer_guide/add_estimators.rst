@@ -217,9 +217,9 @@ the ``sktime`` test suite can be imported and extended in the following ways:
   This pattern requires adding the following test function to the test suite:
 
     .. code-block:: python
-    
+
         from sktime.utils.estimator_checks import parametrize_with_checks
-    
+
         @parametrize_with_checks(OBJS_TO_TEST)
         def test_estimator_interface_compliance(obj, test_name):
             check_estimator(obj, tests_to_run=test_name, raise_exceptions=True)
