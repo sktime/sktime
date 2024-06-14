@@ -227,9 +227,12 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         # if estimator cannot forecast in-sample and fh is in-sample, terminate
         # if the tag correctly states this, we consider this fine as per contract
-        # todo: check that estimator raises error message when fitting instead
+        # check that estimator raises error message when fitting
         if not fh_is_oos and not estimator_instance.get_tag("capability:insample"):
-            return None
+            try:
+                estimator_instance.fit(y_train, fh=fh)
+            except NotImplementedError:
+                return None
 
         estimator_instance.fit(y_train, fh=fh)
         y_pred = estimator_instance.predict()
@@ -245,10 +248,14 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         # if cannot forecast in-sample probabilistically, and fh is in-sample, terminate
         # if the tag correctly states this, we consider this fine as per contract
-        # todo: check that estimator raises error message when fitting instead
+        # check that estimator raises error message when fitting
         if not fh_is_oos:
             if not estimator_instance.get_tag("capability:pred_int:insample"):
-                return None
+                if estimator_instance.get_tag("capability:pred_int"):
+                    try:
+                        estimator_instance.predict_interval()
+                    except NotImplementedError:
+                        return None
 
         if estimator_instance.get_tag("capability:pred_int"):
             y_pred_int = estimator_instance.predict_interval()
