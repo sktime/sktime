@@ -22,7 +22,7 @@ def y_airline():
 
 
 @pytest.fixture(params=["single", "train_test"])
-def series_to_test(request):
+def series_to_plot(request):
     y_airline = load_airline()
     y_airline_true = y_airline.iloc[y_airline.index < "1960-01"]
     y_airline_test = y_airline.iloc[y_airline.index >= "1960-01"]
@@ -74,8 +74,7 @@ def valid_data_types():
     or not _check_soft_dependencies("matplotlib", severity="none"),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-@pytest.mark.parametrize("series_to_plot", series_to_test)
-def test_plot_series_runs_without_error(series_to_plot):
+def test_plot_series_runs_without_error(series_to_plo):
     """Test whether plot_series runs without error."""
     _check_soft_dependencies("matplotlib")
     import matplotlib
@@ -139,7 +138,6 @@ def test_plot_series_with_unequal_index_type_raises_error():
     or not _check_soft_dependencies("matplotlib", severity="none"),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-@pytest.mark.parametrize("series_to_plot", series_to_test)
 def test_plot_series_invalid_marker_kwarg_len_raises_error(series_to_plot):
     """Tests whether plot_series raises error for inconsistent series/markers."""
     match = """There must be one marker for each time series,
@@ -161,7 +159,6 @@ def test_plot_series_invalid_marker_kwarg_len_raises_error(series_to_plot):
     or not _check_soft_dependencies("matplotlib", severity="none"),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-@pytest.mark.parametrize("series_to_plot", series_to_test)
 def test_plot_series_invalid_label_kwarg_len_raises_error(series_to_plot):
     """Tests whether plot_series raises error for inconsistent series/labels."""
     match = """There must be one label for each time series,
@@ -183,7 +180,6 @@ def test_plot_series_invalid_label_kwarg_len_raises_error(series_to_plot):
     or not _check_soft_dependencies("matplotlib", severity="none"),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-@pytest.mark.parametrize("series_to_plot", series_to_test)
 def test_plot_series_output_type(series_to_plot):
     """Tests whether plot_series returns plt.fig and plt.ax."""
     _check_soft_dependencies("matplotlib")
