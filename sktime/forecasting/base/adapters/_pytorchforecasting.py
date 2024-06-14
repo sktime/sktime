@@ -476,8 +476,13 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
             X = pd.DataFrame(data=np.zeros(len(y)), index=y.index)
         return X
 
-    def _extend_y(self, y: pd.DataFrame, fh):
-        index = fh.to_absolute_index(self.cutoff)
+    def _extend_y(self, y: pd.DataFrame, fh: ForecastingHorizon):
+        _fh = ForecastingHorizon(
+            range(1, self._max_prediction_length + 1),
+            is_relative=True,
+            freq=fh.freq,
+        )
+        index = _fh.to_absolute_index(self.cutoff)
         _y = pd.DataFrame(index=index, columns=y.columns)
         _y.index.rename(y.index.names[-1], inplace=True)
         _y.fillna(0, inplace=True)
