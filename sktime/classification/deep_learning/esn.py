@@ -155,8 +155,6 @@ class EchoStateNetwork(BaseClassifier):
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return ``"default"`` set.
-            custom test set 1 = "test-param-set-1"
-            custom test set 2 = "test-param-set-2"
 
         Returns
         -------
