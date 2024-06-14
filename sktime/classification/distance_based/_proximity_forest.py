@@ -669,7 +669,7 @@ class ProximityStump(BaseClassifier):
     verbosity: logging verbosity
 
     backend : {None, "dask", "loky", "threading"}, by default "loky".
-        Runs parallel evaluate if specified. For ProximityStump, "multiprocessing"
+        Runs in parallel mode if specified. For ProximityStump, "multiprocessing"
         will result in an error during parallelization, so it cannot be used.
         Specify None if no parallelization is needed.
 
@@ -1058,7 +1058,7 @@ class ProximityTree(BaseClassifier):
     n_stump_evaluations: number of stump evaluations to do if find_stump method is None
 
     backend : {None, "dask", "loky", "threading"}, by default "loky".
-        Runs parallel evaluate if specified. For ProximityStump, "multiprocessing"
+        Runs in parallel mode if specified. For ProximityStump, "multiprocessing"
         will result in an error during parallelization, so it cannot be used.
         Specify None if no parallelization is needed.
 
@@ -1433,7 +1433,7 @@ class ProximityForest(BaseClassifier):
         number of stump evaluations to do if find_stump method is None
 
     backend : {None, "dask", "loky", "threading"}, by default "loky".
-        Runs parallel evaluate if specified. For ProximityStump, "multiprocessing"
+        Runs in parallel mode if specified. For ProximityStump, "multiprocessing"
         will result in an error during parallelization, so it cannot be used.
         Specify None if no parallelization is needed.
 
