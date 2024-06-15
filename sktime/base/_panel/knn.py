@@ -17,7 +17,15 @@ class _BaseKnnTimeSeriesEstimator:
         y : {array-like, sparse matrix}
             Target values of shape = [n]
         """
-        self.n_vars_ = X.shape[1]
+        # internal import to avoid circular imports
+        from sktime.dists_kernels.base.adapters._sklearn import _SklearnDistanceAdapter
+
+        self._dist_adapt = _SklearnDistanceAdapter(
+            distance=self.distance,
+            distance_params=self.distance_params,
+            n_vars=self._X_metadata["n_features"],
+            is_equal_length=self._X_metadata["is_equal_length"],
+        )
         if self.algorithm == "brute":
             return self._fit_precomp(X=X, y=y)
         else:

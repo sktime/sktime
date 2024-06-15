@@ -14,8 +14,6 @@ __all__ = ["KNeighborsTimeSeriesRegressor"]
 from sklearn.neighbors import KNeighborsRegressor
 
 from sktime.base._panel.knn import _BaseKnnTimeSeriesEstimator
-from sktime.distances import pairwise_distance
-from sktime.dists_kernels.base.adapters._sklearn import _SklearnDistMixin
 from sktime.regression.base import BaseRegressor
 
 # add new distance string codes here
@@ -33,9 +31,7 @@ DISTANCES_SUPPORTED = [
 ]
 
 
-class KNeighborsTimeSeriesRegressor(
-    _SklearnDistMixin, _BaseKnnTimeSeriesEstimator, BaseRegressor
-):
+class KNeighborsTimeSeriesRegressor(_BaseKnnTimeSeriesEstimator, BaseRegressor):
     """KNN Time Series Regressor.
 
     An adapted version of the scikit-learn KNeighborsRegressor for time series data.
@@ -178,31 +174,10 @@ class KNeighborsTimeSeriesRegressor(
             ]
             self.clone_tags(distance, inherit_tags)
 
-    def _distance(self, X, X2):
-        """Compute distance - unified interface to str code and callable."""
-        distance = self.distance
-        distance_params = self.distance_params
-        if distance_params is None:
-            distance_params = {}
-
-        if isinstance(distance, str):
-            return pairwise_distance(X, X2, distance, **distance_params)
-        else:
-            return distance(X, X2)
-
     def _fit_dist(self, X, y):
         """Fit the model using adapted distance metric."""
-        # sklearn wants distance callabel element-wise,
-        # numpy1D x numpy1D -> float
-        # sktime distance classes are Panel x Panel -> numpy2D
-        # and the numba distances are numpy3D x numpy3D -> numpy2D
-        # so we need to wrap the sktime distances
-        if isinstance(self.distance, str):
-            # numba distances
-            metric = self._one_element_distance_npdist
-        else:
-            # sktime distance classes
-            metric = self._one_element_distance_sktime_dist
+        # use distance adapter, see _BaseKnnTimeSeriesEstimator, _SklearnDistanceAdapter
+        metric = self._dist_adapt
 
         algorithm = self.algorithm
         if algorithm == "brute_incr":
@@ -225,7 +200,7 @@ class KNeighborsTimeSeriesRegressor(
         # store full data as indexed X
         self._X = X
 
-        dist_mat = self._distance(X, X)
+        dist_mat = self._dist_adapt._distance(X, X)
 
         self.knn_estimator_.fit(dist_mat, y)
 
