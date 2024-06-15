@@ -69,7 +69,6 @@ class _BaseKnnTimeSeriesEstimator:
             n_neighbors=n_neighbors,
             algorithm=_algorithm,
             metric="precomputed",
-            metric_params=distance_params,
             leaf_size=leaf_size,
             n_jobs=n_jobs,
             weights=weights,
