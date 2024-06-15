@@ -2,9 +2,11 @@
 """Implements adapter for pytorch-forecasting models."""
 import abc
 import functools
+import os
+import time
 import typing
 from copy import deepcopy
-from time import sleep
+from random import randint
 from typing import Any, Dict, Optional
 
 import numpy as np
@@ -82,6 +84,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         validation_to_dataloader_params: Optional[Dict[str, Any]] = None,
         trainer_params: Optional[Dict[str, Any]] = None,
         model_path: Optional[str] = None,
+        random_log_path: bool = False,
     ) -> None:
         self.model_params = model_params
         self.dataset_params = dataset_params
@@ -106,6 +109,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
             if validation_to_dataloader_params is not None
             else {}
         )
+        self.random_log_path = random_log_path
         super().__init__()
 
     @functools.cached_property
@@ -133,6 +137,20 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
             **self._model_params,
         )
         import lightning.pytorch as pl
+
+        if self.random_log_path:
+            if "logger" not in self._trainer_params.keys():
+                if "default_root_dir" not in self._trainer_params.keys():
+                    random_num = (
+                        hash(time.time_ns())
+                        + hash(self.algorithm_class)
+                        + hash(str(data.get_parameters()))
+                        + hash(randint(0, int(time.time())))
+                    )
+                    self._random_log_dir = (
+                        os.getcwd() + "/lightning_logs/" + str(abs(random_num))
+                    )
+                    self._trainer_params["default_root_dir"] = self._random_log_dir
 
         trainer_instance = pl.Trainer(**self._trainer_params)
         return algorithm_instance, trainer_instance
@@ -209,15 +227,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
             )
             # load model from checkpoint
             best_model_path = self._trainer.checkpoint_callback.best_model_path
-            try:
-                self.best_model = self.algorithm_class.load_from_checkpoint(
-                    best_model_path
-                )
-            except FileNotFoundError:
-                sleep(0.1)
-                self.best_model = self.algorithm_class.load_from_checkpoint(
-                    best_model_path
-                )
+            self.best_model = self.algorithm_class.load_from_checkpoint(best_model_path)
         else:
             # load model from disk
             self.best_model = self.algorithm_class.load_from_checkpoint(self.model_path)
@@ -298,6 +308,11 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
             return_x=True,
             return_index=True,
             return_decoder_lengths=True,
+            trainer_kwargs=(
+                {"default_root_dir": self._random_log_dir}
+                if "random_log_path" in self.__dict__.keys()
+                else None
+            ),
         )
         # convert pytorch-forecasting predictions to dataframe
         output = self._predictions_to_dataframe(

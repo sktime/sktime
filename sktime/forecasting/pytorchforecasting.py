@@ -173,6 +173,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         validation_to_dataloader_params: Optional[Dict[str, Any]] = None,
         trainer_params: Optional[Dict[str, Any]] = None,
         model_path: Optional[str] = None,
+        random_log_path: bool = False,
     ) -> None:
         self.allowed_encoder_known_variable_names = allowed_encoder_known_variable_names
         super().__init__(
@@ -182,6 +183,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
             validation_to_dataloader_params,
             trainer_params,
             model_path,
+            random_log_path,
         )
 
     @functools.cached_property
@@ -243,6 +245,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
+                    "random_log_path": True,  # fix multiprocess file access error in CI
                 },
                 {
                     "trainer_params": {
@@ -259,6 +262,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
+                    "random_log_path": True,  # fix multiprocess file access error in CI
                 },
             ]
         else:
@@ -282,6 +286,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
+                    "random_log_path": True,  # fix multiprocess file access error in CI
                 },
                 {
                     "trainer_params": {
@@ -302,6 +307,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
+                    "random_log_path": True,  # fix multiprocess file access error in CI
                 },
             ]
 
@@ -450,6 +456,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         validation_to_dataloader_params: Optional[Dict[str, Any]] = None,
         trainer_params: Optional[Dict[str, Any]] = None,
         model_path: Optional[str] = None,
+        random_log_path: bool = False,
     ) -> None:
         super().__init__(
             model_params,
@@ -458,6 +465,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
             validation_to_dataloader_params,
             trainer_params,
             model_path,
+            random_log_path,
         )
 
     @functools.cached_property
@@ -512,6 +520,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
+                    "random_log_path": True,  # fix multiprocess file access error in CI
                 },
                 {
                     "trainer_params": {
@@ -527,6 +536,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
+                    "random_log_path": True,  # fix multiprocess file access error in CI
                 },
             ]
         else:
@@ -548,6 +558,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
+                    "random_log_path": True,  # fix multiprocess file access error in CI
                 },
                 {
                     "trainer_params": {
@@ -564,6 +575,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
+                    "random_log_path": True,  # fix multiprocess file access error in CI
                 },
             ]
 
