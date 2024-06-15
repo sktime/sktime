@@ -53,7 +53,7 @@ class EchoStateNetwork(BaseClassifier):
     _tags = {
         "authors": ["sharma-kshitij-ks"],
         "maintainers": ["sharma-kshitij-ks"],
-        "X_inner_mtype": "pd.DataFrame",
+        "X_inner_mtype": "numpyflat",
     }
 
     def __init__(
