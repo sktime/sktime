@@ -81,6 +81,8 @@ class EchoStateNetwork(BaseClassifier):
         else:
             self.base_classifier_ = clone(base_classifier)
 
+        super().__init__()
+
     def _fit(self, X, y):
         """Fit the Echo State Network classifier.
 
