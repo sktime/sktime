@@ -23,7 +23,7 @@ from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_panel
 from sktime.utils._testing.series import _make_series
-from sktime.utils.dependencies import _check_estimator_deps
+from sktime.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 from sktime.utils.parallel import _get_parallel_test_fixtures
 
 PANEL_MTYPES = ["pd-multiindex", "nested_univ", "numpy3D"]
@@ -34,7 +34,8 @@ BACKENDS = _get_parallel_test_fixtures("config")
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"])
+    or not _check_soft_dependencies("skpro"),
     reason="run only if base module has changed or datatypes module has changed",
 )
 @pytest.mark.parametrize("backend", BACKENDS)
@@ -58,7 +59,7 @@ def test_vectorization_series_to_panel(mtype, backend):
 
     msg = (
         f"vectorization of forecasters does not work for test example "
-        f"of mtype {mtype}, using the ARIMA forecaster"
+        f"of mtype {mtype}, using the YfromX forecaster"
     )
 
     assert valid, msg
@@ -95,7 +96,7 @@ def test_vectorization_series_to_panel(mtype, backend):
 def test_vectorization_series_to_hier(mtype, backend):
     """Test that forecaster vectorization works for Hierarchical data.
 
-    This test passes Hierarchical data to the ARIMA forecaster which internally has an
+    This test passes Hierarchical data to the YfromX forecaster which internally has an
     implementation for Series only, so the BaseForecaster has to vectorize.
     """
     hierarchy_levels = (2, 4)
@@ -105,6 +106,8 @@ def test_vectorization_series_to_hier(mtype, backend):
     y = convert(y, from_type="pd_multiindex_hier", to_type=mtype)
 
     f = YfromX.create_test_instance()
+    assert f.get_tags()["scitype:y"] == "univariate"  # check the assumption
+
     f.set_config(**backend.copy())
     y_pred = f.fit(y).predict([1, 2, 3])
     valid, _, metadata = check_is_mtype(
@@ -113,7 +116,7 @@ def test_vectorization_series_to_hier(mtype, backend):
 
     msg = (
         f"vectorization of forecasters does not work for test example "
-        f"of mtype {mtype}, using the ARIMA forecaster"
+        f"of mtype {mtype}, using the YfromX forecaster"
     )
 
     assert valid, msg
@@ -144,7 +147,8 @@ PROBA_DF_METHODS = ["predict_interval", "predict_quantiles", "predict_var"]
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"])
+    or not _check_soft_dependencies("skpro"),
     reason="run only if base module has changed or datatypes module has changed",
 )
 @pytest.mark.parametrize("method", PROBA_DF_METHODS)
@@ -159,7 +163,7 @@ def test_vectorization_series_to_panel_proba(method, mtype):
 
     y = _make_panel(n_instances=n_instances, random_state=42, return_mtype=mtype)
 
-    est = YfromX.create_test_instance()
+    est = _get_exog_proba_fcst()
     est.fit(y)
     y_pred = getattr(est, method)([1, 2, 3])
 
@@ -183,7 +187,8 @@ def test_vectorization_series_to_panel_proba(method, mtype):
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"])
+    or not _check_soft_dependencies("skpro"),
     reason="run only if base module has changed or datatypes module has changed",
 )
 @pytest.mark.parametrize("method", PROBA_DF_METHODS)
@@ -198,7 +203,7 @@ def test_vectorization_series_to_hier_proba(method, mtype):
     y = _make_hierarchical(hierarchy_levels=hierarchy_levels, random_state=84)
     y = convert(y, from_type="pd_multiindex_hier", to_type=mtype)
 
-    est = YfromX.create_test_instance()
+    est = _get_exog_proba_fcst()
     est.fit(y)
     y_pred = getattr(est, method)([1, 2, 3])
 
@@ -222,7 +227,8 @@ def test_vectorization_series_to_hier_proba(method, mtype):
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"])
+    or not _check_soft_dependencies("skpro"),
     reason="run only if base module has changed or datatypes module has changed",
 )
 @pytest.mark.parametrize("method", PROBA_DF_METHODS)
@@ -231,7 +237,7 @@ def test_vectorization_preserves_row_index_names(method):
     hierarchy_levels = (2, 4)
     y = _make_hierarchical(hierarchy_levels=hierarchy_levels, random_state=84)
 
-    est = YfromX.create_test_instance()
+    est = _get_exog_proba_fcst()
     est.fit(y, fh=[1, 2, 3])
     y_pred = getattr(est, method)()
 
@@ -539,3 +545,14 @@ def test_panel_with_inner_freq():
 
     msg = "Panel not returning same predictions as simple case."
     assert y_pred.droplevel("hour").sort_index().equals(y_pred_simple), msg
+
+
+def _get_exog_proba_fcst():
+    """Fast forecaster that can use exogenous data and make proba forecasts."""
+    from sklearn.linear_model import LinearRegression
+    from skpro.regression.residual import ResidualDouble
+
+    lin_reg = LinearRegression()
+    reg_proba = ResidualDouble(lin_reg, lin_reg)
+
+    return YfromX(reg_proba)
