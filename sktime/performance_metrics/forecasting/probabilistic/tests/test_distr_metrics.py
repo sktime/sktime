@@ -5,8 +5,8 @@ import pandas as pd
 import pytest
 
 from sktime.performance_metrics.forecasting.probabilistic._classes import (
-    AUCalibration,
     CRPS,
+    AUCalibration,
     LogLoss,
 )
 from sktime.proba.normal import Normal
