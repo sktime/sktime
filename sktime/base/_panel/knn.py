@@ -88,7 +88,7 @@ class _BaseKnnTimeSeriesEstimator:
 
     def _predict_dist(self, X):
         """Predict using adapted distance metric."""
-        X = self._convert_X_to_sklearn(X)
+        X = self._dist_adapt._convert_X_to_sklearn(X)
         y_pred = self.knn_estimator_.predict(X)
         return y_pred
 

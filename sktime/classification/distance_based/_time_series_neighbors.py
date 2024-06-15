@@ -223,7 +223,7 @@ class KNeighborsTimeSeriesClassifier(_BaseKnnTimeSeriesEstimator, BaseClassifier
             weights=self.weights,
         )
 
-        X = self._convert_X_to_sklearn(X)
+        X = self._dist_adapt._convert_X_to_sklearn(X)
         self.knn_estimator_.fit(X, y)
         return self
 
@@ -269,7 +269,7 @@ class KNeighborsTimeSeriesClassifier(_BaseKnnTimeSeriesEstimator, BaseClassifier
 
     def _predict_proba_dist(self, X):
         """Predict (proba) using adapted distance metric."""
-        X = self._convert_X_to_sklearn(X)
+        X = self._dist_adapt._convert_X_to_sklearn(X)
         y_pred = self.knn_estimator_.predict_proba(X)
         return y_pred
 

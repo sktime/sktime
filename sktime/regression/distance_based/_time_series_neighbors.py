@@ -191,7 +191,7 @@ class KNeighborsTimeSeriesRegressor(_BaseKnnTimeSeriesEstimator, BaseRegressor):
             n_jobs=self.n_jobs,
         )
 
-        X = self._convert_X_to_sklearn(X)
+        X = self._dist_adapt._convert_X_to_sklearn(X)
         self.knn_estimator_.fit(X, y)
         return self
 
