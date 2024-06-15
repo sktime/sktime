@@ -20,7 +20,7 @@ class EchoStateNetwork(BaseClassifier):
     initialized reservoir of recurrently connected units, combined
     with a linear readout layer trained using ridge regression.
 
-    Parameters:
+    Parameters
     ----------
     base_classifier: sklearn classifier, default=RidgeClassifier(alpha=1.0)
         The base classifier to use for training the readout layer.
@@ -36,7 +36,7 @@ class EchoStateNetwork(BaseClassifier):
     random_state: int or None, default=None
         Seed for random number generator.
 
-    Attributes:
+    Attributes
     ----------
     W_in_: array-like, shape (n_reservoir, n_features)
         Input weights for the reservoir units.
@@ -45,8 +45,8 @@ class EchoStateNetwork(BaseClassifier):
     W_out_: array-like, shape (n_reservoir, n_classes)
         Output weights for the readout layer.
 
-    References:
-    -----------
+    References
+    ----------
     - Lukoševičius, Mantas. "A practical guide to applying echo state networks."
       Neural Networks: Tricks of the Trade. Springer, Berlin, Heidelberg, 2012. 659-686.
     - https://en.wikipedia.org/wiki/Echo_state_network
@@ -85,14 +85,14 @@ class EchoStateNetwork(BaseClassifier):
     def _fit(self, X, y):
         """Fit the Echo State Network classifier.
 
-        Parameters:
+        Parameters
         ----------
         X: array-like, shape (n_samples, n_features)
             Training time series data.
         y: array-like, shape (n_samples,)
             Training labels.
 
-        Returns:
+        Returns
         -------
         self: object
         """
@@ -122,12 +122,12 @@ class EchoStateNetwork(BaseClassifier):
     def _predict(self, X):
         """Make predictions using the trained ESN.
 
-        Parameters:
+        Parameters
         ----------
         X: array-like, shape (n_samples, n_features)
             Test time series data.
 
-        Returns:
+        Returns
         -------
         y_pred: array-like, shape (n_samples,)
             Predicted class labels.
