@@ -1,4 +1,7 @@
 """Windowed local outlier factor."""
+
+__author__ = ["Alex-JG3"]
+
 import datetime
 import math
 
