@@ -82,6 +82,9 @@ class KNeighborsTimeSeriesRegressor(_BaseKnnTimeSeriesEstimator, BaseRegressor):
     distance_mtype : str, or list of str optional. default = None.
         mtype that distance expects for X and X2, if a callable
             only set this if distance is not BasePairwiseTransformerPanel descendant
+    pass_train_distances : bool, optional, default = False.
+        Whether distances between training points are computed and passed to sklearn.
+        Passing is superfluous for algorithm='brute', but may have impact otherwise.
     leaf_size : int, default=30
         Leaf size passed to BallTree or KDTree. This can affect the
         speed of the construction and query, as well as the memory required to store
@@ -126,14 +129,20 @@ class KNeighborsTimeSeriesRegressor(_BaseKnnTimeSeriesEstimator, BaseRegressor):
         distance_mtype=None,
         leaf_size=30,
         n_jobs=None,
+        pass_train_distances=False,
     ):
         self.n_neighbors = n_neighbors
+        self.weights = weights
         self.algorithm = algorithm
         self.distance = distance
         self.distance_params = distance_params
         self.distance_mtype = distance_mtype
+        self.pass_train_distances = pass_train_distances
         self.leaf_size = leaf_size
         self.n_jobs = n_jobs
+
+        super().__init__()
+
         # translate distance strings into distance callables
         if isinstance(distance, str) and distance not in DISTANCES_SUPPORTED:
             raise ValueError(
@@ -149,10 +158,8 @@ class KNeighborsTimeSeriesRegressor(_BaseKnnTimeSeriesEstimator, BaseRegressor):
             metric_params=distance_params,
             leaf_size=leaf_size,
             n_jobs=n_jobs,
+            weights=weights,
         )
-        self.weights = weights
-
-        super().__init__()
 
         # the distances in sktime.distances want numpy3D
         #   otherwise all Panel formats are ok
@@ -174,38 +181,6 @@ class KNeighborsTimeSeriesRegressor(_BaseKnnTimeSeriesEstimator, BaseRegressor):
             ]
             self.clone_tags(distance, inherit_tags)
 
-    def _fit_dist(self, X, y):
-        """Fit the model using adapted distance metric."""
-        # use distance adapter, see _BaseKnnTimeSeriesEstimator, _SklearnDistanceAdapter
-        metric = self._dist_adapt
-
-        algorithm = self.algorithm
-        if algorithm == "brute_incr":
-            algorithm = "brute"
-
-        self.knn_estimator_ = KNeighborsRegressor(
-            n_neighbors=self.n_neighbors,
-            algorithm=algorithm,
-            metric=metric,
-            leaf_size=self.leaf_size,
-            n_jobs=self.n_jobs,
-        )
-
-        X = self._dist_adapt._convert_X_to_sklearn(X)
-        self.knn_estimator_.fit(X, y)
-        return self
-
-    def _fit_precomp(self, X, y):
-        """Fit the model using precomputed distance matrix."""
-        # store full data as indexed X
-        self._X = X
-
-        dist_mat = self._dist_adapt._distance(X, X)
-
-        self.knn_estimator_.fit(dist_mat, y)
-
-        return self
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -225,7 +200,8 @@ class KNeighborsTimeSeriesRegressor(_BaseKnnTimeSeriesEstimator, BaseRegressor):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        param1 = {
+        params0 = {}
+        params1 = {
             "n_neighbors": 1,
             "weights": "uniform",
             "algorithm": "auto",
@@ -233,7 +209,7 @@ class KNeighborsTimeSeriesRegressor(_BaseKnnTimeSeriesEstimator, BaseRegressor):
             "distance_params": None,
             "n_jobs": None,
         }
-        param2 = {
+        params2 = {
             "n_neighbors": 3,
             "weights": "distance",
             "algorithm": "ball_tree",
@@ -241,4 +217,19 @@ class KNeighborsTimeSeriesRegressor(_BaseKnnTimeSeriesEstimator, BaseRegressor):
             "distance_params": {"window": 0.5},
             "n_jobs": -1,
         }
-        return [param1, param2]
+
+        # testing that callables/classes can be passed
+        from sktime.dists_kernels.compose_tab_to_panel import AggrDist
+
+        dist = AggrDist.create_test_instance()
+        params3 = {"distance": dist}
+
+        params4 = {
+            "algorithm": "brute_incr",
+            "distance": "dtw",
+            "distance_params": {"epsilon": 0.1},
+        }
+        params5 = {"algorithm": "ball_tree", "distance": dist}
+
+        params = [params0, params1, params2, params3, params4, params5]
+        return params

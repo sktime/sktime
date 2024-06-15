@@ -18,7 +18,6 @@ param_names=None)
 __author__ = ["fkiraly", "jasonlines", "TonyBagnall", "chrisholder"]
 __all__ = ["KNeighborsTimeSeriesClassifier"]
 
-import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
 
 from sktime.base._panel.knn import _BaseKnnTimeSeriesEstimator
@@ -204,48 +203,6 @@ class KNeighborsTimeSeriesClassifier(_BaseKnnTimeSeriesEstimator, BaseClassifier
                 "capability:multivariate",
             ]
             self.clone_tags(distance, inherit_tags)
-
-    def _fit_dist(self, X, y):
-        """Fit the model using adapted distance metric."""
-        # use distance adapter, see _BaseKnnTimeSeriesEstimator, _SklearnDistanceAdapter
-        metric = self._dist_adapt
-
-        algorithm = self.algorithm
-        if algorithm == "brute_incr":
-            algorithm = "brute"
-
-        self.knn_estimator_ = KNeighborsClassifier(
-            n_neighbors=self.n_neighbors,
-            algorithm=algorithm,
-            metric=metric,
-            leaf_size=self.leaf_size,
-            n_jobs=self.n_jobs,
-            weights=self.weights,
-        )
-
-        X = self._dist_adapt._convert_X_to_sklearn(X)
-        self.knn_estimator_.fit(X, y)
-        return self
-
-    def _fit_precomp(self, X, y):
-        """Fit the model using precomputed distance matrix."""
-        # store full data as indexed X
-        self._X = X
-
-        if self.pass_train_distances:
-            dist_mat = self._dist_adapt._distance(X)
-        else:
-            n = self._X_metadata["n_instances"]
-            # if we do not want/need to pass train-train distances,
-            #   we still need to pass a zeros matrix, this means "do not consider"
-            # citing the sklearn KNeighborsClassifier docs on distance matrix input:
-            # "X may be a sparse graph, in which case only "nonzero" elements
-            #   may be considered neighbors."
-            dist_mat = np.zeros([n, n], dtype="float")
-
-        self.knn_estimator_.fit(dist_mat, y)
-
-        return self
 
     def _predict_proba(self, X):
         """Return probability estimates for the test data X.

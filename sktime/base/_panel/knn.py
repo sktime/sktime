@@ -3,6 +3,8 @@
 __author__ = ["fkiraly", "Z-Fran"]
 __all__ = ["_BaseKnnTimeSeriesEstimator"]
 
+import numpy as np
+
 
 class _BaseKnnTimeSeriesEstimator:
     """Base KNeighbors Time Series Estimator."""
@@ -30,6 +32,41 @@ class _BaseKnnTimeSeriesEstimator:
             return self._fit_precomp(X=X, y=y)
         else:
             return self._fit_dist(X=X, y=y)
+
+    def _fit_dist(self, X, y):
+        """Fit the model using adapted distance metric."""
+        # use distance adapter, see _BaseKnnTimeSeriesEstimator, _SklearnDistanceAdapter
+        metric = self._dist_adapt
+
+        algorithm = self.algorithm
+        if algorithm == "brute_incr":
+            algorithm = "brute"
+
+        self.knn_estimator_.set_params(algorithm=algorithm, metric=metric)
+
+        X = self._dist_adapt._convert_X_to_sklearn(X)
+        self.knn_estimator_.fit(X, y)
+        return self
+
+    def _fit_precomp(self, X, y):
+        """Fit the model using precomputed distance matrix."""
+        # store full data as indexed X
+        self._X = X
+
+        if self.pass_train_distances:
+            dist_mat = self._dist_adapt._distance(X)
+        else:
+            n = self._X_metadata["n_instances"]
+            # if we do not want/need to pass train-train distances,
+            #   we still need to pass a zeros matrix, this means "do not consider"
+            # citing the sklearn KNeighborsClassifier docs on distance matrix input:
+            # "X may be a sparse graph, in which case only "nonzero" elements
+            #   may be considered neighbors."
+            dist_mat = np.zeros([n, n], dtype="float")
+
+        self.knn_estimator_.fit(dist_mat, y)
+
+        return self
 
     def kneighbors(self, X, n_neighbors=None, return_distance=True):
         """Find the K-neighbors of a point.
