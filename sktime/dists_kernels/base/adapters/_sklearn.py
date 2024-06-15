@@ -42,6 +42,15 @@ class _SklearnDistanceAdapter:
     * ``n_vars``: number of variables in the time series data
     * ``is_equal_length``: whether the time series data is of equal length
 
+    If ``is_equal_length`` is True, the internal distance
+    is simply the distance applied to time series flattened to 1D,
+    and ``_convert_X_to_sklearn`` will flatten the time series data.
+
+    If ``is_equal_length`` is False, the internal distance
+    will have a leading scalar dimension encoding the length of the individual series,
+    and ``_convert_X_to_sklearn`` will produce a flattened vector
+    with the length encoded as the first column in addition.
+    
     Parameters
     ----------
     distance : sklearn BasePairwiseTransformerPanel distance, or str
