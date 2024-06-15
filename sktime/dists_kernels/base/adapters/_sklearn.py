@@ -50,7 +50,7 @@ class _SklearnDistanceAdapter:
     will have a leading scalar dimension encoding the length of the individual series,
     and ``_convert_X_to_sklearn`` will produce a flattened vector
     with the length encoded as the first column in addition.
-    
+
     Parameters
     ----------
     distance : sklearn BasePairwiseTransformerPanel distance, or str
