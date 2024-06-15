@@ -56,6 +56,7 @@ class _SklearnDistanceAdapter:
     is_equal_length : bool, optional, default=True
         Whether the time series data is of equal length.
     """
+
     def __init__(self, distance, distance_params=None, n_vars=1, is_equal_length=True):
         self.distance = distance
         self.distance_params = distance_params
