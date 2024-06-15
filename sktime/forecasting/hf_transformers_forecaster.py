@@ -65,10 +65,10 @@ class HFTransformersForecaster(BaseForecaster):
     >>> from transformers import InformerModel
     >>> from sktime.forecasting.hf_transformers_forecaster import (
     ...     HFTransformersForecaster,
-    )
+    ... )
     >>> from sktime.datasetsimport load_airline
-
-    # Using a model path
+    >>> y = load_airline()
+    ... # Using a model path
     >>> forecaster = HFTransformersForecaster(
     ...     model_path="huggingface/informer-tourism-monthly",
     ...     fit_strategy="minimal",
@@ -91,7 +91,7 @@ class HFTransformersForecaster(BaseForecaster):
     >>> forecaster.fit(y)
     >>> y_pred = forecaster.predict(fh) # doctest: +SKIP
 
-    # Using a pre-loaded model object
+    ... # Using a pre-loaded model object
     >>> model = InformerModel.from_pretrained("huggingface/informer-tourism-monthly")
     >>> forecaster_with_model_obj = HFTransformersForecaster(
     ...     model_path=model,
