@@ -23,7 +23,7 @@ class _BaseKnnTimeSeriesEstimator:
         self._dist_adapt = _SklearnDistanceAdapter(
             distance=self.distance,
             distance_params=self.distance_params,
-            n_vars=self._X_metadata["n_features"],
+            n_vars=X.shape[1],
             is_equal_length=self._X_metadata["is_equal_length"],
         )
         if self.algorithm == "brute":
