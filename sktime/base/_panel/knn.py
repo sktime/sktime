@@ -59,7 +59,7 @@ class _BaseKnnTimeSeriesEstimator:
         X = self._check_convert_X_for_predict(X)
 
         # self._X should be the stored _X
-        dist_mat = self._distance(X, self._X)
+        dist_mat = self._dist_adapt._distance(X, self._X)
 
         result = self.knn_estimator_.kneighbors(
             dist_mat, n_neighbors=n_neighbors, return_distance=return_distance
@@ -95,6 +95,6 @@ class _BaseKnnTimeSeriesEstimator:
     def _predict_precomp(self, X):
         """Predict using precomputed distance matrix."""
         # self._X should be the stored _X
-        dist_mat = self._distance(X, self._X)
+        dist_mat = self._dist_adapt._distance(X, self._X)
         y_pred = self.knn_estimator_.predict(dist_mat)
         return y_pred
