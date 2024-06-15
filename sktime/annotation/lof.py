@@ -225,8 +225,24 @@ class SubLOF(BaseSeriesAnnotator):
         self : pd.Series
             Series containing the locations of the anomalies in X.
         """
+        model_params = {
+            "n_neighbors": self.n_neighbors,
+            "algorithm": self.algorithm,
+            "leaf_size": self.leaf_size,
+            "metric": self.metric,
+            "p": self.p,
+            "metric_params": self.metric_params,
+            "contamination": self.contamination,
+            "novelty": self.novelty,
+            "n_jobs": self.n_jobs,
+        }
         if isinstance(X, pd.Series):
             X = X.to_frame()
+
+        intervals = self._split_into_intervals(X.index, self.window_size)
+        self.models = {
+            interval: LocalOutlierFactor(**model_params) for interval in intervals
+        }
 
         y_all = []
         for interval, model in self.models.items():
