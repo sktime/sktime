@@ -35,7 +35,7 @@ BACKENDS = _get_parallel_test_fixtures("config")
 
 @pytest.mark.skipif(
     not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"])
-    or not _check_soft_dependencies("skpro"),
+    or not _check_soft_dependencies("skpro", severity="none"),
     reason="run only if base module has changed or datatypes module has changed",
 )
 @pytest.mark.parametrize("backend", BACKENDS)
@@ -148,7 +148,7 @@ PROBA_DF_METHODS = ["predict_interval", "predict_quantiles", "predict_var"]
 
 @pytest.mark.skipif(
     not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"])
-    or not _check_soft_dependencies("skpro"),
+    or not _check_soft_dependencies("skpro", severity="none"),
     reason="run only if base module has changed or datatypes module has changed",
 )
 @pytest.mark.parametrize("method", PROBA_DF_METHODS)
@@ -188,7 +188,7 @@ def test_vectorization_series_to_panel_proba(method, mtype):
 
 @pytest.mark.skipif(
     not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"])
-    or not _check_soft_dependencies("skpro"),
+    or not _check_soft_dependencies("skpro", severity="none"),
     reason="run only if base module has changed or datatypes module has changed",
 )
 @pytest.mark.parametrize("method", PROBA_DF_METHODS)
@@ -228,7 +228,7 @@ def test_vectorization_series_to_hier_proba(method, mtype):
 
 @pytest.mark.skipif(
     not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"])
-    or not _check_soft_dependencies("skpro"),
+    or not _check_soft_dependencies("skpro", severity="none"),
     reason="run only if base module has changed or datatypes module has changed",
 )
 @pytest.mark.parametrize("method", PROBA_DF_METHODS)
