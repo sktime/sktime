@@ -5,7 +5,6 @@ __all__ = ["_BaseKnnTimeSeriesEstimator"]
 
 import numpy as np
 
-
 # add new distance string codes here
 DISTANCES_SUPPORTED = [
     "euclidean",
