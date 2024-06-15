@@ -148,10 +148,6 @@ class ProphetverseUnivariate(_DelegatedForecaster):
         scale=None,
         rng_key=None,
     ):
-        """
-        Initializes the Prophet model.
-        """
-
         self.changepoint_interval = changepoint_interval
         self.changepoint_range = changepoint_range
         self.changepoint_prior_scale = changepoint_prior_scale
