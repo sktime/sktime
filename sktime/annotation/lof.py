@@ -115,17 +115,15 @@ class SubLOF(BaseSeriesAnnotator):
         n_jobs=None,
     ):
         self.window_size = window_size
-        self.model_params = {
-            "n_neighbors": n_neighbors,
-            "algorithm": algorithm,
-            "leaf_size": leaf_size,
-            "metric": metric,
-            "p": p,
-            "metric_params": metric_params,
-            "contamination": contamination,
-            "novelty": novelty,
-            "n_jobs": n_jobs,
-        }
+        self.n_neighbors = n_neighbors
+        self.algorithm = algorithm
+        self.leaf_size = leaf_size
+        self.metric = metric
+        self.p = p
+        self.metric_params = metric_params
+        self.contamination = contamination
+        self.novelty = novelty
+        self.n_jobs = n_jobs
         self.models = None
         super().__init__()
 
@@ -137,12 +135,23 @@ class SubLOF(BaseSeriesAnnotator):
         X : pd.DataFrame
             Training data to fit model to (time series).
         """
+        model_params = {
+            "n_neighbors": self.n_neighbors,
+            "algorithm": self.algorithm,
+            "leaf_size": self.leaf_size,
+            "metric": self.metric,
+            "p": self.p,
+            "metric_params": self.metric_params,
+            "contamination": self.contamination,
+            "novelty": self.novelty,
+            "n_jobs": self.n_jobs,
+        }
         if isinstance(X, pd.Series):
             X = X.to_frame()
 
         intervals = self._split_into_intervals(X.index, self.window_size)
         self.models = {
-            interval: LocalOutlierFactor(**self.model_params) for interval in intervals
+            interval: LocalOutlierFactor(**model_params) for interval in intervals
         }
 
         for interval, model in self.models.items():
