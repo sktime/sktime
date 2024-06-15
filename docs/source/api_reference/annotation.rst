@@ -82,6 +82,17 @@ Time Series Segmentation
 
     STRAY
 
+Time Series Anomaly Detection
+-----------------------------
+
+.. currentmodule:: sktime.annotation.lof
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SubLOF
+
 Adapters
 --------
 
