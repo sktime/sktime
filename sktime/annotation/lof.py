@@ -14,12 +14,17 @@ from sktime.annotation.base import BaseSeriesAnnotator
 class SubLOF(BaseSeriesAnnotator):
     """Timeseries version of local outlier factor.
 
+    The LOF models are fit to windows timeseries data.
+
     Parameters
     ----------
-        n_neighbors : int, default=20
+    n_neighbors : int, default=20
         Number of neighbors to use by default for :meth:`kneighbors` queries.
         If n_neighbors is larger than the number of samples provided,
         all samples will be used.
+
+    window_size : int, float, timedelta
+        Size of the non-overlapping windows on which the LOF models are fit.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         Algorithm used to compute the nearest neighbors:
