@@ -16,7 +16,7 @@ from sktime.utils.dependencies import _check_soft_dependencies
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-DISTR_METRICS = [AUCalibration, CRPS, LogLoss]
+DISTR_METRICS = [CRPS, AUCalibration, LogLoss]
 
 
 if _check_soft_dependencies("tensorflow_probability", severity="none"):
