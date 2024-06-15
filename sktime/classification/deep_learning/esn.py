@@ -7,8 +7,6 @@ from sklearn.base import clone
 from sklearn.linear_model import RidgeClassifier
 
 from sktime.classification.base import BaseClassifier
-from sktime.utils.validation import check_array
-from sktime.utils.validation.series import check_series
 
 
 class EchoStateNetwork(BaseClassifier):
@@ -55,6 +53,7 @@ class EchoStateNetwork(BaseClassifier):
     _tags = {
         "authors": ["sharma-kshitij-ks"],
         "maintainers": ["sharma-kshitij-ks"],
+        "X_inner_mtype": "pd.DataFrame",
     }
 
     def __init__(
@@ -96,8 +95,8 @@ class EchoStateNetwork(BaseClassifier):
         -------
         self: object
         """
-        X = check_array(X, ensure_min_features=1, ensure_min_samples=2, dtype="float64")
-        y = check_series(y, enforce_univariate=True, coerce_to_numpy=True)
+        X = X.values
+        y = y.values
 
         n_samples, n_features = X.shape
         self.W_in_ = random(
@@ -132,7 +131,7 @@ class EchoStateNetwork(BaseClassifier):
         y_pred: array-like, shape (n_samples,)
             Predicted class labels.
         """
-        X = check_array(X, ensure_min_features=1, ensure_min_samples=2, dtype="float64")
+        X = X.values
 
         n_samples, _ = X.shape
         X_reservoir = np.zeros((n_samples, self.n_reservoir))
