@@ -1044,6 +1044,9 @@ class AUCalibration(_BaseDistrForecastingMetric):
         diagonal = np.arange(1, n + 1).reshape(-1, 1) / n
 
         res = (cdfs_ranked - diagonal).abs()
+
+        if self.multivariate:
+            return pd.DataFrame(res.mean(axis=1), columns=["score"])
         return res
 
     @classmethod
