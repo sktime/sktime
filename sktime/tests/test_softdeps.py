@@ -17,6 +17,7 @@ import pytest
 
 from sktime.registry import all_estimators
 from sktime.tests._config import EXCLUDE_ESTIMATORS
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
 from sktime.utils.dependencies import _check_python_version, _check_soft_dependencies
 
@@ -300,6 +301,9 @@ def test_est_fit_without_modulenotfound(estimator):
     # skip composite estimators that have no soft dependencies
     #   but which have soft dependencies in example components
     if estimator.__name__ in EXCEPTED_FROM_NO_DEP_CHECK:
+        return None
+
+    if not run_test_for_class(estimator):
         return None
 
     try:
