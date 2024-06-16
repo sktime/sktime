@@ -65,9 +65,9 @@ class HFTransformersForecaster(BaseForecaster):
     Examples
     --------
     >>> from transformers import InformerModel
-    >>> from sktime.forecasting.hf_transformers_forecaster import (
-    ...     HFTransformersForecaster,
-    ... )
+    >>> from sktime.forecasting.hf_transformers_forecaster import ( #noqa
+    ...     HFTransformersForecaster, #noqa
+    ... ) #noqa
     >>> from sktime.datasets import load_airline
 
     ... # Using a model path
