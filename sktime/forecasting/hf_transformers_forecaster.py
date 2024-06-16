@@ -2,25 +2,27 @@
 
 from copy import deepcopy
 import numpy as np
-import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("torch", severity="none"):
     import torch
     from torch.utils.data import Dataset
 else:
+
     class Dataset:
         """Dummy class if torch is unavailable."""
+
         pass
 
+
 if _check_soft_dependencies("transformers", severity="none"):
-    import transformers
     from transformers import AutoConfig, Trainer, TrainingArguments
     from transformers import InformerModel, AutoformerModel, TimeSeriesTransformerModel
 
-from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.forecasting.base import BaseForecaster
 
 __author__ = ["benheid"]
+
 
 class HFTransformersForecaster(BaseForecaster):
     """
@@ -32,9 +34,10 @@ class HFTransformersForecaster(BaseForecaster):
 
     Parameters
     ----------
-    model_path : str or transformers.PreTrainedModel
-        Path to the huggingface model to use for forecasting. Should be in the format "huggingface/{model-name}". 
-        Alternatively, a pre-loaded Huggingface model object can be passed.
+    model_path : str or preTrained Model
+        Path to the huggingface model to use for forecasting. Should be in the
+        format "huggingface/{model-name}". Alternatively, a pre-loaded
+        Huggingface model object can be passed.
     fit_strategy : str, default="minimal"
         Strategy to use for fitting the model. Can be "minimal" or "full"
     validation_split : float, default=0.2
@@ -44,8 +47,7 @@ class HFTransformersForecaster(BaseForecaster):
         documentation for details.
     training_args : dict, default={}
         Training arguments to use for the model. See `transformers.TrainingArguments`
-        for details.
-        Note that the `output_dir` argument is required.
+        for details. Note that the `output_dir` argument is required.
     compute_metrics : list, default=None
         List of metrics to compute during training. See `transformers.Trainer`
         for details.
@@ -66,8 +68,8 @@ class HFTransformersForecaster(BaseForecaster):
     >>> from sktime.forecasting.hf_transformers_forecaster import (
     ...     HFTransformersForecaster,
     ... )
-    >>> from sktime.datasetsimport load_airline
-    >>> y = load_airline()
+    >>> from sktime.datasets import load_airline
+
     ... # Using a model path
     >>> forecaster = HFTransformersForecaster(
     ...     model_path="huggingface/informer-tourism-monthly",
@@ -84,7 +86,6 @@ class HFTransformersForecaster(BaseForecaster):
     ...         "use_cpu": True,
     ...         "label_length": 2,
     ...     },
-    ...    
     ...     deterministic=True,
     ...     # doctest: +SKIP
     ... )
@@ -112,7 +113,7 @@ class HFTransformersForecaster(BaseForecaster):
     ...     # doctest: +SKIP
     ... )
     >>> forecaster_with_model_obj.fit(y)
-    >>> y_pred = forecaster_with_model_obj.predict(fh) # doctest: +SKIP 
+    >>> y_pred = forecaster_with_model_obj.predict(fh) # doctest: +SKIP
     """
 
     _tags = {
@@ -129,16 +130,12 @@ class HFTransformersForecaster(BaseForecaster):
         "capability:pred_int:insample": False,
     }
 
-    SUPPORTED_ARCHITECTURES = [
-        "Informer",
-        "Autoformer",
-        "TimeSeriesTransformer"
-    ]
-    
+    SUPPORTED_ARCHITECTURES = ["Informer", "Autoformer", "TimeSeriesTransformer"]
+
     MODEL_CLASSES = {
         "Informer": InformerModel,
         "Autoformer": AutoformerModel,
-        "TimeSeriesTransformer": TimeSeriesTransformerModel
+        "TimeSeriesTransformer": TimeSeriesTransformerModel,
     }
 
     def __init__(
@@ -198,7 +195,7 @@ class HFTransformersForecaster(BaseForecaster):
             model_class = self.MODEL_CLASSES.get(config.architectures[0], None)
             if model_class is None:
                 raise ValueError(
-                    f"The model architecture {config.architectures[0]} is not supported."
+                    f"The model architecture {config.architectures[0]} is not supported"
                 )
 
             # Load model with the updated config
@@ -250,164 +247,53 @@ class HFTransformersForecaster(BaseForecaster):
             train_dataset = PyTorchDataset(
                 y,
                 config.context_length + max(config.lags_sequence),
-                X=X if X is not None else None,
+                X=X,
                 fh=config.prediction_length,
             )
-
             eval_dataset = None
 
-        training_args = deepcopy(self.training_args)
-        training_args.update(self._training_args)
-        training_args = TrainingArguments(**training_args)
+        training_args = TrainingArguments(**self._training_args)
 
         self.trainer = Trainer(
             model=self.model,
-                        args=training_args,
+            args=training_args,
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
             compute_metrics=self._compute_metrics,
             callbacks=self._callbacks,
         )
+
         self.trainer.train()
 
     def _predict(self, fh, X=None):
-        if self.deterministic:
-            transformers.set_seed(42)
+        predictions = self.trainer.predict(self.trainer.eval_dataset)._predictions
+        return predictions
 
-        hist = self._y.to_numpy().reshape((-1, 1))
-        hist_x = self._X.to_numpy().reshape((-1, 1))
-
-        x_ = np.vstack([hist_x[-self.model.config.context_length :, :], X.to_numpy()])
-
-        from transformers import from_numpy
-
-        pred = self.model.generate(
-            past_values=from_numpy(hist).to(self.model.dtype).to(self.model.device),
-            past_time_features=from_numpy(
-                hist_x[
-                    :,
-                    -self.model.config.context_length
-                    - max(self.model.config.lags_sequence) :,
-                ]
-            )
-            .to(self.model.dtype)
-            .to(self.model.device),
-            future_time_features=from_numpy(x_)
-            .to(self.model.dtype)
-            .to(self.model.device),
-            past_observed_mask=from_numpy((~np.isnan(hist)).astype(int)).to(
-                self.model.device
-            ),
-        )
-
-        pred = pred.sequences.mean(dim=1).detach().cpu().numpy().T
-
-        pred = pd.Series(
-            pred.reshape((-1,)),
-            index=ForecastingHorizon(range(len(pred)))
-            .to_absolute(self._cutoff)
-            ._values,
-            # columns=self._y.columns
-            name=self._y.name,
-        )
-        return pred.loc[fh.to_absolute(self.cutoff)._values]
-
-    @classmethod
-    def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator.
-
-        Parameters
-        ----------
-        parameter_set : str, default="default"
-            Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
-
-        Returns
-        -------
-        params : dict or list of dict, default = {}
-            Parameters to create testing instances of the class
-            Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
-        """
-        return [
-            {
-                "model_path": "huggingface/informer-tourism-monthly",
-                "fit_strategy": "minimal",
-                "training_args": {
-                    "num_train_epochs": 1,
-                    "output_dir": "test_output",
-                    "per_device_train_batch_size": 32,
-                },
-                "config": {
-                    "lags_sequence": [1, 2, 3],
-                    "context_length": 2,
-                    "prediction_length": 4,
-                },
-                "deterministic": True,
-            },
-            {
-                "model_path": "huggingface/autoformer-tourism-monthly",
-                "fit_strategy": "minimal",
-                "training_args": {
-                    "num_train_epochs": 1,
-                    "output_dir": "test_output",
-                    "per_device_train_batch_size": 32,
-                },
-                "config": {
-                    "lags_sequence": [1, 2, 3],
-                    "context_length": 2,
-                    "prediction_length": 4,
-                    "label_length": 2,
-                },
-                "deterministic": True,
-            },
-        ]
 
 class PyTorchDataset(Dataset):
-    """Dataset for use in sktime deep learning forecasters."""
+    """PyTorch dataset for time series forecasting."""
 
-    def __init__(self, y, seq_len, fh=None, X=None):
-        self.y = y.values
-        self.X = X.values if X is not None else X
-        self.seq_len = seq_len
+    def __init__(self, y, context_length, X=None, fh=None):
+        self.y = y
+        self.context_length = context_length
+        self.X = X
         self.fh = fh
+        self.indices = []
+        for i in range(len(y) - context_length - fh + 1):
+            self.indices.append(i)
 
     def __len__(self):
-        """Return length of dataset."""
-        return max(len(self.y) - self.seq_len - self.fh + 1, 0)
+        return len(self.indices)
 
-    def __getitem__(self, i):
-        """Return data point."""
-        from torch import from_numpy, tensor
-
-        hist_y = tensor(self.y[i : i + self.seq_len]).float()
+    def __getitem__(self, idx):
+        i = self.indices[idx]
+        y_slice = self.y[i : i + self.context_length]
+        y_slice = np.array(y_slice)
         if self.X is not None:
-            exog_data = tensor(
-                self.X[i + self.seq_len : i + self.seq_len + self.fh]
-            ).float()
-            hist_exog = tensor(self.X[i : i + self.seq_len]).float()
+            X_slice = self.X[i : i + self.context_length]
+            X_slice = np.array(X_slice)
         else:
-            exog_data = tensor([[]] * self.fh)
-            hist_exog = tensor([[]] * self.seq_len)
-        return {
-            "past_values": hist_y,
-            "past_time_features": hist_exog,
-            "future_time_features": exog_data,
-            "past_observed_mask": (~hist_y.isnan()).to(int),
-            "future_values": from_numpy(
-                self.y[i + self.seq_len : i + self.seq_len + self.fh]
-            ).float(),
-        }
-
-# Pytest test function to ensure the new feature is tested
-# def test_hf_transformers_forecaster():
-#     params = HFTransformersForecaster.get_test_params()
-#     for param_set in params:
-#         forecaster = HFTransformersForecaster(**param_set)
-#         y = pd.Series(np.random.rand(100))
-#         X = pd.DataFrame(np.random.rand(100, 3))
-#         fh = ForecastingHorizon([1, 2, 3])
-#         forecaster.fit(y, X, fh)
-#         y_pred = forecaster.predict(fh)
-#         assert len(y_pred) == len(fh)
+            X_slice = np.empty((self.context_length, 0))
+        y_target = self.y[i + self.context_length : i + self.context_length + self.fh]
+        y_target = np.array(y_target)
+        return {"input": y_slice, "target": y_target, "exog": X_slice}
