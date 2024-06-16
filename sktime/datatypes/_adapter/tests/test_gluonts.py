@@ -1,94 +1,51 @@
-# import numpy as np
-# import pandas as pd
-# import pytest
-# from gluonts.dataset.common import ListDataset
-# from gluonts.dataset.field_names import FieldName
+import numpy as np
+import pandas as pd
+import pytest
 
-# from sktime.datatypes._table._convert import (
-#     convert_gluonts_listDataset_to_pandas,
-#     convert_pandas_to_gluonts_listDataset,
-# )
+from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
-# @pytest.mark.parametrize(
-#     "pandas_df",
-#     [
-#         (
-#             pd.DataFrame(
-#                 {
-#                     "series_id": np.zeros(50, dtype=int),
-#                     "time": pd.date_range("2022-01-01", periods=50, freq="D"),
-#                     "target": np.random.randn(50),
-#                 }
-#             )
-#         ),
-#         (
-#             pd.DataFrame(
-#                 {
-#                     "series_id": np.repeat(np.arange(3), 50),
-#                     "time": np.tile(
-#                         pd.date_range("2022-01-01", periods=50, freq="D"), 3
-#                     ),
-#                     "0": np.random.randn(150),
-#                     "1": np.random.randn(150),
-#                     "2": np.random.randn(150),
-#                 }
-#             )
-#         ),
-#     ],
-# )
-# def test_pandas_to_ListDataset(pandas_df):
-#     generated_list = convert_pandas_to_gluonts_listDataset(pandas_df)
-#     idx = 0
+@pytest.mark.skipif(
+    not _check_soft_dependencies("gluonts", severity="none"),
+    reason="skip test if required soft dependency for GluonTS not available",
+)
+@pytest.mark.parametrize(
+    "pandas_df",
+    [
+        (
+            pd.DataFrame(
+                {
+                    "series_id": np.zeros(50, dtype=int),
+                    "time": pd.date_range("2022-01-01", periods=50, freq="D"),
+                    "target": np.random.randn(50),
+                }
+            )
+        ),
+        (
+            pd.DataFrame(
+                {
+                    "series_id": np.repeat(np.arange(3), 50),
+                    "time": np.tile(
+                        pd.date_range("2022-01-01", periods=50, freq="D"), 3
+                    ),
+                    "0": np.random.randn(150),
+                    "1": np.random.randn(150),
+                    "2": np.random.randn(150),
+                }
+            )
+        ),
+    ],
+)
+def test_pandas_to_ListDataset(pandas_df):
+    # Make the pandas DF multiindex
+    pandas_df = pandas_df.set_index(["series_id", "time"])
 
-#     # Asserting equivalence for each time series in the ListDataset
-#     # and the series categories in the DataFrame
-#     for _, group_data in pandas_df.groupby("series_id"):
-#         np.testing.assert_allclose(
-#             group_data.iloc[:, 2:].values, generated_list[idx]["target"]
-#         )
+    generated_list = convert_pandas_to_listDataset(pandas_df)
+    idx = 0
 
-#         idx += 1
-
-
-# @pytest.mark.parametrize(
-#     "list_dataset",
-#     [
-#         (
-#             ListDataset(
-#                 [
-#                     {
-#                         FieldName.START: pd.Timestamp("2022-01-01"),
-#                         FieldName.TARGET: np.random.randn(50, 1),
-#                     }
-#                 ],
-#                 freq="D",
-#                 one_dim_target=False,
-#             )
-#         ),
-#         (
-#             ListDataset(
-#                 [
-#                     {
-#                         FieldName.START: pd.Timestamp("2022-01-01"),
-#                         FieldName.TARGET: np.random.randn(50, 5),
-#                     }
-#                 ],
-#                 freq="D",
-#                 one_dim_target=False,
-#             )
-#         ),
-#     ],
-# )
-# def test_listDataset_to_pandas(list_dataset):
-#     pandas_df = convert_gluonts_listDataset_to_pandas(list_dataset)
-#     idx = 0
-
-#     # Asserting equivalence for each time series in the ListDataset
-#     # and the series categories in the DataFrame
-#     for _, group_data in pandas_df.groupby("series_id"):
-#         np.testing.assert_allclose(
-#             group_data.iloc[:, 2:].values, list_dataset[idx]["target"]
-#         )
-
-#         idx += 1
+    # Asserting equivalence for each time series in the ListDataset
+    # and the series categories in the DataFrame
+    for _, group_data in pandas_df.groupby(level=0):
+        np.testing.assert_allclose(group_data.values, generated_list[idx]["target"])
+        idx += 1

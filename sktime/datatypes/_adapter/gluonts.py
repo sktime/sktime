@@ -1,6 +1,4 @@
 import pandas as pd
-from gluonts.dataset.common import ListDataset
-from gluonts.dataset.field_names import FieldName
 
 
 def convert_pandas_to_listDataset(pd_dataframe: pd.DataFrame, is_single: bool = False):
@@ -25,6 +23,9 @@ def convert_pandas_to_listDataset(pd_dataframe: pd.DataFrame, is_single: bool = 
     ValueError
         If is_single is True, but multiple rows of entries exist in `pd_dataframe`
     """
+    from gluonts.dataset.common import ListDataset
+    from gluonts.dataset.field_names import FieldName
+
     # Assert the validity of the is_single parameter
     if is_single and pd_dataframe.shape[0] > 1:
         raise ValueError("`is_single` is True but the DataFrame has multiple rows!")
@@ -63,7 +64,7 @@ def convert_pandas_to_listDataset(pd_dataframe: pd.DataFrame, is_single: bool = 
     return list_dataset
 
 
-def convert_listDataset_to_pandas(list_dataset: ListDataset):
+def convert_listDataset_to_pandas(list_dataset):
     """Convert a given gluonTS ListDataset to a pandas DataFrame.
 
     Parameters
