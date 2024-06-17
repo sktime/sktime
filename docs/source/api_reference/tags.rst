@@ -25,7 +25,7 @@ Inspecting tags, retrieving by tags
 
 * to get the tags of an object, use the ``get_tags`` method.
   An object's tags can depend on its hyper-parameters.
-* to get the tags of a class, use the ``get_tags`` method of the class.
+* to get the tags of a class, use the ``get_class_tags`` method of the class.
   A class's tags are static and do not depend on its hyper-parameters.
   By default, class tags that may vary for instances take the most "capable" value,
   in the case of capabilities.
