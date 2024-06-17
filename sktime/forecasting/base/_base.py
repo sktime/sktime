@@ -2684,6 +2684,126 @@ class _BaseGlobalForecaster(BaseForecaster):
         """
         raise NotImplementedError("abstract method")
 
+    def predict_quantiles(self, fh=None, X=None, alpha=None, y=None):
+        """Compute/return quantile forecasts.
+
+        If ``alpha`` is iterable, multiple quantiles will be calculated.
+
+        State required:
+            Requires state to be "fitted", i.e., ``self.is_fitted=True``.
+
+        Accesses in self:
+
+            * Fitted model attributes ending in "_".
+            * ``self.cutoff``, ``self.is_fitted``
+
+        Writes to self:
+            Stores ``fh`` to ``self.fh`` if ``fh`` is passed and has not been passed
+            previously.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ``ForecastingHorizon``, optional (default=None)
+            The forecasting horizon encoding the time stamps to forecast at.
+            Should not be passed if has already been passed in ``fit``.
+            If has not been passed in fit, must be passed, not optional
+
+        X : time series in ``sktime`` compatible format, optional (default=None)
+            Exogeneous time series to use in prediction.
+            Should be of same scitype (``Series``, ``Panel``, or ``Hierarchical``)
+            as ``y`` in ``fit``.
+            If ``self.get_tag("X-y-must-have-same-index")``,
+            ``X.index`` must contain ``fh`` index reference.
+            If ``y`` is passed (performing global forecasting), ``X`` must contain
+            all historical values and the time points to be predicted.
+
+        alpha : float or list of float of unique values, optional (default=[0.05, 0.95])
+            A probability or list of, at which quantile forecasts are computed.
+
+        y : time series in ``sktime`` compatible format, optional (default=None)
+            Historical values of the time series that should be predicted.
+            If not None, global forecasting will be performed.
+            Only pass the historical values not the time points to be predicted.
+
+        Returns
+        -------
+        quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level being the values of alpha passed to the function.
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                    from y seen in fit, if y seen in fit was Panel or Hierarchical.
+            Entries are quantile forecasts, for var in col index,
+                at quantile probability in second col index, for the row index.
+
+        Notes
+        -----
+        If ``y`` is not None, global forecast will be performed.
+        In global forecast mode,
+        ``X`` should contain all historical values and the time points to be predicted,
+        while ``y`` should only contain historical values
+        not the time points to be predicted.
+
+        If ``y`` is None, non global forecast will be performed.
+        In non global forecast mode,
+        ``X`` should only contain the time points to be predicted,
+        while ``y`` should only contain historical values
+        not the time points to be predicted.
+        """
+        if not self.get_tag("capability:pred_int"):
+            raise NotImplementedError(
+                f"{self.__class__.__name__} does not have the capability to return "
+                "quantile predictions. If you "
+                "think this estimator should have the capability, please open "
+                "an issue on sktime."
+            )
+        # check global forecasting tag
+        gf = self.get_tag(
+            "capability:global_forecasting", tag_value_default=False, raise_error=False
+        )
+        if not gf and y is not None:
+            ValueError("no global forecasting support!")
+        self.check_is_fitted()
+
+        # input checks and conversions
+
+        # check fh and coerce to ForecastingHorizon, if not already passed in fit
+        fh = self._check_fh(fh)
+        if y is None:
+            self._global_forecasting = False
+        else:
+            self._global_forecasting = True
+        # default alpha
+        if alpha is None:
+            alpha = [0.05, 0.95]
+        # check alpha and coerce to list
+        alpha = check_alpha(alpha, name="alpha")
+
+        # check and convert X/y
+        X_inner, y_inner = self._check_X_y(X=X, y=y)
+
+        # this also updates cutoff from y
+        # be cautious, in fit self._X and self._y is also updated but not here!
+        if y_inner is not None:
+            self._set_cutoff_from_y(y_inner)
+
+        # check fh and coerce to ForecastingHorizon, if not already passed in fit
+        fh = self._check_fh(fh)
+
+        # we call the ordinary _predict_quantiles if no looping/vectorization needed
+        if not self._is_vectorized:
+            quantiles = self._predict_quantiles(fh=fh, X=X_inner, alpha=alpha, y=y)
+        else:
+            # otherwise we call the vectorized version of predict_quantiles
+            quantiles = self._vectorize(
+                "predict_quantiles",
+                fh=fh,
+                X=X_inner,
+                alpha=alpha,
+                y=y,
+            )
+
+        return quantiles
+
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):
     """Format moving-cutoff predictions.

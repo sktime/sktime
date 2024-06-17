@@ -598,6 +598,22 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         if isinstance(f, _DelegatedForecaster):
             return None
 
+        # we skip the _DelegatedForecaster, since it implements delegation methods
+        #   which may look like the method is implemented, but in fact it is not
+        if isinstance(f, _DelegatedForecaster):
+            return None
+
+        # we skip the PytorchForecastingNBeats,
+        # since the pytorch forecasting adapter class inplements _predict_quantiles
+        # but PytorchForecastingNBeats can not perform quantile forecast
+        try:
+            from sktime.forecasting.pytorchforecasting import PytorchForecastingNBeats
+
+            if isinstance(f, PytorchForecastingNBeats):
+                return None
+        except Exception:
+            pass
+
         # PR #4465 adds base ``_predict_interval`` in ``_StatsModelsAdapter``.
         # This leads to existence of that non-functional method in all subclasses.
         # It causes failure in ``test_pred_int_tag`` tests, which are skipped below.
