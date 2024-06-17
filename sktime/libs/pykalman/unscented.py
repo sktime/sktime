@@ -22,6 +22,7 @@ from .utils import (
     get_params,
     preprocess_arguments,
 )
+from .utils_numpy import newbyteorder
 
 # represents a collection of sigma points and their associated weights. one
 # point per row
@@ -850,13 +851,13 @@ class UnscentedKalmanFilter(UnscentedMixin):
                     0
                 ]
                 transition_noise = rng.multivariate_normal(
-                    np.zeros(n_dim_state), transition_covariance.newbyteorder("=")
+                    np.zeros(n_dim_state), newbyteorder(transition_covariance, "=")
                 )
                 x[t] = transition_function(x[t - 1], transition_noise)
 
             observation_function = _last_dims(observation_functions, t, ndims=1)[0]
             observation_noise = rng.multivariate_normal(
-                np.zeros(n_dim_obs), observation_covariance.newbyteorder("=")
+                np.zeros(n_dim_obs), newbyteorder(observation_covariance, "=")
             )
             z[t] = observation_function(x[t], observation_noise)
 
@@ -1170,13 +1171,13 @@ class AdditiveUnscentedKalmanFilter(UnscentedMixin):
                     0
                 ]
                 transition_noise = rng.multivariate_normal(
-                    np.zeros(n_dim_state), transition_covariance.newbyteorder("=")
+                    np.zeros(n_dim_state), newbyteorder(transition_covariance, "=")
                 )
                 x[t] = transition_function(x[t - 1]) + transition_noise
 
             observation_function = _last_dims(observation_functions, t, ndims=1)[0]
             observation_noise = rng.multivariate_normal(
-                np.zeros(n_dim_obs), observation_covariance.newbyteorder("=")
+                np.zeros(n_dim_obs), newbyteorder(observation_covariance, "=")
             )
             z[t] = observation_function(x[t]) + observation_noise
 
