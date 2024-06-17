@@ -12,9 +12,6 @@ repos:
       - id: debug-statements
       - id: end-of-file-fixer
         exclude: "^docs/source/examples/"
-      - id: fix-encoding-pragma
-        args:
-          - --remove
       - id: requirements-txt-fixer
       - id: trailing-whitespace
 
