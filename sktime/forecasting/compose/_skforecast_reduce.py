@@ -410,9 +410,9 @@ class SkforecastAutoreg(BaseForecaster):
         ).transpose()
 
         for quantile in alpha:
-            quantile_predictions[(var_name, quantile)] = bootstrap_quantiles.to_numpy()[
-                horizon_positions
-            ]
+            quantile_predictions[(var_name, quantile)] = bootstrap_quantiles[
+                quantile
+            ].iloc[horizon_positions.to_list()]
 
         return quantile_predictions
 
