@@ -233,9 +233,9 @@ class _DartsAdapter(BaseForecaster):
 
             if pd.api.types.is_integer_dtype(original_index):
                 if X is not None:
-                    if isinstance(X.index, pd.core.indexes.numeric.Int64Index):
+                    if isinstance(X.index, pd.core.indexes.numeric.NumericIndex):
                         endogenous_point_predictions.index = (
-                            pd.core.indexes.numeric.Int64Index(
+                            pd.core.indexes.numeric.NumericIndex(
                                 endogenous_point_predictions.index
                             )
                         )
