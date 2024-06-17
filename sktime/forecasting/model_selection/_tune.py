@@ -1638,24 +1638,20 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
 
         study = optuna.create_study(direction="minimize")
         for _ in range(self.n_evals):
-            forecaster = self.forecaster.clone()
             trial = study.ask(self.param_grid)  # pass the pre-defined distributions.
             params = {name: trial.params[name] for name, v in self.param_grid.items()}
-            print(params)
-            forecaster.set_params(**params)
 
-            out = evaluate(
-                forecaster,
-                cv,
-                y,
-                X,
-                strategy=self.strategy,
-                scoring=scoring,
-                error_score="raise",
-            )
-            out = out.filter(items=[scoring_name, "fit_time", "pred_time"], axis=1)
-            out = out.mean().add_prefix("mean_")
+            meta = {}
+            meta["forecaster"] = self.forecaster
+            meta["y"] = y
+            meta["X"] = X
+            meta["cv"] = cv
+            meta["strategy"] = self.strategy
+            meta["scoring"] = scoring
+            meta["error_score"] = self.error_score
+            meta["scoring_name"] = scoring_name
 
+            out = _fit_and_score(params, meta)
             study.tell(trial, out[f"mean_{scoring_name}"])
 
         params_list = [trial.params for trial in study.trials]
