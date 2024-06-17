@@ -41,7 +41,7 @@ class _DartsAdapter(BaseForecaster):
         "requires-fh-in-fit": False,
         "enforce_index_type": pd.DatetimeIndex,
         "handles-missing-data": False,
-        "capability:insample": False,
+        "capability:predint:insample": True,
     }
 
     def __init__(
@@ -81,8 +81,8 @@ class _DartsAdapter(BaseForecaster):
         """
         import darts
 
-        dataset.index = dataset.index.astype("datetime64[ns]")  # ensure datetime index
-        return darts.TimeSeries.from_dataframe(dataset)
+        dataset_copy = _handle_input_index(dataset)
+        return darts.TimeSeries.from_dataframe(dataset_copy)
 
     def convert_exogenous_dataset(
         self: "_DartsAdapter", dataset: Optional[pd.DataFrame]
@@ -211,7 +211,7 @@ class _DartsAdapter(BaseForecaster):
             Point predictions
         """
         unknown_exogenous, known_exogenous = self.convert_exogenous_dataset(X)
-
+        absolute_fh = fh.to_absolute(self.cutoff)
         maximum_forecast_horizon = fh.to_relative(self.cutoff)[-1]
         endogenous_point_predictions = self._forecaster.predict(
             maximum_forecast_horizon,
@@ -220,46 +220,49 @@ class _DartsAdapter(BaseForecaster):
             num_samples=1,
         )
         original_index = fh.get_expected_pred_idx(self.cutoff)
+        abs_idx = absolute_fh.to_pandas().astype(original_index.dtype)
         if self.get_class_tag("y_inner_mtype") == "pd.Series":
-            endogenous_point_predictions = endogenous_point_predictions.pd_series()
+            # ToDo: handle the pd.Series
+            pass
+        else:
+            endogenous_point_predictions = endogenous_point_predictions.pd_dataframe()
+
+            if pd.api.types.is_integer_dtype(original_index):
+                if X is not None:
+                    if isinstance(X.index, pd.core.indexes.numeric.Int64Index):
+                        endogenous_point_predictions.index = (
+                            pd.core.indexes.numeric.Int64Index(
+                                endogenous_point_predictions.index
+                            )
+                        )
+
+            if isinstance(original_index, pd.PeriodIndex):
+                endogenous_point_predictions.index = (
+                    endogenous_point_predictions.index.to_period(original_index.freqstr)
+                )
             if isinstance(original_index, pd.RangeIndex):
                 endogenous_point_predictions.index = pd.RangeIndex(
                     start=0, stop=len(endogenous_point_predictions)
                 )
-            elif isinstance(original_index, pd.PeriodIndex):
-                endogenous_point_predictions.index = (
-                    endogenous_point_predictions.index.to_period(original_index.freqstr)
+            if isinstance(original_index, pd.DatetimeIndex):
+                endogenous_point_predictions.index = pd.date_range(
+                    start=original_index[0],
+                    periods=len(endogenous_point_predictions),
+                    freq=original_index.freq,
+                )
+
+            if (
+                len(endogenous_point_predictions.columns) > 1
+                and self._y.columns.dtype != "object"
+            ):
+                endogenous_point_predictions.columns = pd.RangeIndex(
+                    start=0, stop=len(endogenous_point_predictions.columns), step=1
                 )
             else:
                 endogenous_point_predictions.columns = [
                     "c" + str(i) for i in range(endogenous_point_predictions.shape[1])
                 ]
-        else:
-            endogenous_point_predictions = endogenous_point_predictions.pd_dataframe()
-            if X is not None:
-                if isinstance(original_index, pd.RangeIndex):
-                    endogenous_point_predictions.index = pd.RangeIndex(
-                        start=0, stop=len(endogenous_point_predictions)
-                    )
-                elif isinstance(original_index, pd.PeriodIndex):
-                    endogenous_point_predictions.index = (
-                        endogenous_point_predictions.index.to_period(
-                            original_index.freqstr
-                        )
-                    )
-
-                elif (
-                    isinstance(original_index, pd.DatetimeIndex)
-                    and len(endogenous_point_predictions.columns) > 1
-                ):
-                    endogenous_point_predictions.columns = pd.RangeIndex(
-                        start=0, stop=len(endogenous_point_predictions.columns), step=1
-                    )
-            else:
-                endogenous_point_predictions.columns = [
-                    "c" + str(i) for i in range(endogenous_point_predictions.shape[1])
-                ]
-        return endogenous_point_predictions
+        return endogenous_point_predictions.loc[abs_idx]
 
     def _predict_quantiles(
         self,
@@ -313,6 +316,39 @@ class _DartsAdapter(BaseForecaster):
         abs_idx = absolute_fh.to_pandas().astype(original_index.dtype)
         endogenous_quantile_predictions.columns = multi_index
         return endogenous_quantile_predictions.loc[abs_idx]
+
+
+def _handle_input_index(dataset: pd.DataFrame) -> pd.DataFrame:
+    """Convert input dataset index to the compatible type for ``darts``.
+
+    Parameters
+    ----------
+    dataset: pandas.DataFrame
+        dataset with index to be converted
+
+    Returns
+    -------
+    pandas.DataFrame
+        converted dataset
+    """
+    if isinstance(dataset.index, (pd.DatetimeIndex, pd.RangeIndex)):
+        return dataset
+    dataset_copy = dataset.copy(deep=True)
+
+    if isinstance(dataset_copy.index, pd.PeriodIndex):
+        dataset_copy.index = dataset_copy.index.to_timestamp()
+        return dataset_copy
+
+    if pd.api.types.is_integer_dtype(dataset_copy.index):
+        if isinstance(dataset_copy.index, pd.core.indexes.numeric.Int64Index):
+            dataset_copy.index = pd.RangeIndex(
+                start=dataset_copy.index.min(),
+                stop=dataset_copy.index.max() + 1,
+                step=dataset_copy.index[1] - dataset_copy.index[0],
+            )
+            return dataset_copy
+        dataset_copy.index = pd.RangeIndex(start=0, stop=len(dataset_copy))
+        return dataset_copy
 
 
 __all__ = ["_DartsAdapter"]
