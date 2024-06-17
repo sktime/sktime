@@ -11,7 +11,7 @@ Tags are key-value pairs, where the key is a string with the name of the tag.
 The value of the tag can have arbitrary type, and describes a property, capability,
 or controls behaviour of the object, depending on the value.
 
-For instance, a forecaster may have the tag ``capability:pred_int: True`` if it can
+For instance, a forecaster may have the tag ``"capability:pred_int": True`` if it can
 make probabilistic predictions.
 Users can find all forecasters that can make probabilistic predictions by filtering
 for this tag.
@@ -25,7 +25,7 @@ Inspecting tags, retrieving by tags
 
 * to get the tags of an object, use the ``get_tags`` method.
   An object's tags can depend on its hyper-parameters.
-* to get the tags of a class, use the ``get_tags`` method of the class.
+* to get the tags of a class, use the ``get_class_tags`` method of the class.
   A class's tags are static and do not depend on its hyper-parameters.
   By default, class tags that may vary for instances take the most "capable" value,
   in the case of capabilities.
