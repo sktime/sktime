@@ -11,7 +11,7 @@ Tags are key-value pairs, where the key is a string with the name of the tag.
 The value of the tag can have arbitrary type, and describes a property, capability,
 or controls behaviour of the object, depending on the value.
 
-For instance, a forecaster may have the tag ``capability:pred_int: True`` if it can
+For instance, a forecaster may have the tag ``"capability:pred_int": True`` if it can
 make probabilistic predictions.
 Users can find all forecasters that can make probabilistic predictions by filtering
 for this tag.
