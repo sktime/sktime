@@ -6,6 +6,7 @@ Objects compared can have one of the following valid types:
     lists, tuples, or dicts of a valid type (recursive)
     polars.DataFrame, polars.LazyFrame
 """
+
 from skbase.utils.deep_equals._common import _make_ret
 from skbase.utils.deep_equals._deep_equals import deep_equals as _deep_equals
 

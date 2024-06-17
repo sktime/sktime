@@ -1,4 +1,5 @@
 """Test extraction of features across (shifted) windows."""
+
 __author__ = ["danbartl"]
 
 from sktime.tests.test_switch import run_test_for_class

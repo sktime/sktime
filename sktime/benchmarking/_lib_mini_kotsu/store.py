@@ -1,4 +1,5 @@
 """Functionality for storing validation results."""
+
 import pandas as pd
 
 

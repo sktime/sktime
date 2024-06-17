@@ -1,4 +1,5 @@
 """Tests for Croston estimator."""
+
 import numpy as np
 import pytest
 

@@ -242,10 +242,13 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
                 # next classification point index
                 idx + 1,
                 # consecutive predictions, add one if positive decision and same class
-                state_info[i][1] + 1 if decisions[i] and preds[i] == state_info[i][2]
-                # set to 0 if the decision is negative, 1 if its positive but different
-                # class
-                else 1 if decisions[i] else 0,
+                (
+                    state_info[i][1] + 1
+                    if decisions[i] and preds[i] == state_info[i][2]
+                    # set to 0 if the decision is negative
+                    # 1 if its positive but different class
+                    else 1 if decisions[i] else 0
+                ),
                 # predicted class index
                 preds[i],
             )

@@ -1,4 +1,5 @@
 """Tests for the show_versions utility."""
+
 import pathlib
 import uuid
 
