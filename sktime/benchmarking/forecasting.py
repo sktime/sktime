@@ -15,7 +15,7 @@ def forecasting_validation(
     scorers: List[BaseMetric],
     estimator: BaseForecaster,
     backend=None,
-    backend_parms=None,
+    backend_params=None,
     **kwargs,
 ) -> Dict[str, Union[float, str]]:
     """Run validation for a forecasting estimator.
@@ -75,7 +75,7 @@ def forecasting_validation(
         cv=cv_splitter,
         scoring=scorers,
         backend=backend,
-        backend_parms=backend_parms,
+        backend_params=backend_params,
     )
     for scorer in scorers:
         scorer_name = scorer.name
@@ -91,7 +91,7 @@ def _factory_forecasting_validation(
     cv_splitter: BaseSplitter,
     scorers: List[BaseMetric],
     backend=None,
-    backend_parms=None,
+    backend_params=None,
 ) -> Callable:
     """Build validation func which just takes a forecasting estimator."""
     return functools.partial(
@@ -100,7 +100,7 @@ def _factory_forecasting_validation(
         cv_splitter,
         scorers,
         backend=backend,
-        backend_parms=backend_parms,
+        backend_params=backend_params,
     )
 
 
@@ -155,11 +155,11 @@ class ForecastingBenchmark(BaseBenchmark):
         self,
         id_format: Optional[str] = None,
         backend=None,
-        backend_parms=None,
+        backend_params=None,
     ):
         super().__init__(id_format)
         self.backend = backend
-        self.backend_parms = backend_parms
+        self.backend_params = backend_params
 
     def add_task(
         self,
@@ -197,9 +197,11 @@ class ForecastingBenchmark(BaseBenchmark):
                 f"_[cv_splitter={cv_splitter.__class__.__name__}]"
             )
         self._add_task(
-            _factory_forecasting_validation,
+            functools.partial(
+                _factory_forecasting_validation,
+                backend=self.backend,
+                backend_params=self.backend_params,
+            ),
             task_kwargs,
             task_id=task_id,
-            backend=self.backend,
-            backend_parms=self.backend_parms,
         )
