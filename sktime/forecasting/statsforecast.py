@@ -11,7 +11,7 @@ __all__ = [
     "StatsForecastAutoTheta",
     "StatsForecastMSTL",
 ]
-from typing import Dict, List, Optional, Union
+from typing import Optional, Union
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base.adapters._generalised_statsforecast import (
@@ -217,7 +217,7 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
         trend: bool = True,
         method: Optional[str] = None,
         offset_test_args: Optional[str] = None,
-        seasonal_test_args: Optional[Dict] = None,
+        seasonal_test_args: Optional[dict] = None,
         trace: bool = False,
         n_fits: int = 94,
         with_intercept: bool = True,
@@ -694,7 +694,7 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
 
     def __init__(
         self,
-        seasonal_periods: Union[int, List[int]],
+        seasonal_periods: Union[int, list[int]],
         use_boxcox: Optional[bool] = None,
         use_trend: Optional[bool] = None,
         use_damped_trend: Optional[bool] = None,
@@ -831,10 +831,10 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
 
     def __init__(
         self,
-        season_length: Union[int, List[int]],
+        season_length: Union[int, list[int]],
         trend_forecaster=None,
-        stl_kwargs: Optional[Dict] = None,
-        pred_int_kwargs: Optional[Dict] = None,
+        stl_kwargs: Optional[dict] = None,
+        pred_int_kwargs: Optional[dict] = None,
     ):
         self.season_length = season_length
         self.trend_forecaster = trend_forecaster
