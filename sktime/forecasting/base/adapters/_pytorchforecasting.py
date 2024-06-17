@@ -184,7 +184,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
             reference to self
         """
         self._max_prediction_length = np.max(fh.to_relative(self.cutoff))
-        if not np.min(fh.to_relative(self.cutoff)) > 0:
+        if not fh.is_all_out_of_sample(self.cutoff):
             raise NotImplementedError(
                 f"No in sample predict support, but found fh with in sample index: {fh}"
             )
