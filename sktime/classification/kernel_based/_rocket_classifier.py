@@ -54,7 +54,9 @@ class RocketClassifier(_DelegatedClassifier):
         The number of kernels for the Rocket transform.
     rocket_transform : str, optional, default="rocket"
         The type of Rocket transformer to use.
-        Valid inputs = ["rocket", "minirocket", "multirocket"]
+        Valid inputs = ["rocket", "minirocket", "multirocket"].
+        If "minirocket" or "multirocket" are chosen, num_kernels must be
+        at least 84.
     max_dilations_per_kernel : int, optional, default=32
         MiniRocket and MultiRocket only. The maximum number of dilations per kernel.
     n_features_per_kernel : int, optional, default=4
@@ -136,6 +138,15 @@ class RocketClassifier(_DelegatedClassifier):
     ):
         self.num_kernels = num_kernels
         self.rocket_transform = rocket_transform
+        
+        if num_kernels < 84:
+            if (rocket_transform == "multirocket")
+            or (rocket_transform == "minirocket"):
+                raise ValueError(
+                    f"num_kernels in {rocket_transform} must be at least 84, "
+                    f"but received {num_kernels}"
+                    )
+        
         self.max_dilations_per_kernel = max_dilations_per_kernel
         self.n_features_per_kernel = n_features_per_kernel
         self.use_multivariate = use_multivariate
@@ -236,4 +247,4 @@ class RocketClassifier(_DelegatedClassifier):
         if parameter_set == "results_comparison":
             return {"num_kernels": 100}
         else:
-            return {"num_kernels": 20}
+            return {"num_kernels": 20, "rocket_transform": "minirocket"}

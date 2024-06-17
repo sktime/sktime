@@ -2873,6 +2873,16 @@
         "bug",
         "code"
       ]
+    },
+    {
+      "login": "benshaw2",
+      "name": "Ben Shaw",
+      "avatar_url": "https://avatars.githubusercontent.com/u/54603799?v=4",
+      "profile": "https://github.com/benshaw2",
+      "contributions": [
+        "bug",
+        "code"
+      ]
     }
   ]
 }

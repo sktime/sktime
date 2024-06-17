@@ -40,6 +40,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
        number of random convolutional kernels. The calculated number of features is the
        nearest multiple of n_features_per_kernel(default 4)*84=336 < 50,000
        (2*n_features_per_kernel(default 4)*num_kernels(default 10,000)).
+       The value of this parameter must be at least 84.
     max_dilations_per_kernel : int, default=32
         maximum number of dilations per kernel.
     reference_length : int or str, default = ``'max'``
