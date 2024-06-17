@@ -5,6 +5,8 @@
 
 __author__ = ["mloning", "kejsitake", "fkiraly"]
 
+import random
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -38,6 +40,7 @@ from sktime.utils._testing.forecasting import (
     make_forecasting_problem,
 )
 from sktime.utils._testing.series import _make_series
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_fh
 
 # get all forecasters
@@ -632,9 +635,21 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     )
     def test_score(self, estimator_instance, n_columns, fh_int_oos):
         """Check score method."""
+        torch_installed = _check_soft_dependencies("torch", severity="none")
+        tf_installed = _check_soft_dependencies("tensorflow", severity="none")
         y = _make_series(n_columns=n_columns)
         y_train, y_test = temporal_train_test_split(y)
         estimator_instance.fit(y_train, fh=fh_int_oos)
+        if torch_installed:
+            import torch
+
+            torch.manual_seed(0)
+        if tf_installed:
+            import tensorflow as tf
+
+            tf.random.set_seed(0)
+        random.seed(0)
+        np.random.seed(0)
         y_pred = estimator_instance.predict()
 
         fh_idx = check_fh(fh_int_oos).to_indexer()  # get zero based index
@@ -643,6 +658,12 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         )
 
         # compare expected score with actual score
+        if torch_installed:
+            torch.manual_seed(0)
+        if tf_installed:
+            tf.random.set_seed(0)
+        random.seed(0)
+        np.random.seed(0)
         actual = estimator_instance.score(y_test.iloc[fh_idx], fh=fh_int_oos)
         assert actual == expected
 
