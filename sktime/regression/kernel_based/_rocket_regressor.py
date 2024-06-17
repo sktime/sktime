@@ -53,9 +53,7 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
         The number of kernels the for Rocket transform.
     rocket_transform : str, optional, default="rocket"
         The type of Rocket transformer to use.
-        Valid inputs = ["rocket", "minirocket", "multirocket"].
-        If "minirocket" or "multirocket" are chosen, num_kernels must be
-        at least 84.
+        Valid inputs = ["rocket", "minirocket", "multirocket"]
     max_dilations_per_kernel : int, optional, default=32
         MiniRocket and MultiRocket only. The maximum number of dilations per kernel.
     n_features_per_kernel : int, optional, default=4
@@ -79,6 +77,12 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
         The classes labels.
     estimator_ : RegressorPipeline
         RocketRegressor as a RegressorPipeline, fitted to data internally
+    num_kernels_ : int
+        The true number of kernels used in the rocket transform. When
+        rocket_transform="rocket", this is num_kernels. When rocket_transform
+        is either "minirocket" or "multirocket", this is num_kernels rounded
+        down to the nearest multiple of 84. It is 84 if num_kernels is less
+        than 84.
 
     See Also
     --------
@@ -130,13 +134,14 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
         self.num_kernels = num_kernels
         self.rocket_transform = rocket_transform
         
-        if num_kernels < 84:
-            if (rocket_transform == "multirocket")
-            or (rocket_transform == "minirocket"):
-                raise ValueError(
-                    f"num_kernels in {rocket_transform} must be at least 84, "
-                    f"but received {num_kernels}"
-                    )
+        if rocket_transform in ["multirocket", "minirocket"]:
+            if self.num_kernels < 84:
+                self.num_kernels_ = 84
+            else:
+                self.num_kernels_ = (self.num_kernels // 84) * 84
+                
+        else:
+            self.num_kernels_ = num_kernels
         
         self.max_dilations_per_kernel = max_dilations_per_kernel
         self.n_features_per_kernel = n_features_per_kernel
