@@ -713,7 +713,7 @@ class ForecastingPipeline(_Pipeline):
 #     for _, _, transformer in self._iter_transformers():
 #         Zt = transformer.transform(Zt)
 #     return Zt
-
+#
 # def inverse_transform(self, Z, X=None):
 #     self.check_is_fitted()
 #     Zt = check_series(Z, enforce_multivariate=True)
