@@ -22,6 +22,28 @@ def convert_pandas_to_listDataset(pd_dataframe: pd.DataFrame, is_single: bool = 
     ------
     ValueError
         If is_single is True, but multiple rows of entries exist in `pd_dataframe`
+
+    Example
+    --------
+    >>> import pandas as pd
+    >>> cols = ["instances", "timepoints"] + [f"var_{i}" for i in range(2)]
+    >>> Xlist = [
+    ...    pd.DataFrame([[0, 0, 1, 4], [0, 1, 2, 5], [0, 2, 3, 6]], columns=cols),
+    ...    pd.DataFrame([[1, 0, 1, 4], [1, 1, 2, 55], [1, 2, 3, 6]], columns=cols),
+    ...    pd.DataFrame([[2, 0, 1, 42], [2, 1, 2, 5], [2, 2, 3, 6]], columns=cols),
+    ... ]
+
+    >>> X = pd.concat(Xlist)
+
+    # Setting the timepoints in a Pandas acceptable format
+    >>> X['timepoints'] = pd.date_range(start='2023-01-01', periods=len(X), freq='D')
+
+    # Resetting the indexes to create the multiindexed DF
+    >>> X = X.set_index(["instances", "timepoints"])
+
+    # Finally, converting to a GluonTS ListDataset!
+    >>> from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
+    >>> X_list_dataset = convert_pandas_to_listDataset(X)
     """
     from gluonts.dataset.common import ListDataset
     from gluonts.dataset.field_names import FieldName
