@@ -310,7 +310,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
             return_decoder_lengths=True,
             trainer_kwargs=(
                 {"default_root_dir": self._random_log_dir}
-                if "random_log_path" in self.__dict__.keys()
+                if "_random_log_dir" in self.__dict__.keys()
                 else None
             ),
         )
