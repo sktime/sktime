@@ -41,7 +41,8 @@ class _DartsAdapter(BaseForecaster):
         "requires-fh-in-fit": False,
         "enforce_index_type": pd.DatetimeIndex,
         "handles-missing-data": False,
-        "capability:predint:insample": True,
+        "capability:pred_int": False,
+        "capability:insample": False,
     }
 
     def __init__(
@@ -170,7 +171,6 @@ class _DartsAdapter(BaseForecaster):
         self : reference to self
         """
         del fh  # avoid being detected as unused by ``vulture`` like tools
-
         endogenous_actuals = self.convert_dataframe_to_timeseries(y)
         unknown_exogenous, known_exogenous = self.convert_exogenous_dataset(X)
         self._forecaster = self._create_forecaster()
@@ -210,9 +210,13 @@ class _DartsAdapter(BaseForecaster):
         y_pred : pd.DataFrame
             Point predictions
         """
+        if not fh.is_all_out_of_sample(cutoff=self.cutoff):
+            raise NotImplementedError("in-sample prediction is currently not supported")
+        self.check_is_fitted
         unknown_exogenous, known_exogenous = self.convert_exogenous_dataset(X)
         absolute_fh = fh.to_absolute(self.cutoff)
         maximum_forecast_horizon = fh.to_relative(self.cutoff)[-1]
+
         endogenous_point_predictions = self._forecaster.predict(
             maximum_forecast_horizon,
             past_covariates=unknown_exogenous,

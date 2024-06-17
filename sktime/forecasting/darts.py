@@ -112,6 +112,7 @@ class DartsXGBModel(_DartsAdapter):
         "scitype:y": "both",
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
+        "capability:insample": False,
     }
 
     def __init__(
