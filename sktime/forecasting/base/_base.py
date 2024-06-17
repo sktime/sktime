@@ -2762,7 +2762,12 @@ class _BaseGlobalForecaster(BaseForecaster):
         )
         if not gf and y is not None:
             ValueError("no global forecasting support!")
+
         self.check_is_fitted()
+        if y is None:
+            self._global_forecasting = False
+        else:
+            self._global_forecasting = True
 
         # input checks and conversions
 
