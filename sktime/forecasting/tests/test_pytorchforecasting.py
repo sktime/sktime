@@ -1,7 +1,5 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests for interfacing estimators from pytorch-forecasting."""
-import time
-
 import pytest
 
 from sktime.datatypes._utilities import get_cutoff
@@ -63,24 +61,18 @@ def test_load_model_from_disk(model_class) -> None:
     max_prediction_length = 3
     fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
 
-    # fit the model and log the time
-    time_start = time.time()
+    # fit the model to generate the checkpoint
     model.fit(y_train, X_train, fh=fh)
-    time_end = time.time()
-    real_fit_time = time_end - time_start
-
     # get the best model path
     best_model_path = model._trainer.checkpoint_callback.best_model_path
 
     # reload the model from best_model_path
     model = model_class(model_path=best_model_path, **model_class.get_test_params()[0])
-    # call fit function and log the time
-    time_start = time.time()
+    # call fit function (no real fitting will happen)
     model.fit(y_train, X_train, fh=fh)
-    time_end = time.time()
-    # verify the actual fit is skiped by checking the time duration
-    assert time_end - time_start < 0.1 * real_fit_time
+
     # verify the actual fit is skiped by checking the _trainer attribute
+    # there should be no _trainer attribute
     try:
         model._trainer
         raise AssertionError("Trainer should not be initialized")
