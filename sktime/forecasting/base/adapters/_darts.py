@@ -350,6 +350,8 @@ def _handle_input_index(dataset: pd.DataFrame) -> pd.DataFrame:
         )
         return dataset_copy
 
+    return dataset_copy
+
 
 def _is_int64_type(index: pd.Index) -> bool:
     """Check if the index is an Int64Index type for pandas older versions.
