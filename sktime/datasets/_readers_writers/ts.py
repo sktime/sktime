@@ -600,8 +600,7 @@ def load_from_tsfile_to_dataframe(
             raise OSError("file contained metadata but no data")
         # Create a DataFrame from the data parsed above
         data_dict = {
-            f"dim_{dim}": pd.Series(instance_list[dim], dtype="float64")
-            for dim in range(num_dimensions)
+            f"dim_{dim}": pd.Series(instance_list[dim]) for dim in range(num_dimensions)
         }
         data = pd.DataFrame(data_dict)
 
