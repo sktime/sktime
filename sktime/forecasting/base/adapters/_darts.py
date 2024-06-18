@@ -231,14 +231,13 @@ class _DartsAdapter(BaseForecaster):
         else:
             endogenous_point_predictions = endogenous_point_predictions.pd_dataframe()
 
-            if pd.api.types.is_integer_dtype(expected_index):
+            if _is_int64_type(expected_index):
                 if X is not None:
-                    if isinstance(X.index, pd.core.indexes.numeric.NumericIndex):
-                        endogenous_point_predictions.index = (
-                            pd.core.indexes.numeric.NumericIndex(
-                                endogenous_point_predictions.index
-                            )
-                        )
+                    from pandas.core.indexes.numeric import Int64Index
+
+                    endogenous_point_predictions.index = Int64Index(
+                        endogenous_point_predictions.index
+                    )
 
             if isinstance(expected_index, pd.PeriodIndex):
                 endogenous_point_predictions.index = (
@@ -343,16 +342,34 @@ def _handle_input_index(dataset: pd.DataFrame) -> pd.DataFrame:
         dataset_copy.index = dataset_copy.index.to_timestamp()
         return dataset_copy
 
-    if pd.api.types.is_integer_dtype(dataset_copy.index):
-        if isinstance(dataset_copy.index, pd.core.indexes.numeric.NumericIndex):
-            dataset_copy.index = pd.RangeIndex(
-                start=dataset_copy.index.min(),
-                stop=dataset_copy.index.max() + 1,
-                step=dataset_copy.index[1] - dataset_copy.index[0],
-            )
-            return dataset_copy
-        dataset_copy.index = pd.RangeIndex(start=0, stop=len(dataset_copy))
+    if _is_int64_type(dataset_copy.index):
+        dataset_copy.index = pd.RangeIndex(
+            start=dataset_copy.index.min(),
+            stop=dataset_copy.index.max() + 1,
+            step=dataset_copy.index[1] - dataset_copy.index[0],
+        )
         return dataset_copy
+
+
+def _is_int64_type(index: pd.Index) -> bool:
+    """Check if the index is an Int64Index type for pandas older versions.
+
+    Parameters
+    ----------
+    index : pd.Index
+        Index to check
+
+    Returns
+    -------
+    bool
+        True if the index is numeric, False otherwise
+    """
+    try:
+        from pandas.core.indexes.numeric import Int64Index
+
+        return isinstance(index, Int64Index)
+    except ImportError:
+        return False
 
 
 __all__ = ["_DartsAdapter"]
