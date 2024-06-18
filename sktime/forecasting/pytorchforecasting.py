@@ -30,6 +30,12 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
     validation_to_dataloader_params : Dict[str, Any] (default=None)
         parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
         by default {"train": False}
+    model_path: string (default=None)
+        try to load a existing model without fitting. Calling the fit function is
+        still needed, but no real fitting will be performed.
+    random_log_path: bool (default=False)
+        use random root directory for logging. This parameter is for CI test in
+        Github action, not designed for end users.
 
     Examples
     --------
@@ -334,6 +340,12 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
     validation_to_dataloader_params : Dict[str, Any] (default=None)
         parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
         by default {"train": False}
+    model_path: string (default=None)
+        try to load a existing model without fitting. Calling the fit function is
+        still needed, but no real fitting will be performed.
+    random_log_path: bool (default=False)
+        use random root directory for logging. This parameter is for CI test in
+        Github action, not designed for end users.
 
     Examples
     --------
@@ -602,6 +614,12 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
     validation_to_dataloader_params : Dict[str, Any] (default=None)
         parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
         by default {"train": False}
+    model_path: string (default=None)
+        try to load a existing model without fitting. Calling the fit function is
+        still needed, but no real fitting will be performed.
+    random_log_path: bool (default=False)
+        use random root directory for logging. This parameter is for CI test in
+        Github action, not designed for end users.
 
     Examples
     --------
@@ -879,6 +897,12 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
     validation_to_dataloader_params : Dict[str, Any] (default=None)
         parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
         by default {"train": False}
+    model_path: string (default=None)
+        try to load a existing model without fitting. Calling the fit function is
+        still needed, but no real fitting will be performed.
+    random_log_path: bool (default=False)
+        use random root directory for logging. This parameter is for CI test in
+        Github action, not designed for end users.
 
     Examples
     --------

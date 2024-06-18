@@ -40,7 +40,11 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
         by default {"train": False}
     model_path: string (default=None)
-        try to load a existing model without fitting.
+        try to load a existing model without fitting. Calling the fit function is
+        still needed, but no real fitting will be performed.
+    random_log_path: bool (default=False)
+        use random root directory for logging. This parameter is for CI test in
+        Github action, not designed for end users.
 
     References
     ----------
@@ -185,7 +189,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
             reference to self
         """
         self._max_prediction_length = np.max(fh.to_relative(self.cutoff))
-        if not np.min(fh.to_relative(self.cutoff)) > 0:
+        if not fh.is_all_out_of_sample(self.cutoff):
             raise NotImplementedError(
                 f"No in sample predict support, but found fh with in sample index: {fh}"
             )
