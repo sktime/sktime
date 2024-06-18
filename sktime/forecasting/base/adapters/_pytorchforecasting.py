@@ -39,7 +39,11 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
         by default {"train": False}
     model_path: string (default=None)
-        try to load a existing model without fitting.
+        try to load a existing model without fitting. Calling the fit function is
+        still needed, but no real fitting will be performed.
+    random_log_path: bool (default=False)
+        use random root directory for logging. This parameter is for CI test in
+        Github action, not designed for end users.
 
     References
     ----------
