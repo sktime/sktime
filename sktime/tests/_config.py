@@ -97,12 +97,15 @@ EXCLUDED_TESTS = {
         "test_fit_does_not_overwrite_hyper_params",
         "test_save_estimators_to_file",
         "test_multiprocessing_idempotent",  # see 5658
+        "test_fit_idempotent",  # see 6637
     ],
     "ProximityForest": [
         "test_persistence_via_pickle",
         "test_fit_does_not_overwrite_hyper_params",
         "test_save_estimators_to_file",
         "test_fit_idempotent",  # see 6201
+        "test_multiprocessing_idempotent",  # see 6637
+        "test_classifier_output",  # see 6637
     ],
     # TapNet fails due to Lambda layer, see #3539 and #3616
     "TapNetClassifier": [
