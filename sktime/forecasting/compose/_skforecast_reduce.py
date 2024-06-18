@@ -1,14 +1,13 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements back-adapters for skforecast reduction models."""
-import typing
+from typing import Callable, List, Optional, Union
 
 import numpy as np
 import pandas as pd
 
-from sktime.datatypes._utilities import get_cutoff
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
-__author__ = ["yarnabrina"]
+__author__ = ["Abhay-Lejith", "yarnabrina"]
 
 
 class SkforecastAutoreg(BaseForecaster):
@@ -50,6 +49,13 @@ class SkforecastAutoreg(BaseForecaster):
         ``predict_interval()``.
     fit_kwargs : dict, default ``None``
         Additional arguments to be passed to the ``fit`` method of the regressor.
+    binner_kwargs : dict, default `None`
+        Additional arguments to pass to the `KBinsDiscretizer` used to discretize the
+        residuals into k bins according to the predicted values associated with each
+        residual. The `encode' argument is always set to 'ordinal' and `dtype' to
+        np.float64.
+    forecaster_id : str, int, default `None`
+        Name used as an identifier of the forecaster.
 
     References
     ----------
@@ -83,8 +89,6 @@ class SkforecastAutoreg(BaseForecaster):
     >>> from sklearn.ensemble import RandomForestRegressor
     >>> from sktime.datasets import load_longley
     >>> y, X = load_longley()
-    >>> y = y.reset_index(drop=True)  # period index is not supported in ``skforecast``
-    >>> X = X.reset_index(drop=True)  # period index is not supported in ``skforecast``
     >>> y_train = y.head(n=12)
     >>> y_test = y.tail(n=4)
     >>> X_train = X.head(n=12)
@@ -105,12 +109,11 @@ class SkforecastAutoreg(BaseForecaster):
     """
 
     _tags = {
-        "authors": ["yarnabrina"],
+        "authors": ["Abhay-Lejith", "yarnabrina"],
         "maintainers": ["yarnabrina"],
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
-        "enforce_index_type": [pd.DatetimeIndex, pd.RangeIndex],
         "handles-missing-data": False,
         "capability:insample": False,
         "capability:pred_int": True,
@@ -122,12 +125,14 @@ class SkforecastAutoreg(BaseForecaster):
     def __init__(
         self: "SkforecastAutoreg",
         regressor: object,
-        lags: typing.Union[int, np.ndarray, list],
-        transformer_y: typing.Optional[object] = None,
-        transformer_exog: typing.Optional[object] = None,
-        weight_func: typing.Optional[typing.Callable] = None,
-        differentiation: typing.Optional[int] = None,
-        fit_kwargs: typing.Optional[dict] = None,
+        lags: Union[int, np.ndarray, list],
+        transformer_y: Optional[object] = None,
+        transformer_exog: Optional[object] = None,
+        weight_func: Optional[Callable] = None,
+        differentiation: Optional[int] = None,
+        fit_kwargs: Optional[dict] = None,
+        binner_kwargs: Optional[dict] = None,
+        forecaster_id: Optional[Union[str, int]] = None,
     ) -> None:
         self.regressor = regressor
         self.lags = lags
@@ -136,6 +141,8 @@ class SkforecastAutoreg(BaseForecaster):
         self.weight_func = weight_func
         self.differentiation = differentiation
         self.fit_kwargs = fit_kwargs
+        self.binner_kwargs = binner_kwargs
+        self.forecaster_id = forecaster_id
 
         super().__init__()
 
@@ -151,7 +158,7 @@ class SkforecastAutoreg(BaseForecaster):
 
         self._regressor = clone(self.regressor)
 
-        if self.transformer_exog:
+        if self.transformer_y:
             self._transformer_y = clone(self.transformer_y)
 
         if self.transformer_exog:
@@ -169,10 +176,12 @@ class SkforecastAutoreg(BaseForecaster):
             weight_func=self.weight_func,
             differentiation=self.differentiation,
             fit_kwargs=self.fit_kwargs,
+            binner_kwargs=self.binner_kwargs,
+            forecaster_id=self.forecaster_id,
         )
 
     @staticmethod
-    def _coerce_column_names(X: pd.DataFrame):
+    def _coerce_column_names(X: Optional[pd.DataFrame]):
         if X is None:
             return None
 
@@ -206,8 +215,8 @@ class SkforecastAutoreg(BaseForecaster):
     def _fit(
         self: "SkforecastAutoreg",
         y: pd.Series,
-        X: typing.Optional[pd.DataFrame],
-        fh: typing.Optional[ForecastingHorizon],
+        X: Optional[pd.DataFrame],
+        fh: Optional[ForecastingHorizon],
     ):
         """Fit forecaster to training data.
 
@@ -236,6 +245,8 @@ class SkforecastAutoreg(BaseForecaster):
 
         y_new = y
         X_new = X
+        # skforecast does not support PeriodIndex and Integer Index.
+        # So converting to supported index types here.
         if not isinstance(y.index, (pd.RangeIndex, pd.DatetimeIndex)):
             if isinstance(y.index, pd.PeriodIndex):
                 y_new = self._coerce_period_to_datetime_index(y)
@@ -252,13 +263,12 @@ class SkforecastAutoreg(BaseForecaster):
                     (int dtype). Found index of type: {type(y.index)}"""
                 )
 
-        self._new_cutoff = get_cutoff(y_new, return_index=True)
         self._forecaster.fit(y_new, exog=self._coerce_column_names(X_new))
 
         return self
 
     def _get_horizon_details(
-        self: "SkforecastAutoreg", fh: typing.Optional[ForecastingHorizon]
+        self: "SkforecastAutoreg", fh: Optional[ForecastingHorizon]
     ):
         if not fh.is_all_out_of_sample(self.cutoff):
             raise NotImplementedError(
@@ -279,8 +289,8 @@ class SkforecastAutoreg(BaseForecaster):
 
     def _predict(
         self: "SkforecastAutoreg",
-        fh: typing.Optional[ForecastingHorizon],
-        X: typing.Optional[pd.DataFrame],
+        fh: Optional[ForecastingHorizon],
+        X: Optional[pd.DataFrame],
     ):
         """Forecast time series at future horizon.
 
@@ -338,9 +348,9 @@ class SkforecastAutoreg(BaseForecaster):
 
     def _predict_quantiles(
         self: "SkforecastAutoreg",
-        fh: typing.Optional[ForecastingHorizon],
-        X: typing.Optional[pd.DataFrame],
-        alpha: typing.List[float],
+        fh: Optional[ForecastingHorizon],
+        X: Optional[pd.DataFrame],
+        alpha: List[float],
     ):
         """Compute/return prediction quantiles for a forecast.
 
@@ -356,7 +366,7 @@ class SkforecastAutoreg(BaseForecaster):
 
         Parameters
         ----------
-        fh : guaranteed to be ForecastingHorizon
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
             The forecasting horizon with the steps ahead to to predict.
         X :  sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
@@ -410,10 +420,11 @@ class SkforecastAutoreg(BaseForecaster):
         ).transpose()
 
         for quantile in alpha:
-            quantile_predictions[(var_name, quantile)] = bootstrap_quantiles[
-                quantile
-            ].iloc[horizon_positions.to_list()]
-
+            quantile_predictions[(var_name, quantile)] = (
+                bootstrap_quantiles[quantile]
+                .iloc[horizon_positions.to_list()]
+                .to_list()
+            )
         return quantile_predictions
 
     @classmethod
@@ -439,13 +450,20 @@ class SkforecastAutoreg(BaseForecaster):
 
         from sklearn.ensemble import RandomForestRegressor
         from sklearn.linear_model import LinearRegression
+        from sklearn.preprocessing import StandardScaler
 
-        params = [
-            {"regressor": LinearRegression(), "lags": 2},
-            {"regressor": RandomForestRegressor(), "lags": [1, 3]},
-        ]
+        param1 = {
+            "regressor": LinearRegression(),
+            "lags": 2,
+            "transformer_exog": StandardScaler(),
+        }
+        param2 = {
+            "regressor": RandomForestRegressor(),
+            "lags": [1, 3],
+            "differentiation": 2,
+        }
 
-        return params
+        return [param1, param2]
 
 
 __all__ = ["SkforecastAutoreg"]
