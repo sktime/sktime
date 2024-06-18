@@ -602,7 +602,7 @@ def load_from_tsfile_to_dataframe(
         data_dict = {
             f"dim_{dim}": pd.Series(instance_list[dim]) for dim in range(num_dimensions)
         }
-        data = pd.DataFrame(data_dict)
+        data = pd.DataFrame(data_dict, dtype="float64")
 
         # Check if we should return any associated class labels separately
         if class_labels:
