@@ -1,6 +1,9 @@
 """Deep Learning Forecasters using LTSF-Linear Models."""
 
-from sktime.forecasting.base.adapters._pytorch import BaseDeepNetworkPyTorch, BaseFormerNetworkPyTorch
+from sktime.forecasting.base.adapters._pytorch import (
+    BaseDeepNetworkPyTorch,
+    BaseFormerNetworkPyTorch,
+)
 
 
 class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
@@ -502,7 +505,114 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
 
 
 class LTSFTransfomer(BaseFormerNetworkPyTorch):
-    """LTSF-Transformer Forecaster."""
+    """LTSF-Transformer Forecaster.
+
+    Parameters
+    ----------
+    seq_len : int
+        Length of the input sequence.
+    pred_len : int
+        Length of the prediction sequence.
+    label_len : int, optional (default=2)
+        Length of the label sequence.
+    num_epochs : int, optional (default=16)
+        Number of epochs for training.
+    batch_size : int, optional (default=8)
+        Size of the batch.
+    in_channels : int, optional (default=1)
+        Number of input channels.
+    individual : bool, optional (default=False)
+        Whether to use individual models for each series.
+    criterion : str or callable, optional
+        Loss function to use.
+    criterion_kwargs : dict, optional
+        Additional keyword arguments for the loss function.
+    optimizer : str or callable, optional
+        Optimizer to use.
+    optimizer_kwargs : dict, optional
+        Additional keyword arguments for the optimizer.
+    lr : float, optional (default=0.001)
+        Learning rate.
+    custom_dataset_train : torch.utils.data.Dataset, optional
+        Custom dataset for training.
+    custom_dataset_pred : torch.utils.data.Dataset, optional
+        Custom dataset for prediction.
+    output_attention : bool, optional (default=False)
+        Whether to output attention weights.
+    embed_type : int, optional (default=0)
+        Type of embedding to use.
+    embed : str, optional (default="fixed")
+        Type of embedding.
+    enc_in : int, optional (default=7)
+        Number of encoder input features.
+    dec_in : int, optional (default=7)
+        Number of decoder input features.
+    d_model : int, optional (default=512)
+        Dimension of the model.
+    n_heads : int, optional (default=8)
+        Number of attention heads.
+    d_ff : int, optional (default=2048)
+        Dimension of the feed-forward network.
+    e_layers : int, optional (default=3)
+        Number of encoder layers.
+    d_layers : int, optional (default=2)
+        Number of decoder layers.
+    factor : int, optional (default=5)
+        Factor for attention.
+    dropout : float, optional (default=0.1)
+        Dropout rate.
+    activation : str, optional (default="relu")
+        Activation function.
+    c_out : int, optional (default=7)
+        Number of output features.
+    freq : str, optional (default="h")
+        Frequency of the data.
+
+    Examples
+    --------
+    >>> from sktime.forecasting.ltsf import LTSFTransfomer, LTSFLinearForecaster
+    >>> from sktime.datasets import load_longley
+    >>>
+    >>> batch_size = 5
+    >>> seq_len = 5
+    >>> label_len = 2
+    >>> pred_len = 3
+    >>> num_features = 1
+    >>>
+    >>> y, X = load_longley()
+    >>> split_point = len(y) - pred_len
+    >>> X_train, X_test = X[:split_point], X[split_point:]
+    >>> y_train, y_test = y[:split_point], y[split_point:]
+    >>>
+    >>> model = LTSFTransfomer(
+    ... 	seq_len = seq_len,
+    ... 	pred_len = pred_len,
+    ... 	label_len = label_len,
+    ... 	output_attention = False,
+    ... 	embed_type = 0,
+    ... 	embed = "fiixed",
+    ... 	enc_in = num_features,
+    ... 	dec_in = num_features,
+    ... 	d_model = 512,
+    ... 	n_heads = 8,
+    ... 	d_ff = 2048,
+    ... 	e_layers = 1,
+    ... 	d_layers = 1,
+    ... 	factor = 5,
+    ... 	dropout = 0.1,
+    ... 	activation = "relu",
+    ... 	c_out = pred_len,
+    ... 	freq = 'h',
+    ... 	num_epochs=1,
+    ... 	batch_size=batch_size,
+    >>> )
+    >>>
+    >>> model.fit(y_train, X_train, fh=[1, 2, 3])
+    >>> pred = model.predict(X=X_test)
+
+
+
+    """
 
     def __init__(
         self,

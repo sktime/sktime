@@ -317,44 +317,7 @@ class LTSFNLinearNetwork:
 
 
 class LTSFTransformerNetwork:
-    """LTSF-Transformer Forecaster.
-
-    >>> from sktime.forecasting.ltsf import LTSFTransfomer, LTSFLinearForecaster
-    >>> from sktime.datasets import load_airline, load_longley
-
-    >>> y, X = load_longley()
-
-    >>> batch_size = 9
-    >>> seq_len = 5
-    >>> pred_len = 2
-    >>> num_features = 1
-    >>> num_X_features = 5
-
-    >>> model = LTSFTransfomer(
-        seq_len = seq_len,
-        pred_len = pred_len,
-        output_attention = False,
-        embed_type = 0,
-        embed = "fiixed",
-        enc_in = num_features,
-        dec_in = num_features,
-        d_model = 512,
-        n_heads = 8,
-        d_ff = 2048,
-        e_layers = 1,
-        d_layers = 1,
-        factor = 5,
-        dropout = 0.1,
-        activation = "relu",
-        c_out = num_features,
-        freq = 'h',
-        num_epochs=1
-    >>> )
-    >>> model.fit(y, X, fh=[1, 2])
-    
-
-
-    """
+    """LTSF-Transformer Forecaster."""
 
     def __init__(self, configs):
         self.configs = configs
@@ -532,10 +495,10 @@ class LTSFTransformerNetwork:
                 output of Linear Model. x.shape = [Batch, Output Length, Channel]
             """
 
-            x_enc = x['x_enc']
-            x_mark_enc = x['x_mark_enc']
-            x_dec = x['x_dec']
-            x_mark_dec = x['x_mark_dec']
+            x_enc = x["x_enc"]
+            x_mark_enc = x["x_mark_enc"]
+            x_dec = x["x_dec"]
+            x_mark_dec = x["x_mark_dec"]
 
             return self._forward(x_enc, x_mark_enc, x_dec, x_mark_dec)
 

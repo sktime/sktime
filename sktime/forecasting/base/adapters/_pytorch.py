@@ -1,9 +1,9 @@
 import abc
 from abc import ABC
+from copy import deepcopy
 
 import numpy as np
 import pandas as pd
-from copy import deepcopy
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.networks.ltsf.data.dataset import Dataset_Custom
@@ -395,20 +395,16 @@ class BaseFormerNetworkPyTorch(BaseForecaster, ABC):
                 "the forecaster."
             )
 
-        if X is None:
-            dataloader = self.build_pytorch_pred_dataloader(self._y, fh)
-        else:
-            dataloader = self.build_pytorch_pred_dataloader(X, fh)
+        dataloader = self.build_pytorch_pred_dataloader(X)
 
         y_pred = []
         for x, _ in dataloader:
             y_pred.append(self.network(x).detach())
-        y_pred = cat(y_pred, dim=0).view(-1, y_pred[0].shape[-1]).numpy()
+        y_pred = cat(y_pred, dim=0).view(-1, y_pred[0].shape[-1]).numpy().T
         y_pred = y_pred[fh._values.values - 1]
         y_pred = pd.DataFrame(
             y_pred, columns=self._y.columns, index=fh.to_absolute_index(self.cutoff)
         )
-
         return y_pred
 
     def build_pytorch_train_dataloader(self, y, X):
@@ -431,7 +427,10 @@ class BaseFormerNetworkPyTorch(BaseForecaster, ABC):
             dataset = Dataset_Custom(
                 X=X,
                 y=y,
-                target="target", scale=False, size=[self.network.seq_len, self.label_len, self.network.pred_len],
+                target="target",
+                train_only=True,
+                scale=False,
+                size=[self.network.seq_len, self.label_len, self.network.pred_len],
             )
             # dataset = PyTorchFormerTrainDataset(
             #     y=y,
@@ -442,7 +441,7 @@ class BaseFormerNetworkPyTorch(BaseForecaster, ABC):
 
         return DataLoader(dataset, self.batch_size, shuffle=False)
 
-    def build_pytorch_pred_dataloader(self, y, fh):
+    def build_pytorch_pred_dataloader(self, X):
         """Build PyTorch DataLoader for prediction."""
         from torch.utils.data import DataLoader
 
@@ -450,7 +449,7 @@ class BaseFormerNetworkPyTorch(BaseForecaster, ABC):
             if hasattr(self.custom_dataset_pred, "build_dataset") and callable(
                 self.custom_dataset_pred.build_dataset
             ):
-                self.custom_dataset_train.build_dataset(y)
+                self.custom_dataset_train.build_dataset(X)
                 dataset = self.custom_dataset_train
             else:
                 raise NotImplementedError(
@@ -459,10 +458,26 @@ class BaseFormerNetworkPyTorch(BaseForecaster, ABC):
                     "documentation."
                 )
         else:
-            dataset = PyTorchPredDataset(
-                y=y[-self.network.seq_len :],
-                seq_len=self.network.seq_len,
+            # create temporary place holder for masked zeros
+            temp_place_holder = pd.DataFrame(0, index=X.index, columns=self._y.columns)
+
+            # temp_place_holder = pd.DataFrame(np.zeros_like(self._y)[:len(X)], index=X.index[-len(X):])
+            dataset = Dataset_Custom(
+                X=pd.concat([self._X, X], axis=0),
+                y=pd.concat([self._y, temp_place_holder], axis=0),
+                target="target",
+                flag="test",
+                train_only=True,
+                scale=False,
+                size=[self.network.seq_len, self.label_len, self.network.pred_len],
             )
+
+            # dataset = Dataset_Pred(
+            #     hist_X = self._X,
+            #     hist_y = self._y,
+            #     X = X,
+            #     target="target", train_only=True, scale=False, size=[self.network.seq_len, self.label_len, self.network.pred_len],
+            # )
 
         return DataLoader(
             dataset,
@@ -498,7 +513,6 @@ class PyTorchFormerTrainDataset(Dataset):
         from torch import from_numpy, tensor
 
         # self.X, self.y = (16, 5) (16)
-
         # prepare the following inputs for transformer forward pass
         # x_enc         # (batch_size, seq_len, num_features)       input sequence for the encoder
         # x_mark_enc    # (batch_size, seq_len, num_time_features)  time embeddings (or positional embeddings) of input sequence for encoder
@@ -517,7 +531,7 @@ class PyTorchFormerTrainDataset(Dataset):
         x_mark_dec = tensor(self.X[dec_start_i:dec_end_i]).float()
 
         y_true = deepcopy(x_dec[-1])
-        x_dec[-1] = 1       # mask the last one to be 0
+        x_dec[-1] = 1  # mask the last one to be 0
 
         return (
             {
