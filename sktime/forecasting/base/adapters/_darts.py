@@ -223,15 +223,15 @@ class _DartsAdapter(BaseForecaster):
             future_covariates=known_exogenous,
             num_samples=1,
         )
-        original_index = fh.get_expected_pred_idx(self.cutoff)
-        abs_idx = absolute_fh.to_pandas().astype(original_index.dtype)
+        expected_index = fh.get_expected_pred_idx(self.cutoff)
+        abs_idx = absolute_fh.to_pandas().astype(expected_index.dtype)
         if self.get_class_tag("y_inner_mtype") == "pd.Series":
             # ToDo: handle the pd.Series
             pass
         else:
             endogenous_point_predictions = endogenous_point_predictions.pd_dataframe()
 
-            if pd.api.types.is_integer_dtype(original_index):
+            if pd.api.types.is_integer_dtype(expected_index):
                 if X is not None:
                     if isinstance(X.index, pd.core.indexes.numeric.NumericIndex):
                         endogenous_point_predictions.index = (
@@ -240,19 +240,19 @@ class _DartsAdapter(BaseForecaster):
                             )
                         )
 
-            if isinstance(original_index, pd.PeriodIndex):
+            if isinstance(expected_index, pd.PeriodIndex):
                 endogenous_point_predictions.index = (
-                    endogenous_point_predictions.index.to_period(original_index.freqstr)
+                    endogenous_point_predictions.index.to_period(expected_index.freqstr)
                 )
-            if isinstance(original_index, pd.RangeIndex):
+            if isinstance(expected_index, pd.RangeIndex):
                 endogenous_point_predictions.index = pd.RangeIndex(
                     start=0, stop=len(endogenous_point_predictions)
                 )
-            if isinstance(original_index, pd.DatetimeIndex):
+            if isinstance(expected_index, pd.DatetimeIndex):
                 endogenous_point_predictions.index = pd.date_range(
-                    start=original_index[0],
+                    start=expected_index[0],
                     periods=len(endogenous_point_predictions),
-                    freq=original_index.freq,
+                    freq=expected_index.freq,
                 )
 
             if (
@@ -312,12 +312,12 @@ class _DartsAdapter(BaseForecaster):
         multi_index = pd.MultiIndex.from_product(
             [variable_names, alpha], names=["variable", "quantile"]
         )
-        original_index = fh.get_expected_pred_idx(self.cutoff)
+        expected_index = fh.get_expected_pred_idx(self.cutoff)
         endogenous_quantile_predictions.index = (
-            endogenous_quantile_predictions.index.astype(original_index.dtype)
+            endogenous_quantile_predictions.index.astype(expected_index.dtype)
         )
 
-        abs_idx = absolute_fh.to_pandas().astype(original_index.dtype)
+        abs_idx = absolute_fh.to_pandas().astype(expected_index.dtype)
         endogenous_quantile_predictions.columns = multi_index
         return endogenous_quantile_predictions.loc[abs_idx]
 
@@ -344,7 +344,7 @@ def _handle_input_index(dataset: pd.DataFrame) -> pd.DataFrame:
         return dataset_copy
 
     if pd.api.types.is_integer_dtype(dataset_copy.index):
-        if isinstance(dataset_copy.index, pd.core.indexes.numeric.Int64Index):
+        if isinstance(dataset_copy.index, pd.core.indexes.numeric.NumericIndex):
             dataset_copy.index = pd.RangeIndex(
                 start=dataset_copy.index.min(),
                 stop=dataset_copy.index.max() + 1,
