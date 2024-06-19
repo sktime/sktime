@@ -1,3 +1,5 @@
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements EnbPIForecaster."""
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
@@ -5,28 +7,44 @@ from sklearn.utils import check_random_state
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.naive import NaiveForecaster
+from sktime.libs.aws_fortuna.enbpi import EnbPI
+
+__all__ = ["EnbPIForecaster"]
+__author__ = ["benheid"]
 
 
 class EnbPIForecaster(BaseForecaster):
     """
     Ensemble Bootstrap Prediction Interval Forecaster.
 
-    The forecaster combines sktime forecasters, with tsbootratp bootsrappers
+    The forecaster combines sktime forecasters, with tsbootstrap bootsrappers
     and the EnbPI algorithm [1] implemented in fortuna using the
     tutorial from this blogpost [2].
 
-    The forecaster is based upon the bagging forecaster and performs
+    The forecaster is similar to the the bagging forecaster and performs
     internally the following steps:
     For training:
-        1. Fit a forecaster to each bootstrap sample
-        2. Predict on the holdout set using each fitted forecaster
+        1. Uses a tsbootstrap transformer to generate bootstrap samples
+           and returning the corresponding indices of the original time
+           series
+        2. Fit a forecaster on the first n - max(fh) values of each
+           bootstrap sample
+        3. Uses each forecaster to predict the last max(fh) values of each
+           bootstrap sample
 
     For Prediction:
-        1. Average the predictions of each fitted forecaster
+        1. Average the predictions of each fitted forecaster using the
+           aggregation function
 
     For Probabilistic Forecasting:
-        1. Average the prediction of each fitted forecaster
-        2. Use the EnbPI algorithm to calculate the prediction intervals
+        1. Calculate the point forecast by average the prediction of each
+           fitted forecaster using the aggregation function
+        2. Passes the indices of the bootstrapped samples, the predictions
+           from the fit call, the point prediction of the test set, and
+           the desired error rate to the EnbPI algorithm to calculate the
+           prediction intervals.
+           For more information on the EnbPI algorithm, see the references
+           and the documentation of the EnbPI class in aws-fortuna.
 
 
     Parameters
@@ -37,6 +55,9 @@ class EnbPIForecaster(BaseForecaster):
         The transformer to fit to the target series to generate bootstrap samples.
     random_state : int, RandomState instance or None, default=None
         Random state for reproducibility.
+    aggregation_function : str, default="mean"
+        The aggregation function to use for combining the predictions of the
+        fitted forecasters. Either "mean" or "median".
 
     Examples
     --------
@@ -65,7 +86,7 @@ class EnbPIForecaster(BaseForecaster):
 
     _tags = {
         "authors": ["benheid"],
-        "python_dependencies": ["tsbootstrap>=0.1.0", "fortuna", "jax"],
+        "python_dependencies": ["tsbootstrap>=0.1.0"],
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
         "handles-missing-data": False,  # can estimator handle missing data?
@@ -81,13 +102,29 @@ class EnbPIForecaster(BaseForecaster):
         "capability:pred_int:insample": False,  # ... for in-sample horizons?
     }
 
-    def __init__(self, forecaster=None, bootstrap_transformer=None, random_state=None):
+    def __init__(
+        self,
+        forecaster=None,
+        bootstrap_transformer=None,
+        random_state=None,
+        aggregation_function="mean",
+    ):
         self.forecaster = forecaster
         self.forecaster_ = (
-            clone(forecaster) if forecaster is not None else NaiveForecaster()
+            forecaster.clone() if forecaster is not None else NaiveForecaster()
         )
         self.bootstrap_transformer = bootstrap_transformer
         self.random_state = random_state
+        self.aggregation_function = aggregation_function
+        if self.aggregation_function == "mean":
+            self._aggregation_function = np.mean
+        elif self.aggregation_function == "median":
+            self._aggregation_function = np.median
+        else:
+            raise ValueError(
+                f"Aggregation function {self.aggregation_function} not supported. "
+                f"Please choose either 'mean' or 'median'."
+            )
 
         super().__init__()
 
@@ -111,18 +148,18 @@ class EnbPIForecaster(BaseForecaster):
             self.bootstrap_transformer_.bootstrap(y, test_ratio=0, return_indices=True)
         )
         self.indexes = np.stack(list(map(lambda x: x[1], bs_ts_index)))
-        bootstapped_ts = list(map(lambda x: x[0], bs_ts_index))
+        bootstrapped_ts = list(map(lambda x: x[0], bs_ts_index))
 
         self.forecasters = []
-        self.preds = []
+        self._preds = []
         # Fit Models per Bootstrap Sample
-        for bs_ts in bootstapped_ts:
+        for bs_ts in bootstrapped_ts:
             bs_df = pd.DataFrame(bs_ts, index=y.index)
             forecaster = clone(self.forecaster_)
             forecaster.fit(y=bs_df, fh=fh, X=X)
             self.forecasters.append(forecaster)
             prediction = forecaster.predict(fh=y.index, X=X)
-            self.preds.append(prediction)
+            self._preds.append(prediction)
 
         return self
 
@@ -132,14 +169,12 @@ class EnbPIForecaster(BaseForecaster):
         preds = [forecaster.predict(fh=fh, X=X) for forecaster in self.forecasters]
 
         return pd.DataFrame(
-            np.stack(preds, axis=0).mean(axis=0),
+            self._aggregation_function(np.stack(preds, axis=0), axis=0),
             index=list(fh.to_absolute(self.cutoff)),
             columns=self._y.columns,
         )
 
     def _predict_interval(self, fh, X, coverage):
-        from fortuna.conformal import EnbPI
-
         preds = []
         for forecaster in self.forecasters:
             preds.append(forecaster.predict(fh=fh, X=X))
@@ -148,20 +183,19 @@ class EnbPIForecaster(BaseForecaster):
         train_targets.index = pd.RangeIndex(len(train_targets))
         intervals = []
         for cov in coverage:
-            conformal_intervals = EnbPI().conformal_interval(
+            conformal_intervals = EnbPI(self.aggregation_function).conformal_interval(
                 bootstrap_indices=self.indexes,
-                bootstrap_train_preds=np.stack(self.preds),
+                bootstrap_train_preds=np.stack(self._preds),
                 bootstrap_test_preds=np.stack(preds),
-                train_targets=train_targets,
+                train_targets=train_targets.values,
                 error=1 - cov,
             )
-            intervals.append(conformal_intervals)
+            intervals.append(conformal_intervals.reshape(-1, 2))
 
         cols = pd.MultiIndex.from_product(
             [self._y.columns, coverage, ["lower", "upper"]]
         )
-        fh_absolute = fh.to_absolute(self.cutoff)
-        fh_absolute_idx = fh_absolute.to_pandas()
+        fh_absolute_idx = fh.to_absolute_index(self.cutoff)
         pred_int = pd.DataFrame(
             np.concatenate(intervals, axis=1), index=fh_absolute_idx, columns=cols
         )

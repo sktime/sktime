@@ -35,7 +35,6 @@ __all__ = [
 
 from sktime.forecasting.compose._bagging import BaggingForecaster
 from sktime.forecasting.compose._column_ensemble import ColumnEnsembleForecaster
-from sktime.forecasting.compose._enbpi_forecaster import EnbPIForecaster
 from sktime.forecasting.compose._ensemble import (
     AutoEnsembleForecaster,
     EnsembleForecaster,
