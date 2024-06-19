@@ -13,7 +13,6 @@ from collections.abc import Sequence
 from typing import Dict, List, Optional, Union
 
 import numpy as np
-import optuna
 import pandas as pd
 from sklearn.model_selection import ParameterGrid, ParameterSampler, check_cv
 
@@ -1776,6 +1775,8 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         self.n_evals = n_evals
 
     def _fit(self, y, X=None, fh=None):
+        import optuna
+
         cv = check_cv(self.cv)
         scoring = check_scoring(self.scoring, obj=self)
         scoring_name = f"test_{scoring.name}"
