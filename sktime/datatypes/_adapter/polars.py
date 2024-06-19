@@ -155,13 +155,14 @@ def check_polars_frame(
 
     if scitype in ["Series", "Panel", "Hierarchical"]:
         index_cols = get_mi_cols(obj)
-        scitypes = {
-            "Series": len(index_cols) == 1 or len(index_cols) == 0,
-            "Panel": len(index_cols) == 2,
-            "Hierarchical": len(index_cols) >= 3,
+        n_vars = len(index_cols)
+        scitypes_index = {
+            "Series": n_vars == 1 or n_vars == 0,
+            "Panel": n_vars == 2,
+            "Hierarchical": n_vars >= 3,
         }
 
-        if not scitypes[scitype]:
+        if not scitypes_index[scitype]:
             cols_msg = (
                 f"{var_name} must have correct number of index columns for scitype, "
                 f"Series: 0 or 1, Panel: 2, Hierarchical: >= 3,"
@@ -170,7 +171,7 @@ def check_polars_frame(
             return ret(False, cols_msg, None, return_metadata)
 
         # check if index columns are monotonically increasing
-        if not is_monotonically_increasing(obj):
+        if isinstance(obj, pl.DataFrame) and not is_monotonically_increasing(obj):
             msg = (
                 f"The (time) index of {var_name} must be sorted monotonically "
                 f"increasing. Use {var_name}.sort() on columns representing "
@@ -197,12 +198,20 @@ def check_polars_frame(
         feature_columns = [x for x in obj.columns if x not in index_cols]
         metadata["feature_names"] = feature_columns
 
-    if scitype in ["Panel", "Hierarchical", "Table"]:
+    if scitype == "Table":
         if _req("n_instances", return_metadata):
             if hasattr(obj, "height"):
                 metadata["n_instances"] = obj.height
             else:
                 metadata["n_instances"] = "NA"
+
+    if scitype in ["Panel", "Hierarchical"]:
+        if _req("n_instances", return_metadata):
+            if exp_type_str == "LazyFrame":
+                metadata["n_instances"] = "NA"
+            else:
+                instance_cols = index_cols[:-1]
+                metadata["n_instances"] = len(obj[instance_cols].unique())
 
     # check if there are any nans
     #   compute only if needed
