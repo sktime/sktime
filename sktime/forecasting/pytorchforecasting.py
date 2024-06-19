@@ -616,6 +616,8 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
     model_path: string (default=None)
         try to load a existing model without fitting. Calling the fit function is
         still needed, but no real fitting will be performed.
+    deterministic: bool (default=False)
+        set seed before predict, so that it will give the same output for the same input
     random_log_path: bool (default=False)
         use random root directory for logging. This parameter is for CI test in
         Github action, not designed for end users.
@@ -746,9 +748,11 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
         validation_to_dataloader_params: Optional[Dict[str, Any]] = None,
         trainer_params: Optional[Dict[str, Any]] = None,
         model_path: Optional[str] = None,
+        deterministic: bool = False,
         random_log_path: bool = False,
     ) -> None:
         self.allowed_encoder_known_variable_names = allowed_encoder_known_variable_names
+        self.deterministic = deterministic
         super().__init__(
             model_params,
             dataset_params,
@@ -819,6 +823,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                         "max_encoder_length": 3,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,  # to pass test_score
                 },
                 {
                     "trainer_params": {
@@ -833,6 +838,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                         "max_encoder_length": 3,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,  # to pass test_score
                 },
             ]
         else:
@@ -855,6 +861,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                         "max_encoder_length": 3,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,  # to pass test_score
                 },
                 {
                     "trainer_params": {
@@ -870,6 +877,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                         "max_encoder_length": 3,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,  # to pass test_score
                 },
             ]
 

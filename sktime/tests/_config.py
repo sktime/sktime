@@ -247,8 +247,6 @@ EXCLUDED_TESTS = {
         "test_save_estimators_to_file",
         "test_fit_idempotent",
     ],
-    # PytorchForecastingDeepAR is not giving the same ouptut for the same input
-    "PytorchForecastingDeepAR": ["test_score"],
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish
