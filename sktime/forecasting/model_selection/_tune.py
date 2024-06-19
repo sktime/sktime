@@ -13,6 +13,7 @@ from collections.abc import Sequence
 from typing import Dict, List, Optional, Union
 
 import numpy as np
+import optuna
 import pandas as pd
 from sklearn.model_selection import ParameterGrid, ParameterSampler, check_cv
 
@@ -25,17 +26,6 @@ from sktime.split.base import BaseSplitter
 from sktime.utils.parallel import parallelize
 from sktime.utils.validation.forecasting import check_scoring
 from sktime.utils.warnings import warn
-from sktime.forecasting.compose import TransformedTargetForecaster
-from sktime.split import ExpandingWindowSplitter
-from sktime.forecasting.naive import NaiveForecaster
-from sklearn.model_selection import ParameterGrid, ParameterSampler, check_cv
-from sktime.forecasting.model_evaluation import evaluate
-from sktime.utils.validation.forecasting import check_scoring
-from sktime.datasets import load_shampoo_sales
-from sklearn.model_selection import ParameterGrid
-from sklearn.exceptions import NotFittedError
-import optuna
-import numpy as np
 
 
 class BaseGridSearch(_DelegatedForecaster):
@@ -1616,7 +1606,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         error_score=np.nan,
         n_evals=100,
     ):
-        super(ForecastingOptunaSearchCV, self).__init__(
+        super().__init__(
             forecaster=forecaster,
             scoring=scoring,
             refit=refit,
@@ -1631,28 +1621,31 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         self.param_grid = param_grid
         self.n_evals = n_evals
 
+    def _get_score(self, out, scoring_name):
+        return out[f"mean_{scoring_name}"]
+
     def _fit(self, y, X=None, fh=None):
         cv = check_cv(self.cv)
         scoring = check_scoring(self.scoring, obj=self)
         scoring_name = f"test_{scoring.name}"
+
+        meta = {}
+        meta["forecaster"] = self.forecaster
+        meta["y"] = y
+        meta["X"] = X
+        meta["cv"] = cv
+        meta["strategy"] = self.strategy
+        meta["scoring"] = scoring
+        meta["error_score"] = self.error_score
+        meta["scoring_name"] = scoring_name
 
         study = optuna.create_study(direction="minimize")
         for _ in range(self.n_evals):
             trial = study.ask(self.param_grid)  # pass the pre-defined distributions.
             params = {name: trial.params[name] for name, v in self.param_grid.items()}
 
-            meta = {}
-            meta["forecaster"] = self.forecaster
-            meta["y"] = y
-            meta["X"] = X
-            meta["cv"] = cv
-            meta["strategy"] = self.strategy
-            meta["scoring"] = scoring
-            meta["error_score"] = self.error_score
-            meta["scoring_name"] = scoring_name
-
             out = _fit_and_score(params, meta)
-            study.tell(trial, out[f"mean_{scoring_name}"])
+            study.tell(trial, self._get_score(out, scoring_name))
 
         params_list = [trial.params for trial in study.trials]
 
@@ -1695,6 +1688,3 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
             self.n_best_scores_.append(score)
 
         return self
-
-    def _run_search(self, evaluate_candidates):
-        return evaluate_candidates(ParameterGrid(self.param_grid))
