@@ -6,7 +6,6 @@ import time
 from typing import List, Optional, Union
 
 import pandas as pd
-# from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +49,7 @@ def run(
     -------
     pd.DataFrame: dataframe of validation results.
     """
+    
     if run_params is None:
         run_params = {}
 
@@ -62,59 +62,51 @@ def run(
     results_df = results_df.set_index(["validation_id", "model_id"], drop=False)
     results_list = []
 
-    validations = list(validation_registry.all())
-    models = list(model_registry.all())
+    from tqdm import tqdm
 
-    with tqdm(total=len(validations) * len(models), desc="Running validations") as pbar:
-        for validation_spec in validations:
-            if validation_spec.deprecated:
-                logger.info(
-                    f"Skipping validation: {validation_spec.id} - as is deprecated."
-                )
-                pbar.update(len(models))  # Skip all models for this validation
+    print("Running Validations")
+    print("\n")
+    for validation_spec in tqdm(validation_registry.all()):
+        if validation_spec.deprecated:
+            logger.info(
+                f"Skipping validation: {validation_spec.id} - as is deprecated."
+            )
+            continue
+        for model_spec in model_registry.all():
+            if model_spec.deprecated:
+                logger.info(f"Skipping model: {model_spec.id} - as is deprecated.")
                 continue
-            for model_spec in models:
-                if model_spec.deprecated:
-                    logger.info(f"Skipping model: {model_spec.id} - as is deprecated.")
-                    pbar.update(1)
-                    continue
 
-                if (
-                    not force_rerun == "all"
-                    and not (
-                        isinstance(force_rerun, list) and model_spec.id in force_rerun
-                    )
-                    and (validation_spec.id, model_spec.id) in results_df.index
-                ):
-                    logger.info(
-                        f"Skipping validation - model: "
-                        f"{validation_spec.id} - {model_spec.id}"
-                        ", as found prior result in results."
-                    )
-                    pbar.update(1)
-                    continue
-
+            if (
+                not force_rerun == "all"
+                and not (isinstance(force_rerun, list) and model_spec.id in force_rerun)
+                and (validation_spec.id, model_spec.id) in results_df.index
+            ):
                 logger.info(
-                    f"Running validation - model:{validation_spec.id}-{model_spec.id}"
+                    f"Skipping validation - model: "
+                    f"{validation_spec.id} - {model_spec.id}"
+                    ", as found prior result in results."
                 )
+                continue
 
-                validation = validation_spec.make()
-                validation = _form_validation_partial_with_store_dirs(
-                    validation,
-                    artefacts_store_dir,
-                    validation_spec,
-                    model_spec,
-                )
+            logger.info(
+                f"Running validation - model: {validation_spec.id} - {model_spec.id}"
+            )
 
-                model = model_spec.make()
-                results, elapsed_secs = _run_validation_model(
-                    validation, model, run_params
-                )
-                results = _add_meta_data_to_results(
-                    results, elapsed_secs, validation_spec, model_spec
-                )
-                results_list.append(results)
-                pbar.update(1)
+            validation = validation_spec.make()
+            validation = _form_validation_partial_with_store_dirs(
+                validation,
+                artefacts_store_dir,
+                validation_spec,
+                model_spec,
+            )
+
+            model = model_spec.make()
+            results, elapsed_secs = _run_validation_model(validation, model, run_params)
+            results = _add_meta_data_to_results(
+                results, elapsed_secs, validation_spec, model_spec
+            )
+            results_list.append(results)
 
     additional_results_df = pd.DataFrame.from_records(results_list)
     results_df = pd.concat([results_df, additional_results_df], ignore_index=True)
@@ -214,3 +206,4 @@ def _write(df: pd.DataFrame, results_path: str, to_front_cols: List[str]):
     """Write the results to the results path."""
     df = df[to_front_cols + [col for col in df.columns if col not in to_front_cols]]
     df.to_csv(results_path, index=False)
+
