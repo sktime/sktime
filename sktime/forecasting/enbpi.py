@@ -201,6 +201,25 @@ class EnbPIForecaster(BaseForecaster):
         )
         return pred_int
 
+    def _update(self, y, X=None, update_params=True):
+        """Update cutoff value and, optionally, fitted parameters.
+
+        Parameters
+        ----------
+        y : pd.Series, pd.DataFrame, or np.array
+            Target time series to which to fit the forecaster.
+        X : pd.DataFrame, optional (default=None)
+            Exogeneous data
+        update_params : bool, optional (default=True)
+            whether model parameters should be updated
+
+        Returns
+        -------
+        self : reference to self
+        """
+        self.fit(y=self._y, X=self._X, fh=self._fh)
+        return self
+
     @classmethod
     def get_test_params(cls):
         """Return testing parameter settings for the estimator.
