@@ -249,6 +249,9 @@ class RocketClassifier(_DelegatedClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
+        if parameter_set == "results_comparison":
+            return {"num_kernels": 100}
+        
         params1 = {"num_kernels": 100}
         params2 = {"num_kernels": 20}
         params3 = {"num_kernels": 20, "rocket_transform": "minirocket"}

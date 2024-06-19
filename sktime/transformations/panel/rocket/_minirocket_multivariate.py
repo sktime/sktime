@@ -30,7 +30,7 @@ class MiniRocketMultivariate(BaseTransformer):
 
     Parameters
     ----------
-    num_kernels : int, default=9,996
+    num_kernels : int, default=10,000
        number of random convolutional kernels. This should be a multiple of 84.
        If it is lower than 84, it will be set to 84. If it is higher than 84
        and not a multiple of 84, the number of kernels used to transform the
@@ -91,7 +91,7 @@ class MiniRocketMultivariate(BaseTransformer):
 
     def __init__(
         self,
-        num_kernels=9_996,
+        num_kernels=10_000,
         max_dilations_per_kernel=32,
         n_jobs=1,
         random_state=None,

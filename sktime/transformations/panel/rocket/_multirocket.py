@@ -33,7 +33,7 @@ class MultiRocket(BaseTransformer):
 
     Parameters
     ----------
-    num_kernels : int, default = 6,216
+    num_kernels : int, default = 6,250
        number of random convolutional kernels. This should be a multiple of 84.
        If it is lower than 84, it will be set to 84. If it is higher than 84
        and not a multiple of 84, the number of kernels used to transform the
@@ -108,7 +108,7 @@ class MultiRocket(BaseTransformer):
 
     def __init__(
         self,
-        num_kernels=6_216,
+        num_kernels=6_250,
         max_dilations_per_kernel=32,
         n_features_per_kernel=4,
         normalise=False,
