@@ -1,9 +1,9 @@
 """Deep Learning Forecasters using LTSF-Linear Models."""
 
-from sktime.forecasting.base.adapters._pytorch import (
-    BaseDeepNetworkPyTorch,
-    BaseFormerNetworkPyTorch,
-)
+import pandas as pd
+
+from sktime.forecasting.base.adapters._pytorch import BaseDeepNetworkPyTorch
+from sktime.networks.ltsf.data.dataset import PytorchFormerDataset
 
 
 class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
@@ -504,7 +504,7 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
         return params
 
 
-class LTSFTransfomer(BaseFormerNetworkPyTorch):
+class LTSFTransfomer(BaseDeepNetworkPyTorch):
     """LTSF-Transformer Forecaster.
 
     Parameters
@@ -678,6 +678,8 @@ class LTSFTransfomer(BaseFormerNetworkPyTorch):
         self.c_out = c_out
         self.freq = freq
 
+        self.timeenc = embed == "timeF"  # timeenc = 0 if args.embed != 'timeF' else 1
+
         super().__init__(
             num_epochs=num_epochs,
             batch_size=batch_size,
@@ -708,6 +710,71 @@ class LTSFTransfomer(BaseFormerNetworkPyTorch):
                 "AdamW": torch.optim.AdamW,
                 "SGD": torch.optim.SGD,
             }
+
+    def build_pytorch_train_dataloader(self, y):
+        """Build PyTorch DataLoader for training."""
+        from torch.utils.data import DataLoader
+
+        if self.custom_dataset_train:
+            if hasattr(self.custom_dataset_train, "build_dataset") and callable(
+                self.custom_dataset_train.build_dataset
+            ):
+                self.custom_dataset_train.build_dataset(y)
+                dataset = self.custom_dataset_train
+            else:
+                raise NotImplementedError(
+                    "Custom Dataset `build_dataset` method is not available. Please "
+                    f"refer to the {self.__class__.__name__}.build_dataset "
+                    "documentation."
+                )
+        else:
+            dataset = PytorchFormerDataset(
+                y=y,
+                seq_len=self.seq_len,
+                label_len=self.label_len,
+                pred_len=self.pred_len,
+                freq=self.freq,
+                timeenc=self.timeenc,
+            )
+
+        return DataLoader(dataset, self.batch_size, shuffle=True)
+
+    def build_pytorch_pred_dataloader(self, y, fh):
+        """Build PyTorch DataLoader for prediction."""
+        from torch.utils.data import DataLoader
+
+        if self.custom_dataset_pred:
+            if hasattr(self.custom_dataset_pred, "build_dataset") and callable(
+                self.custom_dataset_pred.build_dataset
+            ):
+                self.custom_dataset_train.build_dataset(y)
+                dataset = self.custom_dataset_train
+            else:
+                raise NotImplementedError(
+                    "Custom Dataset `build_dataset` method is not available. Please"
+                    f"refer to the {self.__class__.__name__}.build_dataset"
+                    "documentation."
+                )
+        else:
+            mask_y = pd.DataFrame(
+                data=0, columns=y.columns, index=fh.to_absolute_index(self.cutoff)
+            )
+            _y = y.iloc[-self.seq_len :]
+            _y = pd.concat([_y, mask_y], axis=0)
+
+            dataset = PytorchFormerDataset(
+                y=_y,
+                seq_len=self.seq_len,
+                label_len=self.label_len,
+                pred_len=self.pred_len,
+                freq=self.freq,
+                timeenc=self.timeenc,
+            )
+
+        return DataLoader(
+            dataset,
+            self.batch_size,
+        )
 
     def _build_network(self, fh):
         from sktime.networks.ltsf._ltsf import LTSFTransformerNetwork

@@ -494,26 +494,10 @@ class LTSFTransformerNetwork:
             x : torch.Tensor
                 output of Linear Model. x.shape = [Batch, Output Length, Channel]
             """
-
             x_enc = x["x_enc"]
             x_mark_enc = x["x_mark_enc"]
             x_dec = x["x_dec"]
             x_mark_dec = x["x_mark_dec"]
-
-            return self._forward(x_enc, x_mark_enc, x_dec, x_mark_dec)
-
-            from torch import ones
-
-            batch_size = x.size(0)
-            seq_len = self.seq_len
-            pred_len = self.pred_len
-            num_features = x.size(2)
-            num_X_features = 5
-
-            x_enc = x
-            x_mark_enc = ones(batch_size, seq_len, num_X_features)
-            x_dec = ones(batch_size, pred_len, num_features)
-            x_mark_dec = ones(batch_size, pred_len, num_X_features)
 
             return self._forward(x_enc, x_mark_enc, x_dec, x_mark_dec)
 
@@ -535,9 +519,4 @@ class LTSFTransformerNetwork:
             dec_out = self.decoder(
                 dec_out, enc_out, x_mask=dec_self_mask, cross_mask=dec_enc_mask
             )
-            return dec_out[:, -1]
-
-            if self.output_attention:
-                return dec_out[:, -self.pred_len :, :], attns
-            else:
-                return dec_out[:, -self.pred_len :, :]  # [B, L, D]
+            return dec_out[:, -self.pred_len :, :]
