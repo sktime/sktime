@@ -6,7 +6,6 @@ __author__ = ["mloning", "VyomkeshVyas"]
 __all__ = ["HolidayFeatures"]
 
 import datetime
-import warnings
 from collections import defaultdict
 from datetime import date
 from typing import Dict
@@ -16,6 +15,7 @@ import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.dependencies import _check_soft_dependencies
+from sktime.utils.warnings import warn
 
 
 class HolidayFeatures(BaseTransformer):
@@ -47,8 +47,7 @@ class HolidayFeatures(BaseTransformer):
         point is a holiday or not.
     keep_original_columns : bool, default=False
         Keep original columns in X passed to ``.transform()``.
-    raise_warnings : bool, default=False
-        If True, raise warnings.
+
 
     Examples
     --------
@@ -124,7 +123,6 @@ class HolidayFeatures(BaseTransformer):
         return_categorical: bool = False,
         return_indicator: bool = False,
         keep_original_columns: bool = False,
-        raise_warnings: bool = False,
     ) -> None:
         self.calendar = calendar
         self.holiday_windows = holiday_windows
@@ -134,7 +132,6 @@ class HolidayFeatures(BaseTransformer):
         self.return_dummies = return_dummies
         self.return_indicator = return_indicator
         self.keep_original_columns = keep_original_columns
-        self.raise_warnings = raise_warnings
         super().__init__()
 
     def _transform(self, X, y=None):
@@ -173,7 +170,6 @@ class HolidayFeatures(BaseTransformer):
             return_categorical=self.return_categorical,
             return_dummies=self.return_dummies,
             return_indicator=self.return_indicator,
-            raise_warnings=self.raise_warnings,
             warning_instance=self,
         )
 
@@ -235,7 +231,6 @@ def _generate_holidays(
     return_dummies: bool = True,
     return_categorical: bool = False,
     return_indicator: bool = False,
-    raise_warnings: bool = False,
     warning_instance: HolidayFeatures = None,
 ) -> pd.DataFrame:
     """Generate holidays.
@@ -262,8 +257,6 @@ def _generate_holidays(
     return_indicator : bool, default=False
         Whether or not to return an indicator variable equal to 1 if a time
         point is a holiday or not.
-    raise_warnings : bool, default=False
-        If True, raise warnings.
     warning_instance : HolidayFeatures, default=None
         Instance of HolidayFeatures to raise warnings.
 
@@ -319,14 +312,11 @@ def _generate_holidays(
             if name in holidays_by_name:
                 dates = holidays_by_name[name]
             else:
-                if raise_warnings and warning_instance is not None:
-                    warnings.warn(
-                        message=(
-                            f"{warning_instance.__class__.__name__}: "
-                            f"Holiday '{name}' not found in calendar. Skipping."
-                        ),
-                        stacklevel=2,
-                    )
+                warn(
+                    f"Holiday '{name}' not found in calendar. Skipping.",
+                    obj=warning_instance,
+                    stacklevel=2,
+                )
 
             # We then get the number of days before and after
             # the holiday.
@@ -344,14 +334,11 @@ def _generate_holidays(
                     elif holidays_by_date[date_window] != name:
                         holidays_by_date[date_window] = f", {name}"
                     else:
-                        if raise_warnings and warning_instance is not None:
-                            warnings.warn(
-                                message=(
-                                    f"{warning_instance.__class__.__name__}: "
-                                    f"Conflict with holiday '{name}' on {date_window}"
-                                ),
-                                stacklevel=2,
-                            )
+                        warn(
+                            f"Conflict with holiday '{name}' on {date_window}",
+                            obj=warning_instance,
+                            stacklevel=2,
+                        )
 
     if include_bridge_days:
         # Iterate over holidays.
