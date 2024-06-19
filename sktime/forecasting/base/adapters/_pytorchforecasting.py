@@ -308,6 +308,15 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         training, validation = self._Xy_to_dataset(
             _X, _y, self._dataset_params, self._max_prediction_length
         )
+        try:
+            if self.deterministic:
+                import torch
+
+                torch_state = torch.get_rng_state()
+                torch.manual_seed(0)
+        except AttributeError:
+            pass
+
         predictions = self.best_model.predict(
             validation.to_dataloader(**self._validation_to_dataloader_params),
             return_x=True,
@@ -319,6 +328,11 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
                 else None
             ),
         )
+        try:
+            if self.deterministic:
+                torch.set_rng_state(torch_state)
+        except AttributeError:
+            pass
         # convert pytorch-forecasting predictions to dataframe
         output = self._predictions_to_dataframe(
             predictions, self._max_prediction_length
