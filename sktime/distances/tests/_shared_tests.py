@@ -3,7 +3,7 @@ from typing import Callable
 import numpy as np
 import pytest
 
-from sktime.distances.base import NumbaDistance
+from sktime.distances.base import DistanceCallable, NumbaDistance
 from sktime.distances.tests._utils import create_test_distance_numpy
 from sktime.utils.numba.njit import njit
 
@@ -21,7 +21,9 @@ def _test_metric_parameters(distance_func: Callable):
         def _numba_distance(x, y) -> float:
             return _standalone_numba_distance(x, y)
 
-        def _distance_factory(self, x: np.ndarray, y: np.ndarray, **kwargs: dict):
+        def _distance_factory(
+            self, x: np.ndarray, y: np.ndarray, **kwargs: dict
+        ) -> DistanceCallable:
             return _ValidTestClass._numba_distance
 
     x_numpy = create_test_distance_numpy(10, 10)
@@ -73,7 +75,9 @@ def _test_incorrect_parameters(distance_func: Callable):
         def _numba_distance(x, y, **kwargs) -> float:
             return 5.0
 
-        def _distance_factory(self, x: np.ndarray, y: np.ndarray, **kwargs: dict):
+        def _distance_factory(
+            self, x: np.ndarray, y: np.ndarray, **kwargs: dict
+        ) -> DistanceCallable:
             return self._numba_distance
 
     with pytest.raises(ValueError):  # Invalid metric string
