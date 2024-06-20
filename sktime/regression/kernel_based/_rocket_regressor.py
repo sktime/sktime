@@ -133,16 +133,16 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
     ):
         self.num_kernels = num_kernels
         self.rocket_transform = rocket_transform
-        
+
         if rocket_transform in ["multirocket", "minirocket"]:
             if self.num_kernels < 84:
                 self.num_kernels_ = 84
             else:
                 self.num_kernels_ = (self.num_kernels // 84) * 84
-                
+
         else:
             self.num_kernels_ = num_kernels
-        
+
         self.max_dilations_per_kernel = max_dilations_per_kernel
         self.n_features_per_kernel = n_features_per_kernel
         self.use_multivariate = use_multivariate

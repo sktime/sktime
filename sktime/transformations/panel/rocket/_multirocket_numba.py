@@ -877,7 +877,7 @@ def _fit_biases(X, dilations, num_features_per_dilation, quantiles, seed):
 
 def _fit_dilations(input_length, num_features, max_dilations_per_kernel):
     num_kernels = 84
-    
+
     if num_features < 84:
         num_features = 84
 

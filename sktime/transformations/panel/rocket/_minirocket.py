@@ -41,12 +41,12 @@ class MiniRocket(BaseTransformer):
         The number of jobs to run in parallel for ``transform``. ``-1`` means using all
         processors.
     random_state : None or int, default = None
-    
+
     Attributes
     ----------
     num_kernels_ : int
-        The true number of kernels used in the rocket transform. This is 
-        num_kernels rounded down to the nearest multiple of 84. It is 84 if 
+        The true number of kernels used in the rocket transform. This is
+        num_kernels rounded down to the nearest multiple of 84. It is 84 if
         num_kernels is less than 84.
 
     See Also
@@ -140,7 +140,7 @@ class MiniRocket(BaseTransformer):
             self.num_kernels_ = 84
         else:
             self.num_kernels_ = (self.num_kernels // 84) * 84
-        
+
         return self
 
     def _transform(self, X, y=None):

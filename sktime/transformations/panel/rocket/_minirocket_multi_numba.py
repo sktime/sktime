@@ -382,7 +382,7 @@ def _fit_dilations(n_timepoints, num_features, max_dilations_per_kernel):
 
     if num_features < 84:
         num_features = 84
-    
+
     num_features_per_kernel = num_features // num_kernels
     true_max_dilations_per_kernel = min(
         num_features_per_kernel, max_dilations_per_kernel

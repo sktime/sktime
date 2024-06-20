@@ -40,7 +40,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
        number of random convolutional kernels. This should be a multiple of 84.
        If it is lower than 84, it will be set to 84. If it is higher than 84
        and not a multiple of 84, the number of kernels used to transform the
-       data will rounded down to the next positive multiple of 84. 
+       data will rounded down to the next positive multiple of 84.
     max_dilations_per_kernel : int, default=32
         maximum number of dilations per kernel.
     reference_length : int or str, default = ``'max'``
@@ -52,12 +52,12 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         The number of jobs to run in parallel for ``transform``. ``-1`` means using all
         processors.
     random_state : None or int, default = None
-    
+
     Attributes
     ----------
     num_kernels_ : int
-        The true number of kernels used in the rocket transform. This is 
-        num_kernels rounded down to the nearest multiple of 84. It is 84 if 
+        The true number of kernels used in the rocket transform. This is
+        num_kernels rounded down to the nearest multiple of 84. It is 84 if
         num_kernels is less than 84.
 
     Examples
@@ -229,7 +229,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
             self.num_kernels_ = 84
         else:
             self.num_kernels_ = (self.num_kernels // 84) * 84
-        
+
         return self
 
     def _transform(self, X, y=None):

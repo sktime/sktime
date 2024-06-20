@@ -57,8 +57,8 @@ class MultiRocket(BaseTransformer):
         parameter (dilations, num_features_per_dilation, biases) for
         transformation of input X1 = np.diff(X, 1)
     num_kernels_ : int
-        The true number of kernels used in the rocket transform. This is 
-        num_kernels rounded down to the nearest multiple of 84. It is 84 if 
+        The true number of kernels used in the rocket transform. This is
+        num_kernels rounded down to the nearest multiple of 84. It is 84 if
         num_kernels is less than 84. The calculated number of features is given
         as 2*n_features_per_kernel*num_kernels_.
 
@@ -157,7 +157,7 @@ class MultiRocket(BaseTransformer):
             self.num_kernels_ = 84
         else:
             self.num_kernels_ = (self.num_kernels // 84) * 84
-        
+
         return self
 
     def _transform(self, X, y=None):
