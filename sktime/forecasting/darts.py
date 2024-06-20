@@ -1,6 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Interfaces to estimators from darts by Unit8."""
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Optional, Union
 
 from skbase.utils.dependencies import _check_soft_dependencies
 
@@ -117,21 +117,21 @@ class DartsXGBModel(_DartsAdapter):
 
     def __init__(
         self: "DartsXGBModel",
-        past_covariates: Optional[List[str]] = None,
+        past_covariates: Optional[list[str]] = None,
         num_samples: Optional[int] = 1000,
-        lags: Optional[Union[int, List[int], Dict[str, Union[int, List[int]]]]] = None,
+        lags: Optional[Union[int, list[int], dict[str, Union[int, list[int]]]]] = None,
         lags_past_covariates: Optional[
-            Union[int, List[int], Dict[str, Union[int, List[int]]]]
+            Union[int, list[int], dict[str, Union[int, list[int]]]]
         ] = None,
         lags_future_covariates: Optional[
             Union[
-                Tuple[int, int], List[int], Dict[str, Union[Tuple[int, int], List[int]]]
+                tuple[int, int], list[int], dict[str, Union[tuple[int, int], list[int]]]
             ]
         ] = None,
         output_chunk_length: Optional[int] = 1,
         add_encoders: Optional[dict] = None,
         likelihood: Optional[str] = None,
-        quantiles: Optional[List[float]] = None,
+        quantiles: Optional[list[float]] = None,
         random_state: Optional[int] = None,
         multi_models: Optional[bool] = True,
         use_static_covariates: Optional[bool] = True,
@@ -179,14 +179,14 @@ class DartsXGBModel(_DartsAdapter):
     @property
     def _lags_past_covariates(
         self: "DartsXGBModel",
-    ) -> Union[int, List[int], Dict[str, Union[int, List[int]]], None]:
+    ) -> Union[int, list[int], dict[str, Union[int, list[int]]], None]:
         return self.lags_past_covariates
 
     @property
     def _lags_future_covariates(
         self: "DartsXGBModel",
     ) -> Union[
-        Tuple[int, int], List[int], Dict[str, Union[Tuple[int, int], List[int]]], None
+        tuple[int, int], list[int], dict[str, Union[dict[int, int], list[int]]], None
     ]:
         return self.lags_future_covariates
 

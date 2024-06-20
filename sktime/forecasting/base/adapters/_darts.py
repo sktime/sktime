@@ -1,7 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for Darts models."""
 import abc
-from typing import List, Optional
+from typing import Optional
 
 import pandas as pd
 
@@ -32,7 +32,7 @@ class _DartsAdapter(BaseForecaster):
         "authors": ["yarnabrina", "fnhirwa"],
         "maintainers": ["yarnabrina", "fnhirwa"],
         "python_version": ">=3.9",
-        "python_dependencies": ["u8darts"],
+        "python_dependencies": ["u8darts>=0.29"],
         "python_dependencies_alias": {"u8darts": "darts"},
         # estimator type
         # --------------
@@ -41,13 +41,13 @@ class _DartsAdapter(BaseForecaster):
         "requires-fh-in-fit": False,
         "enforce_index_type": pd.DatetimeIndex,
         "handles-missing-data": False,
-        "capability:pred_int": False,
+        "capability:pred_int": True,
         "capability:insample": False,
     }
 
     def __init__(
         self: "_DartsAdapter",
-        past_covariates: Optional[List[str]] = None,
+        past_covariates: Optional[list[str]] = None,
         num_samples: Optional[int] = 1000,
     ) -> None:
         if past_covariates is not None and not isinstance(past_covariates, list):
@@ -85,6 +85,34 @@ class _DartsAdapter(BaseForecaster):
         dataset_copy = _handle_input_index(dataset)
         return darts.TimeSeries.from_dataframe(dataset_copy)
 
+    @property
+    @abc.abstractmethod
+    def _lags_past_covariates(self):
+        """Get the lags_past_covariates value."""
+        raise NotImplementedError("This model does not support past covariates.")
+
+    @property
+    @abc.abstractmethod
+    def _lags_future_covariates(self):
+        """Get the lags_future_covariates value."""
+        raise NotImplementedError("This model does not support future covariates.")
+
+    @property
+    def _get_lags_past_covariates(self):
+        """Get the lags_past_covariates and lags_future_covariates values."""
+        try:
+            return self._lags_past_covariates
+        except NotImplementedError:
+            return None
+
+    @property
+    def _get_lags_future_covariates(self):
+        """Get the lags_future_covariates value."""
+        try:
+            return self._lags_future_covariates
+        except NotImplementedError:
+            return None
+
     def convert_exogenous_dataset(
         self: "_DartsAdapter", dataset: Optional[pd.DataFrame]
     ):
@@ -109,14 +137,17 @@ class _DartsAdapter(BaseForecaster):
             future_known_dataset = None
             future_unknown_dataset = None
 
-        elif self.past_covariates is not None and self._lags_past_covariates:
+        elif (
+            self.past_covariates is not None
+            and self._get_lags_past_covariates is not None
+        ):
             future_unknown_dataset = self.convert_dataframe_to_timeseries(
                 dataset[self.past_covariates]
             )
             future_known_dataset = self.convert_dataframe_to_timeseries(
                 dataset.drop(columns=self.past_covariates)
             )
-        elif self._lags_future_covariates:
+        elif self._get_lags_future_covariates is not None:
             future_unknown_dataset = None
             future_known_dataset = self.convert_dataframe_to_timeseries(dataset)
         else:
@@ -128,18 +159,6 @@ class _DartsAdapter(BaseForecaster):
     @abc.abstractmethod
     def _create_forecaster(self: "_DartsAdapter"):
         """Create Darts model."""
-
-    @property
-    @abc.abstractmethod
-    def _lags_past_covariates(self):
-        """Get the lags_past_covariates value."""
-        pass
-
-    @property
-    @abc.abstractmethod
-    def _lags_future_covariates(self):
-        """Get the lags_future_covariates value."""
-        pass
 
     def _fit(
         self: "_DartsAdapter",
@@ -212,7 +231,7 @@ class _DartsAdapter(BaseForecaster):
         """
         if not fh.is_all_out_of_sample(cutoff=self.cutoff):
             raise NotImplementedError("in-sample prediction is currently not supported")
-        self.check_is_fitted
+        self.check_is_fitted()
         unknown_exogenous, known_exogenous = self.convert_exogenous_dataset(X)
         absolute_fh = fh.to_absolute(self.cutoff)
         maximum_forecast_horizon = fh.to_relative(self.cutoff)[-1]
@@ -225,53 +244,50 @@ class _DartsAdapter(BaseForecaster):
         )
         expected_index = fh.get_expected_pred_idx(self.cutoff)
         abs_idx = absolute_fh.to_pandas().astype(expected_index.dtype)
-        if self.get_class_tag("y_inner_mtype") == "pd.Series":
-            # ToDo: handle the pd.Series
-            pass
+
+        endogenous_point_predictions = endogenous_point_predictions.pd_dataframe()
+
+        if _is_int64_type(expected_index):
+            if X is not None:
+                from pandas.core.indexes.numeric import Int64Index
+
+                endogenous_point_predictions.index = Int64Index(
+                    endogenous_point_predictions.index
+                )
+
+        if isinstance(expected_index, pd.PeriodIndex):
+            endogenous_point_predictions.index = (
+                endogenous_point_predictions.index.to_period(expected_index.freqstr)
+            )
+        if isinstance(expected_index, pd.RangeIndex):
+            endogenous_point_predictions.index = pd.RangeIndex(
+                start=0, stop=len(endogenous_point_predictions)
+            )
+        if isinstance(expected_index, pd.DatetimeIndex):
+            endogenous_point_predictions.index = pd.date_range(
+                start=expected_index[0],
+                periods=len(endogenous_point_predictions),
+                freq=expected_index.freq,
+            )
+
+        if (
+            len(endogenous_point_predictions.columns) > 1
+            and self._y.columns.dtype != "object"
+        ):
+            endogenous_point_predictions.columns = pd.RangeIndex(
+                start=0, stop=len(endogenous_point_predictions.columns), step=1
+            )
         else:
-            endogenous_point_predictions = endogenous_point_predictions.pd_dataframe()
-
-            if _is_int64_type(expected_index):
-                if X is not None:
-                    from pandas.core.indexes.numeric import Int64Index
-
-                    endogenous_point_predictions.index = Int64Index(
-                        endogenous_point_predictions.index
-                    )
-
-            if isinstance(expected_index, pd.PeriodIndex):
-                endogenous_point_predictions.index = (
-                    endogenous_point_predictions.index.to_period(expected_index.freqstr)
-                )
-            if isinstance(expected_index, pd.RangeIndex):
-                endogenous_point_predictions.index = pd.RangeIndex(
-                    start=0, stop=len(endogenous_point_predictions)
-                )
-            if isinstance(expected_index, pd.DatetimeIndex):
-                endogenous_point_predictions.index = pd.date_range(
-                    start=expected_index[0],
-                    periods=len(endogenous_point_predictions),
-                    freq=expected_index.freq,
-                )
-
-            if (
-                len(endogenous_point_predictions.columns) > 1
-                and self._y.columns.dtype != "object"
-            ):
-                endogenous_point_predictions.columns = pd.RangeIndex(
-                    start=0, stop=len(endogenous_point_predictions.columns), step=1
-                )
-            else:
-                endogenous_point_predictions.columns = [
-                    "c" + str(i) for i in range(endogenous_point_predictions.shape[1])
-                ]
+            endogenous_point_predictions.columns = [
+                "c" + str(i) for i in range(endogenous_point_predictions.shape[1])
+            ]
         return endogenous_point_predictions.loc[abs_idx]
 
     def _predict_quantiles(
         self,
         fh: Optional[ForecastingHorizon],
         X: Optional[pd.DataFrame],
-        alpha: List[float],
+        alpha: list[float],
     ):
         """Compute/return prediction quantiles for a forecast.
 
