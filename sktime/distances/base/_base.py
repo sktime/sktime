@@ -188,9 +188,7 @@ class NumbaDistance(ABC):
             )
 
     @abstractmethod
-    def _distance_factory(
-        self, x: np.ndarray, y: np.ndarray, **kwargs: dict
-    ):
+    def _distance_factory(self, x: np.ndarray, y: np.ndarray, **kwargs: dict):
         """Abstract method to create a no_python compiled distance.
 
         _distance_factory should validate kwargs and then compile a no_python callable
