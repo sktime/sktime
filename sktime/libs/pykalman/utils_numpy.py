@@ -21,6 +21,6 @@ def newbyteorder(arr, new_order):
         Array with new byte order.
     """
     if numpy2:
-        arr.view(arr.dtype.newbyteorder(new_order))
+        return arr.view(arr.dtype.newbyteorder(new_order))
     else:
         return arr.newbyteorder(new_order)
