@@ -204,13 +204,30 @@ Testing within a third party extension package
 
 For third party extension packages to ``sktime`` (open or closed),
 or third party modules that aim for interface compliance with ``sktime``,
-the ``sktime`` test suite can be imported and extended in two ways:
+the ``sktime`` test suite can be imported and extended in the following ways:
 
-*   importing ``check_estimator``, this will carry out the tests defined in ``sktime``
+* importing ``check_estimator``, this will carry out the tests defined in ``sktime``
+  in a single go. ``check_estimator`` can be run within any test framework, including
+  ``unittest`` and ``pytest``.
+
+* importing ``parametrize_with_checks`` from ``sktime.utils.estimator_checks``.
+  When used in a ``pytest`` test suite, this will parametrize a test function with
+  all tests defined in ``sktime`` for a list of estimator classes or instances,
+  running each estimator-test combination as a separate test case.
+  This pattern requires adding the following test function to the test suite:
+
+    .. code-block:: python
+
+        from sktime.utils.estimator_checks import parametrize_with_checks
+
+        @parametrize_with_checks(OBJS_TO_TEST)
+        def test_sktime_api_compliance(obj, test_name):
+            check_estimator(obj, tests_to_run=test_name, raise_exceptions=True)
 
 *   importing test classes, e.g., ``test_all_estimators.TestAllEstimators`` or
     ``test_all_forecasters.TestAllForecasters``. The imports will be discovered directly
     by ``pytest``. The test suite also be extended by inheriting from the test classes.
+
 
 Adding an ``sktime`` compatible estimator to ``sktime``
 =======================================================
