@@ -651,6 +651,7 @@ DISTANCE_MEASURE_GETTERS = {
 }
 
 
+# test_comment
 class ProximityStump(BaseClassifier):
     """Proximity Stump class.
 
