@@ -1276,8 +1276,7 @@ class BaseForecaster(BaseEstimator):
             fh = ForecastingHorizon(y.index, is_relative=False, freq=self._cutoff)
             if self._fh is not None and self.fh.is_relative:
                 fh = fh.to_relative(self._cutoff)
-            cutoff = get_cutoff(y, self.cutoff, return_index=True)
-            fh = self._check_fh(fh, cutoff)
+            fh = self._check_fh(fh)
         # if np.ndarray, rows are not indexed
         # so will be interpreted as range(len), or existing fh if it is stored
         elif isinstance(y, np.ndarray):
