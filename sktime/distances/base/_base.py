@@ -8,7 +8,6 @@ import numpy as np
 from sktime.distances.base._types import (
     AlignmentPathReturn,
     DistanceAlignmentPathCallable,
-    DistanceCallable,
 )
 
 
@@ -70,9 +69,7 @@ class NumbaDistance(ABC):
         )
         return dist_callable(x, y)
 
-    def distance_factory(
-        self, x: np.ndarray, y: np.ndarray, **kwargs: dict
-    ) -> DistanceCallable:
+    def distance_factory(self, x: np.ndarray, y: np.ndarray, **kwargs: dict):
         """Create a no_python distance.
 
         This method will validate the kwargs and ensure x and y are in the correct
@@ -121,7 +118,7 @@ class NumbaDistance(ABC):
         y: np.ndarray,
         return_cost_matrix: bool = False,
         **kwargs: dict,
-    ) -> DistanceCallable:
+    ):
         """Create a no_python distance alignment path.
 
         It should validate kwargs and then compile a no_python callable
@@ -193,7 +190,7 @@ class NumbaDistance(ABC):
     @abstractmethod
     def _distance_factory(
         self, x: np.ndarray, y: np.ndarray, **kwargs: dict
-    ) -> DistanceCallable:
+    ):
         """Abstract method to create a no_python compiled distance.
 
         _distance_factory should validate kwargs and then compile a no_python callable
