@@ -1900,8 +1900,9 @@ class BaseForecaster(BaseEstimator):
             and not self._fh.is_all_out_of_sample(cutoff)
         ):
             msg = (
+                f"in-sample prediction is currently not supported: "
                 f"Forecaster {self.__class__.__name__} "
-                f"can not perform in-sample forecast! "
+                f"can not perform in-sample prediction! "
                 f"Found fh with in sample index: "
                 f"{fh}"
             )
