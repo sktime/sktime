@@ -1841,5 +1841,51 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
 
         return self
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        from optuna.distributions import CategoricalDistribution
+
+        from sktime.forecasting.naive import NaiveForecaster
+        from sktime.forecasting.trend import PolynomialTrendForecaster
+        from sktime.performance_metrics.forecasting import (
+            MeanAbsolutePercentageError,
+            mean_absolute_percentage_error,
+        )
+        from sktime.split import SingleWindowSplitter
+
+        params = {
+            "forecaster": NaiveForecaster(strategy="mean"),
+            "cv": SingleWindowSplitter(fh=1),
+            "param_grid": {"window_length": CategoricalDistribution((2, 5))},
+            "scoring": MeanAbsolutePercentageError(symmetric=True),
+        }
+        params2 = {
+            "forecaster": PolynomialTrendForecaster(),
+            "cv": SingleWindowSplitter(fh=1),
+            "param_grid": {"degree": CategoricalDistribution((1, 2))},
+            "scoring": mean_absolute_percentage_error,
+            "update_behaviour": "inner_only",
+        }
+        params3 = {
+            "forecaster": NaiveForecaster(strategy="mean"),
+            "cv": SingleWindowSplitter(fh=1),
+            "param_grid": {"window_length": CategoricalDistribution((3, 4))},
+            "scoring": "MeanAbsolutePercentageError(symmetric=True)",
+            "update_behaviour": "no_update",
+        }
+        return [params, params2, params3]
+
     def _run_search(self, evaluate_candidates):
         return evaluate_candidates(ParameterGrid(self.param_grid))
