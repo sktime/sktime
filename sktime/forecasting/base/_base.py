@@ -618,7 +618,7 @@ class BaseForecaster(BaseEstimator):
 
         # check fh and coerce to ForecastingHorizon, if not already passed in fit
         cutoff = get_cutoff(self._y, self.cutoff, return_index=True)
-        fh = self._check_fh(fh, cutoff)
+        fh = self._check_fh(fh, cutoff, pred_int=True)
 
         # default alpha
         if alpha is None:
@@ -705,7 +705,7 @@ class BaseForecaster(BaseEstimator):
 
         # check fh and coerce to ForecastingHorizon, if not already passed in fit
         cutoff = get_cutoff(self._y, self.cutoff, return_index=True)
-        fh = self._check_fh(fh, cutoff)
+        fh = self._check_fh(fh, cutoff, pred_int=True)
 
         # check alpha and coerce to list
         coverage = check_alpha(coverage, name="coverage")
@@ -793,7 +793,7 @@ class BaseForecaster(BaseEstimator):
 
         # check fh and coerce to ForecastingHorizon, if not already passed in fit
         cutoff = get_cutoff(self._y, self.cutoff, return_index=True)
-        fh = self._check_fh(fh, cutoff)
+        fh = self._check_fh(fh, cutoff, pred_int=True)
 
         # check and convert X
         X_inner = self._check_X(X=X)
@@ -866,7 +866,7 @@ class BaseForecaster(BaseEstimator):
 
         # check fh and coerce to ForecastingHorizon, if not already passed in fit
         cutoff = get_cutoff(self._y, self.cutoff, return_index=True)
-        fh = self._check_fh(fh, cutoff)
+        fh = self._check_fh(fh, cutoff, pred_int=True)
 
         # check and convert X
         X_inner = self._check_X(X=X)
@@ -1776,7 +1776,7 @@ class BaseForecaster(BaseEstimator):
 
         return self._fh
 
-    def _check_fh(self, fh, cutoff=None):
+    def _check_fh(self, fh, cutoff=None, pred_int=False):
         """Check, set and update the forecasting horizon.
 
         Called from all methods where fh can be passed:
@@ -1799,6 +1799,8 @@ class BaseForecaster(BaseEstimator):
         cutoff: if cutoff is passed, in sample tag will be checked.
             NotImplementedError will be raised if fh with in sample index
             being passed to incompatible forecasters.
+        pred_int: only effective if cutoff is not None. Check pred_int:insample
+            tag instead of insample tag.
 
         Returns
         -------
@@ -1886,8 +1888,11 @@ class BaseForecaster(BaseEstimator):
                     "horizon, please re-fit the forecaster. " + msg
                 )
             # if existing one and new match, ignore new one
-
-        in_sample_pred = self.get_tag("capability:insample")
+        in_sample_pred = (
+            self.get_tag("capability:insample")
+            if not pred_int
+            else self.get_tag("capability:pred_int:insample")
+        )
         if (
             not in_sample_pred
             and self._fh is not None
