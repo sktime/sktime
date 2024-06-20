@@ -77,7 +77,7 @@ if _check_soft_dependencies("dask", severity="none"):
 if _check_soft_dependencies("polars", severity="none"):
     from polars import DataFrame
 
-    pl_df = DataFrame({"__index__1": [0, 1, 2, 3], "a": [1, 4, 0.5, -3]})
+    pl_df = DataFrame({"a": [1, 4, 0.5, -3]})
 
     example_dict[("pl.DataFrame", "Series", 0)] = pl_df
     example_dict_lossy[("pl.DataFrame", "Series", 0)] = False
@@ -183,9 +183,7 @@ if _check_soft_dependencies("dask", severity="none"):
 if _check_soft_dependencies("polars", severity="none"):
     from polars import DataFrame
 
-    pl_df = DataFrame(
-        {"__index__1": [0, 1, 2, 3], "a": [1, 4, 0.5, 3], "b": [3, 7, 2, 3 / 7]}
-    )
+    pl_df = DataFrame({"a": [1, 4, 0.5, 3], "b": [3, 7, 2, 3 / 7]})
 
     example_dict[("pl.DataFrame", "Series", 2)] = pl_df
     example_dict_lossy[("pl.DataFrame", "Series", 2)] = False
