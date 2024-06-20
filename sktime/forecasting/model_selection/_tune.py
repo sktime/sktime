@@ -25,17 +25,6 @@ from sktime.split.base import BaseSplitter
 from sktime.utils.parallel import parallelize
 from sktime.utils.validation.forecasting import check_scoring
 from sktime.utils.warnings import warn
-from sktime.forecasting.compose import TransformedTargetForecaster
-from sktime.split import ExpandingWindowSplitter
-from sktime.forecasting.naive import NaiveForecaster
-from sklearn.model_selection import ParameterGrid, ParameterSampler, check_cv
-from sktime.forecasting.model_evaluation import evaluate
-from sktime.utils.validation.forecasting import check_scoring
-from sktime.datasets import load_shampoo_sales
-from sklearn.model_selection import ParameterGrid
-from sklearn.exceptions import NotFittedError
-import optuna
-import numpy as np
 
 
 class BaseGridSearch(_DelegatedForecaster):
@@ -1601,22 +1590,22 @@ def _fit_and_score_skopt(params, meta):
 
 
 class ForecastingOptunaSearchCV(BaseGridSearch):
-    """Search over hyperparameters over specified parameter distributions for a forecaster using Optuna.
+    """Perform Optuna search cross-validation to find optimal model hyperparameters.
 
-    Experimental: This feature is under development and interface may likely to change.
+    Experimental: This feature is under development and interface is likely to change.
 
     Parameters
     ----------
-        scoring=None,
-        strategy="refit",
-        refit=True,
-        verbose=0,
-        return_n_best_forecasters=1,
-        backend="loky",
-        update_behaviour="full_refit",
-        error_score=np.nan,
-        n_evals=100,
-    
+    scoring=None,
+    strategy="refit",
+    refit=True,
+    verbose=0,
+    return_n_best_forecasters=1,
+    backend="loky",
+    update_behaviour="full_refit",
+    error_score=np.nan,
+    n_evals=100,
+
     forecaster : sktime forecaster, BaseForecaster instance or interface compatible
         The forecaster to tune, must implement the sktime forecaster interface.
         sklearn regressors can be used, but must first be converted to forecasters
@@ -1625,10 +1614,11 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         Splitter used for generating validation folds.
         e.g. ExpandingWindowSplitter()
     param_grid : dict
-        Dictionary with parameters names as keys and lists of parameter distributions from which to sample parameter values.
+        Dictionary with parameters names as keys and lists of parameter distributions
+        from which to sample parameter values.
         e.g. {"forecaster": optuna.distributions.CategoricalDistribution(
         (STLForecaster(), ThetaForecaster())}
-   scoring : sktime metric (BaseMetric), str, or callable, optional (default=None)
+    scoring : sktime metric (BaseMetric), str, or callable, optional (default=None)
         scoring metric to use in tuning the forecaster
 
         * sktime metric objects (BaseMetric) descendants can be searched
@@ -1641,17 +1631,18 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         Metrics in sktime.performance_metrics.forecasting are all of this form.
 
         * If str, uses registry.resolve_alias to resolve to one of the above.
-          Valid strings are valid registry.craft specs, which include
-          string repr-s of any BaseMetric object, e.g., "MeanSquaredError()";
-          and keys of registry.ALIAS_DICT referring to metrics.
+        Valid strings are valid registry.craft specs, which include
+        string repr-s of any BaseMetric object, e.g., "MeanSquaredError()";
+        and keys of registry.ALIAS_DICT referring to metrics.
 
         * If None, defaults to MeanAbsolutePercentageError()
+
     strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
         data ingestion strategy in fitting cv, passed to ``evaluate`` internally
         defines the ingestion mode when the forecaster sees new data when window expands
         "refit" = a new copy of the forecaster is fitted to each training window
         "update" = forecaster is updated with training window data, in sequence provided
-        "no-update_params" = fit to first training window, re-used without fit or update.
+        "no-update_params" = fit to first training window, re-used without fit or update
     refit : bool, default=True
         Refit an estimator using the best found parameters on the whole dataset.
     verbose : int, default=0
@@ -1666,8 +1657,8 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         Value to assign to the score if an error occurs in estimator fitting.
     n_evals : int, default=100
         Number of parameter settings that are sampled. n_iter trades
-        off runtime vs quality of the solution. 
-    
+        off runtime vs quality of the solution.
+
     Attributes
     ----------
     best_index_ : int
@@ -1684,10 +1675,9 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
     n_best_scores_: list of float
         The scores of n_best_forecasters_ sorted from best to worst
         score of forecasters
-    
+
     Examples
     --------
-
     >>> from sktime.forecasting.model_selection import (
     ...     ForecastingOptunaSearchCV,
     ...     )
@@ -1706,6 +1696,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
     >>> from sktime.forecasting.theta import ThetaForecaster
     >>> from sktime.forecasting.trend import STLForecaster
     >>> import optuna
+    >>> from  optuna.distributions import CategoricalDistribution
 
     >>> y = load_shampoo_sales()
     >>> y_train, y_test = temporal_train_test_split(y=y, test_size=6)
@@ -1723,10 +1714,10 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
     ...     ]
     ...     )
     >>> param_grid = {
-    ...     "scaler__transformer__with_scaling": optuna.distributions.CategoricalDistribution(
+    ...     "scaler__transformer__with_scaling": CategoricalDistribution(
     ...          (True, False)
     ...     ),
-    "forecaster": optuna.distributions.CategoricalDistribution(
+    "forecaster": CategoricalDistribution(
     ...     (STLForecaster(), ThetaForecaster())
     ...     ),
     ...     }
@@ -1741,8 +1732,8 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
     """
 
     _tags = {
-        "authors": ["gareth-brown-86","mk406"],
-        "maintainers": ["gareth-brown-86","mk406"],
+        "authors": ["gareth-brown-86", "mk406"],
+        "maintainers": ["gareth-brown-86", "mk406"],
         "scitype:y": "both",
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
@@ -1752,7 +1743,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         "python_dependencies": ["optuna"],
         "python_version": ">= 3.6",
     }
-    
+
     def __init__(
         self,
         forecaster,
@@ -1768,7 +1759,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         error_score=np.nan,
         n_evals=100,
     ):
-        super(ForecastingOptunaSearchCV, self).__init__(
+        super().__init__(
             forecaster=forecaster,
             scoring=scoring,
             refit=refit,
@@ -1784,6 +1775,8 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         self.n_evals = n_evals
 
     def _fit(self, y, X=None, fh=None):
+        import optuna
+
         cv = check_cv(self.cv)
         scoring = check_scoring(self.scoring, obj=self)
         scoring_name = f"test_{scoring.name}"
@@ -1847,6 +1840,52 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
             self.n_best_scores_.append(score)
 
         return self
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        from optuna.distributions import CategoricalDistribution
+
+        from sktime.forecasting.naive import NaiveForecaster
+        from sktime.forecasting.trend import PolynomialTrendForecaster
+        from sktime.performance_metrics.forecasting import (
+            MeanAbsolutePercentageError,
+            mean_absolute_percentage_error,
+        )
+        from sktime.split import SingleWindowSplitter
+
+        params = {
+            "forecaster": NaiveForecaster(strategy="mean"),
+            "cv": SingleWindowSplitter(fh=1),
+            "param_grid": {"window_length": CategoricalDistribution((2, 5))},
+            "scoring": MeanAbsolutePercentageError(symmetric=True),
+        }
+        params2 = {
+            "forecaster": PolynomialTrendForecaster(),
+            "cv": SingleWindowSplitter(fh=1),
+            "param_grid": {"degree": CategoricalDistribution((1, 2))},
+            "scoring": mean_absolute_percentage_error,
+            "update_behaviour": "inner_only",
+        }
+        params3 = {
+            "forecaster": NaiveForecaster(strategy="mean"),
+            "cv": SingleWindowSplitter(fh=1),
+            "param_grid": {"window_length": CategoricalDistribution((3, 4))},
+            "scoring": "MeanAbsolutePercentageError(symmetric=True)",
+            "update_behaviour": "no_update",
+        }
+        return [params, params2, params3]
 
     def _run_search(self, evaluate_candidates):
         return evaluate_candidates(ParameterGrid(self.param_grid))
