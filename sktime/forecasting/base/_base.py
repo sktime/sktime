@@ -1796,6 +1796,9 @@ class BaseForecaster(BaseEstimator):
         Parameters
         ----------
         fh : None, int, list, np.ndarray or ForecastingHorizon
+        cutoff: if cutoff is passed, in sample tag will be checked.
+            NotImplementedError will be raised if fh with in sample index
+            being passed to incompatible forecasters.
 
         Returns
         -------
@@ -1893,7 +1896,7 @@ class BaseForecaster(BaseEstimator):
         ):
             msg = (
                 f"Forecaster {self.__class__.__name__} "
-                f"can not perform in sample predicting! "
+                f"can not perform in-sample forecast! "
                 f"Found fh with in sample index: "
                 f"{fh}"
             )
