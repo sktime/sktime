@@ -1885,6 +1885,13 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         "panel" = second lowest level, one reduced model per panel level (-2)
         if there are 2 or less levels, "global" and "panel" result in the same
         if there is only 1 level (single time series), all three settings agree
+    windows_identical : bool, optional, default=True
+        Specifies whether all direct models use the same number of observations
+        (True: Total observations - maximum forecasting horizon due to
+        imputation of ReductionTransformer, otherwise: Total observations + 1 -
+        window_length + maximum forecasting horizon) or a different number of
+        observations (False: Total observations + 1 - window_length +
+        forecasting horizon).
     """
 
     _tags = {
@@ -1903,6 +1910,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         X_treatment="concurrent",
         impute_method="bfill",
         pooling="local",
+        windows_identical=True,
     ):
         self.window_length = window_length
         self.transformers = transformers
@@ -1911,6 +1919,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         self.X_treatment = X_treatment
         self.impute_method = impute_method
         self.pooling = pooling
+        self.windows_identical = windows_identical
         self._lags = list(range(window_length))
         super().__init__()
 
@@ -1941,16 +1950,22 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         # self.set_tags(**{"handles-missing-data": estimator._get_tags()["allow_nan"]})
 
     def _fit(self, y, X, fh):
-        """Fit dispatcher based on X_treatment."""
-        methodname = f"_fit_{self.X_treatment}"
-        return getattr(self, methodname)(y=y, X=X, fh=fh)
+        """Fit dispatcher based on X_treatment and windows_identical."""
+        # shifted X (future X unknown) and identical windows reduce to
+        # multioutput regression, o/w fit multiple individual estimators
+        if (self.X_treatment == "shifted") and (self.windows_identical is True):
+            return self._fit_multioutput(y=y, X=X, fh=fh)
+        else:
+            return self._fit_multiple(y=y, X=X, fh=fh)
 
     def _predict(self, X=None, fh=None):
-        """Predict dispatcher based on X_treatment."""
-        methodname = f"_predict_{self.X_treatment}"
-        return getattr(self, methodname)(X=X, fh=fh)
+        """Predict dispatcher based on X_treatment and windows_identical."""
+        if (self.X_treatment == "shifted") and (self.windows_identical is True):
+            return self._predict_multioutput(X=X, fh=fh)
+        else:
+            return self._predict_multiple(X=X, fh=fh)
 
-    def _fit_shifted(self, y, X=None, fh=None):
+    def _fit_multioutput(self, y, X=None, fh=None):
         """Fit to training data."""
         from sktime.transformations.series.lag import Lag, ReducerTransform
 
@@ -2000,7 +2015,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
         return self
 
-    def _predict_shifted(self, fh=None, X=None):
+    def _predict_multioutput(self, fh=None, X=None):
         """Predict core logic."""
         y_cols = self._y.columns
         fh_idx = self._get_expected_pred_idx(fh=fh)
@@ -2029,11 +2044,13 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
         return y_pred
 
-    def _fit_concurrent(self, y, X=None, fh=None):
+    def _fit_multiple(self, y, X=None, fh=None):
         """Fit to training data."""
         from sktime.transformations.series.lag import Lag, ReducerTransform
 
         impute_method = self.impute_method
+        X_treatment = self.X_treatment
+        windows_identical = self.windows_identical
 
         # lagger_y_to_X_ will lag y to obtain the sklearn X
         lags = self._lags
@@ -2062,11 +2079,14 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
             lags = self._lags
             trafos = self.transformers
 
+            # determine whether to use concurrent X (lead them) or shifted (0)
+            X_lag = lag if X_treatment == "concurrent" else 0
+
             # lagger_y_to_X_ will lag y to obtain the sklearn X
             # also updates self.lagger_y_to_X_ by reference
             lagger_y_to_X[lag] = ReducerTransform(
                 lags=lags,
-                shifted_vars_lag=lag,
+                shifted_vars_lag=X_lag,
                 transformers=trafos,
                 impute_method=impute_method,
             )
@@ -2078,6 +2098,13 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
             yt = yt.loc[notna_idx]
             Xtt = Xtt.loc[notna_idx]
+
+            if windows_identical:
+                # determine offset for uniform window length
+                # (alternatively max(fh) + lag)
+                offset = -y_lags[lag] - 1
+                yt = yt[offset:]
+                Xtt = Xtt[offset:]
 
             Xtt = prep_skl_df(Xtt)
             yt = prep_skl_df(yt)
@@ -2094,7 +2121,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
         return self
 
-    def _predict_concurrent(self, X=None, fh=None):
+    def _predict_multiple(self, X=None, fh=None):
         """Fit to training data."""
         from sktime.transformations.series.lag import Lag
 
