@@ -1,6 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements back-adapters for skforecast reduction models."""
-from typing import Callable, List, Optional, Union
+from typing import Callable, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -54,8 +54,6 @@ class SkforecastAutoreg(BaseForecaster):
         residuals into k bins according to the predicted values associated with each
         residual. The `encode' argument is always set to 'ordinal' and `dtype' to
         np.float64.
-    forecaster_id : str, int, default `None`
-        Name used as an identifier of the forecaster.
 
     References
     ----------
@@ -132,7 +130,6 @@ class SkforecastAutoreg(BaseForecaster):
         differentiation: Optional[int] = None,
         fit_kwargs: Optional[dict] = None,
         binner_kwargs: Optional[dict] = None,
-        forecaster_id: Optional[Union[str, int]] = None,
     ) -> None:
         self.regressor = regressor
         self.lags = lags
@@ -142,7 +139,6 @@ class SkforecastAutoreg(BaseForecaster):
         self.differentiation = differentiation
         self.fit_kwargs = fit_kwargs
         self.binner_kwargs = binner_kwargs
-        self.forecaster_id = forecaster_id
 
         super().__init__()
 
@@ -177,7 +173,6 @@ class SkforecastAutoreg(BaseForecaster):
             differentiation=self.differentiation,
             fit_kwargs=self.fit_kwargs,
             binner_kwargs=self.binner_kwargs,
-            forecaster_id=self.forecaster_id,
         )
 
     @staticmethod
@@ -350,7 +345,7 @@ class SkforecastAutoreg(BaseForecaster):
         self: "SkforecastAutoreg",
         fh: Optional[ForecastingHorizon],
         X: Optional[pd.DataFrame],
-        alpha: List[float],
+        alpha: list[float],
     ):
         """Compute/return prediction quantiles for a forecast.
 
@@ -421,9 +416,7 @@ class SkforecastAutoreg(BaseForecaster):
 
         for quantile in alpha:
             quantile_predictions[(var_name, quantile)] = (
-                bootstrap_quantiles[quantile]
-                .iloc[horizon_positions.to_list()]
-                .to_list()
+                bootstrap_quantiles[quantile].iloc[horizon_positions].to_list()
             )
         return quantile_predictions
 
