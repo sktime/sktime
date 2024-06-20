@@ -370,6 +370,10 @@ def test_nofreq_pass():
     )
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(_RecursiveReducer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_timezoneaware_index():
     y = load_solar(api_version=None)
     y_notz = y.copy().tz_localize(None)

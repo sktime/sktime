@@ -2842,6 +2842,37 @@
         "code",
         "doc"
       ]
+    },
+    {
+      "login": "gareth-brown-86",
+      "name": "Gareth Brown",
+      "avatar_url": "https://avatars.githubusercontent.com/u/89069265?s=400&u=f6dc19c786a1762fcb7cdbb04f7f30bee9bd0240&v=4",
+      "profile": "https://github.com/gareth-brown-86",
+      "contributions": [
+        "code",
+        "bug"
+      ]
+    },
+    {
+      "login": "duydl",
+      "name": "Duy Do Le",
+      "avatar_url": "https://avatars.githubusercontent.com/u/56506156?v=4",
+      "profile": "https://github.com/duydl",
+      "contributions": [
+        "code",
+        "doc",
+        "maintenance"
+      ]
+    },
+    {
+      "login": "ksharma6",
+      "name": "Kishen Sharma",
+      "avatar_url": "https://avatars.githubusercontent.com/u/142558351?v=4",
+      "profile": "https://github.com/ksharma6",
+      "contributions": [
+        "bug",
+        "code"
+      ]
     }
   ]
 }
