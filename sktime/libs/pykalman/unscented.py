@@ -22,6 +22,7 @@ from .utils import (
     get_params,
     preprocess_arguments,
 )
+from .utils_numpy import newbyteorder
 
 # represents a collection of sigma points and their associated weights. one
 # point per row
@@ -846,18 +847,14 @@ class UnscentedKalmanFilter(UnscentedMixin):
             if t == 0:
                 x[0] = initial_state
             else:
-                transition_function = _last_dims(transition_functions, t - 1, ndims=1)[
-                    0
-                ]
-                transition_noise = rng.multivariate_normal(
-                    np.zeros(n_dim_state), transition_covariance.newbyteorder("=")
-                )
-                x[t] = transition_function(x[t - 1], transition_noise)
+                transition_func = _last_dims(transition_functions, t - 1, ndims=1)[0]
+                cov = newbyteorder(transition_covariance, "=")
+                transition_noise = rng.multivariate_normal(np.zeros(n_dim_state), cov)
+                x[t] = transition_func(x[t - 1], transition_noise)
 
             observation_function = _last_dims(observation_functions, t, ndims=1)[0]
-            observation_noise = rng.multivariate_normal(
-                np.zeros(n_dim_obs), observation_covariance.newbyteorder("=")
-            )
+            cov = newbyteorder(observation_covariance, "=")
+            observation_noise = rng.multivariate_normal(np.zeros(n_dim_obs), cov)
             z[t] = observation_function(x[t], observation_noise)
 
         return (x, ma.asarray(z))
@@ -1166,18 +1163,14 @@ class AdditiveUnscentedKalmanFilter(UnscentedMixin):
             if t == 0:
                 x[0] = initial_state
             else:
-                transition_function = _last_dims(transition_functions, t - 1, ndims=1)[
-                    0
-                ]
-                transition_noise = rng.multivariate_normal(
-                    np.zeros(n_dim_state), transition_covariance.newbyteorder("=")
-                )
-                x[t] = transition_function(x[t - 1]) + transition_noise
+                transition_func = _last_dims(transition_functions, t - 1, ndims=1)[0]
+                cov = newbyteorder(transition_covariance, "=")
+                transition_noise = rng.multivariate_normal(np.zeros(n_dim_state), cov)
+                x[t] = transition_func(x[t - 1]) + transition_noise
 
             observation_function = _last_dims(observation_functions, t, ndims=1)[0]
-            observation_noise = rng.multivariate_normal(
-                np.zeros(n_dim_obs), observation_covariance.newbyteorder("=")
-            )
+            cov = newbyteorder(observation_covariance, "=")
+            observation_noise = rng.multivariate_normal(np.zeros(n_dim_obs), cov)
             z[t] = observation_function(x[t]) + observation_noise
 
         return (x, ma.asarray(z))
