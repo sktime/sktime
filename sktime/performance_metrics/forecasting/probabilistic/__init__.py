@@ -13,14 +13,14 @@ __author__ = ["euanenticott-shell", "fkiraly"]
 
 __all__ = [
     "_BaseProbaForecastingErrorMetric",
-    "PinballLoss",
-    "EmpiricalCoverage",
-    "ConstraintViolation",
     "CRPS",
+    "AUCalibration",
+    "ConstraintViolation",
+    "EmpiricalCoverage",
     "IntervalWidth",
     "LogLoss",
+    "PinballLoss",
     "SquaredDistrLoss",
-    "AUCalibration",
 ]
 
 from sktime.performance_metrics.forecasting.probabilistic._classes import (
