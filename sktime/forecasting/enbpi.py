@@ -7,7 +7,7 @@ from sklearn.utils import check_random_state
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.naive import NaiveForecaster
-from sktime.libs.aws_fortuna.enbpi import EnbPI
+from sktime.libs._aws_fortuna_enbpi.enbpi import EnbPI
 
 __all__ = ["EnbPIForecaster"]
 __author__ = ["benheid"]
