@@ -1172,15 +1172,15 @@ class BaseForecaster(BaseEstimator):
 
         self.check_is_fitted()
 
-        # check fh and coerce to ForecastingHorizon, if not already passed in fit
-        fh = self._check_fh(fh)
-
         # input checks and minor coercions on X, y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
         # update internal _X/_y with the new X/y
         # this also updates cutoff from y
         self._update_y_X(y_inner, X_inner)
+
+        # check fh and coerce to ForecastingHorizon, if not already passed in fit
+        fh = self._check_fh(fh)
 
         # checks and conversions complete, pass to inner update_predict_single
         if not self._is_vectorized:
