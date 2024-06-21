@@ -1,7 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Interfaces to estimators from statsforecast by Nixtla."""
+"""Interfaces to estimators from prophetverse."""
 
-__author__ = ["FedericoGarza", "yarnabrina"]
+__author__ = ["felipeangelimvieira"]  # fkiraly for adapter
 
 import pandas as pd
 
