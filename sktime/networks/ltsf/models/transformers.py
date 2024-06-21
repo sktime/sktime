@@ -47,7 +47,7 @@ class LTSFTransformerNetwork:
             super().__init__()
             self.pred_len = configs.pred_len
             self.seq_len = configs.seq_len
-            self.label_len = configs.label_len
+            self.context_len = configs.context_len
             self.output_attention = configs.output_attention
 
             # Embedding
@@ -215,7 +215,7 @@ class LTSFTransformerNetwork:
             dec_self_mask=None,
             dec_enc_mask=None,
         ):
-            # assert False
+
             enc_out = self.enc_embedding(x_enc, x_mark_enc)
             enc_out, attns = self.encoder(enc_out, attn_mask=enc_self_mask)
 
@@ -223,4 +223,8 @@ class LTSFTransformerNetwork:
             dec_out = self.decoder(
                 dec_out, enc_out, x_mask=dec_self_mask, cross_mask=dec_enc_mask
             )
-            return dec_out[:, -self.pred_len :, :]
+
+            if self.output_attention:
+                return dec_out[:, -self.pred_len:, :], attns
+            else:
+                return dec_out[:, -self.pred_len:, :]  # [B, L, D]

@@ -14,14 +14,14 @@ class PytorchFormerDataset(Dataset):
         self,
         y,
         seq_len,
-        label_len,
+        context_len,
         pred_len,
         freq,
         timeenc,  # boolean
     ):
         self.y = y
         self.seq_len = seq_len
-        self.label_len = label_len
+        self.context_len = context_len
         self.pred_len = pred_len
         self.freq = freq
         self.timeenc = timeenc
@@ -53,8 +53,8 @@ class PytorchFormerDataset(Dataset):
         """Get data pairs at this index."""
         s_begin = index
         s_end = s_begin + self.seq_len
-        r_begin = s_end - self.label_len
-        r_end = r_begin + self.label_len + self.pred_len
+        r_begin = s_end - self.context_len
+        r_end = r_begin + self.context_len + self.pred_len
 
         seq_x = torch.tensor(self.data[s_begin:s_end]).float()
         seq_y = torch.tensor(self.data[r_begin:r_end]).float()
@@ -62,7 +62,7 @@ class PytorchFormerDataset(Dataset):
         seq_y_mark = torch.tensor(self.time_stamps[r_begin:r_end]).float()
 
         dec_inp = torch.zeros_like(seq_y[-self.pred_len :, :])
-        dec_inp = torch.cat([seq_y[: self.label_len, :], dec_inp], dim=0)
+        dec_inp = torch.cat([seq_y[: self.context_len, :], dec_inp], dim=0)
 
         y_true = seq_y[-self.pred_len :]
 

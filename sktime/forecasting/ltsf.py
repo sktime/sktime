@@ -513,7 +513,7 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
         Length of the input sequence.
     pred_len : int
         Length of the prediction sequence.
-    label_len : int, optional (default=2)
+    context_len : int, optional (default=2)
         Length of the label sequence.
     num_epochs : int, optional (default=16)
         Number of epochs for training.
@@ -575,7 +575,7 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
     >>>
     >>> batch_size = 5
     >>> seq_len = 5
-    >>> label_len = 2
+    >>> context_len = 2
     >>> pred_len = 3
     >>> num_features = 1
     >>>
@@ -587,7 +587,7 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
     >>> model = LTSFTransfomer(
     ... 	seq_len = seq_len,
     ... 	pred_len = pred_len,
-    ... 	label_len = label_len,
+    ... 	context_len = context_len,
     ... 	output_attention = False,
     ... 	embed_type = 0,
     ... 	embed = "fiixed",
@@ -617,9 +617,9 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
     def __init__(
         self,
         seq_len,
+        context_len,
         pred_len,
         *,
-        label_len=2,
         num_epochs=16,
         batch_size=8,
         in_channels=1,
@@ -631,11 +631,8 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
         lr=0.001,
         custom_dataset_train=None,
         custom_dataset_pred=None,
-        output_attention=False,
         embed_type=0,
         embed="fixed",
-        enc_in=7,
-        dec_in=7,
         d_model=512,
         n_heads=8,
         d_ff=2048,
@@ -644,12 +641,21 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
         factor=5,
         dropout=0.1,
         activation="relu",
-        c_out=7,
         freq="h",
+        num_features=1,
     ):
+
+        """
+        suggested in the paper
+        context_len = pred_len
+        seq_len = 2 * pred_len
+        
+        """
+
         self.seq_len = seq_len
+        self.context_len = context_len
         self.pred_len = pred_len
-        self.label_len = label_len
+
         self.individual = individual
         self.in_channels = in_channels
         self.criterion = criterion
@@ -662,11 +668,8 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
         self.custom_dataset_pred = custom_dataset_pred
         self.batch_size = batch_size
 
-        self.output_attention = output_attention
         self.embed_type = embed_type
         self.embed = embed
-        self.enc_in = enc_in
-        self.dec_in = dec_in
         self.d_model = d_model
         self.n_heads = n_heads
         self.d_ff = d_ff
@@ -675,10 +678,8 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
         self.factor = factor
         self.dropout = dropout
         self.activation = activation
-        self.c_out = c_out
         self.freq = freq
-
-        self.timeenc = embed == "timeF"  # timeenc = 0 if args.embed != 'timeF' else 1
+        self.num_features = num_features
 
         super().__init__(
             num_epochs=num_epochs,
@@ -731,7 +732,7 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
             dataset = PytorchFormerDataset(
                 y=y,
                 seq_len=self.seq_len,
-                label_len=self.label_len,
+                context_len=self.context_len,
                 pred_len=self.pred_len,
                 freq=self.freq,
                 timeenc=self.timeenc,
@@ -765,7 +766,7 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
             dataset = PytorchFormerDataset(
                 y=_y,
                 seq_len=self.seq_len,
-                label_len=self.label_len,
+                context_len=self.context_len,
                 pred_len=self.pred_len,
                 freq=self.freq,
                 timeenc=self.timeenc,
@@ -779,12 +780,22 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
     def _build_network(self, fh):
         from sktime.networks.ltsf.models.transformers import LTSFTransformerNetwork
 
+        self.timeenc = self.embed == "timeF"  # timeenc = 0 if args.embed != 'timeF' else 1
+
+        # TODO: num_features to be infered from `y` provided as argument
+        self.enc_in = self.num_features
+        self.dec_in = self.num_features
+        self.c_out = self.num_features
+
+        # TODO: this needs to be infered from `fh` provided as argument
+        self.freq = self.freq
+
         class Configs:
             def __init__(self_config):
                 self_config.seq_len = self.seq_len
+                self_config.context_len = self.context_len
                 self_config.pred_len = self.pred_len
-                self_config.label_len = self.label_len
-                self_config.output_attention = self.output_attention
+                self_config.output_attention = False # attention in output is not needed by the user
                 self_config.embed_type = self.embed_type
                 self_config.embed = self.embed
                 self_config.enc_in = self.enc_in
@@ -801,6 +812,27 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
                 self_config.freq = self.freq
 
         return LTSFTransformerNetwork(Configs())._build()
+
+        # return LTSFTransformerNetwork(
+        #     seq_len=self.seq_len,
+        #     pred_len=self.pred_len,
+        #     context_len=self.context_len,
+        #     output_attention=self.output_attention,
+        #     embed_type=self.embed_type,
+        #     embed=self.embed,
+        #     enc_in=self.enc_in,
+        #     dec_in=self.dec_in,
+        #     d_model=self.d_model,
+        #     n_heads=self.n_heads,
+        #     d_ff=self.d_ff,
+        #     e_layers=self.e_layers,
+        #     d_layers=self.d_layers,
+        #     factor=self.factor,
+        #     dropout=self.dropout,
+        #     activation=self.activation,
+        #     c_out=self.c_out,
+        #     freq=self.freq
+        # )._build()
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
