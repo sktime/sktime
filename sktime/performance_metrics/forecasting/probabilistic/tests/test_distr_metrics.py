@@ -4,14 +4,18 @@ import warnings
 import pandas as pd
 import pytest
 
-from sktime.performance_metrics.forecasting.probabilistic._classes import CRPS, LogLoss
+from sktime.performance_metrics.forecasting.probabilistic._classes import (
+    CRPS,
+    AUCalibration,
+    LogLoss,
+)
 from sktime.proba.normal import Normal
 from sktime.proba.tfp import TFNormal
 from sktime.utils.dependencies import _check_soft_dependencies
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-DISTR_METRICS = [CRPS, LogLoss]
+DISTR_METRICS = [CRPS, AUCalibration, LogLoss]
 
 
 if _check_soft_dependencies("tensorflow_probability", severity="none"):
