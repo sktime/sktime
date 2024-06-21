@@ -380,7 +380,7 @@ class BaseForecaster(BaseEstimator):
         self._update_y_X(y_inner, X_inner)
 
         # check forecasting horizon and coerce to ForecastingHorizon object
-        fh = self._check_fh(fh, self._cutoff)
+        fh = self._check_fh(fh)
 
         # checks and conversions complete, pass to inner fit
         #####################################################
@@ -441,8 +441,7 @@ class BaseForecaster(BaseEstimator):
         X_inner = self._check_X(X=X)
 
         # check fh and coerce to ForecastingHorizon, if not already passed in fit
-        cutoff = get_cutoff(self._y, self.cutoff, return_index=True)
-        fh = self._check_fh(fh, cutoff)
+        fh = self._check_fh(fh)
 
         # we call the ordinary _predict if no looping/vectorization needed
         if not self._is_vectorized:
@@ -544,7 +543,7 @@ class BaseForecaster(BaseEstimator):
         self._update_y_X(y_inner, X_inner)
 
         # check fh and coerce to ForecastingHorizon
-        fh = self._check_fh(fh, self._cutoff)
+        fh = self._check_fh(fh)
 
         # apply fit and then predict
         vectorization_needed = isinstance(y_inner, VectorizedDF)
@@ -617,8 +616,7 @@ class BaseForecaster(BaseEstimator):
         # input checks and conversions
 
         # check fh and coerce to ForecastingHorizon, if not already passed in fit
-        cutoff = get_cutoff(self._y, self.cutoff, return_index=True)
-        fh = self._check_fh(fh, cutoff, pred_int=True)
+        fh = self._check_fh(fh, pred_int=True)
 
         # default alpha
         if alpha is None:
@@ -704,8 +702,7 @@ class BaseForecaster(BaseEstimator):
         # input checks and conversions
 
         # check fh and coerce to ForecastingHorizon, if not already passed in fit
-        cutoff = get_cutoff(self._y, self.cutoff, return_index=True)
-        fh = self._check_fh(fh, cutoff, pred_int=True)
+        fh = self._check_fh(fh, pred_int=True)
 
         # check alpha and coerce to list
         coverage = check_alpha(coverage, name="coverage")
@@ -792,8 +789,7 @@ class BaseForecaster(BaseEstimator):
         # input checks and conversions
 
         # check fh and coerce to ForecastingHorizon, if not already passed in fit
-        cutoff = get_cutoff(self._y, self.cutoff, return_index=True)
-        fh = self._check_fh(fh, cutoff, pred_int=True)
+        fh = self._check_fh(fh, pred_int=True)
 
         # check and convert X
         X_inner = self._check_X(X=X)
@@ -865,8 +861,7 @@ class BaseForecaster(BaseEstimator):
         # input checks and conversions
 
         # check fh and coerce to ForecastingHorizon, if not already passed in fit
-        cutoff = get_cutoff(self._y, self.cutoff, return_index=True)
-        fh = self._check_fh(fh, cutoff, pred_int=True)
+        fh = self._check_fh(fh, pred_int=True)
 
         # check and convert X
         X_inner = self._check_X(X=X)
@@ -1178,7 +1173,7 @@ class BaseForecaster(BaseEstimator):
         self.check_is_fitted()
 
         # check fh and coerce to ForecastingHorizon, if not already passed in fit
-        fh = self._check_fh(fh, self._cutoff)
+        fh = self._check_fh(fh)
 
         # input checks and minor coercions on X, y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
@@ -1776,7 +1771,7 @@ class BaseForecaster(BaseEstimator):
 
         return self._fh
 
-    def _check_fh(self, fh, cutoff=None, pred_int=False):
+    def _check_fh(self, fh, pred_int=False):
         """Check, set and update the forecasting horizon.
 
         Called from all methods where fh can be passed:
@@ -1796,11 +1791,7 @@ class BaseForecaster(BaseEstimator):
         Parameters
         ----------
         fh : None, int, list, np.ndarray or ForecastingHorizon
-        cutoff: if cutoff is passed, in sample tag will be checked.
-            NotImplementedError will be raised if fh with in sample index
-            being passed to incompatible forecasters.
-        pred_int: only effective if cutoff is not None. Check pred_int:insample
-            tag instead of insample tag.
+        pred_int: Check pred_int:insample tag instead of insample tag.
 
         Returns
         -------
@@ -1896,13 +1887,11 @@ class BaseForecaster(BaseEstimator):
         if (
             not in_sample_pred
             and self._fh is not None
-            and cutoff is not None
-            and not self._fh.is_all_out_of_sample(cutoff)
+            and not self._fh.is_all_out_of_sample(self._cutoff)
         ):
             msg = (
-                f"in-sample prediction is currently not supported: "
-                f"Forecaster {self.__class__.__name__} "
-                f"can not perform in-sample prediction! "
+                f"{self.__class__.__name__} "
+                f"can not perform in-sample prediction. "
                 f"Found fh with in sample index: "
                 f"{fh}"
             )
