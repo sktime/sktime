@@ -21,6 +21,7 @@ from .utils import (
     log_multivariate_normal_density,
     preprocess_arguments,
 )
+from .utils_numpy import newbyteorder
 
 # Dimensionality of each Kalman Filter parameter for a single time step
 DIM = {
@@ -1158,12 +1159,11 @@ class KalmanFilter:
                 transition_matrix = _last_dims(transition_matrices, t - 1)
                 transition_offset = _last_dims(transition_offsets, t - 1, ndims=1)
                 transition_covariance = _last_dims(transition_covariance, t - 1)
+                cov = newbyteorder(transition_covariance, "=")
                 states[t] = (
                     np.dot(transition_matrix, states[t - 1])
                     + transition_offset
-                    + rng.multivariate_normal(
-                        np.zeros(n_dim_state), transition_covariance.newbyteorder("=")
-                    )
+                    + rng.multivariate_normal(np.zeros(n_dim_state), cov)
                 )
 
             observation_matrix = _last_dims(observation_matrices, t)
@@ -1173,7 +1173,7 @@ class KalmanFilter:
                 np.dot(observation_matrix, states[t])
                 + observation_offset
                 + rng.multivariate_normal(
-                    np.zeros(n_dim_obs), observation_covariance.newbyteorder("=")
+                    np.zeros(n_dim_obs), newbyteorder(observation_covariance, "=")
                 )
             )
 
