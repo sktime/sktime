@@ -40,6 +40,7 @@ Deep learning
     SimpleRNNRegressor
     ResNetRegressor
     TapNetRegressor
+    TleNetRegressor
 
 Distance-based
 --------------
