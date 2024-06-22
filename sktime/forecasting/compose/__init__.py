@@ -5,7 +5,6 @@
 __all__ = [
     "HierarchyEnsembleForecaster",
     "ColumnEnsembleForecaster",
-    "EnbPIForecaster",
     "EnsembleForecaster",
     "TransformSelectForecaster",
     "FallbackForecaster",
