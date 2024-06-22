@@ -36,6 +36,14 @@ Dynamic time warping
     AlignerDTW
     AlignerDTWfromDist
 
+.. currentmodule:: sktime.alignment.dtaidist
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    AlignerDtwDtai
+
 .. currentmodule:: sktime.alignment.dtw_numba
 
 .. autosummary::

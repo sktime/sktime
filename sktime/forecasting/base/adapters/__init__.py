@@ -9,6 +9,7 @@ __all__ = [
     "_StatsForecastAdapter",
     "_GeneralisedStatsForecastAdapter",
     "_NeuralForecastAdapter",
+    "_PytorchForecastingAdapter",
 ]
 
 from sktime.forecasting.base.adapters._fbprophet import _ProphetAdapter
@@ -17,6 +18,9 @@ from sktime.forecasting.base.adapters._generalised_statsforecast import (
 )
 from sktime.forecasting.base.adapters._neuralforecast import _NeuralForecastAdapter
 from sktime.forecasting.base.adapters._pmdarima import _PmdArimaAdapter
+from sktime.forecasting.base.adapters._pytorchforecasting import (
+    _PytorchForecastingAdapter,
+)
 from sktime.forecasting.base.adapters._statsforecast import _StatsForecastAdapter
 from sktime.forecasting.base.adapters._statsmodels import _StatsModelsAdapter
 from sktime.forecasting.base.adapters._tbats import _TbatsAdapter
