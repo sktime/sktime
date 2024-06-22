@@ -11,6 +11,7 @@ from sktime.performance_metrics.forecasting.probabilistic._classes import (
 )
 from sktime.proba.normal import Normal
 from sktime.proba.tfp import TFNormal
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils.dependencies import _check_soft_dependencies
 
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -24,6 +25,10 @@ else:
     normal_dists = [Normal]
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 @pytest.mark.parametrize("normal", normal_dists)
 @pytest.mark.parametrize("metric", DISTR_METRICS)
 @pytest.mark.parametrize("multivariate", [True, False])
