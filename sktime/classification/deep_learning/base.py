@@ -3,6 +3,7 @@
 The reason for this class between BaseClassifier and deep_learning classifiers is
 because we can generalise tags, _predict and _predict_proba
 """
+
 __author__ = ["James-Large", "ABostrom", "TonyBagnall", "aurunmpegasus", "achieveordie"]
 __all__ = ["BaseDeepClassifier"]
 
@@ -15,7 +16,7 @@ from sklearn.utils import check_random_state
 
 from sktime.base._base import SERIALIZATION_FORMATS
 from sktime.classification.base import BaseClassifier
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 class BaseDeepClassifier(BaseClassifier, ABC):
@@ -103,7 +104,7 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         probs = probs / probs.sum(axis=1, keepdims=1)
         return probs
 
-    def convert_y_to_keras(self, y):
+    def _convert_y_to_keras(self, y):
         """Convert y to required Keras format."""
         self.label_encoder = LabelEncoder()
         y = self.label_encoder.fit_transform(y)
@@ -121,6 +122,19 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         # categories='auto' to get rid of FutureWarning
         y = self.onehot_encoder.fit_transform(y)
         return y
+
+    def convert_y_to_keras(self, y):
+        """Convert y to required Keras format."""
+        from sktime.utils.warnings import warn
+
+        warn(
+            "convert_y_to_keras of sktime deep learning estimators is "
+            "deprecated and will be removed in 0.31.0. For equivalent "
+            "behaviour, please use sklearn OneHotEncoder.fit_transform "
+            "directly.",
+            obj=self,
+        )
+        return self._convert_y_to_keras(y=y)
 
     def __getstate__(self):
         """Get Dict config that will be used when a serialization method is called.
@@ -205,7 +219,7 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         if hasattr(self, "history"):
             self.__dict__["history"] = self.history
 
-    def save(self, path=None, serialization_format="pickle", legacy_save=False):
+    def save(self, path=None, serialization_format="pickle"):
         """Save serialized self to bytes-like object or to (.zip) file.
 
         Behaviour:
@@ -233,17 +247,11 @@ class BaseDeepClassifier(BaseClassifier, ABC):
             ``sktime.base._base.SERIALIZATION_FORMATS``. Note that non-default formats
             might require installation of other soft dependencies.
 
-        legacy_save : bool, default = False
-            whether to use the legacy saving method for the model. If
-            tensorflow >= 2.16.0 is installed, this is ignored.
-            The legacy saving method will be removed in sktime 0.30.0.
-
         Returns
         -------
         if ``path`` is None - in-memory serialized self
         if ``path`` is file location - ZipFile with reference to the file
         """
-        # TODO - remove the legacy_save parameter in sktime 0.30.0
         import pickle
         from pathlib import Path
 
@@ -264,31 +272,6 @@ class BaseDeepClassifier(BaseClassifier, ABC):
             path = Path(path) if isinstance(path, str) else path
             path.mkdir()
 
-        if legacy_save:
-            from sktime.utils.warnings import warn
-
-            warn(
-                "WARNING: In the save method of classifiers and regressors,"
-                " saving logic has changed to be compatible with tensorflow 2.16. "
-                "The old saving logic is deprecated and will be removed in "
-                "sktime 0.30.0. "
-                "If tensorflow>=2.16.0 is installed, the new saving logic is always "
-                "used. If not, by default, the legacy saving logic is used until "
-                "sktime 0.28.last, and the new logic is used from sktime 0.29.0."
-                "For safe change in an environment with tensorflow<2.16.0, "
-                "set the legacy_save parameter explicitly to False to test the "
-                "new saving logic. If no issues are found, no changes to your code "
-                "are necessary. To keep using the legacy method, set the parameter "
-                "legacy_save to True. Note that the legacy_save parameter will be "
-                "removed entirely in sktime 0.30.0.",
-                FutureWarning,
-                obj=self,
-                stacklevel=2,
-            )
-
-        if _check_soft_dependencies("tensorflow>=2.16.0", severity="none"):
-            legacy_save = False
-
         if serialization_format == "cloudpickle":
             _check_soft_dependencies("cloudpickle", severity="error")
             import cloudpickle
@@ -301,10 +284,9 @@ class BaseDeepClassifier(BaseClassifier, ABC):
             path=path,
             dump=serializer.dump,
             dumps=serializer.dumps,
-            legacy_save=legacy_save,
         )
 
-    def _serialize_using_dump_func(self, path, dump, dumps, legacy_save=False):
+    def _serialize_using_dump_func(self, path, dump, dumps):
         """Serialize & return DL Estimator using ``dump`` and ``dumps`` functions."""
         import shutil
         from zipfile import ZipFile
@@ -331,12 +313,9 @@ class BaseDeepClassifier(BaseClassifier, ABC):
             )
 
         if self.model_ is not None:
-            if not legacy_save:
-                keras_path = path / "keras" / "model.keras"
-                os.makedirs(keras_path.parent, exist_ok=True)
-                self.model_.save(keras_path)
-            else:
-                self.model_.save(path / "keras/")
+            keras_path = path / "keras" / "model.keras"
+            os.makedirs(keras_path.parent, exist_ok=True)
+            self.model_.save(keras_path)
 
         with open(path / "history", "wb") as history_writer:
             dump(history, history_writer)

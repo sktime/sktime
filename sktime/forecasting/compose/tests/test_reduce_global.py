@@ -2,7 +2,7 @@
 __author__ = ["danbartl"]
 
 from sktime.tests.test_switch import run_test_for_class
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 # HistGradientBoostingRegressor requires experimental flag in old sklearn versions
 if _check_soft_dependencies("sklearn<1.0", severity="none"):
@@ -361,6 +361,10 @@ def test_nofreq_pass():
     )
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(_RecursiveReducer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_timezoneaware_index():
     y = load_solar(api_version=None)
     y_notz = y.copy().tz_localize(None)

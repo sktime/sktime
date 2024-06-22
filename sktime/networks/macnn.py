@@ -3,7 +3,7 @@
 __author__ = ["jnrusson1"]
 
 from sktime.networks.base import BaseDeepNetwork
-from sktime.utils.validation._dependencies import _check_dl_dependencies
+from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class MACNNNetwork(BaseDeepNetwork):

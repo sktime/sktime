@@ -20,7 +20,7 @@ from sklearn.utils.validation import _num_samples
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SFAFast
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.validation.panel import check_X_y
 
 # delayed was moved from utils.fixes to utils.parallel in scikit-learn 1.3
@@ -357,7 +357,11 @@ class BOSSEnsemble(BaseClassifier):
         return min_acc, min_acc_idx
 
     def _get_train_probs(self, X, y):
+        from sktime.datatypes import convert_to
+
         self.check_is_fitted()
+        if not isinstance(X, np.ndarray):
+            X = convert_to(X, "numpy3D")
         X, y = check_X_y(X, y, coerce_to_numpy=True, enforce_univariate=True)
 
         n_instances, _, series_length = X.shape
