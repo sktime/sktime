@@ -1,7 +1,5 @@
 __author__ = ["chrisholder"]
 
-from typing import Tuple
-
 import numpy as np
 
 from sktime.utils.numba.njit import njit
@@ -10,7 +8,7 @@ from sktime.utils.numba.njit import njit
 @njit(fastmath=True)
 def _dba_update(
     center: np.ndarray, X: np.ndarray, path_callable
-) -> Tuple[np.ndarray, float]:
+) -> tuple[np.ndarray, float]:
     """Perform an update iteration for dba.
 
     Parameters

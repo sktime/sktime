@@ -5,7 +5,7 @@
 __author__ = ["ltsaprounis", "ciaran-g"]
 
 from itertools import product
-from typing import Tuple, Union
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -16,7 +16,7 @@ from sktime.utils._testing.series import _make_index
 
 
 def _make_hierarchical(
-    hierarchy_levels: Tuple = (2, 4),
+    hierarchy_levels: tuple = (2, 4),
     max_timepoints: int = 12,
     min_timepoints: int = 12,
     same_cutoff: bool = True,
