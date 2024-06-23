@@ -1,6 +1,6 @@
 # libraries distributed with `sktime`
 
-This folder contains libraries directly distibuted with, and maintained by, `sktime`.
+This folder contains libraries directly distributed with, and maintained by, `sktime`.
 
 * `pykalman` - a package implementing the Kálmán Filter and variants.
   Unofficial fork of abandoned package from June 2024 onwards,

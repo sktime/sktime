@@ -25,7 +25,7 @@ class EnbPI:
 
     def __init__(self, aggregation_fun="mean"):
         if aggregation_fun == "mean":
-            self.aggregation_fun = lambda x : np.mean(x, 0)
+            self.aggregation_fun = lambda x: np.mean(x, 0)
         elif aggregation_fun == "median":
             self._aggregation_fun = lambda x: np.median(x, 0)
 
