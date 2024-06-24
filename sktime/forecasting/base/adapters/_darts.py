@@ -10,8 +10,8 @@ from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 __author__ = ["yarnabrina", "fnhirwa"]
 
 
-class _DartsAdapter(BaseForecaster):
-    """Base adapter class for Darts models.
+class _DartsRegressionModelsAdapter(BaseForecaster):
+    """Base adapter class for Darts Regression models.
 
     Parameters
     ----------
@@ -46,7 +46,7 @@ class _DartsAdapter(BaseForecaster):
     }
 
     def __init__(
-        self: "_DartsAdapter",
+        self: "_DartsRegressionModelsAdapter",
         past_covariates: Optional[list[str]] = None,
         num_samples: Optional[int] = 1000,
     ) -> None:
@@ -114,7 +114,7 @@ class _DartsAdapter(BaseForecaster):
             return None
 
     def convert_exogenous_dataset(
-        self: "_DartsAdapter", dataset: Optional[pd.DataFrame]
+        self: "_DartsRegressionModelsAdapter", dataset: Optional[pd.DataFrame]
     ):
         """Make exogenous features to ``darts`` compatible, if available.
 
@@ -157,11 +157,11 @@ class _DartsAdapter(BaseForecaster):
         return future_known_dataset, future_unknown_dataset
 
     @abc.abstractmethod
-    def _create_forecaster(self: "_DartsAdapter"):
+    def _create_forecaster(self: "_DartsRegressionModelsAdapter"):
         """Create Darts model."""
 
     def _fit(
-        self: "_DartsAdapter",
+        self: "_DartsRegressionModelsAdapter",
         y: pd.DataFrame,
         X: Optional[pd.DataFrame],
         fh: Optional[ForecastingHorizon],
@@ -189,6 +189,8 @@ class _DartsAdapter(BaseForecaster):
         -------
         self : reference to self
         """
+        if fh is not None and not fh.is_all_out_of_sample(cutoff=self.cutoff):
+            raise NotImplementedError("in-sample prediction is currently not supported")
         del fh  # avoid being detected as unused by ``vulture`` like tools
         endogenous_actuals = self.convert_dataframe_to_timeseries(y)
         unknown_exogenous, known_exogenous = self.convert_exogenous_dataset(X)
@@ -202,7 +204,7 @@ class _DartsAdapter(BaseForecaster):
         return self
 
     def _predict(
-        self: "_DartsAdapter",
+        self: "_DartsRegressionModelsAdapter",
         fh: Optional[ForecastingHorizon],
         X: Optional[pd.DataFrame],
     ):
@@ -350,9 +352,17 @@ def _handle_input_index(dataset: pd.DataFrame) -> pd.DataFrame:
     pandas.DataFrame
         converted dataset
     """
-    if isinstance(dataset.index, (pd.DatetimeIndex, pd.RangeIndex)):
+    if isinstance(dataset.index, pd.RangeIndex):
         return dataset
     dataset_copy = dataset.copy(deep=True)
+
+    if isinstance(dataset_copy.index, (pd.DatetimeIndex, pd.RangeIndex)):
+        dataset_copy.index = pd.date_range(
+            start=dataset_copy.index[0],
+            periods=len(dataset_copy),
+            freq=dataset_copy.index.freq,
+        )
+        return dataset_copy
 
     if isinstance(dataset_copy.index, pd.PeriodIndex):
         dataset_copy.index = dataset_copy.index.to_timestamp()
@@ -390,4 +400,4 @@ def _is_int64_type(index: pd.Index) -> bool:
         return False
 
 
-__all__ = ["_DartsAdapter"]
+__all__ = ["_DartsRegressionModelsAdapter"]

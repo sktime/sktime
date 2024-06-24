@@ -4,12 +4,12 @@ from typing import Optional, Union
 
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base.adapters._darts import _DartsAdapter
+from sktime.forecasting.base.adapters._darts import _DartsRegressionModelsAdapter
 
 __author__ = ["yarnabrina", "fnhirwa"]
 
 
-class DartsXGBModel(_DartsAdapter):
+class DartsXGBModel(_DartsRegressionModelsAdapter):
     """Darts XGBModel Estimator.
 
     This is based on implementation of XGBoost Model in darts [1]_ by Unit8.
@@ -223,7 +223,19 @@ class DartsXGBModel(_DartsAdapter):
                     "multi_models": True,
                     "use_static_covariates": True,
                     "kwargs": None,
-                }
+                },
+                {
+                    "num_samples": 200,
+                    "lags": 12,
+                    "output_chunk_length": 3,
+                    "add_encoders": None,
+                    "likelihood": "poisson",
+                    "quantiles": None,
+                    "random_state": None,
+                    "multi_models": True,
+                    "use_static_covariates": True,
+                    "kwargs": {"objective": "reg:squarederror"},
+                },
             ]
         else:
             params = [{}]
