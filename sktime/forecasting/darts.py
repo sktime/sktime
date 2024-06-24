@@ -223,7 +223,7 @@ class DartsXGBModel(_DartsRegressionModelsAdapter):
                     "multi_models": True,
                     "use_static_covariates": True,
                     "kwargs": {
-                        "objective": "reg:linear",
+                        "objective": "reg:squarederror",
                         "eval_metric": "mae",
                     },
                 },
@@ -237,7 +237,7 @@ class DartsXGBModel(_DartsRegressionModelsAdapter):
                     "random_state": None,
                     "multi_models": True,
                     "use_static_covariates": True,
-                    "kwargs": {"objective": "reg:squarederror"},
+                    "kwargs": {"objective": "reg:squarederror", "eval_metric": "rmse"},
                 },
             ]
         else:

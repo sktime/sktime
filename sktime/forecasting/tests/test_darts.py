@@ -28,7 +28,7 @@ y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, test_size=4)
 def test_darts_regression_model_without_X(model):
     """Test with single endogenous without exogenous."""
     kwargs = {
-        "objective": "reg:linear",
+        "objective": "reg:squarederror",
         "eval_metric": "mae",
     }
     sktime_model = model(
@@ -62,7 +62,7 @@ def test_darts_regression_model_with_weather_dataset(model):
     from darts.models import XGBModel
 
     kwargs = {
-        "objective": "reg:linear",
+        "objective": "reg:squarederror",
         "eval_metric": "mae",
     }
     # Load the dataset
@@ -99,7 +99,7 @@ def test_darts_regression_model_with_weather_dataset(model):
 def test_darts_regression_model_with_X(model):
     """Test with single endogenous and exogenous."""
     kwargs = {
-        "objective": "reg:linear",
+        "objective": "reg:squarederror",
         "eval_metric": "mae",
     }
     past_covariates = ["GNPDEFL", "GNP", "UNEMP"]
