@@ -1933,6 +1933,12 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
             "user feedback is appreciated in issue #3224 here: "
             "https://github.com/sktime/sktime/issues/3224"
         )
+        warn(
+            "With the addition of the `windows_identical` parameter, the behaviour of "
+            "DirectReductionForecaster has changed. The default behavior is now "
+            "to fit X of different lengths per forecasting horizon. For the "
+            "previous behavior, set windows_identical=True."
+        )
 
         if pooling == "local":
             mtypes = "pd.DataFrame"
