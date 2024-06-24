@@ -9,7 +9,7 @@ __all__ = [
     "ForecastingSkoptSearchCV",
 ]
 
-from collections.abc import Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from typing import Dict, List, Optional, Union
 
 import numpy as np
@@ -1775,36 +1775,30 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         self.n_evals = n_evals
 
     def _fit(self, y, X=None, fh=None):
-        import optuna
-
         cv = check_cv(self.cv)
         scoring = check_scoring(self.scoring, obj=self)
         scoring_name = f"test_{scoring.name}"
 
-        study = optuna.create_study(direction="minimize")
-        for _ in range(self.n_evals):
-            trial = study.ask(self.param_grid)  # pass the pre-defined distributions.
-            params = {name: trial.params[name] for name, v in self.param_grid.items()}
+        if not isinstance(self.param_grid, (Mapping, Iterable)):
+            raise TypeError(
+                "Parameter distribution is not a dict or a list,"
+                f" got: {self.param_grid!r} of type "
+                f"{type(self.param_grid).__name__}"
+            )
 
-            meta = {}
-            meta["forecaster"] = self.forecaster
-            meta["y"] = y
-            meta["X"] = X
-            meta["cv"] = cv
-            meta["strategy"] = self.strategy
-            meta["scoring"] = scoring
-            meta["error_score"] = self.error_score
-            meta["scoring_name"] = scoring_name
+        # if isinstance(self.param_grid, Mapping):
+        #     # wrap dictionary in a singleton list to support either dict
+        #     # or list of dicts
+        #     self.param_grid = [self.param_grid]
 
-            out = _fit_and_score(params, meta)
-            study.tell(trial, out[f"mean_{scoring_name}"])
+        results = self._run_search(
+            y,
+            X,
+            cv,
+            scoring,
+            scoring_name,
+        )
 
-        params_list = [trial.params for trial in study.trials]
-
-        results = study.trials_dataframe()
-
-        # Add the parameters as a new column to the DataFrame
-        results["params"] = params_list
         results[f"rank_{scoring_name}"] = results["value"].rank(
             ascending=scoring.get_tag("lower_is_better")
         )
@@ -1887,5 +1881,31 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         }
         return [params, params2, params3]
 
-    def _run_search(self, evaluate_candidates):
-        return evaluate_candidates(ParameterGrid(self.param_grid))
+    def _run_search(self, y, X, cv, scoring, scoring_name, evaluate_candidates=None):
+        import optuna
+
+        study = optuna.create_study(direction="minimize")
+        for _ in range(self.n_evals):
+            trial = study.ask(self.param_grid)
+            params = {name: trial.params[name] for name, v in self.param_grid.items()}
+
+            meta = {}
+            meta["forecaster"] = self.forecaster
+            meta["y"] = y
+            meta["X"] = X
+            meta["cv"] = cv
+            meta["strategy"] = self.strategy
+            meta["scoring"] = scoring
+            meta["error_score"] = self.error_score
+            meta["scoring_name"] = scoring_name
+
+            out = _fit_and_score(params, meta)
+            study.tell(trial, out[f"mean_{scoring_name}"])
+
+        params_list = [trial.params for trial in study.trials]
+
+        results = study.trials_dataframe()
+
+        # Add the parameters as a new column to the DataFrame
+        results["params"] = params_list
+        return results
