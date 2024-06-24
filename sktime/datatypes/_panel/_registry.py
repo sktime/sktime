@@ -47,6 +47,10 @@ MTYPE_REGISTER_PANEL = [
     ),
 ]
 
-MTYPE_SOFT_DEPS_PANEL = {"xr.DataArray": "xarray", "dask_panel": "dask"}
+MTYPE_SOFT_DEPS_PANEL = {
+    "xr.DataArray": "xarray",
+    "dask_panel": "dask",
+    "polars_panel": "polars",
+}
 
 MTYPE_LIST_PANEL = [x[0] for x in MTYPE_REGISTER_PANEL]

@@ -205,14 +205,6 @@ def check_polars_frame(
             else:
                 metadata["n_instances"] = "NA"
 
-    if scitype in ["Panel", "Hierarchical"]:
-        if _req("n_instances", return_metadata):
-            if exp_type_str == "LazyFrame":
-                metadata["n_instances"] = "NA"
-            else:
-                instance_cols = index_cols[:-1]
-                metadata["n_instances"] = len(obj[instance_cols].unique())
-
     # check if there are any nans
     #   compute only if needed
     if _req("has_nans", return_metadata):
