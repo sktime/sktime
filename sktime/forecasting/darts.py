@@ -147,16 +147,15 @@ class DartsXGBModel(_DartsRegressionModelsAdapter):
         self.random_state = random_state
         self.multi_models = multi_models
         self.use_static_covariates = use_static_covariates
-        self.kwargs = kwargs
+        self.kwargs = kwargs if kwargs is not None else {}
         self.handle_kwargs()
 
         super().__init__(past_covariates=past_covariates, num_samples=num_samples)
 
     def handle_kwargs(self: "DartsXGBModel") -> None:
         """Handle additional keyword arguments."""
-        if self.kwargs is not None:
-            for key, value in self.kwargs.items():
-                setattr(self, key, value)
+        for key, value in self.kwargs.items():
+            setattr(self, key, value)
 
     def _create_forecaster(self: "DartsXGBModel"):
         """Create Darts model."""
