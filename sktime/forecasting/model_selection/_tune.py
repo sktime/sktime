@@ -1774,6 +1774,9 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         self.param_grid = param_grid
         self.n_evals = n_evals
 
+    def _get_score(self, out, scoring_name):
+        return out[f"mean_{scoring_name}"]
+
     def _fit(self, y, X=None, fh=None):
         import optuna
 
@@ -1781,23 +1784,23 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         scoring = check_scoring(self.scoring, obj=self)
         scoring_name = f"test_{scoring.name}"
 
+        meta = {}
+        meta["forecaster"] = self.forecaster
+        meta["y"] = y
+        meta["X"] = X
+        meta["cv"] = cv
+        meta["strategy"] = self.strategy
+        meta["scoring"] = scoring
+        meta["error_score"] = self.error_score
+        meta["scoring_name"] = scoring_name
+
         study = optuna.create_study(direction="minimize")
         for _ in range(self.n_evals):
             trial = study.ask(self.param_grid)  # pass the pre-defined distributions.
             params = {name: trial.params[name] for name, v in self.param_grid.items()}
 
-            meta = {}
-            meta["forecaster"] = self.forecaster
-            meta["y"] = y
-            meta["X"] = X
-            meta["cv"] = cv
-            meta["strategy"] = self.strategy
-            meta["scoring"] = scoring
-            meta["error_score"] = self.error_score
-            meta["scoring_name"] = scoring_name
-
             out = _fit_and_score(params, meta)
-            study.tell(trial, out[f"mean_{scoring_name}"])
+            study.tell(trial, self._get_score(out, scoring_name))
 
         params_list = [trial.params for trial in study.trials]
 
@@ -1886,6 +1889,3 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
             "update_behaviour": "no_update",
         }
         return [params, params2, params3]
-
-    def _run_search(self, evaluate_candidates):
-        return evaluate_candidates(ParameterGrid(self.param_grid))
