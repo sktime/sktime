@@ -1786,10 +1786,10 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
                 f"{type(self.param_grid).__name__}"
             )
 
-        # if isinstance(self.param_grid, Mapping):
-        #     # wrap dictionary in a singleton list to support either dict
-        #     # or list of dicts
-        #     self.param_grid = [self.param_grid]
+        if isinstance(self.param_grid, Mapping):
+            # wrap dictionary in a singleton list to support either dict
+            # or list of dicts
+            self.param_grid = [self.param_grid]
 
         results = self._run_search(
             y,
@@ -1881,31 +1881,43 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         }
         return [params, params2, params3]
 
-    def _run_search(self, y, X, cv, scoring, scoring_name, evaluate_candidates=None):
+    def _run_search(self, y, X, cv, scoring, scoring_name):
         import optuna
 
-        study = optuna.create_study(direction="minimize")
-        for _ in range(self.n_evals):
-            trial = study.ask(self.param_grid)
-            params = {name: trial.params[name] for name, v in self.param_grid.items()}
+        all_results = []  # List to store results from all parameter grids
 
-            meta = {}
-            meta["forecaster"] = self.forecaster
-            meta["y"] = y
-            meta["X"] = X
-            meta["cv"] = cv
-            meta["strategy"] = self.strategy
-            meta["scoring"] = scoring
-            meta["error_score"] = self.error_score
-            meta["scoring_name"] = scoring_name
+        for (
+            param_grid_dict
+        ) in self.param_grid:  # Assuming self.param_grid is now a list of dicts
+            study = optuna.create_study(direction="minimize")
+            for _ in range(self.n_evals):
+                trial = study.ask(param_grid_dict)
+                params = {
+                    name: trial.params[name] for name, v in param_grid_dict.items()
+                }
 
-            out = _fit_and_score(params, meta)
-            study.tell(trial, out[f"mean_{scoring_name}"])
+                meta = {}
+                meta["forecaster"] = self.forecaster
+                meta["y"] = y
+                meta["X"] = X
+                meta["cv"] = cv
+                meta["strategy"] = self.strategy
+                meta["scoring"] = scoring
+                meta["error_score"] = self.error_score
+                meta["scoring_name"] = scoring_name
 
-        params_list = [trial.params for trial in study.trials]
+                out = _fit_and_score(params, meta)
 
-        results = study.trials_dataframe()
+                study.tell(trial, out[f"mean_{scoring_name}"])
 
-        # Add the parameters as a new column to the DataFrame
-        results["params"] = params_list
-        return results
+            params_list = [trial.params for trial in study.trials]
+
+            results = study.trials_dataframe()
+
+            # Add the parameters as a new column to the DataFrame
+            results["params"] = params_list
+            all_results.append(results)  # Append the results DataFrame to the list
+
+        # Combine all results into a single DataFrame
+        combined_results = pd.concat(all_results, ignore_index=True)
+        return combined_results
