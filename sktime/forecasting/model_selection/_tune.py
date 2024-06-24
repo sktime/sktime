@@ -1881,6 +1881,9 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         }
         return [params, params2, params3]
 
+    def _get_score(self, out, scoring_name):
+        return out[f"mean_{scoring_name}"]
+
     def _run_search(self, y, X, cv, scoring, scoring_name):
         import optuna
 
@@ -1890,25 +1893,24 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
             param_grid_dict
         ) in self.param_grid:  # Assuming self.param_grid is now a list of dicts
             study = optuna.create_study(direction="minimize")
+            meta = {}
+            meta["forecaster"] = self.forecaster
+            meta["y"] = y
+            meta["X"] = X
+            meta["cv"] = cv
+            meta["strategy"] = self.strategy
+            meta["scoring"] = scoring
+            meta["error_score"] = self.error_score
+            meta["scoring_name"] = scoring_name
             for _ in range(self.n_evals):
                 trial = study.ask(param_grid_dict)
                 params = {
                     name: trial.params[name] for name, v in param_grid_dict.items()
                 }
 
-                meta = {}
-                meta["forecaster"] = self.forecaster
-                meta["y"] = y
-                meta["X"] = X
-                meta["cv"] = cv
-                meta["strategy"] = self.strategy
-                meta["scoring"] = scoring
-                meta["error_score"] = self.error_score
-                meta["scoring_name"] = scoring_name
-
                 out = _fit_and_score(params, meta)
 
-                study.tell(trial, out[f"mean_{scoring_name}"])
+                study.tell(trial, self._get_score(out, scoring_name))
 
             params_list = [trial.params for trial in study.trials]
 
