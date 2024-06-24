@@ -185,26 +185,49 @@ class SkforecastAutoreg(BaseForecaster):
     @staticmethod
     def _coerce_int_to_range_index(df):
         new_df = df.copy(deep=True)
-        if new_df is not None:
-            new_index = pd.RangeIndex(new_df.index[0], new_df.index[-1] + 1)
-            try:
-                np.testing.assert_array_equal(new_df.index, new_index)
-            except AssertionError:
-                raise ValueError(
-                    "Coercion of integer pd.Index to pd.RangeIndex "
-                    "failed. Please provide  with a "
-                    "pd.RangeIndex."
-                )
-            new_df.index = new_index
+        start = new_df.index[0]
+        stop = new_df.index[-1] + 1
+        if len(new_df.index) == 1:
+            step = 1
+        else:
+            step = new_df.index[1] - start
+
+        new_index = pd.RangeIndex(start, stop, step)
+        np.testing.assert_array_equal(new_df.index, new_index)
+        new_df.index = new_index
         return new_df
 
     @staticmethod
     def _coerce_period_to_datetime_index(df):
-        if df is not None:
-            new_df = df.copy(deep=True)
-            period_freq = new_df.index.freq
-            new_df.index = new_df.index.to_timestamp(how="e").normalize()
-            new_df.index.freq = period_freq
+        new_df = df.copy(deep=True)
+        period_freq = new_df.index.freq
+        new_df.index = new_df.index.to_timestamp(how="e").normalize()
+        new_df.index.freq = period_freq
+        return new_df
+
+    def _make_index_compatible(self, df, input_var):
+        if df is None:
+            return None
+
+        new_df = df
+        if not isinstance(df.index, (pd.RangeIndex, pd.DatetimeIndex)):
+            if isinstance(df.index, pd.PeriodIndex):
+                new_df = self._coerce_period_to_datetime_index(df)
+            elif pd.api.types.is_integer_dtype(df.index):
+                try:
+                    new_df = self._coerce_int_to_range_index(df)
+                except AssertionError:
+                    raise ValueError(
+                        f"Coercion of index of {input_var} from integer pd.Index to "
+                        "pd.RangeIndex failed. Please ensure that indexes are equally "
+                        "spaced apart."
+                    )
+            else:
+                raise ValueError(
+                    f"{input_var} must have one of the following index types: "
+                    "pd.RangeIndex, pd.DatetimeIndex, pd.PeriodIndex, pd.Index"
+                    f"(int dtype). Found index of type: {type(df.index)}"
+                )
         return new_df
 
     def _fit(
@@ -238,25 +261,10 @@ class SkforecastAutoreg(BaseForecaster):
 
         self._forecaster = self._create_forecaster()
 
-        y_new = y
-        X_new = X
         # skforecast does not support PeriodIndex and Integer Index.
-        # So converting to supported index types here.
-        if not isinstance(y.index, (pd.RangeIndex, pd.DatetimeIndex)):
-            if isinstance(y.index, pd.PeriodIndex):
-                y_new = self._coerce_period_to_datetime_index(y)
-                if X is not None:
-                    X_new = self._coerce_period_to_datetime_index(X)
-            elif pd.api.types.is_integer_dtype(y.index):
-                y_new = self._coerce_int_to_range_index(y)
-                if X is not None:
-                    X_new = self._coerce_int_to_range_index(X)
-            else:
-                raise ValueError(
-                    f"""y and X must have one of the following index types:
-                    pd.RangeIndex, pd.DatetimeIndex, pd.PeriodIndex, pd.Index
-                    (int dtype). Found index of type: {type(y.index)}"""
-                )
+        # So converting to supported index types here if necessary.
+        y_new = self._make_index_compatible(y, "y")
+        X_new = self._make_index_compatible(X, "X")
 
         self._forecaster.fit(y_new, exog=self._coerce_column_names(X_new))
 
@@ -316,19 +324,7 @@ class SkforecastAutoreg(BaseForecaster):
             horizon_positions,
         ) = self._get_horizon_details(fh)
 
-        X_new = X
-        if X is not None:
-            if not isinstance(X.index, (pd.RangeIndex, pd.DatetimeIndex)):
-                if isinstance(X.index, pd.PeriodIndex):
-                    X_new = self._coerce_period_to_datetime_index(X)
-                elif pd.api.types.is_integer_dtype(X.index):
-                    X_new = self._coerce_int_to_range_index(X)
-                else:
-                    raise ValueError(
-                        f"""X must have one of the following index types:
-                        pd.RangeIndex, pd.DatetimeIndex, pd.PeriodIndex, pd.Index
-                        (int dtype). Found index of type: {type(X.index)}"""
-                    )
+        X_new = self._make_index_compatible(X, "X")
 
         point_predictions = self._forecaster.predict(
             maximum_forecast_horizon, exog=self._coerce_column_names(X_new)
@@ -393,19 +389,7 @@ class SkforecastAutoreg(BaseForecaster):
             index=absolute_horizons, columns=quantile_predictions_indices
         )
 
-        X_new = X
-        if X is not None:
-            if not isinstance(X.index, (pd.RangeIndex, pd.DatetimeIndex)):
-                if isinstance(X.index, pd.PeriodIndex):
-                    X_new = self._coerce_period_to_datetime_index(X)
-                elif pd.api.types.is_integer_dtype(X.index):
-                    X_new = self._coerce_int_to_range_index(X)
-                else:
-                    raise ValueError(
-                        f"""X must have one of the following index types:
-                        pd.RangeIndex, pd.DatetimeIndex, pd.PeriodIndex, pd.Index
-                        (int dtype). Found index of type: {type(X.index)}"""
-                    )
+        X_new = self._make_index_compatible(X, "X")
 
         bootstrap_predictions = self._forecaster.predict_bootstrapping(
             maximum_forecast_horizon, exog=self._coerce_column_names(X_new)
