@@ -43,7 +43,7 @@ class DtypeKind(IntEnum):
     CATEGORICAL = 23
 
 
-def _dtype_to_kind(col_dtypes):
+def _pandas_dtype_to_kind(col_dtypes):
     for i, dtype in enumerate(col_dtypes):
         if is_float_dtype(dtype):
             col_dtypes[i] = DtypeKind.FLOAT
@@ -66,38 +66,38 @@ def _dtype_to_kind(col_dtypes):
 def _get_series_dtypekind(obj, mtype):
     if mtype == np.ndarray:
         if len(obj.shape) == 2:
-            col_dtypes = [float] * obj.shape[1]
+            return [DtypeKind.FLOAT] * obj.shape[1]
         else:
-            col_dtypes = [float]
+            return [DtypeKind.FLOAT]
     elif mtype == pd.Series:
         col_dtypes = [obj.dtypes]
     elif mtype == pd.DataFrame:
         col_dtypes = obj.dtypes.to_list()
 
-    col_DtypeKinds = _dtype_to_kind(col_dtypes)
+    col_DtypeKinds = _pandas_dtype_to_kind(col_dtypes)
 
     return col_DtypeKinds
 
 
 def _get_panel_dtypekind(obj, mtype):
     if mtype == "numpy3D":
-        col_dtypes = [float] * obj.shape[1]
+        return [DtypeKind.FLOAT] * obj.shape[1]
     elif mtype == "numpyflat":
-        col_dtypes = [float]
+        return [DtypeKind.FLOAT]
     elif mtype == "pd-multiindex":
         col_dtypes = obj.dtypes.to_list()
     elif mtype == "nested_univ":
         col_names = obj.columns.to_list()
         col_dtypes = [obj[col][0].dtype for col in col_names]
 
-    col_DtypeKinds = _dtype_to_kind(col_dtypes)
+    col_DtypeKinds = _pandas_dtype_to_kind(col_dtypes)
 
     return col_DtypeKinds
 
 
 # This function is to broadly classify all dtypekinds into CATEGORICAL or FLOAT
-def _simple_dtypekind(col_dtypekind):
-    simple_dtypekind_map = {
+def _get_feature_kind(col_dtypekinds):
+    feature_kind_map = {
         DtypeKind.CATEGORICAL: DtypeKind.CATEGORICAL,
         DtypeKind.STRING: DtypeKind.CATEGORICAL,
         DtypeKind.BOOL: DtypeKind.CATEGORICAL,
@@ -107,8 +107,8 @@ def _simple_dtypekind(col_dtypekind):
         DtypeKind.UINT: DtypeKind.FLOAT,
     }
 
-    simple_dtypekind = []
-    for dtype in col_dtypekind:
-        simple_dtypekind.append(simple_dtypekind_map[dtype])
+    feature_kind = []
+    for kind in col_dtypekinds:
+        feature_kind.append(feature_kind_map[kind])
 
-    return simple_dtypekind
+    return feature_kind

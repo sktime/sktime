@@ -83,7 +83,7 @@ example_dict_metadata[("Series", 0)] = {
     "has_nans": False,
     "n_features": 1,
     "feature_names": ["a"],
-    "simple_feature_kind": [DtypeKind.FLOAT],
+    "feature_kind": [DtypeKind.FLOAT],
 }
 
 ###
@@ -127,7 +127,7 @@ example_dict_metadata[("Series", 1)] = {
     "has_nans": False,
     "n_features": 2,
     "feature_names": ["a", "b"],
-    "simple_feature_kind": [DtypeKind.FLOAT, DtypeKind.FLOAT],
+    "feature_kind": [DtypeKind.FLOAT, DtypeKind.FLOAT],
 }
 
 
@@ -174,7 +174,7 @@ example_dict_metadata[("Series", 2)] = {
     "has_nans": False,
     "n_features": 2,
     "feature_names": ["a", "b"],
-    "simple_feature_kind": [DtypeKind.FLOAT, DtypeKind.FLOAT],
+    "feature_kind": [DtypeKind.FLOAT, DtypeKind.FLOAT],
 }
 
 ###
@@ -213,5 +213,5 @@ example_dict_metadata[("Series", 3)] = {
     "has_nans": False,
     "n_features": 1,
     "feature_names": ["a"],
-    "simple_feature_kind": [DtypeKind.FLOAT],
+    "feature_kind": [DtypeKind.FLOAT],
 }
