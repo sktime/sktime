@@ -20,13 +20,14 @@ y, X = load_longley()
 y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, test_size=4)
 
 
+@pytest.mark.parametrize("model", [DartsXGBModel])
 @pytest.mark.skipif(
-    not run_test_for_class(DartsXGBModel),
+    not run_test_for_class([DartsXGBModel]),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-def test_darts_xgb_model_without_X():
+def test_darts_regression_model_without_X(model):
     """Test with single endogenous without exogenous."""
-    sktime_model = DartsXGBModel(
+    sktime_model = model(
         lags=6,
         output_chunk_length=4,
     )
@@ -45,11 +46,12 @@ def test_darts_xgb_model_without_X():
     pd.testing.assert_index_equal(pred.index, y_test.index, check_names=False)
 
 
+@pytest.mark.parametrize("model", [DartsXGBModel])
 @pytest.mark.skipif(
-    not run_test_for_class(DartsXGBModel),
+    not run_test_for_class([DartsXGBModel]),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-def test_darts_xgb_model_with_weather_dataset():
+def test_darts_regression_model_with_weather_dataset(model):
     """Test with weather dataset."""
     from darts.datasets import WeatherDataset
     from darts.models import XGBModel
@@ -71,7 +73,7 @@ def test_darts_xgb_model_with_weather_dataset():
     # Make a prediction for the next 6 time steps
     darts_pred = darts_model.predict(6).pd_series()
     assert isinstance(target_df, pd.Series)
-    sktime_model = DartsXGBModel(
+    sktime_model = model(
         lags=12,
         output_chunk_length=6,
     )
@@ -83,14 +85,15 @@ def test_darts_xgb_model_with_weather_dataset():
     np.testing.assert_array_equal(pred_sktime.to_numpy(), darts_pred.to_numpy())
 
 
-# @pytest.mark.skipif(
-#     not run_test_for_class(DartsXGBModel),
-#     reason="run test only if softdeps are present and incrementally (if requested)",
-# )
-def test_darts_xgb_model_with_X():
+@pytest.mark.parametrize("model", [DartsXGBModel])
+@pytest.mark.skipif(
+    not run_test_for_class([DartsXGBModel]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_darts_regression_model_with_X(model):
     """Test with single endogenous and exogenous."""
     past_covariates = ["GNPDEFL", "GNP", "UNEMP"]
-    sktime_model = DartsXGBModel(
+    sktime_model = model(
         lags=6, output_chunk_length=4, past_covariates=["GNPDEFL", "GNP", "UNEMP"]
     )
     expected_message = re.escape(
