@@ -1,3 +1,5 @@
+"""Interface for running a registry of models on a registry of validations."""
+
 import functools
 import logging
 import os
@@ -5,6 +7,8 @@ import time
 from typing import List, Optional, Union
 
 import pandas as pd
+from sktime.utils.dependencies import _check_soft_dependencies
+
 
 logger = logging.getLogger(__name__)
 
@@ -61,14 +65,9 @@ def run(
         results_df = pd.DataFrame(columns=["validation_id", "model_id", "runtime_secs"])
         results_df["runtime_secs"] = results_df["runtime_secs"].astype(int)
 
-    tqdm_available = False
-    if verbose:
-        try:
-            from tqdm import tqdm
-
-            tqdm_available = True
-        except ImportError:
-            logger.warning("tqdm is not installed. Continuing without progress bars.")
+    tqdm_available, _ = _check_soft_dependencies("tqdm", severity="warning")
+    if tqdm_available:
+        from tqdm import tqdm
 
     results_df = results_df.set_index(["validation_id", "model_id"], drop=False)
     results_list = []
@@ -108,10 +107,14 @@ def run(
             ):
                 logger.info(
                     f"Skipping validation - model: "
-                    f"{validation_spec.id} - {model_spec.id}, "
-                    f"as found prior result in results."
+                    f"{validation_spec.id} - {model_spec.id}"
+                    ", as found prior result in results."
                 )
                 continue
+
+            logger.info(
+                f"Running validation - model: {validation_spec.id} - {model_spec.id}"
+            )
 
             validation = validation_spec.make()
             validation = _form_validation_partial_with_store_dirs(
