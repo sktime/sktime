@@ -1887,11 +1887,16 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         if there is only 1 level (single time series), all three settings agree
     windows_identical : bool, optional, default=False
         Specifies whether all direct models use the same number of observations
-        (True: Total observations - maximum forecasting horizon due to
-        imputation of ReductionTransformer, otherwise: Total observations + 1 -
-        window_length + maximum forecasting horizon) or a different number of
-        observations (False: Total observations + 1 - window_length +
-        forecasting horizon).
+        or a different number of observations.
+            * `True`: Uniform window of length (total observations - maximum
+                forecasting horizon). Note: Currently, there are no missings
+                arising from window length due to backwards imputation in
+                `ReductionTransformer`. Without imputation, the window size
+                corresponds to (total observations + 1 - window_length + maximum
+                forecasting horizon).
+            * `False`: Window size differs for each forecasting horizon. Window
+                length corresponds to (total observations + 1 - window_length +
+                forecasting horizon).
     """
 
     _tags = {
