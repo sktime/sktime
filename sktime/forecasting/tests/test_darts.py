@@ -27,9 +27,14 @@ y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, test_size=4)
 )
 def test_darts_regression_model_without_X(model):
     """Test with single endogenous without exogenous."""
+    kwargs = {
+        "objective": "reg:linear",
+        "eval_metric": "mae",
+    }
     sktime_model = model(
         lags=6,
         output_chunk_length=4,
+        kwargs=kwargs,
     )
     # try to fit with negative forecast horizon (insample prediction)
     with pytest.raises(
@@ -56,6 +61,10 @@ def test_darts_regression_model_with_weather_dataset(model):
     from darts.datasets import WeatherDataset
     from darts.models import XGBModel
 
+    kwargs = {
+        "objective": "reg:linear",
+        "eval_metric": "mae",
+    }
     # Load the dataset
     series = WeatherDataset().load()
 
@@ -63,10 +72,7 @@ def test_darts_regression_model_with_weather_dataset(model):
     target = series["p (mbar)"][:100]
     target_df = target.pd_series()
     # Create and fit the model
-    darts_model = XGBModel(
-        lags=12,
-        output_chunk_length=6,
-    )
+    darts_model = XGBModel(lags=12, output_chunk_length=6, kwargs=kwargs)
 
     darts_model.fit(target)
 
@@ -92,9 +98,16 @@ def test_darts_regression_model_with_weather_dataset(model):
 )
 def test_darts_regression_model_with_X(model):
     """Test with single endogenous and exogenous."""
+    kwargs = {
+        "objective": "reg:linear",
+        "eval_metric": "mae",
+    }
     past_covariates = ["GNPDEFL", "GNP", "UNEMP"]
     sktime_model = model(
-        lags=6, output_chunk_length=4, past_covariates=["GNPDEFL", "GNP", "UNEMP"]
+        lags=6,
+        output_chunk_length=4,
+        past_covariates=["GNPDEFL", "GNP", "UNEMP"],
+        kwargs=kwargs,
     )
     expected_message = re.escape(
         f"Expected following exogenous features: {past_covariates}."
