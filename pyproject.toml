@@ -89,6 +89,7 @@ all_extras = [
   'hmmlearn>=0.2.7; python_version < "3.11"',
   "holidays",
   'keras-self-attention; python_version < "3.11"',
+  'lag-llama@git+https://github.com/time-series-foundation-models/lag-llama.git',
   "matplotlib>=3.3.2",
   "mne",
   'numba<0.60,>=0.53',
