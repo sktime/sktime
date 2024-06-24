@@ -173,7 +173,7 @@ class DartsXGBModel(_DartsRegressionModelsAdapter):
             random_state=self.random_state,
             multi_models=self.multi_models,
             use_static_covariates=self.use_static_covariates,
-            kwargs=self.kwargs,
+            **self.kwargs,
         )
 
     @property
