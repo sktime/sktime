@@ -1885,7 +1885,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         "panel" = second lowest level, one reduced model per panel level (-2)
         if there are 2 or less levels, "global" and "panel" result in the same
         if there is only 1 level (single time series), all three settings agree
-    windows_identical : bool, optional, default=True
+    windows_identical : bool, optional, default=False
         Specifies whether all direct models use the same number of observations
         (True: Total observations - maximum forecasting horizon due to
         imputation of ReductionTransformer, otherwise: Total observations + 1 -
@@ -1910,7 +1910,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         X_treatment="concurrent",
         impute_method="bfill",
         pooling="local",
-        windows_identical=True,
+        windows_identical=False,
     ):
         self.window_length = window_length
         self.transformers = transformers
