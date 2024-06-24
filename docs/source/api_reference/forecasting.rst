@@ -469,6 +469,14 @@ Generic framework adapters that expose other frameworks in the ``sktime`` interf
 
     HCrystalBallAdapter
 
+.. currentmodule:: sktime.forecasting.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SkforecastAutoreg
+
 Model selection and tuning
 --------------------------
 
