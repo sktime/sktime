@@ -14,8 +14,9 @@ def placeholder(cls):
     If prophetverse 0.3 or higher is installed, this will directly
     return the forecaster imported from prophetverse.
     """
-    import importlib.util
     import importlib.metadata
+    import importlib.util
+
     from packaging.version import Version, InvalidVersion
 
     package_name = "prophetverse"
