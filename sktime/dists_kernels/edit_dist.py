@@ -123,6 +123,7 @@ class EditDist(BasePairwiseTransformerPanel):
         # --------------
         "symmetric": True,  # all the distances are symmetric
         "X_inner_mtype": "numpy3D",
+        "capability:unequal_length": False,  # can dist handle unequal length panels?
     }
 
     ALLOWED_DISTANCE_STR = ["lcss", "edr", "erp", "twe"]

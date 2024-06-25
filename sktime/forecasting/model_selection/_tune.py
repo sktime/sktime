@@ -84,7 +84,7 @@ class BaseGridSearch(_DelegatedForecaster):
         if tune_by_variable:
             self.set_tags(**{"scitype:y": "univariate"})
 
-        # todo 0.29.0: check if this is still necessary
+        # todo 0.31.0: check if this is still necessary
         # n_jobs is deprecated, left due to use in tutorials, books, blog posts
         if n_jobs != "deprecated":
             warn(
@@ -1153,7 +1153,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        "python_dependencies": ["numpy<1.24", "scikit-optimize"],
+        "python_dependencies": ["scikit-optimize"],
         "python_version": ">= 3.6",
         "python_dependencies_alias": {"scikit-optimize": "skopt"},
     }
@@ -1586,4 +1586,4 @@ def _fit_and_score_skopt(params, meta):
 
         return out
 
-    return _fit_and_score(**params)
+    return _fit_and_score(params)

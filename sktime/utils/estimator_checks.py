@@ -3,8 +3,6 @@
 __author__ = ["fkiraly"]
 __all__ = ["check_estimator"]
 
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
 
 def check_estimator(
     estimator,
@@ -94,6 +92,8 @@ def check_estimator(
     All tests PASSED!
     {'test_clone[ExponentTransformer-1]': 'PASSED'}
     """
+    from sktime.utils.dependencies import _check_soft_dependencies
+
     msg = (
         "check_estimator is a testing utility for developers, and "
         "requires pytest to be present "
@@ -136,3 +136,98 @@ def check_estimator(
         print(msg)  # noqa T001
 
     return results
+
+
+def _get_test_names_from_class(test_cls):
+    """Get all test names from a test class.
+
+    Parameters
+    ----------
+    test_cls : class
+        class of the test
+
+    Returns
+    -------
+    test_names : list of str
+        list of test names
+    """
+    test_names = [attr for attr in dir(test_cls) if attr.startswith("test")]
+
+    return test_names
+
+
+def _get_test_names_for_obj(obj):
+    """Get all test names for an object.
+
+    Parameters
+    ----------
+    obj : object
+        object to get tests for
+
+    Returns
+    -------
+    test_names : list of str
+        list of test names
+    """
+    from sktime.tests.test_class_register import get_test_classes_for_obj
+
+    test_clss_for_obj = get_test_classes_for_obj(obj)
+
+    test_names = []
+    for test_cls in test_clss_for_obj:
+        test_names.extend(_get_test_names_from_class(test_cls))
+
+    return test_names
+
+
+def parametrize_with_checks(objs, obj_varname="obj", check_varname="test_name"):
+    """Pytest specific decorator for parametrizing estimator checks.
+
+    Designed for setting up API compliance checks in compatible 2nd and 3rd party
+    libraries, using ``pytest.mark.parametrize``.
+
+    Inspired by the ``sklearn`` utility of the same name.
+
+    Parameters
+    ----------
+    objs : objects class or instance, or list thereof
+        Objects to generate test names for.
+    obj_varname : str, optional, default = 'obj'
+        Name of the variable for objects to use in the parametrization.
+    check_varname : str, optional, default = 'test_name'
+        Name of the variable for test name strings to use in the parametrization.
+
+    Returns
+    -------
+    decorator : `pytest.mark.parametrize`
+
+    See Also
+    --------
+    check_estimator : Check if estimator adheres to sktime APi contracts.
+
+    Examples
+    --------
+    >>> from sktime.utils.estimator_checks import parametrize_with_checks
+    >>> from sktime.forecasting.croston import Croston
+    >>> from sktime.forecasting.naive import NaiveForecaster
+
+    >>> @parametrize_with_checks(NaiveForecaster, obj_varname='estimator')
+    ... def test_sktime_compatible_estimator(estimator, test_name):
+    ...     check_estimator(estimator, tests_to_run=test_name, raise_exceptions=True)
+
+    >>> @parametrize_with_checks([NaiveForecaster, Croston])
+    ... def test_sktime_compatible_estimators(obj, test_name):
+    ...     check_estimator(obj, tests_to_run=test_name, raise_exceptions=True)
+    """
+    import pytest
+
+    if not isinstance(objs, list):
+        objs = [objs]
+
+    test_names = []
+    for obj in objs:
+        tests_for_obj = _get_test_names_for_obj(obj)
+        test_names.extend([(obj, test) for test in tests_for_obj])
+
+    var_str = f"{obj_varname}, {check_varname}"
+    return pytest.mark.parametrize(var_str, test_names)
