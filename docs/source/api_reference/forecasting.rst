@@ -341,7 +341,7 @@ Structural time series models
     :toctree: auto_generated/
     :template: class.rst
 
-    ProphetverseUnivariate
+    Prophetverse
 
 .. currentmodule:: sktime.forecasting.structural
 
