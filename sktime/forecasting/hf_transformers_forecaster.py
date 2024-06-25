@@ -28,7 +28,6 @@ __author__ = ["benheid"]
 class HFTransformersForecaster(BaseForecaster):
     """
     Forecaster that uses a huggingface model for forecasting.
-
     This forecaster fetches the model from the huggingface model hub.
     Note, this forecaster is in an experimental state. It is currently only
     working for Informer, Autoformer, and TimeSeriesTransformer.
@@ -58,32 +57,6 @@ class HFTransformersForecaster(BaseForecaster):
         Whether the predictions should be deterministic or not.
     callbacks : list, default=[]
         List of callbacks to use during training. See `transformers.Trainer`
-
-    Examples
-    --------
-    >>> from sktime.forecasting.hf_transformers_forecaster import (
-    ...     HFTransformersForecaster,
-    ... )
-    >>> from sktime.datasets import load_airline
-    >>> y = load_airline()
-    >>> forecaster = HFTransformersForecaster(
-    ...    model_path="huggingface/autoformer-tourism-monthly",
-    ...    training_args ={
-    ...        "num_train_epochs": 20,
-    ...        "output_dir": "test_output",
-    ...        "per_device_train_batch_size": 32,
-    ...    },
-    ...    config={
-    ...         "lags_sequence": [1, 2, 3],
-    ...         "context_length": 2,
-    ...         "prediction_length": 4,
-    ...         "use_cpu": True,
-    ...         "label_length": 2,
-    ...    },
-    ... ) # doctest: +SKIP
-    >>> forecaster.fit(y) # doctest: +SKIP
-    >>> fh = [1, 2, 3]
-    >>> y_pred = forecaster.predict(fh) # doctest: +SKIP
     """
 
     _tags = {
@@ -129,74 +102,76 @@ class HFTransformersForecaster(BaseForecaster):
         self.callbacks = callbacks
         self._callbacks = callbacks
 
-    def _fit(self, y, X, fh):
-        if self.model is None and self.model_path is not None:
-            # Load model and extract config
-            config = AutoConfig.from_pretrained(self.model_path)
+    def _load_model(self, X, fh):
+        """Load the Huggingface model from the given model path."""
+        config = AutoConfig.from_pretrained(self.model_path)
 
-            # Update config with user provided config
-            _config = config.to_dict()
-            _config.update(self._config)
-            _config["num_dynamic_real_features"] = X.shape[-1] if X is not None else 0
-            _config["num_static_real_features"] = 0
-            _config["num_dynamic_real_features"] = 0
-            _config["num_static_categorical_features"] = 0
-            _config["num_time_features"] = 0 if X is None else X.shape[-1]
+        # Update config with user provided config
+        _config = config.to_dict()
+        _config.update(self._config)
+        _config["num_dynamic_real_features"] = X.shape[-1] if X is not None else 0
+        _config["num_static_real_features"] = 0
+        _config["num_dynamic_real_features"] = 0
+        _config["num_static_categorical_features"] = 0
+        _config["num_time_features"] = 0 if X is None else X.shape[-1]
 
-            if hasattr(config, "feature_size"):
-                del _config["feature_size"]
+        if hasattr(config, "feature_size"):
+            del _config["feature_size"]
 
-            if fh is not None:
-                _config["prediction_length"] = max(
-                    *(fh.to_relative(self._cutoff)._values + 1),
-                    _config["prediction_length"],
-                )
-
-            config = config.from_dict(_config)
-            import transformers
-
-            prediction_model_class = None
-            if hasattr(config, "architectures") and config.architectures is not None:
-                prediction_model_class = config.architectures[0]
-            elif hasattr(config, "model_type"):
-                prediction_model_class = (
-                    "".join(
-                        x.capitalize() for x in config.model_type.lower().split("_")
-                    )
-                    + "ForPrediction"
-                )
-            else:
-                raise ValueError(
-                    "The model type is not inferrable from the config."
-                    "Thus, the model cannot be loaded."
-                )
-            # Load model with the updated config
-            self.model, info = getattr(
-                transformers, prediction_model_class
-            ).from_pretrained(
-                self.model_path,
-                config=config,
-                output_loading_info=True,
-                ignore_mismatched_sizes=True,
+        if fh is not None:
+            _config["prediction_length"] = max(
+                *(fh.to_relative(self._cutoff)._values + 1),
+                _config["prediction_length"],
             )
 
-            # Freeze all loaded parameters
-            for param in self.model.parameters():
-                param.requires_grad = False
+        config = config.from_dict(_config)
+        import transformers
 
-            # Clamp all loaded parameters to avoid NaNs due to large values
-            for param in self.model.model.parameters():
-                param.clamp_(-1000, 1000)
+        prediction_model_class = None
+        if hasattr(config, "architectures") and config.architectures is not None:
+            prediction_model_class = config.architectures[0]
+        elif hasattr(config, "model_type"):
+            prediction_model_class = (
+                "".join(x.capitalize() for x in config.model_type.lower().split("_"))
+                + "ForPrediction"
+            )
+        else:
+            raise ValueError(
+                "The model type is not inferrable from the config."
+                "Thus, the model cannot be loaded."
+            )
+        # Load model with the updated config
+        self.model, info = getattr(
+            transformers, prediction_model_class
+        ).from_pretrained(
+            self.model_path,
+            config=config,
+            output_loading_info=True,
+            ignore_mismatched_sizes=True,
+        )
 
-            # Reininit the weights of all layers that have mismatched sizes
-            for key, _, _ in info["mismatched_keys"]:
-                _model = self.model
-                for attr_name in key.split(".")[:-1]:
-                    _model = getattr(_model, attr_name)
-                _model.weight = torch.nn.Parameter(
-                    _model.weight.masked_fill(_model.weight.isnan(), 0.001),
-                    requires_grad=True,
-                )
+        # Freeze all loaded parameters
+        for param in self.model.parameters():
+            param.requires_grad = False
+
+        # Clamp all loaded parameters to avoid NaNs due to large values
+        for param in self.model.model.parameters():
+            param.clamp_(-1000, 1000)
+
+        # Reininit the weights of all layers that have mismatched sizes
+        for key, _, _ in info["mismatched_keys"]:
+            _model = self.model
+            for attr_name in key.split(".")[:-1]:
+                _model = getattr(_model, attr_name)
+            _model.weight = torch.nn.Parameter(
+                _model.weight.masked_fill(_model.weight.isnan(), 0.001),
+                requires_grad=True,
+            )
+        return config, info
+
+    def _fit(self, y, X, fh):
+        if self.model is None and self.model_path is not None:
+            config, info = self._load_model(X, fh)
         else:
             config = self.model.config
 
@@ -320,13 +295,11 @@ class HFTransformersForecaster(BaseForecaster):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
-
         Parameters
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return `"default"` set.
-
         Returns
         -------
         params : dict or list of dict, default = {}
