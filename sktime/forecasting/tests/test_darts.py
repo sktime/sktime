@@ -59,20 +59,22 @@ def test_darts_regression_model_without_X(model):
 def test_darts_regression_model_with_weather_dataset(model):
     """Test with weather dataset."""
     from darts.datasets import WeatherDataset
-    from darts.models import XGBModel
 
     kwargs = {
         "objective": "reg:squarederror",
         "eval_metric": "mae",
     }
+    # Create and fit the model
+    if model == DartsXGBModel:
+        from darts.models import XGBModel
+
+        darts_model = XGBModel(lags=12, output_chunk_length=6, kwargs=kwargs)
     # Load the dataset
     series = WeatherDataset().load()
 
     # Predicting atmospheric pressure
     target = series["p (mbar)"][:100]
     target_df = target.pd_series()
-    # Create and fit the model
-    darts_model = XGBModel(lags=12, output_chunk_length=6, kwargs=kwargs)
 
     darts_model.fit(target)
 
