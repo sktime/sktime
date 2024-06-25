@@ -1901,6 +1901,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
     _tags = {
         "authors": "fkiraly",
+        "maintainers": "hliebert",
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
         "ignores-exogeneous-X": False,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
