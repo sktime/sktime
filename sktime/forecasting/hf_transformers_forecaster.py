@@ -48,6 +48,9 @@ class HFTransformersForecaster(BaseForecaster):
           performance but requires more computational power and time.
         - "peft": Applies Parameter-Efficient Fine-Tuning (PEFT) techniques to adapt
           the model with fewer trainable parameters, saving computational resources.
+          Note: If the 'peft' package is not available, a `ModuleNotFoundError` will
+          be raised, indicating that the 'peft' package is required. Please install
+          it using `pip install peft` to use this fit strategy.
     validation_split : float, default=0.2
         Fraction of the data to use for validation
     config : dict, default={}
@@ -274,7 +277,7 @@ class HFTransformersForecaster(BaseForecaster):
             for param in self.model.parameters():
                 param.requires_grad = True
         elif self.fit_strategy == "peft":
-            if _check_soft_dependencies("peft", severity="none"):
+            if _check_soft_dependencies("peft", severity="error"):
                 from peft import get_peft_model
             peft_config = deepcopy(self.peft_config)
             self.model = get_peft_model(self.model, peft_config)
