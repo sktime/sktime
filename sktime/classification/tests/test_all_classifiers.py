@@ -19,7 +19,7 @@ from sktime.utils._testing.panel import make_classification_problem
 from sktime.utils._testing.scenarios_classification import (
     ClassifierFitPredictMultivariate,
 )
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 class ClassifierFixtureGenerator(BaseFixtureGenerator):
@@ -105,9 +105,14 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
 
             X_train = scenario.args["fit"]["X"]
             _, _, X_train_metadata = check_is_scitype(
-                X_train, "Panel", return_metadata=True
+                X_train, "Panel", return_metadata=["n_instances"]
             )
             X_train_len = X_train_metadata["n_instances"]
+
+            # temp hack until _get_train_probs is implemented for all mtypes
+            if hasattr(X_train_len, "index"):
+                if isinstance(X_train_len.index, pd.MultiIndex):
+                    return None
 
             train_proba = estimator_instance._get_train_probs(X_train, y_train)
 

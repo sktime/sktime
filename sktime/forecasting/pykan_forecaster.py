@@ -36,17 +36,17 @@ class PyKANForecaster(BaseForecaster):
 
     Parameters
     ----------
-    hidden_layers : tuple, optional (default=(5,5))
+    hidden_layers : tuple, optional (default=(1, 1))
         The number of hidden layers in the network.
-    input_layer_size : int, optional (default=12)
+    input_layer_size : int, optional (default=2)
         The size of the input layer.
     k : int, optional (default=3)
         The number of nearest neighbors to consider.
-    grids : np.array, optional (default=np.array([5,10,20, 50, 100]))
+    grids : np.array, optional (default=np.array([2, 3]))
         The grid sizes to use in the model.
-    model_params : dict, optional (default=None)
+    model_params : dict, optional (default={"k": 2})
         The parameters to pass to the model. See pykan documentation for more details.
-    fit_params : dict, optional (default=None)
+    fit_params : dict, optional (default={"steps": 1})
         The parameters to pass to the fit method. See pykan documentation
         for more details.
     val_size : float, optional (default=0.5)
@@ -78,8 +78,8 @@ class PyKANForecaster(BaseForecaster):
 
     def __init__(
         self,
-        hidden_layers=(5, 5),
-        input_layer_size=12,
+        hidden_layers=(1, 1),
+        input_layer_size=2,
         grids=None,
         model_params=None,
         fit_params=None,
@@ -89,12 +89,12 @@ class PyKANForecaster(BaseForecaster):
         self.hidden_layers = hidden_layers
         self.input_layer_size = input_layer_size
         self.grids = grids
-        self._grids = grids if grids is not None else [5, 10, 20, 50, 100]
+        self._grids = grids if grids is not None else [2, 3]
         self.val_size = val_size
         self.model_params = model_params
-        self._model_params = model_params if model_params is not None else {}
+        self._model_params = model_params if model_params is not None else {"k": 2}
         self.fit_params = fit_params
-        self._fit_params = fit_params if fit_params is not None else {}
+        self._fit_params = fit_params if fit_params is not None else {"steps": 1}
         self.device = device
         super().__init__()
 
@@ -167,7 +167,7 @@ class PyKANForecaster(BaseForecaster):
             if i == 0:
                 model = KAN(
                     width=self._layer_sizes,
-                    grid=self.grids[i],
+                    grid=self._grids[i],
                     device=self.device,
                     **self._model_params,
                 )
@@ -258,6 +258,7 @@ class PyKANForecaster(BaseForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params = [
+            {},  # default parameters
             {
                 "grids": [2, 3],
                 "model_params": {"k": 2},

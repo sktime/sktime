@@ -11,9 +11,7 @@ from scipy.stats import ranksums, ttest_ind
 
 from sktime.benchmarking.base import BaseResults
 from sktime.exceptions import NotEvaluatedError
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("matplotlib", "scikit_posthocs", severity="warning")
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 class Evaluator:
