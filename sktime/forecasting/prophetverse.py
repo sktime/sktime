@@ -9,7 +9,7 @@ from sktime.forecasting.base._delegate import _DelegatedForecaster
 
 
 def placeholder(cls):
-    """Placeholder for prophetverse forecaster.  # noqa: D401
+    """Delegate to prophetverse if installed, otherwise use placeholder.
 
     If prophetverse 0.3 or higher is installed, this will directly
     return the forecaster imported from prophetverse.
