@@ -5,6 +5,7 @@ from typing import Optional, Union
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base.adapters._darts import _DartsRegressionModelsAdapter
+from sktime.utils.warnings import warn
 
 __author__ = ["yarnabrina", "fnhirwa"]
 
@@ -109,7 +110,7 @@ class DartsXGBModel(_DartsRegressionModelsAdapter):
         "maintainers": ["yarnabrina", "fnhirwa"],
         # estimator type
         # --------------
-        "scitype:y": "both",
+        "scitype:y": "univariate",
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:insample": False,
@@ -161,6 +162,15 @@ class DartsXGBModel(_DartsRegressionModelsAdapter):
         """Create Darts model."""
         from darts.models import XGBModel
 
+        if self.quantiles is not None and self.multi_models:
+            warn(
+                message=(
+                    "Setting multi_models=True with quantile regression may"
+                    " cause issues. Consider using multi_models=False."
+                ),
+                obj=self,
+                stacklevel=2,
+            )
         return XGBModel(
             lags=self.lags,
             lags_past_covariates=self.lags_past_covariates,
@@ -219,7 +229,7 @@ class DartsXGBModel(_DartsRegressionModelsAdapter):
                     "likelihood": "quantile",
                     "quantiles": None,
                     "random_state": None,
-                    "multi_models": True,
+                    "multi_models": False,
                     "use_static_covariates": True,
                     "kwargs": {
                         "objective": "reg:squarederror",
@@ -234,7 +244,7 @@ class DartsXGBModel(_DartsRegressionModelsAdapter):
                     "likelihood": "poisson",
                     "quantiles": None,
                     "random_state": None,
-                    "multi_models": True,
+                    "multi_models": False,
                     "use_static_covariates": True,
                     "kwargs": {"objective": "reg:squarederror", "eval_metric": "rmse"},
                 },

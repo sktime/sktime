@@ -41,7 +41,6 @@ class _DartsRegressionModelsAdapter(BaseForecaster):
         "requires-fh-in-fit": False,
         "enforce_index_type": pd.DatetimeIndex,
         "handles-missing-data": False,
-        "capability:pred_int": True,
         "capability:insample": False,
     }
 
@@ -194,6 +193,12 @@ class _DartsRegressionModelsAdapter(BaseForecaster):
         del fh  # avoid being detected as unused by ``vulture`` like tools
         endogenous_actuals = self.convert_dataframe_to_timeseries(y)
         unknown_exogenous, known_exogenous = self.convert_exogenous_dataset(X)
+        # single-target variable for univariate prediction
+        if endogenous_actuals.width > 1 and self.get_tag("scitype:y") == "univariate":
+            raise ValueError(
+                "Multi-target prediction is not supported by the quantile loss."
+                " Please provide a single-target variable."
+            )
         self._forecaster = self._create_forecaster()
         self._forecaster.fit(
             endogenous_actuals,
