@@ -642,7 +642,6 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
         dropout=0.1,
         activation="relu",
         freq="h",
-        num_features=1,
     ):
 
         """
@@ -679,7 +678,8 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
         self.dropout = dropout
         self.activation = activation
         self.freq = freq
-        self.num_features = num_features
+
+        self.timeenc = self.embed == "timeF"  # timeenc = 0 if args.embed != 'timeF' else 1
 
         super().__init__(
             num_epochs=num_epochs,
@@ -780,15 +780,11 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
     def _build_network(self, fh):
         from sktime.networks.ltsf.models.transformers import LTSFTransformerNetwork
 
-        self.timeenc = self.embed == "timeF"  # timeenc = 0 if args.embed != 'timeF' else 1
+        num_features = self._y.shape[-1]
 
-        # TODO: num_features to be infered from `y` provided as argument
-        self.enc_in = self.num_features
-        self.dec_in = self.num_features
-        self.c_out = self.num_features
-
-        # TODO: this needs to be infered from `fh` provided as argument
-        self.freq = self.freq
+        self.enc_in = num_features
+        self.dec_in = num_features
+        self.c_out = num_features
 
         class Configs:
             def __init__(self_config):
@@ -813,26 +809,6 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
 
         return LTSFTransformerNetwork(Configs())._build()
 
-        # return LTSFTransformerNetwork(
-        #     seq_len=self.seq_len,
-        #     pred_len=self.pred_len,
-        #     context_len=self.context_len,
-        #     output_attention=self.output_attention,
-        #     embed_type=self.embed_type,
-        #     embed=self.embed,
-        #     enc_in=self.enc_in,
-        #     dec_in=self.dec_in,
-        #     d_model=self.d_model,
-        #     n_heads=self.n_heads,
-        #     d_ff=self.d_ff,
-        #     e_layers=self.e_layers,
-        #     d_layers=self.d_layers,
-        #     factor=self.factor,
-        #     dropout=self.dropout,
-        #     activation=self.activation,
-        #     c_out=self.c_out,
-        #     freq=self.freq
-        # )._build()
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
