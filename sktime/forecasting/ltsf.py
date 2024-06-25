@@ -631,8 +631,11 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
         lr=0.001,
         custom_dataset_train=None,
         custom_dataset_pred=None,
-        embed_type=0,
-        embed="fixed",
+
+        fixed_embedding: bool = False,
+        position_encoding: bool = True,
+        temporal_encoding: bool = True,
+
         d_model=512,
         n_heads=8,
         d_ff=2048,
@@ -667,8 +670,10 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
         self.custom_dataset_pred = custom_dataset_pred
         self.batch_size = batch_size
 
-        self.embed_type = embed_type
-        self.embed = embed
+        self.fixed_embedding = fixed_embedding
+        self.position_encoding = position_encoding
+        self.temporal_encoding = temporal_encoding
+
         self.d_model = d_model
         self.n_heads = n_heads
         self.d_ff = d_ff
@@ -678,8 +683,6 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
         self.dropout = dropout
         self.activation = activation
         self.freq = freq
-
-        self.timeenc = self.embed == "timeF"  # timeenc = 0 if args.embed != 'timeF' else 1
 
         super().__init__(
             num_epochs=num_epochs,
@@ -735,7 +738,7 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
                 context_len=self.context_len,
                 pred_len=self.pred_len,
                 freq=self.freq,
-                timeenc=self.timeenc,
+                fixed_embedding=self.fixed_embedding,
             )
 
         return DataLoader(dataset, self.batch_size, shuffle=True)
@@ -769,7 +772,7 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
                 context_len=self.context_len,
                 pred_len=self.pred_len,
                 freq=self.freq,
-                timeenc=self.timeenc,
+                fixed_embedding=self.fixed_embedding,
             )
 
         return DataLoader(
@@ -792,8 +795,9 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
                 self_config.context_len = self.context_len
                 self_config.pred_len = self.pred_len
                 self_config.output_attention = False # attention in output is not needed by the user
-                self_config.embed_type = self.embed_type
-                self_config.embed = self.embed
+                self_config.fixed_embedding = self.fixed_embedding
+                self_config.position_encoding = self.position_encoding
+                self_config.temporal_encoding = self.temporal_encoding
                 self_config.enc_in = self.enc_in
                 self_config.dec_in = self.dec_in
                 self_config.d_model = self.d_model

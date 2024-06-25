@@ -17,14 +17,14 @@ class PytorchFormerDataset(Dataset):
         context_len,
         pred_len,
         freq,
-        timeenc,  # boolean
+        fixed_embedding,
     ):
         self.y = y
         self.seq_len = seq_len
         self.context_len = context_len
         self.pred_len = pred_len
         self.freq = freq
-        self.timeenc = timeenc
+        self.fixed_embedding = fixed_embedding
 
         self._prepare_data()
 
@@ -32,15 +32,13 @@ class PytorchFormerDataset(Dataset):
         time_stamps = self.y.index
         data = self.y.values
 
-        if self.timeenc:
-            time_stamps = time_features(time_stamps, freq=self.freq)
-            time_stamps = time_stamps.transpose(1, 0)
-        else:
-
+        if self.fixed_embedding:
             def time_stamps_map(x):
                 return [x.month, x.day, x.weekday, x.hour]
-
             time_stamps = np.vstack(time_stamps.map(time_stamps_map))
+        else:
+            time_stamps = time_features(time_stamps, freq=self.freq)
+            time_stamps = time_stamps.transpose(1, 0)
 
         self.time_stamps = time_stamps
         self.data = data

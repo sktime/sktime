@@ -117,16 +117,16 @@ class LTSFFixedEmbedding:
 class LTSFTemporalEmbedding:
     """LTSFTemporalEmbedding."""
 
-    def __init__(self, d_model, embed_type="fixed", freq="h"):
+    def __init__(self, d_model, fixed_embedding=False, freq="h"):
         self.d_model = d_model
-        self.embed_type = embed_type
+        self.fixed_embedding = fixed_embedding
         self.freq = freq
 
     def _build(self):
-        return self._LTSFTemporalEmbedding(self.d_model, self.embed_type, self.freq)
+        return self._LTSFTemporalEmbedding(self.d_model, self.fixed_embedding, self.freq)
 
     class _LTSFTemporalEmbedding(nn_module):
-        def __init__(self, d_model, embed_type="fixed", freq="h"):
+        def __init__(self, d_model, fixed_embedding=False, freq="h"):
             super().__init__()
 
             minute_size = 4
@@ -135,11 +135,9 @@ class LTSFTemporalEmbedding:
             day_size = 32
             month_size = 13
 
-            if embed_type == "fixed":
+            if fixed_embedding:
                 if freq == "t":
-                    self.minute_embed = LTSFFixedEmbedding(
-                        minute_size, d_model
-                    )._build()
+                    self.minute_embed = LTSFFixedEmbedding(minute_size, d_model)._build()
                 self.hour_embed = LTSFFixedEmbedding(hour_size, d_model)._build()
                 self.weekday_embed = LTSFFixedEmbedding(weekday_size, d_model)._build()
                 self.day_embed = LTSFFixedEmbedding(day_size, d_model)._build()
@@ -153,7 +151,6 @@ class LTSFTemporalEmbedding:
                 self.month_embed = nn.Embedding(month_size, d_model)
 
         def forward(self, x):
-            return 0.0
             x = x.long()
 
             minute_x = (
@@ -170,16 +167,16 @@ class LTSFTemporalEmbedding:
 class LTSFTimeFeatureEmbedding:
     """LTSFTimeFeatureEmbedding."""
 
-    def __init__(self, d_model, embed_type="timeF", freq="h"):
+    def __init__(self, d_model, fixed_embedding=False, freq="h"):
         self.d_model = d_model
-        self.embed_type = embed_type
+        self.fixed_embedding = fixed_embedding
         self.freq = freq
 
     def _build(self):
-        return self._LTSFTimeFeatureEmbedding(self.d_model, self.embed_type, self.freq)
+        return self._LTSFTimeFeatureEmbedding(self.d_model, self.fixed_embedding, self.freq)
 
     class _LTSFTimeFeatureEmbedding(nn_module):
-        def __init__(self, d_model, embed_type="timeF", freq="h"):
+        def __init__(self, d_model, fixed_embedding=False, freq="h"):
             super().__init__()
 
             freq_map = {"h": 4, "t": 5, "s": 6, "m": 1, "a": 1, "w": 2, "d": 3, "b": 3}
@@ -193,166 +190,56 @@ class LTSFTimeFeatureEmbedding:
 class LTSFDataEmbedding:
     """LTSFDataEmbedding."""
 
-    def __init__(self, in_channels, d_model, embed_type="fixed", freq="h", dropout=0.1):
+    def __init__(self, in_channels, d_model, freq="h", dropout=0.1, fixed_embedding=False, position_encoding=True, temporal_encoding=True):
         self.in_channels = in_channels
         self.d_model = d_model
-        self.embed_type = embed_type
         self.freq = freq
         self.dropout = dropout
+        self.fixed_embedding = fixed_embedding
+        self.position_encoding = position_encoding
+        self.temporal_encoding = temporal_encoding
 
     def _build(self):
         return self._LTSFDataEmbedding(
-            self.in_channels, self.d_model, self.embed_type, self.freq, self.dropout
+            self.in_channels, self.d_model, self.freq, self.dropout, self.fixed_embedding, self.position_encoding, self.temporal_encoding
         )
 
     class _LTSFDataEmbedding(nn_module):
         def __init__(
-            self, in_channels, d_model, embed_type="fixed", freq="h", dropout=0.1
+            self, in_channels, d_model, freq="h", dropout=0.1, fixed_embedding=False, position_encoding=True, temporal_encoding=True
         ):
             super().__init__()
+
+            self.position_encoding = position_encoding
+            self.temporal_encoding = temporal_encoding
 
             self.value_embedding = LTSFTokenEmbedding(
                 in_channels=in_channels, d_model=d_model
             )._build()
-            self.position_embedding = LTSFPositionalEmbedding(d_model=d_model)._build()
-            self.temporal_embedding = (
-                LTSFTemporalEmbedding(
-                    d_model=d_model, embed_type=embed_type, freq=freq
-                )._build()
-                if embed_type != "timeF"
-                else LTSFTimeFeatureEmbedding(
-                    d_model=d_model, embed_type=embed_type, freq=freq
-                )._build()
-            )
+
+            if position_encoding:
+                self.position_embedding = LTSFPositionalEmbedding(d_model=d_model)._build()
+
+            if temporal_encoding:
+                if fixed_embedding:
+                    self.temporal_embedding = LTSFTemporalEmbedding(
+                        d_model=d_model, fixed_embedding=fixed_embedding, freq=freq
+                    )._build()
+                else:
+                    self.temporal_embedding = LTSFTimeFeatureEmbedding(
+                        d_model=d_model, fixed_embedding=fixed_embedding, freq=freq
+                    )._build()
+
             self.dropout = nn.Dropout(p=dropout)
 
         def forward(self, x, x_mark):
-            x = (
-                self.value_embedding(x)
-                + self.temporal_embedding(x_mark)
-                + self.position_embedding(x)
-            )
-            return self.dropout(x)
 
-
-class LTSFDataEmbeddingWOPos:
-    """LTSFDataEmbeddingWOPos."""
-
-    def __init__(self, in_channels, d_model, embed_type="fixed", freq="h", dropout=0.1):
-        self.in_channels = in_channels
-        self.d_model = d_model
-        self.embed_type = embed_type
-        self.freq = freq
-        self.dropout = dropout
-
-    def _build(self):
-        return self._LTSFDataEmbeddingWOPos(
-            self.in_channels, self.d_model, self.embed_type, self.freq, self.dropout
-        )
-
-    class _LTSFDataEmbeddingWOPos(nn_module):
-        def __init__(
-            self, in_channels, d_model, embed_type="fixed", freq="h", dropout=0.1
-        ):
-            super().__init__()
-
-            self.value_embedding = LTSFTokenEmbedding(
-                in_channels=in_channels, d_model=d_model
-            )._build()
-            self.position_embedding = LTSFPositionalEmbedding(d_model=d_model)._build()
-            self.temporal_embedding = (
-                LTSFTemporalEmbedding(
-                    d_model=d_model, embed_type=embed_type, freq=freq
-                )._build()
-                if embed_type != "timeF"
-                else LTSFTimeFeatureEmbedding(
-                    d_model=d_model, embed_type=embed_type, freq=freq
-                )._build()
-            )
-            self.dropout = nn.Dropout(p=dropout)
-
-        def forward(self, x, x_mark):
-            x = self.value_embedding(x) + self.temporal_embedding(x_mark)
-            return self.dropout(x)
-
-
-class LTSFDataEmbeddingWOPosTemp:
-    """LTSFDataEmbeddingWOPosTemp."""
-
-    def __init__(self, in_channels, d_model, embed_type="fixed", freq="h", dropout=0.1):
-        self.in_channels = in_channels
-        self.d_model = d_model
-        self.embed_type = embed_type
-        self.freq = freq
-        self.dropout = dropout
-
-    def _build(self):
-        return self._LTSFDataEmbeddingWOPosTemp(
-            self.in_channels, self.d_model, self.embed_type, self.freq, self.dropout
-        )
-
-    class _LTSFDataEmbeddingWOPosTemp(nn_module):
-        def __init__(
-            self, in_channels, d_model, embed_type="fixed", freq="h", dropout=0.1
-        ):
-            super().__init__()
-
-            self.value_embedding = LTSFTokenEmbedding(
-                in_channels=in_channels, d_model=d_model
-            )._build()
-            self.position_embedding = LTSFPositionalEmbedding(d_model=d_model)._build()
-            self.temporal_embedding = (
-                LTSFTemporalEmbedding(
-                    d_model=d_model, embed_type=embed_type, freq=freq
-                )._build()
-                if embed_type != "timeF"
-                else LTSFTimeFeatureEmbedding(
-                    d_model=d_model, embed_type=embed_type, freq=freq
-                )._build()
-            )
-            self.dropout = nn.Dropout(p=dropout)
-
-        def forward(self, x, x_mark):
             x = self.value_embedding(x)
-            return self.dropout(x)
 
+            if self.position_encoding:
+                x += self.position_embedding(x)
 
-class LTSFDataEmbeddingWOTemp:
-    """LTSFDataEmbeddingWOTemp."""
+            if self.temporal_encoding:
+                x += self.temporal_embedding(x_mark)
 
-    def __init__(self, in_channels, d_model, embed_type="fixed", freq="h", dropout=0.1):
-        self.in_channels = in_channels
-        self.d_model = d_model
-        self.embed_type = embed_type
-        self.freq = freq
-        self.dropout = dropout
-
-    def _build(self):
-        return self._LTSFDataEmbeddingWOTemp(
-            self.in_channels, self.d_model, self.embed_type, self.freq, self.dropout
-        )
-
-    class _LTSFDataEmbeddingWOTemp(nn_module):
-        def __init__(
-            self, in_channels, d_model, embed_type="fixed", freq="h", dropout=0.1
-        ):
-            super().__init__()
-
-            self.value_embedding = LTSFTokenEmbedding(
-                in_channels=in_channels, d_model=d_model
-            )._build()
-            self.position_embedding = LTSFPositionalEmbedding(d_model=d_model)._build()
-            self.temporal_embedding = (
-                LTSFTemporalEmbedding(
-                    d_model=d_model, embed_type=embed_type, freq=freq
-                )._build()
-                if embed_type != "timeF"
-                else LTSFTimeFeatureEmbedding(
-                    d_model=d_model, embed_type=embed_type, freq=freq
-                )._build()
-            )
-            self.dropout = nn.Dropout(p=dropout)
-
-        def forward(self, x, x_mark):
-            x = self.value_embedding(x) + self.position_embedding(x)
             return self.dropout(x)

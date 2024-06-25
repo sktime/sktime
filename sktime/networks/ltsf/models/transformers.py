@@ -30,12 +30,7 @@ class LTSFTransformerNetwork:
                 LTSFFullAttention,
             )
 
-            from sktime.networks.ltsf.layers.embed import (
-                LTSFDataEmbedding,
-                LTSFDataEmbeddingWOPos,
-                LTSFDataEmbeddingWOPosTemp,
-                LTSFDataEmbeddingWOTemp,
-            )
+            from sktime.networks.ltsf.layers.embed import LTSFDataEmbedding
 
             from sktime.networks.ltsf.layers.enc_dec import (
                 LTSFTransformerDecoder,
@@ -51,82 +46,101 @@ class LTSFTransformerNetwork:
             self.output_attention = configs.output_attention
 
             # Embedding
-            if configs.embed_type == 0:
-                self.enc_embedding = LTSFDataEmbedding(
-                    configs.enc_in,
-                    configs.d_model,
-                    configs.embed,
-                    configs.freq,
-                    configs.dropout,
-                )._build()
-                self.dec_embedding = LTSFDataEmbedding(
-                    configs.dec_in,
-                    configs.d_model,
-                    configs.embed,
-                    configs.freq,
-                    configs.dropout,
-                )._build()
-            elif configs.embed_type == 1:
-                self.enc_embedding = LTSFDataEmbedding(
-                    configs.enc_in,
-                    configs.d_model,
-                    configs.embed,
-                    configs.freq,
-                    configs.dropout,
-                )._build()
-                self.dec_embedding = LTSFDataEmbedding(
-                    configs.dec_in,
-                    configs.d_model,
-                    configs.embed,
-                    configs.freq,
-                    configs.dropout,
-                )._build()
-            elif configs.embed_type == 2:
-                self.enc_embedding = LTSFDataEmbeddingWOPos(
-                    configs.enc_in,
-                    configs.d_model,
-                    configs.embed,
-                    configs.freq,
-                    configs.dropout,
-                )._build()
-                self.dec_embedding = LTSFDataEmbeddingWOPos(
-                    configs.dec_in,
-                    configs.d_model,
-                    configs.embed,
-                    configs.freq,
-                    configs.dropout,
-                )._build()
+            self.enc_embedding = LTSFDataEmbedding(
+                configs.enc_in,
+                configs.d_model,
+                configs.freq,
+                configs.dropout,
+                configs.fixed_embedding,
+                configs.position_encoding,
+                configs.temporal_encoding,
+            )._build()
+            self.dec_embedding = LTSFDataEmbedding(
+                configs.dec_in,
+                configs.d_model,
+                configs.freq,
+                configs.dropout,
+                configs.fixed_embedding,
+                configs.position_encoding,
+                configs.temporal_encoding,
+            )._build()
+            # if configs.embed_type == 0:
+            #     self.enc_embedding = LTSFDataEmbedding(
+            #         configs.enc_in,
+            #         configs.d_model,
+            #         configs.embed,
+            #         configs.freq,
+            #         configs.dropout,
+            #     )._build()
+            #     self.dec_embedding = LTSFDataEmbedding(
+            #         configs.dec_in,
+            #         configs.d_model,
+            #         configs.embed,
+            #         configs.freq,
+            #         configs.dropout,
+            #     )._build()
+            # elif configs.embed_type == 1:
+            #     self.enc_embedding = LTSFDataEmbedding(
+            #         configs.enc_in,
+            #         configs.d_model,
+            #         configs.embed,
+            #         configs.freq,
+            #         configs.dropout,
+            #     )._build()
+            #     self.dec_embedding = LTSFDataEmbedding(
+            #         configs.dec_in,
+            #         configs.d_model,
+            #         configs.embed,
+            #         configs.freq,
+            #         configs.dropout,
+            #     )._build()
+            # elif configs.embed_type == 2:
+            #     self.enc_embedding = LTSFDataEmbeddingWOPos(
+            #         configs.enc_in,
+            #         configs.d_model,
+            #         configs.embed,
+            #         configs.freq,
+            #         configs.dropout,
+            #     )._build()
+            #     self.dec_embedding = LTSFDataEmbeddingWOPos(
+            #         configs.dec_in,
+            #         configs.d_model,
+            #         configs.embed,
+            #         configs.freq,
+            #         configs.dropout,
+            #     )._build()
 
-            elif configs.embed_type == 3:
-                self.enc_embedding = LTSFDataEmbeddingWOTemp(
-                    configs.enc_in,
-                    configs.d_model,
-                    configs.embed,
-                    configs.freq,
-                    configs.dropout,
-                )._build()
-                self.dec_embedding = LTSFDataEmbeddingWOTemp(
-                    configs.dec_in,
-                    configs.d_model,
-                    configs.embed,
-                    configs.freq,
-                    configs.dropout,
-                )._build()
-            elif configs.embed_type == 4:
-                self.enc_embedding = LTSFDataEmbeddingWOPosTemp(
-                    configs.enc_in,
-                    configs.d_model,
-                    configs.embed,
-                    configs.freq,
-                    configs.dropout,
-                )._build()
-                self.dec_embedding = LTSFDataEmbeddingWOPosTemp(
-                    configs.dec_in,
-                    configs.d_model,
-                    configs.embed,
-                    configs.freq,
-                    configs.dropout,
-                )._build()
+            # elif configs.embed_type == 3:
+            #     self.enc_embedding = LTSFDataEmbeddingWOTemp(
+            #         configs.enc_in,
+            #         configs.d_model,
+            #         configs.embed,
+            #         configs.freq,
+            #         configs.dropout,
+            #     )._build()
+            #     self.dec_embedding = LTSFDataEmbeddingWOTemp(
+            #         configs.dec_in,
+            #         configs.d_model,
+            #         configs.embed,
+            #         configs.freq,
+            #         configs.dropout,
+            #     )._build()
+            # elif configs.embed_type == 4:
+            #     self.enc_embedding = LTSFDataEmbeddingWOPosTemp(
+            #         configs.enc_in,
+            #         configs.d_model,
+            #         configs.embed,
+            #         configs.freq,
+            #         configs.dropout,
+            #     )._build()
+            #     self.dec_embedding = LTSFDataEmbeddingWOPosTemp(
+            #         configs.dec_in,
+            #         configs.d_model,
+            #         configs.embed,
+            #         configs.freq,
+            #         configs.dropout,
+            #     )._build()
+
             # LTSFTransformerEncoder
             self.encoder = LTSFTransformerEncoder(
                 [
