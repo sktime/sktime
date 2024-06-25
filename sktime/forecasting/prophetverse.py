@@ -6,10 +6,28 @@ __author__ = ["felipeangelimvieira"]  # fkiraly for adapter
 import pandas as pd
 
 from sktime.forecasting.base._delegate import _DelegatedForecaster
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
-class ProphetverseUnivariate(_DelegatedForecaster):
-    """Univariate ``Prophetverse`` forecaster - prophet model implemented in numpyro.
+def placeholder(cls):
+    """Placeholder for prophetverse forecaster.
+
+    If prophetverse 0.3 or higher is installed, this will directly
+    return the forecaster imported from prophetverse.
+    """
+    if _check_soft_dependencies("prophetverse>=0.3", severity="none"):
+        from prophetverse.sktime import Prophetverse
+
+        return Prophetverse
+    # else we return the placeholder, which is a delegator
+    return cls
+
+
+@placeholder
+class Prophetverse(_DelegatedForecaster):
+    """Univariate prophetverse forecaster - prophet model implemented in numpyro
+
+    Estimator from the ``prophetverse`` package by ``felipeangelimvieira``.
 
     Differences to facebook's prophet:
 
@@ -95,7 +113,7 @@ class ProphetverseUnivariate(_DelegatedForecaster):
         A list of ``prophetverse`` ``AbstractEffect`` objects
         defining the exogenous effects to be used in the model.
 
-    default_effect : AbstractEffectm optional, defalut=None
+    default_effect : AbstractEffectm optional, default=None
         The default effect to be used when no effect is specified for a variable.
 
     default_exogenous_prior : tuple, default=None
@@ -171,6 +189,7 @@ class ProphetverseUnivariate(_DelegatedForecaster):
 
         super().__init__()
 
+        # delegation, only for prophetverse 0.2.X
         from prophetverse.sktime import Prophet
 
         self._delegate = Prophet(**self.get_params())
