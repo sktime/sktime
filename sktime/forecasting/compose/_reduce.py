@@ -1819,6 +1819,10 @@ class _ReducerMixin:
         return fh_idx
 
 
+# TODO (release 0.32.0)
+# change the default of `windows_identical` to `False`
+# update the docstring for parameter `windows_identical`
+# remove the corresponding warning and simplify __init__
 class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
     """Direct reduction forecaster, incl single-output, multi-output, exogeneous Dir.
 
@@ -1885,7 +1889,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         "panel" = second lowest level, one reduced model per panel level (-2)
         if there are 2 or less levels, "global" and "panel" result in the same
         if there is only 1 level (single time series), all three settings agree
-    windows_identical : bool, optional, default=False
+    windows_identical : bool, optional, default=True
         Specifies whether all direct models use the same number of observations
         or a different number of observations.
             * `True`: Uniform window of length (total observations - maximum
@@ -1897,6 +1901,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
             * `False`: Window size differs for each forecasting horizon. Window
                 length corresponds to (total observations + 1 - window_length +
                 forecasting horizon).
+        Default value will change to `False` in version 0.32.0.
     """
 
     _tags = {
@@ -1916,7 +1921,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         X_treatment="concurrent",
         impute_method="bfill",
         pooling="local",
-        windows_identical=False,
+        windows_identical="changing_value",
     ):
         self.window_length = window_length
         self.transformers = transformers
@@ -1925,6 +1930,16 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         self.X_treatment = X_treatment
         self.impute_method = impute_method
         self.pooling = pooling
+        if windows_identical == "changing_value":
+            warn(
+                "in `DirectReductionForecaster`, the default value of parameter "
+                "`windows_identical` will change to `False` in version 0.32.0."
+                "To keep current behaviour and to silence this warning, "
+                "set `windows_identical` to `True` explicitly.",
+            )
+            self.windows_identical = True
+        else:
+            self.windows_identical = False
         self.windows_identical = windows_identical
         self._lags = list(range(window_length))
         super().__init__()
@@ -1933,12 +1948,6 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
             "DirectReductionForecaster is experimental, and interfaces may change. "
             "user feedback is appreciated in issue #3224 here: "
             "https://github.com/sktime/sktime/issues/3224"
-        )
-        warn(
-            "With the addition of the `windows_identical` parameter, the behaviour of "
-            "DirectReductionForecaster has changed. The default behavior is now "
-            "to fit X of different lengths per forecasting horizon. For the "
-            "previous behavior, set windows_identical=True."
         )
 
         if pooling == "local":
