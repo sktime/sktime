@@ -17,7 +17,7 @@ def placeholder(cls):
     import importlib.metadata
     import importlib.util
 
-    from packaging.version import Version, InvalidVersion
+    from packaging.version import InvalidVersion, Version
 
     package_name = "prophetverse"
     required_version = "0.3.0"
