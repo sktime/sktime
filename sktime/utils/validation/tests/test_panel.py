@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.panel import make_classification_problem
 from sktime.utils.validation.panel import check_X, check_X_y, check_y
 
@@ -20,6 +21,10 @@ BAD_INPUT_ARGS = [
 y = pd.Series(dtype=int)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([check_X, check_X_y, check_y]),
+    reason="Run if tested function has changed.",
+)
 @pytest.mark.parametrize("X", BAD_INPUT_ARGS)
 def test_check_X_bad_input_args(X):
     """Test for the correct reaction for bad input in check_X."""
@@ -30,6 +35,10 @@ def test_check_X_bad_input_args(X):
         check_X_y(X, y)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([check_X, check_X_y, check_y]),
+    reason="Run if tested function has changed.",
+)
 def test_check_enforce_min_instances():
     """Test minimum instances enforced in check_X."""
     X, y = make_classification_problem(n_instances=3)
@@ -44,6 +53,10 @@ def test_check_enforce_min_instances():
         check_y(y, enforce_min_instances=4)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([check_X, check_X_y, check_y]),
+    reason="Run if tested function has changed.",
+)
 def test_check_X_enforce_univariate():
     """Test univariate enforced in check_X."""
     X, y = make_classification_problem(n_columns=2)
@@ -55,6 +68,10 @@ def test_check_X_enforce_univariate():
         check_X_y(X, y, enforce_univariate=True)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([check_X, check_X_y, check_y]),
+    reason="Run if tested function has changed.",
+)
 def test_check_X_enforce_min_columns():
     """Test minimum columns enforced in check_X."""
     X, y = make_classification_problem(n_columns=2)
