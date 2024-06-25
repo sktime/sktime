@@ -66,8 +66,16 @@ class _NeuralForecastAdapter(BaseForecaster):
         "python_dependencies": ["neuralforecast"],
         # estimator type
         # --------------
-        "y_inner_mtype": "pd.Series",
-        "X_inner_mtype": "pd.DataFrame",
+        "y_inner_mtype": [
+            "pd.Series",
+            "pd-multiindex",
+            "pd_multiindex_hier",
+        ],
+        "X_inner_mtype": [
+            "pd.DataFrame",
+            "pd-multiindex",
+            "pd_multiindex_hier",
+        ],
         "scitype:y": "univariate",
         "requires-fh-in-fit": True,
         "X-y-must-have-same-index": True,
@@ -295,14 +303,15 @@ class _NeuralForecastAdapter(BaseForecaster):
             self._freq = self.freq
         elif fh.freq:  # B1: freq is infered from fh
             self._freq = fh.freq
-        elif isinstance(y.index, pandas.DatetimeIndex):  # B2.1: y is date-like
+        elif isinstance(
+            y.index.get_level_values(-1), pandas.DatetimeIndex
+        ):  # B2.1: y is date-like
             raise ValueError(
                 f"Error in {self.__class__.__name__}, could not interpret freq, try "
                 "passing freq in model initialization or use a valid offset in index"
             )
         else:  # B2.2: y is not date-like
-            diffs = np.unique(np.diff(y.index))
-
+            diffs = np.unique(np.diff(np.unique(y.index.get_level_values(-1))))
             if diffs.shape[0] > 1:  # B2.2.1: non-equispaced integers
                 raise ValueError(
                     f"Error in {self.__class__.__name__}, could not interpret freq, try"
@@ -313,17 +322,42 @@ class _NeuralForecastAdapter(BaseForecaster):
                 self._freq = int(diffs[-1])  # converts numpy.int64 to int
 
         train_indices = y.index
-        if isinstance(train_indices, pandas.PeriodIndex):
-            train_indices = train_indices.to_timestamp(
-                freq=pandas.tseries.frequencies.to_offset(self._freq)
-            )
+
+        if isinstance(train_indices.get_level_values(-1), pandas.PeriodIndex):
+            self._is_PeriodIndex = True
+            if not isinstance(train_indices, pandas.MultiIndex):
+                train_indices = train_indices.to_timestamp(
+                    freq=pandas.tseries.frequencies.to_offset(self._freq)
+                )
+            else:
+                time_idx = train_indices.get_level_values(-1).to_timestamp(
+                    freq=pandas.tseries.frequencies.to_offset(self._freq)
+                )
+                train_indices = np.hstack(
+                    (
+                        np.array(train_indices.to_list())[:, :-1],
+                        np.array(time_idx.to_list()).reshape(-1, 1),
+                    )
+                )
+                train_indices = pandas.MultiIndex.from_arrays(
+                    [train_indices[:, i] for i in range(train_indices.shape[1])]
+                )
+        else:
+            self._is_PeriodIndex = False
+
+        if not isinstance(train_indices, pandas.MultiIndex):
+            id = 1
+            idx = train_indices.to_numpy()
+        else:
+            id_idx = np.array(train_indices.to_list())
+            id = id_idx[:, :-1].sum(axis=1)
+            idx = id_idx[:, -1]
 
         train_data = {
-            self.id_col: 1,
-            self.time_col: train_indices.to_numpy(),
-            self.target_col: y.to_numpy(),
+            self.id_col: id,
+            self.time_col: idx,
+            self.target_col: y.to_numpy().flatten(),
         }
-
         if self.futr_exog_list and X is None:
             raise ValueError("Missing exogeneous data, 'futr_exog_list' is non-empty.")
 
@@ -335,7 +369,6 @@ class _NeuralForecastAdapter(BaseForecaster):
 
         maximum_forecast_horizon = fh.to_relative(self.cutoff)[-1]
         self._forecaster = self._instantiate_model(maximum_forecast_horizon)
-
         self._forecaster.fit(df=train_dataset, verbose=self.verbose_fit)
 
         return self
@@ -344,6 +377,7 @@ class _NeuralForecastAdapter(BaseForecaster):
         self: "_NeuralForecastAdapter",
         fh: Optional[ForecastingHorizon],
         X: Optional[pandas.DataFrame],
+        y: Optional[pandas.Series] = None,
     ) -> pandas.Series:
         """Forecast time series at future horizon.
 
@@ -390,8 +424,35 @@ class _NeuralForecastAdapter(BaseForecaster):
                 predict_indices = predict_indices.to_timestamp(
                     freq=pandas.tseries.frequencies.to_offset(self._freq)
                 )
+            if isinstance(predict_indices.get_level_values(-1), pandas.PeriodIndex):
+                if not isinstance(predict_indices, pandas.MultiIndex):
+                    predict_indices = predict_indices.to_timestamp(
+                        freq=pandas.tseries.frequencies.to_offset(self._freq)
+                    )
+                else:
+                    time_idx = predict_indices.get_level_values(-1).to_timestamp(
+                        freq=pandas.tseries.frequencies.to_offset(self._freq)
+                    )
+                    predict_indices = np.hstack(
+                        (
+                            np.array(predict_indices.to_list())[:, :-1],
+                            np.array(time_idx.to_list()).reshape(-1, 1),
+                        )
+                    )
+                    predict_indices = pandas.MultiIndex.from_arrays(
+                        [predict_indices[:, i] for i in range(predict_indices.shape[1])]
+                    )
 
-            predict_data = {self.id_col: 1, self.time_col: predict_indices.to_numpy()}
+            if isinstance(
+                predict_indices[0], pandas.Timestamp
+            ) or pandas.api.types.is_numeric_dtype(predict_indices.dtype):
+                id = 1
+                idx = predict_indices.to_numpy()
+            else:
+                id_idx = np.array(predict_indices.to_list())
+                id = id_idx[:, :-1].sum(axis=1)
+                idx = id_idx[:, -1]
+            predict_data = {self.id_col: id, self.time_col: idx}
 
             for column in self.futr_exog_list:
                 predict_data[column] = X[column].to_numpy()
@@ -415,13 +476,35 @@ class _NeuralForecastAdapter(BaseForecaster):
 
         model_point_predictions = model_forecasts[prediction_column_names[0]].to_numpy()
 
-        absolute_horizons = self.fh.to_absolute_index(self.cutoff)
-        horizon_positions = self.fh.to_indexer(self.cutoff)
-
-        final_predictions = pandas.Series(
-            model_point_predictions[horizon_positions],
-            index=absolute_horizons,
-            name=self._y.name,
-        )
-
+        if len(np.unique(model_forecasts.index)) > 1:
+            id_idx = np.array(self._y.index.to_list())
+            id = id_idx[:, :-1].sum(axis=1)
+            ins = id_idx[:, :-1]
+            id_ins = pandas.DataFrame(
+                data=ins, index=id, columns=self._y.index.names[:-1]
+            )
+            id_ins.drop_duplicates(inplace=True)
+            final_predictions = pandas.concat(
+                (model_forecasts, id_ins.loc[model_forecasts.index.tolist()]),
+                axis=1,
+            )
+            if self._is_PeriodIndex:
+                time_idx = pandas.DatetimeIndex(final_predictions["ds"])
+                time_idx = time_idx.to_period(
+                    freq=pandas.tseries.frequencies.to_offset(self._freq)
+                )
+                final_predictions["ds"] = time_idx
+            final_predictions.rename(
+                columns={"ds": self._y.index.names[-1]}, inplace=True
+            )
+            final_predictions.set_index(self._y.index.names, inplace=True)
+            final_predictions.columns = self._y.columns
+        else:
+            absolute_horizons = self.fh.to_absolute_index(self.cutoff)
+            horizon_positions = self.fh.to_indexer(self.cutoff)
+            final_predictions = pandas.Series(
+                model_point_predictions[horizon_positions],
+                index=absolute_horizons,
+                name=self._y.name,
+            )
         return final_predictions
