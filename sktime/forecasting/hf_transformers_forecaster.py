@@ -88,7 +88,7 @@ class HFTransformersForecaster(BaseForecaster):
             raise ValueError("A model must be provided.")
         if model_path is not None:
             warnings.warn(
-                "The `model_path` param is deprecated and will be removed in future."
+                "The `model_path` param is deprecated and will be removed in a future"
                 "Please use the `model` parameter instead.",
                 DeprecationWarning,
             )
@@ -303,11 +303,13 @@ class HFTransformersForecaster(BaseForecaster):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
         Parameters
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return `"default"` set.
+
         Returns
         -------
         params : dict or list of dict, default = {}
