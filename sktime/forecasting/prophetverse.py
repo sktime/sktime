@@ -38,7 +38,7 @@ def placeholder(cls):
 
 @placeholder
 class Prophetverse(_DelegatedForecaster):
-    """Univariate prophetverse forecaster - prophet model implemented in numpyro
+    """Univariate prophetverse forecaster - prophet model implemented in numpyro.
 
     Estimator from the ``prophetverse`` package by ``felipeangelimvieira``.
 
