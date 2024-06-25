@@ -248,11 +248,6 @@ class HFTransformersForecaster(BaseForecaster):
             fh = self.fh
         fh = fh.to_relative(self.cutoff)
 
-        if min(fh._values) < 0:
-            raise NotImplementedError(
-                "The huggingface adapter is not supporting insample predictions."
-            )
-
         self.model.eval()
         from torch import from_numpy
 
