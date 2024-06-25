@@ -6,7 +6,6 @@ __author__ = ["felipeangelimvieira"]  # fkiraly for adapter
 import pandas as pd
 
 from sktime.forecasting.base._delegate import _DelegatedForecaster
-from sktime.utils.dependencies import _check_soft_dependencies
 
 
 def placeholder(cls):
@@ -15,10 +14,24 @@ def placeholder(cls):
     If prophetverse 0.3 or higher is installed, this will directly
     return the forecaster imported from prophetverse.
     """
-    if _check_soft_dependencies("prophetverse>=0.3", severity="none"):
-        from prophetverse.sktime import Prophetverse
+    import importlib.util
+    import importlib.metadata
+    from packaging.version import Version, InvalidVersion
 
-        return Prophetverse
+    package_name = "prophetverse"
+    required_version = "0.3.0"
+
+    package_spec = importlib.util.find_spec(package_name)
+    if package_spec is not None:
+        installed_version = importlib.metadata.version(package_name)
+        try:
+            if Version(installed_version) >= Version(required_version):
+                from prophetverse.sktime import Prophetverse
+
+                return Prophetverse
+        except InvalidVersion:
+            pass
+
     # else we return the placeholder, which is a delegator
     return cls
 
