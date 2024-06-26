@@ -1939,8 +1939,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
             )
             self.windows_identical = True
         else:
-            self.windows_identical = False
-        self.windows_identical = windows_identical
+            self.windows_identical = windows_identical
         self._lags = list(range(window_length))
         super().__init__()
 
