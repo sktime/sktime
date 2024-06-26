@@ -1932,7 +1932,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         self.pooling = pooling
         if windows_identical == "changing_value":
             warn(
-                "in `DirectReductionForecaster`, the default value of parameter "
+                "In `DirectReductionForecaster`, the default value of parameter "
                 "`windows_identical` will change to `False` in version 0.32.0."
                 "To keep current behaviour and to silence this warning, "
                 "set `windows_identical` to `True` explicitly.",
