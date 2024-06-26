@@ -883,7 +883,17 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
 
         if is_timestamp:
             # coerce back to DatetimeIndex after operation
-            absolute = absolute.to_timestamp(fh._freq)
+            try:
+                absolute = absolute.to_timestamp(fh._freq)
+            # this try-except block is a workaround for what seems like a bug in pandas
+            # when trying to convert a PeriodIndex to a DatetimeIndex with a frequency
+            # of type month-begin, which should be supported, a ValueError is raised
+            # see issue #6752 for details
+            except ValueError as e:
+                if "not supported" in str(e):
+                    absolute = absolute.to_timestamp()
+                else:
+                    raise e
 
         if old_tz is not None:
             absolute = absolute.tz_localize(old_tz)

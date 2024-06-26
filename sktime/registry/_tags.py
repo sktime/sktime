@@ -1927,6 +1927,12 @@ ESTIMATOR_TAG_REGISTER = [
         "bool",
         "does the forecaster implement predict_variance?",
     ),
+    (
+        "capability:global_forecasting",
+        ["forecaster"],
+        "bool",
+        "can the estimator make global forecasting?",
+    ),
 ]
 
 # construct the tag register from all classes in this module

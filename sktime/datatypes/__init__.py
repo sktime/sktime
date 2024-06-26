@@ -1,7 +1,5 @@
 """Module exports: data type definitions, checks, validation, fixtures, converters."""
 
-__author__ = ["fkiraly"]
-
 from sktime.datatypes._check import (
     check_is_error_msg,
     check_is_mtype,
