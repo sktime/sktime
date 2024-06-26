@@ -670,6 +670,7 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
         self.custom_dataset_pred = custom_dataset_pred
         self.batch_size = batch_size
 
+        self.output_attention = False # attention in output is not needed by the user
         self.mark_vocab_sizes = [100, 100, 100, 100] # vocab size for each column in mark
         self.position_encoding = position_encoding
         self.temporal_encoding = temporal_encoding
@@ -797,7 +798,7 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
                 self_config.seq_len = self.seq_len
                 self_config.context_len = self.context_len
                 self_config.pred_len = self.pred_len
-                self_config.output_attention = False # attention in output is not needed by the user
+                self_config.output_attention = self.output_attention
                 self_config.mark_vocab_sizes = self.mark_vocab_sizes
                 self_config.position_encoding = self.position_encoding
                 self_config.temporal_encoding = self.temporal_encoding

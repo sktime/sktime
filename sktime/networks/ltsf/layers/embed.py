@@ -245,6 +245,7 @@ class LTSFDataEmbedding:
                 elif temporal_encoding_type == "fixed-embed":
                     self.temporal_embedding = LTSFTemporalEmbeddingFixedEmbed(mark_vocab_sizes=mark_vocab_sizes, d_model=d_model)._build()
                 else:
+                    # TODO: fill this
                     raise ValueError()
 
             self.dropout = nn.Dropout(p=dropout)

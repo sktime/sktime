@@ -45,10 +45,10 @@ class PytorchFormerDataset(Dataset):
                 time_stamps = np.vstack(time_stamps.map(time_stamps_map))
 
             else:
+                # TODO: fill this
                 raise ValueError()
         else:
-            pass
-            # TODO: check for temporal_encoding
+            time_stamps = None
 
         # TODO: process the time stamps
         #       - to scale the data to range (0, vocab_size), put extra to OV
@@ -70,8 +70,13 @@ class PytorchFormerDataset(Dataset):
 
         seq_x = torch.tensor(self.data[s_begin:s_end]).float()
         seq_y = torch.tensor(self.data[r_begin:r_end]).float()
-        seq_x_mark = torch.tensor(self.time_stamps[s_begin:s_end]).float()
-        seq_y_mark = torch.tensor(self.time_stamps[r_begin:r_end]).float()
+
+        if self.temporal_encoding:
+            seq_x_mark = torch.tensor(self.time_stamps[s_begin:s_end]).float()
+            seq_y_mark = torch.tensor(self.time_stamps[r_begin:r_end]).float()
+        else:
+            seq_x_mark = torch.empty((self.seq_len, 0)).float()
+            seq_y_mark = torch.empty((self.context_len + self.pred_len, 0)).float()
 
         dec_inp = torch.zeros_like(seq_y[-self.pred_len :, :])
         dec_inp = torch.cat([seq_y[: self.context_len, :], dec_inp], dim=0)
