@@ -133,6 +133,35 @@ def convert_listDataset_to_pandas(list_dataset):
     return dfs
 
 
+def convert_pandas_series_to_pandasDataset(pd_series: pd.Series):
+    """Convert a given pd.Series to a gluonTS PandasDataset.
+
+    Parameters
+    ----------
+    pd_series : pd.Series
+        A valid pd.Series with the index as pd.DateTimeIndex
+
+    Returns
+    -------
+    gluonts.dataset.common.PandasDataset
+        A convert gluonTS PandasDataset
+
+    Raises
+    ------
+    ValueError
+        Raises a valueError if the index of the Series is not of instance
+        `Pandas DateTimeIndex`.
+    """
+    # Importing required libraries
+    from gluonts.dataset.pandas import PandasDataset
+
+    # Checking for index validity
+    if not isinstance(pd_series.index, pd.DateTimeIndex):
+        raise ValueError("The series must have a pd.DateTimeIndex based index!")
+
+    return PandasDataset(pd_series)
+
+
 def convert_pandas_long_to_pandasDataset(
     pd_dataframe: pd.DataFrame, item_id="item_id", target="target"
 ):
