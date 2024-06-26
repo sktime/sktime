@@ -670,8 +670,6 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
         self.custom_dataset_pred = custom_dataset_pred
         self.batch_size = batch_size
 
-        self.output_attention = False # attention in output is not needed by the user
-        self.mark_vocab_sizes = [100, 100, 100, 100] # vocab size for each column in mark
         self.position_encoding = position_encoding
         self.temporal_encoding = temporal_encoding
         self.temporal_encoding_type = temporal_encoding_type
@@ -696,6 +694,30 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
             optimizer_kwargs=optimizer_kwargs,
             lr=lr,
         )
+
+        self.output_attention = False # attention in output is not needed by the user
+
+        if self.temporal_encoding:
+            # Fill out mark_vocab_sizes, vocab size for each column in mark
+
+            if self.temporal_encoding_type == "embed" or self.temporal_encoding_type == "fixed-embed":
+                # sourced from PytorchFormerDataset._prepare_data
+                self.mark_vocab_sizes = [
+                    13, # month
+                    32, # day
+                    7,  # weekday
+                    24, # hour
+                ]
+            elif self.temporal_encoding_type == "linear":
+                # this method uses mark_vocab_sizes to only find the size of mark arrays
+                # which can be infered by len(mark_vocab_sizes)
+                # therefore we populate this array with zeros
+                from sktime.networks.ltsf.utils.timefeatures import get_n_mark_feats
+                n_mark_feats = get_n_mark_feats(self.freq)
+                self.mark_vocab_sizes = [0] * n_mark_feats
+
+        else:
+            self.mark_vocab_sizes = None
 
         from sktime.utils.dependencies import _check_soft_dependencies
 

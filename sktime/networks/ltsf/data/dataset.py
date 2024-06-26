@@ -34,6 +34,12 @@ class PytorchFormerDataset(Dataset):
         time_stamps = self.y.index
         data = self.y.values
 
+        # Check for index validity
+        # TODO: fill this
+        # 1. PeriodIndex - good to go
+        # 2. DateTimeIndex - convert this to PeriodIndex
+        # 3. else - raise error and tell that they should try without temporal_encoding
+
         if self.temporal_encoding:
             if self.temporal_encoding_type == "linear":
                 time_stamps = time_features(time_stamps, freq=self.freq)
@@ -49,10 +55,6 @@ class PytorchFormerDataset(Dataset):
                 raise ValueError()
         else:
             time_stamps = None
-
-        # TODO: process the time stamps
-        #       - to scale the data to range (0, vocab_size), put extra to OV
-        #       - pad extra columns to get fixed length
 
         self.time_stamps = time_stamps
         self.data = data

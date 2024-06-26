@@ -5,6 +5,7 @@ import pandas as pd
 from pandas.tseries import offsets
 from pandas.tseries.frequencies import to_offset
 
+# TODO: see if this can be replaced by sktime DateTimeFeatures
 
 class TimeFeature:
     def __init__(self):
@@ -130,5 +131,10 @@ def time_features_from_frequency_str(freq_str: str) -> List[TimeFeature]:
     raise RuntimeError(supported_freq_msg)
 
 
-def time_features(dates, freq='h'):
+def time_features(dates, freq):
+    # TODO: check validity for freq
     return np.vstack([feat(dates) for feat in time_features_from_frequency_str(freq)])
+
+def get_n_mark_feats(freq):
+    # TODO: check validity for freq
+    return 4
