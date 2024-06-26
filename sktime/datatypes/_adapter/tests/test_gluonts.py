@@ -67,7 +67,7 @@ def test_pandas_to_ListDataset(pandas_df):
         (
             pd.DataFrame(
                 {
-                    "item_id": np.asarray(range(50), dtype=int),
+                    "item_id": np.random.choice(["A", "B", "C"], size=50),
                     "timestamp": pd.date_range("2022-01-01", periods=50, freq="D"),
                     "target": np.random.randn(50),
                 }
@@ -119,4 +119,5 @@ def test_pandas_to_ListDataset(pandas_df):
 )
 def test_pandas_df_to_PandasDataset(pandas_obj, conversion_function):
     # Attempting to convert the pandas object to a gluonTS PandasDataset
+
     conversion_function(pandas_obj)

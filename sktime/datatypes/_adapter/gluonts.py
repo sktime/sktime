@@ -139,7 +139,7 @@ def convert_pandas_series_to_pandasDataset(pd_series: pd.Series):
     Parameters
     ----------
     pd_series : pd.Series
-        A valid pd.Series with the index as pd.DateTimeIndex
+        A valid pd.Series with the index as pd.DatetimeIndex
 
     Returns
     -------
@@ -150,20 +150,24 @@ def convert_pandas_series_to_pandasDataset(pd_series: pd.Series):
     ------
     ValueError
         Raises a valueError if the index of the Series is not of instance
-        `Pandas DateTimeIndex`.
+        `Pandas DatetimeIndex`.
     """
     # Importing required libraries
     from gluonts.dataset.pandas import PandasDataset
 
     # Checking for index validity
-    if not isinstance(pd_series.index, pd.DateTimeIndex):
-        raise ValueError("The series must have a pd.DateTimeIndex based index!")
+    if not isinstance(pd_series.index, pd.DatetimeIndex):
+        raise ValueError("The series must have a pd.DatetimeIndex based index!")
 
     return PandasDataset(pd_series)
 
 
 def convert_pandas_long_to_pandasDataset(
-    pd_dataframe: pd.DataFrame, item_id="item_id", target="target"
+    pd_dataframe: pd.DataFrame,
+    item_id="item_id",
+    target="target",
+    timestamp="timestamp",
+    freq="D",
 ):
     """Convert a given pandas DataFrame (long) to a gluonTS PandasDataset.
 
@@ -173,10 +177,17 @@ def convert_pandas_long_to_pandasDataset(
         A valid pandas DataFrame
 
     item_id : str
-        A column dedicated to time series labels
+        A column dedicated to time series labels ('item_id' by default)
 
-    target : str | None
+    target : str
         The column that corresponds to target values ('target' by default)
+
+    timestamp: str
+        Leave None if the DataFrame index is of DatetimeIndex format,
+        otherwise specify the appropriate timestamp column name
+
+    freq: str
+        The frequency associated with the timestamp
 
     Returns
     -------
@@ -197,11 +208,11 @@ def convert_pandas_long_to_pandasDataset(
         raise ValueError(f"The pandas DataFrame does not have the {item_id} column!")
 
     if "timestamp" not in pd_dataframe.columns and not isinstance(
-        pd_dataframe.index, pd.DateTimeIndex
+        pd_dataframe.index, pd.DatetimeIndex
     ):
         raise ValueError(
             "The pandas DataFrame does not have a 'timestamp' column "
-            + "nor a pd.DateTimeIndex based index!"
+            + "nor a pd.DatetimeIndex based index!"
         )
 
     if target not in pd_dataframe.columns:
@@ -209,7 +220,7 @@ def convert_pandas_long_to_pandasDataset(
 
     # Convert the Pd.DataFrame to GluonTS!
     gluonTS_pd = PandasDataset.from_long_dataframe(
-        pd_dataframe, target=target, item_id=item_id
+        pd_dataframe, target=target, item_id=item_id, timestamp=timestamp, freq=freq
     )
 
     return gluonTS_pd
@@ -240,17 +251,17 @@ def convert_pandas_wide_to_pandasDataset(pd_dataframe: pd.DataFrame):
     if "timestamp" in pd_dataframe.columns:
         pd_dataframe = pd_dataframe.set_index("timestamp")
 
-    elif not isinstance(pd_dataframe.index, pd.DateTimeIndex):
+    elif not isinstance(pd_dataframe.index, pd.DatetimeIndex):
         raise ValueError(
             "The DataFrame does not have a valid timestamp "
-            + "column or `pd.DateTimeIndex` index!"
+            + "column or `pd.DatetimeIndex` index!"
         )
 
     # Checking for the required
     return PandasDataset(dict(pd_dataframe))
 
 
-def convert_pandas_collection_to_pandasDataset(collection_dataframe):
+def convert_pandas_collection_to_pandasDataset(collection_dataframe, freq="D"):
     """Convert a list of pd.DataFrames or dict of pd.DataFrames to a PandasDataset.
 
     Parameters
@@ -258,6 +269,9 @@ def convert_pandas_collection_to_pandasDataset(collection_dataframe):
     collection_dataframe : list[pd.DataFrame] | dict[pd.DataFrame]
         A list or dictionary of pandas DataFrames
         If dictionary, key = item_id, value = pd.DataFrame
+
+    freq : str
+        The frequency of the timestamps (default='D')
 
     Returns
     -------
@@ -288,7 +302,7 @@ def convert_pandas_collection_to_pandasDataset(collection_dataframe):
 
             # Check for valid timestamps
             if "timestamp" not in df.columns and not isinstance(
-                df.index, pd.DateTimeIndex
+                df.index, pd.DatetimeIndex
             ):
                 raise ValueError(
                     f"The DataFrame at {key} does not have the "
@@ -296,7 +310,9 @@ def convert_pandas_collection_to_pandasDataset(collection_dataframe):
                 )
 
         # If all else is accepted, convert and return the object
-        return PandasDataset(dataframes=collection_dataframe)
+        return PandasDataset(
+            dataframes=collection_dataframe, timestamp="timestamp", freq=freq
+        )
 
     # Checking for the list-format
     elif type(collection_dataframe) is list:
@@ -309,7 +325,7 @@ def convert_pandas_collection_to_pandasDataset(collection_dataframe):
 
             # Check for valid timestamps
             if "timestamp" not in df.columns and not isinstance(
-                df.index, pd.DateTimeIndex
+                df.index, pd.DatetimeIndex
             ):
                 raise ValueError(
                     f"The DataFrame at the {idx} index does not have the "
