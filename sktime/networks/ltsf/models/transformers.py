@@ -51,7 +51,8 @@ class LTSFTransformerNetwork:
                 configs.d_model,
                 configs.freq,
                 configs.dropout,
-                configs.fixed_embedding,
+                configs.mark_vocab_sizes,
+                configs.temporal_encoding_type,
                 configs.position_encoding,
                 configs.temporal_encoding,
             )._build()
@@ -60,86 +61,11 @@ class LTSFTransformerNetwork:
                 configs.d_model,
                 configs.freq,
                 configs.dropout,
-                configs.fixed_embedding,
+                configs.mark_vocab_sizes,
+                configs.temporal_encoding_type,
                 configs.position_encoding,
                 configs.temporal_encoding,
             )._build()
-            # if configs.embed_type == 0:
-            #     self.enc_embedding = LTSFDataEmbedding(
-            #         configs.enc_in,
-            #         configs.d_model,
-            #         configs.embed,
-            #         configs.freq,
-            #         configs.dropout,
-            #     )._build()
-            #     self.dec_embedding = LTSFDataEmbedding(
-            #         configs.dec_in,
-            #         configs.d_model,
-            #         configs.embed,
-            #         configs.freq,
-            #         configs.dropout,
-            #     )._build()
-            # elif configs.embed_type == 1:
-            #     self.enc_embedding = LTSFDataEmbedding(
-            #         configs.enc_in,
-            #         configs.d_model,
-            #         configs.embed,
-            #         configs.freq,
-            #         configs.dropout,
-            #     )._build()
-            #     self.dec_embedding = LTSFDataEmbedding(
-            #         configs.dec_in,
-            #         configs.d_model,
-            #         configs.embed,
-            #         configs.freq,
-            #         configs.dropout,
-            #     )._build()
-            # elif configs.embed_type == 2:
-            #     self.enc_embedding = LTSFDataEmbeddingWOPos(
-            #         configs.enc_in,
-            #         configs.d_model,
-            #         configs.embed,
-            #         configs.freq,
-            #         configs.dropout,
-            #     )._build()
-            #     self.dec_embedding = LTSFDataEmbeddingWOPos(
-            #         configs.dec_in,
-            #         configs.d_model,
-            #         configs.embed,
-            #         configs.freq,
-            #         configs.dropout,
-            #     )._build()
-
-            # elif configs.embed_type == 3:
-            #     self.enc_embedding = LTSFDataEmbeddingWOTemp(
-            #         configs.enc_in,
-            #         configs.d_model,
-            #         configs.embed,
-            #         configs.freq,
-            #         configs.dropout,
-            #     )._build()
-            #     self.dec_embedding = LTSFDataEmbeddingWOTemp(
-            #         configs.dec_in,
-            #         configs.d_model,
-            #         configs.embed,
-            #         configs.freq,
-            #         configs.dropout,
-            #     )._build()
-            # elif configs.embed_type == 4:
-            #     self.enc_embedding = LTSFDataEmbeddingWOPosTemp(
-            #         configs.enc_in,
-            #         configs.d_model,
-            #         configs.embed,
-            #         configs.freq,
-            #         configs.dropout,
-            #     )._build()
-            #     self.dec_embedding = LTSFDataEmbeddingWOPosTemp(
-            #         configs.dec_in,
-            #         configs.d_model,
-            #         configs.embed,
-            #         configs.freq,
-            #         configs.dropout,
-            #     )._build()
 
             # LTSFTransformerEncoder
             self.encoder = LTSFTransformerEncoder(

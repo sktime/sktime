@@ -632,9 +632,9 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
         custom_dataset_train=None,
         custom_dataset_pred=None,
 
-        fixed_embedding: bool = False,
         position_encoding: bool = True,
         temporal_encoding: bool = True,
+        temporal_encoding_type = "linear", # linear, embed, fixed-embed
 
         d_model=512,
         n_heads=8,
@@ -670,9 +670,10 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
         self.custom_dataset_pred = custom_dataset_pred
         self.batch_size = batch_size
 
-        self.fixed_embedding = fixed_embedding
+        self.mark_vocab_sizes = [100, 100, 100, 100] # vocab size for each column in mark
         self.position_encoding = position_encoding
         self.temporal_encoding = temporal_encoding
+        self.temporal_encoding_type = temporal_encoding_type
 
         self.d_model = d_model
         self.n_heads = n_heads
@@ -738,7 +739,8 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
                 context_len=self.context_len,
                 pred_len=self.pred_len,
                 freq=self.freq,
-                fixed_embedding=self.fixed_embedding,
+                temporal_encoding=self.temporal_encoding,
+                temporal_encoding_type=self.temporal_encoding_type,
             )
 
         return DataLoader(dataset, self.batch_size, shuffle=True)
@@ -772,7 +774,8 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
                 context_len=self.context_len,
                 pred_len=self.pred_len,
                 freq=self.freq,
-                fixed_embedding=self.fixed_embedding,
+                temporal_encoding=self.temporal_encoding,
+                temporal_encoding_type=self.temporal_encoding_type,
             )
 
         return DataLoader(
@@ -795,9 +798,10 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
                 self_config.context_len = self.context_len
                 self_config.pred_len = self.pred_len
                 self_config.output_attention = False # attention in output is not needed by the user
-                self_config.fixed_embedding = self.fixed_embedding
+                self_config.mark_vocab_sizes = self.mark_vocab_sizes
                 self_config.position_encoding = self.position_encoding
                 self_config.temporal_encoding = self.temporal_encoding
+                self_config.temporal_encoding_type = self.temporal_encoding_type
                 self_config.enc_in = self.enc_in
                 self_config.dec_in = self.dec_in
                 self_config.d_model = self.d_model
