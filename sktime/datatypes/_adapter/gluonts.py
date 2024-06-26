@@ -131,3 +131,164 @@ def convert_listDataset_to_pandas(list_dataset):
     dfs.columns = columns
 
     return dfs
+
+
+def convert_pandas_long_to_pandasDataset(
+    pd_dataframe: pd.DataFrame, item_id="item_id", target="target"
+):
+    """Convert a given pandas DataFrame (long) to a gluonTS PandasDataset.
+
+    Parameters
+    ----------
+    pd_dataframe : pd.DataFrame
+        A valid pandas DataFrame
+
+    item_id : str
+        A column dedicated to time series labels
+
+    target : str | None
+        The column that corresponds to target values ('target' by default)
+
+    Returns
+    -------
+    gluonts.dataset.common.PandasDataset
+        A gluonTS PandasDataset formed from `pd_dataframe`
+
+    Raises
+    ------
+    ValueError
+        If `pd_dataframe` has no `target` named column
+        or a `timestamp` column.
+    """
+    # Importing required libraries
+    from gluonts.dataset.pandas import PandasDataset
+
+    # Check for required column values
+    if item_id not in pd_dataframe.columns:
+        raise ValueError(f"The pandas DataFrame does not have the {item_id} column!")
+
+    if "timestamp" not in pd_dataframe.columns and not isinstance(
+        pd_dataframe.index, pd.DateTimeIndex
+    ):
+        raise ValueError(
+            "The pandas DataFrame does not have a 'timestamp' column "
+            + "nor a pd.DateTimeIndex based index!"
+        )
+
+    if target not in pd_dataframe.columns:
+        raise ValueError(f"The pandas DataFrame does not have the {target} column!")
+
+    # Convert the Pd.DataFrame to GluonTS!
+    gluonTS_pd = PandasDataset.from_long_dataframe(
+        pd_dataframe, target=target, item_id=item_id
+    )
+
+    return gluonTS_pd
+
+
+def convert_pandas_wide_to_pandasDataset(pd_dataframe: pd.DataFrame):
+    """Convert a given pandas DataFrame (wide) to a gluonTS PandasDataset.
+
+    Parameters
+    ----------
+    pd_dataframe : pd.DataFrame
+        A pd.DataFrame with each column corresponding to a time series
+
+    Returns
+    -------
+    gluonts.dataset.common.PandasDataset
+        A gluonTS PandasDataset formed from `pd_dataframe`
+
+    Raises
+    ------
+    ValueError
+        If the given wide DataFrame does not have a valid timestamp
+    """
+    # Importing required libraries
+    from gluonts.dataset.pandas import PandasDataset
+
+    # Checking for valid timestamp values
+    if "timestamp" in pd_dataframe.columns:
+        pd_dataframe = pd_dataframe.set_index("timestamp")
+
+    elif not isinstance(pd_dataframe.index, pd.DateTimeIndex):
+        raise ValueError(
+            "The DataFrame does not have a valid timestamp "
+            + "column or `pd.DateTimeIndex` index!"
+        )
+
+    # Checking for the required
+    return PandasDataset(dict(pd_dataframe))
+
+
+def convert_pandas_collection_to_pandasDataset(collection_dataframe):
+    """Convert a list of pd.DataFrames or dict of pd.DataFrames to a PandasDataset.
+
+    Parameters
+    ----------
+    collection_dataframe : list[pd.DataFrame] | dict[pd.DataFrame]
+        A list or dictionary of pandas DataFrames
+        If dictionary, key = item_id, value = pd.DataFrame
+
+    Returns
+    -------
+    gluonts.dataset.common.PandasDataset
+        A gluonTS PandasDataset formed from `collection_dataframe`
+
+    Raises
+    ------
+    ValueError
+        If `collection_dataframe` is not a list or a dict,
+        if any entity is not of the format `pd.DataFrame`
+    """
+    # Importing required libraries
+    from gluonts.dataset.pandas import PandasDataset
+
+    # Checking for the dictionary-format
+    if type(collection_dataframe) is dict:
+        for key, df in collection_dataframe.items():
+            # Check for pd.DataFrame format
+            if type(df) is not pd.DataFrame:
+                raise ValueError(f"The value of {key} is not a pandas DataFrame!")
+
+            # Check for a target value
+            if "target" not in df.columns:
+                raise ValueError(
+                    f"The DataFrame at {key} does not have a target column!"
+                )
+
+            # Check for valid timestamps
+            if "timestamp" not in df.columns and not isinstance(
+                df.index, pd.DateTimeIndex
+            ):
+                raise ValueError(
+                    f"The DataFrame at {key} does not have the "
+                    + "required 'target' and 'timestamp' columns!"
+                )
+
+        # If all else is accepted, convert and return the object
+        return PandasDataset(dataframes=collection_dataframe)
+
+    # Checking for the list-format
+    elif type(collection_dataframe) is list:
+        for idx, df in enumerate(collection_dataframe):
+            # Check for a target value
+            if "target" not in df.columns:
+                raise ValueError(
+                    f"The DataFrame at the {idx} index does not have a target column!"
+                )
+
+            # Check for valid timestamps
+            if "timestamp" not in df.columns and not isinstance(
+                df.index, pd.DateTimeIndex
+            ):
+                raise ValueError(
+                    f"The DataFrame at the {idx} index does not have the "
+                    + "required 'target' and 'timestamp' columns!"
+                )
+
+        # If all else is accepted, convert and return the object
+        return PandasDataset(dataframes=collection_dataframe)
+
+    else:
+        raise ValueError("Expected format of dict[pd.DataFrame] or list[pd.DataFrame]")
