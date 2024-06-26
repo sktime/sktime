@@ -391,16 +391,15 @@ class SkforecastAutoreg(BaseForecaster):
 
         X_new = self._make_index_compatible(X, "X")
 
-        bootstrap_predictions = self._forecaster.predict_bootstrapping(
-            maximum_forecast_horizon, exog=self._coerce_column_names(X_new)
+        quantile_pred = self._forecaster.predict_quantiles(
+            maximum_forecast_horizon,
+            exog=self._coerce_column_names(X_new),
+            quantiles=alpha,
         )
-        bootstrap_quantiles = bootstrap_predictions.quantile(
-            q=alpha, axis=1
-        ).transpose()
 
         for quantile in alpha:
             quantile_predictions[(var_name, quantile)] = (
-                bootstrap_quantiles[quantile].iloc[horizon_positions].to_list()
+                quantile_pred[f"q_{quantile}"].iloc[horizon_positions].to_list()
             )
         return quantile_predictions
 
