@@ -40,7 +40,7 @@ import_mappings = {
 
 @pytest.mark.parametrize("model", [DartsXGBModel, DartsLinearRegressionModel])
 @pytest.mark.skipif(
-    not run_test_for_class([DartsXGBModel]),
+    not run_test_for_class([DartsXGBModel, DartsLinearRegressionModel]),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_darts_regression_model_without_X(model):
