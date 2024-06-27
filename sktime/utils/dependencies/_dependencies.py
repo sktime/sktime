@@ -10,7 +10,7 @@ from inspect import isclass
 
 from packaging.markers import InvalidMarker, Marker
 from packaging.requirements import InvalidRequirement, Requirement
-from packaging.specifiers import InvalidSpecifier, SpecifierSet
+from packaging.specifiers import InvalidSpecifier, Specifier, SpecifierSet
 from packaging.version import InvalidVersion, Version
 
 
@@ -112,6 +112,7 @@ def _check_soft_dependencies(
     for package in packages:
         try:
             req = Requirement(package)
+            req = _normalize_requirement(req)
         except InvalidRequirement:
             msg_version = (
                 f"wrong format for package requirement string "
@@ -515,3 +516,37 @@ def _check_estimator_deps(obj, msg=None, severity="error"):
         compatible = compatible and pkg_deps_ok
 
     return compatible
+
+
+def _normalize_requirement(req):
+    """Normalize packaging Requirement by removing build metadata from versions.
+
+    Parameters
+    ----------
+    req : packaging.requirements.Requirement
+        requirement string to normalize, e.g., Requirement("pandas>1.2.3+foobar")
+
+    Returns
+    -------
+    normalized_req : packaging.requirements.Requirement
+        normalized requirement object with build metadata removed from versions,
+        e.g., Requirement("pandas>1.2.3")
+    """
+    # Process each specifier in the requirement
+    normalized_specifiers = []
+    for specifier in req.specifier:
+        # Parse the version and remove the build metadata
+        parsed_version = Version(specifier.version)
+        version_without_build_metadata = f"{parsed_version.major}.{parsed_version.minor}.{parsed_version.micro}"
+
+        # Create a new specifier without the build metadata
+        normalized_specifier = Specifier(f"{specifier.operator}{version_without_build_metadata}")
+        normalized_specifiers.append(normalized_specifier)
+
+    # Reconstruct the specifier set
+    normalized_specifier_set = SpecifierSet(",".join(str(s) for s in normalized_specifiers))
+
+    # Create a new Requirement object with the normalized specifiers
+    normalized_req = Requirement(f"{req.name}{normalized_specifier_set}")
+
+    return normalized_req
