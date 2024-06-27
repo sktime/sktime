@@ -631,11 +631,9 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
         lr=0.001,
         custom_dataset_train=None,
         custom_dataset_pred=None,
-
         position_encoding: bool = True,
         temporal_encoding: bool = True,
-        temporal_encoding_type = "linear", # linear, embed, fixed-embed
-
+        temporal_encoding_type="linear",  # linear, embed, fixed-embed
         d_model=512,
         n_heads=8,
         d_ff=2048,
@@ -646,13 +644,10 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
         activation="relu",
         freq="h",
     ):
-
-        """
-        suggested in the paper
-        context_len = pred_len
-        seq_len = 2 * pred_len
-
-        """
+        # TODO: put this info in docstring
+        # suggested in the paper
+        # context_len = pred_len
+        # seq_len = 2 * pred_len
 
         self.seq_len = seq_len
         self.context_len = context_len
@@ -695,10 +690,11 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
             lr=lr,
         )
 
-        self.output_attention = False # attention in output is not needed by the user
+        self.output_attention = False  # attention in output is not needed by the user
 
         if self.temporal_encoding:
             from sktime.networks.ltsf.utils.timefeatures import get_mark_vocab_sizes
+
             self.mark_vocab_sizes = get_mark_vocab_sizes(
                 temporal_encoding_type=self.temporal_encoding_type,
                 freq=self.freq,
@@ -825,7 +821,6 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
                 self_config.c_out = self.c_out
 
         return LTSFTransformerNetwork(Configs())._build()
-
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

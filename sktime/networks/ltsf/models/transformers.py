@@ -24,7 +24,6 @@ class LTSFTransformerNetwork:
 
     class _LTSFTransformerNetwork(nn_module):
         def __init__(self, configs):
-
             from sktime.networks.ltsf.layers.attention import (
                 LTSFAttentionLayer,
                 LTSFFullAttention,
@@ -160,6 +159,6 @@ class LTSFTransformerNetwork:
             )
 
             if self.output_attention:
-                return dec_out[:, -self.pred_len:, :], attns
+                return dec_out[:, -self.pred_len :, :], attns
             else:
-                return dec_out[:, -self.pred_len:, :]  # [B, L, D]
+                return dec_out[:, -self.pred_len :, :]  # [B, L, D]
