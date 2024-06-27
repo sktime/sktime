@@ -82,125 +82,70 @@ class LTSFTokenEmbedding:
             return x
 
 
-class LTSFFixedEmbedding:
-    """LTSFFixedEmbedding."""
+class LTSFTemporalEmbedding:
+    """LTSFTemporalEmbedding.""" # combines [] from cure-lab
 
-    def __init__(self, num_embeddings, embedding_dim):
-        self.num_embeddings = num_embeddings
-        self.embedding_dim = embedding_dim
-
-    def _build(self):
-        return self._LTSFFixedEmbedding(self.num_embeddings, self.embedding_dim)
-
-    class _LTSFFixedEmbedding(nn_module):
-        def __init__(self, num_embeddings, embedding_dim):
-            super().__init__()
-
-            w = torch.zeros(num_embeddings, embedding_dim).float()
-            w.require_grad = False
-
-            position = torch.arange(0, num_embeddings).float().unsqueeze(1)
-            div_term = (
-                torch.arange(0, embedding_dim, 2).float() * -(math.log(10000.0) / embedding_dim)
-            ).exp()
-
-            w[:, 0::2] = torch.sin(position * div_term)
-            w[:, 1::2] = torch.cos(position * div_term)
-
-            self.emb = nn.Embedding(num_embeddings, embedding_dim)
-            self.emb.weight = nn.Parameter(w, requires_grad=False)
-
-        def forward(self, x):
-            return self.emb(x).detach()
-
-
-class LTSFTemporalEmbeddingEmbed:
-    """LTSFTemporalEmbedding."""
-
-    # inside LTSFTemporalEmbedding of cure-lab
-
-    def __init__(self, mark_vocab_sizes, d_model):
+    def __init__(self, temporal_encoding_type, mark_vocab_sizes, d_model):
+        self.temporal_encoding_type = temporal_encoding_type
         self.mark_vocab_sizes = mark_vocab_sizes
         self.d_model = d_model
 
     def _build(self):
-        return self._LTSFTemporalEmbedding(self.mark_vocab_sizes, self.d_model)
+        return self._LTSFTemporalEmbedding(self.temporal_encoding_type, self.mark_vocab_sizes, self.d_model)
 
     class _LTSFTemporalEmbedding(nn_module):
-        def __init__(self, mark_vocab_sizes, d_model):
+        def __init__(self, temporal_encoding_type, mark_vocab_sizes, d_model):
             super().__init__()
 
-            self.embeds = nn.ModuleList([
-                nn.Embedding(
-                    num_embeddings=mark_vocab_size,
-                    embedding_dim=d_model
-                ) for mark_vocab_size in mark_vocab_sizes
-            ])
+            self.temporal_encoding_type = temporal_encoding_type
+
+            if temporal_encoding_type == "embed" or temporal_encoding_type == "fixed-embed":
+
+                self.embeds = nn.ModuleList()
+                for num_embeddings in mark_vocab_sizes:
+
+                    embed = nn.Embedding(
+                        num_embeddings=num_embeddings,
+                        embedding_dim=d_model
+                    )
+
+                    if temporal_encoding_type == "fixed-embed":
+                        # fix the embedding layer
+                        w = torch.zeros(num_embeddings, d_model).float()
+                        w.require_grad = False
+
+                        position = torch.arange(0, num_embeddings).float().unsqueeze(1)
+                        div_term = (
+                            torch.arange(0, d_model, 2).float() * -(math.log(10000.0) / d_model)
+                        ).exp()
+
+                        w[:, 0::2] = torch.sin(position * div_term)
+                        w[:, 1::2] = torch.cos(position * div_term)
+
+                        embed.weight = nn.Parameter(w, requires_grad=False)
+
+                    self.embeds.append(embed)
+
+            else:
+                # linear or any other transformation
+                self.linear = nn.Linear(
+                    in_features=len(mark_vocab_sizes),
+                    out_features=d_model,
+                    bias=False,
+                    dtype=torch.float,
+                )
 
         def forward(self, x):
-            x = x.long()
 
-            result = 0
-            for i, embed in enumerate(self.embeds):
-                result += embed(x[:, :, i])
+            if self.temporal_encoding_type == "embed" or self.temporal_encoding_type == "fixed-embed":
+                x = x.long()
+                result = 0
+                for i, embed in enumerate(self.embeds):
+                    result += embed(x[:, :, i])
+            else:
+                result = self.linear(x)
 
             return result
-
-
-class LTSFTemporalEmbeddingFixedEmbed:
-    """LTSFTemporalEmbedding."""
-
-    # inside LTSFTemporalEmbedding of cure-lab
-
-    def __init__(self, mark_vocab_sizes, d_model):
-        self.mark_vocab_sizes = mark_vocab_sizes
-        self.d_model = d_model
-
-    def _build(self):
-        return self._LTSFTemporalEmbeddingFixedEmbed(self.mark_vocab_sizes, self.d_model)
-
-    class _LTSFTemporalEmbeddingFixedEmbed(nn_module):
-        def __init__(self, mark_vocab_sizes, d_model):
-            super().__init__()
-
-            self.embeds = nn.ModuleList([
-                LTSFFixedEmbedding(
-                    num_embeddings=mark_vocab_size,
-                    embedding_dim=d_model
-                )._build() for mark_vocab_size in mark_vocab_sizes
-            ])
-
-        def forward(self, x):
-            x = x.long()
-
-            result = 0
-            for i, embed in enumerate(self.embeds):
-                result += embed(x[:, :, i])
-
-            return result
-
-
-class LTSFTemporalEmbeddingLinear:
-    """LTSFTemporalEmbedding."""
-
-    # LTSFTimeFeatureEmbedding of cure-lab
-
-    def __init__(self, mark_vocab_sizes, d_model):
-        self.mark_vocab_sizes = mark_vocab_sizes
-        self.d_model = d_model
-
-    def _build(self):
-        return self._LTSFTemporalEmbeddingLinear(self.mark_vocab_sizes, self.d_model)
-
-    class _LTSFTemporalEmbeddingLinear(nn_module):
-        def __init__(self, mark_vocab_sizes, d_model):
-            super().__init__()
-
-            in_channels = len(mark_vocab_sizes)
-            self.embed = nn.Linear(in_channels, d_model, bias=False)
-
-        def forward(self, x):
-            return self.embed(x)
 
 
 class LTSFDataEmbedding:
@@ -235,29 +180,27 @@ class LTSFDataEmbedding:
             )._build()
 
             if position_encoding:
-                self.position_embedding = LTSFPositionalEmbedding(d_model=d_model)._build()
+                self.position_embedding = LTSFPositionalEmbedding(
+                    d_model=d_model
+                )._build()
 
             if temporal_encoding:
-                if temporal_encoding_type == "linear":
-                    self.temporal_embedding = LTSFTemporalEmbeddingLinear(mark_vocab_sizes=mark_vocab_sizes, d_model=d_model)._build()
-                elif temporal_encoding_type == "embed":
-                    self.temporal_embedding = LTSFTemporalEmbeddingEmbed(mark_vocab_sizes=mark_vocab_sizes, d_model=d_model)._build()
-                elif temporal_encoding_type == "fixed-embed":
-                    self.temporal_embedding = LTSFTemporalEmbeddingFixedEmbed(mark_vocab_sizes=mark_vocab_sizes, d_model=d_model)._build()
-                else:
-                    # TODO: fill this
-                    raise ValueError()
+                self.temporal_embedding = LTSFTemporalEmbedding(
+                    temporal_encoding_type=temporal_encoding_type,
+                    mark_vocab_sizes=mark_vocab_sizes,
+                    d_model=d_model,
+                )._build()
 
             self.dropout = nn.Dropout(p=dropout)
 
         def forward(self, x, x_mark):
 
-            x = self.value_embedding(x)
+            out = self.value_embedding(x)
 
             if self.position_encoding:
-                x += self.position_embedding(x)
+                out += self.position_embedding(x)
 
             if self.temporal_encoding:
-                x += self.temporal_embedding(x_mark)
+                out += self.temporal_embedding(x_mark)
 
-            return self.dropout(x)
+            return self.dropout(out)

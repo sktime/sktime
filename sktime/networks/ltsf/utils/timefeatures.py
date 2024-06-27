@@ -135,6 +135,36 @@ def time_features(dates, freq):
     # TODO: check validity for freq
     return np.vstack([feat(dates) for feat in time_features_from_frequency_str(freq)])
 
-def get_n_mark_feats(freq):
-    # TODO: check validity for freq
-    return 4
+# ADDED BY ME
+
+def get_mapping_functions(temporal_encoding_type, freq):
+    if temporal_encoding_type == "embed" or temporal_encoding_type == "fixed-embed":
+        return [
+            lambda x: x.month,
+            lambda x: x.day,
+            lambda x: x.weekday,
+            lambda x: x.hour,
+        ]
+
+    return get_mapping_functions("embed", freq)
+
+def generate_temporal_features(index, temporal_encoding_type, freq):
+    mapping_functions = get_mapping_functions(
+        temporal_encoding_type=temporal_encoding_type,
+        freq=freq,
+    )
+    index = index.map(
+        lambda row: [fn(row) for fn in mapping_functions]
+    )
+    index = np.vstack(index)
+    return index
+
+def get_mark_vocab_sizes(temporal_encoding_type, freq):
+    if temporal_encoding_type == "embed" or temporal_encoding_type == "fixed-embed":
+        return [13, 32, 7, 24]
+    else:
+        mapping_functions = get_mapping_functions(
+            temporal_encoding_type=temporal_encoding_type,
+            freq=freq,
+        )
+        return [0] * len(mapping_functions)

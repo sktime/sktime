@@ -31,33 +31,21 @@ class PytorchFormerDataset(Dataset):
         self._prepare_data()
 
     def _prepare_data(self):
-        time_stamps = self.y.index
-        data = self.y.values
-
-        # Check for index validity
-        # TODO: fill this
-        # 1. PeriodIndex - good to go
-        # 2. DateTimeIndex - convert this to PeriodIndex
-        # 3. else - raise error and tell that they should try without temporal_encoding
+        index = self.y.index
+        values = self.y.values
 
         if self.temporal_encoding:
-            if self.temporal_encoding_type == "linear":
-                time_stamps = time_features(time_stamps, freq=self.freq)
-                time_stamps = time_stamps.transpose(1, 0)
-
-            elif self.temporal_encoding_type == "embed" or self.temporal_encoding_type == "fixed-embed":
-                def time_stamps_map(x):
-                    return [x.month, x.day, x.weekday, x.hour]
-                time_stamps = np.vstack(time_stamps.map(time_stamps_map))
-
-            else:
-                # TODO: fill this
-                raise ValueError()
+            from sktime.networks.ltsf.utils.timefeatures import generate_temporal_features
+            time_stamps = generate_temporal_features(
+                index=index,
+                temporal_encoding_type=self.temporal_encoding_type,
+                freq=self.freq
+            )
         else:
             time_stamps = None
 
         self.time_stamps = time_stamps
-        self.data = data
+        self.data = values
 
     def __len__(self):
         """Get length of the dataset."""
