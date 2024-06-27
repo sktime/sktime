@@ -2,6 +2,7 @@
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 
+import importlib
 import re
 
 import numpy as np
@@ -9,7 +10,7 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import load_longley
-from sktime.forecasting.darts import DartsXGBModel
+from sktime.forecasting.darts import DartsLinearRegressionModel, DartsXGBModel
 from sktime.split import temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
 
@@ -19,18 +20,32 @@ __author__ = ["fnhirwa"]
 y, X = load_longley()
 y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, test_size=4)
 
+# for setting model custom kwargs
+model_kwargs = {
+    DartsXGBModel: {
+        "objective": "reg:squarederror",
+        "eval_metric": "mae",
+    },
+    DartsLinearRegressionModel: {
+        "fit_intercept": True,
+    },
+}
 
-@pytest.mark.parametrize("model", [DartsXGBModel])
+# for mapping import of darts regression models
+import_mappings = {
+    DartsXGBModel: "XGBModel",
+    DartsLinearRegressionModel: "LinearRegressionModel",
+}
+
+
+@pytest.mark.parametrize("model", [DartsXGBModel, DartsLinearRegressionModel])
 @pytest.mark.skipif(
     not run_test_for_class([DartsXGBModel]),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_darts_regression_model_without_X(model):
     """Test with single endogenous without exogenous."""
-    kwargs = {
-        "objective": "reg:squarederror",
-        "eval_metric": "mae",
-    }
+    kwargs = model_kwargs.get(model, {})
     sktime_model = model(
         lags=6,
         output_chunk_length=4,
@@ -51,24 +66,20 @@ def test_darts_regression_model_without_X(model):
     pd.testing.assert_index_equal(pred.index, y_test.index, check_names=False)
 
 
-@pytest.mark.parametrize("model", [DartsXGBModel])
+@pytest.mark.parametrize("model", [DartsXGBModel, DartsLinearRegressionModel])
 @pytest.mark.skipif(
-    not run_test_for_class([DartsXGBModel]),
+    not run_test_for_class([DartsXGBModel, DartsLinearRegressionModel]),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_darts_regression_model_with_weather_dataset(model):
     """Test with weather dataset."""
     from darts.datasets import WeatherDataset
 
-    kwargs = {
-        "objective": "reg:squarederror",
-        "eval_metric": "mae",
-    }
+    kwargs = model_kwargs.get(model, {})
+    model_to_import = import_mappings.get(model)
     # Create and fit the model
-    if model == DartsXGBModel:
-        from darts.models import XGBModel
-
-        darts_model = XGBModel(lags=12, output_chunk_length=6, kwargs=kwargs)
+    imported_model = getattr(importlib.import_module("darts.models"), model_to_import)
+    darts_model = imported_model(lags=12, output_chunk_length=6, kwargs=kwargs)
     # Load the dataset
     series = WeatherDataset().load()
 
@@ -93,17 +104,14 @@ def test_darts_regression_model_with_weather_dataset(model):
     np.testing.assert_array_equal(pred_sktime.to_numpy(), darts_pred.to_numpy())
 
 
-@pytest.mark.parametrize("model", [DartsXGBModel])
+@pytest.mark.parametrize("model", [DartsXGBModel, DartsLinearRegressionModel])
 @pytest.mark.skipif(
-    not run_test_for_class([DartsXGBModel]),
+    not run_test_for_class([DartsXGBModel, DartsLinearRegressionModel]),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_darts_regression_model_with_X(model):
     """Test with single endogenous and exogenous."""
-    kwargs = {
-        "objective": "reg:squarederror",
-        "eval_metric": "mae",
-    }
+    kwargs = model_kwargs.get(model, {})
     past_covariates = ["GNPDEFL", "GNP", "UNEMP"]
     sktime_model = model(
         lags=6,
