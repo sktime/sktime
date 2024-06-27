@@ -91,7 +91,10 @@ if _check_soft_dependencies("dask", severity="none"):
     example_dict_lossy[("dask_panel", "Panel", 0)] = False
 
 if _check_soft_dependencies("gluonts", severity="none"):
-    from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
+    from sktime.datatypes._adapter.gluonts import (
+        convert_pandas_collection_to_pandasDataset,
+        convert_pandas_to_listDataset,
+    )
 
     df = example_dict[("pd-multiindex", "Panel", 0)]
 
@@ -111,6 +114,21 @@ if _check_soft_dependencies("gluonts", severity="none"):
 
     example_dict[("gluonts_ListDataset_panel", "Panel", 0)] = list_dataset
     example_dict_lossy[("gluonts_ListDataset_panel", "Panel", 0)] = True
+
+    # Creating a list of pd.DataFrames to convert to a PandasDataset
+    dfs_new = []
+
+    for df in dfs:
+        dfs_new.append(df.reset_index().melt(id_vars=df.index.names))
+
+    # Utilizing conversion function
+    pandas_dataset = convert_pandas_collection_to_pandasDataset(
+        dfs_new, timestamp="timepoints", freq="D", target="value"
+    )
+
+    # Storing the generated results
+    example_dict[("gluonts_PandasDataset_panel", "Panel", 0)] = pandas_dataset
+    example_dict_lossy[("gluonts_PandasDataset_panel", "Panel", 0)] = False
 
 example_dict_metadata[("Panel", 0)] = {
     "is_univariate": False,
@@ -207,6 +225,20 @@ if _check_soft_dependencies("gluonts", severity="none"):
     example_dict[("gluonts_ListDataset_panel", "Panel", 1)] = list_dataset
     example_dict_lossy[("gluonts_ListDataset_panel", "Panel", 1)] = True
 
+    # Creating a list of pd.DataFrames to convert to a PandasDataset
+    dfs_new = []
+
+    for df in dfs:
+        dfs_new.append(df.reset_index().melt(id_vars=df.index.names))
+
+    # Utilizing conversion function
+    pandas_dataset = convert_pandas_collection_to_pandasDataset(
+        dfs_new, timestamp="timepoints", freq="D", target="value"
+    )
+
+    # Storing the generated results
+    example_dict[("gluonts_PandasDataset_panel", "Panel", 1)] = pandas_dataset
+    example_dict_lossy[("gluonts_PandasDataset_panel", "Panel", 1)] = False
 
 example_dict_metadata[("Panel", 1)] = {
     "is_univariate": True,
@@ -296,6 +328,21 @@ if _check_soft_dependencies("gluonts", severity="none"):
 
     example_dict[("gluonts_ListDataset_panel", "Panel", 2)] = list_dataset
     example_dict_lossy[("gluonts_ListDataset_panel", "Panel", 2)] = True
+
+    # Creating a list of pd.DataFrames to convert to a PandasDataset
+    dfs_new = []
+
+    for df in dfs:
+        dfs_new.append(df.reset_index().melt(id_vars=df.index.names))
+
+    # Utilizing conversion function
+    pandas_dataset = convert_pandas_collection_to_pandasDataset(
+        dfs_new, timestamp="timepoints", freq="D", target="value"
+    )
+
+    # Storing the generated results
+    example_dict[("gluonts_PandasDataset_panel", "Panel", 2)] = pandas_dataset
+    example_dict_lossy[("gluonts_PandasDataset_panel", "Panel", 2)] = False
 
 example_dict_metadata[("Panel", 2)] = {
     "is_univariate": True,

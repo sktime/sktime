@@ -261,7 +261,9 @@ def convert_pandas_wide_to_pandasDataset(pd_dataframe: pd.DataFrame):
     return PandasDataset(dict(pd_dataframe))
 
 
-def convert_pandas_collection_to_pandasDataset(collection_dataframe, freq="D"):
+def convert_pandas_collection_to_pandasDataset(
+    collection_dataframe, timestamp="timestamp", freq="D", target="target"
+):
     """Convert a list of pd.DataFrames or dict of pd.DataFrames to a PandasDataset.
 
     Parameters
@@ -270,8 +272,14 @@ def convert_pandas_collection_to_pandasDataset(collection_dataframe, freq="D"):
         A list or dictionary of pandas DataFrames
         If dictionary, key = item_id, value = pd.DataFrame
 
+    timestamp : str
+        The column corresponding to the timestamps (default="timestamp")
+
     freq : str
-        The frequency of the timestamps (default='D')
+        The frequency of the timestamps (default="D")
+
+    target : str
+        The column corresponding to the target values column (default="target")
 
     Returns
     -------
@@ -311,29 +319,55 @@ def convert_pandas_collection_to_pandasDataset(collection_dataframe, freq="D"):
 
         # If all else is accepted, convert and return the object
         return PandasDataset(
-            dataframes=collection_dataframe, timestamp="timestamp", freq=freq
+            dataframes=collection_dataframe,
+            timestamp=timestamp,
+            freq=freq,
+            target=target,
         )
 
     # Checking for the list-format
     elif type(collection_dataframe) is list:
         for idx, df in enumerate(collection_dataframe):
             # Check for a target value
-            if "target" not in df.columns:
+            if target not in df.columns:
                 raise ValueError(
-                    f"The DataFrame at the {idx} index does not have a target column!"
+                    f"The DataFrame at the {idx} index does not have a {target} column!"
                 )
 
             # Check for valid timestamps
-            if "timestamp" not in df.columns and not isinstance(
+            if timestamp not in df.columns and not isinstance(
                 df.index, pd.DatetimeIndex
             ):
                 raise ValueError(
                     f"The DataFrame at the {idx} index does not have the "
-                    + "required 'target' and 'timestamp' columns!"
+                    + f"required '{timestamp}' columns!"
                 )
 
         # If all else is accepted, convert and return the object
-        return PandasDataset(dataframes=collection_dataframe)
+        return PandasDataset(
+            dataframes=collection_dataframe,
+            timestamp=timestamp,
+            freq=freq,
+            target=target,
+        )
 
     else:
         raise ValueError("Expected format of dict[pd.DataFrame] or list[pd.DataFrame]")
+
+
+def convert_pandasDataset_to_pandas(pandasDataset):
+    """Convert a GluonTS PandasDataset to a pd.DataFrame.
+
+    Parameters
+    ----------
+    pandasDataset : gluonts.dataset.pandas.PandasDataset
+        A gluonTS PandasDataset
+
+    Returns
+    -------
+    Returns a valid pd.DataFrame
+    """
+    df = pd.DataFrame(pandasDataset._data_entries)
+    df = df.explode("target")
+
+    return df

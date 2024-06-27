@@ -579,4 +579,55 @@ if _check_soft_dependencies("gluonts", severity="none"):
 
         return _ret(True, None, metadata, return_metadata)
 
+    def check_gluonTS_pandasDataset_panel(obj, return_metadata=False, var_name="obj"):
+        # Importing required libraries
+        from gluonts.dataset.pandas import PandasDataset
+
+        metadata = dict()
+
+        # Check for type correctness
+        if not isinstance(obj, PandasDataset):
+            msg = f"{var_name} must be a gluonts.PandasDataset, found {type(obj)}"
+            return _ret(False, msg, None, return_metadata)
+
+        # Convert to a pandas DF for easier checks
+        df = pd.DataFrame(obj._data_entries)
+        df = df.explode("target")
+
+        # Check if there are no values
+        if _req("is_empty", return_metadata):
+            metadata["is_empty"] = len(obj._data_entries) == 0
+
+        if _req("is_univariate", return_metadata):
+            metadata["is_univariate"] = "item_id" not in df.columns
+
+        if _req("n_features", return_metadata):
+            # Check first if the PandasDataset is empty
+            if "item_id" not in df.columns:
+                metadata["n_features"] = 1
+
+            else:
+                metadata["n_features"] = len(df["item_id"].unique())
+
+        if _req("n_instances", return_metadata):
+            metadata["n_instances"] = len(df)
+
+        if _req("n_panels", return_metadata):
+            metadata["n_panels"] = 1
+
+        if _req("feature_names", return_metadata):
+            metadata["feature_names"] = df["item_id"].unique()
+
+        if _req("is_equally_spaced", return_metadata):
+            metadata["is_equally_spaced"] = True
+
+        if _req("has_nans", return_metadata):
+            metadata["has_nans"] = df.isna().any().any()
+
+        return _ret(True, None, metadata, return_metadata)
+
+    check_dict[
+        ("gluonts_PandasDataset_panel", "Panel")
+    ] = check_gluonTS_pandasDataset_panel
+
     check_dict[("gluonts_ListDataset_panel", "Panel")] = check_gluonTS_listDataset_panel

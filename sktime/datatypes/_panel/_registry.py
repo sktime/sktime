@@ -40,6 +40,11 @@ MTYPE_REGISTER_PANEL = [
         "Panel",
         "gluonTS representation of univariate and multivariate time series",
     ),
+    (
+        "gluonts_PandasDataset_panel",
+        "Panel",
+        "gluonTS representation of a pandas DataFrame",
+    ),
 ]
 
 MTYPE_SOFT_DEPS_PANEL = {
