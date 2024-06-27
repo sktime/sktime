@@ -651,7 +651,7 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
         suggested in the paper
         context_len = pred_len
         seq_len = 2 * pred_len
-        
+
         """
 
         self.seq_len = seq_len
@@ -823,7 +823,6 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
                 self_config.dropout = self.dropout
                 self_config.activation = self.activation
                 self_config.c_out = self.c_out
-                self_config.freq = self.freq
 
         return LTSFTransformerNetwork(Configs())._build()
 

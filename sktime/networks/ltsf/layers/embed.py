@@ -151,10 +151,9 @@ class LTSFTemporalEmbedding:
 class LTSFDataEmbedding:
     """LTSFDataEmbedding."""
 
-    def __init__(self, in_channels, d_model, freq="h", dropout=0.1, mark_vocab_sizes=None, position_encoding=True, temporal_encoding=True, temporal_encoding_type='linear'):
+    def __init__(self, in_channels, d_model, dropout=0.1, mark_vocab_sizes=None, position_encoding=True, temporal_encoding=True, temporal_encoding_type='linear'):
         self.in_channels = in_channels
         self.d_model = d_model
-        self.freq = freq
         self.dropout = dropout
         self.mark_vocab_sizes = mark_vocab_sizes
         self.temporal_encoding = temporal_encoding
@@ -163,12 +162,12 @@ class LTSFDataEmbedding:
 
     def _build(self):
         return self._LTSFDataEmbedding(
-            self.in_channels, self.d_model, self.freq, self.dropout, self.mark_vocab_sizes, self.position_encoding, self.temporal_encoding, self.temporal_encoding_type
+            self.in_channels, self.d_model, self.dropout, self.mark_vocab_sizes, self.position_encoding, self.temporal_encoding, self.temporal_encoding_type
         )
 
     class _LTSFDataEmbedding(nn_module):
         def __init__(
-            self, in_channels, d_model, freq="h", dropout=0.1, mark_vocab_sizes=None, temporal_encoding_type="linear", position_encoding=True, temporal_encoding=True
+            self, in_channels, d_model, dropout=0.1, mark_vocab_sizes=None, temporal_encoding_type="linear", position_encoding=True, temporal_encoding=True
         ):
             super().__init__()
 

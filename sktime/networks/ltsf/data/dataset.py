@@ -1,10 +1,7 @@
 """Implements Pytorch Dataset class for LTSF-Formers."""
 
-import numpy as np
 import torch
 from torch.utils.data import Dataset
-
-from sktime.networks.ltsf.utils.timefeatures import time_features
 
 
 class PytorchFormerDataset(Dataset):
@@ -35,11 +32,14 @@ class PytorchFormerDataset(Dataset):
         values = self.y.values
 
         if self.temporal_encoding:
-            from sktime.networks.ltsf.utils.timefeatures import generate_temporal_features
+            from sktime.networks.ltsf.utils.timefeatures import (
+                generate_temporal_features,
+            )
+
             time_stamps = generate_temporal_features(
                 index=index,
                 temporal_encoding_type=self.temporal_encoding_type,
-                freq=self.freq
+                freq=self.freq,
             )
         else:
             time_stamps = None

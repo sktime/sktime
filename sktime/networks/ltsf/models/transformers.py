@@ -29,9 +29,7 @@ class LTSFTransformerNetwork:
                 LTSFAttentionLayer,
                 LTSFFullAttention,
             )
-
             from sktime.networks.ltsf.layers.embed import LTSFDataEmbedding
-
             from sktime.networks.ltsf.layers.enc_dec import (
                 LTSFTransformerDecoder,
                 LTSFTransformerDecoderLayer,
@@ -49,7 +47,6 @@ class LTSFTransformerNetwork:
             self.enc_embedding = LTSFDataEmbedding(
                 configs.enc_in,
                 configs.d_model,
-                configs.freq,
                 configs.dropout,
                 configs.mark_vocab_sizes,
                 configs.temporal_encoding_type,
@@ -59,7 +56,6 @@ class LTSFTransformerNetwork:
             self.dec_embedding = LTSFDataEmbedding(
                 configs.dec_in,
                 configs.d_model,
-                configs.freq,
                 configs.dropout,
                 configs.mark_vocab_sizes,
                 configs.temporal_encoding_type,
