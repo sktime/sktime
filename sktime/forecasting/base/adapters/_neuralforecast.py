@@ -274,9 +274,6 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         ValueError
             When ``freq="auto"`` and cannot be interpreted from ``ForecastingHorizon``
         """
-        if not fh.is_all_out_of_sample(cutoff=self.cutoff):
-            raise NotImplementedError("in-sample prediction is currently not supported")
-
         # A. freq is given {use this}
         # B. freq is auto
         #     B1. freq is infered from fh {use this}
