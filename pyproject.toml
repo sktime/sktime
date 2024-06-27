@@ -349,19 +349,11 @@ select = [
     "PT007",   # Checks for the type of parameter values passed to pytest.mark.parametrize.
     "PT018",   # Checks for assertions that combine multiple independent condition
 ]
-extended_select = [
+extend-select = [
     "I", # isort
     "C4", # https://pypi.org/project/flake8-comprehensions
 ]
 ignore=[
-    "E121",
-    "E123",
-    "E126",
-    "E226",
-    "E24",
-    "E704",
-    "W503",
-    "W504",
     "E203", # Whitespace-before-punctuation.
     "E402", # Module-import-not-at-top-of-file.
     "E731", # Do not assign a lambda expression, use a def.
@@ -378,7 +370,6 @@ ignore=[
     "D400", # First line should end with a period.
     "RUF100", # https://docs.astral.sh/ruff/rules/unused-noqa/
 ]
-ignore-init-module-imports = true
 exclude = ['test_*.py']
 
 [tool.ruff.lint.per-file-ignores]
