@@ -108,7 +108,7 @@ class SkforecastAutoreg(BaseForecaster):
 
     _tags = {
         "authors": ["Abhay-Lejith", "yarnabrina"],
-        "maintainers": ["yarnabrina"],
+        "maintainers": ["Abhay-Lejith", "yarnabrina"],
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
@@ -142,6 +142,7 @@ class SkforecastAutoreg(BaseForecaster):
 
         super().__init__()
 
+        self._regressor = None
         self._forecaster = None
         self._transformer_y = None
         self._transformer_exog = None
@@ -201,7 +202,11 @@ class SkforecastAutoreg(BaseForecaster):
     def _coerce_period_to_datetime_index(df):
         new_df = df.copy(deep=True)
         period_freq = new_df.index.freq
-        new_df.index = new_df.index.to_timestamp(how="e").normalize()
+        # converting the period index to the timestamp at the 'end' of the period
+        # Example:        Period                   Datetime
+        #          '2024-01-12 00:00' --> '2024-01-12 00:59:59.999999999'
+        #          '2024-01-12 01:00' --> '2024-01-12 01:59:59.999999999'
+        new_df.index = new_df.index.to_timestamp(how="e")
         new_df.index.freq = period_freq
         return new_df
 
@@ -209,25 +214,27 @@ class SkforecastAutoreg(BaseForecaster):
         if df is None:
             return None
 
+        if isinstance(df.index, (pd.RangeIndex, pd.DatetimeIndex)):
+            return df
+
         new_df = df
-        if not isinstance(df.index, (pd.RangeIndex, pd.DatetimeIndex)):
-            if isinstance(df.index, pd.PeriodIndex):
-                new_df = self._coerce_period_to_datetime_index(df)
-            elif pd.api.types.is_integer_dtype(df.index):
-                try:
-                    new_df = self._coerce_int_to_range_index(df)
-                except AssertionError:
-                    raise ValueError(
-                        f"Coercion of index of {input_var} from integer pd.Index to "
-                        "pd.RangeIndex failed. Please ensure that indexes are equally "
-                        "spaced apart."
-                    )
-            else:
+        if isinstance(df.index, pd.PeriodIndex):
+            new_df = self._coerce_period_to_datetime_index(df)
+        elif pd.api.types.is_integer_dtype(df.index):
+            try:
+                new_df = self._coerce_int_to_range_index(df)
+            except AssertionError:
                 raise ValueError(
-                    f"{input_var} must have one of the following index types: "
-                    "pd.RangeIndex, pd.DatetimeIndex, pd.PeriodIndex, pd.Index"
-                    f"(int dtype). Found index of type: {type(df.index)}"
+                    f"Coercion of index of {input_var} from integer pd.Index to "
+                    "pd.RangeIndex failed. Please ensure that indexes are equally "
+                    "spaced apart."
                 )
+        else:
+            raise ValueError(
+                f"{input_var} must have one of the following index types: "
+                "pd.RangeIndex, pd.DatetimeIndex, pd.PeriodIndex, pd.Index"
+                f"(int dtype). Found index of type: {type(df.index)}"
+            )
         return new_df
 
     def _fit(
