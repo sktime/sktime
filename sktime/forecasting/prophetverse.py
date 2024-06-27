@@ -14,24 +14,15 @@ def placeholder(cls):
     If prophetverse 0.3 or higher is installed, this will directly
     return the forecaster imported from prophetverse.
     """
-    import importlib.metadata
-    import importlib.util
+    from sktime.utils.dependencies import _check_soft_dependencies
 
-    from packaging.version import InvalidVersion, Version
+    try:
+        if _check_soft_dependencies("prophetverse>=0.3.0", severity="none"):
+            from prophetverse.sktime import Prophetverse
 
-    package_name = "prophetverse"
-    required_version = "0.3.0"
-
-    package_spec = importlib.util.find_spec(package_name)
-    if package_spec is not None:
-        installed_version = importlib.metadata.version(package_name)
-        try:
-            if Version(installed_version) >= Version(required_version):
-                from prophetverse.sktime import Prophetverse
-
-                return Prophetverse
-        except InvalidVersion:
-            pass
+            return Prophetverse
+    except Exception:
+        pass
 
     # else we return the placeholder, which is a delegator
     return cls
