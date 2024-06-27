@@ -369,6 +369,16 @@ ignore=[
     "S101", # Use of `assert` detected.
     "D400", # First line should end with a period.
     "RUF100", # https://docs.astral.sh/ruff/rules/unused-noqa/
+    "C408", # Unnecessary dict call - rewrite as a literal.
+    "UP031", # Use format specifier instead of %
+    "S102", # Use of excec
+    "C414", # Unnecessary `list` call within `sorted()`
+    "S301", # pickle and modules that wrap it can be unsafe
+    "C416", # Unnecessary list comprehension - rewrite as a generator
+    "S310", # Audit URL open for permited schemes
+    "S202", # Uses of `tarfile.extractall()`
+    "S307", # Use of possibly insecure function
+    "C417", # Unnecessary `map` usage (rewrite using a generator expression)
 ]
 exclude = ['test_*.py']
 
