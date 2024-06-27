@@ -445,9 +445,9 @@ class HFTransformersForecaster(BaseForecaster):
                         "label_length": 2,
                     },
                     "peft_config": LoraConfig(
-                        r=8,
-                        lora_alpha=32,
-                        target_modules=["q_proj", "v_proj"],
+                        r=2,
+                        lora_alpha=8,
+                        target_modules=["q_proj"],
                         lora_dropout=0.01,
                     ),
                     "deterministic": True,
