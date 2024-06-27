@@ -38,6 +38,23 @@ def is_monotonically_increasing(obj):
     return False
 
 
+def _convert_period_index_to_datetime_index(obj):
+    """Convert PeriodIndex to DatatimeIndex as polars only supports DatetimeIndex."""
+    import pandas as pd
+
+    if isinstance(obj.index, pd.PeriodIndex):
+        obj.index = obj.index.to_timestamp(freq=obj.index.freq)
+
+    if isinstance(obj.index, pd.MultiIndex):
+        levels = obj.index.levels
+        if isinstance(levels[-1], pd.PeriodIndex):
+            new_levels = list(levels)
+            new_levels[-1] = new_levels[-1].to_timestamp(freq=new_levels[-1].freq)
+            obj.index = obj.index.set_levels(new_levels)
+
+    return obj
+
+
 def convert_pandas_to_polars(
     obj, schema_overrides=None, rechunk=True, nan_to_null=True, lazy=False
 ):
@@ -74,6 +91,9 @@ def convert_pandas_to_polars(
         return col
 
     obj = obj.copy()
+    obj = _convert_period_index_to_datetime_index(
+        obj
+    )  # Polars only supports DatetimeIndex
     index_names = obj.index.names
     index_names = polars_index_columns(index_names)
     obj.index.names = index_names
@@ -151,6 +171,12 @@ def check_polars_frame(
         return ret(False, msg, None, return_metadata)
 
     # we now know obj is a polars DataFrame or LazyFrame
+    if scitype not in ["Table", "Series", "Panel", "Hierarchical"]:
+        return RuntimeError(
+            'scitype arg of check_polars_frame must be one of strings "Table", '
+            f'"Series", "Panel", or "Hierarchical", but found {scitype}'
+        )
+
     index_cols = []
 
     if scitype in ["Series", "Panel", "Hierarchical"]:
@@ -179,12 +205,6 @@ def check_polars_frame(
                 f"to find duplicates."
             )
             return ret(False, msg, None, return_metadata)
-
-    elif scitype != "Table":
-        return RuntimeError(
-            'scitype arg of check_polars_frame must be one of strings "Table", '
-            f'"Series", "Panel", or "Hierarchical", but found {scitype}'
-        )
 
     # columns in polars are unique, no check required
 
