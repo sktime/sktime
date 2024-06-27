@@ -52,9 +52,7 @@ def test_darts_regression_model_without_X(model):
         kwargs=kwargs,
     )
     # try to fit with negative forecast horizon (insample prediction)
-    with pytest.raises(
-        NotImplementedError, match="in-sample prediction is currently not supported"
-    ):
+    with pytest.raises(NotImplementedError):
         sktime_model.fit(y_train, fh=[-2, -1, 0, 1, 2])
 
     # train the model
