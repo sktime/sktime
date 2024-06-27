@@ -533,18 +533,18 @@ def _normalize_requirement(req):
         e.g., Requirement("pandas>1.2.3")
     """
     # Process each specifier in the requirement
-    normalized_specifiers = []
-    for specifier in req.specifier:
+    normalized_specs = []
+    for spec in req.specifier:
         # Parse the version and remove the build metadata
-        parsed_version = Version(specifier.version)
-        version_without_build_metadata = f"{parsed_version.major}.{parsed_version.minor}.{parsed_version.micro}"
+        spec_v = Version(spec.version)
+        version_wo_build_metadata = f"{spec_v.major}.{spec_v.minor}.{spec_v.micro}"
 
         # Create a new specifier without the build metadata
-        normalized_specifier = Specifier(f"{specifier.operator}{version_without_build_metadata}")
-        normalized_specifiers.append(normalized_specifier)
+        normalized_spec = Specifier(f"{spec.operator}{version_wo_build_metadata}")
+        normalized_specs.append(normalized_spec)
 
     # Reconstruct the specifier set
-    normalized_specifier_set = SpecifierSet(",".join(str(s) for s in normalized_specifiers))
+    normalized_specifier_set = SpecifierSet(",".join(str(s) for s in normalized_specs))
 
     # Create a new Requirement object with the normalized specifiers
     normalized_req = Requirement(f"{req.name}{normalized_specifier_set}")
