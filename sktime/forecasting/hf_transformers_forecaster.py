@@ -56,11 +56,6 @@ class HFTransformersForecaster(BaseForecaster):
     config : dict, default={}
         Configuration to use for the model. See the `transformers`
         documentation for details.
-    peft_config : peft.PeftConfig, default=None
-        Configuration for Parameter-Efficient Fine-Tuning.
-        When `fit_strategy` is set to "peft",
-        this will be used to set up PEFT parameters for the model.
-        See the `peft` documentation for details.
     training_args : dict, default={}
         Training arguments to use for the model. See `transformers.TrainingArguments`
         for details.
@@ -72,6 +67,11 @@ class HFTransformersForecaster(BaseForecaster):
         Whether the predictions should be deterministic or not.
     callbacks : list, default=[]
         List of callbacks to use during training. See `transformers.Trainer`
+    peft_config : peft.PeftConfig, default=None
+        Configuration for Parameter-Efficient Fine-Tuning.
+        When `fit_strategy` is set to "peft",
+        this will be used to set up PEFT parameters for the model.
+        See the `peft` documentation for details.
 
     Examples
     --------
@@ -152,11 +152,11 @@ class HFTransformersForecaster(BaseForecaster):
         fit_strategy="minimal",
         validation_split=0.2,
         config=None,
-        peft_config=None,
         training_args=None,
         compute_metrics=None,
         deterministic=False,
         callbacks=None,
+        peft_config=None,
     ):
         super().__init__()
         self.model_path = model_path
@@ -164,7 +164,6 @@ class HFTransformersForecaster(BaseForecaster):
         self.validation_split = validation_split
         self.config = config
         self._config = config if config is not None else {}
-        self.peft_config = peft_config
         self.training_args = training_args
         self._training_args = training_args if training_args is not None else {}
         self.compute_metrics = compute_metrics
@@ -173,6 +172,7 @@ class HFTransformersForecaster(BaseForecaster):
         self.deterministic = deterministic
         self.callbacks = callbacks
         self._callbacks = callbacks
+        self.peft_config = peft_config
 
     def _fit(self, y, X, fh):
         # Load model and extract config
