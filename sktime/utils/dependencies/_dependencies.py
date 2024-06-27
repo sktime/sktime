@@ -11,6 +11,7 @@ from inspect import isclass
 from packaging.markers import InvalidMarker, Marker
 from packaging.requirements import InvalidRequirement, Requirement
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
+from packaging.version import InvalidVersion, Version
 
 
 def _check_soft_dependencies(
@@ -136,8 +137,8 @@ def _check_soft_dependencies(
         pkg_spec = find_spec(package_import_name)
         if pkg_spec is not None:
             try:
-                pkg_env_version = version(package_name)
-            except PackageNotFoundError:
+                pkg_env_version = Version(version(package_name))
+            except (InvalidVersion, PackageNotFoundError):
                 pkg_spec = None
 
         # if package not present, make the user aware of installation reqs
