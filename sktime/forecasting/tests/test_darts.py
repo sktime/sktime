@@ -77,7 +77,7 @@ def test_darts_regression_model_with_weather_dataset(model):
     model_to_import = import_mappings.get(model)
     # Create and fit the model
     imported_model = getattr(importlib.import_module("darts.models"), model_to_import)
-    darts_model = imported_model(lags=12, output_chunk_length=6, kwargs=kwargs)
+    darts_model = imported_model(lags=12, output_chunk_length=6, **kwargs)
     # Load the dataset
     series = WeatherDataset().load()
 
@@ -93,6 +93,7 @@ def test_darts_regression_model_with_weather_dataset(model):
     sktime_model = model(
         lags=12,
         output_chunk_length=6,
+        kwargs=kwargs,
     )
     sktime_model.fit(target_df)
     fh = list(range(1, 7))
