@@ -1,7 +1,16 @@
 """Implements Pytorch Dataset class for LTSF-Formers."""
 
-import torch
-from torch.utils.data import Dataset
+from sktime.utils.dependencies import _check_soft_dependencies
+
+if _check_soft_dependencies("torch", severity="none"):
+    import torch
+    from torch.utils.data import Dataset
+else:
+
+    class Dataset:
+        """Dummy class if torch is unavailable."""
+
+        pass
 
 
 class PytorchFormerDataset(Dataset):

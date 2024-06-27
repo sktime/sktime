@@ -1,6 +1,5 @@
 """Generates Features for Temporal Emboddings."""
 
-
 import numpy as np
 import pandas as pd
 from pandas.tseries import offsets
