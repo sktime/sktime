@@ -575,7 +575,7 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
     >>>
     >>> y = load_airline()
     >>>
-    >>> model = LTSFTransformerForecaster(seq_len=10, context_len=5, pred_len=5) # doctest: +SKIP
+    >>> model = LTSFTransformerForecaster(10, 5, 5) # doctest: +SKIP
     >>> model.fit(y, fh=[1, 2, 3, 4, 5]) # doctest: +SKIP
     LTSFTransformerForecaster(context_len=5, pred_len=5, seq_len=10)
     >>> pred = model.predict() # doctest: +SKIP
@@ -708,6 +708,7 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
                 )
         else:
             from sktime.networks.ltsf.data.dataset import PytorchFormerDataset
+
             dataset = PytorchFormerDataset(
                 y=y,
                 seq_len=self.seq_len,
@@ -737,7 +738,7 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
                     "documentation."
                 )
         else:
-            _fh = ForecastingHorizon(range(1, self._pred_len+1), is_relative=True)
+            _fh = ForecastingHorizon(range(1, self._pred_len + 1), is_relative=True)
             mask_y = pd.DataFrame(
                 data=0, columns=y.columns, index=_fh.to_absolute_index(self.cutoff)
             )
@@ -745,6 +746,7 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
             _y = pd.concat([_y, mask_y], axis=0)
 
             from sktime.networks.ltsf.data.dataset import PytorchFormerDataset
+
             dataset = PytorchFormerDataset(
                 y=_y,
                 seq_len=self.seq_len,
@@ -821,10 +823,10 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
                 "factor": 5,
                 "dropout": 0.1,
                 "activation": "relu",
-                "freq": 'h',
+                "freq": "h",
                 "position_encoding": True,
                 "temporal_encoding": True,
-                "temporal_encoding_type": 'linear',
+                "temporal_encoding_type": "linear",
                 "num_epochs": 1,
                 "batch_size": 1,
                 "lr": 0.008,
