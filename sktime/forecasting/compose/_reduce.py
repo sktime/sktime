@@ -1933,11 +1933,17 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         if windows_identical == "changing_value":
             warn(
                 "In `DirectReductionForecaster`, the default value of parameter "
-                "`windows_identical` will change to `False` in version 0.32.0."
-                "To keep current behaviour and to silence this warning, "
-                "set `windows_identical` to `True` explicitly.",
+                "`windows_identical` will change to `False` in version 0.32.0. "
+                "Before the introduction of `windows_identical`, the parameter "
+                "defaulted implicitly to `True` when `X_treatment` was set to "
+                "`shifted`, and to `False` when `X_treatment` was set to "
+                "`concurrent`. To keep current behaviour and to silence this "
+                "warning, set `windows_identical` explicitly.",
             )
-            self.windows_identical = True
+            if X_treatment == "shifted":
+                self.windows_identical = True
+            else:
+                self.windows_identical = False
         else:
             self.windows_identical = windows_identical
         self._lags = list(range(window_length))
@@ -2121,8 +2127,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
             if windows_identical:
                 # determine offset for uniform window length
-                # (alternatively max(fh) + lag)
-                offset = -y_lags[lag] - 1
+                offset = -y_lags[lag] - 1  # equivalent to max(fh) + lag
                 yt = yt[offset:]
                 Xtt = Xtt[offset:]
 
