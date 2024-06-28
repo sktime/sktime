@@ -142,9 +142,8 @@ class HFTransformersForecaster(BaseForecaster):
         # Update config with user provided config
         _config = config.to_dict()
         _config.update(self._config)
-        _config["num_dynamic_real_features"] = X.shape[-1] if X is not None else 0
         _config["num_static_real_features"] = 0
-        # _config["num_dynamic_real_features"] = 0
+        _config["num_dynamic_real_features"] = 0
         _config["num_static_categorical_features"] = 0
         _config["num_time_features"] = 0 if X is None else X.shape[-1]
 
