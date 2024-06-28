@@ -2,8 +2,8 @@
 
 import pandas as pd
 
+from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base.adapters._pytorch import BaseDeepNetworkPyTorch
-from sktime.networks.ltsf.data.dataset import PytorchFormerDataset
 
 
 class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
@@ -504,7 +504,7 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
         return params
 
 
-class LTSFTransfomer(BaseDeepNetworkPyTorch):
+class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
     """LTSF-Transformer Forecaster.
 
     Parameters
@@ -570,48 +570,15 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
 
     Examples
     --------
-    >>> from sktime.forecasting.ltsf import LTSFTransfomer, LTSFLinearForecaster
-    >>> from sktime.datasets import load_longley
+    >>> from sktime.forecasting.ltsf import LTSFTransformerForecaster # doctest: +SKIP
+    >>> from sktime.datasets import load_airline
     >>>
-    >>> batch_size = 5
-    >>> seq_len = 5
-    >>> context_len = 2
-    >>> pred_len = 3
-    >>> num_features = 1
+    >>> y = load_airline()
     >>>
-    >>> y, X = load_longley()
-    >>> split_point = len(y) - pred_len
-    >>> X_train, X_test = X[:split_point], X[split_point:]
-    >>> y_train, y_test = y[:split_point], y[split_point:]
-    >>>
-    >>> model = LTSFTransfomer(
-    ... 	seq_len = seq_len,
-    ... 	pred_len = pred_len,
-    ... 	context_len = context_len,
-    ... 	output_attention = False,
-    ... 	embed_type = 0,
-    ... 	embed = "fiixed",
-    ... 	enc_in = num_features,
-    ... 	dec_in = num_features,
-    ... 	d_model = 512,
-    ... 	n_heads = 8,
-    ... 	d_ff = 2048,
-    ... 	e_layers = 1,
-    ... 	d_layers = 1,
-    ... 	factor = 5,
-    ... 	dropout = 0.1,
-    ... 	activation = "relu",
-    ... 	c_out = pred_len,
-    ... 	freq = 'h',
-    ... 	num_epochs=1,
-    ... 	batch_size=batch_size,
-    >>> )
-    >>>
-    >>> model.fit(y_train, X_train, fh=[1, 2, 3])
-    >>> pred = model.predict(X=X_test)
-
-
-
+    >>> model = LTSFTransformerForecaster(seq_len=10, context_len=5, pred_len=5) # doctest: +SKIP
+    >>> model.fit(y, fh=[1, 2, 3, 4, 5]) # doctest: +SKIP
+    LTSFTransformerForecaster(context_len=5, pred_len=5, seq_len=10)
+    >>> pred = model.predict() # doctest: +SKIP
     """
 
     def __init__(
@@ -652,6 +619,7 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
         self.seq_len = seq_len
         self.context_len = context_len
         self.pred_len = pred_len
+        self._pred_len = None
 
         self.individual = individual
         self.in_channels = in_channels
@@ -739,11 +707,12 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
                     "documentation."
                 )
         else:
+            from sktime.networks.ltsf.data.dataset import PytorchFormerDataset
             dataset = PytorchFormerDataset(
                 y=y,
                 seq_len=self.seq_len,
                 context_len=self.context_len,
-                pred_len=self.pred_len,
+                pred_len=self._pred_len,
                 freq=self.freq,
                 temporal_encoding=self.temporal_encoding,
                 temporal_encoding_type=self.temporal_encoding_type,
@@ -768,22 +737,23 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
                     "documentation."
                 )
         else:
+            _fh = ForecastingHorizon(range(1, self._pred_len+1), is_relative=True)
             mask_y = pd.DataFrame(
-                data=0, columns=y.columns, index=fh.to_absolute_index(self.cutoff)
+                data=0, columns=y.columns, index=_fh.to_absolute_index(self.cutoff)
             )
             _y = y.iloc[-self.seq_len :]
             _y = pd.concat([_y, mask_y], axis=0)
 
+            from sktime.networks.ltsf.data.dataset import PytorchFormerDataset
             dataset = PytorchFormerDataset(
                 y=_y,
                 seq_len=self.seq_len,
                 context_len=self.context_len,
-                pred_len=self.pred_len,
+                pred_len=self._pred_len,
                 freq=self.freq,
                 temporal_encoding=self.temporal_encoding,
                 temporal_encoding_type=self.temporal_encoding_type,
             )
-
         return DataLoader(
             dataset,
             self.batch_size,
@@ -797,12 +767,13 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
         self.enc_in = num_features
         self.dec_in = num_features
         self.c_out = num_features
+        self._pred_len = fh
 
         class Configs:
             def __init__(self_config):
                 self_config.seq_len = self.seq_len
                 self_config.context_len = self.context_len
-                self_config.pred_len = self.pred_len
+                self_config.pred_len = self._pred_len
                 self_config.output_attention = self.output_attention
                 self_config.mark_vocab_sizes = self.mark_vocab_sizes
                 self_config.position_encoding = self.position_encoding
@@ -839,14 +810,24 @@ class LTSFTransfomer(BaseDeepNetworkPyTorch):
         """
         params = [
             {
-                "seq_len": 2,
-                "pred_len": 1,
-                "lr": 0.005,
-                "optimizer": "Adam",
-                "batch_size": 1,
+                "seq_len": 4,
+                "context_len": 2,
+                "pred_len": 2,
+                "d_model": 16,
+                "n_heads": 1,
+                "d_ff": 32,
+                "e_layers": 1,
+                "d_layers": 1,
+                "factor": 5,
+                "dropout": 0.1,
+                "activation": "relu",
+                "freq": 'h',
+                "position_encoding": True,
+                "temporal_encoding": True,
+                "temporal_encoding_type": 'linear',
                 "num_epochs": 1,
-                "individual": True,
+                "batch_size": 1,
+                "lr": 0.008,
             }
         ]
-
         return params

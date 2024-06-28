@@ -363,7 +363,7 @@ Deep learning based forecasters
     LTSFLinearForecaster
     LTSFDLinearForecaster
     LTSFNLinearForecaster
-    LTSFTransfomer
+    LTSFTransformerForecaster
 
 .. currentmodule:: sktime.forecasting.hf_transformers_forecaster
 
