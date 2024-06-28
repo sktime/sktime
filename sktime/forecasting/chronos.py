@@ -16,7 +16,7 @@ import sys
 from copy import deepcopy
 from functools import partial
 from pathlib import Path
-from typing import Dict, Iterator, List, Optional
+from typing import Dict, Iterator, List, Optional, Union
 
 import accelerate
 import gluonts
@@ -43,6 +43,7 @@ from transformers import (
     AutoConfig,
     AutoModelForCausalLM,
     AutoModelForSeq2SeqLM,
+    GenerationConfig,
     T5Config,
     Trainer,
     TrainingArguments,
@@ -51,6 +52,19 @@ from transformers import (
 from sktime.forecasting.hf_transformers_forecaster import HFTransformersForecaster
 
 logger = logging.getLogger(__name__)
+
+
+def left_pad_and_stack_1D(tensors: List[torch.Tensor]) -> torch.Tensor:
+    max_len = max(len(c) for c in tensors)
+    padded = []
+    for c in tensors:
+        assert isinstance(c, torch.Tensor)
+        assert c.ndim == 1
+        padding = torch.full(
+            size=(max_len - len(c),), fill_value=torch.nan, device=c.device
+        )
+        padded.append(torch.concat((padding, c), dim=-1))
+    return torch.stack(padded)
 
 
 def is_main_process() -> bool:
@@ -636,6 +650,42 @@ class ChronosForecaster(HFTransformersForecaster):
         self.top_k = top_k
         self.top_p = top_p
 
+        assert self.model_type in ["seq2seq", "causal"]
+
+        self.model = load_model(
+            model_id=self.model_path,
+            model_type=self.model_type,
+            vocab_size=self.n_tokens,
+            random_init=self.random_init,
+            tie_embeddings=self.tie_embeddings,
+            pad_token_id=self.pad_token_id,
+            eos_token_id=self.eos_token_id,
+        )
+
+        tokenizer_kwargs = self.tokenizer_kwargs
+        if isinstance(tokenizer_kwargs, str):
+            tokenizer_kwargs = ast.literal_eval(tokenizer_kwargs)
+        assert isinstance(tokenizer_kwargs, dict)
+
+        self.chronos_config = ChronosConfig(
+            tokenizer_class=self.tokenizer_class,
+            tokenizer_kwargs=tokenizer_kwargs,
+            n_tokens=self.n_tokens,
+            n_special_tokens=self.n_special_tokens,
+            pad_token_id=self.pad_token_id,
+            eos_token_id=self.eos_token_id,
+            use_eos_token=self.use_eos_token,
+            model_type=self.model_type,
+            context_length=self.context_length,
+            prediction_length=self.prediction_length,
+            num_samples=self.num_samples,
+            temperature=self.temperature,
+            top_k=self.top_k,
+            top_p=self.top_p,
+        )
+        # Add extra items to model config so that it's saved in the ckpt
+        self.model.config.chronos_config = self.chronos_config.__dict__
+
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
@@ -684,13 +734,6 @@ class ChronosForecaster(HFTransformersForecaster):
         #     probability = [1.0 / len(training_data_paths)] * len(training_data_paths)
         assert isinstance(probability, list)
 
-        tokenizer_kwargs = self.tokenizer_kwargs
-        if isinstance(tokenizer_kwargs, str):
-            tokenizer_kwargs = ast.literal_eval(tokenizer_kwargs)
-        assert isinstance(tokenizer_kwargs, dict)
-
-        assert self.model_type in ["seq2seq", "causal"]
-
         # logger.info(
         #     f"Loading and filtering {len(training_data_paths)} datasets "
         #     f"for training: {training_data_paths}",
@@ -715,46 +758,15 @@ class ChronosForecaster(HFTransformersForecaster):
                     min_length=self.min_past + self.prediction_length,
                     max_missing_prop=self.max_missing_prop,
                 ),
-                ListDataset([dataset_item] * 20, freq=y.index.freqstr),
+                ListDataset([dataset_item], freq=y.index.freqstr),
                 # ListDataset(dataset, freq="M")
             )
         ]
 
-        logger.info("Initializing model")
-
-        model = load_model(
-            model_id=self.model_path,
-            model_type=self.model_type,
-            vocab_size=self.n_tokens,
-            random_init=self.random_init,
-            tie_embeddings=self.tie_embeddings,
-            pad_token_id=self.pad_token_id,
-            eos_token_id=self.eos_token_id,
-        )
-
-        chronos_config = ChronosConfig(
-            tokenizer_class=self.tokenizer_class,
-            tokenizer_kwargs=tokenizer_kwargs,
-            n_tokens=self.n_tokens,
-            n_special_tokens=self.n_special_tokens,
-            pad_token_id=self.pad_token_id,
-            eos_token_id=self.eos_token_id,
-            use_eos_token=self.use_eos_token,
-            model_type=self.model_type,
-            context_length=self.context_length,
-            prediction_length=self.prediction_length,
-            num_samples=self.num_samples,
-            temperature=self.temperature,
-            top_k=self.top_k,
-            top_p=self.top_p,
-        )
-        # Add extra items to model config so that it's saved in the ckpt
-        model.config.chronos_config = chronos_config.__dict__
-
         shuffled_train_dataset = ChronosDataset(
             datasets=train_datasets,
             probabilities=probability,
-            tokenizer=chronos_config.create_tokenizer(),
+            tokenizer=self.chronos_config.create_tokenizer(),
             context_length=self.context_length,
             prediction_length=self.prediction_length,
             min_past=self.min_past,
@@ -770,7 +782,7 @@ class ChronosForecaster(HFTransformersForecaster):
 
         # Create Trainer instance
         trainer = Trainer(
-            model=model,
+            model=self.model,
             args=training_args,
             train_dataset=shuffled_train_dataset,
         )
@@ -785,6 +797,18 @@ class ChronosForecaster(HFTransformersForecaster):
         #     )
 
         return self
+
+    def _prepare_and_validate_context(
+        self, context: Union[torch.Tensor, List[torch.Tensor]]
+    ):
+        if isinstance(context, list):
+            context = left_pad_and_stack_1D(context)
+        assert isinstance(context, torch.Tensor)
+        if context.ndim == 1:
+            context = context.unsqueeze(0)
+        assert context.ndim == 2
+
+        return context
 
     def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
@@ -803,18 +827,66 @@ class ChronosForecaster(HFTransformersForecaster):
         y_pred : pd.DataFrame
             Predicted forecasts.
         """
+        transformers.set_seed(self.seed)
+        self.model.eval()
+        context = torch.tensor(self._y.values)
+        context_tensor = self._prepare_and_validate_context(context=context)
+
         prediction_length = len(fh)
-        forecast = self._model.predict(
-            self._context,
-            prediction_length,
-            num_samples=self.num_samples,
-            temperature=self.temperature,
-            top_k=self.top_k,
-            top_p=self.top_p,
-        )
-        values = np.median(forecast[0].numpy(), axis=0)
+        if prediction_length is None:
+            prediction_length = self.prediction_length
+
+        predictions = []
+        remaining = prediction_length
+        tokenizer = self.chronos_config.create_tokenizer()
+        while remaining > 0:
+            token_ids, attention_mask, scale = tokenizer.context_input_transform(
+                context_tensor
+            )
+            prediction_length = min(remaining, self.prediction_length)
+            preds = self.model.generate(
+                input_ids=token_ids.to(self.model.device),
+                attention_mask=attention_mask.to(self.model.device),
+                generation_config=GenerationConfig(
+                    min_new_tokens=prediction_length,
+                    max_new_tokens=prediction_length,
+                    do_sample=True,
+                    num_return_sequences=self.num_samples,
+                    eos_token_id=self.model.config.eos_token_id,
+                    pad_token_id=self.model.config.pad_token_id,
+                    temperature=self.temperature,
+                    top_k=self.top_k,
+                    top_p=self.top_p,
+                ),
+            )
+
+            if self.model_type == "seq2seq":
+                preds = preds[..., 1:]  # remove the decoder start token
+            else:
+                assert self.model_type == "causal"
+                assert preds.size(-1) == token_ids.size(-1) + prediction_length
+                preds = preds[..., -prediction_length:]
+
+            preds = preds.reshape(token_ids.size(0), self.num_samples, -1)
+
+            prediction = tokenizer.output_transform(preds.to(scale.device), scale)
+
+            predictions.append(prediction)
+            remaining -= prediction.shape[-1]
+
+            if remaining <= 0:
+                break
+
+            context_tensor = torch.cat(
+                [context_tensor, prediction.median(dim=1).values], dim=-1
+            )
+
+        forecast_result = torch.cat(predictions, dim=-1)
+
+        values = np.median(forecast_result[0].numpy(), axis=0)
         row_idx = self.fh.to_absolute_index(self.cutoff)
         y_pred = pd.Series(values, index=row_idx, name=self._y.name)
+
         return y_pred
 
     @classmethod
