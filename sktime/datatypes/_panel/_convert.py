@@ -1122,3 +1122,78 @@ if _check_soft_dependencies("dask", severity="none"):
     _extend_conversions(
         "dask_panel", "pd-multiindex", convert_dict, mtype_universe=MTYPE_LIST_PANEL
     )
+
+if _check_soft_dependencies("gluonts", severity="none"):
+    from sktime.datatypes._adapter.gluonts import (
+        convert_listDataset_to_pandas,
+        convert_pandas_long_to_pandasDataset,
+        convert_pandas_to_listDataset,
+        convert_pandas_wide_to_pandasDataset,
+        convert_pandasDataset_to_pandas,
+    )
+
+    # Utilizing functions defined in _adapter/gluonts.py
+    def convert_gluonts_listDataset_to_pandas(obj, store=None):
+        return convert_listDataset_to_pandas(obj)
+
+    def convert_pandas_to_gluonts_listDataset(obj, store=None):
+        return convert_pandas_to_listDataset(obj, is_single=False)
+
+    def convert_pandas_long_to_gluonts_pandasDataset(obj, store=None):
+        return convert_pandas_long_to_pandasDataset(obj)
+
+    def convert_gluonts_pandasDataset_to_pandas_long(obj, store=None):
+        return convert_pandasDataset_to_pandas(obj)
+
+    def convert_pandas_wide_to_gluonts_pandasDataset(obj, store=None):
+        return convert_pandas_wide_to_pandasDataset(obj)
+
+    def convert_gluonts_pandasDataset_to_pandas_wide(obj, store=None):
+        return convert_pandasDataset_to_pandas(obj)
+
+    # Storing functions in convert_dict
+    convert_dict[
+        ("pd-multiindex", "gluonts_ListDataset_panel", "Panel")
+    ] = convert_pandas_to_gluonts_listDataset
+
+    convert_dict[
+        ("gluonts_ListDataset_panel", "pd-multiindex", "Panel")
+    ] = convert_gluonts_listDataset_to_pandas
+
+    convert_dict[
+        ("pd-wide", "gluonts_PandasDataset_panel", "Panel")
+    ] = convert_pandas_wide_to_gluonts_pandasDataset
+
+    convert_dict[
+        ("gluonts_PandasDataset_panel", "pd-wide", "Panel")
+    ] = convert_gluonts_pandasDataset_to_pandas_wide
+
+    convert_dict[
+        ("pd-long", "gluonts_PandasDataset_panel", "Panel")
+    ] = convert_pandas_long_to_gluonts_pandasDataset
+
+    convert_dict[
+        ("gluonts_PandasDataset_panel", "pd-long", "Panel")
+    ] = convert_gluonts_pandasDataset_to_pandas_long
+
+    # Extending conversions
+    _extend_conversions(
+        "gluonts_ListDataset_panel",
+        "pd-multiindex",
+        convert_dict,
+        mtype_universe=MTYPE_LIST_PANEL,
+    )
+
+    _extend_conversions(
+        "gluonts_PandasDataset_panel",
+        "pd-wide",
+        convert_dict,
+        mtype_universe=MTYPE_LIST_PANEL,
+    )
+
+    _extend_conversions(
+        "gluonts_PandasDataset_panel",
+        "pd-long",
+        convert_dict,
+        mtype_universe=MTYPE_LIST_PANEL,
+    )
