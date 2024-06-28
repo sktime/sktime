@@ -6,6 +6,8 @@ import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
+from sktime.split import temporal_train_test_split
+
 if _check_soft_dependencies("torch", severity="none"):
     import torch
     from torch.utils.data import Dataset
@@ -93,8 +95,16 @@ class HFTransformersForecaster(BaseForecaster):
         "handles-missing-data": False,
         "capability:pred_int": False,
         "python_dependencies": ["transformers", "torch"],
-        "X_inner_mtype": "pd.DataFrame",
-        "y_inner_mtype": "pd.Series",
+        "X_inner_mtype": [
+            "pd.DataFrame",
+            "pd-multiindex",
+            "pd_multiindex_hier",
+        ],
+        "y_inner_mtype": [
+            "pd.Series",
+            "pd-multiindex",
+            "pd_multiindex_hier",
+        ],
         "capability:insample": False,
         "capability:pred_int:insample": False,
     }
@@ -134,7 +144,7 @@ class HFTransformersForecaster(BaseForecaster):
         _config.update(self._config)
         _config["num_dynamic_real_features"] = X.shape[-1] if X is not None else 0
         _config["num_static_real_features"] = 0
-        _config["num_dynamic_real_features"] = 0
+        # _config["num_dynamic_real_features"] = 0
         _config["num_static_categorical_features"] = 0
         _config["num_time_features"] = 0 if X is None else X.shape[-1]
 
@@ -145,6 +155,9 @@ class HFTransformersForecaster(BaseForecaster):
             _config["prediction_length"] = max(
                 *(fh.to_relative(self._cutoff)._values + 1),
                 _config["prediction_length"],
+            )
+            _config["prediction_length"] = int(
+                np.max(fh.to_relative(self._cutoff)._values)
             )
 
         config = config.from_dict(_config)
@@ -192,19 +205,26 @@ class HFTransformersForecaster(BaseForecaster):
             )
 
         if self.validation_split is not None:
-            split = int(len(y) * (1 - self.validation_split))
+            if X is None:
+                y_train, y_test = temporal_train_test_split(
+                    y, X, test_size=self.validation_split
+                )
+            else:
+                y_train, y_test, X_train, X_test = temporal_train_test_split(
+                    y, X, test_size=self.validation_split
+                )
 
             train_dataset = PyTorchDataset(
-                y[:split],
+                y_train,
                 config.context_length + max(config.lags_sequence),
-                X=X[:split] if X is not None else None,
+                X=X_train if X is not None else None,
                 fh=config.prediction_length,
             )
 
             eval_dataset = PyTorchDataset(
-                y[split:],
+                y_test,
                 config.context_length + max(config.lags_sequence),
-                X=X[split:] if X is not None else None,
+                X=X_test if X is not None else None,
                 fh=config.prediction_length,
             )
         else:
@@ -251,15 +271,46 @@ class HFTransformersForecaster(BaseForecaster):
         self.model.eval()
         from torch import from_numpy
 
-        hist = self._y.values.reshape((1, -1))
+        if isinstance(self._y.index, pd.MultiIndex):
+            lens = self._y.groupby(
+                level=list(range(len(self._y.index.levels) - 1))
+            ).apply(lambda x: len(x))
+            assert (lens == lens.iloc[0]).all(), "All series must has the same length"
+            hist = self._y.values.reshape((-1, lens.iloc[0]))
+        else:
+            hist = self._y.values.reshape((1, -1))
         if X is not None:
-            hist_x = self._X.values.reshape((1, -1, self._X.shape[-1]))
-            x_ = X.values.reshape((1, -1, self._X.shape[-1]))
-            if x_.shape[1] < self.model.config.prediction_length:
-                # TODO raise exception here?
-                x_ = np.resize(
-                    x_, (1, self.model.config.prediction_length, x_.shape[-1])
+            if isinstance(self._y.index, pd.MultiIndex):
+                hist_x = np.array(self._X.values, dtype=np.float32).reshape(
+                    (-1, lens.iloc[0], self._X.shape[-1])
                 )
+                lens = X.groupby(
+                    level=list(range(len(self._y.index.levels) - 1))
+                ).apply(lambda x: len(x))
+                assert (
+                    lens == lens.iloc[0]
+                ).all(), "All series must has the same length"
+                x_ = np.array(X.values, dtype=np.float32).reshape(
+                    (-1, lens.iloc[0], self._X.shape[-1])
+                )
+                if x_.shape[1] < self.model.config.prediction_length:
+                    # TODO raise exception here?
+                    x_ = np.resize(
+                        x_,
+                        (
+                            x_.shape[0],
+                            self.model.config.prediction_length,
+                            x_.shape[-1],
+                        ),
+                    )
+            else:
+                hist_x = self._X.values.reshape((1, -1, self._X.shape[-1]))
+                x_ = X.values.reshape((1, -1, self._X.shape[-1]))
+                if x_.shape[1] < self.model.config.prediction_length:
+                    # TODO raise exception here?
+                    x_ = np.resize(
+                        x_, (1, self.model.config.prediction_length, x_.shape[-1])
+                    )
         else:
             hist_x = np.array(
                 [
@@ -269,8 +320,9 @@ class HFTransformersForecaster(BaseForecaster):
                         + max(self.model.config.lags_sequence)
                     )
                 ]
+                * hist.shape[0]
             )
-            x_ = np.array([[[]] * self.model.config.prediction_length])
+            x_ = np.array([[[]] * self.model.config.prediction_length] * hist.shape[0])
 
         pred = self.model.generate(
             past_values=from_numpy(hist).to(self.model.dtype).to(self.model.device),
@@ -291,17 +343,50 @@ class HFTransformersForecaster(BaseForecaster):
             ),
         )
 
-        pred = pred.sequences.mean(dim=1).detach().cpu().numpy().T
+        if isinstance(self._y.index, pd.MultiIndex):
+            pred = pred.sequences.mean(dim=1).detach().cpu().numpy()
 
-        pred = pd.Series(
-            pred.reshape((-1,)),
-            index=ForecastingHorizon(range(len(pred)))
-            .to_absolute(self._cutoff)
-            ._values,
-            # columns=self._y.columns
-            name=self._y.name,
-        )
-        return pred.loc[fh.to_absolute(self.cutoff)._values]
+            ins = np.array(
+                list(np.unique(self._y.index.droplevel(-1)).repeat(pred.shape[1]))
+            )
+            ins = [ins[..., i] for i in range(ins.shape[-1])] if ins.ndim > 1 else [ins]
+
+            idx = (
+                ForecastingHorizon(range(1, pred.shape[1] + 1), freq=self.fh.freq)
+                .to_absolute(self._cutoff)
+                ._values.tolist()
+                * pred.shape[0]
+            )
+
+            index = pd.MultiIndex.from_arrays(
+                ins + [idx],
+                names=self._y.index.names,
+            )
+
+            pred = pd.DataFrame(
+                pred.flatten(),
+                index=index,
+                columns=self._y.columns,
+            )
+
+            absolute_horizons = fh.to_absolute_index(self.cutoff)
+            dateindex = pred.index.get_level_values(-1).map(
+                lambda x: x in absolute_horizons
+            )
+
+            pred = pred.loc[dateindex]
+        else:
+            pred = pred.sequences.mean(dim=1).detach().cpu().numpy().T
+
+            pred = pd.Series(
+                pred.reshape((-1,)),
+                index=ForecastingHorizon(range(1, len(pred) + 1), freq=self.fh.freq)
+                .to_absolute(self._cutoff)
+                ._values,
+                name=self._y.name,
+            )
+            pred = pred.loc[fh.to_absolute(self.cutoff)._values]
+        return pred
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -359,35 +444,62 @@ class HFTransformersForecaster(BaseForecaster):
 class PyTorchDataset(Dataset):
     """Dataset for use in sktime deep learning forecasters."""
 
-    def __init__(self, y, seq_len, fh=None, X=None):
-        self.y = y.values
-        self.X = X.values if X is not None else X
-        self.seq_len = seq_len
+    def __init__(self, y: pd.DataFrame, seq_len: int, fh=None, X: pd.DataFrame = None):
+        if not isinstance(y.index, pd.MultiIndex):
+            self.y = np.array(y.values, dtype=np.float32).reshape(len(y), 1)
+            self.X = (
+                np.array(X.values, dtype=np.float32).reshape(
+                    (len(X.columns), len(X), 1)
+                )
+                if X is not None
+                else X
+            )
+        else:
+            lens = y.groupby(level=list(range(len(y.index.levels) - 1))).apply(
+                lambda x: len(x)
+            )
+            assert (lens == lens.iloc[0]).all(), "All series must has the same length"
+            self.y = np.array(y.values, dtype=np.float32).reshape((lens.iloc[0], -1))
+            self.X = (
+                np.array(X.values, dtype=np.float32).T.reshape(
+                    (len(X.columns), lens.iloc[0], -1)
+                )
+                if X is not None
+                else X
+            )
+
+        self._len, self._num = self.y.shape
         self.fh = fh
+        self.seq_len = seq_len
 
     def __len__(self):
         """Return length of dataset."""
-        return max(len(self.y) - self.seq_len - self.fh + 1, 0)
+        return self._num * max(self._len - self.seq_len - self.fh + 1, 0)
 
     def __getitem__(self, i):
         """Return data point."""
         from torch import from_numpy, tensor
 
-        hist_y = tensor(self.y[i : i + self.seq_len]).float()
+        m = i % (self._len - self.seq_len - self.fh + 1)
+        n = int((i - m) / self._len)
+        hist_y = tensor(self.y[m : m + self.seq_len, n]).float()
         if self.X is not None:
-            exog_data = tensor(
-                self.X[i + self.seq_len : i + self.seq_len + self.fh]
-            ).float()
-            hist_exog = tensor(self.X[i : i + self.seq_len]).float()
+            exog_data = (
+                tensor(self.X[:, m + self.seq_len : m + self.seq_len + self.fh, n])
+                .float()
+                .T
+            )
+            hist_exog = tensor(self.X[:, m : m + self.seq_len, n]).float().T
         else:
             exog_data = tensor([[]] * self.fh)
             hist_exog = tensor([[]] * self.seq_len)
+
         return {
             "past_values": hist_y,
             "past_time_features": hist_exog,
             "future_time_features": exog_data,
             "past_observed_mask": (~hist_y.isnan()).to(int),
             "future_values": from_numpy(
-                self.y[i + self.seq_len : i + self.seq_len + self.fh]
+                self.y[m + self.seq_len : m + self.seq_len + self.fh, n]
             ).float(),
         }
