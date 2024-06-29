@@ -3,9 +3,14 @@
 import pandas as pd
 import pytest
 
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils.multiindex import flatten_multiindex, rename_multiindex
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils.multiindex"]),
+    reason="Run if multiindex module has changed.",
+)
 def test_flatten_multiindex():
     """Test flatten_multiindex contract."""
     mi = pd.MultiIndex.from_product([["a", "b"], [0, 42]])
@@ -18,6 +23,10 @@ def test_flatten_multiindex():
     assert (expected == flat).all()
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils.multiindex"]),
+    reason="Run if multiindex module has changed.",
+)
 def test_rename_multiindex():
     """Test rename_multiindex contract."""
     mi = pd.MultiIndex.from_tuples([("a", 1), ("a", 42), ("b", 1), ("c", 0)])

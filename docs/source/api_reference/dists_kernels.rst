@@ -108,6 +108,8 @@ Dynamic Time Warping Distances
     DtwPythonDist
     DtwDistTslearn
     SoftDtwDistTslearn
+    DtwDtaidistUniv
+    DtwDtaidistMultiv
 
 .. currentmodule:: sktime.dists_kernels.ctw
 

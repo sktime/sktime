@@ -25,9 +25,7 @@ def test_neural_forecast_univariate_y_without_X(model_class) -> None:
     model = model_class(freq="A-DEC", max_steps=5, trainer_kwargs={"logger": False})
 
     # attempt fit with negative fh
-    with pytest.raises(
-        NotImplementedError, match="in-sample prediction is currently not supported"
-    ):
+    with pytest.raises(NotImplementedError):
         model.fit(y_train, fh=[-2, -1, 0, 1, 2])
 
     # train model

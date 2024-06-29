@@ -5,6 +5,8 @@
 
 __author__ = ["mloning", "kejsitake", "fkiraly"]
 
+from inspect import signature
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -28,7 +30,11 @@ from sktime.split import (
     SlidingWindowSplitter,
     temporal_train_test_split,
 )
-from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
+from sktime.tests.test_all_estimators import (
+    BaseFixtureGenerator,
+    QuickTester,
+    TestAllObjects,
+)
 from sktime.utils._testing.forecasting import (
     _assert_correct_columns,
     _assert_correct_pred_time_index,
@@ -227,8 +233,13 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         # if estimator cannot forecast in-sample and fh is in-sample, terminate
         # if the tag correctly states this, we consider this fine as per contract
-        # todo: check that estimator raises error message when fitting instead
+        # check that estimator raises error message when fitting
         if not fh_is_oos and not estimator_instance.get_tag("capability:insample"):
+            with pytest.raises(
+                NotImplementedError,
+                match="can not perform in-sample prediction",
+            ):
+                estimator_instance.fit(y_train, fh=fh)
             return None
 
         estimator_instance.fit(y_train, fh=fh)
@@ -245,10 +256,16 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         # if cannot forecast in-sample probabilistically, and fh is in-sample, terminate
         # if the tag correctly states this, we consider this fine as per contract
-        # todo: check that estimator raises error message when fitting instead
+        # check that estimator raises error message when fitting
         if not fh_is_oos:
             if not estimator_instance.get_tag("capability:pred_int:insample"):
-                return None
+                if estimator_instance.get_tag("capability:pred_int"):
+                    with pytest.raises(
+                        NotImplementedError,
+                        match="can not perform in-sample prediction",
+                    ):
+                        estimator_instance.predict_interval()
+                    return None
 
         if estimator_instance.get_tag("capability:pred_int"):
             y_pred_int = estimator_instance.predict_interval()
@@ -898,3 +915,192 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         cutoff = get_cutoff(y_train, return_index=True)
         _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
         _assert_correct_columns(y_pred, y_train)
+
+
+class TestAllGlobalForecasters(TestAllObjects):
+    """Module level tests for all global forecasters."""
+
+    estimator_type_filter = "global_forecaster"
+
+    def test_global_forecasting_tag(self, estimator_class):
+        global_forecasting_tag = estimator_class._tags["capability:global_forecasting"]
+        assert global_forecasting_tag is True
+
+    def test_pridect_signature(self, estimator_class):
+        sig = signature(estimator_class.predict)
+        assert "X" in sig.parameters.keys()
+        assert "y" in sig.parameters.keys()
+
+    def test_global_forecasting_multiindex_hier(self, estimator_instance):
+        from sktime.utils._testing.hierarchical import _make_hierarchical
+
+        data_length = 100
+        data = _make_hierarchical(
+            (5, 100),
+            n_columns=2,
+            max_timepoints=data_length,
+            min_timepoints=data_length,
+        )
+        l1 = data.index.get_level_values(1).map(lambda x: int(x[3:]))
+        X_train = data.loc[l1 < 90, "c0"].to_frame()
+        y_train = data.loc[l1 < 90, "c1"].to_frame()
+        X_test = data.loc[l1 >= 80, "c0"].to_frame()
+        y_test = data.loc[l1 >= 80, "c1"].to_frame()
+
+        max_prediction_length = 3
+        fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
+
+        estimator_instance.fit(y_train, X_train, fh=fh)
+
+        # remove max_prediction_length from the end of y_test
+        len_levels = len(y_test.index.names)
+        y_test = y_test.groupby(level=list(range(len_levels - 1))).apply(
+            lambda x: x.droplevel(list(range(len_levels - 1))).iloc[
+                :-max_prediction_length
+            ]
+        )
+        y_pred = estimator_instance.predict(fh, X_test, y_test)
+
+        cutoff = get_cutoff(y_test, return_index=True)
+        index_pred = y_pred.iloc[:max_prediction_length].index.get_level_values(2)
+        _assert_correct_pred_time_index(index_pred, cutoff, fh)
+        _assert_correct_columns(y_pred, y_test)
+
+        assert isinstance(y_pred, pd.DataFrame)
+        assert check_is_mtype(y_pred, "pd_multiindex_hier", msg_return_dict="list")
+        msg = (
+            "returned columns after predict are not as expected. "
+            f"expected: {y_test.columns}. Found: {y_pred.columns}"
+        )
+        assert np.all(y_pred.columns == y_test.columns), msg
+
+        # check consistency of forecast hierarchy with training data
+        assert set(y_pred.index).issubset(X_test.index)
+
+    def test_global_forecasting_multiindex(self, estimator_instance):
+        from sktime.utils._testing.hierarchical import _make_hierarchical
+
+        data_length = 100
+        data = _make_hierarchical(
+            (500, 1),
+            n_columns=2,
+            max_timepoints=data_length,
+            min_timepoints=data_length,
+        )
+        data = data.droplevel(1)
+        l0 = data.index.get_level_values(0).map(lambda x: int(x[3:]))
+        X_train = data[l0 < 450]["c0"].to_frame()
+        y_train = data[l0 < 450]["c1"].to_frame()
+        X_test = data[l0 >= 400]["c0"].to_frame()
+        y_test = data[l0 >= 400]["c1"].to_frame()
+
+        max_prediction_length = 3
+        fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
+
+        estimator_instance.fit(y_train, X_train, fh=fh)
+
+        # remove max_prediction_length from the end of y_test
+        len_levels = len(y_test.index.names)
+        y_test = y_test.groupby(level=list(range(len_levels - 1))).apply(
+            lambda x: x.droplevel(list(range(len_levels - 1))).iloc[
+                :-max_prediction_length
+            ]
+        )
+        y_pred = estimator_instance.predict(fh, X_test, y_test)
+
+        cutoff = get_cutoff(y_test, return_index=True)
+        index_pred = y_pred.iloc[:max_prediction_length].index.get_level_values(1)
+        _assert_correct_pred_time_index(index_pred, cutoff, fh)
+        _assert_correct_columns(y_pred, y_test)
+
+        assert isinstance(y_pred, pd.DataFrame)
+        assert check_is_mtype(y_pred, "pd-multiindex", msg_return_dict="list")
+        msg = (
+            "returned columns after predict are not as expected. "
+            f"expected: {y_test.columns}. Found: {y_pred.columns}"
+        )
+        assert np.all(y_pred.columns == y_test.columns), msg
+
+        # check consistency of forecast hierarchy with training data
+        assert set(y_pred.index).issubset(X_test.index)
+
+    @pytest.mark.parametrize("n_columns", (1, 10))
+    def test_global_forecasting_series(self, estimator_instance, n_columns):
+        from sktime.utils._testing.series import _make_series
+
+        data = _make_series(n_columns=n_columns)
+        y_train = data
+
+        max_prediction_length = 3
+        fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
+
+        estimator_instance.fit(y=y_train, fh=fh)
+
+        # remove max_prediction_length from the end of y_train
+        y_test = _make_series(n_columns=n_columns).iloc[:-max_prediction_length]
+        y_test.rename({0: "renamed"})
+        y_pred = estimator_instance.predict(fh, y=y_test)
+
+        cutoff = get_cutoff(y_test, return_index=True)
+        _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
+        _assert_correct_columns(y_pred, y_test)
+
+        if isinstance(y_test, pd.Series):
+            assert isinstance(y_pred, pd.Series)
+            assert check_is_mtype(y_pred, "pd.Series", msg_return_dict="list")
+        elif isinstance(y_test, pd.DataFrame):
+            assert isinstance(y_pred, pd.DataFrame)
+            assert check_is_mtype(y_pred, "pd.DataFrame", msg_return_dict="list")
+            msg = (
+                "returned columns after predict are not as expected. "
+                f"expected: {y_test.columns}. Found: {y_pred.columns}"
+            )
+            assert np.all(y_pred.columns == y_test.columns), msg
+
+        # check consistency of forecast hierarchy with training data
+        assert set(y_test.index.names).issubset(y_pred.index.names)
+
+    def test_global_forecasting_no_X(self, estimator_instance):
+        from sktime.utils._testing.hierarchical import _make_hierarchical
+
+        data_length = 100
+        data = _make_hierarchical(
+            (500, 1),
+            n_columns=1,
+            max_timepoints=data_length,
+            min_timepoints=data_length,
+        )
+        data = data.droplevel(1)
+        l0 = data.index.get_level_values(0).map(lambda x: int(x[3:]))
+        y_train = data[l0 < 450]["c0"].to_frame()
+        y_test = data[l0 >= 400]["c0"].to_frame()
+
+        max_prediction_length = 3
+        fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
+
+        estimator_instance.fit(y=y_train, fh=fh)
+
+        # remove max_prediction_length from the end of y_test
+        len_levels = len(y_test.index.names)
+        y_test = y_test.groupby(level=list(range(len_levels - 1))).apply(
+            lambda x: x.droplevel(list(range(len_levels - 1))).iloc[
+                :-max_prediction_length
+            ]
+        )
+        y_pred = estimator_instance.predict(fh, y=y_test)
+
+        cutoff = get_cutoff(y_test, return_index=True)
+        index_pred = y_pred.iloc[:max_prediction_length].index.get_level_values(1)
+        _assert_correct_pred_time_index(index_pred, cutoff, fh)
+        _assert_correct_columns(y_pred, y_test)
+
+        assert isinstance(y_pred, pd.DataFrame)
+        assert check_is_mtype(y_pred, "pd-multiindex", msg_return_dict="list")
+        msg = (
+            "returned columns after predict are not as expected. "
+            f"expected: {y_test.columns}. Found: {y_pred.columns}"
+        )
+        assert np.all(y_pred.columns == y_test.columns), msg
+
+        # check consistency of forecast hierarchy with training data
+        assert set(y_test.index.names).issubset(y_pred.index.names)

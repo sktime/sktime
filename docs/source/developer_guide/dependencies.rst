@@ -30,7 +30,7 @@ Soft dependencies in ``sktime`` should usually be isolated to estimators.
 
 Informative warnings or error messages for missing soft dependencies should be raised, in a situation where a user would need them.
 This is handled through our ``_check_soft_dependencies`` utility
-`here <https://github.com/sktime/sktime/blob/main/sktime/utils/validation/_dependencies.py>`__.
+`here <https://github.com/sktime/sktime/blob/main/sktime/utils/dependencies/_dependencies.py>`__.
 There are specific conventions to add such warnings in estimators, as below.
 
 Estimators with a soft dependency need to ensure the following:

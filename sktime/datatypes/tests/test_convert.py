@@ -75,8 +75,8 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.datatypes"),
-    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+    not run_test_module_changed(["sktime.datatypes", "sktime.utils.deep_equals"]),
+    reason="Test only if sktime.datatypes or utils.deep_equals has been changed",
 )
 def test_convert(scitype, from_mtype, to_mtype, fixture_index):
     """Tests that conversions for scitype agree with from/to example fixtures.
