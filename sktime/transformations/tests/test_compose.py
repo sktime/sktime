@@ -385,7 +385,7 @@ def test_input_output_series_panel_chain():
 )
 def test_requires_tags_trafopipe():
     """Test correct handling of requires_X tag, failure case in ."""
-    from sktime.transformations.compose import YtoX, TransformerPipeline
+    from sktime.transformations.compose import TransformerPipeline, YtoX
     from sktime.transformations.series.fourier import FourierFeatures
 
     # data with no exogenous features
@@ -399,7 +399,7 @@ def test_requires_tags_trafopipe():
                 sp_list=[24, 24 * 7],
                 fourier_terms_list=[10, 5],
                 keep_original_columns=True,
-            )
+            ),
         ]
     )
 
