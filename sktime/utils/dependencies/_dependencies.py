@@ -14,13 +14,14 @@ from packaging.specifiers import InvalidSpecifier, Specifier, SpecifierSet
 from packaging.version import InvalidVersion, Version
 
 
+# todo 0.32.0: remove suppress_import_stdout argument
 def _check_soft_dependencies(
     *packages,
     package_import_alias=None,
     severity="error",
     obj=None,
     msg=None,
-    suppress_import_stdout=False,
+    suppress_import_stdout="deprecated",
 ):
     """Check if required soft dependencies are installed and raise error or warning.
 
@@ -54,8 +55,6 @@ def _check_soft_dependencies(
         if str is passed, will be used as name of the class/object or module
     msg : str, or None, default=None
         if str, will override the error message or warning shown with msg
-    suppress_import_stdout : bool, optional. Default=False
-        whether to suppress stdout printout upon import.
 
     Raises
     ------
@@ -66,6 +65,22 @@ def _check_soft_dependencies(
     -------
     boolean - whether all packages are installed, only if no exception is raised
     """
+    # todo 0.32.0: remove this warning
+    if suppress_import_stdout != "deprecated":
+        warnings.warn(
+            "In sktime _check_soft_dependencies, the suppress_import_stdout argument "
+            "is deprecated and no longer has any effect. "
+            "The argument will be removed in version 0.32.0, so users of the "
+            "_check_soft_dependencies utility should not pass this argument anymore. "
+            "The _check_soft_dependencies utility also no longer causes imports, "
+            "hence no stdout "
+            "output is created from imports, for any setting of the "
+            "suppress_import_stdout argument. If you wish to import packages "
+            "and make use of stdout prints, import the package directly instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
     if len(packages) == 1 and isinstance(packages[0], (tuple, list)):
         packages = packages[0]
     if not all(isinstance(x, str) for x in packages):
