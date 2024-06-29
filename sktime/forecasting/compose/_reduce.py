@@ -2124,8 +2124,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
             if windows_identical:
                 # determine offset for uniform window length
-                # (alternatively max(fh) + lag)
-                offset = -y_lags[lag] - 1
+                offset = max(fh_rel) + lag
                 yt = yt[offset:]
                 Xtt = Xtt[offset:]
 
