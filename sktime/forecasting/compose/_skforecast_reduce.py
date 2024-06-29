@@ -194,7 +194,11 @@ class SkforecastAutoreg(BaseForecaster):
             step = new_df.index[1] - start
 
         new_index = pd.RangeIndex(start, stop, step)
+        # testing if RangeIndex is matching the original integer Index.
+        # this will fail if indices are not equally spaced apart.
+        # exception is caught in _make_index_compatible.
         np.testing.assert_array_equal(new_df.index, new_index)
+        # assigning RangeIndex to the new DataFrame
         new_df.index = new_index
         return new_df
 
@@ -217,7 +221,6 @@ class SkforecastAutoreg(BaseForecaster):
         if isinstance(df.index, (pd.RangeIndex, pd.DatetimeIndex)):
             return df
 
-        new_df = df
         if isinstance(df.index, pd.PeriodIndex):
             new_df = self._coerce_period_to_datetime_index(df)
         elif pd.api.types.is_integer_dtype(df.index):
@@ -285,11 +288,7 @@ class SkforecastAutoreg(BaseForecaster):
                 f"{self.__class__.__name__} does not support in-sample predictions."
             )
 
-        if not (out_of_sample_horizon := fh.to_out_of_sample(self.cutoff)):
-            raise ValueError(
-                f"{self.__class__.__name__} received empty out-of-sample horizon."
-            )
-
+        out_of_sample_horizon = fh.to_out_of_sample(self.cutoff)
         maximum_forecast_horizon = out_of_sample_horizon.to_relative(self.cutoff)[-1]
 
         absolute_horizons = out_of_sample_horizon.to_absolute_index(self.cutoff)
