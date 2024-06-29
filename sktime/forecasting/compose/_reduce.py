@@ -1952,12 +1952,6 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         self._lags = list(range(window_length))
         super().__init__()
 
-        warn(
-            "DirectReductionForecaster is experimental, and interfaces may change. "
-            "user feedback is appreciated in issue #3224 here: "
-            "https://github.com/sktime/sktime/issues/3224"
-        )
-
         if pooling == "local":
             mtypes = "pd.DataFrame"
         elif pooling == "global":
