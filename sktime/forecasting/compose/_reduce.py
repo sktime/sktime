@@ -1932,6 +1932,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         self.X_treatment = X_treatment
         self.impute_method = impute_method
         self.pooling = pooling
+        self.windows_identical = windows_identical
         if windows_identical == "changing_value":
             warn(
                 "In `DirectReductionForecaster`, the default value of parameter "
@@ -1943,11 +1944,11 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
                 "warning, set `windows_identical` explicitly.",
             )
             if X_treatment == "shifted":
-                self.windows_identical = True
+                self._windows_identical = True
             else:
-                self.windows_identical = False
+                self._windows_identical = False
         else:
-            self.windows_identical = windows_identical
+            self._windows_identical = windows_identical
         self._lags = list(range(window_length))
         super().__init__()
 
@@ -1981,14 +1982,14 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         """Fit dispatcher based on X_treatment and windows_identical."""
         # shifted X (future X unknown) and identical windows reduce to
         # multioutput regression, o/w fit multiple individual estimators
-        if (self.X_treatment == "shifted") and (self.windows_identical is True):
+        if (self.X_treatment == "shifted") and (self._windows_identical is True):
             return self._fit_multioutput(y=y, X=X, fh=fh)
         else:
             return self._fit_multiple(y=y, X=X, fh=fh)
 
     def _predict(self, X=None, fh=None):
         """Predict dispatcher based on X_treatment and windows_identical."""
-        if (self.X_treatment == "shifted") and (self.windows_identical is True):
+        if (self.X_treatment == "shifted") and (self._windows_identical is True):
             return self._predict_multioutput(X=X, fh=fh)
         else:
             return self._predict_multiple(X=X, fh=fh)
@@ -2078,7 +2079,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
         impute_method = self.impute_method
         X_treatment = self.X_treatment
-        windows_identical = self.windows_identical
+        windows_identical = self._windows_identical
 
         # lagger_y_to_X_ will lag y to obtain the sklearn X
         lags = self._lags
@@ -2129,7 +2130,8 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
             if windows_identical:
                 # determine offset for uniform window length
-                offset = -y_lags[lag] - 1  # equivalent to max(fh) + lag
+                # (alternatively max(fh) + lag)
+                offset = -y_lags[lag] - 1
                 yt = yt[offset:]
                 Xtt = Xtt[offset:]
 
