@@ -273,9 +273,7 @@ def _check_dl_dependencies(msg=None, severity="error"):
             )
 
 
-def _check_mlflow_dependencies(
-    msg=None, severity="error", suppress_import_stdout=False
-):
+def _check_mlflow_dependencies(msg=None, severity="error"):
     """Check if `mlflow` and its dependencies are installed.
 
     Parameters
@@ -308,12 +306,7 @@ def _check_mlflow_dependencies(
             "or `pip install sktime[mlflow]` to install the package."
         )
 
-    return _check_soft_dependencies(
-        "mlflow",
-        msg=msg,
-        severity=severity,
-        suppress_import_stdout=suppress_import_stdout,
-    )
+    return _check_soft_dependencies("mlflow", msg=msg, severity=severity)
 
 
 def _check_python_version(obj, package=None, msg=None, severity="error"):
