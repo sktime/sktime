@@ -4,7 +4,7 @@ __author__ = ["mloning", "viktorkaz"]
 __all__ = ["BaseDataset", "HDDBaseDataset", "BaseResults", "HDDBaseResults"]
 
 import os
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from warnings import warn
 
 import numpy as np
@@ -221,7 +221,7 @@ class _PredictionsWrapper:
         self.predict_estimator_end_time = predict_estimator_end_time
 
 
-class BaseMetric(ABC):
+class BaseMetric:
     def __init__(self, name, **kwargs):
         self.name = name
         self.kwargs = kwargs

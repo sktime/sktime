@@ -8,7 +8,7 @@ __author__ = ["James-Large", "ABostrom", "TonyBagnall", "aurunmpegasus", "achiev
 __all__ = ["BaseDeepClassifier"]
 
 import os
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 
 import numpy as np
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
@@ -19,7 +19,7 @@ from sktime.classification.base import BaseClassifier
 from sktime.utils.dependencies import _check_soft_dependencies
 
 
-class BaseDeepClassifier(BaseClassifier, ABC):
+class BaseDeepClassifier(BaseClassifier):
     """Abstract base class for deep learning time series classifiers.
 
     The base classifier provides a deep learning default method for

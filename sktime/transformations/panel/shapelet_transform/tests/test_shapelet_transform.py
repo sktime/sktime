@@ -1,4 +1,5 @@
 """ShapeletTransform test code."""
+
 import numpy as np
 import pytest
 from numpy import testing

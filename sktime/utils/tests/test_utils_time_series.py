@@ -1,4 +1,5 @@
 """Tests for time series utilities."""
+
 import numpy as np
 import pytest
 from scipy.stats import linregress

@@ -1,4 +1,5 @@
 """Arsenal test code."""
+
 import pytest
 
 from sktime.classification.kernel_based import Arsenal

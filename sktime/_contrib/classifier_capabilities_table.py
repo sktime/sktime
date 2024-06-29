@@ -1,4 +1,5 @@
 """Auto-generate a classifier capabilities summary."""
+
 import pandas as pd
 
 from sktime.registry import all_estimators

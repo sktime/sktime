@@ -1,4 +1,5 @@
 """Dictionary based time series classifiers."""
+
 __all__ = [
     "IndividualBOSS",
     "BOSSEnsemble",

@@ -1,4 +1,5 @@
 """Shapelet based time series classifiers."""
+
 __all__ = [
     "MrSEQL",
     "MrSQM",

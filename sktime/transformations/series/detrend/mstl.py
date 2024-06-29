@@ -4,7 +4,8 @@
 __all__ = ["MSTL"]
 __authors__ = ["luca-miniati"]
 
-from typing import Dict, Optional, Sequence, Union
+from collections.abc import Sequence
+from typing import Optional, Union
 
 import pandas as pd
 
@@ -127,7 +128,7 @@ class MSTL(BaseTransformer):
         windows: Optional[Union[int, Sequence[int]]] = None,
         lmbda: Optional[Union[float, str]] = None,
         iterate: Optional[int] = 2,
-        stl_kwargs: Optional[Dict[str, Union[int, bool, None]]] = None,
+        stl_kwargs: Optional[dict[str, Union[int, bool, None]]] = None,
         return_components: bool = False,
     ):
         self.periods = periods

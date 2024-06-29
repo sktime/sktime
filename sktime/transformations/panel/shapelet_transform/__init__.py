@@ -1,4 +1,5 @@
 """Shapelet Transformers."""
+
 __all__ = [
     "ShapeletTransform",
     "RandomShapeletTransform",

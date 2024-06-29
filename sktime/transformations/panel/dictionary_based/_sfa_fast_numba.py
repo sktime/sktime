@@ -1,6 +1,5 @@
 """Isolated numba imports for _sfa_fast."""
 
-
 __author__ = ["patrickzib"]
 
 import math

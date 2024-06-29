@@ -1,4 +1,5 @@
 """Elastic Ensemble classifier from file."""
+
 __author__ = ["jasonlines"]
 
 import os

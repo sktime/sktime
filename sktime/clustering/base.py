@@ -1,4 +1,5 @@
 """Base class for clustering."""
+
 __author__ = ["chrisholder", "TonyBagnall", "achieveordie"]
 __all__ = ["BaseClusterer"]
 

@@ -1,4 +1,5 @@
 """Tests for time series kernel kmeans."""
+
 import numpy as np
 import pytest
 

@@ -4,8 +4,8 @@ Implements a basic Hidden Markov Model (HMM) as an annotation estimator. To read
 about the algorithm, check out the `HMM wikipedia page
 <https://en.wikipedia.org/wiki/Hidden_Markov_model>`_.
 """
+
 import warnings
-from typing import Tuple
 
 import numpy as np
 from scipy.stats import norm
@@ -201,7 +201,7 @@ class HMM(BaseSeriesAnnotator):
         transition_prob_mat: np.ndarray,
         num_obs: int,
         num_states: int,
-    ) -> Tuple[np.array, np.array]:
+    ) -> tuple[np.array, np.array]:
         """Calculate the transition mats used in the Viterbi algorithm.
 
         Parameters

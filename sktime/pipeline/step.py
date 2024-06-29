@@ -1,4 +1,5 @@
 """Implementation of the graphpipeline step."""
+
 import inspect
 from copy import deepcopy
 

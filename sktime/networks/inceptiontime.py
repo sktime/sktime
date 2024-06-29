@@ -1,4 +1,5 @@
 """Inception Time."""
+
 __author__ = ["JamesLarge", "Withington"]
 
 from sktime.networks.base import BaseDeepNetwork

@@ -1,4 +1,5 @@
 """Sklearn related typing and inheritance checking utility."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 from inspect import isclass

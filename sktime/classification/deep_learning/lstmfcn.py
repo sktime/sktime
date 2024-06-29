@@ -1,4 +1,5 @@
 """LongShort Term Memory Fully Convolutional Network (LSTM-FCN)."""
+
 __author__ = ["jnrusson1", "solen0id"]
 
 __all__ = ["LSTMFCNClassifier"]

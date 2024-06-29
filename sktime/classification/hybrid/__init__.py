@@ -1,4 +1,5 @@
 """Hybrid time series classifiers."""
+
 __all__ = [
     "HIVECOTEV1",
     "HIVECOTEV2",

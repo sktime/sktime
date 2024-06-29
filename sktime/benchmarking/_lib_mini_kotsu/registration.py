@@ -5,6 +5,7 @@ under a unique ID, which can be passed to kotsu's run interface.
 
 Based on: https://github.com/openai/gym/blob/master/gym/envs/registration.py
 """
+
 import importlib
 import logging
 import re

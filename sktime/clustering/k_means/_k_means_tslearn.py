@@ -1,4 +1,5 @@
 """Time series kernel kmeans."""
+
 import numpy as np
 
 from sktime.base.adapters._tslearn import _TslearnAdapter

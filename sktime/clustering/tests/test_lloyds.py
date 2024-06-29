@@ -1,4 +1,5 @@
 """Tests for time series Lloyds partitioning."""
+
 from typing import Callable
 
 import numpy as np

@@ -1,4 +1,5 @@
 """Common components and constants for transformer compositors."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 from sktime.utils.sklearn import is_sklearn_transformer

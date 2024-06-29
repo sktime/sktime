@@ -6,7 +6,7 @@ A transformer for the Catch22 features.
 __author__ = ["MatthewMiddlehurst", "julnow"]
 __all__ = ["Catch22"]
 
-from typing import List, Union
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -118,8 +118,8 @@ CATCH24_FEATURE_NAMES = list(CATCH24_SHORT_FEATURE_NAMES_DICT.keys())
 
 
 def _verify_features(
-    features: Union[int, str, List[Union[int, str]]], catch24: bool
-) -> List[int]:
+    features: Union[int, str, list[Union[int, str]]], catch24: bool
+) -> list[int]:
     feature_names = FEATURE_NAMES + CATCH24_FEATURE_NAMES if catch24 else FEATURE_NAMES
     short_feature_names = (
         SHORT_FEATURE_NAMES + CATCH24_SHORT_FEATURE_NAMES
@@ -260,7 +260,7 @@ class Catch22(BaseTransformer):
 
     def __init__(
         self,
-        features: Union[int, str, List[Union[int, str]]] = "all",
+        features: Union[int, str, list[Union[int, str]]] = "all",
         catch24: bool = False,
         outlier_norm: bool = False,
         replace_nans: bool = False,
@@ -366,7 +366,7 @@ class Catch22(BaseTransformer):
 
         return np.asarray(c22_list)[:, 0, 0]
 
-    def _transform_case(self, X: pd.Series, f_idx: List[int]) -> np.ndarray:
+    def _transform_case(self, X: pd.Series, f_idx: list[int]) -> np.ndarray:
         """Transform data into the Catch22/24 features.
 
         Parameters
@@ -445,7 +445,7 @@ class Catch22(BaseTransformer):
 
     def _prepare_output_col_names(
         self, n_features: int
-    ) -> Union[range, List[int], List[str]]:
+    ) -> Union[range, list[int], list[str]]:
         """Prepare output column names.
 
         It selects the naming style according to self.col_names.

@@ -1,4 +1,5 @@
 """Test the signature module augmentations."""
+
 import numpy as np
 import pytest
 

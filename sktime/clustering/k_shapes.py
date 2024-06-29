@@ -1,4 +1,5 @@
 """Time series kshapes."""
+
 from typing import Union
 
 import numpy as np

@@ -7,7 +7,7 @@ __all__ = ["evaluate"]
 
 import time
 import warnings
-from typing import Dict, List, Optional, Union
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -41,7 +41,7 @@ def _check_strategy(strategy):
         raise ValueError(f"`strategy` must be one of {valid_strategies}")
 
 
-def _check_scores(metrics) -> Dict:
+def _check_scores(metrics) -> dict:
     """Validate and coerce to BaseMetric and segregate them based on predict type.
 
     Parameters
@@ -53,7 +53,7 @@ def _check_scores(metrics) -> Dict:
     metrics_type : Dict
         The key is metric types and its value is a list of its corresponding metrics.
     """
-    if not isinstance(metrics, List):
+    if not isinstance(metrics, list):
         metrics = [metrics]
 
     metrics_type = {}
@@ -74,8 +74,8 @@ def _check_scores(metrics) -> Dict:
 
 
 def _get_column_order_and_datatype(
-    metric_types: Dict, return_data: bool = True, cutoff_dtype=None, old_naming=True
-) -> Dict:
+    metric_types: dict, return_data: bool = True, cutoff_dtype=None, old_naming=True
+) -> dict:
     """Get the ordered column name and input datatype of results."""
     others_metadata = {
         "len_train_window": "int",
@@ -244,9 +244,9 @@ def _evaluate_window(x, meta):
                     result_key = f"test_{metric.name}_{argval}"
                     y_pred_key = f"y_{scitype}_{argval}"
                     old_name_mapping[f"{scitype}_{argval}_time"] = f"{scitype}_time"
-                    old_name_mapping[
-                        f"test_{metric.name}_{argval}"
-                    ] = f"test_{metric.name}"
+                    old_name_mapping[f"test_{metric.name}_{argval}"] = (
+                        f"test_{metric.name}"
+                    )
                     old_name_mapping[f"y_{scitype}_{argval}"] = f"y_{scitype}"
 
                 # make prediction
@@ -324,7 +324,7 @@ def evaluate(
     y,
     X=None,
     strategy: str = "refit",
-    scoring: Optional[Union[callable, List[callable]]] = None,
+    scoring: Optional[Union[callable, list[callable]]] = None,
     return_data: bool = False,
     error_score: Union[str, int, float] = np.nan,
     backend: Optional[str] = None,

@@ -1,4 +1,5 @@
 """InceptionTime for Regression."""
+
 __author__ = "james-large"
 __all__ = ["InceptionTimeRegressor"]
 

@@ -1,4 +1,5 @@
 """Symbolic Aggregate Approximation Transformer."""
+
 __author__ = ["steenrotsman"]
 import numpy as np
 from scipy.stats import norm, zscore

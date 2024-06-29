@@ -3,6 +3,7 @@
 Compare the distance calculations on the 1D and 2D (d,m) format input against the
 results generated with tsml, in distances.tests.TestDistances.
 """
+
 __author__ = ["chrisholder", "TonyBagnall", "fkiraly"]
 
 import pytest

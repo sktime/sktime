@@ -1,4 +1,5 @@
 """Discrete wavelet transform."""
+
 import math
 
 import numpy as np

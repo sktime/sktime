@@ -1,4 +1,5 @@
 """Test function of DummyClassifier."""
+
 import numpy as np
 import pytest
 

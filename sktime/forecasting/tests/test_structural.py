@@ -1,4 +1,5 @@
 """UnobservedComponents Tests."""
+
 __author__ = ["juanitorduz"]
 
 import numpy as np
