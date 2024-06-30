@@ -78,6 +78,7 @@ dependencies = [
 #
 all_extras = [
   "arch>=5.6,<7.1.0",
+  'autots<0.7,>=0.6.1',
   "cloudpickle",
   "dash!=2.9.0",
   "dask<2024.6.3; extra == 'dataframe'",
@@ -118,6 +119,7 @@ all_extras = [
 # all soft dependencies compatible with pandas 2
 all_extras_pandas2 = [
   "arch>=5.6,<7.1.0",
+  'autots<0.7,>=0.6.1',
   "cloudpickle",
   "dash!=2.9.0",
   "dask<2024.6.3; extra == 'dataframe'",
@@ -184,6 +186,7 @@ clustering = [
 ]
 forecasting = [
   "arch>=5.6,<7.1",
+  'autots<0.7,>=0.6.1',
   'pmdarima!=1.8.1,<2.1,>=1.8; python_version < "3.12"',
   "prophet<1.2,>=1.1",
   "skpro>=2,<2.4.0",

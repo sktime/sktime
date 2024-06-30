@@ -493,6 +493,7 @@ Generic framework adapters that expose other frameworks in the ``sktime`` interf
     :template: class.rst
 
     HCrystalBallAdapter
+    AutoTSAdapter
 
 Model selection and tuning
 --------------------------
