@@ -335,6 +335,14 @@ Structural time series models
 
     Prophet
 
+.. currentmodule:: sktime.forecasting.prophetverse
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Prophetverse
+
 .. currentmodule:: sktime.forecasting.structural
 
 .. autosummary::
