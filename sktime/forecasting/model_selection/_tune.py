@@ -1860,7 +1860,12 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         from sktime.utils.dependencies import _check_soft_dependencies
 
         if not _check_soft_dependencies("optuna", severity="none"):
-            return {}
+            return {
+                "forecaster": "foo",
+                "cv": "bar",
+                "param_grid": "foobar",
+                "scoring": "barfoo",
+            }
 
         from optuna.distributions import CategoricalDistribution
 
