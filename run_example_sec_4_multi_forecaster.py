@@ -1,3 +1,4 @@
+"""Manual testing, remove."""
 import warnings
 
 from sktime.datasets import load_shampoo_sales
