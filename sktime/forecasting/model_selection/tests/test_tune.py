@@ -19,9 +19,9 @@ from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.model_selection import (
     ForecastingGridSearchCV,
+    ForecastingOptunaSearchCV,
     ForecastingRandomizedSearchCV,
     ForecastingSkoptSearchCV,
-    ForecastingOptunaSearchCV,
 )
 from sktime.forecasting.model_selection._tune import BaseGridSearch
 from sktime.forecasting.naive import NaiveForecaster

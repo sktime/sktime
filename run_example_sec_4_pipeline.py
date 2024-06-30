@@ -1,3 +1,6 @@
+import warnings
+
+from sktime.datasets import load_shampoo_sales
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_selection import (
     ForecastingGridSearchCV,
@@ -5,21 +8,18 @@ from sktime.forecasting.model_selection import (
     ForecastingSkoptSearchCV,
 )
 from sktime.performance_metrics.forecasting import MeanSquaredError
-from sktime.datasets import load_shampoo_sales
-
-import warnings
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
+import optuna
+
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.split import (
     ExpandingWindowSplitter,
     SingleWindowSplitter,
     SlidingWindowSplitter,
+    temporal_train_test_split,
 )
-from sktime.utils.plotting import plot_windows
-from sktime.split import temporal_train_test_split
-from sktime.utils.plotting import plot_series
-import optuna
+from sktime.utils.plotting import plot_series, plot_windows
 
 y = load_shampoo_sales()
 y_train, y_test = temporal_train_test_split(y=y, test_size=6)

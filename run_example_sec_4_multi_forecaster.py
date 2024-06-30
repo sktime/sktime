@@ -1,24 +1,24 @@
+import warnings
+
+from sktime.datasets import load_shampoo_sales
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_selection import (
     ForecastingGridSearchCV,
     ForecastingOptunaSearchCV,
 )
 from sktime.performance_metrics.forecasting import MeanSquaredError
-from sktime.datasets import load_shampoo_sales
-
-import warnings
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
+import optuna
+
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.split import (
     ExpandingWindowSplitter,
     SingleWindowSplitter,
     SlidingWindowSplitter,
+    temporal_train_test_split,
 )
-from sktime.utils.plotting import plot_windows
-from sktime.split import temporal_train_test_split
-from sktime.utils.plotting import plot_series
-import optuna
+from sktime.utils.plotting import plot_series, plot_windows
 
 y = load_shampoo_sales()
 y_train, y_test = temporal_train_test_split(y=y, test_size=6)
@@ -34,13 +34,11 @@ cv = ExpandingWindowSplitter(fh=fh, initial_window=24, step_length=1)
 from sklearn.preprocessing import MinMaxScaler, PowerTransformer, RobustScaler
 
 from sktime.forecasting.compose import TransformedTargetForecaster
-from sktime.transformations.series.adapt import TabularToSeriesAdaptor
-from sktime.transformations.series.detrend import Deseasonalizer, Detrender
-
-
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.forecasting.trend import STLForecaster
+from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+from sktime.transformations.series.detrend import Deseasonalizer, Detrender
 
 forecaster = TransformedTargetForecaster(
     steps=[
