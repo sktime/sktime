@@ -8,10 +8,15 @@ import pytest
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.split import ExpandingCutoffSplitter
 from sktime.split.tests.test_split import _check_cv
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.series import _make_series
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ExpandingCutoffSplitter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_expandingcutoff_datelike_index_001():
     """Test datetime index with _check_cv"""
     y = _make_series(n_timepoints=10, random_state=42)
@@ -22,6 +27,10 @@ def test_expandingcutoff_datelike_index_001():
     np.testing.assert_array_equal(cutoffs, cv.get_cutoffs(y))
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ExpandingCutoffSplitter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_expandingcutoff_int_index_002():
     """Test int index with _check_cv"""
     y = _make_series(n_timepoints=10, index_type="int", random_state=42)
@@ -32,6 +41,10 @@ def test_expandingcutoff_int_index_002():
     np.testing.assert_array_equal(cutoffs, cv.get_cutoffs(y))
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ExpandingCutoffSplitter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_expandingcutoff_ytype_cutofftype_combos_003a():
     """Test invalid param combo"""
     # Datetime cutoff
@@ -46,6 +59,10 @@ def test_expandingcutoff_ytype_cutofftype_combos_003a():
             _check_cv(cv1, y1)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ExpandingCutoffSplitter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_expandingcutoff_ytype_cutofftype_combos_003b():
     """Test invalid param combo"""
     # Datetime cutoff
@@ -59,6 +76,10 @@ def test_expandingcutoff_ytype_cutofftype_combos_003b():
             _check_cv(cv1, y1)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ExpandingCutoffSplitter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_expandingcutoff_ytype_cutofftype_combos_003c():
     """Test invalid param combo"""
     # Datetime cutoff
@@ -72,6 +93,10 @@ def test_expandingcutoff_ytype_cutofftype_combos_003c():
         _check_cv(cv1, y1)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ExpandingCutoffSplitter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_expandingcutoff_splitloc_004():
     """Test split loc"""
     y = _make_series(n_timepoints=10, random_state=42)
@@ -87,6 +112,10 @@ def test_expandingcutoff_splitloc_004():
         np.testing.assert_array_equal(expected.values, actual.values)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ExpandingCutoffSplitter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_expandingcutoff_hiearchical_splitloc_005():
     """Test hiearchical splitloc with datetime"""
     y = _make_hierarchical(
@@ -123,6 +152,10 @@ def test_expandingcutoff_hiearchical_splitloc_005():
     )
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ExpandingCutoffSplitter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_expandingcutoff_hiearchical_forecastbylevel_006():
     """Test hiearchical with forecast by level"""
     from sktime.forecasting.compose import ForecastByLevel
@@ -156,6 +189,10 @@ def test_expandingcutoff_hiearchical_forecastbylevel_006():
     assert expected_last_forecast_date, actual_last_forecast_date
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ExpandingCutoffSplitter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_expandingcutoff_fh_list_007():
     """Test fh as list with _check_cv"""
     y = _make_series(n_timepoints=10, random_state=42)
@@ -166,6 +203,10 @@ def test_expandingcutoff_fh_list_007():
     np.testing.assert_array_equal(cutoffs, cv.get_cutoffs(y))
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ExpandingCutoffSplitter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_expanding_cutoff_period_008():
     date_range = pd.date_range(
         start=pd.Timestamp("2020-Q1"), end=pd.Timestamp("2021-Q4"), freq="QS"
@@ -194,6 +235,10 @@ def _make_splits_listlike(splits):
     return splits_new
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ExpandingCutoffSplitter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_expanding_cutoff_docstring_examples():
     date_range = pd.date_range(start="2020-Q1", end="2021-Q3", freq="QS")
     y = pd.DataFrame(index=pd.PeriodIndex(date_range, freq="Q"))

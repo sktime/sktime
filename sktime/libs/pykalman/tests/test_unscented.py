@@ -1,8 +1,11 @@
 import inspect
 
 import numpy as np
+import pytest
 from numpy import ma
 from numpy.testing import assert_array_almost_equal
+
+from sktime.tests.test_switch import run_test_module_changed
 
 from ..datasets import load_robot
 from ..unscented import AdditiveUnscentedKalmanFilter, UnscentedKalmanFilter
@@ -85,6 +88,10 @@ def check_dims(n_dim_state, n_dim_obs, n_func_args, kf_cls, kwargs):
     assert initial_state_covariance.shape == (n_dim_state, n_dim_state)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.libs.pykalman"),
+    reason="Execute tests for pykalman iff anything in the module has changed",
+)
 def test_unscented_sample():
     kf = build_unscented_filter(UnscentedKalmanFilter)
     (x, z) = kf.sample(100)
@@ -93,6 +100,10 @@ def test_unscented_sample():
     assert z.shape == (100, 1)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.libs.pykalman"),
+    reason="Execute tests for pykalman iff anything in the module has changed",
+)
 def test_unscented_filter():
     # true unscented mean, covariance, as calculated by a MATLAB ukf_predict3
     # and ukf_update3 available from
@@ -121,6 +132,10 @@ def test_unscented_filter():
     )
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.libs.pykalman"),
+    reason="Execute tests for pykalman iff anything in the module has changed",
+)
 def test_unscented_filter_update():
     kf = build_unscented_filter(UnscentedKalmanFilter)
     Z = ma.array([0, 1, 2, 3], mask=[True, False, False, False])
@@ -139,6 +154,10 @@ def test_unscented_filter_update():
     assert_array_almost_equal(sigma_filt, sigma_filt2)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.libs.pykalman"),
+    reason="Execute tests for pykalman iff anything in the module has changed",
+)
 def test_unscented_smoother():
     # true unscented mean, covariance, as calculated by a MATLAB urts_smooth2
     # available in http://becs.aalto.fi/en/research/bayes/ekfukf/
@@ -166,6 +185,10 @@ def test_unscented_smoother():
     )
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.libs.pykalman"),
+    reason="Execute tests for pykalman iff anything in the module has changed",
+)
 def test_additive_sample():
     kf = build_unscented_filter(AdditiveUnscentedKalmanFilter)
     (x, z) = kf.sample(100)
@@ -174,6 +197,10 @@ def test_additive_sample():
     assert z.shape == (100, 1)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.libs.pykalman"),
+    reason="Execute tests for pykalman iff anything in the module has changed",
+)
 def test_additive_filter():
     # true unscented mean, covariance, as calculated by a MATLAB ukf_predict1
     # and ukf_update1 available from
@@ -204,6 +231,10 @@ def test_additive_filter():
     )
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.libs.pykalman"),
+    reason="Execute tests for pykalman iff anything in the module has changed",
+)
 def test_additive_filter_update():
     kf = build_unscented_filter(AdditiveUnscentedKalmanFilter)
     Z = ma.array([0, 1, 2, 3], mask=[True, False, False, False])
@@ -222,6 +253,10 @@ def test_additive_filter_update():
     assert_array_almost_equal(sigma_filt, sigma_filt2)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.libs.pykalman"),
+    reason="Execute tests for pykalman iff anything in the module has changed",
+)
 def test_additive_smoother():
     # true unscented mean, covariance, as calculated by a MATLAB urts_smooth1
     # available in http://becs.aalto.fi/en/research/bayes/ekfukf/
@@ -251,6 +286,10 @@ def test_additive_smoother():
     )
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.libs.pykalman"),
+    reason="Execute tests for pykalman iff anything in the module has changed",
+)
 def test_unscented_initialize_parameters():
     check_dims(
         1,
@@ -264,6 +303,10 @@ def test_unscented_initialize_parameters():
     check_dims(2, 1, 2, UnscentedKalmanFilter, {"initial_state_mean": np.zeros(2)})
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.libs.pykalman"),
+    reason="Execute tests for pykalman iff anything in the module has changed",
+)
 def test_additive_initialize_parameters():
     check_dims(
         1,

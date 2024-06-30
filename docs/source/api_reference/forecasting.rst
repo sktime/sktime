@@ -186,6 +186,14 @@ Wrappers that add prediction intervals to any forecaster.
 
     BaggingForecaster
 
+.. currentmodule:: sktime.forecasting.enbpi
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    EnbPIForecaster
+
 
 Trend forecasters
 -----------------
@@ -381,6 +389,14 @@ Structural time series models
 
     Prophet
 
+.. currentmodule:: sktime.forecasting.prophetverse
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Prophetverse
+
 .. currentmodule:: sktime.forecasting.structural
 
 .. autosummary::
@@ -434,6 +450,15 @@ Deep learning based forecasters
 
     NeuralForecastRNN
     NeuralForecastLSTM
+
+.. currentmodule:: sktime.forecasting.pytorchforecasting
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    PytorchForecastingTFT
+    PytorchForecastingNBeats
 
 .. currentmodule:: sktime.forecasting.pykan_forecaster
 
