@@ -2223,15 +2223,31 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
             "window_length": 3,
             "X_treatment": "shifted",
             "pooling": "global",  # all internal mtypes are tested across scenarios
+            "windows_identical": True,
         }
         params2 = {
             "estimator": est,
             "window_length": 3,
             "X_treatment": "concurrent",
             "pooling": "global",
+            "windows_identical": True,
         }
-        params3 = {"estimator": est, "window_length": 0}
-        return [params1, params2, params3]
+        params3 = {
+            "estimator": est,
+            "window_length": 3,
+            "X_treatment": "shifted",
+            "pooling": "global",  # all internal mtypes are tested across scenarios
+            "windows_identical": False,
+        }
+        params4 = {
+            "estimator": est,
+            "window_length": 3,
+            "X_treatment": "concurrent",
+            "pooling": "global",
+            "windows_identical": False,
+        }
+        params5 = {"estimator": est, "window_length": 0}
+        return [params1, params2, params3, params4, params5]
 
 
 class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
