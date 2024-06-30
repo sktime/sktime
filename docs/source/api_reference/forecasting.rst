@@ -140,6 +140,14 @@ Wrappers that add prediction intervals to any forecaster.
 
     BaggingForecaster
 
+.. currentmodule:: sktime.forecasting.enbpi
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    EnbPIForecaster
+
 
 Trend forecasters
 -----------------
