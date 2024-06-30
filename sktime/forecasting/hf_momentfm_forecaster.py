@@ -80,7 +80,7 @@ class MomentFMForecaster(BaseForecaster):
         "scitype:y": "both",
         "authors": ["julian-fong"],
         "maintainers": ["julian-fong"],
-        "y_inner_mtype": "pd.DataFrame",
+        "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
