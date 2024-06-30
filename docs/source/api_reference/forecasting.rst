@@ -97,7 +97,6 @@ Different strategies can be constructed via  ``make_reduction`` for easy specifi
 
     DirectTabularRegressionForecaster
     DirectTimeSeriesRegressionForecaster
-    DirectReductionForecaster
     MultioutputTabularRegressionForecaster
     MultioutputTimeSeriesRegressionForecaster
     RecursiveTabularRegressionForecaster
