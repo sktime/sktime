@@ -79,7 +79,7 @@ Uses exogeneous data at the same time stamp - simple reduction strategy.
 Direct and recursive - ``sktime`` native 1st generation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-1nd generation direct and recursive reduction forecasters, ``numpy`` based.
+1st generation direct and recursive reduction forecasters, ``numpy`` based.
 
 Different strategies can be constructed via  ``make_reduction`` for easy specification.
 
