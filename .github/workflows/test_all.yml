@@ -120,7 +120,17 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: install core, test and all soft dependencies
-        run: python3 -m pip install .[all_extras_pandas2,tests]
+        run: |
+          echo "Installing macos system dependencies"
+          if [[ "${{ matrix.operating-system }}" == 'macos-13' ]]; then
+            brew install libomp
+            echo "Verifying libomp installation:"
+            ls -l /usr/local/opt/libomp/lib/libomp.dylib
+            echo "DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib:$DYLD_LIBRARY_PATH" >> $GITHUB_ENV
+            echo "LDFLAGS=-L/usr/local/opt/libomp/lib" >> $GITHUB_ENV
+            echo "CPPFLAGS=-I/usr/local/opt/libomp/include" >> $GITHUB_ENV
+          fi
+          python3 -m pip install .[all_extras_pandas2,tests]
       - name: run unit tests
         run: >-
           python3
