@@ -507,4 +507,4 @@ class DartsLinearRegressionModel(_DartsRegressionModelsAdapter):
         return params
 
 
-__all__ = ["DartsXGBModel"]
+__all__ = ["DartsXGBModel", "DartsLinearRegressionModel"]
