@@ -132,9 +132,9 @@ def check_dflist_panel(obj, return_metadata=False, var_name="obj"):
     if _req("feature_names", return_metadata):
         metadata["feature_names"] = obj[0].columns.to_list()
     if _req("dtypekind_dfip", return_metadata):
-        metadata["dtypekind_dfip"] = check_res[0][2]["dtypekind_dfip"]
+        metadata["dtypekind_dfip"] = _get_panel_dtypekind(obj, "df-list")
     if _req("feature_kind", return_metadata):
-        dtype_kind = check_res[0][2]["dtypekind_dfip"]
+        dtype_kind = _get_panel_dtypekind(obj, "df-list")
         metadata["feature_kind"] = _get_feature_kind(dtype_kind)
 
     return _ret(True, None, metadata, return_metadata)

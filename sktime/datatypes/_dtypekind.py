@@ -84,6 +84,8 @@ def _get_panel_dtypekind(obj, mtype):
         return [DtypeKind.FLOAT] * obj.shape[1]
     elif mtype == "numpyflat":
         return [DtypeKind.FLOAT]
+    elif mtype == "df-list":
+        return _get_series_dtypekind(obj[0], pd.DataFrame)
     elif mtype == "pd-multiindex":
         col_dtypes = obj.dtypes.to_list()
     elif mtype == "nested_univ":
