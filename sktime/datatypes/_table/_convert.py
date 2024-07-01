@@ -26,7 +26,7 @@ ValueError and TypeError, if requested conversion is not possible
                             (depending on conversion logic)
 """
 
-__author__ = ["fkiraly"]
+__author__ = ["fkiraly", "shlok191"]
 
 __all__ = ["convert_dict"]
 
