@@ -63,8 +63,6 @@ EXCLUDE_ESTIMATORS = [
     "SARIMAX",
     "StatsModelsARIMA",
     "ShapeletLearningClassifierTslearn",
-    # Failing for macos runner but other forecasters working well, see #6454
-    "DartsXGBModel",
 ]
 
 
