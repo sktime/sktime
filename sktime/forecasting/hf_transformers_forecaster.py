@@ -1,10 +1,10 @@
 """Adapter for using huggingface transformers for forecasting."""
 
 from copy import deepcopy
-
-import numpy as np
 import pandas as pd
+import numpy as np
 from skbase.utils.dependencies import _check_soft_dependencies
+import warnings
 
 if _check_soft_dependencies("torch", severity="none"):
     import torch
@@ -29,16 +29,14 @@ __author__ = ["benheid"]
 class HFTransformersForecaster(BaseForecaster):
     """
     Forecaster that uses a huggingface model for forecasting.
-
     This forecaster fetches the model from the huggingface model hub.
     Note, this forecaster is in an experimental state. It is currently only
     working for Informer, Autoformer, and TimeSeriesTransformer.
 
     Parameters
     ----------
-    model_path : str
-        Path to the huggingface model to use for forecasting. Currently,
-        Informer, Autoformer, and TimeSeriesTransformer are supported.
+    model : transformers.PreTrainedModel, default=None
+        An instantiated model object to use directly for forecasting.
     fit_strategy : str, default="minimal"
         Strategy to use for fitting the model. Can be "minimal" or "full"
     validation_split : float, default=0.2
@@ -57,32 +55,6 @@ class HFTransformersForecaster(BaseForecaster):
         Whether the predictions should be deterministic or not.
     callbacks : list, default=[]
         List of callbacks to use during training. See `transformers.Trainer`
-
-    Examples
-    --------
-    >>> from sktime.forecasting.hf_transformers_forecaster import (
-    ...     HFTransformersForecaster,
-    ... )
-    >>> from sktime.datasets import load_airline
-    >>> y = load_airline()
-    >>> forecaster = HFTransformersForecaster(
-    ...    model_path="huggingface/autoformer-tourism-monthly",
-    ...    training_args ={
-    ...        "num_train_epochs": 20,
-    ...        "output_dir": "test_output",
-    ...        "per_device_train_batch_size": 32,
-    ...    },
-    ...    config={
-    ...         "lags_sequence": [1, 2, 3],
-    ...         "context_length": 2,
-    ...         "prediction_length": 4,
-    ...         "use_cpu": True,
-    ...         "label_length": 2,
-    ...    },
-    ... ) # doctest: +SKIP
-    >>> forecaster.fit(y) # doctest: +SKIP
-    >>> fh = [1, 2, 3]
-    >>> y_pred = forecaster.predict(fh) # doctest: +SKIP
     """
 
     _tags = {
@@ -101,7 +73,8 @@ class HFTransformersForecaster(BaseForecaster):
 
     def __init__(
         self,
-        model_path: str,
+        model=None,
+        model_path: str = None,
         fit_strategy="minimal",
         validation_split=0.2,
         config=None,
@@ -111,7 +84,20 @@ class HFTransformersForecaster(BaseForecaster):
         callbacks=None,
     ):
         super().__init__()
-        self.model_path = model_path
+        if model is None and model_path is None:
+            raise ValueError("A model must be provided.")
+        if model_path is not None:
+            warnings.warn(
+                "The `model_path` param is deprecated and will be removed in a future"
+                "Please use the `model` parameter instead.",
+                DeprecationWarning,
+            )
+            self.model = None
+            self.model_path = model_path
+        else:
+            self.model = model
+            self.model_path = None
+
         self.fit_strategy = fit_strategy
         self.validation_split = validation_split
         self.config = config
@@ -120,13 +106,12 @@ class HFTransformersForecaster(BaseForecaster):
         self._training_args = training_args if training_args is not None else {}
         self.compute_metrics = compute_metrics
         self._compute_metrics = compute_metrics
-        self._compute_metrics = compute_metrics
         self.deterministic = deterministic
         self.callbacks = callbacks
         self._callbacks = callbacks
 
-    def _fit(self, y, X, fh):
-        # Load model and extract config
+    def _load_model(self, X, fh):
+        """Load the Huggingface model from the given model path."""
         config = AutoConfig.from_pretrained(self.model_path)
 
         # Update config with user provided config
@@ -190,6 +175,13 @@ class HFTransformersForecaster(BaseForecaster):
                 _model.weight.masked_fill(_model.weight.isnan(), 0.001),
                 requires_grad=True,
             )
+        return config, info
+
+    def _fit(self, y, X, fh):
+        if self.model is None and self.model_path is not None:
+            config, info = self._load_model(X, fh)
+        else:
+            config = self.model.config
 
         if self.validation_split is not None:
             split = int(len(y) * (1 - self.validation_split))
@@ -222,7 +214,7 @@ class HFTransformersForecaster(BaseForecaster):
         training_args = TrainingArguments(**training_args)
 
         if self.fit_strategy == "minimal":
-            if len(info["mismatched_keys"]) == 0:
+            if self.model_path is not None and len(info["mismatched_keys"]) == 0:
                 return  # No need to fit
         elif self.fit_strategy == "full":
             for param in self.model.parameters():
@@ -266,6 +258,7 @@ class HFTransformersForecaster(BaseForecaster):
                     [[]]
                     * (
                         self.model.config.context_length
+                        + self.model.config.prediction_length
                         + max(self.model.config.lags_sequence)
                     )
                 ]
@@ -298,7 +291,6 @@ class HFTransformersForecaster(BaseForecaster):
             index=ForecastingHorizon(range(len(pred)))
             .to_absolute(self._cutoff)
             ._values,
-            # columns=self._y.columns
             name=self._y.name,
         )
         return pred.loc[fh.to_absolute(self.cutoff)._values]
@@ -323,7 +315,7 @@ class HFTransformersForecaster(BaseForecaster):
         """
         return [
             {
-                "model_path": "huggingface/informer-tourism-monthly",
+                "model": "huggingface/informer-tourism-monthly",
                 "fit_strategy": "minimal",
                 "training_args": {
                     "num_train_epochs": 1,
@@ -338,7 +330,7 @@ class HFTransformersForecaster(BaseForecaster):
                 "deterministic": True,
             },
             {
-                "model_path": "huggingface/autoformer-tourism-monthly",
+                "model": "huggingface/autoformer-tourism-monthly",
                 "fit_strategy": "minimal",
                 "training_args": {
                     "num_train_epochs": 1,
