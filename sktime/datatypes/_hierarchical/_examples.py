@@ -104,6 +104,16 @@ if _check_soft_dependencies("dask", severity="none"):
     example_dict[("dask_hierarchical", "Hierarchical", 0)] = df_dask
     example_dict_lossy[("dask_hierarchical", "Hierarchical", 0)] = False
 
+if _check_soft_dependencies("polars", severity="none"):
+    from sktime.datatypes._adapter.polars import convert_pandas_to_polars
+
+    pl_frame = convert_pandas_to_polars(
+        example_dict[("pd_multiindex_hier", "Hierarchical", 0)]
+    )
+
+    example_dict[("polars_hierarchical", "Hierarchical", 0)] = pl_frame
+    example_dict_lossy[("polars_hierarchical", "Hierarchical", 0)] = False
+
 example_dict_metadata[("Hierarchical", 0)] = {
     "is_univariate": False,
     "is_one_panel": False,
@@ -147,6 +157,16 @@ if _check_soft_dependencies("dask", severity="none"):
 
     example_dict[("dask_hierarchical", "Hierarchical", 1)] = df_dask
     example_dict_lossy[("dask_hierarchical", "Hierarchical", 1)] = False
+
+if _check_soft_dependencies("polars", severity="none"):
+    from sktime.datatypes._adapter.polars import convert_pandas_to_polars
+
+    pl_frame = convert_pandas_to_polars(
+        example_dict[("pd_multiindex_hier", "Hierarchical", 1)]
+    )
+
+    example_dict[("polars_hierarchical", "Hierarchical", 1)] = pl_frame
+    example_dict_lossy[("polars_hierarchical", "Hierarchical", 1)] = False
 
 example_dict_metadata[("Hierarchical", 1)] = {
     "is_univariate": True,

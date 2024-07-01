@@ -512,12 +512,14 @@ if _check_soft_dependencies("polars", severity="none"):
 
     from sktime.datatypes._adapter.polars import check_polars_frame, get_mi_cols
 
-    def check_polars_panel(obj, return_metadata=False, var_name="obj", panel=True):
+    def check_polars_panel(
+        obj, return_metadata=False, var_name="obj", panel=True, scitype="Panel"
+    ):
         metadict = check_polars_frame(
             obj=obj,
             return_metadata=return_metadata,
             var_name=var_name,
-            scitype="Panel",
+            scitype=scitype,
         )
 
         if isinstance(metadict, tuple) and metadict[0]:
