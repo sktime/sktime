@@ -200,10 +200,9 @@ jobs:
       - name: Install OS packages
         run: |
           brew install libomp
-          sudo mkdir -p /usr/local/opt/libomp/lib
-          sudo cp $(brew --prefix libomp)/lib/libomp.dylib /usr/local/opt/libomp/lib/libomp.dylib
-          echo "DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib:$DYLD_LIBRARY_PATH" >> $GITHUB_ENV
+          echo "Verifying libomp installation:"
           ls -l /usr/local/opt/libomp/lib/libomp.dylib
+          echo "DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib:$DYLD_LIBRARY_PATH" >> $GITHUB_ENV
 
       - name: Install sktime and dependencies
         run: |
