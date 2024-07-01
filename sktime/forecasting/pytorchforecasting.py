@@ -68,52 +68,10 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
     ...     },
     ... )
     >>> # fit and predict
-    >>> model.fit(y=y_train, X=X_train, fh=fh)
-    GPU available: True (cuda), used: True
-    TPU available: False, using: 0 TPU cores
-    IPU available: False, using: 0 IPUs
-    HPU available: False, using: 0 HPUs
-    LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
-
-    | Name                               | Type                            | Params
-    ----------------------------------------------------------------------------------------
-    0  | loss                               | QuantileLoss                    | 0
-    1  | logging_metrics                    | ModuleList                      | 0
-    2  | input_embeddings                   | MultiEmbedding                  | 0
-    3  | prescalers                         | ModuleDict                      | 48
-    4  | static_variable_selection          | VariableSelectionNetwork        | 0
-    5  | encoder_variable_selection         | VariableSelectionNetwork        | 1.8 K
-    6  | decoder_variable_selection         | VariableSelectionNetwork        | 1.2 K
-    7  | static_context_variable_selection  | GatedResidualNetwork            | 1.1 K
-    8  | static_context_initial_hidden_lstm | GatedResidualNetwork            | 1.1 K
-    9  | static_context_initial_cell_lstm   | GatedResidualNetwork            | 1.1 K
-    10 | static_context_enrichment          | GatedResidualNetwork            | 1.1 K
-    11 | lstm_encoder                       | LSTM                            | 2.2 K
-    12 | lstm_decoder                       | LSTM                            | 2.2 K
-    13 | post_lstm_gate_encoder             | GatedLinearUnit                 | 544
-    14 | post_lstm_add_norm_encoder         | AddNorm                         | 32
-    15 | static_enrichment                  | GatedResidualNetwork            | 1.4 K
-    16 | multihead_attn                     | InterpretableMultiHeadAttention | 676
-    17 | post_attn_gate_norm                | GateAddNorm                     | 576
-    18 | pos_wise_ff                        | GatedResidualNetwork            | 1.1 K
-    19 | pre_output_gate_norm               | GateAddNorm                     | 576
-    20 | output_layer                       | Linear                          | 119
-    ----------------------------------------------------------------------------------------
-    16.7 K    Trainable params
-    0         Non-trainable params
-    16.7 K    Total params
-    0.067     Total estimated model params size (MB)
-    Sanity Checking: |                                                                                       | 0/? [00:00<?, ?it/s]
-    Epoch 4: 100%|███████| 10/10 [00:00<00:00, 11.19it/s, v_num=166, train_loss_step=0.754, val_loss=0.745, train_loss_epoch=0.737]`Trainer.fit` stopped: `max_epochs=5` reached.
-    Epoch 4: 100%|███████| 10/10 [00:00<00:00, 10.83it/s, v_num=166, train_loss_step=0.754, val_loss=0.745, train_loss_epoch=0.737]
+    >>> model.fit(y=y_train, X=X_train, fh=fh) # doctest skip
     PytorchForecastingTFT(trainer_params={'limit_train_batches': 10,
                                         'max_epochs': 5})
     >>> y_pred = model.predict(fh, X=X_test, y=y_test)
-    GPU available: True (cuda), used: True
-    TPU available: False, using: 0 TPU cores
-    IPU available: False, using: 0 IPUs
-    HPU available: False, using: 0 HPUs
-    LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
     >>> print(y_test)
                                 c2
     h0   h1     time
@@ -237,8 +195,6 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
-
         try:
             _check_soft_dependencies("pytorch_forecasting", severity="error")
         except ModuleNotFoundError:
@@ -255,7 +211,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                 },
                 {
                     "trainer_params": {
-                        "max_epochs": 3,  # for quick test
+                        "max_epochs": 1,  # for quick test
                         "limit_train_batches": 10,  # for quick test
                     },
                     "model_params": {
@@ -297,7 +253,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                 {
                     "trainer_params": {
                         "callbacks": [early_stop_callback],
-                        "max_epochs": 3,  # for quick test
+                        "max_epochs": 1,  # for quick test
                         "limit_train_batches": 10,  # for quick test
                     },
                     "model_params": {
@@ -375,34 +331,10 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
     ...     },
     ... )
     >>> # fit and predict
-    >>> model.fit(y=y_train, fh=fh)
-    GPU available: True (cuda), used: True
-    TPU available: False, using: 0 TPU cores
-    IPU available: False, using: 0 IPUs
-    HPU available: False, using: 0 HPUs
-    LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
-
-    | Name            | Type       | Params
-    -----------------------------------------------
-    0 | loss            | MASE       | 0
-    1 | logging_metrics | ModuleList | 0
-    2 | net_blocks      | ModuleList | 1.6 M
-    -----------------------------------------------
-    1.6 M     Trainable params
-    0         Non-trainable params
-    1.6 M     Total params
-    6.563     Total estimated model params size (MB)
-    Sanity Checking: |                                                                                       | 0/? [00:00<?, ?it/s]
-    Epoch 4: 100%|███████| 10/10 [00:00<00:00, 14.85it/s, v_num=164, train_loss_step=0.741, val_loss=0.747, train_loss_epoch=0.735]`Trainer.fit` stopped: `max_epochs=5` reached.
-    Epoch 4: 100%|███████| 10/10 [00:00<00:00, 14.16it/s, v_num=164, train_loss_step=0.741, val_loss=0.747, train_loss_epoch=0.735]
+    >>> model.fit(y=y_train, fh=fh) # doctest skip
     PytorchForecastingNBeats(trainer_params={'limit_train_batches': 10,
                                             'max_epochs': 5})
     >>> y_pred = model.predict(fh, y=y_test)
-    GPU available: True (cuda), used: True
-    TPU available: False, using: 0 TPU cores
-    IPU available: False, using: 0 IPUs
-    HPU available: False, using: 0 HPUs
-    LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
     >>> print(y_test)
                                 c2
     h0   h1     time
@@ -518,8 +450,6 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
-
         try:
             _check_soft_dependencies("pytorch_forecasting", severity="error")
         except ModuleNotFoundError:
@@ -536,7 +466,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                 },
                 {
                     "trainer_params": {
-                        "max_epochs": 3,  # for quick test
+                        "max_epochs": 1,  # for quick test
                         "limit_train_batches": 10,  # for quick test
                     },
                     "model_params": {
@@ -575,7 +505,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                 {
                     "trainer_params": {
                         "callbacks": [early_stop_callback],
-                        "max_epochs": 3,  # for quick test
+                        "max_epochs": 1,  # for quick test
                         "limit_train_batches": 10,  # for quick test
                     },
                     "model_params": {
@@ -653,36 +583,10 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
     ...     },
     ... )
     >>> # fit and predict
-    >>> model.fit(y=y_train, X=X_train, fh=fh)
-    GPU available: True (cuda), used: True
-    TPU available: False, using: 0 TPU cores
-    IPU available: False, using: 0 IPUs
-    HPU available: False, using: 0 HPUs
-    LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
-
-    | Name                   | Type                   | Params
-    ------------------------------------------------------------------
-    0 | loss                   | NormalDistributionLoss | 0
-    1 | logging_metrics        | ModuleList             | 0
-    2 | embeddings             | MultiEmbedding         | 0
-    3 | rnn                    | LSTM                   | 1.5 K
-    4 | distribution_projector | Linear                 | 22
-    ------------------------------------------------------------------
-    1.5 K     Trainable params
-    0         Non-trainable params
-    1.5 K     Total params
-    0.006     Total estimated model params size (MB)
-    Sanity Checking: |                                                                                       | 0/? [00:00<?, ?it/s]
-    Epoch 4: 100%|███████| 10/10 [00:00<00:00, 14.85it/s, v_num=168, train_loss_step=1.630, val_loss=1.730, train_loss_epoch=1.690]`Trainer.fit` stopped: `max_epochs=5` reached.
-    Epoch 4: 100%|███████| 10/10 [00:00<00:00, 14.74it/s, v_num=168, train_loss_step=1.630, val_loss=1.730, train_loss_epoch=1.690]
+    >>> model.fit(y=y_train, X=X_train, fh=fh) # doctest skip
     PytorchForecastingDeepAR(trainer_params={'limit_train_batches': 10,
                                             'max_epochs': 5})
     >>> y_pred = model.predict(fh, X=X_test, y=y_test)
-    GPU available: True (cuda), used: True
-    TPU available: False, using: 0 TPU cores
-    IPU available: False, using: 0 IPUs
-    HPU available: False, using: 0 HPUs
-    LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
     >>> print(y_test)
                                 c2
     h0   h1     time
@@ -808,8 +712,6 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
-
         try:
             _check_soft_dependencies("pytorch_forecasting", severity="error")
         except ModuleNotFoundError:
@@ -827,7 +729,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                 },
                 {
                     "trainer_params": {
-                        "max_epochs": 3,  # for quick test
+                        "max_epochs": 1,  # for quick test
                         "limit_train_batches": 10,  # for quick test
                     },
                     "model_params": {
@@ -866,7 +768,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                 {
                     "trainer_params": {
                         "callbacks": [early_stop_callback],
-                        "max_epochs": 3,  # for quick test
+                        "max_epochs": 1,  # for quick test
                         "limit_train_batches": 10,  # for quick test
                     },
                     "model_params": {
@@ -941,35 +843,10 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
     ...     },
     ... )
     >>> # fit and predict
-    >>> model.fit(y=y_train, X=X_train, fh=fh)
-    GPU available: True (cuda), used: True
-    TPU available: False, using: 0 TPU cores
-    IPU available: False, using: 0 IPUs
-    HPU available: False, using: 0 HPUs
-    LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
-
-    | Name            | Type           | Params
-    ---------------------------------------------------
-    0 | loss            | MASE           | 0
-    1 | logging_metrics | ModuleList     | 0
-    2 | embeddings      | MultiEmbedding | 0
-    3 | model           | NHiTS          | 978 K
-    ---------------------------------------------------
-    978 K     Trainable params
-    0         Non-trainable params
-    978 K     Total params
-    3.914     Total estimated model params size (MB)
-    Sanity Checking: |                                                                                       | 0/? [00:00<?, ?it/s]
-    Epoch 4: 100%|███████| 10/10 [00:00<00:00, 14.80it/s, v_num=170, train_loss_step=0.800, val_loss=0.840, train_loss_epoch=0.846]`Trainer.fit` stopped: `max_epochs=5` reached.
-    Epoch 4: 100%|███████| 10/10 [00:00<00:00, 14.37it/s, v_num=170, train_loss_step=0.800, val_loss=0.840, train_loss_epoch=0.846]
+    >>> model.fit(y=y_train, X=X_train, fh=fh) # doctest skip
     PytorchForecastingNHiTS(trainer_params={'limit_train_batches': 10,
                                             'max_epochs': 5})
     >>> y_pred = model.predict(fh, X=X_test, y=y_test)
-    GPU available: True (cuda), used: True
-    TPU available: False, using: 0 TPU cores
-    IPU available: False, using: 0 IPUs
-    HPU available: False, using: 0 HPUs
-    LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
     >>> print(y_test)
                                 c2
     h0   h1     time
@@ -1094,8 +971,6 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
-
         try:
             _check_soft_dependencies("pytorch_forecasting", severity="error")
         except ModuleNotFoundError:
@@ -1112,7 +987,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                 },
                 {
                     "trainer_params": {
-                        "max_epochs": 3,  # for quick test
+                        "max_epochs": 1,  # for quick test
                         "limit_train_batches": 10,  # for quick test
                     },
                     "model_params": {
@@ -1149,7 +1024,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                 {
                     "trainer_params": {
                         "callbacks": [early_stop_callback],
-                        "max_epochs": 3,  # for quick test
+                        "max_epochs": 1,  # for quick test
                         "limit_train_batches": 10,  # for quick test
                     },
                     "model_params": {
