@@ -1965,7 +1965,23 @@ class MedianSquaredError(BaseForecastingErrorMetricFunc):
 
 
 class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
-    """Geometric mean absolute error (GMAE).
+    r"""Geometric mean absolute error (GMAE).
+
+    For a univariate, non-hierarchical sample
+    of true values :math:`y_1, \dots, y_n` and
+    predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n` (in :math:`mathbb{R}`),
+    at time indices :math:`t_1, \dots, t_n`,
+    ``evaluate`` or call returns the Geometric Mean Absolute Error,
+    :math:`\left( \prod_{i=1}^n |y_i - \widehat{y}_i| \right)^{\frac{1}{n}}`.
+    (the time indices are not used)
+
+    ``multioutput`` and ``multilevel`` control averaging across variables and
+    hierarchy indices, see below.
+
+    ``evaluate_by_index`` returns, at a time index :math:`t_i`,
+    the absolute error at that time index, :math:`|y_i - \widehat{y}_i|`,
+    for all time indices :math:`t_1, \dots, t_n` in the input.
+
 
     GMAE output is non-negative floating point. The best value is approximately
     zero, rather than zero.
@@ -2034,6 +2050,208 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
     """
 
     func = geometric_mean_absolute_error
+
+    def __init__(self, multioutput="uniform_average", multilevel="uniform_average"):
+        super().__init__(multioutput=multioutput, multilevel=multilevel)
+        self.multioutput = multioutput
+
+    def _compute_pseudo_values(self, y_true, y_pred):
+        """Compute the jackknife pseudo-values.
+
+        Note
+        ----------
+        This private method computes the jackknife pseudo-values
+        for the GMAE metric. The pseudo-values are used to estimate
+        the influence of each observation on the overall metric.
+
+        Parameters
+        ----------
+        y_true : pd.Series or pd.DataFrame
+            Ground truth (correct) target values.
+            y can be in one of the following formats:
+            Series scitype: pd.DataFrame
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+        y_pred : pd.Series or pd.DataFrame
+            Forecasted values to evaluate
+            must be of same format as y_true, same indices and columns if indexed
+
+        Returns
+        -------
+        pseudo_values : pd.Series or pd.DataFrame
+            Jackknife pseudo-values for the GMAE metric.
+            - If self.multioutput="uniform_average", returns a pd.Series where each
+              entry is the pseudo-value for a time point, averaged over variables.
+            - If self.multioutput="raw_values", returns a pd.DataFrame where each entry
+              is the pseudo-value for a time point, for each variable.
+        """
+        y_true = pd.DataFrame(y_true)
+        y_pred = pd.DataFrame(y_pred)
+        gmae_values = []
+
+        for col_true, col_pred in zip(y_true.columns, y_pred.columns):
+            raw_values = np.abs(y_true[col_true] - y_pred[col_pred])
+            raw_values[raw_values == 0] = np.finfo(float).eps
+            log_raw_values = np.log(raw_values)
+            log_mean = np.mean(log_raw_values)
+            gmae_value = np.exp(log_mean)
+            gmae_values.append(gmae_value)
+
+        gmae_values = np.array(gmae_values)
+
+        if isinstance(self.multioutput, str):
+            if self.multioutput == "uniform_average":
+                return np.mean(gmae_values)
+            elif self.multioutput == "raw_values":
+                return gmae_values
+        elif isinstance(self.multioutput, np.ndarray) or isinstance(
+            self.multioutput, list
+        ):
+            weights = np.array(self.multioutput)
+            weighted_gmae_values = gmae_values * weights
+            return weighted_gmae_values
+
+    def _evaluate(self, y_true, y_pred, sample_weight=None, **kwargs):
+        """Evaluate the Geometric Mean Absolute Error (GMAE) metric on given inputs.
+
+        This private method contains core logic for computing the GMAE metric.
+        By default, it uses `_evaluate_by_index` to compute the
+        arithmetic mean over time points.
+
+        Parameters
+        ----------
+        y_true : pd.Series or pd.DataFrame
+            Ground truth (correct) target values
+            y can be in one of the following formats:
+            Series scitype: pd.DataFrame
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+
+        y_pred : pd.Series or pd.DataFrame
+            Forecasted values to evaluate
+            must be of same format as y_true, same indices and columns if indexed
+
+        sample_weight : array-like of shape (n_samples,), optional
+            Sample weights
+
+        Returns
+        -------
+        loss : float or np.ndarray
+            Calculated metric, averaged or by variable.
+            - If self.multioutput="uniform_average", returns the
+                average GMAE metric over variables.
+            - If self.multioutput="raw_values", returns an
+                array of GMAE values for each variable.
+        """
+        pseudo_values = self._compute_pseudo_values(y_true, y_pred)
+
+        if sample_weight is not None:
+            sample_weight = np.array(sample_weight)
+            if sample_weight.ndim == 1:
+                sample_weight = sample_weight[:, np.newaxis]
+            pseudo_values = pseudo_values * sample_weight
+
+        multioutput = self.multioutput
+
+        if isinstance(multioutput, str):
+            if multioutput == "raw_values":
+                return pseudo_values
+            elif multioutput == "uniform_average":
+                return np.mean(pseudo_values)
+        elif isinstance(multioutput, list):
+            if len(multioutput) == y_true.shape[1]:
+                return np.mean(pseudo_values, axis=0) * 2.0
+        elif isinstance(multioutput, np.ndarray):
+            return np.mean(pseudo_values)
+
+    def _evaluate_by_index(self, y_true, y_pred, sample_weight=None, **kwargs):
+        """Return the metric evaluated at each time point.
+
+        private _evaluate_by_index containing core logic, called from evaluate_by_index
+
+        Parameters
+        ----------
+        y_true : time series in sktime compatible pandas based data container format
+            Ground truth (correct) target values
+            y can be in one of the following formats:
+            Series scitype: pd.DataFrame
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+        y_pred :time series in sktime compatible data container format
+            Forecasted values to evaluate
+            must be of same format as y_true, same indices and columns if indexed
+        sample_weight : array-like of shape (n_samples,), optional
+            Sample weights
+
+
+        Returns
+        -------
+        loss : pd.Series or pd.DataFrame
+            Calculated metric, by time point (default=jackknife pseudo-values).
+            pd.Series if self.multioutput="uniform_average" or array-like
+                index is equal to index of y_true
+                entry at index i is metric at time i, averaged over variables
+            pd.DataFrame if self.multioutput="raw_values"
+                index and columns equal to those of y_true
+                i,j-th entry is metric at time i, at variable j
+        """
+        if isinstance(y_true, np.ndarray):
+            y_true = pd.DataFrame(y_true)
+        if isinstance(y_pred, np.ndarray):
+            y_pred = pd.DataFrame(y_pred)
+
+        raw_values = np.abs(y_true - y_pred)
+        raw_values[raw_values == 0] = np.finfo(float).eps
+        log_raw_values = np.log(raw_values)
+        # Calculate mean log error per time point for each column
+        gmae_per_time_point = np.exp(log_raw_values)
+
+        if sample_weight is not None:
+            sample_weight = np.array(sample_weight)
+            if sample_weight.ndim == 1:
+                sample_weight = sample_weight[:, np.newaxis]
+            gmae_per_time_point = gmae_per_time_point * sample_weight
+
+        multioutput = self.multioutput
+        if isinstance(multioutput, str):
+            if multioutput == "raw_values":
+                return gmae_per_time_point
+            elif multioutput == "uniform_average":
+                return pd.Series(
+                    np.mean(gmae_per_time_point, axis=1), index=y_true.index
+                )
+
+        weights = np.asarray(multioutput)
+        if weights.ndim == 1:
+            weights = weights[np.newaxis, :]
+
+        weighted_gmae_per_time_point = gmae_per_time_point * weights
+        final_contributions_per_time_point = np.sum(
+            weighted_gmae_per_time_point, axis=1
+        )
+
+        return pd.Series(final_contributions_per_time_point, index=y_true.index)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        return [{}]
 
 
 class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):
