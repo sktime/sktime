@@ -321,9 +321,9 @@ sktime = [
 exclude = ["tests", "tests.*"]
 
 [tool.nbqa.exclude]
-black = "^docs/source/examples/"
-flake8 = "^docs/source/examples/"
-isort = "^docs/source/examples/"
+black = "^docs/source/examples/|^examples/"
+flake8 = "^docs/source/examples/|^examples/"
+isort = "^docs/source/examples/|^examples/"
 
 [tool.ruff]
 line-length = 88
