@@ -15,7 +15,63 @@ else:
 
 
 class LTSFTransformerNetwork:
-    """LTSF-Transformer Forecaster."""
+    """LTSF-Transformer Forecaster.
+
+    Implementation of the Long-Term Short-Term Feature (LTSF) transformer forecaster,
+    aka LTSF-Transformer, by Zeng et al [1]_.
+
+    Core logic is directly copied from the cure-lab LTSF-Linear implementation [2]_,
+    which is unfortunately not available as a package.
+
+    Parameters
+    ----------
+    seq_len : int
+        Length of the input sequence.
+        Preffered to be twice the pred_len.
+    pred_len : int
+        Length of the prediction sequence.
+    context_len : int, optional (default=2)
+        Length of the label sequence.
+        Preffered to be same as the pred_len.
+    position_encoding : bool, optional (default=True)
+        Whether to use positional encoding.
+        Positional encoding helps the model understand the order of elements
+        in the input sequence by adding unique positional information to each element.
+    temporal_encoding : bool, optional (default=True)
+        Whether to use temporal encoding.
+        Works only with DatetimeIndex and PeriodIndex, disabled otherwise.
+    temporal_encoding_type : str, optional (default="linear")
+        Type of temporal encoding to use, relevant only if temporal_encoding is True.
+        - "linear": Uses linear layer to encode temporal data.
+        - "embed": Uses embeddings layer with learnable weights.
+        - "fixed-embed": Uses embeddings layer with fixed sine-cosine values as weights.
+    d_model : int, optional (default=512)
+        Dimension of the model.
+    n_heads : int, optional (default=8)
+        Number of attention heads.
+    d_ff : int, optional (default=2048)
+        Dimension of the feedforward network model.
+    e_layers : int, optional (default=3)
+        Number of encoder layers.
+    d_layers : int, optional (default=2)
+        Number of decoder layers.
+    factor : int, optional (default=5)
+        Factor for the attention mechanism.
+    dropout : float, optional (default=0.1)
+        Dropout rate.
+    activation : str, optional (default="relu")
+        Activation function to use. Defaults to relu and otherwise gelu.
+    freq : str, optional (default="h")
+        Frequency of the input data, relevant only if temporal_encoding is True.
+
+    References
+    ----------
+    .. [1] Zeng A, Chen M, Zhang L, Xu Q. 2023.
+    Are transformers effective for time series forecasting?
+    Proceedings of the AAAI conference on artificial intelligence 2023
+    (Vol. 37, No. 9, pp. 11121-11128).
+    .. [2] https://github.com/cure-lab/LTSF-Linear
+    """
 
     def __init__(self, configs):
         self.configs = configs

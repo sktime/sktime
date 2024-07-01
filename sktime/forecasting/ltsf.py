@@ -4,6 +4,7 @@ import pandas as pd
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base.adapters._pytorch import BaseDeepNetworkPyTorch
+from sktime.utils.warnings import warn
 
 
 class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
@@ -70,7 +71,7 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["luca-miniati"],
+        "authors": ["mixiancmx", "luca-miniati"],
         "maintainers": ["luca-miniati"],
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
@@ -239,6 +240,15 @@ class LTSFDLinearForecaster(BaseDeepNetworkPyTorch):
     Freq: M, Name: Number of airline passengers, dtype: float32
     """
 
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["mixiancmx", "luca-miniati"],
+        "maintainers": ["luca-miniati"],
+        # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
+        # estimator type vars inherited from BaseDeepNetworkPyTorch
+    }
+
     def __init__(
         self,
         seq_len,
@@ -402,6 +412,15 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
     Freq: M, Name: Number of airline passengers, dtype: float32
     """
 
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["mixiancmx", "luca-miniati"],
+        "maintainers": ["luca-miniati"],
+        # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
+        # estimator type vars inherited from BaseDeepNetworkPyTorch
+    }
+
     def __init__(
         self,
         seq_len,
@@ -507,14 +526,22 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
 class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
     """LTSF-Transformer Forecaster.
 
+    Implementation of the Long-Term Short-Term Feature (LTSF) transformer forecaster,
+    aka LTSF-Transformer, by Zeng et al [1]_.
+
+    Core logic is directly copied from the cure-lab LTSF-Linear implementation [2]_,
+    which is unfortunately not available as a package.
+
     Parameters
     ----------
     seq_len : int
         Length of the input sequence.
+        Preffered to be twice the pred_len.
     pred_len : int
         Length of the prediction sequence.
     context_len : int, optional (default=2)
         Length of the label sequence.
+        Preffered to be same as the pred_len.
     num_epochs : int, optional (default=16)
         Number of epochs for training.
     batch_size : int, optional (default=8)
@@ -537,36 +564,36 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
         Custom dataset for training.
     custom_dataset_pred : torch.utils.data.Dataset, optional
         Custom dataset for prediction.
-    output_attention : bool, optional (default=False)
-        Whether to output attention weights.
-    embed_type : int, optional (default=0)
-        Type of embedding to use.
-    embed : str, optional (default="fixed")
-        Type of embedding.
-    enc_in : int, optional (default=7)
-        Number of encoder input features.
-    dec_in : int, optional (default=7)
-        Number of decoder input features.
+    position_encoding : bool, optional (default=True)
+        Whether to use positional encoding.
+        Positional encoding helps the model understand the order of elements
+        in the input sequence by adding unique positional information to each element.
+    temporal_encoding : bool, optional (default=True)
+        Whether to use temporal encoding.
+        Works only with DatetimeIndex and PeriodIndex, disabled otherwise.
+    temporal_encoding_type : str, optional (default="linear")
+        Type of temporal encoding to use, relevant only if temporal_encoding is True.
+        - "linear": Uses linear layer to encode temporal data.
+        - "embed": Uses embeddings layer with learnable weights.
+        - "fixed-embed": Uses embeddings layer with fixed sine-cosine values as weights.
     d_model : int, optional (default=512)
         Dimension of the model.
     n_heads : int, optional (default=8)
         Number of attention heads.
     d_ff : int, optional (default=2048)
-        Dimension of the feed-forward network.
+        Dimension of the feedforward network model.
     e_layers : int, optional (default=3)
         Number of encoder layers.
     d_layers : int, optional (default=2)
         Number of decoder layers.
     factor : int, optional (default=5)
-        Factor for attention.
+        Factor for the attention mechanism.
     dropout : float, optional (default=0.1)
         Dropout rate.
     activation : str, optional (default="relu")
-        Activation function.
-    c_out : int, optional (default=7)
-        Number of output features.
+        Activation function to use. Defaults to relu and otherwise gelu.
     freq : str, optional (default="h")
-        Frequency of the data.
+        Frequency of the input data, relevant only if temporal_encoding is True.
 
     Examples
     --------
@@ -580,6 +607,15 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
     LTSFTransformerForecaster(context_len=5, pred_len=5, seq_len=10)
     >>> pred = model.predict() # doctest: +SKIP
     """
+
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["mixiancmx", "geetu040"],
+        "maintainers": ["geetu040"],
+        # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
+        # estimator type vars inherited from BaseDeepNetworkPyTorch
+    }
 
     def __init__(
         self,
@@ -598,8 +634,8 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
         lr=0.001,
         custom_dataset_train=None,
         custom_dataset_pred=None,
-        position_encoding: bool = True,
-        temporal_encoding: bool = True,
+        position_encoding=True,
+        temporal_encoding=True,
         temporal_encoding_type="linear",  # linear, embed, fixed-embed
         d_model=512,
         n_heads=8,
@@ -611,11 +647,6 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
         activation="relu",
         freq="h",
     ):
-        # TODO: put this info in docstring
-        # suggested in the paper
-        # context_len = pred_len
-        # seq_len = 2 * pred_len
-
         self.seq_len = seq_len
         self.context_len = context_len
         self.pred_len = pred_len
@@ -635,8 +666,8 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
 
         self.position_encoding = position_encoding
         self.temporal_encoding = temporal_encoding
+        self._temporal_encoding = None
         self.temporal_encoding_type = temporal_encoding_type
-
         self.d_model = d_model
         self.n_heads = n_heads
         self.d_ff = d_ff
@@ -657,18 +688,6 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
             optimizer_kwargs=optimizer_kwargs,
             lr=lr,
         )
-
-        self.output_attention = False  # attention in output is not needed by the user
-
-        if self.temporal_encoding:
-            from sktime.networks.ltsf.utils.timefeatures import get_mark_vocab_sizes
-
-            self.mark_vocab_sizes = get_mark_vocab_sizes(
-                temporal_encoding_type=self.temporal_encoding_type,
-                freq=self.freq,
-            )
-        else:
-            self.mark_vocab_sizes = None
 
         from sktime.utils.dependencies import _check_soft_dependencies
 
@@ -715,7 +734,7 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
                 context_len=self.context_len,
                 pred_len=self._pred_len,
                 freq=self.freq,
-                temporal_encoding=self.temporal_encoding,
+                temporal_encoding=self._temporal_encoding,
                 temporal_encoding_type=self.temporal_encoding_type,
             )
 
@@ -753,7 +772,7 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
                 context_len=self.context_len,
                 pred_len=self._pred_len,
                 freq=self.freq,
-                temporal_encoding=self.temporal_encoding,
+                temporal_encoding=self._temporal_encoding,
                 temporal_encoding_type=self.temporal_encoding_type,
             )
         return DataLoader(
@@ -765,11 +784,31 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
         from sktime.networks.ltsf.models.transformers import LTSFTransformerNetwork
 
         num_features = self._y.shape[-1]
-
         self.enc_in = num_features
         self.dec_in = num_features
         self.c_out = num_features
+
+        self.output_attention = False  # attention in output is not needed by the user
+
         self._pred_len = fh
+
+        if self.temporal_encoding:
+            if isinstance(self._y.index, (pd.DatetimeIndex, pd.PeriodIndex)):
+                self._temporal_encoding = self.temporal_encoding
+            else:
+                self._temporal_encoding = False
+                # TODO: improve this
+                warn(msg="Temporal Encoding set to False")
+
+            from sktime.networks.ltsf.utils.timefeatures import get_mark_vocab_sizes
+
+            self.mark_vocab_sizes = get_mark_vocab_sizes(
+                temporal_encoding_type=self.temporal_encoding_type,
+                freq=self.freq,
+            )
+        else:
+            self._temporal_encoding = self.temporal_encoding
+            self.mark_vocab_sizes = None
 
         class Configs:
             def __init__(self_config):
@@ -779,7 +818,7 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
                 self_config.output_attention = self.output_attention
                 self_config.mark_vocab_sizes = self.mark_vocab_sizes
                 self_config.position_encoding = self.position_encoding
-                self_config.temporal_encoding = self.temporal_encoding
+                self_config.temporal_encoding = self._temporal_encoding
                 self_config.temporal_encoding_type = self.temporal_encoding_type
                 self_config.enc_in = self.enc_in
                 self_config.dec_in = self.dec_in

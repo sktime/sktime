@@ -85,16 +85,22 @@ features_by_offsets = {
 
 def get_mapping_functions(temporal_encoding_type, freq):
     """Get the mapping functions based on the temporal encoding type and frequency."""
-    if temporal_encoding_type == "embed" or temporal_encoding_type == "fixed-embed":
+    if temporal_encoding_type in {"embed", "fixed-embed"}:
         return [fn_month_embed, fn_day_embed, fn_weekday_embed, fn_hour_embed]
 
     freq_offset_class = to_offset(freq).__class__
     mapping_functions = features_by_offsets.get(freq_offset_class)
 
-    if mapping_functions:
-        return mapping_functions
+    if mapping_functions is None:
+        # no specific frequency found
+        mapping_functions = [
+            fn_month_embed,
+            fn_day_embed,
+            fn_weekday_embed,
+            fn_hour_embed,
+        ]
 
-    raise ValueError("Unsupported frequency")
+    return mapping_functions
 
 
 def generate_temporal_features(index, temporal_encoding_type, freq):
@@ -103,8 +109,6 @@ def generate_temporal_features(index, temporal_encoding_type, freq):
 
     if isinstance(index, pd.DatetimeIndex):
         index = index.to_period()
-    elif not isinstance(index, pd.PeriodIndex):
-        raise ValueError("Index must be a DatetimeIndex or PeriodIndex")
 
     index = index.map(lambda row: [fn(row) for fn in mapping_functions])
     index = np.vstack(index)
@@ -113,7 +117,7 @@ def generate_temporal_features(index, temporal_encoding_type, freq):
 
 def get_mark_vocab_sizes(temporal_encoding_type, freq):
     """Get vocabulary sizes for mark embeddings based on the encoding type and freq."""
-    if temporal_encoding_type == "embed" or temporal_encoding_type == "fixed-embed":
+    if temporal_encoding_type in {"embed", "fixed-embed"}:
         return [13, 32, 7, 24]
     else:
         mapping_functions = get_mapping_functions(temporal_encoding_type, freq)
