@@ -198,9 +198,7 @@ jobs:
         run: python -c "import sys; print(sys.version)"
 
       - name: Install OS packages
-        run: |
-          brew update
-          brew install libomp
+        run: brew install libomp
 
       - name: Install sktime and dependencies
         run: |
