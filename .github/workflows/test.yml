@@ -290,7 +290,7 @@ jobs:
 
       - name: Install sktime and dependencies
         run: |
-          if [[ ${{ matrix.os }} == 'macos-13' ]]; then
+          if([[ ${{ matrix.os }} == 'macos-13' ]]); then
             brew install libomp
             echo "Verifying libomp installation:"
             ls -l /usr/local/opt/libomp/lib/libomp.dylib
