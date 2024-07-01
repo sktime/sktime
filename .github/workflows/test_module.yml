@@ -72,13 +72,6 @@ jobs:
       - name: checkout pull request branch
         uses: actions/checkout@v4
 
-      - name: Install system dependencies of macos
-        if: matrix.operating-system == 'macos-13'
-        run: |
-          brew install libomp
-          echo "Verifying libomp installation:"
-          ls -l /usr/local/opt/libomp/lib/libomp.dylib
-
       - name: ${{ matrix.sktime-component }}, ${{ matrix.operating-system }}, ${{ matrix.python-version }}
         uses: ./.github/actions/test-component
         with:
