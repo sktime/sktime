@@ -328,6 +328,7 @@ isort = "^docs/source/examples/"
 [tool.ruff]
 line-length = 88
 exclude = ["docs/source/examples/", ".git", "sktime/_contrib/*"]
+target-version = "py39"
 
 [tool.ruff.lint]
 select = [
@@ -357,17 +358,8 @@ ignore=[
     "E203", # Whitespace-before-punctuation.
     "E402", # Module-import-not-at-top-of-file.
     "E731", # Do not assign a lambda expression, use a def.
-    "D100", # Missing docstring in public module.
-    "D101", # Missing docstring in public class.
-    "D102", # Missing docstring in public method.
-    "D103", # Missing docstring in public function.
-    "D104", # Missing docstring in public package.
-    "D105", # Missing docstring in magic method.
-    "D106", # Missing docstring in public nested class.
-    "D107", # Missing docstring in `__init__`.
     "RET504", # Unnecessary variable assignment before `return` statement.
     "S101", # Use of `assert` detected.
-    "D400", # First line should end with a period.
     "RUF100", # https://docs.astral.sh/ruff/rules/unused-noqa/
     "C408", # Unnecessary dict call - rewrite as a literal.
     "UP031", # Use format specifier instead of %

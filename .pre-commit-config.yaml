@@ -21,12 +21,8 @@ repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.4.10
     hooks:
-      # run the linter
       - id: ruff
         args: [--fix]
-      - id: ruff-format
-      # validate in preview mode
-      - id: ruff
 
   - repo: https://github.com/psf/black
     rev: 23.12.1
