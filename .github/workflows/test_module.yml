@@ -77,6 +77,7 @@ jobs:
         with:
           sktime-component-identifier: ${{ matrix.sktime-component }}
           python-version-identifier: ${{ matrix.python-version }}
+          os-identifier: ${{ matrix.operating-system }}
           sub-sample-estimators: "True"
           test-affected-estimators: "True"
 
