@@ -289,8 +289,9 @@ jobs:
         run: python -c "import sys; print(sys.version)"
 
       - name: Install sktime and dependencies
+        shell: bash
         run: |
-          if([[ ${{ matrix.os }} == 'macos-13' ]]); then
+          if [ "${{ matrix.os }}" == 'macos-13' ]; then
             brew install libomp
             echo "Verifying libomp installation:"
             ls -l /usr/local/opt/libomp/lib/libomp.dylib
