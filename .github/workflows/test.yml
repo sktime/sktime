@@ -290,6 +290,11 @@ jobs:
 
       - name: Install sktime and dependencies
         run: |
+          if [[ ${{ matrix.os }} == 'macos-13' ]]; then
+            brew install libomp
+            echo "Verifying libomp installation:"
+            ls -l /usr/local/opt/libomp/lib/libomp.dylib
+          fi
           python -m pip install .[all_extras_pandas2,dev,dl] --no-cache-dir
 
       - name: Show dependencies
