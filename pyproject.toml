@@ -327,7 +327,7 @@ isort = "^docs/source/examples/"
 
 [tool.ruff]
 line-length = 88
-exclude = ["docs/source/examples/", ".git", "sktime/_contrib/*"]
+exclude = ["docs/source/examples/", ".git", "sktime/_contrib/*", "examples/*"]
 target-version = "py39"
 
 [tool.ruff.lint]
