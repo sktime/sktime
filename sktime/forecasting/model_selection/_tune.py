@@ -1685,8 +1685,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
     >>> import warnings
     >>> warnings.simplefilter(action="ignore", category=FutureWarning)
     >>> from sktime.forecasting.base import ForecastingHorizon
-    >>>from sktime.split import (
-    ...     ExpandingWindowSplitter,)
+    >>> from sktime.split import ExpandingWindowSplitter
     >>> from sktime.split import temporal_train_test_split
     >>> from sklearn.preprocessing import MinMaxScaler, RobustScaler
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
@@ -1849,6 +1848,16 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         -------
         params : dict or list of dict
         """
+        from sktime.utils.dependencies import _check_soft_dependencies
+
+        if not _check_soft_dependencies("optuna", severity="none"):
+            return {
+                "forecaster": "foo",
+                "cv": "bar",
+                "param_grid": "foobar",
+                "scoring": "barfoo",
+            }
+
         from optuna.distributions import CategoricalDistribution
 
         from sktime.forecasting.naive import NaiveForecaster

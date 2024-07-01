@@ -14,9 +14,9 @@ __all__ = [
 
 from sktime.forecasting.model_selection._tune import (
     ForecastingGridSearchCV,
+    ForecastingOptunaSearchCV,
     ForecastingRandomizedSearchCV,
     ForecastingSkoptSearchCV,
-    ForecastingOptunaSearchCV,
 )
 
 
