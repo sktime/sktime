@@ -871,6 +871,26 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
                 "num_epochs": 1,
                 "batch_size": 1,
                 "lr": 0.008,
-            }
+            },
+            {
+                "seq_len": 4,
+                "context_len": 2,
+                "pred_len": 2,
+                "d_model": 16,
+                "n_heads": 1,
+                "d_ff": 32,
+                "e_layers": 1,
+                "d_layers": 1,
+                "factor": 5,
+                "dropout": 0.1,
+                "activation": "relu",
+                "freq": "h",
+                "position_encoding": False,
+                "temporal_encoding": True,
+                "temporal_encoding_type": "embed",
+                "num_epochs": 1,
+                "batch_size": 1,
+                "lr": 0.008,
+            },
         ]
         return params
