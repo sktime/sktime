@@ -32,7 +32,7 @@ class _DartsRegressionModelsAdapter(BaseForecaster):
         "authors": ["yarnabrina", "fnhirwa"],
         "maintainers": ["yarnabrina", "fnhirwa"],
         "python_version": ">=3.9",
-        "python_dependencies": ["u8darts>=0.29", "xgboost>=1.6.0"],
+        "python_dependencies": ["u8darts>=0.29"],
         "python_dependencies_alias": {"u8darts": "darts"},
         # estimator type
         # --------------
