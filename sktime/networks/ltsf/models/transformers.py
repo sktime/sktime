@@ -73,14 +73,50 @@ class LTSFTransformerNetwork:
     .. [2] https://github.com/cure-lab/LTSF-Linear
     """
 
-    def __init__(self, configs):
-        self.configs = configs
-
-    def _build(self):
-        return self._LTSFTransformerNetwork(self.configs)
-
     class _LTSFTransformerNetwork(nn_module):
-        def __init__(self, configs):
+        def __init__(
+            self,
+            seq_len,
+            context_len,
+            pred_len,
+            output_attention,
+            mark_vocab_sizes,
+            position_encoding,
+            temporal_encoding,
+            temporal_encoding_type,
+            enc_in,
+            dec_in,
+            d_model,
+            n_heads,
+            d_ff,
+            e_layers,
+            d_layers,
+            factor,
+            dropout,
+            activation,
+            c_out,
+        ):
+            super().__init__()
+            self.seq_len = seq_len
+            self.context_len = context_len
+            self.pred_len = pred_len
+            self.output_attention = output_attention
+            self.mark_vocab_sizes = mark_vocab_sizes
+            self.position_encoding = position_encoding
+            self.temporal_encoding = temporal_encoding
+            self.temporal_encoding_type = temporal_encoding_type
+            self.enc_in = enc_in
+            self.dec_in = dec_in
+            self.d_model = d_model
+            self.n_heads = n_heads
+            self.d_ff = d_ff
+            self.e_layers = e_layers
+            self.d_layers = d_layers
+            self.factor = factor
+            self.dropout = dropout
+            self.activation = activation
+            self.c_out = c_out
+
             from sktime.networks.ltsf.layers.attention import (
                 LTSFAttentionLayer,
                 LTSFFullAttention,
@@ -93,30 +129,24 @@ class LTSFTransformerNetwork:
                 LTSFTransformerEncoderLayer,
             )
 
-            super().__init__()
-            self.pred_len = configs.pred_len
-            self.seq_len = configs.seq_len
-            self.context_len = configs.context_len
-            self.output_attention = configs.output_attention
-
             # Embedding
             self.enc_embedding = LTSFDataEmbedding(
-                configs.enc_in,
-                configs.d_model,
-                configs.dropout,
-                configs.mark_vocab_sizes,
-                configs.temporal_encoding_type,
-                configs.position_encoding,
-                configs.temporal_encoding,
+                self.enc_in,
+                self.d_model,
+                self.dropout,
+                self.mark_vocab_sizes,
+                self.temporal_encoding_type,
+                self.position_encoding,
+                self.temporal_encoding,
             )._build()
             self.dec_embedding = LTSFDataEmbedding(
-                configs.dec_in,
-                configs.d_model,
-                configs.dropout,
-                configs.mark_vocab_sizes,
-                configs.temporal_encoding_type,
-                configs.position_encoding,
-                configs.temporal_encoding,
+                self.dec_in,
+                self.d_model,
+                self.dropout,
+                self.mark_vocab_sizes,
+                self.temporal_encoding_type,
+                self.position_encoding,
+                self.temporal_encoding,
             )._build()
 
             # LTSFTransformerEncoder
@@ -126,21 +156,21 @@ class LTSFTransformerNetwork:
                         LTSFAttentionLayer(
                             LTSFFullAttention(
                                 False,
-                                configs.factor,
-                                attention_dropout=configs.dropout,
-                                output_attention=configs.output_attention,
+                                self.factor,
+                                attention_dropout=self.dropout,
+                                output_attention=self.output_attention,
                             )._build(),
-                            configs.d_model,
-                            configs.n_heads,
+                            self.d_model,
+                            self.n_heads,
                         )._build(),
-                        configs.d_model,
-                        configs.d_ff,
-                        dropout=configs.dropout,
-                        activation=configs.activation,
+                        self.d_model,
+                        self.d_ff,
+                        dropout=self.dropout,
+                        activation=self.activation,
                     )._build()
-                    for _ in range(configs.e_layers)
+                    for _ in range(self.e_layers)
                 ],
-                norm_layer=nn.LayerNorm(configs.d_model),
+                norm_layer=nn.LayerNorm(self.d_model),
             )._build()
             # LTSFTransformerDecoder
             self.decoder = LTSFTransformerDecoder(
@@ -149,32 +179,32 @@ class LTSFTransformerNetwork:
                         LTSFAttentionLayer(
                             LTSFFullAttention(
                                 True,
-                                configs.factor,
-                                attention_dropout=configs.dropout,
+                                self.factor,
+                                attention_dropout=self.dropout,
                                 output_attention=False,
                             )._build(),
-                            configs.d_model,
-                            configs.n_heads,
+                            self.d_model,
+                            self.n_heads,
                         )._build(),
                         LTSFAttentionLayer(
                             LTSFFullAttention(
                                 False,
-                                configs.factor,
-                                attention_dropout=configs.dropout,
+                                self.factor,
+                                attention_dropout=self.dropout,
                                 output_attention=False,
                             )._build(),
-                            configs.d_model,
-                            configs.n_heads,
+                            self.d_model,
+                            self.n_heads,
                         )._build(),
-                        configs.d_model,
-                        configs.d_ff,
-                        dropout=configs.dropout,
-                        activation=configs.activation,
+                        self.d_model,
+                        self.d_ff,
+                        dropout=self.dropout,
+                        activation=self.activation,
                     )._build()
-                    for _ in range(configs.d_layers)
+                    for _ in range(self.d_layers)
                 ],
-                norm_layer=nn.LayerNorm(configs.d_model),
-                projection=nn.Linear(configs.d_model, configs.c_out, bias=True),
+                norm_layer=nn.LayerNorm(self.d_model),
+                projection=nn.Linear(self.d_model, self.c_out, bias=True),
             )._build()
 
         def forward(self, x):
@@ -219,3 +249,68 @@ class LTSFTransformerNetwork:
                 return dec_out[:, -self.pred_len :, :], attns
             else:
                 return dec_out[:, -self.pred_len :, :]  # [B, L, D]
+
+    def __init__(
+        self,
+        seq_len,
+        context_len,
+        pred_len,
+        output_attention,
+        mark_vocab_sizes,
+        position_encoding,
+        temporal_encoding,
+        temporal_encoding_type,
+        enc_in,
+        dec_in,
+        d_model,
+        n_heads,
+        d_ff,
+        e_layers,
+        d_layers,
+        factor,
+        dropout,
+        activation,
+        c_out,
+    ):
+        self.seq_len = seq_len
+        self.context_len = context_len
+        self.pred_len = pred_len
+        self.output_attention = output_attention
+        self.mark_vocab_sizes = mark_vocab_sizes
+        self.position_encoding = position_encoding
+        self.temporal_encoding = temporal_encoding
+        self.temporal_encoding_type = temporal_encoding_type
+        self.enc_in = enc_in
+        self.dec_in = dec_in
+        self.d_model = d_model
+        self.n_heads = n_heads
+        self.d_ff = d_ff
+        self.e_layers = e_layers
+        self.d_layers = d_layers
+        self.factor = factor
+        self.dropout = dropout
+        self.activation = activation
+        self.c_out = c_out
+
+    def _build(self):
+        return self._LTSFTransformerNetwork(
+            seq_len=self.seq_len,
+            context_len=self.context_len,
+            pred_len=self.pred_len,
+            output_attention=self.output_attention,
+            mark_vocab_sizes=self.mark_vocab_sizes,
+            position_encoding=self.position_encoding,
+            temporal_encoding=self.temporal_encoding,
+            temporal_encoding_type=self.temporal_encoding_type,
+            enc_in=self.enc_in,
+            dec_in=self.dec_in,
+            d_model=self.d_model,
+            n_heads=self.n_heads,
+            d_ff=self.d_ff,
+            e_layers=self.e_layers,
+            d_layers=self.d_layers,
+            factor=self.factor,
+            dropout=self.dropout,
+            activation=self.activation,
+            c_out=self.c_out,
+        )

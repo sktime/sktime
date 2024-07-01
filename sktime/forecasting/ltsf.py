@@ -810,29 +810,27 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
             self._temporal_encoding = self.temporal_encoding
             self.mark_vocab_sizes = None
 
-        class Configs:
-            def __init__(self_config):
-                self_config.seq_len = self.seq_len
-                self_config.context_len = self.context_len
-                self_config.pred_len = self._pred_len
-                self_config.output_attention = self.output_attention
-                self_config.mark_vocab_sizes = self.mark_vocab_sizes
-                self_config.position_encoding = self.position_encoding
-                self_config.temporal_encoding = self._temporal_encoding
-                self_config.temporal_encoding_type = self.temporal_encoding_type
-                self_config.enc_in = self.enc_in
-                self_config.dec_in = self.dec_in
-                self_config.d_model = self.d_model
-                self_config.n_heads = self.n_heads
-                self_config.d_ff = self.d_ff
-                self_config.e_layers = self.e_layers
-                self_config.d_layers = self.d_layers
-                self_config.factor = self.factor
-                self_config.dropout = self.dropout
-                self_config.activation = self.activation
-                self_config.c_out = self.c_out
-
-        return LTSFTransformerNetwork(Configs())._build()
+        return LTSFTransformerNetwork(
+            seq_len=self.seq_len,
+            context_len=self.context_len,
+            pred_len=self._pred_len,
+            output_attention=self.output_attention,
+            mark_vocab_sizes=self.mark_vocab_sizes,
+            position_encoding=self.position_encoding,
+            temporal_encoding=self._temporal_encoding,
+            temporal_encoding_type=self.temporal_encoding_type,
+            enc_in=self.enc_in,
+            dec_in=self.dec_in,
+            d_model=self.d_model,
+            n_heads=self.n_heads,
+            d_ff=self.d_ff,
+            e_layers=self.e_layers,
+            d_layers=self.d_layers,
+            factor=self.factor,
+            dropout=self.dropout,
+            activation=self.activation,
+            c_out=self.c_out,
+        )._build()
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
