@@ -2367,7 +2367,9 @@
       "profile": "https://github.com/hliebert",
       "contributions": [
         "bug",
-        "code"
+        "code",
+        "doc",
+        "test"
       ]
     },
     {
@@ -2730,7 +2732,7 @@
         "doc"
       ]
     },
-{
+    {
       "login": "ArthrowAbstract",
       "name": "Devanshu Sinha",
       "avatar_url": "https://avatars.githubusercontent.com/u/38614120?v=4",
