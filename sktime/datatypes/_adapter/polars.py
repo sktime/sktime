@@ -9,6 +9,52 @@ def get_mi_cols(obj):
     return [x for x in obj.columns if isinstance(x, str) and x.startswith("__index__")]
 
 
+def is_monotonically_increasing(obj):
+    """Check is polars frame columns(__index__) is monotonically increasing."""
+    index_cols = get_mi_cols(obj)
+
+    # Series with no index columns
+    if len(index_cols) == 0:
+        return True
+
+    # check for Series scitype
+    if len(index_cols) == 1:
+        if obj[index_cols[0]].is_sorted():
+            return True
+
+    # check for Panel and Hierarchical scitype
+    else:
+        import polars as pl
+
+        index_df = obj.with_columns(index_cols)
+        grouped = index_df.groupby(index_cols[:-1]).agg([pl.col(index_cols[-1])])
+        last_index_col = grouped.select([index_cols[-1]])
+        for val in last_index_col.iter_rows():
+            # iter rows returns a list of tuples
+            if not pl.Series(val[0]).is_sorted():
+                return False
+        return True
+
+    return False
+
+
+def _convert_period_index_to_datetime_index(obj):
+    """Convert PeriodIndex to DatatimeIndex as polars only supports DatetimeIndex."""
+    import pandas as pd
+
+    if isinstance(obj.index, pd.PeriodIndex):
+        obj.index = obj.index.to_timestamp(freq=obj.index.freq)
+
+    if isinstance(obj.index, pd.MultiIndex):
+        levels = obj.index.levels
+        if isinstance(levels[-1], pd.PeriodIndex):
+            new_levels = list(levels)
+            new_levels[-1] = new_levels[-1].to_timestamp(freq=new_levels[-1].freq)
+            obj.index = obj.index.set_levels(new_levels)
+
+    return obj
+
+
 def convert_pandas_to_polars(
     obj, schema_overrides=None, rechunk=True, nan_to_null=True, lazy=False
 ):
@@ -44,6 +90,10 @@ def convert_pandas_to_polars(
                 col[i] = f"__index__{name}"
         return col
 
+    obj = obj.copy()
+    obj = _convert_period_index_to_datetime_index(
+        obj
+    )  # Polars only supports DatetimeIndex
     index_names = obj.index.names
     index_names = polars_index_columns(index_names)
     obj.index.names = index_names
@@ -101,7 +151,9 @@ def convert_polars_to_pandas(obj):
     return obj
 
 
-def check_polars_frame(obj, return_metadata=False, var_name="obj", lazy=False):
+def check_polars_frame(
+    obj, return_metadata=False, var_name="obj", lazy=False, scitype="Table"
+):
     """Check polars frame, generic format."""
     import polars as pl
 
@@ -119,19 +171,59 @@ def check_polars_frame(obj, return_metadata=False, var_name="obj", lazy=False):
         return ret(False, msg, None, return_metadata)
 
     # we now know obj is a polars DataFrame or LazyFrame
+    if scitype not in ["Table", "Series", "Panel", "Hierarchical"]:
+        return RuntimeError(
+            'scitype arg of check_polars_frame must be one of strings "Table", '
+            f'"Series", "Panel", or "Hierarchical", but found {scitype}'
+        )
+
+    index_cols = []
+
+    if scitype in ["Series", "Panel", "Hierarchical"]:
+        index_cols = get_mi_cols(obj)
+        n_vars = len(index_cols)
+        scitypes_index = {
+            "Series": n_vars == 1 or n_vars == 0,
+            "Panel": n_vars == 2,
+            "Hierarchical": n_vars >= 3,
+        }
+
+        if not scitypes_index[scitype]:
+            cols_msg = (
+                f"{var_name} must have correct number of index columns for scitype, "
+                f"Series: 0 or 1, Panel: 2, Hierarchical: >= 3,"
+                f"found {len(index_cols)}, namely: {index_cols}"
+            )
+            return ret(False, cols_msg, None, return_metadata)
+
+        # check if index columns are monotonically increasing
+        if isinstance(obj, pl.DataFrame) and not is_monotonically_increasing(obj):
+            msg = (
+                f"The (time) index of {var_name} must be sorted monotonically "
+                f"increasing. Use {var_name}.sort() on columns representing "
+                f"index(__index__) to sort the index, or {var_name}.is_duplicated() "
+                f"to find duplicates."
+            )
+            return ret(False, msg, None, return_metadata)
+
+    # columns in polars are unique, no check required
+
     if _req("is_empty", return_metadata):
         metadata["is_empty"] = obj.width < 1
     if _req("is_univariate", return_metadata):
-        metadata["is_univariate"] = obj.width == 1
-    if _req("n_instances", return_metadata):
-        if hasattr(obj, "height"):
-            metadata["n_instances"] = obj.height
-        else:
-            metadata["n_instances"] = "NA"
+        metadata["is_univariate"] = obj.width - len(index_cols) == 1
     if _req("n_features", return_metadata):
-        metadata["n_features"] = obj.width
+        metadata["n_features"] = obj.width - len(index_cols)
     if _req("feature_names", return_metadata):
-        metadata["feature_names"] = obj.columns
+        feature_columns = [x for x in obj.columns if x not in index_cols]
+        metadata["feature_names"] = feature_columns
+
+    if scitype == "Table":
+        if _req("n_instances", return_metadata):
+            if hasattr(obj, "height"):
+                metadata["n_instances"] = obj.height
+            else:
+                metadata["n_instances"] = "NA"
 
     # check if there are any nans
     #   compute only if needed
