@@ -797,8 +797,12 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
                 self._temporal_encoding = self.temporal_encoding
             else:
                 self._temporal_encoding = False
-                # TODO: improve this
-                warn(msg="Temporal Encoding set to False")
+                warn(
+                    "Temporal encoding has been disabled because the input data's "
+                    "index is not a DatetimeIndex or PeriodIndex. Temporal encoding "
+                    "only works with time-based indices. To disable this warning "
+                    "set manually temporal_encoding=False when initalizing the model."
+                )
 
             from sktime.networks.ltsf.utils.timefeatures import get_mark_vocab_sizes
 
