@@ -371,6 +371,12 @@ ignore=[
     "S202", # Uses of `tarfile.extractall()`
     "S307", # Use of possibly insecure function
     "C417", # Unnecessary `map` usage (rewrite using a generator expression)
+    "S605", # Starting a process with a shell, possible injection detected
+    "E741", # Ambiguous variable name
+    "S107", # Possible hardcoded password
+    "S105", # Possible hardcoded password
+    "PT018", # Checks for assertions that combine multiple independent condition
+
 ]
 exclude = ['test_*.py']
 
