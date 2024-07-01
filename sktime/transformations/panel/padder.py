@@ -19,8 +19,8 @@ class PaddingTransformer(BaseTransformer):
 
     Parameters
     ----------
-    pad_length  : int, optional (default=None) length to pad the series too.
-                if None, will find the longest sequence and use instead.
+    pad_length : int, optional (default=None) length to pad the series too.
+        if None, will find the longest sequence and use instead.
     """
 
     _tags = {
@@ -107,6 +107,7 @@ class PaddingTransformer(BaseTransformer):
 
         pad = [pd.Series([self._create_pad(series) for series in out]) for out in arr]
         Xt = df_map(pd.DataFrame(pad))(pd.Series)
+        Xt.columns = X.columns
 
         return Xt
 
