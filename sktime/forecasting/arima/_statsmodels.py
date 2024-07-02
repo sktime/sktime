@@ -6,7 +6,7 @@ __all__ = ["StatsModelsARIMA"]
 __author__ = ["arnaujc91"]
 
 from collections.abc import Iterable
-from typing import Optional, Tuple, Union
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -165,8 +165,8 @@ class StatsModelsARIMA(_StatsModelsAdapter):
 
     def __init__(
         self,
-        order: Tuple[int, int, int] = (0, 0, 0),
-        seasonal_order: Tuple[int, int, int, int] = (0, 0, 0, 0),
+        order: tuple[int, int, int] = (0, 0, 0),
+        seasonal_order: tuple[int, int, int, int] = (0, 0, 0, 0),
         trend: Optional[Union[str, Iterable]] = None,
         enforce_stationarity: bool = True,
         enforce_invertibility: bool = True,

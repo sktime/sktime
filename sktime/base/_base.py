@@ -239,7 +239,7 @@ class BaseObject(_BaseObject):
         try:  # try/except to avoid unexpected failures
             cls.set_config = deepcopy_func(cls.set_config)
             cls.set_config.__doc__ = cls._get_set_config_doc()
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
     def save(self, path=None, serialization_format="pickle"):

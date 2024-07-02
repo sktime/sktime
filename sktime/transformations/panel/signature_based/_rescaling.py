@@ -62,7 +62,8 @@ def _rescale_signature(signature, channels, depth):
     if sigdim != signature.shape[-1]:
         raise ValueError(
             f"A path with {channels} channels to depth {depth} should yield a "
-            f"signature with {sigdim} features. Input signature has {signature.shape[-1]} "
+            f"signature with {sigdim} features. "
+            f"Input signature has {signature.shape[-1]} "
             "features which is inconsistent."
         )
 

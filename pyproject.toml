@@ -376,6 +376,9 @@ ignore=[
     "S107", # Possible hardcoded password
     "S105", # Possible hardcoded password
     "PT018", # Checks for assertions that combine multiple independent condition
+    "S602", # sub process call with shell=True unsafe
+    "C419", # Unnecessary list comprehension, some are flaged yet are not
+    "C409", # Unnecessary `list` literal passed to `tuple()` (rewrite as a `tuple` literal)
 
 ]
 exclude = ['test_*.py']

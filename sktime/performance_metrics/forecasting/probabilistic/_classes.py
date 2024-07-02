@@ -285,7 +285,8 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
         if isinstance(multioutput, str):
             if multioutput not in allowed_multioutput_str:
                 raise ValueError(
-                    f"Allowed 'multioutput' string values are {allowed_multioutput_str}. "
+                    "Allowed 'multioutput' string values are "
+                    f"{allowed_multioutput_str}. "
                     f"You provided multioutput={multioutput!r}"
                 )
         elif multioutput is not None:

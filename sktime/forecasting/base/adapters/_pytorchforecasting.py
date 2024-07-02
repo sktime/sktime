@@ -7,7 +7,7 @@ import time
 import typing
 from copy import deepcopy
 from random import randint
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 import numpy as np
 import pandas as pd
@@ -78,11 +78,11 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
 
     def __init__(
         self: "_PytorchForecastingAdapter",
-        model_params: Optional[Dict[str, Any]] = None,
-        dataset_params: Optional[Dict[str, Any]] = None,
-        train_to_dataloader_params: Optional[Dict[str, Any]] = None,
-        validation_to_dataloader_params: Optional[Dict[str, Any]] = None,
-        trainer_params: Optional[Dict[str, Any]] = None,
+        model_params: Optional[dict[str, Any]] = None,
+        dataset_params: Optional[dict[str, Any]] = None,
+        train_to_dataloader_params: Optional[dict[str, Any]] = None,
+        validation_to_dataloader_params: Optional[dict[str, Any]] = None,
+        trainer_params: Optional[dict[str, Any]] = None,
         model_path: Optional[str] = None,
         random_log_path: bool = False,
     ) -> None:
@@ -145,7 +145,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
                         hash(time.time_ns())
                         + hash(self.algorithm_class)
                         + hash(str(data.get_parameters()))
-                        + hash(randint(0, int(time.time())))
+                        + hash(randint(0, int(time.time())))  # noqa: S311
                     )
                     self._random_log_dir = (
                         os.getcwd() + "/lightning_logs/" + str(abs(random_num))
@@ -329,7 +329,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         self,
         X: pd.DataFrame,
         y: pd.DataFrame,
-        dataset_params: Dict[str, Any],
+        dataset_params: dict[str, Any],
         max_prediction_length,
     ):
         from pytorch_forecasting.data import TimeSeriesDataSet

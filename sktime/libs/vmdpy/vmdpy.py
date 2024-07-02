@@ -10,7 +10,7 @@ def VMD(f, alpha, tau, K, DC, init, tol):
 
     Python implementation by Vinícius Rezende Carvalho - vrcarva
     code based on Dominique Zosso's MATLAB code, available at:
-    https://www.mathworks.com/matlabcentral/fileexchange/44765-variational-mode-decomposition  # noqa E501
+    https://www.mathworks.com/matlabcentral/fileexchange/44765-variational-mode-decomposition
 
     Original paper: Dragomiretskiy, K., & Zosso, D. (2014) [1]_.
 
@@ -47,7 +47,7 @@ def VMD(f, alpha, tau, K, DC, init, tol):
     .. [1] K. Dragomiretskiy and D. Zosso, - Variational Mode Decomposition:
         IEEE Transactions on Signal Processing, vol. 62, no. 3, pp. 531-544, Feb.1,
         2014, doi: 10.1109/TSP.2013.2288675.
-    """
+    """  # noqa: E501
     if len(f) % 2:
         f = f[:-1]
 
