@@ -199,8 +199,8 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
         for Xs, name in zip(result, names):
             if not (getattr(Xs, "ndim", 0) == 2 or isinstance(Xs, pd.Series)):
                 raise ValueError(
-                    "The output of the '{}' transformer should be 2D (scipy "
-                    "matrix, array, or pandas DataFrame).".format(name)
+                    f"The output of the '{name}' transformer should be 2D (scipy "
+                    "matrix, array, or pandas DataFrame)."
                 )
 
     @classmethod

@@ -50,9 +50,7 @@ def _window_getter(
 
     if window_name not in window_dict.keys():
         raise ValueError(
-            "Window name must be one of: {}. Got: {}.".format(
-                window_dict.keys(), window_name
-            )
+            f"Window name must be one of: {window_dict.keys()}. Got: {window_name}."
         )
 
     window_cls, window_kwargs = window_dict[window_name]
@@ -182,8 +180,8 @@ class _Dyadic(_Window):
         if self.depth > max_depth:
             raise ValueError(
                 "Chosen dyadic depth is too high for the data length. "
-                "We require depth <= {} for length {}. "
-                "Depth given is: {}.".format(max_depth, length, self.depth)
+                f"We require depth <= {max_depth} for length {length}. "
+                f"Depth given is: {self.depth}."
             )
         return self.call(float(length))
 

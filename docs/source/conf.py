@@ -171,10 +171,7 @@ def linkcode_resolve(domain, info):
         filename = "sktime/%s#L%d-L%d" % find_source()
     except Exception:
         filename = info["module"].replace(".", "/") + ".py"
-    return "https://github.com/sktime/sktime/blob/{}/{}".format(
-        CURRENT_VERSION,
-        filename,
-    )
+    return f"https://github.com/sktime/sktime/blob/{CURRENT_VERSION}/{filename}"
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -334,7 +331,9 @@ def _make_estimator_overview(app):
             author_info = [author_info]
 
         def _add_link(github_id_str):
-            link = '<a href="https://www.github.com/{0}">{0}</a>'.format(github_id_str)
+            link = (
+                f'<a href="https://www.github.com/{github_id_str}">{github_id_str}</a>'
+            )
             return link
 
         author_info = [_add_link(author) for author in author_info]

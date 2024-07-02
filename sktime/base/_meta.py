@@ -161,12 +161,12 @@ class _HeterogenousMetaEstimator:
         if invalid_names:
             raise ValueError(
                 "Estimator names conflict with constructor "
-                "arguments: {!r}".format(sorted(invalid_names))
+                f"arguments: {sorted(invalid_names)!r}"
             )
         invalid_names = [name for name in names if "__" in name]
         if invalid_names:
             raise ValueError(
-                "Estimator names must not contain __: got " "{!r}".format(invalid_names)
+                "Estimator names must not contain __: got " f"{invalid_names!r}"
             )
 
     def _subset_dict_keys(self, dict_to_subset, keys, prefix=None):
