@@ -163,7 +163,8 @@ class StatsModelsARIMA(_StatsModelsAdapter):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["arnaujc91"],
+        "authors": ["chadfulton", "bashtage", "jbrockmendel", "arnaujc91"],
+        # chadfulton, bashtage, jbrockmendel for statsmodels implementation
         "maintainers": ["arnaujc91"],
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,

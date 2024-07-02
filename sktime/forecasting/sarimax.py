@@ -224,7 +224,14 @@ class SARIMAX(_StatsModelsAdapter):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["TNTran92", "yarnabrina"],
+        "authors": [
+            "chadfulton",  # for statsmodels
+            "bashtage",  # for statsmodels
+            "jbrockmendel",  # for statsmodels
+            "jackzyliu",  # for statsmodels
+            "TNTran92",
+            "yarnabrina",
+        ],
         "maintainers": ["TNTran92", "yarnabrina"],
         # "python_dependencnies": "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type
