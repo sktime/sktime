@@ -64,6 +64,14 @@ def check_pddataframe_series(obj, return_metadata=False, var_name="obj"):
         msg = f"{var_name} must be a pandas.DataFrame, found {type(obj)}"
         return ret(False, msg, None, return_metadata)
 
+    # check to delineate from nested_univ mtype (Panel)
+    # pd.DataFrame mtype allows object dtype,
+    # but if we allow object dtype with pd.Series entries,
+    # the mtype becomes ambiguous, i.e., non-delineable from nested_univ
+    if np.prod(obj.shape) > 0 and isinstance(obj.iloc[0, 0], (pd.Series, pd.DataFrame)):
+        msg = f"{var_name} cannot contain nested pd.Series or pd.DataFrame"
+        return ret(False, msg, None, return_metadata)
+
     # we now know obj is a pd.DataFrame
     index = obj.index
     if _req("is_empty", return_metadata):
@@ -91,11 +99,6 @@ def check_pddataframe_series(obj, return_metadata=False, var_name="obj"):
             f"{type(index)} is not supported for {var_name}, use "
             f"one of {VALID_INDEX_TYPES} or integer index instead."
         )
-        return ret(False, msg, None, return_metadata)
-
-    # check that no dtype is object
-    if "object" in obj.dtypes.values:
-        msg = f"{var_name} should not have column of 'object' dtype"
         return ret(False, msg, None, return_metadata)
 
     # Check time index is ordered in time
@@ -149,11 +152,6 @@ def check_pdseries_series(obj, return_metadata=False, var_name="obj"):
     if _req("feature_kind", return_metadata):
         dtype_kind = _get_series_dtypekind(obj, pd.Series)
         metadata["feature_kind"] = _get_feature_kind(dtype_kind)
-
-    # check that dtype is not object
-    if "object" == obj.dtypes:
-        msg = f"{var_name} should not be of 'object' dtype"
-        return ret(False, msg, None, return_metadata)
 
     # check whether the time index is of valid type
     if not is_in_valid_index_types(index):
@@ -335,11 +333,6 @@ if _check_soft_dependencies("xarray", severity="none"):
                 f"{type(index)} is not supported for {var_name}, use "
                 f"one of {VALID_INDEX_TYPES} or integer index instead."
             )
-            return ret(False, msg, None, return_metadata)
-
-        # check that the dtype is not object
-        if "object" == obj.dtype:
-            msg = f"{var_name} should not have column of 'object' dtype"
             return ret(False, msg, None, return_metadata)
 
         # Check time index is ordered in time
