@@ -84,7 +84,7 @@ class Orchestrator:
                     strategy, data.dataset_name
                 )
             ):
-                log.warn(
+                log.warning(
                     f"Skipping strategy: {strategy.name} on CV-fold: "
                     f"{cv_fold} of dataset: {dataset.name}"
                 )
@@ -152,7 +152,7 @@ class Orchestrator:
                 and not overwrite_fitted_strategies
                 and (fitted_strategy_exists or not save_fitted_strategies)
             ):
-                log.warn(
+                log.warning(
                     f"Skipping strategy: {strategy.name} on CV-fold: "
                     f"{cv_fold} of dataset: {dataset.name}"
                 )
@@ -336,7 +336,7 @@ class Orchestrator:
 
             n_splits = self.cv.get_n_splits() - 1  # zero indexing
 
-            log.warn(
+            log.warning(
                 f"strategy: {self._strategy_counter}/{self.n_strategies} - "
                 f"{strategy_name} "
                 f"on CV-fold: {cv_fold}/{n_splits} "

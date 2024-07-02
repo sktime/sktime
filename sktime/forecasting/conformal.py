@@ -359,9 +359,9 @@ class ConformalIntervals(BaseForecaster):
             and (initial_window <= 0 or initial_window >= 1)
         ):
             raise ValueError(
-                "initial_window={} should be either positive and smaller"
-                " than the number of samples {} or a float in the "
-                "(0, 1) range".format(initial_window, n_samples)
+                f"initial_window={initial_window} should be either positive and smaller"
+                f" than the number of samples {n_samples} or a float in the "
+                "(0, 1) range"
             )
 
         if initial_window is not None and initial_window_type not in ("i", "f"):

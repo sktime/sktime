@@ -4,7 +4,8 @@
 __all__ = ["MSTL"]
 __authors__ = ["luca-miniati"]
 
-from typing import Dict, Optional, Sequence, Union
+from collections.abc import Sequence
+from typing import Dict, Optional, Union
 
 import pandas as pd
 

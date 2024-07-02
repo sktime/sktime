@@ -5,7 +5,8 @@
 __all__ = ["StatsModelsARIMA"]
 __author__ = ["arnaujc91"]
 
-from typing import Iterable, Optional, Tuple, Union
+from collections.abc import Iterable
+from typing import Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
