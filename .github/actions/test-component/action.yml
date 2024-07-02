@@ -37,7 +37,17 @@ runs:
       shell: bash
 
     - name: Install sktime and dependencies
-      run: python3 -m pip install .[${{ inputs.sktime-component-identifier }},tests]
+      run: |
+        echo "Installing macos system dependencies"
+        if [[ "${{ inputs.os-identifier }}" == 'macos-13' ]]; then
+          brew install libomp
+          echo "Verifying libomp installation:"
+          ls -l /usr/local/opt/libomp/lib/libomp.dylib
+          echo "DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib:$DYLD_LIBRARY_PATH" >> $GITHUB_ENV
+          echo "LDFLAGS=-L/usr/local/opt/libomp/lib" >> $GITHUB_ENV
+          echo "CPPFLAGS=-I/usr/local/opt/libomp/include" >> $GITHUB_ENV
+        fi
+        python3 -m pip install .[${{ inputs.sktime-component-identifier }},tests]
       shell: bash
 
     - name: Show dependencies
