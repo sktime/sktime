@@ -271,7 +271,15 @@ class AutoARIMA(_PmdArimaAdapter):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["mloning", "hyang1996", "fkiraly", "ilkersigirci"],
+        "authors": [
+            "tgsmith61591",  # for pmdarima
+            "charlesdrotar",  # for pmdarima
+            "aaronreidsmith",  # for pmdarima
+            "mloning",
+            "hyang1996",
+            "fkiraly",
+            "ilkersigirci",
+        ],
         "maintainers": ["hyang1996"],
         # python_dependencies: "pmdarima" - inherited from _PmdArimaAdapter
         # estimator type
@@ -676,7 +684,15 @@ class ARIMA(_PmdArimaAdapter):
     """  # noqa: E501
 
     _tags = {
-        "authors": ["mloning", "hyang1996", "fkiraly", "ilkersigirci"],
+        "authors": [
+            "tgsmith61591",  # for pmdarima
+            "charlesdrotar",  # for pmdarima
+            "aaronreidsmith",  # for pmdarima
+            "mloning",
+            "hyang1996",
+            "fkiraly",
+            "ilkersigirci",
+        ],
         "maintainers": ["hyang1996"],
         "handles-missing-data": True,
     }
