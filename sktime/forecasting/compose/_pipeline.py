@@ -700,8 +700,6 @@ class ForecastingPipeline(_Pipeline):
                 if isinstance(y, ForecastingHorizon) and requires_y:
                     y = y.to_absolute_index(self.cutoff)
                     y = pd.DataFrame(index=y)
-                else:
-                    y = None
                 X = transformer.transform(X=X, y=y)
         return X
 
