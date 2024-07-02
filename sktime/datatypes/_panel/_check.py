@@ -47,6 +47,7 @@ import pandas as pd
 from pandas.core.dtypes.cast import is_nested_object
 
 from sktime.datatypes._common import _req, _ret
+from sktime.datatypes._dtypekind import _get_feature_kind, _get_panel_dtypekind
 from sktime.datatypes._series._check import (
     _index_equally_spaced,
     check_pddataframe_series,
@@ -130,6 +131,11 @@ def check_dflist_panel(obj, return_metadata=False, var_name="obj"):
         metadata["n_features"] = len(obj[0].columns)
     if _req("feature_names", return_metadata):
         metadata["feature_names"] = obj[0].columns.to_list()
+    if _req("dtypekind_dfip", return_metadata):
+        metadata["dtypekind_dfip"] = _get_panel_dtypekind(obj, "df-list")
+    if _req("feature_kind", return_metadata):
+        dtype_kind = _get_panel_dtypekind(obj, "df-list")
+        metadata["feature_kind"] = _get_feature_kind(dtype_kind)
 
     return _ret(True, None, metadata, return_metadata)
 
@@ -170,6 +176,11 @@ def check_numpy3d_panel(obj, return_metadata=False, var_name="obj"):
         metadata["n_features"] = obj.shape[1]
     if _req("feature_names", return_metadata):
         metadata["feature_names"] = list(range(obj.shape[1]))
+    if _req("dtypekind_dfip", return_metadata):
+        metadata["dtypekind_dfip"] = _get_panel_dtypekind(obj, "numpy3D")
+    if _req("feature_kind", return_metadata):
+        dtype_kind = _get_panel_dtypekind(obj, "numpy3D")
+        metadata["feature_kind"] = _get_feature_kind(dtype_kind)
 
     # check whether there any nans; only if requested
     if _req("has_nans", return_metadata):
@@ -260,6 +271,11 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=T
         metadata["n_features"] = len(obj.columns)
     if _req("feature_names", return_metadata):
         metadata["feature_names"] = obj.columns.to_list()
+    if _req("dtypekind_dfip", return_metadata):
+        metadata["dtypekind_dfip"] = _get_panel_dtypekind(obj, "pd-multiindex")
+    if _req("feature_kind", return_metadata):
+        dtype_kind = _get_panel_dtypekind(obj, "pd-multiindex")
+        metadata["feature_kind"] = _get_feature_kind(dtype_kind)
 
     # check whether index is equally spaced or if there are any nans
     #   compute only if needed
@@ -440,6 +456,11 @@ def is_nested_dataframe(obj, return_metadata=False, var_name="obj"):
         metadata["n_features"] = len(obj.columns)
     if _req("feature_names", return_metadata):
         metadata["feature_names"] = obj.columns.to_list()
+    if _req("dtypekind_dfip", return_metadata):
+        metadata["dtypekind_dfip"] = _get_panel_dtypekind(obj, "nested_univ")
+    if _req("feature_kind", return_metadata):
+        dtype_kind = _get_panel_dtypekind(obj, "nested_univ")
+        metadata["feature_kind"] = _get_feature_kind(dtype_kind)
 
     # todo: this is temporary override, proper is_empty logic needs to be added
     if _req("is_empty", return_metadata):
@@ -463,7 +484,7 @@ def check_numpyflat_Panel(obj, return_metadata=False, var_name="obj"):
         msg = f"{var_name} must be a 2D numpy.ndarray, but found {len(obj.shape)}D"
         return _ret(False, msg, None, return_metadata)
 
-    # we now know obj is a 3D np.ndarray
+    # we now know obj is a 2D np.ndarray
     metadata = dict()
     if _req("is_empty", return_metadata):
         metadata["is_empty"] = len(obj) < 1 or obj.shape[1] < 1
@@ -473,6 +494,11 @@ def check_numpyflat_Panel(obj, return_metadata=False, var_name="obj"):
         metadata["n_features"] = 1
     if _req("feature_names", return_metadata):
         metadata["feature_names"] = [0]
+    if _req("dtypekind_dfip", return_metadata):
+        metadata["dtypekind_dfip"] = _get_panel_dtypekind(obj, "numpyflat")
+    if _req("feature_kind", return_metadata):
+        dtype_kind = _get_panel_dtypekind(obj, "numpyflat")
+        metadata["feature_kind"] = _get_feature_kind(dtype_kind)
     # np.arrays are considered equally spaced, equal length, by assumption
     if _req("is_equally_spaced", return_metadata):
         metadata["is_equally_spaced"] = True

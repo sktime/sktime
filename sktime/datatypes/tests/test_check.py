@@ -242,7 +242,8 @@ def test_check_metadata_inference(scitype, mtype, fixture_index):
 
     # metadata keys to ignore
     # is_equal_index is not fully supported yet in inference
-    EXCLUDE_KEYS = ["is_equal_index"]
+    # feature_kind is not supported yet, simple_feature_kind is used instead
+    EXCLUDE_KEYS = ["is_equal_index", "dtypekind_dfip"]
 
     # metadata keys to ignore if mtype is lossy
     EXCLUDE_IF_LOSSY = [
