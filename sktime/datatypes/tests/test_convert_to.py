@@ -17,8 +17,8 @@ MTYPES_PANEL = ["pd-multiindex", "df-list", "numpy3D"]
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.datatypes"),
-    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+    not run_test_module_changed(["sktime.datatypes", "sktime.utils.deep_equals"]),
+    reason="Test only if sktime.datatypes or utils.deep_equals has been changed",
 )
 def test_convert_to_simple():
     """Testing convert_to basic call works."""
@@ -37,8 +37,8 @@ def test_convert_to_simple():
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.datatypes"),
-    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+    not run_test_module_changed(["sktime.datatypes", "sktime.utils.deep_equals"]),
+    reason="Test only if sktime.datatypes or utils.deep_equals has been changed",
 )
 def test_convert_to_without_scitype():
     """Testing convert_to call without scitype specification."""
@@ -57,8 +57,8 @@ def test_convert_to_without_scitype():
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.datatypes"),
-    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+    not run_test_module_changed(["sktime.datatypes", "sktime.utils.deep_equals"]),
+    reason="Test only if sktime.datatypes or utils.deep_equals has been changed",
 )
 def test_convert_to_mtype_list():
     """Testing convert_to call to_type being a list, of same scitype."""
@@ -87,8 +87,8 @@ def test_convert_to_mtype_list():
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.datatypes"),
-    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+    not run_test_module_changed(["sktime.datatypes", "sktime.utils.deep_equals"]),
+    reason="Test only if sktime.datatypes or utils.deep_equals has been changed",
 )
 def test_convert_to_mtype_list_different_scitype():
     """Testing convert_to call to_type being a list, of different scitypes."""

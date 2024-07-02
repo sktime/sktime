@@ -2863,6 +2863,37 @@
         "doc",
         "maintenance"
       ]
+    },
+    {
+      "login": "ksharma6",
+      "name": "Kishen Sharma",
+      "avatar_url": "https://avatars.githubusercontent.com/u/142558351?v=4",
+      "profile": "https://github.com/ksharma6",
+      "contributions": [
+        "bug",
+        "code"
+      ]
+    },
+    {
+      "login": "benshaw2",
+      "name": "Ben Shaw",
+      "avatar_url": "https://avatars.githubusercontent.com/u/54603799?v=4",
+      "profile": "https://github.com/benshaw2",
+      "contributions": [
+        "bug",
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "doberbauer",
+      "name": "Daniel Oberbauer",
+      "avatar_url": "https://avatars.githubusercontent.com/u/81889558?v=4",
+      "profile": "https://github.com/doberbauer",
+      "contributions": [
+        "bug",
+        "code"
+      ]
     }
   ]
 }
