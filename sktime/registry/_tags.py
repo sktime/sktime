@@ -1826,6 +1826,12 @@ ESTIMATOR_TAG_REGISTER = [
         ("str", ["temporal", "instance"]),
         "whether the splitter splits by time or by instance (panel/hierarchy index)",
     ),
+    (
+        "capability:categorical-in-X",
+        "estimator",
+        "bool",
+        "can the estimator natively handle categorical data in exogeneous X?",
+    ),
     # -------------------------
     # tags to be moved to skpro
     # -------------------------
