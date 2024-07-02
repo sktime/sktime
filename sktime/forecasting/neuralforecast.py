@@ -168,6 +168,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         # estimator type
         # --------------
         "python_dependencies": ["neuralforecast>=1.6.4"],
+        "capability:global_forecasting": True,
     }
 
     def __init__(
@@ -538,6 +539,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         # estimator type
         # --------------
         "python_dependencies": ["neuralforecast>=1.6.4"],
+        "capability:global_forecasting": True,
     }
 
     def __init__(
