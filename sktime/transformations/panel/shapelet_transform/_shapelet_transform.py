@@ -49,8 +49,10 @@ class Shapelet:
 
     def __str__(self):
         """Print."""
-        return "Series ID: {}, start_pos: {}, length: {}, info_gain: {}," " ".format(
-            self.series_id, self.start_pos, self.length, self.info_gain
+        return (
+            f"Series ID: {self.series_id}, start_pos: {self.start_pos}, "
+            "length: {self.length}, info_gain: {self.info_gain},"
+            " "
         )
 
 
@@ -489,18 +491,11 @@ class ShapeletTransform(BaseTransformer):
                     ) * 0.75
                     if (time_now + max_shapelet_time_percentage) > time_in_seconds:
                         if self.verbose > 0:
-                            print(  # noqa
-                                "No more time available! It's been {0:02d}:{"
-                                "1:02}".format(
-                                    int(round(time_now / 60, 3)),
-                                    int(
-                                        (
-                                            round(time_now / 60, 3)
-                                            - int(round(time_now / 60, 3))
-                                        )
-                                        * 60
-                                    ),
-                                )
+                            minutes = int(round(time_now / 60, 3))
+                            seconds = int((round(time_now / 60, 3) - minutes) * 60)
+                            print(
+                                "No more time available! It's been"
+                                f"{minutes:02d}:{seconds:02}"
                             )
                         time_finished = True
                         break
