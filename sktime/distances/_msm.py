@@ -1,5 +1,6 @@
 __author__ = ["chrisholder", "jlines", "TonyBagnall"]
 
+
 import numpy as np
 
 from sktime.distances.base import (

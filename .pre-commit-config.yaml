@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v4.6.0
     hooks:
       - id: check-added-large-files
         args:
@@ -12,9 +12,6 @@ repos:
       - id: debug-statements
       - id: end-of-file-fixer
         exclude: "^docs/source/examples/"
-      - id: fix-encoding-pragma
-        args:
-          - --remove
       - id: requirements-txt-fixer
       - id: trailing-whitespace
 
@@ -25,7 +22,7 @@ repos:
         args: [--fix]
 
   - repo: https://github.com/psf/black
-    rev: 23.12.1
+    rev: 24.4.2
     hooks:
       - id: black
         language_version: python3
@@ -37,7 +34,7 @@ repos:
         stages: [manual]
 
   - repo: https://github.com/nbQA-dev/nbQA
-    rev: 1.7.1
+    rev: 1.8.5
     hooks:
       - id: nbqa-black
         args:
@@ -53,7 +50,7 @@ repos:
   # We use the Python version instead of the original version which seems to require Docker
   # https://github.com/koalaman/shellcheck-precommit
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.9.0.6
+    rev: v0.10.0.1
     hooks:
       - id: shellcheck
         name: shellcheck
