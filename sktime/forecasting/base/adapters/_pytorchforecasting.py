@@ -291,12 +291,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         while ``y`` should only contain historical values
         not the time points to be predicted.
         """
-        if y is None:
-            y = deepcopy(self._y)
-        if X is None:
-            X = deepcopy(self._X)
-        if X is not None and not self._global_forecasting:
-            X = pd.concat([self._X, X])
+        X, y = self._Xy_precheck(X, y)
         # convert series to frame
         _y, self._convert_to_series = _series_to_frame(y)
         _X, _ = _series_to_frame(X)
@@ -391,12 +386,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
                 "https://pytorch-forecasting.readthedocs.io/en/stable/metrics.html"
             )
 
-        if y is None:
-            y = deepcopy(self._y)
-        if X is None:
-            X = deepcopy(self._X)
-        if X is not None and not self._global_forecasting:
-            X = pd.concat([self._X, X])
+        X, y = self._Xy_precheck(X, y)
         # convert series to frame
         _y, self._convert_to_series = _series_to_frame(y)
         _X, _ = _series_to_frame(X)
@@ -431,6 +421,15 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
             lambda x: x in absolute_horizons
         )
         return output.loc[dateindex]
+
+    def _Xy_precheck(self, X, y):
+        if y is None:
+            y = deepcopy(self._y)
+        if X is None:
+            X = deepcopy(self._X)
+        if X is not None and not self._global_forecasting:
+            X = pd.concat([self._X, X])
+        return X, y
 
     def _Xy_to_dataset(
         self,
