@@ -89,7 +89,7 @@ class _PytsAdapter:
         self._call_with_y_optional(pyts_est.fit, X, y)
 
         # write fitted params to self
-        _clone_fitted_params(pyts_est, self)
+        _clone_fitted_params(to_obj=self, from_obj=pyts_est)
 
         return self
 
