@@ -1763,6 +1763,15 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         self.param_grid = param_grid
         self.n_evals = n_evals
 
+        warn(
+            "ForecastingOptunaSearchCV is experimental, and interfaces may change. "
+            "User feedback and suggestions for future development "
+            "are appreciated in issue #6618 here: "
+            "https://github.com/sktime/sktime/issues/6618",
+            obj=self,
+            stacklevel=2,
+        )
+
     def _fit(self, y, X=None, fh=None):
         cv = check_cv(self.cv)
         scoring = check_scoring(self.scoring, obj=self)
