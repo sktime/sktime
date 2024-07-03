@@ -1592,20 +1592,10 @@ def _fit_and_score_skopt(params, meta):
 class ForecastingOptunaSearchCV(BaseGridSearch):
     """Perform Optuna search cross-validation to find optimal model hyperparameters.
 
-    Experimental: This feature is under development and interface is likely to change.
+    Experimental: This feature is under development and interfaces may change.
 
     Parameters
     ----------
-    scoring=None,
-    strategy="refit",
-    refit=True,
-    verbose=0,
-    return_n_best_forecasters=1,
-    backend="loky",
-    update_behaviour="full_refit",
-    error_score=np.nan,
-    n_evals=100,
-
     forecaster : sktime forecaster, BaseForecaster instance or interface compatible
         The forecaster to tune, must implement the sktime forecaster interface.
         sklearn regressors can be used, but must first be converted to forecasters
@@ -1613,7 +1603,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
     cv : cross-validation generator or an iterable
         Splitter used for generating validation folds.
         e.g. ExpandingWindowSplitter()
-    param_grid : dict
+    param_grid : dict of optuna samplers
         Dictionary with parameters names as keys and lists of parameter distributions
         from which to sample parameter values.
         e.g. {"forecaster": optuna.distributions.CategoricalDistribution(

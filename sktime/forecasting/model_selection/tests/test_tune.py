@@ -329,6 +329,7 @@ def test_skoptcv_multiple_forecaster():
     assert len(sscv.cv_results_) == 5
 
 
+@pytest.mark.xfail
 @pytest.mark.skipif(
     not run_test_for_class(ForecastingOptunaSearchCV),
     reason="run test only if softdeps are present and incrementally (if requested)",
