@@ -104,7 +104,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                 2000-02-19  5.188011
 
     [500 rows x 1 columns]
-    >>>
+
 
     References
     ----------
@@ -368,7 +368,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                 2000-02-19  5.113482
 
     [500 rows x 1 columns]
-    >>>
+
 
     References
     ----------
@@ -620,7 +620,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                 2000-02-19  5.121511
 
     [500 rows x 1 columns]
-    >>>
+
 
     References
     ----------
@@ -881,7 +881,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                 2000-02-19  5.047630
 
     [500 rows x 1 columns]
-    >>>
+
 
     References
     ----------
