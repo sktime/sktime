@@ -1594,6 +1594,16 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
 
     Experimental: This feature is under development and interfaces may change.
 
+    In ``fit``, this estimator uses the ``optuna`` base search algorithm
+    applied to the ``sktime`` ``evaluate`` benchmarking output.
+
+    ``param_grid`` is used to parametrize the search space, over parameters of
+    the passed ``forecaster``, via ``set_params``.
+
+    The remaining parameters are passed directly to ``evaluate``, to obtain
+    the primary optimization outcome as the aggregate ``scoring`` metric specified
+    on the evaluation schema.
+
     Parameters
     ----------
     forecaster : sktime forecaster, BaseForecaster instance or interface compatible
