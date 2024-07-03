@@ -4,10 +4,9 @@ import pytest
 
 from sktime.datatypes._adapter.gluonts import (
     convert_pandas_collection_to_pandasDataset,
-    convert_pandas_long_to_pandasDataset,
+    convert_pandas_multiindex_to_pandasDataset,
     convert_pandas_series_to_pandasDataset,
     convert_pandas_to_listDataset,
-    convert_pandas_wide_to_pandasDataset,
 )
 from sktime.utils.dependencies import _check_soft_dependencies
 
@@ -67,23 +66,14 @@ def test_pandas_to_ListDataset(pandas_df):
         (
             pd.DataFrame(
                 {
-                    "item_id": np.random.choice(["A", "B", "C"], size=50),
-                    "timestamp": pd.date_range("2022-01-01", periods=50, freq="D"),
-                    "target": np.random.randn(50),
-                }
-            ),
-            convert_pandas_long_to_pandasDataset,
-        ),
-        (
-            pd.DataFrame(
-                {
-                    "timestamp": pd.date_range("2022-01-01", periods=50, freq="D"),
-                    "A": np.random.randn(50),
-                    "B": np.random.randn(50),
-                    "C": np.random.randn(50),
-                }
-            ),
-            convert_pandas_wide_to_pandasDataset,
+                    "series_id": ["A", "A", "A", "B", "B", "B", "C", "C", "C"],
+                    "timepoints": pd.date_range("2022-01-01", periods=9, freq="D"),
+                    "target": np.random.randn(9),
+                },
+            )
+            .set_index(["series_id", "timepoints"])
+            .sort_index(),
+            convert_pandas_multiindex_to_pandasDataset,
         ),
         (
             {

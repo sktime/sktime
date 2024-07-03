@@ -51,6 +51,7 @@ MTYPE_SOFT_DEPS_PANEL = {
     "xr.DataArray": "xarray",
     "dask_panel": "dask",
     "gluonts_ListDataset_panel": "gluonts",
+    "gluonts_PandasDataset_panel": "gluonts",
 }
 
 MTYPE_LIST_PANEL = [x[0] for x in MTYPE_REGISTER_PANEL]

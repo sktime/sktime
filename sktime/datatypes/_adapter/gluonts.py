@@ -1,13 +1,14 @@
+import numpy as np
 import pandas as pd
 
 
-def convert_pandas_to_listDataset(pd_dataframe: pd.DataFrame, is_single: bool = False):
+def convert_pandas_to_listDataset(pandas_obj, is_single: bool = False):
     """Convert a given pandas DataFrame to a gluonTS ListDataset.
 
     Parameters
     ----------
-    pd_dataframe : pd.DataFrame
-        A valid pandas DataFrame
+    pandas_obj
+        A valid pandas object (DataFrame or Series)
 
     is_single : bool (default=False)
         True if there is only 1 time series, false if there are multiple series
@@ -48,16 +49,29 @@ def convert_pandas_to_listDataset(pd_dataframe: pd.DataFrame, is_single: bool = 
     from gluonts.dataset.common import ListDataset
     from gluonts.dataset.field_names import FieldName
 
+    if not isinstance(pandas_obj, pd.Series) and not isinstance(
+        pandas_obj, pd.DataFrame
+    ):
+        raise ValueError("`pandas_obj` must either be a pd.DataFrame or a pd.Series!")
+
+    if isinstance(pandas_obj, pd.Series):
+        return ListDataset(pandas_obj, freq="D", one_dim_target=True)
+
     # Assert the validity of the is_single parameter
-    if is_single and pd_dataframe.shape[0] > 1:
-        raise ValueError("`is_single` is True but the DataFrame has multiple rows!")
+    if is_single and pandas_obj.shape[0] > 1:
+        time_index = pandas_obj.index.name
+
+        pandas_obj["series_id"] = np.repeat(0, pandas_obj.shape[0])
+
+        pandas_obj = pandas_obj.reset_index().set_index(["series_id", time_index])
+        pandas_obj = pandas_obj.sort_index()
 
     # This list will store all individual time series
     dataset = []
 
     # By maintaining 2 levels in the DataFrame's indices
     # we can access each series and its timestep values with ease!
-    for _, data in pd_dataframe.groupby(level=0):
+    for _, data in pandas_obj.groupby(level=0):
         # Getting the starting time for each series (assumed to be min value)
         start_datetime = data.index.get_level_values(level=1).min()
 
@@ -73,8 +87,8 @@ def convert_pandas_to_listDataset(pd_dataframe: pd.DataFrame, is_single: bool = 
         )
 
     # Obtain the total amount of timesteps to assist with inferring frequency
-    n_steps = pd_dataframe.index.get_level_values(level=1).nunique()
-    fr = pd.infer_freq(pd_dataframe.index.get_level_values(level=1)[:n_steps])
+    n_steps = pandas_obj.index.get_level_values(level=1).nunique()
+    fr = pd.infer_freq(pandas_obj.index.get_level_values(level=1)[:n_steps])
 
     # Converting the dataset to a GluonTS ListDataset
     list_dataset = ListDataset(
@@ -162,78 +176,33 @@ def convert_pandas_series_to_pandasDataset(pd_series: pd.Series):
     return PandasDataset(pd_series)
 
 
-def convert_pandas_long_to_pandasDataset(
+def convert_pandas_multiindex_to_pandasDataset(
     pd_dataframe: pd.DataFrame,
-    item_id="item_id",
     target="target",
-    timestamp="timestamp",
+    item_id="series_id",
+    timepoints=None,
     freq="D",
 ):
-    """Convert a given pandas DataFrame (long) to a gluonTS PandasDataset.
-
-    Parameters
-    ----------
-    pd_dataframe : pd.DataFrame
-        A valid pandas DataFrame
-
-    item_id : str
-        A column dedicated to time series labels ('item_id' by default)
-
-    target : str
-        The column that corresponds to target values ('target' by default)
-
-    timestamp: str
-        Leave None if the DataFrame index is of DatetimeIndex format,
-        otherwise specify the appropriate timestamp column name
-
-    freq: str
-        The frequency associated with the timestamp
-
-    Returns
-    -------
-    gluonts.dataset.common.PandasDataset
-        A gluonTS PandasDataset formed from `pd_dataframe`
-
-    Raises
-    ------
-    ValueError
-        If `pd_dataframe` has no `target` named column
-        or a `timestamp` column.
-    """
-    # Importing required libraries
-    from gluonts.dataset.pandas import PandasDataset
-
-    # Check for required column values
-    if item_id not in pd_dataframe.columns:
-        raise ValueError(f"The pandas DataFrame does not have the {item_id} column!")
-
-    if "timestamp" not in pd_dataframe.columns and not isinstance(
-        pd_dataframe.index, pd.DatetimeIndex
-    ):
-        raise ValueError(
-            "The pandas DataFrame does not have a 'timestamp' column "
-            + "nor a pd.DatetimeIndex based index!"
-        )
-
-    if target not in pd_dataframe.columns:
-        raise ValueError(f"The pandas DataFrame does not have the {target} column!")
-
-    # Convert the Pd.DataFrame to GluonTS!
-    gluonTS_pd = PandasDataset.from_long_dataframe(
-        pd_dataframe, target=target, item_id=item_id, timestamp=timestamp, freq=freq
-    )
-
-    return gluonTS_pd
-
-
-def convert_pandas_wide_to_pandasDataset(pd_dataframe: pd.DataFrame):
-    """Convert a given pandas DataFrame (wide) to a gluonTS PandasDataset.
+    """Convert a given pandas DataFrame (multiindex) to a gluonTS PandasDataset.
 
     Parameters
     ----------
     pd_dataframe : pd.DataFrame
         A pd.DataFrame with each column corresponding to a time series
 
+    target : str | list[str]
+        The column(s) that corresponds to target values ('target' by default)
+
+    item_id : str
+        A column dedicated to time series labels ('series_id' by default)
+
+    timepoints: str | None
+        Leave None if the DataFrame index is of DatetimeIndex format,
+        otherwise specify the appropriate timepoints column name
+
+    freq : str
+        The frequency of the given timepoints
+
     Returns
     -------
     gluonts.dataset.common.PandasDataset
@@ -242,27 +211,69 @@ def convert_pandas_wide_to_pandasDataset(pd_dataframe: pd.DataFrame):
     Raises
     ------
     ValueError
-        If the given wide DataFrame does not have a valid timestamp
+        If the given DataFrame does not have valid Pandas timestamps
     """
-    # Importing required libraries
     from gluonts.dataset.pandas import PandasDataset
 
-    # Checking for valid timestamp values
-    if "timestamp" in pd_dataframe.columns:
-        pd_dataframe = pd_dataframe.set_index("timestamp")
+    if timepoints is None:
+        # Obtain the index name for the timestamp
+        timestamp_index = pd_dataframe.index.names[1]
+        df = pd_dataframe.reset_index().set_index([timestamp_index])
 
-    elif not isinstance(pd_dataframe.index, pd.DatetimeIndex):
-        raise ValueError(
-            "The DataFrame does not have a valid timestamp "
-            + "column or `pd.DatetimeIndex` index!"
+        df = PandasDataset.from_long_dataframe(df, item_id=item_id, target=target)
+
+        return df
+
+    else:
+        df = pd_dataframe.reset_index()
+
+        return PandasDataset.from_long_dataframe(
+            df, item_id=item_id, timestamp=timepoints, target=target, freq=freq
         )
 
-    # Checking for the required
-    return PandasDataset(dict(pd_dataframe))
+
+def convert_pandasDataset_to_pandas(
+    pandasDataset, item_id="series_id", timepoints="timepoints"
+):
+    """Convert a GluonTS PandasDataset to a pd.DataFrame.
+
+    Parameters
+    ----------
+    pandasDataset : gluonts.dataset.pandas.PandasDataset
+        A gluonTS PandasDataset
+
+    item_id : str
+        A column dedicated to time series labels ('series_id' by default)
+
+    timepoints: str
+        The name of the timepoints column ('timepoints' by default)
+
+    Returns
+    -------
+    Returns a valid pd.DataFrame
+    """
+    # Extracting the inner iterable from the PandasDataset StarMap
+    iterables = pandasDataset._data_entries.iterable.iterable
+    all_dfs = []
+
+    for item in iterables:
+        # Each individual time series is stored here
+        df = item[1]
+
+        if not isinstance(df, pd.DataFrame):
+            df = pd.DataFrame(df)
+
+        all_dfs.append(df)
+
+    df = pd.concat(all_dfs, ignore_index=False)
+
+    df = df.reset_index().set_index([item_id, timepoints])
+    df = df.sort_index()
+    return df
 
 
 def convert_pandas_collection_to_pandasDataset(
-    collection_dataframe, timestamp="timestamp", freq="D", target="target"
+    collection_dataframe, timepoints="timepoints", freq="D", target="target"
 ):
     """Convert a list of pd.DataFrames or dict of pd.DataFrames to a PandasDataset.
 
@@ -272,11 +283,11 @@ def convert_pandas_collection_to_pandasDataset(
         A list or dictionary of pandas DataFrames
         If dictionary, key = item_id, value = pd.DataFrame
 
-    timestamp : str
-        The column corresponding to the timestamps (default="timestamp")
+    timepoints : str
+        The column corresponding to the timepoints (default='timepoints')
 
     freq : str
-        The frequency of the timestamps (default="D")
+        The frequency of the timepoints (default='D')
 
     target : str
         The column corresponding to the target values column (default="target")
@@ -295,6 +306,10 @@ def convert_pandas_collection_to_pandasDataset(
     # Importing required libraries
     from gluonts.dataset.pandas import PandasDataset
 
+    # Update target to the default value if it is None
+    if target is None:
+        target = "target"
+
     # Checking for the dictionary-format
     if type(collection_dataframe) is dict:
         for key, df in collection_dataframe.items():
@@ -303,24 +318,20 @@ def convert_pandas_collection_to_pandasDataset(
                 raise ValueError(f"The value of {key} is not a pandas DataFrame!")
 
             # Check for a target value
-            if "target" not in df.columns:
+            if isinstance(target, list):
+                if not set(target).issubset(df.columns):
+                    raise ValueError(
+                        f"The DataFrame at {key} does not have a target column!"
+                    )
+
+            elif target not in df.columns:
                 raise ValueError(
                     f"The DataFrame at {key} does not have a target column!"
                 )
 
-            # Check for valid timestamps
-            if "timestamp" not in df.columns and not isinstance(
-                df.index, pd.DatetimeIndex
-            ):
-                raise ValueError(
-                    f"The DataFrame at {key} does not have the "
-                    + "required 'target' and 'timestamp' columns!"
-                )
-
-        # If all else is accepted, convert and return the object
         return PandasDataset(
             dataframes=collection_dataframe,
-            timestamp=timestamp,
+            timestamp=timepoints,
             freq=freq,
             target=target,
         )
@@ -328,46 +339,21 @@ def convert_pandas_collection_to_pandasDataset(
     # Checking for the list-format
     elif type(collection_dataframe) is list:
         for idx, df in enumerate(collection_dataframe):
-            # Check for a target value
-            if target not in df.columns:
-                raise ValueError(
-                    f"The DataFrame at the {idx} index does not have a {target} column!"
-                )
-
             # Check for valid timestamps
-            if timestamp not in df.columns and not isinstance(
+            if timepoints not in df.columns and not isinstance(
                 df.index, pd.DatetimeIndex
             ):
                 raise ValueError(
                     f"The DataFrame at the {idx} index does not have the "
-                    + f"required '{timestamp}' columns!"
+                    + f"required '{timepoints}' columns!"
                 )
 
-        # If all else is accepted, convert and return the object
         return PandasDataset(
             dataframes=collection_dataframe,
-            timestamp=timestamp,
+            timestamp=timepoints,
             freq=freq,
             target=target,
         )
 
     else:
         raise ValueError("Expected format of dict[pd.DataFrame] or list[pd.DataFrame]")
-
-
-def convert_pandasDataset_to_pandas(pandasDataset):
-    """Convert a GluonTS PandasDataset to a pd.DataFrame.
-
-    Parameters
-    ----------
-    pandasDataset : gluonts.dataset.pandas.PandasDataset
-        A gluonTS PandasDataset
-
-    Returns
-    -------
-    Returns a valid pd.DataFrame
-    """
-    df = pd.DataFrame(pandasDataset._data_entries)
-    df = df.explode("target")
-
-    return df

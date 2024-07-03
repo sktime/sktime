@@ -92,7 +92,7 @@ if _check_soft_dependencies("dask", severity="none"):
 
 if _check_soft_dependencies("gluonts", severity="none"):
     from sktime.datatypes._adapter.gluonts import (
-        convert_pandas_collection_to_pandasDataset,
+        convert_pandas_multiindex_to_pandasDataset,
         convert_pandas_to_listDataset,
     )
 
@@ -115,18 +115,18 @@ if _check_soft_dependencies("gluonts", severity="none"):
     example_dict[("gluonts_ListDataset_panel", "Panel", 0)] = list_dataset
     example_dict_lossy[("gluonts_ListDataset_panel", "Panel", 0)] = True
 
-    # Creating a list of pd.DataFrames to convert to a PandasDataset
-    dfs_new = []
+    # Beginning example tests for PandasDataset
+    df = example_dict[("pd-multiindex", "Panel", 0)]
 
-    for df in dfs:
-        dfs_new.append(df.reset_index().melt(id_vars=df.index.names))
+    df = df.assign(
+        series_id=np.repeat([0, 1, 2], 3),
+        timepoints=pd.date_range(start="2023-01-01", periods=len(df), freq="D"),
+    ).set_index(["series_id", "timepoints"])
 
-    # Utilizing conversion function
-    pandas_dataset = convert_pandas_collection_to_pandasDataset(
-        dfs_new, timestamp="timepoints", freq="D", target="value"
+    pandas_dataset = convert_pandas_multiindex_to_pandasDataset(
+        df, item_id="series_id", target=["var_0", "var_1"]
     )
 
-    # Storing the generated results
     example_dict[("gluonts_PandasDataset_panel", "Panel", 0)] = pandas_dataset
     example_dict_lossy[("gluonts_PandasDataset_panel", "Panel", 0)] = False
 
@@ -225,18 +225,18 @@ if _check_soft_dependencies("gluonts", severity="none"):
     example_dict[("gluonts_ListDataset_panel", "Panel", 1)] = list_dataset
     example_dict_lossy[("gluonts_ListDataset_panel", "Panel", 1)] = True
 
-    # Creating a list of pd.DataFrames to convert to a PandasDataset
-    dfs_new = []
+    # Beginning example tests for PandasDataset
+    df = example_dict[("pd-multiindex", "Panel", 1)]
 
-    for df in dfs:
-        dfs_new.append(df.reset_index().melt(id_vars=df.index.names))
+    df = df.assign(
+        series_id=np.repeat([0, 1, 2], 3),
+        timepoints=pd.date_range(start="2023-01-01", periods=len(df), freq="D"),
+    ).set_index(["series_id", "timepoints"])
 
-    # Utilizing conversion function
-    pandas_dataset = convert_pandas_collection_to_pandasDataset(
-        dfs_new, timestamp="timepoints", freq="D", target="value"
+    pandas_dataset = convert_pandas_multiindex_to_pandasDataset(
+        df, item_id="series_id", target=["var_0"]
     )
 
-    # Storing the generated results
     example_dict[("gluonts_PandasDataset_panel", "Panel", 1)] = pandas_dataset
     example_dict_lossy[("gluonts_PandasDataset_panel", "Panel", 1)] = False
 
@@ -329,20 +329,20 @@ if _check_soft_dependencies("gluonts", severity="none"):
     example_dict[("gluonts_ListDataset_panel", "Panel", 2)] = list_dataset
     example_dict_lossy[("gluonts_ListDataset_panel", "Panel", 2)] = True
 
-    # Creating a list of pd.DataFrames to convert to a PandasDataset
-    dfs_new = []
+    # Beginning example tests for PandasDataset
+    df = example_dict[("pd-multiindex", "Panel", 2)]
 
-    for df in dfs:
-        dfs_new.append(df.reset_index().melt(id_vars=df.index.names))
+    df = df.assign(
+        series_id=[0, 0, 0],
+        timepoints=pd.date_range(start="2023-01-01", periods=len(df), freq="D"),
+    ).set_index(["series_id", "timepoints"])
 
-    # Utilizing conversion function
-    pandas_dataset = convert_pandas_collection_to_pandasDataset(
-        dfs_new, timestamp="timepoints", freq="D", target="value"
+    pandas_dataset = convert_pandas_multiindex_to_pandasDataset(
+        df, item_id="series_id", target=["var_0"]
     )
 
-    # Storing the generated results
     example_dict[("gluonts_PandasDataset_panel", "Panel", 2)] = pandas_dataset
-    example_dict_lossy[("gluonts_PandasDataset_panel", "Panel", 2)] = False
+    example_dict_lossy[("gluonts_PandasDataset_panel", "Panel", 2)] = True
 
 example_dict_metadata[("Panel", 2)] = {
     "is_univariate": True,
