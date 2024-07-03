@@ -8,7 +8,6 @@ __author__ = ["James-Large", "ABostrom", "TonyBagnall", "aurunmpegasus", "achiev
 __all__ = ["BaseDeepClassifier"]
 
 import os
-from abc import ABC, abstractmethod
 
 import numpy as np
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
@@ -19,7 +18,7 @@ from sktime.classification.base import BaseClassifier
 from sktime.utils.dependencies import _check_soft_dependencies
 
 
-class BaseDeepClassifier(BaseClassifier, ABC):
+class BaseDeepClassifier(BaseClassifier):
     """Abstract base class for deep learning time series classifiers.
 
     The base classifier provides a deep learning default method for
@@ -42,7 +41,6 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         "python_dependencies": "tensorflow",
     }
 
-    @abstractmethod
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
 
@@ -58,7 +56,7 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         -------
         A compiled Keras Model
         """
-        ...
+        raise RuntimeError("abstract method")
 
     def summary(self):
         """Summary function to return the losses/metrics for model fit.
