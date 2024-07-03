@@ -609,11 +609,6 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         if isinstance(f, _DelegatedForecaster):
             return None
 
-        # we skip the _DelegatedForecaster, since it implements delegation methods
-        #   which may look like the method is implemented, but in fact it is not
-        if isinstance(f, _DelegatedForecaster):
-            return None
-
         # we skip the PytorchForecastingNBeats,
         # since the pytorch forecasting adapter class inplements _predict_quantiles
         # but PytorchForecastingNBeats can not perform quantile forecast
