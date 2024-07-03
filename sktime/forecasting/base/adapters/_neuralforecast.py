@@ -47,6 +47,11 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         print processing steps during fit
     verbose_predict : bool (default=False)
         print processing steps during predict
+    broadcasting : bool (default=True)
+        multiindex data input will be broadcasted to single series, and for each single series,
+        one copy of this forecaster will try to fit and predict on it. The broadcasting is
+        happening inside automatically, from the outerside api perspective, the input and
+        output are the same, only one multiindex output from `predict`.
 
     Notes
     -----
@@ -90,6 +95,7 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         futr_exog_list: Optional[List[str]] = None,
         verbose_fit: bool = False,
         verbose_predict: bool = False,
+        broadcasting: bool = True,
     ) -> None:
         self.freq = freq
         self.local_scaler_type = local_scaler_type
@@ -98,6 +104,7 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
 
         self.verbose_fit = verbose_fit
         self.verbose_predict = verbose_predict
+        self.broadcasting = broadcasting
 
         super().__init__()
 
@@ -111,6 +118,13 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         self.needs_X = self.algorithm_exogenous_support and bool(self.futr_exog_list)
 
         self.set_tags(**{"ignores-exogeneous-X": not self.needs_X})
+        if self.broadcasting:
+            self.set_tags(
+                **{
+                    "y_inner_mtype": "pd.Series",
+                    "X_inner_mtype": "pd.DataFrame",
+                }
+            )
 
     @functools.cached_property
     @abc.abstractmethod
@@ -403,6 +417,14 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         X : sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
+            If ``y`` is not passed (not performing global forecasting), ``X`` should
+            only contain the time points to be predicted.
+            If ``y`` is passed (performing global forecasting), ``X`` must contain
+            all historical values and the time points to be predicted.
+        y : sktime time series object, optional (default=None)
+            Historical values of the time series that should be predicted.
+            If not None, global forecasting will be performed.
+            Only pass the historical values not the time points to be predicted.
 
         Returns
         -------
@@ -413,6 +435,18 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         Notes
         -----
         This method does not use ``fh``, the one passed during ``fit`` takes precedence.
+
+        If ``y`` is not None, global forecast will be performed.
+        In global forecast mode,
+        ``X`` should contain all historical values and the time points to be predicted,
+        while ``y`` should only contain historical values
+        not the time points to be predicted.
+
+        If ``y`` is None, non global forecast will be performed.
+        In non global forecast mode,
+        ``X`` should only contain the time points to be predicted,
+        while ``y`` should only contain historical values
+        not the time points to be predicted.
         """
         del fh  # to avoid being detected as unused by ``vulture`` etc.
 

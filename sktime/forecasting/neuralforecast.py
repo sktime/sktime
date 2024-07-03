@@ -47,6 +47,11 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         print processing steps during fit
     verbose_predict : bool (default=False)
         print processing steps during predict
+    broadcasting : bool (default=True)
+        multiindex data input will be broadcasted to single series, and for each single series,
+        one copy of this forecaster will try to fit and predict on it. The broadcasting is
+        happening inside automatically, from the outerside api perspective, the input and
+        output are the same, only one multiindex output from `predict`.
     input_size : int (default=-1)
         maximum sequence length for truncated train backpropagation
 
@@ -178,6 +183,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         futr_exog_list: Optional[List[str]] = None,
         verbose_fit: bool = False,
         verbose_predict: bool = False,
+        broadcasting: bool = True,
         input_size: int = -1,
         inference_input_size: int = -1,
         encoder_n_layers: int = 2,
@@ -238,6 +244,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
             futr_exog_list=futr_exog_list,
             verbose_fit=verbose_fit,
             verbose_predict=verbose_predict,
+            broadcasting=broadcasting,
         )
 
         # initiate internal variables to avoid AttributeError in future
@@ -424,6 +431,11 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         print processing steps during fit
     verbose_predict : bool (default=False)
         print processing steps during predict
+    broadcasting : bool (default=True)
+        multiindex data input will be broadcasted to single series, and for each single series,
+        one copy of this forecaster will try to fit and predict on it. The broadcasting is
+        happening inside automatically, from the outerside api perspective, the input and
+        output are the same, only one multiindex output from `predict`.
     input_size : int (default=-1)
         maximum sequence length for truncated train backpropagation
 
@@ -549,6 +561,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         futr_exog_list: Optional[List[str]] = None,
         verbose_fit: bool = False,
         verbose_predict: bool = False,
+        broadcasting: bool = True,
         input_size: int = -1,
         inference_input_size: int = -1,
         encoder_n_layers: int = 2,
@@ -607,6 +620,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
             futr_exog_list=futr_exog_list,
             verbose_fit=verbose_fit,
             verbose_predict=verbose_predict,
+            broadcasting=broadcasting,
         )
 
         self._trainer_kwargs = None
