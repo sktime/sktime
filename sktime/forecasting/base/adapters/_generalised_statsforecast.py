@@ -6,6 +6,7 @@ from warnings import warn
 import pandas
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.utils.adapters.forward import _clone_fitted_params
 
 __all__ = ["_GeneralisedStatsForecastAdapter", "StatsForecastBackAdapter"]
 __author__ = ["yarnabrina", "arnaujc91", "luca-miniati"]
@@ -166,6 +167,9 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
             X_fit_input = X.to_numpy(copy=False)
 
         self._forecaster.fit(y_fit_input, X=X_fit_input)
+
+        # clone fitted parameters to self
+        _clone_fitted_params(self, self._forecaster, overwrite=False)
 
         return self
 
