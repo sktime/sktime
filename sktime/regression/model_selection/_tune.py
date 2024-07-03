@@ -420,17 +420,20 @@ class TSRGridSearchCV(_DelegatedRegressor):
         """
         from sklearn.metrics import r2_score
 
+        from sktime.dists_kernels import AggrDist, ScipyDist
         from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
 
+        mean_eucl_tsdist = AggrDist(ScipyDist(metric="euclidean"))
+        mean_cb_tsdist = AggrDist(ScipyDist(metric="cityblock"))
+
         param1 = {
-            "estimator": KNeighborsTimeSeriesRegressor(distance="euclidean"),
+            "estimator": KNeighborsTimeSeriesRegressor(distance=mean_eucl_tsdist),
             "param_grid": {"n_neighbors": [1, 3, 5]},
-            "scoring": r2_score,
         }
 
         param2 = {
-            "estimator": KNeighborsTimeSeriesRegressor(distance="euclidean"),
-            "param_grid": {"algorithm": ["ball_tree", "kd_tree", "brute"]},
+            "estimator": KNeighborsTimeSeriesRegressor(distance=mean_cb_tsdist),
+            "param_grid": {"distance__metric": ["euclidean", "cityblock"]},
             "scoring": r2_score,
         }
 
