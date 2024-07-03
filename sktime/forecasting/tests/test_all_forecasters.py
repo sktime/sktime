@@ -1200,13 +1200,16 @@ def _check_predict_proba(pred_dist, y_test, fh_int):
     assert obj_type == "distribution"
 
     pred_cols = pred_dist.columns
+    try:
+        pred_index = pred_dist.sigma.iloc[
+            : 1 if isinstance(fh_int, int) else len(fh_int)
+        ].index.get_level_values(len(pred_dist.index.names) - 1)
+    except AttributeError:
+        pred_index = pred_dist.index
 
     # check time index
     cutoff = get_cutoff(y_test, return_index=True)
-    index_pred = pred_dist.sigma.iloc[
-        : 1 if isinstance(fh_int, int) else len(fh_int)
-    ].index.get_level_values(len(pred_dist.index.names) - 1)
-    _assert_correct_pred_time_index(index_pred, cutoff, fh_int)
+    _assert_correct_pred_time_index(pred_index, cutoff, fh_int)
 
     # check columns
     if isinstance(y_test, pd.Series):
