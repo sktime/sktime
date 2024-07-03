@@ -1797,7 +1797,9 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         if isinstance(self.param_grid, Mapping):
             # wrap dictionary in a singleton list to support either dict
             # or list of dicts
-            self.param_grid = [self.param_grid]
+            self._param_grid = [self.param_grid]
+        else:
+            self._param_grid = self.param_grid
 
         results = self._run_search(
             y,
@@ -1909,7 +1911,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
 
         for (
             param_grid_dict
-        ) in self.param_grid:  # Assuming self.param_grid is now a list of dicts
+        ) in self._param_grid:  # Assuming self._param_grid is now a list of dicts
             study = optuna.create_study(direction="minimize")
             meta = {}
             meta["forecaster"] = self.forecaster
