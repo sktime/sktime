@@ -273,13 +273,13 @@ if _check_soft_dependencies("gluonts", severity="none"):
         return convert_pandas_to_listDataset(obj, is_single=True)
 
     # Storing functions in convert_dict
-    convert_dict[
-        ("pd.DataFrame", "gluonts_ListDataset_series", "Series")
-    ] = convert_pandas_to_gluonts_listDataset
+    convert_dict[("pd.DataFrame", "gluonts_ListDataset_series", "Series")] = (
+        convert_pandas_to_gluonts_listDataset
+    )
 
-    convert_dict[
-        ("gluonts_ListDataset_series", "pd.DataFrame", "Series")
-    ] = convert_gluonts_listDataset_to_pandas
+    convert_dict[("gluonts_ListDataset_series", "pd.DataFrame", "Series")] = (
+        convert_gluonts_listDataset_to_pandas
+    )
 
     # Extending conversions
     _extend_conversions(
