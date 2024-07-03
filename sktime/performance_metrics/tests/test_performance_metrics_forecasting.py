@@ -48,6 +48,7 @@ from sktime.performance_metrics.forecasting import (
     relative_loss,
 )
 from sktime.performance_metrics.tests._config import RANDOM_SEED
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.series import _make_series
 
 # For multiple comparisons of equality between functions and classes
@@ -388,6 +389,10 @@ def _call_metrics(metric_func, metric_class, y_true, y_pred, y_train, y_pred_ben
     return function_metric, class_metric
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 @pytest.mark.parametrize("metric_func_name", LOSS_RESULTS.keys())
 @pytest.mark.parametrize("n_test_case", [1, 2, 3])
 def test_univariate_loss_expected_zero(n_test_case, metric_func_name):
@@ -423,6 +428,10 @@ def test_univariate_loss_expected_zero(n_test_case, metric_func_name):
     )
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 @pytest.mark.parametrize("metric_func_name", LOSS_RESULTS.keys())
 @pytest.mark.parametrize("n_test_case", [1, 2, 3])
 def test_univariate_loss_against_expected_value(n_test_case, metric_func_name):
@@ -459,6 +468,10 @@ def test_univariate_loss_against_expected_value(n_test_case, metric_func_name):
     )
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 @pytest.mark.parametrize("metric_func_name", LOSS_RESULTS.keys())
 @pytest.mark.parametrize("random_state", RANDOM_STATES)
 def test_univariate_metric_function_class_equality(metric_func_name, random_state):
@@ -485,6 +498,10 @@ def test_univariate_metric_function_class_equality(metric_func_name, random_stat
     )
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 @pytest.mark.parametrize("random_state", RANDOM_STATES)
 @pytest.mark.parametrize("metric_func_name", LOSS_RESULTS.keys())
 def test_univariate_function_output_type(metric_func_name, random_state):
@@ -506,6 +523,10 @@ def test_univariate_function_output_type(metric_func_name, random_state):
     )
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 @pytest.mark.parametrize("metric_func_name", LOSS_RESULTS.keys())
 def test_y_true_y_pred_inconsistent_n_outputs_raises_error(metric_func_name):
     """Error should be raised when y_true and y_pred have different number of output."""
@@ -525,6 +546,10 @@ def test_y_true_y_pred_inconsistent_n_outputs_raises_error(metric_func_name):
         metric_func(y_true, y_pred, y_train=y_train, y_pred_benchmark=y_pred_benchmark)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 @pytest.mark.parametrize("metric_func_name", LOSS_RESULTS.keys())
 def test_y_true_y_pred_inconsistent_n_timepoints_raises_error(metric_func_name):
     """Error should be raised if input variables have inconsistent number of samples."""
@@ -541,6 +566,10 @@ def test_y_true_y_pred_inconsistent_n_timepoints_raises_error(metric_func_name):
         metric_func(y_true, y_pred, y_train=y_train, y_pred_benchmark=y_pred_benchmark)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 @pytest.mark.parametrize("metric_func_name", LOSS_RESULTS.keys())
 def test_y_true_y_pred_inconsistent_n_variables_raises_error(metric_func_name):
     """Error should be raised when y_true and y_pred have different number of output."""
