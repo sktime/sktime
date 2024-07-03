@@ -25,7 +25,8 @@ class StatsModelsARIMA(_StatsModelsAdapter):
     These are implementations of the same underlying model, (S)ARIMA(X),
     but with different
     fitting strategies, fitted parameters, and slightly differring behaviour.
-    Users should refer to the statsmodels documentation for further details.
+    Users should refer to the statsmodels documentation for further details:
+    https://www.statsmodels.org/dev/examples/notebooks/generated/statespace_sarimax_faq.html  # noqa: E501
 
     Parameters
     ----------
