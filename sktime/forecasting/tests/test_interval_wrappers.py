@@ -14,7 +14,7 @@ from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.naive import NaiveForecaster, NaiveVariance
 from sktime.performance_metrics.forecasting.probabilistic import PinballLoss
 from sktime.split import ExpandingWindowSplitter, SlidingWindowSplitter
-from sktime.tests.test_switch import run_test_for_class
+from sktime.tests.test_switch import run_test_for_class, run_test_module_changed
 
 INTERVAL_WRAPPERS = [ConformalIntervals, NaiveVariance]
 CV_SPLITTERS = [SlidingWindowSplitter, ExpandingWindowSplitter]
@@ -24,7 +24,8 @@ MTYPES_SERIES = scitype_to_mtype("Series", softdeps="present")
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(INTERVAL_WRAPPERS),
+    not run_test_for_class(INTERVAL_WRAPPERS)
+    and not run_test_module_changed("sktime.datatypes"),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("mtype", MTYPES_SERIES)
@@ -43,6 +44,9 @@ def test_wrapper_series_mtype(wrapper, override_y_mtype, mtype):
     We do this with a trick: the vanilla NaiveForecaster can accept both; we mimic a
     "pd.DataFrame only" forecaster by restricting its y_inner_mtype tag to pd.Series.
     """
+    if mtype == "gluonts_ListDataset_series":
+        return None
+
     y = load_airline()
     y = convert_to(y, to_type=mtype)
 
