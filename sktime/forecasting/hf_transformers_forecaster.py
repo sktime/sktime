@@ -23,12 +23,12 @@ if _check_soft_dependencies("transformers", severity="none"):
     import transformers
     from transformers import AutoConfig, Trainer, TrainingArguments
 
-from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 
 __author__ = ["benheid"]
 
 
-class HFTransformersForecaster(BaseForecaster):
+class HFTransformersForecaster(_BaseGlobalForecaster):
     """
     Forecaster that uses a huggingface model for forecasting.
 
@@ -107,6 +107,7 @@ class HFTransformersForecaster(BaseForecaster):
         ],
         "capability:insample": False,
         "capability:pred_int:insample": False,
+        "capability:global_forecasting": True,
     }
 
     def __init__(
@@ -256,7 +257,7 @@ class HFTransformersForecaster(BaseForecaster):
         )
         trainer.train()
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X=None, y=None):
         if self.deterministic:
             transformers.set_seed(42)
 
@@ -265,19 +266,45 @@ class HFTransformersForecaster(BaseForecaster):
         fh = fh.to_relative(self.cutoff)
 
         self.model.eval()
-
-        if isinstance(self._y.index, pd.MultiIndex):
-            hist = _frame2numpy(self._y).squeeze(2)
+        hist_y = y if self._global_forecasting else self._y
+        if isinstance(hist_y.index, pd.MultiIndex):
+            hist = _frame2numpy(hist_y).squeeze(2)
         else:
-            hist = self._y.values.reshape((1, -1))
+            hist = hist_y.values.reshape((1, -1))
 
         if X is not None:
-            if isinstance(self._y.index, pd.MultiIndex):
-                hist_x = _frame2numpy(self._X)
-                x_ = _frame2numpy(X)
+            if isinstance(hist_y.index, pd.MultiIndex):
+                if not self._global_forecasting:
+                    hist_x = _frame2numpy(self._X)
+                    x_ = _frame2numpy(X)
+                else:
+                    len_levels = len_levels = len(X.index.names)
+                    hist_x = _frame2numpy(
+                        X.groupby(level=list(range(len_levels - 1))).apply(
+                            lambda x: x.droplevel(list(range(len_levels - 1))).iloc[
+                                : -self.model.config.prediction_length
+                            ]
+                        )
+                    )
+                    x_ = _frame2numpy(
+                        X.groupby(level=list(range(len_levels - 1))).apply(
+                            lambda x: x.droplevel(list(range(len_levels - 1))).iloc[
+                                -self.model.config.prediction_length :
+                            ]
+                        )
+                    )
             else:
-                hist_x = self._X.values.reshape((1, -1, self._X.shape[-1]))
-                x_ = X.values.reshape((1, -1, self._X.shape[-1]))
+                if not self._global_forecasting:
+                    hist_x = self._X.values.reshape((1, -1, self._X.shape[-1]))
+                    x_ = X.values.reshape((1, -1, self._X.shape[-1]))
+                else:
+                    hist_x = X.iloc[
+                        : -self.model.config.prediction_length
+                    ].values.reshape((1, -1, X.shape[-1]))
+                    x_ = X.iloc[-self.model.config.prediction_length :].values.reshape(
+                        (1, -1, X.shape[-1])
+                    )
+
             if x_.shape[1] < self.model.config.prediction_length:
                 # TODO raise exception here?
                 x_ = np.resize(
@@ -317,11 +344,11 @@ class HFTransformersForecaster(BaseForecaster):
             ),
         )
 
-        if isinstance(self._y.index, pd.MultiIndex):
+        if isinstance(hist_y.index, pd.MultiIndex):
             pred = pred.sequences.mean(dim=1).detach().cpu().numpy()
 
             ins = np.array(
-                list(np.unique(self._y.index.droplevel(-1)).repeat(pred.shape[1]))
+                list(np.unique(hist_y.index.droplevel(-1)).repeat(pred.shape[1]))
             )
             ins = [ins[..., i] for i in range(ins.shape[-1])] if ins.ndim > 1 else [ins]
 
@@ -334,13 +361,13 @@ class HFTransformersForecaster(BaseForecaster):
 
             index = pd.MultiIndex.from_arrays(
                 ins + [idx],
-                names=self._y.index.names,
+                names=hist_y.index.names,
             )
 
             pred = pd.DataFrame(
                 pred.flatten(),
                 index=index,
-                columns=self._y.columns,
+                columns=hist_y.columns,
             )
 
             absolute_horizons = fh.to_absolute_index(self.cutoff)
@@ -357,7 +384,7 @@ class HFTransformersForecaster(BaseForecaster):
                 index=ForecastingHorizon(range(1, len(pred) + 1), freq=self.fh.freq)
                 .to_absolute(self._cutoff)
                 ._values,
-                name=self._y.name,
+                name=hist_y.name,
             )
             pred = pred.loc[fh.to_absolute(self.cutoff)._values]
         return pred
