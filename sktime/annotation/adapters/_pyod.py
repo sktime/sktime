@@ -7,7 +7,6 @@ from sklearn.base import clone
 
 from sktime.annotation.base._base import BaseSeriesAnnotator
 from sktime.utils.dependencies import _check_soft_dependencies
-from sktime.utils.warnings import warn
 
 __author__ = ["mloning", "satya-pattnaik", "fkiraly"]
 

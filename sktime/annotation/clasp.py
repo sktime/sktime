@@ -23,7 +23,6 @@ import pandas as pd
 
 from sktime.transformations.series.clasp import ClaSPTransformer
 from sktime.utils.validation.series import check_series
-from sktime.utils.warnings import warn
 
 
 def find_dominant_window_sizes(X, offset=0.05):
