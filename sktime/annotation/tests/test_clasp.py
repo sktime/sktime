@@ -46,9 +46,9 @@ def test_clasp_dense():
     ts, period_size, cps = load_gun_point_segmentation()
 
     # compute a ClaSP segmentation
-    clasp = ClaSPSegmentation(period_size, n_cps=1, fmt="dense")
+    clasp = ClaSPSegmentation(period_size, n_cps=1)
     clasp.fit(ts)
-    segmentation = clasp.predict(ts)
+    segmentation = clasp.transform(ts)
 
     profile = clasp.predict_scores(ts)
 
