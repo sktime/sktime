@@ -18,9 +18,16 @@ available on GitHub.
 For upcoming changes and next releases, see our `milestones <https://github.com/sktime/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
 For our long-term plan, see our :ref:`roadmap`.
 
+
 Version 0.31.0 - 2024-07-04
 ---------------------------
 
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``numpy`` (core dependency) bounds have been updated to ``<2.1,>=1.21``
+
+* ``skpro`` (soft dependency) bounds have been updated to ``>=2,<2.5.0``
 
 
 Version 0.30.2 - 2024-07-04
