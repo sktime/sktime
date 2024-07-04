@@ -608,6 +608,6 @@ def _to_multiindex(data):
         index=pd.MultiIndex.from_product(
             [["h0_0"], data.index], names=["h0", data.index.name]
         ),
-        columns=data.name if isinstance(data, pd.Series) else data.columns,
+        columns=[data.name] if isinstance(data, pd.Series) else data.columns,
     )
     return res
