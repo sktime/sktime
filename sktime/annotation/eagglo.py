@@ -1,7 +1,7 @@
 """E-Agglo: agglomerative clustering algorithm that preserves observation order."""
 
 import warnings
-from typing import Callable, Dict, List, Tuple
+from typing import Callable
 
 import numpy as np
 import pandas as pd
@@ -317,7 +317,7 @@ class EAgglo(BaseTransformer):
 
         return fit
 
-    def _find_closest(self, K: int) -> Tuple[int, int]:
+    def _find_closest(self, K: int) -> tuple[int, int]:
         """Determine which clusters will be merged_, for K clusters.
 
         Greedily optimize the goodness-of-fit statistic by merging the pair of adjacent
@@ -410,7 +410,7 @@ class EAgglo(BaseTransformer):
         )
 
     @classmethod
-    def get_test_params(cls) -> List[Dict]:
+    def get_test_params(cls) -> list[dict]:
         """Test parameters."""
         return [
             {"alpha": 1.0, "penalty": None},

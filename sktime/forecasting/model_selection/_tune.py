@@ -10,7 +10,7 @@ __all__ = [
 ]
 
 from collections.abc import Iterable, Mapping, Sequence
-from typing import Dict, List, Optional, Union
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -1162,12 +1162,12 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         self,
         forecaster,
         cv: BaseSplitter,
-        param_distributions: Union[Dict, List[Dict]],
+        param_distributions: Union[dict, list[dict]],
         n_iter: int = 10,
         n_points: Optional[int] = 1,
         random_state: Optional[int] = None,
-        scoring: Optional[List[BaseMetric]] = None,
-        optimizer_kwargs: Optional[Dict] = None,
+        scoring: Optional[list[BaseMetric]] = None,
+        optimizer_kwargs: Optional[dict] = None,
         strategy: Optional[str] = "refit",
         refit: bool = True,
         verbose: int = 0,
