@@ -1,6 +1,6 @@
 # libraries distributed with `sktime`
 
-This folder contains libraries directly distibuted with, and maintained by, `sktime`.
+This folder contains libraries directly distributed with, and maintained by, `sktime`.
 
 * `pykalman` - a package implementing the Kálmán Filter and variants.
   Unofficial fork of abandoned package from June 2024 onwards,
@@ -8,3 +8,12 @@ This folder contains libraries directly distibuted with, and maintained by, `skt
 
 *``vmdpy` - a package implementing Variational Mode Decomposition.
   Official fork, `vmdpy` is maintained in `sktime` since August 2023.
+
+
+# Snippets from other libraries:
+
+This folder contains also some snippets from other libraries
+
+* Parts of the `EnbPI` class from aws-fortuna.
+  The installation of the original package is not working due to dependency
+  mismatches.
