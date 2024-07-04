@@ -69,6 +69,8 @@ def forecasting_validation(
     """
     y = dataset_loader()
     results = {}
+    y_pred = {}
+    y_test = {}
     scores_df = evaluate(
         forecaster=estimator,
         y=y,
@@ -76,14 +78,17 @@ def forecasting_validation(
         scoring=scorers,
         backend=backend,
         backend_params=backend_params,
+        return_data=True,
     )
     for scorer in scorers:
         scorer_name = scorer.name
         for ix, row in scores_df.iterrows():
             results[f"{scorer_name}_fold_{ix}_test"] = row[f"test_{scorer_name}"]
+            y_pred[f"{scorer_name}_fold_{ix}"] = row["y_pred"]
+            y_test[f"{scorer_name}_fold_{ix}"] = row["y_test"]
         results[f"{scorer_name}_mean"] = scores_df[f"test_{scorer_name}"].mean()
         results[f"{scorer_name}_std"] = scores_df[f"test_{scorer_name}"].std()
-    return results
+    return results, y_pred, y_test
 
 
 def _factory_forecasting_validation(

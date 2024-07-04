@@ -130,7 +130,7 @@ class BaseBenchmark:
             id=task_id, entry_point=task_entrypoint, kwargs=task_kwargs
         )
 
-    def run(self, output_file: str) -> pd.DataFrame:
+    def run(self, output_file: str, artefacts_store_dir: str = None) -> pd.DataFrame:
         """Run the benchmark.
 
         Parameters
@@ -138,9 +138,18 @@ class BaseBenchmark:
         output_file : str
             Path to write results output file to.
 
+        artefacts_store_dir : str, optional
+            Directory to store artefacts, e.g., forecasts, if None, no artefacts
+            are stored.
+
         Returns
         -------
         pandas DataFrame of results
         """
-        results_df = self.kotsu_run(self.estimators, self.validations, output_file)
+        results_df = self.kotsu_run(
+            self.estimators,
+            self.validations,
+            output_file,
+            artefacts_store_dir=artefacts_store_dir,
+        )
         return results_df

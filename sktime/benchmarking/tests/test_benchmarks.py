@@ -18,7 +18,7 @@ def factory_estimator_class_task(**kwargs) -> Callable:
 
         Used as simple task for testing purposes.
         """
-        return {"estimator_class": str(estimator.__class__)}
+        return {"estimator_class": str(estimator.__class__)}, [], []
 
     return estimator_class_task
 
