@@ -7,6 +7,7 @@ __all__ = [
     "ForecastingGridSearchCV",
     "ForecastingRandomizedSearchCV",
     "ForecastingSkoptSearchCV",
+    "ForecastingOptunaSearchCV",
 ]
 
 from collections.abc import Iterable, Mapping, Sequence
