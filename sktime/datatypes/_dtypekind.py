@@ -1,3 +1,11 @@
+"""Class definition of DtypeKind and related utility functions.
+
+Enum values of DtypeKind are in accordance with the dataframe interchange protocol.
+Utility functions to help convert dtypes to corresponding DtypeKind values.
+"""
+
+__author__ = ["Abhay-Lejith"]
+
 from enum import IntEnum
 
 import numpy as np
@@ -44,22 +52,29 @@ class DtypeKind(IntEnum):
 
 
 def _pandas_dtype_to_kind(col_dtypes):
-    for i, dtype in enumerate(col_dtypes):
-        if is_float_dtype(dtype):
-            col_dtypes[i] = DtypeKind.FLOAT
-        elif is_signed_integer_dtype(dtype):
-            col_dtypes[i] = DtypeKind.INT
-        elif is_unsigned_integer_dtype(dtype):
-            col_dtypes[i] = DtypeKind.UINT
-        elif dtype == "object" or dtype == "category":
-            col_dtypes[i] = DtypeKind.CATEGORICAL
-        elif is_bool_dtype(dtype):
-            col_dtypes[i] = DtypeKind.BOOL
-        elif is_datetime64_any_dtype(dtype):
-            col_dtypes[i] = DtypeKind.DATETIME
-        elif is_string_dtype(dtype):
-            col_dtypes[i] = DtypeKind.STRING
-    return col_dtypes
+    """Convert pandas dtypes to enum DtypeKind values."""
+    if isinstance(col_dtypes, list):
+        return [_pandas_dtype_to_kind(x) for x in col_dtypes]
+
+    if is_float_dtype(col_dtypes):
+        return DtypeKind.FLOAT
+    elif is_signed_integer_dtype(col_dtypes):
+        return DtypeKind.INT
+    elif is_unsigned_integer_dtype(col_dtypes):
+        return DtypeKind.UINT
+    elif col_dtypes == "object" or col_dtypes == "category":
+        return DtypeKind.CATEGORICAL
+    elif is_bool_dtype(col_dtypes):
+        return DtypeKind.BOOL
+    elif is_datetime64_any_dtype(col_dtypes):
+        return DtypeKind.DATETIME
+    elif is_string_dtype(col_dtypes):
+        return DtypeKind.STRING
+    else:
+        raise TypeError(
+            f"""Dtype of columns can be: INT, UINT, FLOAT, BOOL, STRING,
+                        DATETIME, CATEGORICAL. Found dtype: {col_dtypes}"""
+        )
 
 
 # function for series scitype
