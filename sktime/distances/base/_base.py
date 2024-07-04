@@ -1,6 +1,6 @@
 __author__ = ["chrisholder", "TonyBagnall"]
 
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from typing import Callable, NamedTuple
 
 import numpy as np
@@ -12,7 +12,7 @@ from sktime.distances.base._types import (
 )
 
 
-class NumbaDistance(ABC):
+class NumbaDistance:
     """Abstract class to define a numba compatible distance metric."""
 
     def distance(self, x: np.ndarray, y: np.ndarray, **kwargs: dict) -> float:

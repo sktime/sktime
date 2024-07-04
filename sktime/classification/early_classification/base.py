@@ -26,7 +26,7 @@ __all__ = [
 ]
 __author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst"]
 
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 
 import numpy as np
 
@@ -34,7 +34,7 @@ from sktime.base import BaseEstimator
 from sktime.classification import BaseClassifier
 
 
-class BaseEarlyClassifier(BaseEstimator, ABC):
+class BaseEarlyClassifier(BaseEstimator):
     """Abstract base class for early time series classifiers.
 
     The base classifier specifies the methods and method signatures that all
