@@ -1,14 +1,13 @@
-import numpy as np
 import pandas as pd
 
 
-def convert_pandas_to_listDataset(pandas_obj, is_single: bool = False):
+def convert_pandas_to_listDataset(pd_dataframe: pd.DataFrame, is_single: bool = False):
     """Convert a given pandas DataFrame to a gluonTS ListDataset.
 
     Parameters
     ----------
-    pandas_obj
-        A valid pandas object (DataFrame or Series)
+    pd_dataframe : pd.DataFrame
+        A valid pandas DataFrame
 
     is_single : bool (default=False)
         True if there is only 1 time series, false if there are multiple series
@@ -49,29 +48,16 @@ def convert_pandas_to_listDataset(pandas_obj, is_single: bool = False):
     from gluonts.dataset.common import ListDataset
     from gluonts.dataset.field_names import FieldName
 
-    if not isinstance(pandas_obj, pd.Series) and not isinstance(
-        pandas_obj, pd.DataFrame
-    ):
-        raise ValueError("`pandas_obj` must either be a pd.DataFrame or a pd.Series!")
-
-    if isinstance(pandas_obj, pd.Series):
-        return ListDataset(pandas_obj, freq="D", one_dim_target=True)
-
     # Assert the validity of the is_single parameter
-    if is_single and pandas_obj.shape[0] > 1:
-        time_index = pandas_obj.index.name
-
-        pandas_obj["series_id"] = np.repeat(0, pandas_obj.shape[0])
-
-        pandas_obj = pandas_obj.reset_index().set_index(["series_id", time_index])
-        pandas_obj = pandas_obj.sort_index()
+    if is_single and pd_dataframe.shape[0] > 1:
+        raise ValueError("`is_single` is True but the DataFrame has multiple rows!")
 
     # This list will store all individual time series
     dataset = []
 
     # By maintaining 2 levels in the DataFrame's indices
     # we can access each series and its timestep values with ease!
-    for _, data in pandas_obj.groupby(level=0):
+    for _, data in pd_dataframe.groupby(level=0):
         # Getting the starting time for each series (assumed to be min value)
         start_datetime = data.index.get_level_values(level=1).min()
 
@@ -87,8 +73,8 @@ def convert_pandas_to_listDataset(pandas_obj, is_single: bool = False):
         )
 
     # Obtain the total amount of timesteps to assist with inferring frequency
-    n_steps = pandas_obj.index.get_level_values(level=1).nunique()
-    fr = pd.infer_freq(pandas_obj.index.get_level_values(level=1)[:n_steps])
+    n_steps = pd_dataframe.index.get_level_values(level=1).nunique()
+    fr = pd.infer_freq(pd_dataframe.index.get_level_values(level=1)[:n_steps])
 
     # Converting the dataset to a GluonTS ListDataset
     list_dataset = ListDataset(
