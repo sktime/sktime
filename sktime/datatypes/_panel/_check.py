@@ -580,6 +580,7 @@ if _check_soft_dependencies("gluonts", severity="none"):
         return _ret(True, None, metadata, return_metadata)
 
     check_dict[("gluonts_ListDataset_panel", "Panel")] = check_gluonTS_listDataset_panel
+    
 
     def check_gluonTS_pandasDataset_panel(obj, return_metadata=False, var_name="obj"):
         # Importing required libraries
@@ -630,3 +631,4 @@ if _check_soft_dependencies("gluonts", severity="none"):
     check_dict[
         ("gluonts_PandasDataset_panel", "Panel")
     ] = check_gluonTS_pandasDataset_panel
+    

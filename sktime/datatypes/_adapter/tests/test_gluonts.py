@@ -7,7 +7,9 @@ from sktime.datatypes._adapter.gluonts import (
     convert_pandas_multiindex_to_pandasDataset,
     convert_pandas_series_to_pandasDataset,
     convert_pandas_to_listDataset,
+    convert_pandas_to_listDataset
 )
+
 from sktime.utils.dependencies import _check_soft_dependencies
 
 
@@ -55,7 +57,7 @@ def test_pandas_to_ListDataset(pandas_df):
         np.testing.assert_allclose(group_data.values, generated_list[idx]["target"])
         idx += 1
 
-
+        
 @pytest.mark.skipif(
     not _check_soft_dependencies("gluonts", severity="none"),
     reason="skip test if required soft dependency for GluonTS not available",

@@ -1129,6 +1129,7 @@ if _check_soft_dependencies("gluonts", severity="none"):
         convert_pandas_multiindex_to_pandasDataset,
         convert_pandas_to_listDataset,
         convert_pandasDataset_to_pandas,
+        convert_pandas_to_listDataset,
     )
 
     # Utilizing functions defined in _adapter/gluonts.py
@@ -1161,6 +1162,7 @@ if _check_soft_dependencies("gluonts", severity="none"):
         ("gluonts_PandasDataset_panel", "pd-multiindex", "Panel")
     ] = convert_gluonts_pandasDataset_to_pandas_multiindex
 
+
     # Extending conversions
     _extend_conversions(
         "gluonts_ListDataset_panel",
@@ -1168,20 +1170,6 @@ if _check_soft_dependencies("gluonts", severity="none"):
         convert_dict,
         mtype_universe=MTYPE_LIST_PANEL,
     )
-
-    # _extend_conversions(
-    #     "gluonts_PandasDataset_panel",
-    #     "pd-wide",
-    #     convert_dict,
-    #     mtype_universe=MTYPE_LIST_PANEL,
-    # )
-
-    # _extend_conversions(
-    #     "gluonts_PandasDataset_panel",
-    #     "pd-long",
-    #     convert_dict,
-    #     mtype_universe=MTYPE_LIST_PANEL,
-    # )
 
     _extend_conversions(
         "gluonts_PandasDataset_panel",

@@ -94,6 +94,7 @@ if _check_soft_dependencies("gluonts", severity="none"):
     from sktime.datatypes._adapter.gluonts import (
         convert_pandas_multiindex_to_pandasDataset,
         convert_pandas_to_listDataset,
+        convert_pandas_to_listDataset
     )
 
     df = example_dict[("pd-multiindex", "Panel", 0)]
