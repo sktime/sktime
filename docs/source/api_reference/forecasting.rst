@@ -448,6 +448,7 @@ Deep learning based forecasters
     :toctree: auto_generated/
     :template: class.rst
 
+    NeuralForecastAutoTFT
     NeuralForecastRNN
     NeuralForecastLSTM
 
