@@ -53,6 +53,12 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
           Note: If the 'peft' package is not available, a `ModuleNotFoundError` will
           be raised, indicating that the 'peft' package is required. Please install
           it using `pip install peft` to use this fit strategy.
+    broadcasting: bool (default=True)
+        multiindex data input will be broadcasted to single series.
+        For each single series, one copy of this forecaster will try to
+        fit and predict on it. The broadcasting is happening inside automatically,
+        from the outerside api perspective, the input and output are the same,
+        only one multiindex output from `predict`.
     validation_split : float, default=0.2
         Fraction of the data to use for validation
     config : dict, default={}
@@ -161,6 +167,7 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
         self,
         model_path: str,
         fit_strategy="minimal",
+        broadcasting=True,
         validation_split=0.2,
         config=None,
         training_args=None,
@@ -172,6 +179,7 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
         super().__init__()
         self.model_path = model_path
         self.fit_strategy = fit_strategy
+        self.broadcasting = broadcasting
         self.validation_split = validation_split
         self.config = config
         self._config = config if config is not None else {}
@@ -184,6 +192,15 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
         self.callbacks = callbacks
         self._callbacks = callbacks
         self.peft_config = peft_config
+
+        if self.broadcasting:
+            self.set_tags(
+                **{
+                    "y_inner_mtype": "pd.Series",
+                    "X_inner_mtype": "pd.DataFrame",
+                    "capability:global_forecasting": False,
+                }
+            )
 
     def _fit(self, y, X, fh):
         # Load model and extract config
@@ -526,7 +543,10 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
                     "deterministic": True,
                 }
             )
-
+        params_no_broadcasting = [
+            dict(p, **{"broadcasting": False}) for p in test_params
+        ]
+        test_params.extend(params_no_broadcasting)
         return test_params
 
 
