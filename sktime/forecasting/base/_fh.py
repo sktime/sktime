@@ -6,13 +6,14 @@ __author__ = ["mloning", "fkiraly", "eenticott-shell", "khrapovs"]
 __all__ = ["ForecastingHorizon"]
 
 from functools import lru_cache
-from typing import Optional, Union
+from typing import Optional
 
 import numpy as np
 import pandas as pd
 from pandas.tseries.frequencies import to_offset
 
 from sktime.utils.datetime import _coerce_duration_to_int
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.validation import (
     array_is_int,
     array_is_timedelta_or_date_offset,
@@ -20,7 +21,6 @@ from sktime.utils.validation import (
     is_int,
     is_timedelta_or_date_offset,
 )
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.series import (
     VALID_INDEX_TYPES,
     is_in_valid_absolute_index_types,
@@ -71,7 +71,7 @@ def _delegator(method):
     return delegated
 
 
-def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
+def _check_values(values) -> pd.Index:
     """Validate forecasting horizon values.
 
     Validation checks validity and also converts forecasting horizon values
@@ -267,12 +267,7 @@ class ForecastingHorizon:
     >>> # ForecastingHorizon([1, 2, 3], dtype='int64', is_relative=True)
     """
 
-    def __new__(
-        cls,
-        values: Union[VALID_FORECASTING_HORIZON_TYPES] = None,
-        is_relative: bool = None,
-        freq=None,
-    ):
+    def __new__(cls, values=None, is_relative=None, freq=None):
         """Create a new ForecastingHorizon object."""
         # We want the ForecastingHorizon class to be an extension of the
         # pandas index, but since subclassing pandas indices is not
@@ -284,12 +279,7 @@ class ForecastingHorizon:
             setattr(cls, method, _delegator(method))
         return object.__new__(cls)
 
-    def __init__(
-        self,
-        values: Union[VALID_FORECASTING_HORIZON_TYPES] = None,
-        is_relative: Optional[bool] = True,
-        freq=None,
-    ):
+    def __init__(self, values=None, is_relative=None, freq=None):
         # coercing inputs
 
         # values to pd.Index self._values
@@ -328,12 +318,7 @@ class ForecastingHorizon:
                 raise TypeError(error_msg)
         self._is_relative = is_relative
 
-    def _new(
-        self,
-        values: Union[VALID_FORECASTING_HORIZON_TYPES] = None,
-        is_relative: bool = None,
-        freq: str = None,
-    ):
+    def _new(self, values=None, is_relative=None, freq=None):
         """Construct new ForecastingHorizon based on current object.
 
         Parameters
@@ -898,7 +883,17 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
 
         if is_timestamp:
             # coerce back to DatetimeIndex after operation
-            absolute = absolute.to_timestamp(fh._freq)
+            try:
+                absolute = absolute.to_timestamp(fh._freq)
+            # this try-except block is a workaround for what seems like a bug in pandas
+            # when trying to convert a PeriodIndex to a DatetimeIndex with a frequency
+            # of type month-begin, which should be supported, a ValueError is raised
+            # see issue #6752 for details
+            except ValueError as e:
+                if "not supported" in str(e):
+                    absolute = absolute.to_timestamp()
+                else:
+                    raise e
 
         if old_tz is not None:
             absolute = absolute.tz_localize(old_tz)

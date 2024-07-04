@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("torch", severity="none"):
     import torch
@@ -123,9 +123,6 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
         if fh is None:
             fh = self.fh
         fh = fh.to_relative(self.cutoff)
-
-        if min(fh._values) < 0:
-            raise NotImplementedError("LTSF is not supporting insample predictions.")
 
         if max(fh._values) > self.network.pred_len or min(fh._values) < 0:
             raise ValueError(

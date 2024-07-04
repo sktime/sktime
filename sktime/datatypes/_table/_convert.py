@@ -26,7 +26,7 @@ ValueError and TypeError, if requested conversion is not possible
                             (depending on conversion logic)
 """
 
-__author__ = ["fkiraly"]
+__author__ = ["fkiraly", "shlok191"]
 
 __all__ = ["convert_dict"]
 
@@ -35,7 +35,7 @@ import pandas as pd
 
 from sktime.datatypes._convert_utils._convert import _extend_conversions
 from sktime.datatypes._table._registry import MTYPE_LIST_TABLE
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 ##############################################################
 # methods to convert one machine type to another machine type

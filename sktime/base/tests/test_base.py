@@ -40,7 +40,7 @@ from copy import deepcopy
 import pytest
 
 from sktime.base import BaseEstimator, BaseObject
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 # Fixture class for testing tag system

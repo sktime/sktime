@@ -13,7 +13,7 @@ from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.registry import scitype
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.validation.series import check_series
 from sktime.utils.warnings import warn
 
@@ -700,8 +700,9 @@ class ForecastingPipeline(_Pipeline):
                 if isinstance(y, ForecastingHorizon) and requires_y:
                     y = y.to_absolute_index(self.cutoff)
                     y = pd.DataFrame(index=y)
-                else:
+                elif isinstance(y, ForecastingHorizon) and not requires_y:
                     y = None
+                # else we just pass on y
                 X = transformer.transform(X=X, y=y)
         return X
 
@@ -713,7 +714,7 @@ class ForecastingPipeline(_Pipeline):
 #     for _, _, transformer in self._iter_transformers():
 #         Zt = transformer.transform(Zt)
 #     return Zt
-
+#
 # def inverse_transform(self, Z, X=None):
 #     self.check_is_fitted()
 #     Zt = check_series(Z, enforce_multivariate=True)

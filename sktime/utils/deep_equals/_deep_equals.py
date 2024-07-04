@@ -135,15 +135,15 @@ def _csr_matrix_equals_plugin(x, y, return_msg=False, deep_equals=None):
     if type(x).__name__ != "csr_matrix":  # isinstance(x, csr_matrix):
         return None
 
-    import numpy as np
-
     ret = _make_ret(return_msg)
 
-    # csr-matrix must not be compared using np.any(x!=y)
-    if not np.allclose(x.A, y.A):
+    if x.shape != y.shape:
         return ret(False, " !=, {} != {}", [x, y])
 
-    return ret(True, "")
+    if (x != y).nnz == 0:
+        return ret(True, "")
+
+    return ret(False, " !=, {} != {}", [x, y])
 
 
 def _dask_dataframe_equals_plugin(x, y, return_msg=False, deep_equals=None):
@@ -170,7 +170,7 @@ def _dask_dataframe_equals_plugin(x, y, return_msg=False, deep_equals=None):
     if not hasattr(x, "compute"):
         return None
 
-    from sktime.utils.validation._dependencies import _check_soft_dependencies
+    from sktime.utils.dependencies import _check_soft_dependencies
 
     dask_available = _check_soft_dependencies("dask", severity="none")
 
@@ -209,7 +209,7 @@ def _polars_equals_plugin(x, y, return_msg=False):
         if unequal, returns string
     returns None if this function does not apply, i.e., x is not polars
     """
-    from sktime.utils.validation._dependencies import _check_soft_dependencies
+    from sktime.utils.dependencies import _check_soft_dependencies
 
     polars_available = _check_soft_dependencies("polars", severity="none")
 
