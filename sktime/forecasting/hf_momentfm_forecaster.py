@@ -2,10 +2,13 @@
 
 # from skbase.utils.dependencies import _check_soft_dependencies
 
+from skbase.utils.dependencies import _check_soft_dependencies
+
 from sktime.forecasting.base import BaseForecaster  # , ForecastingHorizon
 
-# if _check_soft_dependencies(["momentfm", "torch"], severity="none"):
-#     import momemtfm
+if _check_soft_dependencies(["momentfm", "torch"], severity="none"):
+    import momentfm
+    import torch
 
 
 class MomentFMForecaster(BaseForecaster):
@@ -45,10 +48,6 @@ class MomentFMForecaster(BaseForecaster):
         Recommendation is that the linear forecasting head must be trained
         Default = False
 
-    d_model : int
-        Dimensionality of the inputs into the transformer model. If d_model is None
-        then d_model is extracted from a specified transformer_backbone
-
     dropout : float
         Dropout value of the model. Values range between [0.0, 1.0]
         Default = 0.1
@@ -74,6 +73,12 @@ class MomentFMForecaster(BaseForecaster):
         d_model of a pre-trained transformer model to use. See
         SUPPORTED_HUGGINGFACE_MODELS to specify valid models to use.
         Default is 'google/flan-t5-large'. Used if d_model is None
+
+    config : dict, default = {}
+        If desired, user can pass in a config detailing all momentfm parameters
+        that they wish to set in dictionary form, so that parameters do not need
+        to be individually set. If a parameter inside a config is a
+        duplicate of one already passed in individually, it will be overwritten.
     """
 
     _tags = {
@@ -83,7 +88,7 @@ class MomentFMForecaster(BaseForecaster):
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "ignores-exogeneous-X": False,
-        "requires-fh-in-fit": False,
+        "requires-fh-in-fit": True,
         "python_dependencies": ["momentfm", "torch"],
     }
 
@@ -93,7 +98,6 @@ class MomentFMForecaster(BaseForecaster):
         freeze_encoder: True,
         freeze_embedder: True,
         freeze_head: False,
-        d_model: None,
         dropout=0.1,
         head_dropout=0.1,
         epochs=0.1,
@@ -101,13 +105,13 @@ class MomentFMForecaster(BaseForecaster):
         device="gpu",
         train_val_split=0.2,
         transformer_backbone="google/flan-t5-large",
+        config=None,
     ):
         super().__init__()
         self.pretrained_model_name_or_path = pretrained_model_name_or_path
         self.freeze_encoder = freeze_encoder
         self.freeze_embedder = freeze_embedder
         self.freeze_head = freeze_head
-        self.d_model = d_model
         self.dropout = dropout
         self.head_dropout = head_dropout
         self.epochs = epochs
@@ -115,3 +119,42 @@ class MomentFMForecaster(BaseForecaster):
         self.device = device
         self.train_val_split = train_val_split
         self.transformer_backbone = transformer_backbone
+        self.config = config
+        self._config = config if config is not None else {}
+        self.criterion = torch.nn.MSELoss()
+
+    def _fit(self, y, X, fh):
+        self._pretrained_model_name_or_path = self._config.getattr(
+            "pretrained_model_name_or_path", self.pretrained_model_name_or_path
+        )
+        self._freeze_encoder = self._config.getattr(
+            "freeze_encoder", self.freeze_encoder
+        )
+        self._freeze_embedder = self._config.getattr(
+            "freeze_embedder", self.freeze_embedder
+        )
+        self._freeze_head = self._config.getattr("freeze_head", self.freeze_head)
+        self._dropout = self._config.getattr("dropout", self.dropout)
+        self._head_dropout = self._config.getattr("head_dropout", self.head_dropout)
+        self._device = self._config.getattr("device", self.device)
+        self._transformer_backbone = self._config.getattr(
+            "transformer_backbone", self.transformer_backbone
+        )
+        self._fh = max(fh.to_relative(self.cutoff))
+        # train_split = int(len(y) * (1 - self.train_val_split))
+
+        self._model = momentfm.MOMENTPipeline.from_pretrained(
+            self._pretrained_model_name_or_path,
+            model_kwargs={
+                "task_name": "forecasting",
+                "forecast_horizon": self._fh,
+                "dropout": self._dropout,
+                "head_dropout": self._head_dropout,
+                "freeze_encoder": self._freeze_encoder,
+                "freeze_embedder": self._freeze_embedder,
+                "freeze_head": self._freeze_head,
+                "device": self._device,
+                "transformer_backbone": self._transformer_backbone,
+            },
+        )
+        return self
