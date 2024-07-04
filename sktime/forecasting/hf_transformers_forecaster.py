@@ -267,43 +267,37 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
 
         self.model.eval()
         hist_y = y if self._global_forecasting else self._y
-        if isinstance(hist_y.index, pd.MultiIndex):
-            hist = _frame2numpy(hist_y).squeeze(2)
+
+        if not isinstance(hist_y.index, pd.MultiIndex):
+            hist_y = _to_multiindex(hist_y)
+            if X is not None:
+                X = _to_multiindex(X)
+            converted_to_multiindex = True
         else:
-            hist = hist_y.values.reshape((1, -1))
+            converted_to_multiindex = False
+
+        hist = _frame2numpy(hist_y).squeeze(2)
 
         if X is not None:
-            if isinstance(hist_y.index, pd.MultiIndex):
-                if not self._global_forecasting:
-                    hist_x = _frame2numpy(self._X)
-                    x_ = _frame2numpy(X)
-                else:
-                    len_levels = len_levels = len(X.index.names)
-                    hist_x = _frame2numpy(
-                        X.groupby(level=list(range(len_levels - 1))).apply(
-                            lambda x: x.droplevel(list(range(len_levels - 1))).iloc[
-                                : -self.model.config.prediction_length
-                            ]
-                        )
-                    )
-                    x_ = _frame2numpy(
-                        X.groupby(level=list(range(len_levels - 1))).apply(
-                            lambda x: x.droplevel(list(range(len_levels - 1))).iloc[
-                                -self.model.config.prediction_length :
-                            ]
-                        )
-                    )
+            if not self._global_forecasting:
+                hist_x = _frame2numpy(self._X)
+                x_ = _frame2numpy(X)
             else:
-                if not self._global_forecasting:
-                    hist_x = self._X.values.reshape((1, -1, self._X.shape[-1]))
-                    x_ = X.values.reshape((1, -1, self._X.shape[-1]))
-                else:
-                    hist_x = X.iloc[
-                        : -self.model.config.prediction_length
-                    ].values.reshape((1, -1, X.shape[-1]))
-                    x_ = X.iloc[-self.model.config.prediction_length :].values.reshape(
-                        (1, -1, X.shape[-1])
+                len_levels = len_levels = len(X.index.names)
+                hist_x = _frame2numpy(
+                    X.groupby(level=list(range(len_levels - 1))).apply(
+                        lambda x: x.droplevel(list(range(len_levels - 1))).iloc[
+                            : -self.model.config.prediction_length
+                        ]
                     )
+                )
+                x_ = _frame2numpy(
+                    X.groupby(level=list(range(len_levels - 1))).apply(
+                        lambda x: x.droplevel(list(range(len_levels - 1))).iloc[
+                            -self.model.config.prediction_length :
+                        ]
+                    )
+                )
 
             if x_.shape[1] < self.model.config.prediction_length:
                 # TODO raise exception here?
@@ -344,49 +338,44 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
             ),
         )
 
-        if isinstance(hist_y.index, pd.MultiIndex):
-            pred = pred.sequences.mean(dim=1).detach().cpu().numpy()
+        pred = pred.sequences.mean(dim=1).detach().cpu().numpy()
 
-            ins = np.array(
-                list(np.unique(hist_y.index.droplevel(-1)).repeat(pred.shape[1]))
-            )
-            ins = [ins[..., i] for i in range(ins.shape[-1])] if ins.ndim > 1 else [ins]
+        ins = np.array(
+            list(np.unique(hist_y.index.droplevel(-1)).repeat(pred.shape[1]))
+        )
+        ins = [ins[..., i] for i in range(ins.shape[-1])] if ins.ndim > 1 else [ins]
 
-            idx = (
-                ForecastingHorizon(range(1, pred.shape[1] + 1), freq=self.fh.freq)
-                .to_absolute(self._cutoff)
-                ._values.tolist()
-                * pred.shape[0]
-            )
+        idx = (
+            ForecastingHorizon(range(1, pred.shape[1] + 1), freq=self.fh.freq)
+            .to_absolute(self._cutoff)
+            ._values.tolist()
+            * pred.shape[0]
+        )
 
-            index = pd.MultiIndex.from_arrays(
-                ins + [idx],
-                names=hist_y.index.names,
-            )
+        index = pd.MultiIndex.from_arrays(
+            ins + [idx],
+            names=hist_y.index.names,
+        )
 
-            pred = pd.DataFrame(
-                pred.flatten(),
-                index=index,
-                columns=hist_y.columns,
-            )
+        pred = pd.DataFrame(
+            pred.flatten(),
+            index=index,
+            columns=hist_y.columns,
+        )
 
-            absolute_horizons = fh.to_absolute_index(self.cutoff)
-            dateindex = pred.index.get_level_values(-1).map(
-                lambda x: x in absolute_horizons
-            )
+        absolute_horizons = fh.to_absolute_index(self.cutoff)
+        dateindex = pred.index.get_level_values(-1).map(
+            lambda x: x in absolute_horizons
+        )
+        pred = pred.loc[dateindex]
 
-            pred = pred.loc[dateindex]
-        else:
-            pred = pred.sequences.mean(dim=1).detach().cpu().numpy().T
-
+        if converted_to_multiindex:
             pred = pd.Series(
-                pred.reshape((-1,)),
-                index=ForecastingHorizon(range(1, len(pred) + 1), freq=self.fh.freq)
-                .to_absolute(self._cutoff)
-                ._values,
-                name=hist_y.name,
+                pred.values.squeeze(),
+                index=pred.index.get_level_values(-1),
+                name=pred.columns[0],
             )
-            pred = pred.loc[fh.to_absolute(self.cutoff)._values]
+
         return pred
 
     @classmethod
@@ -515,3 +504,14 @@ def _frame2numpy(data):
         (-1, length, len(data.columns))
     )
     return arr
+
+
+def _to_multiindex(data):
+    res = pd.DataFrame(
+        data.values,
+        index=pd.MultiIndex.from_product(
+            [["h0_0"], data.index], names=["h0", data.index.name]
+        ),
+        columns=data.name if isinstance(data, pd.Series) else data.columns,
+    )
+    return res
