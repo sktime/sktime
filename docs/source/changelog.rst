@@ -24,12 +24,12 @@ Version 0.30.2 - 2024-07-04
 Highlights
 ~~~~~~~~~~
 
-* new estimator overview table and estimator search page (:pr:`6147`) :user:`duydl`, :user:`fkiraly`
+* new `estimator overview table and estimator search page <https://www.sktime.net/en/stable/estimator_overview.html>`_ (:pr:`6147`) :user:`duydl`
+* ``HFTransformersForecaster`` (hugging face transformers connector) now has a user friendly interface for applying PEFT methods (:pr:`6457`) :user:`geetu040`
 * ``ForecastingOptunaSearchCV`` for hyper-parameter tuning of forecasters via ``optuna`` (:pr:`6630`) :user:`mk406`, :user:`gareth-brown-86`
-* Extend ``HFTransformersForecaster`` for PEFT methods (:pr:`6457`) :user:`geetu040`
-* ``prophetverse`` forecaster with ``sktime`` compatible API (:pr:`6614`) :user:`felipeangelimvieira`
-* ``pytorch-forecasting`` adapter with Global Forecasting API (:pr:`6228`) :user:`Xinyu-Wu-0000`
-* ``skforecast`` ForecasterAutoreg adapter  (:pr:`6531`) :user:`Abhay-Lejith`, :user:`yarnabrina`
+* ``prophetverse`` package forecasters are now indexed by ``sktime`` (:pr:`6614`) :user:`felipeangelimvieira`
+* ``pytorch-forecasting`` adapter, experimental global forecasting API (:pr:`6228`) :user:`Xinyu-Wu-0000`
+* ``skforecast`` adapter for reduction strategies (:pr:`6531`) :user:`Abhay-Lejith`, :user:`yarnabrina`
 * EnbPI based forecaster with components from ``aws-fortuna`` (:pr:`6449`) :user:`benHeid`
 * DTW distances and aligners from ``dtaidistance`` (:pr:`6578`) :user:`fkiraly`
 * ``parametrize_with_checks`` utility for granular API compliance test setup in 2nd/3rd party libraries (:pr:`6588`) :user:`fkiraly`
@@ -37,16 +37,48 @@ Highlights
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
 
-
 * ``holidays`` (transformations soft dependency) bounds have been updated to ``>=0.29,<0.53``
 * ``dask`` (data container and parallelization back-end) bounds have been updated to ``<2024.5.3``
-
+* ``optuna`` is now a soft dependency, via the ``ForecastingOptunaSearchCV`` estimator, in the ``all_extras`` soft dependency set,
+  with bounds ``<3.7``
+* ``pytorch-forecasting`` is now a soft dependency, in the ``dl`` (deep learning) soft dependency set
+* ``skforecast`` is now a soft dependency, in the ``all_extras`` soft dependency set and the ``forecasting`` soft dependency set,
+  with bounds ``<0.13,>=0.12.1``
+* ``dtaidistance`` is now a soft dependency, in the ``all_extras`` soft dependency set and the ``alignment`` soft dependency set,
+  with bounds ``<2.4``
 
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
 
-* [ENH] ``pytorch-forecasting`` adapter with Global Forecasting API (:pr:`6228`) :user:`Xinyu-Wu-0000`
+Forecasting
+^^^^^^^^^^^
 
+The base forecaster interface now has a dedicated interface point for
+global forecasting or fine-tuning: in forecasters supporting global forecast,
+an ``y`` argument may be passed in ``predict``, indicating new time series instances
+for a global forecast, or a context for foundation models.
+Forecasters capable of global forecasting or fine-tuning (this is the same interface
+point) are tagged with the tag ``capability:global_forecasting``, value ``True``.
+
+The global forecasting and fine-tuning interfaces are currently experimental,
+and may undergo changes.
+
+Users are invited to give feedback, and test the feature with the new
+``pytorch-forecasting`` adapter.
+
+Test framework
+^^^^^^^^^^^^^^
+
+* 2nd and 3rd party extension packages can now use the ``parametrize_with_checks``
+  utility to set up granular API compliance tests. For detailed usage notes,
+  consult the extender guide: :ref:`developer_guide_add_estimators`.
+* various quality-of-life improvements have been made to facilitate
+  indexing an estimator in the estimator overview and estimator search for
+  developers of API compatible 2nd and 3rd party packages,
+  without adding it directly to the main ``sktime`` repository.
+  For detailed usage notes, consult the extender guide:
+  :ref:`developer_guide_add_estimators`, or inspect the ``Prophetverse`` forecaster
+  as a worked example.
 
 Enhancements
 ~~~~~~~~~~~~
@@ -60,9 +92,6 @@ Benchmarking, Metrics, Splitters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * [ENH] Parallelization option for ``ForecastingBenchmark`` (:pr:`6568`) :user:`benHeid`
-
-Data loaders
-^^^^^^^^^^^^
 
 Data types, checks, conversions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
