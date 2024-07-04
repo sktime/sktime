@@ -25,7 +25,7 @@ if _check_soft_dependencies("transformers", severity="none"):
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 
-__author__ = ["benheid", "geetu040"]
+__author__ = ["benheid", "geetu040", "XinyuWu"]
 
 
 class HFTransformersForecaster(_BaseGlobalForecaster):
