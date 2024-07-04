@@ -338,6 +338,7 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
             hist_y = _to_multiindex(hist_y)
             if X is not None:
                 X = _to_multiindex(X)
+                _X = _to_multiindex(self._X)
             converted_to_multiindex = True
         else:
             converted_to_multiindex = False
@@ -346,7 +347,7 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
 
         if X is not None:
             if not self._global_forecasting:
-                hist_x = _frame2numpy(self._X)
+                hist_x = _frame2numpy(_X)
                 x_ = _frame2numpy(X)
             else:
                 len_levels = len_levels = len(X.index.names)
