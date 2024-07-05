@@ -272,6 +272,7 @@ class TinyTimeMixerForecaster(BaseForecaster):
 
         data = y.copy()
         data.index = self._handle_data_index(data.index)
+        data = data.astype(float)
         data.reset_index(inplace=True)
 
         from tsfm_public.toolkit.time_series_preprocessor import (
