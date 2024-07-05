@@ -2,24 +2,26 @@
 
 __author__ = ["fkiraly", "mloning"]
 
-import io
 import sys
 import warnings
-from importlib import import_module
+from importlib.metadata import PackageNotFoundError, version
+from importlib.util import find_spec
 from inspect import isclass
 
 from packaging.markers import InvalidMarker, Marker
 from packaging.requirements import InvalidRequirement, Requirement
-from packaging.specifiers import InvalidSpecifier, SpecifierSet
+from packaging.specifiers import InvalidSpecifier, Specifier, SpecifierSet
+from packaging.version import InvalidVersion, Version
 
 
+# todo 0.32.0: remove suppress_import_stdout argument
 def _check_soft_dependencies(
     *packages,
     package_import_alias=None,
     severity="error",
     obj=None,
     msg=None,
-    suppress_import_stdout=False,
+    suppress_import_stdout="deprecated",
 ):
     """Check if required soft dependencies are installed and raise error or warning.
 
@@ -53,8 +55,6 @@ def _check_soft_dependencies(
         if str is passed, will be used as name of the class/object or module
     msg : str, or None, default=None
         if str, will override the error message or warning shown with msg
-    suppress_import_stdout : bool, optional. Default=False
-        whether to suppress stdout printout upon import.
 
     Raises
     ------
@@ -65,6 +65,22 @@ def _check_soft_dependencies(
     -------
     boolean - whether all packages are installed, only if no exception is raised
     """
+    # todo 0.32.0: remove this warning
+    if suppress_import_stdout != "deprecated":
+        warnings.warn(
+            "In sktime _check_soft_dependencies, the suppress_import_stdout argument "
+            "is deprecated and no longer has any effect. "
+            "The argument will be removed in version 0.32.0, so users of the "
+            "_check_soft_dependencies utility should not pass this argument anymore. "
+            "The _check_soft_dependencies utility also no longer causes imports, "
+            "hence no stdout "
+            "output is created from imports, for any setting of the "
+            "suppress_import_stdout argument. If you wish to import packages "
+            "and make use of stdout prints, import the package directly instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
     if len(packages) == 1 and isinstance(packages[0], (tuple, list)):
         packages = packages[0]
     if not all(isinstance(x, str) for x in packages):
@@ -111,6 +127,7 @@ def _check_soft_dependencies(
     for package in packages:
         try:
             req = Requirement(package)
+            req = _normalize_requirement(req)
         except InvalidRequirement:
             msg_version = (
                 f"wrong format for package requirement string "
@@ -128,20 +145,24 @@ def _check_soft_dependencies(
             package_import_name = package_import_alias[package_name]
         else:
             package_import_name = package_name
-        # attempt import - if not possible, we know we need to raise warning/exception
-        try:
-            if suppress_import_stdout:
-                # setup text trap, import, then restore
-                sys.stdout = io.StringIO()
-                pkg_ref = import_module(package_import_name)
-                sys.stdout = sys.__stdout__
-            else:
-                pkg_ref = import_module(package_import_name)
-        # if package cannot be imported, make the user aware of installation requirement
-        except ModuleNotFoundError as e:
+
+        # optimized branching to check presence of import
+        # and presence of package distribution
+        # first we check import, then we check distribution
+        # because try/except consumes more runtime
+        pkg_spec = find_spec(package_import_name)
+        if pkg_spec is not None:
+            try:
+                pkg_env_version = Version(version(package_name))
+            except (InvalidVersion, PackageNotFoundError):
+                pkg_spec = None
+
+        # if package not present, make the user aware of installation reqs
+        if pkg_spec is None:
             if obj is None and msg is None:
                 msg = (
-                    f"{e}. '{package}' is a soft dependency and not included in the "
+                    f"'{package}' not found. "
+                    f"'{package}' is a soft dependency and not included in the "
                     f"base sktime installation. Please run: `pip install {package}` to "
                     f"install the {package} package. "
                     f"To install all soft dependencies, run: `pip install "
@@ -161,7 +182,7 @@ def _check_soft_dependencies(
             # so if msg is passed it overrides the default messages
 
             if severity == "error":
-                raise ModuleNotFoundError(msg) from e
+                raise ModuleNotFoundError(msg)
             elif severity == "warning":
                 warnings.warn(msg, stacklevel=2)
                 return False
@@ -176,8 +197,6 @@ def _check_soft_dependencies(
 
         # now we check compatibility with the version specifier if non-empty
         if package_version_req != SpecifierSet(""):
-            pkg_env_version = pkg_ref.__version__
-
             msg = (
                 f"{class_name} requires package '{package}' to be present "
                 f"in the python environment, with version {package_version_req}, "
@@ -237,12 +256,11 @@ def _check_dl_dependencies(msg=None, severity="error"):
             "tensorflow is required for deep learning functionality in `sktime`. "
             "To install these dependencies, run: `pip install sktime[dl]`"
         )
-    try:
-        import_module("tensorflow")
+    if find_spec("tensorflow") is not None:
         return True
-    except ModuleNotFoundError as e:
+    else:
         if severity == "error":
-            raise ModuleNotFoundError(msg) from e
+            raise ModuleNotFoundError(msg)
         elif severity == "warning":
             warnings.warn(msg, stacklevel=2)
             return False
@@ -255,9 +273,7 @@ def _check_dl_dependencies(msg=None, severity="error"):
             )
 
 
-def _check_mlflow_dependencies(
-    msg=None, severity="error", suppress_import_stdout=False
-):
+def _check_mlflow_dependencies(msg=None, severity="error"):
     """Check if `mlflow` and its dependencies are installed.
 
     Parameters
@@ -290,12 +306,7 @@ def _check_mlflow_dependencies(
             "or `pip install sktime[mlflow]` to install the package."
         )
 
-    return _check_soft_dependencies(
-        "mlflow",
-        msg=msg,
-        severity=severity,
-        suppress_import_stdout=suppress_import_stdout,
-    )
+    return _check_soft_dependencies("mlflow", msg=msg, severity=severity)
 
 
 def _check_python_version(obj, package=None, msg=None, severity="error"):
@@ -513,3 +524,37 @@ def _check_estimator_deps(obj, msg=None, severity="error"):
         compatible = compatible and pkg_deps_ok
 
     return compatible
+
+
+def _normalize_requirement(req):
+    """Normalize packaging Requirement by removing build metadata from versions.
+
+    Parameters
+    ----------
+    req : packaging.requirements.Requirement
+        requirement string to normalize, e.g., Requirement("pandas>1.2.3+foobar")
+
+    Returns
+    -------
+    normalized_req : packaging.requirements.Requirement
+        normalized requirement object with build metadata removed from versions,
+        e.g., Requirement("pandas>1.2.3")
+    """
+    # Process each specifier in the requirement
+    normalized_specs = []
+    for spec in req.specifier:
+        # Parse the version and remove the build metadata
+        spec_v = Version(spec.version)
+        version_wo_build_metadata = f"{spec_v.major}.{spec_v.minor}.{spec_v.micro}"
+
+        # Create a new specifier without the build metadata
+        normalized_spec = Specifier(f"{spec.operator}{version_wo_build_metadata}")
+        normalized_specs.append(normalized_spec)
+
+    # Reconstruct the specifier set
+    normalized_specifier_set = SpecifierSet(",".join(str(s) for s in normalized_specs))
+
+    # Create a new Requirement object with the normalized specifiers
+    normalized_req = Requirement(f"{req.name}{normalized_specifier_set}")
+
+    return normalized_req
