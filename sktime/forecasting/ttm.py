@@ -102,7 +102,7 @@ class TinyTimeMixerForecaster(BaseForecaster):
         # if False, raises exception if y or X passed contain missing data (nans)
         #
         # capability:insample = can forecaster make in-sample forecasts?
-        "capability:insample": True,
+        "capability:insample": False,
         # valid values: boolean True (yes), False (no)
         # if False, exception raised if any forecast method called with in-sample fh
         #
@@ -112,7 +112,7 @@ class TinyTimeMixerForecaster(BaseForecaster):
         # if False, exception raised if proba methods are called (predict_interval etc)
         #
         # capability:pred_int:insample = can forecaster make in-sample proba forecasts?
-        "capability:pred_int:insample": True,
+        "capability:pred_int:insample": False,
         # valid values: boolean True (yes), False (no)
         # only needs to be set if capability:pred_int is True
         # if False, exception raised if proba methods are called with in-sample fh
@@ -385,5 +385,19 @@ class TinyTimeMixerForecaster(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = []
+        params = [
+            {
+                "config": {
+                    "context_length": 4,
+                    "patch_length": 2,
+                    "prediction_length": 2,
+                },
+                "validation_split": 0.2,
+                "training_args": {
+                    "num_train_epochs": 1,
+                    "output_dir": "test_output",
+                    "per_device_train_batch_size": 32,
+                },
+            },
+        ]
         return params
