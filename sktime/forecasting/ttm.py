@@ -77,7 +77,7 @@ class TinyTimeMixerForecaster(BaseForecaster):
         # --------------------------------------------
         #
         # ignores-exogeneous-X = does estimator ignore the exogeneous X?
-        "ignores-exogeneous-X": False,
+        "ignores-exogeneous-X": True,
         # valid values: boolean True (ignores X), False (uses X in non-trivial manner)
         # CAVEAT: if tag is set to True, inner methods always see X=None
         #
@@ -245,7 +245,6 @@ class TinyTimeMixerForecaster(BaseForecaster):
         # Get the Dataset
         train_dataset, eval_dataset = self._get_dataset(
             y=y,
-            X=X,
             context_length=config.context_length,
             prediction_length=config.prediction_length,
         )
@@ -267,12 +266,11 @@ class TinyTimeMixerForecaster(BaseForecaster):
         # Train the model
         trainer.train()
 
-    def _get_dataset(self, y, X, context_length, prediction_length):
+    def _get_dataset(self, y, context_length, prediction_length):
         target_columns = y.columns
         timestamp_column = y.index.name or "index"
-        control_columns = X.columns if X is not None else []
 
-        data = pd.concat([y, X], axis=1)
+        data = y.copy()
         data.index = self._handle_data_index(data.index)
         data.reset_index(inplace=True)
 
@@ -284,7 +282,6 @@ class TinyTimeMixerForecaster(BaseForecaster):
         tsp = TimeSeriesPreprocessor(
             target_columns=target_columns,
             timestamp_column=timestamp_column,
-            control_columns=control_columns,
             context_length=context_length,
             prediction_length=prediction_length,
         )
@@ -346,13 +343,8 @@ class TinyTimeMixerForecaster(BaseForecaster):
         fh = fh.to_relative(self.cutoff)
 
         _y = self._y[-self.model.config.context_length :]
-        if self._X is not None:
-            _X = self._X[-self.model.config.context_length :]
-            inputs_df = pd.concat([_y, _X], axis=1)
-        else:
-            inputs_df = _y
 
-        inputs = np.expand_dims(inputs_df.values, axis=0)
+        inputs = np.expand_dims(_y.values, axis=0)
         inputs = torch.tensor(inputs, dtype=torch.float)
         self.model.eval()
         outputs = self.model(inputs)
@@ -363,7 +355,7 @@ class TinyTimeMixerForecaster(BaseForecaster):
             .to_absolute(self._cutoff)
             ._values
         )
-        columns = inputs_df.columns
+        columns = _y.columns
 
         pred = pd.DataFrame(
             outputs,
