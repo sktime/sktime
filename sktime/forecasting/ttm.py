@@ -222,6 +222,8 @@ class TinyTimeMixerForecaster(BaseForecaster):
         # Update config with user provided config
         _config = config.to_dict()
         _config.update(self._config)
+        # TODO: validate this configuration
+        # context_length / num_patches == patch_length == patch_stride
 
         if fh is not None:
             _config["prediction_length"] = max(
