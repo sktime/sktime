@@ -330,6 +330,10 @@ class TinyTimeMixerForecaster(BaseForecaster):
         """
         import torch
 
+        if fh is None:
+            fh = self.fh
+        fh = fh.to_relative(self.cutoff)
+
         _y = self._y[-self.model.config.context_length :]
         if self._X is not None:
             _X = self._X[-self.model.config.context_length :]
@@ -355,6 +359,7 @@ class TinyTimeMixerForecaster(BaseForecaster):
             index=index,
             columns=columns,
         )
+        pred = pred.loc[fh.to_absolute(self.cutoff)._values]
 
         return pred
 
