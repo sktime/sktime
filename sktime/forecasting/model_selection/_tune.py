@@ -1592,20 +1592,20 @@ def _fit_and_score_skopt(params, meta):
 class ForecastingOptunaSearchCV(BaseGridSearch):
     """Perform Optuna search cross-validation to find optimal model hyperparameters.
 
-    Experimental: This feature is under development and interface is likely to change.
+    Experimental: This feature is under development and interfaces may change.
+
+    In ``fit``, this estimator uses the ``optuna`` base search algorithm
+    applied to the ``sktime`` ``evaluate`` benchmarking output.
+
+    ``param_grid`` is used to parametrize the search space, over parameters of
+    the passed ``forecaster``, via ``set_params``.
+
+    The remaining parameters are passed directly to ``evaluate``, to obtain
+    the primary optimization outcome as the aggregate ``scoring`` metric specified
+    on the evaluation schema.
 
     Parameters
     ----------
-    scoring=None,
-    strategy="refit",
-    refit=True,
-    verbose=0,
-    return_n_best_forecasters=1,
-    backend="loky",
-    update_behaviour="full_refit",
-    error_score=np.nan,
-    n_evals=100,
-
     forecaster : sktime forecaster, BaseForecaster instance or interface compatible
         The forecaster to tune, must implement the sktime forecaster interface.
         sklearn regressors can be used, but must first be converted to forecasters
@@ -1613,7 +1613,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
     cv : cross-validation generator or an iterable
         Splitter used for generating validation folds.
         e.g. ExpandingWindowSplitter()
-    param_grid : dict
+    param_grid : dict of optuna samplers
         Dictionary with parameters names as keys and lists of parameter distributions
         from which to sample parameter values.
         e.g. {"forecaster": optuna.distributions.CategoricalDistribution(
@@ -1773,6 +1773,15 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         self.param_grid = param_grid
         self.n_evals = n_evals
 
+        warn(
+            "ForecastingOptunaSearchCV is experimental, and interfaces may change. "
+            "User feedback and suggestions for future development "
+            "are appreciated in issue #6618 here: "
+            "https://github.com/sktime/sktime/issues/6618",
+            obj=self,
+            stacklevel=2,
+        )
+
     def _fit(self, y, X=None, fh=None):
         cv = check_cv(self.cv)
         scoring = check_scoring(self.scoring, obj=self)
@@ -1788,7 +1797,9 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         if isinstance(self.param_grid, Mapping):
             # wrap dictionary in a singleton list to support either dict
             # or list of dicts
-            self.param_grid = [self.param_grid]
+            self._param_grid = [self.param_grid]
+        else:
+            self._param_grid = self.param_grid
 
         results = self._run_search(
             y,
