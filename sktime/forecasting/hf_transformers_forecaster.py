@@ -80,6 +80,19 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
         When `fit_strategy` is set to "peft",
         this will be used to set up PEFT parameters for the model.
         See the `peft` documentation for details.
+    no_size1_batch: bool, default=True
+        drop the last batch if batch size is one.
+        It's not `drop_last` of pytorch dataloader [1]_,
+        it will only drop if last batch size is exactly one.
+        The batch size is from training_args["per_device_train_batch_size"].
+        If no training_args["per_device_train_batch_size"] passed, it's default 8 [2]_.
+
+    References
+    ----------
+    .. [1] https://pytorch.org/docs/stable/data.html
+    .. [2] https://huggingface.co/docs/transformers/v4.42.0/en/main_classes/trainer#transformers.TrainingArguments.per_device_train_batch_size
+    # noqa: E501
+
 
     Examples
     --------
@@ -175,6 +188,7 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
         deterministic=False,
         callbacks=None,
         peft_config=None,
+        no_size1_batch=True,
     ):
         super().__init__()
         self.model_path = model_path
@@ -192,6 +206,7 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
         self.callbacks = callbacks
         self._callbacks = callbacks
         self.peft_config = peft_config
+        self.no_size1_batch = no_size1_batch
 
         if self.broadcasting:
             self.set_tags(
@@ -282,6 +297,12 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
                 config.context_length + max(config.lags_sequence),
                 X=X_train if X is not None else None,
                 fh=config.prediction_length,
+                batch_size=(
+                    self._training_args["per_device_train_batch_size"]
+                    if "per_device_train_batch_size" in self._training_args.keys()
+                    else 8
+                ),
+                no_size1_batch=self.no_size1_batch,
             )
 
             eval_dataset = PyTorchDataset(
@@ -289,6 +310,12 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
                 config.context_length + max(config.lags_sequence),
                 X=X_test if X is not None else None,
                 fh=config.prediction_length,
+                batch_size=(
+                    self._training_args["per_device_train_batch_size"]
+                    if "per_device_train_batch_size" in self._training_args.keys()
+                    else 8
+                ),
+                no_size1_batch=self.no_size1_batch,
             )
         else:
             train_dataset = PyTorchDataset(
@@ -296,11 +323,17 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
                 config.context_length + max(config.lags_sequence),
                 X=X if X is not None else None,
                 fh=config.prediction_length,
+                batch_size=(
+                    self._training_args["per_device_train_batch_size"]
+                    if "per_device_train_batch_size" in self._training_args.keys()
+                    else 8
+                ),
+                no_size1_batch=self.no_size1_batch,
             )
 
             eval_dataset = None
 
-        training_args = deepcopy(self.training_args)
+        training_args = deepcopy(self._training_args)
         training_args["label_names"] = ["future_values"]
         training_args = TrainingArguments(**training_args)
 
@@ -554,7 +587,15 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
 class PyTorchDataset(Dataset):
     """Dataset for use in sktime deep learning forecasters."""
 
-    def __init__(self, y: pd.DataFrame, seq_len: int, fh=None, X: pd.DataFrame = None):
+    def __init__(
+        self,
+        y: pd.DataFrame,
+        seq_len: int,
+        fh=None,
+        X: pd.DataFrame = None,
+        batch_size=8,
+        no_size1_batch=True,
+    ):
         if not isinstance(y.index, pd.MultiIndex):
             self.y = np.array(y.values, dtype=np.float32).reshape(1, len(y), 1)
             self.X = (
@@ -571,10 +612,16 @@ class PyTorchDataset(Dataset):
         self._num, self._len, _ = self.y.shape
         self.fh = fh
         self.seq_len = seq_len
+        self.batch_size = batch_size
+        self.no_size1_batch = no_size1_batch
 
     def __len__(self):
         """Return length of dataset."""
-        return self._num * max(self._len - self.seq_len - self.fh + 1, 0)
+        true_length = self._num * max(self._len - self.seq_len - self.fh + 1, 0)
+        if self.no_size1_batch and true_length % self.batch_size == 1:
+            return true_length - 1
+        else:
+            return true_length
 
     def __getitem__(self, i):
         """Return data point."""
