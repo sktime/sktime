@@ -358,6 +358,7 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
                 _X = _to_multiindex(self._X)
             converted_to_multiindex = True
         else:
+            _X = self._X
             converted_to_multiindex = False
 
         hist = _frame2numpy(hist_y).squeeze(2)
