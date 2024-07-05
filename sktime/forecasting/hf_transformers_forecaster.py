@@ -199,6 +199,8 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
         self._config = config if config is not None else {}
         self.training_args = training_args
         self._training_args = training_args if training_args is not None else {}
+        if "per_device_train_batch_size" not in self._training_args.keys():
+            self._training_args["per_device_train_batch_size"] = 8
         self.compute_metrics = compute_metrics
         self._compute_metrics = compute_metrics
         self._compute_metrics = compute_metrics
@@ -297,11 +299,7 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
                 config.context_length + max(config.lags_sequence),
                 X=X_train if X is not None else None,
                 fh=config.prediction_length,
-                batch_size=(
-                    self._training_args["per_device_train_batch_size"]
-                    if "per_device_train_batch_size" in self._training_args.keys()
-                    else 8
-                ),
+                batch_size=self._training_args["per_device_train_batch_size"],
                 no_size1_batch=self.no_size1_batch,
             )
 
@@ -310,11 +308,7 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
                 config.context_length + max(config.lags_sequence),
                 X=X_test if X is not None else None,
                 fh=config.prediction_length,
-                batch_size=(
-                    self._training_args["per_device_train_batch_size"]
-                    if "per_device_train_batch_size" in self._training_args.keys()
-                    else 8
-                ),
+                batch_size=self._training_args["per_device_train_batch_size"],
                 no_size1_batch=self.no_size1_batch,
             )
         else:
@@ -323,11 +317,7 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
                 config.context_length + max(config.lags_sequence),
                 X=X if X is not None else None,
                 fh=config.prediction_length,
-                batch_size=(
-                    self._training_args["per_device_train_batch_size"]
-                    if "per_device_train_batch_size" in self._training_args.keys()
-                    else 8
-                ),
+                batch_size=self._training_args["per_device_train_batch_size"],
                 no_size1_batch=self.no_size1_batch,
             )
 
@@ -401,17 +391,22 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
                 hist_x = _frame2numpy(_X)
                 x_ = _frame2numpy(X)
             else:
-                len_levels = len_levels = len(X.index.names)
+                len_levels = len(X.index.names)
+                ins_levels = list(range(len_levels - 1))
+                # groupby instances levels, get the history exogenous data
+                # of each instances by slicing the time index
                 hist_x = _frame2numpy(
-                    X.groupby(level=list(range(len_levels - 1))).apply(
-                        lambda x: x.droplevel(list(range(len_levels - 1))).iloc[
+                    X.groupby(level=ins_levels).apply(
+                        lambda x: x.droplevel(ins_levels).iloc[
                             : -self.model.config.prediction_length
                         ]
                     )
                 )
+                # groupby instances levels, get the last prediction_length
+                # of the time index as the future exogenous data
                 x_ = _frame2numpy(
-                    X.groupby(level=list(range(len_levels - 1))).apply(
-                        lambda x: x.droplevel(list(range(len_levels - 1))).iloc[
+                    X.groupby(level=ins_levels).apply(
+                        lambda x: x.droplevel(ins_levels).iloc[
                             -self.model.config.prediction_length :
                         ]
                     )
