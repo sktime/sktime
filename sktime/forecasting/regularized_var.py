@@ -3,9 +3,11 @@
 
 # __author__ = [meraldoantonio]
 
-from sktime.forecasting.base import BaseForecaster
 import numpy as np
 import pandas as pd
+
+from sktime.forecasting.base import BaseForecaster
+
 
 class RegularizedVAR(BaseForecaster):
     """Custom forecaster using VAR with regularization.
@@ -22,7 +24,7 @@ class RegularizedVAR(BaseForecaster):
 
     _tags = {
         "scitype:y": "both",
-        "authors": ["meraldoantonio"],  
+        "authors": ["meraldoantonio"],
         "python_dependencies": "cvxpy",
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
@@ -42,12 +44,12 @@ class RegularizedVAR(BaseForecaster):
     def create_var_data(self, data):
         """
         Prepare the data for VAR(p) model.
-        
+
         Parameters
         ----------
         data : pd.DataFrame
             The input time series data.
-        
+
         Returns
         -------
         X : np.ndarray
@@ -56,7 +58,9 @@ class RegularizedVAR(BaseForecaster):
             The current values as response variable.
         """
         df = pd.concat([data.shift(i) for i in range(self.lags + 1)], axis=1)
-        df.columns = [f"{col}_lag{i}" for i in range(self.lags + 1) for col in data.columns]
+        df.columns = [
+            f"{col}_lag{i}" for i in range(self.lags + 1) for col in data.columns
+        ]
         df = df.dropna()
         y = df[[f"{col}_lag0" for col in data.columns]].values
         X = df.drop(columns=[f"{col}_lag0" for col in data.columns]).values
@@ -79,7 +83,7 @@ class RegularizedVAR(BaseForecaster):
         self : reference to self
         """
         import cvxpy as cp
-        
+
         X, y = self.create_var_data(y)
         n, k = X.shape
         num_series = y.shape[1]
@@ -91,19 +95,21 @@ class RegularizedVAR(BaseForecaster):
 
         # Define the objective function with regularization
         objective = cp.Minimize(
-            cp.sum_squares(y - X @ coefficients - intercept) +
-            self.L1_penalty * cp.norm(coefficients, 1) +
-            self.L2_penalty * cp.norm(coefficients, 'fro')
+            cp.sum_squares(y - X @ coefficients - intercept)
+            + self.L1_penalty * cp.norm(coefficients, 1)
+            + self.L2_penalty * cp.norm(coefficients, "fro")
         )
         problem = cp.Problem(objective)
         problem.solve()
 
         # Store the estimated coefficients and intercept
-        # Reshape and rearrange the coefficient matrix so it's the same with statsmodels' VAR
-        self.coefficients = coefficients.value.reshape(self.lags, num_series, num_series)
+        # Reshape and rearrange the coefficients to match with statsmodels VAR
+        self.coefficients = coefficients.value.reshape(
+            self.lags, num_series, num_series
+        )
         self.coefficients = np.transpose(self.coefficients, (0, 2, 1))
         self.intercept = intercept.value.reshape(num_series)
-        
+
         self._is_fitted = True
         return self
 
@@ -123,22 +129,22 @@ class RegularizedVAR(BaseForecaster):
             Point predictions
         """
         # Get the last observed values
-        y_last = self._y.iloc[-self.lags:].values
+        y_last = self._y.iloc[-self.lags :].values
         steps = len(fh)
 
         # Produce forecasts
         y_pred = self.forecast(y_last, steps)
-        
+
         # Convert to DataFrame with the correct index
         row_idx = fh.to_absolute(self.cutoff).to_pandas()
         y_pred = pd.DataFrame(y_pred, index=row_idx, columns=self._y.columns)
-        
+
         return y_pred
 
     def forecast(self, y, steps):
         """
-        Produce linear minimum MSE forecast. Adapted from statsmodels' VAR forecast method
-        
+        Produce steps-ahead forecast, adapted from statsmodels VAR's forecast.
+
         Parameters
         ----------
         y : np.ndarray (k_ar x neqs)
@@ -176,15 +182,17 @@ class RegularizedVAR(BaseForecaster):
         for h in range(1, steps + 1):
             # Initialize the forecast for the current step
             current_forecast = forecasts[h - 1]
-            
+
             # Sum the contributions from the lagged observations
             for lag in range(1, p + 1):
                 # Determine the prior observation based on the lag
                 if h - lag <= 0:
                     prior_y = y[h - lag - 1]  # Use the original observations
                 else:
-                    prior_y = forecasts[h - lag - 1]  # Use the previously forecasted values
-                
+                    prior_y = forecasts[
+                        h - lag - 1
+                    ]  # Use the previously forecasted values
+
                 # Update the current forecast with the contribution from the current lag
                 current_forecast += np.dot(coefs[lag - 1], prior_y)
 
@@ -214,4 +222,3 @@ class RegularizedVAR(BaseForecaster):
         """
         params = {"lags": 2, "L1_penalty": 0.1, "L2_penalty": 0.1}
         return params
-    
