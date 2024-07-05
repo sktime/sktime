@@ -200,6 +200,8 @@ class BaseObject(_BaseObject):
         * if any are found, adds a numpy<2.0 soft dependency to the list,
           and sets it as a dynamic overide of the python_dependencies tag
         """
+        from packaging.requirements import Requirement
+
         NOT_NP2_COMPATIBLE = ["prophet", "numba"]
 
         softdeps = self.get_class_tag("python_dependencies", [])
@@ -210,10 +212,14 @@ class BaseObject(_BaseObject):
         # make copy of list to avoid side effects
         softdeps = softdeps.copy()
 
+        def _pkg_name(req):
+            """Get package name from requirement string."""
+            return Requirement(req).name
+
         noncomp = False
         for softdep in softdeps:
             # variable: does any softdep string start with one of the non-compatibles
-            noncomp_sd = any([softdep.startswith(pkg) for pkg in NOT_NP2_COMPATIBLE])
+            noncomp_sd = any([_pkg_name(softdep) == pkg for pkg in NOT_NP2_COMPATIBLE])
             noncomp = noncomp or noncomp_sd
 
         if noncomp:
