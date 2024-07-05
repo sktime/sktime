@@ -191,6 +191,14 @@ class BaseObject(_BaseObject):
         but do not set the bound in their setup.py. This method is a patch over
         those packages' missing bound setting to provide informative
         errors to users.
+
+        This method does the following:
+
+        * checks if any soft dependencies in the python_dependencies tag
+          are in NOT_NP2_COMPATIBLE, this is a hard-coded
+          list of soft dependencies that are not numpy 2 compatible
+        * if any are found, adds a numpy<2.0 soft dependency to the list,
+          and sets it as a dynamic overide of the python_dependencies tag
         """
         NOT_NP2_COMPATIBLE = ["prophet", "numba"]
 
