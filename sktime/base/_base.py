@@ -178,6 +178,41 @@ class BaseObject(_BaseObject):
                 stacklevel=2,
             )
 
+        # handle numpy 2 incompatible soft dependencies
+        # for rationale, see _handle_numpy2_softdeps
+        self._handle_numpy2_softdeps()
+
+    # TODO 0.32.0: check list of numpy 2 incompatible soft deps
+    # remove any from NOT_NP2_COMPATIBLE that become compatible
+    def _handle_numpy2_softdeps(self):
+        """Handle tags for soft deps that are not numpy 2 compatible.
+
+        A number of soft dependencies are not numpy 2 compatible yet,
+        but do not set the bound in their setup.py. This method is a patch over
+        those packages' missing bound setting to provide informative
+        errors to users.
+        """
+        NOT_NP2_COMPATIBLE = ["prophet", "numba"]
+
+        softdeps = self.get_class_tag("python_dependencies", [])
+        if softdeps is None:
+            return None
+        if not isinstance(softdeps, list):
+            softdeps = [softdeps]
+        # make copy of list to avoid side effects
+        softdeps = softdeps.copy()
+
+        noncomp = False
+        for softdep in softdeps:
+            # variable: does any softdep string start with one of the non-compatibles
+            noncomp_sd = any([softdep.startswith(pkg) for pkg in NOT_NP2_COMPATIBLE])
+            noncomp = noncomp or noncomp_sd
+
+        if noncomp:
+            softdeps = softdeps + ["numpy<2.0"]
+        self.set_tags(python_dependencies=softdeps)
+        return None
+
     def __eq__(self, other):
         """Equality dunder. Checks equal class and parameters.
 
