@@ -2730,7 +2730,7 @@
         "doc"
       ]
     },
-{
+    {
       "login": "ArthrowAbstract",
       "name": "Devanshu Sinha",
       "avatar_url": "https://avatars.githubusercontent.com/u/38614120?v=4",
@@ -2881,6 +2881,15 @@
       "profile": "https://github.com/doberbauer",
       "contributions": [
         "bug",
+        "code"
+      ]
+    },
+    {
+      "login": "mk406",
+      "name": "Miguel Krause",
+      "avatar_url": "https://avatars.githubusercontent.com/u/78024411?v=4",
+      "profile": "https://github.com/mk406",
+      "contributions": [
         "code"
       ]
     }
