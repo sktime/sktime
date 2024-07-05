@@ -269,12 +269,11 @@ class TinyTimeMixerForecaster(BaseForecaster):
 
     def _get_dataset(self, y, X, context_length, prediction_length):
         target_columns = y.columns
-        timestamp_column = y.index.name
+        timestamp_column = y.index.name or "index"
         control_columns = X.columns if X is not None else []
 
         data = pd.concat([y, X], axis=1)
-        if isinstance(data.index, pd.PeriodIndex):
-            data = data.to_timestamp()
+        data.index = self._handle_data_index(data.index)
         data.reset_index(inplace=True)
 
         from tsfm_public.toolkit.time_series_preprocessor import (
@@ -300,6 +299,18 @@ class TinyTimeMixerForecaster(BaseForecaster):
         )
 
         return train_dataset, eval_dataset
+
+    def _handle_data_index(self, index):
+        if isinstance(index, pd.DatetimeIndex):
+            return index
+
+        if isinstance(index, pd.PeriodIndex):
+            return index.to_timestamp()
+
+        if pd.api.types.is_integer_dtype(index):
+            return pd.to_datetime("2021-01-01") + pd.to_timedelta(index, unit="D")
+
+        return index
 
     def _predict(self, fh, X):
         """Forecast time series at future horizon.
