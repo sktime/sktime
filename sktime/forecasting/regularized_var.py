@@ -1,4 +1,5 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements Regularized (L1/L2) VAR using cvxpy."""
 
 # __author__ = [meraldoantonio]
 
@@ -21,11 +22,12 @@ class RegularizedVAR(BaseForecaster):
 
     _tags = {
         "scitype:y": "both",
-        "authors": ["meraldoantonio"],  # authors, GitHub handles
+        "authors": ["meraldoantonio"],  
+        "python_dependencies": "cvxpy",
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
-        "ignores-exogeneous-X": False,
-        "requires-fh-in-fit": True,
+        "ignores-exogeneous-X": True,
+        "requires-fh-in-fit": False,
     }
 
     def __init__(self, lags, L1_penalty=0.0, L2_penalty=0.0):
