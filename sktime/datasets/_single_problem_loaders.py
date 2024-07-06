@@ -55,6 +55,7 @@ from sktime.datasets._data_io import (
     _list_available_datasets,
     _load_dataset,
     _load_provided_dataset,
+    _reduce_memory_usage,
 )
 from sktime.datasets._readers_writers.tsf import load_tsf_to_dataframe
 from sktime.datasets.tsf_dataset_names import tsf_all, tsf_all_datasets
@@ -1436,3 +1437,175 @@ def load_forecastingdata(
     return load_tsf_to_dataframe(
         path_to_file, replace_missing_vals, value_column_name, return_type
     )
+
+
+def load_m5(
+    extract_path=None,
+    folder_path=None,
+    include_events=False,
+):
+    """Fetch M5 dataset from https://zenodo.org/records/12636070 .
+
+    Downloads and extracts dataset if not already downloaded. Fetched dataset is
+    in the standard .csv format.
+
+    Parameters
+    ----------
+    extract_path : str, optional (default=None)
+        the path to look for the data. If no path is provided, the function
+        creates a `data` folder and stores `m5-forecasting-accuray` foldeer in it.
+        If a path is given, it can be absolute,
+        e.g. C:/Temp or relative, e.g. Temp or ./Temp
+
+    folder_path : str, optional (default=None)
+        Provide the path of the folder condatining data files if downloaded already.
+        This avoids download and preprocess the data files. It can be absolute,
+        e.g. C:/Temp or relative, e.g. Temp or ./Temp
+
+    include_events : bool, optional (default=False)
+        Includes the event names and types in the dataset if `True`.
+
+    Returns
+    -------
+    data: "pd_multiindex_hier" = pd.DataFrame of sktime type ``pd_multiindex_hier``
+        The preprocessed dataframe containing the time series.
+    """
+    if folder_path is not None:
+        path_to_data_dir = folder_path
+
+        sales_train_validation = _reduce_memory_usage(
+            pd.read_csv(path_to_data_dir + "/sales_train_validation.csv")
+        )
+
+        sell_prices = _reduce_memory_usage(
+            pd.read_csv(path_to_data_dir + "/sell_prices.csv")
+        )
+
+        calendar = _reduce_memory_usage(pd.read_csv(path_to_data_dir + "/calendar.csv"))
+    else:
+        if extract_path is not None:
+            local_module = os.path.dirname(extract_path)
+            local_dirname = extract_path
+
+        else:  # this is the default path for downloaded dataset
+            local_module = MODULE
+            local_dirname = DIRNAME
+
+        if not os.path.exists(os.path.join(local_module, local_dirname)):
+            os.makedirs(os.path.join(local_module, local_dirname))
+
+        path_to_data_dir = os.path.join(local_module, local_dirname)
+
+        _download_and_extract(
+            "https://zenodo.org/records/12636070/files/m5-forecasting-accuracy.zip",
+            extract_path=path_to_data_dir,
+        )
+
+        sales_train_validation = _reduce_memory_usage(
+            pd.read_csv(
+                path_to_data_dir + "/m5-forecasting-accuracy/sales_train_validation.csv"
+            )
+        )
+
+        sell_prices = _reduce_memory_usage(
+            pd.read_csv(path_to_data_dir + "/m5-forecasting-accuracy/sell_prices.csv")
+        )
+
+        calendar = _reduce_memory_usage(
+            pd.read_csv(path_to_data_dir + "/m5-forecasting-accuracy/calendar.csv")
+        )
+
+    def create_series_data(df, cal, sp, include_events=False):
+        """Create the series data.
+
+        Parameters
+        ----------
+        df : pd.Dataframe
+            takes the sales_train_validation dataframe by default.
+        cal : pd.Dataframe
+            takes the calendar dataframe by default.
+        sp : pd.Dataframe
+            takes the sell_prices dataframe by default.
+        include_events : bool, optional (default=False)
+            takes the sales_train_validation dataframe by default.
+
+        Returns
+        -------
+        df4 : pd.Dataframe
+            the merged dataframe
+        """
+        # melt
+        df1 = pd.melt(
+            df,
+            id_vars=[
+                "id",
+                "item_id",
+                "dept_id",
+                "cat_id",
+                "store_id",
+                "state_id",
+            ],
+            var_name="day",
+            value_name="sales",
+        ).dropna()
+
+        # add calender info
+        df2 = df1.merge(cal, left_on="day", right_on="d", how="left")
+
+        # select useful columns
+        if include_events:
+            df3 = df2[
+                [
+                    "id",
+                    "item_id",
+                    "dept_id",
+                    "cat_id",
+                    "store_id",
+                    "state_id",
+                    "day",
+                    "sales",
+                    "date",
+                    "wm_yr_wk",
+                    "event_name_1",
+                    "event_name_2",
+                    "event_type_1",
+                    "event_type_2",
+                ]
+            ]
+        else:
+            df3 = df2[
+                [
+                    "id",
+                    "item_id",
+                    "dept_id",
+                    "cat_id",
+                    "store_id",
+                    "state_id",
+                    "day",
+                    "sales",
+                    "date",
+                    "wm_yr_wk",
+                ]
+            ]
+
+        df4 = df3.merge(sp, on=["store_id", "item_id", "wm_yr_wk"], how="left")
+
+        df4["day"] = df4["day"].apply(lambda x: int(x.split("_")[1]))
+        df4["date"] = pd.DatetimeIndex(df4["date"])
+
+        return df4
+
+    if include_events:
+        data = create_series_data(
+            sales_train_validation, calendar, sell_prices, include_events=True
+        )
+        data = data.drop(columns=["id"])
+    else:
+        data = create_series_data(sales_train_validation, calendar, sell_prices)
+        data = data.drop(columns=["id"])
+
+    data.set_index(["state_id", "store_id", "cat_id", "dept_id", "date"], inplace=True)
+    # data["item_id"] = data["item_id"].astype('category').cat.codes
+    data = data.sort_index()
+
+    return data
