@@ -92,7 +92,7 @@ class BinarySegmentation(BaseSeriesAnnotator):
 
         return np.abs(cumsum_statistic)
 
-    def _find_change_points(self, X, start, end, threshold, change_points):
+    def _find_change_points(self, X, threshold):
         """Find change points in 'X' between the 'start' and 'end' index.
 
         All change points are appended to 'change_points'.
@@ -101,35 +101,35 @@ class BinarySegmentation(BaseSeriesAnnotator):
         ----------
         X : pd.Series
             Timeseries data on which the change points will be found.
-        start : int
-            Starting index of the window in which the change points will be found.
-        end : int
-            Final index of the window in which the change points will be found. The
-            value at this index will be included in the window (inclusive).
         threshold : float
             Threshold for a change point to be kept.
-        change_points : list[int]
-            Indexes of change points. Newly detected change points are appended to this
-            list.
+
+        Returns
+        -------
+        list[int]
+            A list of the found change points.
         """
-        if end - start < 1:
-            return
+        change_points = []
 
-        costs = []
-        for change_point in range(start, end):
-            costs.append(self._cumsum_statistic(X, start, end, change_point))
+        # List for storing the start and end indexes of the segments in which change
+        # points are searched
+        segment_indexes = [(0, len(X) - 1)]
 
-        if np.max(costs) > threshold:
-            new_change_point = start + np.argmax(costs)
-            change_points.append(new_change_point)
-            self._find_change_points(
-                X, start, new_change_point, threshold, change_points
-            )
-            self._find_change_points(
-                X, new_change_point + 1, end, threshold, change_points
-            )
-        else:
-            return
+        while True:
+            start, end = segment_indexes.pop(0)
+            costs = []
+
+            for change_point in range(start, end):
+                costs.append(self._cumsum_statistic(X, start, end, change_point))
+
+            if np.max(costs) > threshold:
+                new_change_point = start + np.argmax(costs)
+                change_points.append(new_change_point)
+                segment_indexes.append((start, new_change_point))
+                segment_indexes.append((new_change_point + 1, end))
+
+            if len(segment_indexes) == 0:
+                return change_points
 
     def _fit(self, X, Y=None):
         return self
@@ -149,8 +149,7 @@ class BinarySegmentation(BaseSeriesAnnotator):
         pd.Series
             Series whose values are the indexes of the change points.
         """
-        change_points = []
-        self._find_change_points(X, 0, len(X) - 1, self.threshold, change_points)
+        change_points = self._find_change_points(X, self.threshold)
         change_points.sort()
         return pd.Series(X.index[change_points])
 
