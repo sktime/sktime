@@ -225,7 +225,7 @@ class BaseObject(_BaseObject):
 
         if noncomp:
             softdeps = softdeps + ["numpy<2.0"]
-        self.set_tags(python_dependencies=softdeps)
+            self.set_tags(python_dependencies=softdeps)
         return None
 
     def __eq__(self, other):
