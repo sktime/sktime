@@ -12,8 +12,7 @@ from sktime.annotation.bs import BinarySegmentation
     ],
 )
 def test_find_change_points(X, expected_change_points):
-    change_points = []
     model = BinarySegmentation(X)
-    model._find_change_points(X, 0, len(X) - 1, 1, change_points)
+    change_points = model._find_change_points(X, 1)
     change_points.sort()
     assert tuple(change_points) == tuple(expected_change_points)
