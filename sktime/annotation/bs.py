@@ -1,5 +1,7 @@
 """Binary Segmentation."""
 
+from collections import deque
+
 import numpy as np
 import pandas as pd
 
@@ -92,7 +94,7 @@ class BinarySegmentation(BaseSeriesAnnotator):
 
         return np.abs(cumsum_statistic)
 
-    def _find_change_points(self, X, threshold):
+    def _find_change_points(self, X, threshold, min_segment_length=0):
         """Find change points in 'X' between the 'start' and 'end' index.
 
         All change points are appended to 'change_points'.
@@ -103,6 +105,8 @@ class BinarySegmentation(BaseSeriesAnnotator):
             Timeseries data on which the change points will be found.
         threshold : float
             Threshold for a change point to be kept.
+        min_segment_length : int
+            Minimum distance between change points.
 
         Returns
         -------
@@ -113,23 +117,31 @@ class BinarySegmentation(BaseSeriesAnnotator):
 
         # List for storing the start and end indexes of the segments in which change
         # points are searched
-        segment_indexes = [(0, len(X) - 1)]
+        segment_indexes = deque([(0, len(X) - 1)])
 
         while True:
-            start, end = segment_indexes.pop(0)
+            if len(segment_indexes) == 0:
+                return change_points
+
+            start, end = segment_indexes.popleft()
             costs = []
 
-            for change_point in range(start, end):
+            # Skip change points at the start and end of the segment to avoid segments
+            # that are too small
+            cp_start = start + min_segment_length
+            cp_end = end - min_segment_length
+
+            if cp_end <= cp_start:
+                continue
+
+            for change_point in range(cp_start, cp_end):
                 costs.append(self._cumsum_statistic(X, start, end, change_point))
 
             if np.max(costs) > threshold:
-                new_change_point = start + np.argmax(costs)
+                new_change_point = start + min_segment_length + np.argmax(costs)
                 change_points.append(new_change_point)
                 segment_indexes.append((start, new_change_point))
                 segment_indexes.append((new_change_point + 1, end))
-
-            if len(segment_indexes) == 0:
-                return change_points
 
     def _fit(self, X, Y=None):
         return self
