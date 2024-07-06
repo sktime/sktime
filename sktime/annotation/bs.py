@@ -94,7 +94,7 @@ class BinarySegmentation(BaseSeriesAnnotator):
 
         return np.abs(cumsum_statistic)
 
-    def _find_change_points(self, X, threshold, min_segment_length=0):
+    def _find_change_points(self, X, threshold, min_segment_length=0, max_iter=10000):
         """Find change points in 'X' between the 'start' and 'end' index.
 
         All change points are appended to 'change_points'.
@@ -107,6 +107,8 @@ class BinarySegmentation(BaseSeriesAnnotator):
             Threshold for a change point to be kept.
         min_segment_length : int
             Minimum distance between change points.
+        max_iter : int
+            Maximum number of interations before the found change points are returned.
 
         Returns
         -------
@@ -119,7 +121,9 @@ class BinarySegmentation(BaseSeriesAnnotator):
         # points are searched
         segment_indexes = deque([(0, len(X) - 1)])
 
-        while True:
+        i = 0
+        while i < max_iter:
+            i += 1
             if len(segment_indexes) == 0:
                 return change_points
 
@@ -142,6 +146,8 @@ class BinarySegmentation(BaseSeriesAnnotator):
                 change_points.append(new_change_point)
                 segment_indexes.append((start, new_change_point))
                 segment_indexes.append((new_change_point + 1, end))
+
+        return change_points
 
     def _fit(self, X, Y=None):
         return self
