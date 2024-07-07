@@ -1497,8 +1497,6 @@ class BaseForecaster(BaseEstimator):
                 var_name="y",
             )
 
-            y = _handle_categorical(self, y, y_metadata, "y")
-
             msg_start = (
                 f"Unsupported input data type in {self.__class__.__name__}, input y"
             )
@@ -1517,6 +1515,8 @@ class BaseForecaster(BaseEstimator):
                     allowed_msg=allowed_msg,
                     raise_exception=True,
                 )
+
+            y = _handle_categorical(self, y, y_metadata, "y")
 
             y_scitype = y_metadata["scitype"]
             self._y_metadata = y_metadata
@@ -1561,8 +1561,6 @@ class BaseForecaster(BaseEstimator):
                 var_name="X",
             )
 
-            X = _handle_categorical(self, X, X_metadata, "X")
-
             msg_start = (
                 f"Unsupported input data type in {self.__class__.__name__}, input X"
             )
@@ -1581,6 +1579,8 @@ class BaseForecaster(BaseEstimator):
                     allowed_msg=allowed_msg,
                     raise_exception=True,
                 )
+
+            X = _handle_categorical(self, X, X_metadata, "X")
 
             X_scitype = X_metadata["scitype"]
             X_requires_vectorization = X_scitype not in X_inner_scitype

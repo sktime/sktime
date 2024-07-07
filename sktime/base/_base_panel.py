@@ -371,8 +371,6 @@ class BasePanelMixin(BaseEstimator):
             y, "Table", return_metadata=y_metadata_required
         )
 
-        y = _handle_categorical(self, y, y_metadata, "y")
-
         if not y_valid:
             allowed_msg = (
                 f"In {self.TASK}, y must be of a supported type, "
@@ -383,6 +381,8 @@ class BasePanelMixin(BaseEstimator):
             check_is_error_msg(
                 y_msg, var_name="y", allowed_msg=allowed_msg, raise_exception=True
             )
+
+        y = _handle_categorical(self, y, y_metadata, "y")
 
         y_uni = y_metadata["is_univariate"]
         y_mtype = y_metadata["mtype"]
@@ -501,8 +501,6 @@ class BasePanelMixin(BaseEstimator):
             X, scitype="Panel", return_metadata=return_metadata
         )
 
-        X = _handle_categorical(self, X, X_metadata, "X")
-
         # raise informative error message if X is in wrong format
         allowed_msg = (
             f"Allowed scitypes for {self.EST_TYPE_PLURAL} are Panel mtypes, "
@@ -514,6 +512,8 @@ class BasePanelMixin(BaseEstimator):
             check_is_error_msg(
                 msg, var_name="X", allowed_msg=allowed_msg, raise_exception=True
             )
+
+        X = _handle_categorical(self, X, X_metadata, "X")
 
         n_cases = X_metadata["n_instances"]
         if n_cases < enforce_min_instances:
