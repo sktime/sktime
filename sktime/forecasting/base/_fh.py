@@ -171,7 +171,7 @@ def _check_freq(obj):
         return _extract_freq_from_cutoff(obj)
     elif isinstance(obj, str) or obj is None:
         with _suppress_pd22_warning:
-            offset = pd.to_offset(obj)
+            offset = to_offset(obj)
         return offset
     else:
         return None
