@@ -1,5 +1,4 @@
 import abc
-from abc import ABC
 
 import numpy as np
 import pandas as pd
@@ -15,10 +14,8 @@ else:
     class Dataset:
         """Dummy class if torch is unavailable."""
 
-        pass
 
-
-class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
+class BaseDeepNetworkPyTorch(BaseForecaster):
     """Abstract base class for deep learning networks using torch.nn."""
 
     _tags = {

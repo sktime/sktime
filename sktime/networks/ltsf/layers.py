@@ -10,8 +10,6 @@ else:
     class nn_module:
         """Dummy class if torch is unavailable."""
 
-        pass
-
 
 import math
 

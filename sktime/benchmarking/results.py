@@ -110,7 +110,6 @@ class RAMResults(BaseResults):
         Method present for interface consistency.
         """
         # in-memory results are currently not persisted (i.e saved to the disk)
-        pass
 
     def _generate_key(self, strategy_name, dataset_name, cv_fold, train_or_test):
         """Get paths for files, encapsulates the storage logic of the class."""
