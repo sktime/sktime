@@ -103,7 +103,7 @@ def _get_panel_dtypekind(obj, mtype):
         col_dtypes = obj.dtypes.to_list()
     elif mtype == "nested_univ":
         col_names = obj.columns.to_list()
-        col_dtypes = [obj[col][0].dtype for col in col_names]
+        col_dtypes = [obj[col].iloc[0].dtype for col in col_names]
 
     col_DtypeKinds = _pandas_dtype_to_kind(col_dtypes)
 
