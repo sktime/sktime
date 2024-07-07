@@ -2,6 +2,7 @@
 
 Code based partially on NaiveVariance by ilyasmoutawwakil.
 """
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __all__ = ["ConformalIntervals"]
@@ -441,9 +442,9 @@ class ConformalIntervals(BaseForecaster):
                 overlapping_index = pd.Index(
                     self.residuals_matrix_.index.intersection(full_y_index)
                 ).sort_values()
-                residuals_matrix.loc[
-                    overlapping_index, overlapping_index
-                ] = self.residuals_matrix_.loc[overlapping_index, overlapping_index]
+                residuals_matrix.loc[overlapping_index, overlapping_index] = (
+                    self.residuals_matrix_.loc[overlapping_index, overlapping_index]
+                )
             else:
                 overlapping_index = None
             y_index = remaining_y_index

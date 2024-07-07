@@ -1,4 +1,5 @@
 """Benchmarking for forecasting estimators."""
+
 import functools
 from typing import Callable, Optional, Union
 

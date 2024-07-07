@@ -244,9 +244,9 @@ def _evaluate_window(x, meta):
                     result_key = f"test_{metric.name}_{argval}"
                     y_pred_key = f"y_{scitype}_{argval}"
                     old_name_mapping[f"{scitype}_{argval}_time"] = f"{scitype}_time"
-                    old_name_mapping[
-                        f"test_{metric.name}_{argval}"
-                    ] = f"test_{metric.name}"
+                    old_name_mapping[f"test_{metric.name}_{argval}"] = (
+                        f"test_{metric.name}"
+                    )
                     old_name_mapping[f"y_{scitype}_{argval}"] = f"y_{scitype}"
 
                 # make prediction

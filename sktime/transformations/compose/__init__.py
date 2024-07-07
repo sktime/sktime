@@ -1,4 +1,5 @@
 """Meta-transformers for building composite transformers."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 from sktime.transformations.compose._column import (
