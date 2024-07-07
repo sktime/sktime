@@ -52,13 +52,14 @@ class _SuppressWarningPattern:
     message_pattern : str, regex pattern
         pattern to match the warning message
     """
+
     def __init__(self, warning_type, message_pattern):
         self.warning_type = warning_type
         self.message_pattern = re.compile(message_pattern)
 
     def __enter__(self):
         self.original_filters = warnings.filters[:]
-        warnings.simplefilter('default', self.warning_type)
+        warnings.simplefilter("default", self.warning_type)
         self.original_showwarning = warnings.showwarning
         warnings.showwarning = self._custom_showwarning
 
