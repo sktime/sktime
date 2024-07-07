@@ -797,6 +797,31 @@ class requires_fh_in_fit(_BaseTag):
     }
 
 
+class capability__categorical_in_X(_BaseTag):
+    """Capability: If forecaster can handle categorical natively in exogeneous(X) data.
+
+    ``False`` = cannot handle categorical natively in X,
+    ``True`` = can handle categorical natively in X
+
+    - String name: ``"capability:categorical_in_X"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    Exogeneous data are additional time series,
+    that can be used to improve forecasting accuracy.
+    """
+
+    _tags = {
+        "tag_name": "capability:categorical_in_X",
+        "parent_type": "forecaster",
+        "tag_type": "bool",
+        "short_descr": "can the forecaster natively handle categorical data in exogeneous X?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
 # Panel data related tags
 # -----------------------
 
@@ -1825,12 +1850,6 @@ ESTIMATOR_TAG_REGISTER = [
         "splitter",
         ("str", ["temporal", "instance"]),
         "whether the splitter splits by time or by instance (panel/hierarchy index)",
-    ),
-    (
-        "capability:categorical-in-X",
-        "estimator",
-        "bool",
-        "can the estimator natively handle categorical data in exogeneous X?",
     ),
     # -------------------------
     # tags to be moved to skpro
