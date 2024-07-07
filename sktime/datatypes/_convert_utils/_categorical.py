@@ -28,7 +28,7 @@ def _need_to_encode(est, metadata, var_name):
     if est_scitype == "classifier" and var_name == "y":
         return False
     elif est_scitype == "forecaster" and var_name == "X":
-        if est.get_tag("capability:categorical-in-X", False, False):
+        if est.get_tag("capability:categorical_in_X", False, False):
             return False
         return True
 
