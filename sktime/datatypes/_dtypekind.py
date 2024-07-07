@@ -1,7 +1,13 @@
+"""Class definition of DtypeKind and related utility functions.
+
+Enum values of DtypeKind are in accordance with the dataframe interchange protocol.
+Utility functions to help convert dtypes to corresponding DtypeKind values.
+"""
+
+__author__ = ["Abhay-Lejith"]
+
 from enum import IntEnum
 
-import numpy as np
-import pandas as pd
 from pandas.api.types import (
     is_bool_dtype,
     is_datetime64_any_dtype,
@@ -44,34 +50,41 @@ class DtypeKind(IntEnum):
 
 
 def _pandas_dtype_to_kind(col_dtypes):
-    for i, dtype in enumerate(col_dtypes):
-        if is_float_dtype(dtype):
-            col_dtypes[i] = DtypeKind.FLOAT
-        elif is_signed_integer_dtype(dtype):
-            col_dtypes[i] = DtypeKind.INT
-        elif is_unsigned_integer_dtype(dtype):
-            col_dtypes[i] = DtypeKind.UINT
-        elif dtype == "object" or dtype == "category":
-            col_dtypes[i] = DtypeKind.CATEGORICAL
-        elif is_bool_dtype(dtype):
-            col_dtypes[i] = DtypeKind.BOOL
-        elif is_datetime64_any_dtype(dtype):
-            col_dtypes[i] = DtypeKind.DATETIME
-        elif is_string_dtype(dtype):
-            col_dtypes[i] = DtypeKind.STRING
-    return col_dtypes
+    """Convert pandas dtypes to enum DtypeKind values."""
+    if isinstance(col_dtypes, list):
+        return [_pandas_dtype_to_kind(x) for x in col_dtypes]
+
+    if is_float_dtype(col_dtypes):
+        return DtypeKind.FLOAT
+    elif is_signed_integer_dtype(col_dtypes):
+        return DtypeKind.INT
+    elif is_unsigned_integer_dtype(col_dtypes):
+        return DtypeKind.UINT
+    elif col_dtypes == "object" or col_dtypes == "category":
+        return DtypeKind.CATEGORICAL
+    elif is_bool_dtype(col_dtypes):
+        return DtypeKind.BOOL
+    elif is_datetime64_any_dtype(col_dtypes):
+        return DtypeKind.DATETIME
+    elif is_string_dtype(col_dtypes):
+        return DtypeKind.STRING
+    else:
+        raise TypeError(
+            f"""Dtype of columns can be: INT, UINT, FLOAT, BOOL, STRING,
+                        DATETIME, CATEGORICAL. Found dtype: {col_dtypes}"""
+        )
 
 
 # function for series scitype
 def _get_series_dtypekind(obj, mtype):
-    if mtype == np.ndarray:
+    if mtype == "numpy":
         if len(obj.shape) == 2:
             return [DtypeKind.FLOAT] * obj.shape[1]
         else:
             return [DtypeKind.FLOAT]
-    elif mtype == pd.Series:
+    elif mtype == "pd.Series":
         col_dtypes = [obj.dtypes]
-    elif mtype == pd.DataFrame:
+    elif mtype == "pd.DataFrame":
         col_dtypes = obj.dtypes.to_list()
 
     col_DtypeKinds = _pandas_dtype_to_kind(col_dtypes)
@@ -85,7 +98,7 @@ def _get_panel_dtypekind(obj, mtype):
     elif mtype == "numpyflat":
         return [DtypeKind.FLOAT]
     elif mtype == "df-list":
-        return _get_series_dtypekind(obj[0], pd.DataFrame)
+        return _get_series_dtypekind(obj[0], "pd.DataFrame")
     elif mtype == "pd-multiindex":
         col_dtypes = obj.dtypes.to_list()
     elif mtype == "nested_univ":
@@ -95,6 +108,23 @@ def _get_panel_dtypekind(obj, mtype):
     col_DtypeKinds = _pandas_dtype_to_kind(col_dtypes)
 
     return col_DtypeKinds
+
+
+def _get_table_dtypekind(obj, mtype):
+    if mtype == "numpy1D":
+        return [DtypeKind.FLOAT]
+    elif mtype == "numpy2D":
+        return [DtypeKind.FLOAT] * obj.shape[1]
+    elif mtype == "pd.Series":
+        col_dtypes = [obj.dtypes]
+    elif mtype == "pd.DataFrame":
+        col_dtypes = obj.dtypes.to_list()
+    elif mtype == "list_of_dict":
+        col_dtypes = [type(obj[0][key]) for key in obj[0].keys()]
+
+    col_Dtypekinds = _pandas_dtype_to_kind(col_dtypes)
+
+    return col_Dtypekinds
 
 
 # This function is to broadly classify all dtypekinds into CATEGORICAL or FLOAT

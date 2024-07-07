@@ -9,6 +9,7 @@ from sktime.datatypes._dtypekind import (
     _get_feature_kind,
     _get_panel_dtypekind,
     _get_series_dtypekind,
+    _get_table_dtypekind,
 )
 
 
@@ -17,7 +18,7 @@ def test_feature_kind_for_series():
     df = pd.DataFrame({"a": ["a", "b", "c", "d"], "b": [3, 7, 2, -3 / 7]})
     expected_feature_kind = [DtypeKind.CATEGORICAL, DtypeKind.FLOAT]
 
-    dtype_kind = _get_series_dtypekind(df, pd.DataFrame)
+    dtype_kind = _get_series_dtypekind(df, "pd.DataFrame")
     feature_kind = _get_feature_kind(dtype_kind)
 
     assert feature_kind == expected_feature_kind, (
@@ -104,6 +105,47 @@ def test_feature_kind_for_hierarchical():
     hierarchical_df = hierarchical_df.set_index(["foo", "bar", "timepoints"])
 
     dtype_kind = _get_panel_dtypekind(hierarchical_df, "pd-multiindex")
+    feature_kind = _get_feature_kind(dtype_kind)
+
+    assert feature_kind == expected_feature_kind, (
+        f"feature_kind was not correctly inferred, expected {expected_feature_kind} but"
+        f"found {feature_kind}"
+    )
+
+
+def test_feature_kind_for_table():
+    # mtype: pd.Series
+    expected_feature_kind = [DtypeKind.CATEGORICAL]
+
+    series = pd.Series(["a", "b", "c", "a"])
+    dtype_kind = _get_table_dtypekind(series, "pd.Series")
+    feature_kind = _get_feature_kind(dtype_kind)
+
+    assert feature_kind == expected_feature_kind, (
+        f"feature_kind was not correctly inferred, expected {expected_feature_kind} but"
+        f"found {feature_kind}"
+    )
+
+    expected_feature_kind = [DtypeKind.CATEGORICAL, DtypeKind.FLOAT]
+
+    # mtype: pd.DataFrame
+    df = pd.DataFrame({"a": ["a", "b", "c", "a"], "b": [3, 7, 2, -3 / 7]})
+    dtype_kind = _get_table_dtypekind(df, "pd.DataFrame")
+    feature_kind = _get_feature_kind(dtype_kind)
+
+    assert feature_kind == expected_feature_kind, (
+        f"feature_kind was not correctly inferred, expected {expected_feature_kind} but"
+        f"found {feature_kind}"
+    )
+
+    # mtype: list_of_dict
+    list_of_dict = [
+        {"a": "x", "b": 3.0},
+        {"a": "y", "b": 7.0},
+        {"a": "z", "b": 2.0},
+        {"a": "x", "b": -3 / 7},
+    ]
+    dtype_kind = _get_table_dtypekind(list_of_dict, "list_of_dict")
     feature_kind = _get_feature_kind(dtype_kind)
 
     assert feature_kind == expected_feature_kind, (
