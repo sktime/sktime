@@ -8,8 +8,6 @@ __author__ = ["Abhay-Lejith"]
 
 from enum import IntEnum
 
-import numpy as np
-import pandas as pd
 from pandas.api.types import (
     is_bool_dtype,
     is_datetime64_any_dtype,
@@ -79,14 +77,14 @@ def _pandas_dtype_to_kind(col_dtypes):
 
 # function for series scitype
 def _get_series_dtypekind(obj, mtype):
-    if mtype == np.ndarray:
+    if mtype == "numpy":
         if len(obj.shape) == 2:
             return [DtypeKind.FLOAT] * obj.shape[1]
         else:
             return [DtypeKind.FLOAT]
-    elif mtype == pd.Series:
+    elif mtype == "pd.Series":
         col_dtypes = [obj.dtypes]
-    elif mtype == pd.DataFrame:
+    elif mtype == "pd.DataFrame":
         col_dtypes = obj.dtypes.to_list()
 
     col_DtypeKinds = _pandas_dtype_to_kind(col_dtypes)
@@ -100,7 +98,7 @@ def _get_panel_dtypekind(obj, mtype):
     elif mtype == "numpyflat":
         return [DtypeKind.FLOAT]
     elif mtype == "df-list":
-        return _get_series_dtypekind(obj[0], pd.DataFrame)
+        return _get_series_dtypekind(obj[0], "pd.DataFrame")
     elif mtype == "pd-multiindex":
         col_dtypes = obj.dtypes.to_list()
     elif mtype == "nested_univ":
@@ -110,6 +108,23 @@ def _get_panel_dtypekind(obj, mtype):
     col_DtypeKinds = _pandas_dtype_to_kind(col_dtypes)
 
     return col_DtypeKinds
+
+
+def _get_table_dtypekind(obj, mtype):
+    if mtype == "numpy1D":
+        return [DtypeKind.FLOAT]
+    elif mtype == "numpy2D":
+        return [DtypeKind.FLOAT] * obj.shape[1]
+    elif mtype == "pd.Series":
+        col_dtypes = [obj.dtypes]
+    elif mtype == "pd.DataFrame":
+        col_dtypes = obj.dtypes.to_list()
+    elif mtype == "list_of_dict":
+        col_dtypes = [type(obj[0][key]) for key in obj[0].keys()]
+
+    col_Dtypekinds = _pandas_dtype_to_kind(col_dtypes)
+
+    return col_Dtypekinds
 
 
 # This function is to broadly classify all dtypekinds into CATEGORICAL or FLOAT
