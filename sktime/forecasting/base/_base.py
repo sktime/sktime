@@ -53,6 +53,7 @@ from sktime.datatypes import (
     scitype_to_mtype,
     update_data,
 )
+from sktime.datatypes._convert_utils._categorical import _handle_categorical
 from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.utils.datetime import _shift
 from sktime.utils.dependencies import _check_estimator_deps
@@ -1483,7 +1484,7 @@ class BaseForecaster(BaseEstimator):
         # checking y
         if y is not None:
             # request only required metadata from checks
-            y_metadata_required = ["n_features", "feature_names"]
+            y_metadata_required = ["n_features", "feature_names", "feature_kind"]
             if self.get_tag("scitype:y") != "both":
                 y_metadata_required += ["is_univariate"]
             if not self.get_tag("handles-missing-data"):
@@ -1495,6 +1496,8 @@ class BaseForecaster(BaseEstimator):
                 return_metadata=y_metadata_required,
                 var_name="y",
             )
+
+            y = _handle_categorical(self, y, y_metadata, "y")
 
             msg_start = (
                 f"Unsupported input data type in {self.__class__.__name__}, input y"
@@ -1547,7 +1550,7 @@ class BaseForecaster(BaseEstimator):
         # checking X
         if X is not None:
             # request only required metadata from checks
-            X_metadata_required = []
+            X_metadata_required = ["feature_kind"]
             if not self.get_tag("handles-missing-data"):
                 X_metadata_required += ["has_nans"]
 
@@ -1557,6 +1560,8 @@ class BaseForecaster(BaseEstimator):
                 return_metadata=X_metadata_required,
                 var_name="X",
             )
+
+            X = _handle_categorical(self, X, X_metadata, "X")
 
             msg_start = (
                 f"Unsupported input data type in {self.__class__.__name__}, input X"

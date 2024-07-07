@@ -23,6 +23,7 @@ from sktime.datatypes import (
     check_is_scitype,
     convert,
 )
+from sktime.datatypes._convert_utils._categorical import _handle_categorical
 from sktime.utils.warnings import warn
 
 
@@ -365,9 +366,12 @@ class BasePanelMixin(BaseEstimator):
         capa_multioutput = self.get_tag("capability:multioutput")
         y_inner_mtype = self.get_tag("y_inner_mtype")
 
+        y_metadata_required = ["is_univariate", "feature_names", "feature_kind"]
         y_valid, y_msg, y_metadata = check_is_scitype(
-            y, "Table", return_metadata=["is_univariate", "feature_names"]
+            y, "Table", return_metadata=y_metadata_required
         )
+
+        y = _handle_categorical(self, y, y_metadata, "y")
 
         if not y_valid:
             allowed_msg = (
@@ -496,6 +500,9 @@ class BasePanelMixin(BaseEstimator):
         X_valid, msg, X_metadata = check_is_scitype(
             X, scitype="Panel", return_metadata=return_metadata
         )
+
+        X = _handle_categorical(self, X, X_metadata, "X")
+
         # raise informative error message if X is in wrong format
         allowed_msg = (
             f"Allowed scitypes for {self.EST_TYPE_PLURAL} are Panel mtypes, "
