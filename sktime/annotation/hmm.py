@@ -4,6 +4,7 @@ Implements a basic Hidden Markov Model (HMM) as an annotation estimator. To read
 about the algorithm, check out the `HMM wikipedia page
 <https://en.wikipedia.org/wiki/Hidden_Markov_model>`_.
 """
+
 import warnings
 
 import numpy as np

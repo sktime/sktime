@@ -4,6 +4,7 @@ Useful for building estimators where all but one or a few methods are delegated.
 that purpose, inherit from this estimator and then override only the methods     that
 are not delegated.
 """
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly"]

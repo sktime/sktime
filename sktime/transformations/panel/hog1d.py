@@ -1,4 +1,5 @@
 """HOG1D transform."""
+
 import math
 import numbers
 
