@@ -10,6 +10,7 @@ Introduces the Window module that is used when splitting the path over:
 window types.
 Code based on window code written by Patrick Kidger.
 """
+
 import collections as co
 
 import numpy as np
