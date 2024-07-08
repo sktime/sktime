@@ -333,12 +333,14 @@ isort = "^docs/source/examples/|^examples/"
 
 [tool.ruff]
 line-length = 88
-exclude = ["docs/source/examples/", ".git", "sktime/_contrib/*", "examples/*"]
+exclude = [".git", "sktime/_contrib/*"]
 target-version = "py39"
+extend-include = ["*.ipynb"]
 
 [tool.ruff.lint]
 select = [
     # https://pypi.org/project/pycodestyle
+    "D",
     "E",
     "W",
     # https://pypi.org/project/pyflakes
@@ -403,3 +405,6 @@ exclude = ['test_*.py']
     "PT019",  # Fixture `_` without value is injected as parameter, use `@pytest.mark.usefixtures` instead
     "PT006" # Checks for the type of parameter names passed to pytest.mark.parametrize.
 ]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"

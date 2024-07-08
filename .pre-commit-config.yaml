@@ -33,20 +33,6 @@ repos:
       - id: check-manifest
         stages: [manual]
 
-  - repo: https://github.com/nbQA-dev/nbQA
-    rev: 1.8.5
-    hooks:
-      - id: nbqa-black
-        args:
-          - --nbqa-dont-skip-bad-cells
-      - id: nbqa-isort
-        args:
-          - --nbqa-dont-skip-bad-cells
-      - id: nbqa-flake8
-        args:
-          - --nbqa-dont-skip-bad-cells
-          - --extend-ignore=E402,E203
-
   # We use the Python version instead of the original version which seems to require Docker
   # https://github.com/koalaman/shellcheck-precommit
   - repo: https://github.com/shellcheck-py/shellcheck-py
