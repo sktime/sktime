@@ -160,6 +160,8 @@ class TinyTimeMixerForecaster(BaseForecaster):
     # todo: add any hyper-parameters and components to constructor
     def __init__(
         self,
+        model_path="ibm/TTM",
+        revision="main",
         config=None,
         training_args=None,
         validation_split=0.2,
@@ -167,6 +169,8 @@ class TinyTimeMixerForecaster(BaseForecaster):
         callbacks=None,
     ):
         super().__init__()
+        self.model_path = model_path
+        self.revision = revision
         self.config = config
         self._config = config if config is not None else {}
         self.training_args = training_args
@@ -213,8 +217,11 @@ class TinyTimeMixerForecaster(BaseForecaster):
         )
 
         # Get the Configuration
-        config = TinyTimeMixerConfig()
-        # config = TinyTimeMixerConfig.from_pretrained("ibm/TTM", revision="1024_96_v1")
+        # config = TinyTimeMixerConfig()
+        config = TinyTimeMixerConfig.from_pretrained(
+            self.model_path,
+            revision=self.revision,
+        )
         # config = PatchTSTConfig.from_pretrained(
         # "ibm-granite/granite-timeseries-patchtst"
         # )
@@ -236,13 +243,14 @@ class TinyTimeMixerForecaster(BaseForecaster):
         # Get the Model
         # self.model, info = PatchTSTForPrediction.from_pretrained(
         # "ibm-granite/granite-timeseries-patchtst",
-        # self.model, info = TinyTimeMixerForPrediction.from_pretrained(
-        #     "ibm/TTM", revision="1024_96_v1",
-        #     config=config,
-        #     output_loading_info=True,
-        #     ignore_mismatched_sizes=True,
-        # )
-        self.model = TinyTimeMixerForPrediction(config)
+        self.model, info = TinyTimeMixerForPrediction.from_pretrained(
+            self.model_path,
+            revision=self.revision,
+            config=config,
+            output_loading_info=True,
+            ignore_mismatched_sizes=True,
+        )
+        # self.model = TinyTimeMixerForPrediction(config)
 
         # Get the Dataset
         train_dataset, eval_dataset = self._get_dataset(
