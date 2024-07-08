@@ -18,14 +18,9 @@ repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.5.1
     hooks:
+      - id: ruff-format
       - id: ruff
         args: [--fix]
-
-  - repo: https://github.com/psf/black
-    rev: 24.4.2
-    hooks:
-      - id: black
-        language_version: python3
 
   - repo: https://github.com/mgedmin/check-manifest
     rev: "0.49"

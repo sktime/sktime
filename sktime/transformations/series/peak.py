@@ -1,5 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Extract peak/working hour features from datetimeindex."""
+
 __author__ = ["ali-parizad"]
 __all__ = ["PeakTimeFeature"]
 

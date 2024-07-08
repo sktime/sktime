@@ -1,5 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements DynamicFactor Model as interface to statsmodels."""
+
 import numpy as np
 import pandas as pd
 

@@ -1289,9 +1289,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
             # hacky approach to handle unhashable type objects
             if "forecaster" in search_space:
                 forecasters = search_space.get("forecaster")
-                mapping = {
-                    num: estimator for num, estimator in enumerate(forecasters)
-                }  # noqa
+                mapping = {num: estimator for num, estimator in enumerate(forecasters)}  # noqa
                 search_space["forecaster"] = list(mapping.keys())
                 mappings.append(mapping)
             else:
