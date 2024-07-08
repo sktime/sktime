@@ -388,7 +388,13 @@ ignore=[
 [tool.ruff.lint.per-file-ignores]
 
 "setup.py" = ["S101"]
-"**/__init__.py" = ["F401", "F403", "F405", "F811", "F821", "E501", "SIM102"]
+"**/__init__.py" = [
+  "F401", # unused import
+  "F403", # undefined local with import star
+  "F405", # undefined local with import start usage
+  "F821", # undefined name
+  "E501", # line too long
+]
 "**/tests/**" = [
   "D",
   "S605",  # Starting a process with a shell: seems safe, but may be changed in the future; consider rewriting without `shell`
