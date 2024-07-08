@@ -132,8 +132,8 @@ def _get_feature_kind(col_dtypekinds):
     feature_kind_map = {
         DtypeKind.CATEGORICAL: DtypeKind.CATEGORICAL,
         DtypeKind.STRING: DtypeKind.CATEGORICAL,
-        DtypeKind.BOOL: DtypeKind.CATEGORICAL,
         DtypeKind.DATETIME: DtypeKind.CATEGORICAL,
+        DtypeKind.BOOL: DtypeKind.FLOAT,
         DtypeKind.FLOAT: DtypeKind.FLOAT,
         DtypeKind.INT: DtypeKind.FLOAT,
         DtypeKind.UINT: DtypeKind.FLOAT,
