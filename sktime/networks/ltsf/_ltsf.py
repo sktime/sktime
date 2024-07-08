@@ -11,8 +11,6 @@ else:
     class nn_module:
         """Dummy class if torch is unavailable."""
 
-        pass
-
 
 class LTSFLinearNetwork:
     """LTSF-Linear Forecaster.

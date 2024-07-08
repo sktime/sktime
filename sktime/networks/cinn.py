@@ -15,8 +15,6 @@ else:
     class NNModule:
         """Dummy class if torch is unavailable."""
 
-        pass
-
 
 if _check_soft_dependencies("FrEIA", severity="none"):
     import FrEIA.framework as Ff

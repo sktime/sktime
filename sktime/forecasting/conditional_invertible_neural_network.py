@@ -27,8 +27,6 @@ else:
     class Dataset:
         """Dummy class if torch is unavailable."""
 
-        pass
-
 
 def default_sine(x, amplitude, phase, offset, amplitude2, amplitude3, phase2):
     """Calculate a special sine for the cINN."""
