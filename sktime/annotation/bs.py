@@ -54,6 +54,7 @@ class BinarySegmentation(BaseSeriesAnnotator):
 
     _tags = {
         "fit_is_empty": True,
+        "univariate-only": True,
         "task": "change_point_detection",
         "learning_type": "unsupervised",
     }
