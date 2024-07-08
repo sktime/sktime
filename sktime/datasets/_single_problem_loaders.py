@@ -1453,7 +1453,7 @@ def load_m5(
     ----------
     extract_path : str, optional (default=None)
         the path to look for the data. If no path is provided, the function
-        creates a `data` folder and stores `m5-forecasting-accuray` foldeer in it.
+        creates a `data` folder and stores `m5-forecasting-accuray` folder in it.
         If a path is given, it can be absolute,
         e.g. C:/Temp or relative, e.g. Temp or ./Temp
 
@@ -1527,7 +1527,7 @@ def load_m5(
         sp : pd.Dataframe
             takes the sell_prices dataframe by default.
         include_events : bool, optional (default=False)
-            takes the sales_train_validation dataframe by default.
+            Includes the event names and types in the dataset if `True`.
 
         Returns
         -------
