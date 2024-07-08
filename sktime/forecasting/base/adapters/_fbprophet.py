@@ -23,7 +23,7 @@ class _ProphetAdapter(BaseForecaster):
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "y_inner_mtype": "pd.DataFrame",
-        "python_dependencies": "prophet",
+        "python_dependencies": ["prophet", "numpy<2.0"],
     }
 
     def _convert_int_to_date(self, y):

@@ -1,4 +1,5 @@
 """Test for hidalgo segmentation."""
+
 import numpy as np
 import pytest
 from sklearn.utils.validation import check_random_state

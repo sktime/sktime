@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.30.1"
+version = "0.30.2"
 description = "A unified framework for machine learning with time series"
 readme = "README.md"
 keywords = [
@@ -53,7 +53,7 @@ classifiers = [
 # this set should be kept minimal!
 dependencies = [
   "joblib<1.5,>=1.2.0",  # required for parallel processing
-  "numpy<1.27,>=1.21",  # required for framework layer and base class logic
+  "numpy<2.1,>=1.21",  # required for framework layer and base class logic
   "packaging",  # for estimator specific dependency parsing
   "pandas<2.3.0,>=1.1",  # pandas is the main in-memory data container
   "scikit-base>=0.6.1,<0.9.0",  # base module for sklearn compatible base API
@@ -80,7 +80,7 @@ all_extras = [
   "arch>=5.6,<7.1.0",
   "cloudpickle",
   "dash!=2.9.0",
-  "dask<2024.6.2; extra == 'dataframe'",
+  "dask<2024.6.3; extra == 'dataframe'",
   "dtaidistance<2.4",
   "dtw-python",
   'esig==0.9.7; python_version < "3.10"',
@@ -93,6 +93,7 @@ all_extras = [
   "matplotlib>=3.3.2",
   "mne",
   'numba<0.61,>=0.53',
+  'optuna<3.7',
   'pmdarima!=1.8.1,<3.0.0,>=1.8; python_version < "3.12"',
   "polars[pandas]",
   'prophet>=1.1; python_version < "3.12"',
@@ -103,7 +104,8 @@ all_extras = [
   "scikit_posthocs>=0.6.5",
   "seaborn>=0.11",
   "seasonal",
-  "skpro>=2,<2.4.0",
+  'skforecast<0.13,>=0.12.1; python_version < "3.12"',
+  "skpro>=2,<2.5.0",
   'statsforecast<1.8.0,>=1.0.0; python_version < "3.12"',
   "statsmodels>=0.12.1",
   'stumpy>=1.5.1; python_version < "3.11"',
@@ -121,7 +123,7 @@ all_extras_pandas2 = [
   "arch>=5.6,<7.1.0",
   "cloudpickle",
   "dash!=2.9.0",
-  "dask<2024.6.2; extra == 'dataframe'",
+  "dask<2024.6.3; extra == 'dataframe'",
   "dtaidistance<2.4",
   "dtw-python",
   'esig==0.9.7; python_version < "3.10"',
@@ -134,6 +136,7 @@ all_extras_pandas2 = [
   "matplotlib>=3.3.2",
   "mne",
   'numba<0.61,>=0.53',
+  'optuna<3.7',
   'pmdarima!=1.8.1,<3.0.0,>=1.8; python_version < "3.12"',
   "polars[pandas]",
   'prophet>=1.1; python_version < "3.12"',
@@ -142,7 +145,8 @@ all_extras_pandas2 = [
   "scikit_posthocs>=0.6.5",
   "seaborn>=0.11",
   "seasonal",
-  "skpro>=2,<2.4.0",
+  'skforecast<0.13,>=0.12.1; python_version < "3.12"',
+  "skpro>=2,<2.5.0",
   'statsforecast<1.8.0,>=1.0.0; python_version < "3.12"',
   "statsmodels>=0.12.1",
   'stumpy>=1.5.1; python_version < "3.11"',
@@ -188,7 +192,8 @@ forecasting = [
   "arch>=5.6,<7.1",
   'pmdarima!=1.8.1,<2.1,>=1.8; python_version < "3.12"',
   "prophet<1.2,>=1.1",
-  "skpro>=2,<2.4.0",
+  'skforecast<0.13,>=0.12.1; python_version < "3.12"',
+  "skpro>=2,<2.5.0",
   'statsforecast<1.8.0,>=1.0.0; python_version < "3.12"',
   "statsmodels<0.15,>=0.12.1",
   'tbats<1.2,>=1.1; python_version < "3.12"',
@@ -208,7 +213,7 @@ regression = [
 transformations = [
   'esig<0.10,>=0.9.7; python_version < "3.11"',
   "filterpy<1.5,>=1.4.5",
-  "holidays>=0.29,<0.52",
+  "holidays>=0.52,<0.53",
   "mne>=1.5,<1.8",
   'numba<0.61,>=0.53',
   "pycatch22>=0.4,<0.4.6",
@@ -275,6 +280,7 @@ datasets = [
 dl = [
   'FrEIA; python_version < "3.12"',
   'neuralforecast<1.8.0,>=1.6.4; python_version < "3.11"',
+  'peft>=0.10.0; python_version < "3.12"',
   'tensorflow<2.17,>=2; python_version < "3.12"',
   'torch; python_version < "3.12"',
   'transformers[torch]<4.41.0; python_version < "3.12"',
