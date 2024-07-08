@@ -25,6 +25,7 @@ def convert_pandas_to_polars(
         If data contains NaN values PyArrow will convert the NaN to None
     lazy : bool, optional (default=False)
         If True, return a LazyFrame instead of a DataFrame
+
     Returns
     -------
     polars.DataFrame or polars.LazyFrame (if lazy=True)

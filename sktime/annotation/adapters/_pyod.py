@@ -62,6 +62,7 @@ class PyODAnnotator(BaseSeriesAnnotator):
             training data to fit model to, time series
         Y : pd.Series, optional
             ground truth annotations for training if annotator is supervised
+
         Returns
         -------
         self : returns a reference to self

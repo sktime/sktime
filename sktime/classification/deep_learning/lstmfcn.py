@@ -122,6 +122,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         n_classes: int
             The number of classes, which shall become the size of the output
              layer
+
         Returns
         -------
         output : a compiled Keras Model

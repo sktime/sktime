@@ -247,6 +247,7 @@ class PeakTimeFeature(BaseTransformer):
         """Transform X and return a transformed version.
 
         private _transform containing the core logic, called from transform
+
         Parameters
         ----------
         X : pd.Series or pd.DataFrame

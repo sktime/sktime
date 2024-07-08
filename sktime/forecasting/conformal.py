@@ -402,6 +402,7 @@ class ConformalIntervals(BaseForecaster):
         update : bool
             Whether residuals_matrix has been calculated previously and just
             needs extending. Default = False
+
         Returns
         -------
         residuals_matrix : pd.DataFrame, row and column index = y.index[initial_window:]

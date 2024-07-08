@@ -19,7 +19,7 @@ GITHUB_REPOS = "https://api.github.com/repos"
 
 
 def fetch_merged_pull_requests(page: int = 1) -> list[dict]:  # noqa
-    "Fetch a page of pull requests"
+    """Fetch a page of pull requests."""
     params = {
         "base": "main",
         "state": "closed",
@@ -48,8 +48,7 @@ def fetch_latest_release():  # noqa
 
 
 def fetch_pull_requests_since_last_release() -> list[dict]:  # noqa
-    "Fetch pull requests and filter based on merged date"
-
+    """Fetch pull requests and filter based on merged date."""
     release = fetch_latest_release()
     published_at = parser.parse(release["published_at"])
     print(  # noqa
@@ -70,7 +69,7 @@ def fetch_pull_requests_since_last_release() -> list[dict]:  # noqa
 
 
 def github_compare_tags(tag_left: str, tag_right: str = "HEAD"):  # noqa
-    "Compare commit between two tags"
+    """Compare commit between two tags."""
     response = httpx.get(
         f"{GITHUB_REPOS}/{OWNER}/{REPO}/compare/{tag_left}...{tag_right}"
     )
@@ -81,7 +80,7 @@ def github_compare_tags(tag_left: str, tag_right: str = "HEAD"):  # noqa
 
 
 def render_contributors(prs: list, fmt: str = "rst"):  # noqa
-    "Find unique authors and print a list in  given format"
+    """Find unique authors and print a list in  given format."""
     authors = sorted({pr["user"]["login"] for pr in prs}, key=lambda x: x.lower())
 
     header = "Contributors"
@@ -95,7 +94,7 @@ def render_contributors(prs: list, fmt: str = "rst"):  # noqa
 
 
 def assign_prs(prs, categs: list[dict[str, list[str]]]):  # noqa
-    "Assign PR to categories based on labels"
+    """Assign PR to categories based on labels."""
     assigned = defaultdict(list)
 
     for i, pr in enumerate(prs):
@@ -115,7 +114,7 @@ def assign_prs(prs, categs: list[dict[str, list[str]]]):  # noqa
 
 
 def render_row(pr):  # noqa
-    "Render a single row with PR in restructuredText format"
+    """Render a single row with PR in restructuredText format."""
     print(  # noqa
         "*",
         pr["title"].replace("`", "``"),
@@ -126,7 +125,7 @@ def render_row(pr):  # noqa
 
 def render_changelog(prs, assigned):  # noqa
     # sourcery skip: use-named-expression
-    "Render changelog"
+    """Render changelog."""
     for title, _ in assigned.items():
         pr_group = [prs[i] for i in assigned[title]]
         if pr_group:
