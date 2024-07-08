@@ -19,6 +19,10 @@ class BinarySegmentation(BaseSeriesAnnotator):
     threshold : float
         Threshold for the CUMSUM statistic. Change points that do not increase the
         CUMSUM statistic above this threshold are ignored.
+    min_cp_distance : int
+        Minimum distance between change points.
+    max_iter : int
+        Maximum number of interations before the found change points are returned.
 
     Notes
     -----
@@ -52,7 +56,7 @@ class BinarySegmentation(BaseSeriesAnnotator):
         "learning_type": "unsupervised",
     }
 
-    def __init__(self, threshold):
+    def __init__(self, threshold, min_cp_distance=0, max_iter=10000):
         self.threshold = threshold
         super().__init__()
 
@@ -94,7 +98,7 @@ class BinarySegmentation(BaseSeriesAnnotator):
 
         return np.abs(cumsum_statistic)
 
-    def _find_change_points(self, X, threshold, min_segment_length=0, max_iter=10000):
+    def _find_change_points(self, X, threshold, min_cp_distance=0, max_iter=10000):
         """Find change points in 'X' between the 'start' and 'end' index.
 
         All change points are appended to 'change_points'.
@@ -105,7 +109,7 @@ class BinarySegmentation(BaseSeriesAnnotator):
             Timeseries data on which the change points will be found.
         threshold : float
             Threshold for a change point to be kept.
-        min_segment_length : int
+        min_cp_distance : int
             Minimum distance between change points.
         max_iter : int
             Maximum number of interations before the found change points are returned.
@@ -132,8 +136,8 @@ class BinarySegmentation(BaseSeriesAnnotator):
 
             # Skip change points at the start and end of the segment to avoid segments
             # that are too small
-            cp_start = start + min_segment_length
-            cp_end = end - min_segment_length
+            cp_start = start + min_cp_distance
+            cp_end = end - min_cp_distance
 
             if cp_end <= cp_start:
                 continue
@@ -142,7 +146,7 @@ class BinarySegmentation(BaseSeriesAnnotator):
                 costs.append(self._cumsum_statistic(X, start, end, change_point))
 
             if np.max(costs) > threshold:
-                new_change_point = start + min_segment_length + np.argmax(costs)
+                new_change_point = start + min_cp_distance + np.argmax(costs)
                 change_points.append(new_change_point)
                 segment_indexes.append((start, new_change_point))
                 segment_indexes.append((new_change_point + 1, end))
