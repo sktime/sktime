@@ -7,6 +7,8 @@ import pandas as pd
 
 from sktime.annotation.base._base import BaseSeriesAnnotator
 
+__author__ = ["Alex-JG3"]
+
 
 class BinarySegmentation(BaseSeriesAnnotator):
     """Binary segmentation change point detector.

@@ -3,6 +3,8 @@ import pytest
 
 from sktime.annotation.bs import BinarySegmentation
 
+__author__ = ["Alex-JG3"]
+
 
 @pytest.mark.parametrize(
     "X,expected_change_points",
