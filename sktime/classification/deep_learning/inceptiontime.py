@@ -1,4 +1,5 @@
 """InceptionTime for classification."""
+
 __author__ = "james-large"
 __all__ = ["InceptionTimeClassifier"]
 

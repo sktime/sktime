@@ -1,4 +1,5 @@
 """Warning related utilities."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 from warnings import warn as _warn

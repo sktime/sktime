@@ -1,4 +1,5 @@
 """Conditional Invertible Neural Network (cINN) for forecasting."""
+
 __author__ = ["benHeid"]
 
 from copy import deepcopy
@@ -25,8 +26,6 @@ else:
 
     class Dataset:
         """Dummy class if torch is unavailable."""
-
-        pass
 
 
 def default_sine(x, amplitude, phase, offset, amplitude2, amplitude3, phase2):

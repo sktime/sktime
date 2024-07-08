@@ -1,4 +1,5 @@
 """Tests the AutoReg model."""
+
 __author__ = ["CTFallon", "mgazian000", "jonathanbechtel"]
 
 import pytest
