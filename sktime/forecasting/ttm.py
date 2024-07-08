@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.utils.warnings import warn
 
 # todo: for imports of sktime soft dependencies:
 # make sure to fill in the "python_dependencies" tag with the package import name
@@ -229,8 +230,40 @@ class TinyTimeMixerForecaster(BaseForecaster):
         # Update config with user provided config
         _config = config.to_dict()
         _config.update(self._config)
-        # TODO: validate this configuration
+
+        # validate patches in configuration
         # context_length / num_patches == patch_length == patch_stride
+        # if this condition is not satisfied in the configuration
+        # this error is raised in forward pass of the model
+        # RuntimeError: mat1 and mat2 shapes cannot be multiplied (384x4 and 32x64)
+        context_length = _config.get("context_length")
+        num_patches = _config.get("num_patches")
+        patch_length = _config.get("patch_length")
+        patch_stride = _config.get("patch_stride")
+        patch_size = context_length / num_patches
+        if patch_size != patch_length or patch_stride != patch_stride:
+            # update the config here
+            patch_size = max(1, int(patch_size))
+            _config["patch_length"] = patch_size
+            _config["patch_stride"] = patch_size
+            _config["num_patches"] = _config["context_length"] // patch_size
+
+            msg = (
+                "Invalid configuration detected. "
+                "The provided values do not satisfy the required condition:\n"
+                "context_length / num_patches == patch_length == patch_stride\n"
+                "Provided configuration:\n"
+                f"- context_length: {context_length}\n"
+                f"- num_patches: {num_patches}\n"
+                f"- patch_length: {patch_length}\n"
+                f"- patch_stride: {patch_stride}\n"
+                "Configuration has been automatically updated to:\n"
+                f"- context_length: {context_length}\n"
+                f"- num_patches: {_config['num_patches']}\n"
+                f"- patch_length: {_config['patch_length']}\n"
+                f"- patch_stride: {_config['patch_stride']}"
+            )
+            warn(msg)
 
         if fh is not None:
             _config["prediction_length"] = max(
@@ -400,7 +433,6 @@ class TinyTimeMixerForecaster(BaseForecaster):
             {
                 "config": {
                     "context_length": 4,
-                    "patch_length": 2,
                     "prediction_length": 2,
                 },
                 "validation_split": 0.2,
