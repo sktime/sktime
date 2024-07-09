@@ -91,7 +91,7 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
         "X_inner_mtype": "pd.DataFrame",
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
-        "python_dependencies": "prophet",
+        "python_dependencies": ["prophet", "numpy<2.0"],
     }
 
     def __init__(

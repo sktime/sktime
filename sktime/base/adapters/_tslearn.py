@@ -6,6 +6,8 @@ __author__ = ["fkiraly"]
 
 from inspect import signature
 
+from sktime.utils.adapters.forward import _clone_fitted_params
+
 
 class _TslearnAdapter:
     """Mixin adapter class for tslearn models."""
@@ -74,9 +76,7 @@ class _TslearnAdapter:
             tslearn_est.fit(X)
 
         # write fitted params to self
-        tslearn_fitted_params = self._get_fitted_params_default(tslearn_est)
-        for k, v in tslearn_fitted_params.items():
-            setattr(self, f"{k}_", v)
+        _clone_fitted_params(to_obj=self, from_obj=tslearn_est)
 
         return self
 
