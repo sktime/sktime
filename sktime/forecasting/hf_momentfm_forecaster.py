@@ -1,5 +1,6 @@
 """Interface for the momentfm deep learning time series forecaster."""
 
+import numpy as np
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import _BaseGlobalForecaster  # , ForecastingHorizon
@@ -55,11 +56,18 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         Dropout value of the forecasting head. Values range between [0.0, 1.0]
         Default = 0.1
 
+    forecasting_horizon : int
+        Number of time steps to forecast ahead, leave this as None if user
+        wishes to pass in a fh object instead inside the fit function
+        default = None
+
     batch_size : int
         size of batches to train the model on
+        default = 8
 
     epochs : int
         Number of epochs to fit tune the model on
+        default = 1
 
     max_lr : float
         Maximum learning rate that the learning rate scheduler will use
@@ -87,11 +95,12 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         "scitype:y": "both",
         "authors": ["julian-fong"],
         "maintainers": ["julian-fong"],
-        "y_inner_mtype": "pd.Series",
+        "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
-        "ignores-exogeneous-X": False,
+        "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
         "python_dependencies": ["momentfm", "torch"],
+        "capability:global_forecasting": False,
     }
 
     def __init__(
@@ -102,8 +111,9 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         freeze_head: False,
         dropout=0.1,
         head_dropout=0.1,
+        forecasting_horizon=None,
         batch_size=8,
-        epochs=0.1,
+        epochs=1,
         max_lr=1e-4,
         device="gpu",
         train_val_split=0.2,
@@ -117,6 +127,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         self.freeze_head = freeze_head
         self.dropout = dropout
         self.head_dropout = head_dropout
+        self.forecasting_horizon = forecasting_horizon
         self.batch_size = batch_size
         self.epochs = epochs
         self.max_lr = max_lr
@@ -127,9 +138,15 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         self._config = config if config is not None else {}
         self.criterion = MSELoss()
 
-    def _fit(self, y, X, fh):
-        # from torch.optim import Adam
+    def _fit(self, y, fh):
+        """Assumes y is a single or multivariate time series."""
+        import torch.cuda.amp
+
+        # from momentfm.utils.forecasting_metrics import get_forecasting_metrics
+        from torch.optim import Adam
+        from torch.optim.lr_scheduler import OneCycleLR
         from torch.utils.data import DataLoader
+        from tqdm import tqdm
 
         self._pretrained_model_name_or_path = self._config.getattr(
             "pretrained_model_name_or_path", self.pretrained_model_name_or_path
@@ -149,7 +166,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         )
         # in the case the config contains 'forecasting_horizon', we'll set
         # fh as that, otherwise we override it using the fh param
-        self._fh = self._config.getattr("forecasting_horizon", None)
+        self._fh = self._config.getattr("forecasting_horizon", self.forecasting_horizon)
         if self._fh is None:
             self._fh = max(fh.to_relative(self.cutoff))
         self._freeze_head = self._config.getattr("freeze_head", self.freeze_head)
@@ -172,7 +189,6 @@ class MomentFMForecaster(_BaseGlobalForecaster):
 
         train_dataset = momentPytorchDataset(
             y=y[:train_val_split],
-            X=X[:train_val_split],
             fh=self._fh,
             seq_len=512,  # fixed due to momentfm model pre-requisite
         )
@@ -183,7 +199,6 @@ class MomentFMForecaster(_BaseGlobalForecaster):
 
         val_dataset = momentPytorchDataset(
             y=y[train_val_split:],
-            X=X[train_val_split:],
             fh=self._fh,
             seq_len=512,  # fixed due to momentfm model pre-requisite
         )
@@ -193,18 +208,118 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         )
 
         # returning dataloaders to pass pre-commit checks, WIP
-        return train_dataloader, val_dataloader
+        criterion = MSELoss()
+        optimizer = Adam(self._model.parameters, lr=1e-4)
+        if self.device == "gpu" and torch.cuda.is_available():
+            device = "cuda"
+        else:
+            device = "cpu"
 
-    def _predict(sefl, X, fh):
+        cur_epoch = 0
+        max_epoch = self.epochs
+
+        # Move the model to the GPU
+        model = self._model.to(device)
+
+        # Move the loss function to the GPU
+        criterion = criterion.to(device)
+
+        # Enable mixed precision training
+        scaler = torch.cuda.amp.GradScaler()
+
+        # Create a OneCycleLR scheduler
+        max_lr = 1e-4
+        total_steps = len(train_dataloader) * max_epoch
+        scheduler = OneCycleLR(
+            optimizer, max_lr=max_lr, total_steps=total_steps, pct_start=0.3
+        )
+
+        # Gradient clipping value
+        max_norm = 5.0
+
+        while cur_epoch < max_epoch:
+            losses = []
+            for timeseries, forecast, input_mask in tqdm(
+                train_dataloader, total=len(train_dataloader)
+            ):
+                # Move the data to the GPU
+                timeseries = timeseries.float().to(device)
+                input_mask = input_mask.to(device)
+                forecast = forecast.float().to(device)
+
+                with torch.cuda.amp.autocast():
+                    output = model(timeseries, input_mask)
+
+                loss = criterion(output.forecast, forecast)
+
+                # Scales the loss for mixed precision training
+                scaler.scale(loss).backward()
+
+                # Clip gradients
+                scaler.unscale_(optimizer)
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)
+
+                scaler.step(optimizer)
+                scaler.update()
+                optimizer.zero_grad(set_to_none=True)
+
+                losses.append(loss.item())
+
+            losses = np.array(losses)
+            # average_loss = np.average(losses)
+            # print(f"Epoch {cur_epoch}: Train loss: {average_loss:.3f}")
+
+            # Step the learning rate scheduler
+            scheduler.step()
+            cur_epoch += 1
+
+            # Evaluate the model on the test split
+            trues, preds, histories, losses = [], [], [], []
+            model.eval()
+            with torch.no_grad():
+                for timeseries, forecast, input_mask in tqdm(
+                    val_dataloader, total=len(val_dataset)
+                ):
+                    # Move the data to the GPU
+                    timeseries = timeseries.float().to(device)
+                    input_mask = input_mask.to(device)
+                    forecast = forecast.float().to(device)
+
+                    with torch.cuda.amp.autocast():
+                        output = model(timeseries, input_mask)
+
+                    loss = criterion(output.forecast, forecast)
+                    losses.append(loss.item())
+
+                    trues.append(forecast.detach().cpu().numpy())
+                    preds.append(output.forecast.detach().cpu().numpy())
+                    histories.append(timeseries.detach().cpu().numpy())
+
+            losses = np.array(losses)
+            # average_loss = np.average(losses)
+            model.train()
+
+            trues = np.concatenate(trues, axis=0)
+            preds = np.concatenate(preds, axis=0)
+            histories = np.concatenate(histories, axis=0)
+
+            # metrics = get_forecasting_metrics(y=trues, y_hat=preds, reduction="mean")
+
+            # print(
+            #     f"Epoch {cur_epoch}: Test MSE: {metrics.mse:.3f} |
+            # Test MAE: {metrics.mae:.3f}"
+            # )
+        return self
+
+    def _predict(self, X, fh):
         pass
 
 
 class momentPytorchDataset(Dataset):
     """Customized Pytorch dataset for the momentfm model."""
 
-    def __init__(self, y, fh, seq_len, X=None):
+    def __init__(self, y, fh, seq_len):
         self.y = y
-        self.X = X if X is not None else X
         self.seq_len = seq_len
         self.fh = fh
 
@@ -222,13 +337,8 @@ class momentPytorchDataset(Dataset):
         input_mask = ones(self.y.shape[0])
         historical_y = from_numpy(self.y.iloc[i:hist_end].values)
         future_y = from_numpy(self.y.iloc[hist_end:pred_end].values)
-        if self.X is not None:
-            historical_x = from_numpy(self.X.iloc[i:hist_end].values)
-            future_x = from_numpy(self.X.iloc[hist_end:pred_end])
         return {
             "future_y": future_y,
-            "future_x": future_x,
             "historical_y": historical_y,
-            "historical_x": historical_x,
             "input_mask": input_mask,
         }
