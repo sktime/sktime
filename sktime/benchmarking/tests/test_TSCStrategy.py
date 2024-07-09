@@ -1,4 +1,5 @@
 """Data storage for benchmarking."""
+
 import pytest
 
 from sktime.benchmarking.strategies import TSCStrategy
