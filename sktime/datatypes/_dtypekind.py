@@ -77,7 +77,7 @@ def _pandas_dtype_to_kind(col_dtypes):
 
 # function for series scitype
 def _get_series_dtypekind(obj, mtype):
-    if mtype == "numpy":
+    if mtype in ["numpy", "xarray"]:
         if len(obj.shape) == 2:
             return [DtypeKind.FLOAT] * obj.shape[1]
         else:
@@ -103,7 +103,15 @@ def _get_panel_dtypekind(obj, mtype):
         col_dtypes = obj.dtypes.to_list()
     elif mtype == "nested_univ":
         col_names = obj.columns.to_list()
-        col_dtypes = [obj[col].iloc[0].dtype for col in col_names]
+        col_dtypes = [obj[col].iloc[0].dtype for col in col_names[:-1]]
+        # handling case where in dataloaders if X/y is not split, nested_univ may
+        # contain str type in last column(y) which does not have dtype attr.
+        # therefore, checking last column separately.
+        last_col = col_names[-1]
+        if isinstance(obj[last_col].iloc[0], str):
+            col_dtypes.append(str)
+        else:
+            col_dtypes.append(obj[last_col].iloc[0].dtype)
 
     col_DtypeKinds = _pandas_dtype_to_kind(col_dtypes)
 

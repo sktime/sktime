@@ -322,6 +322,12 @@ if _check_soft_dependencies("xarray", severity="none"):
             if _req("feature_names", return_metadata):
                 metadata["feature_names"] = obj.indexes[obj.dims[1]].to_list()
 
+        if _req("dtypekind_dfip", return_metadata):
+            metadata["dtypekind_dfip"] = _get_series_dtypekind(obj, "xarray")
+        if _req("feature_kind", return_metadata):
+            dtype_kind = _get_series_dtypekind(obj, "xarray")
+            metadata["feature_kind"] = _get_feature_kind(dtype_kind)
+
         # check that columns are unique
         if not len(obj.dims) == len(set(obj.dims)):
             msg = f"{var_name} must have unique column indices, but found {obj.dims}"

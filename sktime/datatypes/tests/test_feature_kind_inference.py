@@ -11,12 +11,14 @@ from sktime.datatypes._dtypekind import (
     _get_series_dtypekind,
     _get_table_dtypekind,
 )
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 def test_feature_kind_for_series():
+    expected_feature_kind = [DtypeKind.CATEGORICAL, DtypeKind.FLOAT]
+
     # mtype: pd.DataFrame
     df = pd.DataFrame({"a": ["a", "b", "c", "d"], "b": [3, 7, 2, -3 / 7]})
-    expected_feature_kind = [DtypeKind.CATEGORICAL, DtypeKind.FLOAT]
 
     dtype_kind = _get_series_dtypekind(df, "pd.DataFrame")
     feature_kind = _get_feature_kind(dtype_kind)
@@ -25,6 +27,22 @@ def test_feature_kind_for_series():
         f"feature_kind was not correctly inferred, expected {expected_feature_kind} but"
         f"found {feature_kind}"
     )
+
+    if _check_soft_dependencies("dask", severity="none"):
+        from dask.dataframe import from_pandas
+
+        from sktime.datatypes._adapter.dask_to_pd import check_dask_frame
+
+        df_dask = from_pandas(df, npartitions=1)
+        res = check_dask_frame(
+            obj=df_dask,
+            return_metadata="feature_kind",
+            scitype="Series",
+        )
+        assert res[2]["feature_kind"] == expected_feature_kind, (
+            f"feature_kind was not correctly inferred, expected {expected_feature_kind}"
+            f" but found {feature_kind}"
+        )
 
 
 def test_feature_kind_for_panel():
@@ -77,6 +95,24 @@ def test_feature_kind_for_panel():
         f"found {feature_kind}"
     )
 
+    # mtype: dask
+    if _check_soft_dependencies("dask", severity="none"):
+        from sktime.datatypes._adapter.dask_to_pd import (
+            check_dask_frame,
+            convert_pandas_to_dask,
+        )
+
+        df_dask = convert_pandas_to_dask(multiindex_df, npartitions=1)
+        res = check_dask_frame(
+            obj=df_dask,
+            return_metadata="feature_kind",
+            scitype="Panel",
+        )
+        assert res[2]["feature_kind"] == expected_feature_kind, (
+            f"feature_kind was not correctly inferred, expected {expected_feature_kind}"
+            f" but found {feature_kind}"
+        )
+
 
 def test_feature_kind_for_hierarchical():
     expected_feature_kind = [DtypeKind.CATEGORICAL, DtypeKind.FLOAT]
@@ -111,6 +147,24 @@ def test_feature_kind_for_hierarchical():
         f"feature_kind was not correctly inferred, expected {expected_feature_kind} but"
         f"found {feature_kind}"
     )
+
+    # mtype: dask
+    if _check_soft_dependencies("dask", severity="none"):
+        from sktime.datatypes._adapter.dask_to_pd import (
+            check_dask_frame,
+            convert_pandas_to_dask,
+        )
+
+        df_dask = convert_pandas_to_dask(hierarchical_df, npartitions=1)
+        res = check_dask_frame(
+            obj=df_dask,
+            return_metadata="feature_kind",
+            scitype="Hierarchical",
+        )
+        assert res[2]["feature_kind"] == expected_feature_kind, (
+            f"feature_kind was not correctly inferred, expected {expected_feature_kind}"
+            f" but found {feature_kind}"
+        )
 
 
 def test_feature_kind_for_table():
