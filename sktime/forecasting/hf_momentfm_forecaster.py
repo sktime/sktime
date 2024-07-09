@@ -9,6 +9,12 @@ if _check_soft_dependencies(["momentfm", "torch"], severity="none"):
     import momentfm
     from torch.nn import MSELoss
     from torch.utils.data import Dataset
+else:
+
+    class Dataset:
+        """Dummy class if torch is unavailable."""
+
+        pass
 
 
 class MomentFMForecaster(_BaseGlobalForecaster):
