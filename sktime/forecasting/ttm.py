@@ -4,8 +4,6 @@
 __author__ = ["geetu040"]
 
 
-from copy import deepcopy
-
 import numpy as np
 import pandas as pd
 
@@ -211,7 +209,6 @@ class TinyTimeMixerForecaster(BaseForecaster):
         self : reference to self
         """
         # from transformers import PatchTSTForPrediction, PatchTSTConfig
-        from transformers import Trainer, TrainingArguments
         from tsfm_public.models.tinytimemixer import (
             TinyTimeMixerConfig,
             TinyTimeMixerForPrediction,
@@ -267,7 +264,7 @@ class TinyTimeMixerForecaster(BaseForecaster):
 
         if fh is not None:
             _config["prediction_length"] = max(
-                *(fh.to_relative(self._cutoff)._values + 1),
+                *(fh.to_relative(self._cutoff)._values),
                 _config["prediction_length"],
             )
 
@@ -283,75 +280,6 @@ class TinyTimeMixerForecaster(BaseForecaster):
             output_loading_info=True,
             ignore_mismatched_sizes=True,
         )
-        # self.model = TinyTimeMixerForPrediction(config)
-
-        # Get the Dataset
-        train_dataset, eval_dataset = self._get_dataset(
-            y=y,
-            context_length=config.context_length,
-            prediction_length=config.prediction_length,
-        )
-
-        # Get Training Configuration
-        training_args = deepcopy(self._training_args)
-        training_args = TrainingArguments(**training_args)
-
-        # Get the Trainer
-        trainer = Trainer(
-            model=self.model,
-            args=training_args,
-            train_dataset=train_dataset,
-            eval_dataset=eval_dataset,
-            compute_metrics=self.compute_metrics,
-            callbacks=self.callbacks,
-        )
-
-        # Train the model
-        trainer.train()
-
-    def _get_dataset(self, y, context_length, prediction_length):
-        target_columns = y.columns
-        timestamp_column = y.index.name or "index"
-
-        data = y.copy()
-        data.index = self._handle_data_index(data.index)
-        data = data.astype(float)
-        data.reset_index(inplace=True)
-
-        from tsfm_public.toolkit.time_series_preprocessor import (
-            TimeSeriesPreprocessor,
-            get_datasets,
-        )
-
-        tsp = TimeSeriesPreprocessor(
-            target_columns=target_columns,
-            timestamp_column=timestamp_column,
-            context_length=context_length,
-            prediction_length=prediction_length,
-        )
-        train_dataset, eval_dataset, _ = get_datasets(
-            ts_preprocessor=tsp,
-            dataset=data,
-            split_config={
-                "train": 1 - self.validation_split,
-                "eval": self.validation_split,
-                "test": 0,
-            },
-        )
-
-        return train_dataset, eval_dataset
-
-    def _handle_data_index(self, index):
-        if isinstance(index, pd.DatetimeIndex):
-            return index
-
-        if isinstance(index, pd.PeriodIndex):
-            return index.to_timestamp()
-
-        if pd.api.types.is_integer_dtype(index):
-            return pd.to_datetime("2021-01-01") + pd.to_timedelta(index, unit="D")
-
-        return index
 
     def _predict(self, fh, X):
         """Forecast time series at future horizon.
@@ -386,12 +314,26 @@ class TinyTimeMixerForecaster(BaseForecaster):
             fh = self.fh
         fh = fh.to_relative(self.cutoff)
 
-        _y = self._y[-self.model.config.context_length :]
+        # get the last 'context_length' values from '_y'
+        _y = self._y[-self.model.config.context_length :].values
 
-        inputs = np.expand_dims(_y.values, axis=0)
-        inputs = torch.tensor(inputs, dtype=torch.float)
+        # initialize 'past_values' and 'observed_mask' with the correct lengths
+        past_values = np.zeros((self.model.config.context_length, _y.shape[-1]))
+        observed_mask = np.zeros((self.model.config.context_length, _y.shape[-1]))
+
+        # update 'past_values' and 'observed_mask' with '_y' and ones respectively
+        past_values[-len(_y) :] = _y
+        observed_mask[-len(_y) :] = 1
+
+        # convert to torch tensors
+        past_values = torch.tensor(np.expand_dims(past_values, axis=0)).float()
+        observed_mask = torch.tensor(np.expand_dims(observed_mask, axis=0)).float()
+
         self.model.eval()
-        outputs = self.model(inputs)
+        outputs = self.model(
+            past_values=past_values,
+            observed_mask=observed_mask,
+        )
         outputs = outputs.prediction_outputs.detach().numpy()[0]
 
         index = (
@@ -399,7 +341,7 @@ class TinyTimeMixerForecaster(BaseForecaster):
             .to_absolute(self._cutoff)
             ._values
         )
-        columns = _y.columns
+        columns = self._y.columns
 
         pred = pd.DataFrame(
             outputs,
@@ -431,10 +373,7 @@ class TinyTimeMixerForecaster(BaseForecaster):
         """
         params = [
             {
-                "config": {
-                    "context_length": 4,
-                    "prediction_length": 2,
-                },
+                "config": {},
                 "validation_split": 0.2,
                 "training_args": {
                     "num_train_epochs": 1,
