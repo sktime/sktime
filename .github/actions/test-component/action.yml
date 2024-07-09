@@ -37,6 +37,8 @@ runs:
       shell: bash
     - name: Install OSX packages
       run: ./scripts/install_osx_dependencies.sh
+      shell: bash
+
     - name: Install sktime and dependencies
       run: python3 -m pip install .[${{ inputs.sktime-component-identifier }},tests]
       shell: bash
