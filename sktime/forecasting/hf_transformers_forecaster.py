@@ -607,12 +607,13 @@ class PyTorchDataset(Dataset):
         self._num, self._len, _ = self.y.shape
         self.fh = fh
         self.seq_len = seq_len
+        self._len_single = self._len - self.seq_len - self.fh + 1
         self.batch_size = batch_size
         self.no_size1_batch = no_size1_batch
 
     def __len__(self):
         """Return length of dataset."""
-        true_length = self._num * max(self._len - self.seq_len - self.fh + 1, 0)
+        true_length = self._num * max(self._len_single, 0)
         if self.no_size1_batch and true_length % self.batch_size == 1:
             return true_length - 1
         else:
@@ -622,8 +623,8 @@ class PyTorchDataset(Dataset):
         """Return data point."""
         from torch import tensor
 
-        m = i % (self._len - self.seq_len - self.fh + 1)
-        n = int((i - m) / self._len)
+        m = i % self._len_single
+        n = i // self._len_single
         hist_y = tensor(self.y[n, m : m + self.seq_len, :]).float().flatten()
         futu_y = (
             tensor(self.y[n, m + self.seq_len : m + self.seq_len + self.fh, :])
@@ -666,11 +667,11 @@ def _frame2numpy(data):
     return arr
 
 
-def _to_multiindex(data):
+def _to_multiindex(data, index_name="h0", instance_name="h0_0"):
     res = pd.DataFrame(
         data.values,
         index=pd.MultiIndex.from_product(
-            [["h0_0"], data.index], names=["h0", data.index.name]
+            [[instance_name], data.index], names=[index_name, data.index.name]
         ),
         columns=[data.name] if isinstance(data, pd.Series) else data.columns,
     )
