@@ -90,7 +90,6 @@ all_extras = [
   'hmmlearn>=0.2.7; python_version < "3.11"',
   "holidays",
   'keras-self-attention; python_version < "3.11"',
-  'lag-llama@git+https://github.com/time-series-foundation-models/lag-llama.git',
   "matplotlib>=3.3.2",
   "mne",
   'numba<0.61,>=0.53',
@@ -285,6 +284,9 @@ dl = [
   'transformers[torch]<4.41.0; python_version < "3.12"',
   'pykan; python_version > "3.9.7"',
   'pytorch-forecasting>=1.0.0; python_version < "3.11"',
+  'lag-llama@git+https://github.com/time-series-foundation-models/lag-llama.git',
+  'gluonts',
+  'huggingface-hub'
 ]
 mlflow = [
   "mlflow",
