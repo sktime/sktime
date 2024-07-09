@@ -1,6 +1,5 @@
 """Utilities to handle categorical features in data."""
 
-
 from sktime.datatypes._dtypekind import DtypeKind
 
 __author__ = ["Abhay-Lejith"]
