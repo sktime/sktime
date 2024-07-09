@@ -2,6 +2,7 @@
 
 Code based partially on NaiveVariance by ilyasmoutawwakil.
 """
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __all__ = ["ConformalIntervals"]
@@ -239,7 +240,7 @@ class ConformalIntervals(BaseForecaster):
         pred_int : pd.DataFrame
             Column has multi-index: first level is variable name from y in fit,
                 second level coverage fractions for which intervals were computed.
-                    in the same order as in input `coverage`.
+                    in the same order as in input ``coverage``.
                 Third level is string "lower" or "upper", for lower/upper interval end.
             Row index is fh, with additional (upper) levels equal to instance levels,
                 from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
@@ -300,6 +301,15 @@ class ConformalIntervals(BaseForecaster):
         for fh_ind, offset in zip(fh_absolute, fh_relative):
             resids = np.diagonal(residuals_matrix, offset=offset)
             resids = resids[~np.isnan(resids)]
+            if len(resids) < 1:
+                resids = np.array([0], dtype=float)
+                warn(
+                    "In ConformalIntervals, sample fraction too low for "
+                    "computing residuals matrix, using zero residuals. "
+                    "Try setting sample_frac to a higher value.",
+                    obj=self,
+                    stacklevel=2,
+                )
             abs_resids = np.abs(resids)
             coverage2 = np.repeat(coverage, 2)
             if self.method == "empirical":
@@ -432,9 +442,9 @@ class ConformalIntervals(BaseForecaster):
                 overlapping_index = pd.Index(
                     self.residuals_matrix_.index.intersection(full_y_index)
                 ).sort_values()
-                residuals_matrix.loc[
-                    overlapping_index, overlapping_index
-                ] = self.residuals_matrix_.loc[overlapping_index, overlapping_index]
+                residuals_matrix.loc[overlapping_index, overlapping_index] = (
+                    self.residuals_matrix_.loc[overlapping_index, overlapping_index]
+                )
             else:
                 overlapping_index = None
             y_index = remaining_y_index
@@ -513,7 +523,7 @@ class ConformalIntervals(BaseForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------

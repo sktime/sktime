@@ -15,18 +15,18 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
 
     Produces a probabilistic prediction which is the weighted average of
     predictions of individual classifiers.
-    Classifier with name `name` has ensemble weight in `weights_[name]`.
-    `weights_` is fitted in `fit`, if `weights` is a scalar, otherwise fixed.
+    Classifier with name ``name`` has ensemble weight in ``weights_[name]``.
+    ``weights_`` is fitted in ``fit``, if ``weights`` is a scalar, otherwise fixed.
 
-    If `weights` is a scalar, empirical training loss is computed for each classifier.
+    If ``weights`` is a scalar, empirical training loss is computed for each classifier.
     In this case, ensemble weights of classifier is empirical loss,
-    to the power of `weights` (a scalar).
+    to the power of ``weights`` (a scalar).
 
     The evaluation for the empirical training loss can be selected
-    through the `metric` and `metric_type` parameters.
+    through the ``metric`` and ``metric_type`` parameters.
 
     The in-sample empirical training loss is computed in-sample or out-of-sample,
-    depending on the `cv` parameter. None = in-sample; other = cross-validated oos.
+    depending on the ``cv`` parameter. None = in-sample; other = cross-validated oos.
 
     Parameters
     ----------
@@ -60,13 +60,13 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
     Attributes
     ----------
     classifiers_ : list of tuples (str, classifier) of sktime classifiers
-        clones of classifies in `classifiers` which are fitted in the ensemble
-        is always in (str, classifier) format, even if `classifiers` is just a list
-        strings not passed in `classifiers` are replaced by unique generated strings
-        i-th classifier in `classifier_` is clone of i-th in `classifier`
-    weights_ : dict with str being classifier names as in `classifiers_`
+        clones of classifies in ``classifiers`` which are fitted in the ensemble
+        is always in (str, classifier) format, even if ``classifiers`` is just a list
+        strings not passed in ``classifiers`` are replaced by unique generated strings
+        i-th classifier in ``classifier_`` is clone of i-th in ``classifier``
+    weights_ : dict with str being classifier names as in ``classifiers_``
         value at key is ensemble weights of classifier with name key
-        ensemble weights are fitted in `fit` if `weights` is a scalar
+        ensemble weights are fitted in ``fit`` if ``weights`` is a scalar
 
     Examples
     --------
@@ -242,7 +242,7 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -253,11 +253,12 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         from sktime.classification.dummy import DummyClassifier
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         params0 = {"classifiers": [DummyClassifier()]}
 

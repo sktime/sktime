@@ -1,4 +1,5 @@
 """Time series kmeans."""
+
 __author__ = ["chrisholder", "TonyBagnall"]
 
 from typing import Callable, Union
@@ -187,9 +188,9 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
                             curr_j, curr_indexes[k]
                         ]
 
-                self._average_params[
-                    "precomputed_medoids_pairwise_distance"
-                ] = distance_matrix
+                self._average_params["precomputed_medoids_pairwise_distance"] = (
+                    distance_matrix
+                )
 
             result = self._averaging_method(X[curr_indexes], **self._average_params)
             if result.shape[0] > 0:
@@ -204,7 +205,7 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -212,8 +213,9 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {
             "n_clusters": 2,

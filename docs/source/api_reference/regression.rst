@@ -18,6 +18,30 @@ Composition
     :toctree: auto_generated/
     :template: class.rst
 
+    RegressorPipeline
+    SklearnRegressorPipeline
+    MultiplexRegressor
+
+Model selection and tuning
+--------------------------
+
+.. currentmodule:: sktime.regression.model_selection
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TSRGridSearchCV
+
+Ensembles
+---------
+
+.. currentmodule:: sktime.regression.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
     ComposableTimeSeriesForestRegressor
 
 Deep learning
@@ -30,7 +54,13 @@ Deep learning
     :template: class.rst
 
     CNNRegressor
+    CNTCRegressor
+    FCNRegressor
+    InceptionTimeRegressor
+    LSTMFCNRegressor
+    MACNNRegressor
     MCDCNNRegressor
+    MLPRegressor
     SimpleRNNRegressor
     ResNetRegressor
     TapNetRegressor
@@ -77,6 +107,7 @@ Kernel-based
     :toctree: auto_generated/
     :template: class.rst
 
+    TimeSeriesSVRTslearn
     RocketRegressor
 
 Base

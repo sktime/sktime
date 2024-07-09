@@ -35,6 +35,7 @@ Time index splitters
 
 Time index splitters split one or multiple time series by temporal order.
 They are typically used in both evaluation and tuning of forecasters.
+They have tag ``"split_type"="temporal"``.
 
 .. currentmodule:: sktime.split
 
@@ -46,6 +47,7 @@ They are typically used in both evaluation and tuning of forecasters.
     SingleWindowSplitter
     SlidingWindowSplitter
     ExpandingWindowSplitter
+    ExpandingCutoffSplitter
     ExpandingGreedySplitter
     TemporalTrainTestSplitter
 
@@ -72,3 +74,20 @@ more complex time index based splitting strategies.
 
     SameLocSplitter
     TestPlusTrainSplitter
+
+
+Instance splitters
+------------------
+
+Instance splitters split panels or hierarchical time series by
+the instance index, i.e., identifiers for entire series.
+Train and test sets contain entire series from the original panel.
+Instance splitters have tag ``"split_type"="instance"``.
+
+.. currentmodule:: sktime.split
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    InstanceSplitter

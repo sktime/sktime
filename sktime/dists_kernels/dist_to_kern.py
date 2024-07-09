@@ -24,12 +24,13 @@ class KernelFromDist(BasePairwiseTransformerPanel):
 
     Formal details (for real valued objects, mixed typed rows in analogy):
     Let :math:`d: \mathbb{R}^D \times \mathbb{R}^D\rightarrow \mathbb{R}`
-    be the pairwise function in `dist`, when applied to `D`-vectors.
-    If `dist_diag=None`, then `KernelFromDist(dist)` corresponds to the kernel function
+    be the pairwise function in ``dist``, when applied to ``D``-vectors.
+    If ``dist_diag=None``, then ``KernelFromDist(dist)`` corresponds to the kernel
+    function
     :math:`k(x, y) := d(x, x)^2 + d(y, y)^2 - 0.5 \cdot d(x, y)^2`.
-    If `dist_diag` is provided,
+    If ``dist_diag`` is provided,
     and corresponds to a function :math:`f:\mathbb{R}^D \rightarrow \mathbb{R}`,
-    then `KernelFromDist(dist)` corresponds to the kernel function
+    then ``KernelFromDist(dist)`` corresponds to the kernel function
     :math:`k(x, y) := f(x, x)^2 + f(y, y)^2 - 0.5 \cdot d(x, y)^2`.
 
     It should be noted that :math:`k` is, in general, not positive semi-definite.
@@ -133,15 +134,16 @@ class KernelFromDist(BasePairwiseTransformerPanel):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         from sktime.dists_kernels.dtw import DtwDist
         from sktime.transformations.series.adapt import PandasTransformAdaptor
@@ -162,8 +164,8 @@ class DistFromKernel(BasePairwiseTransformerPanel):
 
     Formal details (for real valued objects, mixed typed rows in analogy):
     Let :math:`k: \mathbb{R}^D \times \mathbb{R}^D\rightarrow \mathbb{R}`
-    be the pairwise function in `kernel`, when applied to `D`-vectors.
-    `DistFromKernel(dist)` corresponds to the distance function
+    be the pairwise function in ``kernel``, when applied to ``D``-vectors.
+    ``DistFromKernel(dist)`` corresponds to the distance function
     :math:`d(x, y) := \sqrt{k(x, x) + k(y, y) - 2 \cdot k(x, y)}`.
 
     It should be noted that if :math:`k` is positive semi-definite,
@@ -251,15 +253,16 @@ class DistFromKernel(BasePairwiseTransformerPanel):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         from sktime.dists_kernels import DtwDist, EditDist
 

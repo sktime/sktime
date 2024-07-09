@@ -44,7 +44,7 @@ class ExpandingGreedySplitter(BaseSplitter):
     folds : int, default = 5
         The number of folds.
     step_length : int, optional
-        The number of steps advanced for each fold. Defaults to `test_size`.
+        The number of steps advanced for each fold. Defaults to ``test_size``.
 
     Examples
     --------
@@ -106,15 +106,16 @@ class ExpandingGreedySplitter(BaseSplitter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {"test_size": 1}
         params2 = {"test_size": 3, "folds": 2, "step_length": 2}

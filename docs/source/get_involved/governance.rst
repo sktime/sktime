@@ -37,8 +37,7 @@ experience. Accordingly, everyone who participates in the sktime project
 is expected to show respect and courtesy to other community members at
 all times.
 
-We ask all members of the community to conform to our `Code of
-Conduct <https://github.com/sktime/sktime/blob/main/CODE_OF_CONDUCT.rst>`__.
+We ask all members of the community to conform to our :ref:`code_of_conduct`.
 
 .. _roles:
 
@@ -673,7 +672,7 @@ We have the following guidelines:
 Note that an algorithm need not be in sktime to be fully compatible with
 sktime interfaces. You can implement your favorite algorithm in a sktime
 compatible way in a third party codebase - open or closed - following
-the guide for implmenting compatible estimators (see :ref:`developer_guide_add_estimators:`).
+the guide for implementing compatible estimators (see :ref:`developer_guide_add_estimators:`).
 
 We are happy to list any compatible open source project under `related
 software <https://github.com/sktime/sktime/wiki/related-software>`__.

@@ -4,8 +4,8 @@ Implements a basic Hidden Markov Model (HMM) as an annotation estimator. To read
 about the algorithm, check out the `HMM wikipedia page
 <https://en.wikipedia.org/wiki/Hidden_Markov_model>`_.
 """
+
 import warnings
-from typing import Tuple
 
 import numpy as np
 from scipy.stats import norm
@@ -48,7 +48,7 @@ class HMM(BaseSeriesAnnotator):
     calculated - these are both nxm matrices, where n is the number of
     hidden states and m is the number of observations. The transition
     probability matrices record the probability of the most likely
-    sequence which has observation `m` being assigned to hidden state n.
+    sequence which has observation ``m`` being assigned to hidden state n.
     The transition_id matrix records the step before hidden state n that
     proceeds it in the most likely path.  This logic is mostly carried
     out by helper function _calculate_trans_mats.
@@ -74,7 +74,7 @@ class HMM(BaseSeriesAnnotator):
         probability of transitioning from state i to state j.)
     initial_probs: 1D np.ndarray, shape = [num hidden states], optional
         A array of probabilities that the sequence of hidden states starts in each
-        of the hidden states. If passed, should be of length `n` the number of
+        of the hidden states. If passed, should be of length ``n`` the number of
         hidden states and  should match the length of both the emission funcs
         list and the transition_prob_mat. The initial probs should be reflective
         of prior beliefs.  If none is passed will each hidden state will be
@@ -128,7 +128,12 @@ class HMM(BaseSeriesAnnotator):
     """
 
     # plan to update to make multivariate.
-    _tags = {"univariate-only": True, "fit_is_empty": True}
+    _tags = {
+        "univariate-only": True,
+        "fit_is_empty": True,
+        "task": "segmentation",
+        "learning_type": "unsupervised",
+    }
 
     def __init__(
         self,
@@ -139,7 +144,7 @@ class HMM(BaseSeriesAnnotator):
         self.initial_probs = initial_probs
         self.emission_funcs = emission_funcs
         self.transition_prob_mat = transition_prob_mat
-        super().__init__(fmt="dense", labels="int_label")
+        super().__init__()
         self._validate_init()
 
     def _validate_init(self):
@@ -196,7 +201,7 @@ class HMM(BaseSeriesAnnotator):
         transition_prob_mat: np.ndarray,
         num_obs: int,
         num_states: int,
-    ) -> Tuple[np.array, np.array]:
+    ) -> tuple[np.array, np.array]:
         """Calculate the transition mats used in the Viterbi algorithm.
 
         Parameters
@@ -404,7 +409,7 @@ class HMM(BaseSeriesAnnotator):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------

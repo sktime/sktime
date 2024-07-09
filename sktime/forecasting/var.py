@@ -13,10 +13,12 @@ from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
 class VAR(_StatsModelsAdapter):
-    """A VAR model is a generalisation of the univariate autoregressive.
+    """VAR model from statsmodels.
 
-    Direct interface for `statsmodels.tsa.vector_ar`
-    A model for forecasting a vector of time series[1].
+    Direct interface to ``statsmodels.tsa.vector_ar``.
+
+    A VAR model is a generalisation of the univariate autoregressive model
+    to multivariate time series, see [1]_.
 
     Parameters
     ----------
@@ -36,7 +38,7 @@ class VAR(_StatsModelsAdapter):
     missing: str, optional (default='none')
         A string specifying if data is missing
     freq: str, tuple, datetime.timedelta, DateOffset or None, optional (default=None)
-        A frequency specification for either `dates` or the row labels from
+        A frequency specification for either ``dates`` or the row labels from
         the endog / exog data.
     dates: array_like, optional (default=None)
         An array like object containing dates.
@@ -224,7 +226,7 @@ class VAR(_StatsModelsAdapter):
         pred_int : pd.DataFrame
             Column has multi-index: first level is variable name from y in fit,
                 second level coverage fractions for which intervals were computed.
-                    in the same order as in input `coverage`.
+                    in the same order as in input ``coverage``.
                 Third level is string "lower" or "upper", for lower/upper interval end.
             Row index is fh, with additional (upper) levels equal to instance levels,
                 from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
@@ -245,7 +247,9 @@ class VAR(_StatsModelsAdapter):
 
         for cov in coverage:
             alpha = 1 - cov
-
+            # A hacky way to coerce error-inducing alpha==1 into its approximant
+            if alpha >= 0.99999:
+                alpha = 0.99999
             fcast_interval = model.forecast_interval(
                 self._y.values[-n_lags:], steps=steps, alpha=alpha
             )
@@ -317,7 +321,7 @@ class VAR(_StatsModelsAdapter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------

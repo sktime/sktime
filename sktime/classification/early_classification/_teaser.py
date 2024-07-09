@@ -8,7 +8,6 @@ __author__ = ["MatthewMiddlehurst", "patrickzib"]
 __all__ = ["TEASER"]
 
 import copy
-from typing import Tuple
 
 import numpy as np
 from joblib import Parallel, delayed
@@ -49,7 +48,8 @@ class TEASER(BaseEarlyClassifier):
         safe. Defaults to a tuned one-class SVM classifier.
     one_class_param_grid: dict or list of dict, default=None
         The hyper-parameters for the one-class classifier to learn using grid-search.
-        Dictionary with parameters names (`str`) as keys and lists of parameter settings
+        Dictionary with parameters names (``str``) as keys and lists of parameter
+        settings
         to try as values, or a list of such dictionaries.
     classification_points : List or None, default=None
         List of integer time series time stamps to build classifiers and allow
@@ -58,7 +58,7 @@ class TEASER(BaseEarlyClassifier):
         full series length will be appended if not present.
         If None, will use 20 thresholds linearly spaces from 0 to the series length.
     n_jobs : int, default=1
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``-1`` means using all processors.
     random_state : int or None, default=None
         Seed for random number generation.
@@ -205,15 +205,15 @@ class TEASER(BaseEarlyClassifier):
 
         return self
 
-    def _predict(self, X) -> Tuple[np.ndarray, np.ndarray]:
+    def _predict(self, X) -> tuple[np.ndarray, np.ndarray]:
         out = self._predict_proba(X)
         return self._proba_output_to_preds(out)
 
-    def _update_predict(self, X) -> Tuple[np.ndarray, np.ndarray]:
+    def _update_predict(self, X) -> tuple[np.ndarray, np.ndarray]:
         out = self._update_predict_proba(X)
         return self._proba_output_to_preds(out)
 
-    def _predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray]:
+    def _predict_proba(self, X) -> tuple[np.ndarray, np.ndarray]:
         n_instances, _, series_length = X.shape
 
         # maybe use the largest index that is smaller than the series length
@@ -250,9 +250,11 @@ class TEASER(BaseEarlyClassifier):
 
         probas = np.array(
             [
-                probas[new_state_info[i][0]][i]
-                if accept_decision[i]
-                else [-1 for _ in range(self.n_classes_)]
+                (
+                    probas[new_state_info[i][0]][i]
+                    if accept_decision[i]
+                    else [-1 for _ in range(self.n_classes_)]
+                )
                 for i in range(n_instances)
             ]
         )
@@ -261,7 +263,7 @@ class TEASER(BaseEarlyClassifier):
 
         return probas, accept_decision
 
-    def _update_predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray]:
+    def _update_predict_proba(self, X) -> tuple[np.ndarray, np.ndarray]:
         n_instances, _, series_length = X.shape
 
         # maybe use the largest index that is smaller than the series length
@@ -324,9 +326,11 @@ class TEASER(BaseEarlyClassifier):
 
         probas = np.array(
             [
-                probas[max(0, new_state_info[i][0] - last_idx)][i]
-                if accept_decision[i]
-                else [-1 for _ in range(self.n_classes_)]
+                (
+                    probas[max(0, new_state_info[i][0] - last_idx)][i]
+                    if accept_decision[i]
+                    else [-1 for _ in range(self.n_classes_)]
+                )
                 for i in range(n_instances)
             ]
         )
@@ -335,7 +339,7 @@ class TEASER(BaseEarlyClassifier):
 
         return probas, accept_decision
 
-    def _score(self, X, y) -> Tuple[float, float, float]:
+    def _score(self, X, y) -> tuple[float, float, float]:
         self._predict(X)
         hm, acc, earl = self._compute_harmonic_mean(self.state_info, y)
 
@@ -510,11 +514,13 @@ class TEASER(BaseEarlyClassifier):
         # record consecutive class decisions
         state_info = np.array(
             [
-                self._update_state_info(
-                    accept_decision, estimator_preds, state_info, i, idx
+                (
+                    self._update_state_info(
+                        accept_decision, estimator_preds, state_info, i, idx
+                    )
+                    if not finished[i]
+                    else state_info[i]
                 )
-                if not finished[i]
-                else state_info[i]
                 for i in range(n_instances)
             ]
         )
@@ -570,11 +576,13 @@ class TEASER(BaseEarlyClassifier):
         rng = check_random_state(self.random_state)
         preds = np.array(
             [
-                self.classes_[
-                    int(rng.choice(np.flatnonzero(out[0][i] == out[0][i].max())))
-                ]
-                if out[1][i]
-                else -1
+                (
+                    self.classes_[
+                        int(rng.choice(np.flatnonzero(out[0][i] == out[0][i].max())))
+                    ]
+                    if out[1][i]
+                    else -1
+                )
                 for i in range(len(out[0]))
             ]
         )
@@ -588,7 +596,7 @@ class TEASER(BaseEarlyClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -598,7 +606,7 @@ class TEASER(BaseEarlyClassifier):
         """
         from sktime.classification.dummy import DummyClassifier
         from sktime.classification.feature_based import Catch22Classifier
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         if _check_soft_dependencies("numba", severity="none"):
             est = Catch22Classifier(estimator=RandomForestClassifier(n_estimators=2))

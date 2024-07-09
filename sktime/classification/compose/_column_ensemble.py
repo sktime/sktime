@@ -202,22 +202,22 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
             transformer and its parameters to be set using ``set_params`` and searched
             in grid search.
         estimator :  or {'drop'}
-            Estimator must support `fit` and `predict_proba`. Special-cased
+            Estimator must support ``fit`` and ``predict_proba``. Special-cased
             strings 'drop' and 'passthrough' are accepted as well, to
             indicate to drop the columns.
         column(s) : array-like of string or int, slice, boolean mask array or callable.
 
     remainder : {'drop', 'passthrough'} or estimator, default 'drop'
-        By default, only the specified columns in `transformations` are
+        By default, only the specified columns in ``transformations`` are
         transformed and combined in the output, and the non-specified
         columns are dropped. (default of ``'drop'``).
         By specifying ``remainder='passthrough'``, all remaining columns
-        that were not specified in `transformations` will be automatically passed
+        that were not specified in ``transformations`` will be automatically passed
         through. This subset of columns is concatenated with the output of
         the transformations.
         By setting ``remainder`` to be an estimator, the remaining
         non-specified columns will use the ``remainder`` estimator. The
-        estimator must support `fit` and `transform`.
+        estimator must support ``fit`` and ``transform``.
 
     Examples
     --------
@@ -262,7 +262,7 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -273,8 +273,9 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         from sktime.classification.dictionary_based import ContractableBOSS
         from sktime.classification.interval_based import CanonicalIntervalForest
@@ -355,14 +356,14 @@ def _check_key_type(key, superclass):
     """Check that scalar, list or slice is of a certain type.
 
     This is only used in _get_column and _get_column_indices to check
-    if the `key` (column specification) is fully integer or fully string-like.
+    if the ``key`` (column specification) is fully integer or fully string-like.
 
     Parameters
     ----------
     key : scalar, list, slice, array-like
         The column specification to check
     superclass : int or str
-        The type for which to check the `key`
+        The type for which to check the ``key``
     """
     if isinstance(key, superclass):
         return True
@@ -384,7 +385,7 @@ def _check_key_type(key, superclass):
 def _get_column_indices(X, key):
     """Get feature column indices for input data X and key.
 
-    For accepted values of `key`, see the docstring of _get_column
+    For accepted values of ``key``, see the docstring of _get_column
     """
     n_columns = X.shape[1]
 

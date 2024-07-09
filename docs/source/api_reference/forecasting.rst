@@ -26,7 +26,7 @@ Pipeline composition
 --------------------
 
 Compositors for building forecasting pipelines.
-Pipelines can also be constructed using ``*``, ``+``, and ``|`` dunders.
+Pipelines can also be constructed using ``*``, ``**``, ``+``, and ``|`` dunders.
 
 .. currentmodule:: sktime.pipeline
 
@@ -50,6 +50,7 @@ Pipelines can also be constructed using ``*``, ``+``, and ``|`` dunders.
     ForecastByLevel
     Permute
     HierarchyEnsembleForecaster
+    TransformSelectForecaster
     FhPlexForecaster
     IgnoreX
     FallbackForecaster
@@ -57,8 +58,30 @@ Pipelines can also be constructed using ``*``, ``+``, and ``|`` dunders.
 Reduction
 ---------
 
-Reduction forecasters that use ``sklearn`` regressors or ``sktime`` time series regressors to make forecasts.
-Use ``make_reduction`` for easy specification.
+Reduction forecasters that use ``sklearn`` regressors or ``sktime``
+time series regressors to make forecasts.
+
+Concurrent tabular strategy
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Uses exogeneous data at the same time stamp - simple reduction strategy.
+
+.. currentmodule:: sktime.forecasting.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+
+
+    YfromX
+
+
+Direct and recursive - ``sktime`` native 1st generation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1st generation direct and recursive reduction forecasters, ``numpy`` based.
+
+Different strategies can be constructed via  ``make_reduction`` for easy specification.
 
 .. currentmodule:: sktime.forecasting.compose
 
@@ -74,14 +97,38 @@ Use ``make_reduction`` for easy specification.
 
     DirectTabularRegressionForecaster
     DirectTimeSeriesRegressionForecaster
-    DirectReductionForecaster
     MultioutputTabularRegressionForecaster
     MultioutputTimeSeriesRegressionForecaster
     RecursiveTabularRegressionForecaster
     RecursiveTimeSeriesRegressionForecaster
     DirRecTabularRegressionForecaster
     DirRecTimeSeriesRegressionForecaster
-    YfromX
+
+
+Direct and recursive - ``sktime`` native 2nd generation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+2nd generation rearchitecture of direct and recursive reduction forecasters,
+``pandas`` based.
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DirectReductionForecaster
+
+
+Direct and recursive - 3rd party
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.forecasting.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SkforecastAutoreg
+
 
 Naive forecasters
 -----------------
@@ -138,6 +185,14 @@ Wrappers that add prediction intervals to any forecaster.
     :template: class.rst
 
     BaggingForecaster
+
+.. currentmodule:: sktime.forecasting.enbpi
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    EnbPIForecaster
 
 
 Trend forecasters
@@ -334,6 +389,14 @@ Structural time series models
 
     Prophet
 
+.. currentmodule:: sktime.forecasting.prophetverse
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Prophetverse
+
 .. currentmodule:: sktime.forecasting.structural
 
 .. autosummary::
@@ -350,7 +413,7 @@ Structural time series models
 
     DynamicFactor
 
-Transformer (deep learning) based forecasters
+Deep learning based forecasters
 ---------------------------------------------
 
 .. currentmodule:: sktime.forecasting.ltsf
@@ -362,6 +425,48 @@ Transformer (deep learning) based forecasters
     LTSFLinearForecaster
     LTSFDLinearForecaster
     LTSFNLinearForecaster
+
+.. currentmodule:: sktime.forecasting.hf_transformers_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HFTransformersForecaster
+
+.. currentmodule:: sktime.forecasting.conditional_invertible_neural_network
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    CINNForecaster
+
+.. currentmodule:: sktime.forecasting.neuralforecast
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    NeuralForecastRNN
+    NeuralForecastLSTM
+
+.. currentmodule:: sktime.forecasting.pytorchforecasting
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    PytorchForecastingTFT
+    PytorchForecastingNBeats
+
+.. currentmodule:: sktime.forecasting.pykan_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    PyKANForecaster
 
 
 Intermittent time series forecasters
@@ -447,6 +552,7 @@ Model selection and tuning
     ForecastingGridSearchCV
     ForecastingRandomizedSearchCV
     ForecastingSkoptSearchCV
+    ForecastingOptunaSearchCV
 
 Model Evaluation (Backtesting)
 ------------------------------

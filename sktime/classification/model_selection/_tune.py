@@ -13,7 +13,7 @@ class TSCGridSearchCV(_DelegatedClassifier):
 
     Adapts sklearn GridSearchCV for sktime time series classifiers
 
-    Optimizes hyper-parameters of `estimators` by exhaustive grid search.
+    Optimizes hyper-parameters of ``estimators`` by exhaustive grid search.
 
     Parameters
     ----------
@@ -23,7 +23,7 @@ class TSCGridSearchCV(_DelegatedClassifier):
         or ``scoring`` must be passed.
 
     param_grid : dict or list of dictionaries
-        Dictionary with parameters names (`str`) as keys and lists of
+        Dictionary with parameters names (``str``) as keys and lists of
         parameter settings to try as values, or a list of such
         dictionaries, in which case the grids spanned by each dictionary
         in the list are explored. This enables searching over any sequence
@@ -53,9 +53,9 @@ class TSCGridSearchCV(_DelegatedClassifier):
 
     refit : bool, str, or callable, default=True
         Refit an estimator using the best found parameters on the whole
-        dataset. If ``False``, the ``predict`` and ``predict_probab`` will not work.
+        dataset. If ``False``, the ``predict`` and ``predict_proba`` will not work.
 
-        For multiple metric evaluation, this needs to be a `str` denoting the
+        For multiple metric evaluation, this needs to be a ``str`` denoting the
         scorer that would be used to find the best parameters for refitting
         the estimator at the end.
 
@@ -83,14 +83,14 @@ class TSCGridSearchCV(_DelegatedClassifier):
         Possible inputs for cv are:
 
         - None, to use the default 5-fold cross validation,
-        - integer, to specify the number of folds in a `(Stratified)KFold`,
+        - integer, to specify the number of folds in a ``(Stratified)KFold``,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
         other cases, :class:`KFold` is used. These splitters are instantiated
-        with `shuffle=False` so the splits will be the same across calls.
+        with ``shuffle=False`` so the splits will be the same across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -212,15 +212,15 @@ class TSCGridSearchCV(_DelegatedClassifier):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if
-        `best_estimator_` is defined (see the documentation for the `refit`
-        parameter for more details) and that `best_estimator_` exposes
-        `n_features_in_` when fit.
+        ``best_estimator_`` is defined (see the documentation for the ``refit``
+        parameter for more details) and that ``best_estimator_`` exposes
+        ``n_features_in_`` when fit.
 
-    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+    feature_names_in_ : ndarray of shape (``n_features_in_``,)
         Names of features seen during :term:`fit`. Only defined if
-        `best_estimator_` is defined (see the documentation for the `refit`
-        parameter for more details) and that `best_estimator_` exposes
-        `feature_names_in_` when fit.
+        ``best_estimator_`` is defined (see the documentation for the ``refit``
+        parameter for more details) and that ``best_estimator_`` exposes
+        ``feature_names_in_`` when fit.
 
     See Also
     --------
@@ -410,7 +410,7 @@ class TSCGridSearchCV(_DelegatedClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -421,8 +421,9 @@ class TSCGridSearchCV(_DelegatedClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         from sklearn.gaussian_process.kernels import RBF, DotProduct
         from sklearn.metrics import accuracy_score

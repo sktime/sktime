@@ -41,6 +41,7 @@ Composition
     :template: class.rst
 
     PluginParamsForecaster
+    PluginParamsTransformer
 
 Naive
 ~~~~~

@@ -1,4 +1,5 @@
 """Lagging transformer."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly"]
@@ -29,8 +30,10 @@ class Lag(BaseTransformer):
     Multiple lags can be provided, as a list.
     Estimator-like wrapper of pandas.shift and integer index lagging.
 
-    Lags can be provided as a simple offset, `lags`, or pair of (lag count, frequency),
-    with lag count an int (`lags` arg) and frequency a `pandas` frequency descriptor.
+    Lags can be provided as a simple offset, ``lags``, or pair of (lag count,
+    frequency),
+    with lag count an int (``lags`` arg) and frequency a ``pandas`` frequency
+    descriptor.
 
     When multiple lags are provided, multiple column concatenated copies of the lagged
     time series will be created.
@@ -45,18 +48,18 @@ class Lag(BaseTransformer):
     lags : lag offset, or list of lag offsets, optional, default=0 (identity transform)
         a "lag offset" can be one of the following:
         int - number of periods to shift/lag
-        time-like: `DateOffset`, `tseries.offsets`, or `timedelta`
+        time-like: ``DateOffset``, ``tseries.offsets``, or ``timedelta``
             time delta offset to shift/lag
             requires time index of transformed data to be time-like (not int)
         str - time rule from pandas.tseries module, e.g., "EOM"
     freq : frequency descriptor of list of frequency descriptors, optional, default=None
-        if passed, must be scalar, or list of equal length to `lags` parameter
-        elements in `freq` correspond to elements in lags
-        if i-th element of `freq` is not None, i-th element of `lags` must be int
+        if passed, must be scalar, or list of equal length to ``lags`` parameter
+        elements in ``freq`` correspond to elements in lags
+        if i-th element of ``freq`` is not None, i-th element of ``lags`` must be int
             this is called the "corresponding lags element" below
         "frequency descriptor" can be one of the following:
-        time-like: `DateOffset`, `tseries.offsets`, or `timedelta`
-            multiplied to corresponding `lags` element when shifting
+        time-like: ``DateOffset``, ``tseries.offsets``, or ``timedelta``
+            multiplied to corresponding ``lags`` element when shifting
         str - offset from pd.tseries module, e.g., "D", "M", or time rule, e.g., "EOM"
     index_out : str, optional, one of "shift", "original", "extend", default="extend"
         determines set of output indices in lagged time series
@@ -70,9 +73,10 @@ class Lag(BaseTransformer):
         if False, columns are MultiIndex (lagname, variablename)
         has no effect if return mtype is one without column names
     keep_column_names : bool, optional (default=False)
-        has an effect only if `lags` contains only a single element
-        if True, ensures that column names of `transform` output are same as in input,
-        i.e., not `lag_x__varname` but `varname`. Overrides `flatten_transform_index`.
+        has an effect only if ``lags`` contains only a single element
+        if True, ensures that column names of ``transform`` output are same as in input,
+        i.e., not ``lag_x__varname`` but ``varname``. Overrides
+        ``flatten_transform_index``.
     remember_data : bool, optional (default=True)
         if True, memorizes data seen in ``fit``, ``update``, uses it in ``transform``
         if False, only uses data seen in ``transform`` to produce lags
@@ -337,7 +341,7 @@ class Lag(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -345,8 +349,9 @@ class Lag(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {"lags": 2, "index_out": "original"}
         params2 = {"lags": [-1, 4]}
@@ -365,18 +370,18 @@ class ReducerTransform(BaseTransformer):
     lags : lag offset, or list of lag offsets, optional, default=0 (identity transform)
         a "lag offset" can be one of the following:
         int - number of periods to shift/lag
-        time-like: `DateOffset`, `tseries.offsets`, or `timedelta`
+        time-like: ``DateOffset``, ``tseries.offsets``, or ``timedelta``
             time delta offset to shift/lag
             requires time index of transformed data to be time-like (not int)
         str - time rule from pandas.tseries module, e.g., "EOM"
     freq : frequency descriptor of list of frequency descriptors, optional, default=None
-        if passed, must be scalar, or list of equal length to `lags` parameter
-        elements in `freq` correspond to elements in lags
-        if i-th element of `freq` is not None, i-th element of `lags` must be int
+        if passed, must be scalar, or list of equal length to ``lags`` parameter
+        elements in ``freq`` correspond to elements in lags
+        if i-th element of ``freq`` is not None, i-th element of ``lags`` must be int
             this is called the "corresponding lags element" below
         "frequency descriptor" can be one of the following:
-        time-like: `DateOffset`, `tseries.offsets`, or `timedelta`
-            multiplied to corresponding `lags` element when shifting
+        time-like: ``DateOffset``, ``tseries.offsets``, or ``timedelta``
+            multiplied to corresponding ``lags`` element when shifting
         str - offset from pd.tseries module, e.g., "D", "M", or time rule, e.g., "EOM"
     shifted_vars : None
     shifted_vars_lag : 0
@@ -592,7 +597,7 @@ class ReducerTransform(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -600,8 +605,9 @@ class ReducerTransform(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {"lags": 2}
 

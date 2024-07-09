@@ -4,6 +4,7 @@ Useful for building estimators where all but one or a few methods are delegated.
 that purpose, inherit from this estimator and then override only the methods that
 are not delegated.
 """
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly"]
@@ -47,7 +48,7 @@ class _DelegatedForecaster(BaseForecaster):
 
         * data mtype tags are set to the most general value.
           This is to ensure that conversion is left to the inner estimator.
-        * packaging tags such as "author" or "python_depedencies" are not cloned.
+        * packaging tags such as "author" or "python_dependencies" are not cloned.
         * other boilerplate tags are cloned.
 
         Parameters

@@ -16,20 +16,20 @@ class KinematicFeatures(BaseTransformer):
     a selection of kinematic features.
 
     For noisy time series, is strongly recommended to pipeline this with
-    `KalmanFilterTransformerPK` or `KalmanFilterTransformerFP` (prior),
+    ``KalmanFilterTransformerPK`` or ``KalmanFilterTransformerFP`` (prior),
     or other smoothing or trajectory fitting transformers,
     as this transformer does not carry out its own smoothing.
 
-    For min/max/quantiles of velocity etc, pipeline with `SummaryTransformer` (post).
+    For min/max/quantiles of velocity etc, pipeline with ``SummaryTransformer`` (post).
 
     For a time series input :math:`x(t)`, observed at discrete times,
     this transformer computes (when selected) discretized versions of:
 
-    * `"v"` - vector of velocity: :math:`\vec{v}(t) := \Delta x(t)`
-    * `"v_abs"` - absolute velocity: :math:`v(t) := \left| \Delta x(t) \right|`
-    * `"a"` - vector of velocity: :math:`\vec{a}(t) := \Delta \Delta x(t)`
-    * `"a_abs"` - absolute velocity: :math:`a(t) := \left| \Delta \Delta x(t) \right|`
-    * `"curv"` - curvature: :math:`c(t) := \frac{\sqrt{v(t)^2 a(t)^2 - \left\langle
+    * ``"v"`` - vector of velocity: :math:`\vec{v}(t) := \Delta x(t)`
+    * ``"v_abs"`` - absolute velocity: :math:`v(t) := \left| \Delta x(t) \right|`
+    * ``"a"`` - vector of velocity: :math:`\vec{a}(t) := \Delta \Delta x(t)`
+    * ``"a_abs"`` - absolute velocity: :math:`a(t) := \left| \Delta \Delta x(t) \right|`
+    * ``"curv"`` - curvature: :math:`c(t) := \frac{\sqrt{v(t)^2 a(t)^2 - \left\langle
       \vec{v}(t), \vec{a}(t)\right\rangle^2}}{v(t)^3}`
 
     where :math:`\Delta` denotes first finite differences, that is,
@@ -174,7 +174,7 @@ class KinematicFeatures(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -182,8 +182,9 @@ class KinematicFeatures(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
         params2 = {"features": ["v", "a"]}

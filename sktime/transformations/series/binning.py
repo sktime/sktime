@@ -1,4 +1,5 @@
 """Time binning for turning series equally spaced."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly"]
@@ -14,17 +15,18 @@ from sktime.transformations.base import BaseTransformer
 class TimeBinAggregate(BaseTransformer):
     r"""Bins time series and aggregates by bin.
 
-    In `transform`, applies `groupby` with `aggfunc` on the temporal coordinate.
+    In ``transform``, applies ``groupby`` with ``aggfunc`` on the temporal coordinate.
 
     More precisely:
-    `bins` encodes bins :math:`B_1, \dots, B_k` where :math:`B_i` are intervals,
+    ``bins`` encodes bins :math:`B_1, \dots, B_k` where :math:`B_i` are intervals,
     in the reals or in a temporal (time stamp) range.
 
-    In `transform`, the estimator `TimeBinAggregate` collects values
-    at time stamps of `X` falling into :math:`B_i` as a sample :math:`S_i`,
-    and then applies `aggfunc` to :math:`S_i` to obtain an aggregate value :math:`v_i`.
+    In ``transform``, the estimator ``TimeBinAggregate`` collects values
+    at time stamps of ``X`` falling into :math:`B_i` as a sample :math:`S_i`,
+    and then applies ``aggfunc`` to :math:`S_i` to obtain an aggregate value
+    :math:`v_i`.
     The transformed series are values :math:`v_i` at time stamps :math:`t_i`,
-    determined from :math:`B_i` per the rule in `return_index`.
+    determined from :math:`B_i` per the rule in ``return_index``.
 
     Parameters
     ----------
@@ -36,11 +38,11 @@ class TimeBinAggregate(BaseTransformer):
         Should have signature 1D -> float and defaults
         to mean if None
     return_index : str, one of the below; optional, default="range"
-        "range" = RangeIndex with bins indexed in same order as in `bins`
+        "range" = RangeIndex with bins indexed in same order as in ``bins``
         "bin_start" = transformed pd.DataFrame will be indexed by bin starts
         "bin_end" = transformed pd.DataFrame will be indexed by bin starts
         "bin_mid" = transformed pd.DataFrame will be indexed by bin midpoints
-        "bin" = transformed pd.DataFrame will have `bins` as `IntervalIndex`
+        "bin" = transformed pd.DataFrame will have ``bins`` as ``IntervalIndex``
 
     Example
     -------
@@ -116,7 +118,7 @@ class TimeBinAggregate(BaseTransformer):
         """
         bins = self.bins
         idx_cut = pd.cut(X.index, bins=self._bins, include_lowest=True)
-        Xt = X.groupby(idx_cut).apply(self._aggfunc)
+        Xt = X.groupby(idx_cut, observed=False).apply(self._aggfunc)
 
         if self.return_index == "range":
             Xt = Xt.reset_index(drop=True)
@@ -147,7 +149,7 @@ class TimeBinAggregate(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -155,8 +157,9 @@ class TimeBinAggregate(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {"bins": [0, 1]}
 

@@ -1,4 +1,5 @@
 """Feature union."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly", "mloning"]
@@ -80,9 +81,10 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
         flatten_transform_index=True,
     ):
         self.transformer_list = transformer_list
-        self.transformer_list_ = self._check_estimators(
+        transformer_list_ = self._check_estimators(
             transformer_list, cls_type=BaseTransformer
         )
+        self.transformer_list_ = transformer_list_
 
         self.n_jobs = n_jobs
         self.transformer_weights = transformer_weights
@@ -90,9 +92,11 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
 
         super().__init__()
 
-        # todo: check for transform-input, transform-output
-        #   for now, we assume it's always Series/Series or Series/Panel
-        #   but no error is currently raised
+        t_outs = [t.get_tag("scitype:transform-output") for _, t in transformer_list_]
+        t_ins = [t.get_tag("scitype:transform-input") for _, t in transformer_list_]
+        # todo: error or special case handling if these are not all the same
+        self.set_tags(**{"scitype:transform-output": t_outs[0]})
+        self.set_tags(**{"scitype:transform-input": t_ins[0]})
 
         # abbreviate for readability
         ests = self.transformer_list_
@@ -110,6 +114,10 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
         self._anytagis_then_set("handles-missing-data", False, True, ests)
         self._anytagis_then_set("univariate-only", True, False, ests)
 
+        # if any of the components require_X or require_y, set it for the composite
+        self._anytagis_then_set("requires_X", True, False, ests)
+        self._anytagis_then_set("requires_y", True, False, ests)
+
     @property
     def _transformer_list(self):
         return self._get_estimator_tuples(self.transformer_list, clone_ests=False)
@@ -122,17 +130,19 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
     def __add__(self, other):
         """Magic + method, return (right) concatenated FeatureUnion.
 
-        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+        Implemented for ``other`` being a transformer, otherwise returns
+        ``NotImplemented``.
 
         Parameters
         ----------
-        other: `sktime` transformer, must inherit from BaseTransformer
-            otherwise, `NotImplemented` is returned
+        other: ``sktime`` transformer, must inherit from BaseTransformer
+            otherwise, ``NotImplemented`` is returned
 
         Returns
         -------
-        TransformerPipeline object, concatenation of `self` (first) with `other` (last).
-            not nested, contains only non-FeatureUnion `sktime` transformers
+        TransformerPipeline object, concatenation of ``self`` (first) with ``other``
+        (last).
+            not nested, contains only non-FeatureUnion ``sktime`` transformers
         """
         other = _coerce_to_sktime(other)
         return self._dunder_concat(
@@ -146,17 +156,19 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
     def __radd__(self, other):
         """Magic + method, return (left) concatenated FeatureUnion.
 
-        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+        Implemented for ``other`` being a transformer, otherwise returns
+        ``NotImplemented``.
 
         Parameters
         ----------
-        other: `sktime` transformer, must inherit from BaseTransformer
-            otherwise, `NotImplemented` is returned
+        other: ``sktime`` transformer, must inherit from BaseTransformer
+            otherwise, ``NotImplemented`` is returned
 
         Returns
         -------
-        TransformerPipeline object, concatenation of `self` (last) with `other` (first).
-            not nested, contains only non-FeatureUnion `sktime` transformers
+        TransformerPipeline object, concatenation of ``self`` (last) with ``other``
+        (first).
+            not nested, contains only non-FeatureUnion ``sktime`` transformers
         """
         other = _coerce_to_sktime(other)
         return self._dunder_concat(

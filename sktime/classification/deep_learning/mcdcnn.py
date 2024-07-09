@@ -9,7 +9,7 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.mcdcnn import MCDCNNNetwork
-from sktime.utils.validation._dependencies import _check_dl_dependencies
+from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class MCDCNNClassifier(BaseDeepClassifier):
@@ -47,11 +47,11 @@ class MCDCNNClassifier(BaseDeepClassifier):
         Whether bias should be included in the output layer.
     metrics : None or string, optional (default=None)
         The string which will be used during model compilation. If left as None,
-        then "accuracy" is passed to `model.compile()`.
+        then "accuracy" is passed to ``model.compile()``.
     optimizer: None or keras.optimizers.Optimizer instance, optional (default=None)
         The optimizer that is used for model compiltation. If left as None,
-        then `keras.optimizers.SGD` is used with the following parameters -
-        `learning_rate=0.01, momentum=0.9, weight_decay=0.0005`.
+        then ``keras.optimizers.SGD`` is used with the following parameters -
+        ``learning_rate=0.01, momentum=0.9, weight_decay=0.0005``.
     callbacks : None or list of keras.callbacks.Callback, optional (default=None)
         The callback(s) to use during training.
     random_state : int, optional (default=0)
@@ -107,7 +107,6 @@ class MCDCNNClassifier(BaseDeepClassifier):
         random_state=0,
     ):
         _check_dl_dependencies(severity="error")
-        super().__init__()
 
         self.n_epochs = n_epochs
         self.batch_size = batch_size
@@ -125,6 +124,9 @@ class MCDCNNClassifier(BaseDeepClassifier):
         self.optimizer = optimizer
         self.verbose = verbose
         self.random_state = random_state
+
+        super().__init__()
+
         self.history = None
         self._network = MCDCNNNetwork(
             kernel_size=self.kernel_size,
@@ -204,7 +206,7 @@ class MCDCNNClassifier(BaseDeepClassifier):
         -------
         self : object
         """
-        y_onehot = self.convert_y_to_keras(y)
+        y_onehot = self._convert_y_to_keras(y)
         X = X.transpose(0, 2, 1)
         self.input_shape = X.shape[1:]
         X = self._network._prepare_input(X)

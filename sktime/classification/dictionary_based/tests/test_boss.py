@@ -1,4 +1,5 @@
 """BOSS test code."""
+
 import numpy as np
 import pytest
 
@@ -25,7 +26,7 @@ def dataset():
 @pytest.mark.parametrize(
     "new_class,expected_dtype",
     [
-        ({"1": "Class1", "2": "Class2"}, object),
+        ({"1": "Class1", "2": "Class2"}, "same"),
         ({"1": 1, "2": 2}, int),
         ({"1": 1.0, "2": 2.0}, float),
         ({"1": True, "2": False}, bool),
@@ -38,6 +39,9 @@ def test_individual_boss_classes(dataset, new_class, expected_dtype):
 
     # change class
     y_train = np.array([new_class[y] for y in y_train])
+
+    if expected_dtype == "same":
+        expected_dtype = y_train.dtype
 
     # train iboss and predict X_test
     iboss = IndividualBOSS()

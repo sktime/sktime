@@ -36,8 +36,8 @@ __all__ = [
 from sktime.datatypes._convert_utils._coerce import _coerce_df_dtypes
 from sktime.datatypes._convert_utils._convert import _extend_conversions
 from sktime.datatypes._panel._registry import MTYPE_LIST_PANEL
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.pandas import df_map
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 # dictionary indexed by triples of types
 #  1st element = convert from - type
@@ -988,7 +988,7 @@ convert_dict[("df-list", "pd-multiindex", "Panel")] = from_dflist_to_multiindex
 def from_multiindex_to_dflist(obj, store=None):
     obj = _coerce_df_dtypes(obj)
 
-    instance_index = set(obj.index.get_level_values(0))
+    instance_index = obj.index.get_level_values(0).unique()
 
     Xlist = [obj.loc[i].rename_axis(None) for i in instance_index]
 
@@ -1121,4 +1121,34 @@ if _check_soft_dependencies("dask", severity="none"):
 
     _extend_conversions(
         "dask_panel", "pd-multiindex", convert_dict, mtype_universe=MTYPE_LIST_PANEL
+    )
+
+if _check_soft_dependencies("gluonts", severity="none"):
+    from sktime.datatypes._adapter.gluonts import (
+        convert_listDataset_to_pandas,
+        convert_pandas_to_listDataset,
+    )
+
+    # Utilizing functions defined in _adapter/gluonts.py
+    def convert_gluonts_listDataset_to_pandas(obj, store=None):
+        return convert_listDataset_to_pandas(obj)
+
+    def convert_pandas_to_gluonts_listDataset(obj, store=None):
+        return convert_pandas_to_listDataset(obj, is_single=False)
+
+    # Storing functions in convert_dict
+    convert_dict[("pd-multiindex", "gluonts_ListDataset_panel", "Panel")] = (
+        convert_pandas_to_gluonts_listDataset
+    )
+
+    convert_dict[("gluonts_ListDataset_panel", "pd-multiindex", "Panel")] = (
+        convert_gluonts_listDataset_to_pandas
+    )
+
+    # Extending conversions
+    _extend_conversions(
+        "gluonts_ListDataset_panel",
+        "pd-multiindex",
+        convert_dict,
+        mtype_universe=MTYPE_LIST_PANEL,
     )

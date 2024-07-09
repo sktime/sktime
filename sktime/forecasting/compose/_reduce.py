@@ -75,7 +75,7 @@ def _sliding_window_transform(
 ):
     """Transform time series data using sliding window.
 
-    See `test_sliding_window_transform_explicit` in test_reduce.py for explicit
+    See ``test_sliding_window_transform_explicit`` in test_reduce.py for explicit
     example.
 
     Parameters
@@ -283,10 +283,7 @@ class _Reducer(_BaseWindowForecaster):
         # Note that we currently only support out-of-sample predictions. For the
         # direct and multioutput strategy, we need to check this already during fit,
         # as the fh is required for fitting.
-        raise NotImplementedError(
-            f"Generating in-sample predictions is not yet "
-            f"implemented for {self.__class__.__name__}."
-        )
+        pass
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -296,21 +293,22 @@ class _Reducer(_BaseWindowForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sklearn.linear_model import LinearRegression
         from sklearn.pipeline import make_pipeline
 
         from sktime.transformations.panel.reduce import Tabularizer
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         # naming convention is as follows:
         #   reducers with Tabular take an sklearn estimator, e.g., LinearRegressor
@@ -366,19 +364,19 @@ class _Reducer(_BaseWindowForecaster):
         ``*`` = (other) time stamps in the window which is summarized
         ``x`` = observations, past or future, not part of the window
 
-        For`window_length = 7` and `fh = [3]` we get the following windows
+        For``window_length = 7`` and ``fh = [3]`` we get the following windows
 
-        `shift = 0`
+        ``shift = 0``
         |--------------------------- |
         | x x x x * * * * * * * z x x|
         |----------------------------|
 
-        `shift = 1`
+        ``shift = 1``
         |--------------------------- |
         | x x x x x * * * * * * * z x|
         |----------------------------|
 
-        `shift = 2`
+        ``shift = 2``
         |--------------------------- |
         | x x x x x x * * * * * * * z|
         |----------------------------|
@@ -576,9 +574,6 @@ class _DirectReducer(_Reducer):
                     + "Please reduce window length / window lagging to match"
                     + "observation size"
                 )
-
-        if not self.fh.is_all_out_of_sample(self.cutoff):
-            raise NotImplementedError("In-sample predictions are not implemented.")
 
         yt, Xt = self._transform(y, X)
         if hasattr(Xt, "columns"):
@@ -782,9 +777,6 @@ class _MultioutputReducer(_Reducer):
         # We currently only support out-of-sample predictions. For the direct
         # strategy, we need to check this at the beginning of fit, as the fh is
         # required for fitting.
-        if not self.fh.is_all_out_of_sample(self.cutoff):
-            raise NotImplementedError("In-sample predictions are not implemented.")
-
         self.window_length_ = check_window_length(
             self.window_length, n_timepoints=len(y)
         )
@@ -1123,9 +1115,6 @@ class _DirRecReducer(_Reducer):
         # todo: logic for X below is broken. Escape X until fixed.
         if X is not None:
             X = None
-
-        if len(self.fh.to_in_sample(self.cutoff)) > 0:
-            raise NotImplementedError("In-sample predictions are not implemented")
 
         self.window_length_ = check_window_length(
             self.window_length, n_timepoints=len(y)
@@ -1470,7 +1459,7 @@ def make_reduction(
     | * * * * * * * * * * * * * *|
     |----------------------------|
 
-    And want to forecast with `window_length = 9` and `fh = [2, 4]`.
+    And want to forecast with ``window_length = 9`` and ``fh = [2, 4]``.
 
     By construction, a recursive reducer always targets the first data point after
     the window, irrespective of the forecasting horizons requested.
@@ -1485,10 +1474,10 @@ def make_reduction(
     |----------------------------|
 
     Direct Reducers will create multiple models, one for each forecasting horizon.
-    With the argument `windows_identical = True` (default) the windows used to train
+    With the argument ``windows_identical = True`` (default) the windows used to train
     the model are defined by the maximum forecasting horizon.
     Only two complete windows can be defined in this example
-    `fh = 4` (maximum of `fh = [2, 4]`)::
+    ``fh = 4`` (maximum of ``fh = [2, 4]``)::
 
     |----------------------------|
     | x x x x x x x x x * * * y *|
@@ -1496,17 +1485,17 @@ def make_reduction(
     |----------------------------|
 
     All other forecasting horizons will also use those two (maximal) windows.
-    `fh = 2`::
+    ``fh = 2``::
 
     |----------------------------|
     | x x x x x x x x x * y * * *|
     | * x x x x x x x x x * y * *|
     |----------------------------|
 
-    With `windows_identical = False` we drop the requirement to use the same windows
+    With ``windows_identical = False`` we drop the requirement to use the same windows
     for each of the direct models, so more windows can be created for horizons other
     than the maximum forecasting horizon.
-    `fh = 2`::
+    ``fh = 2``::
 
     |----------------------------|
     | x x x x x x x x x * y * * *|
@@ -1515,16 +1504,16 @@ def make_reduction(
     | * * * x x x x x x x x x * y|
     |----------------------------|
 
-    `fh = 4`::
+    ``fh = 4``::
 
     |----------------------------|
     | x x x x x x x x x * * * y *|
     | * x x x x x x x x x * * * y|
     |----------------------------|
 
-    Use `windows_identical = True` if you want to compare the forecasting
+    Use ``windows_identical = True`` if you want to compare the forecasting
     performance across different horizons, since all models trained will use the
-    same windows. Use `windows_identical = False` if you want to have the highest
+    same windows. Use ``windows_identical = False`` if you want to have the highest
     forecasting accuracy for each forecasting horizon.
 
     Parameters
@@ -1545,8 +1534,8 @@ def make_reduction(
 
     scitype : str, optional (default="infer")
         Legacy argument for downwards compatibility, should not be used.
-        `make_reduction` will automatically infer the correct type of `estimator`.
-        This internal inference can be force-overridden by the `scitype` argument.
+        ``make_reduction`` will automatically infer the correct type of ``estimator``.
+        This internal inference can be force-overridden by the ``scitype`` argument.
         Must be one of "infer", "tabular-regressor" or "time-series-regressor".
         If the scitype cannot be inferred, this is a bug and should be reported.
 
@@ -1735,7 +1724,7 @@ def _create_fcst_df(target_date, origin_df, fill=None):
     else:
         values = fill
 
-    res = pd.DataFrame(values, index=index, columns=columns)
+    res = pd.DataFrame(values, index=index, columns=columns, dtype="float64")
 
     if isinstance(origin_df, pd.Series) and not isinstance(index, pd.MultiIndex):
         res = res.iloc[:, 0]
@@ -1823,36 +1812,43 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
     Implements direct reduction, of forecasting to tabular regression.
 
-    For no `X`, defaults to DirMO (direct multioutput) for `X_treatment = "concurrent"`,
-    and simple direct (direct single-output) for `X_treatment = "shifted"`.
+    For no ``X``, defaults to DirMO (direct multioutput) for ``X_treatment =
+    "concurrent"``,
+    and simple direct (direct single-output) for ``X_treatment = "shifted"``.
 
-    Direct single-output with concurrent `X` behaviour can be configured
-    by passing a single-output `scikit-learn` compatible transformer.
+    Direct single-output with concurrent ``X`` behaviour can be configured
+    by passing a single-output ``scikit-learn`` compatible transformer.
 
     Algorithm details:
 
-    In `fit`, given endogeneous time series `y` and possibly exogeneous `X`:
-        fits `estimator` to feature-label pairs as defined as follows.
+    In ``fit``, given endogeneous time series ``y`` and possibly exogeneous ``X``:
+        fits ``estimator`` to feature-label pairs as defined as follows.
     if `X_treatment = "concurrent":
-        features = `y(t)`, `y(t-1)`, ..., `y(t-window_size)`, if provided: `X(t+h)`
-        labels = `y(t+h)` for `h` in the forecasting horizon
-        ranging over all `t` where the above have been observed (are in the index)
-        for each `h` in the forecasting horizon (separate estimator fitted per `h`)
+        features = ``y(t)``, ``y(t-1)``, ..., ``y(t-window_size)``, if provided:
+        ``X(t+h)``
+        labels = ``y(t+h)`` for ``h`` in the forecasting horizon
+        ranging over all ``t`` where the above have been observed (are in the index)
+        for each ``h`` in the forecasting horizon (separate estimator fitted per ``h``)
     if `X_treatment = "shifted":
-        features = `y(t)`, `y(t-1)`, ..., `y(t-window_size)`, if provided: `X(t)`
-        labels = `y(t+h_1)`, ..., `y(t+h_k)` for `h_j` in the forecasting horizon
-        ranging over all `t` where the above have been observed (are in the index)
-        estimator is fitted as a multi-output estimator (for all  `h_j` simultaneously)
+        features = ``y(t)``, ``y(t-1)``, ..., ``y(t-window_size)``, if provided:
+        ``X(t)``
+        labels = ``y(t+h_1)``, ..., ``y(t+h_k)`` for ``h_j`` in the forecasting horizon
+        ranging over all ``t`` where the above have been observed (are in the index)
+        estimator is fitted as a multi-output estimator (for all ``h_j``
+        simultaneously)
 
-    In `predict`, given possibly exogeneous `X`, at cutoff time `c`,
+    In ``predict``, given possibly exogeneous ``X``, at cutoff time ``c``,
     if `X_treatment = "concurrent":
         applies fitted estimators' predict to
-        feature = `y(c)`, `y(c-1)`, ..., `y(c-window_size)`, if provided: `X(c+h)`
-        to obtain a prediction for `y(c+h)`, for each `h` in the forecasting horizon
+        feature = ``y(c)``, ``y(c-1)``, ..., ``y(c-window_size)``, if provided:
+        ``X(c+h)``
+        to obtain a prediction for ``y(c+h)``, for each ``h`` in the forecasting horizon
     if `X_treatment = "shifted":
         applies fitted estimator's predict to
-        features = `y(c)`, `y(c-1)`, ..., `y(c-window_size)`, if provided: `X(c)`
-        to obtain prediction for `y(c+h_1)`, ..., `y(c+h_k)` for `h_j` in forec. horizon
+        features = ``y(c)``, ``y(c-1)``, ..., ``y(c-window_size)``, if provided:
+        ``X(c)``
+        to obtain prediction for ``y(c+h_1)``, ..., ``y(c+h_k)`` for ``h_j`` in forec.
+        horizon
 
     Parameters
     ----------
@@ -2147,15 +2143,16 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sklearn.linear_model import LinearRegression
 
@@ -2183,23 +2180,25 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
     Algorithm details:
 
-    In `fit`, given endogeneous time series `y` and possibly exogeneous `X`:
-        fits `estimator` to feature-label pairs as defined as follows.
+    In ``fit``, given endogeneous time series ``y`` and possibly exogeneous ``X``:
+        fits ``estimator`` to feature-label pairs as defined as follows.
 
-        features = `y(t)`, `y(t-1)`, ..., `y(t-window_size)`, if provided: `X(t+1)`
-        labels = `y(t+1)`
-        ranging over all `t` where the above have been observed (are in the index)
+        features = ``y(t)``, ``y(t-1)``, ..., ``y(t-window_size)``, if provided:
+        ``X(t+1)``
+        labels = ``y(t+1)``
+        ranging over all ``t`` where the above have been observed (are in the index)
 
-    In `predict`, given possibly exogeneous `X`, at cutoff time `c`,
+    In ``predict``, given possibly exogeneous ``X``, at cutoff time ``c``,
         applies fitted estimators' predict to
-        feature = `y(c)`, `y(c-1)`, ..., `y(c-window_size)`, if provided: `X(c+1)`
-        to obtain a prediction for `y(c+1)`.
-        If a given `y(t)` has not been observed, it is replaced by a prediction
+        feature = ``y(c)``, ``y(c-1)``, ..., ``y(c-window_size)``, if provided:
+        ``X(c+1)``
+        to obtain a prediction for ``y(c+1)``.
+        If a given ``y(t)`` has not been observed, it is replaced by a prediction
         obtained in the same way - done repeatedly until all predictions are obtained.
         Out-of-sample, this results in the "recursive" behaviour, where predictions
         at time points c+1, c+2, etc, are obtained iteratively.
         In-sample, predictions are obtained in a single step, with potential
-        missing values obtained via the `impute` strategy chosen.
+        missing values obtained via the ``impute`` strategy chosen.
 
     Parameters
     ----------
@@ -2488,15 +2487,16 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sklearn.linear_model import LinearRegression
 
@@ -2772,7 +2772,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
         pred_int : pd.DataFrame
             Column has multi-index: first level is variable name from y in fit,
                 second level coverage fractions for which intervals were computed.
-                    in the same order as in input `coverage`.
+                    in the same order as in input ``coverage``.
                 Third level is string "lower" or "upper", for lower/upper interval end.
             Row index is fh, with additional (upper) levels equal to instance levels,
                 from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
@@ -2806,9 +2806,9 @@ class YfromX(BaseForecaster, _ReducerMixin):
 
         Returns
         -------
-        pred_var : pd.DataFrame, format dependent on `cov` variable
+        pred_var : pd.DataFrame, format dependent on ``cov`` variable
             If cov=False:
-                Column names are exactly those of `y` passed in `fit`/`update`.
+                Column names are exactly those of ``y`` passed in ``fit``/``update``.
                     For nameless formats, column index will be a RangeIndex.
                 Row index is fh, with additional levels equal to instance levels,
                     from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
@@ -2884,20 +2884,21 @@ class YfromX(BaseForecaster, _ReducerMixin):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sklearn.ensemble import RandomForestRegressor
         from sklearn.linear_model import LinearRegression
 
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         params1 = {
             "estimator": LinearRegression(),

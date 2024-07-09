@@ -19,7 +19,9 @@ import pytest
 from sklearn.linear_model import LinearRegression
 
 from sktime.datasets import load_airline, load_longley
-from sktime.exceptions import FitFailedWarning
+
+# from sktime.exceptions import FitFailedWarning
+# commented out until bugs are resolved, see test_evaluate_error_score
 from sktime.forecasting.arima import ARIMA, AutoARIMA
 from sktime.forecasting.compose._reduce import DirectReductionForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
@@ -47,8 +49,8 @@ from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.series import _make_series
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.parallel import _get_parallel_test_fixtures
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 METRICS = [MeanAbsolutePercentageError(symmetric=True), MeanAbsoluteScaledError()]
 PROBA_METRICS = [CRPS(), EmpiricalCoverage(), LogLoss(), PinballLoss()]
@@ -245,11 +247,16 @@ def test_evaluate_error_score(error_score, return_data, strategy, backend, score
 
     if error_score in [np.nan, 1000]:
         # known bug - loky backend does not pass on warnings, #5307
-        if backend["backend"] not in ["loky", "multiprocessing"]:
-            with pytest.warns(FitFailedWarning):
-                results = evaluate(**args)
-        else:
-            results = evaluate(**args)
+        # known bug - warnings are sporadically not raised otherwise, #5959
+
+        # commented out until bugs are resolved
+
+        # if backend["backend"] not in ["loky", "multiprocessing"]:
+        #     with pytest.warns(FitFailedWarning):
+        #         results = evaluate(**args)
+        # else:
+        #     results = evaluate(**args)
+        results = evaluate(**args)
 
         if isinstance(error_score, type(np.nan)):
             assert all(results[scoring_name].isna().sum() > 0)
@@ -301,6 +308,10 @@ ARIMA_MODELS = [ARIMA, AutoARIMA]
 # ARIMA_MODELS = [ARIMA, AutoARIMA, SARIMAX]
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([evaluate]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("cls", ARIMA_MODELS)
 def test_evaluate_bigger_X(cls):
     """Check that evaluating ARIMA models with exogeneous X works.

@@ -81,18 +81,36 @@ class BasePanelMixin(BaseEstimator):
             return self
         else:  # methodname == "predict" or methodname == "predict_proba":
             ests_ = getattr(self, self.VECTORIZATION_ATTR)
-            y_pred = self._yvec.vectorize_est(
+            y_preds = self._yvec.vectorize_est(
                 ests_,
                 method=methodname,
                 X=X,
+                return_type="list",
                 **kwargs,
             )
-            y_pred = pd.DataFrame(
-                {str(i): y_pred[col].values[0] for i, col in enumerate(y_pred.columns)}
-            )
+
+            y_cols = self._y_metadata["feature_names"]
+
+            if isinstance(y_preds[0], np.ndarray):
+                y_preds_df = [pd.DataFrame(y_pred) for y_pred in y_preds]
+                y_pred = pd.concat(y_preds_df, axis=1, keys=y_cols)
+                if methodname == "predict":
+                    # to avoid column MultiIndex with duplicated label
+                    y_pred.columns = y_cols
+            else:  # pd.DataFrame
+                y_pred = pd.concat(y_preds, axis=1, keys=y_cols)
+
             return y_pred
 
-    def _fit_predict_boilerplate(self, X, y, cv, change_state, method):
+    def _fit_predict_boilerplate(
+        self,
+        X,
+        y,
+        cv,
+        change_state,
+        method,
+        return_type="single_y_pred",
+    ):
         """Boilerplate logic for fit_predict and fit_predict_proba."""
         from sklearn.model_selection import KFold
 
@@ -137,31 +155,86 @@ class BasePanelMixin(BaseEstimator):
             X = convert(
                 X,
                 from_type=X_mtype,
-                to_type="nested_univ",
+                to_type=["pd-multiindex", "nested_univ"],
                 as_scitype="Panel",
                 store_behaviour="freeze",
             )
 
-        if method == "predict_proba":
-            y_pred = np.empty([len(y), len(np.unique(y))])
-        else:
-            y_pred = np.empty_like(y)
-        y_pred[:] = -1
-        if isinstance(X, np.ndarray):
-            for tr_idx, tt_idx in cv.split(X):
-                X_train = X[tr_idx]
-                X_test = X[tt_idx]
-                y_train = y[tr_idx]
-                fitted_est = self.clone().fit(X_train, y_train)
-                y_pred[tt_idx] = getattr(fitted_est, method)(X_test)
-        else:
-            for tr_idx, tt_idx in cv.split(X):
-                X_train = X.iloc[tr_idx]
-                X_test = X.iloc[tt_idx]
-                y_train = y[tr_idx]
-                fitted_est = self.clone().fit(X_train, y_train)
-                y_pred[tt_idx] = getattr(fitted_est, method)(X_test)
+        y_preds = []
+        tt_ixx = []
 
+        if isinstance(X.index, pd.MultiIndex):
+            X_ix = X.index.get_level_values(0).unique()
+        else:
+            X_ix = np.arange(len(X))
+
+        for tr_idx, tt_idx in cv.split(X_ix):
+            X_train = self._subset(X, tr_idx)
+            X_test = self._subset(X, tt_idx)
+            y_train = self._subset(y, tr_idx)
+            fitted_est = self.clone().fit(X_train, y_train)
+            y_preds.append(getattr(fitted_est, method)(X_test))
+            tt_ixx.append(tt_idx)
+
+        if return_type == "single_y_pred":
+            return self._pool(y_preds, tt_ixx, y)
+        else:
+            return y_preds
+
+    def _subset(self, obj, ix):
+        """Subset input data by ix, for use in fit_predict_boilerplate.
+
+        Parameters
+        ----------
+        obj : pd.DataFrame or np.ndarray
+            if pd.DataFrame, instance index = first level of pd.MultiIndex
+            if np.ndarray, instance index = 0-th axis
+        ix : sklearn splitter index, e.g., ix, _ from KFold.split(X)
+
+        Returns
+        -------
+        obj_ix : obj subset by ix
+        """
+        if isinstance(obj, np.ndarray):
+            return obj[ix]
+        if not isinstance(obj, (pd.DataFrame, pd.Series)):
+            raise ValueError("obj must be a pd.DataFrame, pd.Series, or np.ndarray")
+        if not isinstance(obj.index, pd.MultiIndex):
+            return obj.iloc[ix]
+        else:
+            ix_loc = obj.index.get_level_values(0).unique()[ix]
+            return obj.loc[ix_loc]
+
+    def _pool(self, y_preds, tt_ixx, y):
+        """Pool predictions from cv splits, for use in fit_predict_boilerplate.
+
+        Parameters
+        ----------
+        y_preds : list of np.ndarray or pd.DataFrame
+            list of predictions from cv splits
+        tt_ixx : list of np.ndarray or pd.DataFrame
+            list of test indices from cv splits
+
+        Returns
+        -------
+        y_pred : np.ndarray, pooled predictions
+        """
+        y_pred = y_preds[0]
+        if isinstance(y_pred, (pd.DataFrame, pd.Series)):
+            for i in range(1, len(y_preds)):
+                y_pred = y_pred.combine_first(y_preds[i])
+            y_pred = y_pred.reindex(y.index).fillna(-1)
+        else:
+            if y_pred.ndim == 1:
+                sh = y.shape
+            else:
+                sh = (y.shape[0], y_pred.shape[1])
+            y_pred = -np.ones(sh, dtype=y.dtype)
+            for i, ix in enumerate(tt_ixx):
+                y_preds_i = y_preds[i]
+                if y_pred.ndim == 1:
+                    y_preds_i = y_preds_i.reshape(-1)
+                y_pred[ix] = y_preds_i
         return y_pred
 
     def _check_convert_X_for_predict(self, X):
@@ -293,7 +366,7 @@ class BasePanelMixin(BaseEstimator):
         y_inner_mtype = self.get_tag("y_inner_mtype")
 
         y_valid, y_msg, y_metadata = check_is_scitype(
-            y, "Table", return_metadata=["is_univariate"]
+            y, "Table", return_metadata=["is_univariate", "feature_names"]
         )
 
         if not y_valid:
@@ -339,6 +412,22 @@ class BasePanelMixin(BaseEstimator):
             return y_inner, y_metadata, y_inner_mtype
         else:
             return y_inner, y_metadata
+
+    def _get_output_mtype(self, y):
+        """Get the mtype of the output y.
+
+        Parameters
+        ----------
+        y : np.ndarray or pd.DataFrame
+            output to convert
+
+        Returns
+        -------
+        y_mtype : str
+            mtype of y
+        """
+        y_mtype = check_is_scitype(y, "Table", return_metadata="mtype")
+        return y_mtype
 
     def _convert_output_y(self, y):
         """Convert output y to original format.

@@ -1,5 +1,6 @@
 """Extra LTSF-Linear Model Layers."""
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+from sktime.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("torch", severity="none"):
     import torch.nn as nn
@@ -9,8 +10,6 @@ else:
 
     class nn_module:
         """Dummy class if torch is unavailable."""
-
-        pass
 
 
 import math

@@ -110,13 +110,15 @@ class _StatsModelsAdapter(BaseForecaster):
         # bug fix for evaluate function as test_plus_train indices are passed
         # statsmodels exog must contain test indices only.
         # For discussion see https://github.com/sktime/sktime/issues/3830
-        if X is not None:
+        if X is not None and self._X is not None:
             ind_drop = self._X.index
             X = X.loc[~X.index.isin(ind_drop)]
             # Entire range of the forecast horizon is required
             X = X.iloc[: (fh_int[-1] + 1)]  # include end point
 
         if "exog" in inspect.signature(self._forecaster.__init__).parameters.keys():
+            if self._X is None:
+                X = None  # change X passed in predict to None if X wasn't passed to fit
             y_pred = self._fitted_forecaster.predict(start=start, end=end, exog=X)
         else:
             y_pred = self._fitted_forecaster.predict(start=start, end=end)

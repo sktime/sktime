@@ -70,6 +70,7 @@ class BATS(_TbatsAdapter):
         When not provided BATS shall try to utilize all available cpu cores.
     multiprocessing_start_method: str, optional (default='spawn')
         How threads should be started. See also:
+
         https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
     context: abstract.ContextInterface, optional (default=None)
         For advanced users only. Provide this to override default behaviors
@@ -87,6 +88,7 @@ class BATS(_TbatsAdapter):
        smoothing, Journal of the American Statistical Association, 106(496), 1513-1527.
        DOI: https://doi.org/10.1198/jasa.2011.tm09771
     .. [3] G. Skorupa. Multiple Seasonalities using TBATS in Python.
+
        https://medium.com/intive-developers/forecasting-time-series-with-multiple-seasonalities-using-tbats-in-python-398a00ac0e8a
     .. [4] R.J. Hyndman, G. Athanasopoulos. Forecasting: Principles and Practice.
        https://otexts.com/fpp2/complexseasonality.html
@@ -126,7 +128,7 @@ class BATS(_TbatsAdapter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------

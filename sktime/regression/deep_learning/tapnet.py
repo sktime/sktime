@@ -9,7 +9,7 @@ from sklearn.utils import check_random_state
 
 from sktime.networks.tapnet import TapNetNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
-from sktime.utils.validation._dependencies import _check_dl_dependencies
+from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class TapNetRegressor(BaseDeepRegressor):
@@ -107,7 +107,6 @@ class TapNetRegressor(BaseDeepRegressor):
         verbose=False,
     ):
         _check_dl_dependencies(severity="error")
-        super().__init__()
 
         self.batch_size = batch_size
         self.random_state = random_state
@@ -135,6 +134,8 @@ class TapNetRegressor(BaseDeepRegressor):
         # parameters for random projection
         self.use_rp = use_rp
         self.rp_params = rp_params
+
+        super().__init__()
 
         self._network = TapNetNetwork(
             dropout=self.dropout,
@@ -238,7 +239,7 @@ class TapNetRegressor(BaseDeepRegressor):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -249,10 +250,11 @@ class TapNetRegressor(BaseDeepRegressor):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         param1 = {
             "n_epochs": 10,
