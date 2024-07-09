@@ -380,7 +380,7 @@ if _check_soft_dependencies("polars", severity="none"):
         return metadict
 
     check_dict[("pl.DataFrame", "Series")] = check_polars_series
-    
+
 
 if _check_soft_dependencies("gluonts", severity="none"):
 

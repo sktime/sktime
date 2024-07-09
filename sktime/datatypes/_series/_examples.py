@@ -147,7 +147,7 @@ if _check_soft_dependencies("polars", severity="none"):
     example_dict[("pl.DataFrame", "Series", 1)] = pl_df
     example_dict_lossy[("pl.DataFrame", "Series", 1)] = False
 
-    
+
 if _check_soft_dependencies("gluonts", severity="none"):
     from gluonts.dataset.common import ListDataset
     from gluonts.dataset.field_names import FieldName
@@ -210,7 +210,7 @@ if _check_soft_dependencies("dask", severity="none"):
     example_dict[("dask_series", "Series", 2)] = df_dask
     example_dict_lossy[("dask_series", "Series", 2)] = False
 
-    
+
 if _check_soft_dependencies("polars", severity="none"):
     from polars import DataFrame
 
@@ -276,7 +276,7 @@ if _check_soft_dependencies("xarray", severity="none"):
     example_dict[("xr.DataArray", "Series", 3)] = da
     example_dict_lossy[("xr.DataArray", "Series", 3)] = False
 
-    
+
 if _check_soft_dependencies("polars", severity="none"):
     from polars import DataFrame
 
@@ -285,7 +285,7 @@ if _check_soft_dependencies("polars", severity="none"):
     example_dict[("pl.DataFrame", "Series", 3)] = pl_df
     example_dict_lossy[("pl.DataFrame", "Series", 3)] = False
 
-    
+
 if _check_soft_dependencies("gluonts", severity="none"):
     from gluonts.dataset.common import ListDataset
     from gluonts.dataset.field_names import FieldName
