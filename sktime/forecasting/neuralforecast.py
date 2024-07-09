@@ -1,7 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Interfaces to estimators from neuralforecast by Nixtla."""
 import functools
-from typing import List, Optional, Union
+from typing import Optional, Union
 
 from sktime.forecasting.base.adapters._neuralforecast import (
     _SUPPORTED_LOCAL_SCALAR_TYPES,
@@ -180,7 +180,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         self: "NeuralForecastRNN",
         freq: Union[str, int] = "auto",
         local_scaler_type: Optional[_SUPPORTED_LOCAL_SCALAR_TYPES] = None,
-        futr_exog_list: Optional[List[str]] = None,
+        futr_exog_list: Optional[list[str]] = None,
         verbose_fit: bool = False,
         verbose_predict: bool = False,
         broadcasting: bool = True,
@@ -559,7 +559,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         self: "NeuralForecastLSTM",
         freq: Union[str, int] = "auto",
         local_scaler_type: Optional[_SUPPORTED_LOCAL_SCALAR_TYPES] = None,
-        futr_exog_list: Optional[List[str]] = None,
+        futr_exog_list: Optional[list[str]] = None,
         verbose_fit: bool = False,
         verbose_predict: bool = False,
         broadcasting: bool = True,

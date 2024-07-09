@@ -1,4 +1,5 @@
 """Tests the SkforecastAutoreg model."""
+
 __author__ = ["Abhay-Lejith"]
 
 import pandas as pd

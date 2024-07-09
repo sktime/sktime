@@ -1,7 +1,6 @@
 """Tests for STRAY (Search TRace AnomalY) outlier estimator."""
 
 import warnings
-from typing import Dict
 
 import numpy as np
 import numpy.typing as npt
@@ -139,7 +138,7 @@ class STRAY(BaseTransformer):
 
         return np.where(outlier_score > bound)[0]
 
-    def _find_outliers_kNN(self, X: npt.ArrayLike, n: int) -> Dict:
+    def _find_outliers_kNN(self, X: npt.ArrayLike, n: int) -> dict:
         """Find outliers using kNN distance with maximum gap.
 
         Parameters

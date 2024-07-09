@@ -4,7 +4,7 @@ import abc
 import functools
 from copy import deepcopy
 from inspect import signature
-from typing import List, Literal, Optional, Union
+from typing import Literal, Optional, Union
 
 import numpy as np
 import pandas
@@ -92,7 +92,7 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         self: "_NeuralForecastAdapter",
         freq: Union[str, int] = "auto",
         local_scaler_type: Optional[_SUPPORTED_LOCAL_SCALAR_TYPES] = None,
-        futr_exog_list: Optional[List[str]] = None,
+        futr_exog_list: Optional[list[str]] = None,
         verbose_fit: bool = False,
         verbose_predict: bool = False,
         broadcasting: bool = True,

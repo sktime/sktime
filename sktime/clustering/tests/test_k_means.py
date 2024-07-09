@@ -1,4 +1,5 @@
 """Tests for time series k-means."""
+
 import numpy as np
 import pytest
 from sklearn import metrics
