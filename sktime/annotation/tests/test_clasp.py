@@ -48,9 +48,9 @@ def test_clasp_dense():
     # compute a ClaSP segmentation
     clasp = ClaSPSegmentation(period_size, n_cps=1)
     clasp.fit(ts)
-    segmentation = clasp.transform(ts)
+    changepoint_indicator = clasp.transform(ts)
 
     profile = clasp.predict_scores(ts)
 
-    assert len(segmentation) == 2 and segmentation.index[0].right == 893
+    assert len(changepoint_indicator) == len(ts)
     assert np.argmax(profile) == 893
