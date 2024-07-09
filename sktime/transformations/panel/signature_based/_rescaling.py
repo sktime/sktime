@@ -4,6 +4,7 @@ rescaling.py ========================= This implements the pre- and post- signat
 rescaling methods along with generic scaling methods along feature dimensions of 3D
 tensors. Code for `rescale_path` and `rescale_signature` written by Patrick Kidger.
 """
+
 import math
 
 import numpy as np
