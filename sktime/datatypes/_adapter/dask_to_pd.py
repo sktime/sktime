@@ -17,6 +17,7 @@ import pandas as pd
 
 from sktime.datatypes._common import _req
 from sktime.datatypes._common import _ret as ret
+from sktime.datatypes._dtypekind import _get_feature_kind, _pandas_dtype_to_kind
 
 
 def _is_mi_col(x):
@@ -179,6 +180,16 @@ def check_dask_frame(
         metadata["n_features"] = len(obj.columns)
     if _req("feature_names", return_metadata):
         metadata["feature_names"] = obj.columns.to_list()
+    if _req("dtypekind_dfip", return_metadata):
+        index_cols_count = len(index_cols)
+        # slicing off additional index columns
+        dtype_list = obj.dtypes.to_list()[index_cols_count:]
+        metadata["dtypekind_dfip"] = _pandas_dtype_to_kind(dtype_list)
+    if _req("feature_kind", return_metadata):
+        index_cols_count = len(index_cols)
+        dtype_list = obj.dtypes.to_list()[index_cols_count:]
+        dtype_kind = _pandas_dtype_to_kind(dtype_list)
+        metadata["feature_kind"] = _get_feature_kind(dtype_kind)
 
     # check that columns are unique
     if not obj.columns.is_unique:

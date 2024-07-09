@@ -77,7 +77,7 @@ def _pandas_dtype_to_kind(col_dtypes):
 
 # function for series scitype
 def _get_series_dtypekind(obj, mtype):
-    if mtype == "numpy":
+    if mtype in ["numpy", "xarray"]:
         if len(obj.shape) == 2:
             return [DtypeKind.FLOAT] * obj.shape[1]
         else:
