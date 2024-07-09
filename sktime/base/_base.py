@@ -203,7 +203,7 @@ class BaseObject(_BaseObject):
         from packaging.requirements import Requirement
 
         # pypi package names of soft dependencies that are not numpy 2 compatibleS
-        NOT_NP2_COMPATIBLE = ["prophet", "numba"]
+        NOT_NP2_COMPATIBLE = ["numba"]
 
         softdeps = self.get_class_tag("python_dependencies", [])
         if softdeps is None:
