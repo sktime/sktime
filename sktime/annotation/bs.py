@@ -61,6 +61,8 @@ class BinarySegmentation(BaseSeriesAnnotator):
 
     def __init__(self, threshold, min_cp_distance=0, max_iter=10000):
         self.threshold = threshold
+        self.min_cp_distance = min_cp_distance
+        self.max_iter = max_iter
         super().__init__()
 
     def _cumsum_statistic(self, X, start, end, change_point):
@@ -174,7 +176,9 @@ class BinarySegmentation(BaseSeriesAnnotator):
         pd.Series
             Series whose values are the indexes of the change points.
         """
-        change_points = self._find_change_points(X, self.threshold)
+        change_points = self._find_change_points(
+            X, self.threshold, self.min_cp_distance, self.max_iter
+        )
         change_points.sort()
         return pd.Series(X.index[change_points])
 
