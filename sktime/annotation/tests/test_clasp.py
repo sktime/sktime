@@ -50,7 +50,7 @@ def test_clasp_dense():
     clasp.fit(ts)
     changepoint_indicator = clasp.transform(ts)
 
-    profile = clasp.predict_scores(ts)
+    profile = clasp.predict_scores(ts)  # noqa: F841
 
     assert len(changepoint_indicator) == len(ts)
     # no longer true because predict_scores is always sparse
