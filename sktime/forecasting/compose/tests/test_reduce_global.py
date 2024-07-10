@@ -39,7 +39,7 @@ if _check_soft_dependencies(
     severity="none",
     package_import_alias={"scikit-learn": "sklearn"},
 ):
-    from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+    from sklearn.experimental import enable_hist_gradient_boosting  # noqa: F401
 
 
 @pytest.fixture

@@ -95,7 +95,8 @@ Integrating with your local developer IDE
 
 Local developer IDEs will usually integrate with common code quality checks, but need setting them up in IDE specific ways.
 
-For Visual Studio Code, ``ruff`` and/or ``numpydoc`` will need to be activated individually in the preferences you can install ``ruff`` vscode extension from the marketplace.
+For Visual Studio Code, ``ruff`` and/or ``numpydoc`` will need to be activated individually in the preferences you can install ``ruff`` vscode extension from the marketplace and can be found here `ruff extension <https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff>`_.
+The Ruff VS Code extension will respect any Ruff configuration as defined in your project's ``pyproject.toml``, ``ruff.toml``, or ``.ruff.toml file`` this means that after installing the extension you can start using it right away.
 The packages ``ruff`` etc will need to be installed in the python environment used by the IDE,
 this can be achieved by an install of ``sktime`` with ``dev`` dependencies.
 

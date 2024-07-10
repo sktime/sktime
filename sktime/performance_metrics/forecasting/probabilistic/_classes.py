@@ -253,15 +253,11 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
         try:
             x_bar = self.evaluate(y_true, y_pred, multioutput, **kwargs)
             for i in range(n):
-                out_series[i] = (
-                    n * x_bar
-                    - (n - 1)
-                    * self.evaluate(
-                        np.vstack((y_true[:i, :], y_true[i + 1 :, :])),  # noqa
-                        np.vstack((y_pred[:i, :], y_pred[i + 1 :, :])),  # noqa
-                        multioutput,
-                        **kwargs,
-                    )
+                out_series[i] = n * x_bar - (n - 1) * self.evaluate(
+                    np.vstack((y_true[:i, :], y_true[i + 1 :, :])),
+                    np.vstack((y_pred[:i, :], y_pred[i + 1 :, :])),
+                    multioutput,
+                    **kwargs,
                 )
             return out_series
         except RecursionError:

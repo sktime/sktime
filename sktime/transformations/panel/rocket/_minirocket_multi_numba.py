@@ -19,7 +19,7 @@ if _check_soft_dependencies("numba", severity="none"):
 
 
 @njit(
-    "float32[:](float32[:,:,:],int32[:],int32[:],int32[:],int32[:],float32[:],optional(int32))",  # noqa
+    "float32[:](float32[:,:,:],int32[:],int32[:],int32[:],int32[:],float32[:],optional(int32))",  # noqa: E501
     fastmath=True,
     parallel=False,
     cache=True,
@@ -474,7 +474,7 @@ def _fit_multi(X, num_features=10_000, max_dilations_per_kernel=32, seed=None):
 
 
 @njit(
-    "float32[:,:](float32[:,:,:],Tuple((int32[:],int32[:],int32[:],int32[:],float32[:])))",  # noqa
+    "float32[:,:](float32[:,:,:],Tuple((int32[:],int32[:],int32[:],int32[:],float32[:])))",  # noqa: E501
     fastmath=True,
     parallel=True,
     cache=True,

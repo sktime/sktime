@@ -265,7 +265,7 @@ class ShapeletTransform(BaseTransformer):
             binary_ig_other_class_count = num_ins - binary_ig_this_class_count - 1
 
             if self.verbose:
-                print(  # noqa
+                print(
                     "visiting series: "
                     + str(series_id)
                     + " (#"
@@ -444,7 +444,7 @@ class ShapeletTransform(BaseTransformer):
 
                 candidates_evaluated += 1
                 if self.verbose > 3 and candidates_evaluated % 100 == 0:
-                    print("candidates evaluated: " + str(candidates_evaluated))  # noqa
+                    print("candidates evaluated: " + str(candidates_evaluated))
 
                 # only do if candidate was not rejected
                 if candidate_rejected is False:
@@ -479,7 +479,7 @@ class ShapeletTransform(BaseTransformer):
                     if time_this_shapelet > max_time_calc_shapelet:
                         max_time_calc_shapelet = time_this_shapelet
                         if self.verbose > 0:
-                            print(max_time_calc_shapelet)  # noqa
+                            print(max_time_calc_shapelet)
                     time_last_shapelet = time_now
 
                     # add a little 1% leeway to the timing in case one run was
@@ -502,7 +502,7 @@ class ShapeletTransform(BaseTransformer):
                     else:
                         if self.verbose > 0:
                             if candidate_rejected is False:
-                                print(  # noqa
+                                print(
                                     "Candidate finished. {:02d}:{:02} "
                                     "remaining".format(
                                         int(
@@ -535,7 +535,7 @@ class ShapeletTransform(BaseTransformer):
                                     )
                                 )
                             else:
-                                print(  # noqa
+                                print(
                                     "Candidate rejected. {:02d}:{:02} "
                                     "remaining".format(
                                         int(
@@ -582,7 +582,7 @@ class ShapeletTransform(BaseTransformer):
                     case_idx = 0
             elif case_idx >= num_series_to_visit or time_finished:
                 if self.verbose > 0:
-                    print("Stopping search")  # noqa
+                    print("Stopping search")
                 break
 
         # remove self similar here

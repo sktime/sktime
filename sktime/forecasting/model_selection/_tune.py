@@ -196,7 +196,7 @@ class BaseGridSearch(_DelegatedForecaster):
             if self.verbose > 0:
                 n_candidates = len(candidate_params)
                 n_splits = cv.get_n_splits(y)
-                print(  # noqa
+                print(
                     f"Fitting {n_splits} folds for each of {n_candidates} candidates,"
                     f" totalling {n_candidates * n_splits} fits"
                 )
@@ -1289,7 +1289,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
             # hacky approach to handle unhashable type objects
             if "forecaster" in search_space:
                 forecasters = search_space.get("forecaster")
-                mapping = {num: estimator for num, estimator in enumerate(forecasters)}  # noqa
+                mapping = {num: estimator for num, estimator in enumerate(forecasters)}
                 search_space["forecaster"] = list(mapping.keys())
                 mappings.append(mapping)
             else:
@@ -1301,7 +1301,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         if self.verbose > 0:
             n_candidates = self.n_iter
             n_splits = self.cv.get_n_splits(y)
-            print(  # noqa
+            print(
                 f"Fitting {n_splits} folds for each of {n_candidates} candidates,"
                 f" totalling {n_candidates * n_splits} fits"
             )
