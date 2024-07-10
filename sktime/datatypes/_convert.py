@@ -65,7 +65,7 @@ __all__ = [
 ]
 
 from copy import deepcopy
-from typing import Union, List, Optional
+from typing import Union, Optional
 
 import numpy as np
 import pandas as pd
@@ -90,7 +90,7 @@ convert_dict.update(convert_dict_Proba)
 def convert(
     obj,
     from_type: str,
-    to_type: Union[str, List[str]],
+    to_type: Union[str, list[str]],
     as_scitype: Optional[str] = None,
     store=None,
     store_behaviour: Optional[str] = None,
@@ -191,8 +191,8 @@ def convert(
 # conversion based on queryable type to specified target
 def convert_to(
     obj,
-    to_type: Union[str, List[str]],
-    as_scitype: Optional[Union[str, List[str]]] = None,
+    to_type: Union[str, list[str]],
+    as_scitype: Optional[Union[str, list[str]]] = None,
     store=None,
     store_behaviour: Optional[str] = None,
     return_to_mtype: bool = False,
