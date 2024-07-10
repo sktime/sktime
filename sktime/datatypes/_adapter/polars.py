@@ -123,6 +123,7 @@ def convert_polars_to_pandas(obj):
         by converting columns with names __index__[indexname] to MultiIndex levels,
         and other columns identical to those of obj.
     """
+    import pandas as pd
     from polars.lazyframe.frame import LazyFrame
 
     # convert to DataFrame if LazyFrame
@@ -141,12 +142,23 @@ def convert_polars_to_pandas(obj):
                 names[i] = None
         return names
 
+    def set_freq(obj):
+        if isinstance(obj.index, pd.DatetimeIndex):
+            obj.index.freq = pd.infer_freq(obj.index)
+
+        if isinstance(obj.index, pd.MultiIndex):
+            levels = obj.index.levels
+            if isinstance(levels[-1], pd.DatetimeIndex):
+                obj.index.levels[-1].freq = pd.infer_freq(obj.index.levels[-1])
+        return obj
+
     pd_index_names = get_index_names(obj.columns)
 
     if len(pd_index_names) > 0:
         pl_index_names = get_mi_cols(obj)
         obj = obj.set_index(pl_index_names)
         obj.index.names = pd_index_names
+        obj = set_freq(obj)
 
     return obj
 
