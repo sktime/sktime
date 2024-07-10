@@ -286,7 +286,7 @@ dl = [
   'pytorch-forecasting>=1.0.0; python_version < "3.11"',
   'lag-llama@git+https://github.com/time-series-foundation-models/lag-llama.git',
   'gluonts',
-  'huggingface-hub'
+  'huggingface_hub[cli]'
 ]
 mlflow = [
   "mlflow",

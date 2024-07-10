@@ -60,8 +60,8 @@ class _LagLlamaAdapter(BaseForecaster):
     """
 
     _tags = {
-        "y_inner_mtype": "PandasDataset",
-        "X_inner_mtype": "pd.DataFrame",
+        "y_inner_mtype": "gluonts_PandasDataset_panel",
+        "X_inner_mtype": "gluonts_PandasDataset_panel",
         "scitype:y": "both",
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": True,
@@ -74,35 +74,31 @@ class _LagLlamaAdapter(BaseForecaster):
         "authors": ["shlok191"],
         "maintainers": ["shlok191"],
         "python_version": None,
-        "python_dependencies": [
-            "gluonts",
-            "huggingface-hub",
-            "lag-llama@git+https://github.com/time-series-foundation-models/"
-            + "lag-llama.git",
-        ],
+        "python_dependencies": ["gluonts", "huggingface_hub", "lag_llama"],
     }
 
     def __init__(
         self,
         device=None,
         context_length=None,
-        fh=None,
-        use_rope_scaling=None,
+        prediction_length=None,
         num_samples=None,
         batch_size=None,
         nonnegative_pred_samples=None,
+        lr=None,
+        trainer_kwargs=None,
     ):
         from lag_llama.gluon.estimator import LagLlamaEstimator
 
         # Defining private variable values
         self.device = device
-        self.device_ = "cpu" if not device else device
+        self.device_ = torch.device("cpu") if not device else device
 
         self.context_length = context_length
         self.context_length_ = 32 if not context_length else context_length
 
-        self.fh = fh
-        self.fh_ = 100 if not fh else fh
+        self.prediction_length = prediction_length
+        self.prediction_length_ = 100 if not prediction_length else prediction_length
 
         self.num_samples = num_samples
         self.num_samples_ = 10 if not num_samples else num_samples
@@ -110,8 +106,16 @@ class _LagLlamaAdapter(BaseForecaster):
         self.batch_size = batch_size
         self.batch_size_ = 32 if not batch_size else batch_size
 
+        # Now storing the training related variables
+        self.lr = lr
+        self.lr_ = 5e-5 if not lr else lr
+
+        self.trainer_kwargs = trainer_kwargs
+        self.trainer_kwargs_ = (
+            {"max_epochs": 50} if not trainer_kwargs else trainer_kwargs
+        )
+
         # Not storing private variables for boolean specific values
-        self.use_rope_scaling = use_rope_scaling
         self.nonnegative_pred_samples = nonnegative_pred_samples
 
         super().__init__()
@@ -119,7 +123,7 @@ class _LagLlamaAdapter(BaseForecaster):
         # Downloading the LagLlama weights from Hugging Face
         download_command = (
             "huggingface-cli download time-series-foundation"
-            + "-models/Lag-Llama lag-llama.ckpt --local-dir ./lag-llama"
+            + "-models/Lag-Llama lag-llama.ckpt --local-dir ."
         )
 
         status = subprocess.run(
@@ -133,15 +137,26 @@ class _LagLlamaAdapter(BaseForecaster):
             )
 
         # Load in the lag llama checkpoint
-        ckpt = torch.load("./lag-llama/lag-llama.ckpt", device=device)
+        ckpt = torch.load("./lag-llama.ckpt", map_location=self.device_)
 
         estimator_args = ckpt["hyper_parameters"]["model_kwargs"]
         self.estimator_args = estimator_args
 
+        # By default, we maintain RoPE scaling
+        # We provide the user an option to disable in fit() function
+        rope_scaling_arguments = {
+            "type": "linear",
+            "factor": max(
+                1.0,
+                (self.context_length_ + self.prediction_length_)
+                / estimator_args["context_length"],
+            ),
+        }
+
         # Creating our LagLlama estimator
         self.estimator_ = LagLlamaEstimator(
             ckpt_path="lag-llama.ckpt",
-            prediction_length=self.fh_,
+            prediction_length=self.prediction_length_,
             context_length=self.context_length_,
             input_size=estimator_args["input_size"],
             n_layer=estimator_args["n_layer"],
@@ -151,15 +166,19 @@ class _LagLlamaAdapter(BaseForecaster):
             time_feat=estimator_args["time_feat"],
             batch_size=self.batch_size_,
             device=self.device_,
+            rope_scaling=rope_scaling_arguments,
         )
 
-        lightning_module = self.estimator.create_lightning_module()
-        transformation = self.estimator.create_transformation()
+        lightning_module = self.estimator_.create_lightning_module()
+        transformation = self.estimator_.create_transformation()
 
         # Finally, we create our predictor!
         self.predictor_ = self.estimator_.create_predictor(
             transformation, lightning_module
         )
+
+        # Since we are importing pretrained weights
+        self._is_fitted = True
 
     # todo: implement this, mandatory
     def _fit(self, y, X, fh):
@@ -172,13 +191,13 @@ class _LagLlamaAdapter(BaseForecaster):
 
         Parameters
         ----------
-        y : GluonTS PandasDataset
+        y : GluonTS PandasDataset Object, optional (default=None)
             Time series to which to fit the forecaster.
 
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
             The forecasting horizon with the steps ahead to to predict.
 
-        X : sktime time series object, optional (default=None)
+        X : GluonTS PandasDataset Object, optional (default=None)
             Exogeneous time series to fit to.
 
         Returns
@@ -191,7 +210,7 @@ class _LagLlamaAdapter(BaseForecaster):
         # forecasting horizon
         self.estimator_ = LagLlamaEstimator(
             ckpt_path="lag-llama.ckpt",
-            prediction_length=fh,  # This is the most important here!
+            prediction_length=32 if not fh else fh,  # This is the most important here!
             context_length=self.context_length_,
             input_size=self.estimator_args["input_size"],
             n_layer=self.estimator_args["n_layer"],
@@ -201,16 +220,19 @@ class _LagLlamaAdapter(BaseForecaster):
             time_feat=self.estimator_args["time_feat"],
             batch_size=self.batch_size_,
             device=self.device_,
+            lr=self.lr_,
+            trainer_kwargs=self.trainer_kwargs_,
         )
 
         lightning_module = self.estimator.create_lightning_module()
         transformation = self.estimator.create_transformation()
 
-        # Finally, we create our predictor!
+        # Creating a new predictor
         self.predictor_ = self.estimator_.create_predictor(
             transformation, lightning_module
         )
 
+        # Lastly, training the model
         self.predictor_ = self.estimator.train(y.train, cache_data=True)
 
     def _predict(self, fh, X):
@@ -228,15 +250,16 @@ class _LagLlamaAdapter(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
-            If not passed in _fit, guaranteed to be passed here
-        X : sktime time series object, optional (default=None)
+            The forecasting horizon is not read here, please set it as
+            `prediction_length` during initialization or when calling the fit function
+
+        X : GluonTS PandasDataset Object (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
 
         Returns
         -------
-        y_pred : sktime time series object
+        y_pred : GluonTS PandasDataset Object
             should be of the same type as seen in _fit, as in "y_inner_mtype" tag
             Point predictions
         """
