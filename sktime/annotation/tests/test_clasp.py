@@ -3,7 +3,6 @@
 __author__ = ["patrickzib"]
 __all__ = []
 
-import numpy as np
 import pytest
 
 from sktime.annotation.clasp import ClaSPSegmentation
