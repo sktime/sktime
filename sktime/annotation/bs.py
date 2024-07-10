@@ -1,4 +1,4 @@
-"""Binary Segmentation."""
+"""Binary segmentation annotator for change point detection."""
 
 from collections import deque
 
@@ -28,7 +28,7 @@ class BinarySegmentation(BaseSeriesAnnotator):
 
     Notes
     -----
-    This is base on the implementation of binary segmentation described in [1]_.
+    This is based on the implementation of binary segmentation described in [1]_.
 
     References
     ----------
@@ -106,8 +106,6 @@ class BinarySegmentation(BaseSeriesAnnotator):
     def _find_change_points(self, X, threshold, min_cp_distance=0, max_iter=10000):
         """Find change points in 'X' between the 'start' and 'end' index.
 
-        All change points are appended to 'change_points'.
-
         Parameters
         ----------
         X : pd.Series
@@ -159,6 +157,7 @@ class BinarySegmentation(BaseSeriesAnnotator):
         return change_points
 
     def _fit(self, X, Y=None):
+        """Fit method for compatibitility with sklearn-type interface."""
         return self
 
     def _predict(self, X, Y=None):
