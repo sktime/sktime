@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import _BaseGlobalForecaster  # , ForecastingHorizon
+from sktime.forecasting.base import _BaseGlobalForecaster
 
 if _check_soft_dependencies(["momentfm", "torch"], severity="none"):
     import momentfm
@@ -110,7 +110,6 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         "authors": ["julian-fong"],
         "maintainers": ["julian-fong"],
         "y_inner_mtype": "pd.DataFrame",
-        "X_inner_mtype": "pd.DataFrame",
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": True,
         "python_dependencies": ["momentfm", "torch"],
@@ -154,7 +153,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         self._config = config if config is not None else {}
         self.criterion = MSELoss()
 
-    def _fit(self, y, fh):
+    def _fit(self, fh, y, X=None):
         """Assumes y is a single or multivariate time series."""
         import torch.cuda.amp
 
@@ -164,29 +163,58 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         from torch.utils.data import DataLoader
         from tqdm import tqdm
 
-        self._pretrained_model_name_or_path = self._config.getattr(
-            "pretrained_model_name_or_path", self.pretrained_model_name_or_path
+        self._pretrained_model_name_or_path = (
+            self._config["pretrained_model_name_or_path"]
+            if "pretrained_model_name_or_path" in self._config.keys()
+            else self.pretrained_model_name_or_path
         )
-        self._freeze_encoder = self._config.getattr(
-            "freeze_encoder", self.freeze_encoder
+        self._freeze_encoder = (
+            self._config["freeze_encoder"]
+            if "freeze_encoder" in self._config.keys()
+            else self.freeze_encoder
         )
-        self._freeze_embedder = self._config.getattr(
-            "freeze_embedder", self.freeze_embedder
+        self._freeze_embedder = (
+            self._config["freeze_embedder"]
+            if "_freeze_embedder" in self._config.keys()
+            else self.freeze_embedder
         )
-        self._freeze_head = self._config.getattr("freeze_head", self.freeze_head)
-        self._dropout = self._config.getattr("dropout", self.dropout)
-        self._head_dropout = self._config.getattr("head_dropout", self.head_dropout)
-        self._device = self._config.getattr("device", self.device)
-        self._transformer_backbone = self._config.getattr(
-            "transformer_backbone", self.transformer_backbone
+        self._freeze_head = (
+            self._config["freeze_head"]
+            if "freeze_head" in self._config.keys()
+            else self.freeze_head
         )
-        self._seq_len = self._config.getattr("seq_len", self.seq_len)
+        self._dropout = (
+            self._config["dropout"]
+            if "dropout" in self._config.keys()
+            else self.dropout
+        )
+        self._head_dropout = (
+            self._config["head_dropout"]
+            if "head_dropout" in self._config.keys()
+            else self.head_dropout
+        )
+        self._device = (
+            self._config["device"] if "device" in self._config.keys() else self.device
+        )
+        self._transformer_backbone = (
+            self._config["transformer_backbone"]
+            if "transformer_backbone" in self._config.keys()
+            else self.transformer_backbone
+        )
+        self._seq_len = (
+            self._config["seq_len"]
+            if "seq_len" in self._config.keys()
+            else self.seq_len
+        )
         # in the case the config contains 'forecasting_horizon', we'll set
         # fh as that, otherwise we override it using the fh param
-        self._fh = self._config.getattr("forecasting_horizon", self.forecasting_horizon)
+        self._fh = (
+            self._config["forecasting_horizon"]
+            if "forecasting_horizon" in self._config.keys()
+            else self.fh
+        )
         if self._fh is None:
             self._fh = max(fh.to_relative(self.cutoff))
-        self._freeze_head = self._config.getattr("freeze_head", self.freeze_head)
         train_val_split = int(len(y) * (1 - self.train_val_split))
 
         self._model = momentfm.MOMENTPipeline.from_pretrained(
@@ -201,9 +229,10 @@ class MomentFMForecaster(_BaseGlobalForecaster):
                 "freeze_head": self._freeze_head,
                 "device": self._device,
                 "transformer_backbone": self._transformer_backbone,
-                "forecasting_horizon": self._fh,
+                "forecast_horizon": self._fh,
             },
         )
+        self._model.init()
         self._y_cols = y.columns
         self._y_shape = y.values.shape
         train_dataset = momentPytorchDataset(
@@ -226,9 +255,8 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             val_dataset, batch_size=self.batch_size, shuffle=True
         )
 
-        # returning dataloaders to pass pre-commit checks, WIP
         criterion = MSELoss()
-        optimizer = Adam(self._model.parameters, lr=1e-4)
+        optimizer = Adam(self._model.parameters(), lr=1e-4)
         if self.device == "gpu" and torch.cuda.is_available():
             self.device = "cuda"
         else:
@@ -258,13 +286,11 @@ class MomentFMForecaster(_BaseGlobalForecaster):
 
         while cur_epoch < max_epoch:
             losses = []
-            for timeseries, forecast, input_mask in tqdm(
-                train_dataloader, total=len(train_dataloader)
-            ):
+            for data in tqdm(train_dataloader, total=len(train_dataloader)):
                 # Move the data to the GPU
-                timeseries = timeseries.float().to(self.device)
-                input_mask = input_mask.to(self.device)
-                forecast = forecast.float().to(self.device)
+                timeseries = data["historical_y"].float().to(self.device)
+                input_mask = data["input_mask"].to(self.device)
+                forecast = data["future_y"].float().to(self.device)
 
                 with torch.cuda.amp.autocast():
                     output = self._model(timeseries, input_mask)
@@ -296,13 +322,11 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             trues, preds, histories, losses = [], [], [], []
             self._model.eval()
             with torch.no_grad():
-                for timeseries, forecast, input_mask in tqdm(
-                    val_dataloader, total=len(val_dataset)
-                ):
+                for data in tqdm(val_dataloader, total=len(val_dataset)):
                     # Move the data to the specified device
-                    timeseries = timeseries.float().to(self.device)
-                    input_mask = input_mask.to(self.device)
-                    forecast = forecast.float().to(self.device)
+                    timeseries = data["historical_y"].float().to(self.device)
+                    input_mask = data["input_mask"].to(self.device)
+                    forecast = data["future_y"].float().to(self.device)
 
                     with torch.cuda.amp.autocast():
                         output = self._model(timeseries, input_mask)
@@ -389,7 +413,7 @@ def _create_padding(x, pad_shape):
     from torch import cat, zeros
 
     zero_pad = zeros(pad_shape)
-    return cat(x, zero_pad)
+    return cat((x, zero_pad), axis=0)
 
 
 class momentPytorchDataset(Dataset):
@@ -410,14 +434,14 @@ class momentPytorchDataset(Dataset):
             ones_tensor = ones(self.seq_len)
             zeros_tensor = zeros(self._pad_shape[0])
             # Concatenate the tensors
-            self.input_mask = cat((ones_tensor, zeros_tensor))
+            self.input_mask = cat((ones_tensor, zeros_tensor)).float()
         elif self.seq_len > self.moment_seq_len:
             # leaving this if statement here in case for refactor
             # for now if seq_len > 512 than we reduce it back to 512
             self.seq_len = 512
-            self.input_mask = ones(self.moment_seq_len)
+            self.input_mask = ones(self.moment_seq_len).float()
         else:
-            self.input_mask = ones(self.moment_seq_len)
+            self.input_mask = ones(self.moment_seq_len).float()
 
     def __len__(self):
         """Return length of dataset."""
@@ -425,15 +449,25 @@ class momentPytorchDataset(Dataset):
 
     def __getitem__(self, i):
         """Return dataset items from index i."""
+        # batches must be returned in format (B, C, S)
+        # where B = batch_size, C = channels, S = sequence_length
         from torch import from_numpy
 
         hist_end = i + self.seq_len
         pred_end = i + self.seq_len + self.fh
 
-        historical_y = from_numpy(self.y.iloc[i:hist_end].values)
+        historical_y = (
+            from_numpy(self.y.iloc[i:hist_end].values)
+            .float()
+            .reshape(self.y.shape[1], -1)
+        )
         if hist_end < self.moment_seq_len:
             historical_y = _create_padding(historical_y, self._pad_shape)
-        future_y = from_numpy(self.y.iloc[hist_end:pred_end].values)
+        future_y = (
+            from_numpy(self.y.iloc[hist_end:pred_end].values)
+            .float()
+            .reshape(self.y.shape[1], -1)
+        )
         return {
             "future_y": future_y,
             "historical_y": historical_y,
