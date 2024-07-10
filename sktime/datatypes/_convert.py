@@ -65,6 +65,7 @@ __all__ = [
 ]
 
 from copy import deepcopy
+from typing import Union, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -89,10 +90,10 @@ convert_dict.update(convert_dict_Proba)
 def convert(
     obj,
     from_type: str,
-    to_type: str,
-    as_scitype: str = None,
+    to_type: Union[str, List[str]],
+    as_scitype: Optional[str] = None,
     store=None,
-    store_behaviour: str = None,
+    store_behaviour: Optional[str] = None,
     return_to_mtype: bool = False,
 ):
     """Convert objects between different machine representations, subject to scitype.
@@ -190,8 +191,8 @@ def convert(
 # conversion based on queryable type to specified target
 def convert_to(
     obj,
-    to_type: str,
-    as_scitype: str = None,
+    to_type: Union[str, List[str]],
+    as_scitype: Optional[Union[str, List[str]]] = None,
     store=None,
     store_behaviour: str = None,
     return_to_mtype: bool = False,
