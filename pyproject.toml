@@ -294,6 +294,9 @@ mlflow_tests = [
   "mlflow",
   "moto",
 ]
+numpy1 = [
+  "numpy<2.0.0",
+]
 pandas1 = [
   "pandas<2.0.0",
 ]
