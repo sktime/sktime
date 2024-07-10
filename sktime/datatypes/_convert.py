@@ -194,7 +194,7 @@ def convert_to(
     to_type: Union[str, List[str]],
     as_scitype: Optional[Union[str, List[str]]] = None,
     store=None,
-    store_behaviour: str = None,
+    store_behaviour: Optional[str] = None,
     return_to_mtype: bool = False,
 ):
     """Convert object to a different machine representation, subject to scitype.
