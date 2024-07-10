@@ -13,8 +13,6 @@ import numpy as np
 import pandas as pd
 
 from sktime.datatypes._panel._convert import (
-    _make_column_names,
-    from_long_to_nested,
     from_nested_to_2d_np_array,
     from_nested_to_3d_numpy,
 )
