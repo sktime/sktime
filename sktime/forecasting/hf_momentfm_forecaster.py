@@ -67,6 +67,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         length of sequences or length of historical values that are passed
         to the model for training at each time point. the momentfm model requires
         sequence lengths to be 512 exactly, so if less, padding will be used.
+        If the sequence length is > 512, it will be reduced to 512.
         default = 512
 
     forecasting_horizon : int
@@ -345,7 +346,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         # returns a timeseriesoutput object
         X_torch_input = from_numpy(X.values.reshape((1, self._y_shape[1], -1))).float()
         X_torch_input.to(self.device)
-        output = self._model(X.values)
+        output = self._model(X_torch_input)
         forecast_output = output.forecast
         forecast_output = forecast_output.squeeze(0)
 
@@ -391,10 +392,6 @@ def _create_padding(x, pad_shape):
     return cat(x, zero_pad)
 
 
-# def _create_truncate(x, seq_len):
-#     pass
-
-
 class momentPytorchDataset(Dataset):
     """Customized Pytorch dataset for the momentfm model."""
 
@@ -410,12 +407,15 @@ class momentPytorchDataset(Dataset):
         # code block to figure out masking sizes in case seq_len < 512
         if self.seq_len < self.moment_seq_len:
             self._pad_shape = (self.moment_seq_len - self.seq_len, self.shape[1])
-            ones_tensor = ones(self._pad_shape[0])
-            zeros_tensor = zeros(self.moment_seq_len - self.seq_len)
+            ones_tensor = ones(self.seq_len)
+            zeros_tensor = zeros(self._pad_shape[0])
             # Concatenate the tensors
             self.input_mask = cat((ones_tensor, zeros_tensor))
         elif self.seq_len > self.moment_seq_len:
-            pass
+            # leaving this if statement here in case for refactor
+            # for now if seq_len > 512 than we reduce it back to 512
+            self.seq_len = 512
+            self.input_mask = ones(self.moment_seq_len)
         else:
             self.input_mask = ones(self.moment_seq_len)
 
