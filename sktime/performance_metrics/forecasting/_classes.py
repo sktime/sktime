@@ -2352,6 +2352,173 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         return [params1, params2]
 
 
+class MeanAbsoluteErrorPercentage(BaseForecastingErrorMetricFunc):
+    r"""Mean absolute error percentage (MAEP).
+
+    For a univariate, non-hierarchical sample
+    of true values :math:`y_1, \dots, y_n` and
+    predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n`,
+    at time indices :math:`t_1, \dots, t_n`,
+    ``evaluate`` or call returns the Mean Absolute Error Percentage (MAEP),
+    :math:`\frac{\sum_{i=1}^n \left| y_i - \widehat{y}_i \right|}{\sum_{i=1}^n y_i}`.
+
+    Both MAE% and sMAE% output non-negative floating point which is in fractional units
+    rather than percentage. The best value is 0.0.
+
+    MAE% is measured in percentage error relative to the total sum of the true values.
+
+    ``multioutput`` and ``multilevel`` control averaging across variables and
+    hierarchy indices, see below.
+
+    ``evaluate_by_index`` returns, at a time index :math:`t_i`,
+    the absolute error at that time index divided by the total sum of true values,
+    :math:`\frac{| y_i - \widehat{y}_i |}{\sum_{j=1}^n y_j}`,
+    for all time indices :math:`t_1, \dots, t_n` in the input.
+
+    Parameters
+    ----------
+    multioutput : str or 1D array-like (n_outputs,), default='uniform_average'
+        if str, must be one of {'raw_values', 'uniform_average'}
+        Defines how to aggregate metric for multivariate (multioutput) data.
+        If array-like, values used as weights to average the errors.
+        If 'raw_values', returns a full set of errors in case of multioutput input.
+        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+    multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
+        Defines how to aggregate metric for hierarchical data (with levels).
+        If 'uniform_average' (default), errors are mean-averaged across levels.
+        If 'uniform_average_time', metric is applied to all data, ignoring level index.
+        If 'raw_values', does not average errors across levels, hierarchy is retained.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.performance_metrics.forecasting import MeanAbsoluteErrorPercentage
+    >>> y_true = np.array([3, -0.5, 2, 7, 2])
+    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    >>> maep = MeanAbsoluteErrorPercentage()
+    >>> maep(y_true, y_pred)
+    0.09523809523809523
+    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+    >>> maep(y_true, y_pred)
+    0.09191176470588236
+    >>> maep = MeanAbsoluteErrorPercentage(multioutput='raw_values')
+    >>> maep(y_true, y_pred)
+    array([0.05882353, 0.125])
+    >>> maep = MeanAbsoluteErrorPercentage(multioutput=[0.3, 0.7])
+    >>> maep(y_true, y_pred)
+    0.1051470588235294
+    """
+
+    def __init__(
+        self,
+        multioutput="uniform_average",
+        multilevel="uniform_average",
+    ):
+        super().__init__(multioutput=multioutput, multilevel=multilevel)
+
+    def _evaluate(self, y_true, y_pred, **kwargs):
+        """Evaluate the metric at a global level, aggregating across all time points.
+
+        private _evaluate_by_index containing core logic, called from evaluate_by_index
+
+        Parameters
+        ----------
+        y_true : time series in sktime compatible pandas based data container format
+            Ground truth (correct) target values
+            y can be in one of the following formats:
+            Series scitype: pd.DataFrame
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+        y_pred :time series in sktime compatible data container format
+            Forecasted values to evaluate
+            must be of same format as y_true, same indices and columns if indexed
+
+        Returns
+        -------
+        loss : pd.Series or pd.DataFrame
+            Calculated metric, by time point (default=jackknife pseudo-values).
+            pd.Series if self.multioutput="uniform_average" or array-like
+                index is equal to index of y_true
+                entry at index i is metric at time i, averaged over variables
+            pd.DataFrame if self.multioutput="raw_values"
+                index and columns equal to those of y_true
+                i,j-th entry is metric at time i, at variable j
+        """
+        raw_values = self._evaluate_by_index(y_true, y_pred, **kwargs)
+        if isinstance(self.multioutput, str):
+            if self.multioutput == "raw_values":
+                return raw_values.mean(axis=0)
+            if self.multioutput == "uniform_average":
+                raw_values = np.array(raw_values)
+                return raw_values.mean()
+
+        raw_mean_values = raw_values.mean(axis=0)
+        return (np.dot(raw_mean_values, self.multioutput)).sum()
+
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point.
+
+        private _evaluate_by_index containing core logic, called from evaluate_by_index
+
+        Parameters
+        ----------
+        y_true : time series in sktime compatible pandas based data container format
+            Ground truth (correct) target values
+            y can be in one of the following formats:
+            Series scitype: pd.DataFrame
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+        y_pred :time series in sktime compatible data container format
+            Forecasted values to evaluate
+            must be of same format as y_true, same indices and columns if indexed
+
+        Returns
+        -------
+        loss : pd.Series or pd.DataFrame
+            Calculated metric, by time point (default=jackknife pseudo-values).
+            pd.Series if self.multioutput="uniform_average" or array-like
+                index is equal to index of y_true
+                entry at index i is metric at time i, averaged over variables
+            pd.DataFrame if self.multioutput="raw_values"
+                index and columns equal to those of y_true
+                i,j-th entry is metric at time i, at variable j
+        """
+        numer_values = np.abs(y_true - y_pred)
+        denom_value = np.abs(y_true).sum(axis=0)
+
+        raw_values = numer_values / denom_value
+
+        if isinstance(self.multioutput, str):
+            if self.multioutput == "uniform_average" and len(np.shape(raw_values)) > 1:
+                return raw_values.mean(axis=1)
+            return raw_values
+        else:
+            return raw_values.dot(self.multioutput)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        params1 = {}
+        return [params1]
+
+
 class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     r"""Median absolute percentage error (MdAPE) or symmetric version.
 
