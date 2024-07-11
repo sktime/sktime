@@ -7,16 +7,21 @@ __author__ = ["geetu040"]
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 from sktime.utils.warnings import warn
+from skbase.utils.dependencies import _check_soft_dependencies
 
-# todo: for imports of sktime soft dependencies:
-# make sure to fill in the "python_dependencies" tag with the package import name
-# import soft dependencies only inside methods of the class, not at the top of the file
+if _check_soft_dependencies("torch", severity="none"):
+    from torch.utils.data import Dataset
+else:
+
+    class Dataset:
+        """Dummy class if torch is unavailable."""
+        pass
 
 
 # todo: change class name and write docstring
-class TinyTimeMixerForecaster(BaseForecaster):
+class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     """Custom forecaster. todo: write docstring.
 
     todo: describe your custom forecaster here
@@ -152,6 +157,7 @@ class TinyTimeMixerForecaster(BaseForecaster):
         "python_dependencies": None,
         # valid values: str or list of str, PEP 440 valid package version specifiers
         # raises exception at construction if modules at strings cannot be imported
+        "capability:global_forecasting": True,
     }
     #  in case of inheritance, concrete class should typically set tags
     #  alternatively, descendants can set tags in __init__ (avoid this if possible)
@@ -281,7 +287,7 @@ class TinyTimeMixerForecaster(BaseForecaster):
             ignore_mismatched_sizes=True,
         )
 
-    def _predict(self, fh, X):
+    def _predict(self, fh, X, y=None):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -314,16 +320,18 @@ class TinyTimeMixerForecaster(BaseForecaster):
             fh = self.fh
         fh = fh.to_relative(self.cutoff)
 
-        # get the last 'context_length' values from '_y'
-        _y = self._y[-self.model.config.context_length :].values
+        hist =  y if self._global_forecasting else self._y
+
+        # get the last 'context_length' values from hist
+        hist = hist[-self.model.config.context_length :].values
 
         # initialize 'past_values' and 'observed_mask' with the correct lengths
-        past_values = np.zeros((self.model.config.context_length, _y.shape[-1]))
-        observed_mask = np.zeros((self.model.config.context_length, _y.shape[-1]))
+        past_values = np.zeros((self.model.config.context_length, hist.shape[-1]))
+        observed_mask = np.zeros((self.model.config.context_length, hist.shape[-1]))
 
         # update 'past_values' and 'observed_mask' with '_y' and ones respectively
-        past_values[-len(_y) :] = _y
-        observed_mask[-len(_y) :] = 1
+        past_values[-len(hist) :] = hist
+        observed_mask[-len(hist) :] = 1
 
         # convert to torch tensors
         past_values = torch.tensor(np.expand_dims(past_values, axis=0)).float()
@@ -383,3 +391,73 @@ class TinyTimeMixerForecaster(BaseForecaster):
             },
         ]
         return params
+
+
+class PyTorchDataset(Dataset):
+    """Dataset for use in sktime deep learning forecasters."""
+
+    def __init__(
+        self,
+        y: pd.DataFrame,
+        seq_len: int,
+        fh=None,
+        X: pd.DataFrame = None,
+        batch_size=8,
+        no_size1_batch=True,
+    ):
+        if not isinstance(y.index, pd.MultiIndex):
+            self.y = np.array(y.values, dtype=np.float32).reshape(1, len(y), 1)
+            self.X = (
+                np.array(X.values, dtype=np.float32).reshape(
+                    (1, len(X), len(X.columns))
+                )
+                if X is not None
+                else X
+            )
+        else:
+            self.y = _frame2numpy(y)
+            self.X = _frame2numpy(X) if X is not None else X
+
+        self._num, self._len, _ = self.y.shape
+        self.fh = fh
+        self.seq_len = seq_len
+        self._len_single = self._len - self.seq_len - self.fh + 1
+        self.batch_size = batch_size
+        self.no_size1_batch = no_size1_batch
+
+    def __len__(self):
+        """Return length of dataset."""
+        true_length = self._num * max(self._len_single, 0)
+        if self.no_size1_batch and true_length % self.batch_size == 1:
+            return true_length - 1
+        else:
+            return true_length
+
+    def __getitem__(self, i):
+        """Return data point."""
+        from torch import tensor
+
+        m = i % self._len_single
+        n = i // self._len_single
+        hist_y = tensor(self.y[n, m : m + self.seq_len, :]).float().flatten()
+        futu_y = (
+            tensor(self.y[n, m + self.seq_len : m + self.seq_len + self.fh, :])
+            .float()
+            .flatten()
+        )
+        if self.X is not None:
+            exog_data = tensor(
+                self.X[n, m + self.seq_len : m + self.seq_len + self.fh, :]
+            ).float()
+            hist_exog = tensor(self.X[n, m : m + self.seq_len, :]).float()
+        else:
+            exog_data = tensor([[]] * self.fh)
+            hist_exog = tensor([[]] * self.seq_len)
+
+        return {
+            "past_values": hist_y,
+            "past_time_features": hist_exog,
+            "future_time_features": exog_data,
+            "past_observed_mask": (~hist_y.isnan()).to(int),
+            "future_values": futu_y,
+        }
