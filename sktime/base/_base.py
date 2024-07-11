@@ -149,7 +149,8 @@ class BaseObject(_BaseObject):
         """,
     }
 
-    # TODO 0.31.0: check whether 3.8 has reached EoL. If so, remove warning altogether
+    # TODO 0.32.0: check whether python 3.8 has reached EoL.
+    # If so, remove warning altogether
     def __init__(self):
         super().__init__()
 
@@ -162,7 +163,8 @@ class BaseObject(_BaseObject):
         py39_or_higher = SpecifierSet(">=3.9")
         sys_version = sys.version.split(" ")[0]
 
-        # todo 0.31.0 - check whether 3.9 eol is reached. If yes, remove this msg.
+        # todo 0.32.0 - check whether python 3.8 eol is reached.
+        # If yes, remove this msg.
         if sys_version not in py39_or_higher:
             warn(
                 f"From sktime 0.30.0, sktime requires Python version >=3.9, "
