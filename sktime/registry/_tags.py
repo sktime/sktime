@@ -1569,7 +1569,7 @@ class x_inner_mtype(_BaseTag):
         "tag_name": "X_inner_mtype",
         "parent_type": "estimator",
         "tag_type": ("list", "str"),
-        "short_descr": "which machine type(s) is the internal _fit/_predict able to deal with?",  # noqa
+        "short_descr": "which machine type(s) is the internal _fit/_predict able to deal with?",  # noqa: E501
         "user_facing": False,
     }
 
@@ -1640,7 +1640,7 @@ class y_inner_mtype(_BaseTag):
         "tag_name": "y_inner_mtype",
         "parent_type": "estimator",
         "tag_type": ("list", "str"),
-        "short_descr": "which machine type(s) is the internal _fit/_predict able to deal with?",  # noqa
+        "short_descr": "which machine type(s) is the internal _fit/_predict able to deal with?",  # noqa: E501
         "user_facing": False,
     }
 

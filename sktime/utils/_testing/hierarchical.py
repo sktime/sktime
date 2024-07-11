@@ -170,11 +170,9 @@ def _bottom_hier_datagen(
                     ["l" + str(i - 1) + "_agg"]
                 )["l1_agg"].transform(
                     lambda x: "l"
-                    + str(i)  # noqa B023
+                    + str(i)
                     + "_node"
-                    + "{:02d}".format(
-                        _sample_node(node_lookup.index, i, rng)  # noqa B023
-                    )
+                    + f"{_sample_node(node_lookup.index, i, rng):02d}"
                 )
 
         node_lookup = node_lookup.set_index("l1_agg", drop=True)
