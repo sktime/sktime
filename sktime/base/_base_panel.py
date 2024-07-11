@@ -23,7 +23,7 @@ from sktime.datatypes import (
     check_is_scitype,
     convert,
 )
-from sktime.datatypes._convert_utils._categorical import _handle_categorical
+from sktime.datatypes._dtypekind import DtypeKind
 from sktime.utils.warnings import warn
 
 
@@ -382,7 +382,14 @@ class BasePanelMixin(BaseEstimator):
                 y_msg, var_name="y", allowed_msg=allowed_msg, raise_exception=True
             )
 
-        y = _handle_categorical(self, y, y_metadata, "y")
+        est_type = self.get_tag("object_type")  # classifier or regressor
+        if (
+            est_type == "regressor"
+            and DtypeKind.CATEGORICAL in y_metadata["feature_kind"]
+        ):
+            raise TypeError(
+                "Regressors do not support categorical features in endogeneous y."
+            )
 
         y_uni = y_metadata["is_univariate"]
         y_mtype = y_metadata["mtype"]
@@ -513,7 +520,11 @@ class BasePanelMixin(BaseEstimator):
                 msg, var_name="X", allowed_msg=allowed_msg, raise_exception=True
             )
 
-        X = _handle_categorical(self, X, X_metadata, "X")
+        est_type = self.get_tag("object_type")  # classifier or regressor
+        if DtypeKind.CATEGORICAL in X_metadata["feature_kind"]:
+            raise TypeError(
+                f"{est_type}s do not support categorical features in exogeneous X."
+            )
 
         n_cases = X_metadata["n_instances"]
         if n_cases < enforce_min_instances:

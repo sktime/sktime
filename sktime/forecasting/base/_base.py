@@ -53,7 +53,7 @@ from sktime.datatypes import (
     scitype_to_mtype,
     update_data,
 )
-from sktime.datatypes._convert_utils._categorical import _handle_categorical
+from sktime.datatypes._dtypekind import DtypeKind
 from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.utils.datetime import _shift
 from sktime.utils.dependencies import _check_estimator_deps
@@ -105,6 +105,8 @@ class BaseForecaster(BaseEstimator):
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": False,  # is fit empty and can be skipped?
+        "capability:categorical_in_X": False,
+        # does the forecaster natively support categorical in exogeneous X?
     }
 
     # configs and default config values
@@ -1516,7 +1518,10 @@ class BaseForecaster(BaseEstimator):
                     raise_exception=True,
                 )
 
-            y = _handle_categorical(self, y, y_metadata, "y")
+            if DtypeKind.CATEGORICAL in y_metadata["feature_kind"]:
+                raise TypeError(
+                    "Forecasters do not support categorical features in endogeneous y."
+                )
 
             y_scitype = y_metadata["scitype"]
             self._y_metadata = y_metadata
@@ -1548,6 +1553,11 @@ class BaseForecaster(BaseEstimator):
         # end checking y
 
         # checking X
+
+        # check: if X is ignored by inner methods, pass None to them
+        if self.get_tag("ignores-exogeneous-X"):
+            X = None
+
         if X is not None:
             # request only required metadata from checks
             X_metadata_required = ["feature_kind"]
@@ -1580,7 +1590,14 @@ class BaseForecaster(BaseEstimator):
                     raise_exception=True,
                 )
 
-            X = _handle_categorical(self, X, X_metadata, "X")
+            if DtypeKind.CATEGORICAL in X_metadata["feature_kind"] and not self.get_tag(
+                "capability:categorical_in_X"
+            ):
+                # replace error with encoding logic in next step.
+                raise TypeError(
+                    f"Forecaster {self} does not support categorical features in "
+                    "exogeneous X."
+                )
 
             X_scitype = X_metadata["scitype"]
             X_requires_vectorization = X_scitype not in X_inner_scitype
@@ -1592,10 +1609,6 @@ class BaseForecaster(BaseEstimator):
             # X_scitype is used below - set to None if X is None
             X_scitype = None
 
-        # extra check: if X is ignored by inner methods, pass None to them
-        if self.get_tag("ignores-exogeneous-X"):
-            X = None
-            X_scitype = None
         # end checking X
 
         # compatibility checks between X and y
