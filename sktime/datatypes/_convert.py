@@ -65,7 +65,7 @@ __all__ = [
 ]
 
 from copy import deepcopy
-from typing import Union, Optional
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -91,9 +91,9 @@ def convert(
     obj,
     from_type: str,
     to_type: Union[str, list[str]],
-    as_scitype: Optional[str] = None,
+    as_scitype: str = None,
     store=None,
-    store_behaviour: Optional[str] = None,
+    store_behaviour: str = None,
     return_to_mtype: bool = False,
 ):
     """Convert objects between different machine representations, subject to scitype.
@@ -192,9 +192,9 @@ def convert(
 def convert_to(
     obj,
     to_type: Union[str, list[str]],
-    as_scitype: Optional[Union[str, list[str]]] = None,
+    as_scitype: Union[str, list[str]] = None,
     store=None,
-    store_behaviour: Optional[str] = None,
+    store_behaviour: str = None,
     return_to_mtype: bool = False,
 ):
     """Convert object to a different machine representation, subject to scitype.
