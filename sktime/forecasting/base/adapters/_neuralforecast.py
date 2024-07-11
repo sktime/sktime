@@ -373,7 +373,7 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
             id_idx = np.array(indices.to_list())
             # with ("h0":"h0_0", "h1":"h1_1") as instance index,
             # the id would be "h0_1h1_1"
-            id = id_idx[:, :-1].astype(str).sum(axis=1)
+            id = id_idx[:, :-1].sum(axis=1)
             idx = id_idx[:, -1]
         return id, idx
 
