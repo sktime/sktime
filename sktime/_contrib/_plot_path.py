@@ -1,4 +1,5 @@
 """Alignment path plotting utilities."""
+
 import numpy as np
 
 from sktime.distances._distance import distance_alignment_path, pairwise_distance
