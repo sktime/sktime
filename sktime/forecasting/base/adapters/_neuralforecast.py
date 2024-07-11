@@ -310,20 +310,18 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         # | Index                   | B2.2.1    |
         # | Index (Missing)         | B2.2.2    |
         # | Other                   | unreached |
-
+        y_time_index = y.index.get_level_values(-1)
         if self.freq != "auto":  # A: freq is given as non-auto
             self._freq = self.freq
         elif fh.freq:  # B1: freq is infered from fh
             self._freq = fh.freq
-        elif isinstance(
-            y.index.get_level_values(-1), pandas.DatetimeIndex
-        ):  # B2.1: y is date-like
+        elif isinstance(y_time_index, pandas.DatetimeIndex):  # B2.1: y is date-like
             raise ValueError(
                 f"Error in {self.__class__.__name__}, could not interpret freq, try "
                 "passing freq in model initialization or use a valid offset in index"
             )
         else:  # B2.2: y is not date-like
-            diffs = np.unique(np.diff(np.unique(y.index.get_level_values(-1))))
+            diffs = np.unique(np.diff(np.unique(y_time_index)))
             if diffs.shape[0] > 1:  # B2.2.1: non-equispaced integers
                 raise ValueError(
                     f"Error in {self.__class__.__name__}, could not interpret freq, try"
@@ -333,7 +331,7 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
             else:  # B2.2.2: equispaced integers
                 self._freq = int(diffs[-1])  # converts numpy.int64 to int
 
-        if isinstance(y.index.get_level_values(-1), pandas.PeriodIndex):
+        if isinstance(y_time_index, pandas.PeriodIndex):
             self._is_PeriodIndex = True
             train_indices = self._handle_PeriodIndex(y)
         else:
@@ -362,13 +360,20 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
 
         return self
 
-    def _get_id_idx(self, indices):
+    def _get_id_idx(self, indices: pandas.Index):
+        """Get instance index (id) and time index (idx) from a pandas.Index.
+
+        For a single time series, the instance index (id) will be a integer 1.
+        For multiIndex, the id will be a string concat of all instance levels.
+        """
         if not isinstance(indices, pandas.MultiIndex):
             id = 1
             idx = indices.to_numpy()
         else:
             id_idx = np.array(indices.to_list())
-            id = id_idx[:, :-1].sum(axis=1)
+            # with ("h0":"h0_0", "h1":"h1_1") as instance index,
+            # the id would be "h0_1h1_1"
+            id = id_idx[:, :-1].astype(str).sum(axis=1)
             idx = id_idx[:, -1]
         return id, idx
 
@@ -460,7 +465,8 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
             raise ValueError("Missing exogeneous data, 'futr_exog_list' is non-empty.")
 
         if self.futr_exog_list:
-            if isinstance(X.index.get_level_values(-1), pandas.PeriodIndex):
+            X_time_index = X.index.get_level_values(-1)
+            if isinstance(X_time_index, pandas.PeriodIndex):
                 predict_indices = self._handle_PeriodIndex(X)
             else:
                 predict_indices = X.index
@@ -483,7 +489,8 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
                 predict_parameters["df"] = df
 
         if self._global_forecasting and not self.futr_exog_list:
-            if isinstance(y.index.get_level_values(-1), pandas.PeriodIndex):
+            y_time_index = y.index.get_level_values(-1)
+            if isinstance(y_time_index, pandas.PeriodIndex):
                 predict_indices = self._handle_PeriodIndex(y)
             else:
                 predict_indices = y.index

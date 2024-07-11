@@ -47,11 +47,6 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         print processing steps during fit
     verbose_predict : bool (default=False)
         print processing steps during predict
-    broadcasting : bool (default=True)
-        multiindex data input will be broadcasted to single series, and for each single series,
-        one copy of this forecaster will try to fit and predict on it. The broadcasting is
-        happening inside automatically, from the outerside api perspective, the input and
-        output are the same, only one multiindex output from `predict`.
     input_size : int (default=-1)
         maximum sequence length for truncated train backpropagation
 
@@ -108,6 +103,11 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         optimizer to use for training, if passed with None defaults to Adam
     optimizer_kwargs : dict (default=None) [8]_
         dict of parameters to pass to the user defined optimizer
+    broadcasting : bool (default=True)
+        multiindex data input will be broadcasted to single series, and for each single series,
+        one copy of this forecaster will try to fit and predict on it. The broadcasting is
+        happening inside automatically, from the outerside api perspective, the input and
+        output are the same, only one multiindex output from `predict`.
 
     Notes
     -----
@@ -183,7 +183,6 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         futr_exog_list: Optional[list[str]] = None,
         verbose_fit: bool = False,
         verbose_predict: bool = False,
-        broadcasting: bool = True,
         input_size: int = -1,
         inference_input_size: int = -1,
         encoder_n_layers: int = 2,
@@ -210,6 +209,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         trainer_kwargs: Optional[dict] = None,
         optimizer=None,
         optimizer_kwargs: dict = None,
+        broadcasting: bool = True,
     ):
         self.input_size = input_size
         self.inference_input_size = inference_input_size
@@ -432,11 +432,6 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         print processing steps during fit
     verbose_predict : bool (default=False)
         print processing steps during predict
-    broadcasting : bool (default=True)
-        multiindex data input will be broadcasted to single series, and for each single series,
-        one copy of this forecaster will try to fit and predict on it. The broadcasting is
-        happening inside automatically, from the outerside api perspective, the input and
-        output are the same, only one multiindex output from `predict`.
     input_size : int (default=-1)
         maximum sequence length for truncated train backpropagation
 
@@ -491,6 +486,11 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         optimizer to use for training, if passed with None defaults to Adam
     optimizer_kwargs : dict (default=None) [8]_
         dict of parameters to pass to the user defined optimizer
+    broadcasting : bool (default=True)
+        multiindex data input will be broadcasted to single series, and for each single series,
+        one copy of this forecaster will try to fit and predict on it. The broadcasting is
+        happening inside automatically, from the outerside api perspective, the input and
+        output are the same, only one multiindex output from `predict`.
 
     Notes
     -----
@@ -562,7 +562,6 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         futr_exog_list: Optional[list[str]] = None,
         verbose_fit: bool = False,
         verbose_predict: bool = False,
-        broadcasting: bool = True,
         input_size: int = -1,
         inference_input_size: int = -1,
         encoder_n_layers: int = 2,
@@ -588,6 +587,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         trainer_kwargs: Optional[dict] = None,
         optimizer=None,
         optimizer_kwargs: dict = None,
+        broadcasting: bool = True,
     ):
         self.input_size = input_size
         self.inference_input_size = inference_input_size
