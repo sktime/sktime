@@ -60,9 +60,9 @@ class VARReduce(BaseForecaster):
         from sklearn.linear_model import LinearRegression
 
         self.lags = lags
-        self._regressor = regressor if regressor is not None else LinearRegression()
+        self.regressor = regressor if regressor is not None else LinearRegression()
         assert isinstance(
-            self._regressor, RegressorMixin
+            self.regressor, RegressorMixin
         ), "The regressor must be a scikit-learn compatible regressor."
         self.coefficients = None
         self.intercept = None
@@ -123,6 +123,8 @@ class VARReduce(BaseForecaster):
         -------
         self : reference to self
         """
+        from copy import deepcopy
+
         X, y = self.prepare_var_data(y)
         n, k = X.shape
         num_series = y.shape[1]
@@ -134,7 +136,7 @@ class VARReduce(BaseForecaster):
 
         # Fit the chosen regressor model for each series
         for i in range(num_series):
-            model = self._regressor
+            model = deepcopy(self.regressor)
             model.fit(X, y[:, i])
             intercepts[i] = model.intercept_
             # Reshape the coefficients to match with statsmodels VAR
