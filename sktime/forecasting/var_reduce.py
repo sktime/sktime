@@ -34,6 +34,16 @@ class VARReduce(BaseForecaster):
         The intercept term of the model for each time series.
     num_series : int
         The number of time series being modeled.
+
+    Examples
+    --------
+    >>> from sktime.forecasting.var_reduce import VARReduce
+    >>> from sktime.datasets import load_longley
+    >>> _, y = load_longley()
+    >>> forecaster = VARReduce()  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
+    VARReduce(...)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
     """
 
     _tags = {
