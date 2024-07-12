@@ -60,30 +60,38 @@ class VARReduce(BaseForecaster):
         self.num_series = None
         super().__init__()
 
-    def create_var_data(self, data):
+    def prepare_var_data(self, data, return_as_ndarray=True):
         """
-        Prepare the data for VAR(p) model.
+        Prepare the data for the VAR(p) model by creating lagged predictors.
 
         Parameters
         ----------
         data : pd.DataFrame
-            The input time series data.
+            The input multivariate time series data.
+        return_as_ndarray : bool, optional (default=True)
+            If True, returns the data as numpy arrays.
+            If False, returns the data as pandas DataFrames.
 
         Returns
         -------
-        X : np.ndarray (num_samples, num_series * lags)
+        X : np.ndarray or pd.DataFrame
             The lagged values as predictors.
-        y : np.ndarray (num_samples, num_series)
-            The current values as response variable.
+            with shape (num_samples, num_series * lags)
+        y : np.ndarray or pd.DataFrame
+            with shape (num_samples, num_series).
         """
         df = pd.concat([data.shift(i) for i in range(self.lags + 1)], axis=1)
         df.columns = [
             f"{col}_lag{i}" for i in range(self.lags + 1) for col in data.columns
         ]
         df = df.dropna()
-        y = df[[f"{col}_lag0" for col in data.columns]].values
-        X = df.drop(columns=[f"{col}_lag0" for col in data.columns]).values
-        return X, y
+        y = df[[f"{col}_lag0" for col in data.columns]]
+        X = df.drop(columns=[f"{col}_lag0" for col in data.columns])
+
+        if return_as_ndarray:
+            return X.values, y.values
+        else:
+            return X, y
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -95,13 +103,13 @@ class VARReduce(BaseForecaster):
         fh : ForecastingHorizon, optional (default=None)
             The forecasting horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
-            Exogenous time series to fit to.
+            Exogenous time series to fit to; will be ignored
 
         Returns
         -------
         self : reference to self
         """
-        X, y = self.create_var_data(y)
+        X, y = self.prepare_var_data(y)
         n, k = X.shape
         num_series = y.shape[1]
         self.num_series = num_series
