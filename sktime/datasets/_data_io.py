@@ -444,7 +444,7 @@ def _reduce_memory_usage(df, category=True, n_jobs=1):
 
     def optimize_column(col):
         col_type = col.dtype
-        if col_type != object:
+        if col_type is not object:
             if pd.isnull(col).any():
                 if col_type == "int":
                     col = col.astype("float32")
