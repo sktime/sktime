@@ -395,6 +395,9 @@ def _fit_biases_multi_var(
 def _fit_dilations_multi_var(reference_length, num_features, max_dilations_per_kernel):
     num_kernels = 84
 
+    if num_features < 84:
+        num_features = 84
+
     num_features_per_kernel = num_features // num_kernels
     true_max_dilations_per_kernel = min(
         num_features_per_kernel, max_dilations_per_kernel

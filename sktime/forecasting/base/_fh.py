@@ -28,6 +28,7 @@ from sktime.utils.validation.series import (
     is_in_valid_relative_index_types,
     is_integer_index,
 )
+from sktime.utils.warnings import _suppress_pd22_warning
 
 VALID_FORECASTING_HORIZON_TYPES = (int, list, np.ndarray, pd.Index)
 
@@ -169,7 +170,9 @@ def _check_freq(obj):
     elif isinstance(obj, (pd.Period, pd.Index)):
         return _extract_freq_from_cutoff(obj)
     elif isinstance(obj, str) or obj is None:
-        return to_offset(obj)
+        with _suppress_pd22_warning:
+            offset = to_offset(obj)
+        return offset
     else:
         return None
 
@@ -397,7 +400,9 @@ class ForecastingHorizon:
             freq_from_self = None
 
         if freq_from_self is not None and freq_from_obj is not None:
-            if freq_from_self != freq_from_obj:
+            with _suppress_pd22_warning:
+                freqs_unequal = freq_from_self != freq_from_obj
+            if freqs_unequal:
                 raise ValueError(
                     "Frequencies from two sources do not coincide: "
                     f"Current: {freq_from_self}, from update: {freq_from_obj}."
@@ -801,7 +806,7 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
             absolute = _coerce_to_period(absolute, freq=fh._freq)
             cutoff = _coerce_to_period(cutoff, freq=fh._freq)
 
-        # TODO: 0.31.0:
+        # TODO: 0.32.0:
         # Check at every minor release whether lower pandas bound >=0.15.0
         # if yes, can remove the workaround in the "else" condition and the check
         #

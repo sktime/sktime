@@ -424,7 +424,7 @@ def erp_distance_measure_getter(X):
         "distance_measure": [numba_wrapper(erp_distance)],
         "dim_to_use": stats.randint(low=0, high=n_dimensions),
         "g": stats.uniform(0.2 * stdp, 0.8 * stdp - 0.2 * stdp),
-        "band_size": stats.randint(low=0, high=max_raw_warping_window + 1)
+        "band_size": stats.randint(low=0, high=max_raw_warping_window + 1),
         # scipy stats randint is exclusive on the max value, hence + 1
     }
 
@@ -1368,7 +1368,7 @@ class ProximityForest(BaseClassifier):
         self : object
         """
         if self.verbosity > 0:
-            print("tree " + str(index) + " building")  # noqa
+            print("tree " + str(index) + " building")
         tree = ProximityTree(
             random_state=random_state,
             verbosity=self.verbosity,

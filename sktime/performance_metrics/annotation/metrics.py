@@ -3,6 +3,7 @@
 Metrics are suitable for comparing predicted change point sets against true change
 points and quantify the error.
 """
+
 import numpy as np
 import numpy.typing as npt
 from scipy.spatial.distance import directed_hausdorff

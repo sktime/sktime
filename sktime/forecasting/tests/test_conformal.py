@@ -1,4 +1,5 @@
 """Tests for the ConformalIntervals probability wrapper."""
+
 import pytest
 
 from sktime.datasets import load_airline
