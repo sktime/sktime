@@ -71,10 +71,12 @@ class VARReduce(BaseForecaster):
 
     def prepare_var_data(self, data, return_as_ndarray=True):
         """
-        Prepare the data by transforming the provided training data into
+        Prepare the data for VAR fitting.
+
+        This function transforms the provided training data into
         a tabular format suitable for regression. Specifically,
-        The predictors X consist of lagged values of the time series
-        The target variables y are the current, unlagged values of the time series,
+        The predictors X consist of lagged values of the time series, while
+        the target variables y are the current, unlagged values of the time series,
 
         Parameters
         ----------
