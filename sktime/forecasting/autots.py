@@ -217,7 +217,7 @@ class AutoTS(BaseForecaster):
         "capability:pred_int:insample": False,
         "capability:pred_int": False,  # TODO: add capability
         "requires-fh-in-fit": True,
-        "python_dependencies": ["autots", "pandas", "sklearn", "statsmodels", "scipy"],
+        "python_dependencies": ["autots", "pandas", "statsmodels", "scipy"],
         "python_version": ">=3.6",
     }
 
