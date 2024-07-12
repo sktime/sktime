@@ -1,4 +1,5 @@
 """Interval and window segmenter transformers."""
+
 import math
 
 import numpy as np

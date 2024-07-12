@@ -1,4 +1,5 @@
 """Slope transformer."""
+
 import math
 import statistics
 

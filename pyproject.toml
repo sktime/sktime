@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.30.2"
+version = "0.31.0"
 description = "A unified framework for machine learning with time series"
 readme = "README.md"
 keywords = [
@@ -294,6 +294,9 @@ mlflow_tests = [
   "mlflow",
   "moto",
 ]
+numpy1 = [
+  "numpy<2.0.0",
+]
 pandas1 = [
   "pandas<2.0.0",
 ]
@@ -326,7 +329,82 @@ sktime = [
 [tool.setuptools.packages.find]
 exclude = ["tests", "tests.*"]
 
-[tool.nbqa.exclude]
-black = "^docs/source/examples/"
-flake8 = "^docs/source/examples/"
-isort = "^docs/source/examples/"
+[tool.ruff]
+line-length = 88
+exclude = [".git", "sktime/_contrib/*", "examples/blog_posts/*"]
+target-version = "py39"
+extend-include = ["*.ipynb"]
+
+[tool.ruff.lint]
+select = [
+  # https://pypi.org/project/pycodestyle
+  "D",
+  "E",
+  "W",
+  # https://pypi.org/project/pyflakes
+  "F",
+  # https://pypi.org/project/flake8-bandit
+  "S",
+  # https://docs.astral.sh/ruff/rules/#pyupgrade-up
+  "UP",
+  "I002",    # Missing required imports
+  "UP008",   # Super calls with redundant arguments passed.
+  "G010",    # Deprecated log warn.
+  "PLR1722", # Use sys.exit() instead of exit() and quit().
+  "PT014",   # pytest-duplicate-parametrize-test-cases.
+  "PT006",   # Checks for the type of parameter names passed to pytest.mark.parametrize.
+  "PT007",   # Checks for the type of parameter values passed to pytest.mark.parametrize.
+  "PT018",   # Checks for assertions that combine multiple independent condition
+]
+extend-select = [
+  "I", # isort
+  "C4", # https://pypi.org/project/flake8-comprehensions
+]
+ignore=[
+  "E203", # Whitespace-before-punctuation.
+  "E402", # Module-import-not-at-top-of-file.
+  "E731", # Do not assign a lambda expression, use a def.
+  "RET504", # Unnecessary variable assignment before `return` statement.
+  "S101", # Use of `assert` detected.
+  "RUF100", # https://docs.astral.sh/ruff/rules/unused-noqa/
+  "C408", # Unnecessary dict call - rewrite as a literal.
+  "UP031", # Use format specifier instead of %
+  "S102", # Use of excec
+  "C414", # Unnecessary `list` call within `sorted()`
+  "S301", # pickle and modules that wrap it can be unsafe
+  "C416", # Unnecessary list comprehension - rewrite as a generator
+  "S310", # Audit URL open for permited schemes
+  "S202", # Uses of `tarfile.extractall()`
+  "S307", # Use of possibly insecure function
+  "C417", # Unnecessary `map` usage (rewrite using a generator expression)
+  "S605", # Starting a process with a shell, possible injection detected
+  "E741", # Ambiguous variable name
+  "S107", # Possible hardcoded password
+  "S105", # Possible hardcoded password
+  "PT018", # Checks for assertions that combine multiple independent condition
+  "S602", # sub process call with shell=True unsafe
+  "C419", # Unnecessary list comprehension, some are flaged yet are not
+  "C409", # Unnecessary `list` literal passed to `tuple()` (rewrite as a `tuple` literal)
+  "S113", # Probable use of httpx call withour timeout
+]
+
+[tool.ruff.lint.per-file-ignores]
+
+"setup.py" = ["S101"]
+"**/__init__.py" = [
+  "F401", # unused import
+]
+"**/tests/**" = [
+  "D",
+  "S605",  # Starting a process with a shell: seems safe, but may be changed in the future; consider rewriting without `shell`
+  "S607",  # Starting a process with a partial executable path
+  "RET504",  # todo:Unnecessary variable assignment before `return` statement
+  "PT004",  # Fixture `tmpdir_unittest_fixture` does not return anything, add leading underscore
+  "PT011",  # `pytest.raises(ValueError)` is too broad, set the `match` parameter or use a more specific exception
+  "PT012",  # `pytest.raises()` block should contain a single simple statement
+  "PT019",  # Fixture `_` without value is injected as parameter, use `@pytest.mark.usefixtures` instead
+  "PT006" # Checks for the type of parameter names passed to pytest.mark.parametrize.
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"

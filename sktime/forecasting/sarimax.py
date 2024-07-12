@@ -23,7 +23,7 @@ class SARIMAX(_StatsModelsAdapter):
     but with different
     fitting strategies, fitted parameters, and slightly differring behaviour.
     Users should refer to the statsmodels documentation for further details:
-    https://www.statsmodels.org/dev/examples/notebooks/generated/statespace_sarimax_faq.html  # noqa: E501
+    https://www.statsmodels.org/dev/examples/notebooks/generated/statespace_sarimax_faq.html
 
     Parameters
     ----------
@@ -220,7 +220,7 @@ class SARIMAX(_StatsModelsAdapter):
     >>> forecaster.fit(y)  # doctest: +SKIP
     SARIMAX(...)
     >>> y_pred = forecaster.predict(fh=y.index)  # doctest: +SKIP
-    """
+    """  # noqa: E501
 
     _tags = {
         # packaging info

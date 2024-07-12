@@ -1,4 +1,5 @@
 """Dummy classifier."""
+
 __all__ = [
     "DummyClassifier",
 ]
