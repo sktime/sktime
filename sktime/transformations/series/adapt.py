@@ -327,9 +327,16 @@ class TabularToSeriesAdaptor(BaseTransformer):
         Xt : 2D np.ndarray
             transformed version of X
         """
+        # if DataFrame, remember index for later to restore on Xt
+        was_df = isinstance(X, pd.DataFrame):
+        if was_df:
+            saved_index = X.index
+
+        # get args for fit and transform
         fit_args = self._get_args(X, y, method="fit")
         trafo_args = self._get_args(X, y, method="transform")
 
+        # apply transformer
         if self._skip_fit:
             Xt = self.transformer_.fit(**fit_args).transform(**trafo_args)
         else:
@@ -342,6 +349,13 @@ class TabularToSeriesAdaptor(BaseTransformer):
             Xt = np.array(Xt)
         if Xt.ndim == 1 and hasattr(Xt, "reshape"):
             Xt = Xt.reshape((len(X), 1))
+
+        # restore index if DataFrame
+        if was_df:
+            if isinstance(Xt, pd.DataFrame):
+                Xt.index = saved_index
+            else:
+                Xt = pd.DataFrame(Xt, index=saved_index)
 
         return Xt
 
