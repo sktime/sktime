@@ -9,10 +9,7 @@ import math
 import numpy as np
 
 from sktime.networks.base import BaseDeepNetwork
-from sktime.utils.validation._dependencies import (
-    _check_dl_dependencies,
-    _check_soft_dependencies,
-)
+from sktime.utils.dependencies import _check_dl_dependencies, _check_soft_dependencies
 
 
 class TapNetNetwork(BaseDeepNetwork):
@@ -205,9 +202,7 @@ class TapNetNetwork(BaseDeepNetwork):
                         dilation_rate=self.dilation,
                         strides=1,
                         padding=self.padding,
-                    )(
-                        channel
-                    )  # N * C * L
+                    )(channel)  # N * C * L
 
                     x_conv = keras.layers.BatchNormalization()(x_conv)
                     x_conv = keras.layers.LeakyReLU()(x_conv)
@@ -253,9 +248,7 @@ class TapNetNetwork(BaseDeepNetwork):
                     dilation_rate=self.dilation,
                     strides=1,
                     padding=self.padding,
-                )(
-                    input_layer
-                )  # N * C * L
+                )(input_layer)  # N * C * L
 
                 x_conv = keras.layers.BatchNormalization()(x_conv)
                 x_conv = keras.layers.LeakyReLU()(x_conv)

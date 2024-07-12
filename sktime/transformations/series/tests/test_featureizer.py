@@ -1,10 +1,13 @@
 """Test YtoX."""
+
 __author__ = ["aiwalter", "fkiraly"]
 
+import pytest
 from numpy.testing import assert_array_equal
 
 from sktime.datasets import load_longley
 from sktime.split import temporal_train_test_split
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.compose import YtoX
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.lag import Lag
@@ -13,6 +16,10 @@ y, X = load_longley()
 y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([YtoX, Lag]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_featurized_values():
     """Test against plain transformation.
 

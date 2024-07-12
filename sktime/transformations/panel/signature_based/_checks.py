@@ -3,6 +3,7 @@
 _checks.py ==================== Contains a reusable decorator function to handle the
 sklearn signature checks.
 """
+
 import functools
 
 import numpy as np

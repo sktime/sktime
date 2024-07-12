@@ -19,6 +19,692 @@ For upcoming changes and next releases, see our `milestones <https://github.com/
 For our long-term plan, see our :ref:`roadmap`.
 
 
+Version 0.31.0 - 2024-07-11
+---------------------------
+
+Maintenance release:
+
+* scheduled deprecations and change actions
+* ``numpy 2`` compatibility
+* code style and pre-commit updates, using ``ruff`` for linting
+
+For last non-maintenance content updates, see 0.30.2.
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``numpy`` (core dependency) bounds have been updated to ``<2.1,>=1.21``
+* ``skpro`` (soft dependency) bounds have been updated to ``>=2,<2.5.0``
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Time series annomalies, changepoints, segmentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* The ``fmt`` argument in time series annotators is now deprecated.
+  Users should use the ``predict`` and ``transform`` methods instead,
+  ``predict`` instead of ``fmt="sparse"``, and ``transform`` instead of
+  ``fmt="dense"``.
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* The ``convert_y_to_keras`` method in deep learning classifiers has been removed.
+  Users who have been using this method should
+  instead use ``OneHotEncoder`` from ``sklearn`` directly, as ``convert_y_to_keras``
+  is a simple wrapper around ``OneHotEncoder`` with default settings.
+
+Contents
+~~~~~~~~
+
+* [MNT] raise ``numpy`` bound to ``numpy < 2.1``, ``numpy 2`` compatibility (:pr:`6624`) :user:`fkiraly`
+* [MNT] [Dependabot](deps): Update skpro requirement from ``<2.4.0,>=2`` to ``>=2,<2.5.0`` (:pr:`6663`) :user:`dependabot[bot]`
+* [MNT] bound ``prophet`` based forecasters to ``numpy<2`` due to incompatibility of ``prophet`` (:pr:`6721`) :user:`fkiraly`
+* [MNT] further ``numpy 2`` compatibility fixes in estimators (:pr:`6729`) :user:`fkiraly`
+* [MNT] handle ``numpy 2`` incompatible soft deps (:pr:`6728`) :user:`fkiraly`
+* [MNT] Upgrade code style beyond ``python 3.8`` (:pr:`6330`) :user:`yarnabrina`
+* [MNT] Update pre commit hooks post dropping ``python 3.8`` support (:pr:`6331`) :user:`yarnabrina`
+* [MNT] suppress aggressive ``freq`` related warnings from ``pandas 2.2`` (:pr:`6733`) :user:`fkiraly`
+* [MNT] 0.31.0 deprecations and change actions (:pr:`6716`) :user:`fkiraly`
+* [MNT] switch to ``ruff`` as linting tool (:pr:`6676`) :user:`fnhirwa`
+* [ENH] refactor and bugfixes for environment checker utilities (:pr:`6719`) :user:`fkiraly`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`fkiraly`,
+:user:`fnhirwa`,
+:user:`yarnabrina`
+
+
+Version 0.30.2 - 2024-07-04
+---------------------------
+
+Highlights
+~~~~~~~~~~
+
+* new `estimator overview table and estimator search page <https://www.sktime.net/en/stable/estimator_overview.html>`_ (:pr:`6147`) :user:`duydl`
+* ``HFTransformersForecaster`` (hugging face transformers connector) now has a user friendly interface for applying PEFT methods (:pr:`6457`) :user:`geetu040`
+* ``ForecastingOptunaSearchCV`` for hyper-parameter tuning of forecasters via ``optuna`` (:pr:`6630`) :user:`mk406`, :user:`gareth-brown-86`
+* ``prophetverse`` package forecasters are now indexed by ``sktime`` (:pr:`6614`) :user:`felipeangelimvieira`
+* ``pytorch-forecasting`` adapter, experimental global forecasting API (:pr:`6228`) :user:`Xinyu-Wu-0000`
+* ``skforecast`` adapter for reduction strategies (:pr:`6531`) :user:`Abhay-Lejith`, :user:`yarnabrina`
+* EnbPI based forecaster with components from ``aws-fortuna`` (:pr:`6449`) :user:`benHeid`
+* DTW distances and aligners from ``dtaidistance`` (:pr:`6578`) :user:`fkiraly`
+* ``parametrize_with_checks`` utility for granular API compliance test setup in 2nd/3rd party libraries (:pr:`6588`) :user:`fkiraly`
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``holidays`` (transformations soft dependency) bounds have been updated to ``>=0.29,<0.53``
+* ``dask`` (data container and parallelization back-end) bounds have been updated to ``<2024.5.3``
+* ``optuna`` is now a soft dependency, via the ``ForecastingOptunaSearchCV`` estimator, in the ``all_extras`` soft dependency set,
+  with bounds ``<3.7``
+* ``pytorch-forecasting`` is now a soft dependency, in the ``dl`` (deep learning) soft dependency set
+* ``skforecast`` is now a soft dependency, in the ``all_extras`` soft dependency set and the ``forecasting`` soft dependency set,
+  with bounds ``<0.13,>=0.12.1``
+* ``dtaidistance`` is now a soft dependency, in the ``all_extras`` soft dependency set and the ``alignment`` soft dependency set,
+  with bounds ``<2.4``
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+Forecasting
+^^^^^^^^^^^
+
+The base forecaster interface now has a dedicated interface point for
+global forecasting or fine-tuning: in forecasters supporting global forecast,
+an ``y`` argument may be passed in ``predict``, indicating new time series instances
+for a global forecast, or a context for foundation models.
+Forecasters capable of global forecasting or fine-tuning (this is the same interface
+point) are tagged with the tag ``capability:global_forecasting``, value ``True``.
+
+The global forecasting and fine-tuning interfaces are currently experimental,
+and may undergo changes.
+
+Users are invited to give feedback, and test the feature with the new
+``pytorch-forecasting`` adapter.
+
+Test framework
+^^^^^^^^^^^^^^
+
+* 2nd and 3rd party extension packages can now use the ``parametrize_with_checks``
+  utility to set up granular API compliance tests. For detailed usage notes,
+  consult the extender guide: :ref:`developer_guide_add_estimators`.
+* various quality-of-life improvements have been made to facilitate
+  indexing an estimator in the estimator overview and estimator search for
+  developers of API compatible 2nd and 3rd party packages,
+  without adding it directly to the main ``sktime`` repository.
+  For detailed usage notes, consult the extender guide:
+  :ref:`developer_guide_add_estimators`, or inspect the ``Prophetverse`` forecaster
+  as a worked example.
+
+Enhancements
+~~~~~~~~~~~~
+
+BaseObject and base framework
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] prevent imports caused by ``_check_soft_dependencies``, speed up dependency check and test collection time (:pr:`6355`) :user:`fkiraly`, :user:`yarnabrina`
+
+Benchmarking, Metrics, Splitters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Parallelization option for ``ForecastingBenchmark`` (:pr:`6568`) :user:`benHeid`
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Added GluonTS datasets as ``sktime`` mtypes (:pr:`6530`) :user:`shlok191`
+
+Distances, kernels
+^^^^^^^^^^^^^^^^^^
+
+* [ENH] DTW distances from ``dtaidistance`` (:pr:`6578`) :user:`fkiraly`
+
+Forecasting
+^^^^^^^^^^^
+
+* [ENH] ``pytorch-forecasting`` adapter with Global Forecasting API (:pr:`6228`) :user:`Xinyu-Wu-0000`
+* [ENH] fitted parameter forwarding utility, forward ``statsforecast`` estimators' fitted parameters (:pr:`6349`) :user:`fkiraly`
+* [ENH] EnbPI based forecaster with components from ``aws-fortuna`` (:pr:`6449`) :user:`benHeid`
+* [ENH] ``skforecast`` ForecasterAutoreg adapter  (:pr:`6531`) :user:`Abhay-Lejith`, :user:`yarnabrina`
+* [ENH] Extend ``HFTransformersForecaster`` for PEFT methods (:pr:`6457`) :user:`geetu040`
+* [ENH] in ``BaseForecaster``, move check for ``capability:insample`` to ``_check_fh`` boilerplate (:pr:`6593`) :user:`Xinyu-Wu-0000`
+* [ENH] indexing ``prophetverse`` forecaster (:pr:`6614`) :user:`fkiraly`
+* [ENH] ``ForecastingOptunaSearchCV`` for hyper-parameter tuning of forecasters via ``optuna`` (:pr:`6630`) :user:`mk406`, :user:`gareth-brown-86`
+
+Registry and search
+^^^^^^^^^^^^^^^^^^^
+
+* [ENH] enhanced estimator overview table - tag display and search (:pr:`6147`) :user:`duydl`, :user:`fkiraly`
+
+Time series alignment
+^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] DTW aligners from ``dtaidistance`` (:pr:`6578`) :user:`fkiraly`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] resolve duplication in KNeighborsClassifier and KNeighborsRegressor (:pr:`6504`) :user:`Z-Fran`
+* [ENH] added two test params sets to ``FCNNetwork`` (:pr:`6562`) :user:`TheoWeih`
+* [ENH] further refactor of knn classifier and regressor (:pr:`6615`) :user:`fkiraly`
+* [ENH] update ``tests._config`` to skip various sporadically failing tests for Proximity Forest and Proximity Tree until fixed (:pr:`6638`) :user:`julian-fong`
+
+Time series regression
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Time Series Regression grid search (:pr:`6118`) :user:`ksharma6`
+* [ENH] test parameters for ``RocketRegressor`` (:pr:`6149`) :user:`iaryangoyal`
+* [ENH] resolve duplication in KNeighborsClassifier and KNeighborsRegressor (:pr:`6504`) :user:`Z-Fran`
+* [ENH] further refactor of knn classifier and regressor (:pr:`6615`) :user:`fkiraly`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [ENH] refactor ``WindowSummarizer`` tests (:pr:`6564`) :user:`fkiraly`
+
+Test framework
+^^^^^^^^^^^^^^
+
+* [ENH] differential testing for base functionality in various modules (:pr:`6534`) :user:`fkiraly`
+* [ENH] further differential testing for the ``transformations`` module (:pr:`6533`) :user:`fkiraly`
+* [ENH] differential testing in ``dist_kernels`` and ``clustering`` modules (:pr:`6543`) :user:`fkiraly`
+* [ENH] simplify and add differential testing to ``forecasting.compose.tests`` module (:pr:`6563`) :user:`fkiraly`
+* [ENH] simplify and add differential testing to ``sktime.pipeline`` module (:pr:`6565`) :user:`fkiraly`
+* [ENH] differential testing in ``benchmarking`` module (:pr:`6566`) :user:`fkiraly`
+* [ENH] move doctests to main test suite to ensure conditional execution (:pr:`6536`) :user:`fkiraly`
+* [ENH] minor improvements to test efficiency (:pr:`6586`) :user:`fkiraly`
+* [ENH] ``parametrize_with_checks`` utility for granular API compliance test setup in 2nd/3rd party libraries (:pr:`6588`) :user:`fkiraly`
+* [ENH] differential testing to ``utils`` module (:pr:`6620`) :user:`fkiraly`
+* [ENH] differential testing and minor improvements to ``forecasting.base`` tests (:pr:`6619`) :user:`fkiraly`
+* [ENH] differential testing for ``performance_metrics`` module (:pr:`6616`) :user:`fkiraly`
+* [ENH] fixes and improvements to ``pytest`` ``doctest`` integration (:pr:`6621`) :user:`fkiraly`
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] fix broken links on webpage docs (:pr:`6339`) :user:`duydl`
+* [DOC] document more tags (:pr:`6496`) :user:`fkiraly`
+* [DOC] fix minor typos in tags API reference (:pr:`6631`) :user:`fkiraly`
+* [DOC] update dependencies reference (:pr:`6655`) :user:`emmanuel-ferdman`
+* [DOC] fix minor typo in developer comment in ``BaseTransformer`` (:pr:`6689`) :user:`Spinachboul`
+* [DOC] rst roadmap documentation page stale since 2021 - replace by correct links to recent roadmaps (:pr:`6556`) :user:`fkiraly`
+* [DOC] clarify docs on ARIMA estimators, add author credits for upstream (:pr:`6705`) :user:`fkiraly`
+* [DOC] credit :user:`doberbauer`` for ``pykalman`` python 3.11 compatibility fix (:pr:`6662`) :user:`doberbauer`
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] [Dependabot](deps): Update holidays requirement from ``<0.51,>=0.29`` to ``>=0.29,<0.52`` (:pr:`6634`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update holidays requirement from ``<0.52,>=0.29`` to ``>=0.52,<0.53`` (:pr:`6702`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update dask requirement from ``<2024.6.1`` to ``<2024.6.2`` (:pr:`6643`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update numba requirement from ``<0.60,>=0.53`` to ``>=0.53,<0.61`` (:pr:`6590`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update dask requirement from ``<2024.6.2`` to ``<2024.6.3`` (:pr:`6647`) :user:`dependabot[bot]`
+* [MNT] remove coverage reporting and ``pytest-cov`` from PR CI and ``setup.cfg`` (:pr:`6363`) :user:`fkiraly`
+* [MNT] ``numpy 2`` compatibility fixes - estimators (:pr:`6626`) :user:`fkiraly`
+* [MNT] ``scipy`` ``1.14.0`` compatibility for ``deep_equals`` plugin for ``csr_matrix`` (:pr:`6664`) :user:`fkiraly`
+* [MNT] deprecate unused ``_check_soft_dependencies`` argument ``suppress_import_stdout`` (:pr:`6691`) :user:`fkiraly`
+
+Fixes
+~~~~~
+
+Benchmarking, Metrics, Splitters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fix ``AUCalibration`` probabilistic metric for ``multivariate`` case (:pr:`6617`) :user:`fkiraly`
+
+Data loaders
+^^^^^^^^^^^^
+
+* [BUG] fix bug 4076: ``PerformanceWarning`` in ``load_from_tsfile_to_dataframe`` (:pr:`6632`) :user:`ericjb`
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] patch over ``pandas 2.2.X`` issue in ``freq`` timestamp/period round trip conversion for period start timestamps such as ``"MonthBegin"`` (:pr:`6574`) :user:`fkiraly`
+
+Forecasting
+^^^^^^^^^^^
+
+* [BUG] fix passing of ``y`` in ``ForecastingPipeline`` (:pr:`6706`) :user:`fkiraly`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] Fix bug in fitted parameter override in ``pyts`` and ``tslearn`` adapters (:pr:`6707`) :user:`fkiraly`
+
+Time series clustering
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] Fix bug in fitted parameter override in ``pyts`` and ``tslearn`` adapters (:pr:`6707`) :user:`fkiraly`
+
+Time series regression
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] in ``TimeSeriesForestRegressor``, fix failure: ``self.criterion`` does not exist (:pr:`6573`) :user:`ksharma6`
+
+Test framework
+^^^^^^^^^^^^^^
+
+* [BUG] partially revert ``pytest.skip`` change from #6233 due to side effects in downstream test suites (:pr:`6508`) :user:`fkiraly`
+* [BUG] fix test failures introduced by differential testing refactor (:pr:`6585`) :user:`fkiraly`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [BUG] fix ``HolidayFeatures`` crashes if dataframe doesn't contain specified date  (:pr:`6550`) :user:`fnhirwa`
+* [BUG] in ``Differencer``, make explicit clone to avoid ``SettingWithCopyWarning`` (:pr:`6567`) :user:`benHeid`
+* [BUG] minirocket: fix zero division errors #5174 (:pr:`6612`) :user:`benshaw2`
+* [BUG] ensure correct setting of ``requires_X`` and ``requires_y`` tag for ``FeatureUnion`` (:pr:`6695`) :user:`fkiraly`
+* [BUG] ensure correct setting of ``requires_X`` and ``requires_y`` tag for ``TransformerPipeline`` (:pr:`6692`) :user:`fkiraly`
+* [BUG] partial fix for dropped column names in ``PaddingTransformer`` (:pr:`6693`) :user:`fkiraly`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`Abhay-Lejith`,
+:user:`benHeid`,
+:user:`benshaw2`,
+:user:`doberbauer`,
+:user:`emmanuel-ferdman`,
+:user:`ericjb`,
+:user:`felipeangelimvieira`,
+:user:`fkiraly`,
+:user:`fnhirwa`,
+:user:`gareth-brown-86`,
+:user:`geetu040`,
+:user:`iaryangoyal`,
+:user:`julian-fong`,
+:user:`ksharma6`,
+:user:`mk406`,
+:user:`shlok191`,
+:user:`Spinachboul`,
+:user:`TheoWeih`,
+:user:`Xinyu-Wu-0000`,
+:user:`yarnabrina`,
+:user:`Z-Fran`
+
+
+Version 0.30.1 - 2024-06-04
+---------------------------
+
+Minimal maintenance update with actions consolidating onboard packages.
+
+For last major feature update, see 0.29.1.
+
+Contents
+~~~~~~~~
+
+* [MNT] reorganization of onboard libs - ``pykalman``, ``vmdpy`` (:pr:`6535`) :user:`fkiraly`
+* [MNT] differential testing for ``split`` module (:pr:`6532`) :user:`fkiraly`
+
+
+Version 0.30.0 - 2024-06-03
+---------------------------
+
+Major upgrade to the time series anomaly, changepoints, segmentation API (:user:`Alex-JG3`).
+Users should review the section in the release notes.
+
+Kindly also note the python 3.8 End-of-life warning below.
+
+Also includes scheduled deprecations and change actions.
+
+For last major feature update, see 0.29.1.
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``joblib`` is now an explicit core dependency, with bounds ``<1.5,>=1.2.0``.
+  Previously, ``joblib`` was an indirect core dependency, via ``scikit-learn``.
+  Due to direct imports, this was changed to an explicit dependency.
+
+* ``scikit-learn`` (core dependency) bounds have been updated to ``>=0.24,<1.6.0``
+
+* ``scikit-base`` (core dependency) bounds have been updated to ``>=0.6.1,<0.9.0``
+
+* ``skpro`` (soft dependency) bounds have been updated to ``>=2,<2.4.0``
+
+* ``kotsu`` is not longer a soft dependency required by the forecasting benchmarking
+  framework. The ``kotsu`` package is no longer maintained,
+  and its necessary imports have beend moved
+  to ``sktime`` as private utilities until refactor. See :pr:`6514`.
+
+* ``pykalman`` (transformations soft dependency) has been forked into ``sktime``,
+  as ``sktime.libs.pykalman``, as the original package is no longer maintained,
+  see ``sktime`` issue 5414 or ``pykalman`` issue 109.
+
+  * The package fork will be maintained in ``sktime``.
+  * Direct users of ``pykalman`` can replace imports ``from pykalman import x``
+    with equivalent imports ``from sktime.libs.pykalman import x``.
+  * Indirect users via the transformer ``KalmanFilterTransformerPK`` will not be
+    impacted as APIs do not change, except that they no longer require
+    the original ``pykalman`` package in their python environment.
+
+* ``dask`` (data container and parallelization back-end) bounds have been updated to ``<2024.5.3``
+
+* ``holidays`` (transformations soft dependency) bounds have been updated to ``>=0.29,<0.51``
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+The time series annotation, anomalies, changepoints, segmentation API has been
+fully reworked to be in line with ``scikit-base`` patterns, ``sktime`` tags,
+and to provide a more consistent and flexible interface.
+
+* the API provides ``predict`` methods for annotation labels, e.g., segments,
+  outlier points, and a ``transform`` method for indicator series, for instance
+  1/0 indicator whether an anomaly is present at the time stamp.
+* the ``fmt`` argument used in some estimators is now deprecated,
+  in favour of using ``predict`` or ``transform``.
+* The type of annotation, e.g., change points or segmentation, is
+  encoded by the new tag ``task`` used in time series annotators,
+  with values ``anomaly_detection``, ``segmentation``, ``changepoint_detection``.
+* Low-level methods allow polymorphic use of annotators, e.g., a changepoint detector
+  to be used for segmentation, via ``predict_points`` or ``predict_segments``.
+  The ``predict`` method defaults to the type of annotation defined by ``task``.
+
+A full tutorial with examples will be created over the next release cycles,
+and further enhancements are planned.
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Python 3.8 End-of-life
+^^^^^^^^^^^^^^^^^^^^^^
+
+``sktime`` now requires Python version ``>=3.9``.
+No errors will be raised on Python 3.8, but test coverage and support for
+Python 3.8 has been dropped.
+
+Kindly note for context: python 3.8 will reach end of life
+in October 2024, and multiple ``sktime`` core dependencies,
+including ``scikit-learn``, have already dropped support for 3.8.
+
+Forecasting
+^^^^^^^^^^^
+
+``cINNForecaster`` has been renamed to ``CINNForecaster``.
+The estimator is no longer available under its old name,
+after the deprecation period.
+Users should replace any imports of ``cINNForecaster``
+with imports of ``CINNForecaster``.
+
+Enhancements
+~~~~~~~~~~~~
+
+* [ENH] Rework of base series annotator API (:pr:`6265`) :user:`Alex-JG3`
+* [ENH] upgrade ``is_module_changed`` test utility for paths (:pr:`6518`) :user:`fkiraly`
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] updated ``all_estimators`` docstring for ``re.Pattern`` support (:pr:`6478`) :user:`fkiraly`
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] [Dependabot](deps): Update skpro requirement from ``<2.3.0,>=2`` to ``>=2,<2.4.0`` (:pr:`6443`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update scikit-learn requirement from ``<1.5.0,>=0.24`` to ``>=0.24,<1.6.0`` (:pr:`6462`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update scikit-base requirement from ``<0.8.0,>=0.6.1`` to ``>=0.6.1,<0.9.0`` (:pr:`6488`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``dask`` requirement from ``<2024.5.2`` to ``<2024.5.3`` (:pr:`6526`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``holidays`` requirement from ``<0.50,>=0.29`` to ``>=0.29,<0.51`` (:pr:`6525`) :user:`dependabot[bot]`
+* [MNT] drop test coverage on python 3.8 in CI (:pr:`6329`) :user:`yarnabrina`
+* [MNT] final change cycle (0.30.0) for renaming ``cINNForecaster`` to ``CINNForecaster`` (:pr:`6367`) :user:`geetu040`
+* [MNT] added ``joblib`` as core dependency (:pr:`6384`) :user:`yarnabrina`
+* [MNT] 0.30.0 deprecations and change actions (:pr:`6468`) :user:`fkiraly`
+* [MNT] modified CRLF line endings to LF line endings (:pr:`6512`) :user:`yarnabrina`
+* [MNT] Move dependency checkers to separate module in ``utils`` (:pr:`6354`) :user:`fkiraly`
+* [MNT] resolution to ``pykalman`` issue - ``sktime`` local pykalman fork (:pr:`6188`) :user:`fkiraly`
+* [MNT] add systematic differential test switch to low-level tests (:pr:`6511`) :user:`fkiraly`
+* [MNT] isolate ``utils`` module init and ``sktime`` init from external imports (:pr:`6516`) :user:`fkiraly`
+* [MNT] preparing refactor of benchmark framework: folding minimal ``kotsu`` library into ``sktime`` (:pr:`6514`) :user:`fkiraly`
+* [MNT] run tests in ``distances`` module only if it has changed (:pr:`6517`) :user:`fkiraly`
+* [MNT] refactor ``pykalman`` tests to ``pytest`` and conditional execution (:pr:`6519`) :user:`fkiraly`
+* [MNT] conditional execution of tests in ``datatypes`` module (:pr:`6520`) :user:`fkiraly`
+
+Fixes
+~~~~~
+
+* [BUG] Remove dict unpacking on list in tuning skopt (:pr:`6521`) :user:`gareth-brown-86`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`Alex-JG3`,
+:user:`dependabot[bot]`,
+:user:`fkiraly`,
+:user:`gareth-brown-86`,
+:user:`geetu040`,
+:user:`yarnabrina`
+
+
+Version 0.29.1 - 2024-05-30
+---------------------------
+
+Highlights
+~~~~~~~~~~
+
+* ``TransformSelectForecaster`` to apply different forecasters depending on series type (e.g., intermittent, lumpy) (:pr:`6453`) :user:`shlok191`
+* Kolmogorov-Arnold Network (KAN) forecaster (:pr:`6386`) :user:`benHeid`
+* New probabilistic forecast metrics: interval width (sharpness), area under the
+  calibration curve (:pr:`6437`, :pr:`6460`) :user:`fkiraly`
+* Data loader for fpp3 (Forecasting, Princniples and Practice) datasets via ``rdata`` package, in ``sktime`` data formats (:pr:`6477`) :user:`ericjb`
+* Bollinger Bands transformation (:pr:`6473`) :user:`ishanpai`
+* ADI/CV2 (Syntetos/Boylan) feature extractor (:pr:`6336`) :user:`shlok191`
+* ``ExpandingCutoffSplitter`` - splitter by moving cutoff (:pr:`6360`) :user:`ninedigits`
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``holidays`` (transformations soft dependency) bounds have been updated to ``>=0.29,<0.50``
+* ``pycatch22`` (transformations soft dependency) bounds have been updated to ``<0.4.6``
+* ``dtw-python`` (distances and alignment soft dependency) bounds have been updated to ``>=1.3,<1.6``
+* ``dask`` (data container and parallelization back-end) bounds have been updated to ``<2024.5.2``
+* ``transformers`` (forecasting soft dependency) bounds have been updated to ``<4.41.0``
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+Benchmarking, Metrics, Splitters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* all metrics for point forecasts now support weighting, via the ``sample_weight`` parameter.
+  If passed, the metric will be weighted by the sample weights.
+  For hierarchical data, the weights are applied to the series level,
+  in this case all series need to have same length.
+  Probabilistic metrics do not support weighting yet, this will be added in a future release.
+
+Time series alignment
+^^^^^^^^^^^^^^^^^^^^^
+
+* all time series aligners now possess the ``capability:unequal_length`` tag,
+  which is ``True`` if the aligner can handle time series of unequal length,
+  and ``False`` otherwise. An informative error message, based on the tag,
+  is now raised if an aligner not supporting unequal length time series is used on such data.
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* The ``convert_y_to_keras`` method in deep learning classifiers has been deprecated and
+  will be removed in 0.31.0. Users who have been using this method should
+  instead use ``OneHotEncoder`` from ``sklearn`` directly, as ``convert_y_to_keras``
+  is a simple wrapper around ``OneHotEncoder`` with default settings.
+
+Enhancements
+~~~~~~~~~~~~
+
+BaseObject and base framework
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Benchmarking, Metrics, Splitters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] ``ExpandingCutoffSplitter`` - splitter by moving cutoff (:pr:`6360`) :user:`ninedigits`
+* [ENH] Interval width (sharpness) metric (:pr:`6437`) :user:`fkiraly`
+* [ENH] unsigned area under the calibration curve metric for distribution forecasts (:pr:`6460`) :user:`fkiraly`
+* [ENH] forecasting metrics: ensure uniform support and testing for ``sample_weight`` parameter (:pr:`6495`) :user:`fkiraly`
+
+Data loaders
+^^^^^^^^^^^^
+
+* [ENH] data loader for fpp3 datasets from CRAN via ``rdata`` package, to ``sktime`` data formats (:pr:`6477`) :user:`ericjb`
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Polars conversion utilities (:pr:`6455`) :user:`pranavvp16`
+
+Forecasting
+^^^^^^^^^^^
+
+* [ENH] Kolmogorov-Arnold Network (KAN) forecaster (:pr:`6386`) :user:`benHeid`
+* [ENH] Compositor to apply forecasters depending on series type (e.g., intermittent) (:pr:`6453`) :user:`shlok191`
+* [ENH] compatibility of ``ForecastingHorizon`` with ``pandas`` ``freq`` ``2Y`` on ``pandas 2.2.0`` and above (:pr:`6500`) :user:`fkiraly`
+* [ENH] add test case for ``ForecastingHorizon``  ``pandas 2.2.X`` compatibility, failure case #6499 (:pr:`6503`) :user:`fkiraly`
+* [ENH] remove ``Prophet`` from ``test_differencer_cutoff`` (:pr:`6492`) :user:`fkiraly`
+* [ENH] address deprecation and raise error in ``test_differencer_cutoff`` (:pr:`6493`) :user:`fkiraly`
+
+Time series alignment
+^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] time series aligners capability check at input, tag for unequal length capability (:pr:`6486`) :user:`fkiraly`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Make deep classifier's ``convert_y_to_keras`` private (:pr:`6373`) :user:`cedricdonie`
+* [ENH] classification test scenario with three classes and ``pd-multiindex`` mtype (:pr:`6374`) :user:`fkiraly`
+* [ENH] test classifiers on str dtype ``y``, ensure ``predict`` returns same type and labels (:pr:`6428`) :user:`fkiraly`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [ENH] Test Parameters for `FinancialHolidaysTransformer` (:pr:`6334`) :user:`sharma-kshitij-ks`
+* [ENH] ADI/CV feature extractor (:pr:`6336`) :user:`shlok191`
+* [ENH] Bollinger Bands (:pr:`6473`) :user:`ishanpai`
+
+Test framework
+^^^^^^^^^^^^^^
+
+* [ENH] enable ``check_estimator`` and ``QuickTester.run_tests`` to work with skip marked ``pytest`` tests (:pr:`6233`) :user:`YelenaYY`
+* [ENH] make ``get_packages_with_changed_specs`` safe to mutation of return (:pr:`6451`) :user:`fkiraly`
+
+Visualization
+^^^^^^^^^^^^^
+
+* [ENH] ``plot_series`` improved to use ``matplotlib`` conventions;
+  ``plot_interval`` can now plot multiple overlaid intervals (:pr:`6416`, :pr:`6501`) :user:`ericjb`
+
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] remove redundant/duplicative classification tutorial notebooks (:pr:`6401`) :user:`fkiraly`
+* [DOC] update meetup time to new 1pm slot (:pr:`6402`) :user:`fkiraly`
+* [DOC] explanation of ``get_test_params`` in test framework example (:pr:`6434`) :user:`fkiraly`
+* [DOC] fix download badges in README (:pr:`6479`) :user:`fkiraly`
+* [DOC] improved formatting of transformation docstrings (:pr:`6489`) :user:`fkiraly`
+* [DOC] document more tags: transformations (:pr:`6351`) :user:`fkiraly`
+* [DOC] Improve docstrings for metrics (:pr:`6419`) :user:`fkiraly`
+* [DOC] fixed wrong sentence in the documentation (:pr:`6375`) :user:`helloplayer1`
+* [DOC] Correct docstring for conversion functions of ``dask_to_pd`` (:pr:`6439`) :user:`pranavvp16`
+* [DOC] Fix hugging face transformers documentation (:pr:`6450``) :user:`benheid`
+* [DOC] ``plot_calibration`` docstring - formal explanation of the plot (:pr:`6414`) :user:`fkiraly`
+* [DOC] high-level explanation of deprecation policy principles (:pr:`6464`) :user:`fkiraly`
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] [Dependabot](deps): Update holidays requirement from ``<0.49,>=0.29`` to ``>=0.29,<0.50`` (:pr:`6456`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update pycatch22 requirement from ``<0.4.4`` to <0.4.6`` (:pr:`6442`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update sphinx-design requirement from ``<0.6.0`` to ``<0.7.0`` (:pr:`6471`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update dask requirement from ``<2024.5.1`` to ``<2024.5.2`` (:pr:`6444`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update dtw-python requirement from ``<1.5,>=1.3`` to ``>=1.3,<1.6`` (:pr:`6474`) :user:`dependabot[bot]`
+* [MNT] include unit tests in ``sktime/tests`` in per module tests (:pr:`6353`) :user:`yarnabrina`
+* [MNT] maintenance changes for ``AutoTBATS`` (:pr:`6400`) :user:`yarnabrina`
+* [MNT] bound ``transformers<4.41.0`` (:pr:`6447`) :user:`fkiraly`
+* [MNT] ``sklearn 1.5.0`` compatibility patch (:pr:`6464`) :user:`fkiraly`
+* [MNT] skip doctest for ``all_estimators`` (:pr:`6476`) :user:`fkiraly`
+* [MNT] address various deprecation and computation warnings (:pr:`6482`) :user:`fkiraly`
+* [MNT] address further deprecation warnings from ``pandas`` (:pr:`6494`) :user:`fkiraly`
+* [MNT] fix the docs local build failure due to corrupt notebook (:pr:`6426`) :user:`fnhirwa`
+
+Fixes
+~~~~~
+
+Forecasting
+^^^^^^^^^^^
+
+* [BUG] fix ``ForecastX`` when ``forecaster_X_exogeneous="complement"`` (:pr:`6433`) :user:`fnhirwa`
+* [BUG] Modified VAR code to allow ``predict_quantiles`` of 0.5 (fixes #4742) (:pr:`6441`) :user:`meraldoantonio`
+
+Neural networks
+^^^^^^^^^^^^^^^
+
+* [BUG] Remove duplicated ``BaseDeepNetworkPyTorch`` in ``networks.base`` (:pr:`6398`) :user:`luca-miniati`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] Resolve ``LSTMFCNClassifier`` changing ``callback`` parameter (:pr:`6239`) :user:`ArthrowAbstract`
+* [BUG] fix ``_get_train_probs`` in some classifiers to accept any input data type (:pr:`6377`) :user:`fkiraly`
+* [BUG] fix ``BaggingClassifier`` for column subsampling case (:pr:`6429`) :user:`fkiraly`
+* [BUG] fix ``ProximityForest``, tree, stump, and ``IndividualBOSS`` returning ``y`` of different type in ``predict`` (:pr:`6432`) :user:`fkiraly`
+* [BUG] fix classifier default ``_predict`` returning integer labels always, even if ``fit`` ``y`` was not integer (:pr:`6430`) :user:`fkiraly`
+* [BUG] in ``CNNClassifier``, ensure ``filter_sizes`` and ``padding`` is passed on (:pr:`6452`) :user:`fkiraly`
+* [BUG] fix ``BaseClassifier.fit_predict`` and ``fit_predict_proba`` for ``pd-multiindex`` mtype (:pr:`6491`) :user:`fkiraly`
+
+Time series regression
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] Resolve ``LSTMFCNRegressor`` changing ``callback`` parameter (:pr:`6239`) :user:`ArthrowAbstract`
+* [BUG] in ``CNNRegressor``, ensure ``filter_sizes`` and ``padding`` is passed on (:pr:`6452`) :user:`fkiraly`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [BUG] fix to make ``LabelEncoder`` compatible with ``sktime`` pipelines (:pr:`6458`) :user:`Abhay-Lejith`
+
+Test framework
+^^^^^^^^^^^^^^
+
+* [BUG] allow metric classes to be called with ``multilevel`` arg if series is not hierarchical (:pr:`6418`) :user:`fkiraly`
+* [BUG] fix ``test_run_test_for_class`` logic check if ``ONLY_CHANGED_MODULES`` flag is ``False`` and all estimator dependencies are present (:pr:`6383`) :user:`fkiraly`
+* [BUG] fix ``test_run_test_for_class`` test logic (:pr:`6448`) :user:`fkiraly`
+
+Visualization
+^^^^^^^^^^^^^
+
+* [BUG] fix ``xticks`` fore date-like data in ``plot_series`` (:pr:`6416`, :pr:`6501`) :user:`ericjb`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`Abhay-Lejith`,
+:user:`ArthrowAbstract`,
+:user:`benHeid`,
+:user:`cedricdonie`,
+:user:`ericjb`,
+:user:`fkiraly`,
+:user:`fnhirwa`,
+:user:`helloplayer1`,
+:user:`ishanpai`,
+:user:`luca-miniati`,
+:user:`meraldoantonio`,
+:user:`ninedigits`,
+:user:`pranavvp16`,
+:user:`sharma-kshitij-ks`,
+:user:`shlok191`,
+:user:`yarnabrina`,
+:user:`YelenaYY`
+
+
 Version 0.29.0 - 2024-04-28
 ---------------------------
 

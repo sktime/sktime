@@ -1,4 +1,5 @@
 """Pipeline with a clusterer."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 import numpy as np
 
@@ -312,7 +313,7 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
         from sktime.clustering.dbscan import TimeSeriesDBSCAN
         from sktime.clustering.k_means import TimeSeriesKMeans
         from sktime.transformations.series.exponent import ExponentTransformer
-        from sktime.utils.validation._dependencies import _check_estimator_deps
+        from sktime.utils.dependencies import _check_estimator_deps
 
         params = []
 

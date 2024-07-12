@@ -283,10 +283,7 @@ class _Reducer(_BaseWindowForecaster):
         # Note that we currently only support out-of-sample predictions. For the
         # direct and multioutput strategy, we need to check this already during fit,
         # as the fh is required for fitting.
-        raise NotImplementedError(
-            f"Generating in-sample predictions is not yet "
-            f"implemented for {self.__class__.__name__}."
-        )
+        pass
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -311,7 +308,7 @@ class _Reducer(_BaseWindowForecaster):
         from sklearn.pipeline import make_pipeline
 
         from sktime.transformations.panel.reduce import Tabularizer
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         # naming convention is as follows:
         #   reducers with Tabular take an sklearn estimator, e.g., LinearRegressor
@@ -578,9 +575,6 @@ class _DirectReducer(_Reducer):
                     + "observation size"
                 )
 
-        if not self.fh.is_all_out_of_sample(self.cutoff):
-            raise NotImplementedError("In-sample predictions are not implemented.")
-
         yt, Xt = self._transform(y, X)
         if hasattr(Xt, "columns"):
             Xt.columns = Xt.columns.astype(str)
@@ -783,9 +777,6 @@ class _MultioutputReducer(_Reducer):
         # We currently only support out-of-sample predictions. For the direct
         # strategy, we need to check this at the beginning of fit, as the fh is
         # required for fitting.
-        if not self.fh.is_all_out_of_sample(self.cutoff):
-            raise NotImplementedError("In-sample predictions are not implemented.")
-
         self.window_length_ = check_window_length(
             self.window_length, n_timepoints=len(y)
         )
@@ -1124,9 +1115,6 @@ class _DirRecReducer(_Reducer):
         # todo: logic for X below is broken. Escape X until fixed.
         if X is not None:
             X = None
-
-        if len(self.fh.to_in_sample(self.cutoff)) > 0:
-            raise NotImplementedError("In-sample predictions are not implemented")
 
         self.window_length_ = check_window_length(
             self.window_length, n_timepoints=len(y)
@@ -1736,7 +1724,7 @@ def _create_fcst_df(target_date, origin_df, fill=None):
     else:
         values = fill
 
-    res = pd.DataFrame(values, index=index, columns=columns)
+    res = pd.DataFrame(values, index=index, columns=columns, dtype="float64")
 
     if isinstance(origin_df, pd.Series) and not isinstance(index, pd.MultiIndex):
         res = res.iloc[:, 0]
@@ -2910,7 +2898,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
         from sklearn.ensemble import RandomForestRegressor
         from sklearn.linear_model import LinearRegression
 
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         params1 = {
             "estimator": LinearRegression(),

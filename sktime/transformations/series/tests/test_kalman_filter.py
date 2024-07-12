@@ -7,11 +7,11 @@ import numpy as np
 import pytest
 from numpy.testing import assert_array_almost_equal
 
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.kalman_filter import (
     KalmanFilterTransformerFP,
     KalmanFilterTransformerPK,
 )
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 # ts stands for time steps
 ts = 10
@@ -151,7 +151,7 @@ def init_kf_pykalman(
     denoising=False,
 ):
     """Initiate instance of `pykalman`'s `KalmanFilter`."""
-    from pykalman.standard import KalmanFilter
+    from sktime.libs.pykalman.standard import KalmanFilter
 
     em_vars = get_params_mapping(params=estimate_matrices)
     kf_pykalman = KalmanFilter(
@@ -200,8 +200,8 @@ def init_kf_filterpy(measurements, adapter, n=10, y=None):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("pykalman", severity="none"),
-    reason="skip test if required soft dependency pykalman not available",
+    not run_test_for_class(KalmanFilterTransformerPK),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize(
     "params, measurements",
@@ -345,8 +345,8 @@ def test_transform_and_smooth_pk(params, measurements):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("pykalman", "filterpy", severity="none"),
-    reason="skip test if required soft dependencies pykalman, filterpy not available",
+    not run_test_for_class([KalmanFilterTransformerPK, KalmanFilterTransformerFP]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize(
     "classes, params, measurements",
@@ -580,8 +580,8 @@ def test_em(classes, params, measurements):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("pykalman", "filterpy", severity="none"),
-    reason="skip test if required soft dependencies pykalman, filterpy not available",
+    not run_test_for_class([KalmanFilterTransformerPK, KalmanFilterTransformerFP]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize(
     "classes, params, measurements",
@@ -729,8 +729,8 @@ def test_bad_inputs(classes, params, measurements):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("filterpy", severity="none"),
-    reason="skip test if required soft dependency filterpy not available",
+    not run_test_for_class([KalmanFilterTransformerPK, KalmanFilterTransformerFP]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.xfail(reason="failure of unknown cause, see #4835")
 @pytest.mark.parametrize(

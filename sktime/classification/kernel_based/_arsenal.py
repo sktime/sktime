@@ -230,12 +230,16 @@ class Arsenal(BaseClassifier):
                     delayed(self._fit_estimator)(
                         _clone_estimator(
                             base_rocket,
-                            None
-                            if self.random_state is None
-                            else (255 if self.random_state == 0 else self.random_state)
-                            * 37
-                            * (i + 1)
-                            % 2**31,
+                            (
+                                None
+                                if self.random_state is None
+                                else (
+                                    255 if self.random_state == 0 else self.random_state
+                                )
+                                * 37
+                                * (i + 1)
+                                % 2**31
+                            ),
                         ),
                         X,
                         y,
@@ -255,12 +259,14 @@ class Arsenal(BaseClassifier):
                 delayed(self._fit_estimator)(
                     _clone_estimator(
                         base_rocket,
-                        None
-                        if self.random_state is None
-                        else (255 if self.random_state == 0 else self.random_state)
-                        * 37
-                        * (i + 1)
-                        % 2**31,
+                        (
+                            None
+                            if self.random_state is None
+                            else (255 if self.random_state == 0 else self.random_state)
+                            * 37
+                            * (i + 1)
+                            % 2**31
+                        ),
                     ),
                     X,
                     y,
@@ -327,7 +333,11 @@ class Arsenal(BaseClassifier):
         )
 
     def _get_train_probs(self, X, y) -> np.ndarray:
+        from sktime.datatypes import convert_to
+
         self.check_is_fitted()
+        if not isinstance(X, np.ndarray):
+            X = convert_to(X, "numpy3D")
         X, y = check_X_y(X, y, coerce_to_numpy=True)
 
         # handle the single-class-label case

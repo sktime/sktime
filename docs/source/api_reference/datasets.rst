@@ -29,6 +29,7 @@ These loaders can be used to access reference datasets for benchmarking.
     :template: function.rst
 
     load_forecastingdata
+    load_fpp3
     load_UCR_UEA_dataset
 
 

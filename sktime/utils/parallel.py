@@ -175,7 +175,7 @@ def _get_parallel_test_fixtures(naming="estimator"):
         values are backend strings and backend parameter dicts
         only backends that are available in the environment are included
     """
-    from sktime.utils.validation._dependencies import _check_soft_dependencies
+    from sktime.utils.dependencies import _check_soft_dependencies
 
     fixtures = []
 

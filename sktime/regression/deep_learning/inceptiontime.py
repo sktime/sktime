@@ -1,4 +1,5 @@
 """InceptionTime for Regression."""
+
 __author__ = "james-large"
 __all__ = ["InceptionTimeRegressor"]
 
@@ -8,7 +9,7 @@ from sklearn.utils import check_random_state
 
 from sktime.networks.inceptiontime import InceptionTimeNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
-from sktime.utils.validation._dependencies import _check_dl_dependencies
+from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class InceptionTimeRegressor(BaseDeepRegressor):
@@ -209,7 +210,7 @@ class InceptionTimeRegressor(BaseDeepRegressor):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         param1 = {
             "n_epochs": 10,

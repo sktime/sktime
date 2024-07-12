@@ -13,10 +13,12 @@ from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
 class VAR(_StatsModelsAdapter):
-    """A VAR model is a generalisation of the univariate autoregressive.
+    """VAR model from statsmodels.
 
-    Direct interface for ``statsmodels.tsa.vector_ar``
-    A model for forecasting a vector of time series[1].
+    Direct interface to ``statsmodels.tsa.vector_ar``.
+
+    A VAR model is a generalisation of the univariate autoregressive model
+    to multivariate time series, see [1]_.
 
     Parameters
     ----------
@@ -245,7 +247,9 @@ class VAR(_StatsModelsAdapter):
 
         for cov in coverage:
             alpha = 1 - cov
-
+            # A hacky way to coerce error-inducing alpha==1 into its approximant
+            if alpha >= 0.99999:
+                alpha = 0.99999
             fcast_interval = model.forecast_interval(
                 self._y.values[-n_lags:], steps=steps, alpha=alpha
             )

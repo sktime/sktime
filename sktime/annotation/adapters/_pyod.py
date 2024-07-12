@@ -6,7 +6,7 @@ import numpy as np
 from sklearn.base import clone
 
 from sktime.annotation.base._base import BaseSeriesAnnotator
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 __author__ = ["mloning", "satya-pattnaik", "fkiraly"]
 
@@ -21,22 +21,21 @@ class PyODAnnotator(BaseSeriesAnnotator):
     estimator : PyOD estimator
         See ``https://pyod.readthedocs.io/en/latest/`` documentation for a detailed
         description of all options.
-    fmt : str {"dense", "sparse"}, optional (default="dense")
-        Annotation output format:
-        * If "sparse", a sub-series of labels for only the outliers in X is returned,
-        * If "dense", a series of labels for all values in X is returned.
-    labels : str {"indicator", "score"}, optional (default="indicator")
-        Annotation output labels:
-        * If "indicator", returned values are boolean, indicating whether a value is an
-        outlier,
-        * If "score", returned values are floats, giving the outlier score.
     """
 
-    _tags = {"python_dependencies": "pyod"}
+    _tags = {
+        "python_dependencies": "pyod",
+        "task": "anomaly_detection",
+        "learning_type": "unsupervised",
+    }
 
-    def __init__(self, estimator, fmt="dense", labels="indicator"):
+    def __init__(self, estimator, labels="indicator"):
         self.estimator = estimator  # pyod estimator
-        super().__init__(fmt=fmt, labels=labels)
+        self.labels = labels
+
+        super().__init__()
+
+        self._fmt = "sparse"
 
     def _fit(self, X, Y=None):
         """Fit to training data.
@@ -49,6 +48,7 @@ class PyODAnnotator(BaseSeriesAnnotator):
             training data to fit model to, time series
         Y : pd.Series, optional
             ground truth annotations for training if annotator is supervised
+
         Returns
         -------
         self : returns a reference to self
@@ -77,9 +77,8 @@ class PyODAnnotator(BaseSeriesAnnotator):
         Returns
         -------
         Y : pd.Series - annotations for sequence X
-            exact format depends on annotation type
         """
-        fmt = self.fmt
+        fmt = self._fmt
         labels = self.labels
 
         X_np = X.to_numpy()

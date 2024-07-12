@@ -1,5 +1,6 @@
 """Deep Learning Forecasters using LTSF-Linear Models."""
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+from sktime.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("torch", severity="none"):
     import torch.nn as nn
@@ -9,8 +10,6 @@ else:
 
     class nn_module:
         """Dummy class if torch is unavailable."""
-
-        pass
 
 
 class LTSFLinearNetwork:
@@ -184,9 +183,10 @@ class LTSFDLinearNetwork:
 
             # x: [Batch, Input length, Channel]
             seasonal_init, trend_init = self.decompsition(x)
-            seasonal_init, trend_init = seasonal_init.permute(
-                0, 2, 1
-            ), trend_init.permute(0, 2, 1)
+            seasonal_init, trend_init = (
+                seasonal_init.permute(0, 2, 1),
+                trend_init.permute(0, 2, 1),
+            )
             if self.individual:
                 seasonal_output = zeros(
                     [seasonal_init.size(0), seasonal_init.size(1), self.pred_len],

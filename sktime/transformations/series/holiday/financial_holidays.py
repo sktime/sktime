@@ -1,9 +1,11 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements transformer to add binary column based on financial market holidays."""
+
 import pandas
 
 from sktime.transformations.base import BaseTransformer
 
+__all__ = ["FinancialHolidaysTransformer"]
 __author__ = ["yarnabrina"]
 
 
@@ -71,7 +73,6 @@ class FinancialHolidaysTransformer(BaseTransformer):
         # --------------
         "authors": "yarnabrina",
         "maintainers": "yarnabrina",
-        "python_version": ">=3.8",
         "python_dependencies": ["holidays"],
         # estimator type
         # --------------
@@ -159,12 +160,14 @@ class FinancialHolidaysTransformer(BaseTransformer):
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
+
+        Raises
+        ------
+        ValueError
+            If an unknown parameter_set is provided.
         """
         del parameter_set  # avoid being detected as unused by ``vulture`` like tools
 
-        params = [{"market": "XNYS"}]
+        params = [{"market": "XNYS"}, {"market": "ECB"}]
 
         return params
-
-
-__all__ = ["FinancialHolidaysTransformer"]

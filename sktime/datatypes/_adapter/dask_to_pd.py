@@ -13,6 +13,7 @@ MultiIndex columns to DataFrame columns with the name:
     __index__[index_iloc], if level has no indexname and is index_iloc-th level
 index is replaced by a string index where tuples are replaced with str coerced elements
 """
+
 import pandas as pd
 
 from sktime.datatypes._common import _req
@@ -44,11 +45,11 @@ def convert_dask_to_pandas(obj):
 
     Parameters
     ----------
-    obj : pandas.DataFrame
+    obj : dask DataFrame
 
     Returns
     -------
-    dask DataFrame
+    pandas.DataFrame
         MultiIndex levels 0 .. -1 of X are converted to columns of name
         __index__[indexname], where indexname is name of multiindex level,
         or the integer index if the level has no name
@@ -86,7 +87,7 @@ def convert_pandas_to_dask(obj, npartitions=1, chunksize=None, sort=True):
 
     Parameters
     ----------
-    obj : dask DataFrame
+    obj : pandas.DataFrame
     npartitions : int or None, optional, default = 1
         npartitions passed to dask from_pandas when converting obj to dask
     chunksize : int or None, optional, default = None
@@ -96,7 +97,7 @@ def convert_pandas_to_dask(obj, npartitions=1, chunksize=None, sort=True):
 
     Returns
     -------
-    pandas.DataFrame
+    dask DataFrame
         MultiIndex levels 0 .. -1 of X are converted to columns of name
         __index__[indexname], where indexname is name of multiindex level,
         or the integer index if the level has no name

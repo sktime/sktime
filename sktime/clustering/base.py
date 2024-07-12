@@ -1,4 +1,5 @@
 """Base class for clustering."""
+
 __author__ = ["chrisholder", "TonyBagnall", "achieveordie"]
 __all__ = ["BaseClusterer"]
 
@@ -10,9 +11,9 @@ import pandas as pd
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_scitype, convert_to, scitype_to_mtype
+from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.validation import check_n_jobs
-from sktime.utils.validation._dependencies import _check_estimator_deps
 
 # Valid input types for clustering
 TimeSeriesInstances = Union[pd.DataFrame, np.ndarray]
