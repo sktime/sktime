@@ -45,8 +45,6 @@ __author__ = ["shlok191"]
 
 import subprocess
 
-import torch
-
 from sktime.forecasting.base import BaseForecaster
 
 
@@ -88,6 +86,7 @@ class _LagLlamaAdapter(BaseForecaster):
         lr=None,
         trainer_kwargs=None,
     ):
+        import torch
         from lag_llama.gluon.estimator import LagLlamaEstimator
 
         # Defining private variable values
