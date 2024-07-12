@@ -211,7 +211,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
                 )
         elif pooling == "global":
             self.set_tags(**{"scitype:instancewise": False})
-            PANDAS_TYPES = ["pd.DataFrame", "pd-multiindex", "pd-multiindex-hier"]
+            PANDAS_TYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
             self.set_tags(**{"X_inner_mtype": PANDAS_TYPES})
         else:
             raise ValueError(
