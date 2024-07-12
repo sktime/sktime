@@ -23,7 +23,7 @@ __all__ = [
     "mtype",
 ]
 
-from typing import List, Union
+from typing import Union
 
 import numpy as np
 
@@ -88,7 +88,7 @@ def _coerce_list_of_str(obj, var_name="obj"):
 
 def check_is_mtype(
     obj,
-    mtype: Union[str, List[str]],
+    mtype: Union[str, list[str]],
     scitype: str = None,
     return_metadata=False,
     var_name="obj",
@@ -273,7 +273,7 @@ def check_raise(obj, mtype: str, scitype: str = None, var_name: str = "input"):
 
 def mtype(
     obj,
-    as_scitype: Union[str, List[str]] = None,
+    as_scitype: Union[str, list[str]] = None,
     exclude_mtypes=AMBIGUOUS_MTYPES,
 ):
     """Infer the mtype of an object considered as a specific scitype.
@@ -355,7 +355,7 @@ def mtype(
 
 def check_is_scitype(
     obj,
-    scitype: Union[str, List[str]],
+    scitype: Union[str, list[str]],
     return_metadata=False,
     var_name="obj",
     exclude_mtypes=AMBIGUOUS_MTYPES,
@@ -408,6 +408,7 @@ def check_is_scitype(
             "has_nans": bool, True iff the panel contains NaN values
         For scitype "Alignment":
             currently none
+
     Raises
     ------
     TypeError if scitype input argument is not of expected type

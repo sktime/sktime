@@ -1,4 +1,5 @@
 """Tests for datagen functions."""
+
 __author__ = ["klam-data", "mgorlin", "pyyim"]
 
 import pytest
