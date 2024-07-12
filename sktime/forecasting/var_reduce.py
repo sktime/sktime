@@ -9,7 +9,7 @@ import pandas as pd
 from sktime.forecasting.base import BaseForecaster
 
 
-class RegularizedVAR(BaseForecaster):
+class VARReduce(BaseForecaster):
     """Custom forecaster using VAR with regularization.
 
     Parameters
@@ -52,9 +52,9 @@ class RegularizedVAR(BaseForecaster):
 
         Returns
         -------
-        X : np.ndarray
+        X : np.ndarray (n_samples, n_features * lags)
             The lagged values as predictors.
-        y : np.ndarray
+        y : np.ndarray (n_samples, n_features)
             The current values as response variable.
         """
         df = pd.concat([data.shift(i) for i in range(self.lags + 1)], axis=1)
