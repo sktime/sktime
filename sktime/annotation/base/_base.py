@@ -365,7 +365,9 @@ class BaseSeriesAnnotator(BaseEstimator):
         X = check_series(X)
 
         if self.task == "change_point_detection":
-            return self.segments_to_change_points(self.predict_points(X))
+            return self.change_points_to_segments(
+                self.predict_points(X), start=X.index.min(), end=X.index.max()
+            )
         elif self.task == "segmentation":
             return self._predict_segments(X)
 
