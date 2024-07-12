@@ -1,6 +1,5 @@
 __author__ = ["chrisholder", "jlines", "TonyBagnall"]
 
-from typing import List, Tuple
 
 import numpy as np
 
@@ -112,7 +111,7 @@ class _MsmDistance(NumbaDistance):
             def numba_msm_distance_alignment_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
-            ) -> Tuple[List, float, np.ndarray]:
+            ) -> tuple[list, float, np.ndarray]:
                 cost_matrix = _cost_matrix(_x, _y, _bounding_matrix, c)
                 path = compute_min_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1], cost_matrix
@@ -123,7 +122,7 @@ class _MsmDistance(NumbaDistance):
             def numba_msm_distance_alignment_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
-            ) -> Tuple[List, float]:
+            ) -> tuple[list, float]:
                 cost_matrix = _cost_matrix(_x, _y, _bounding_matrix, c)
                 path = compute_min_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1]

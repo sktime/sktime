@@ -537,7 +537,7 @@ def plot_calibration(y_true, y_pred, ax=None):
     of the conditional distribution of :math:`y_i`, as contained in ``y_pred``.
 
     We compute the calibration indicators :math:`c_{i, j},`
-    as :math:`c_{i, j} = 1, \{ if } y_i \le \widehat{y}_{i,j} \text{ and } 0, \text{otherwise},`  # noqa: E501
+    as :math:`c_{i, j} = 1, \{ if } y_i \le \widehat{y}_{i,j} \text{ and } 0, \text{otherwise},`
     and calibration fractions as
 
     .. math:: \widehat{p}_j = \frac{1}{N} \sum_{i = 1}^N c_{i, j}.
@@ -570,7 +570,7 @@ def plot_calibration(y_true, y_pred, ax=None):
         matplotlib figure object
     ax : matplotlib.axes.Axes
         matplotlib axes object with the figure
-    """
+    """  # noqa: E501
     from sktime.utils.dependencies import _check_soft_dependencies
 
     _check_soft_dependencies("matplotlib")

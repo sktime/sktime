@@ -560,6 +560,7 @@ Model selection and tuning
     ForecastingGridSearchCV
     ForecastingRandomizedSearchCV
     ForecastingSkoptSearchCV
+    ForecastingOptunaSearchCV
 
 Model Evaluation (Backtesting)
 ------------------------------

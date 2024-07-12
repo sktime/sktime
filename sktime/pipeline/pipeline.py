@@ -1,4 +1,5 @@
 """class that implements a graph pipeline."""
+
 import warnings
 from copy import copy, deepcopy
 

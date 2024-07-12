@@ -6,7 +6,7 @@ __author__ = ["mloning", "fkiraly"]
 
 
 from functools import reduce
-from typing import Dict, List, Union
+from typing import Union
 
 import numpy as np
 import pytest
@@ -19,6 +19,7 @@ from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.model_selection import (
     ForecastingGridSearchCV,
+    ForecastingOptunaSearchCV,
     ForecastingRandomizedSearchCV,
     ForecastingSkoptSearchCV,
 )
@@ -51,6 +52,7 @@ TUNER_CLASSES = [
     ForecastingGridSearchCV,
     ForecastingRandomizedSearchCV,
     ForecastingSkoptSearchCV,
+    ForecastingOptunaSearchCV,
 ]
 
 
@@ -327,6 +329,42 @@ def test_skoptcv_multiple_forecaster():
     assert len(sscv.cv_results_) == 5
 
 
+@pytest.mark.xfail
+@pytest.mark.skipif(
+    not run_test_for_class(ForecastingOptunaSearchCV),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize(
+    "forecaster, param_grid", [(NAIVE, NAIVE_GRID), (PIPE, PIPE_GRID)]
+)
+@pytest.mark.parametrize("scoring", TEST_METRICS)
+@pytest.mark.parametrize("error_score", ERROR_SCORES)
+@pytest.mark.parametrize("cv", CVs)
+@pytest.mark.parametrize("n_iter", TEST_N_ITERS)
+@pytest.mark.parametrize("random_state", TEST_RANDOM_SEEDS)
+def test_optuna(forecaster, param_grid, cv, scoring, error_score, n_iter, random_state):
+    """Test TuneForecastingOptunaCV.
+
+    Tests that TuneForecastingOptunaCV successfully searches the parameter
+    distributions to identify the best parameter set
+    """
+    y, X = load_longley()
+    rscv = ForecastingOptunaSearchCV(
+        forecaster,
+        param_grid=param_grid,
+        cv=cv,
+        scoring=scoring,
+        error_score=error_score,
+    )
+    rscv.fit(y, X)
+
+    param_distributions = list(
+        ParameterSampler(param_grid, n_iter, random_state=random_state)
+    )
+    _check_cv(forecaster, rscv, cv, param_distributions, y, X, scoring)
+    _check_fitted_params_keys(rscv.get_fitted_params())
+
+
 BACKEND_TEST = _get_parallel_test_fixtures("estimator")
 
 
@@ -398,7 +436,7 @@ def test_return_n_best_forecasters(Forecaster, return_n_best_forecasters, kwargs
     searchCV.fit(y, X)
     if return_n_best_forecasters == -1:
 
-        def calculate_total_combinations(param_grid: Union[List[Dict], Dict]):
+        def calculate_total_combinations(param_grid: Union[list[dict], dict]):
             if isinstance(param_grid, dict):
                 return reduce(lambda x, y: x * y, [len(x) for x in param_grid.values()])
             elif isinstance(param_grid, list):
