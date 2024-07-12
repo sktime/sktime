@@ -739,7 +739,7 @@ def from_multi_index_to_nested(
     x_nested = pd.DataFrame()
 
     # Loop the dimensions (columns) of multi-index DataFrame
-    for _label, _series in multi_ind_dataframe.items():  # noqa
+    for _label, _series in multi_ind_dataframe.items():
         # for _label in multi_ind_dataframe.columns:
         #    _series = multi_ind_dataframe.loc[:, _label]
         # Slice along the instance dimension to return list of series for each case
@@ -1137,13 +1137,13 @@ if _check_soft_dependencies("gluonts", severity="none"):
         return convert_pandas_to_listDataset(obj, is_single=False)
 
     # Storing functions in convert_dict
-    convert_dict[
-        ("pd-multiindex", "gluonts_ListDataset_panel", "Panel")
-    ] = convert_pandas_to_gluonts_listDataset
+    convert_dict[("pd-multiindex", "gluonts_ListDataset_panel", "Panel")] = (
+        convert_pandas_to_gluonts_listDataset
+    )
 
-    convert_dict[
-        ("gluonts_ListDataset_panel", "pd-multiindex", "Panel")
-    ] = convert_gluonts_listDataset_to_pandas
+    convert_dict[("gluonts_ListDataset_panel", "pd-multiindex", "Panel")] = (
+        convert_gluonts_listDataset_to_pandas
+    )
 
     # Extending conversions
     _extend_conversions(

@@ -1,4 +1,5 @@
 """Test orchestration."""
+
 __author__ = ["viktorkaz", "mloning"]
 
 import os
@@ -98,7 +99,8 @@ def test_automated_orchestration_vs_manual(data_loader):
     "cv", [SingleSplit(random_state=1), StratifiedKFold(random_state=1, shuffle=True)]
 )
 @pytest.mark.parametrize(
-    "metric_func", [accuracy_score, f1_score]  # pairwise metric  # composite metric
+    "metric_func",
+    [accuracy_score, f1_score],  # pairwise metric  # composite metric
 )
 @pytest.mark.parametrize("results_cls", [RAMResults, HDDResults])
 @pytest.mark.parametrize(

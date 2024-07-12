@@ -2,6 +2,7 @@
 
 Wraps kotsu benchmarking package.
 """
+
 from typing import Callable, Optional, Union
 
 import pandas as pd

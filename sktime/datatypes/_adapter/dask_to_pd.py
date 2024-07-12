@@ -13,6 +13,7 @@ MultiIndex columns to DataFrame columns with the name:
     __index__[index_iloc], if level has no indexname and is index_iloc-th level
 index is replaced by a string index where tuples are replaced with str coerced elements
 """
+
 import pandas as pd
 
 from sktime.datatypes._common import _req

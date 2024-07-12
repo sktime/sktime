@@ -1,5 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for pytorch-forecasting models."""
+
 import abc
 import functools
 import os
@@ -7,7 +8,7 @@ import time
 import typing
 from copy import deepcopy
 from random import randint
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 import numpy as np
 import pandas as pd
@@ -78,11 +79,11 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
 
     def __init__(
         self: "_PytorchForecastingAdapter",
-        model_params: Optional[Dict[str, Any]] = None,
-        dataset_params: Optional[Dict[str, Any]] = None,
-        train_to_dataloader_params: Optional[Dict[str, Any]] = None,
-        validation_to_dataloader_params: Optional[Dict[str, Any]] = None,
-        trainer_params: Optional[Dict[str, Any]] = None,
+        model_params: Optional[dict[str, Any]] = None,
+        dataset_params: Optional[dict[str, Any]] = None,
+        train_to_dataloader_params: Optional[dict[str, Any]] = None,
+        validation_to_dataloader_params: Optional[dict[str, Any]] = None,
+        trainer_params: Optional[dict[str, Any]] = None,
         model_path: Optional[str] = None,
         random_log_path: bool = False,
     ) -> None:
@@ -145,7 +146,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
                         hash(time.time_ns())
                         + hash(self.algorithm_class)
                         + hash(str(data.get_parameters()))
-                        + hash(randint(0, int(time.time())))
+                        + hash(randint(0, int(time.time())))  # noqa: S311
                     )
                     self._random_log_dir = (
                         os.getcwd() + "/lightning_logs/" + str(abs(random_num))
@@ -329,7 +330,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         self,
         X: pd.DataFrame,
         y: pd.DataFrame,
-        dataset_params: Dict[str, Any],
+        dataset_params: dict[str, Any],
         max_prediction_length,
     ):
         from pytorch_forecasting.data import TimeSeriesDataSet
@@ -443,9 +444,9 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         for i in range(output.shape[0]):
             start_idx = i * max_prediction_length
             start_time = data.loc[start_idx, time_idx]
-            data.loc[
-                start_idx : start_idx + max_prediction_length - 1, time_idx
-            ] = list(range(start_time, start_time + max_prediction_length))
+            data.loc[start_idx : start_idx + max_prediction_length - 1, time_idx] = (
+                list(range(start_time, start_time + max_prediction_length))
+            )
 
         # set the instance columns to multi index
         data.set_index(index_names, inplace=True)
