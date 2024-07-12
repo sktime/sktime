@@ -1,5 +1,5 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implements Regularized (L1/L2) VAR using cvxpy."""
+"""Implements Regularized (L1/L2) VAR."""
 
 # __author__ = [meraldoantonio]
 
@@ -109,8 +109,6 @@ class VARReduce(BaseForecaster):
         )
         self.coefficients = np.transpose(self.coefficients, (0, 2, 1))
         self.intercept = intercept.value.reshape(num_series)
-
-        self._is_fitted = True
         return self
 
     def _predict(self, fh, X=None):
