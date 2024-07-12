@@ -6,10 +6,10 @@ __author__ = ["geetu040"]
 
 import numpy as np
 import pandas as pd
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 from sktime.utils.warnings import warn
-from skbase.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("torch", severity="none"):
     from torch.utils.data import Dataset
@@ -17,6 +17,7 @@ else:
 
     class Dataset:
         """Dummy class if torch is unavailable."""
+
         pass
 
 
@@ -39,6 +40,12 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         descriptive explanation of est
     est2: another estimator
         descriptive explanation of est2
+    broadcasting: bool (default=True)
+        multiindex data input will be broadcasted to single series.
+        For each single series, one copy of this forecaster will try to
+        fit and predict on it. The broadcasting is happening inside automatically,
+        from the outerside api perspective, the input and output are the same,
+        only one multiindex output from `predict`.
     and so on
     """
 
@@ -59,8 +66,16 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         #
         # y_inner_mtype, X_inner_mtype control which format X/y appears in
         # in the inner functions _fit, _predict, etc
-        "y_inner_mtype": "pd.DataFrame",
-        "X_inner_mtype": "pd.DataFrame",
+        "X_inner_mtype": [
+            "pd.DataFrame",
+            "pd-multiindex",
+            "pd_multiindex_hier",
+        ],
+        "y_inner_mtype": [
+            "pd.DataFrame",
+            "pd-multiindex",
+            "pd_multiindex_hier",
+        ],
         # valid values: str and list of str
         # if str, must be a valid mtype str, in sktime.datatypes.MTYPE_REGISTER
         #   of scitype Series, Panel (panel data) or Hierarchical (hierarchical series)
@@ -172,6 +187,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         validation_split=0.2,
         compute_metrics=None,
         callbacks=None,
+        broadcasting=True,
     ):
         super().__init__()
         self.model_path = model_path
@@ -183,6 +199,16 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         self.validation_split = validation_split
         self.compute_metrics = compute_metrics
         self.callbacks = callbacks
+        self.broadcasting = broadcasting
+
+        if self.broadcasting:
+            self.set_tags(
+                **{
+                    "y_inner_mtype": "pd.DataFrame",
+                    "X_inner_mtype": "pd.DataFrame",
+                    "capability:global_forecasting": False,
+                }
+            )
 
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
@@ -320,43 +346,72 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
             fh = self.fh
         fh = fh.to_relative(self.cutoff)
 
-        hist =  y if self._global_forecasting else self._y
+        _y = y if self._global_forecasting else self._y
 
-        # get the last 'context_length' values from hist
-        hist = hist[-self.model.config.context_length :].values
+        # multi-index conversion goes here
+        if isinstance(_y.index, pd.MultiIndex):
+            hist = _frame2numpy(_y)
+        else:
+            hist = np.expand_dims(_y.values, axis=0)
 
-        # initialize 'past_values' and 'observed_mask' with the correct lengths
-        past_values = np.zeros((self.model.config.context_length, hist.shape[-1]))
-        observed_mask = np.zeros((self.model.config.context_length, hist.shape[-1]))
+        # hist.shape: (batch_size, n_timestamps, n_cols)
 
-        # update 'past_values' and 'observed_mask' with '_y' and ones respectively
-        past_values[-len(hist) :] = hist
-        observed_mask[-len(hist) :] = 1
+        # truncate or pad to match sequence length
+        past_values, observed_mask = _pad_truncate(
+            hist, self.model.config.context_length
+        )
 
-        # convert to torch tensors
-        past_values = torch.tensor(np.expand_dims(past_values, axis=0)).float()
-        observed_mask = torch.tensor(np.expand_dims(observed_mask, axis=0)).float()
+        past_values = (
+            torch.tensor(past_values).to(self.model.dtype).to(self.model.device)
+        )
+        observed_mask = (
+            torch.tensor(observed_mask).to(self.model.dtype).to(self.model.device)
+        )
 
         self.model.eval()
         outputs = self.model(
             past_values=past_values,
             observed_mask=observed_mask,
         )
-        outputs = outputs.prediction_outputs.detach().numpy()[0]
+        pred = outputs.prediction_outputs.detach().cpu().numpy()
 
-        index = (
-            ForecastingHorizon(range(1, len(outputs) + 1))
-            .to_absolute(self._cutoff)
-            ._values
-        )
-        columns = self._y.columns
+        # converting pred datatype
+
+        if isinstance(_y.index, pd.MultiIndex):
+            ins = np.array(
+                list(np.unique(_y.index.droplevel(-1)).repeat(pred.shape[1]))
+            )
+            ins = [ins[..., i] for i in range(ins.shape[-1])] if ins.ndim > 1 else [ins]
+
+            idx = (
+                ForecastingHorizon(range(1, pred.shape[1] + 1), freq=self.fh.freq)
+                .to_absolute(self._cutoff)
+                ._values.tolist()
+                * pred.shape[0]
+            )
+            index = pd.MultiIndex.from_arrays(
+                ins + [idx],
+                names=_y.index.names,
+            )
+        else:
+            index = (
+                ForecastingHorizon(range(1, pred.shape[1] + 1))
+                .to_absolute(self._cutoff)
+                ._values
+            )
 
         pred = pd.DataFrame(
-            outputs,
+            # batch_size * num_timestams, n_cols
+            pred.reshape(-1, pred.shape[-1]),
             index=index,
-            columns=columns,
+            columns=_y.columns,
         )
-        pred = pred.loc[fh.to_absolute(self.cutoff)._values]
+
+        absolute_horizons = fh.to_absolute_index(self.cutoff)
+        dateindex = pred.index.get_level_values(-1).map(
+            lambda x: x in absolute_horizons
+        )
+        pred = pred.loc[dateindex]
 
         return pred
 
@@ -379,7 +434,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = [
+        test_params = [
             {
                 "config": {},
                 "validation_split": 0.2,
@@ -390,74 +445,60 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 },
             },
         ]
-        return params
+        params_no_broadcasting = [
+            dict(p, **{"broadcasting": False}) for p in test_params
+        ]
+        test_params.extend(params_no_broadcasting)
+        return test_params
 
 
-class PyTorchDataset(Dataset):
-    """Dataset for use in sktime deep learning forecasters."""
+def _pad_truncate(data, seq_len, pad_value=0):
+    """
+    Pad or truncate a numpy array.
 
-    def __init__(
-        self,
-        y: pd.DataFrame,
-        seq_len: int,
-        fh=None,
-        X: pd.DataFrame = None,
-        batch_size=8,
-        no_size1_batch=True,
-    ):
-        if not isinstance(y.index, pd.MultiIndex):
-            self.y = np.array(y.values, dtype=np.float32).reshape(1, len(y), 1)
-            self.X = (
-                np.array(X.values, dtype=np.float32).reshape(
-                    (1, len(X), len(X.columns))
-                )
-                if X is not None
-                else X
-            )
-        else:
-            self.y = _frame2numpy(y)
-            self.X = _frame2numpy(X) if X is not None else X
+    Parameters
+    ----------
+    - data: numpy array of shape (batch_size, original_seq_len, n_dims)
+    - seq_len: sequence length to pad or truncate to
+    - pad_value: value to use for padding
 
-        self._num, self._len, _ = self.y.shape
-        self.fh = fh
-        self.seq_len = seq_len
-        self._len_single = self._len - self.seq_len - self.fh + 1
-        self.batch_size = batch_size
-        self.no_size1_batch = no_size1_batch
+    Returns
+    -------
+    - padded_data: array padded or truncated to (batch_size, seq_len, n_dims)
+    - mask: mask indicating padded elements (1 for existing; 0 for missing)
+    """
+    batch_size, original_seq_len, n_dims = data.shape
 
-    def __len__(self):
-        """Return length of dataset."""
-        true_length = self._num * max(self._len_single, 0)
-        if self.no_size1_batch and true_length % self.batch_size == 1:
-            return true_length - 1
-        else:
-            return true_length
-
-    def __getitem__(self, i):
-        """Return data point."""
-        from torch import tensor
-
-        m = i % self._len_single
-        n = i // self._len_single
-        hist_y = tensor(self.y[n, m : m + self.seq_len, :]).float().flatten()
-        futu_y = (
-            tensor(self.y[n, m + self.seq_len : m + self.seq_len + self.fh, :])
-            .float()
-            .flatten()
+    # Truncate or pad each sequence in data
+    if original_seq_len > seq_len:
+        truncated_data = data[:, :seq_len, :]
+        mask = np.ones_like(truncated_data)
+    else:
+        truncated_data = np.pad(
+            data,
+            ((0, 0), (seq_len - original_seq_len, 0), (0, 0)),
+            mode="constant",
+            constant_values=pad_value,
         )
-        if self.X is not None:
-            exog_data = tensor(
-                self.X[n, m + self.seq_len : m + self.seq_len + self.fh, :]
-            ).float()
-            hist_exog = tensor(self.X[n, m : m + self.seq_len, :]).float()
-        else:
-            exog_data = tensor([[]] * self.fh)
-            hist_exog = tensor([[]] * self.seq_len)
+        mask = np.zeros_like(truncated_data)
+        mask[:, -original_seq_len:, :] = 1
 
-        return {
-            "past_values": hist_y,
-            "past_time_features": hist_exog,
-            "future_time_features": exog_data,
-            "past_observed_mask": (~hist_y.isnan()).to(int),
-            "future_values": futu_y,
-        }
+    return truncated_data, mask
+
+
+def _same_index(data):
+    data = data.groupby(level=list(range(len(data.index.levels) - 1))).apply(
+        lambda x: x.index.get_level_values(-1)
+    )
+    assert data.map(
+        lambda x: x.equals(data.iloc[0])
+    ).all(), "All series must has the same index"
+    return data.iloc[0], len(data.iloc[0])
+
+
+def _frame2numpy(data):
+    idx, length = _same_index(data)
+    arr = np.array(data.values, dtype=np.float32).reshape(
+        (-1, length, len(data.columns))
+    )
+    return arr
