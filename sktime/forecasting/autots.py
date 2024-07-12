@@ -22,18 +22,18 @@ class AutoTSAdapter(BaseForecaster):
         model_list : str
             The list of models to use.
              str alias or list of names of model objects to use now can be a dictionary
-             of {“model”: prob} but only affects starting random templates.
+             of {"model": prob} but only affects starting random templates.
              Genetic algorithm takes from there.
         frequency : str
-            ‘infer’ or a specific pandas datetime offset. Can be used to force rollup of
-             data (ie daily input, but frequency ‘M’ will rollup to monthly).
+            'infer' or a specific pandas datetime offset. Can be used to force rollup of
+             data (ie daily input, but frequency 'M' will rollup to monthly).
         prediction_interval: float
             0-1, uncertainty range for upper and lower forecasts.
             Adjust range, but rarely matches actual containment.
         max_generations: int
             The maximum number of generations for the genetic algorithm.
             number of genetic algorithms generations to run. More runs = longer runtime,
-            generally better accuracy. It’s called max because someday there will be an
+            generally better accuracy. It's called max because someday there will be an
             auto early stopping option, but for now this is just the exact number of
             generations to run.
         no_negatives (bool):
@@ -49,7 +49,7 @@ class AutoTSAdapter(BaseForecaster):
                 * st dev of data stdev - threshold is the mean of historic data +/-
                     constraint
                 * st dev of data absolute - input is array of length series containing
-                    the threshold’s final value for each quantile - constraint is the
+                    the threshold's final value for each quantile - constraint is the
                     quantile of historic data to use as threshold
             constraint_regularization (float): 0 to 1
             where 0 means no constraint, 1 is hard threshold cutoff, and in between is
@@ -61,12 +61,12 @@ class AutoTSAdapter(BaseForecaster):
         ensemble: str
             The ensemble method to use.
             None or list or comma-separated string containing:
-            ‘auto’, ‘simple’, ‘distance’, ‘horizontal’, ‘horizontal-min’,
-            ‘horizontal-max’, “mosaic”, “subsample”
+            'auto', 'simple', 'distance', 'horizontal', 'horizontal-min',
+            'horizontal-max', "mosaic", "subsample"
         initial_template (str):
             The initial template to use for the forecast.
-            ‘Random’ - randomly generates starting template, ‘General’ uses template
-            included in package, ‘General+Random’ - both of previous.
+            'Random' - randomly generates starting template, 'General' uses template
+            included in package, 'General+Random' - both of previous.
             Also can be overriden with import_template()
         random_seed (int):
             The random seed for reproducibility.
@@ -82,9 +82,9 @@ class AutoTSAdapter(BaseForecaster):
         aggfunc (str):
             The aggregation function to use.
             If data is to be rolled up to a higher frequency (daily -> monthly) or
-            duplicate timestamps are included. Default ‘first’ removes duplicates,
-            for rollup try ‘mean’ or np.sum. Beware numeric aggregations like ‘mean’
-            will not work with non-numeric inputs. Numeric aggregations like ‘sum’
+            duplicate timestamps are included. Default 'first' removes duplicates,
+            for rollup try 'mean' or np.sum. Beware numeric aggregations like 'mean'
+            will not work with non-numeric inputs. Numeric aggregations like 'sum'
             will also change nan values to 0
         na_tolerance (float):
             The tolerance for missing values.
@@ -104,7 +104,7 @@ class AutoTSAdapter(BaseForecaster):
         transformer_list (dict):
             List of transformers to use, or dict of transformer:probability.
             Note this does not apply to initial templates. can accept string aliases:
-             “all”, “fast”, “superfast”, ‘scalable’ (scalable is a subset of fast that
+             "all", "fast", "superfast", 'scalable' (scalable is a subset of fast that
               should have fewer memory issues at scale)
         transformer_max_depth (int):
             maximum number of sequential transformers to generate for new Random
@@ -112,16 +112,16 @@ class AutoTSAdapter(BaseForecaster):
         models_mode (str):
             The mode for selecting models.
             option to adjust parameter options for newly generated models.
-            Only sporadically utilized. Currently includes: ‘default’/’random’,
-            ‘deep’ (searches more params, likely slower), and ‘regressor’
-            (forces ‘User’ regressor mode in regressor capable models),
-            ‘gradient_boosting’, ‘neuralnets’ (~Regression class models only)
+            Only sporadically utilized. Currently includes: 'default'/'random',
+            'deep' (searches more params, likely slower), and 'regressor'
+            (forces 'User' regressor mode in regressor capable models),
+            'gradient_boosting', 'neuralnets' (~Regression class models only)
         num_validations (int):
             The number of validations to perform.
              number of cross validations to perform. 0 for just train/test on best
              split. Possible confusion: num_validations is the number of
              validations to perform after the first eval segment, so totally
-             eval/validations will be this + 1. Also “auto” and “max”
+             eval/validations will be this + 1. Also "auto" and "max"
              aliases available. Max maxes out at 50.
         models_to_validate (float):
             The fraction of models to validate.
@@ -134,16 +134,16 @@ class AutoTSAdapter(BaseForecaster):
             The maximum number of models per class. of the models_to_validate what is
             the maximum to pass from any one model class/family.
         validation_method (str):
-            The method for validation.  ‘even’, ‘backwards’, or ‘seasonal n’ where n is
-            an integer of seasonal ‘backwards’ is better for recency and for shorter
-            training sets ‘even’ splits the data into equally-sized slices best for
+            The method for validation.  'even', 'backwards', or 'seasonal n' where n is
+            an integer of seasonal 'backwards' is better for recency and for shorter
+            training sets 'even' splits the data into equally-sized slices best for
             more consistent data, a poetic but less effective strategy than others here
-            ‘seasonal’ most similar indexes ‘seasonal n’ for example ‘seasonal 364’
+            'seasonal' most similar indexes 'seasonal n' for example 'seasonal 364'
             would test all data on each previous year of the forecast_length that would
-            immediately follow the training data. ‘similarity’ automatically finds the
+            immediately follow the training data. 'similarity' automatically finds the
             data sections most similar to the most recent data that will be used for
-            prediction ‘custom’ - if used, .fit() needs validation_indexes passed - a
-            list of pd.DatetimeIndex’s, tail of each is used as test
+            prediction 'custom' - if used, .fit() needs validation_indexes passed - a
+            list of pd.DatetimeIndex's, tail of each is used as test
         min_allowed_train_percent (float):
             The minimum percentage of data allowed for training.
             percent of forecast length to allow as min training, else raises error.
@@ -153,11 +153,11 @@ class AutoTSAdapter(BaseForecaster):
         remove_leading_zeroes (bool):
             Whether to remove leading zeroes from the data.
             replace leading zeroes with NaN. Useful in data where initial
-            zeroes mean data collection hasn’t started yet.
+            zeroes mean data collection hasn't started yet.
         prefill_na (str):
             The method for prefilling missing values.
             The value to input to fill all NaNs with. Leaving as None and allowing model
-            interpolation is recommended. None, 0, ‘mean’, or ‘median’. 0 may be useful
+            interpolation is recommended. None, 0, 'mean', or 'median'. 0 may be useful
             in for examples sales cases where all NaN can be assumed equal to zero.
         introduce_na (bool):
             Whether to introduce missing values to the data.
@@ -169,7 +169,7 @@ class AutoTSAdapter(BaseForecaster):
         preclean (dict):
             The parameters for data pre-cleaning.
             if not None, a dictionary of Transformer params to be applied to input data
-            {“fillna”: “median”, “transformations”: {}, “transformation_params”: {}}
+            {"fillna": "median", "transformations": {}, "transformation_params": {}}
             This will change data used in model inputs for fit and predict, and for
             accuracy evaluation in cross validation!
         model_interrupt (bool):
@@ -177,14 +177,14 @@ class AutoTSAdapter(BaseForecaster):
             If False, KeyboardInterrupts quit entire program.
             if True, KeyboardInterrupts attempt to only quit current model.
             if True, recommend use in conjunction with verbose > 0 and result_file in
-            the event of accidental complete termination. if “end_generation”, as True
+            the event of accidental complete termination. if "end_generation", as True
             and also ends entire generation of run. Note skipped models will not be
             tried again.
         generation_timeout (int):
             The timeout for each generation. if not None, this is the number of minutes
             from start at which the generational search ends, then proceeding to
             validation This is only checked after the end of each generation, so
-            only offers an ‘approximate’ timeout for searching. It is an overall
+            only offers an 'approximate' timeout for searching. It is an overall
             cap for total generation search time, not per generation.
         current_model_file (str):
             The file containing the current model.
@@ -198,14 +198,12 @@ class AutoTSAdapter(BaseForecaster):
             The number of jobs to run in parallel.
              Number of cores available to pass to parallel processing.
              A joblib context manager can be used instead (pass None in this case).
-             Also ‘auto’.
+             Also 'auto'.
     """
 
     _tags = {
         "scitype:y": "univariate",
-        "authors": [
-            "MBristle",
-        ],
+        "authors": ["MBristle"],
         "maintainers": ["MBristle"],
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
