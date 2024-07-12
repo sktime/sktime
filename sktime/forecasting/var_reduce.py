@@ -1,5 +1,5 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implements Regularized (L1/L2) VAR."""
+"""Implements ReducedVAR where user can choose the type of Regressor to use."""
 
 # __author__ = [meraldoantonio]
 
@@ -10,16 +10,30 @@ from sktime.forecasting.base import BaseForecaster
 
 
 class VARReduce(BaseForecaster):
-    """Custom forecaster using VAR with regularization.
+    """
+    VAR-like reduced forecaster.
+
+    It reduces multivariate time series to tabular regression and trains a regressor.
+    Any scikit-learn compatible regressor can be used; by default, `LinearRegression`,
+    is used, making it behave like a traditional VAR. Users can specify other
+    regressors such as `ElasticNet` to introduce regularization and potentially
+    enhance performance with large datasets or in the presence of multicollinearity.
 
     Parameters
     ----------
     lags : int
         The number of lagged values to include in the model.
-    L1_penalty : float, optional (default=0.0)
-        The L1 regularization penalty.
-    L2_penalty : float, optional (default=0.0)
-        The L2 regularization penalty.
+    regressor : object, optional (default=LinearRegression())
+        The regressor to use for fitting the model. Must be scikit-learn-compatible.
+
+    Attributes
+    ----------
+    coefficients : np.ndarray, shape (lags, num_series, num_series)
+        The estimated coefficients of the model
+    intercept : np.ndarray, shape (num_series,)
+        The intercept term of the model for each time series.
+    num_series : int
+        The number of time series being modeled.
     """
 
     _tags = {
@@ -32,10 +46,15 @@ class VARReduce(BaseForecaster):
         "requires-fh-in-fit": False,
     }
 
-    def __init__(self, lags, L1_penalty=0.0, L2_penalty=0.0):
+    def __init__(self, lags, regressor=None):
+        from sklearn.base import RegressorMixin
+        from sklearn.linear_model import LinearRegression
+
         self.lags = lags
-        self.L1_penalty = L1_penalty
-        self.L2_penalty = L2_penalty
+        self.regressor = regressor if regressor is not None else LinearRegression()
+        assert isinstance(
+            self.regressor, RegressorMixin
+        ), "The regressor must be a scikit-learn compatible regressor."
         self.coefficients = None
         self.intercept = None
         self.num_series = None
@@ -52,9 +71,9 @@ class VARReduce(BaseForecaster):
 
         Returns
         -------
-        X : np.ndarray (n_samples, n_features * lags)
+        X : np.ndarray (num_samples, num_series * lags)
             The lagged values as predictors.
-        y : np.ndarray (n_samples, n_features)
+        y : np.ndarray (num_samples, num_series)
             The current values as response variable.
         """
         df = pd.concat([data.shift(i) for i in range(self.lags + 1)], axis=1)
@@ -76,39 +95,32 @@ class VARReduce(BaseForecaster):
         fh : ForecastingHorizon, optional (default=None)
             The forecasting horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
-            Exogeneous time series to fit to.
+            Exogenous time series to fit to.
 
         Returns
         -------
         self : reference to self
         """
-        import cvxpy as cp
-
         X, y = self.create_var_data(y)
         n, k = X.shape
         num_series = y.shape[1]
         self.num_series = num_series
 
-        # Define the optimization problem
-        coefficients = cp.Variable((k, num_series))
-        intercept = cp.Variable((1, num_series))
+        # Initialize placeholders for coefficients and intercepts
+        coefficients = np.zeros((self.lags, num_series, num_series))
+        intercepts = np.zeros(num_series)
 
-        # Define the objective function with regularization
-        objective = cp.Minimize(
-            cp.sum_squares(y - X @ coefficients - intercept)
-            + self.L1_penalty * cp.norm(coefficients, 1)
-            + self.L2_penalty * cp.norm(coefficients, "fro")
-        )
-        problem = cp.Problem(objective)
-        problem.solve()
+        # Fit the chosen regressor model for each series
+        for i in range(num_series):
+            model = self.regressor
+            model.fit(X, y[:, i])
+            intercepts[i] = model.intercept_
+            # Reshape the coefficients to match with statsmodels VAR
+            coefficients[:, :, i] = model.coef_.reshape(self.lags, num_series)
 
-        # Store the estimated coefficients and intercept
-        # Reshape and rearrange the coefficients to match with statsmodels VAR
-        self.coefficients = coefficients.value.reshape(
-            self.lags, num_series, num_series
-        )
-        self.coefficients = np.transpose(self.coefficients, (0, 2, 1))
-        self.intercept = intercept.value.reshape(num_series)
+        # Transpose coefficients to match the desired shape
+        self.coefficients = np.transpose(coefficients, (0, 2, 1))
+        self.intercept = intercepts
         return self
 
     def _predict(self, fh, X=None):
@@ -218,5 +230,7 @@ class VARReduce(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = {"lags": 2, "L1_penalty": 0.1, "L2_penalty": 0.1}
+        from sklearn.linear_model import Ridge
+
+        params = {"lags": 2, "regressor": Ridge(alpha=1.0)}
         return params
