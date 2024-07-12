@@ -328,7 +328,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
             transformed version of X
         """
         # if DataFrame, remember index for later to restore on Xt
-        was_df = isinstance(X, pd.DataFrame):
+        was_df = isinstance(X, pd.DataFrame)
         if was_df:
             saved_index = X.index
 
