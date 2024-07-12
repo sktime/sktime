@@ -413,7 +413,7 @@ class BaseClusterer(BaseEstimator):
 
         if DtypeKind.CATEGORICAL in X_metadata["feature_kind"]:
             raise TypeError(
-                "Clustering do not support categorical features in endogeneous y."
+                "Clustering does not support categorical features in endogeneous y."
             )
 
         n_cases = X_metadata["n_instances"]
