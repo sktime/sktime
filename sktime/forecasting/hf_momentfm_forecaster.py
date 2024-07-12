@@ -201,6 +201,11 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             if "transformer_backbone" in self._config.keys()
             else self.transformer_backbone
         )
+        self._criterion = (
+            self._config["criterion"]
+            if "criterion" in self._config.keys()
+            else self.criterion
+        )
         self._seq_len = (
             self._config["seq_len"]
             if "seq_len" in self._config.keys()
@@ -208,15 +213,15 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         )
         # in the case the config contains 'forecasting_horizon', we'll set
         # fh as that, otherwise we override it using the fh param
-        self._fh = (
+        self._fh_config = (
             self._config["forecasting_horizon"]
             if "forecasting_horizon" in self._config.keys()
             else self.fh
         )
-        if self._fh is None:
-            self._fh = max(fh.to_relative(self.cutoff))
+        if fh is not None:
+            self._fh_input = max(fh.to_relative(self.cutoff))
+        self._fh = self._fh_input if fh is not None else self._fh_config
         train_val_split = int(len(y) * (1 - self.train_val_split))
-
         self._model = momentfm.MOMENTPipeline.from_pretrained(
             self._pretrained_model_name_or_path,
             model_kwargs={
@@ -255,13 +260,12 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             val_dataset, batch_size=self.batch_size, shuffle=True
         )
 
-        criterion = MSELoss()
+        criterion = self._criterion
         optimizer = Adam(self._model.parameters(), lr=1e-4)
         if self.device == "gpu" and torch.cuda.is_available():
             self.device = "cuda"
         else:
             self.device = "cpu"
-
         cur_epoch = 0
         max_epoch = self.epochs
 
@@ -291,10 +295,8 @@ class MomentFMForecaster(_BaseGlobalForecaster):
                 timeseries = data["historical_y"].float().to(self.device)
                 input_mask = data["input_mask"].to(self.device)
                 forecast = data["future_y"].float().to(self.device)
-
                 with torch.cuda.amp.autocast():
                     output = self._model(timeseries, input_mask)
-
                 loss = criterion(output.forecast, forecast)
 
                 # Scales the loss for mixed precision training
@@ -322,7 +324,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             trues, preds, histories, losses = [], [], [], []
             self._model.eval()
             with torch.no_grad():
-                for data in tqdm(val_dataloader, total=len(val_dataset)):
+                for data in tqdm(val_dataloader, total=len(val_dataloader)):
                     # Move the data to the specified device
                     timeseries = data["historical_y"].float().to(self.device)
                     input_mask = data["input_mask"].to(self.device)
@@ -338,7 +340,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
                     preds.append(output.forecast.detach().cpu().numpy())
                     histories.append(timeseries.detach().cpu().numpy())
 
-            losses = np.array(losses)
+            # losses = np.array(losses)
             # average_loss = np.average(losses)
             self._model.train()
 
@@ -349,28 +351,36 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             # metrics = get_forecasting_metrics(y=trues, y_hat=preds, reduction="mean")
 
             # print(
-            #     f"Epoch {cur_epoch}: Test MSE: {metrics.mse:.3f} |
-            # Test MAE: {metrics.mae:.3f}"
+            #     f"Epoch {cur_epoch}: Test MSE: {metrics.mse:.3f}",
+            #     f"|Test MAE: {metrics.mae:.3f}"
             # )
         return self
 
     def _predict(self, X, fh=None):
-        """Predict method to forecast timesteps into the future."""
+        """Predict method to forecast timesteps into the future.
+
+        fh must be the same length as the one used to fit the model.
+        """
         from torch import from_numpy
 
         if fh is None:
             pass
-
+        self._moment_seq_len = 512
         self._model.eval()
-        shape = X.values.shape
+        X_ = X
+        # TODO fix masking block here
+        shape = X_.shape
+        if shape[0] < self._moment_seq_len:
+            input_mask = _create_mask(shape[0], self._moment_seq_len - shape[0])
         # raise error here if num_cols in X don't match y in fit
         if shape[1] != self._y_shape[1]:
             # Todo raise error here
             pass
         # returns a timeseriesoutput object
-        X_torch_input = from_numpy(X.values.reshape((1, self._y_shape[1], -1))).float()
+        X_torch_input = from_numpy(X_.values.reshape((1, self._y_shape[1], -1))).float()
         X_torch_input.to(self.device)
-        output = self._model(X_torch_input)
+        input_mask = input_mask.to(self.device)
+        output = self._model(X_torch_input, input_mask)
         forecast_output = output.forecast
         forecast_output = forecast_output.squeeze(0)
 
@@ -416,32 +426,36 @@ def _create_padding(x, pad_shape):
     return cat((x, zero_pad), axis=0)
 
 
+def _create_mask(ones_length, zeros_length=0):
+    from torch import cat, ones, zeros
+
+    zeros_tensor = zeros(zeros_length)
+    ones_tensor = ones(ones_length)
+
+    input_mask = cat((ones_tensor, zeros_tensor))
+    return input_mask
+
+
 class momentPytorchDataset(Dataset):
     """Customized Pytorch dataset for the momentfm model."""
 
     def __init__(self, y, fh, seq_len):
-        from torch import cat, ones, zeros
-
         self.y = y
         self.moment_seq_len = 512  # forced seq_len by pre-trained model
         self.seq_len = seq_len
         self.fh = fh
         self.shape = y.shape
-
         # code block to figure out masking sizes in case seq_len < 512
         if self.seq_len < self.moment_seq_len:
             self._pad_shape = (self.moment_seq_len - self.seq_len, self.shape[1])
-            ones_tensor = ones(self.seq_len)
-            zeros_tensor = zeros(self._pad_shape[0])
+            self.input_mask = _create_mask(self.seq_len, self._pad_shape[0]).float()
             # Concatenate the tensors
-            self.input_mask = cat((ones_tensor, zeros_tensor)).float()
         elif self.seq_len > self.moment_seq_len:
-            # leaving this if statement here in case for refactor
             # for now if seq_len > 512 than we reduce it back to 512
             self.seq_len = 512
-            self.input_mask = ones(self.moment_seq_len).float()
+            self.input_mask = _create_mask(self.seq_len).float()
         else:
-            self.input_mask = ones(self.moment_seq_len).float()
+            self.input_mask = _create_mask(self.seq_len).float()
 
     def __len__(self):
         """Return length of dataset."""
