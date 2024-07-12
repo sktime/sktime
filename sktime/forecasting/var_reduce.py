@@ -62,7 +62,7 @@ class VARReduce(BaseForecaster):
         self.lags = lags
         self._regressor = regressor if regressor is not None else LinearRegression()
         assert isinstance(
-            self.regressor, RegressorMixin
+            self._regressor, RegressorMixin
         ), "The regressor must be a scikit-learn compatible regressor."
         self.coefficients = None
         self.intercept = None
