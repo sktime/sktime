@@ -230,7 +230,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
                 "head_dropout": self._head_dropout,
                 "freeze_encoder": self._freeze_encoder,
                 "freeze_embedder": self._freeze_embedder,
-                "seq_len": self._seq_len,
+                "seq_len": 512,  # forced to be hard coded
                 "freeze_head": self._freeze_head,
                 "device": self._device,
                 "transformer_backbone": self._transformer_backbone,
@@ -356,35 +356,40 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             # )
         return self
 
-    def _predict(self, X, fh=None):
+    def _predict(self, y, X=None, fh=1):
         """Predict method to forecast timesteps into the future.
 
         fh must be the same length as the one used to fit the model.
         """
         from torch import from_numpy
 
-        if fh is None:
-            pass
         self._moment_seq_len = 512
         self._model.eval()
-        X_ = X
-        # TODO fix masking block here
-        shape = X_.shape
+        # first convert it into numpy values
+        y_ = y.values
+        shape = y_.shape
         if shape[0] < self._moment_seq_len:
+            # if smaller, need to pad values
+            y_ = _create_padding(y_, (self._moment_seq_len - shape[0], shape[1]))
             input_mask = _create_mask(shape[0], self._moment_seq_len - shape[0])
-        # raise error here if num_cols in X don't match y in fit
+        elif shape[0] > self._moment_seq_len:  # this means that the user input a
+            # time series greater than 512 => we only use the most recent 512 steps
+            y_ = y_[-self._moment_seq_len :, :]
+            input_mask = _create_mask(self._moment_seq_len)
+        else:  # this means shape[0] == 512
+            input_mask = _create_mask(self._moment_seq_len)
         if shape[1] != self._y_shape[1]:
             # Todo raise error here
             pass
         # returns a timeseriesoutput object
-        X_torch_input = from_numpy(X_.values.reshape((1, self._y_shape[1], -1))).float()
-        X_torch_input.to(self.device)
+        y_torch_input = from_numpy(y_.values.reshape((1, self._y_shape[1], -1))).float()
+        y_torch_input.to(self.device)
         input_mask = input_mask.to(self.device)
-        output = self._model(X_torch_input, input_mask)
+        output = self._model(y_torch_input, input_mask)
         forecast_output = output.forecast
         forecast_output = forecast_output.squeeze(0)
 
-        pred = forecast_output.detach().cpu().numpy()
+        pred = forecast_output.detach().cpu().numpy().T
 
         df_pred = pd.DataFrame(pred, columns=self._y_cols)
 
@@ -422,8 +427,17 @@ def _create_padding(x, pad_shape):
     # then cat(x, zero_pad) should return (512,num_cols)
     from torch import cat, zeros
 
+    if isinstance(x, np.ndarray):
+        from torch import from_numpy
+
+        x_ = from_numpy(x)
+    else:
+        x_ = x
     zero_pad = zeros(pad_shape)
-    return cat((x, zero_pad), axis=0)
+    out = cat((x_, zero_pad), axis=0)
+    if isinstance(x, np.ndarray):
+        out = np.array(out)
+    return out
 
 
 def _create_mask(ones_length, zeros_length=0):
