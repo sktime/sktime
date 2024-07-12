@@ -179,7 +179,7 @@ def test_hierarchy_ensemble_exog(forecasters):
 )
 @pytest.mark.parametrize("default", [NaiveForecaster(), None])
 def test_level_one_data(forecasters, default):
-    "Check for data with one level of hierarchy (excluding timepoints level)."
+    """Check for data with one level of hierarchy (excluding timepoints level)."""
     agg = Aggregator()
 
     y = _bottom_hier_datagen(

@@ -1,6 +1,5 @@
 __author__ = ["chrisholder"]
 
-
 import numpy as np
 
 from sktime.utils.numba.njit import njit
