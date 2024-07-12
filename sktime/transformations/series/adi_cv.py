@@ -1,6 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Feature transformer that returns features of time series including categories."""
 
+import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
@@ -90,7 +91,13 @@ class ADICVTransformer(BaseTransformer):
         "maintainers": ["shlok191"],
     }
 
-    def __init__(self, features=None, adi_threshold=1.32, cv_threshold=0.49):
+    def __init__(
+        self,
+        features=None,
+        adi_threshold=1.32,
+        cv_threshold=0.49,
+        adi_trim_handling="pool",
+    ):
         """Initialize the transformer and processes any provided parameters.
 
         Parameters
@@ -112,6 +119,7 @@ class ADICVTransformer(BaseTransformer):
         self.adi_threshold = adi_threshold
         self.cv_threshold = cv_threshold
         self.features = features
+        self.adi_trim_handling = adi_trim_handling
 
         self.features_internal = features
 
@@ -156,48 +164,58 @@ class ADICVTransformer(BaseTransformer):
                 2. Variance (CV2)
                 3. categorical class
         """
-        X_non_zero = X.to_numpy().nonzero()
-        X_non_zero = X.iloc[X_non_zero]
+        X_non_zero_indices = X.to_numpy().nonzero()[0]
+        X_non_zero_values = X.iloc[X_non_zero_indices].values
 
-        # Calculating ADI value based on formula from paper
-        adi_value = len(X) / (len(X_non_zero) - 1)
+        # Calculating ADI value based on adi_trim_handling parameter
+        n_non_zero_observations = len(X_non_zero_indices)
+        n_observations = len(X)
 
-        # Calculating variance for all non-zero values
-        variance = X_non_zero.var().iloc[0]
-        cv2_value = variance / len(X_non_zero)
+        if self.adi_trim_handling == "trim":
+            first_non_zero = X_non_zero_indices[0]
+            last_non_zero = X_non_zero_indices[-1]
+
+            adi_numerator = last_non_zero - first_non_zero
+            adi_denominator = n_non_zero_observations - 1
+
+        elif self.adi_trim_handling == "pool":
+            adi_numerator = n_observations
+            adi_denominator = n_non_zero_observations
+
+        elif self.adi_trim_handling == "ignore":
+            adi_numerator = n_observations
+            adi_denominator = n_non_zero_observations - 1
+
+        adi_value = adi_numerator / adi_denominator
+
+        # Calculating coefficient of variation squared for all non-zero values
+        sigma = np.std(X_non_zero_values)
+        mu = np.mean(X_non_zero_values)
+        cv2_value = (sigma / mu) ** 2
 
         # Calculating the class type
-
-        adi_low = adi_value <= self.adi_threshold
-        cv2_low = cv2_value <= self.cv_threshold
-        adi_high = not adi_low
-        cv2_high = not cv2_low
-
-        if adi_low and cv2_low:
-            class_type = "smooth"
-
-        elif adi_low and cv2_high:
-            class_type = "erratic"
-
-        elif adi_high and cv2_low:
-            class_type = "intermittent"
-
-        elif adi_high and cv2_high:
-            class_type = "lumpy"
+        if adi_value < self.adi_threshold:
+            if cv2_value < self.cv_threshold:
+                class_type = "smooth"
+            elif cv2_value >= self.cv_threshold:
+                class_type = "erratic"
+        elif adi_value >= self.adi_threshold:
+            if cv2_value < self.cv_threshold:
+                class_type = "intermittent"
+            elif cv2_value >= self.cv_threshold:
+                class_type = "lumpy"
 
         # Collecting all values together into dict and converting to DF
-        return_dict = {}
+        df = pd.DataFrame()
 
         if "adi" in self.features_internal:
-            return_dict["adi"] = [adi_value]
+            df["adi"] = [adi_value]
 
         if "cv2" in self.features_internal:
-            return_dict["cv2"] = [cv2_value]
+            df["cv2"] = [cv2_value]
 
         if "class" in self.features_internal:
-            return_dict["class"] = [class_type]
-
-        df = pd.DataFrame(return_dict)
+            df["class"] = [class_type]
 
         # Ordering the dataframe in the correct order
         df = df.loc[:, self.features_internal]
