@@ -234,7 +234,7 @@ class EAgglo(BaseTransformer):
 
         for i, xi in grouped:
             self.distances[: self.n_cluster, i] = (
-                2 * grouped.apply(lambda xj: get_distance(xi, xj, self.alpha))  # noqa
+                2 * grouped.apply(lambda xj: get_distance(xi, xj, self.alpha))
                 - within[i]
                 - within
             )

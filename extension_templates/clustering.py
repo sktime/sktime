@@ -40,7 +40,6 @@ copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 # todo: uncomment the following line, enter authors' GitHub IDs
 # __author__ = [authorGitHubID, anotherAuthorGitHubID]
 
-
 from sktime.clustering import BaseClusterer
 
 # todo: add any necessary imports here

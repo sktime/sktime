@@ -27,7 +27,7 @@ class StatsModelsARIMA(_StatsModelsAdapter):
     but with different
     fitting strategies, fitted parameters, and slightly differring behaviour.
     Users should refer to the statsmodels documentation for further details:
-    https://www.statsmodels.org/dev/examples/notebooks/generated/statespace_sarimax_faq.html  # noqa: E501
+    https://www.statsmodels.org/dev/examples/notebooks/generated/statespace_sarimax_faq.html
 
     Parameters
     ----------
@@ -160,7 +160,7 @@ class StatsModelsARIMA(_StatsModelsAdapter):
     >>> forecaster = StatsModelsARIMA(order=(0, 0, 12))  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
     >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
-    """
+    """  # noqa: E501
 
     _tags = {
         # packaging info

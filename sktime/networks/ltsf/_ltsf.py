@@ -183,9 +183,10 @@ class LTSFDLinearNetwork:
 
             # x: [Batch, Input length, Channel]
             seasonal_init, trend_init = self.decompsition(x)
-            seasonal_init, trend_init = seasonal_init.permute(
-                0, 2, 1
-            ), trend_init.permute(0, 2, 1)
+            seasonal_init, trend_init = (
+                seasonal_init.permute(0, 2, 1),
+                trend_init.permute(0, 2, 1),
+            )
             if self.individual:
                 seasonal_output = zeros(
                     [seasonal_init.size(0), seasonal_init.size(1), self.pred_len],
