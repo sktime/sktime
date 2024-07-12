@@ -14,6 +14,7 @@ from pandas.api.types import (
     is_float_dtype,
     is_signed_integer_dtype,
     is_string_dtype,
+    is_timedelta64_dtype,
     is_unsigned_integer_dtype,
 )
 
@@ -64,14 +65,14 @@ def _pandas_dtype_to_kind(col_dtypes):
         return DtypeKind.CATEGORICAL
     elif is_bool_dtype(col_dtypes):
         return DtypeKind.BOOL
-    elif is_datetime64_any_dtype(col_dtypes):
+    elif is_datetime64_any_dtype(col_dtypes) or is_timedelta64_dtype(col_dtypes):
         return DtypeKind.DATETIME
     elif is_string_dtype(col_dtypes):
         return DtypeKind.STRING
     else:
         raise TypeError(
-            f"""Dtype of columns can be: INT, UINT, FLOAT, BOOL, STRING,
-                        DATETIME, CATEGORICAL. Found dtype: {col_dtypes}"""
+            "Dtype of columns can be: INT, UINT, FLOAT, BOOL, STRING, "
+            f"DATETIME, CATEGORICAL. Found dtype: {col_dtypes}"
         )
 
 
