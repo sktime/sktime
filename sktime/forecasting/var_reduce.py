@@ -49,7 +49,6 @@ class VARReduce(BaseForecaster):
     _tags = {
         "scitype:y": "both",
         "authors": ["meraldoantonio"],
-        "python_dependencies": "cvxpy",
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "ignores-exogeneous-X": True,
