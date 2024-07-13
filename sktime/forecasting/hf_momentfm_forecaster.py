@@ -1,5 +1,7 @@
 """Interface for the momentfm deep learning time series forecaster."""
 
+import warnings
+
 import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
@@ -130,7 +132,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         epochs=1,
         max_lr=1e-4,
         device="gpu",
-        train_val_split=0.2,
+        train_val_split=0.25,
         transformer_backbone="google/flan-t5-large",
         config=None,
     ):
@@ -152,6 +154,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         self.config = config
         self._config = config if config is not None else {}
         self.criterion = MSELoss()
+        self._moment_seq_len = 512
 
     def _fit(self, fh, y, X=None):
         """Assumes y is a single or multivariate time series."""
@@ -206,11 +209,20 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             if "criterion" in self._config.keys()
             else self.criterion
         )
+        # evaluate the sequence length passed by the user
         self._seq_len = (
             self._config["seq_len"]
             if "seq_len" in self._config.keys()
             else self.seq_len
         )
+        if self._seq_len > self._moment_seq_len:
+            warnings.warn(
+                f"length of {self._seq_len} was found which is greater than 512. "
+                "The most recent 512"
+                " values will be used when fitting.",
+                stacklevel=2,
+            )
+            self._seq_len = 512
         # in the case the config contains 'forecasting_horizon', we'll set
         # fh as that, otherwise we override it using the fh param
         self._fh_config = (
@@ -312,7 +324,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
 
                 losses.append(loss.item())
 
-            losses = np.array(losses)
+            # losses = np.array(losses)
             # average_loss = np.average(losses)
             # print(f"Epoch {cur_epoch}: Train loss: {average_loss:.3f}")
 
@@ -352,38 +364,55 @@ class MomentFMForecaster(_BaseGlobalForecaster):
 
             # print(
             #     f"Epoch {cur_epoch}: Test MSE: {metrics.mse:.3f}",
-            #     f"|Test MAE: {metrics.mae:.3f}"
+            #     f"|Test MAE: {metrics.mae:.3f}",
             # )
         return self
 
-    def _predict(self, y, X=None, fh=1):
+    def _predict(self, y, fh=1, X=None):
         """Predict method to forecast timesteps into the future.
 
         fh must be the same length as the one used to fit the model.
         """
         from torch import from_numpy
 
-        self._moment_seq_len = 512
+        self._model = self._model.to(self.device)
         self._model.eval()
         # first convert it into numpy values
         y_ = y.values
-        shape = y_.shape
-        if shape[0] < self._moment_seq_len:
+        sequence_length, num_channels = y_.shape  # shape of our input to predict
+        # raise warning if sequence length of y is greater than the sequence
+        # length used to fit the model
+        if sequence_length > self._seq_len:
+            warnings.warn(
+                f"length of {y.shape[0]} was found which is greater than sequence "
+                "length {self._seq_len} used to fit the model. The most recent"
+                f" {self._seq_len} values will be used.",
+                stacklevel=2,
+            )
+            # only retain the most recent self._seq_len values if greater than
+            # self._seq_len
+            y_ = y_[-self._seq_len :, :]
+            sequence_length = self._seq_len
+
+        # transpose it to change it into (C, S) size
+        y_ = y_.T
+        if sequence_length < self._moment_seq_len:
             # if smaller, need to pad values
-            y_ = _create_padding(y_, (self._moment_seq_len - shape[0], shape[1]))
-            input_mask = _create_mask(shape[0], self._moment_seq_len - shape[0])
-        elif shape[0] > self._moment_seq_len:  # this means that the user input a
-            # time series greater than 512 => we only use the most recent 512 steps
-            y_ = y_[-self._moment_seq_len :, :]
+            y_ = _create_padding(
+                y_, (self._moment_seq_len - sequence_length, num_channels)
+            )
+            input_mask = _create_mask(
+                sequence_length, self._moment_seq_len - sequence_length
+            )
+        else:  # this means sequence_length = self._seq_len == 512
             input_mask = _create_mask(self._moment_seq_len)
-        else:  # this means shape[0] == 512
-            input_mask = _create_mask(self._moment_seq_len)
-        if shape[1] != self._y_shape[1]:
+        if num_channels != self._y_shape[1]:
             # Todo raise error here
             pass
         # returns a timeseriesoutput object
-        y_torch_input = from_numpy(y_.values.reshape((1, self._y_shape[1], -1))).float()
-        y_torch_input.to(self.device)
+        y_torch_input = (
+            from_numpy(y_.reshape((1, self._y_shape[1], -1))).float().to(self.device)
+        )
         input_mask = input_mask.to(self.device)
         output = self._model(y_torch_input, input_mask)
         forecast_output = output.forecast
@@ -424,7 +453,7 @@ def _create_padding(x, pad_shape):
     """Return zero padded tensor of size seq_len, num_cols."""
     #    For example, if num_rows = 500 and seq_len = 512
     # then x.shape[0] = 500 and pad_shape[0] = 12
-    # then cat(x, zero_pad) should return (512,num_cols)
+    # then cat(x, zero_pad) should return (num_cols,512)
     from torch import cat, zeros
 
     if isinstance(x, np.ndarray):
@@ -433,8 +462,8 @@ def _create_padding(x, pad_shape):
         x_ = from_numpy(x)
     else:
         x_ = x
-    zero_pad = zeros(pad_shape)
-    out = cat((x_, zero_pad), axis=0)
+    zero_pad = zeros(pad_shape).T  # transpose to make it size (C, 512)
+    out = cat((x_, zero_pad), axis=1)
     if isinstance(x, np.ndarray):
         out = np.array(out)
     return out
@@ -489,7 +518,7 @@ class momentPytorchDataset(Dataset):
             .float()
             .reshape(self.y.shape[1], -1)
         )
-        if hist_end < self.moment_seq_len:
+        if self.seq_len < self.moment_seq_len:
             historical_y = _create_padding(historical_y, self._pad_shape)
         future_y = (
             from_numpy(self.y.iloc[hist_end:pred_end].values)
