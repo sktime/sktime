@@ -16,27 +16,27 @@ class ADICVTransformer(BaseTransformer):
     ``"smooth"``, ``"erratic"``, ``"intermittent"``, or ``"lumpy"``.
 
     The labels are based on the Average Demand Interval (ADI) and the Coefficient of
-    Variation (CV2) of the time series, using simple thresholding.
-    Optionally, the transformer can return the ADI and CV2 values as well.
+    Variation squared (CV^2) of the time series, using simple thresholding.
+    Optionally, the transformer can return the ADI and CV^2 values as well.
 
     Let :math:`x_t` be the value of the time series at times :math:`t = 1, 2, \dots, T`,
     and let :math:`N` be the number of non-zero values in the time series, i.e.,
     :math:`N = \text{card}\{t: x_t \neq 0\}`.
 
-    The ADI and CV2 are calculated as follows:
+    The ADI and CV^2 are calculated as follows:
 
-    1. Average Demand Interval (ADI): The average time period between
-      time periods with non-zero demands, mathematically defined as:
+    1. Average Demand Interval (ADI): The average number of periods between
+    periods with positive demand, mathematically defined as:
 
-    .. math:: ADI = \frac{T}{N - 1}
+    .. math:: ADI = \frac{T}{N}
 
-    2. Variance (CV2): Variance calculated on non-zero values
+    2. Coefficient of Variation squared (CV^2): CV is calculated on non-zero values
     in the time series. Mathematical definition is:
 
     .. math:: CV2 = \frac{1}{N}\sum_{t=1}^{T} x_t^2 - \left(\frac{1}{N}\sum_{t=1}^{T} x_t\right)^2
 
     3. Class: Classification of time series on basis of ADI threshold
-    and CV2 threshold.
+    and CV^2 threshold.
 
     For thresholds ``ADI_threshold`` and ``CV2_threshold``, the classes are:
 
@@ -48,6 +48,9 @@ class ADICVTransformer(BaseTransformer):
     Default values for the thresholds are taken from the paper by Syntetos/Boylan [1].
     namely, ``adi_threshold = 1.32`` and ``cv2_threshold = 0.49``.
     They can also be adjusted by passing them as parameters to the transformer.
+    Note that Hyndman & Kostenko [2], in their response to Syntetos/Boylan, indicated that
+    there was a more robust threshold for ADI/CV; this can theoretically be accounted for
+    by passing the threshold parameters as arguments to the fit_transform method.
 
     Parameters
     ----------
@@ -59,6 +62,14 @@ class ADICVTransformer(BaseTransformer):
 
     features : list[str] | None (default = ['adi', 'cv2', 'class'])
         Specifies all of the feature values to be calculated
+
+    adi_trim_handling: string (default = pool)
+        Specifies the method for reconciling leading/trailing zeros in the series.
+        Allowable values are ('pool', 'trim', and 'ignore'), corresponding to the
+        following treatment of leading/trailing zeros:
+        pool => N Observations / N Non-Zero Observations
+        trim => (Last Non-Zero Observation - First Non-Zero Observation) / N Non-Zero Observations
+        ignore => N Observations / (N Non-Zero Observations - 1)
 
     Examples
     --------
@@ -72,6 +83,8 @@ class ADICVTransformer(BaseTransformer):
     ----------
     [1]: John E. Boylan, Aris Syntetos: The Accuracy of Intermittent
     Demand Estimates. International Journal of Forecasting, 1 Apr. 2005
+    [2]: A V Kostenko, R J Hyndman: A note on the categorization of
+    demand patterns. Journal of the Operational Research Society, 21 Dec. 2017
     """  # noqa: E501
 
     _tags = {
@@ -98,7 +111,7 @@ class ADICVTransformer(BaseTransformer):
         cv_threshold=0.49,
         adi_trim_handling="pool",
     ):
-        """Initialize the transformer and processes any provided parameters.
+        """Initialize the transformer and process any provided parameters.
 
         Parameters
         ----------
@@ -110,6 +123,10 @@ class ADICVTransformer(BaseTransformer):
 
         cv_threshold : float, optional
             Threshold for Variance. Defaults to 0.49.
+
+        adi_trim_handling : str, optional
+            Determines how leading and trailing zeros are handled for ADI.
+            Defaults to 'pool'
 
         Raises
         ------
@@ -161,7 +178,7 @@ class ADICVTransformer(BaseTransformer):
             during initialization. Specifically, the columns include (by default):
 
                 1. Average Demand Interval (ADI)
-                2. Variance (CV2)
+                2. Coefficient of Variation squared (CV2)
                 3. categorical class
         """
         X_non_zero_indices = X.to_numpy().nonzero()[0]

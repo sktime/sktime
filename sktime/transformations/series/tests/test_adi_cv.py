@@ -29,8 +29,8 @@ def test_adi_cv_extractor(demand_series, expected_adi, expected_cv, expected_cla
 
     Parameters
     ----------
-    series_generator
-        A function that returns a time series in the Pandas Series format.
+    demand_series
+        A series of discrete integer values representing a demand pattern.
 
     expected_adi
         The expected Average Demand Interval (ADI) to be calculated by the transformer.
