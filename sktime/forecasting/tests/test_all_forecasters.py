@@ -218,7 +218,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             "ignores-exogeneous-X"
         ) and not estimator_instance.get_tag("capability:categorical_in_X"):
             X_train = pd.DataFrame({"col_0": ["a", "b", "c", "a", "b", "c"]})
-            y_train = _make_series(n_timepoints=6, n_columns=1)
+            y_train = _make_series(n_timepoints=6, n_columns=2)
 
             with pytest.raises(TypeError, match=r"categorical"):
                 estimator_instance.fit(y_train, X_train, fh=FH0)
