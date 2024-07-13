@@ -108,7 +108,7 @@ all_extras = [
   'statsforecast<1.8.0,>=1.0.0; python_version < "3.12"',
   "statsmodels>=0.12.1",
   'stumpy>=1.5.1; python_version < "3.11"',
-  'tbats>=1.1; python_version < "3.12"',
+  'tbats>=1.1',
   'temporian<0.9.0,>=0.7.0,!=0.8.0; python_version < "3.12" and sys_platform != "win32"',
   'tensorflow<2.17,>=2; python_version < "3.12"',
   'tsbootstrap<0.2,>=0.1.0',
