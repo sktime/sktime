@@ -19,7 +19,10 @@ class DWTTransformer(BaseTransformer):
     Parameters
     ----------
     num_levels : int, number of levels to perform the Haar wavelet
-                 transformation.
+        transformation.
+
+    Example
+    -------
     """
 
     _tags = {
