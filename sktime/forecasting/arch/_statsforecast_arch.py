@@ -118,7 +118,7 @@ class StatsForecastARCH(_GeneralisedStatsForecastAdapter):
     >>> y = load_airline()
     >>> forecaster = StatsForecastARCH(p=2)
     >>> forecaster.fit(y)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])  
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
     _tags = {
