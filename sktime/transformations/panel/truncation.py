@@ -21,11 +21,12 @@ class TruncationTransformer(BaseTransformer):
     upper : int, optional (default=None) maximum length, exclusive
                 This is used to calculate the range between.
                 If None, will truncate to the lower bound.
+
     Examples
     --------
     >>> from sktime.transformations.panel.truncation import TruncationTransformer
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
-    >>> X = _make_hierarchical(min_timepoints=3, max_timepoints=5, same_cutoff=False)
+    >>> X = _make_hierarchical(same_cutoff=False)
     >>> tt = TruncationTransformer()
     >>> tt.fit(X)
     >>> X_transformed = tt.transform(X)
