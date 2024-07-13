@@ -26,7 +26,7 @@ class ADICVTransformer(BaseTransformer):
     The ADI and CV^2 are calculated as follows:
 
     1. Average Demand Interval (ADI): The average number of periods between
-    periods with positive demand, mathematically defined as:
+    periods with non-zero demand, mathematically defined as:
 
     .. math:: ADI = \frac{T}{N}
 
