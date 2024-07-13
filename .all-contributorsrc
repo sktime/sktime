@@ -2895,5 +2895,14 @@
         "code"
       ]
     }
+    {
+      "login": "alexander-lakocy",
+      "name": "Alex Lakocy",
+      "avatar_url": "https://avatars.githubusercontent.com/alexander-lakocy",
+      "profile": "https://github.com/alexander-lakocy",
+      "contributions": [
+        "doc",
+      ]
+    }
   ]
 }
