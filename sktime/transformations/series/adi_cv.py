@@ -48,9 +48,6 @@ class ADICVTransformer(BaseTransformer):
     Default values for the thresholds are taken from the paper by Syntetos/Boylan [1].
     namely, ``adi_threshold = 1.32`` and ``cv2_threshold = 0.49``.
     They can also be adjusted by passing them as parameters to the transformer.
-    Note that Hyndman & Kostenko [2], in their response to Syntetos/Boylan, indicated that
-    there was a more robust threshold for ADI/CV; this can theoretically be accounted for
-    by passing the threshold parameters as arguments to the fit_transform method.
 
     Parameters
     ----------
@@ -67,9 +64,10 @@ class ADICVTransformer(BaseTransformer):
         Specifies the method for reconciling leading/trailing zeros in the series.
         Allowable values are ('pool', 'trim', and 'ignore'), corresponding to the
         following treatment of leading/trailing zeros:
-        pool => N Observations / N Non-Zero Observations
-        trim => (Last Non-Zero Observation - First Non-Zero Observation) / N Non-Zero Observations
-        ignore => N Observations / (N Non-Zero Observations - 1)
+        pool => L / N
+        trim => (Last N - First N) / N
+        ignore => L / (N - 1)
+            - where L is the set of All Observations, and N is the set of Non-Zero observations
 
     Examples
     --------
@@ -83,8 +81,6 @@ class ADICVTransformer(BaseTransformer):
     ----------
     [1]: John E. Boylan, Aris Syntetos: The Accuracy of Intermittent
     Demand Estimates. International Journal of Forecasting, 1 Apr. 2005
-    [2]: A V Kostenko, R J Hyndman: A note on the categorization of
-    demand patterns. Journal of the Operational Research Society, 21 Dec. 2017
     """  # noqa: E501
 
     _tags = {
