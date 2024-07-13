@@ -223,16 +223,18 @@ class ADICVTransformer(BaseTransformer):
                 class_type = "lumpy"
 
         # Collecting all values together into dict and converting to DF
-        df = pd.DataFrame()
+        return_dict = {}
 
         if "adi" in self.features_internal:
-            df["adi"] = [adi_value]
+            return_dict["adi"] = [adi_value]
 
         if "cv2" in self.features_internal:
-            df["cv2"] = [cv2_value]
+            return_dict["cv2"] = [cv2_value]
 
         if "class" in self.features_internal:
-            df["class"] = [class_type]
+            return_dict["class"] = [class_type]
+
+        df = pd.DataFrame(return_dict)
 
         # Ordering the dataframe in the correct order
         df = df.loc[:, self.features_internal]
