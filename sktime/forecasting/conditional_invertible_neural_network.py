@@ -301,9 +301,7 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
                         ):
                             return False
                     if self.verbose:
-                        print(  # noqa
-                            epoch, i, nll.detach().numpy(), val_nll.detach().numpy()
-                        )
+                        print(epoch, i, nll.detach().numpy(), val_nll.detach().numpy())
         return True
 
     def _predict(self, X=None, fh=None):
