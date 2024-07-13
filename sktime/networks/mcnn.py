@@ -15,8 +15,6 @@ class MCNNNetwork(BaseDeepNetwork):
     ----------
     input_shapes: tuple
         The shapes of three input branches.
-    num_classes: int
-        The number of classes in the dataset.
     pool_factor: int, optional (default=2)
         The factor by which the pooling size is divided.
     kernel_size: int, optional (default=7)
@@ -39,7 +37,6 @@ class MCNNNetwork(BaseDeepNetwork):
 
     def __init__(
         self,
-        num_classes,
         pool_factor=2,
         kernel_size=7,
         padding="same",
@@ -47,7 +44,6 @@ class MCNNNetwork(BaseDeepNetwork):
     ):
         _check_dl_dependencies(severity="error")
 
-        self.num_classes = num_classes
         self.pool_factor = pool_factor
         self.kernel_size = kernel_size
         self.padding = padding
@@ -66,7 +62,7 @@ class MCNNNetwork(BaseDeepNetwork):
         Returns
         -------
         tuple
-            A tuple containing the input and output layers of the network.
+            A tuple containing the input and fully connected layers of the network.
         """
         from tensorflow import keras
 
@@ -120,14 +116,7 @@ class MCNNNetwork(BaseDeepNetwork):
             activation="sigmoid",
             kernel_initializer="glorot_uniform",
         )(flatten_layer)
-
-        output_layer = keras.layers.Dense(
-            units=self.num_classes,
-            activation="softmax",
-            kernel_initializer="glorot_uniform",
-        )(fully_connected_layer)
-
-        return input_layers, output_layer
+        return input_layers, fully_connected_layer
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -153,14 +142,12 @@ class MCNNNetwork(BaseDeepNetwork):
         """
         params1 = {}
         params2 = {
-            "numclasses": 10,
             "pool_factor": 3,
             "kernel_size": 5,
             "padding": "same",
             "random_state": 0,
         }
         parms3 = {
-            "numclasses": 5,
             "pool_factor": 2,
             "kernel_size": 7,
             "padding": "auto",
