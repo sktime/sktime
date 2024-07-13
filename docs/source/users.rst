@@ -39,11 +39,11 @@ Documentation
     .. grid-item-card::
         :text-align: center
 
-        Tutorials
+        Video tutorials
 
         ^^^
 
-        `sktime` tutorials.
+        ``sktime`` video tutorials.
 
         +++
 
@@ -61,7 +61,7 @@ Documentation
 
         ^^^
 
-        `sktime` user guide.
+        ``sktime`` user guide.
 
         +++
 
@@ -79,7 +79,7 @@ Documentation
 
         ^^^
 
-        Overview of all estimators in `sktime`.
+        Overview of all estimators in ``sktime``.
 
         +++
 
@@ -97,7 +97,7 @@ Documentation
 
         ^^^
 
-        Glossary of common terms and API elements in `sktime`.
+        Glossary of common terms and API elements in ``sktime``.
 
         +++
 
@@ -133,7 +133,7 @@ Documentation
 
         ^^^
 
-        Software related to `sktime` and time series.
+        Software related to ``sktime`` and time series.
 
         +++
 
