@@ -2322,8 +2322,9 @@
       "profile": "https://github.com/MBristle",
       "contributions": [
         "bug",
-        "test",
-        "doc"
+        "code",
+        "doc",
+        "test"
       ]
     },
     {
@@ -2893,6 +2894,25 @@
       "contributions": [
         "bug",
         "code"
+      ]
+    },
+    {
+      "login": "fr1ll",
+      "name": "Will Sanger",
+      "avatar_url": "https://avatars.githubusercontent.com/u/29168593?v=4",
+      "profile": "https://github.com/fr1ll",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    }
+    {
+      "login": "alexander-lakocy",
+      "name": "Alex Lakocy",
+      "avatar_url": "https://avatars.githubusercontent.com/alexander-lakocy",
+      "profile": "https://github.com/alexander-lakocy",
+      "contributions": [
+        "doc",
       ]
     }
   ]

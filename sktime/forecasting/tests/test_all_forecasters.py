@@ -857,7 +857,7 @@ class TestAllGlobalForecasters(TestAllObjects):
 
         self._check_consistency(y_test, y_pred)
 
-    @pytest.mark.parametrize("n_columns", (1, 10))
+    @pytest.mark.parametrize("n_columns", [1, 10])
     def test_global_forecasting_series(self, estimator_instance, n_columns):
         from sktime.utils._testing.series import _make_series
 

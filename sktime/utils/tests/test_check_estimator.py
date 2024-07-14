@@ -60,7 +60,7 @@ def _check_none_failed_and_only_few_skipped(result):
     assert not any(x == "FAILED" for x in result.values())
 
     # Check less than 10% are skipped.
-    skip_ratio = sum(list(x[:4] == "SKIP" for x in result.values()))
+    skip_ratio = sum([x[:4] == "SKIP" for x in result.values()])
     skip_ratio = skip_ratio / len(result.values())
     assert skip_ratio < 0.1
 

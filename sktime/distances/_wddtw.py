@@ -1,6 +1,6 @@
 __author__ = ["chrisholder", "TonyBagnall"]
 
-from typing import Any, List, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -113,7 +113,7 @@ class _WddtwDistance(NumbaDistance):
             def numba_wddtw_distance_alignment_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
-            ) -> Tuple[List, float, np.ndarray]:
+            ) -> tuple[list, float, np.ndarray]:
                 _x = compute_derivative(_x)
                 _y = compute_derivative(_y)
                 cost_matrix = _weighted_cost_matrix(_x, _y, _bounding_matrix, g)
@@ -126,7 +126,7 @@ class _WddtwDistance(NumbaDistance):
             def numba_wddtw_distance_alignment_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
-            ) -> Tuple[List, float]:
+            ) -> tuple[list, float]:
                 _x = compute_derivative(_x)
                 _y = compute_derivative(_y)
                 cost_matrix = _weighted_cost_matrix(_x, _y, _bounding_matrix, g)

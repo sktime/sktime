@@ -1,7 +1,7 @@
 __author__ = ["chrisholder", "TonyBagnall"]
 
 
-from typing import Any, List, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -118,7 +118,7 @@ class _LcssDistance(NumbaDistance):
             def numba_lcss_distance_alignment_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
-            ) -> Tuple[List, float, np.ndarray]:
+            ) -> tuple[list, float, np.ndarray]:
                 x_size = _x.shape[1]
                 y_size = _y.shape[1]
                 cost_matrix = _sequence_cost_matrix(_x, _y, _bounding_matrix, epsilon)
@@ -138,7 +138,7 @@ class _LcssDistance(NumbaDistance):
             def numba_lcss_distance_alignment_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
-            ) -> Tuple[List, float]:
+            ) -> tuple[list, float]:
                 x_size = _x.shape[1]
                 y_size = _y.shape[1]
                 cost_matrix = _sequence_cost_matrix(_x, _y, _bounding_matrix, epsilon)
