@@ -1368,7 +1368,7 @@ class ProximityForest(BaseClassifier):
         self : object
         """
         if self.verbosity > 0:
-            print("tree " + str(index) + " building")  # noqa
+            print("tree " + str(index) + " building")
         tree = ProximityTree(
             random_state=random_state,
             verbosity=self.verbosity,

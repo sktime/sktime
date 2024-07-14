@@ -241,12 +241,9 @@ def save_model(
     if serialization_format not in SUPPORTED_SERIALIZATION_FORMATS:
         raise MlflowException(
             message=(
-                "Unrecognized serialization format: {serialization_format}. "
+                f"Unrecognized serialization format: {serialization_format}. "
                 "Please specify one of the following supported formats: "
-                "{supported_formats}.".format(
-                    serialization_format=serialization_format,
-                    supported_formats=SUPPORTED_SERIALIZATION_FORMATS,
-                )
+                f"{SUPPORTED_SERIALIZATION_FORMATS}."
             ),
             error_code=INVALID_PARAMETER_VALUE,
         )
@@ -545,12 +542,9 @@ def _load_model(path, serialization_format):
     if serialization_format not in SUPPORTED_SERIALIZATION_FORMATS:
         raise MlflowException(
             message=(
-                "Unrecognized serialization format: {serialization_format}. "
+                f"Unrecognized serialization format: {serialization_format}. "
                 "Please specify one of the following supported formats: "
-                "{supported_formats}.".format(
-                    serialization_format=serialization_format,
-                    supported_formats=SUPPORTED_SERIALIZATION_FORMATS,
-                )
+                f"{SUPPORTED_SERIALIZATION_FORMATS}."
             ),
             error_code=INVALID_PARAMETER_VALUE,
         )

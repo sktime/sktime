@@ -1,5 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Interfaces to estimators from neuralforecast by Nixtla."""
+
 import functools
 from typing import Optional, Union
 

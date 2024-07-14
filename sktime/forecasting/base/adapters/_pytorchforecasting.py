@@ -1,5 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for pytorch-forecasting models."""
+
 import abc
 import functools
 import os
@@ -145,7 +146,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
                         hash(time.time_ns())
                         + hash(self.algorithm_class)
                         + hash(str(data.get_parameters()))
-                        + hash(randint(0, int(time.time())))
+                        + hash(randint(0, int(time.time())))  # noqa: S311
                     )
                     self._random_log_dir = (
                         os.getcwd() + "/lightning_logs/" + str(abs(random_num))

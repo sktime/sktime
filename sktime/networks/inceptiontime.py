@@ -130,6 +130,7 @@ class InceptionTimeNetwork(BaseDeepNetwork):
         ----------
         input_shape : tuple
             The shape of the data fed into the input layer
+
         Returns
         -------
         input_layer : a keras layer
