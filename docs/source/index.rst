@@ -73,11 +73,11 @@ Contents
     .. grid-item-card::
         :text-align: center
 
-        User Guide
+        Documentation
 
         ^^^
 
-        Find user documentation.
+        User documentation.
 
         +++
 
@@ -86,7 +86,7 @@ Contents
             :click-parent:
             :expand:
 
-            User Guide
+            Documentation
 
     .. grid-item-card::
         :text-align: center
