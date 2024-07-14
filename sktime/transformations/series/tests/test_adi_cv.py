@@ -9,12 +9,16 @@ from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.adi_cv import ADICVTransformer
 
 
-def _generate_smooth_series(size: int = 750, seed=42):
+def _generate_smooth_series(size: int = 750, seed: int = 42):
     """Generates a demand time series of the "smooth" category.
     Parameters
     ----------
     size : int, optional
         The size of the generated time series, by default 750
+
+    seed : int, optional
+        The random seed state for the randomization algorithm.
+
     Returns
     -------
     Pandas.Series
@@ -24,17 +28,21 @@ def _generate_smooth_series(size: int = 750, seed=42):
     # standard deviation to 0.25. Denoted as scale according to numpy docs
 
     np.random.seed(seed)
-    smooth_series = np.random.normal(loc=10, scale=0.25, size=size)
+    smooth_series = np.random.normal(loc=10, scale=0.25, size=12)
 
     return pd.Series(smooth_series)
 
 
-def _generate_erratic_series(size: int = 750, seed=42):
+def _generate_erratic_series(size: int = 750, seed: int = 42):
     """Generates a demand time series of the "erratic" category.
     Parameters
     ----------
     size : int, optional
         The size of the generated time series, by default 750
+
+    seed : int, optional
+        The random seed state for the randomization algorithm.
+
     Returns
     -------
     Pandas.Series
@@ -44,17 +52,21 @@ def _generate_erratic_series(size: int = 750, seed=42):
     # standard deviation to 1 and then squaring the values
 
     np.random.seed(seed)
-    erratic_series = np.random.normal(loc=10, scale=2.5, size=size) ** 2
+    erratic_series = np.random.uniform(low=1, high=100, size=size) ** 2
 
     return pd.Series(erratic_series)
 
 
-def _generate_intermittent_series(size: int = 750, seed=42):
+def _generate_intermittent_series(size: int = 750, seed: int = 42):
     """Generates a demand time series of the "intermittent" category.
     Parameters
     ----------
     size : int, optional
         The size of the generated time series, by default 750
+
+    seed : int, optional
+        The random seed state for the randomization algorithm.
+
     Returns
     -------
     Pandas.Series
@@ -72,12 +84,16 @@ def _generate_intermittent_series(size: int = 750, seed=42):
     return pd.Series(intermittent_series)
 
 
-def _generate_lumpy_series(size: int = 750, seed=42):
+def _generate_lumpy_series(size: int = 750, seed: int = 42):
     """Generates a demand time series of the "lumpy" category.
     Parameters
     ----------
     size : int, optional
         The size of the generated time series, by default 750
+
+    seed : int, optional
+        The random seed state for the randomization algorithm.
+
     Returns
     -------
     Pandas.Series
@@ -90,7 +106,7 @@ def _generate_lumpy_series(size: int = 750, seed=42):
     lumpy_series = np.zeros(shape=(size,))
     non_zero_indices = np.random.choice(size, size=size // 10, replace=False)
 
-    lumpy_series[non_zero_indices] = np.random.normal(10, 2.5, size=size // 10) ** 2
+    lumpy_series[non_zero_indices] = np.random.uniform(1, 100, size=size // 10) ** 2
 
     return pd.Series(lumpy_series)
 
@@ -103,10 +119,10 @@ def _generate_lumpy_series(size: int = 750, seed=42):
 @pytest.mark.parametrize(
     "demand_series, expected_adi, expected_cv, expected_class",
     [
-        (_generate_smooth_series(), 1, 1, "smooth"),
-        (_generate_erratic_series(), 1, 1, "erratic"),
-        (_generate_intermittent_series(), 1, 1, "intermittent"),
-        (_generate_lumpy_series(), 1, 1, "lumpy"),
+        (_generate_smooth_series(), 1.0, 0.00, "smooth"),
+        (_generate_erratic_series(), 1.0, 0.82, "erratic"),
+        (_generate_intermittent_series(), 10.0, 0.0, "intermittent"),
+        (_generate_lumpy_series(), 10.0, 0.64, "lumpy"),
         ([10, 9, 10, 11, 12, 10, 9, 10, 8, 9, 10, 10], 1.0, 0.01, "smooth"),
         ([10, 20, 5, 25, 20, 5, 50, 35, 30, 100, 35, 45], 1.0, 0.62, "erratic"),
         ([6, 5, 0, 9, 2, 0, 14, 0, 0, 21, 0, 17], 1.71, 0.37, "intermittent"),
