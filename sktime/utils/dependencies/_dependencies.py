@@ -301,7 +301,6 @@ def _get_installed_packages():
     return _get_installed_packages_private().copy()
 
 
-@lru_cache
 def _get_pkg_version(package_name, package_import_name=None):
     """Check whether package is available in environment, and return its version if yes.
 
