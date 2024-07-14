@@ -9,6 +9,11 @@ This folder contains libraries directly distributed with, and maintained by, `sk
 *``vmdpy` - a package implementing Variational Mode Decomposition.
   Official fork, `vmdpy` is maintained in `sktime` since August 2023.
 
+*``fracdiff` - a package implementing fractional differentiation of time series,
+a la "Advances in Financial Machine Learning" by M. Prado.
+  Unofficial fork of abandoned package from July 2024,
+  see [pykalman issue 6700](https://github.com/sktime/sktime/issues/6700).
+
 
 # Snippets from other libraries:
 
