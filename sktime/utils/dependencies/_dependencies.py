@@ -2,10 +2,10 @@
 
 __author__ = ["fkiraly", "mloning"]
 
-import subprocess
 import sys
 import warnings
 from functools import lru_cache
+from importlib.metadata import distributions
 from importlib.util import find_spec
 from inspect import isclass
 
@@ -284,24 +284,8 @@ def _get_installed_packages_private():
     Same as _get_installed_packages, but internal to avoid mutating the lru_cache
     by accident.
     """
-    result = subprocess.run(  # noqa: S603
-        ["pip", "list", "--format=json"],  # noqa: S607
-        capture_output=True,
-        text=True,
-    )
-    packages = {}
-    if result.returncode == 0:
-        package_list = result.stdout
-        import json
-
-        package_data = json.loads(package_list)
-        for package in package_data:
-            packages[package["name"]] = package["version"]
-    else:
-        raise RuntimeError(
-            "Error in _get_installed_package - pip list command failed."
-            f"Return code: {result.returncode}, stderr: {result.stderr}"
-        )
+    dists = distributions()
+    packages = {dist.metadata['Name']: dist.version for dist in dists}
     return packages
 
 
