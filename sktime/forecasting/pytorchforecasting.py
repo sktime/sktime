@@ -17,18 +17,18 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
 
     Parameters
     ----------
-    model_params :  Dict[str, Any] (default=None)
+    model_params :  dict[str, Any] (default=None)
         parameters to be passed to initialize the pytorch-forecasting TFT model [1]_
         for example: {"lstm_layers": 3, "hidden_continuous_size": 10}
-    dataset_params : Dict[str, Any] (default=None)
+    dataset_params : dict[str, Any] (default=None)
         parameters to initialize `TimeSeriesDataSet` [2]_ from `pandas.DataFrame`
         max_prediction_length will be overwrite according to fh
         time_idx, target, group_ids, time_varying_known_reals, time_varying_unknown_reals
         will be infered from data, so you do not have to pass them
-    train_to_dataloader_params : Dict[str, Any] (default=None)
+    train_to_dataloader_params : dict[str, Any] (default=None)
         parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
         by default {"train": True}
-    validation_to_dataloader_params : Dict[str, Any] (default=None)
+    validation_to_dataloader_params : dict[str, Any] (default=None)
         parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
         by default {"train": False}
     model_path: string (default=None)
@@ -282,18 +282,18 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
 
     Parameters
     ----------
-    model_params :  Dict[str, Any] (default=None)
+    model_params :  dict[str, Any] (default=None)
         parameters to be passed to initialize the pytorch-forecasting NBeats model [1]_
         for example: {"num_blocks": [5, 5], "widths": [128, 1024]}
-    dataset_params : Dict[str, Any] (default=None)
+    dataset_params : dict[str, Any] (default=None)
         parameters to initialize `TimeSeriesDataSet` [2]_ from `pandas.DataFrame`
         max_prediction_length will be overwrite according to fh
         time_idx, target, group_ids, time_varying_known_reals, time_varying_unknown_reals
         will be infered from data, so you do not have to pass them
-    train_to_dataloader_params : Dict[str, Any] (default=None)
+    train_to_dataloader_params : dict[str, Any] (default=None)
         parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
         by default {"train": True}
-    validation_to_dataloader_params : Dict[str, Any] (default=None)
+    validation_to_dataloader_params : dict[str, Any] (default=None)
         parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
         by default {"train": False}
     model_path: string (default=None)
@@ -530,18 +530,18 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
 
     Parameters
     ----------
-    model_params :  Dict[str, Any] (default=None)
+    model_params :  dict[str, Any] (default=None)
         parameters to be passed to initialize the pytorch-forecasting NBeats model [1]_
         for example: {"cell_type": "GRU", "rnn_layers": 3}
-    dataset_params : Dict[str, Any] (default=None)
+    dataset_params : dict[str, Any] (default=None)
         parameters to initialize `TimeSeriesDataSet` [2]_ from `pandas.DataFrame`
         max_prediction_length will be overwrite according to fh
         time_idx, target, group_ids, time_varying_known_reals, time_varying_unknown_reals
         will be infered from data, so you do not have to pass them
-    train_to_dataloader_params : Dict[str, Any] (default=None)
+    train_to_dataloader_params : dict[str, Any] (default=None)
         parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
         by default {"train": True}
-    validation_to_dataloader_params : Dict[str, Any] (default=None)
+    validation_to_dataloader_params : dict[str, Any] (default=None)
         parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
         by default {"train": False}
     model_path: string (default=None)
@@ -646,12 +646,12 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
 
     def __init__(
         self: "PytorchForecastingDeepAR",
-        model_params: Optional[Dict[str, Any]] = None,
-        allowed_encoder_known_variable_names: Optional[List[str]] = None,
-        dataset_params: Optional[Dict[str, Any]] = None,
-        train_to_dataloader_params: Optional[Dict[str, Any]] = None,
-        validation_to_dataloader_params: Optional[Dict[str, Any]] = None,
-        trainer_params: Optional[Dict[str, Any]] = None,
+        model_params: Optional[dict[str, Any]] = None,
+        allowed_encoder_known_variable_names: Optional[list[str]] = None,
+        dataset_params: Optional[dict[str, Any]] = None,
+        train_to_dataloader_params: Optional[dict[str, Any]] = None,
+        validation_to_dataloader_params: Optional[dict[str, Any]] = None,
+        trainer_params: Optional[dict[str, Any]] = None,
         model_path: Optional[str] = None,
         deterministic: bool = False,
         random_log_path: bool = False,
@@ -792,18 +792,18 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
 
     Parameters
     ----------
-    model_params :  Dict[str, Any] (default=None)
+    model_params :  dict[str, Any] (default=None)
         parameters to be passed to initialize the pytorch-forecasting NBeats model [1]_
         for example: {"interpolation_mode": "nearest", "activation": "Tanh"}
-    dataset_params : Dict[str, Any] (default=None)
+    dataset_params : dict[str, Any] (default=None)
         parameters to initialize `TimeSeriesDataSet` [2]_ from `pandas.DataFrame`
         max_prediction_length will be overwrite according to fh
         time_idx, target, group_ids, time_varying_known_reals, time_varying_unknown_reals
         will be infered from data, so you do not have to pass them
-    train_to_dataloader_params : Dict[str, Any] (default=None)
+    train_to_dataloader_params : dict[str, Any] (default=None)
         parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
         by default {"train": True}
-    validation_to_dataloader_params : Dict[str, Any] (default=None)
+    validation_to_dataloader_params : dict[str, Any] (default=None)
         parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
         by default {"train": False}
     model_path: string (default=None)
@@ -906,11 +906,11 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
 
     def __init__(
         self: "PytorchForecastingNHiTS",
-        model_params: Optional[Dict[str, Any]] = None,
-        dataset_params: Optional[Dict[str, Any]] = None,
-        train_to_dataloader_params: Optional[Dict[str, Any]] = None,
-        validation_to_dataloader_params: Optional[Dict[str, Any]] = None,
-        trainer_params: Optional[Dict[str, Any]] = None,
+        model_params: Optional[dict[str, Any]] = None,
+        dataset_params: Optional[dict[str, Any]] = None,
+        train_to_dataloader_params: Optional[dict[str, Any]] = None,
+        validation_to_dataloader_params: Optional[dict[str, Any]] = None,
+        trainer_params: Optional[dict[str, Any]] = None,
         model_path: Optional[str] = None,
         random_log_path: bool = False,
     ) -> None:
