@@ -284,13 +284,14 @@ def _get_installed_packages_private():
     Same as _get_installed_packages, but internal to avoid mutating the lru_cache
     by accident.
     """
-    result = subprocess.run(
-        ["pip", "list", "--format=json"], capture_output=True, text=True
-    )  # noqa: S603, S607
+    result = subprocess.run(  # noqa: S603
+        ["pip", "list", "--format=json"], capture_output=True, text=True  # noqa: S607
+    )
     packages = {}
     if result.returncode == 0:
         package_list = result.stdout
         import json
+
         package_data = json.loads(package_list)
         for package in package_data:
             packages[package["name"]] = package["version"]
