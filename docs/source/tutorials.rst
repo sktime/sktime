@@ -3,7 +3,7 @@
 Tutorials
 =========
 
-Below are introductory tutorials for ``sktime``.
+Below are introductory video tutorials for ``sktime``.
 
 Each tutorial is located in its own repository, which contains notebooks and links to a youtube video walkthrough.
 
@@ -30,7 +30,7 @@ The notebooks are always functional with the most recent stable version.
 
         +++
 
-        .. button-link:: https://www.youtube.com/watch?v=ODspi8-uWgo
+        .. button-link:: https://youtu.be/ihWp8qZjayc
             :color: primary
             :click-parent:
             :expand:
