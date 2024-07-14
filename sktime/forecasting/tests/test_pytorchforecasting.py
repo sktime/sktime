@@ -1,5 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests for interfacing estimators from pytorch-forecasting."""
+
 import pytest
 
 from sktime.datatypes._utilities import get_cutoff
