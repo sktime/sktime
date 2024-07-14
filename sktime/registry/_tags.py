@@ -1575,7 +1575,7 @@ class x_inner_mtype(_BaseTag):
 
 
 class y_inner_mtype(_BaseTag):
-    """The machine type(s) the transformer can deal with internally for X.
+    """The machine type(s) the transformer can deal with internally for y.
 
     - String name: ``"y_inner_mtype"``
     - Extension developer tag
