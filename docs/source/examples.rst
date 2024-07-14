@@ -41,8 +41,8 @@ Forecasting
     examples/01b_forecasting_proba.ipynb
     examples/01c_forecasting_hierarchical_global.ipynb
 
-Time Series Classification
-==========================
+Time Series Classification, Regression, Clustering
+==================================================
 
 .. nbgallery::
     :glob:
@@ -61,14 +61,6 @@ Transformations, pipelines
     examples/03_transformers.ipynb
     examples/03a_transformers_cheat_sheet.ipynb
     examples/03b_forecasting_transformers_pipelines_tuning.ipynb
-
-Time Series Clustering
-======================
-
-.. nbgallery::
-    :glob:
-
-    examples/clustering/*
 
 Changepoint, Anomaly or Outlier Detection
 =========================================
