@@ -2,10 +2,10 @@
 
 __author__ = ["fkiraly", "mloning"]
 
+import subprocess
 import sys
 import warnings
 from functools import lru_cache
-from importlib.metadata import PackageNotFoundError, version
 from importlib.util import find_spec
 from inspect import isclass
 
@@ -278,6 +278,41 @@ def _check_mlflow_dependencies(msg=None, severity="error"):
 
 
 @lru_cache
+def _get_installed_packages_private():
+    """Get a dictionary of installed packages and their versions.
+
+    Same as _get_installed_packages, but internal to avoid mutating the lru_cache
+    by accident.
+    """
+    result = subprocess.run(['pip', 'list', '--format=json'], capture_output=True, text=True)
+    packages = {}
+    if result.returncode == 0:
+        package_list = result.stdout
+        import json
+        package_data = json.loads(package_list)
+        for package in package_data:
+            packages[package['name']] = package['version']
+    else:
+        raise RuntimeError(
+            "Error in _get_installed_package - pip list command failed."
+            f"Return code: {result.returncode}, stderr: {result.stderr}"
+        )
+    return packages
+
+
+def _get_installed_packages():
+    """Get a dictionary of installed packages and their versions.
+
+    Returns
+    -------
+    dict : dictionary of installed packages and their versions
+        keys are PEP 440 compatible package names, values are package versions
+        MAJOR.MINOR.PATCH version format is used for versions, e.g., "1.2.3"
+    """
+    return _get_installed_packages_private().copy()
+
+
+@lru_cache
 def _get_pkg_version(package_name, package_import_name=None):
     """Check whether package is available in environment, and return its version if yes.
 
@@ -299,24 +334,16 @@ def _get_pkg_version(package_name, package_import_name=None):
     Returns
     -------
     None, if package is not found at import ``package_import_name``;
-    ``importlib`` ``Version`` of package, if found at import ``package_import_name``
+    ``importlib`` ``Version`` of package, if present in environment.
     """
-    if package_import_name is None:
-        package_import_name = package_name
-
-    # optimized branching to check presence of import
-    # and presence of package distribution
-    # first we check import, then we check distribution
-    # because try/except consumes more runtime
-    pkg_spec = find_spec(package_import_name)
-    if pkg_spec is not None:
-        try:
-            pkg_env_version = Version(version(package_name))
-        except (InvalidVersion, PackageNotFoundError):
-            pkg_env_version = None
-    else:
+    pkgs = _get_installed_packages()
+    pkg_vers_str = pkgs.get(package_name, None)
+    if pkg_vers_str is None:
+        return None
+    try:
+        pkg_env_version = Version(pkg_vers_str)
+    except InvalidVersion:
         pkg_env_version = None
-
     return pkg_env_version
 
 
