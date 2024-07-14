@@ -1,7 +1,7 @@
 # found module but no type hints or library stubs
 import numpy as np
 
-from ..fdiff import fdiff_coef
+from sktime.libs.fracdiff import fdiff_coef
 
 
 def window_from_tol_coef(n: float, tol_coef: float, max_window: int = 2**12) -> int:
