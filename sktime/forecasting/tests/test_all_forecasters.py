@@ -153,7 +153,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             params = estimator_instance.get_fitted_params()
             assert isinstance(params, dict)
 
-        except NotImplementedError:
+        except NotImplementedError:  # noqa: S110
             pass
 
     # todo: should these not be checked in test_all_estimators?
@@ -170,7 +170,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         try:
             with pytest.raises(NotFittedError):
                 estimator_instance.get_fitted_params()
-        except NotImplementedError:
+        except NotImplementedError:  # noqa: S110
             pass
 
     def test_y_multivariate_raises_error(self, estimator_instance):
@@ -313,7 +313,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 _assert_correct_pred_time_index(y_pred_int.index, cutoff, fh)
                 y_pred_q = estimator_instance.predict_quantiles(X=X_test)
                 _assert_correct_pred_time_index(y_pred_q.index, cutoff, fh)
-        except NotImplementedError:
+        except NotImplementedError:  # noqa: S110
             pass
 
     @pytest.mark.parametrize(
@@ -346,7 +346,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 _assert_correct_pred_time_index(y_pred_int.index, cutoff, fh)
                 y_pred_q = estimator_instance.predict_quantiles()
                 _assert_correct_pred_time_index(y_pred_q.index, cutoff, fh)
-        except NotImplementedError:
+        except NotImplementedError:  # noqa: S110
             pass
 
     def test_predict_series_name_preserved(self, estimator_instance):
@@ -468,7 +468,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             try:
                 pred_dist = estimator_instance.predict_proba()
                 _check_predict_proba(pred_dist, y_train, fh_int_oos)
-            except NotImplementedError:
+            except NotImplementedError:  # noqa: S110
                 pass
         else:
             with pytest.raises(NotImplementedError, match="probabilistic predictions"):
@@ -502,7 +502,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
             if isinstance(f, PytorchForecastingNBeats):
                 return None
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
         # PR #4465 adds base ``_predict_interval`` in ``_StatsModelsAdapter``.
@@ -1017,7 +1017,7 @@ class TestAllGlobalForecasters(TestAllObjects):
             try:
                 pred_dist = estimator_instance.predict_proba(X=X_test, y=y_test)
                 _check_predict_proba(pred_dist, y_test, fh_int_oos)
-            except NotImplementedError:
+            except NotImplementedError:  # noqa: S110
                 pass
         else:
             with pytest.raises(NotImplementedError, match="probabilistic predictions"):

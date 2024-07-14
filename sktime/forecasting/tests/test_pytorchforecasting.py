@@ -1,5 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests for interfacing estimators from pytorch-forecasting."""
+
 import pytest
 
 from sktime.datatypes._utilities import get_cutoff
@@ -76,7 +77,7 @@ def test_load_model_from_disk(model_class) -> None:
     try:
         model._trainer
         raise AssertionError("Trainer should not be initialized")
-    except AttributeError:
+    except AttributeError:  # noqa: S110
         pass
 
     # remove max_prediction_length from the end of y_test
