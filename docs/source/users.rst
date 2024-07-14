@@ -9,7 +9,7 @@ Documentation
 
    installation
    tutorials
-   user_guide
+   examples
    estimator_overview
    glossary
    changelog
@@ -57,20 +57,20 @@ Documentation
     .. grid-item-card::
         :text-align: center
 
-        User Guide
+        Notebook Examples
 
         ^^^
 
-        ``sktime`` user guide.
+        Usage examples in jupyter notebooks.
 
         +++
 
-        .. button-ref:: user_guide
+        .. button-ref:: examples
             :color: primary
             :click-parent:
             :expand:
 
-            User Guide
+            Notebook Examples
 
     .. grid-item-card::
         :text-align: center
