@@ -493,6 +493,11 @@ Ensembles and stacking
     AutoEnsembleForecaster
     StackingForecaster
 
+
+.. currentmodule:: sktime.forecasting.autots
+
+    AutoTS
+
 Hierarchical reconciliation
 ---------------------------
 

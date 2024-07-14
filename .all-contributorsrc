@@ -2322,8 +2322,9 @@
       "profile": "https://github.com/MBristle",
       "contributions": [
         "bug",
-        "test",
-        "doc"
+        "code",
+        "doc",
+        "test"
       ]
     },
     {
