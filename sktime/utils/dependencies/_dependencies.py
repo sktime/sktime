@@ -285,9 +285,7 @@ def _get_installed_packages_private():
     by accident.
     """
     result = subprocess.run(  # noqa: S603
-        ["pip", "list", "--format=json"],  # noqa: S607
-        capture_output=True,
-        text=True,
+        ["pip", "list", "--format=json"], capture_output=True, text=True  # noqa: S607
     )
     packages = {}
     if result.returncode == 0:
