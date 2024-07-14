@@ -7,7 +7,6 @@ from sklearn.base import clone
 
 from sktime.annotation.base._base import BaseSeriesAnnotator
 from sktime.utils.dependencies import _check_soft_dependencies
-from sktime.utils.warnings import warn
 
 __author__ = ["mloning", "satya-pattnaik", "fkiraly"]
 
@@ -30,26 +29,13 @@ class PyODAnnotator(BaseSeriesAnnotator):
         "learning_type": "unsupervised",
     }
 
-    # todo 0.31.0: remove fmt argument and warning
-    def __init__(self, estimator, fmt="deprecated", labels="indicator"):
+    def __init__(self, estimator, labels="indicator"):
         self.estimator = estimator  # pyod estimator
-        self.fmt = fmt
         self.labels = labels
 
         super().__init__()
 
-        if fmt == "deprecated":
-            self._fmt = "sparse"
-            warn(
-                f"Warning from {type(self).__name__}: fmt argument will be removed in"
-                " 0.31.0. For behaviour equivalent to fmt=dense, use transform instead "
-                "of predict. In 0.31.0 the behaviour of predict will equivalent to the"
-                " current behaviour of predict when fmt=sparse.",
-                DeprecationWarning,
-                obj=self,
-            )
-        else:
-            self._fmt = fmt
+        self._fmt = "sparse"
 
     def _fit(self, X, Y=None):
         """Fit to training data.
@@ -62,6 +48,7 @@ class PyODAnnotator(BaseSeriesAnnotator):
             training data to fit model to, time series
         Y : pd.Series, optional
             ground truth annotations for training if annotator is supervised
+
         Returns
         -------
         self : returns a reference to self

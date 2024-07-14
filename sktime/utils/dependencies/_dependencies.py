@@ -4,6 +4,7 @@ __author__ = ["fkiraly", "mloning"]
 
 import sys
 import warnings
+from functools import lru_cache
 from importlib.metadata import PackageNotFoundError, version
 from importlib.util import find_spec
 from inspect import isclass
@@ -146,19 +147,16 @@ def _check_soft_dependencies(
         else:
             package_import_name = package_name
 
-        # optimized branching to check presence of import
-        # and presence of package distribution
-        # first we check import, then we check distribution
-        # because try/except consumes more runtime
-        pkg_spec = find_spec(package_import_name)
-        if pkg_spec is not None:
-            try:
-                pkg_env_version = Version(version(package_name))
-            except (InvalidVersion, PackageNotFoundError):
-                pkg_spec = None
+        # determine the package import
+        if package_name in package_import_alias.keys():
+            package_import_name = package_import_alias[package_name]
+        else:
+            package_import_name = package_name
+
+        pkg_env_version = _get_pkg_version(package_name, package_import_name)
 
         # if package not present, make the user aware of installation reqs
-        if pkg_spec is None:
+        if pkg_env_version is None:
             if obj is None and msg is None:
                 msg = (
                     f"'{package}' not found. "
@@ -181,19 +179,8 @@ def _check_soft_dependencies(
             # if msg is not None, none of the above is executed,
             # so if msg is passed it overrides the default messages
 
-            if severity == "error":
-                raise ModuleNotFoundError(msg)
-            elif severity == "warning":
-                warnings.warn(msg, stacklevel=2)
-                return False
-            elif severity == "none":
-                return False
-            else:
-                raise RuntimeError(
-                    "Error in calling _check_soft_dependencies, severity "
-                    'argument must be "error", "warning", or "none",'
-                    f'found "{severity}".'
-                )
+            _raise_at_severity(msg, severity, caller="_check_soft_dependencies")
+            return False
 
         # now we check compatibility with the version specifier if non-empty
         if package_version_req != SpecifierSet(""):
@@ -210,17 +197,8 @@ def _check_soft_dependencies(
 
             # raise error/warning or return False if version is incompatible
             if pkg_env_version not in package_version_req:
-                if severity == "error":
-                    raise ModuleNotFoundError(msg)
-                elif severity == "warning":
-                    warnings.warn(msg, stacklevel=2)
-                elif severity == "none":
-                    return False
-                else:
-                    raise RuntimeError(
-                        "Error in calling _check_soft_dependencies, severity argument"
-                        f' must be "error", "warning", or "none", found "{severity}".'
-                    )
+                _raise_at_severity(msg, severity, caller="_check_soft_dependencies")
+                return False
 
     # if package can be imported and no version issue was caught for any string,
     # then obj is compatible with the requirements and we should return True
@@ -259,18 +237,8 @@ def _check_dl_dependencies(msg=None, severity="error"):
     if find_spec("tensorflow") is not None:
         return True
     else:
-        if severity == "error":
-            raise ModuleNotFoundError(msg)
-        elif severity == "warning":
-            warnings.warn(msg, stacklevel=2)
-            return False
-        elif severity == "none":
-            return False
-        else:
-            raise RuntimeError(
-                "Error in calling _check_dl_dependencies, severity "
-                f'argument must be "error", "warning", or "none", found "{severity}".'
-            )
+        _raise_at_severity(msg, severity, caller="_check_dl_dependencies")
+        return False
 
 
 def _check_mlflow_dependencies(msg=None, severity="error"):
@@ -307,6 +275,49 @@ def _check_mlflow_dependencies(msg=None, severity="error"):
         )
 
     return _check_soft_dependencies("mlflow", msg=msg, severity=severity)
+
+
+@lru_cache
+def _get_pkg_version(package_name, package_import_name=None):
+    """Check whether package is available in environment, and return its version if yes.
+
+    Returns ``Version`` object from ``lru_cache``, this should not be mutated.
+
+    Parameters
+    ----------
+    package_name : str, optional, default=None
+        name of package to check, e.g., "pandas" or "sklearn".
+        This is the pypi package name, not the import name, e.g.,
+        ``scikit-learn``, not ``sklearn``.
+    package_import_name : str, optional, default=None
+        name of package to check for import, e.g., "pandas" or "sklearn".
+        Note: this is the import name, not the pypi package name, e.g.,
+        ``sklearn``, not ``scikit-learn``.
+        If not given, ``package_name`` is used as ``package_import_name``,
+        i.e., it is assumed that the import name is the same as the package name.
+
+    Returns
+    -------
+    None, if package is not found at import ``package_import_name``;
+    ``importlib`` ``Version`` of package, if found at import ``package_import_name``
+    """
+    if package_import_name is None:
+        package_import_name = package_name
+
+    # optimized branching to check presence of import
+    # and presence of package distribution
+    # first we check import, then we check distribution
+    # because try/except consumes more runtime
+    pkg_spec = find_spec(package_import_name)
+    if pkg_spec is not None:
+        try:
+            pkg_env_version = Version(version(package_name))
+        except (InvalidVersion, PackageNotFoundError):
+            pkg_env_version = None
+    else:
+        pkg_env_version = None
+
+    return pkg_env_version
 
 
 def _check_python_version(obj, package=None, msg=None, severity="error"):
@@ -372,18 +383,8 @@ def _check_python_version(obj, package=None, msg=None, severity="error"):
                 f" This is due to python version requirements of the {package} package."
             )
 
-    if severity == "error":
-        raise ModuleNotFoundError(msg)
-    elif severity == "warning":
-        warnings.warn(msg, stacklevel=2)
-    elif severity == "none":
-        return False
-    else:
-        raise RuntimeError(
-            "Error in calling _check_python_version, severity "
-            f'argument must be "error", "warning", or "none", found "{severity}".'
-        )
-    return True
+    _raise_at_severity(msg, severity, caller="_check_python_version")
+    return False
 
 
 def _check_env_marker(obj, package=None, msg=None, severity="error"):
@@ -447,18 +448,8 @@ def _check_env_marker(obj, package=None, msg=None, severity="error"):
         if package is not None:
             msg += f" This is due to requirements of the {package} package."
 
-    if severity == "error":
-        raise ModuleNotFoundError(msg)
-    elif severity == "warning":
-        warnings.warn(msg, stacklevel=2)
-    elif severity == "none":
-        return False
-    else:
-        raise RuntimeError(
-            "Error in calling _check_env_marker, severity "
-            f'argument must be "error", "warning", or "none", found "{severity}".'
-        )
-    return True
+    _raise_at_severity(msg, severity, caller="_check_env_marker")
+    return False
 
 
 def _check_estimator_deps(obj, msg=None, severity="error"):
@@ -558,3 +549,55 @@ def _normalize_requirement(req):
     normalized_req = Requirement(f"{req.name}{normalized_specifier_set}")
 
     return normalized_req
+
+
+def _raise_at_severity(
+    msg,
+    severity,
+    exception_type=None,
+    warning_type=None,
+    stacklevel=2,
+    caller="_raise_at_severity",
+):
+    """Raise exception or warning or take no action, based on severity.
+
+    Parameters
+    ----------
+    msg : str
+        message to raise or warn
+    severity : str, "error", "warning", or "none"
+        behaviour for raising errors or warnings
+    exception_type : Exception, default=ModuleNotFoundError
+        exception type to raise if severity="severity"
+    warning_type : warning, default=Warning
+        warning type to raise if severity="warning"
+    stacklevel : int, default=2
+        stacklevel for warnings, if severity="warning"
+    caller : str, default="_raise_at_severity"
+        caller name, used in exception if severity not in ["error", "warning", "none"]
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    exception : exception_type, if severity="error"
+    warning : warning+type, if severity="warning"
+    ValueError : if severity not in ["error", "warning", "none"]
+    """
+    if exception_type is None:
+        exception_type = ModuleNotFoundError
+
+    if severity == "error":
+        raise exception_type(msg)
+    elif severity == "warning":
+        warnings.warn(msg, category=warning_type, stacklevel=stacklevel)
+    elif severity == "none":
+        return None
+    else:
+        raise ValueError(
+            f"Error in calling {caller}, severity "
+            f'argument must be "error", "warning", or "none", found {severity!r}.'
+        )
+    return None
