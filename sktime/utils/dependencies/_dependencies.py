@@ -285,7 +285,7 @@ def _get_installed_packages_private():
     by accident.
     """
     dists = distributions()
-    packages = {dist.metadata['Name']: dist.version for dist in dists}
+    packages = {dist.metadata["Name"]: dist.version for dist in dists}
     return packages
 
 
