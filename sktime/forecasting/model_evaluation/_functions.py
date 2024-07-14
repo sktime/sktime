@@ -184,8 +184,12 @@ def _get_pred_args_from_metric(scitype, metric):
 
 
 def _evaluate_window(x, meta):
+    global_mode = meta["global_mode"]
     # unpack args
-    i, (y_train, y_test, X_train, X_test) = x
+    if global_mode:
+        i, (y_train, y_hist, y_true, X_train, X_test) = x
+    else:
+        i, (y_train, y_test, X_train, X_test) = x
     fh = meta["fh"]
     forecaster = meta["forecaster"]
     strategy = meta["strategy"]
@@ -205,7 +209,7 @@ def _evaluate_window(x, meta):
     old_naming = True
     old_name_mapping = {}
     if fh is None:
-        fh = _select_fh_from_y(y_test)
+        fh = _select_fh_from_y(y_true if global_mode else y_test)
 
     try:
         # fit/update
@@ -252,14 +256,21 @@ def _evaluate_window(x, meta):
                 # make prediction
                 if y_pred_key not in y_preds_cache.keys():
                     start_pred = time.perf_counter()
-                    y_pred = method(fh, X_test, **pred_args)
+                    if global_mode:
+                        y_pred = method(fh, X_test, y_hist, **pred_args)
+                    else:
+                        y_pred = method(fh, X_test, **pred_args)
                     pred_time = time.perf_counter() - start_pred
                     temp_result[time_key] = [pred_time]
                     y_preds_cache[y_pred_key] = [y_pred]
                 else:
                     y_pred = y_preds_cache[y_pred_key][0]
 
-                score = metric(y_test, y_pred, y_train=y_train)
+                # evaluate metrics
+                if global_mode:
+                    score = metric(y_true, y_pred, y_train=y_train)
+                else:
+                    score = metric(y_test, y_pred, y_train=y_train)
                 temp_result[result_key] = [score]
 
         # get cutoff
@@ -300,7 +311,11 @@ def _evaluate_window(x, meta):
     temp_result["cutoff"] = [cutoff_ind]
     if return_data:
         temp_result["y_train"] = [y_train]
-        temp_result["y_test"] = [y_test]
+        if global_mode:
+            temp_result["y_hist"] = [y_hist]
+            temp_result["y_true"] = [y_true]
+        else:
+            temp_result["y_test"] = [y_test]
         temp_result.update(y_preds_cache)
     result = pd.DataFrame(temp_result)
     result = result.astype({"len_train_window": int, "cutoff": cutoff_dtype})
@@ -330,6 +345,8 @@ def evaluate(
     backend: Optional[str] = None,
     cv_X=None,
     backend_params: Optional[dict] = None,
+    global_mode=False,
+    cv_ht=None,
 ):
     r"""Evaluate forecaster using timeseries cross-validation.
 
@@ -513,6 +530,8 @@ def evaluate(
     >>> results = evaluate(forecaster=NaiveVariance(forecaster),
     ... y=y, cv=cv, scoring=loss)
     """
+    if global_mode:
+        assert cv_ht is not None, "in global mode, cv_ht must be passed"
     if backend in ["dask", "dask_lazy"]:
         if not _check_soft_dependencies("dask", severity="none"):
             raise RuntimeError(
@@ -523,8 +542,10 @@ def evaluate(
     _check_strategy(strategy)
     cv = check_cv(cv, enforce_start_with_window=True)
     scoring = _check_scores(scoring)
-
-    ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
+    if global_mode:
+        ALLOWED_SCITYPES = ["Panel", "Hierarchical"]
+    else:
+        ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
 
     y_valid, _, _ = check_is_scitype(y, scitype=ALLOWED_SCITYPES, return_metadata=True)
     if not y_valid:
@@ -546,13 +567,14 @@ def evaluate(
 
     cutoff_dtype = str(y.index.dtype)
     _evaluate_window_kwargs = {
-        "fh": cv.fh,
+        "fh": cv_ht.fh if global_mode else cv.fh,
         "forecaster": forecaster,
         "scoring": scoring,
         "strategy": strategy,
         "return_data": return_data,
         "error_score": error_score,
         "cutoff_dtype": cutoff_dtype,
+        "global_mode": global_mode,
     }
 
     def gen_y_X_train_test(y, X, cv, cv_X):
@@ -586,8 +608,58 @@ def evaluate(
             for (y_train, y_test), (X_train, X_test) in zip(geny, genx):
                 yield y_train, y_test, X_train, X_test
 
+    def gen_y_X_train_test_global(y, X, cv, cv_X, cv_ht):
+        """Generate joint splits of y, X as per cv, cv_X.
+
+        If X is None, train/test splits of X are also None.
+
+        If cv_X is None, will default to
+        SameLocSplitter(TestPlusTrainSplitter(cv), y)
+        i.e., X splits have same loc index as y splits.
+
+        Yields
+        ------
+        y_train : i-th train split of y as per cv
+        y_hist : i-th test history value split of y as per cv
+        y_true : i-th test true value split of y as per cv
+        X_train : i-th train split of y as per cv_X. None if X was None.
+        X_test : i-th test split of y as per cv_X. None if X was None.
+        """
+        from sktime.split import InstanceSplitter, SingleWindowSplitter
+
+        assert isinstance(
+            cv, InstanceSplitter
+        ), "cv must be an instance of sktime.split.InstanceSplitter"
+        if cv_X is not None:
+            assert isinstance(
+                cv_X, InstanceSplitter
+            ), "cv_X must be an instance of sktime.split.InstanceSplitter"
+        assert isinstance(
+            cv_ht, SingleWindowSplitter
+        ), "cv_ht must be an instance of sktime.split.SingleWindowSplitter"
+
+        geny = cv.split_series(y)
+        if X is None:
+            for y_train, y_test in geny:
+                y_hist, y_true = next(cv_ht.split_series(y_test))
+                yield y_train, y_hist, y_true, None, None
+        else:
+            if cv_X is None:
+                from sktime.split import SameLocSplitter
+
+                cv_X = SameLocSplitter(cv, y)
+
+            genx = cv_X.split_series(X)
+
+            for (y_train, y_test), (X_train, X_test) in zip(geny, genx):
+                y_hist, y_true = next(cv_ht.split_series(y_test))
+                yield y_train, y_hist, y_true, X_train, X_test
+
     # generator for y and X splits to iterate over below
-    yx_splits = gen_y_X_train_test(y, X, cv, cv_X)
+    if global_mode:
+        yx_splits = gen_y_X_train_test_global(y, X, cv, cv_X, cv_ht=cv_ht)
+    else:
+        yx_splits = gen_y_X_train_test(y, X, cv, cv_X)
 
     # sequential strategies cannot be parallelized
     not_parallel = strategy in ["update", "no-update_params"]
