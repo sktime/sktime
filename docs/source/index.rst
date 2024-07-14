@@ -77,7 +77,7 @@ Contents
 
         ^^^
 
-        Find user documentation.
+        User documentation.
 
         +++
 
