@@ -20,6 +20,15 @@ We assume basic familiarity with `scikit-learn`_. If you haven't worked with sci
 .. _scikit-learn: https://scikit-learn.org/stable/
 .. _getting-started guide: https://scikit-learn.org/stable/getting_started.html
 
+
+Introduction
+=============
+
+.. nbgallery::
+    :glob:
+
+    examples/00_sktime_intro.ipynb
+
 Forecasting
 =============
 
@@ -76,6 +85,14 @@ Transformation
     examples/03b_forecasting_transformers_pipelines_tuning.ipynb
     examples/transformation/*
 
+Distances Kernels Alignment
+=============
+
+.. nbgallery::
+    :glob:
+
+    examples/06_distances_kernels_alignment.ipynb
+
 Data
 =============
 
@@ -91,7 +108,6 @@ Other
 .. nbgallery::
     :glob:
 
-    examples/00_sktime_intro.ipynb
     examples/04_benchmarking.ipynb
     examples/04_benchmarking_v2.ipynb
     examples/other/*
