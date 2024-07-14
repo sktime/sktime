@@ -16,6 +16,7 @@ See here for a `full list of precompiled wheels available on PyPI <https://pypi.
 For frequent issues with installation, consult the `Release versions - troubleshooting`_ section.
 
 There are three different installation types:
+
 * Installing sktime releases
 * Installing the latest sktime development version
 * For developers of sktime and 3rd party extensions: Developer setup
@@ -135,7 +136,7 @@ For a developer install that updates the package each time the local source code
 
 .. code-block:: bash
 
-    pip install --editable .[dev]
+    pip install --editable '.[dev]'
 
 This allows editing and extending the code in-place. See also
 `pip reference on editable installs <https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`_).
