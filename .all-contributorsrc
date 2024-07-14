@@ -2924,5 +2924,14 @@
         "doc"
       ]
     }
+    {
+        "login": "DinoBektesevic",
+        "name": "Dino Bektesevic",
+        "avatar_url": "https://avatars.githubusercontent.com/u/29500910?v=4?s=100",
+        "profile": "https://github.com/DinoBektesevic",
+        "contributions": [
+            "code",
+        ]
+    }
   ]
 }
