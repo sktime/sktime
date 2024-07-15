@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.adi_cv import ADICVTransformer
 
 
@@ -111,10 +112,10 @@ def _generate_lumpy_series(size: int = 750, seed: int = 42):
 
 
 # Defining all of the categories we wish to run tests for
-# @pytest.mark.skipif(
-#     not run_test_for_class(ADICVTransformer),
-#     reason="run test only if softdeps are present and incrementally (if requested)",
-# )
+@pytest.mark.skipif(
+    not run_test_for_class(ADICVTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "demand_series, expected_adi, expected_cv, expected_class",
     [
