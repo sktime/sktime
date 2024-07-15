@@ -18,10 +18,7 @@ else:
     class Dataset:
         """Dummy class if torch is unavailable."""
 
-        pass
 
-
-# todo: change class name and write docstring
 class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     """Custom forecaster. todo: write docstring.
 
@@ -241,20 +238,17 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         self : reference to self
         """
         # from transformers import PatchTSTForPrediction, PatchTSTConfig
+        from transformers import Trainer, TrainingArguments
         from tsfm_public.models.tinytimemixer import (
             TinyTimeMixerConfig,
             TinyTimeMixerForPrediction,
         )
 
         # Get the Configuration
-        # config = TinyTimeMixerConfig()
         config = TinyTimeMixerConfig.from_pretrained(
             self.model_path,
             revision=self.revision,
         )
-        # config = PatchTSTConfig.from_pretrained(
-        # "ibm-granite/granite-timeseries-patchtst"
-        # )
 
         # Update config with user provided config
         _config = config.to_dict()
@@ -312,6 +306,49 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
             output_loading_info=True,
             ignore_mismatched_sizes=True,
         )
+
+        if len(info["mismatched_keys"]) == 0:
+            return  # No need to fit
+
+        # Freeze all loaded parameters
+        for param in self.model.parameters():
+            param.requires_grad = False
+
+        # Reininit the weights of all layers that have mismatched sizes
+        for key, _, _ in info["mismatched_keys"]:
+            _model = self.model
+            for attr_name in key.split(".")[:-1]:
+                _model = getattr(_model, attr_name)
+            _model.weight.requires_grad = True
+
+        # multi-index conversion goes here
+        if isinstance(y.index, pd.MultiIndex):
+            _y = _frame2numpy(y)
+        else:
+            _y = np.expand_dims(y.values, axis=0)
+
+        # TODO: create train-test split
+        dataset = PyTorchDataset(
+            y=_y,
+            context_length=config.context_length,
+            prediction_length=config.prediction_length,
+        )
+
+        # Get Training Configuration
+        training_args = TrainingArguments(**self._training_args)
+
+        # Get the Trainer
+        trainer = Trainer(
+            model=self.model,
+            args=training_args,
+            train_dataset=dataset,
+            # eval_dataset=eval_dataset,
+            compute_metrics=self.compute_metrics,
+            callbacks=self.callbacks,
+        )
+
+        # Train the model
+        trainer.train()
 
     def _predict(self, fh, X, y=None):
         """Forecast time series at future horizon.
@@ -502,3 +539,55 @@ def _frame2numpy(data):
         (-1, length, len(data.columns))
     )
     return arr
+
+
+class PyTorchDataset(Dataset):
+    """Dataset for use in sktime deep learning forecasters."""
+
+    def __init__(self, y, context_length, prediction_length):
+        """
+        Initialize the dataset.
+
+        Parameters
+        ----------
+        y : ndarray
+            The time series data, shape (n_sequences, n_timestamps, n_dims)
+        context_length : int
+            The length of the past values
+        prediction_length : int
+            The length of the future values
+        """
+        self.y = y
+        self.context_length = context_length
+        self.prediction_length = prediction_length
+
+        self.n_sequences, self.n_timestamps, _ = self.y.shape
+        self.single_length = (
+            self.n_timestamps - self.context_length - self.prediction_length + 1
+        )
+
+        # TODO: raise error on less data
+
+    def __len__(self):
+        """Return the length of the dataset."""
+        # Calculate the number of samples that can be created from each sequence
+        return self.single_length * self.n_sequences
+
+    def __getitem__(self, i):
+        """Return data point."""
+        m = i % self.single_length
+        n = i // self.single_length
+
+        past_values = self.y[n, m : m + self.context_length, :]
+        future_values = self.y[
+            n,
+            m + self.context_length : m + self.context_length + self.prediction_length,
+            :,
+        ]
+        observed_mask = np.ones_like(past_values)
+
+        return {
+            "past_values": past_values,
+            "observed_mask": observed_mask,
+            "future_values": future_values,
+        }
