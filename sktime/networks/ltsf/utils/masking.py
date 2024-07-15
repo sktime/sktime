@@ -12,8 +12,6 @@ else:
     class nn_module:
         """Dummy class if torch is unavailable."""
 
-        pass
-
 
 class LTSFTriangularCausalMask:
     """LTSFTriangularCausalMask."""
@@ -27,7 +25,7 @@ class LTSFTriangularCausalMask:
 
     @property
     def mask(self):
-        """mask."""
+        """Mask."""
         return self._mask
 
 
@@ -44,5 +42,5 @@ class LTSFProbMask:
 
     @property
     def mask(self):
-        """mask."""
+        """Mask."""
         return self._mask

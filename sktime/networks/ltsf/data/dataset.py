@@ -10,8 +10,6 @@ else:
     class Dataset:
         """Dummy class if torch is unavailable."""
 
-        pass
-
 
 class PytorchFormerDataset(Dataset):
     """Implements Pytorch Dataset class for LTSF-Formers."""
