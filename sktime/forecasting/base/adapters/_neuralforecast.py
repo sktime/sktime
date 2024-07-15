@@ -371,11 +371,11 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
             id = 1
             idx = indices.to_numpy()
         else:
-            id_idx = np.array(indices.to_list())
+            id_idx = indices.to_frame().values
             # with ("h0":"h0_0", "h1":"h1_1") as instance index,
             # the id would be "h0_1h1_1"
             id = id_idx[:, :-1].sum(axis=1)
-            idx = id_idx[:, -1]
+            idx = indices.get_level_values(-1)
         return id, idx
 
     def _handle_PeriodIndex(self, data):
@@ -515,7 +515,7 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         if len(prediction_column_names) > 1:
             raise NotImplementedError("Multiple prediction columns are not supported.")
 
-        if len(np.unique(model_forecasts.index)) > 1:
+        if isinstance(self._y, pandas.DataFrame):
             if self._global_forecasting:
                 id_idx = np.array(y.index.to_list())
             else:
