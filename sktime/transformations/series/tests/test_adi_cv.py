@@ -125,7 +125,7 @@ def _generate_lumpy_series(size: int = 750, seed: int = 42):
         ([10, 9, 10, 11, 12, 10, 9, 10, 8, 9, 10, 10], 1.0, 0.01, "smooth"),
         ([10, 20, 5, 25, 20, 5, 50, 35, 30, 100, 35, 45], 1.0, 0.62, "erratic"),
         ([6, 5, 0, 9, 2, 0, 14, 0, 0, 21, 0, 17], 1.71, 0.37, "intermittent"),
-        ([1, 0, 0, 50, 0, 0, 200, 0, 0, 0, 0, 100], 6, 0.70, "lumpy"),
+        ([1, 0, 0, 50, 0, 0, 200, 0, 0, 0, 0, 100], 3.0, 0.70, "lumpy"),
     ],
 )
 def test_adi_cv_extractor(demand_series, expected_adi, expected_cv, expected_class):
