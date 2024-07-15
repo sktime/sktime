@@ -1,6 +1,7 @@
 """Benchmarking for forecasting estimators."""
+
 import functools
-from typing import Callable, Dict, List, Optional, Union
+from typing import Callable, Optional, Union
 
 from sktime.benchmarking.benchmarks import BaseBenchmark
 from sktime.forecasting.base import BaseForecaster
@@ -12,12 +13,12 @@ from sktime.split.base import BaseSplitter
 def forecasting_validation(
     dataset_loader: Callable,
     cv_splitter: BaseSplitter,
-    scorers: List[BaseMetric],
+    scorers: list[BaseMetric],
     estimator: BaseForecaster,
     backend=None,
     backend_params=None,
     **kwargs,
-) -> Dict[str, Union[float, str]]:
+) -> dict[str, Union[float, str]]:
     """Run validation for a forecasting estimator.
 
     Parameters
@@ -63,6 +64,7 @@ def forecasting_validation(
         will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed,
         e.g., ``scheduler``
+
     Returns
     -------
     Dictionary of benchmark results for that forecaster
@@ -89,7 +91,7 @@ def forecasting_validation(
 def _factory_forecasting_validation(
     dataset_loader: Callable,
     cv_splitter: BaseSplitter,
-    scorers: List[BaseMetric],
+    scorers: list[BaseMetric],
     backend=None,
     backend_params=None,
 ) -> Callable:
@@ -165,7 +167,7 @@ class ForecastingBenchmark(BaseBenchmark):
         self,
         dataset_loader: Callable,
         cv_splitter: BaseSplitter,
-        scorers: List[BaseMetric],
+        scorers: list[BaseMetric],
         task_id: Optional[str] = None,
     ):
         """Register a forecasting task to the benchmark.

@@ -21,7 +21,7 @@ def placeholder(cls):
             from prophetverse.sktime import Prophetverse
 
             return Prophetverse
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
     # else we return the placeholder, which is a delegator

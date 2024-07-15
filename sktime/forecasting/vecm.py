@@ -1,7 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """VECM Forecaster."""
 
-
 __all__ = ["VECM"]
 __author__ = ["thayeylolu", "AurumnPegasus"]
 

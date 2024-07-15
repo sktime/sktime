@@ -163,7 +163,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                         if len(levels) == 1:
                             levels = levels[0]
                         yt[ix] = y.xs(ix, level=levels, axis=1)
-                        # todo 0.31.0 - check why this cannot be easily removed
+                        # todo 0.32.0 - check why this cannot be easily removed
                         # in theory, we should get rid of the "Coverage" case treatment
                         # (the legacy naming convention was removed in 0.23.0)
                         # deal with the "Coverage" case, we need to get rid of this
@@ -700,8 +700,9 @@ class ForecastingPipeline(_Pipeline):
                 if isinstance(y, ForecastingHorizon) and requires_y:
                     y = y.to_absolute_index(self.cutoff)
                     y = pd.DataFrame(index=y)
-                else:
+                elif isinstance(y, ForecastingHorizon) and not requires_y:
                     y = None
+                # else we just pass on y
                 X = transformer.transform(X=X, y=y)
         return X
 
