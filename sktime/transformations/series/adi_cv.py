@@ -265,6 +265,7 @@ class ADICVTransformer(BaseTransformer):
             "features": ["adi", "class"],
             "adi_threshold": 1.5,
             "cv_threshold": 0.2,
+            "adi_trim_handling": "trim",
         }
 
         return [params1, params2, params3]
