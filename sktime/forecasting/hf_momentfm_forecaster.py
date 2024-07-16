@@ -7,6 +7,7 @@ import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import _BaseGlobalForecaster
+from sktime.forecasting.model_selection import temporal_train_test_split
 
 if _check_soft_dependencies(["momentfm", "torch"], severity="none"):
     import momentfm
@@ -114,7 +115,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         "y_inner_mtype": "pd.DataFrame",
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": True,
-        "python_dependencies": ["momentfm", "torch"],
+        "python_dependencies": ["momentfm", "torch", "tqdm"],
         "capability:global_forecasting": False,
     }
 
@@ -223,17 +224,16 @@ class MomentFMForecaster(_BaseGlobalForecaster):
                 stacklevel=2,
             )
             self._seq_len = 512
-        # in the case the config contains 'forecasting_horizon', we'll set
+        # in the case the config contains 'forecast_horizon', we'll set
         # fh as that, otherwise we override it using the fh param
         self._fh_config = (
-            self._config["forecasting_horizon"]
-            if "forecasting_horizon" in self._config.keys()
+            self._config["forecast_horizon"]
+            if "forecast_horizon" in self._config.keys()
             else self.fh
         )
         if fh is not None:
             self._fh_input = max(fh.to_relative(self.cutoff))
         self._fh = self._fh_input if fh is not None else self._fh_config
-        train_val_split = int(len(y) * (1 - self.train_val_split))
         self._model = momentfm.MOMENTPipeline.from_pretrained(
             self._pretrained_model_name_or_path,
             model_kwargs={
@@ -252,8 +252,12 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         self._model.init()
         self._y_cols = y.columns
         self._y_shape = y.values.shape
-        train_dataset = momentPytorchDataset(
-            y=y[:train_val_split],
+
+        # preparing the datasets
+        y_train, y_test = temporal_train_test_split(y, test_split=self.train_val_split)
+
+        train_dataset = MomentPytorchDataset(
+            y=y_train,
             fh=self._fh,
             seq_len=self._seq_len,
         )
@@ -262,8 +266,8 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             train_dataset, batch_size=self.batch_size, shuffle=True
         )
 
-        val_dataset = momentPytorchDataset(
-            y=y[train_val_split:],
+        val_dataset = MomentPytorchDataset(
+            y=y_test,
             fh=self._fh,
             seq_len=self._seq_len,
         )
@@ -273,7 +277,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         )
 
         criterion = self._criterion
-        optimizer = Adam(self._model.parameters(), lr=1e-4)
+        optimizer = Adam(self._model.parameters(), lr=self.max_lr)
         if self.device == "gpu" and torch.cuda.is_available():
             self.device = "cuda"
         else:
@@ -291,10 +295,9 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         scaler = torch.cuda.amp.GradScaler()
 
         # Create a OneCycleLR scheduler
-        max_lr = 1e-4
         total_steps = len(train_dataloader) * max_epoch
         scheduler = OneCycleLR(
-            optimizer, max_lr=max_lr, total_steps=total_steps, pct_start=0.3
+            optimizer, max_lr=self.max_lr, total_steps=total_steps, pct_start=0.3
         )
 
         # Gradient clipping value
@@ -479,7 +482,7 @@ def _create_mask(ones_length, zeros_length=0):
     return input_mask
 
 
-class momentPytorchDataset(Dataset):
+class MomentPytorchDataset(Dataset):
     """Customized Pytorch dataset for the momentfm model."""
 
     def __init__(self, y, fh, seq_len):
