@@ -1043,11 +1043,16 @@ class TestAllGlobalForecasters(TestAllObjects):
             min_timepoints=data_length,
         )
         data = data.droplevel(1)
-        l0 = data.index.get_level_values(0).map(lambda x: int(x[3:]))
-        X_train = data[l0 < 450]["c0"].to_frame()
-        y_train = data[l0 < 450]["c1"].to_frame()
-        X_test = data[l0 >= 400]["c0"].to_frame()
-        y_test = data[l0 >= 400]["c1"].to_frame()
+        from sklearn.model_selection import train_test_split
+
+        x = data["c0"].to_frame()
+        y = data["c1"].to_frame()
+        X_train, _, y_train, _ = train_test_split(
+            x, y, test_size=0.1, train_size=0.9, shuffle=False
+        )
+        _, X_test, _, y_test = train_test_split(
+            x, y, test_size=0.2, train_size=0.8, shuffle=False
+        )
 
         # remove max_prediction_length from the end of y_test
         y_test = self._remove_last_n(y_test, max_prediction_length)
@@ -1062,11 +1067,16 @@ class TestAllGlobalForecasters(TestAllObjects):
             max_timepoints=data_length,
             min_timepoints=data_length,
         )
-        l1 = data.index.get_level_values(1).map(lambda x: int(x[3:]))
-        X_train = data.loc[l1 < 90, "c0"].to_frame()
-        y_train = data.loc[l1 < 90, "c1"].to_frame()
-        X_test = data.loc[l1 >= 80, "c0"].to_frame()
-        y_test = data.loc[l1 >= 80, "c1"].to_frame()
+        from sklearn.model_selection import train_test_split
+
+        x = data["c0"].to_frame()
+        y = data["c1"].to_frame()
+        X_train, _, y_train, _ = train_test_split(
+            x, y, test_size=0.1, train_size=0.9, shuffle=False
+        )
+        _, X_test, _, y_test = train_test_split(
+            x, y, test_size=0.2, train_size=0.8, shuffle=False
+        )
 
         # remove max_prediction_length from the end of y_test
         y_test = self._remove_last_n(y_test, max_prediction_length)
