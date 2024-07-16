@@ -19,7 +19,18 @@ class DWTTransformer(BaseTransformer):
     Parameters
     ----------
     num_levels : int, number of levels to perform the Haar wavelet
-                 transformation.
+        transformation.
+
+    Example
+    -------
+    >>> from sktime.transformations.panel.dwt import DWTTransformer
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.datatypes import convert
+    >>>
+    >>> y = load_airline()
+    >>> y = convert(y, to="Panel")
+    >>> transformer = DWTTransformer(num_levels=3)
+    >>> y_transformed = transformer.fit_transform(y)
     """
 
     _tags = {
