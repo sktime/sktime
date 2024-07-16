@@ -9,6 +9,7 @@ import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
+from sktime.split import temporal_train_test_split
 from sktime.utils.warnings import warn
 
 if _check_soft_dependencies("torch", severity="none"):
@@ -19,50 +20,103 @@ else:
         """Dummy class if torch is unavailable."""
 
 
-class TinyTimeMixerForecaster(_BaseGlobalForecaster):
-    """Custom forecaster. todo: write docstring.
+if _check_soft_dependencies("transformers", severity="none"):
+    from transformers import Trainer, TrainingArguments
 
-    todo: describe your custom forecaster here
+
+# TODO: soft dep ttm
+
+
+class TinyTimeMixerForecaster(_BaseGlobalForecaster):
+    """
+    TinyTimeMixer Forecaster for Zero-Shot Forecasting of Multivariate Time Series.
+
+    Wrapping implementation in [1]_ of method proposed in [2]_. See [3]_
+    for tutorial by creators of [2]_.
+
+    TinyTimeMixer (TTM) are compact pre-trained models for Time-Series Forecasting,
+    open-sourced by IBM Research. With less than 1 Million parameters, TTM introduces
+    the notion of the first-ever “tiny” pre-trained models for Time-Series Forecasting.
 
     Parameters
     ----------
-    parama : int
-        descriptive explanation of parama
-    paramb : string, optional (default='default')
-        descriptive explanation of paramb
-    paramc : boolean, optional (default= whether paramb is not the default)
-        descriptive explanation of paramc
-    and so on
-    est : sktime.estimator, BaseEstimator descendant
-        descriptive explanation of est
-    est2: another estimator
-        descriptive explanation of est2
+    model_path : str, default="ibm/TTM"
+        Path of the model to use for forecasting.
+    revision: str, default="main"
+        Revision of the model to use:
+        - "main": For loading model with context_length of 512
+          and prediction_length of 96.
+        - "1024_96_v1": For loading model with context_length of 1024
+          and prediction_length of 96.
+    validation_split : float, default=0.2
+        Fraction of the data to use for validation
+    config : dict, default={}
+        Configuration to use for the model. See the `transformers`
+        documentation for details.
+    training_args : dict, default={}
+        Training arguments to use for the model. See `transformers.TrainingArguments`
+        for details.
+        Note that the `output_dir` argument is required.
+    compute_metrics : list, default=None
+        List of metrics to compute during training. See `transformers.Trainer`
+        for details.
+    callbacks : list, default=[]
+        List of callbacks to use during training. See `transformers.Trainer`
     broadcasting: bool (default=True)
         multiindex data input will be broadcasted to single series.
         For each single series, one copy of this forecaster will try to
         fit and predict on it. The broadcasting is happening inside automatically,
         from the outerside api perspective, the input and output are the same,
         only one multiindex output from `predict`.
-    and so on
+
+    References
+    ----------
+    .. [1] https://github.com/ibm-granite/granite-tsfm/tree/main/tsfm_public/models/tinytimemixer
+    .. [2] Ekambaram, V., Jati, A., Dayama, P., Mukherjee, S.,
+    Nguyen, N.H., Gifford, W.M., Reddy, C. and Kalagnanam, J., 2024.
+    Tiny Time Mixers (TTMs): Fast Pre-trained Models for Enhanced
+    Zero/Few-Shot Forecasting of Multivariate Time Series. CoRR.
+    .. [3] https://github.com/ibm-granite/granite-tsfm/blob/main/notebooks/tutorial/ttm_tutorial.ipynb
+
+    Examples
+    --------
+    >>> from sktime.forecasting.ttm import TinyTimeMixerForecaster
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> forecaster = TinyTimeMixerForecaster() # doctest: +SKIP
+    >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
+    >>> y_pred = forecaster.predict() # doctest: +SKIP
+
+    >>> from sktime.forecasting.ttm import TinyTimeMixerForecaster
+    >>> from sktime.datasets import load_tecator
+    >>>
+    >>> # load multi-index dataset
+    >>> y = load_tecator(
+    ...     return_type="pd-multiindex",
+    ...     return_X_y=False
+    ... )
+    >>> y.drop(['class_val'], axis=1, inplace=True)
+    >>>
+    >>> # global forecasting on multi-index dataset
+    >>> forecaster = TinyTimeMixerForecaster(
+    ...     broadcasting=False,
+    ...     config={
+    ...             "context_length": 8,
+    ...             "prediction_length": 2
+    ...     },
+    ...     training_args={
+    ...         "num_train_epochs": 1,
+    ...         "output_dir": "test_output",
+    ...         "per_device_train_batch_size": 32,
+    ...     },
+    ... ) # doctest: +SKIP
+    >>>
+    >>> # train and predict
+    >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
+    >>> y_pred = forecaster.predict() # doctest: +SKIP
     """
 
-    # todo: fill out estimator tags here
-    #  tags are inherited from parent class if they are not set
-    # todo: define the forecaster scitype by setting the tags
-    #  the "forecaster scitype" is determined by the tags
-    #   scitype:y - the expected input scitype of y - univariate or multivariate or both
-    #  when changing scitype:y to multivariate or both:
-    #   y_inner_mtype should be changed to pd.DataFrame
-    # other tags are "safe defaults" which can usually be left as-is
     _tags = {
-        # to list all valid tags with description, use sktime.registry.all_tags
-        #   all_tags(estimator_types="forecaster", as_dataframe=True)
-        #
-        # behavioural tags: internal type
-        # -------------------------------
-        #
-        # y_inner_mtype, X_inner_mtype control which format X/y appears in
-        # in the inner functions _fit, _predict, etc
         "X_inner_mtype": [
             "pd.DataFrame",
             "pd-multiindex",
@@ -73,115 +127,28 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
             "pd-multiindex",
             "pd_multiindex_hier",
         ],
-        # valid values: str and list of str
-        # if str, must be a valid mtype str, in sktime.datatypes.MTYPE_REGISTER
-        #   of scitype Series, Panel (panel data) or Hierarchical (hierarchical series)
-        #   in that case, all inputs are converted to that one type
-        # if list of str, must be a list of valid str specifiers
-        #   in that case, X/y are passed through without conversion if on the list
-        #   if not on the list, converted to the first entry of the same scitype
-        #
-        # scitype:y controls whether internal y can be univariate/multivariate
-        # if multivariate is not valid, applies vectorization over variables
         "scitype:y": "both",
-        # valid values: "univariate", "multivariate", "both"
-        #   "univariate": inner _fit, _predict, etc, receive only univariate series
-        #   "multivariate": inner methods receive only series with 2 or more variables
-        #   "both": inner methods can see series with any number of variables
-        #
-        # capability tags: properties of the estimator
-        # --------------------------------------------
-        #
-        # ignores-exogeneous-X = does estimator ignore the exogeneous X?
         "ignores-exogeneous-X": True,
-        # valid values: boolean True (ignores X), False (uses X in non-trivial manner)
-        # CAVEAT: if tag is set to True, inner methods always see X=None
-        #
-        # requires-fh-in-fit = is forecasting horizon always required in fit?
         "requires-fh-in-fit": True,
-        # valid values: boolean True (yes), False (no)
-        # if True, raises exception in fit if fh has not been passed
-        #
-        # X-y-must-have-same-index = can estimator handle different X/y index?
         "X-y-must-have-same-index": True,
-        # valid values: boolean True (yes), False (no)
-        # if True, raises exception if X.index is not contained in y.index
-        #
-        # enforce_index_type = index type that needs to be enforced in X/y
         "enforce_index_type": None,
-        # valid values: pd.Index subtype, or list of pd.Index subtype
-        # if not None, raises exception if X.index, y.index level -1 is not of that type
-        #
-        # handles-missing-data = can estimator handle missing data?
         "handles-missing-data": False,
-        # valid values: boolean True (yes), False (no)
-        # if False, raises exception if y or X passed contain missing data (nans)
-        #
-        # capability:insample = can forecaster make in-sample forecasts?
         "capability:insample": False,
-        # valid values: boolean True (yes), False (no)
-        # if False, exception raised if any forecast method called with in-sample fh
-        #
-        # capability:pred_int = does forecaster implement probabilistic forecasts?
         "capability:pred_int": False,
-        # valid values: boolean True (yes), False (no)
-        # if False, exception raised if proba methods are called (predict_interval etc)
-        #
-        # capability:pred_int:insample = can forecaster make in-sample proba forecasts?
         "capability:pred_int:insample": False,
-        # valid values: boolean True (yes), False (no)
-        # only needs to be set if capability:pred_int is True
-        # if False, exception raised if proba methods are called with in-sample fh
-        #
-        # ----------------------------------------------------------------------------
-        # packaging info - only required for sktime contribution or 3rd party packages
-        # ----------------------------------------------------------------------------
-        #
-        # ownership and contribution tags
-        # -------------------------------
-        #
-        # author = author(s) of th estimator
-        # an author is anyone with significant contribution to the code at some point
-        "authors": ["author1", "author2"],
-        # valid values: str or list of str, should be GitHub handles
-        # this should follow best scientific contribution practices
-        # scope is the code, not the methodology (method is per paper citation)
-        # if interfacing a 3rd party estimator, ensure to give credit to the
-        # authors of the interfaced estimator
-        #
-        # maintainer = current maintainer(s) of the estimator
-        # per algorithm maintainer role, see governance document
-        # this is an "owner" type role, with rights and maintenance duties
-        # for 3rd party interfaces, the scope is the sktime class only
-        "maintainers": ["maintainer1", "maintainer2"],
-        # valid values: str or list of str, should be GitHub handles
-        # remove tag if maintained by sktime core team
-        #
-        # dependency tags: python version and soft dependencies
-        # -----------------------------------------------------
-        #
-        # python version requirement
-        "python_version": None,
-        # valid values: str, PEP 440 valid python version specifiers
-        # raises exception at construction if local python version is incompatible
-        #
-        # soft dependency requirement
-        "python_dependencies": None,
-        # valid values: str or list of str, PEP 440 valid package version specifiers
-        # raises exception at construction if modules at strings cannot be imported
+        "authors": ["geetu040"],
+        "maintainers": ["geetu040"],
+        "python_dependencies": ["transformers", "torch"],  # TODO: add dep ttm
         "capability:global_forecasting": True,
     }
-    #  in case of inheritance, concrete class should typically set tags
-    #  alternatively, descendants can set tags in __init__ (avoid this if possible)
 
-    # todo: add any hyper-parameters and components to constructor
     def __init__(
         self,
         model_path="ibm/TTM",
         revision="main",
+        validation_split=0.2,
         config=None,
         training_args=None,
-        validation_split=0.2,
         compute_metrics=None,
         callbacks=None,
         broadcasting=True,
@@ -237,8 +204,6 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         -------
         self : reference to self
         """
-        # from transformers import PatchTSTForPrediction, PatchTSTConfig
-        from transformers import Trainer, TrainingArguments
         from tsfm_public.models.tinytimemixer import (
             TinyTimeMixerConfig,
             TinyTimeMixerForPrediction,
@@ -321,15 +286,15 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 _model = getattr(_model, attr_name)
             _model.weight.requires_grad = True
 
-        # multi-index conversion goes here
-        if isinstance(y.index, pd.MultiIndex):
-            _y = _frame2numpy(y)
-        else:
-            _y = np.expand_dims(y.values, axis=0)
+        y_train, y_test = temporal_train_test_split(y, test_size=self.validation_split)
 
-        # TODO: create train-test split
-        dataset = PyTorchDataset(
-            y=_y,
+        train = PyTorchDataset(
+            y=y_train,
+            context_length=config.context_length,
+            prediction_length=config.prediction_length,
+        )
+        test = PyTorchDataset(
+            y=y_test,
             context_length=config.context_length,
             prediction_length=config.prediction_length,
         )
@@ -341,14 +306,17 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         trainer = Trainer(
             model=self.model,
             args=training_args,
-            train_dataset=dataset,
-            # eval_dataset=eval_dataset,
+            train_dataset=train,
+            eval_dataset=test,
             compute_metrics=self.compute_metrics,
             callbacks=self.callbacks,
         )
 
         # Train the model
         trainer.train()
+
+        # Get the model
+        self.model = trainer.model
 
     def _predict(self, fh, X, y=None):
         """Forecast time series at future horizon.
@@ -473,7 +441,12 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         """
         test_params = [
             {
-                "config": {},
+                "model_path": "ibm/TTM",
+                "revision": "main",
+                "config": {
+                    "context_length": 8,
+                    "prediction_length": 2,
+                },
                 "validation_split": 0.2,
                 "training_args": {
                     "num_train_epochs": 1,
@@ -557,16 +530,19 @@ class PyTorchDataset(Dataset):
         prediction_length : int
             The length of the future values
         """
-        self.y = y
         self.context_length = context_length
         self.prediction_length = prediction_length
+
+        # multi-index conversion
+        if isinstance(y.index, pd.MultiIndex):
+            self.y = _frame2numpy(y)
+        else:
+            self.y = np.expand_dims(y.values, axis=0)
 
         self.n_sequences, self.n_timestamps, _ = self.y.shape
         self.single_length = (
             self.n_timestamps - self.context_length - self.prediction_length + 1
         )
-
-        # TODO: raise error on less data
 
     def __len__(self):
         """Return the length of the dataset."""
@@ -575,6 +551,8 @@ class PyTorchDataset(Dataset):
 
     def __getitem__(self, i):
         """Return data point."""
+        from torch import tensor
+
         m = i % self.single_length
         n = i // self.single_length
 
@@ -587,7 +565,7 @@ class PyTorchDataset(Dataset):
         observed_mask = np.ones_like(past_values)
 
         return {
-            "past_values": past_values,
-            "observed_mask": observed_mask,
-            "future_values": future_values,
+            "past_values": tensor(past_values).float(),
+            "observed_mask": tensor(observed_mask).float(),
+            "future_values": tensor(future_values).float(),
         }
