@@ -44,6 +44,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.forecasting.pytorchforecasting import PytorchForecastingTFT
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
+    >>> from sklearn.model_selection import train_test_split
     >>> # generate random data
     >>> data = _make_hierarchical(
     ...     hierarchy_levels=(5, 200), max_timepoints=50, min_timepoints=50, n_columns=3
@@ -52,11 +53,11 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
     >>> max_prediction_length = 5
     >>> fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
     >>> # split X, y data for train and test
-    >>> l1 = data.index.get_level_values(1).map(lambda x: int(x[3:]))
-    >>> X_train = data.loc[l1 < 190, ["c0", "c1"]]
-    >>> y_train = data.loc[l1 < 190, "c2"].to_frame()
-    >>> X_test = data.loc[l1 >= 180, ["c0", "c1"]]
-    >>> y_test = data.loc[l1 >= 180, "c2"].to_frame()
+    >>> x = data["c0", "c1"]
+    >>> y = data["c2"].to_frame()
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...     x, y, test_size=0.2, train_size=0.8, shuffle=False
+    ... )
     >>> len_levels = len(y_test.index.names)
     >>> y_test = y_test.groupby(level=list(range(len_levels - 1))).apply(
     ...     lambda x: x.droplevel(list(range(len_levels - 1))).iloc[:-max_prediction_length]
@@ -310,6 +311,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.forecasting.pytorchforecasting import PytorchForecastingNBeats
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
+    >>> from sklearn.model_selection import train_test_split
     >>> # generate random data
     >>> data = _make_hierarchical(
     ...     hierarchy_levels=(5, 200), max_timepoints=50, min_timepoints=50, n_columns=3
@@ -318,9 +320,9 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
     >>> max_prediction_length = 5
     >>> fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
     >>> # split y data for train and test
-    >>> l1 = data.index.get_level_values(1).map(lambda x: int(x[3:]))
-    >>> y_train = data.loc[l1 < 190, "c2"].to_frame()
-    >>> y_test = data.loc[l1 >= 180, "c2"].to_frame()
+    >>> y_train, y_test = train_test_split(
+    ...     data["c2"].to_frame(), test_size=0.2, train_size=0.8, shuffle=False
+    ... )
     >>> len_levels = len(y_test.index.names)
     >>> y_test = y_test.groupby(level=list(range(len_levels - 1))).apply(
     ...     lambda x: x.droplevel(list(range(len_levels - 1))).iloc[:-max_prediction_length]
@@ -560,6 +562,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.forecasting.pytorchforecasting import PytorchForecastingDeepAR
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
+    >>> from sklearn.model_selection import train_test_split
     >>> # generate random data
     >>> data = _make_hierarchical(
     ...     hierarchy_levels=(5, 200), max_timepoints=50, min_timepoints=50, n_columns=3
@@ -568,11 +571,11 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
     >>> max_prediction_length = 5
     >>> fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
     >>> # split X, y data for train and test
-    >>> l1 = data.index.get_level_values(1).map(lambda x: int(x[3:]))
-    >>> X_train = data.loc[l1 < 190, ["c0", "c1"]]
-    >>> y_train = data.loc[l1 < 190, "c2"].to_frame()
-    >>> X_test = data.loc[l1 >= 180, ["c0", "c1"]]
-    >>> y_test = data.loc[l1 >= 180, "c2"].to_frame()
+    >>> x = data["c0", "c1"]
+    >>> y = data["c2"].to_frame()
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...     x, y, test_size=0.2, train_size=0.8, shuffle=False
+    ... )
     >>> len_levels = len(y_test.index.names)
     >>> y_test = y_test.groupby(level=list(range(len_levels - 1))).apply(
     ...     lambda x: x.droplevel(list(range(len_levels - 1))).iloc[:-max_prediction_length]
@@ -821,6 +824,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.forecasting.pytorchforecasting import PytorchForecastingNHiTS
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
+    >>> from sklearn.model_selection import train_test_split
     >>> # generate random data
     >>> data = _make_hierarchical(
     ...     hierarchy_levels=(5, 200), max_timepoints=50, min_timepoints=50, n_columns=3
@@ -829,11 +833,11 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
     >>> max_prediction_length = 5
     >>> fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
     >>> # split X, y data for train and test
-    >>> l1 = data.index.get_level_values(1).map(lambda x: int(x[3:]))
-    >>> X_train = data.loc[l1 < 190, ["c0", "c1"]]
-    >>> y_train = data.loc[l1 < 190, "c2"].to_frame()
-    >>> X_test = data.loc[l1 >= 180, ["c0", "c1"]]
-    >>> y_test = data.loc[l1 >= 180, "c2"].to_frame()
+    >>> x = data["c0", "c1"]
+    >>> y = data["c2"].to_frame()
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...     x, y, test_size=0.2, train_size=0.8, shuffle=False
+    ... )
     >>> len_levels = len(y_test.index.names)
     >>> y_test = y_test.groupby(level=list(range(len_levels - 1))).apply(
     ...     lambda x: x.droplevel(list(range(len_levels - 1))).iloc[:-max_prediction_length]
