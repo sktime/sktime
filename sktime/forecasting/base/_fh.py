@@ -28,6 +28,7 @@ from sktime.utils.validation.series import (
     is_in_valid_relative_index_types,
     is_integer_index,
 )
+from sktime.utils.warnings import _suppress_pd22_warning
 
 VALID_FORECASTING_HORIZON_TYPES = (int, list, np.ndarray, pd.Index)
 
@@ -169,7 +170,9 @@ def _check_freq(obj):
     elif isinstance(obj, (pd.Period, pd.Index)):
         return _extract_freq_from_cutoff(obj)
     elif isinstance(obj, str) or obj is None:
-        return to_offset(obj)
+        with _suppress_pd22_warning:
+            offset = to_offset(obj)
+        return offset
     else:
         return None
 
@@ -397,7 +400,9 @@ class ForecastingHorizon:
             freq_from_self = None
 
         if freq_from_self is not None and freq_from_obj is not None:
-            if freq_from_self != freq_from_obj:
+            with _suppress_pd22_warning:
+                freqs_unequal = freq_from_self != freq_from_obj
+            if freqs_unequal:
                 raise ValueError(
                     "Frequencies from two sources do not coincide: "
                     f"Current: {freq_from_self}, from update: {freq_from_obj}."
@@ -497,7 +502,7 @@ class ForecastingHorizon:
 
         Returns
         -------
-        fh : ForecastingHorizon
+        fh_abs : pandas.Index
             Absolute representation of forecasting horizon.
         """
         cutoff = self._coerce_cutoff_to_index(cutoff)
@@ -801,7 +806,7 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
             absolute = _coerce_to_period(absolute, freq=fh._freq)
             cutoff = _coerce_to_period(cutoff, freq=fh._freq)
 
-        # TODO: 0.31.0:
+        # TODO: 0.32.0:
         # Check at every minor release whether lower pandas bound >=0.15.0
         # if yes, can remove the workaround in the "else" condition and the check
         #
@@ -883,7 +888,17 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
 
         if is_timestamp:
             # coerce back to DatetimeIndex after operation
-            absolute = absolute.to_timestamp(fh._freq)
+            try:
+                absolute = absolute.to_timestamp(fh._freq)
+            # this try-except block is a workaround for what seems like a bug in pandas
+            # when trying to convert a PeriodIndex to a DatetimeIndex with a frequency
+            # of type month-begin, which should be supported, a ValueError is raised
+            # see issue #6752 for details
+            except ValueError as e:
+                if "not supported" in str(e):
+                    absolute = absolute.to_timestamp()
+                else:
+                    raise e
 
         if old_tz is not None:
             absolute = absolute.tz_localize(old_tz)
@@ -908,7 +923,6 @@ def _check_cutoff(cutoff, index):
     """
     if cutoff is None:
         raise ValueError("`cutoff` must be given, but found none.")
-
     if isinstance(index, pd.PeriodIndex):
         assert isinstance(cutoff, (pd.Period, pd.PeriodIndex))
         assert index.freqstr == cutoff.freqstr

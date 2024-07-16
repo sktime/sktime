@@ -173,7 +173,7 @@ def _validate_estimate_matrices(input_ems, all_ems):
         if input_ems == "all":
             return all_ems
         if input_ems in all_ems:
-            return list([input_ems])
+            return list([input_ems])  # noqa: C410
 
         raise ValueError(
             f"If `estimate_matrices` is passed as a "

@@ -29,7 +29,6 @@ class BaseDistribution(BaseObject):
         # estimator type
         # --------------
         "object_type": "distribution",  # type of object, e.g., 'distribution'
-        "python_version": None,  # PEP 440 python version specifier to limit versions
         "reserved_params": ["index", "columns"],
         "capabilities:approx": ["energy", "mean", "var", "pdfnorm"],
         "approx_mean_spl": 1000,  # sample size used in MC estimates of mean

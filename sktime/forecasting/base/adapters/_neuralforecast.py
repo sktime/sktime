@@ -1,10 +1,11 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for NeuralForecast models."""
+
 import abc
 import functools
 from copy import deepcopy
 from inspect import signature
-from typing import List, Literal, Optional, Union
+from typing import Literal, Optional, Union
 
 import numpy as np
 import pandas
@@ -79,7 +80,7 @@ class _NeuralForecastAdapter(BaseForecaster):
         self: "_NeuralForecastAdapter",
         freq: Union[str, int] = "auto",
         local_scaler_type: Optional[_SUPPORTED_LOCAL_SCALAR_TYPES] = None,
-        futr_exog_list: Optional[List[str]] = None,
+        futr_exog_list: Optional[list[str]] = None,
         verbose_fit: bool = False,
         verbose_predict: bool = False,
     ) -> None:
@@ -266,9 +267,6 @@ class _NeuralForecastAdapter(BaseForecaster):
         ValueError
             When ``freq="auto"`` and cannot be interpreted from ``ForecastingHorizon``
         """
-        if not fh.is_all_out_of_sample(cutoff=self.cutoff):
-            raise NotImplementedError("in-sample prediction is currently not supported")
-
         # A. freq is given {use this}
         # B. freq is auto
         #     B1. freq is infered from fh {use this}
