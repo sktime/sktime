@@ -1,39 +1,16 @@
-"""Extension template for series annotation.
+"""Cluster Segmentation.
 
-Purpose of this implementation template:
-    quick implementation of new estimators following the template
-    NOT a concrete class to import! This is NOT a base class or concrete class!
-    This is to be used as a "fill-in" coding template.
-
-How to use this implementation template to implement a new estimator:
-- make a copy of the template in a suitable location, give it a descriptive name.
-- work through all the "todo" comments below
-- fill in code for mandatory methods, and optionally for optional methods
-- you can add more private methods, but do not override BaseEstimator's private methods
-    an easy way to be safe is to prefix your methods with "_custom"
-- change docstrings for functions and the file
-- ensure interface compatibility by sktime.utils.estimator_checks.check_estimator
-- once complete: use as a local library, or contribute to sktime via PR
-- more details:
-  https://www.sktime.net/en/stable/developer_guide/add_estimators.html
-
-Mandatory implements:
-    fitting         - _fit(self, X, Y=None)
-    annotating     - _predict(self, X)
-
-Optional implements:
-    updating        - _update(self, X, Y=None)
-
-Testing - required for sktime test framework and check_estimator usage:
-    get default parameters for test instance(s) - get_test_params()
-
-copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+Implementing segmentation using clustering, Read more at
+<https://en.wikipedia.org/wiki/Cluster_analysis>_.
 """
 
 import pandas as pd
 from sklearn.cluster import KMeans
 
 from sktime.annotation.base import BaseSeriesAnnotator
+
+__author__ = ["Ankit-1204"]
+__all__ = ["ClusterSegmenter"]
 
 
 class ClusterSegmenter(BaseSeriesAnnotator):
@@ -49,6 +26,16 @@ class ClusterSegmenter(BaseSeriesAnnotator):
         The instance of clustering algorithm used for segmentation.
     n_clusters : int, default=3
         The number of clusters to form
+
+    Examples
+    --------
+    >>> from sktime.annotation.cluster import ClusterSegmenter
+    >>> from sktime.datasets import load_gunpoint
+    >>> X, y = load_gunpoint()
+    >>> clusterer = KMeans(n_clusters=2)
+    >>> segmenter = ClusterSegmenter(clusterer)
+    >>> segmenter.fit(X)
+    >>> segment_labels = segmenter.predict(X)
 
     """
 
@@ -70,27 +57,6 @@ class ClusterSegmenter(BaseSeriesAnnotator):
 
         super().__init__()
 
-        # todo: optional, parameter checking logic (if applicable) should happen here
-        # if writes derived values to self, should *not* overwrite self.parama etc
-        # instead, write to self._parama, self._newparam (starting with _)
-
-        # todo: default estimators should have None arg defaults
-        #  and be initialized here
-        #  do this only with default estimators, not with parameters
-        # if est2 is None:
-        #     self.estimator = MyDefaultEstimator()
-
-        # todo: if tags of estimator depend on component tags, set these here
-        #  only needed if estimator is a composite
-        #  tags set in the constructor apply to the object and override the class
-        #
-        # example 1: conditional setting of a tag
-        # if est.foo == 42:
-        #   self.set_tags(handles-missing-data=True)
-        # example 2: cloning tags from component
-        #   self.clone_tags(est2, ["enforce_index_type", "handles-missing-data"])
-
-    # todo: implement this, mandatory
     def fit(self, X, Y=None):
         """Fit to training data.
 
@@ -116,7 +82,6 @@ class ClusterSegmenter(BaseSeriesAnnotator):
         self.clusterer.fit(X_flat)
         return self
 
-    # todo: implement this, mandatory
     def predict(self, X):
         """Create annotations on test/deployment data.
 
@@ -136,8 +101,6 @@ class ClusterSegmenter(BaseSeriesAnnotator):
         labels = labels.reshape(self.n_instances, self.n_timepoints)
         return pd.DataFrame(labels, index=X.index)
 
-    # todo: return default parameters, so that a test instance can be created
-    #   required for automated unit and integration testing of estimator
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
