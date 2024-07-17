@@ -9,6 +9,7 @@ from functools import reduce
 from typing import Union
 
 import numpy as np
+import optuna
 import pytest
 from sklearn.model_selection import ParameterGrid, ParameterSampler
 
@@ -108,6 +109,9 @@ def _create_hierarchical_data(n_columns=1):
 # this is currently the case, but a future improved NaiveForecaster may reduce coverage
 NAIVE = NaiveForecaster(strategy="mean").set_tags(**{"scitype:y": "univariate"})
 NAIVE_GRID = {"window_length": TEST_WINDOW_LENGTHS_INT}
+NAIVE_GRID_OPTUNA = {
+    "window_length": optuna.distributions.IntDistribution(*TEST_WINDOW_LENGTHS_INT)
+}
 PIPE = TransformedTargetForecaster(
     [
         ("transformer", Detrender(PolynomialTrendForecaster())),
@@ -335,7 +339,7 @@ def test_skoptcv_multiple_forecaster():
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize(
-    "forecaster, param_grid", [(NAIVE, NAIVE_GRID), (PIPE, PIPE_GRID)]
+    "forecaster, param_grid", [(NAIVE, NAIVE_GRID_OPTUNA), (PIPE, PIPE_GRID)]
 )
 @pytest.mark.parametrize("scoring", TEST_METRICS)
 @pytest.mark.parametrize("error_score", ERROR_SCORES)

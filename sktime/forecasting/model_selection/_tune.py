@@ -14,6 +14,7 @@ from collections.abc import Iterable, Mapping, Sequence
 from typing import Optional, Union
 
 import numpy as np
+import optuna
 import pandas as pd
 from sklearn.model_selection import ParameterGrid, ParameterSampler, check_cv
 
@@ -1632,6 +1633,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
 
         * If None, defaults to MeanAbsolutePercentageError()
 
+    sampler : Optuna sampler, optional, default=optuna.samplers.TPESampler(seed=42)
     strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
         data ingestion strategy in fitting cv, passed to ``evaluate`` internally
         defines the ingestion mode when the forecaster sees new data when window expands
@@ -1744,6 +1746,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         cv,
         param_grid,
         scoring=None,
+        sampler=optuna.samplers.TPESampler(seed=42),
         strategy="refit",
         refit=True,
         verbose=0,
@@ -1767,6 +1770,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         )
         self.param_grid = param_grid
         self.n_evals = n_evals
+        self.sampler = sampler
 
         warn(
             "ForecastingOptunaSearchCV is experimental, and interfaces may change. "
@@ -1781,6 +1785,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         cv = check_cv(self.cv)
         scoring = check_scoring(self.scoring, obj=self)
         scoring_name = f"test_{scoring.name}"
+        sampler = self.sampler
 
         if not isinstance(self.param_grid, (Mapping, Iterable)):
             raise TypeError(
@@ -1802,6 +1807,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
             cv,
             scoring,
             scoring_name,
+            sampler,
         )
 
         results[f"rank_{scoring_name}"] = results["value"].rank(
@@ -1899,7 +1905,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
     def _get_score(self, out, scoring_name):
         return out[f"mean_{scoring_name}"]
 
-    def _run_search(self, y, X, cv, scoring, scoring_name):
+    def _run_search(self, y, X, cv, scoring, scoring_name, sampler):
         import optuna
 
         all_results = []  # List to store results from all parameter grids
@@ -1907,7 +1913,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         for (
             param_grid_dict
         ) in self._param_grid:  # Assuming self._param_grid is now a list of dicts
-            study = optuna.create_study(direction="minimize")
+            study = optuna.create_study(direction="minimize", sampler=sampler)
             meta = {}
             meta["forecaster"] = self.forecaster
             meta["y"] = y
