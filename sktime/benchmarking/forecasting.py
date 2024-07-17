@@ -200,6 +200,8 @@ class ForecastingBenchmark(BaseBenchmark):
         cv_splitter: BaseSplitter,
         scorers: list[BaseMetric],
         task_id: Optional[str] = None,
+        global_mode=False,
+        cv_ht=None,
     ):
         """Register a forecasting task to the benchmark.
 
@@ -214,6 +216,22 @@ class ForecastingBenchmark(BaseBenchmark):
         task_id : str, optional (default=None)
             Identifier for the benchmark task. If none given then uses dataset loader
             name combined with cv_splitter class name.
+        global_mode: bool, default=False
+            If `global_mode=True`, following changes are applied:
+            `cv_splitter` is used to split data in instance level.
+            `cv_splitter` must be an instance of `InstanceSplitter`.
+            `cv_ht` is used to split `y_test` from `cv_splitter`
+            to `y_hist` and `y_true` in time index level.
+            `cv_ht` must be an instance of `SingleWindowSplitter`.
+            With `y_train`, `y_hist`, `y_true`, `X_train`, `X_test`
+            from each fold, following evaluation will be applied:
+            ```py
+            forecaster.fit(y=y_train, X=X_train, fh=cv_ht.fh)
+            y_pred = forecaster.predict((y=y_hist, X=X_test)
+            # calculate metrics with `y_true` and `y_pred`
+            ```
+        cv_ht : sktime InstanceSplitter descendant, optional
+            In global mode, `cv_ht` is used to split `y_test` to 'y_hist and 'y_true`
 
         Returns
         -------
@@ -223,11 +241,18 @@ class ForecastingBenchmark(BaseBenchmark):
             "dataset_loader": dataset_loader,
             "cv_splitter": cv_splitter,
             "scorers": scorers,
+            "global_mode": global_mode,
+            "cv_ht": cv_ht,
         }
         if task_id is None:
             task_id = (
-                f"[dataset={dataset_loader.__name__}]"
-                f"_[cv_splitter={cv_splitter.__class__.__name__}]"
+                (
+                    f"[dataset={dataset_loader.__name__}]"
+                    f"_[cv_splitter={cv_splitter.__class__.__name__}]"
+                )
+                + f"_[cv_ht={cv_ht.__class__.__name__}]"
+                if global_mode
+                else ""
             )
         self._add_task(
             functools.partial(
