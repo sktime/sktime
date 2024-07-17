@@ -32,7 +32,7 @@ class ADICVTransformer(BaseTransformer):
     2. Variance (CV2): Variance calculated on non-zero values
     in the time series. Mathematical definition is:
 
-    .. math:: CV2 = \frac{1}{N}\sum_{t=1}^{T} x_t^2 - \left(\frac{1}{N}\sum_{t=1}^{T} x_t\right)^2  # noqa: E501
+    .. math:: CV2 = \frac{1}{N}\sum_{t=1}^{T} x_t^2 - \left(\frac{1}{N}\sum_{t=1}^{T} x_t\right)^2
 
     3. Class: Classification of time series on basis of ADI threshold
     and CV2 threshold.
@@ -71,7 +71,7 @@ class ADICVTransformer(BaseTransformer):
     ----------
     [1]: John E. Boylan, Aris Syntetos: The Accuracy of Intermittent
     Demand Estimates. International Journal of Forecasting, 1 Apr. 2005
-    """
+    """  # noqa: E501
 
     _tags = {
         "scitype:transform-input": "Series",

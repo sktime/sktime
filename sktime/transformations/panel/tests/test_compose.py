@@ -1,4 +1,5 @@
 """Tests for panel compositors."""
+
 import numpy as np
 import pytest
 from sklearn.ensemble import RandomForestClassifier

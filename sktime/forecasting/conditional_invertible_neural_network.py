@@ -1,4 +1,5 @@
 """Conditional Invertible Neural Network (cINN) for forecasting."""
+
 __author__ = ["benHeid"]
 
 from copy import deepcopy
@@ -25,8 +26,6 @@ else:
 
     class Dataset:
         """Dummy class if torch is unavailable."""
-
-        pass
 
 
 def default_sine(x, amplitude, phase, offset, amplitude2, amplitude3, phase2):
@@ -302,9 +301,7 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
                         ):
                             return False
                     if self.verbose:
-                        print(  # noqa
-                            epoch, i, nll.detach().numpy(), val_nll.detach().numpy()
-                        )
+                        print(epoch, i, nll.detach().numpy(), val_nll.detach().numpy())
         return True
 
     def _predict(self, X=None, fh=None):

@@ -1,4 +1,5 @@
 """Tests for TSInterpolator."""
+
 import pandas as pd
 import pytest
 

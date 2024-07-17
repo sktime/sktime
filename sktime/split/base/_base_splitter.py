@@ -4,7 +4,8 @@
 
 __author__ = ["fkiraly", "khrapovs", "mateuja", "mloning"]
 
-from typing import Iterator, Optional, Tuple
+from collections.abc import Iterator
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -199,7 +200,7 @@ class BaseSplitter(BaseObject):
 
         yield from zip(train, test)
 
-    def split_loc(self, y: ACCEPTED_Y_TYPES) -> Iterator[Tuple[pd.Index, pd.Index]]:
+    def split_loc(self, y: ACCEPTED_Y_TYPES) -> Iterator[tuple[pd.Index, pd.Index]]:
         """Get loc references to train/test splits of `y`.
 
         Parameters
@@ -221,7 +222,7 @@ class BaseSplitter(BaseObject):
 
         yield from self._split_loc(y_index)
 
-    def _split_loc(self, y: ACCEPTED_Y_TYPES) -> Iterator[Tuple[pd.Index, pd.Index]]:
+    def _split_loc(self, y: ACCEPTED_Y_TYPES) -> Iterator[tuple[pd.Index, pd.Index]]:
         """Get loc references to train/test splits of `y`.
 
         private _split containing the core logic, called from split_loc

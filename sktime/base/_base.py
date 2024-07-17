@@ -149,7 +149,8 @@ class BaseObject(_BaseObject):
         """,
     }
 
-    # TODO 0.31.0: check whether 3.8 has reached EoL. If so, remove warning altogether
+    # TODO 0.32.0: check whether python 3.8 has reached EoL.
+    # If so, remove warning altogether
     def __init__(self):
         super().__init__()
 
@@ -162,7 +163,8 @@ class BaseObject(_BaseObject):
         py39_or_higher = SpecifierSet(">=3.9")
         sys_version = sys.version.split(" ")[0]
 
-        # todo 0.31.0 - check whether 3.9 eol is reached. If yes, remove this msg.
+        # todo 0.32.0 - check whether python 3.8 eol is reached.
+        # If yes, remove this msg.
         if sys_version not in py39_or_higher:
             warn(
                 f"From sktime 0.30.0, sktime requires Python version >=3.9, "
@@ -177,6 +179,56 @@ class BaseObject(_BaseObject):
                 obj=self,
                 stacklevel=2,
             )
+
+        # handle numpy 2 incompatible soft dependencies
+        # for rationale, see _handle_numpy2_softdeps
+        self._handle_numpy2_softdeps()
+
+    # TODO 0.32.0: check list of numpy 2 incompatible soft deps
+    # remove any from NOT_NP2_COMPATIBLE that become compatible
+    def _handle_numpy2_softdeps(self):
+        """Handle tags for soft deps that are not numpy 2 compatible.
+
+        A number of soft dependencies are not numpy 2 compatible yet,
+        but do not set the bound in their setup.py. This method is a patch over
+        those packages' missing bound setting to provide informative
+        errors to users.
+
+        This method does the following:
+
+        * checks if any soft dependencies in the python_dependencies tag
+          are in NOT_NP2_COMPATIBLE, this is a hard-coded
+          list of soft dependencies that are not numpy 2 compatible
+        * if any are found, adds a numpy<2.0 soft dependency to the list,
+          and sets it as a dynamic overide of the python_dependencies tag
+        """
+        from packaging.requirements import Requirement
+
+        # pypi package names of soft dependencies that are not numpy 2 compatibleS
+        NOT_NP2_COMPATIBLE = ["prophet", "numba"]
+
+        softdeps = self.get_class_tag("python_dependencies", [])
+        if softdeps is None:
+            return None
+        if not isinstance(softdeps, list):
+            softdeps = [softdeps]
+        # make copy of list to avoid side effects
+        softdeps = softdeps.copy()
+
+        def _pkg_name(req):
+            """Get package name from requirement string."""
+            return Requirement(req).name
+
+        noncomp = False
+        for softdep in softdeps:
+            # variable: does any softdep string start with one of the non-compatibles
+            noncomp_sd = any([_pkg_name(softdep) == pkg for pkg in NOT_NP2_COMPATIBLE])
+            noncomp = noncomp or noncomp_sd
+
+        if noncomp:
+            softdeps = softdeps + ["numpy<2.0"]
+            self.set_tags(python_dependencies=softdeps)
+        return None
 
     def __eq__(self, other):
         """Equality dunder. Checks equal class and parameters.
@@ -239,7 +291,7 @@ class BaseObject(_BaseObject):
         try:  # try/except to avoid unexpected failures
             cls.set_config = deepcopy_func(cls.set_config)
             cls.set_config.__doc__ = cls._get_set_config_doc()
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
     def save(self, path=None, serialization_format="pickle"):
