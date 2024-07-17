@@ -458,6 +458,22 @@ def evaluate(
           will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed,
           e.g., ``scheduler``
+    global_mode: bool, default=False
+        If `global_mode=True`, following changes are applied:
+        `cv` is used to split data in instance level.
+        `cv` must be an instance of `InstanceSplitter`.
+        `cv_ht` is used to split `y_test` from `cv`
+        to `y_hist` and `y_true` in time index level.
+        `cv_ht` must be an instance of `SingleWindowSplitter`.
+        With `y_train`, `y_hist`, `y_true`, `X_train`, `X_test`
+        from each fold, following evaluation will be applied:
+        ```py
+        forecaster.fit(y=y_train, X=X_train, fh=cv_ht.fh)
+        y_pred = forecaster.predict((y=y_hist, X=X_test)
+        # calculate metrics with `y_true` and `y_pred`
+        ```
+    cv_ht : sktime InstanceSplitter descendant, optional
+        In global mode, cv_ht is used to split `y_test` to 'y_hist and 'y_true`
 
     Returns
     -------
