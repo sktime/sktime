@@ -246,14 +246,9 @@ class ForecastingBenchmark(BaseBenchmark):
         }
         if task_id is None:
             task_id = (
-                (
-                    f"[dataset={dataset_loader.__name__}]"
-                    f"_[cv_splitter={cv_splitter.__class__.__name__}]"
-                )
-                + f"_[cv_ht={cv_ht.__class__.__name__}]"
-                if global_mode
-                else ""
-            )
+                f"[dataset={dataset_loader.__name__}]"
+                f"_[cv_splitter={cv_splitter.__class__.__name__}]"
+            ) + (f"_[cv_ht={cv_ht.__class__.__name__}]" if global_mode else "")
         self._add_task(
             functools.partial(
                 _factory_forecasting_validation,
