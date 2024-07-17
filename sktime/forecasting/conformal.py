@@ -2,6 +2,7 @@
 
 Code based partially on NaiveVariance by ilyasmoutawwakil.
 """
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __all__ = ["ConformalIntervals"]
@@ -359,9 +360,9 @@ class ConformalIntervals(BaseForecaster):
             and (initial_window <= 0 or initial_window >= 1)
         ):
             raise ValueError(
-                "initial_window={} should be either positive and smaller"
-                " than the number of samples {} or a float in the "
-                "(0, 1) range".format(initial_window, n_samples)
+                f"initial_window={initial_window} should be either positive and smaller"
+                f" than the number of samples {n_samples} or a float in the "
+                "(0, 1) range"
             )
 
         if initial_window is not None and initial_window_type not in ("i", "f"):
@@ -401,6 +402,7 @@ class ConformalIntervals(BaseForecaster):
         update : bool
             Whether residuals_matrix has been calculated previously and just
             needs extending. Default = False
+
         Returns
         -------
         residuals_matrix : pd.DataFrame, row and column index = y.index[initial_window:]
@@ -441,9 +443,9 @@ class ConformalIntervals(BaseForecaster):
                 overlapping_index = pd.Index(
                     self.residuals_matrix_.index.intersection(full_y_index)
                 ).sort_values()
-                residuals_matrix.loc[
-                    overlapping_index, overlapping_index
-                ] = self.residuals_matrix_.loc[overlapping_index, overlapping_index]
+                residuals_matrix.loc[overlapping_index, overlapping_index] = (
+                    self.residuals_matrix_.loc[overlapping_index, overlapping_index]
+                )
             else:
                 overlapping_index = None
             y_index = remaining_y_index

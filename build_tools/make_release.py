@@ -79,13 +79,13 @@ def colored(msg, color=None, style=None):
 
 def cprint(msg, color=None, style=None):
     """Coloured printing."""
-    print(colored(msg, color=color, style=style))  # noqa
+    print(colored(msg, color=color, style=style))
 
 
 def wait_for_enter():
     """Wait for Enter."""
     input(colored("\nPress Enter to continue", style="dim"))
-    print()  # noqa
+    print()
 
 
 class Step:

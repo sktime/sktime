@@ -408,6 +408,7 @@ def check_is_scitype(
             "has_nans": bool, True iff the panel contains NaN values
         For scitype "Alignment":
             currently none
+
     Raises
     ------
     TypeError if scitype input argument is not of expected type

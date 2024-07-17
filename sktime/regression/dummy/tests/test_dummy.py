@@ -1,4 +1,5 @@
 """Test function of DummyRegressor."""
+
 import pytest
 
 from sktime.datasets import load_unit_test

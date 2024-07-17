@@ -428,6 +428,6 @@ if _check_soft_dependencies("gluonts", severity="none"):
 
         return ret(True, None, metadata, return_metadata)
 
-    check_dict[
-        ("gluonts_ListDataset_series", "Series")
-    ] = check_gluonTS_listDataset_series
+    check_dict[("gluonts_ListDataset_series", "Series")] = (
+        check_gluonTS_listDataset_series
+    )

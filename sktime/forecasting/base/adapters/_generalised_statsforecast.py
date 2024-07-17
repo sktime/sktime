@@ -1,5 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for StatsForecast models."""
+
 from inspect import signature
 from warnings import warn
 
@@ -236,12 +237,12 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
             if isinstance(upper_interval_predictions, pandas.Series):
                 upper_interval_predictions = upper_interval_predictions.to_numpy()
 
-            interval_predictions[
-                (var_name, level, "lower")
-            ] = lower_interval_predictions[horizon_positions]
-            interval_predictions[
-                (var_name, level, "upper")
-            ] = upper_interval_predictions[horizon_positions]
+            interval_predictions[(var_name, level, "lower")] = (
+                lower_interval_predictions[horizon_positions]
+            )
+            interval_predictions[(var_name, level, "upper")] = (
+                upper_interval_predictions[horizon_positions]
+            )
 
         return interval_predictions
 

@@ -1,4 +1,5 @@
 """Test suite for numba distances with parameters."""
+
 from typing import Callable
 
 import numpy as np

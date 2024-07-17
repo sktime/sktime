@@ -1,4 +1,5 @@
 """Benchmarking for forecasting estimators."""
+
 import functools
 from typing import Callable, Optional, Union
 
@@ -63,6 +64,7 @@ def forecasting_validation(
         will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed,
         e.g., ``scheduler``
+
     Returns
     -------
     Dictionary of benchmark results for that forecaster

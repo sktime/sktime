@@ -10,6 +10,11 @@ All forecasters in ``sktime`` can be listed using the ``sktime.registry.all_esti
 using ``estimator_types="forecaster"``, optionally filtered by tags.
 Valid tags can be listed using ``sktime.registry.all_tags``.
 
+A full table with tag based search is also available on the
+`Estimator Search Page <https://www.sktime.net/en/latest/estimator_overview.html>`_
+(select "forecaster" in the "Estimator type" dropdown).
+
+
 Base
 ----
 
@@ -492,6 +497,11 @@ Ensembles and stacking
     EnsembleForecaster
     AutoEnsembleForecaster
     StackingForecaster
+
+
+.. currentmodule:: sktime.forecasting.autots
+
+    AutoTS
 
 Hierarchical reconciliation
 ---------------------------
