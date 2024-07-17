@@ -6,6 +6,16 @@ Performance metrics
 
 The :mod:`sktime.performance_metrics` module contains metrics for evaluating and tuning time series models.
 
+All parameter estimators in ``sktime`` can be listed using the
+``sktime.registry.all_estimators`` utility,
+using ``estimator_types="metric"``, optionally filtered by tags.
+Valid tags can be listed using ``sktime.registry.all_tags``.
+
+A full table with tag based search is also available on the
+`Estimator Search Page <https://www.sktime.net/en/latest/estimator_overview.html>`_
+(select "metric" in the "Estimator type" dropdown).
+
+
 .. automodule:: sktime.performance_metrics
     :no-members:
     :no-inherited-members:

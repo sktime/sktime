@@ -30,7 +30,7 @@ Soft dependencies in ``sktime`` should usually be isolated to estimators.
 
 Informative warnings or error messages for missing soft dependencies should be raised, in a situation where a user would need them.
 This is handled through our ``_check_soft_dependencies`` utility
-`here <https://github.com/sktime/sktime/blob/main/sktime/utils/validation/_dependencies.py>`__.
+`here <https://github.com/sktime/sktime/blob/main/sktime/utils/dependencies/_dependencies.py>`__.
 There are specific conventions to add such warnings in estimators, as below.
 
 Estimators with a soft dependency need to ensure the following:
@@ -47,11 +47,6 @@ Estimators with a soft dependency need to ensure the following:
    should be populated to pass the information on package and import strings as ``dict`` such as ``{"scikit-learn": "sklearn"}``.
 *  If the soft dependencies require specific python versions, the ``python_version``
    tag should also be populated, with a PEP 440 compliant version specification ``str`` such as ``"<3.10"`` or ``">3.6,~=3.8"``.
-*  If including docstring examples that use soft dependencies, ensure to skip the corresponding doctest,
-   in order to avoid that ``doctest`` attempts to import the soft dependency when it is not present.
-   To do this, add a ``# doctest: +SKIP`` to the end of each line in the doctest to skip it entirely.
-   See ``forecasting.arima.ARIMA`` as as an example. If concerned that skipping the test will reduce test coverage,
-   consider exposing the doctest example as a pytest test function instead, see below how to handle soft dependencies in pytest functions.
 *  Decorate all ``pytest`` tests that import soft dependencies with a ``@pytest.mark.skipif(...)`` conditional on a soft dependency check.
    If the test is specific to a single estimator or object, use ``run_test_for_class`` from ``sktime.tests.test_switch``
    to mediate the condition through the class tags.
