@@ -1043,7 +1043,7 @@ class TestAllGlobalForecasters(TestAllObjects):
         # check consistency of forecast hierarchy with training data
         assert set(y_pred.index).issubset(X_test.index)
 
-    @pytest.mark.parametrize("n_columns", (1, 10))
+    @pytest.mark.parametrize("n_columns", [1, 10])
     def test_global_forecasting_series(self, estimator_instance, n_columns):
         from sktime.utils._testing.series import _make_series
 

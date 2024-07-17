@@ -1,4 +1,5 @@
 """Class for signature computation over windows."""
+
 import numpy as np
 
 from sktime.transformations.base import BaseTransformer

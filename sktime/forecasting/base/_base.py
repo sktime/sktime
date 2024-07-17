@@ -1769,6 +1769,7 @@ class BaseForecaster(BaseEstimator):
                 pd.Series, pd.DataFrame, np.ndarray, of Series scitype
                 pd.multiindex, numpy3D, nested_univ, df-list, of Panel scitype
                 pd_multiindex_hier, of Hierarchical scitype
+
         Notes
         -----
         Set self._cutoff to pandas.Index containing latest index seen in ``y``.

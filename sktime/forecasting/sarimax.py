@@ -11,9 +11,19 @@ from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
 class SARIMAX(_StatsModelsAdapter):
-    """SARIMAX forecaster.
+    """(S)ARIMA(X) forecaster, from statsmodels, tsa.statespace module.
 
-    Direct interface for ``statsmodels.tsa.api.SARIMAX``.
+    Direct interface for ``statsmodels.tsa.statespace.SARIMAX``.
+
+    Users should note that statsmodels contains two separate implementations of
+    (S)ARIMA(X), the ARIMA and the SARIMAX class, in different modules:
+    ``tsa.arima.model.ARIMA`` and ``tsa.statespace.SARIMAX``.
+
+    These are implementations of the same underlying model, (S)ARIMA(X),
+    but with different
+    fitting strategies, fitted parameters, and slightly differring behaviour.
+    Users should refer to the statsmodels documentation for further details:
+    https://www.statsmodels.org/dev/examples/notebooks/generated/statespace_sarimax_faq.html
 
     Parameters
     ----------
@@ -210,12 +220,19 @@ class SARIMAX(_StatsModelsAdapter):
     >>> forecaster.fit(y)  # doctest: +SKIP
     SARIMAX(...)
     >>> y_pred = forecaster.predict(fh=y.index)  # doctest: +SKIP
-    """
+    """  # noqa: E501
 
     _tags = {
         # packaging info
         # --------------
-        "authors": ["TNTran92", "yarnabrina"],
+        "authors": [
+            "chadfulton",  # for statsmodels
+            "bashtage",  # for statsmodels
+            "jbrockmendel",  # for statsmodels
+            "jackzyliu",  # for statsmodels
+            "TNTran92",
+            "yarnabrina",
+        ],
         "maintainers": ["TNTran92", "yarnabrina"],
         # "python_dependencnies": "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type

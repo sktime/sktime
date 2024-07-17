@@ -1,4 +1,5 @@
 """Tests for get intervals in time series forests."""
+
 from typing import Optional
 
 import numpy as np

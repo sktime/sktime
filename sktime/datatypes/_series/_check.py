@@ -379,3 +379,82 @@ if _check_soft_dependencies("dask", severity="none"):
         )
 
     check_dict[("dask_series", "Series")] = check_dask_series
+
+if _check_soft_dependencies("gluonts", severity="none"):
+
+    def check_gluonTS_listDataset_series(obj, return_metadata=False, var_name="obj"):
+        metadata = dict()
+
+        if (
+            not isinstance(obj, list)
+            or not isinstance(obj[0], dict)
+            or "target" not in obj[0]
+            or len(obj[0]["target"]) > 1
+        ):
+            msg = f"{var_name} must be a gluonts.ListDataset, found {type(obj)}"
+            return ret(False, msg, None, return_metadata)
+
+        # Check if there are no time series in the ListDataset
+        if _req("is_empty", return_metadata):
+            metadata["is_empty"] = len(obj) < 1
+
+        if _req("is_univariate", return_metadata):
+            # Check first if the ListDataset is empty
+            if len(obj) < 1:
+                metadata["is_univariate"] = True
+
+            # Check the first time-series for total features
+            else:
+                metadata["is_univariate"] = obj[0]["target"].shape[1] == 1
+
+        if _req("n_features", return_metadata):
+            # Check first if the ListDataset is empty
+            if len(obj) < 1:
+                metadata["n_features"] = 0
+
+            else:
+                metadata["n_features"] = obj[0]["target"].shape[1]
+
+        if _req("n_instances", return_metadata):
+            metadata["n_instances"] = 1
+
+        if _req("feature_names", return_metadata):
+            # Check first if the ListDataset is empty
+            if len(obj) < 1:
+                metadata["feature_names"] = []
+
+            else:
+                metadata["feature_names"] = [
+                    f"value_{i}" for i in range(obj[0]["target"].shape[1])
+                ]
+
+        for series in obj:
+            # check that no dtype is object
+            if series["target"].dtype == "object":
+                msg = f"{var_name} should not have column of 'object' dtype"
+                return ret(False, msg, None, return_metadata)
+
+        # Check if a valid Frequency is set
+        if FREQ_SET_CHECK and len(obj) >= 1:
+            if obj[0].freq is None:
+                msg = f"{var_name} has no freq attribute set."
+                return ret(False, msg, None, return_metadata)
+
+        # For a GluonTS ListDataset, only a start date and frequency is set
+        # so everything should thus be equally spaced
+        if _req("is_equally_spaced", return_metadata):
+            metadata["is_equally_spaced"] = True
+
+        if _req("has_nans", return_metadata):
+            for series in obj:
+                metadata["has_nans"] = pd.isnull(series["target"]).any()
+
+                # Break out if at least 1 time series has NaN values
+                if metadata["has_nans"]:
+                    break
+
+        return ret(True, None, metadata, return_metadata)
+
+    check_dict[("gluonts_ListDataset_series", "Series")] = (
+        check_gluonTS_listDataset_series
+    )

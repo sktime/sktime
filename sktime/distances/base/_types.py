@@ -8,14 +8,14 @@ __all__ = [
     "AlignmentPathReturn",
 ]
 
-from typing import Callable, List, Tuple, Union
+from typing import Callable, Union
 
 import numpy as np
 
 # Callable types
 DistanceCallable = (Callable[[np.ndarray, np.ndarray], float],)
 AlignmentPathReturn = Union[
-    Tuple[List[Tuple], float], Tuple[List[Tuple], float, np.ndarray]
+    tuple[list[tuple], float], tuple[list[tuple], float, np.ndarray]
 ]
 DistanceAlignmentPathCallable = Callable[[np.ndarray, np.ndarray], AlignmentPathReturn]
 DistanceFactoryCallable = Callable[

@@ -1,4 +1,5 @@
 """SAX transformer test code."""
+
 import numpy as np
 import pytest
 

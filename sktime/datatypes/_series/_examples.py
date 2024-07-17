@@ -76,6 +76,17 @@ if _check_soft_dependencies("dask", severity="none"):
     example_dict_lossy[("dask_series", "Series", 0)] = False
 
 
+if _check_soft_dependencies("gluonts", severity="none"):
+    from gluonts.dataset.common import ListDataset
+    from gluonts.dataset.field_names import FieldName
+
+    list_dataset = ListDataset(
+        [{FieldName.TARGET: s, FieldName.START: pd.Timestamp(2023, 1, 1)}], freq="D"
+    )
+
+    example_dict[("gluonts_ListDataset_series", "Series", 0)] = list_dataset
+    example_dict_lossy[("gluonts_ListDataset_series", "Series", 0)] = True
+
 example_dict_metadata[("Series", 0)] = {
     "is_univariate": True,
     "is_equally_spaced": True,
@@ -120,6 +131,24 @@ if _check_soft_dependencies("dask", severity="none"):
     example_dict[("dask_series", "Series", 1)] = df_dask
     example_dict_lossy[("dask_series", "Series", 1)] = False
 
+if _check_soft_dependencies("gluonts", severity="none"):
+    from gluonts.dataset.common import ListDataset
+    from gluonts.dataset.field_names import FieldName
+
+    list_dataset = ListDataset(
+        [
+            {
+                FieldName.TARGET: df,
+                FieldName.START: pd.Timestamp(2023, 1, 1),
+            }
+        ],
+        freq="D",
+        one_dim_target=False,  # Must be specified for multivariate datasets
+    )
+
+    example_dict[("gluonts_ListDataset_series", "Series", 1)] = list_dataset
+    example_dict_lossy[("gluonts_ListDataset_series", "Series", 1)] = True
+
 example_dict_metadata[("Series", 1)] = {
     "is_univariate": False,
     "is_equally_spaced": True,
@@ -129,7 +158,6 @@ example_dict_metadata[("Series", 1)] = {
     "feature_names": ["a", "b"],
     "feature_kind": [DtypeKind.FLOAT, DtypeKind.FLOAT],
 }
-
 
 ###
 # example 2: multivariate, positive
@@ -166,6 +194,23 @@ if _check_soft_dependencies("dask", severity="none"):
     example_dict[("dask_series", "Series", 2)] = df_dask
     example_dict_lossy[("dask_series", "Series", 2)] = False
 
+if _check_soft_dependencies("gluonts", severity="none"):
+    from gluonts.dataset.common import ListDataset
+    from gluonts.dataset.field_names import FieldName
+
+    list_dataset = ListDataset(
+        [
+            {
+                FieldName.TARGET: df,
+                FieldName.START: pd.Timestamp(2023, 1, 1),
+            }
+        ],
+        freq="D",
+        one_dim_target=False,  # Must be specified for multivariate datasets
+    )
+
+    example_dict[("gluonts_ListDataset_series", "Series", 2)] = list_dataset
+    example_dict_lossy[("gluonts_ListDataset_series", "Series", 2)] = True
 
 example_dict_metadata[("Series", 2)] = {
     "is_univariate": False,
@@ -205,6 +250,25 @@ if _check_soft_dependencies("xarray", severity="none"):
 
     example_dict[("xr.DataArray", "Series", 3)] = da
     example_dict_lossy[("xr.DataArray", "Series", 3)] = False
+
+if _check_soft_dependencies("gluonts", severity="none"):
+    from gluonts.dataset.common import ListDataset
+    from gluonts.dataset.field_names import FieldName
+
+    list_dataset = ListDataset(
+        [
+            {
+                FieldName.TARGET: df,
+                FieldName.START: pd.Timestamp(2023, 1, 1),
+            }
+        ],
+        freq="D",
+        one_dim_target=False,  # Must be specified for multivariate datasets
+    )
+
+    example_dict[("gluonts_ListDataset_series", "Series", 3)] = list_dataset
+    example_dict_lossy[("gluonts_ListDataset_series", "Series", 3)] = True
+
 
 example_dict_metadata[("Series", 3)] = {
     "is_univariate": True,
