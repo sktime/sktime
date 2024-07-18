@@ -124,5 +124,7 @@ def test_load_m5():
     loaded_dataset = load_m5(extract_path=file, test=True)
     assert len(loaded_dataset) == 1913
 
-    mul_indexhier = check_is_mtype(loaded_dataset, mtype="pd_multiindex_hier")
+    mul_indexhier = check_is_mtype(
+        loaded_dataset, mtype="pd_multiindex_hier", scitype="Hierarchical"
+    )
     assert mul_indexhier is True
