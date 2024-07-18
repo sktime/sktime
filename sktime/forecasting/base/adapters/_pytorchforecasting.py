@@ -231,9 +231,11 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
                 ),
             )
             if self._trainer.checkpoint_callback is not None:
-            # load model from checkpoint
+                # load model from checkpoint
                 best_model_path = self._trainer.checkpoint_callback.best_model_path
-                self.best_model = self.algorithm_class.load_from_checkpoint(best_model_path)
+                self.best_model = self.algorithm_class.load_from_checkpoint(
+                    best_model_path
+                )
             else:
                 self.best_model = self._forecaster
         else:
