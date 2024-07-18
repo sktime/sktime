@@ -209,6 +209,9 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
+                    "model_params": {
+                        "hidden_size": 8,
+                    },
                     "random_log_path": True,  # fix multiprocess file access error in CI
                 },
                 {
@@ -465,6 +468,12 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
+                    "model_params": {
+                        "num_blocks": [2, 2],
+                        "num_block_layers": [1, 1],
+                        "widths": 32
+                    },
+                    "da
                     "random_log_path": True,  # fix multiprocess file access error in CI
                 },
                 {
@@ -477,6 +486,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                         "num_block_layers": [5, 5],
                         "log_interval": 10,
                         "backcast_loss_ratio": 1.0,
+                        "widths": 32
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
@@ -725,6 +735,11 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                         "max_epochs": 1,  # for quick test
                         "limit_train_batches": 10,  # for quick test
                     },
+                    "model_params": {
+                        "cell_type": "GRU",
+                        "rnn_layers": 1,
+                        "hidden_size": 3,
+                    },
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
@@ -738,7 +753,8 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                     },
                     "model_params": {
                         "cell_type": "GRU",
-                        "rnn_layers": 3,
+                        "rnn_layers": 2,
+                        "hidden_size": 3,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
@@ -988,6 +1004,9 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
+                    "model_params": {
+                        "hidden_size": 8,
+                    },
                     "random_log_path": True,  # fix multiprocess file access error in CI
                 },
                 {
@@ -998,6 +1017,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     "model_params": {
                         "interpolation_mode": "nearest",
                         "activation": "Tanh",
+                        "hidden_size": 8,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
