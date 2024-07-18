@@ -60,7 +60,7 @@ Base
 
 .. autosummary::
     :toctree: auto_generated/
-    :template: class.rst
+    :template: function.rst
 
     run_clustering_experiment
     load_and_run_clustering_experiment
