@@ -54,3 +54,24 @@ def test_plotting_dataframe_with_unused_levels():
     )
     plt.gcf().canvas.draw_idle()
     plt.close()
+
+
+def test_plotting_basic_dataframe():
+    """This example is based on the notebook 01_forecasting.ipynb."""
+
+    from sktime.datasets import load_airline
+    from sktime.forecasting.theta import ThetaForecaster
+
+    # until fit, identical with the simple workflow
+    y = load_airline()
+
+    fh = np.arange(1, 13)
+
+    forecaster = ThetaForecaster(sp=12)
+    forecaster.fit(y, fh=fh)
+
+    coverage = 0.9
+    y_pred_ints = forecaster.predict_interval(coverage=coverage)
+    y_pred = forecaster.predict()
+
+    fig, ax = plot_series(y, y_pred, labels=["y", "y_pred"], pred_interval=y_pred_ints)
