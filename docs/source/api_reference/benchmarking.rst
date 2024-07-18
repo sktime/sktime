@@ -105,7 +105,7 @@ Base
     TSCTask
     TSRTask
 
-.. currentmodule:: sktime.benchmarking.metrocs
+.. currentmodule:: sktime.benchmarking.metrics
 
 .. autosummary::
     :toctree: auto_generated/
