@@ -11,6 +11,7 @@ from packaging.specifiers import SpecifierSet
 from sktime.datasets import (
     load_forecastingdata,
     load_fpp3,
+    load_m5,
     load_solar,
     load_UCR_UEA_dataset,
 )
@@ -114,3 +115,14 @@ def test_load_fpp3():
     assert isinstance(olympic_running, pd.DataFrame)
     ret = check_is_mtype(olympic_running, mtype="pd_multiindex_hier")
     assert ret is True
+
+
+@pytest.mark.datadownload
+def test_load_m5():
+    """Test loading downloaded dataset from Zenodo.org."""
+    file = "UnitTest"
+    loaded_dataset = load_m5(extract_path=file, test=True)
+    assert len(loaded_dataset) == 1913
+
+    mul_indexhier = check_is_mtype(loaded_dataset, mtype="pd_multiindex_hier")
+    assert mul_indexhier is True
