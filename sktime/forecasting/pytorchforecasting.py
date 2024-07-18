@@ -473,7 +473,6 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                         "num_block_layers": [1, 1],
                         "widths": 32
                     },
-                    "da
                     "random_log_path": True,  # fix multiprocess file access error in CI
                 },
                 {
