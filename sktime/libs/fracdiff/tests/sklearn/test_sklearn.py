@@ -1,5 +1,8 @@
 import numpy as np
 import pytest
+
+from sktime.tests.test_switch import run_test_module_changed
+
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
@@ -7,6 +10,10 @@ from sklearn.preprocessing import StandardScaler
 from sktime.libs.fracdiff.sklearn import Fracdiff
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.libs.fracdiff.sklearn"),
+    reason="Execute tests for fracdiff.sklearn iff anything in the module has changed",
+)
 class TestScikitLearn:
     @pytest.mark.parametrize("seed", [42])
     @pytest.mark.parametrize("n_samples", [20, 100])

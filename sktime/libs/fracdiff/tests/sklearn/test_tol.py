@@ -1,11 +1,17 @@
 import numpy as np
 import pytest
 
+from sktime.tests.test_switch import run_test_module_changed
+
 from sktime.libs.fracdiff.fdiff import fdiff_coef
 from sktime.libs.fracdiff.sklearn.tol import window_from_tol_coef
 from sktime.libs.fracdiff.sklearn.tol import window_from_tol_memory
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.libs.fracdiff.sklearn"),
+    reason="Execute tests for fracdiff.sklearn iff anything in the module has changed",
+)
 class TestTol:
     LARGE = 10**6
 

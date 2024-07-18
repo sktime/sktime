@@ -2,10 +2,16 @@ import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
 
+from sktime.tests.test_switch import run_test_module_changed
+
 from sktime.libs.fracdiff import fdiff
 from sktime.libs.fracdiff.sklearn import Fracdiff
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.libs.fracdiff.sklearn"),
+    reason="Execute tests for fracdiff.sklearn iff anything in the module has changed",
+)
 class TestFracdiff:
     def test_repr(self):
         fracdiff = Fracdiff(0.5, window=10, mode="same", window_policy="fixed")
