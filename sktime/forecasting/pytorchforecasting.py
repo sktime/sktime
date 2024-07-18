@@ -205,6 +205,8 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
                         "limit_train_batches": 10,  # for quick test
+                        "enable_checkpointing": False,
+                        "logger": False,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
@@ -218,6 +220,8 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
                         "limit_train_batches": 10,  # for quick test
+                        "enable_checkpointing": False,
+                        "logger": False,
                     },
                     "model_params": {
                         "hidden_size": 10,
@@ -464,6 +468,8 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
                         "limit_train_batches": 10,  # for quick test
+                        "enable_checkpointing": False,
+                        "logger": False,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
@@ -479,6 +485,8 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
                         "limit_train_batches": 10,  # for quick test
+                        "enable_checkpointing": False,
+                        "logger": False,
                     },
                     "model_params": {
                         "num_blocks": [5, 5],
@@ -738,6 +746,8 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                         "cell_type": "GRU",
                         "rnn_layers": 1,
                         "hidden_size": 3,
+                        "enable_checkpointing": False,
+                        "logger": False,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
@@ -749,6 +759,8 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
                         "limit_train_batches": 10,  # for quick test
+                        "enable_checkpointing": False,
+                        "logger": False,
                     },
                     "model_params": {
                         "cell_type": "GRU",
@@ -999,6 +1011,8 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
                         "limit_train_batches": 10,  # for quick test
+                        "enable_checkpointing": False,
+                        "logger": False,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
@@ -1012,6 +1026,8 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
                         "limit_train_batches": 10,  # for quick test
+                        "enable_checkpointing": False,
+                        "logger": False,
                     },
                     "model_params": {
                         "interpolation_mode": "nearest",
