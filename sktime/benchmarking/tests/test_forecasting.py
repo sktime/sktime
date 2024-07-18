@@ -8,7 +8,6 @@ from sklearn.model_selection import KFold
 from sktime.benchmarking.benchmarks import coerce_estimator_and_id
 from sktime.benchmarking.forecasting import ForecastingBenchmark
 from sktime.forecasting.naive import NaiveForecaster
-from sktime.forecasting.pytorchforecasting import PytorchForecastingTFT
 from sktime.forecasting.trend import TrendForecaster
 from sktime.performance_metrics.forecasting import (
     MeanAbsoluteError,
@@ -176,6 +175,11 @@ def test_forecastingbenchmark_global_mode(
     scorers,
 ):
     """Test benchmarking a forecaster estimator in gloabl mode."""
+    try:
+        from sktime.forecasting.pytorchforecasting import PytorchForecastingTFT
+    except ModuleNotFoundError:
+        return None
+
     benchmark = ForecastingBenchmark()
 
     params = PytorchForecastingTFT.get_test_params()[0]
