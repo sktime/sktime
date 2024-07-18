@@ -1,5 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Interfaces to estimators from darts by Unit8."""
+
 from typing import Optional, Union
 
 from skbase.utils.dependencies import _check_soft_dependencies
