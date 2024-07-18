@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v4.6.0
     hooks:
       - id: check-added-large-files
         args:
@@ -12,37 +12,15 @@ repos:
       - id: debug-statements
       - id: end-of-file-fixer
         exclude: "^docs/source/examples/"
-      - id: fix-encoding-pragma
-        args:
-          - --remove
       - id: requirements-txt-fixer
       - id: trailing-whitespace
 
-  - repo: https://github.com/asottile/pyupgrade
-    rev: v3.15.0
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.5.1
     hooks:
-      - id: pyupgrade
-        args:
-          - --py38-plus
-
-  - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
-    hooks:
-      - id: isort
-        name: isort
-
-  - repo: https://github.com/psf/black
-    rev: 23.12.1
-    hooks:
-      - id: black
-        language_version: python3
-
-  - repo: https://github.com/pycqa/flake8
-    rev: 7.0.0
-    hooks:
-      - id: flake8
-        exclude: docs/conf.py
-        additional_dependencies: [flake8-bugbear, flake8-print]
+      - id: ruff-format
+      - id: ruff
+        args: [--fix]
 
   - repo: https://github.com/mgedmin/check-manifest
     rev: "0.49"
@@ -50,31 +28,10 @@ repos:
       - id: check-manifest
         stages: [manual]
 
-  - repo: https://github.com/nbQA-dev/nbQA
-    rev: 1.7.1
-    hooks:
-      - id: nbqa-black
-        args:
-          - --nbqa-dont-skip-bad-cells
-      - id: nbqa-isort
-        args:
-          - --nbqa-dont-skip-bad-cells
-      - id: nbqa-flake8
-        args:
-          - --nbqa-dont-skip-bad-cells
-          - --extend-ignore=E402,E203
-
-  - repo: https://github.com/pycqa/pydocstyle
-    rev: 6.3.0
-    hooks:
-      - id: pydocstyle
-        args:
-          - --config=setup.cfg
-
   # We use the Python version instead of the original version which seems to require Docker
   # https://github.com/koalaman/shellcheck-precommit
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.9.0.6
+    rev: v0.10.0.1
     hooks:
       - id: shellcheck
         name: shellcheck
