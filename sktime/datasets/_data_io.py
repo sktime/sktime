@@ -451,7 +451,7 @@ def _reduce_memory_usage(df, category=True, n_jobs=1):
             else:
                 c_min = col.min()
                 c_max = col.max()
-                if str(col_type)[:3] == "int":
+                if pd.api.types.is_integer_dtype(col):
                     if c_min > np.iinfo(np.int8).min and c_max < np.iinfo(np.int8).max:
                         return col.astype(np.int8)
                     elif (
@@ -482,7 +482,7 @@ def _reduce_memory_usage(df, category=True, n_jobs=1):
                         return col.astype(np.float32)
                     else:
                         return col.astype(np.float64)
-        else:
+        elif col_type is object:
             if category:
                 return col.astype("category")
         return col

@@ -1445,6 +1445,7 @@ def load_m5(
     extract_path=None,
     folder_path=None,
     include_events=False,
+    test=False,
 ):
     """Fetch M5 dataset from https://zenodo.org/records/12636070 .
 
@@ -1466,6 +1467,9 @@ def load_m5(
 
     include_events : bool, optional (default=False)
         Includes the event names and types in the dataset if `True`.
+
+    test : bool, optional (default = False)
+        useful when running the tests
 
     Returns
     -------
@@ -1517,7 +1521,7 @@ def load_m5(
             pd.read_csv(path_to_data_dir + "/m5-forecasting-accuracy/calendar.csv")
         )
 
-    def create_series_data(df, cal, sp, include_events=False):
+    def create_series_data(df, cal, sp, include_events=False, test=False):
         """Create the series data.
 
         Parameters
@@ -1530,12 +1534,16 @@ def load_m5(
             takes the sell_prices dataframe by default.
         include_events : bool, optional (default=False)
             Includes the event names and types in the dataset if `True`.
+        test : bool, optional (default = False)
+            useful when running the tests
 
         Returns
         -------
         df4 : pd.Dataframe
             the merged dataframe
         """
+        if test:
+            df = df[:1]
         # melt
         df1 = pd.melt(
             df,
@@ -1568,6 +1576,9 @@ def load_m5(
                     "sales",
                     "date",
                     "wm_yr_wk",
+                    "wday",
+                    "month",
+                    "year",
                     "event_name_1",
                     "event_name_2",
                     "event_type_1",
@@ -1587,6 +1598,9 @@ def load_m5(
                     "sales",
                     "date",
                     "wm_yr_wk",
+                    "wday",
+                    "month",
+                    "year",
                 ]
             ]
 
@@ -1597,17 +1611,31 @@ def load_m5(
 
         return df4
 
+    if test:
+        data = create_series_data(
+            sales_train_validation,
+            calendar,
+            sell_prices,
+            include_events=False,
+            test=True,
+        )
+        data.set_index(
+            ["state_id", "store_id", "cat_id", "dept_id", "date"], inplace=True
+        )
+        return data
+
     if include_events:
         data = create_series_data(
             sales_train_validation, calendar, sell_prices, include_events=True
         )
-        data = data.drop(columns=["id"])
+
     else:
-        data = create_series_data(sales_train_validation, calendar, sell_prices)
-        data = data.drop(columns=["id"])
+        data = create_series_data(
+            sales_train_validation, calendar, sell_prices, include_events=False
+        )
 
     data.set_index(["state_id", "store_id", "cat_id", "dept_id", "date"], inplace=True)
-    # data["item_id"] = data["item_id"].astype('category').cat.codes
+
     data = data.sort_index()
 
     return data
