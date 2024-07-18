@@ -471,7 +471,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                     "model_params": {
                         "num_blocks": [2, 2],
                         "num_block_layers": [1, 1],
-                        "widths": 32
+                        "widths": 32,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
                 },
@@ -485,7 +485,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                         "num_block_layers": [5, 5],
                         "log_interval": 10,
                         "backcast_loss_ratio": 1.0,
-                        "widths": 32
+                        "widths": 32,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
