@@ -227,9 +227,11 @@ class PyKANForecaster(BaseForecaster):
                 dim=-1,
             ).type(torch.float32)
         else:
-            input_ = torch.from_numpy(self._y.values[-self.input_layer_size :]).reshape(
-                (1, -1)
-            ).type(torch.float32)
+            input_ = (
+                torch.from_numpy(self._y.values[-self.input_layer_size :])
+                .reshape((1, -1))
+                .type(torch.float32)
+            )
 
         prediction = model(input_).detach().numpy().reshape((-1,))
         index = list(fh.to_absolute(self.cutoff))
