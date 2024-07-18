@@ -10,19 +10,26 @@ __author__ = ["abostrom"]
 
 
 class TruncationTransformer(BaseTransformer):
-    """Truncate unequal length panels to lower/upper bounds.
-
-    Truncates all series in panel between lower/upper range bounds.
+    """
+    Truncates unequal length panels between lower/upper length ranges.
 
     Parameters
     ----------
-    lower : int, optional (default=None) bottom range of the values to
-                truncate can also be used to truncate to a specific length
-                if None, will find the shortest sequence and use instead.
-    upper : int, optional (default=None) upper range, only required when
-                paired with lower.
-                This is used to calculate the range between. exclusive.
-                if None, will truncate from 0 to the lower bound.
+    lower : int, optional (default=None) minimum length, inclusive
+                Cannot be less than the length of the shortest series in the panel.
+                If None, will find the length of the shortest series and use instead.
+    upper : int, optional (default=None) maximum length, exclusive
+                This is used to calculate the range between.
+                If None, will truncate to the lower bound.
+
+    Examples
+    --------
+    >>> from sktime.transformations.panel.truncation import TruncationTransformer
+    >>> from sktime.utils._testing.hierarchical import _make_hierarchical
+    >>> X = _make_hierarchical(same_cutoff=False)
+    >>> tt = TruncationTransformer()
+    >>> tt.fit(X)
+    >>> X_transformed = tt.transform(X)
     """
 
     _tags = {
