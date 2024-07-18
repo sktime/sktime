@@ -17,6 +17,7 @@ from sktime.performance_metrics.forecasting import (
 from sktime.split import ExpandingWindowSplitter, InstanceSplitter, SingleWindowSplitter
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.hierarchical import _make_hierarchical
+from sktime.utils.dependencies import _check_soft_dependencies
 
 EXPECTED_RESULTS_1 = pd.DataFrame(
     data={
@@ -175,10 +176,10 @@ def test_forecastingbenchmark_global_mode(
     scorers,
 ):
     """Test benchmarking a forecaster estimator in gloabl mode."""
-    try:
-        from sktime.forecasting.pytorchforecasting import PytorchForecastingTFT
-    except ModuleNotFoundError:
+    if not _check_soft_dependencies("pytorch_forecasting", severity="none"):
         return None
+    else:
+        from sktime.forecasting.pytorchforecasting import PytorchForecastingTFT
 
     benchmark = ForecastingBenchmark()
 
