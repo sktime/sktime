@@ -307,7 +307,12 @@ def _evaluate_window(x, meta):
 
     # Storing the remaining evaluate detail
     temp_result["fit_time"] = [fit_time]
-    temp_result["len_train_window"] = [len(y_train)]
+    temp_result["len_train_window"] = (
+        [len(y_train)]
+        if not isinstance(y_train.index, pd.MultiIndex)
+        else len(np.unique(y_train.index.get_level_values(-1)))
+    )
+
     temp_result["cutoff"] = [cutoff_ind]
     if return_data:
         temp_result["y_train"] = [y_train]
