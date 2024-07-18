@@ -69,11 +69,11 @@ class MCNNNetwork(BaseDeepNetwork):
         input_layers = []
         first_stage_layers = []
 
-        for i in range(3):
+        for i in range(len(input_shape)):
             input_layer = keras.layers.Input(input_shape[i])
             input_layers.append(input_layer)
 
-            conv_layer = keras.Conv1D(
+            conv_layer = keras.layers.Conv1D(
                 filters=256,
                 kernel_size=self.kernel_size,
                 padding=self.padding,

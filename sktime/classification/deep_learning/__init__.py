@@ -12,6 +12,7 @@ __all__ = [
     "ResNetClassifier",
     "SimpleRNNClassifier",
     "TapNetClassifier",
+    "MCNNClassifier",
 ]
 
 from sktime.classification.deep_learning.cnn import CNNClassifier
@@ -21,6 +22,7 @@ from sktime.classification.deep_learning.inceptiontime import InceptionTimeClass
 from sktime.classification.deep_learning.lstmfcn import LSTMFCNClassifier
 from sktime.classification.deep_learning.macnn import MACNNClassifier
 from sktime.classification.deep_learning.mcdcnn import MCDCNNClassifier
+from sktime.classification.deep_learning.mcnn import MCNNClassifier
 from sktime.classification.deep_learning.mlp import MLPClassifier
 from sktime.classification.deep_learning.resnet import ResNetClassifier
 from sktime.classification.deep_learning.rnn import SimpleRNNClassifier
