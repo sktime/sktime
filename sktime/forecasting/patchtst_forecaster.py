@@ -19,11 +19,13 @@ from tsfm_public.toolkit.dataset import ForecastDFDataset
 from tsfm_public.toolkit.time_series_preprocessor import TimeSeriesPreprocessor
 from tsfm_public.toolkit.util import select_by_index
 
+from sktime.forecasting.base import _BaseGlobalForecaster
+
 # from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
 
-class HFPatchTSTForecaster:
-    """docstring for PatchTST forecaster.
+class HFPatchTSTForecaster(_BaseGlobalForecaster):
+    """Interface for the PatchTST forecaster.
 
     link to ref: https://github.com/yuqinie98/PatchTST
     link to paper: https://arxiv.org/abs/2211.14730
