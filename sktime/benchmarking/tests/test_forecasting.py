@@ -160,6 +160,10 @@ def test_forecastingbenchmark(tmp_path, expected_results_df, scorers):
     not run_test_module_changed("sktime.benchmarking"),
     reason="run test only if benchmarking module has changed",
 )
+@pytest.mark.skipif(
+    not _check_soft_dependencies("pytorch_forecasting", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 @pytest.mark.parametrize(
     "expected_results_df, scorers",
     [
@@ -176,10 +180,7 @@ def test_forecastingbenchmark_global_mode(
     scorers,
 ):
     """Test benchmarking a forecaster estimator in gloabl mode."""
-    if not _check_soft_dependencies("pytorch_forecasting", severity="none"):
-        return None
-    else:
-        from sktime.forecasting.pytorchforecasting import PytorchForecastingTFT
+    from sktime.forecasting.pytorchforecasting import PytorchForecastingTFT
 
     benchmark = ForecastingBenchmark()
 
