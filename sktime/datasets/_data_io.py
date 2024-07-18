@@ -444,44 +444,31 @@ def _reduce_memory_usage(df, category=True, n_jobs=1):
 
     def optimize_column(col):
         col_type = col.dtype
-        if col_type is not object:
-            if pd.isnull(col).any():
-                if col_type == "int":
-                    col = col.astype("float32")
+        if pd.api.types.is_numeric_dtype(col):
+            c_min = col.min()
+            c_max = col.max()
+            if pd.api.types.is_integer_dtype(col):
+                if c_min > np.iinfo(np.int8).min and c_max < np.iinfo(np.int8).max:
+                    return col.astype(np.int8)
+                elif c_min > np.iinfo(np.int16).min and c_max < np.iinfo(np.int16).max:
+                    return col.astype(np.int16)
+                elif c_min > np.iinfo(np.int32).min and c_max < np.iinfo(np.int32).max:
+                    return col.astype(np.int32)
+                elif c_min > np.iinfo(np.int64).min and c_max < np.iinfo(np.int64).max:
+                    return col.astype(np.int64)
             else:
-                c_min = col.min()
-                c_max = col.max()
-                if pd.api.types.is_integer_dtype(col):
-                    if c_min > np.iinfo(np.int8).min and c_max < np.iinfo(np.int8).max:
-                        return col.astype(np.int8)
-                    elif (
-                        c_min > np.iinfo(np.int16).min
-                        and c_max < np.iinfo(np.int16).max
-                    ):
-                        return col.astype(np.int16)
-                    elif (
-                        c_min > np.iinfo(np.int32).min
-                        and c_max < np.iinfo(np.int32).max
-                    ):
-                        return col.astype(np.int32)
-                    elif (
-                        c_min > np.iinfo(np.int64).min
-                        and c_max < np.iinfo(np.int64).max
-                    ):
-                        return col.astype(np.int64)
+                if (
+                    c_min > np.finfo(np.float16).min
+                    and c_max < np.finfo(np.float16).max
+                ):
+                    return col.astype(np.float16)
+                elif (
+                    c_min > np.finfo(np.float32).min
+                    and c_max < np.finfo(np.float32).max
+                ):
+                    return col.astype(np.float32)
                 else:
-                    if (
-                        c_min > np.finfo(np.float16).min
-                        and c_max < np.finfo(np.float16).max
-                    ):
-                        return col.astype(np.float16)
-                    elif (
-                        c_min > np.finfo(np.float32).min
-                        and c_max < np.finfo(np.float32).max
-                    ):
-                        return col.astype(np.float32)
-                    else:
-                        return col.astype(np.float64)
+                    return col.astype(np.float64)
         elif col_type is object:
             if category:
                 return col.astype("category")
