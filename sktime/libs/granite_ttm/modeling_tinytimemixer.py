@@ -11,16 +11,13 @@ from skbase.utils.dependencies import _check_soft_dependencies
 from sktime.libs.granite_ttm.configuration_tinytimemixer import TinyTimeMixerConfig
 
 if _check_soft_dependencies("transformers", severity="none"):
-    from transformers.modeling_utils import PreTrainedModel
-    from transformers.utils import (
-        ModelOutput,
-        add_start_docstrings,
-        add_start_docstrings_to_model_forward,
-        replace_return_docstrings,
-    )
+    from transformers.modeling_utils import ModelOutput, PreTrainedModel
 else:
 
     class PreTrainedModel:
+        """Dummy class if transformers is unavailable."""
+
+    class ModelOutput:
         """Dummy class if transformers is unavailable."""
 
 
@@ -41,53 +38,6 @@ else:
 
     class torch_float:
         """Dummy class if torch is unavailable."""
-
-
-_CONFIG_FOR_DOC = "TinyTimeMixerConfig"
-
-
-TINYTIMEMIXER_PRETRAINED_MODEL_ARCHIVE_LIST = []
-
-
-TINYTIMEMIXER_START_DOCSTRING = r"""
-
-    This model inherits from [`PreTrainedModel`]. Check the superclass documentation for
-    the generic methods the
-    library implements for all its model (such as downloading or saving,
-    resizing the input embeddings, pruning heads
-    etc.)
-
-    This model is also a PyTorch
-    [nn_module](https://pytorch.org/docs/stable/nn.html#torch.nn_module) subclass.
-    Use it as a regular PyTorch Module and refer to the PyTorch documentation
-    for all matter related to general usage
-    and behavior.
-
-    Args:
-        config ([`TinyTimeMixerConfig`]):
-            Model configuration class with all the parameters of the model. Initializing
-            with a config file does not
-            load the weights associated with the model, only the configuration.
-            Check out the
-            [`~PreTrainedModel.from_pretrained`] method to load the model weights.
-"""
-
-TINYTIMEMIXER_INPUTS_DOCSTRING = r"""
-    Args:
-        past_values (`torch.FloatTensor` of
-            shape `(batch_size, seq_length, num_input_channels)`):
-            Context values of the time series. For a forecasting task, this denotes the
-            history/past time series values.
-            For univariate time series, `num_input_channels` dimension should be 1.
-            For multivariate time series, it is
-            greater than 1.
-
-        output_hidden_states (`bool`, *optional*):
-            Whether or not to return the hidden states of all layers.
-
-        return_dict (`bool`, *optional*):
-            Whether or not to return a [`~utils.ModelOutput`] instead of a plain tuple.
-"""
 
 
 class TinyTimeMixerGatedAttention(nn_module):
@@ -1260,9 +1210,6 @@ class TinyTimeMixerEncoder(TinyTimeMixerPreTrainedModel):
         if config.post_init:
             self.post_init()
 
-    @replace_return_docstrings(
-        output_type=TinyTimeMixerEncoderOutput, config_class=_CONFIG_FOR_DOC
-    )
     def forward(
         self,
         past_values: torch_tensor,
@@ -1369,12 +1316,29 @@ class TinyTimeMixerModelOutput(ModelOutput):
     scale: Optional[torch_float] = None
 
 
-@add_start_docstrings(
-    "The TinyTimeMixer Model for time-series forecasting.",
-    TINYTIMEMIXER_START_DOCSTRING,
-)
 class TinyTimeMixerModel(TinyTimeMixerPreTrainedModel):
-    """TinyTimeMixerModel."""
+    """TinyTimeMixerModel.
+
+    This model inherits from [`PreTrainedModel`]. Check the superclass documentation for
+    the generic methods the
+    library implements for all its model (such as downloading or saving,
+    resizing the input embeddings, pruning heads
+    etc.)
+
+    This model is also a PyTorch
+    [nn_module](https://pytorch.org/docs/stable/nn.html#torch.nn_module) subclass.
+    Use it as a regular PyTorch Module and refer to the PyTorch documentation
+    for all matter related to general usage
+    and behavior.
+
+    Args:
+        config ([`TinyTimeMixerConfig`]):
+            Model configuration class with all the parameters of the model. Initializing
+            with a config file does not
+            load the weights associated with the model, only the configuration.
+            Check out the
+            [`~PreTrainedModel.from_pretrained`] method to load the model weights.
+    """
 
     def __init__(self, config: TinyTimeMixerConfig):
         if config.init_processing is False:
@@ -1398,10 +1362,6 @@ class TinyTimeMixerModel(TinyTimeMixerPreTrainedModel):
         if config.post_init:
             self.post_init()
 
-    @add_start_docstrings_to_model_forward(TINYTIMEMIXER_INPUTS_DOCSTRING)
-    @replace_return_docstrings(
-        output_type=TinyTimeMixerModelOutput, config_class=_CONFIG_FOR_DOC
-    )
     def forward(
         self,
         past_values: torch_tensor,
@@ -1413,17 +1373,37 @@ class TinyTimeMixerModel(TinyTimeMixerPreTrainedModel):
         r"""
         Forward Pass.
 
-        observed_mask (`torch.FloatTensor` of shape
-            `(batch_size, sequence_length, num_input_channels)`, *optional*):
-            Boolean mask to indicate which `past_values`
-            were observed and which were missing. Mask values selected
-            in `[0, 1]`:
-                - 1 for values that are **observed**,
-                - 0 for values that are **missing**
-                  (i.e. NaNs that were replaced by zeros).
+        Args:
+            past_values (`torch.FloatTensor` of
+                shape `(batch_size, seq_length, num_input_channels)`):
+                Context values of the time series. For a forecasting task,
+                this denotes the
+                history/past time series values.
+                For univariate time series, `num_input_channels` dimension should be 1.
+                For multivariate time series, it is
+                greater than 1.
 
-        Return:
+            output_hidden_states (`bool`, *optional*):
+                Whether or not to return the hidden states of all layers.
 
+            return_dict (`bool`, *optional*):
+                Whether or not to return a [`~utils.ModelOutput`] instead of a
+                plain tuple.
+
+            observed_mask (`torch.FloatTensor` of shape
+                `(batch_size, sequence_length, num_input_channels)`, *optional*):
+                Boolean mask to indicate which `past_values`
+                were observed and which were missing. Mask values selected
+                in `[0, 1]`:
+                    - 1 for values that are **observed**,
+                    - 0 for values that are **missing**
+                    (i.e. NaNs that were replaced by zeros).
+
+        Returns
+        -------
+            `TinyTimeMixerModelOutput` or `tuple`:
+                If `return_dict` is True, returns a `TinyTimeMixerModelOutput` object,
+                otherwise returns a tuple.
         """
         return_dict = return_dict if return_dict is not None else self.use_return_dict
 
@@ -1505,70 +1485,6 @@ class TinyTimeMixerForPredictionOutput(ModelOutput):
     scale: torch_float = None
 
 
-@dataclass
-class SampleTinyTimeMixerPredictionOutput(ModelOutput):
-    """
-    SampleTinyTimeMixerPredictionOutput.
-
-    Base class for time series model's predictions outputs that contains
-    the sampled values from the chosen
-    distribution.
-
-    Args:
-        sequences (`torch.FloatTensor` of
-            shape `(batch_size, num_samples,
-        prediction_length, number_channels)`):
-            Sampled values from the chosen distribution.
-    """
-
-    sequences: torch_float = None
-
-
-def nll(input: torch.distributions.Distribution, target: torch_tensor):
-    """
-    nll.
-
-    Computes the negative log likelihood loss from input distribution
-    with respect to target.
-    """
-    return -input.log_prob(target)
-
-
-def weighted_average(
-    input_tensor: torch_tensor, weights: Optional[torch_tensor] = None, dim=None
-):
-    """
-    weighted_average.
-
-    Computes the weighted average of a given tensor across a given `dim`, masking
-    values associated with weight zero,
-    meaning instead of `nan * 0 = nan` you will get `0 * 0 = 0`.
-
-    Args:
-        input_tensor (`torch.FloatTensor`):
-            Input tensor, of which the average must be computed.
-        weights (`torch.FloatTensor`, *optional*):
-            Weights tensor, of the same shape as `input_tensor`.
-        dim (`int`, *optional*):
-            The dim along which to average `input_tensor`.
-
-    Return:
-        `torch.FloatTensor`: The tensor with values averaged along the specified `dim`.
-    """
-    if weights is not None:
-        weighted_tensor = torch.where(
-            weights != 0, input_tensor * weights, torch.zeros_like(input_tensor)
-        )
-        sum_weights = torch.clamp(
-            weights.sum(dim=dim) if dim else weights.sum(), min=1.0
-        )
-        return (
-            weighted_tensor.sum(dim=dim) if dim else weighted_tensor.sum()
-        ) / sum_weights
-    else:
-        return input_tensor.mean(dim=dim)
-
-
 class TinyTimeMixerForPrediction(TinyTimeMixerPreTrainedModel):
     r"""
     `TinyTimeMixer` for forecasting application.
@@ -1610,10 +1526,6 @@ class TinyTimeMixerForPrediction(TinyTimeMixerPreTrainedModel):
         if config.post_init:
             self.post_init()
 
-    @add_start_docstrings_to_model_forward(TINYTIMEMIXER_INPUTS_DOCSTRING)
-    @replace_return_docstrings(
-        output_type=TinyTimeMixerForPredictionOutput, config_class=_CONFIG_FOR_DOC
-    )
     def forward(
         self,
         past_values: torch_tensor,
@@ -1627,34 +1539,50 @@ class TinyTimeMixerForPrediction(TinyTimeMixerPreTrainedModel):
         r"""
         Forward Pass.
 
-        observed_mask (`torch.FloatTensor` of shape
-            `(batch_size, sequence_length, num_input_channels)`, *optional*):
-            Boolean mask to indicate which `past_values` were observed
-            and which were missing. Mask values selected
-            in `[0, 1]`:
-                - 1 for values that are **observed**,
-                - 0 for values that are **missing**
+        Args:
+            past_values (`torch.FloatTensor` of
+                shape `(batch_size, seq_length, num_input_channels)`):
+                Context values of the time series. For a forecasting task,
+                this denotes the
+                history/past time series values.
+                For univariate time series, `num_input_channels` dimension should be 1.
+                For multivariate time series, it is
+                greater than 1.
 
-                  y zeros).
-        future_values (`torch.FloatTensor` of shape
-            `(batch_size, target_len, num_input_channels)` for forecasting,:
-            `(batch_size, num_targets)` for regression, or `(batch_size,)`
-            for classification, *optional*): Target
-            values of the time series, that serve as labels for the model.
-            The `future_values` is what the
-            Transformer needs during training to learn to output, given the
-            `past_values`. Note that, this is NOT
-            required for a pretraining task.
+            output_hidden_states (`bool`, *optional*):
+                Whether or not to return the hidden states of all layers.
 
-            For a forecasting task, the shape is be
-            `(batch_size, target_len, num_input_channels)`. Even if we want
-            to forecast only specific channels by setting the indices in
-            `prediction_channel_indices` parameter,
-            pass the target data with all channels, as channel Filtering for both
-            prediction and target will be
-            manually applied before the loss computation.
-        return_loss (`bool`,  *optional*):
-            Whether to return the loss in the `forward` call.
+            return_dict (`bool`, *optional*):
+                Whether or not to return a [`~utils.ModelOutput`] instead of
+                a plain tuple.
+            observed_mask (`torch.FloatTensor` of shape
+                `(batch_size, sequence_length, num_input_channels)`, *optional*):
+                Boolean mask to indicate which `past_values` were observed
+                and which were missing. Mask values selected
+                in `[0, 1]`:
+                    - 1 for values that are **observed**,
+                    - 0 for values that are **missing**
+
+                    y zeros).
+            future_values (`torch.FloatTensor` of shape
+                `(batch_size, target_len, num_input_channels)` for forecasting,:
+                `(batch_size, num_targets)` for regression, or `(batch_size,)`
+                for classification, *optional*): Target
+                values of the time series, that serve as labels for the model.
+                The `future_values` is what the
+                Transformer needs during training to learn to output, given the
+                `past_values`. Note that, this is NOT
+                required for a pretraining task.
+
+                For a forecasting task, the shape is be
+                `(batch_size, target_len, num_input_channels)`. Even if we want
+                to forecast only specific channels by setting the indices in
+                `prediction_channel_indices` parameter,
+                pass the target data with all channels, as channel Filtering for both
+                prediction and target will be
+                manually applied before the loss computation.
+            return_loss (`bool`,  *optional*):
+                Whether to return the loss in the `forward` call.
 
         Return:
 

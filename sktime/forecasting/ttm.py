@@ -9,10 +9,6 @@ import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
-from sktime.libs.granite_ttm import (
-    TinyTimeMixerConfig,
-    TinyTimeMixerForPrediction,
-)
 from sktime.split import temporal_train_test_split
 from sktime.utils.warnings import warn
 
@@ -205,6 +201,12 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         -------
         self : reference to self
         """
+        if _check_soft_dependencies("torch", severity="error"):
+            from sktime.libs.granite_ttm import (
+                TinyTimeMixerConfig,
+                TinyTimeMixerForPrediction,
+            )
+
         # Get the Configuration
         config = TinyTimeMixerConfig.from_pretrained(
             self.model_path,
