@@ -3,7 +3,7 @@
 import copy
 import math
 from dataclasses import dataclass
-from typing import Optional, Union
+from typing import Optional
 from warnings import warn
 
 from skbase.utils.dependencies import _check_soft_dependencies
@@ -153,7 +153,7 @@ class TinyTimeMixerPositionalEncoding(nn_module):
             )
 
     @staticmethod
-    def _init_pe(config: TinyTimeMixerConfig) -> nn.Parameter:
+    def _init_pe(config: TinyTimeMixerConfig):
         if config.positional_encoding_type == "random":
             position_enc = nn.Parameter(
                 torch.randn(config.num_patches, config.d_model), requires_grad=True
@@ -365,7 +365,7 @@ class TinyTimeMixerAttention(nn_module):
         attention_mask: Optional[torch_tensor] = None,
         layer_head_mask: Optional[torch_tensor] = None,
         output_attentions: bool = False,
-    ) -> tuple[torch.Tensor, Optional[torch_tensor], Optional[tuple[torch_tensor]]]:
+    ):
         """Input shape: Batch x Time x Channel."""
         is_cross_attention = key_value_states is not None
 
@@ -1075,9 +1075,7 @@ class TinyTimeMixerStdScaler(nn_module):
             config.minimum_scale if hasattr(config, "minimum_scale") else 1e-5
         )
 
-    def forward(
-        self, data: torch_tensor, observed_indicator: torch_tensor
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def forward(self, data: torch_tensor, observed_indicator: torch_tensor):
         """
         Forward Pass.
 
@@ -1127,9 +1125,7 @@ class TinyTimeMixerMeanScaler(nn_module):
             config.default_scale if hasattr(config, "default_scale") else None
         )
 
-    def forward(
-        self, data: torch_tensor, observed_indicator: torch_tensor
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def forward(self, data: torch_tensor, observed_indicator: torch_tensor):
         """
         Forward Pass.
 
@@ -1182,9 +1178,7 @@ class TinyTimeMixerNOPScaler(nn_module):
         self.dim = config.scaling_dim if hasattr(config, "scaling_dim") else 1
         self.keepdim = config.keepdim if hasattr(config, "keepdim") else True
 
-    def forward(
-        self, data: torch_tensor, observed_indicator: torch_tensor = None
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def forward(self, data: torch_tensor, observed_indicator: torch_tensor = None):
         """
         Forward Pass.
 
@@ -1275,7 +1269,7 @@ class TinyTimeMixerEncoder(TinyTimeMixerPreTrainedModel):
         output_hidden_states: Optional[bool] = False,
         return_dict: Optional[bool] = None,
         freq_token: Optional[torch_tensor] = None,
-    ) -> Union[tuple, TinyTimeMixerEncoderOutput]:
+    ):
         r"""
         Forward Pass.
 
@@ -1415,7 +1409,7 @@ class TinyTimeMixerModel(TinyTimeMixerPreTrainedModel):
         output_hidden_states: Optional[bool] = False,
         return_dict: Optional[bool] = None,
         freq_token: Optional[torch_tensor] = None,
-    ) -> TinyTimeMixerModelOutput:
+    ):
         r"""
         Forward Pass.
 
@@ -1530,7 +1524,7 @@ class SampleTinyTimeMixerPredictionOutput(ModelOutput):
     sequences: torch_float = None
 
 
-def nll(input: torch.distributions.Distribution, target: torch_tensor) -> torch.Tensor:
+def nll(input: torch.distributions.Distribution, target: torch_tensor):
     """
     nll.
 
@@ -1542,7 +1536,7 @@ def nll(input: torch.distributions.Distribution, target: torch_tensor) -> torch.
 
 def weighted_average(
     input_tensor: torch_tensor, weights: Optional[torch_tensor] = None, dim=None
-) -> torch.Tensor:
+):
     """
     weighted_average.
 
@@ -1629,7 +1623,7 @@ class TinyTimeMixerForPrediction(TinyTimeMixerPreTrainedModel):
         return_loss: bool = True,
         return_dict: Optional[bool] = None,
         freq_token: Optional[torch_tensor] = None,
-    ) -> TinyTimeMixerForPredictionOutput:
+    ):
         r"""
         Forward Pass.
 
