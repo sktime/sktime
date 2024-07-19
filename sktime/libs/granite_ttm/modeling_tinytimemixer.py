@@ -28,6 +28,12 @@ if _check_soft_dependencies("torch", severity="none"):
     import torch
     import torch.nn as nn
 
+    nn_module = nn.Module
+else:
+
+    class nn_module:
+        """Dummy class if torch is unavailable."""
+
 
 _CONFIG_FOR_DOC = "TinyTimeMixerConfig"
 
@@ -44,7 +50,7 @@ TINYTIMEMIXER_START_DOCSTRING = r"""
     etc.)
 
     This model is also a PyTorch
-    [torch.nn.Module](https://pytorch.org/docs/stable/nn.html#torch.nn.Module) subclass.
+    [nn_module](https://pytorch.org/docs/stable/nn.html#torch.nn_module) subclass.
     Use it as a regular PyTorch Module and refer to the PyTorch documentation
     for all matter related to general usage
     and behavior.
@@ -76,7 +82,7 @@ TINYTIMEMIXER_INPUTS_DOCSTRING = r"""
 """
 
 
-class TinyTimeMixerGatedAttention(nn.Module):
+class TinyTimeMixerGatedAttention(nn_module):
     """
     Module that applies gated attention to input data.
 
@@ -97,7 +103,7 @@ class TinyTimeMixerGatedAttention(nn.Module):
         return inputs
 
 
-class TinyTimeMixerBatchNorm(nn.Module):
+class TinyTimeMixerBatchNorm(nn_module):
     """
     TinyTimeMixerBatchNorm.
 
@@ -125,7 +131,7 @@ class TinyTimeMixerBatchNorm(nn.Module):
         return output.transpose(1, 2)
 
 
-class TinyTimeMixerPositionalEncoding(nn.Module):
+class TinyTimeMixerPositionalEncoding(nn_module):
     """Class for positional encoding."""
 
     def __init__(self, config: TinyTimeMixerConfig):
@@ -169,7 +175,7 @@ class TinyTimeMixerPositionalEncoding(nn.Module):
         return hidden_state
 
 
-class TinyTimeMixerNormLayer(nn.Module):
+class TinyTimeMixerNormLayer(nn_module):
     """Normalization block.
 
     Args:
@@ -219,7 +225,7 @@ class TinyTimeMixerNormLayer(nn.Module):
         return inputs
 
 
-class TinyTimeMixerMLP(nn.Module):
+class TinyTimeMixerMLP(nn_module):
     """TinyTimeMixerMLP."""
 
     def __init__(self, in_features, out_features, config):
@@ -247,7 +253,7 @@ class TinyTimeMixerMLP(nn.Module):
         return inputs
 
 
-class TinyTimeMixerChannelFeatureMixerBlock(nn.Module):
+class TinyTimeMixerChannelFeatureMixerBlock(nn_module):
     """
     TinyTimeMixerChannelFeatureMixerBlock.
 
@@ -301,7 +307,7 @@ class TinyTimeMixerChannelFeatureMixerBlock(nn.Module):
         return out
 
 
-class TinyTimeMixerAttention(nn.Module):
+class TinyTimeMixerAttention(nn_module):
     """Multi-headed attention from 'Attention Is All You Need' paper."""
 
     def __init__(
@@ -455,7 +461,7 @@ class TinyTimeMixerAttention(nn.Module):
         return attn_output, attn_weights_reshaped, past_key_value
 
 
-class PatchMixerBlock(nn.Module):
+class PatchMixerBlock(nn_module):
     """
     PatchMixerBlock.
 
@@ -533,7 +539,7 @@ class PatchMixerBlock(nn.Module):
         return out
 
 
-class FeatureMixerBlock(nn.Module):
+class FeatureMixerBlock(nn_module):
     """
     FeatureMixerBlock.
 
@@ -586,7 +592,7 @@ class FeatureMixerBlock(nn.Module):
         return out
 
 
-class TinyTimeMixerLayer(nn.Module):
+class TinyTimeMixerLayer(nn_module):
     """
     The `TinyTimeMixer` layer that does all three kinds of mixing.
 
@@ -632,7 +638,7 @@ class TinyTimeMixerLayer(nn.Module):
         return hidden
 
 
-class TinyTimeMixerAdaptivePatchingBlock(nn.Module):
+class TinyTimeMixerAdaptivePatchingBlock(nn_module):
     """
     The `TinyTimeMixer` layer that does all three kinds of mixing.
 
@@ -711,7 +717,7 @@ class TinyTimeMixerAdaptivePatchingBlock(nn.Module):
         return hidden, all_hidden_states
 
 
-class TinyTimeMixerBlock(nn.Module):
+class TinyTimeMixerBlock(nn_module):
     """The main computing framework of the `TinyTimeMixer` model.
 
     Args:
@@ -773,7 +779,7 @@ class TinyTimeMixerBlock(nn.Module):
             return embedding, None
 
 
-class TinyTimeMixerDecoder(nn.Module):
+class TinyTimeMixerDecoder(nn_module):
     """Decoder for tiny time mixer.
 
     Args:
@@ -865,7 +871,7 @@ class TinyTimeMixerDecoder(nn.Module):
         return decoder_output, decoder_hidden_states
 
 
-class TinyTimeMixerForPredictionHead(nn.Module):
+class TinyTimeMixerForPredictionHead(nn_module):
     """Prediction Head for Forecasting.
 
     Args:
@@ -984,7 +990,7 @@ class TinyTimeMixerPreTrainedModel(PreTrainedModel):
                 module.bias.data.zero_()
 
 
-class TinyTimeMixerPatchify(nn.Module):
+class TinyTimeMixerPatchify(nn_module):
     """
     A class to patchify the time series sequence into different patches.
 
@@ -1044,7 +1050,7 @@ class TinyTimeMixerPatchify(nn.Module):
         return output
 
 
-class TinyTimeMixerStdScaler(nn.Module):
+class TinyTimeMixerStdScaler(nn_module):
     """
     TinyTimeMixerStdScaler.
 
@@ -1093,7 +1099,7 @@ class TinyTimeMixerStdScaler(nn.Module):
         return (data - loc) / scale, loc, scale
 
 
-class TinyTimeMixerMeanScaler(nn.Module):
+class TinyTimeMixerMeanScaler(nn_module):
     """
     TinyTimeMixerMeanScaler.
 
@@ -1155,7 +1161,7 @@ class TinyTimeMixerMeanScaler(nn.Module):
         return scaled_data, torch.zeros_like(scale), scale
 
 
-class TinyTimeMixerNOPScaler(nn.Module):
+class TinyTimeMixerNOPScaler(nn_module):
     """
     TinyTimeMixerNOPScaler.
 
