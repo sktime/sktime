@@ -14,8 +14,6 @@ else:
     class Dataset:
         """Dummy class if torch is unavailable."""
 
-        pass
-
 
 if _check_soft_dependencies("transformers", severity="none"):
     import transformers
@@ -23,7 +21,7 @@ if _check_soft_dependencies("transformers", severity="none"):
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
-__author__ = ["benheid"]
+__author__ = ["benheid", "geetu040"]
 
 
 class HFTransformersForecaster(BaseForecaster):
@@ -38,7 +36,17 @@ class HFTransformersForecaster(BaseForecaster):
     model : transformers.PreTrainedModel, default=None
         An instantiated model object to use directly for forecasting.
     fit_strategy : str, default="minimal"
-        Strategy to use for fitting the model. Can be "minimal" or "full"
+        Strategy to use for fitting (fine-tuning) the model. This can be one of
+        the following:
+        - "minimal": Fine-tunes only a small subset of the model parameters,
+          allowing for quick adaptation with limited computational resources.
+        - "full": Fine-tunes all model parameters, which may result in better
+          performance but requires more computational power and time.
+        - "peft": Applies Parameter-Efficient Fine-Tuning (PEFT) techniques to adapt
+          the model with fewer trainable parameters, saving computational resources.
+          Note: If the 'peft' package is not available, a `ModuleNotFoundError` will
+          be raised, indicating that the 'peft' package is required. Please install
+          it using `pip install peft` to use this fit strategy.
     validation_split : float, default=0.2
         Fraction of the data to use for validation
     config : dict, default={}
@@ -55,6 +63,32 @@ class HFTransformersForecaster(BaseForecaster):
         Whether the predictions should be deterministic or not.
     callbacks : list, default=[]
         List of callbacks to use during training. See `transformers.Trainer`
+
+    Examples
+    --------
+    >>> from sktime.forecasting.hf_transformers_forecaster import (
+    ...     HFTransformersForecaster,
+    ... )
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> forecaster = HFTransformersForecaster(
+    ...    model_path="huggingface/autoformer-tourism-monthly",
+    ...    training_args ={
+    ...        "num_train_epochs": 20,
+    ...        "output_dir": "test_output",
+    ...        "per_device_train_batch_size": 32,
+    ...    },
+    ...    config={
+    ...         "lags_sequence": [1, 2, 3],
+    ...         "context_length": 2,
+    ...         "prediction_length": 4,
+    ...         "use_cpu": True,
+    ...         "label_length": 2,
+    ...    },
+    ... ) # doctest: +SKIP
+    >>> forecaster.fit(y) # doctest: +SKIP
+    >>> fh = [1, 2, 3]
+    >>> y_pred = forecaster.predict(fh) # doctest: +SKIP
     """
 
     _tags = {
@@ -82,6 +116,7 @@ class HFTransformersForecaster(BaseForecaster):
         compute_metrics=None,
         deterministic=False,
         callbacks=None,
+        peft_config=None,
     ):
         super().__init__()
         if model is None and model_path is None:
@@ -109,6 +144,7 @@ class HFTransformersForecaster(BaseForecaster):
         self.deterministic = deterministic
         self.callbacks = callbacks
         self._callbacks = callbacks
+        self.peft_config = peft_config
 
     def _load_model(self, X, fh):
         """Load the Huggingface model from the given model path."""
@@ -219,6 +255,23 @@ class HFTransformersForecaster(BaseForecaster):
         elif self.fit_strategy == "full":
             for param in self.model.parameters():
                 param.requires_grad = True
+        elif self.fit_strategy == "peft":
+            if _check_soft_dependencies(
+                "peft",
+                severity="error",
+                msg=(
+                    f"Error in {self.__class__.__name__}: 'peft' module not found. "
+                    "'peft' is a soft dependency and not included "
+                    "in the base sktime installation. "
+                    "To use this functionality, please install 'peft' by running: "
+                    "`pip install peft` or `pip install sktime[dl]`. "
+                    "To install all soft dependencies, "
+                    "run: `pip install sktime[all_extras]`"
+                ),
+            ):
+                from peft import get_peft_model
+            peft_config = deepcopy(self.peft_config)
+            self.model = get_peft_model(self.model, peft_config)
         else:
             raise ValueError("Unknown fit strategy")
 
@@ -313,7 +366,7 @@ class HFTransformersForecaster(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        return [
+        test_params = [
             {
                 "model": "huggingface/informer-tourism-monthly",
                 "fit_strategy": "minimal",
@@ -346,6 +399,36 @@ class HFTransformersForecaster(BaseForecaster):
                 "deterministic": True,
             },
         ]
+
+        if _check_soft_dependencies("peft", severity="none"):
+            from peft import LoraConfig
+
+            test_params.append(
+                {
+                    "model_path": "huggingface/autoformer-tourism-monthly",
+                    "fit_strategy": "peft",
+                    "training_args": {
+                        "num_train_epochs": 1,
+                        "output_dir": "test_output",
+                        "per_device_train_batch_size": 32,
+                    },
+                    "config": {
+                        "lags_sequence": [1, 2, 3],
+                        "context_length": 2,
+                        "prediction_length": 4,
+                        "label_length": 2,
+                    },
+                    "peft_config": LoraConfig(
+                        r=2,
+                        lora_alpha=8,
+                        target_modules=["q_proj"],
+                        lora_dropout=0.01,
+                    ),
+                    "deterministic": True,
+                }
+            )
+
+        return test_params
 
 
 class PyTorchDataset(Dataset):

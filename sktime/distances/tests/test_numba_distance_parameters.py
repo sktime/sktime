@@ -1,5 +1,6 @@
 """Test suite for numba distances with parameters."""
-from typing import Callable, Dict, List
+
+from typing import Callable
 
 import numpy as np
 import pytest
@@ -21,7 +22,7 @@ from sktime.utils.numba.njit import njit
     reason="skip test if required soft dependency not available",
 )
 def _test_distance_params(
-    param_list: List[Dict], distance_func: Callable, distance_str: str
+    param_list: list[dict], distance_func: Callable, distance_str: str
 ):
     x_univ = to_numba_timeseries(create_test_distance_numpy(10, 1))
     y_univ = to_numba_timeseries(create_test_distance_numpy(10, 1, random_state=2))

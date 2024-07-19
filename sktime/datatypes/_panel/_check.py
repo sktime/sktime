@@ -506,3 +506,127 @@ if _check_soft_dependencies("dask", severity="none"):
         )
 
     check_dict[("dask_panel", "Panel")] = check_dask_panel
+
+if _check_soft_dependencies("gluonts", severity="none"):
+
+    def check_gluonTS_listDataset_panel(obj, return_metadata=False, var_name="obj"):
+        metadata = dict()
+
+        if (
+            not isinstance(obj, list)
+            or not isinstance(obj[0], dict)
+            or "target" not in obj[0]
+            or len(obj[0]["target"]) <= 1
+        ):
+            msg = f"{var_name} must be a gluonts.ListDataset, found {type(obj)}"
+            return _ret(False, msg, None, return_metadata)
+
+        # Check if there are no time series in the ListDataset
+        if _req("is_empty", return_metadata):
+            metadata["is_empty"] = len(obj) < 1
+
+        if _req("is_univariate", return_metadata):
+            # Check first if the ListDataset is empty
+            if len(obj) < 1:
+                metadata["is_univariate"] = True
+
+            # Check the first time-series for total features
+            else:
+                metadata["is_univariate"] = obj[0]["target"].shape[1] == 1
+
+        if _req("n_features", return_metadata):
+            # Check first if the ListDataset is empty
+            if len(obj) < 1:
+                metadata["n_features"] = 0
+
+            else:
+                metadata["n_features"] = obj[0]["target"].shape[1]
+
+        if _req("n_instances", return_metadata):
+            metadata["n_instances"] = len(obj)
+
+        if _req("n_panels", return_metadata):
+            metadata["n_panels"] = len(obj)
+
+        if _req("feature_names", return_metadata):
+            # Check first if the ListDataset is empty
+            if len(obj) < 1:
+                metadata["feature_names"] = []
+
+            else:
+                metadata["feature_names"] = [
+                    f"value_{i}" for i in range(obj[0]["target"].shape[1])
+                ]
+
+        for series in obj:
+            # check that no dtype is object
+            if series["target"].dtype == "object":
+                msg = f"{var_name} should not have column of 'object' dtype"
+                return _ret(False, msg, None, return_metadata)
+
+        # For a GluonTS ListDataset, only a start date and frequency is set
+        # so everything should thus be equally spaced
+        if _req("is_equally_spaced", return_metadata):
+            metadata["is_equally_spaced"] = True
+
+        if _req("has_nans", return_metadata):
+            for series in obj:
+                metadata["has_nans"] = pd.isnull(series["target"]).any()
+
+                # Break out if at least 1 time series has NaN values
+                if metadata["has_nans"]:
+                    break
+
+        return _ret(True, None, metadata, return_metadata)
+
+    check_dict[("gluonts_ListDataset_panel", "Panel")] = check_gluonTS_listDataset_panel
+
+    def check_gluonTS_pandasDataset_panel(obj, return_metadata=False, var_name="obj"):
+        # Importing required libraries
+        from gluonts.dataset.pandas import PandasDataset
+
+        metadata = dict()
+
+        # Check for type correctness
+        if not isinstance(obj, PandasDataset):
+            msg = f"{var_name} must be a gluonts.PandasDataset, found {type(obj)}"
+            return _ret(False, msg, None, return_metadata)
+
+        # Convert to a pandas DF for easier checks
+        df = pd.DataFrame(obj._data_entries)
+        df = df.explode("target")
+
+        # Check if there are no values
+        if _req("is_empty", return_metadata):
+            metadata["is_empty"] = len(obj._data_entries) == 0
+
+        if _req("is_univariate", return_metadata):
+            metadata["is_univariate"] = "item_id" not in df.columns
+
+        if _req("n_features", return_metadata):
+            metadata["n_features"] = len(df.columns)
+
+        if _req("n_instances", return_metadata):
+            if "item_id" not in df.columns:
+                metadata["n_instances"] = 1
+
+            else:
+                metadata["n_instances"] = len(df["item_id"].unique())
+
+        if _req("n_panels", return_metadata):
+            metadata["n_panels"] = 1
+
+        if _req("feature_names", return_metadata):
+            metadata["feature_names"] = df.columns
+
+        if _req("is_equally_spaced", return_metadata):
+            metadata["is_equally_spaced"] = True
+
+        if _req("has_nans", return_metadata):
+            metadata["has_nans"] = df.isna().any().any()
+
+        return _ret(True, None, metadata, return_metadata)
+
+    check_dict[
+        ("gluonts_PandasDataset_panel", "Panel")
+    ] = check_gluonTS_pandasDataset_panel

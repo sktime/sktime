@@ -17,8 +17,6 @@ else:
     class Dataset:
         """Dummy class if torch is unavailable."""
 
-        pass
-
 
 if _check_soft_dependencies("kan", severity="none"):
     from kan import KAN
