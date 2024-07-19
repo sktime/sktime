@@ -13,6 +13,9 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
 
     Parameters
     ----------
+    huggingface_id : str, optional (default="time-series-foundation-models/Lag-Llama")'
+        The ID of the weights for the LagLlama estimator to fetch.
+
     device : str, optional (default="cpu")
         Specifies the device on which to load the model.
 
@@ -60,6 +63,7 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
 
     def __init__(
         self,
+        huggingface_id=None,
         device=None,
         context_length=None,
         prediction_length=None,
@@ -73,6 +77,13 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         from lag_llama.gluon.estimator import LagLlamaEstimator
 
         # Defining private variable values
+        self.huggingface_id = huggingface_id
+        self.huggingface_id_ = (
+            "time-series-foundation-models/Lag-Llama"
+            if not huggingface_id
+            else huggingface_id
+        )
+
         self.device = device
         self.device_ = torch.device("cpu") if not device else device
 
@@ -103,10 +114,8 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         super().__init__()
 
         # Downloading the LagLlama weights from Hugging Face
-        download_command = (
-            "huggingface-cli download time-series-foundation"
-            + "-models/Lag-Llama lag-llama.ckpt --local-dir ."
-        )
+        download_command = f"huggingface-cli download {self.huggingface_id_} "
+        +"lag-llama.ckpt --local-dir ."
 
         status = subprocess.run(
             download_command, shell=True, check=True, capture_output=True
