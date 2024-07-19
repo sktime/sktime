@@ -185,10 +185,17 @@ def test_forecastingbenchmark_global_mode(
     benchmark = ForecastingBenchmark()
 
     params = PytorchForecastingTFT.get_test_params()[0]
-    # the training process is not deterministic
-    # train 10 epoches to make sure loss is low enough
-    params["trainer_params"]["max_epochs"] = 10
-    params["trainer_params"].pop("limit_train_batches")
+    params = {
+        "trainer_params": {
+            # the training process is not deterministic
+            # train 10 epoches to make sure loss is low enough
+            "max_epochs": 10,
+        },
+        "dataset_params": {
+            "max_encoder_length": 3,
+        },
+        "random_log_path": True,  # fix multiprocess file access error in CI
+    }
     benchmark.add_estimator(PytorchForecastingTFT(**params))
 
     benchmark.add_task(
