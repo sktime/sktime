@@ -73,6 +73,9 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         lr=None,
         trainer_kwargs=None,
     ):
+        # Initializing parent class
+        super().__init__()
+
         import torch
         from lag_llama.gluon.estimator import LagLlamaEstimator
 
@@ -110,8 +113,6 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
 
         # Not storing private variables for boolean specific values
         self.nonnegative_pred_samples = nonnegative_pred_samples
-
-        super().__init__()
 
         # Downloading the LagLlama weights from Hugging Face
         download_command = f"huggingface-cli download {self.huggingface_id_} "
