@@ -1,6 +1,7 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Extract calendar features from datetimeindex."""
+
 __author__ = ["danbartl", "KishManani", "VyomkeshVyas"]
 __all__ = ["DateTimeFeatures"]
 

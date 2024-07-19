@@ -6,6 +6,7 @@ Classes named as ``*Score`` return a value to maximize: the higher the better.
 Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
+
 from inspect import getfullargspec, isfunction, signature
 
 import numpy as np
@@ -171,7 +172,7 @@ class BaseForecastingErrorMetric(BaseMetric):
             Predicted values to evaluate against ground truth.
             Must be of same format as ``y_true``, same indices and columns if indexed.
 
-        y_pred_benchmark : optional, time series in ``sktime`` compatible data container format  # noqa: E501
+        y_pred_benchmark : optional, time series in ``sktime`` compatible data container format
             Benchmark predictions to compare ``y_pred`` to, used for relative metrics.
             Required only if metric requires benchmark predictions,
             as indicated by tag ``requires-y-pred-benchmark``.
@@ -215,7 +216,7 @@ class BaseForecastingErrorMetric(BaseMetric):
               of shape ``(n_levels, )``, if ``multioutput="uniform_average"``;
               of shape ``(n_levels, y_true.columns)`` if ``multioutput="raw_values"``.
               metric is applied per level, row averaging (yes/no) as in ``multioutput``.
-        """
+        """  # noqa: E501
         return self.evaluate(y_true, y_pred, **kwargs)
 
     def evaluate(self, y_true, y_pred, **kwargs):
@@ -248,7 +249,7 @@ class BaseForecastingErrorMetric(BaseMetric):
             Predicted values to evaluate against ground truth.
             Must be of same format as ``y_true``, same indices and columns if indexed.
 
-        y_pred_benchmark : optional, time series in ``sktime`` compatible data container format  # noqa: E501
+        y_pred_benchmark : optional, time series in ``sktime`` compatible data container format
             Benchmark predictions to compare ``y_pred`` to, used for relative metrics.
             Required only if metric requires benchmark predictions,
             as indicated by tag ``requires-y-pred-benchmark``.
@@ -292,7 +293,7 @@ class BaseForecastingErrorMetric(BaseMetric):
               of shape ``(n_levels, )``, if ``multioutput="uniform_average"``;
               of shape ``(n_levels, y_true.columns)`` if ``multioutput="raw_values"``.
               metric is applied per level, row averaging (yes/no) as in ``multioutput``.
-        """
+        """  # noqa: E501
         multioutput = self.multioutput
         multilevel = self.multilevel
         # Input checks and conversions
@@ -451,7 +452,7 @@ class BaseForecastingErrorMetric(BaseMetric):
             Predicted values to evaluate against ground truth.
             Must be of same format as ``y_true``, same indices and columns if indexed.
 
-        y_pred_benchmark : optional, time series in ``sktime`` compatible data container format  # noqa: E501
+        y_pred_benchmark : optional, time series in ``sktime`` compatible data container format
             Benchmark predictions to compare ``y_pred`` to, used for relative metrics.
             Required only if metric requires benchmark predictions,
             as indicated by tag ``requires-y-pred-benchmark``.
@@ -490,7 +491,7 @@ class BaseForecastingErrorMetric(BaseMetric):
             * ``pd.DataFrame`` if ``multioutput="raw_values"``.
               index and columns equal to those of ``y_true``;
               i,j-th entry is metric at time i, at variable j
-        """
+        """  # noqa: E501
         multioutput = self.multioutput
         multilevel = self.multilevel
         # Input checks and conversions
@@ -1661,7 +1662,7 @@ class MeanSquaredError(BaseForecastingErrorMetric):
       where :math:`\bar{\varepsilon}` is the RMSE over all time indices,
       and :math:`\varepsilon_i` is the RMSE with the i-th time index removed,
       i.e., using values :math:`y_1, \dots, y_{i-1}, y_{i+1}, \dots, y_n`,
-      and :math:`\widehat{y}_1, \dots, \widehat{y}_{i-1}, \widehat{y}_{i+1}, \dots, \widehat{y}_n`.  # noqa: E501
+      and :math:`\widehat{y}_1, \dots, \widehat{y}_{i-1}, \widehat{y}_{i+1}, \dots, \widehat{y}_n`.
 
     MSE is measured in squared units of the input data, and RMSE is on the
     same scale as the data. Because MSE and RMSE square the forecast error
@@ -1723,7 +1724,7 @@ class MeanSquaredError(BaseForecastingErrorMetric):
     >>> rmse = MeanSquaredError(multioutput=[0.3, 0.7], square_root=True)
     >>> rmse(y_true, y_pred)
     0.8936491673103708
-    """
+    """  # noqa: E501
 
     def __init__(
         self,
