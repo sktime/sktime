@@ -2124,7 +2124,8 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
             if windows_identical:
                 # determine offset for uniform window length
-                offset = max(fh_rel) + lag
+                # convert to abs values to account for in-sample prediction
+                offset = np.abs(fh_rel.to_numpy()).max() - abs(lag)
                 yt = yt[offset:]
                 Xtt = Xtt[offset:]
 
