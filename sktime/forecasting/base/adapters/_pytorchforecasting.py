@@ -146,19 +146,21 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         if self.random_log_path:
             if "logger" not in self._trainer_params.keys():
                 if "default_root_dir" not in self._trainer_params.keys():
-                    random_num = (
-                        hash(time.time_ns())
-                        + hash(self.algorithm_class)
-                        + hash(str(data.get_parameters()))
-                        + hash(randint(0, int(time.time())))  # noqa: S311
-                    )
-                    self._random_log_dir = (
-                        os.getcwd() + "/lightning_logs/" + str(abs(random_num))
-                    )
+                    self._random_log_dir = self._gen_random_log_dir(data)
                     self._trainer_params["default_root_dir"] = self._random_log_dir
 
         trainer_instance = pl.Trainer(**self._trainer_params)
         return algorithm_instance, trainer_instance
+
+    def _gen_random_log_dir(self, data=None):
+        random_num = (
+            hash(time.time_ns())
+            + hash(self.algorithm_class)
+            + hash(str(data.get_parameters()) if data else "NoDataPassed")
+            + hash(randint(0, int(time.time())))  # noqa: S311
+        )
+        random_log_dir = os.getcwd() + "/lightning_logs/" + str(abs(random_num))
+        return random_log_dir
 
     def _fit(
         self: "_PytorchForecastingAdapter",
