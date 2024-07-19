@@ -1,6 +1,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests for interfacing estimators from pytorch-forecasting."""
 
+import os
+
 import pytest
 from sklearn.model_selection import train_test_split
 
@@ -69,7 +71,16 @@ def test_load_model_from_disk(model_class) -> None:
     # fit the model to generate the checkpoint
     model.fit(y_train, X_train, fh=fh)
     # get the best model path
-    best_model_path = model._trainer.checkpoint_callback.best_model_path
+    if model._trainer.checkpoint_callback is not None:
+        best_model_path = model._trainer.checkpoint_callback.best_model_path
+    else:
+        best_model_path = getattr(model, "_random_log_dir", None)
+        if best_model_path is None:
+            best_model_path = model._gen_random_log_dir()
+        if not os.path.exists(best_model_path):
+            os.makedirs(best_model_path)
+        best_model_path = best_model_path + "/last_model.pt"
+        model._trainer.save_checkpoint(best_model_path)
 
     # reload the model from best_model_path
     model = model_class(model_path=best_model_path, **model_class.get_test_params()[0])
