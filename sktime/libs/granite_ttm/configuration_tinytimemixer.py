@@ -14,14 +14,14 @@ else:
 
 class TinyTimeMixerConfig(PretrainedConfig):
     r"""
-    Configuration class to store the configuration of a [`TinyTimeMixerModel`].
+    TinyTimeMixerConfig.
 
-    It is used to instantiate a
-    TinyTimeMixer model according to the specified arguments,
-    defining the model architecture.
-    Instantiating a
-    configuration with the defaults will yield a similar configuration to that of the
-    TinyTimeMixer {} architecture.
+    This is the configuration class to store the configuration of a
+    [`TinyTimeMixerModel`]. It is used to instantiate a
+    TinyTimeMixer model according to the specified arguments, defining
+    the model architecture. Instantiating a
+    configuration with the defaults will yield a similar configuration
+    to that of the TinyTimeMixer {} architecture.
 
     Configuration objects inherit from [`PretrainedConfig`] and can be used to
     control the model outputs. Read the
@@ -52,10 +52,10 @@ class TinyTimeMixerConfig(PretrainedConfig):
             The dropout probability the `TinyTimeMixer` backbone.
             Recommended range is 0.2-0.7
         mode (`str`, *optional*, defaults to `"common_channel"`):
-            Mixer Mode. Determines how to process the channels.
-            Allowed values: "common_channel", "mix_channel". In
-            "common_channel" mode, we follow Channel-independent modelling with
-            no explicit channel-mixing. Channel
+            Mixer Mode. Determines how to process the channels. Allowed values:
+            "common_channel", "mix_channel". In
+            "common_channel" mode, we follow Channel-independent modelling with no
+            explicit channel-mixing. Channel
             mixing happens in an implicit manner via shared weights across channels.
             (preferred first approach) In
             "mix_channel" mode, we follow explicit channel-mixing in addition to
@@ -72,8 +72,8 @@ class TinyTimeMixerConfig(PretrainedConfig):
             pair-wise attention and modelling
             across patches.
         self_attn_heads (`int`, *optional*, defaults to 1):
-            Number of self-attention heads. Works only when `self_attn`
-            is set to `True`.
+            Number of self-attention heads.
+            Works only when `self_attn` is set to `True`.
         use_positional_encoding (`bool`, *optional*, defaults to `False`):
             Enable the use of positional embedding for the tiny self-attention layers.
             Works only when `self_attn` is
@@ -99,10 +99,10 @@ class TinyTimeMixerConfig(PretrainedConfig):
         norm_eps (`float`, *optional*, defaults to 1e-05):
             A value added to the denominator for numerical stability of normalization.
         adaptive_patching_levels (`int`, *optional*, defaults to 0):
-            If adaptive_patching_levels is i, then we will have i levels with
-            each level having n_layers.
-            Level id starts with 0. num_patches at level i will be multipled
-            by (2^i) and num_features at level i will be divided by (2^i).
+            If adaptive_patching_levels is i, then we will have i levels with each level
+             having n_layers.
+            Level id starts with 0. num_patches at level i will be multipled by (2^i)
+            and num_features at level i will be divided by (2^i).
             For Ex. if adaptive_patching_levels is 3 - then we will have 3 levels:
                 level 2: num_features//(2^2), num_patches*(2^2)
                 level 1: num_features//(2^1), num_patches*(2^1)
@@ -120,8 +120,8 @@ class TinyTimeMixerConfig(PretrainedConfig):
         prediction_channel_indices (`list`, *optional*):
             List of channel indices to forecast. If None, forecast all channels.
             Target data is expected to have all
-            channels and we explicitly filter the channels in prediction and
-            target before loss computation. Please provide the indices
+            channels and we explicitly filter the channels in prediction and target
+            before loss computation. Please provide the indices
             in sorted ascending order.
         decoder_num_layers (`int`, *optional*, defaults to 8):
             Number of layers to use in decoder
@@ -131,8 +131,9 @@ class TinyTimeMixerConfig(PretrainedConfig):
             Adaptive Patching levels for decoder. Preferable to set it to 0
             for decoder to keep it light weight.
         decoder_raw_residual (`bool`, *optional*, defaults to `False`):
-            Flag to enable merging of raw embedding with encoder embedding for
-            decoder input. Defaults to False.
+            Flag to enable merging of raw embedding with encoder embedding
+            for decoder input.
+            Defaults to False.
         decoder_mode (`string`, *optional*, defaults to `"common_channel"`):
             Decoder channel mode. Use `"common_channel" for channel-independent
             modelling and `"mix_channel"` for channel-mixing modelling
