@@ -213,6 +213,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                     },
                     "model_params": {
                         "hidden_size": 8,
+                        "log_interval": -1,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
                 },
@@ -228,7 +229,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                         "dropout": 0.1,
                         "optimizer": "Adam",
                         # avoid jdb78/pytorch-forecasting#1571 bug in the CI
-                        "log_val_interval": -1,
+                        "log_interval": -1,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
@@ -256,6 +257,9 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                         "enable_checkpointing": False,
                         "logger": False,
                     },
+                    "model_params": {
+                        "log_interval": -1,
+                    },
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
@@ -277,7 +281,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                         # QuantileLoss() != QuantileLoss()
                         "optimizer": "Adam",
                         # avoid jdb78/pytorch-forecasting#1571 bug in the CI
-                        "log_val_interval": -1,
+                        "log_interval": -1,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
@@ -482,6 +486,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                         "num_blocks": [2, 2],
                         "num_block_layers": [1, 1],
                         "widths": 32,
+                        "log_interval": -1,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
                 },
@@ -495,7 +500,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                     "model_params": {
                         "num_blocks": [5, 5],
                         "num_block_layers": [5, 5],
-                        "log_interval": 10,
+                        "log_interval": -1,
                         "backcast_loss_ratio": 1.0,
                         "widths": 32,
                     },
@@ -523,6 +528,9 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                         "enable_checkpointing": False,
                         "logger": False,
                     },
+                    "model_params": {
+                        "log_interval": -1,
+                    },
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
@@ -539,8 +547,8 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                     "model_params": {
                         "num_blocks": [5, 5],
                         "num_block_layers": [5, 5],
-                        "log_interval": 10,
                         "backcast_loss_ratio": 1.0,
+                        "log_interval": -1,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
@@ -757,7 +765,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                         "rnn_layers": 1,
                         "hidden_size": 3,
                         "enable_checkpointing": False,
-                        "logger": False,
+                        "log_interval": -1,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
@@ -776,6 +784,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                         "cell_type": "GRU",
                         "rnn_layers": 2,
                         "hidden_size": 3,
+                        "log_interval": -1,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
@@ -802,6 +811,9 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                         "enable_checkpointing": False,
                         "logger": False,
                     },
+                    "model_params": {
+                        "log_interval": -1,
+                    },
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
@@ -819,6 +831,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                     "model_params": {
                         "cell_type": "GRU",
                         "rnn_layers": 3,
+                        "log_interval": -1,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
@@ -1033,6 +1046,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     },
                     "model_params": {
                         "hidden_size": 8,
+                        "log_interval": -1,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
                 },
@@ -1047,6 +1061,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                         "interpolation_mode": "nearest",
                         "activation": "Tanh",
                         "hidden_size": 8,
+                        "log_interval": -1,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
@@ -1072,6 +1087,9 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                         "enable_checkpointing": False,
                         "logger": False,
                     },
+                    "model_params": {
+                        "log_interval": -1,
+                    },
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
@@ -1088,6 +1106,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     "model_params": {
                         "interpolation_mode": "nearest",
                         "activation": "Tanh",
+                        "log_interval": -1,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
