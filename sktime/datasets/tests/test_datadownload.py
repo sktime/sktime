@@ -16,7 +16,7 @@ from sktime.datasets import (
     load_UCR_UEA_dataset,
 )
 from sktime.datasets.tsf_dataset_names import tsf_all, tsf_all_datasets
-from sktime.datatypes import check_is_mtype
+from sktime.datatypes import check_is_mtype, check_raise
 
 # test tsf download only on a random uniform subsample of datasets
 N_TSF_SUBSAMPLE = 3
@@ -124,7 +124,5 @@ def test_load_m5():
     loaded_dataset = load_m5(extract_path=file, test=True)
     assert len(loaded_dataset) == 1913
 
-    mul_indexhier = check_is_mtype(
-        loaded_dataset, mtype="pd_multiindex_hier", scitype="Hierarchical"
-    )
-    assert mul_indexhier is True
+    index = check_raise(loaded_dataset, mtype="pd_multiindex_hier")
+    assert index is True
