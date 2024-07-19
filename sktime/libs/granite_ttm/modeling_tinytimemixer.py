@@ -4,6 +4,7 @@ import copy
 import math
 from dataclasses import dataclass
 from typing import Optional, Union
+from warnings import warn
 
 from skbase.utils.dependencies import _check_soft_dependencies
 
@@ -15,7 +16,6 @@ if _check_soft_dependencies("transformers", severity="none"):
         ModelOutput,
         add_start_docstrings,
         add_start_docstrings_to_model_forward,
-        logging,
         replace_return_docstrings,
     )
 else:
@@ -28,8 +28,6 @@ if _check_soft_dependencies("torch", severity="none"):
     import torch
     import torch.nn as nn
 
-
-logger = logging.get_logger(__name__)
 
 _CONFIG_FOR_DOC = "TinyTimeMixerConfig"
 
@@ -652,10 +650,9 @@ class TinyTimeMixerAdaptivePatchingBlock(nn.Module):
         self.adaptive_patch_factor = adaptive_patch_factor
 
         if config.d_model // self.adaptive_patch_factor <= 4:
-            logger.warning(
-                "Disabling adaptive patching at level %s. "
+            warn(
+                f"Disabling adaptive patching at level {adapt_patch_level}. "
                 "Either increase d_model or reduce adaptive_patching_levels"
-                % (adapt_patch_level)
             )
             self.adaptive_patch_factor = 1
 
