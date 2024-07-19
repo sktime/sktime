@@ -211,7 +211,8 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=T
 
     # check that no dtype is object
     if "object" in obj.dtypes.values:
-        msg = f"{var_name} should not have column of 'object' dtype"
+        obj_cols = obj.select_dtypes(include=["object"]).columns
+        msg = f"{var_name} should not have column of 'object' dtype. Column:{obj_cols}"
         return _ret(False, msg, None, return_metadata)
 
     # check that there are precisely two index levels
@@ -653,6 +654,6 @@ if _check_soft_dependencies("gluonts", severity="none"):
 
         return _ret(True, None, metadata, return_metadata)
 
-    check_dict[
-        ("gluonts_PandasDataset_panel", "Panel")
-    ] = check_gluonTS_pandasDataset_panel
+    check_dict[("gluonts_PandasDataset_panel", "Panel")] = (
+        check_gluonTS_pandasDataset_panel
+    )
