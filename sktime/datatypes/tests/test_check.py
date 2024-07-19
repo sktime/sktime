@@ -3,8 +3,8 @@
 __author__ = ["fkiraly"]
 
 import numpy as np
-import pytest
 import pandas
+import pytest
 
 from sktime.datatypes._check import (
     AMBIGUOUS_MTYPES,
