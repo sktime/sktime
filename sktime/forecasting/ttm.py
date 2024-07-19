@@ -9,6 +9,10 @@ import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
+from sktime.libs.granite_ttm import (
+    TinyTimeMixerConfig,
+    TinyTimeMixerForPrediction,
+)
 from sktime.split import temporal_train_test_split
 from sktime.utils.warnings import warn
 
@@ -22,9 +26,6 @@ else:
 
 if _check_soft_dependencies("transformers", severity="none"):
     from transformers import Trainer, TrainingArguments
-
-
-# TODO: soft dep ttm
 
 
 class TinyTimeMixerForecaster(_BaseGlobalForecaster):
@@ -138,7 +139,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         "capability:pred_int:insample": False,
         "authors": ["geetu040"],
         "maintainers": ["geetu040"],
-        "python_dependencies": ["transformers", "torch"],  # TODO: add dep ttm
+        "python_dependencies": ["transformers", "torch"],
         "capability:global_forecasting": True,
     }
 
@@ -204,11 +205,6 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         -------
         self : reference to self
         """
-        from tsfm_public.models.tinytimemixer import (
-            TinyTimeMixerConfig,
-            TinyTimeMixerForPrediction,
-        )
-
         # Get the Configuration
         config = TinyTimeMixerConfig.from_pretrained(
             self.model_path,
@@ -449,7 +445,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 },
                 "validation_split": 0.2,
                 "training_args": {
-                    "num_train_epochs": 1,
+                    "max_steps": 10,
                     "output_dir": "test_output",
                     "per_device_train_batch_size": 32,
                 },
