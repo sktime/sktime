@@ -443,7 +443,6 @@ def _reduce_memory_usage(df, category=True, n_jobs=1):
     """
 
     def optimize_column(col):
-        col_type = col.dtype
         if pd.api.types.is_numeric_dtype(col):
             c_min = col.min()
             c_max = col.max()
@@ -469,7 +468,7 @@ def _reduce_memory_usage(df, category=True, n_jobs=1):
                     return col.astype(np.float32)
                 else:
                     return col.astype(np.float64)
-        elif col_type is object:
+        elif pd.api.types.is_object_dtype(col):
             if category:
                 return col.astype("category")
         return col
