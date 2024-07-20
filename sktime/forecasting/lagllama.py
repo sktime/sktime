@@ -13,8 +13,8 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
 
     Parameters
     ----------
-    huggingface_id : str, optional (default="time-series-foundation-models/Lag-Llama")'
-        The ID of the weights for the LagLlama estimator to fetch.
+    weights_url : str, optional (default="time-series-foundation-models/Lag-Llama")'
+        The URL of the weights on hugging face for the LagLlama estimator to fetch.
 
     device : str, optional (default="cpu")
         Specifies the device on which to load the model.
@@ -63,7 +63,7 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
 
     def __init__(
         self,
-        huggingface_id=None,
+        weights_url=None,
         device=None,
         context_length=None,
         prediction_length=None,
@@ -80,11 +80,11 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         from lag_llama.gluon.estimator import LagLlamaEstimator
 
         # Defining private variable values
-        self.huggingface_id = huggingface_id
-        self.huggingface_id_ = (
+        self.weights_url = weights_url
+        self.weights_url_ = (
             "time-series-foundation-models/Lag-Llama"
-            if not huggingface_id
-            else huggingface_id
+            if not weights_url
+            else weights_url
         )
 
         self.device = device
@@ -115,12 +115,10 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         self.nonnegative_pred_samples = nonnegative_pred_samples
 
         # Downloading the LagLlama weights from Hugging Face
-        download_command = f"huggingface-cli download {self.huggingface_id_} "
-        +"lag-llama.ckpt --local-dir ."
+        url = self.weights_url_
+        c = f"huggingface-cli download {url} lag-llama.ckpt --local-dir ."
 
-        status = subprocess.run(
-            download_command, shell=True, check=True, capture_output=True
-        )
+        status = subprocess.run(c, shell=True, check=True, capture_output=True)
 
         # Checking if the command ran successfully
         if status.returncode != 0:
@@ -345,13 +343,6 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         """
         params = {
             "huggingface_id": None,
-            "device": None,
-            "context_length": 32,
-            "prediction_length": 100,
-            "num_samples": 10,
-            "batch_size": 32,
-            "nonnegative_pred_samples": False,
-            "lr": 5e-5,
         }
 
         return params
