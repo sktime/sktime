@@ -344,7 +344,7 @@ def _make_estimator_overview(app):
             return author_info[0]
 
     # hard-coded for better user experience
-    tags_by_category = {
+    tags_by_object_type = {
         "forecaster": [
             "capability:categorical_in_X",
             "capability:insample",
@@ -486,20 +486,16 @@ def _make_estimator_overview(app):
         if isinstance(python_dependencies, list) and len(python_dependencies) == 1:
             python_dependencies = python_dependencies[0]
 
-        algorithm_type = modclass.get_class_tag("object_type", "object")
-        if not isinstance(algorithm_type, list):
-            algorithm_type = [algorithm_type]
+        object_type = modclass.get_class_tag("object_type", "object")
+        if not isinstance(object_type, list):
+            object_type = [object_type]
 
         tags = {}
 
-        for category in tags_by_category:
-            if category in algorithm_type:
-                for tag in tags_by_category[category]:
+        for category in tags_by_object_type:
+            if category in object_type:
+                for tag in tags_by_object_type[category]:
                     tags[tag] = modclass.get_class_tag(tag, None)
-                if isinstance(tags["object_type"], list):
-                    tags["object_type"] = category  # ensures always a string
-                    # currently there are no instances where this would override twice
-                    # (July 2024) - if this changes, this needs to be revisited
 
         # includes part of class string
         modpath = str(modclass)[8:-2]
@@ -517,7 +513,7 @@ def _make_estimator_overview(app):
         records.append(
             [
                 modname,
-                algorithm_type,
+                object_type[0],  # only one object type, first one is the main one
                 author_info,
                 maintainer_info,
                 str(python_dependencies),
