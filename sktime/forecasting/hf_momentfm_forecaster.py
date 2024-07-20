@@ -92,6 +92,13 @@ class MomentFMForecaster(_BaseGlobalForecaster):
     device : str
         torch device to use gpu else cpu
 
+    pct_start : float
+        percentage of total iterations where the learning rate rises during
+        one epoch
+
+    max_norm : float
+        gradient clipping value
+
     train_val_split : float
         float value between 0 and 1 to determine portions of training
         and validation splits
@@ -133,6 +140,8 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         epochs=1,
         max_lr=1e-4,
         device="gpu",
+        pct_start=0.3,
+        max_norm=5.0,
         train_val_split=0.25,
         transformer_backbone="google/flan-t5-large",
         config=None,
@@ -150,6 +159,8 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         self.epochs = epochs
         self.max_lr = max_lr
         self.device = device
+        self.pct_start = pct_start
+        self.max_norm = max_norm
         self.train_val_split = train_val_split
         self.transformer_backbone = transformer_backbone
         self.config = config
@@ -297,11 +308,14 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         # Create a OneCycleLR scheduler
         total_steps = len(train_dataloader) * max_epoch
         scheduler = OneCycleLR(
-            optimizer, max_lr=self.max_lr, total_steps=total_steps, pct_start=0.3
+            optimizer,
+            max_lr=self.max_lr,
+            total_steps=total_steps,
+            pct_start=self.pct_start,
         )
 
         # Gradient clipping value
-        max_norm = 5.0
+        max_norm = self.max_norm
 
         while cur_epoch < max_epoch:
             losses = []
