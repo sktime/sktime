@@ -18,7 +18,7 @@ from packaging.version import InvalidVersion, Version
 # todo 0.32.0: remove suppress_import_stdout argument
 def _check_soft_dependencies(
     *packages,
-    package_import_alias=None,
+    package_import_alias="deprecated",
     severity="error",
     obj=None,
     msg=None,
@@ -38,19 +38,24 @@ def _check_soft_dependencies(
         `_check_soft_dependencies("package1", "package2")`
         `_check_soft_dependencies(("package1", "package2"))`
         `_check_soft_dependencies(["package1", "package2"])`
+
     package_import_alias : ignored, present only for backwards compatibility
+
     severity : str, "error" (default), "warning", "none"
         behaviour for raising errors or warnings
-        "error" - raises a `ModuleNotFoundError` if one of packages is not installed
-        "warning" - raises a warning if one of packages is not installed
-            function returns False if one of packages is not installed, otherwise True
-        "none" - does not raise exception or warning
-            function returns False if one of packages is not installed, otherwise True
+
+        * "error" - raises a `ModuleNotFoundError` if one of packages is not installed
+        * "warning" - raises a warning if one of packages is not installed
+          function returns False if one of packages is not installed, otherwise True
+        * "none" - does not raise exception or warning
+          function returns False if one of packages is not installed, otherwise True
+
     obj : python class, object, str, or None, default=None
         if self is passed here when _check_soft_dependencies is called within __init__,
         or a class is passed when it is called at the start of a single-class module,
         the error message is more informative and will refer to the class/object;
         if str is passed, will be used as name of the class/object or module
+
     msg : str, or None, default=None
         if str, will override the error message or warning shown with msg
 
