@@ -207,7 +207,7 @@ class AutoTS(BaseForecaster):
     """
 
     _tags = {
-        "scitype:y": "univariate",
+        "scitype:y": "both",
         "authors": ["winedarksea", "MBristle"],  # winedarksea for autots library
         "maintainers": ["MBristle"],
         "y_inner_mtype": "pd.DataFrame",
