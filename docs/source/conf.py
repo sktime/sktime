@@ -515,7 +515,7 @@ def _make_estimator_overview(app):
         records.append(
             [
                 obj_name,
-                object_type[0],  # only one object type, first one is the main one
+                object_types[0],  # only one object type, first one is the main one
                 author_info,
                 maintainer_info,
                 str(python_dependencies),
