@@ -376,7 +376,7 @@ ignore=[
   "C414", # Unnecessary `list` call within `sorted()`
   "S301", # pickle and modules that wrap it can be unsafe
   "C416", # Unnecessary list comprehension - rewrite as a generator
-  "S310", # Audit URL open for permited schemes
+  "S310", # Audit URL open for permitted schemes
   "S202", # Uses of `tarfile.extractall()`
   "S307", # Use of possibly insecure function
   "C417", # Unnecessary `map` usage (rewrite using a generator expression)
@@ -386,7 +386,7 @@ ignore=[
   "S105", # Possible hardcoded password
   "PT018", # Checks for assertions that combine multiple independent condition
   "S602", # sub process call with shell=True unsafe
-  "C419", # Unnecessary list comprehension, some are flaged yet are not
+  "C419", # Unnecessary list comprehension, some are flagged yet are not
   "C409", # Unnecessary `list` literal passed to `tuple()` (rewrite as a `tuple` literal)
   "S113", # Probable use of httpx call withour timeout
 ]
