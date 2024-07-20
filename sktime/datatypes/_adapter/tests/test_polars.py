@@ -112,7 +112,7 @@ def test_pandas_to_polars_with_pandas_period_index_and_inverse():
     df = df.set_index(pd.period_range("2021-01-01", periods=3))
 
     pl_result = convert_pandas_to_polars(df)
-    pd_result = convert_polars_to_pandas(pl_result)
+    pd_result = convert_polars_to_pandas(pl_result, infer_freq=True)
 
     assert pl_result.columns == ["__index__0", "a", "b", "foo", "bar"]
     assert list(pd_result.columns) == list(df.columns)
@@ -139,7 +139,7 @@ def test_pd_multiindex_to_polars_with_pandas_period_index_and_inverse():
     )
 
     pl_result = convert_pandas_to_polars(pd_multiindex_period_index)
-    pd_result = convert_polars_to_pandas(pl_result)
+    pd_result = convert_polars_to_pandas(pl_result, infer_freq=True)
 
     assert pl_result.columns == [
         "__index__1",

@@ -111,13 +111,14 @@ def convert_pandas_to_polars(
     return obj
 
 
-def convert_polars_to_pandas(obj):
+def convert_polars_to_pandas(obj, infer_freq=True):
     """Convert polars DataFrame to pandas DataFrame, preserving MultiIndex.
 
     Parameters
     ----------
     obj : polars.DataFrame, polars.LazyFrame
-
+    infer_freq : bool, optional (default=True)
+        Infer frequency and set freq attribute of DatetimeIndex and DatetimeIndex levels
     Returns
     -------
     pandas.DataFrame
@@ -160,7 +161,8 @@ def convert_polars_to_pandas(obj):
         pl_index_names = get_mi_cols(obj)
         obj = obj.set_index(pl_index_names)
         obj.index.names = pd_index_names
-        obj = set_freq(obj)
+        if infer_freq:
+            obj = set_freq(obj)
 
     return obj
 
