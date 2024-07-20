@@ -10,7 +10,8 @@ import importlib
 import logging
 import re
 import warnings
-from typing import Callable, Generic, Optional, TypeVar, Union
+from collections.abc import Callable
+from typing import Generic, Optional, TypeVar, Union
 
 logger = logging.getLogger(__name__)
 
