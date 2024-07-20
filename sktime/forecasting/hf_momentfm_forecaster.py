@@ -7,7 +7,7 @@ import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import _BaseGlobalForecaster
-from sktime.forecasting.model_selection import temporal_train_test_split
+from sktime.split import temporal_train_test_split
 
 if _check_soft_dependencies(["momentfm", "torch"], severity="none"):
     import momentfm
@@ -171,8 +171,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
     def _fit(self, fh, y, X=None):
         """Assumes y is a single or multivariate time series."""
         import torch.cuda.amp
-
-        # from momentfm.utils.forecasting_metrics import get_forecasting_metrics
+        from momentfm.utils.forecasting_metrics import get_forecasting_metrics
         from torch.optim import Adam
         from torch.optim.lr_scheduler import OneCycleLR
         from torch.utils.data import DataLoader
@@ -242,6 +241,13 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             if "forecast_horizon" in self._config.keys()
             else self.fh
         )
+        if self.device == "gpu" and torch.cuda.is_available():
+            self.device = "cuda"
+        else:
+            self.device = "cpu"
+
+        cur_epoch = 0
+        max_epoch = self.epochs
         if fh is not None:
             self._fh_input = max(fh.to_relative(self.cutoff))
         self._fh = self._fh_input if fh is not None else self._fh_config
@@ -265,12 +271,15 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         self._y_shape = y.values.shape
 
         # preparing the datasets
-        y_train, y_test = temporal_train_test_split(y, test_split=self.train_val_split)
+        y_train, y_test = temporal_train_test_split(
+            y, train_size=1 - self.train_val_split, test_size=self.train_val_split
+        )
 
         train_dataset = MomentPytorchDataset(
             y=y_train,
             fh=self._fh,
             seq_len=self._seq_len,
+            device=self.device,
         )
 
         train_dataloader = DataLoader(
@@ -281,6 +290,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             y=y_test,
             fh=self._fh,
             seq_len=self._seq_len,
+            device=self.device,
         )
 
         val_dataloader = DataLoader(
@@ -289,12 +299,6 @@ class MomentFMForecaster(_BaseGlobalForecaster):
 
         criterion = self._criterion
         optimizer = Adam(self._model.parameters(), lr=self.max_lr)
-        if self.device == "gpu" and torch.cuda.is_available():
-            self.device = "cuda"
-        else:
-            self.device = "cpu"
-        cur_epoch = 0
-        max_epoch = self.epochs
 
         # Move the model to the GPU
         self._model = self._model.to(self.device)
@@ -321,9 +325,9 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             losses = []
             for data in tqdm(train_dataloader, total=len(train_dataloader)):
                 # Move the data to the GPU
-                timeseries = data["historical_y"].float().to(self.device)
-                input_mask = data["input_mask"].to(self.device)
-                forecast = data["future_y"].float().to(self.device)
+                timeseries = data["historical_y"]
+                input_mask = data["input_mask"]
+                forecast = data["future_y"]
                 with torch.cuda.amp.autocast():
                     output = self._model(timeseries, input_mask)
                 loss = criterion(output.forecast, forecast)
@@ -341,9 +345,9 @@ class MomentFMForecaster(_BaseGlobalForecaster):
 
                 losses.append(loss.item())
 
-            # losses = np.array(losses)
-            # average_loss = np.average(losses)
-            # print(f"Epoch {cur_epoch}: Train loss: {average_loss:.3f}")
+            losses = np.array(losses)
+            average_loss = np.average(losses)
+            tqdm.write(f"Epoch {cur_epoch}: Train loss: {average_loss:.3f}")
 
             # Step the learning rate scheduler
             scheduler.step()
@@ -355,9 +359,9 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             with torch.no_grad():
                 for data in tqdm(val_dataloader, total=len(val_dataloader)):
                     # Move the data to the specified device
-                    timeseries = data["historical_y"].float().to(self.device)
-                    input_mask = data["input_mask"].to(self.device)
-                    forecast = data["future_y"].float().to(self.device)
+                    timeseries = data["historical_y"]
+                    input_mask = data["input_mask"]
+                    forecast = data["future_y"]
 
                     with torch.cuda.amp.autocast():
                         output = self._model(timeseries, input_mask)
@@ -369,20 +373,20 @@ class MomentFMForecaster(_BaseGlobalForecaster):
                     preds.append(output.forecast.detach().cpu().numpy())
                     histories.append(timeseries.detach().cpu().numpy())
 
-            # losses = np.array(losses)
-            # average_loss = np.average(losses)
+            losses = np.array(losses)
+            average_loss = np.average(losses)
             self._model.train()
 
             trues = np.concatenate(trues, axis=0)
             preds = np.concatenate(preds, axis=0)
             histories = np.concatenate(histories, axis=0)
 
-            # metrics = get_forecasting_metrics(y=trues, y_hat=preds, reduction="mean")
+            metrics = get_forecasting_metrics(y=trues, y_hat=preds, reduction="mean")
 
-            # print(
-            #     f"Epoch {cur_epoch}: Test MSE: {metrics.mse:.3f}",
-            #     f"|Test MAE: {metrics.mae:.3f}",
-            # )
+            tqdm.write(
+                f"Epoch {cur_epoch}: Test MSE: {metrics.mse:.3f}",
+                f"|Test MAE: {metrics.mae:.3f}",
+            )
         return self
 
     def _predict(self, y, fh=1, X=None):
@@ -396,6 +400,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         self._model.eval()
         # first convert it into numpy values
         y_ = y.values
+        y_index = y.index
         sequence_length, num_channels = y_.shape  # shape of our input to predict
         # raise warning if sequence length of y is greater than the sequence
         # length used to fit the model
@@ -437,7 +442,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
 
         pred = forecast_output.detach().cpu().numpy().T
 
-        df_pred = pd.DataFrame(pred, columns=self._y_cols)
+        df_pred = pd.DataFrame(pred, columns=self._y_cols, index=y_index)
 
         return df_pred
 
@@ -496,26 +501,33 @@ def _create_mask(ones_length, zeros_length=0):
     return input_mask
 
 
+def _run_epoch():
+    pass
+
+
 class MomentPytorchDataset(Dataset):
     """Customized Pytorch dataset for the momentfm model."""
 
-    def __init__(self, y, fh, seq_len):
+    def __init__(self, y, fh, seq_len, device):
         self.y = y
         self.moment_seq_len = 512  # forced seq_len by pre-trained model
         self.seq_len = seq_len
         self.fh = fh
         self.shape = y.shape
+        self.device = device
         # code block to figure out masking sizes in case seq_len < 512
         if self.seq_len < self.moment_seq_len:
             self._pad_shape = (self.moment_seq_len - self.seq_len, self.shape[1])
-            self.input_mask = _create_mask(self.seq_len, self._pad_shape[0]).float()
+            self.input_mask = (
+                _create_mask(self.seq_len, self._pad_shape[0]).float().to(self.device)
+            )
             # Concatenate the tensors
         elif self.seq_len > self.moment_seq_len:
             # for now if seq_len > 512 than we reduce it back to 512
             self.seq_len = 512
-            self.input_mask = _create_mask(self.seq_len).float()
+            self.input_mask = _create_mask(self.seq_len).float().to(self.device)
         else:
-            self.input_mask = _create_mask(self.seq_len).float()
+            self.input_mask = _create_mask(self.seq_len).float().to(self.device)
 
     def __len__(self):
         """Return length of dataset."""
@@ -537,10 +549,15 @@ class MomentPytorchDataset(Dataset):
         )
         if self.seq_len < self.moment_seq_len:
             historical_y = _create_padding(historical_y, self._pad_shape)
+        historical_y = historical_y.float().to(self.device)
         future_y = (
-            from_numpy(self.y.iloc[hist_end:pred_end].values)
+            (
+                from_numpy(self.y.iloc[hist_end:pred_end].values)
+                .float()
+                .reshape(self.y.shape[1], -1)
+            )
             .float()
-            .reshape(self.y.shape[1], -1)
+            .to(self.device)
         )
         return {
             "future_y": future_y,
