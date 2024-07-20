@@ -201,18 +201,20 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=T
         msg = f"{var_name} must have a MultiIndex, found {type(obj.index)}"
         return _ret(False, msg, None, return_metadata)
 
+    # check to delineate from nested_univ mtype (Hierarchical)
+    # pd.DataFrame mtype allows object dtype,
+    # but if we allow object dtype with Panel entries,
+    # the mtype becomes ambiguous, i.e., non-delineable from nested_univ
+    if np.prod(obj.shape) > 0 and isinstance(obj.iloc[0, 0], (pd.Series, pd.DataFrame)):
+        msg = f"{var_name} cannot contain nested pd.Series or pd.DataFrame"
+        return _ret(False, msg, None, return_metadata)
+
     index = obj.index
 
     # check that columns are unique
     col_names = obj.columns
     if not col_names.is_unique:
         msg = f"{var_name} must have unique column indices, but found {col_names}"
-        return _ret(False, msg, None, return_metadata)
-
-    # check that no dtype is object
-    if "object" in obj.dtypes.values:
-        obj_cols = obj.select_dtypes(include=["object"]).columns
-        msg = f"{var_name} should not have column of 'object' dtype. Column:{obj_cols}"
         return _ret(False, msg, None, return_metadata)
 
     # check that there are precisely two index levels
