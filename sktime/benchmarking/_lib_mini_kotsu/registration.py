@@ -125,7 +125,7 @@ class _Registry(Generic[Entity]):
             raise KeyError(f"No registered entity with ID {id}")
 
     def all(self):
-        """Return all the entitys in the registry."""
+        """Return all the entities in the registry."""
         return self.entity_specs.values()
 
     def register(
