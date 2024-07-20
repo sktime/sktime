@@ -846,7 +846,7 @@ def load_lynx():
 
     Notes
     -----
-    The annual numbers of lynx trappings for 1821–1934 in Canada. This
+    The annual numbers of lynx trappings for 1821-1934 in Canada. This
     time-series records the number of skins of
     predators (lynx) that were collected over several years by the Hudson's
     Bay Company. The dataset was
@@ -868,9 +868,9 @@ def load_lynx():
 
     .. [2] Campbell, M. J. and Walker, A. M. (1977). A Survey of statistical
     work on the Mackenzie River series of
-    annual Canadian lynx trappings for the years 1821–1934 and a new
+    annual Canadian lynx trappings for the years 1821-1934 and a new
     analysis. Journal of the Royal Statistical Society
-    series A, 140, 411–431.
+    series A, 140, 411-431.
     """
     name = "Lynx"
     fname = name + ".csv"
