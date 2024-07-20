@@ -476,43 +476,45 @@ def _make_estimator_overview(app):
 
     records = []
 
-    for modname, modclass in all_estimators():
-        author_tag = modclass.get_class_tag("authors", "sktime developers")
+    for obj_name, obj_class in all_estimators():
+        author_tag = obj_class.get_class_tag("authors", "sktime developers")
         author_info = _process_author_info(author_tag)
-        maintainer_tag = modclass.get_class_tag("maintainers", "sktime developers")
+        maintainer_tag = obj_class.get_class_tag("maintainers", "sktime developers")
         maintainer_info = _process_author_info(maintainer_tag)
 
-        python_dependencies = modclass.get_class_tag("python_dependencies", [])
+        python_dependencies = obj_class.get_class_tag("python_dependencies", [])
         if isinstance(python_dependencies, list) and len(python_dependencies) == 1:
             python_dependencies = python_dependencies[0]
 
-        object_type = modclass.get_class_tag("object_type", "object")
-        if not isinstance(object_type, list):
-            object_type = [object_type]
+        object_types = obj_class.get_class_tag("object_type", "object")
+        # the tag can contain multiple object types
+        # it is a str or a lis of str - we normalize to a list
+        if not isinstance(object_types, list):
+            object_types = [object_types]
 
         tags = {}
 
-        for category in tags_by_object_type:
-            if category in object_type:
-                for tag in tags_by_object_type[category]:
-                    tags[tag] = modclass.get_class_tag(tag, None)
+        for object_type in tags_by_object_type:
+            if object_type in object_types:
+                for tag in tags_by_object_type[object_type]:
+                    tags[tag] = obj_class.get_class_tag(tag, None)
 
         # includes part of class string
-        modpath = str(modclass)[8:-2]
+        modpath = str(obj_class)[8:-2]
         path_parts = modpath.split(".")
         del path_parts[-2]
         clean_path = ".".join(path_parts)
         import_path = ".".join(path_parts[:-1])
         # adds html link reference
-        modname = (
+        obj_name = (
             """<a href='#'"""
             f"""onclick="go2URL('api_reference/auto_generated/{clean_path}.html',"""
-            f"""'api_reference/auto_generated/{modpath}.html', event)">{modname}</a>"""
+            f"""'api_reference/auto_generated/{modpath}.html', event)">{obj_name}</a>"""
         )
 
         records.append(
             [
-                modname,
+                obj_name,
                 object_type[0],  # only one object type, first one is the main one
                 author_info,
                 maintainer_info,
