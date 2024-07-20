@@ -487,13 +487,13 @@ def _make_estimator_overview(app):
             python_dependencies = python_dependencies[0]
 
         algorithm_type = modclass.get_class_tag("object_type", "object")
-        if isinstance(algorithm_type, list):
-            algorithm_type = algorithm_type[0]
+        if not isinstance(algorithm_type, list):
+            algorithm_type = [algorithm_type]
 
         tags = {}
 
         for category in tags_by_category:
-            if algorithm_type == category:
+            if category in algorithm_type:
                 for tag in tags_by_category[category]:
                     tags[tag] = modclass.get_class_tag(tag, None)
 
