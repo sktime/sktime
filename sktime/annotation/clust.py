@@ -5,6 +5,7 @@ Implementing segmentation using clustering, Read more at
 """
 
 import pandas as pd
+from sklearn.base import clone
 from sklearn.cluster import KMeans
 
 from sktime.annotation.base import BaseSeriesAnnotator
@@ -24,15 +25,13 @@ class ClusterSegmenter(BaseSeriesAnnotator):
     ----------
     clusterer : sklearn.cluster
         The instance of clustering algorithm used for segmentation.
-    n_clusters : int, default=3
-        The number of clusters to form
 
     Examples
     --------
     >>> from sktime.annotation.cluster import ClusterSegmenter
     >>> from sktime.datasets import load_gunpoint
     >>> X, y = load_gunpoint()
-    >>> clusterer = KMeans(n_clusters=2)
+    >>> clusterer = KMeans()
     >>> segmenter = ClusterSegmenter(clusterer)
     >>> segmenter.fit(X)
     >>> segment_labels = segmenter.predict(X)
@@ -44,20 +43,15 @@ class ClusterSegmenter(BaseSeriesAnnotator):
         "learning_type": "unsupervised",
     }
 
-    # todo: add any hyper-parameters and components to constructor
-    def __init__(self, clusterer=None, n_clusters=3):
+    def __init__(self, clusterer=None):
         # estimators should precede parameters
         #  if estimators have default values, set None and initialize below
 
-        # todo: write any hyper-parameters and components to self
-        self.clusterer = (
-            clusterer if clusterer is not None else KMeans(n_clusters=n_clusters)
-        )
-        self.n_clusters = n_clusters
+        self._clusterer = clusterer if clusterer is not None else KMeans()
 
         super().__init__()
 
-    def fit(self, X, Y=None):
+    def _fit(self, X, Y=None):
         """Fit to training data.
 
         core logic
@@ -77,12 +71,15 @@ class ClusterSegmenter(BaseSeriesAnnotator):
         ------------
         creates fitted model (attributes ending in "_")
         """
+        cloned_clusterer = clone(self._clusterer)
         self.n_instances, self.n_timepoints = X.shape
         X_flat = X.values.reshape(-1, 1)
-        self.clusterer.fit(X_flat)
+        cloned_clusterer.fit(X_flat)
+
+        self._clusterer = cloned_clusterer
         return self
 
-    def predict(self, X):
+    def _predict(self, X):
         """Create annotations on test/deployment data.
 
         core logic
@@ -97,7 +94,7 @@ class ClusterSegmenter(BaseSeriesAnnotator):
             exact format depends on annotation type
         """
         X_flat = X.values.reshape(-1, 1)
-        labels = self.clusterer.predict(X_flat)
+        labels = self._clusterer.predict(X_flat)
         labels = labels.reshape(self.n_instances, self.n_timepoints)
         return pd.DataFrame(labels, index=X.index)
 
@@ -117,4 +114,6 @@ class ClusterSegmenter(BaseSeriesAnnotator):
         params : dict or list of dict, default = {}
 
         """
-        return {"clusterer": KMeans(n_clusters=2), "n_clusters": 2}
+        params1 = {"clusterer": KMeans(n_clusters=2)}
+        params2 = {}
+        return [params1, params2]
