@@ -324,9 +324,6 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
 
         return pred_int
 
-    # todo: implement this if this is an estimator contributed to sktime
-    #   or to run local automated unit and integration testing of estimator
-    #   method should return default parameters, so that a test instance can be created
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -346,17 +343,15 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = [
-            {
-                "device": "cpu",
-                "context_length": 32,
-                "prediction_length": 100,
-                "num_samples": 10,
-                "batch_size": 32,
-                "nonnegative_pred_samples": False,
-                "lr": 5e-5,
-                "trainer_kwargs": {"num_epochs": 10},
-            }
-        ]
+        params = {
+            "huggingface_id": None,
+            "device": None,
+            "context_length": 32,
+            "prediction_length": 100,
+            "num_samples": 10,
+            "batch_size": 32,
+            "nonnegative_pred_samples": False,
+            "lr": 5e-5,
+        }
 
         return params
