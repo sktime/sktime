@@ -84,11 +84,17 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
         it will only drop if last batch size is exactly one.
         The batch size is from training_args["per_device_train_batch_size"].
         If no training_args["per_device_train_batch_size"] passed, it's default 8 [2]_.
+    try_local_files_only: bool, default=False
+        Try to load config and model in `local_files_only` mode first,
+        if any error raises, load again in normal mode.
+        See HuggingFace offline mode for details [3]_.
+
 
     References
     ----------
     .. [1] https://pytorch.org/docs/stable/data.html
     .. [2] https://huggingface.co/docs/transformers/v4.42.0/en/main_classes/trainer#transformers.TrainingArguments.per_device_train_batch_size
+    .. [3] https://huggingface.co/docs/transformers/main/en/installation#offline-mode
     # noqa: E501
 
 
@@ -187,6 +193,7 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
         callbacks=None,
         peft_config=None,
         no_size1_batch=True,
+        try_local_files_only=False,
     ):
         super().__init__()
         self.model_path = model_path
@@ -207,6 +214,7 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
         self._callbacks = callbacks
         self.peft_config = peft_config
         self.no_size1_batch = no_size1_batch
+        self.try_local_files_only = try_local_files_only
 
         if self.broadcasting:
             self.set_tags(
@@ -218,8 +226,23 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
             )
 
     def _fit(self, y, X, fh):
+        def try_local_files_only(f: callable):
+            try:
+                return f(True)
+            except Exception:
+                return f(False)
+
+        def load_config(local_files_only=False):
+            return AutoConfig.from_pretrained(
+                self.model_path,
+                local_files_only=local_files_only,
+            )
+
         # Load model and extract config
-        config = AutoConfig.from_pretrained(self.model_path)
+        if self.try_local_files_only:
+            config = try_local_files_only(load_config)
+        else:
+            config = load_config(False)
 
         # Update config with user provided config
         _config = config.to_dict()
@@ -254,15 +277,22 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
                 "The model type is not inferrable from the config."
                 "Thus, the model cannot be loaded."
             )
+
+        def load_model(local_files_only=False):
+            model, info = getattr(transformers, prediction_model_class).from_pretrained(
+                self.model_path,
+                config=config,
+                output_loading_info=True,
+                ignore_mismatched_sizes=True,
+                local_files_only=local_files_only,
+            )
+            return model, info
+
         # Load model with the updated config
-        self.model, info = getattr(
-            transformers, prediction_model_class
-        ).from_pretrained(
-            self.model_path,
-            config=config,
-            output_loading_info=True,
-            ignore_mismatched_sizes=True,
-        )
+        if self.try_local_files_only:
+            self.model, info = try_local_files_only(load_model)
+        else:
+            self.model, info = load_model(False)
 
         # Freeze all loaded parameters
         for param in self.model.parameters():
@@ -523,6 +553,7 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
                     "prediction_length": 4,
                 },
                 "deterministic": True,
+                "try_local_files_only": True,
             },
             {
                 "model_path": "huggingface/autoformer-tourism-monthly",
@@ -540,6 +571,7 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
                     "label_length": 2,
                 },
                 "deterministic": True,
+                "try_local_files_only": True,
             },
         ]
 
@@ -568,6 +600,7 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
                         lora_dropout=0.01,
                     ),
                     "deterministic": True,
+                    "try_local_files_only": True,
                 }
             )
         params_no_broadcasting = [
