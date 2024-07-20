@@ -176,7 +176,7 @@ function filterTable() {
         if (cachedData) {
             let dynamicHeader = ["Class Name"];
             const data = JSON.parse(cachedData);
-            const filteredData = data.filter(row => row["Estimator Type"] === filter);
+            const filteredData = data.filter(row => row["Estimator Type"].inludes(filter));
             const tags = visibleTagsOfTypes[filter]
             if (tags) {
                 dynamicHeader.push(Object.keys(tags).filter(key => tags[key]));
