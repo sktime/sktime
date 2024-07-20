@@ -496,6 +496,10 @@ def _make_estimator_overview(app):
             if category in algorithm_type:
                 for tag in tags_by_category[category]:
                     tags[tag] = modclass.get_class_tag(tag, None)
+                if isinstance(tags["object_type"], list):
+                    tags["object_type"] = category  # ensures always a string
+                    # currently there are no instances where this would override twice
+                    # (July 2024) - if this changes, this needs to be revisited
 
         # includes part of class string
         modpath = str(modclass)[8:-2]
