@@ -268,7 +268,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             y=y_train,
             fh=self._fh,
             seq_len=self._seq_len,
-            device=self.device,
+            device=self._device,
         )
 
         train_dataloader = DataLoader(
@@ -279,7 +279,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             y=y_test,
             fh=self._fh,
             seq_len=self._seq_len,
-            device=self.device,
+            device=self._device,
         )
 
         val_dataloader = DataLoader(
@@ -290,10 +290,10 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         optimizer = Adam(self._model.parameters(), lr=self.max_lr)
 
         # Move the model to the GPU
-        self._model = self._model.to(self.device)
+        self._model = self._model.to(self._device)
 
         # Move the loss function to the GPU
-        criterion = criterion.to(self.device)
+        criterion = criterion.to(self._device)
 
         # Enable mixed precision training
         scaler = torch.cuda.amp.GradScaler()
@@ -331,7 +331,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         """
         from torch import from_numpy
 
-        self._model = self._model.to(self.device)
+        self._model = self._model.to(self._device)
         self._model.eval()
         # first convert it into numpy values
         y_ = y.values
@@ -367,9 +367,9 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             pass
         # returns a timeseriesoutput object
         y_torch_input = (
-            from_numpy(y_.reshape((1, self._y_shape[1], -1))).float().to(self.device)
+            from_numpy(y_.reshape((1, self._y_shape[1], -1))).float().to(self._device)
         )
-        input_mask = input_mask.to(self.device)
+        input_mask = input_mask.to(self._device)
         output = self._model(y_torch_input, input_mask)
         forecast_output = output.forecast
         forecast_output = forecast_output.squeeze(0)
@@ -519,6 +519,8 @@ def _run_epoch(
 
 
 def _check_device(device):
+    mps = False
+    cuda = False
     if device == "mps":
         from torch.backends.mps import is_available, is_built
 
@@ -535,16 +537,21 @@ def _check_device(device):
                 )
         else:
             _device = "mps"
+            mps = True
     elif device == "gpu" or device == "cuda":
         from torch.cuda import is_available
 
         if is_available():
             _device = "cuda"
+            cuda = True
     elif "cuda" in device:  # for specific cuda devices like cuda:0 etc
         from torch.cuda import is_available
 
         if is_available():
             _device = device
+            cuda = True
+    if mps or cuda:
+        return _device
     else:
         _device = "cpu"
 
