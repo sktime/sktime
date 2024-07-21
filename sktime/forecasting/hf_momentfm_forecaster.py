@@ -171,11 +171,9 @@ class MomentFMForecaster(_BaseGlobalForecaster):
     def _fit(self, fh, y, X=None):
         """Assumes y is a single or multivariate time series."""
         import torch.cuda.amp
-        from momentfm.utils.forecasting_metrics import get_forecasting_metrics
         from torch.optim import Adam
         from torch.optim.lr_scheduler import OneCycleLR
         from torch.utils.data import DataLoader
-        from tqdm import tqdm
 
         self._pretrained_model_name_or_path = (
             self._config["pretrained_model_name_or_path"]
@@ -322,70 +320,16 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         max_norm = self.max_norm
 
         while cur_epoch < max_epoch:
-            losses = []
-            for data in tqdm(train_dataloader, total=len(train_dataloader)):
-                # Move the data to the GPU
-                timeseries = data["historical_y"]
-                input_mask = data["input_mask"]
-                forecast = data["future_y"]
-                with torch.cuda.amp.autocast():
-                    output = self._model(timeseries, input_mask)
-                loss = criterion(output.forecast, forecast)
-
-                # Scales the loss for mixed precision training
-                scaler.scale(loss).backward()
-
-                # Clip gradients
-                scaler.unscale_(optimizer)
-                torch.nn.utils.clip_grad_norm_(self._model.parameters(), max_norm)
-
-                scaler.step(optimizer)
-                scaler.update()
-                optimizer.zero_grad(set_to_none=True)
-
-                losses.append(loss.item())
-
-            losses = np.array(losses)
-            average_loss = np.average(losses)
-            tqdm.write(f"Epoch {cur_epoch}: Train loss: {average_loss:.3f}")
-
-            # Step the learning rate scheduler
-            scheduler.step()
-            cur_epoch += 1
-
-            # Evaluate the model on the test split
-            trues, preds, histories, losses = [], [], [], []
-            self._model.eval()
-            with torch.no_grad():
-                for data in tqdm(val_dataloader, total=len(val_dataloader)):
-                    # Move the data to the specified device
-                    timeseries = data["historical_y"]
-                    input_mask = data["input_mask"]
-                    forecast = data["future_y"]
-
-                    with torch.cuda.amp.autocast():
-                        output = self._model(timeseries, input_mask)
-
-                    loss = criterion(output.forecast, forecast)
-                    losses.append(loss.item())
-
-                    trues.append(forecast.detach().cpu().numpy())
-                    preds.append(output.forecast.detach().cpu().numpy())
-                    histories.append(timeseries.detach().cpu().numpy())
-
-            losses = np.array(losses)
-            average_loss = np.average(losses)
-            self._model.train()
-
-            trues = np.concatenate(trues, axis=0)
-            preds = np.concatenate(preds, axis=0)
-            histories = np.concatenate(histories, axis=0)
-
-            metrics = get_forecasting_metrics(y=trues, y_hat=preds, reduction="mean")
-
-            tqdm.write(
-                f"Epoch {cur_epoch}: Test MSE: {metrics.mse:.3f}",
-                f"|Test MAE: {metrics.mae:.3f}",
+            cur_epoch = _run_epoch(
+                cur_epoch,
+                criterion,
+                optimizer,
+                scheduler,
+                scaler,
+                self._model,
+                max_norm,
+                train_dataloader,
+                val_dataloader,
             )
         return self
 
@@ -400,7 +344,6 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         self._model.eval()
         # first convert it into numpy values
         y_ = y.values
-        y_index = y.index
         sequence_length, num_channels = y_.shape  # shape of our input to predict
         # raise warning if sequence length of y is greater than the sequence
         # length used to fit the model
@@ -442,7 +385,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
 
         pred = forecast_output.detach().cpu().numpy().T
 
-        df_pred = pd.DataFrame(pred, columns=self._y_cols, index=y_index)
+        df_pred = pd.DataFrame(pred, columns=self._y_cols)
 
         return df_pred
 
@@ -501,8 +444,87 @@ def _create_mask(ones_length, zeros_length=0):
     return input_mask
 
 
-def _run_epoch():
-    pass
+def _run_epoch(
+    cur_epoch,
+    criterion,
+    optimizer,
+    scheduler,
+    scaler,
+    model,
+    max_norm,
+    train_dataloader,
+    val_dataloader,
+):
+    import torch.cuda.amp
+    from momentfm.utils.forecasting_metrics import get_forecasting_metrics
+    from tqdm import tqdm
+
+    losses = []
+    for data in tqdm(train_dataloader, total=len(train_dataloader)):
+        # Move the data to the GPU
+        timeseries = data["historical_y"]
+        input_mask = data["input_mask"]
+        forecast = data["future_y"]
+        with torch.cuda.amp.autocast():
+            output = model(timeseries, input_mask)
+        loss = criterion(output.forecast, forecast)
+
+        # Scales the loss for mixed precision training
+        scaler.scale(loss).backward()
+
+        # Clip gradients
+        scaler.unscale_(optimizer)
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)
+
+        scaler.step(optimizer)
+        scaler.update()
+        optimizer.zero_grad(set_to_none=True)
+
+        losses.append(loss.item())
+
+    losses = np.array(losses)
+    average_loss = np.average(losses)
+    tqdm.write(f"Epoch {cur_epoch}: Train loss: {average_loss:.3f}")
+
+    # Step the learning rate scheduler
+    scheduler.step()
+    cur_epoch += 1
+
+    # Evaluate the model on the test split
+    trues, preds, histories, losses = [], [], [], []
+    model.eval()
+    with torch.no_grad():
+        for data in tqdm(val_dataloader, total=len(val_dataloader)):
+            # Move the data to the specified device
+            timeseries = data["historical_y"]
+            input_mask = data["input_mask"]
+            forecast = data["future_y"]
+
+            with torch.cuda.amp.autocast():
+                output = model(timeseries, input_mask)
+
+            loss = criterion(output.forecast, forecast)
+            losses.append(loss.item())
+
+            trues.append(forecast.detach().cpu().numpy())
+            preds.append(output.forecast.detach().cpu().numpy())
+            histories.append(timeseries.detach().cpu().numpy())
+
+    losses = np.array(losses)
+    average_loss = np.average(losses)
+    model.train()
+
+    trues = np.concatenate(trues, axis=0)
+    preds = np.concatenate(preds, axis=0)
+    histories = np.concatenate(histories, axis=0)
+
+    metrics = get_forecasting_metrics(y=trues, y_hat=preds, reduction="mean")
+    tqdm.write(
+        f"Epoch {cur_epoch}: Test MSE: {metrics.mse:.3f}"
+        f"|Test MAE: {metrics.mae:.3f}"
+    )
+
+    return cur_epoch
 
 
 class MomentPytorchDataset(Dataset):
