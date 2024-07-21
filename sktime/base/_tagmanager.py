@@ -1,4 +1,5 @@
 """Mixin class for flag and configuration settings management."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly"]
