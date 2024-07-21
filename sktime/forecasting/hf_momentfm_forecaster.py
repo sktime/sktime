@@ -40,7 +40,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
     https://github.com/moment-timeseries-foundation-model/moment
 
     For information regarding licensing and use of the momentfm model please visit:
-    https://huggingface.co/datasets/choosealicense/licenses/blob/main/markdown/mit.md
+    https://huggingface.co/AutonLab/MOMENT-1-large
 
     pretrained_model_name_or_path : str
         Path to the pretrained Momentfm model. Default is AutonLab/MOMENT-1-large
@@ -72,11 +72,6 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         sequence lengths to be 512 exactly, so if less, padding will be used.
         If the sequence length is > 512, it will be reduced to 512.
         default = 512
-
-    forecasting_horizon : int
-        Number of time steps to forecast ahead, leave this as None if user
-        wishes to pass in a fh object instead inside the fit function
-        default = None
 
     batch_size : int
         size of batches to train the model on
@@ -135,7 +130,6 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         dropout=0.1,
         head_dropout=0.1,
         seq_len=512,
-        forecasting_horizon=None,
         batch_size=8,
         epochs=1,
         max_lr=1e-4,
@@ -154,7 +148,6 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         self.dropout = dropout
         self.head_dropout = head_dropout
         self.seq_len = seq_len
-        self.forecasting_horizon = forecasting_horizon
         self.batch_size = batch_size
         self.epochs = epochs
         self.max_lr = max_lr
@@ -205,9 +198,6 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             if "head_dropout" in self._config.keys()
             else self.head_dropout
         )
-        self._device = (
-            self._config["device"] if "device" in self._config.keys() else self.device
-        )
         self._transformer_backbone = (
             self._config["transformer_backbone"]
             if "transformer_backbone" in self._config.keys()
@@ -239,10 +229,11 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             if "forecast_horizon" in self._config.keys()
             else self.fh
         )
-        if self.device == "gpu" and torch.cuda.is_available():
-            self.device = "cuda"
-        else:
-            self.device = "cpu"
+        self._device = (
+            self._config["device"] if "device" in self._config.keys() else self.device
+        )
+        # check availability of user specified device
+        self._device = _check_device(self._device)
 
         cur_epoch = 0
         max_epoch = self.epochs
@@ -292,7 +283,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         )
 
         val_dataloader = DataLoader(
-            val_dataset, batch_size=self.batch_size, shuffle=True
+            val_dataset, batch_size=len(val_dataset), shuffle=True
         )
 
         criterion = self._criterion
@@ -525,6 +516,39 @@ def _run_epoch(
     )
 
     return cur_epoch
+
+
+def _check_device(device):
+    if device == "mps":
+        from torch.backends.mps import is_available, is_built
+
+        if not is_available():
+            if not is_built():
+                print(
+                    "MPS not available because the current PyTorch install was not "
+                    "built with MPS enabled."
+                )
+            else:
+                print(
+                    "MPS not available because the current MacOS version is not 12.3+ "
+                    "and/or you do not have an MPS-enabled device on this machine."
+                )
+        else:
+            _device = "mps"
+    elif device == "gpu" or device == "cuda":
+        from torch.cuda import is_available
+
+        if is_available():
+            _device = "cuda"
+    elif "cuda" in device:  # for specific cuda devices like cuda:0 etc
+        from torch.cuda import is_available
+
+        if is_available():
+            _device = device
+    else:
+        _device = "cpu"
+
+    return _device
 
 
 class MomentPytorchDataset(Dataset):
