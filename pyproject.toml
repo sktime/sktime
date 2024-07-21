@@ -78,6 +78,7 @@ dependencies = [
 #
 all_extras = [
   "arch>=5.6,<7.1.0",
+  'autots<0.7,>=0.6.1',
   "cloudpickle",
   "dash!=2.9.0",
   "dask<2024.6.3; extra == 'dataframe'",
@@ -108,7 +109,7 @@ all_extras = [
   'statsforecast<1.8.0,>=1.0.0; python_version < "3.12"',
   "statsmodels>=0.12.1",
   'stumpy>=1.5.1; python_version < "3.11"',
-  'tbats>=1.1; python_version < "3.12"',
+  'tbats>=1.1',
   'temporian<0.9.0,>=0.7.0,!=0.8.0; python_version < "3.12" and sys_platform != "win32"',
   'tensorflow<2.17,>=2; python_version < "3.12"',
   'tsbootstrap<0.2,>=0.1.0',
@@ -120,6 +121,7 @@ all_extras = [
 # all soft dependencies compatible with pandas 2
 all_extras_pandas2 = [
   "arch>=5.6,<7.1.0",
+  'autots<0.7,>=0.6.1',
   "cloudpickle",
   "dash!=2.9.0",
   "dask<2024.6.3; extra == 'dataframe'",
@@ -188,6 +190,7 @@ clustering = [
 ]
 forecasting = [
   "arch>=5.6,<7.1",
+  'autots<0.7,>=0.6.1',
   'pmdarima!=1.8.1,<2.1,>=1.8; python_version < "3.12"',
   "prophet<1.2,>=1.1",
   'skforecast<0.13,>=0.12.1; python_version < "3.12"',
@@ -211,7 +214,7 @@ regression = [
 transformations = [
   'esig<0.10,>=0.9.7; python_version < "3.11"',
   "filterpy<1.5,>=1.4.5",
-  "holidays>=0.52,<0.53",
+  "holidays>=0.52,<0.54",
   "mne>=1.5,<1.8",
   'numba<0.61,>=0.53',
   "pycatch22>=0.4,<0.4.6",
@@ -373,7 +376,7 @@ ignore=[
   "C414", # Unnecessary `list` call within `sorted()`
   "S301", # pickle and modules that wrap it can be unsafe
   "C416", # Unnecessary list comprehension - rewrite as a generator
-  "S310", # Audit URL open for permited schemes
+  "S310", # Audit URL open for permitted schemes
   "S202", # Uses of `tarfile.extractall()`
   "S307", # Use of possibly insecure function
   "C417", # Unnecessary `map` usage (rewrite using a generator expression)
@@ -383,7 +386,7 @@ ignore=[
   "S105", # Possible hardcoded password
   "PT018", # Checks for assertions that combine multiple independent condition
   "S602", # sub process call with shell=True unsafe
-  "C419", # Unnecessary list comprehension, some are flaged yet are not
+  "C419", # Unnecessary list comprehension, some are flagged yet are not
   "C409", # Unnecessary `list` literal passed to `tuple()` (rewrite as a `tuple` literal)
   "S113", # Probable use of httpx call withour timeout
 ]

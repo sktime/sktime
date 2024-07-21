@@ -1,8 +1,8 @@
 """Time series kmedoids."""
 
 __author__ = ["chrisholder", "TonyBagnall"]
-
-from typing import Callable, Union
+from collections.abc import Callable
+from typing import Union
 
 import numpy as np
 from numpy.random import RandomState
