@@ -439,14 +439,6 @@ Deep learning based forecasters
 
     HFTransformersForecaster
 
-.. currentmodule:: sktime.forecasting.ttm
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    TinyTimeMixerForecaster
-
 .. currentmodule:: sktime.forecasting.conditional_invertible_neural_network
 
 .. autosummary::
