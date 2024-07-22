@@ -31,6 +31,7 @@ overall, conversions from non-lossy representations to any other ones
 import numpy as np
 import pandas as pd
 
+from sktime.datatypes._dtypekind import DtypeKind
 from sktime.utils.dependencies import _check_soft_dependencies
 
 example_dict = dict()
@@ -100,6 +101,7 @@ example_dict_metadata[("Series", 0)] = {
     "has_nans": False,
     "n_features": 1,
     "feature_names": ["a"],
+    "feature_kind": [DtypeKind.FLOAT],
 }
 
 ###
@@ -174,6 +176,7 @@ example_dict_metadata[("Series", 1)] = {
     "has_nans": False,
     "n_features": 2,
     "feature_names": ["a", "b"],
+    "feature_kind": [DtypeKind.FLOAT, DtypeKind.FLOAT],
 }
 
 ###
@@ -246,6 +249,7 @@ example_dict_metadata[("Series", 2)] = {
     "has_nans": False,
     "n_features": 2,
     "feature_names": ["a", "b"],
+    "feature_kind": [DtypeKind.FLOAT, DtypeKind.FLOAT],
 }
 
 ###
@@ -313,4 +317,5 @@ example_dict_metadata[("Series", 3)] = {
     "has_nans": False,
     "n_features": 1,
     "feature_names": ["a"],
+    "feature_kind": [DtypeKind.FLOAT],
 }

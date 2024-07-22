@@ -463,7 +463,7 @@ class Catch22(BaseTransformer):
         Returns
         -------
         Union[range, List[int], List[str]]
-            Column labels for ouput DataFrame.
+            Column labels for output DataFrame.
         """
         if self.col_names == "range":
             return range(n_features)

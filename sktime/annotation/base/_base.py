@@ -37,7 +37,7 @@ class BaseSeriesAnnotator(BaseEstimator):
     task : str {"segmentation", "change_point_detection", "anomaly_detection"}
         The main annotation task:
         * If ``segmentation``, the annotator divides timeseries into discrete chunks
-        based on certain criteria. The same label can be applied at mulitple
+        based on certain criteria. The same label can be applied at multiple
         disconnected regions of the timeseries.
         * If ``change_point_detection``, the annotator finds points where the
         statistical properties of the timeseries change significantly.
@@ -537,7 +537,7 @@ class BaseSeriesAnnotator(BaseEstimator):
         """
         if y_sparse.index.is_overlapping:
             raise NotImplementedError(
-                "Cannot convert overlapping segments to a dense formet yet."
+                "Cannot convert overlapping segments to a dense format yet."
             )
 
         interval_indexes = y_sparse.index.get_indexer(index)
