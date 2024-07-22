@@ -9,7 +9,6 @@ from sklearn.base import clone
 from sklearn.cluster import KMeans
 
 from sktime.annotation.base import BaseSeriesAnnotator
-from sktime.utils.estimator_checks import check_estimator
 
 __author__ = ["Ankit-1204"]
 __all__ = ["ClusterSegmenter"]
@@ -36,7 +35,6 @@ class ClusterSegmenter(BaseSeriesAnnotator):
     >>> segmenter = ClusterSegmenter(clusterer)
     >>> segmenter._fit(X)
     >>> segment_labels = segmenter._predict(X)
-
     """
 
     _tags = {
@@ -120,11 +118,3 @@ class ClusterSegmenter(BaseSeriesAnnotator):
         params1 = {"clusterer": KMeans(n_clusters=2)}
         params2 = {}
         return [params1, params2]
-
-
-check_estimator(ClusterSegmenter, raise_exceptions=True)
-
-
-# esti=ClusterSegmenter(KMeans(n_clusters=3))
-# esti._clusterer=KMeans(n_clusters=5)
-# print(esti._clusterer)
