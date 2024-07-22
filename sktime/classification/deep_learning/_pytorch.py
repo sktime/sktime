@@ -5,6 +5,8 @@ __author__ = ["geetu040"]
 
 __all__ = ["BaseDeepClassifierPytorch"]
 
+import abc
+
 import numpy as np
 
 from sktime.classification.base import BaseClassifier
@@ -12,7 +14,7 @@ from sktime.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("torch", severity="none"):
     import torch
-    from torch.utils.data import Dataset
+    from torch.utils.data import DataLoader, Dataset
 else:
 
     class Dataset:
@@ -36,7 +38,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         "X_inner_mtype": "numpy3D",
         "y_inner_mtype": "numpy1D",
         "capability:multivariate": True,
-        "capability:multioutput": True,
+        "capability:multioutput": False,
     }
 
     def __init__(
@@ -49,6 +51,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         optimizer_kwargs=None,
         lr=0.001,
         verbose=True,
+        random_state=None,
     ):
         self.num_epochs = num_epochs
         self.batch_size = batch_size
@@ -58,11 +61,15 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         self.optimizer_kwargs = optimizer_kwargs
         self.lr = lr
         self.verbose = verbose
+        self.random_state = random_state
+
+        if self.random_state is not None:
+            torch.manual_seed(self.random_state)
 
         super().__init__()
 
     def _fit(self, X, y):
-        self.network = self._build_network()
+        self.network = self._build_network(X, y)
 
         self._criterion = self._instantiate_criterion()
         self._optimizer = self._instantiate_optimizer()
@@ -119,19 +126,13 @@ class BaseDeepClassifierPytorch(BaseClassifier):
             # default criterion
             return torch.nn.CrossEntropyLoss()
 
-    # @abc.abstractmethod
+    @abc.abstractmethod
     def _build_network(self):
         pass
 
     def _build_dataloader(self, X, y=None):
-        from torch.utils.data import DataLoader
-
-        dataset = BaseDatasetPytorch(X, y)
-
-        return DataLoader(
-            dataset,
-            self.batch_size,
-        )
+        dataset = PytorchDataset(X, y)
+        return DataLoader(dataset, self.batch_size)
 
     def _predict(self, X):
         """Predict labels for sequences in X.
@@ -160,13 +161,10 @@ class BaseDeepClassifierPytorch(BaseClassifier):
             if self.get_tag("capaility:multioutput") = False, should be 1D
             if self.get_tag("capaility:multioutput") = True, should be 2D
         """
+        y_pred_prob = self._predict_proba(X)
+        y_pred = np.argmax(y_pred_prob, axis=-1)
+        return y_pred
 
-        # implement here
-        # IMPORTANT: avoid side effects to X
-
-    # todo: consider implementing this, optional
-    # if you do not implement it, then the default _predict_proba will be called.
-    # the default simply calls predict and sets probas to 0 or 1.
     def _predict_proba(self, X):
         """Predicts labels probabilities for sequences in X.
 
@@ -197,6 +195,19 @@ class BaseDeepClassifierPytorch(BaseClassifier):
             2nd dimension indices correspond to possible labels (integers)
             (i, j)-th entry is predictive probability that i-th instance is of class j
         """
+        import torch.nn.functional as F
+        from torch import cat
+
+        self.network.eval()
+        dataloader = self._build_dataloader(X)
+        y_pred = []
+        for inputs in dataloader:
+            y_pred.append(self.network(**inputs).detach())
+        y_pred = cat(y_pred, dim=0)
+        # (batch_size, num_outputs)
+        y_pred = F.softmax(y_pred, dim=-1)
+        y_pred = y_pred.numpy()
+        return y_pred
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -222,10 +233,10 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         return []
 
 
-class BaseDatasetPytorch(Dataset):
+class PytorchDataset(Dataset):
     """Dataset for use in sktime deep learning classifier based on pytorch."""
 
-    def __init__(self, X, y):
+    def __init__(self, X, y=None):
         # X.shape = (batch_size, n_dims, n_timestamps)
         X = np.transpose(X, (0, 2, 1))
         # X.shape = (batch_size, n_timestamps, n_dims)
@@ -234,23 +245,19 @@ class BaseDatasetPytorch(Dataset):
         self.y = y
 
     def __len__(self):
+        """Get length of dataset."""
         return len(self.X)
 
     def __getitem__(self, i):
+        """Get item at index."""
         x = self.X[i]
         x = torch.tensor(x, dtype=torch.float)
-        padding_masks = torch.ones(x.shape[:-1], dtype=torch.bool)
-
-        inputs = {
-            "X": x,
-            "padding_masks": padding_masks,
-        }
 
         # to make it reusable for predict
         if self.y is None:
-            return inputs
+            return x
 
         # return y during fit
         y = self.y[i]
         y = torch.tensor(y)
-        return inputs, y
+        return x, y

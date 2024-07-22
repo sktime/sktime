@@ -1,6 +1,16 @@
 """Pytorch Transformer Model."""
 
+import numpy as np
+
 from sktime.classification.deep_learning._pytorch import BaseDeepClassifierPytorch
+from sktime.utils.dependencies import _check_soft_dependencies
+
+if _check_soft_dependencies("torch", severity="none"):
+    from torch.utils.data import DataLoader, Dataset
+else:
+
+    class Dataset:
+        """Dummy class if torch is unavailable."""
 
 
 class TransformerClassifier(BaseDeepClassifierPytorch):
@@ -14,13 +24,10 @@ class TransformerClassifier(BaseDeepClassifierPytorch):
     def __init__(
         self,
         # model specific
-        feat_dim,
-        max_len,
         d_model,
         n_heads,
         num_layers,
         dim_feedforward,
-        num_classes,
         dropout=0.1,
         pos_encoding="fixed",
         activation="gelu",
@@ -35,14 +42,12 @@ class TransformerClassifier(BaseDeepClassifierPytorch):
         optimizer_kwargs=None,
         lr=0.001,
         verbose=True,
+        random_state=None,
     ):
-        self.feat_dim = feat_dim
-        self.max_len = max_len
         self.d_model = d_model
         self.n_heads = n_heads
         self.num_layers = num_layers
         self.dim_feedforward = dim_feedforward
-        self.num_classes = num_classes
         self.dropout = dropout
         self.pos_encoding = pos_encoding
         self.activation = activation
@@ -56,6 +61,12 @@ class TransformerClassifier(BaseDeepClassifierPytorch):
         self.optimizer_kwargs = optimizer_kwargs
         self.lr = lr
         self.verbose = verbose
+        self.random_state = random_state
+
+        # infer from the data
+        self.feat_dim = None
+        self.max_len = None
+        self.num_classes = None
 
         super().__init__(
             num_epochs=num_epochs,
@@ -66,6 +77,7 @@ class TransformerClassifier(BaseDeepClassifierPytorch):
             optimizer_kwargs=optimizer_kwargs,
             lr=lr,
             verbose=verbose,
+            random_state=random_state,
         )
 
         from sktime.utils.dependencies import _check_soft_dependencies
@@ -83,10 +95,15 @@ class TransformerClassifier(BaseDeepClassifierPytorch):
                 "SGD": torch.optim.SGD,
             }
 
-    def _build_network(self):
+    def _build_network(self, X, y):
         from sktime.classification.deep_learning.transformer.network import (
             TSTransformerEncoderClassiregressor,
         )
+
+        # n_instances, n_dims, n_timestamps
+        _, self.feat_dim, self.max_len = X.shape
+
+        self.num_classes = len(np.unique(y))
 
         return TSTransformerEncoderClassiregressor(
             feat_dim=self.feat_dim,
@@ -103,6 +120,14 @@ class TransformerClassifier(BaseDeepClassifierPytorch):
             freeze=self.freeze,
         )
 
+    def _build_dataloader(self, X, y=None):
+        from sktime.classification.deep_learning.transformer.dataset import (
+            PytorchDataset,
+        )
+
+        dataset = PytorchDataset(X, y)
+        return DataLoader(dataset, self.batch_size)
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -118,5 +143,34 @@ class TransformerClassifier(BaseDeepClassifierPytorch):
         -------
         params : dict or list of dict
         """
-        params = []
+        params = [
+            {
+                "d_model": 16,
+                "n_heads": 1,
+                "num_layers": 1,
+                "dim_feedforward": 8,
+                "dropout": 0,
+                "pos_encoding": "fixed",
+                "activation": "relu",
+                "norm": "BatchNorm",
+                "freeze": False,
+                "num_epochs": 1,
+                "verbose": False,
+                "random_state": 0,
+            },
+            {
+                "d_model": 16,
+                "n_heads": 1,
+                "num_layers": 1,
+                "dim_feedforward": 8,
+                "dropout": 0,
+                "pos_encoding": "learnable",
+                "activation": "gelu",
+                "norm": "LayerNorm",
+                "freeze": True,
+                "num_epochs": 1,
+                "verbose": False,
+                "random_state": 0,
+            },
+        ]
         return params
