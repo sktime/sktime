@@ -492,12 +492,15 @@ def _make_estimator_overview(app):
         if not isinstance(object_types, list):
             object_types = [object_types]
 
-        tags = {}
+        # set of object types that are also in the dropdown menu
+        obj_types_in_menu = list(set(object_types) & set(tags_by_object_type.keys()))
 
-        for object_type in tags_by_object_type:
-            if object_type in object_types:
-                for tag in tags_by_object_type[object_type]:
-                    tags[tag] = obj_class.get_class_tag(tag, None)
+        # we populate the tags for object types that are in the dropdown
+        # these will be selectable by checkboxes in the table
+        tags = {}
+        for object_type in obj_types_in_menu:
+            for tag in tags_by_object_type[object_type]:
+                tags[tag] = obj_class.get_class_tag(tag, None)
 
         # includes part of class string
         modpath = str(obj_class)[8:-2]
@@ -514,15 +517,12 @@ def _make_estimator_overview(app):
 
         # determine the "main" object type
         # this is the first in the list that also appears in the dropdown menu
-        obj_types_in_register = [
-            obj_type for obj_type in object_types if obj_type in tags_by_object_type
-        ]
-        # this could result in an empty list,
+        # if obj_types_in_register is an empty list,
         # in which case the object will appear only in the "ALL" table
-        if obj_types_in_register == []:
+        if obj_types_in_menu == []:
             first_obj_type_in_register = object_types[0]
         else:
-            first_obj_type_in_register = obj_types_in_register[0]
+            first_obj_type_in_register = obj_types_in_menu[0]
 
         records.append(
             [
