@@ -2905,7 +2905,7 @@
         "bug",
         "code"
       ]
-    }
+    },
     {
       "login": "fr1ll",
       "name": "Will Sanger",
@@ -2915,14 +2915,14 @@
         "code",
         "doc"
       ]
-    }
+    },
     {
       "login": "alexander-lakocy",
       "name": "Alex Lakocy",
       "avatar_url": "https://avatars.githubusercontent.com/alexander-lakocy",
       "profile": "https://github.com/alexander-lakocy",
       "contributions": [
-        "doc",
+        "doc"
       ]
     }
   ]
