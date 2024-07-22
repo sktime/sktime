@@ -33,7 +33,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
 
     TinyTimeMixer (TTM) are compact pre-trained models for Time-Series Forecasting,
     open-sourced by IBM Research. With less than 1 Million parameters, TTM introduces
-    the notion of the first-ever “tiny” pre-trained models for Time-Series Forecasting.
+    the notion of the first-ever "tiny" pre-trained models for Time-Series Forecasting.
 
     Parameters
     ----------
