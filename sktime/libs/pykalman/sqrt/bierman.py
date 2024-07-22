@@ -1,4 +1,4 @@
-"""Bierman's verion of the Kalman Filter.
+"""Bierman's version of the Kalman Filter.
 
 =====================================
 Inference for Linear-Gaussian Systems

@@ -195,10 +195,10 @@ def _gluonts_PandasDataset_equals_plugin(x, y, return_msg=False, deep_equals=Non
 
     Parameters
     ----------
-    x : gluonts.dataset.pandas.PandasDatset
+    x : gluonts.dataset.pandas.PandasDataset
         The first pandasDataset to compare
 
-    y : gluonts.dataset.pandas.PandasDatset
+    y : gluonts.dataset.pandas.PandasDataset
         The second pandasDataset to compare
 
     return_msg : bool, optional
