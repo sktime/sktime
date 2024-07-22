@@ -119,6 +119,7 @@ def convert_polars_to_pandas(obj, infer_freq=True):
     obj : polars.DataFrame, polars.LazyFrame
     infer_freq : bool, optional (default=True)
         Infer frequency and set freq attribute of DatetimeIndex and DatetimeIndex levels
+
     Returns
     -------
     pandas.DataFrame
