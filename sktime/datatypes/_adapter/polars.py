@@ -3,6 +3,7 @@
 
 from sktime.datatypes._common import _req
 from sktime.datatypes._common import _ret as ret
+from sktime.datatypes._dtypekind import _get_feature_kind, _polars_dtype_to_kind
 
 
 def get_mi_cols(obj):
@@ -234,6 +235,15 @@ def check_polars_frame(
     if _req("feature_names", return_metadata):
         feature_columns = [x for x in obj.columns if x not in index_cols]
         metadata["feature_names"] = feature_columns
+    if _req("dtypekind_dfip", return_metadata):
+        index_cols_count = len(index_cols)
+        dtype_list = obj.dtypes[index_cols_count:]
+        metadata["dtypekind_dfip"] = _polars_dtype_to_kind(dtype_list)
+    if _req("feature_kind", return_metadata):
+        index_cols_count = len(index_cols)
+        dtype_list = obj.dtypes[index_cols_count:]
+        dtype_kind = _polars_dtype_to_kind(dtype_list)
+        metadata["feature_kind"] = _get_feature_kind(dtype_kind)
 
     if scitype == "Table":
         if _req("n_instances", return_metadata):

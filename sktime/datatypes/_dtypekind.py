@@ -4,7 +4,7 @@ Enum values of DtypeKind are in accordance with the dataframe interchange protoc
 Utility functions to help convert dtypes to corresponding DtypeKind values.
 """
 
-__author__ = ["Abhay-Lejith"]
+__author__ = ["Abhay-Lejith", "pranavvp16"]
 
 from enum import IntEnum
 
@@ -17,6 +17,8 @@ from pandas.api.types import (
     is_timedelta64_dtype,
     is_unsigned_integer_dtype,
 )
+
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 class DtypeKind(IntEnum):
@@ -74,6 +76,38 @@ def _pandas_dtype_to_kind(col_dtypes):
             "Dtype of columns can be: INT, UINT, FLOAT, BOOL, STRING, "
             f"DATETIME, CATEGORICAL. Found dtype: {col_dtypes}"
         )
+
+
+if _check_soft_dependencies(["polars", "pyarrow"], severity="none"):
+
+    def _polars_dtype_to_kind(col_dtypes):
+        """Convert polars dtypes to enum DtypeKind values."""
+        import polars as pl
+
+        if isinstance(col_dtypes, list):
+            return [_polars_dtype_to_kind(x) for x in col_dtypes]
+
+        if col_dtypes.is_float():
+            return DtypeKind.FLOAT
+        elif col_dtypes.is_signed_integer():
+            return DtypeKind.INT
+        elif col_dtypes.is_unsigned_integer():
+            return DtypeKind.UINT
+        elif isinstance(col_dtypes, pl.Categorical) or isinstance(
+            col_dtypes, pl.Object
+        ):
+            return DtypeKind.CATEGORICAL
+        elif isinstance(col_dtypes, pl.Boolean):
+            return DtypeKind.BOOL
+        elif col_dtypes.is_temporal():
+            return DtypeKind.DATETIME
+        elif isinstance(col_dtypes, pl.String):
+            return DtypeKind.STRING
+        else:
+            raise TypeError(
+                "Dtype of columns can be: INT, UINT, FLOAT, BOOL, STRING, "
+                f"DATETIME, CATEGORICAL. Found dtype: {col_dtypes}"
+            )
 
 
 # function for series scitype
