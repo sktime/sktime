@@ -123,8 +123,8 @@ def _generate_lumpy_series(size: int = 750, seed: int = 42):
         (_generate_erratic_series(), 1.0, 0.82, "erratic", "pool"),
         (_generate_intermittent_series(), 10.0, 0.0, "intermittent", "pool"),
         (_generate_lumpy_series(), 10.0, 0.64, "lumpy", "pool"),
-        (_generate_intermittent_series, 9.95, 0.0, "intermittent", "trim"),
-        (_generate_erratic_series, 1.0, 0.92, "erratic", "ignore"),
+        (_generate_intermittent_series(), 9.95, 0.0, "intermittent", "trim"),
+        (_generate_erratic_series(), 1.0, 0.82, "erratic", "ignore"),
         ([10, 9, 10, 11, 12, 10, 9, 10, 8, 9, 10, 10], 1.0, 0.01, "smooth", "pool"),
         ([10, 20, 5, 25, 20, 5, 50, 35, 30, 100, 35, 45], 1.0, 0.62, "erratic", "pool"),
         ([6, 5, 0, 9, 2, 0, 14, 0, 0, 21, 0, 17], 1.71, 0.37, "intermittent", "pool"),
@@ -158,7 +158,7 @@ def test_adi_cv_extractor(
     transformer = ADICVTransformer(adi_trim_handling=adi_trim_handling)
 
     df = transformer.fit_transform(series)
-    print(df)
+
     assert np.round(df.loc[0, "adi"], 2) == expected_adi, (
         f'The expected ADI '
         f'of {expected_adi} does not match the actual ADI of {df.loc[0, "adi"]}.'

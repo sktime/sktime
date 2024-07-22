@@ -207,16 +207,19 @@ class ADICVTransformer(BaseTransformer):
         cv2_value = (sigma / mu) ** 2
 
         # Calculating the class type
-        if adi_value < self.adi_threshold:
-            if cv2_value < self.cv_threshold:
-                class_type = "smooth"
-            elif cv2_value >= self.cv_threshold:
-                class_type = "erratic"
-        elif adi_value >= self.adi_threshold:
-            if cv2_value < self.cv_threshold:
-                class_type = "intermittent"
-            elif cv2_value >= self.cv_threshold:
-                class_type = "lumpy"
+        adi_low = adi_value <= self.adi_threshold
+        cv2_low = cv2_value <= self.cv_threshold
+        adi_high = not adi_low
+        cv2_high = not cv2_low
+
+        if adi_low and cv2_low:
+            class_type = "smooth"
+        elif adi_low and cv2_high:
+            class_type = "erratic"
+        elif adi_high and cv2_low:
+            class_type = "intermittent"
+        elif adi_high and cv2_high:
+            class_type = "lumpy"
 
         # Collecting all values together into dict and converting to DF
         return_dict = {}
