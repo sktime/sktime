@@ -931,16 +931,7 @@ class TestAllGlobalForecasters(TestAllObjects):
         assert "X" in sig.parameters.keys()
         assert "y" in sig.parameters.keys()
 
-    def _check_global_tag(self, estimator_instance):
-        global_forecast = estimator_instance.get_tag(
-            "capability:global_forecasting", tag_value_default=False, raise_error=False
-        )
-        return global_forecast
-
     def test_global_forecasting_multiindex_hier(self, estimator_instance):
-        if not self._check_global_tag(estimator_instance):
-            return None
-
         from sktime.utils._testing.hierarchical import _make_hierarchical
 
         data_length = 100
@@ -987,9 +978,6 @@ class TestAllGlobalForecasters(TestAllObjects):
         assert set(y_pred.index).issubset(X_test.index)
 
     def test_global_forecasting_multiindex(self, estimator_instance):
-        if not self._check_global_tag(estimator_instance):
-            return None
-
         from sktime.utils._testing.hierarchical import _make_hierarchical
 
         data_length = 100
@@ -1038,9 +1026,6 @@ class TestAllGlobalForecasters(TestAllObjects):
 
     @pytest.mark.parametrize("n_columns", [1, 10])
     def test_global_forecasting_series(self, estimator_instance, n_columns):
-        if not self._check_global_tag(estimator_instance):
-            return None
-
         from sktime.utils._testing.series import _make_series
 
         data = _make_series(n_columns=n_columns)
@@ -1076,9 +1061,6 @@ class TestAllGlobalForecasters(TestAllObjects):
         assert set(y_test.index.names).issubset(y_pred.index.names)
 
     def test_global_forecasting_no_X(self, estimator_instance):
-        if not self._check_global_tag(estimator_instance):
-            return None
-
         from sktime.utils._testing.hierarchical import _make_hierarchical
 
         data_length = 100
