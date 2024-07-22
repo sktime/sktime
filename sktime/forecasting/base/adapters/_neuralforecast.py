@@ -458,10 +458,9 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         del fh  # to avoid being detected as unused by ``vulture`` etc.
 
         predict_parameters: dict = {"verbose": self.verbose_predict}
+        if not self._global_forecasting:
+            y = self._y
 
-        # this block is probably unnecessary, but kept to be safe
-        # the check in fit ensures X is passed if futr_exog_list is non-empty
-        # base framework should ensure X is passed in predict in that case
         if self.futr_exog_list and X is None:
             raise ValueError("Missing exogeneous data, 'futr_exog_list' is non-empty.")
 
@@ -515,16 +514,18 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         if len(prediction_column_names) > 1:
             raise NotImplementedError("Multiple prediction columns are not supported.")
 
-        if isinstance(self._y, pandas.DataFrame):
+        # use str index names to avoid None as index names
+        # which cause problems when reindex
+        new_index_names = [f"_new_idx_name_{i}" for i in range(len(y.index.names))]
+
+        if isinstance(y, pandas.DataFrame):
             if self._global_forecasting:
                 id_idx = np.array(y.index.to_list())
             else:
-                id_idx = np.array(self._y.index.to_list())
+                id_idx = np.array(y.index.to_list())
             id = id_idx[:, :-1].sum(axis=1)
             ins = id_idx[:, :-1]
-            id_ins = pandas.DataFrame(
-                data=ins, index=id, columns=self._y.index.names[:-1]
-            )
+            id_ins = pandas.DataFrame(data=ins, index=id, columns=new_index_names[:-1])
             id_ins.drop_duplicates(inplace=True)
             final_predictions = pandas.concat(
                 (model_forecasts, id_ins.loc[model_forecasts.index.tolist()]),
@@ -538,12 +539,12 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
                 final_predictions[self.time_col] = time_idx
             final_predictions.rename(
                 columns={
-                    self.time_col: self._y.index.names[-1],
-                    prediction_column_names[0]: self._y.columns[0],
+                    self.time_col: new_index_names[-1],
+                    prediction_column_names[0]: y.columns[0],
                 },
                 inplace=True,
             )
-            final_predictions.set_index(self._y.index.names, inplace=True)
+            final_predictions.set_index(new_index_names, inplace=True)
         else:
             model_point_predictions = model_forecasts[
                 prediction_column_names[0]
@@ -553,6 +554,11 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
             final_predictions = pandas.Series(
                 model_point_predictions[horizon_positions],
                 index=absolute_horizons,
-                name=self._y.name,
+                name=y.name,
             )
+        # restore index names
+        final_predictions.index.rename(
+            y.index.names[0] if len(y.index.names) == 1 else y.index.names,
+            inplace=True,
+        )
         return final_predictions
