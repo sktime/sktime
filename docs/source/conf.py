@@ -512,10 +512,15 @@ def _make_estimator_overview(app):
             f"""'api_reference/auto_generated/{modpath}.html', event)">{obj_name}</a>"""
         )
 
+        obj_types_in_register = [
+            obj_type for obj_type in object_types if obj_type in tags_by_object_type
+        ]
+        first_obj_type_in_register = obj_types_in_register[0]
+
         records.append(
             [
                 obj_name,
-                object_types[0],  # only one object type, first one is the main one
+                first_obj_type_in_register,  # only one obj type, first is the main one
                 author_info,
                 maintainer_info,
                 str(python_dependencies),
