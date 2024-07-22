@@ -88,6 +88,7 @@ These tags are used to describe capabilities, properties, and behavior of foreca
     capability__pred_int
     capability__pred_int__insample
     capability__missing_values
+    capability__categorical_in_X
     requires_fh_in_fit
     fit_is_empty
 

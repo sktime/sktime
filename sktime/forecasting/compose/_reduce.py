@@ -669,7 +669,7 @@ class _DirectReducer(_Reducer):
             return y_pred
 
         def _coerce_to_numpy(y_pred):
-            """Coerce predictions to numpy array, assumes pd.DataFram or numpy."""
+            """Coerce predictions to numpy array, assumes pd.DataFrame or numpy."""
             if isinstance(y_pred, pd.DataFrame):
                 return y_pred.values
             else:
