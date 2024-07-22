@@ -1,14 +1,12 @@
 """TODO: fill this."""
 
 import math
-from typing import Optional
 
 from sktime.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("torch", severity="none"):
     import torch
     import torch.nn as nn
-    from torch import Tensor
     from torch.nn import functional as F
     from torch.nn.modules import (
         BatchNorm1d,
@@ -112,11 +110,11 @@ class TransformerBatchNormEncoderLayer(nn_module):
 
     def forward(
         self,
-        src: Tensor,
-        src_mask: Optional[Tensor] = None,
-        src_key_padding_mask: Optional[Tensor] = None,
-        is_causal: bool = None,
-    ) -> Tensor:
+        src,
+        src_mask=None,
+        src_key_padding_mask=None,
+        is_causal=None,
+    ):
         """Forward Pass."""
         src2 = self.self_attn(
             src, src, src, attn_mask=src_mask, key_padding_mask=src_key_padding_mask

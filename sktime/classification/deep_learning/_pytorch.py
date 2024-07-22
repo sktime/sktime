@@ -64,7 +64,8 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         self.random_state = random_state
 
         if self.random_state is not None:
-            torch.manual_seed(self.random_state)
+            if _check_soft_dependencies("torch", severity="none"):
+                torch.manual_seed(self.random_state)
 
         super().__init__()
 
