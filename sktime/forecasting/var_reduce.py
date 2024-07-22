@@ -21,7 +21,7 @@ class VARReduce(BaseForecaster):
 
     Parameters
     ----------
-    lags : int
+    lags : int, optional, default=1
         The number of lagged values to include in the model.
     regressor : object, optional (default=LinearRegression())
         The regressor to use for fitting the model. Must be scikit-learn-compatible.
@@ -55,15 +55,16 @@ class VARReduce(BaseForecaster):
         "requires-fh-in-fit": False,
     }
 
-    def __init__(self, lags, regressor=None):
-        from sklearn.base import RegressorMixin
+    def __init__(self, lags=1, regressor=None):
+        from sklearn.base import RegressorMixin, clone
         from sklearn.linear_model import LinearRegression
 
         self.lags = lags
-        self.regressor = regressor if regressor is not None else LinearRegression()
-        assert isinstance(
-            self.regressor, RegressorMixin
-        ), "The regressor must be a scikit-learn compatible regressor."
+        if regressor is None
+            self.regressor_ = clone(regressor)
+        else:
+            self.regressor_ = LinearRegression()
+
         self.coefficients = None
         self.intercept = None
         self.num_series = None
