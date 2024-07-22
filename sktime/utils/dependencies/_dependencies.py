@@ -30,7 +30,7 @@ def _check_soft_dependencies(
     ----------
     packages : str or list/tuple of str, or length-1-tuple containing list/tuple of str
         str should be package names and/or package version specifications to check.
-        Each str must be a PEP 440 compatibe specifier string, for a single package.
+        Each str must be a PEP 440 compatible specifier string, for a single package.
         For instance, the PEP 440 compatible package name such as "pandas";
         or a package requirement specifier string such as "pandas>1.2.3".
         arg can be str, kwargs tuple, or tuple/list of str, following calls are valid:
@@ -442,7 +442,7 @@ def _check_env_marker(obj, package=None, msg=None, severity="error"):
     if not isinstance(msg, str):
         msg = (
             f"{class_name} requires an environment to satisfy "
-            f"packaging marker spec {est_marker}, but enviroment does not satisfy it."
+            f"packaging marker spec {est_marker}, but environment does not satisfy it."
         )
 
         if package is not None:
