@@ -9,6 +9,7 @@ from sklearn.base import clone
 from sklearn.cluster import KMeans
 
 from sktime.annotation.base import BaseSeriesAnnotator
+from sktime.utils.estimator_checks import check_estimator
 
 __author__ = ["Ankit-1204"]
 __all__ = ["ClusterSegmenter"]
@@ -33,8 +34,8 @@ class ClusterSegmenter(BaseSeriesAnnotator):
     >>> X, y = load_gunpoint()
     >>> clusterer = KMeans()
     >>> segmenter = ClusterSegmenter(clusterer)
-    >>> segmenter.fit(X)
-    >>> segment_labels = segmenter.predict(X)
+    >>> segmenter._fit(X)
+    >>> segment_labels = segmenter._predict(X)
 
     """
 
@@ -46,9 +47,11 @@ class ClusterSegmenter(BaseSeriesAnnotator):
     def __init__(self, clusterer=None):
         # estimators should precede parameters
         #  if estimators have default values, set None and initialize below
-
-        self._clusterer = clusterer if clusterer is not None else KMeans()
-
+        self.clusterer = clusterer
+        if self.clusterer is None:
+            self._clusterer = KMeans()
+        else:
+            self._clusterer = self.clusterer
         super().__init__()
 
     def _fit(self, X, Y=None):
@@ -76,7 +79,7 @@ class ClusterSegmenter(BaseSeriesAnnotator):
         X_flat = X.values.reshape(-1, 1)
         cloned_clusterer.fit(X_flat)
 
-        self._clusterer = cloned_clusterer
+        self._clusterer_ = cloned_clusterer
         return self
 
     def _predict(self, X):
@@ -94,7 +97,7 @@ class ClusterSegmenter(BaseSeriesAnnotator):
             exact format depends on annotation type
         """
         X_flat = X.values.reshape(-1, 1)
-        labels = self._clusterer.predict(X_flat)
+        labels = self._clusterer_.predict(X_flat)
         labels = labels.reshape(self.n_instances, self.n_timepoints)
         return pd.DataFrame(labels, index=X.index)
 
@@ -117,3 +120,11 @@ class ClusterSegmenter(BaseSeriesAnnotator):
         params1 = {"clusterer": KMeans(n_clusters=2)}
         params2 = {}
         return [params1, params2]
+
+
+check_estimator(ClusterSegmenter, raise_exceptions=True)
+
+
+# esti=ClusterSegmenter(KMeans(n_clusters=3))
+# esti._clusterer=KMeans(n_clusters=5)
+# print(esti._clusterer)
