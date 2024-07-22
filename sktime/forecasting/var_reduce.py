@@ -65,8 +65,8 @@ class VARReduce(BaseForecaster):
         else:
             self.regressor_ = LinearRegression()
 
-        self.coefficients = None
-        self.intercept = None
+        self.coefficients_ = None
+        self.intercept_ = None
         self.num_series = None
         super().__init__()
 
@@ -137,15 +137,15 @@ class VARReduce(BaseForecaster):
 
         # Fit the chosen regressor model for each series
         for i in range(num_series):
-            model = deepcopy(self.regressor)
+            model = deepcopy(self.regressor_)
             model.fit(X, y[:, i])
             intercepts[i] = model.intercept_
             # Reshape the coefficients to match with statsmodels VAR
             coefficients[:, :, i] = model.coef_.reshape(self.lags, num_series)
 
         # Transpose coefficients to match the desired shape
-        self.coefficients = np.transpose(coefficients, (0, 2, 1))
-        self.intercept = intercepts
+        self.coefficients_ = np.transpose(coefficients, (0, 2, 1))
+        self.intercept_ = intercepts
         return self
 
     def _predict(self, fh, X=None):
@@ -193,8 +193,8 @@ class VARReduce(BaseForecaster):
             Forecasted values for the next `steps` time points.
         """
         # Extract coefficients and intercept
-        coefs = self.coefficients
-        intercept = self.intercept
+        coefs = self.coefficients_
+        intercept = self.intercept_
 
         # Number of lags (p) and number of series (k)
         p = len(coefs)
