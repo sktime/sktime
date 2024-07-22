@@ -2130,7 +2130,7 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetric):
         n = raw_values.shape[0]
         gmae = gmean(raw_values, axis=0)
 
-        gmae_jackknife = (raw_values ** (1 / n) * gmae) ** (1 + 1 / (n - 1))
+        gmae_jackknife = (raw_values ** (-1 / n) * gmae) ** (1 + 1 / (n - 1))
         pseudo_values = n * gmae - (n - 1) * gmae_jackknife
 
         pseudo_values = self._get_weighted_df(pseudo_values, **kwargs)
