@@ -215,4 +215,4 @@ limitations under the License.
 """
 
 from sktime.libs.granite_ttm.configuration_tinytimemixer import TinyTimeMixerConfig
-# from sktime.libs.granite_ttm.modeling_tinytimemixer import TinyTimeMixerForPrediction
+from sktime.libs.granite_ttm.modeling_tinytimemixer import TinyTimeMixerForPrediction
