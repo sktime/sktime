@@ -58,7 +58,8 @@ class MCNNClassifier(BaseDeepClassifier):
         # --------------
         "authors": ["fnhirwa"],
         "maintainers": "fnhirwa",
-        "python_dependencies": "tensorflow",
+        "python_version": ">=3.9",
+        "python_dependencies": "tensorflow==2.15.0",
         # estimator type handled by parent class
     }
 
@@ -309,7 +310,6 @@ class MCNNClassifier(BaseDeepClassifier):
         if self._network is None:
             raise ValueError("The network has not been built yet.")
         import tensorflow as tf
-        from tensorflow import keras
 
         tf.random.set_seed(self.random_state)
 
@@ -317,15 +317,17 @@ class MCNNClassifier(BaseDeepClassifier):
             input_shape, **kwargs
         )
 
-        output_layer = keras.layers.Dense(
+        output_layer = tf.keras.layers.Dense(
             units=nb_classes, activation="softmax", kernel_initializer="glorot_uniform"
         )(fully_connected_layer)
 
-        model = keras.models.Model(inputs=input_layer, outputs=output_layer)
+        model = tf.keras.models.Model(inputs=input_layer, outputs=output_layer)
 
         model.compile(
             loss="categorical_crossentropy",
-            optimizer=keras.optimizers.Adam(learning_rate=0.1),
+            optimizer=tf.keras.optimizers.legacy.Adam(
+                learning_rate=0.1
+            ),  # runs slowly on M1/M2 Macs # noqa: E501
             metrics=["accuracy"],
         )
 
@@ -520,7 +522,7 @@ class MCNNClassifier(BaseDeepClassifier):
         -------
         self : object
         """
-        from tensorflow import keras
+        import tensorflow as tf
 
         y_onehot = self._convert_y_to_keras(y)
         X = X.transpose(0, 2, 1)
@@ -529,7 +531,6 @@ class MCNNClassifier(BaseDeepClassifier):
 
         # best_df_metrics = None
         best_valid_loss = np.inf
-
         # grid search
         for pool_factor in self.pool_factors:
             for filter_size in self.filter_size:
@@ -542,7 +543,7 @@ class MCNNClassifier(BaseDeepClassifier):
 
                 # clear memory in all the ways
                 gc.collect()
-                keras.backend.clear_session()
+                tf.keras.backend.clear_session()
         self.train(X, y_onehot, self.best_pool_factor, self.best_filter_size)
         self._is_fitted = True
 

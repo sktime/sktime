@@ -33,7 +33,7 @@ class MCNNNetwork(BaseDeepNetwork):
     .. [1] Cui, Z., Chen, W., & Chen, Y. (2016). Multi-scale convolutional neural networks for time series classification. arXiv preprint arXiv:1603.06995.
     """  # noqa: E501
 
-    _tags = {"python_dependencies": "tensorflow"}
+    _tags = {"python_dependencies": "tensorflow==2.15.0"}
 
     def __init__(
         self,
@@ -64,16 +64,16 @@ class MCNNNetwork(BaseDeepNetwork):
         tuple
             A tuple containing the input and fully connected layers of the network.
         """
-        from tensorflow import keras
+        import tensorflow as tf
 
         input_layers = []
         first_stage_layers = []
 
         for i in range(len(input_shape)):
-            input_layer = keras.layers.Input(input_shape[i])
+            input_layer = tf.keras.layers.Input(input_shape[i])
             input_layers.append(input_layer)
 
-            conv_layer = keras.layers.Conv1D(
+            conv_layer = tf.keras.layers.Conv1D(
                 filters=256,
                 kernel_size=self.kernel_size,
                 padding=self.padding,
@@ -84,18 +84,18 @@ class MCNNNetwork(BaseDeepNetwork):
             # selecting the pooling size based on the convolutional layer output size
             pool_size = int(int(conv_layer.shape[1]) / self.pool_factor)
 
-            pool_layer = keras.layers.MaxPooling1D(pool_size=pool_size)(conv_layer)
+            pool_layer = tf.keras.layers.MaxPooling1D(pool_size=pool_size)(conv_layer)
             first_stage_layers.append(pool_layer)
 
         # concatenating the three branches
-        merged_layer = keras.layers.Concatenate(axis=-1)(first_stage_layers)
+        merged_layer = tf.keras.layers.Concatenate(axis=-1)(first_stage_layers)
 
         # kernel size as it shouldn't exceed the input size
 
         kernel_size = int(min(self.kernel_size, int(merged_layer.shape[1])))
 
         # full conv layer
-        full_conv_layer = keras.layers.Conv1D(
+        full_conv_layer = tf.keras.layers.Conv1D(
             filters=256,
             kernel_size=kernel_size,
             padding=self.padding,
@@ -106,12 +106,12 @@ class MCNNNetwork(BaseDeepNetwork):
         # pooling
         pool_size = int(int(full_conv_layer.shape[1]) / self.pool_factor)
 
-        pool_layer = keras.layers.MaxPooling1D(pool_size=pool_size)(full_conv_layer)
+        pool_layer = tf.keras.layers.MaxPooling1D(pool_size=pool_size)(full_conv_layer)
 
         # flatten
-        flatten_layer = keras.layers.Flatten()(pool_layer)
+        flatten_layer = tf.keras.layers.Flatten()(pool_layer)
 
-        fully_connected_layer = keras.layers.Dense(
+        fully_connected_layer = tf.keras.layers.Dense(
             units=256,
             activation="sigmoid",
             kernel_initializer="glorot_uniform",

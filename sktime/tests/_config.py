@@ -47,7 +47,6 @@ EXCLUDE_ESTIMATORS = [
     "MACNNRegressor",
     "CNTCClassifier",
     "CNTCRegressor",
-    "MCNNClassifier",
     # splitters excluded with undiagnosed failures, see #6194
     # these are temporarily skipped to allow merging of the base test framework
     "SameLocSplitter",
