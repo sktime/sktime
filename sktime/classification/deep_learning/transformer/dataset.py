@@ -45,5 +45,5 @@ class PytorchDataset(Dataset):
 
         # return y during fit
         y = self.y[i]
-        y = torch.tensor(y)
+        y = torch.tensor(y, dtype=torch.long)
         return inputs, y
