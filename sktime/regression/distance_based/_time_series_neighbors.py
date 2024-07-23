@@ -78,7 +78,7 @@ class KNeighborsTimeSeriesRegressor(_BaseKnnTimeSeriesEstimator, BaseRegressor):
                 X, X2 which are pd_multiindex and numpy3D mtype
         can be pairwise panel transformer inheriting from BasePairwiseTransformerPanel
     distance_params : dict, optional. default = None.
-        dictionary for metric parameters , in case that distane is a str
+        dictionary for metric parameters , in case that distance is a str
     distance_mtype : str, or list of str optional. default = None.
         mtype that distance expects for X and X2, if a callable
             only set this if distance is not BasePairwiseTransformerPanel descendant
