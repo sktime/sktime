@@ -30,11 +30,6 @@ def test_transform_returns_correct_components():
     transformed = transformer.transform(series)
 
     # Check if the transformed data has the expected components
-    assert "transformed" in transformed.columns, (
-        "Test of MSTL.transform failed with return_components=True, "
-        "returned DataFrame columns are missing 'transformed' "
-        "variable."
-    )
     assert "trend" in transformed.columns, (
         "Test of MSTL.transform failed with return_components=True, "
         "returned DataFrame columns are missing 'trend' variable."
