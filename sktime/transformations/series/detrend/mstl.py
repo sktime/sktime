@@ -286,7 +286,7 @@ class MSTL(BaseTransformer):
             row_sums.name = self._X.name
             return row_sums
         # otherwise, we make naive seasonal forecasts, and add them to "transformed"
-        # since "transformed" is trend + resid, this will resture the full series
+        # since "transformed" is trend + resid, this will restore the full series
         from sktime.forecasting.base import ForecastingHorizon
         from sktime.forecasting.naive import NaiveForecaster
 
