@@ -178,8 +178,11 @@ class TinyTimeMixerForecaster(BaseForecaster):
         from sktime.libs.granite_ttm.configuration_tinytimemixer import (
             TinyTimeMixerConfig,
         )
+        from sktime.libs.granite_ttm.modeling_tinytimemixer import (
+            TinyTimeMixerForPrediction,
+        )
 
-        TinyTimeMixerConfig()
+        TinyTimeMixerForPrediction(TinyTimeMixerConfig())
         # ----------------------------
 
         # Load model and extract config
