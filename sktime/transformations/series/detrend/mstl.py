@@ -20,16 +20,21 @@ class MSTL(BaseTransformer):
 
     ``fit`` stores the decomposed values in self.trend_, self.seasonal_, and
     self.resid_.
+
     If ``return_components=False``, then ``transform`` returns a pd.Series of the
-    deseasonalized values. The seasonal and residual components can be found in
+    deseasonalized values, i.e., trend plus residual component.
+    The individual seasonal and residual components can be found in
     self.trend_ and self.resid_.
-    If ``return_components=True``, then ``transform`` returns the transformed series, as
-    well as three components as variables in the returned multivariate series
-    (DataFrame cols)
-        "transformed" - the transformed series
-        "seasonal" - the seasonal component(s), summed up if multiple
-        "trend" - the trend component
-        "resid" - the residuals after de-trending, de-seasonalizing
+
+    If ``return_components=True``, then ``transform`` returns
+    a full components decomposition,
+    in a DataFrame with cols (for each input column):
+
+    * "seasonal_<period>" - the seasonal component(s),
+      where <period> is an integer indicating the periodicity,
+      one such component per element in ``periods``
+    * "trend" - the trend component
+    * "resid" - the residuals after de-trending, de-seasonalizing
 
     ``MSTL`` performs ``inverse_transform`` by summing any components,
     and can be used for pipelining in a ``TransformedTargetForecaster``.
