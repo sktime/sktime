@@ -69,7 +69,7 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
 
     def __init__(
         self,
-        weights_url=None,
+        model_path=None,
         device=None,
         context_length=None,
         prediction_length=None,
@@ -86,15 +86,13 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         from lag_llama.gluon.estimator import LagLlamaEstimator
 
         # Defining private variable values
-        self.weights_url = weights_url
-        self.weights_url_ = (
-            "time-series-foundation-models/Lag-Llama"
-            if not weights_url
-            else weights_url
+        self.model_path = model_path
+        self.model_path_ = (
+            "time-series-foundation-models/Lag-Llama" if not model_path else model_path
         )
 
         self.device = device
-        self.device_ = torch.device("cpu") if not device else device
+        self.device_ = torch.device("cpu") if not device else torch.device("device")
 
         self.context_length = context_length
         self.context_length_ = 32 if not context_length else context_length
@@ -121,7 +119,7 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         self.nonnegative_pred_samples = nonnegative_pred_samples
 
         # Downloading the LagLlama weights from Hugging Face
-        url = self.weights_url_
+        url = self.model_path_
         c = f"huggingface-cli download {url} lag-llama.ckpt --local-dir ."
 
         status = subprocess.run(c, shell=True, check=True, capture_output=True)
@@ -346,7 +344,7 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params = {
-            "weights_url": None,
+            "model_path": None,
             "device": None,
             "context_length": 32,
             "prediction_length": 100,
