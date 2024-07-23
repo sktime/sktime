@@ -1,7 +1,8 @@
 """Time series kmeans."""
-__author__ = ["chrisholder", "TonyBagnall"]
 
-from typing import Callable, Union
+__author__ = ["chrisholder", "TonyBagnall"]
+from collections.abc import Callable
+from typing import Union
 
 import numpy as np
 from numpy.random import RandomState
@@ -187,9 +188,9 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
                             curr_j, curr_indexes[k]
                         ]
 
-                self._average_params[
-                    "precomputed_medoids_pairwise_distance"
-                ] = distance_matrix
+                self._average_params["precomputed_medoids_pairwise_distance"] = (
+                    distance_matrix
+                )
 
             result = self._averaging_method(X[curr_indexes], **self._average_params)
             if result.shape[0] > 0:

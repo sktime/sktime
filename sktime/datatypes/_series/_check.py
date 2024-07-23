@@ -44,6 +44,7 @@ import pandas as pd
 
 from sktime.datatypes._common import _req
 from sktime.datatypes._common import _ret as ret
+from sktime.datatypes._dtypekind import _get_feature_kind, _get_series_dtypekind
 from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.validation.series import is_in_valid_index_types
 
@@ -63,6 +64,14 @@ def check_pddataframe_series(obj, return_metadata=False, var_name="obj"):
         msg = f"{var_name} must be a pandas.DataFrame, found {type(obj)}"
         return ret(False, msg, None, return_metadata)
 
+    # check to delineate from nested_univ mtype (Panel)
+    # pd.DataFrame mtype allows object dtype,
+    # but if we allow object dtype with pd.Series entries,
+    # the mtype becomes ambiguous, i.e., non-delineable from nested_univ
+    if np.prod(obj.shape) > 0 and isinstance(obj.iloc[0, 0], (pd.Series, pd.DataFrame)):
+        msg = f"{var_name} cannot contain nested pd.Series or pd.DataFrame"
+        return ret(False, msg, None, return_metadata)
+
     # we now know obj is a pd.DataFrame
     index = obj.index
     if _req("is_empty", return_metadata):
@@ -73,6 +82,11 @@ def check_pddataframe_series(obj, return_metadata=False, var_name="obj"):
         metadata["n_features"] = len(obj.columns)
     if _req("feature_names", return_metadata):
         metadata["feature_names"] = obj.columns.to_list()
+    if _req("dtypekind_dfip", return_metadata):
+        metadata["dtypekind_dfip"] = _get_series_dtypekind(obj, "pd.DataFrame")
+    if _req("feature_kind", return_metadata):
+        dtype_kind = _get_series_dtypekind(obj, "pd.DataFrame")
+        metadata["feature_kind"] = _get_feature_kind(dtype_kind)
 
     # check that columns are unique
     if not obj.columns.is_unique:
@@ -85,11 +99,6 @@ def check_pddataframe_series(obj, return_metadata=False, var_name="obj"):
             f"{type(index)} is not supported for {var_name}, use "
             f"one of {VALID_INDEX_TYPES} or integer index instead."
         )
-        return ret(False, msg, None, return_metadata)
-
-    # check that no dtype is object
-    if "object" in obj.dtypes.values:
-        msg = f"{var_name} should not have column of 'object' dtype"
         return ret(False, msg, None, return_metadata)
 
     # Check time index is ordered in time
@@ -138,11 +147,11 @@ def check_pdseries_series(obj, return_metadata=False, var_name="obj"):
             metadata["feature_names"] = [0]
         else:
             metadata["feature_names"] = [obj.name]
-
-    # check that dtype is not object
-    if "object" == obj.dtypes:
-        msg = f"{var_name} should not be of 'object' dtype"
-        return ret(False, msg, None, return_metadata)
+    if _req("dtypekind_dfip", return_metadata):
+        metadata["dtypekind_dfip"] = _get_series_dtypekind(obj, "pd.Series")
+    if _req("feature_kind", return_metadata):
+        dtype_kind = _get_series_dtypekind(obj, "pd.Series")
+        metadata["feature_kind"] = _get_feature_kind(dtype_kind)
 
     # check whether the time index is of valid type
     if not is_in_valid_index_types(index):
@@ -195,6 +204,11 @@ def check_numpy_series(obj, return_metadata=False, var_name="obj"):
             metadata["n_features"] = obj.shape[1]
         if _req("feature_names", return_metadata):
             metadata["feature_names"] = list(range(obj.shape[1]))
+        if _req("dtypekind_dfip", return_metadata):
+            metadata["dtypekind_dfip"] = _get_series_dtypekind(obj, "numpy")
+        if _req("feature_kind", return_metadata):
+            dtype_kind = _get_series_dtypekind(obj, "numpy")
+            metadata["feature_kind"] = _get_feature_kind(dtype_kind)
     elif len(obj.shape) == 1:
         # we now know obj is a 1D np.ndarray
         if _req("is_empty", return_metadata):
@@ -205,6 +219,11 @@ def check_numpy_series(obj, return_metadata=False, var_name="obj"):
             metadata["n_features"] = 1
         if _req("feature_names", return_metadata):
             metadata["feature_names"] = [0]
+        if _req("dtypekind_dfip", return_metadata):
+            metadata["dtypekind_dfip"] = _get_series_dtypekind(obj, "numpy")
+        if _req("feature_kind", return_metadata):
+            dtype_kind = _get_series_dtypekind(obj, "numpy")
+            metadata["feature_kind"] = _get_feature_kind(dtype_kind)
     else:
         msg = f"{var_name} must be 1D or 2D numpy.ndarray, but found {len(obj.shape)}D"
         return ret(False, msg, None, return_metadata)
@@ -303,6 +322,12 @@ if _check_soft_dependencies("xarray", severity="none"):
             if _req("feature_names", return_metadata):
                 metadata["feature_names"] = obj.indexes[obj.dims[1]].to_list()
 
+        if _req("dtypekind_dfip", return_metadata):
+            metadata["dtypekind_dfip"] = _get_series_dtypekind(obj, "xarray")
+        if _req("feature_kind", return_metadata):
+            dtype_kind = _get_series_dtypekind(obj, "xarray")
+            metadata["feature_kind"] = _get_feature_kind(dtype_kind)
+
         # check that columns are unique
         if not len(obj.dims) == len(set(obj.dims)):
             msg = f"{var_name} must have unique column indices, but found {obj.dims}"
@@ -314,11 +339,6 @@ if _check_soft_dependencies("xarray", severity="none"):
                 f"{type(index)} is not supported for {var_name}, use "
                 f"one of {VALID_INDEX_TYPES} or integer index instead."
             )
-            return ret(False, msg, None, return_metadata)
-
-        # check that the dtype is not object
-        if "object" == obj.dtype:
-            msg = f"{var_name} should not have column of 'object' dtype"
             return ret(False, msg, None, return_metadata)
 
         # Check time index is ordered in time
@@ -435,6 +455,6 @@ if _check_soft_dependencies("gluonts", severity="none"):
 
         return ret(True, None, metadata, return_metadata)
 
-    check_dict[
-        ("gluonts_ListDataset_series", "Series")
-    ] = check_gluonTS_listDataset_series
+    check_dict[("gluonts_ListDataset_series", "Series")] = (
+        check_gluonTS_listDataset_series
+    )

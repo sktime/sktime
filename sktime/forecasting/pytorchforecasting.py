@@ -1,7 +1,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Interfaces to estimators from pytorch-forecasting."""
+
 import functools
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from sktime.forecasting.base.adapters._pytorchforecasting import (
     _PytorchForecastingAdapter,
@@ -23,7 +24,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         parameters to initialize `TimeSeriesDataSet` [2]_ from `pandas.DataFrame`
         max_prediction_length will be overwrite according to fh
         time_idx, target, group_ids, time_varying_known_reals, time_varying_unknown_reals
-        will be infered from data, so you do not have to pass them
+        will be inferred from data, so you do not have to pass them
     train_to_dataloader_params : Dict[str, Any] (default=None)
         parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
         by default {"train": True}
@@ -55,12 +56,12 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
 
     def __init__(
         self: "PytorchForecastingTFT",
-        model_params: Optional[Dict[str, Any]] = None,
-        allowed_encoder_known_variable_names: Optional[List[str]] = None,
-        dataset_params: Optional[Dict[str, Any]] = None,
-        train_to_dataloader_params: Optional[Dict[str, Any]] = None,
-        validation_to_dataloader_params: Optional[Dict[str, Any]] = None,
-        trainer_params: Optional[Dict[str, Any]] = None,
+        model_params: Optional[dict[str, Any]] = None,
+        allowed_encoder_known_variable_names: Optional[list[str]] = None,
+        dataset_params: Optional[dict[str, Any]] = None,
+        train_to_dataloader_params: Optional[dict[str, Any]] = None,
+        validation_to_dataloader_params: Optional[dict[str, Any]] = None,
+        trainer_params: Optional[dict[str, Any]] = None,
         model_path: Optional[str] = None,
         random_log_path: bool = False,
     ) -> None:
@@ -215,7 +216,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         parameters to initialize `TimeSeriesDataSet` [2]_ from `pandas.DataFrame`
         max_prediction_length will be overwrite according to fh
         time_idx, target, group_ids, time_varying_known_reals, time_varying_unknown_reals
-        will be infered from data, so you do not have to pass them
+        will be inferred from data, so you do not have to pass them
     train_to_dataloader_params : Dict[str, Any] (default=None)
         parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
         by default {"train": True}
@@ -248,11 +249,11 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
 
     def __init__(
         self: "PytorchForecastingNBeats",
-        model_params: Optional[Dict[str, Any]] = None,
-        dataset_params: Optional[Dict[str, Any]] = None,
-        train_to_dataloader_params: Optional[Dict[str, Any]] = None,
-        validation_to_dataloader_params: Optional[Dict[str, Any]] = None,
-        trainer_params: Optional[Dict[str, Any]] = None,
+        model_params: Optional[dict[str, Any]] = None,
+        dataset_params: Optional[dict[str, Any]] = None,
+        train_to_dataloader_params: Optional[dict[str, Any]] = None,
+        validation_to_dataloader_params: Optional[dict[str, Any]] = None,
+        trainer_params: Optional[dict[str, Any]] = None,
         model_path: Optional[str] = None,
         random_log_path: bool = False,
     ) -> None:

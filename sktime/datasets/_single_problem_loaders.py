@@ -175,6 +175,7 @@ def load_tecator(split=None, return_X_y=True, return_type=None):
     The dataset contains 215 samples of meat, each with 100 spectral measurements.
     For more information see:
     https://www.openml.org/search?type=data&sort=runs&id=505&status=active
+
     References
     ----------
     [1] C.Borggaard and H.H.Thodberg, "Optimal Minimal Neural Interpretation of Spectra"
@@ -700,6 +701,7 @@ def load_basic_motions(split=None, return_X_y=True, return_type=None):
     Raises
     ------
     ValueError if argument "numpy2d"/"numpyflat" is passed as return_type
+
     Notes
     -----
     Dimensionality:     multivariate, 6
@@ -1008,7 +1010,7 @@ def load_gun_point_segmentation():
     name = "GunPoint"
     fname = name + ".csv"
 
-    period_length = int(10)
+    period_length = 10
     change_points = np.int32([900])
 
     path = os.path.join(MODULE, DIRNAME, dir, fname)
@@ -1048,7 +1050,7 @@ def load_electric_devices_segmentation():
     name = "ElectricDevices"
     fname = name + ".csv"
 
-    period_length = int(10)
+    period_length = 10
     change_points = np.int32([1090, 4436, 5712, 7923])
 
     path = os.path.join(MODULE, DIRNAME, dir, fname)

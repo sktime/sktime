@@ -9,7 +9,7 @@ Welcome to the API reference for ``sktime``.
 The API reference provides a technical manual.
 It describes the classes and functions included in sktime.
 
-For a scientific manual, see the :ref:`user_guide`.
+For notebook examples, see the :ref:`examples`.
 
 For a list of object and estimator tags, see :ref:`tags_ref`.
 

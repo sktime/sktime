@@ -863,10 +863,7 @@ class SFA(BaseTransformer):
         """Convert a bag of SFA words into a string."""
         s = "{"
         for word, value in bag.items():
-            s += "{}: {}, ".format(
-                self.word_list_typed(word) if self.typed_dict else self.word_list(word),
-                value,
-            )
+            s += f"{self.word_list_typed(word) if self.typed_dict else self.word_list(word)}: {value}, "  # noqa: E501
         s = s[:-2]
         return s + "}"
 
