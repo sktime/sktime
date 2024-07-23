@@ -155,10 +155,42 @@ def convert_pandas_series_to_pandasDataset(pd_series: pd.Series):
     from gluonts.dataset.pandas import PandasDataset
 
     # Checking for index validity
-    if not isinstance(pd_series.index, pd.DatetimeIndex):
-        raise ValueError("The series must have a pd.DatetimeIndex based index!")
+    if not isinstance(pd_series.index, (pd.DatetimeIndex, pd.PeriodIndex)):
+        raise ValueError("The series must have a DateTimeIndex or PeriodIndex!")
 
     return PandasDataset(pd_series)
+
+
+def convert_pandasDataset_to_pandas_series(pandasDataset):
+    """Convert a PandasDataset into a valid Pandas Series.
+
+    Parameters
+    ----------
+    pandasDataset : GluonTS PandasDataset
+        A valid gluonTS pandasDataset formed from a pandas Series
+
+    Raises
+    ------
+    ValueError
+        Raises a value error if the pandasDataset is not a valid
+        GluonTS PandasDataset
+
+    Returns
+    -------
+    pandas.Series
+        Returns the pandas Series stored in the PandasDataset
+    """
+    from gluonts.dataset.pandas import PandasDataset
+
+    # Checking for a valid data type
+    if not isinstance(pandasDataset, PandasDataset):
+        raise ValueError("The passed object must be a valid GluonTS PandasDataset!")
+
+    # In a PandasDataset formed from a Pandas Series,
+    # this is where the underlying Series is stored!
+
+    iterable = pandasDataset._data_entries.iterable
+    return iterable[0][1]
 
 
 def convert_pandas_multiindex_to_pandasDataset(

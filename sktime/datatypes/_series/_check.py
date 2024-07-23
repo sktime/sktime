@@ -455,6 +455,60 @@ if _check_soft_dependencies("gluonts", severity="none"):
 
         return ret(True, None, metadata, return_metadata)
 
+    def check_gluonTS_pandasDataset_series(obj, return_metadata=False, var_name="obj"):
+        # Importing required libraries
+        from gluonts.dataset.pandas import PandasDataset
+
+        metadata = dict()
+
+        # Check for type correctness
+        if not isinstance(obj, PandasDataset):
+            msg = f"{var_name} must be a gluonts.PandasDataset, found {type(obj)}"
+            return ret(False, msg, None, return_metadata)
+
+        data_entry = obj._data_entries.iterable
+
+        if hasattr(data_entry, "iterable"):
+            msg = "The PandasDataset must be formed from a pandas Series object"
+            return ret(False, msg, None, return_metadata)
+
+        # Fetching the underlying series
+        series = data_entry[0][1]
+
+        # Check if there are no values
+        if _req("is_empty", return_metadata):
+            metadata["is_empty"] = len(obj) == 0
+
+        # A pandas Series is univariate
+        if _req("is_univariate", return_metadata):
+            metadata["is_univariate"] = True
+
+        # A pandas Series has only 1 feature
+        if _req("n_features", return_metadata):
+            metadata["n_features"] = 1
+
+        if _req("n_instances", return_metadata):
+            metadata["n_instances"] = 1
+
+        if _req("n_panels", return_metadata):
+            metadata["n_panels"] = 1
+
+        # Fetching the name of the series' singular column
+        if _req("feature_names", return_metadata):
+            metadata["feature_names"] = series.name
+
+        if _req("is_equally_spaced", return_metadata):
+            metadata["is_equally_spaced"] = True
+
+        if _req("has_nans", return_metadata):
+            metadata["has_nans"] = series.isna().any()
+
+        return ret(True, None, metadata, return_metadata)
+
     check_dict[("gluonts_ListDataset_series", "Series")] = (
         check_gluonTS_listDataset_series
+    )
+
+    check_dict[("gluonts_PandasDataset_series", "Series")] = (
+        check_gluonTS_pandasDataset_series
     )

@@ -621,6 +621,10 @@ if _check_soft_dependencies("gluonts", severity="none"):
             msg = f"{var_name} must be a gluonts.PandasDataset, found {type(obj)}"
             return _ret(False, msg, None, return_metadata)
 
+        if not hasattr(obj._data_entries.iterable, "iterable"):
+            msg = f"{var_name} must be formed with a pandas DataFrame, not Series"
+            return _ret(False, msg, None, return_metadata)
+
         # Convert to a pandas DF for easier checks
         df = pd.DataFrame(obj._data_entries)
         df = df.explode("target")

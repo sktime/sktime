@@ -37,12 +37,18 @@ MTYPE_REGISTER_SERIES = [
         "Series",
         "gluonTS representation of univariate and multivariate series",
     ),
+    (
+        "gluonts_PandasDataset_series",
+        "Series",
+        "gluonTS representation of a uni- or multivariate series",
+    ),
 ]
 
 MTYPE_SOFT_DEPS_SERIES = {
     "xr.DataArray": "xarray",
     "dask_series": "dask",
     "gluonts_ListDataset_series": "gluonts",
+    "gluonts_PandasDataset_series": "gluonts",
 }
 
 MTYPE_LIST_SERIES = [x[0] for x in MTYPE_REGISTER_SERIES]

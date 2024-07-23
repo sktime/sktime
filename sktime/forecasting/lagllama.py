@@ -44,8 +44,14 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
     """
 
     _tags = {
-        "y_inner_mtype": "gluonts_PandasDataset_panel",
-        "X_inner_mtype": "gluonts_PandasDataset_panel",
+        "y_inner_mtype": [
+            "gluonts_PandasDataset_panel",
+            "gluonts_PandasDataset_series",
+        ],
+        "X_inner_mtype": [
+            "gluonts_PandasDataset_panel",
+            "gluonts_PandasDataset_series",
+        ],
         "scitype:y": "both",
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": True,
@@ -167,9 +173,6 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
             transformation, lightning_module
         )
 
-        # Since we are importing pretrained weights
-        self._is_fitted = True
-
     # todo: implement this, mandatory
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
@@ -223,7 +226,8 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         )
 
         # Lastly, training the model
-        self.predictor_ = self.estimator.train(y.train, cache_data=True)
+        if y is not None:
+            self.predictor_ = self.estimator.train(y.train, cache_data=True)
 
     def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
@@ -342,7 +346,14 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params = {
-            "huggingface_id": None,
+            "weights_url": None,
+            "device": None,
+            "context_length": 32,
+            "prediction_length": 100,
+            "num_samples": 10,
+            "batch_size": 32,
+            "nonnegative_pred_samples": False,
+            "lr": 5e-5,
         }
 
         return params

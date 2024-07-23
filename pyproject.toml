@@ -284,6 +284,8 @@ dl = [
   'transformers[torch]<4.41.0; python_version < "3.12"',
   'pykan; python_version > "3.9.7"',
   'pytorch-forecasting>=1.0.0; python_version < "3.11"',
+  'gluonts<0.15.0',
+  'huggingface-hub[cli]',
   'lag-llama@git+https://github.com/time-series-foundation-models/lag-llama.git'
 ]
 mlflow = [
