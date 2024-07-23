@@ -77,6 +77,11 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         size of batches to train the model on
         default = 8
 
+    eval_batch_size : int or "all"
+        size of batches to evaluate the model on. If the string "all" is
+        specified, then we process the entire validation set as a single batch
+        default = 8
+
     epochs : int
         Number of epochs to fit tune the model on
         default = 1
@@ -131,6 +136,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         head_dropout=0.1,
         seq_len=512,
         batch_size=8,
+        eval_batch_size=8,
         epochs=1,
         max_lr=1e-4,
         device="gpu",
@@ -149,6 +155,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         self.head_dropout = head_dropout
         self.seq_len = seq_len
         self.batch_size = batch_size
+        self.eval_batch_size = eval_batch_size
         self.epochs = epochs
         self.max_lr = max_lr
         self.device = device
@@ -282,8 +289,13 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             device=self._device,
         )
 
+        if self.eval_batch_size == "all":
+            self._eval_batch_size = len(val_dataset)
+        else:
+            self._eval_batch_size = self.eval_batch_size
+
         val_dataloader = DataLoader(
-            val_dataset, batch_size=len(val_dataset), shuffle=True
+            val_dataset, batch_size=self._eval_batch_size, shuffle=True
         )
 
         criterion = self._criterion
