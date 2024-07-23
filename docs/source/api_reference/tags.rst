@@ -20,7 +20,7 @@ This API reference lists all tags available in ``sktime``, and key utilities
 for their usage.
 
 To search estimators by tags on the ``sktime`` webpage, use the
-:doc:`Estimator Search Page </estimator_overview>`_
+:doc:`Estimator Search Page </estimator_overview>`
 
 
 Inspecting tags, retrieving by tags
