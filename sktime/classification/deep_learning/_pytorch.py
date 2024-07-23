@@ -23,14 +23,7 @@ else:
 
 
 class BaseDeepClassifierPytorch(BaseClassifier):
-    """Abstract base class for deep learning time series classifiers based on pytorch.
-
-    Parameters
-    ----------
-    batch_size : int, default = 16
-        training batch size for the model
-
-    """
+    """Abstract base class for the Pytorch neural network classifiers."""
 
     _tags = {
         "authors": ["geetu040"],
@@ -138,6 +131,8 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         pass
 
     def _build_dataloader(self, X, y=None):
+        # default behaviour if estimator doesnot implement
+        # dataloader of its own
         dataset = PytorchDataset(X, y)
         return DataLoader(dataset, self.batch_size)
 

@@ -14,7 +14,7 @@ else:
 
 
 class PytorchDataset(Dataset):
-    """Dataset for use in sktime deep learning classifier based on pytorch."""
+    """Dataset specifc to TransformerClassifier."""
 
     def __init__(self, X, y):
         # X.shape = (batch_size, n_dims, n_timestamps)
