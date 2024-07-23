@@ -584,7 +584,7 @@ class MCNNClassifier(BaseDeepClassifier):
                 "max_train_batch_size": 256,
                 "slice_ratio": 0.9,
                 "random_state": 0,
-                "verbose": True,
+                "verbose": False,
                 "model_name": "mcnn",
                 "model_save_directory": None,
             }
