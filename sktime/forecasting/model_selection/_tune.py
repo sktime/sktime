@@ -1632,8 +1632,6 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
 
         * If None, defaults to MeanAbsolutePercentageError()
 
-    sampler : Optuna sampler, optional (default=None)
-        e.g. optuna.samplers.TPESampler(seed=42)
     strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
         data ingestion strategy in fitting cv, passed to ``evaluate`` internally
         defines the ingestion mode when the forecaster sees new data when window expands
@@ -1655,6 +1653,8 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
     n_evals : int, default=100
         Number of parameter settings that are sampled. n_iter trades
         off runtime vs quality of the solution.
+    sampler : Optuna sampler, optional (default=None)
+        e.g. optuna.samplers.TPESampler(seed=42)
 
     Attributes
     ----------
