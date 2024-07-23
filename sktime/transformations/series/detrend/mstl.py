@@ -279,7 +279,10 @@ class MSTL(BaseTransformer):
         # for inverse transform, we sum up the columns
         # this will be close if return_components=True
         if self.return_components or self.periods is None:
-            row_sums = X.sum(axis=1)
+            if isinstance(X, pd.DataFrame):
+                row_sums = X.sum(axis=1)
+            else:
+                row_sums = X
             row_sums.name = self._X.name
             return row_sums
         # otherwise, we make naive seasonal forecasts, and add them to "transformed"
