@@ -477,6 +477,7 @@ class BaseTransformer(BaseEstimator):
         # skip everything if fit_is_empty is True and we do not need to remember data
         if self.get_tag("fit_is_empty") and not self.get_tag("remember_data", False):
             self._is_fitted = True
+            self._is_vectorized = "unknown"
             return self
 
         # if requires_X is set, X is required in fit and update
@@ -608,7 +609,14 @@ class BaseTransformer(BaseEstimator):
         # input check and conversion for X/y
         X_inner, y_inner, metadata = self._check_X_y(X=X, y=y, return_metadata=True)
 
-        if not self._is_vectorized:
+        # check if we need to vectorize
+        if self._is_vectorized == "unknown":
+            vectorization_needed = isinstance(X_inner, VectorizedDF)
+        else:
+            vectorization_needed = self._is_vectorized
+
+        # if no vectorization needed, we call _transform directly
+        if not vectorization_needed:
             Xt = self._transform(X=X_inner, y=y_inner)
         else:
             # otherwise we call the vectorized version of predict
@@ -767,7 +775,19 @@ class BaseTransformer(BaseEstimator):
         # input check and conversion for X/y
         X_inner, y_inner, metadata = self._check_X_y(X=X, y=y, return_metadata=True)
 
-        if not self._is_vectorized:
+        # check if we need to vectorize
+        if self._is_vectorized == "unknown":
+            vectorization_needed = isinstance(X_inner, VectorizedDF)
+        else:
+            vectorization_needed = self._is_vectorized
+
+        # if no vectorization needed, we call _inverse_transform directly
+        if not vectorization_needed:
+            # capture edge condition where:
+            # transformer is univariate, transform produces multivariate
+            # in this case the check_X_y will convert to VectorizedDF,
+            # but inverse_transform expects a DataFrame
+            # example: time series decomposition algorithms
             if isinstance(X_inner, VectorizedDF):
                 X_inner = X_inner.X_multiindex
             Xt = self._inverse_transform(X=X_inner, y=y_inner)
