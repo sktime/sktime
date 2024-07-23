@@ -8,6 +8,7 @@ __all__ = ["BaseDeepClassifierPytorch"]
 import abc
 
 import numpy as np
+from sklearn.preprocessing import LabelEncoder
 
 from sktime.classification.base import BaseClassifier
 from sktime.utils.dependencies import _check_soft_dependencies
@@ -67,9 +68,14 @@ class BaseDeepClassifierPytorch(BaseClassifier):
             if _check_soft_dependencies("torch", severity="none"):
                 torch.manual_seed(self.random_state)
 
+        # use this when y has str
+        self.label_encoder = None
+
         super().__init__()
 
     def _fit(self, X, y):
+        y = self._encode_y(y)
+
         self.network = self._build_network(X, y)
 
         self._criterion = self._instantiate_criterion()
@@ -164,7 +170,8 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         """
         y_pred_prob = self._predict_proba(X)
         y_pred = np.argmax(y_pred_prob, axis=-1)
-        return y_pred
+        y_decoded = self._decode_y(y_pred)
+        return y_decoded
 
     def _predict_proba(self, X):
         """Predicts labels probabilities for sequences in X.
@@ -209,6 +216,20 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         y_pred = F.softmax(y_pred, dim=-1)
         y_pred = y_pred.numpy()
         return y_pred
+
+    def _encode_y(self, y):
+        unique = np.unique(y)
+        if np.array_equal(unique, np.arange(len(unique))):
+            return y
+
+        self.label_encoder = LabelEncoder()
+        return self.label_encoder.fit_transform(y)
+
+    def _decode_y(self, y):
+        if self.label_encoder is None:
+            return y
+
+        return self.label_encoder.inverse_transform(y)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
