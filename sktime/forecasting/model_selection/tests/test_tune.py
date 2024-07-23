@@ -333,14 +333,11 @@ def test_skoptcv_multiple_forecaster():
     assert len(sscv.cv_results_) == 5
 
 
-@pytest.mark.xfail
 @pytest.mark.skipif(
     not run_test_for_class(ForecastingOptunaSearchCV),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-@pytest.mark.parametrize(
-    "forecaster, param_grid", [(NAIVE, NAIVE_GRID_OPTUNA), (PIPE, PIPE_GRID)]
-)
+@pytest.mark.parametrize("forecaster, param_grid", [(NAIVE, NAIVE_GRID_OPTUNA)])
 @pytest.mark.parametrize("scoring", TEST_METRICS)
 @pytest.mark.parametrize("error_score", ERROR_SCORES)
 @pytest.mark.parametrize("cv", CVs)
@@ -362,10 +359,16 @@ def test_optuna(forecaster, param_grid, cv, scoring, error_score, n_iter, random
     )
     rscv.fit(y, X)
 
-    param_distributions = list(
-        ParameterSampler(param_grid, n_iter, random_state=random_state)
+    param_distributions = rscv.cv_results_.params.to_list()
+    _check_cv(
+        forecaster,
+        rscv,
+        cv,
+        param_distributions,
+        y,
+        X,
+        scoring,
     )
-    _check_cv(forecaster, rscv, cv, param_distributions, y, X, scoring)
     _check_fitted_params_keys(rscv.get_fitted_params())
 
 

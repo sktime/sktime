@@ -1810,18 +1810,18 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
             sampler,
         )
 
-        results[f"rank_{scoring_name}"] = results["value"].rank(
+        results[f"rank_{scoring_name}"] = results[f"mean_{scoring_name}"].rank(
             ascending=scoring.get_tag("lower_is_better")
         )
         self.cv_results_ = results
-        self.best_index_ = results["value"].idxmin()
+        self.best_index_ = results[f"mean_{scoring_name}"].idxmin()
         if self.best_index_ == -1:
             raise NotFittedError(
                 f"""All fits of forecaster failed,
                 set error_score='raise' to see the exceptions.
                 Failed forecaster: {self.forecaster}"""
             )
-        self.best_score_ = results.loc[self.best_index_, "value"]
+        self.best_score_ = results.loc[self.best_index_, f"mean_{scoring_name}"]
         self.best_params_ = results.loc[self.best_index_, "params"]
         self.best_forecaster_ = self.forecaster.clone().set_params(**self.best_params_)
 
@@ -1829,7 +1829,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
             self.best_forecaster_.fit(y, X, fh)
 
         results = results.sort_values(
-            by="value", ascending=scoring.get_tag("lower_is_better")
+            by=f"mean_{scoring_name}", ascending=scoring.get_tag("lower_is_better")
         )
         self.n_best_forecasters_ = []
         self.n_best_scores_ = []
@@ -1841,7 +1841,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
             if self.refit:
                 forecaster.fit(y, X, fh)
             self.n_best_forecasters_.append((rank, forecaster))
-            score = results["value"].iloc[i]
+            score = results[f"mean_{scoring_name}"].iloc[i]
             self.n_best_scores_.append(score)
 
         return self
@@ -1943,4 +1943,4 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
 
         # Combine all results into a single DataFrame
         combined_results = pd.concat(all_results, ignore_index=True)
-        return combined_results
+        return combined_results.rename(columns={"value": f"mean_{scoring_name}"})
