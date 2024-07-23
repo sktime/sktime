@@ -56,6 +56,10 @@ class MSTL(BaseTransformer):
 
     See the examples below for usage.
 
+    For automated detection of seasonalities using a custom seasonality detection
+    algorithm, pipeline ``MSTL`` with the respective estimator, e.g.,
+    ``SeasonalityACF``.
+
     Parameters
     ----------
     endog : array_like
