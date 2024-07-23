@@ -572,8 +572,27 @@ class MCNNClassifier(BaseDeepClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        if _check_dl_dependencies(severity="none"):
-            params = [
+        from sktime.utils.dependencies import _check_soft_dependencies
+
+        params = [
+            {
+                "pool_factors": [2, 3, 5],
+                "filter_size": [0.05, 0.1, 0.2],
+                "window_size": 3,
+                "nb_train_batch": 10,
+                "nb_epochs": 1,
+                "max_train_batch_size": 256,
+                "slice_ratio": 0.9,
+                "random_state": 0,
+                "verbose": True,
+                "model_name": "mcnn",
+                "model_save_directory": None,
+            }
+        ]
+        if _check_soft_dependencies("keras", severity="none"):
+            from keras.callbacks import EarlyStopping
+
+            params.append(
                 {
                     "pool_factors": [2, 3, 5],
                     "filter_size": [0.05, 0.1, 0.2],
@@ -584,10 +603,9 @@ class MCNNClassifier(BaseDeepClassifier):
                     "slice_ratio": 0.9,
                     "random_state": 0,
                     "verbose": False,
+                    "callbacks": [EarlyStopping()],
                     "model_name": "mcnn",
                     "model_save_directory": None,
                 }
-            ]
-        else:
-            params = []
+            )
         return params
