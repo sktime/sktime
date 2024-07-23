@@ -5,6 +5,7 @@
 #      at the end, see **1
 
 import gc
+from copy import deepcopy
 
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -73,6 +74,7 @@ class MCNNClassifier(BaseDeepClassifier):
         padding="same",
         random_state=0,
         verbose=False,
+        callbacks=None,
         model_name="mcnn",
         model_save_directory=None,
     ):
@@ -87,6 +89,7 @@ class MCNNClassifier(BaseDeepClassifier):
         self.padding = padding
         self.random_state = random_state
         self.verbose = verbose
+        self.callbacks = callbacks
         self.model_name = model_name
         self.model_save_directory = model_save_directory
 
@@ -98,6 +101,8 @@ class MCNNClassifier(BaseDeepClassifier):
             random_state=0,
         )
         self.input_shapes = None
+        self.best_pool_factor = None
+        self.best_filter_size = None
         self.history = None
         self._is_fitted = False
 
@@ -378,11 +383,6 @@ class MCNNClassifier(BaseDeepClassifier):
         train_set_x, train_set_y = x_train, y_train
         valid_set_x, valid_set_y = x_val, y_val
 
-        valid_num = valid_set_x.shape[0]
-
-        # print("increase factor is ", increase_num, ', ori len', ori_len)
-        valid_num_batch = int(valid_num / increase_num)
-
         length_train = train_set_x.shape[1]  # length after slicing.
 
         current_window_size = (
@@ -426,7 +426,6 @@ class MCNNClassifier(BaseDeepClassifier):
         n_train_size = train_set_x.shape[0]
         # n_valid_size = valid_set_x.shape[0]
         batch_size = int(n_train_size / current_n_train_batch)
-        n_train_batches = int(n_train_size / batch_size)
         # data_dim = train_set_x.shape[1]
         num_dim = train_set_x.shape[2]  # For MTS
         nb_classes = train_set_y.shape[1]
@@ -443,126 +442,25 @@ class MCNNClassifier(BaseDeepClassifier):
         )
 
         model = self.build_model(self.input_shapes, nb_classes)
-        # print('submodel built', model)
 
         if self.verbose:
             model.summary()
+        self.callback_ = deepcopy(self.callbacks)
 
-        # early-stopping parameters
-        patience = 10000  # look as this many examples regardless
-        patience_increase = 2  # wait this much longer when a new best is
-        # found
-        improvement_threshold = 0.995  # a relative improvement of this much is
-        # considered significant
-        validation_frequency = min(n_train_batches, patience / 2)
+        x = self.split_input_for_model(train_set_x, self.input_shapes)
+        x_val = self.split_input_for_model(valid_set_x, self.input_shapes)
 
-        max_before_stopping = 500
-
-        best_validation_loss = np.inf
-        # best_iter = 0
-        valid_loss = 0.0
-
-        epoch = 0
-        done_looping = False
-        num_no_update_epoch = 0
-        epoch_avg_cost = float("inf")
-        # epoch_avg_err = float("inf")
-
-        while (epoch < self.nb_epochs) and (not done_looping):
-            epoch = epoch + 1
-            epoch_train_err = 0.0
-            epoch_cost = 0.0
-
-            num_no_update_epoch += 1
-            if num_no_update_epoch == max_before_stopping:
-                break
-
-            for minibatch_index in range(n_train_batches):
-                iteration = (epoch - 1) * n_train_batches + minibatch_index
-
-                x = train_set_x[
-                    minibatch_index * batch_size : (minibatch_index + 1) * batch_size
-                ]
-                y = train_set_y[
-                    minibatch_index * batch_size : (minibatch_index + 1) * batch_size
-                ]
-
-                x = self.split_input_for_model(x, self.input_shapes)
-
-                # print('\t pre train batch')
-                cost_ij, accuracy = model.train_on_batch(x, y)
-                # print('\t post train batch')
-
-                train_err = 1 - accuracy
-
-                epoch_train_err = epoch_train_err + train_err
-                epoch_cost = epoch_cost + cost_ij
-
-                if (iteration + 1) % validation_frequency == 0:
-                    valid_losses = []
-                    for i in range(valid_num_batch):
-                        x = valid_set_x[i * (increase_num) : (i + 1) * (increase_num)]
-                        y_pred = model.predict_on_batch(
-                            self.split_input_for_model(x, self.input_shapes)
-                        )
-
-                        # convert the predicted from binary to integer
-                        y_pred = np.argmax(y_pred, axis=1)
-                        label = np.argmax(valid_set_y[i * increase_num])
-
-                        (
-                            unique_value,
-                            sub_ind,
-                            correspond_ind,
-                            count,
-                        ) = np.unique(y_pred, True, True, True)
-                        unique_value = unique_value.tolist()
-
-                        curr_err = 1.0
-                        if label in unique_value:
-                            target_ind = unique_value.index(label)
-                            count = count.tolist()
-                            sorted_count = sorted(count)
-                            if count[target_ind] == sorted_count[-1]:
-                                if (
-                                    len(sorted_count) > 1
-                                    and sorted_count[-1] == sorted_count[-2]
-                                ):
-                                    curr_err = 0.5  # tie
-                                else:
-                                    curr_err = 0
-                        valid_losses.append(curr_err)
-                    valid_loss = sum(valid_losses) / float(len(valid_losses))
-
-                    # print('...epoch%i,valid err: %.5f |' %
-                    #       (epoch, valid_loss))
-
-                    # if we got the best validation score until now
-                    if valid_loss <= best_validation_loss:
-                        num_no_update_epoch = 0
-
-                        # improve patience if loss improvement is good enough
-                        if valid_loss < best_validation_loss * improvement_threshold:
-                            patience = max(patience, iteration * patience_increase)
-
-                        # save best validation score and iteration number
-                        best_validation_loss = valid_loss
-                        # best_iter = iteration
-
-                        # save model in h5 format
-                        # self.model.save(self.output_directory+'best_model.hdf5')
-                if patience <= iteration:
-                    done_looping = True
-                    break
-            epoch_avg_cost = epoch_cost / n_train_batches
-            # epoch_avg_err = epoch_train_err / n_train_batches
-
-            # print('train err %.5f, cost %.4f' % (epoch_avg_err,
-            #                                      epoch_avg_cost))
-            if epoch_avg_cost == 0:
-                break
-
-        return best_validation_loss, model
+        # Fit the model
+        self.history = model.fit(
+            x,
+            train_set_y,
+            validation_data=(x_val, valid_set_y),
+            batch_size=batch_size,
+            epochs=self.nb_epochs,
+            callbacks=self.callback_,
+            verbose=self.verbose,
+        )
+        return self
 
     def split_input_for_model(self, x, input_shapes):
         """Split input for model compatibility.
@@ -635,28 +533,17 @@ class MCNNClassifier(BaseDeepClassifier):
         # grid search
         for pool_factor in self.pool_factors:
             for filter_size in self.filter_size:
-                # print('pretrain')
-                valid_loss, model = self.train(X, y_onehot, pool_factor, filter_size)
-                # print('posttrain')
-
+                self.train(X, y_onehot, pool_factor, filter_size)
+                valid_loss = self.history.history["val_loss"][-1]
                 if valid_loss < best_valid_loss:
                     best_valid_loss = valid_loss
                     self.best_pool_factor = pool_factor
                     self.best_filter_size = filter_size
-                    # self.model = model # see **1 below
 
-                # print('postbest', self.model)
-
-                # clear memory in all the ways... **1
-                del model
+                # clear memory in all the ways
                 gc.collect()
                 keras.backend.clear_session()
-
-                # print('postclear',self.model)
-
-        _, self.model = self.train(X, y_onehot, pool_factor, filter_size)
-
-        self.save_trained_model()
+        self.train(X, y_onehot, self.best_pool_factor, self.best_filter_size)
         self._is_fitted = True
 
         return self
