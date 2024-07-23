@@ -1746,7 +1746,6 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         cv,
         param_grid,
         scoring=None,
-        sampler=None,
         strategy="refit",
         refit=True,
         verbose=0,
@@ -1755,6 +1754,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         update_behaviour="full_refit",
         error_score=np.nan,
         n_evals=100,
+        sampler=None,
     ):
         super().__init__(
             forecaster=forecaster,
