@@ -917,7 +917,8 @@ class BaseTransformer(BaseEstimator):
               e.g., `[componentname]__[componentcomponentname]__[paramname]`, etc
         """
         # if self is not vectorized, run the default get_fitted_params
-        if not getattr(self, "_is_vectorized", False):
+        is_vectorized = getattr(self, "_is_vectorized", False)
+        if isinstance(is_vectorized, bool) and not is_vectorized:
             return super().get_fitted_params(deep=deep)
 
         # otherwise, we delegate to the instances' get_fitted_params
