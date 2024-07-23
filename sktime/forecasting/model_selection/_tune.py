@@ -14,7 +14,6 @@ from collections.abc import Iterable, Mapping, Sequence
 from typing import Optional, Union
 
 import numpy as np
-import optuna
 import pandas as pd
 from sklearn.model_selection import ParameterGrid, ParameterSampler, check_cv
 
@@ -1633,7 +1632,8 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
 
         * If None, defaults to MeanAbsolutePercentageError()
 
-    sampler : Optuna sampler, optional, default=optuna.samplers.TPESampler(seed=42)
+    sampler : Optuna sampler, optional (default=None)
+        e.g. optuna.samplers.TPESampler(seed=42)
     strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
         data ingestion strategy in fitting cv, passed to ``evaluate`` internally
         defines the ingestion mode when the forecaster sees new data when window expands
@@ -1746,7 +1746,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         cv,
         param_grid,
         scoring=None,
-        sampler=optuna.samplers.TPESampler(seed=42),
+        sampler=None,
         strategy="refit",
         refit=True,
         verbose=0,
