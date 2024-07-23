@@ -119,7 +119,11 @@ class MSTL(BaseTransformer):
     >>> plt.tight_layout()  # doctest: +SKIP
     >>> plt.show()  # doctest: +SKIP
 
-    MSTL can be pipelined with a forecaster for multiple deseasonalized forecasts:
+    MSTL can be pipelined with a forecaster for multiple deseasonalized forecasts.
+    The following example uses a simple trend forecaster, applied
+    to a series deseasonalized with MSTL at periods 2 and 12.
+    After the trend forecast, the seasonal components
+    are added back to the forecast automatically.
     >>> from sktime.datasets import load_airline
     >>> from sktime.transformations.series.detrend import MSTL
     >>> from sktime.forecasting.trend import TrendForecaster
@@ -130,9 +134,17 @@ class MSTL(BaseTransformer):
     >>> mstl_deseason_fcst.fit(y, fh=[1, 2, 3])
     >>> y_pred = mstl_deseason_fcst.predict()
 
-    To make forecasts using the full component decomposition,
-    set ``return_components=True``. The forecaster will then see
-    a multivariate series with the components as columns:
+    MSTL can also be used to make forecasts using the full component decomposition.
+    For this, set ``return_components=True`` when pipelining.
+    The forecaster in the pipeline will then be given a multivariate series
+    with the components as columns,
+    i.e., "trend", "resid", "seasonal_2", "seasonal_12".
+    To apply different forecasters to different components, use a
+    ``ColumnEnsembleForecaster``; to apply the same forecaster to all components,
+    simply pipeline with the forecaster.
+    The following example uses a ``TrendForecaster`` for the trend,
+    a seasonal naive forecaster for the seasonal components, with different
+    seasonalities, and a naive forecaster for the residuals.
     >>> from sktime.datasets import load_airline
     >>> from sktime.transformations.series.detrend import MSTL
     >>> from sktime.forecasting.compose import ColumnEnsembleForecaster
