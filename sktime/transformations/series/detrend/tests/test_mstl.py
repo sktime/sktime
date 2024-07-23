@@ -65,7 +65,7 @@ def test_mstl_deseason_pipeline():
     y_pred = mstl_deseason_fcst.predict()
 
     # check expected output shape
-    assert y_pred.shape == 3
+    assert y_pred.shape == (3,)
     # assert there are no nans
     assert not y_pred.isna().any()
 
@@ -93,6 +93,6 @@ def test_mstl_component_pipeline():
     mstl_component_fcst.fit(y, fh=[1, 2, 3])
     y_pred = mstl_component_fcst.predict()
     # check expected output shape
-    assert y_pred.shape == 3
+    assert y_pred.shape == (3,)
     # assert there are no nans
     assert not y_pred.isna().any()
