@@ -61,13 +61,20 @@ class MSTL(BaseTransformer):
     stl_kwargs : dict, optional
         Arguments to pass to STL.
     return_components : bool, default=False
-        if False, will return only the MSTL transformed series
-        if True, will return the transformed series, as well as three components
-            as variables in the returned multivariate series (DataFrame cols)
-            "transformed" - the transformed series
-            "seasonal" - the seasonal component(s), summed up if multiple
-            "trend" - the trend component
-            "resid" - the residuals after de-trending, de-seasonalizing
+        * if False, will return only the MSTL transformed series, same
+          as trend plus residual component. The resulting series has the same
+          number of columns as the input.
+
+        * if True, will return all components of the decomposition,
+            a multivariate series with DataFrame cols (for each input column):
+
+            * "seasonal_<period>" - the seasonal component(s),
+              where <period> is an integer indicating the periodicity,
+              one such component per element in ``periods``
+            * "trend" - the trend component
+            * "resid" - the residuals after de-trending, de-seasonalizing
+
+            All components together sum up to the original series, in-sample.
 
     Attributes
     ----------
@@ -76,7 +83,7 @@ class MSTL(BaseTransformer):
     seasonal_ : pd.Series or list of pd.Series
         If ``periods`` is a single value, this contains the seasonal component of the
         series observed during fitting.
-        If ``periods`` is a list of values, this can contain multiple pd.Series, each
+        If ``periods`` is a list of values, this contains multiple pd.Series, each
         corresponding to a different period.
     resid_ : pd.Series
         Residuals component of series seen in fit.
@@ -87,17 +94,42 @@ class MSTL(BaseTransformer):
 
     Examples
     --------
+    Simple use case: decompose a time series into trend, seasonal, residual components
     >>> import matplotlib.pyplot as plt  # doctest: +SKIP
     >>> from sktime.datasets import load_airline
     >>> from sktime.transformations.series.detrend import MSTL
     >>> y = load_airline()
     >>> y.index = y.index.to_timestamp()
-    >>> mstl = MSTL(return_components=True)  # doctest: +SKIP
-    >>> fitted = mstl.fit(y)  # doctest: +SKIP
-    >>> res = fitted.transform(y)  # doctest: +SKIP
+    >>> mstl = MSTL(return_components=True)
+    >>> fitted = mstl.fit(y)
+    >>> res = fitted.transform(y)
     >>> res.plot()  # doctest: +SKIP
     >>> plt.tight_layout()  # doctest: +SKIP
     >>> plt.show()  # doctest: +SKIP
+
+    MSTL can be pipelined with a forecaster for multiple deseasonalized forecasts:
+
+    To make forecasts using the full component decomposition,
+    set ``return_components=True``. The forecaster will then see
+    a multivariate series with the components as columns:
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.transformations.series.detrend import MSTL
+    >>> from sktime.forecasting.compose import ColumnEnsembleForecaster
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.forecasting.trend import TrendForecaster
+    >>>
+    >>> mstl_trafo = MSTL(periods=[2, 12], return_components=True)
+    >>> mstl_component_fcst = mstl_trafo * ColumnEnsembleForecaster(
+    ...     [
+    ...         ("trend", TrendForecaster(), "trend"),
+    ...         ("sp2", NaiveForecaster(strategy="last", sp=2), "seasonal_2"),
+    ...         ("sp12", NaiveForecaster(strategy="last", sp=12), "seasonal_12"),
+    ...         ("residual", NaiveForecaster(strategy="last"), "resid"),
+    ...     ]
+    ... )
+    >>> y = load_airline()
+    >>> mstl_component_fcst.fit(y, fh=[1, 2, 3])
+    >>> y_pred = mstl_component_fcst.predict()
     """
 
     _tags = {
@@ -218,11 +250,7 @@ class MSTL(BaseTransformer):
             resid = pd.Series(mstl.resid, index=X.index)
             trend = pd.Series(mstl.trend, index=X.index)
 
-            ret = {
-                "transformed": transformed,
-                "trend": trend,
-                "resid": resid,
-            }
+            ret = {"trend": trend, "resid": resid}
 
             for column_name, column_data in mstl.seasonal.items():
                 ret[column_name] = column_data
