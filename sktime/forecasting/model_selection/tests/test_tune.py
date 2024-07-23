@@ -349,7 +349,15 @@ def test_skoptcv_multiple_forecaster():
 @pytest.mark.parametrize("scoring", TEST_METRICS)
 @pytest.mark.parametrize("error_score", ERROR_SCORES)
 @pytest.mark.parametrize("cv", CVs)
-@pytest.mark.parametrize("sampler", [None, optuna.samplers.NSGAIISampler(seed=42)])
+@pytest.mark.parametrize(
+    "sampler",
+    [
+        None,
+        optuna.samplers.NSGAIISampler(seed=42),
+        optuna.samplers.QMCSampler(seed=42),
+        optuna.samplers.CmaEsSampler(seed=42),
+    ],
+)
 @pytest.mark.parametrize("n_iter", TEST_N_ITERS)
 def test_optuna(forecaster, param_grid, cv, scoring, error_score, sampler, n_iter):
     """Test TuneForecastingOptunaCV.
