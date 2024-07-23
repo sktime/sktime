@@ -42,8 +42,8 @@ class MSTL(BaseTransformer):
       one such component per element in ``periods``, if
       ``periods`` is an array-like of integers.
 
-    ``MSTL`` performs ``inverse_transform`` by reconstituting the components,
-    and can be used for pipelining in a ``TransformedTargetForecaster``,
+    ``MSTL`` performs ``inverse_transform`` by reconstituting the signal from its
+    components, and can be used for pipelining in a ``TransformedTargetForecaster``,
     see examples below.
 
     * if ``periods`` are provided, the transformation will deseasonalize,
