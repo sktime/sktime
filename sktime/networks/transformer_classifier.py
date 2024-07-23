@@ -1,4 +1,18 @@
-"""TODO: fill this."""
+"""Transformer Network for Classification, as described in [1]_.
+
+This classifier has been wrapped around the official pytorch implementation of
+Transformer from [2]_, provided by the authors of the paper [1]_.
+
+References
+----------
+.. [1] George Zerveas, Srideepika Jayaraman, Dhaval Patel, Anuradha Bhamidipaty,
+and Carsten Eickhoff. 2021. A Transformer-based Framework
+for Multivariate Time Series Representation Learning.
+In Proceedings of the 27th ACM SIGKDD Conference on Knowledge Discovery
+& Data Mining (KDD '21). Association for Computing Machinery, New York, NY, USA,
+2114-2124. https://doi.org/10.1145/3447548.3467401.
+.. [2] https://github.com/gzerveas/mvts_transformer
+"""
 
 import math
 
