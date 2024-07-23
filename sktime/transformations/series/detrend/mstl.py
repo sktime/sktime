@@ -28,13 +28,17 @@ class MSTL(BaseTransformer):
 
     If ``return_components=True``, then ``transform`` returns
     a full components decomposition,
-    in a DataFrame with cols (for each input column):
+    in a DataFrame with cols (for each input column),
+    in this order:
 
-    * "seasonal_<period>" - the seasonal component(s),
-      where <period> is an integer indicating the periodicity,
-      one such component per element in ``periods``
     * "trend" - the trend component
     * "resid" - the residuals after de-trending, de-seasonalizing
+    * "seasonal" - a single sum-of-seasonalities component, if
+      ``periods`` is ``None``.
+    * "seasonal_<period>" - the seasonal component(s),
+      where <period> is an integer indicating the periodicity,
+      one such component per element in ``periods``, if
+      ``periods`` is an array-like of integers.
 
     ``MSTL`` performs ``inverse_transform`` by summing any components,
     and can be used for pipelining in a ``TransformedTargetForecaster``.
@@ -73,11 +77,13 @@ class MSTL(BaseTransformer):
         * if True, will return all components of the decomposition,
             a multivariate series with DataFrame cols (for each input column):
 
+            * "trend" - the trend component
+            * "resid" - the residuals after de-trending, de-seasonalizing
+            * "seasonal" - a single sum-of-seasonalities component, if
+            ``periods`` is ``None``.
             * "seasonal_<period>" - the seasonal component(s),
               where <period> is an integer indicating the periodicity,
               one such component per element in ``periods``
-            * "trend" - the trend component
-            * "resid" - the residuals after de-trending, de-seasonalizing
 
             All components together sum up to the original series, in-sample.
 
@@ -85,13 +91,14 @@ class MSTL(BaseTransformer):
     ----------
     trend_ : pd.Series
         Trend component of series seen in fit.
-    seasonal_ : pd.Series or list of pd.Series
-        If ``periods`` is a single value, this contains the seasonal component of the
-        series observed during fitting.
-        If ``periods`` is a list of values, this contains multiple pd.Series, each
-        corresponding to a different period.
     resid_ : pd.Series
         Residuals component of series seen in fit.
+    seasonal_ : pd.DataFrame
+        If ``periods`` is ``None``, this contains a single column,
+        with the sum of all seasonal components of the ``X`` seen in ``fit``.
+        If ``periods`` is an array-like of integers, this consists
+        of multiple columns ``seasonal_<period>``, each
+        corresponding to a seasonal component of the series.
 
     References
     ----------
@@ -106,13 +113,22 @@ class MSTL(BaseTransformer):
     >>> y = load_airline()
     >>> y.index = y.index.to_timestamp()
     >>> mstl = MSTL(return_components=True)
-    >>> fitted = mstl.fit(y)
-    >>> res = fitted.transform(y)
+    >>> mstl.fit(y)
+    >>> res = mstl.transform(y)
     >>> res.plot()  # doctest: +SKIP
     >>> plt.tight_layout()  # doctest: +SKIP
     >>> plt.show()  # doctest: +SKIP
 
     MSTL can be pipelined with a forecaster for multiple deseasonalized forecasts:
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.transformations.series.detrend import MSTL
+    >>> from sktime.forecasting.trend import TrendForecaster
+    >>>
+    >>> mstl_trafo = MSTL(periods=[2, 12])
+    >>> mstl_deseason_fcst = mstl_trafo * TrendForecaster()
+    >>> y = load_airline()
+    >>> mstl_deseason_fcst.fit(y, fh=[1, 2, 3])
+    >>> y_pred = mstl_deseason_fcst.predict()
 
     To make forecasts using the full component decomposition,
     set ``return_components=True``. The forecaster will then see
@@ -123,8 +139,8 @@ class MSTL(BaseTransformer):
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.trend import TrendForecaster
     >>>
-    >>> mstl_trafo = MSTL(periods=[2, 12], return_components=True)
-    >>> mstl_component_fcst = mstl_trafo * ColumnEnsembleForecaster(
+    >>> mstl_trafo_comp = MSTL(periods=[2, 12], return_components=True)
+    >>> mstl_component_fcst = mstl_trafo_comp * ColumnEnsembleForecaster(
     ...     [
     ...         ("trend", TrendForecaster(), "trend"),
     ...         ("sp2", NaiveForecaster(strategy="last", sp=2), "seasonal_2"),
@@ -192,7 +208,7 @@ class MSTL(BaseTransformer):
             stl_kwargs=self.stl_kwargs,
         ).fit()
 
-        self.seasonal_ = self.mstl_.seasonal
+        self.seasonal_ = _coerce_to_df(self.mstl_.seasonal)
         self.resid_ = pd.Series(self.mstl_.resid, index=X.index)
         self.trend_ = pd.Series(self.mstl_.trend, index=X.index)
 
@@ -238,17 +254,32 @@ class MSTL(BaseTransformer):
     def _inverse_transform(self, X, y=None):
         # for inverse transform, we sum up the columns
         # this will be close if return_components=True
-        row_sums = X.sum(axis=1)
-        row_sums.name = self._X.name
-        return row_sums
+        if self.return_components or self.periods is None:
+            row_sums = X.sum(axis=1)
+            row_sums.name = self._X.name
+            return row_sums
+        # otherwise, we make naive seasonal forecasts, and add them to "transformed"
+        # since "transformed" is trend + resid, this will resture the full series
+        from sktime.forecasting.base import ForecastingHorizon
+        from sktime.forecasting.naive import NaiveForecaster
+
+        seasonal = self.seasonal_
+
+        fcsts = []
+        for period in self.periods:
+            nf = NaiveForecaster(strategy="last", sp=period)
+            fh = ForecastingHorizon(X.index, is_relative=False)
+            sp_ix = f"seasonal_{period}"
+            nf_pred = nf.fit(seasonal[sp_ix], fh=fh).predict()
+            fcsts.append(nf_pred)
+        fcsts = pd.DataFrame(fcsts).T
+        return X + fcsts.sum(axis=1)
 
     def _make_return_object(self, X, mstl):
-        if len(mstl.seasonal.shape) > 1:
-            seasonal = mstl.seasonal.sum(axis=1)
-        else:
-            seasonal = mstl.seasonal
+        seasonal = _coerce_to_df(mstl.seasonal)
+        seasonal_sum = seasonal.sum(axis=1)
         # deseasonalize only
-        transformed = pd.Series(X.values - seasonal, index=X.index)
+        transformed = pd.Series(X.values - seasonal_sum, index=X.index)
         # transformed = pd.Series(X.values - stl.seasonal - stl.trend, index=X.index)
 
         if self.return_components:
@@ -257,7 +288,7 @@ class MSTL(BaseTransformer):
 
             ret = {"trend": trend, "resid": resid}
 
-            for column_name, column_data in mstl.seasonal.items():
+            for column_name, column_data in seasonal.items():
                 ret[column_name] = column_data
 
             ret = pd.DataFrame(ret)
@@ -303,3 +334,13 @@ class MSTL(BaseTransformer):
         }
 
         return [params1, params2, params3]
+
+
+def _coerce_to_df(x):
+    """Coerce pd.Series or pd.DataFrame to pd.DataFrame."""
+    if not isinstance(x, pd.DataFrame):
+        if isinstance(x, pd.Series):
+            x = pd.DataFrame(x)
+        else:
+            raise ValueError(f"Unexpected input type {type(x)}")
+    return x
