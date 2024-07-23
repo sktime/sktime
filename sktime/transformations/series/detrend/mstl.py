@@ -15,7 +15,9 @@ from sktime.transformations.base import BaseTransformer
 class MSTL(BaseTransformer):
     """Season-Trend decomposition using LOESS for multiple seasonalities.
 
-    Direct interface for ``statsmodels.tsa.seasonal.MSTL``.
+    Direct interface for ``statsmodels.tsa.seasonal.MSTL`` for ``transform``,
+    with ``sktime`` native extensions to allow use in forecasting pipelines.
+
     ``MSTL`` can be used to perform deseasonalization or decomposition:
 
     ``fit`` stores the decomposed values in self.trend_, self.seasonal_, and
@@ -40,13 +42,19 @@ class MSTL(BaseTransformer):
       one such component per element in ``periods``, if
       ``periods`` is an array-like of integers.
 
-    ``MSTL`` performs ``inverse_transform`` by summing any components,
-    and can be used for pipelining in a ``TransformedTargetForecaster``.
+    ``MSTL`` performs ``inverse_transform`` by reconstituting the components,
+    and can be used for pipelining in a ``TransformedTargetForecaster``,
+    see examples below.
 
-    Important: for separate forecasts of trend and seasonalities, and an
-    inverse transform that respects seasonality, ensure
-    that ``return_components=True`` is set, otherwise the inverse will just
-    return the trend component.
+    * if ``periods`` are provided, the transformation will deseasonalize,
+      and reseasonalize after forecast.
+    * if ``periods`` are not provided, and ``return_components=False``,
+      the forecast will be a pure trend forecast, using sum of trend and residual
+      components.
+    * if ``return_components=True``, the forecaster has access to
+      all components, and can apply different forecasters to different components.
+
+    See the examples below for usage.
 
     Parameters
     ----------
@@ -168,7 +176,7 @@ class MSTL(BaseTransformer):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["luca-miniati"],
+        "authors": ["luca-miniati", "fkiraly"],
         "maintainers": ["luca-miniati"],
         "python_dependencies": "statsmodels",
         # estimator type
