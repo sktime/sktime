@@ -122,6 +122,12 @@ PIPE_GRID = {
     "transformer__forecaster__degree": [1, 2],
     "forecaster__strategy": ["last", "mean"],
 }
+PIPE_GRID_OPTUNA = {
+    "transformer__forecaster__degree": optuna.distributions.IntDistribution(1, 2),
+    "forecaster__strategy": optuna.distributions.CategoricalDistribution(
+        ["last", "mean"]
+    ),
+}
 CVs = [
     *[SingleWindowSplitter(fh=fh) for fh in TEST_OOS_FHS],
     SlidingWindowSplitter(fh=1, initial_window=12, step_length=3),
@@ -337,13 +343,15 @@ def test_skoptcv_multiple_forecaster():
     not run_test_for_class(ForecastingOptunaSearchCV),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-@pytest.mark.parametrize("forecaster, param_grid", [(NAIVE, NAIVE_GRID_OPTUNA)])
+@pytest.mark.parametrize(
+    "forecaster, param_grid", [(NAIVE, NAIVE_GRID_OPTUNA), (PIPE, PIPE_GRID_OPTUNA)]
+)
 @pytest.mark.parametrize("scoring", TEST_METRICS)
 @pytest.mark.parametrize("error_score", ERROR_SCORES)
 @pytest.mark.parametrize("cv", CVs)
+@pytest.mark.parametrize("sampler", [None, optuna.samplers.NSGAIISampler(seed=42)])
 @pytest.mark.parametrize("n_iter", TEST_N_ITERS)
-@pytest.mark.parametrize("random_state", TEST_RANDOM_SEEDS)
-def test_optuna(forecaster, param_grid, cv, scoring, error_score, n_iter, random_state):
+def test_optuna(forecaster, param_grid, cv, scoring, error_score, sampler, n_iter):
     """Test TuneForecastingOptunaCV.
 
     Tests that TuneForecastingOptunaCV successfully searches the parameter
@@ -356,6 +364,8 @@ def test_optuna(forecaster, param_grid, cv, scoring, error_score, n_iter, random
         cv=cv,
         scoring=scoring,
         error_score=error_score,
+        sampler=sampler,
+        n_evals=n_iter,
     )
     rscv.fit(y, X)
 
