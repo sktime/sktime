@@ -117,10 +117,6 @@ EXCLUDED_TESTS = {
         "test_persistence_via_pickle",
         "test_save_estimators_to_file",
     ],
-    # str in y raises error: TypeError("new(): invalid data type 'numpy.str_'")
-    "TransformerClassifier": [
-        "test_classifier_on_unit_test_data",
-    ],
     # `test_fit_idempotent` fails with `AssertionError`, see #3616
     "ResNetClassifier": [
         "test_fit_idempotent",
