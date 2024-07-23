@@ -29,6 +29,57 @@ class TransformerClassifier(BaseDeepClassifierPytorch):
     & Data Mining (KDD '21). Association for Computing Machinery, New York, NY, USA,
     2114-2124. https://doi.org/10.1145/3447548.3467401.
     .. [2] https://github.com/gzerveas/mvts_transformer
+
+    Parameters
+    ----------
+    d_model : int, optional (default=256)
+        The number of expected features in the input (i.e., the dimension of the model).
+    n_heads : int, optional (default=4)
+        The number of heads in the multihead attention mechanism.
+    num_layers : int, optional (default=4)
+        The number of layers (or blocks) in the transformer encoder.
+    dim_feedforward : int, optional (default=128)
+        The dimension of the feedforward network model.
+    dropout : float, optional (default=0.1)
+        The dropout rate to apply.
+    pos_encoding : str, optional (default="fixed")
+        The type of positional encoding to use. Options: ["fixed", "learnable"].
+    activation : str, optional (default="relu")
+        The activation function to use. Options: ["relu", "gelu"].
+    norm : str, optional (default="BatchNorm")
+        The type of normalization to use. Options: ["BatchNorm", "LayerNorm"].
+    freeze : bool, optional (default=False)
+        If True, the transformer layers will be frozen and not trained.
+    num_epochs : int, optional (default=10)
+        The number of epochs to train the model.
+    batch_size : int, optional (default=8)
+        The size of each mini-batch during training.
+    criterion : callable, optional (default=None)
+        The loss function to use. If None, CrossEntropyLoss will be used.
+    criterion_kwargs : dict, optional (default=None)
+        Additional keyword arguments to pass to the loss function.
+    optimizer : str, optional (default=None)
+        The optimizer to use. If None, Adam optimizer will be used.
+    optimizer_kwargs : dict, optional (default=None)
+        Additional keyword arguments to pass to the optimizer.
+    lr : float, optional (default=0.001)
+        The learning rate for the optimizer.
+    verbose : bool, optional (default=True)
+        If True, prints progress messages during training.
+    random_state : int or None, optional (default=None)
+        Seed for the random number generator.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_unit_test
+    >>> from sktime.classification.deep_learning import TransformerClassifier
+    >>>
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> X_test, _ = load_unit_test(split="test")
+    >>>
+    >>> model = TransformerClassifier()
+    >>> model.fit(X_train, y_train)  # doctest: +SKIP
+    >>> preds = model.predict(X_test)  # doctest: +SKIP
     """
 
     _tags = {
@@ -39,17 +90,17 @@ class TransformerClassifier(BaseDeepClassifierPytorch):
     def __init__(
         self,
         # model specific
-        d_model,
-        n_heads,
-        num_layers,
-        dim_feedforward,
+        d_model=256,
+        n_heads=4,
+        num_layers=4,
+        dim_feedforward=128,
         dropout=0.1,
         pos_encoding="fixed",
-        activation="gelu",
+        activation="relu",
         norm="BatchNorm",
         freeze=False,
         # base classifier specific
-        num_epochs=16,
+        num_epochs=10,
         batch_size=8,
         criterion=None,
         criterion_kwargs=None,
@@ -146,13 +197,19 @@ class TransformerClassifier(BaseDeepClassifierPytorch):
         Parameters
         ----------
         parameter_set : str, default="default"
-                Name of the set of test parameters to return, for use in tests. If no
-                special parameters are defined for a value,
-                will return ``"default"`` set.
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            Reserved values for classifiers:
+                "results_comparison" - used for identity testing in some classifiers
+                    should contain parameter settings comparable to "TSC bakeoff"
 
         Returns
         -------
-        params : dict or list of dict
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params = [
             {
