@@ -85,7 +85,7 @@ class BaseGridSearch(_DelegatedForecaster):
         if tune_by_variable:
             self.set_tags(**{"scitype:y": "univariate"})
 
-        # todo 0.31.0: check if this is still necessary
+        # todo 0.32.0: check if this is still necessary
         # n_jobs is deprecated, left due to use in tutorials, books, blog posts
         if n_jobs != "deprecated":
             warn(
@@ -196,11 +196,9 @@ class BaseGridSearch(_DelegatedForecaster):
             if self.verbose > 0:
                 n_candidates = len(candidate_params)
                 n_splits = cv.get_n_splits(y)
-                print(  # noqa
-                    "Fitting {} folds for each of {} candidates,"
-                    " totalling {} fits".format(
-                        n_splits, n_candidates, n_candidates * n_splits
-                    )
+                print(
+                    f"Fitting {n_splits} folds for each of {n_candidates} candidates,"
+                    f" totalling {n_candidates * n_splits} fits"
                 )
 
             # Set meta variables for parallelization.
@@ -646,16 +644,16 @@ class ForecastingGridSearchCV(BaseGridSearch):
 
                 if isinstance(v, str) or not isinstance(v, (np.ndarray, Sequence)):
                     raise ValueError(
-                        "Parameter grid for parameter ({}) needs to"
-                        " be a list or numpy array, but got ({})."
+                        f"Parameter grid for parameter ({name}) needs to"
+                        f" be a list or numpy array, but got ({type(v)})."
                         " Single values need to be wrapped in a list"
-                        " with one element.".format(name, type(v))
+                        " with one element."
                     )
 
                 if len(v) == 0:
                     raise ValueError(
-                        "Parameter values for parameter ({}) need "
-                        "to be a non-empty sequence.".format(name)
+                        f"Parameter values for parameter ({name}) need "
+                        "to be a non-empty sequence."
                     )
 
     def _run_search(self, evaluate_candidates):
@@ -1291,9 +1289,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
             # hacky approach to handle unhashable type objects
             if "forecaster" in search_space:
                 forecasters = search_space.get("forecaster")
-                mapping = {
-                    num: estimator for num, estimator in enumerate(forecasters)
-                }  # noqa
+                mapping = {num: estimator for num, estimator in enumerate(forecasters)}
                 search_space["forecaster"] = list(mapping.keys())
                 mappings.append(mapping)
             else:
@@ -1305,11 +1301,9 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         if self.verbose > 0:
             n_candidates = self.n_iter
             n_splits = self.cv.get_n_splits(y)
-            print(  # noqa
-                "Fitting {} folds for each of {} candidates,"
-                " totalling {} fits".format(
-                    n_splits, n_candidates, n_candidates * n_splits
-                )
+            print(
+                f"Fitting {n_splits} folds for each of {n_candidates} candidates,"
+                f" totalling {n_candidates * n_splits} fits"
             )
 
         # Run sequential search by iterating through each optimizer and evaluates
@@ -1428,7 +1422,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         kwargs = self.optimizer_kwargs_.copy()
         # convert params space to a list ordered by the key name
         kwargs["dimensions"] = dimensions_aslist(params_space)
-        dimensions_name = list(sorted(params_space.keys()))
+        dimensions_name = sorted(params_space.keys())
         optimizer = Optimizer(**kwargs)
         # set the name of the dimensions if not set
         for i in range(len(optimizer.space.dimensions)):
