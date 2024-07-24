@@ -1458,7 +1458,7 @@ def load_m5(
     extract_path : str, optional (default=None)
         The path to extract the data to. If the provided path doesn't
         contain the data, the function creates a folder `m5-forecasting-accuracy`
-        in the provided path. If no path is provided, the functioncreates
+        in the provided path. If no path is provided, the function creates
         the `m5-forecasting-accuracy` folder in the current working directory.
         If a path is given, it can be absolute (e.g., C:/Temp) or
         relative (e.g., Temp or ./Temp).
@@ -1523,14 +1523,13 @@ def load_m5(
 
                 _download_and_extract(
                     "https://zenodo.org/records/12636070/files/m5-forecasting-accuracy.zip",
-                    extract_path=path_to_data_dir,
+                    extract_path=extract_path,
                 )
 
             else:
                 path_to_data_dir = os.path.join(extract_path, "m5-forecasting-accuracy")
 
     else:
-        print("extract path is NONE")
         extract_path = "./"
         local_module = MODULE
         if not os.path.exists(os.path.join(extract_path, "m5-forecasting-accuracy")):
