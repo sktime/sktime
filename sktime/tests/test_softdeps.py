@@ -218,7 +218,7 @@ def test_python_error(estimator):
 @pytest.mark.parametrize("estimator", est_pyok_with_soft_dep)
 def test_softdep_error(estimator):
     """Test that estimators raise error if required soft dependencies are missing."""
-    softdeps, softdeps_alias = _get_soft_deps(estimator)
+    softdeps = _get_soft_deps(estimator)
     if not _is_in_env(softdeps):
         try:
             estimator.create_test_instance()
