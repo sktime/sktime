@@ -18,7 +18,7 @@ class EnbPIForecaster(BaseForecaster):
     """
     Ensemble Bootstrap Prediction Interval Forecaster.
 
-    The forecaster combines sktime forecasters, with tsbootstrap bootsrappers
+    The forecaster combines sktime forecasters, with tsbootstrap bootstrappers
     and the EnbPI algorithm [1] implemented in fortuna using the
     tutorial from this blogpost [2].
 

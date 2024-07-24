@@ -24,7 +24,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         parameters to initialize `TimeSeriesDataSet` [2]_ from `pandas.DataFrame`
         max_prediction_length will be overwrite according to fh
         time_idx, target, group_ids, time_varying_known_reals, time_varying_unknown_reals
-        will be infered from data, so you do not have to pass them
+        will be inferred from data, so you do not have to pass them
     train_to_dataloader_params : dict[str, Any] (default=None)
         parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
         by default {"train": True}
@@ -119,11 +119,11 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         # --------------
         # "authors": ["XinyuWu"],
         # "maintainers": ["XinyuWu"],
-        # "python_dependencies": "pytorch_forecasting"
+        # "python_dependencies": "pytorch-forecasting"
         # inherited from _PytorchForecastingAdapter
         # estimator type
         # --------------
-        "python_dependencies": ["pytorch_forecasting>=1.0.0", "torch", "lightning"],
+        "python_dependencies": ["pytorch-forecasting>=1.0.0", "torch", "lightning"],
         "capability:global_forecasting": True,
         "capability:insample": False,
         "X-y-must-have-same-index": True,
@@ -197,9 +197,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        try:
-            _check_soft_dependencies("pytorch_forecasting", severity="error")
-        except ModuleNotFoundError:
+        if not _check_soft_dependencies("pytorch-forecasting", severity="none"):
             params = [
                 {
                     "trainer_params": {
@@ -305,7 +303,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         parameters to initialize `TimeSeriesDataSet` [2]_ from `pandas.DataFrame`
         max_prediction_length will be overwrite according to fh
         time_idx, target, group_ids, time_varying_known_reals, time_varying_unknown_reals
-        will be infered from data, so you do not have to pass them
+        will be inferred from data, so you do not have to pass them
     train_to_dataloader_params : dict[str, Any] (default=None)
         parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
         by default {"train": True}
@@ -398,11 +396,11 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         # --------------
         # "authors": ["XinyuWu"],
         # "maintainers": ["XinyuWu"],
-        # "python_dependencies": "pytorch_forecasting"
+        # "python_dependencies": "pytorch-forecasting"
         # inherited from _PytorchForecastingAdapter
         # estimator type
         # --------------
-        "python_dependencies": ["pytorch_forecasting>=1.0.0", "torch", "lightning"],
+        "python_dependencies": ["pytorch-forecasting>=1.0.0", "torch", "lightning"],
         "capability:global_forecasting": True,
         "ignores-exogeneous-X": True,
         "capability:insample": False,
@@ -468,9 +466,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        try:
-            _check_soft_dependencies("pytorch_forecasting", severity="error")
-        except ModuleNotFoundError:
+        if not _check_soft_dependencies("pytorch-forecasting", severity="none"):
             params = [
                 {
                     "trainer_params": {
