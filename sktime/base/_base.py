@@ -149,7 +149,8 @@ class BaseObject(_BaseObject):
         """,
     }
 
-    # TODO 0.31.0: check whether 3.8 has reached EoL. If so, remove warning altogether
+    # TODO 0.32.0: check whether python 3.8 has reached EoL.
+    # If so, remove warning altogether
     def __init__(self):
         super().__init__()
 
@@ -162,7 +163,8 @@ class BaseObject(_BaseObject):
         py39_or_higher = SpecifierSet(">=3.9")
         sys_version = sys.version.split(" ")[0]
 
-        # todo 0.31.0 - check whether 3.9 eol is reached. If yes, remove this msg.
+        # todo 0.32.0 - check whether python 3.8 eol is reached.
+        # If yes, remove this msg.
         if sys_version not in py39_or_higher:
             warn(
                 f"From sktime 0.30.0, sktime requires Python version >=3.9, "
@@ -198,7 +200,7 @@ class BaseObject(_BaseObject):
           are in NOT_NP2_COMPATIBLE, this is a hard-coded
           list of soft dependencies that are not numpy 2 compatible
         * if any are found, adds a numpy<2.0 soft dependency to the list,
-          and sets it as a dynamic overide of the python_dependencies tag
+          and sets it as a dynamic override of the python_dependencies tag
         """
         from packaging.requirements import Requirement
 
@@ -289,7 +291,7 @@ class BaseObject(_BaseObject):
         try:  # try/except to avoid unexpected failures
             cls.set_config = deepcopy_func(cls.set_config)
             cls.set_config.__doc__ = cls._get_set_config_doc()
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
     def save(self, path=None, serialization_format="pickle"):

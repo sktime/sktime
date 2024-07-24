@@ -18,6 +18,66 @@ available on GitHub.
 For upcoming changes and next releases, see our `milestones <https://github.com/sktime/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
 For our long-term plan, see our :ref:`roadmap`.
 
+
+Version 0.31.0 - 2024-07-11
+---------------------------
+
+Maintenance release:
+
+* scheduled deprecations and change actions
+* ``numpy 2`` compatibility
+* code style and pre-commit updates, using ``ruff`` for linting
+
+For last non-maintenance content updates, see 0.30.2.
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``numpy`` (core dependency) bounds have been updated to ``<2.1,>=1.21``
+* ``skpro`` (soft dependency) bounds have been updated to ``>=2,<2.5.0``
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Time series annomalies, changepoints, segmentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* The ``fmt`` argument in time series annotators is now deprecated.
+  Users should use the ``predict`` and ``transform`` methods instead,
+  ``predict`` instead of ``fmt="sparse"``, and ``transform`` instead of
+  ``fmt="dense"``.
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* The ``convert_y_to_keras`` method in deep learning classifiers has been removed.
+  Users who have been using this method should
+  instead use ``OneHotEncoder`` from ``sklearn`` directly, as ``convert_y_to_keras``
+  is a simple wrapper around ``OneHotEncoder`` with default settings.
+
+Contents
+~~~~~~~~
+
+* [MNT] raise ``numpy`` bound to ``numpy < 2.1``, ``numpy 2`` compatibility (:pr:`6624`) :user:`fkiraly`
+* [MNT] [Dependabot](deps): Update skpro requirement from ``<2.4.0,>=2`` to ``>=2,<2.5.0`` (:pr:`6663`) :user:`dependabot[bot]`
+* [MNT] bound ``prophet`` based forecasters to ``numpy<2`` due to incompatibility of ``prophet`` (:pr:`6721`) :user:`fkiraly`
+* [MNT] further ``numpy 2`` compatibility fixes in estimators (:pr:`6729`) :user:`fkiraly`
+* [MNT] handle ``numpy 2`` incompatible soft deps (:pr:`6728`) :user:`fkiraly`
+* [MNT] Upgrade code style beyond ``python 3.8`` (:pr:`6330`) :user:`yarnabrina`
+* [MNT] Update pre commit hooks post dropping ``python 3.8`` support (:pr:`6331`) :user:`yarnabrina`
+* [MNT] suppress aggressive ``freq`` related warnings from ``pandas 2.2`` (:pr:`6733`) :user:`fkiraly`
+* [MNT] 0.31.0 deprecations and change actions (:pr:`6716`) :user:`fkiraly`
+* [MNT] switch to ``ruff`` as linting tool (:pr:`6676`) :user:`fnhirwa`
+* [ENH] refactor and bugfixes for environment checker utilities (:pr:`6719`) :user:`fkiraly`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`fkiraly`,
+:user:`fnhirwa`,
+:user:`yarnabrina`
+
+
 Version 0.30.2 - 2024-07-04
 ---------------------------
 
@@ -7777,7 +7837,7 @@ Refactored
 *  [ENH] renamed ``fit-in-transform`` and ``fit-in-predict`` to ``fit_is_empty`` (:pr:`2250`) :user:`fkiraly`
 *  [ENH] refactoring `test_all_classifiers` to test class architecture (:pr:`2257`) :user:`fkiraly`
 *  [ENH] test parameter refactor: all classifiers (:pr:`2288`) :user:`MatthewMiddlehurst`
-*  [ENH] test paraneter refactor: ``Arsenal`` (:pr:`2273`) :user:`dionysisbacchus`
+*  [ENH] test parameter refactor: ``Arsenal`` (:pr:`2273`) :user:`dionysisbacchus`
 *  [ENH] test parameter refactor: ``RocketClassifier`` (:pr:`2166`) :user:`dionysisbacchus`
 *  [ENH] test parameter refactor: ``TimeSeriesForestClassifier`` (:pr:`2277`) :user:`lielleravid`
 *  [ENH] ``FeatureUnion`` refactor - moved to ``transformations``, tags, dunder method (:pr:`2231`) :user:`fkiraly`

@@ -37,7 +37,7 @@ Documentation
 * If the same parameter, attribute, return object or error is included elsewhere in sktime are the docstring descriptions
   as similar as possible
 * Does the online documentation render correctly with the changes?
-* Do the docstrings contain links to the relevant topics in the :ref:`glossary` or :ref:`user_guide`?
+* Do the docstrings contain links to the relevant topics in the :ref:`glossary` or :ref:`examples`?
 
 .. warning::
 

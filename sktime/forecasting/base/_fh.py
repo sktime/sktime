@@ -502,7 +502,7 @@ class ForecastingHorizon:
 
         Returns
         -------
-        fh : ForecastingHorizon
+        fh_abs : pandas.Index
             Absolute representation of forecasting horizon.
         """
         cutoff = self._coerce_cutoff_to_index(cutoff)
@@ -806,7 +806,7 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
             absolute = _coerce_to_period(absolute, freq=fh._freq)
             cutoff = _coerce_to_period(cutoff, freq=fh._freq)
 
-        # TODO: 0.31.0:
+        # TODO: 0.32.0:
         # Check at every minor release whether lower pandas bound >=0.15.0
         # if yes, can remove the workaround in the "else" condition and the check
         #
@@ -923,7 +923,6 @@ def _check_cutoff(cutoff, index):
     """
     if cutoff is None:
         raise ValueError("`cutoff` must be given, but found none.")
-
     if isinstance(index, pd.PeriodIndex):
         assert isinstance(cutoff, (pd.Period, pd.PeriodIndex))
         assert index.freqstr == cutoff.freqstr

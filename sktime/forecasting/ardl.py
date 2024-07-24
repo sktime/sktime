@@ -1,5 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements ARDL Model as interface to statsmodels."""
+
 import warnings
 
 import pandas as pd

@@ -41,7 +41,7 @@ def test_reconciler_fit_predict(method, flatten, no_levels):
 
     Raises
     ------
-    This test asserts that the output of ReconcilerForecaster is actually hierarhical
+    This test asserts that the output of ReconcilerForecaster is actually hierarchical
     in that the predictions sum together appropriately. It also tests the index
     and columns of the fitted s and g matrix from each method and finally tests
     if the method works for both named and unnamed indexes

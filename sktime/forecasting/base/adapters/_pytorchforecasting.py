@@ -1,5 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for pytorch-forecasting models."""
+
 import abc
 import functools
 import os
@@ -31,7 +32,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         parameters to initialize `TimeSeriesDataSet` [1]_ from `pandas.DataFrame`
         max_prediction_length will be overwrite according to fh
         time_idx, target, group_ids, time_varying_known_reals, time_varying_unknown_reals
-        will be infered from data, so you do not have to pass them
+        will be inferred from data, so you do not have to pass them
     train_to_dataloader_params : Dict[str, Any] (default=None)
         parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
         by default {"train": True}
@@ -52,7 +53,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         "authors": ["XinyuWu"],
         "maintainers": ["XinyuWu"],
         "python_version": ">3.8, <3.11",
-        "python_dependencies": ["pytorch_forecasting>=1.0.0"],
+        "python_dependencies": ["pytorch-forecasting>=1.0.0"],
         # estimator type
         # --------------
         "y_inner_mtype": [
@@ -145,7 +146,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
                         hash(time.time_ns())
                         + hash(self.algorithm_class)
                         + hash(str(data.get_parameters()))
-                        + hash(randint(0, int(time.time())))
+                        + hash(randint(0, int(time.time())))  # noqa: S311
                     )
                     self._random_log_dir = (
                         os.getcwd() + "/lightning_logs/" + str(abs(random_num))
