@@ -1154,7 +1154,6 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         "capability:pred_int:insample": True,
         "python_dependencies": ["scikit-optimize"],
         "python_version": ">= 3.6",
-        "python_dependencies_alias": {"scikit-optimize": "skopt"},
     }
 
     def __init__(
