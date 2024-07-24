@@ -1,4 +1,5 @@
 """Base classes for adapting other forecasters to sktime framework."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __all__ = [
@@ -11,6 +12,7 @@ __all__ = [
     "_NeuralForecastAdapter",
     "_PytorchForecastingAdapter",
 ]
+
 
 from sktime.forecasting.base.adapters._fbprophet import _ProphetAdapter
 from sktime.forecasting.base.adapters._generalised_statsforecast import (

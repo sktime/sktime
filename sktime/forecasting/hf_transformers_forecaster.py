@@ -14,8 +14,6 @@ else:
     class Dataset:
         """Dummy class if torch is unavailable."""
 
-        pass
-
 
 if _check_soft_dependencies("transformers", severity="none"):
     import transformers
@@ -209,7 +207,7 @@ class HFTransformersForecaster(BaseForecaster):
             )
         else:
             raise ValueError(
-                "The model type is not inferrable from the config."
+                "The model type is not inferable from the config."
                 "Thus, the model cannot be loaded."
             )
         # Load model with the updated config

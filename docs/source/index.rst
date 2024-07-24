@@ -43,6 +43,7 @@ Contents
    get_started
    users
    installation
+   estimator_overview
    api_reference
    get_involved
    developers
@@ -73,11 +74,11 @@ Contents
     .. grid-item-card::
         :text-align: center
 
-        User Guide
+        Documentation
 
         ^^^
 
-        Find user documentation.
+        User documentation.
 
         +++
 
@@ -86,7 +87,7 @@ Contents
             :click-parent:
             :expand:
 
-            User Guide
+            Documentation
 
     .. grid-item-card::
         :text-align: center
@@ -105,6 +106,24 @@ Contents
             :expand:
 
             Installation
+
+    .. grid-item-card::
+        :text-align: center
+
+        Estimator Overview
+
+        ^^^
+
+        Overview of all estimators in ``sktime``.
+
+        +++
+
+        .. button-ref:: estimator_overview
+            :color: primary
+            :click-parent:
+            :expand:
+
+            Estimator Overview
 
     .. grid-item-card::
         :text-align: center

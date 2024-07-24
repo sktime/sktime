@@ -1,7 +1,7 @@
 __author__ = ["chrisholder", "TonyBagnall"]
 
-
-from typing import Any, Callable, Union
+from collections.abc import Callable
+from typing import Any, Union
 
 import numpy as np
 
@@ -817,6 +817,7 @@ def msm_distance(
         NumbaDistance.
         If a resolved metric is not no_python compiled.
         If the metric type cannot be determined
+
     References
     ----------
     .. [1]A.  Stefan,  V.  Athitsos,  and  G.  Das.   The  Move-Split-Merge  metric
@@ -1762,6 +1763,7 @@ def msm_alignment_path(
         NumbaDistance.
         If a resolved metric is not no_python compiled.
         If the metric type cannot be determined
+
     References
     ----------
     .. [1]A.  Stefan,  V.  Athitsos,  and  G.  Das.   The  Move-Split-Merge  metric

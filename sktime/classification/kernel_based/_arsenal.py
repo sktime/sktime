@@ -230,12 +230,16 @@ class Arsenal(BaseClassifier):
                     delayed(self._fit_estimator)(
                         _clone_estimator(
                             base_rocket,
-                            None
-                            if self.random_state is None
-                            else (255 if self.random_state == 0 else self.random_state)
-                            * 37
-                            * (i + 1)
-                            % 2**31,
+                            (
+                                None
+                                if self.random_state is None
+                                else (
+                                    255 if self.random_state == 0 else self.random_state
+                                )
+                                * 37
+                                * (i + 1)
+                                % 2**31
+                            ),
                         ),
                         X,
                         y,
@@ -255,12 +259,14 @@ class Arsenal(BaseClassifier):
                 delayed(self._fit_estimator)(
                     _clone_estimator(
                         base_rocket,
-                        None
-                        if self.random_state is None
-                        else (255 if self.random_state == 0 else self.random_state)
-                        * 37
-                        * (i + 1)
-                        % 2**31,
+                        (
+                            None
+                            if self.random_state is None
+                            else (255 if self.random_state == 0 else self.random_state)
+                            * 37
+                            * (i + 1)
+                            % 2**31
+                        ),
                     ),
                     X,
                     y,

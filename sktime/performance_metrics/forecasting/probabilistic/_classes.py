@@ -254,8 +254,8 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
             x_bar = self.evaluate(y_true, y_pred, multioutput, **kwargs)
             for i in range(n):
                 out_series[i] = n * x_bar - (n - 1) * self.evaluate(
-                    np.vstack((y_true[:i, :], y_true[i + 1 :, :])),  # noqa
-                    np.vstack((y_pred[:i, :], y_pred[i + 1 :, :])),  # noqa
+                    np.vstack((y_true[:i, :], y_true[i + 1 :, :])),
+                    np.vstack((y_pred[:i, :], y_pred[i + 1 :, :])),
                     multioutput,
                     **kwargs,
                 )
@@ -285,10 +285,9 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
         if isinstance(multioutput, str):
             if multioutput not in allowed_multioutput_str:
                 raise ValueError(
-                    "Allowed 'multioutput' string values are {}. "
-                    "You provided multioutput={!r}".format(
-                        allowed_multioutput_str, multioutput
-                    )
+                    "Allowed 'multioutput' string values are "
+                    f"{allowed_multioutput_str}. "
+                    f"You provided multioutput={multioutput!r}"
                 )
         elif multioutput is not None:
             multioutput = check_array(multioutput, ensure_2d=False)
@@ -990,7 +989,7 @@ class AUCalibration(_BaseDistrForecastingMetric):
     Computes the unsigned area between the calibration curve and the diagonal.
 
     The calibration curve is the cumulative curve of the sample of
-    predictive cumulative distibution functions evaluated at the true values.
+    predictive cumulative distribution functions evaluated at the true values.
 
     Mathematically, let :math:`d_1, \dots, d_N` be the predictive distributions,
     let :math:`y_1, \dots, y_N` be the true values, and let :math:`F_i` be the

@@ -1,4 +1,5 @@
 """Test extraction of features across (shifted) windows."""
+
 __author__ = ["danbartl"]
 
 import random
@@ -38,7 +39,7 @@ if _check_soft_dependencies(
     severity="none",
     package_import_alias={"scikit-learn": "sklearn"},
 ):
-    from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+    from sklearn.experimental import enable_hist_gradient_boosting  # noqa: F401
 
 
 @pytest.fixture
@@ -300,9 +301,9 @@ def test_equality_transfo_nontranso(regressor):
         }
     }
 
-    random_int = random.randint(1, 1000)
+    random_int = random.randint(1, 1000)  # noqa: S311
     regressor.random_state = random_int
-    forecaster = make_reduction(regressor, window_length=int(6), strategy="recursive")
+    forecaster = make_reduction(regressor, window_length=6, strategy="recursive")
     forecaster.fit(y_train)
     y_pred = forecaster.predict(fh)
     recursive_without = mean_absolute_percentage_error(y_test, y_pred, symmetric=False)
