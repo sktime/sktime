@@ -665,11 +665,11 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
         # --------------
         # "authors": ["XinyuWu"],
         # "maintainers": ["XinyuWu"],
-        # "python_dependencies": "pytorch_forecasting"
+        # "python_dependencies": "pytorch-forecasting"
         # inherited from _PytorchForecastingAdapter
         # estimator type
         # --------------
-        "python_dependencies": ["pytorch_forecasting>=1.0.0", "torch", "lightning"],
+        "python_dependencies": ["pytorch-forecasting>=1.0.0", "torch", "lightning"],
         "capability:global_forecasting": True,
         "capability:insample": False,
         "X-y-must-have-same-index": True,
@@ -745,9 +745,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        try:
-            _check_soft_dependencies("pytorch_forecasting", severity="error")
-        except ModuleNotFoundError:
+        if not _check_soft_dependencies("pytorch-forecasting", severity="none"):
             params = [
                 {
                     "trainer_params": {
@@ -947,11 +945,11 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
         # --------------
         # "authors": ["XinyuWu"],
         # "maintainers": ["XinyuWu"],
-        # "python_dependencies": "pytorch_forecasting"
+        # "python_dependencies": "pytorch-forecasting"
         # inherited from _PytorchForecastingAdapter
         # estimator type
         # --------------
-        "python_dependencies": ["pytorch_forecasting>=1.0.0", "torch", "lightning"],
+        "python_dependencies": ["pytorch-forecasting>=1.0.0", "torch", "lightning"],
         "capability:global_forecasting": True,
         "capability:insample": False,
         "X-y-must-have-same-index": True,
@@ -1026,9 +1024,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        try:
-            _check_soft_dependencies("pytorch_forecasting", severity="error")
-        except ModuleNotFoundError:
+        if not _check_soft_dependencies("pytorch-forecasting", severity="none"):
             params = [
                 {
                     "trainer_params": {
