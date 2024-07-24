@@ -83,7 +83,7 @@ class TransformerClassifier(BaseDeepClassifierPytorch):
     """
 
     _tags = {
-        "authors": ["geetu040"],
+        "authors": ["geetu040", "gzerveas"],
         "maintainers": ["geetu040"],
     }
 
