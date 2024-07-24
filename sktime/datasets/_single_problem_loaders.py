@@ -1530,17 +1530,16 @@ def load_m5(
                 path_to_data_dir = os.path.join(extract_path, "m5-forecasting-accuracy")
 
     else:
-        extract_path = "./"
-        local_module = MODULE
+        extract_path = MODULE
         if not os.path.exists(os.path.join(extract_path, "m5-forecasting-accuracy")):
-            path_to_data_dir = os.path.join(local_module, "m5-forecasting-accuracy")
+            path_to_data_dir = os.path.join(extract_path, "m5-forecasting-accuracy")
 
             _download_and_extract(
                 "https://zenodo.org/records/12636070/files/m5-forecasting-accuracy.zip",
                 extract_path=path_to_data_dir,
             )
         else:
-            path_to_data_dir = os.path.join(local_module, "m5-forecasting-accuracy")
+            path_to_data_dir = os.path.join(MODULE, "m5-forecasting-accuracy")
 
     sales_train_validation = _reduce_memory_usage(
         pd.read_csv(path_to_data_dir + "/sales_train_validation.csv")
