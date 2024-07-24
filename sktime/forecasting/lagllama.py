@@ -59,6 +59,7 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         "enforce_index_type": None,
         "handles-missing-data": False,
         "capability:insample": True,
+        "capability:global_forecasting": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "authors": ["shlok191"],
@@ -201,7 +202,7 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         # forecasting horizon
         self.estimator_ = LagLlamaEstimator(
             ckpt_path="lag-llama.ckpt",
-            prediction_length=32 if not fh else fh,  # This is the most important here!
+            prediction_length=(32 if not fh else fh.to_pandas()[-1]),
             context_length=self.context_length_,
             input_size=self.estimator_args["input_size"],
             n_layer=self.estimator_args["n_layer"],
@@ -215,8 +216,8 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
             trainer_kwargs=self.trainer_kwargs_,
         )
 
-        lightning_module = self.estimator.create_lightning_module()
-        transformation = self.estimator.create_transformation()
+        lightning_module = self.estimator_.create_lightning_module()
+        transformation = self.estimator_.create_transformation()
 
         # Creating a new predictor
         self.predictor_ = self.estimator_.create_predictor(
@@ -225,7 +226,8 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
 
         # Lastly, training the model
         if y is not None:
-            self.predictor_ = self.estimator.train(y.train, cache_data=True)
+            print(y)
+            self.predictor_ = self.estimator_.train(y, cache_data=True)
 
     def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.

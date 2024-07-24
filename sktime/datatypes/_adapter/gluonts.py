@@ -195,8 +195,8 @@ def convert_pandasDataset_to_pandas_series(pandasDataset):
 
 def convert_pandas_multiindex_to_pandasDataset(
     pd_dataframe: pd.DataFrame,
-    target="target",
-    item_id="series_id",
+    target=None,
+    item_id=None,
     timepoints=None,
     freq="D",
 ):
@@ -208,17 +208,20 @@ def convert_pandas_multiindex_to_pandasDataset(
         A pd.DataFrame with each column corresponding to a time series
 
     target : str | list[str]
-        The column(s) that corresponds to target values ('target' by default)
+        The column that corresponds to target values.
+        If no value provided, all column(s) assumed to be targets.
 
-    item_id : str
-        A column dedicated to time series labels ('series_id' by default)
+    item_id : str (optional, default=None)
+        A column dedicated to time series labels.
+        If no value provided, inferred automatically
 
-    timepoints: str | None
-        Leave None if the DataFrame index is of DatetimeIndex format,
-        otherwise specify the appropriate timepoints column name
+    timepoints: str (optional, default=None)
+        The level name corresponding to the timepoints.
+        If no value provided, inferred automatically
 
-    freq : str
-        The frequency of the given timepoints
+    freq : str (optional, default="D")
+        The frequency of the given timepoints.
+        If no value provided, assumed to be daily
 
     Returns
     -------
@@ -234,24 +237,44 @@ def convert_pandas_multiindex_to_pandasDataset(
 
     if timepoints is None:
         # Obtain the index name for the timestamp
-        timestamp_index = pd_dataframe.index.names[1]
-        df = pd_dataframe.reset_index().set_index([timestamp_index])
+        for value in pd_dataframe.index.levels:
+            # Found the timepoints level
+            if isinstance(value, (pd.DatetimeIndex, pd.PeriodIndex)):
+                timepoints = value.name
+                break
 
-        df = PandasDataset.from_long_dataframe(df, item_id=item_id, target=target)
+        if timepoints is None:
+            raise ValueError(
+                "Could not find a valid `timepoints` level in the DataFrame!"
+            )
 
-        return df
+    if item_id is None:
+        # If no item_id is provided, the first non-timepoints level
+        # is assumed to contain the IDs
 
-    else:
-        df = pd_dataframe.reset_index()
+        for value in pd_dataframe.index.levels:
+            # Found the timepoints level
+            if not isinstance(value, (pd.DatetimeIndex, pd.PeriodIndex)):
+                item_id = value.name
+                break
 
-        return PandasDataset.from_long_dataframe(
-            df, item_id=item_id, timestamp=timepoints, target=target, freq=freq
-        )
+        if item_id is None:
+            raise ValueError("Could not find a valid `item_id` level in the DataFrame!")
+
+    # If no target is provided, we assume all columns to be valid targets
+    if target is None:
+        target = list(pd_dataframe.columns)
+
+    # Assists with finding level-based values
+    pd_dataframe = pd_dataframe.reset_index()
+
+    # Finally, we create and return a PandasDataset
+    return PandasDataset.from_long_dataframe(
+        pd_dataframe, item_id=item_id, timestamp=timepoints, target=target, freq=freq
+    )
 
 
-def convert_pandasDataset_to_pandas(
-    pandasDataset, item_id="series_id", timepoints="timepoints"
-):
+def convert_pandasDataset_to_pandas(pandasDataset, item_id=None, timepoints=None):
     """Convert a GluonTS PandasDataset to a pd.DataFrame.
 
     Parameters
@@ -259,18 +282,19 @@ def convert_pandasDataset_to_pandas(
     pandasDataset : gluonts.dataset.pandas.PandasDataset
         A gluonTS PandasDataset
 
-    item_id : str
-        A column dedicated to time series labels ('series_id' by default)
+    item_id : str (optional, default=None)
+        A column dedicated to time series labels, if not given, inferred automatically
 
-    timepoints: str
-        The name of the timepoints column ('timepoints' by default)
+    timepoints: str (optional, default=None)
+        The name of the timepoints column, if not given, inferred automatically
 
     Returns
     -------
-    Returns a valid pd.DataFrame
+    Returns a valid pandas DataFrame
     """
     # Extracting the inner iterable from the PandasDataset StarMap
     iterables = pandasDataset._data_entries.iterable.iterable
+
     all_dfs = []
 
     for item in iterables:
@@ -284,8 +308,43 @@ def convert_pandasDataset_to_pandas(
 
     df = pd.concat(all_dfs, ignore_index=False)
 
+    if timepoints is None:
+        # Obtain the index name for the timestamp
+        for value in df.columns:
+            # Found the timepoints level
+            if isinstance(df[value][0], pd._libs.tslibs.timestamps.Timestamp):
+                timepoints = value
+                break
+
+        if timepoints is None:
+            raise ValueError(
+                "Could not find a valid `timepoints` level in the DataFrame!"
+            )
+
+    if item_id is None:
+        # If no item_id is provided, the first non-timepoints level
+        # is assumed to contain the IDs
+
+        for value in df.columns:
+            # Found the timepoints level
+            if not isinstance(df[value][0], pd._libs.tslibs.timestamps.Timestamp):
+                item_id = value
+                break
+
+        if item_id is None:
+            raise ValueError("Could not find a valid `item_id` level in the DataFrame!")
+
+    # Drop extra mentions of time
+    if "time" in df.columns:
+        df = df.drop("time", axis=1)
+
+    # Drop extra mentions of time
+    if "timepoints" in df.columns:
+        df = df.drop("timepoints", axis=1)
+
     df = df.reset_index().set_index([item_id, timepoints])
     df = df.sort_index()
+
     return df
 
 
