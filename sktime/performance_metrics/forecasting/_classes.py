@@ -2091,7 +2091,7 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetric):
 
         return self._handle_multioutput(gmae, self.multioutput)
 
-    def _evaluate_by_index(self, y_true, y_pred, sample_weight=None, **kwargs):
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
         """Return the metric evaluated at each time point.
 
         private _evaluate_by_index containing core logic, called from evaluate_by_index
@@ -2107,8 +2107,6 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetric):
         y_pred :time series in sktime compatible data container format
             Forecasted values to evaluate
             must be of same format as y_true, same indices and columns if indexed
-        sample_weight : array-like of shape (n_samples,), optional
-            Sample weights
 
         Returns
         -------
@@ -2131,9 +2129,7 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetric):
         gmae_jackknife = (raw_values ** (-1 / n) * gmae) ** (1 + 1 / (n - 1))
         pseudo_values = n * gmae - (n - 1) * gmae_jackknife
 
-        pseudo_values = self._get_weighted_df(
-            pseudo_values, sample_weight=sample_weight, **kwargs
-        )
+        pseudo_values = self._get_weighted_df(pseudo_values, **kwargs)
 
         if isinstance(multioutput, str):
             if multioutput == "raw_values":
