@@ -123,9 +123,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         """
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
-        try:
-            _check_soft_dependencies("pytorch-forecasting", severity="error")
-        except ModuleNotFoundError:
+        if not _check_soft_dependencies("pytorch-forecasting", severity="none"):
             params = [
                 {
                     "trainer_params": {
@@ -307,9 +305,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         """
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
-        try:
-            _check_soft_dependencies("pytorch-forecasting", severity="error")
-        except ModuleNotFoundError:
+        if not _check_soft_dependencies("pytorch-forecasting", severity="none"):
             params = [
                 {
                     "trainer_params": {
