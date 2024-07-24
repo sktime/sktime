@@ -42,6 +42,7 @@ class DtwPythonDist(_DelegatedPairwiseTransformerPanel):
         # --------------
         "authors": ["fkiraly"],
         "python_dependencies": "dtw-python",
+        "python_dependencies_alias": {"dtw-python": "dtw"},
         # estimator type
         # --------------
         "pwtrafo_type": "distance",  # type of pw. transformer, "kernel" or "distance"

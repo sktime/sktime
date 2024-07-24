@@ -1902,7 +1902,7 @@ ESTIMATOR_TAG_REGISTER = [
         "can the estimator make global forecasting?",
     ),
     (
-        "python_dependencies_alias",
+        "python_dependencies",
         "object",
         "dict",
         "deprecated tag for dependency import aliases",
