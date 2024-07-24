@@ -24,8 +24,8 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         parameters to initialize `TimeSeriesDataSet` [2]_ from `pandas.DataFrame`
         max_prediction_length will be overwrite according to fh
         time_idx, target, group_ids, time_varying_known_reals, time_varying_unknown_reals
-        will be infered from data, so you do not have to pass them
-    train_to_dataloader_params : dict[str, Any] (default=None)
+        will be inferred from data, so you do not have to pass them
+    train_to_dataloader_params : Dict[str, Any] (default=None)
         parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
         by default {"train": True}
     validation_to_dataloader_params : dict[str, Any] (default=None)
@@ -305,8 +305,8 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         parameters to initialize `TimeSeriesDataSet` [2]_ from `pandas.DataFrame`
         max_prediction_length will be overwrite according to fh
         time_idx, target, group_ids, time_varying_known_reals, time_varying_unknown_reals
-        will be infered from data, so you do not have to pass them
-    train_to_dataloader_params : dict[str, Any] (default=None)
+        will be inferred from data, so you do not have to pass them
+    train_to_dataloader_params : Dict[str, Any] (default=None)
         parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
         by default {"train": True}
     validation_to_dataloader_params : dict[str, Any] (default=None)
@@ -572,7 +572,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
         parameters to initialize `TimeSeriesDataSet` [2]_ from `pandas.DataFrame`
         max_prediction_length will be overwrite according to fh
         time_idx, target, group_ids, time_varying_known_reals, time_varying_unknown_reals
-        will be infered from data, so you do not have to pass them
+        will be inferred from data, so you do not have to pass them
     train_to_dataloader_params : dict[str, Any] (default=None)
         parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
         by default {"train": True}
@@ -856,7 +856,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
         parameters to initialize `TimeSeriesDataSet` [2]_ from `pandas.DataFrame`
         max_prediction_length will be overwrite according to fh
         time_idx, target, group_ids, time_varying_known_reals, time_varying_unknown_reals
-        will be infered from data, so you do not have to pass them
+        will be inferred from data, so you do not have to pass them
     train_to_dataloader_params : dict[str, Any] (default=None)
         parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
         by default {"train": True}

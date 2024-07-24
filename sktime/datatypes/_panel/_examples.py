@@ -24,6 +24,7 @@ overall, conversions from non-lossy representations to any other ones
 import numpy as np
 import pandas as pd
 
+from sktime.datatypes._dtypekind import DtypeKind
 from sktime.utils.dependencies import _check_soft_dependencies
 
 example_dict = dict()
@@ -143,6 +144,7 @@ example_dict_metadata[("Panel", 0)] = {
     "n_instances": 3,
     "n_features": 2,
     "feature_names": ["var_0", "var_1"],
+    "feature_kind": [DtypeKind.FLOAT, DtypeKind.FLOAT],
 }
 
 ###
@@ -253,6 +255,7 @@ example_dict_metadata[("Panel", 1)] = {
     "n_instances": 3,
     "n_features": 1,
     "feature_names": ["var_0"],
+    "feature_kind": [DtypeKind.FLOAT],
 }
 
 ###
@@ -357,6 +360,7 @@ example_dict_metadata[("Panel", 2)] = {
     "n_instances": 1,
     "n_features": 1,
     "feature_names": ["var_0"],
+    "feature_kind": [DtypeKind.FLOAT],
 }
 
 ###
@@ -387,4 +391,5 @@ example_dict_metadata[("Panel", 3)] = {
     "n_instances": 3,
     "n_features": 1,
     "feature_names": ["var_0"],
+    "feature_kind": [DtypeKind.FLOAT],
 }

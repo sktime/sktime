@@ -1507,7 +1507,7 @@ class ForecastX(BaseForecaster):
         # either columns explicitly specified through the `columns` argument
         # or all columns in the `X` argument passed in `fit` call are future-unknown
         if self.columns is None or len(self.columns) == 0:
-            # `self._X` is guranteed to exist and be a DataFrame at this point
+            # `self._X` is guaranteed to exist and be a DataFrame at this point
             # ensured by `self.X_was_None_` check in `_get_forecaster_X_prediction`
             unknown_columns = self._X.columns
         else:
