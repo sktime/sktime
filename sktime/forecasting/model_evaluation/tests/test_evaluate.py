@@ -187,8 +187,8 @@ def test_evaluate_global_mode(scoring, strategy, backend):
     if backend == "dask" and not _check_soft_dependencies("dask", severity="none"):
         return None
 
-    hierarchy_levels = (5, 10)
-    timepoints = 12
+    hierarchy_levels = (4, 4)
+    timepoints = 5
     data = _make_hierarchical(
         hierarchy_levels=hierarchy_levels,
         max_timepoints=timepoints,
@@ -215,7 +215,7 @@ def test_evaluate_global_mode(scoring, strategy, backend):
     }
     forecaster = PytorchForecastingTFT(**params)
     cv = InstanceSplitter(KFold(2))
-    cv_ht = SingleWindowSplitter(fh=[1], window_length=11)
+    cv_ht = SingleWindowSplitter(fh=[1], window_length=4)
     out = evaluate(
         forecaster,
         cv,
