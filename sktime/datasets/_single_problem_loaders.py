@@ -1450,76 +1450,108 @@ def load_m5(
     """Fetch M5 dataset from https://zenodo.org/records/12636070 .
 
     Downloads and extracts dataset if not already downloaded. Fetched dataset is
-    in the standard .csv format.
+    in the standard .csv format and loaded into an sktime-compatible in-memory
+    format (`pd_multiindex_hier`).
 
     Parameters
     ----------
     extract_path : str, optional (default=None)
-        the path to look for the data. If no path is provided, the function
-        creates a `data` folder and stores `m5-forecasting-accuray` folder in it.
-        If a path is given, it can be absolute,
-        e.g. C:/Temp or relative, e.g. Temp or ./Temp
-
-    folder_path : str, optional (default=None)
-        Provide the path of the folder condatining data files if downloaded already.
-        This avoids download and preprocess the data files. It can be absolute,
-        e.g. C:/Temp or relative, e.g. Temp or ./Temp
+        The path to extract the data to. If the provided path doesn't
+        contain the data, the function creates a folder `m5-forecasting-accuracy`
+        in the provided path. If no path is provided, the functioncreates
+        the `m5-forecasting-accuracy` folder in the current working directory.
+        If a path is given, it can be absolute (e.g., C:/Temp) or
+        relative (e.g., Temp or ./Temp).
 
     include_events : bool, optional (default=False)
-        Includes the event names and types in the dataset if `True`.
+        If `True`, the resulting dataset will include additional columns
+        related to events. Including these columns allows for a richer
+        dataset that can be used to analyze the impact of events on sales.
+        If `False`, the dataset will exclude these columns, providing a
+        more streamlined version of the data.
 
-    test : bool, optional (default = False)
-        useful when running the tests
+    test : bool, optional (default=False)
+        Loads a smaller part of the dataset which doesn't include events
+        for testing purposes. This should not be used in standard usage
+        but might be useful for developers running tests.
 
     Returns
     -------
-    data: "pd_multiindex_hier" = pd.DataFrame of sktime type ``pd_multiindex_hier``
+    data : pd.DataFrame of sktime type `pd_multiindex_hier`
         The preprocessed dataframe containing the time series.
+
+    Dataset Description
+    --------------------
+    - **Number of Rows**: Approximately 58 million rows (for the full dataset).
+    - **Number of Columns**: Varies based on `include_events` parameter.
+      - Without events: 9 columns.
+      - With events: 13 columns.
+
+    Notes
+    -----
+    The dataset consists of three main files:
+    - sales_train_validation.csv: daily sales data for each product and store
+    - sell_prices.csv: price data for each product and store
+    - calendar.csv: calendar information including events
+
+    The returned dataframe will have a multi-index with the following levels:
+    - state_id
+    - store_id
+    - cat_id
+    - dept_id
+    - date
+
+    Example
+    -------
+    >>> data = load_m5()
+    >>> data.head()
     """
-    if folder_path is not None:
-        path_to_data_dir = folder_path
+    required_files = ["calendar.csv", "sell_prices.csv", "sales_train_validation.csv"]
 
-        sales_train_validation = _reduce_memory_usage(
-            pd.read_csv(path_to_data_dir + "/sales_train_validation.csv")
-        )
+    if extract_path is not None:
+        if all(
+            os.path.exists(os.path.join(extract_path, file)) for file in required_files
+        ):
+            # checks if the required files are present at given extract_path
+            path_to_data_dir = extract_path
 
-        sell_prices = _reduce_memory_usage(
-            pd.read_csv(path_to_data_dir + "/sell_prices.csv")
-        )
+        else:
+            if not os.path.exists(
+                os.path.join(extract_path, "m5-forecasting-accuracy")
+            ):
+                path_to_data_dir = os.path.join(extract_path, "m5-forecasting-accuracy")
 
-        calendar = _reduce_memory_usage(pd.read_csv(path_to_data_dir + "/calendar.csv"))
+                _download_and_extract(
+                    "https://zenodo.org/records/12636070/files/m5-forecasting-accuracy.zip",
+                    extract_path=path_to_data_dir,
+                )
+
+            else:
+                path_to_data_dir = os.path.join(extract_path, "m5-forecasting-accuracy")
+
     else:
-        if extract_path is not None:
-            local_module = os.path.dirname(extract_path)
-            local_dirname = extract_path
+        print("extract path is NONE")
+        extract_path = "./"
+        local_module = MODULE
+        if not os.path.exists(os.path.join(extract_path, "m5-forecasting-accuracy")):
+            path_to_data_dir = os.path.join(local_module, "m5-forecasting-accuracy")
 
-        else:  # this is the default path for downloaded dataset
-            local_module = MODULE
-            local_dirname = DIRNAME
-
-        if not os.path.exists(os.path.join(local_module, local_dirname)):
-            os.makedirs(os.path.join(local_module, local_dirname))
-
-        path_to_data_dir = os.path.join(local_module, local_dirname)
-
-        _download_and_extract(
-            "https://zenodo.org/records/12636070/files/m5-forecasting-accuracy.zip",
-            extract_path=path_to_data_dir,
-        )
-
-        sales_train_validation = _reduce_memory_usage(
-            pd.read_csv(
-                path_to_data_dir + "/m5-forecasting-accuracy/sales_train_validation.csv"
+            _download_and_extract(
+                "https://zenodo.org/records/12636070/files/m5-forecasting-accuracy.zip",
+                extract_path=path_to_data_dir,
             )
-        )
+        else:
+            path_to_data_dir = os.path.join(local_module, "m5-forecasting-accuracy")
 
-        sell_prices = _reduce_memory_usage(
-            pd.read_csv(path_to_data_dir + "/m5-forecasting-accuracy/sell_prices.csv")
-        )
+    sales_train_validation = _reduce_memory_usage(
+        pd.read_csv(path_to_data_dir + "/sales_train_validation.csv")
+    )
 
-        calendar = _reduce_memory_usage(
-            pd.read_csv(path_to_data_dir + "/m5-forecasting-accuracy/calendar.csv")
-        )
+    sell_prices = _reduce_memory_usage(
+        pd.read_csv(path_to_data_dir + "/sell_prices.csv")
+    )
+
+    calendar = _reduce_memory_usage(pd.read_csv(path_to_data_dir + "/calendar.csv"))
 
     def create_series_data(df, cal, sp, include_events=False, test=False):
         """Create the series data.
