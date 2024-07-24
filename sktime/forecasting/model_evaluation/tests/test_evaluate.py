@@ -54,6 +54,7 @@ from sktime.split import (
     SingleWindowSplitter,
     SlidingWindowSplitter,
 )
+from sktime.tests._pytest_fixture import lock, serial  # noqa F401
 from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.forecasting import make_forecasting_problem
@@ -68,6 +69,7 @@ PROBA_METRICS = [CRPS(), EmpiricalCoverage(), LogLoss(), PinballLoss()]
 
 # list of parallelization backends to test
 BACKENDS = _get_parallel_test_fixtures("estimator")
+STRATEGY = ["refit", "update", "no-update_params"]
 
 
 def _check_evaluate_output(
@@ -132,7 +134,7 @@ def _check_evaluate_output(
 @pytest.mark.parametrize("fh", TEST_FHS)
 @pytest.mark.parametrize("window_length", [7, 10])
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS_INT)
-@pytest.mark.parametrize("strategy", ["refit", "update", "no-update_params"])
+@pytest.mark.parametrize("strategy", STRATEGY)
 @pytest.mark.parametrize("scoring", METRICS)
 @pytest.mark.parametrize("backend", BACKENDS)
 def test_evaluate_common_configs(
@@ -170,6 +172,9 @@ def test_evaluate_common_configs(
     np.testing.assert_array_equal(actual, expected)
 
 
+# DL models running on CPU will consume a lot of memory and CPU resource
+# run it sequentially instead of parallelly
+@pytest.mark.usefixtures("serial")
 @pytest.mark.skipif(
     not run_test_for_class(evaluate),
     reason="run test only if softdeps are present and incrementally (if requested)",
@@ -179,7 +184,7 @@ def test_evaluate_common_configs(
     reason="skip test if required soft dependency not available",
 )
 @pytest.mark.parametrize("scoring", METRICS_GLOBAL)
-@pytest.mark.parametrize("strategy", ["refit", "update", "no-update_params"])
+@pytest.mark.parametrize("strategy", STRATEGY)
 @pytest.mark.parametrize("backend", BACKENDS)
 def test_evaluate_global_mode(scoring, strategy, backend):
     """Check that evaluate works with hierarchical data."""
@@ -316,7 +321,7 @@ def test_evaluate_no_exog_against_with_exog():
 )
 @pytest.mark.parametrize("error_score", [np.nan, "raise", 1000])
 @pytest.mark.parametrize("return_data", [True, False])
-@pytest.mark.parametrize("strategy", ["refit", "update", "no-update_params"])
+@pytest.mark.parametrize("strategy", STRATEGY)
 @pytest.mark.parametrize("backend", BACKENDS)
 @pytest.mark.parametrize("scores", [[MeanAbsolutePercentageError()], METRICS])
 def test_evaluate_error_score(error_score, return_data, strategy, backend, scores):
