@@ -207,7 +207,7 @@ def test_get_params(
         fallback_forecaster=fallback_forecaster,
     )
 
-    # Fit the forecaster and then fetch the generated paramaters
+    # Fit the forecaster and then fetch the generated parameters
     forecaster.fit(y=series_generator(), fh=horizon)
     forecaster_params = forecaster.get_params()
 

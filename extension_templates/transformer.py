@@ -217,7 +217,7 @@ class MyTransformer(BaseTransformer):
         #
         # skip-inverse-transform = is inverse-transform skipped when called?
         "skip-inverse-transform": False,
-        # if False, capability:inverse_transform tag behaviour is as per devault
+        # if False, capability:inverse_transform tag behaviour is as per default
         # if True, inverse_transform is the identity transform and raises no exception
         #   this is useful for transformers where inverse_transform
         #   may be called but should behave as the identity, e.g., imputers

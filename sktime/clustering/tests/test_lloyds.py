@@ -1,6 +1,6 @@
 """Tests for time series Lloyds partitioning."""
 
-from typing import Callable
+from collections.abc import Callable
 
 import numpy as np
 import pytest
