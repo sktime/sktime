@@ -23,7 +23,6 @@ from sktime.performance_metrics.forecasting._coerce import (
     _coerce_to_series,
 )
 from sktime.performance_metrics.forecasting._functions import (
-    geometric_mean_absolute_error,
     geometric_mean_relative_absolute_error,
     geometric_mean_relative_squared_error,
     geometric_mean_squared_error,
@@ -2092,7 +2091,6 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetric):
 
         return self._handle_multioutput(gmae, self.multioutput)
 
-
     def _evaluate_by_index(self, y_true, y_pred, sample_weight=None, **kwargs):
         """Return the metric evaluated at each time point.
 
@@ -2133,7 +2131,9 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetric):
         gmae_jackknife = (raw_values ** (-1 / n) * gmae) ** (1 + 1 / (n - 1))
         pseudo_values = n * gmae - (n - 1) * gmae_jackknife
 
-        pseudo_values = self._get_weighted_df(pseudo_values, **kwargs)
+        pseudo_values = self._get_weighted_df(
+            pseudo_values, sample_weight=sample_weight, **kwargs
+        )
 
         if isinstance(multioutput, str):
             if multioutput == "raw_values":
