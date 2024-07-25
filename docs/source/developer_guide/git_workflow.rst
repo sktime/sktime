@@ -140,8 +140,8 @@ Contributing a feature - for every new feature
     changes. If there are any merge conflicts, you will need to resolve them manually.
 
 
-Managing Branches - Advaned Guide
----------------------------------
+Managing Branches - Advanced Guide
+----------------------------------
 
 This section provides some advanced tips on managing multiple branches.
 
