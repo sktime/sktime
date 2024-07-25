@@ -5,7 +5,7 @@ __author__ = ["fkiraly", "mloning"]
 import sys
 import warnings
 from functools import lru_cache
-from importlib.metadata import PackageNotFoundError, version
+from importlib.metadata import distributions
 from importlib.util import find_spec
 from inspect import isclass
 
@@ -18,7 +18,7 @@ from packaging.version import InvalidVersion, Version
 # todo 0.32.0: remove suppress_import_stdout argument
 def _check_soft_dependencies(
     *packages,
-    package_import_alias=None,
+    package_import_alias="deprecated",
     severity="error",
     obj=None,
     msg=None,
@@ -38,22 +38,24 @@ def _check_soft_dependencies(
         `_check_soft_dependencies("package1", "package2")`
         `_check_soft_dependencies(("package1", "package2"))`
         `_check_soft_dependencies(["package1", "package2"])`
-    package_import_alias : dict with str keys and values, optional, default=empty
-        key-value pairs are package name, import name
-        import name is str used in python import, i.e., from import_name import ...
-        should be provided if import name differs from package name
+
+    package_import_alias : ignored, present only for backwards compatibility
+
     severity : str, "error" (default), "warning", "none"
         behaviour for raising errors or warnings
-        "error" - raises a `ModuleNotFoundError` if one of packages is not installed
-        "warning" - raises a warning if one of packages is not installed
-            function returns False if one of packages is not installed, otherwise True
-        "none" - does not raise exception or warning
-            function returns False if one of packages is not installed, otherwise True
+
+        * "error" - raises a `ModuleNotFoundError` if one of packages is not installed
+        * "warning" - raises a warning if one of packages is not installed
+          function returns False if one of packages is not installed, otherwise True
+        * "none" - does not raise exception or warning
+          function returns False if one of packages is not installed, otherwise True
+
     obj : python class, object, str, or None, default=None
         if self is passed here when _check_soft_dependencies is called within __init__,
         or a class is passed when it is called at the start of a single-class module,
         the error message is more informative and will refer to the class/object;
         if str is passed, will be used as name of the class/object or module
+
     msg : str, or None, default=None
         if str, will override the error message or warning shown with msg
 
@@ -89,20 +91,6 @@ def _check_soft_dependencies(
             "packages argument of _check_soft_dependencies must be str or tuple of "
             f"str, but found packages argument of type {type(packages)}"
         )
-
-    if package_import_alias is None:
-        package_import_alias = {}
-    msg_pkg_import_alias = (
-        "package_import_alias argument of _check_soft_dependencies must "
-        "be a dict with str keys and values, but found "
-        f"package_import_alias of type {type(package_import_alias)}"
-    )
-    if not isinstance(package_import_alias, dict):
-        raise TypeError(msg_pkg_import_alias)
-    if not all(isinstance(x, str) for x in package_import_alias.keys()):
-        raise TypeError(msg_pkg_import_alias)
-    if not all(isinstance(x, str) for x in package_import_alias.values()):
-        raise TypeError(msg_pkg_import_alias)
 
     if obj is None:
         class_name = "This functionality"
@@ -141,19 +129,7 @@ def _check_soft_dependencies(
         package_name = req.name
         package_version_req = req.specifier
 
-        # determine the package import
-        if package_name in package_import_alias.keys():
-            package_import_name = package_import_alias[package_name]
-        else:
-            package_import_name = package_name
-
-        # determine the package import
-        if package_name in package_import_alias.keys():
-            package_import_name = package_import_alias[package_name]
-        else:
-            package_import_name = package_name
-
-        pkg_env_version = _get_pkg_version(package_name, package_import_name)
+        pkg_env_version = _get_pkg_version(package_name)
 
         # if package not present, make the user aware of installation reqs
         if pkg_env_version is None:
@@ -278,7 +254,30 @@ def _check_mlflow_dependencies(msg=None, severity="error"):
 
 
 @lru_cache
-def _get_pkg_version(package_name, package_import_name=None):
+def _get_installed_packages_private():
+    """Get a dictionary of installed packages and their versions.
+
+    Same as _get_installed_packages, but internal to avoid mutating the lru_cache
+    by accident.
+    """
+    dists = distributions()
+    packages = {dist.metadata["Name"]: dist.version for dist in dists}
+    return packages
+
+
+def _get_installed_packages():
+    """Get a dictionary of installed packages and their versions.
+
+    Returns
+    -------
+    dict : dictionary of installed packages and their versions
+        keys are PEP 440 compatible package names, values are package versions
+        MAJOR.MINOR.PATCH version format is used for versions, e.g., "1.2.3"
+    """
+    return _get_installed_packages_private().copy()
+
+
+def _get_pkg_version(package_name):
     """Check whether package is available in environment, and return its version if yes.
 
     Returns ``Version`` object from ``lru_cache``, this should not be mutated.
@@ -286,37 +285,24 @@ def _get_pkg_version(package_name, package_import_name=None):
     Parameters
     ----------
     package_name : str, optional, default=None
-        name of package to check, e.g., "pandas" or "sklearn".
+        name of package to check,
+        PEP 440 compatibe specifier string, e.g., "pandas" or "sklearn".
         This is the pypi package name, not the import name, e.g.,
         ``scikit-learn``, not ``sklearn``.
-    package_import_name : str, optional, default=None
-        name of package to check for import, e.g., "pandas" or "sklearn".
-        Note: this is the import name, not the pypi package name, e.g.,
-        ``sklearn``, not ``scikit-learn``.
-        If not given, ``package_name`` is used as ``package_import_name``,
-        i.e., it is assumed that the import name is the same as the package name.
 
     Returns
     -------
-    None, if package is not found at import ``package_import_name``;
-    ``importlib`` ``Version`` of package, if found at import ``package_import_name``
+    None, if package is not found in python environment.
+    ``importlib`` ``Version`` of package, if present in environment.
     """
-    if package_import_name is None:
-        package_import_name = package_name
-
-    # optimized branching to check presence of import
-    # and presence of package distribution
-    # first we check import, then we check distribution
-    # because try/except consumes more runtime
-    pkg_spec = find_spec(package_import_name)
-    if pkg_spec is not None:
-        try:
-            pkg_env_version = Version(version(package_name))
-        except (InvalidVersion, PackageNotFoundError):
-            pkg_env_version = None
-    else:
+    pkgs = _get_installed_packages()
+    pkg_vers_str = pkgs.get(package_name, None)
+    if pkg_vers_str is None:
+        return None
+    try:
+        pkg_env_version = Version(pkg_vers_str)
+    except InvalidVersion:
         pkg_env_version = None
-
     return pkg_env_version
 
 
