@@ -123,28 +123,32 @@ GitHub, clone, and develop on a new branch.
     ``main`` branch of the sktime repo, and then update your feature branch with those
     changes. If there are any merge conflicts, you will need to resolve them manually.
 
-12. Once your pull request is merged in the ``main`` branch of the sktime repo, you can
-    delete your feature branch:
+Managing Branches
+-----------------
 
-    .. code:: bash
+If you are working on a different unrelated task in parallel, create a new branch from
+``main`` branch of your fork following step 6, and then repeat steps 7 - 11.
+We recommend to not use the same branch for multiple tasks, as it can make the history
+of the branch messy and harder to review.
 
-       git checkout main
-       git branch -D <feature-branch>
+However, if your new task depend on your previous task, which is not yet approved or
+merged, you can create a new branch from the branch of the previous task, and continue
+your development from there. For such cases, please remember to specify in the PR
+description that this PR depends on the previous PR.
 
-    You can also delete the remote branch on your fork:
+Cleaning up
+~~~~~~~~~~~
 
-    .. code:: bash
+Once your pull request is merged in the ``main`` branch of the sktime repo, you can
+delete your feature branch:
 
-       git push origin --delete <feature-branch>
+.. code:: bash
 
-13. If you are working on a different task in parallel, create a new branch from
-    ``main`` branch of your fork following step 6, and then repeat steps 7 - 11. We
-    recommend to not use the same branch for multiple tasks, as it can make the history
-    of the branch messy and harder to review.
+    git checkout main
+    git branch -D <feature-branch>
 
-.. note::
+You can also delete the remote branch on your fork:
 
-    However, if your new task depend on your previous task, which is not yet approved or
-    merged, you can create a new branch from the branch of the previous task, and
-    continue your development from there. For such cases, please remember to specify in
-    the PR description that this PR depends on the previous PR.
+.. code:: bash
+
+    git push origin --delete <feature-branch>
