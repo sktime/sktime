@@ -295,6 +295,7 @@ class ColumnConcatenator(BaseTransformer):
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
+        "capability:categorical_in_X": True,
     }
 
     def _transform(self, X, y=None):
