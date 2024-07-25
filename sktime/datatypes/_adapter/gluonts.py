@@ -48,11 +48,25 @@ def convert_pandas_to_listDataset(pd_dataframe: pd.DataFrame, is_single: bool = 
     from gluonts.dataset.common import ListDataset
     from gluonts.dataset.field_names import FieldName
 
-    # Assert the validity of the is_single parameter
-    if is_single and pd_dataframe.shape[0] > 1:
-        raise ValueError("`is_single` is True but the DataFrame has multiple rows!")
+    # For non-multiindexed DataFrames
+    if is_single:
+        start_datetime = pd_dataframe.index[0]
 
-    # This list will store all individual time series
+        target_columns = pd_dataframe.columns[:]
+        target_values = pd_dataframe[target_columns]
+
+        if isinstance(pd_dataframe.index, pd.DatetimeIndex):
+            freq = pd_dataframe.index.inferred_freq
+
+        else:
+            freq = pd_dataframe.index.freq
+
+        return ListDataset(
+            [{FieldName.START: start_datetime, FieldName.TARGET: target_values}],
+            freq=freq,
+            one_dim_target=False,
+        )
+
     dataset = []
 
     # By maintaining 2 levels in the DataFrame's indices
@@ -82,6 +96,7 @@ def convert_pandas_to_listDataset(pd_dataframe: pd.DataFrame, is_single: bool = 
         freq=fr,
         one_dim_target=False,
     )
+
     return list_dataset
 
 
@@ -132,13 +147,13 @@ def convert_listDataset_to_pandas(list_dataset):
     return dfs
 
 
-def convert_pandas_series_to_pandasDataset(pd_series: pd.Series):
-    """Convert a given pd.Series to a gluonTS PandasDataset.
+def convert_pandas_dataframe_to_pandasDataset(pd_dataframe: pd.DataFrame):
+    """Convert a given pandas DataFrame to a gluonTS PandasDataset.
 
     Parameters
     ----------
-    pd_series : pd.Series
-        A valid pd.Series with the index as pd.DatetimeIndex
+    pd_dataframe : pd.DataFrame
+        A valid pandas DataFrame with the index as pd.DatetimeIndex
 
     Returns
     -------
@@ -148,26 +163,25 @@ def convert_pandas_series_to_pandasDataset(pd_series: pd.Series):
     Raises
     ------
     ValueError
-        Raises a valueError if the index of the Series is not of instance
-        `Pandas DatetimeIndex`.
+        Raises a valueError if the index is not of instance `DatetimeIndex`.
     """
     # Importing required libraries
     from gluonts.dataset.pandas import PandasDataset
 
     # Checking for index validity
-    if not isinstance(pd_series.index, (pd.DatetimeIndex, pd.PeriodIndex)):
-        raise ValueError("The series must have a DateTimeIndex or PeriodIndex!")
+    if not isinstance(pd_dataframe.index, (pd.DatetimeIndex, pd.PeriodIndex)):
+        raise ValueError("The dataframe must have a DateTimeIndex or PeriodIndex!")
 
-    return PandasDataset(pd_series)
+    return PandasDataset(pd_dataframe)
 
 
-def convert_pandasDataset_to_pandas_series(pandasDataset):
-    """Convert a PandasDataset into a valid Pandas Series.
+def convert_pandasDataset_to_pandas_dataframe(pandasDataset):
+    """Convert a PandasDataset into a valid Pandas DataFrame.
 
     Parameters
     ----------
     pandasDataset : GluonTS PandasDataset
-        A valid gluonTS pandasDataset formed from a pandas Series
+        A valid gluonTS pandasDataset
 
     Raises
     ------
@@ -177,8 +191,8 @@ def convert_pandasDataset_to_pandas_series(pandasDataset):
 
     Returns
     -------
-    pandas.Series
-        Returns the pandas Series stored in the PandasDataset
+    pd.DataFrame
+        Returns the pandas DataFrame stored in the PandasDataset
     """
     from gluonts.dataset.pandas import PandasDataset
 
@@ -186,11 +200,7 @@ def convert_pandasDataset_to_pandas_series(pandasDataset):
     if not isinstance(pandasDataset, PandasDataset):
         raise ValueError("The passed object must be a valid GluonTS PandasDataset!")
 
-    # In a PandasDataset formed from a Pandas Series,
-    # this is where the underlying Series is stored!
-
-    iterable = pandasDataset._data_entries.iterable
-    return iterable[0][1]
+    return pandasDataset._data_entries.iterable[0][1]
 
 
 def convert_pandas_multiindex_to_pandasDataset(
@@ -267,6 +277,10 @@ def convert_pandas_multiindex_to_pandasDataset(
 
     # Assists with finding level-based values
     pd_dataframe = pd_dataframe.reset_index()
+
+    # Converting to float32 for MPS compatibility
+    float64_cols = list(pd_dataframe.select_dtypes(include="float64"))
+    pd_dataframe[float64_cols] = pd_dataframe[float64_cols].astype("float32")
 
     # Finally, we create and return a PandasDataset
     return PandasDataset.from_long_dataframe(
@@ -345,6 +359,10 @@ def convert_pandasDataset_to_pandas(pandasDataset, item_id=None, timepoints=None
     df = df.reset_index().set_index([item_id, timepoints])
     df = df.sort_index()
 
+    # Converting to float32 for MPS compatibility
+    float64_cols = list(df.select_dtypes(include="float64"))
+    df[float64_cols] = df[float64_cols].astype("float32")
+
     return df
 
 
@@ -405,6 +423,10 @@ def convert_pandas_collection_to_pandasDataset(
                     f"The DataFrame at {key} does not have a target column!"
                 )
 
+            # Converting to float32 for MPS compatibility
+            float64_cols = list(df.select_dtypes(include="float64"))
+            df[float64_cols] = df[float64_cols].astype("float32")
+
         return PandasDataset(
             dataframes=collection_dataframe,
             timestamp=timepoints,
@@ -423,6 +445,10 @@ def convert_pandas_collection_to_pandasDataset(
                     f"The DataFrame at the {idx} index does not have the "
                     + f"required '{timepoints}' columns!"
                 )
+
+            # Converting to float32 for MPS compatibility
+            float64_cols = list(df.select_dtypes(include="float64"))
+            df[float64_cols] = df[float64_cols].astype("float32")
 
         return PandasDataset(
             dataframes=collection_dataframe,

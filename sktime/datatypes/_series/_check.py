@@ -456,7 +456,6 @@ if _check_soft_dependencies("gluonts", severity="none"):
         return ret(True, None, metadata, return_metadata)
 
     def check_gluonTS_pandasDataset_series(obj, return_metadata=False, var_name="obj"):
-        # Importing required libraries
         from gluonts.dataset.pandas import PandasDataset
 
         metadata = dict()
@@ -466,24 +465,27 @@ if _check_soft_dependencies("gluonts", severity="none"):
             msg = f"{var_name} must be a gluonts.PandasDataset, found {type(obj)}"
             return ret(False, msg, None, return_metadata)
 
-        data_entry = obj._data_entries.iterable
+        # Convert to a pandas DF for easier checks
+        df = obj._data_entries.iterable
 
-        if hasattr(data_entry, "iterable"):
-            msg = "The PandasDataset must be formed from a pandas Series object"
+        # Checking if the DataFrame is stored in the appropriate place
+        if (
+            not isinstance(df, list)
+            or not isinstance(df[0], tuple)
+            or not isinstance(df[0][1], pd.DataFrame)
+        ):
+            msg = f"{var_name} was not formed with a single-instance pandas DataFrame"
             return ret(False, msg, None, return_metadata)
 
-        # Fetching the underlying series
-        series = data_entry[0][1]
+        df = df[0][1]
 
         # Check if there are no values
         if _req("is_empty", return_metadata):
-            metadata["is_empty"] = len(obj) == 0
+            metadata["is_empty"] = len(obj._data_entries) == 0
 
-        # A pandas Series is univariate
         if _req("is_univariate", return_metadata):
-            metadata["is_univariate"] = True
+            metadata["is_univariate"] = len(df.columns) == 1
 
-        # A pandas Series has only 1 feature
         if _req("n_features", return_metadata):
             metadata["n_features"] = 1
 
@@ -493,15 +495,14 @@ if _check_soft_dependencies("gluonts", severity="none"):
         if _req("n_panels", return_metadata):
             metadata["n_panels"] = 1
 
-        # Fetching the name of the series' singular column
         if _req("feature_names", return_metadata):
-            metadata["feature_names"] = series.name
+            metadata["feature_names"] = df.columns
 
         if _req("is_equally_spaced", return_metadata):
             metadata["is_equally_spaced"] = True
 
         if _req("has_nans", return_metadata):
-            metadata["has_nans"] = series.isna().any()
+            metadata["has_nans"] = df.isna().any().any()
 
         return ret(True, None, metadata, return_metadata)
 

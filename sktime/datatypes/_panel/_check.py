@@ -622,11 +622,14 @@ if _check_soft_dependencies("gluonts", severity="none"):
             return _ret(False, msg, None, return_metadata)
 
         if not hasattr(obj._data_entries.iterable, "iterable"):
-            msg = f"{var_name} must be formed with a pandas DataFrame, not Series"
+            msg = f"{var_name} must be formed with a multiindex DataFrame "
+            +"to be a valid `pandasDataset_panel`"
+
             return _ret(False, msg, None, return_metadata)
 
         # Convert to a pandas DF for easier checks
         df = pd.DataFrame(obj._data_entries)
+
         df = df.explode("target")
 
         # Check if there are no values

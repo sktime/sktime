@@ -262,9 +262,9 @@ if _check_soft_dependencies("dask", severity="none"):
 if _check_soft_dependencies("gluonts", severity="none"):
     from sktime.datatypes._adapter.gluonts import (
         convert_listDataset_to_pandas,
-        convert_pandas_series_to_pandasDataset,
+        convert_pandas_dataframe_to_pandasDataset,
         convert_pandas_to_listDataset,
-        convert_pandasDataset_to_pandas_series,
+        convert_pandasDataset_to_pandas_dataframe,
     )
 
     # Utilizing functions defined in _adapter/gluonts.py
@@ -275,10 +275,10 @@ if _check_soft_dependencies("gluonts", severity="none"):
         return convert_pandas_to_listDataset(obj, is_single=True)
 
     def convert_gluonts_PandasDataset_to_pandas(obj, store=None):
-        return convert_pandasDataset_to_pandas_series(obj)
+        return convert_pandasDataset_to_pandas_dataframe(obj)
 
     def convert_pandas_to_gluonts_PandasDataset(obj, store=None):
-        return convert_pandas_series_to_pandasDataset(obj)
+        return convert_pandas_dataframe_to_pandasDataset(obj)
 
     # Storing functions in convert_dict
     convert_dict[("pd.DataFrame", "gluonts_ListDataset_series", "Series")] = (
@@ -289,11 +289,11 @@ if _check_soft_dependencies("gluonts", severity="none"):
         convert_gluonts_listDataset_to_pandas
     )
 
-    convert_dict[("pd.Series", "gluonts_PandasDataset_series", "Series")] = (
+    convert_dict[("pd.DataFrame", "gluonts_PandasDataset_series", "Series")] = (
         convert_pandas_to_gluonts_PandasDataset
     )
 
-    convert_dict[("gluonts_PandasDataset_series", "pd.Series", "Series")] = (
+    convert_dict[("gluonts_PandasDataset_series", "pd.DataFrame", "Series")] = (
         convert_gluonts_PandasDataset_to_pandas
     )
 
@@ -307,7 +307,7 @@ if _check_soft_dependencies("gluonts", severity="none"):
 
     _extend_conversions(
         "gluonts_PandasDataset_series",
-        "pd.Series",
+        "pd.DataFrame",
         convert_dict,
         mtype_universe=MTYPE_LIST_SERIES,
     )
