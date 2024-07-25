@@ -127,6 +127,7 @@ class ColumnEnsembleTransformer(
         "fit_is_empty": False,
         "capability:unequal_length": True,
         "handles-missing-data": True,
+        "capability:categorical_in_X": True,
     }
 
     # for default get_params/set_params from _HeterogenousMetaEstimator
@@ -415,6 +416,7 @@ class ColumnwiseTransformer(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "univariate-only": False,
         "fit_is_empty": False,
+        "capability:categorical_in_X": True,
     }
 
     def __init__(self, transformer, columns=None):
