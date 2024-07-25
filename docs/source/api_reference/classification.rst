@@ -69,10 +69,10 @@ Deep learning
     MACNNClassifier
     MLPClassifier
     MCDCNNClassifier
+    MVTSTransformerClassifier
     ResNetClassifier
     SimpleRNNClassifier
     TapNetClassifier
-    TransformerClassifier
 
 Dictionary-based
 ----------------

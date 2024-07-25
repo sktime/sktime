@@ -1,4 +1,4 @@
-"""Pytorch Transformer Model."""
+"""Pytorch Multivariate Time Series Transformer Model."""
 
 import numpy as np
 
@@ -14,8 +14,8 @@ else:
         """Dummy class if torch is unavailable."""
 
 
-class TransformerClassifier(BaseDeepClassifierPytorch):
-    """Transformer for Classification, as described in [1]_.
+class MVTSTransformerClassifier(BaseDeepClassifierPytorch):
+    """Multivariate Time Series Transformer for Classification, as described in [1]_.
 
     This classifier has been wrapped around the official pytorch implementation of
     Transformer from [2]_, provided by the authors of the paper [1]_.
@@ -72,12 +72,12 @@ class TransformerClassifier(BaseDeepClassifierPytorch):
     Examples
     --------
     >>> from sktime.datasets import load_unit_test
-    >>> from sktime.classification.deep_learning import TransformerClassifier
+    >>> from sktime.classification.deep_learning import MVTSTransformerClassifier
     >>>
     >>> X_train, y_train = load_unit_test(split="train")
     >>> X_test, _ = load_unit_test(split="test")
     >>>
-    >>> model = TransformerClassifier()
+    >>> model = MVTSTransformerClassifier()
     >>> model.fit(X_train, y_train)  # doctest: +SKIP
     >>> preds = model.predict(X_test)  # doctest: +SKIP
     """
@@ -162,7 +162,7 @@ class TransformerClassifier(BaseDeepClassifierPytorch):
             }
 
     def _build_network(self, X, y):
-        from sktime.networks.transformer_classifier import (
+        from sktime.networks.mvts_transformer import (
             TSTransformerEncoderClassiregressor,
         )
 

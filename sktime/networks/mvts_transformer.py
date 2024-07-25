@@ -1,4 +1,4 @@
-"""Transformer Network for Classification, as described in [1]_.
+"""Multivariate Time Series Transformer Network for Classification, described in [1]_.
 
 This classifier has been wrapped around the official pytorch implementation of
 Transformer from [2]_, provided by the authors of the paper [1]_.
