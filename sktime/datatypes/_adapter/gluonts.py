@@ -58,8 +58,12 @@ def convert_pandas_to_listDataset(pd_dataframe: pd.DataFrame, is_single: bool = 
         if isinstance(pd_dataframe.index, pd.DatetimeIndex):
             freq = pd_dataframe.index.inferred_freq
 
-        else:
+        elif isinstance(pd_dataframe.index, pd.PeriodIndex):
             freq = pd_dataframe.index.freq
+
+        # This is in the case of a RangeIndex
+        else:
+            freq = "D"
 
         return ListDataset(
             [{FieldName.START: start_datetime, FieldName.TARGET: target_values}],
@@ -249,7 +253,7 @@ def convert_pandas_multiindex_to_pandasDataset(
         # Obtain the index name for the timestamp
         for value in pd_dataframe.index.levels:
             # Found the timepoints level
-            if isinstance(value, (pd.DatetimeIndex, pd.PeriodIndex)):
+            if isinstance(value, (pd.DatetimeIndex, pd.PeriodIndex, pd.RangeIndex)):
                 timepoints = value.name
                 break
 
@@ -264,7 +268,7 @@ def convert_pandas_multiindex_to_pandasDataset(
 
         for value in pd_dataframe.index.levels:
             # Found the timepoints level
-            if not isinstance(value, (pd.DatetimeIndex, pd.PeriodIndex)):
+            if not isinstance(value, (pd.DatetimeIndex, pd.PeriodIndex, pd.RangeIndex)):
                 item_id = value.name
                 break
 
