@@ -65,6 +65,11 @@ GitHub, clone, and develop on a new branch.
     the ``main`` branch! Name the ``feature`` branch after your
     contribution.
 
+.. note::
+
+    We recommend to never make changes in ``main`` branch of your fork, and always use a
+    separate dedicated branch for a particular task.
+
 7.  Develop your contribution on your feature branch. Add changed files
     using ``git add`` and then ``git commit`` files to record your
     changes in Git:
@@ -99,3 +104,47 @@ GitHub, clone, and develop on a new branch.
 
    If any of the above seems like magic to you, look up the `Git documentation <https://git scm.com/documentation>`_.
    If you get stuck, chat with us on `Discord`_, or join one of the community sessions on `Discord`_.
+
+11. Between the time you created a pull request and when it is ready to merge into the
+    ``main`` branch, the ``main`` branch of the sktime repo may have been updated with
+    new changes by other contributors, and may cause merge conflicts. To keep your
+    feature branch up-to-date with the ``main`` branch of the sktime repo, you can do
+    the following:
+
+    .. code:: bash
+
+       git fetch upstream
+       git checkout main
+       git merge upstream/main
+       git checkout <feature-branch>
+       git merge main
+
+    This will first update ``main`` branch of your fork with the latest changes from the
+    ``main`` branch of the sktime repo, and then update your feature branch with those
+    changes. If there are any merge conflicts, you will need to resolve them manually.
+
+12. Once your pull request is merged in the ``main`` branch of the sktime repo, you can
+    delete your feature branch:
+
+    .. code:: bash
+
+       git checkout main
+       git branch -D <feature-branch>
+
+    You can also delete the remote branch on your fork:
+
+    .. code:: bash
+
+       git push origin --delete <feature-branch>
+
+13. If you are working on a different task in parallel, create a new branch from
+    ``main`` branch of your fork following step 6, and then repeat steps 7 - 11. We
+    recommend to not use the same branch for multiple tasks, as it can make the history
+    of the branch messy and harder to review.
+
+.. note::
+
+    However, if your new task depend on your previous task, which is not yet approved or
+    merged, you can create a new branch from the branch of the previous task, and
+    continue your development from there. For such cases, please remember to specify in
+    the PR description that this PR depends on the previous PR.
