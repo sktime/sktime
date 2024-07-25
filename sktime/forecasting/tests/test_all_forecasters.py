@@ -904,6 +904,32 @@ class TestAllGlobalForecasters(TestAllObjects):
 
         self._check_consistency(y_test, y_pred)
 
+    def test_global_forecasting_different_timestamps(self, estimator_instance):
+        max_prediction_length = 3
+        fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
+        X_train, y_train, X_test, y_test = self._multiindex_data(max_prediction_length)
+        estimator_instance.fit(y_train, X_train, fh=fh)
+
+        time_gap = pd.Timedelta(3650, "D")
+        X_test.index = pd.MultiIndex.from_arrays(
+            [
+                X_test.index.get_level_values(0),
+                X_test.index.get_level_values(-1) + time_gap,
+            ]
+        )
+        y_test.index = pd.MultiIndex.from_arrays(
+            [
+                y_test.index.get_level_values(0),
+                y_test.index.get_level_values(-1) + time_gap,
+            ]
+        )
+        y_pred = estimator_instance.predict(fh, X_test, y_test)
+
+        self._multiindex_check_time_index(y_test, y_pred, fh)
+        _assert_correct_columns(y_pred, y_test)
+
+        self._check_consistency(y_test, y_pred)
+
     def test_global_forecasting_no_X(self, estimator_instance):
         max_prediction_length = 3
         fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
