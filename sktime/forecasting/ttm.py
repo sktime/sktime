@@ -1,7 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implementation of TinyTimeMixer for forecasting."""
 
-__author__ = ["geetu040"]
+__author__ = ["geetu040", "ajati", "wgifford", "vijaye12"]
 
 
 import numpy as np
@@ -133,7 +133,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         "capability:insample": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
-        "authors": ["geetu040"],
+        "authors": ["geetu040", "ajati", "wgifford", "vijaye12"],
         "maintainers": ["geetu040"],
         "python_dependencies": ["transformers", "torch"],
         "capability:global_forecasting": True,
