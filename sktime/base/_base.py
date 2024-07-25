@@ -200,7 +200,7 @@ class BaseObject(_BaseObject):
           are in NOT_NP2_COMPATIBLE, this is a hard-coded
           list of soft dependencies that are not numpy 2 compatible
         * if any are found, adds a numpy<2.0 soft dependency to the list,
-          and sets it as a dynamic overide of the python_dependencies tag
+          and sets it as a dynamic override of the python_dependencies tag
         """
         from packaging.requirements import Requirement
 
