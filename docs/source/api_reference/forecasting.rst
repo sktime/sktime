@@ -473,6 +473,14 @@ Deep learning based forecasters
 
     PyKANForecaster
 
+.. currentmodule:: sktime.forecasting.hf_momentfm_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MomentFMForecaster
+
 
 Intermittent time series forecasters
 ------------------------------------
