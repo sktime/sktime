@@ -26,14 +26,20 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
         "capability:global_forecasting": True,
     }
 
-    def __init__(self, forecaster, aggregate_method):
+    def __init__(self, forecaster, aggregate_method=None):
         self.forecaster = forecaster
-        self.aggregate_method = aggregate_method
+        self.aggregate_method = (
+            aggregate_method
+            if aggregate_method is not None
+            else (
+                sum  # TODO: change the default aggregator
+            )
+        )
 
         super().__init__()
 
     def _fit(self, y, X=None, fh=None):
-        pass
+        self.forecaster.fit(y=y, X=X, fh=fh)
 
     def _predict(self, fh, X=None, y=None):
         pass
