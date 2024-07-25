@@ -64,12 +64,10 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
             "pd-multiindex",
             "pd_multiindex_hier",
             "pd.Series",
-            "pd.DataFrame",
         ],
         "X_inner_mtype": [
             "pd-multiindex",
             "pd_multiindex_hier",
-            "pd.Series",
             "pd.DataFrame",
         ],
         "scitype:y": "univariate",
@@ -90,6 +88,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         trainer_params: Optional[dict[str, Any]] = None,
         model_path: Optional[str] = None,
         random_log_path: bool = False,
+        broadcasting: bool = False,
     ) -> None:
         self.model_params = model_params
         self.dataset_params = dataset_params
@@ -115,6 +114,15 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
             else {}
         )
         self.random_log_path = random_log_path
+        self.broadcasting = broadcasting
+        if self.broadcasting:
+            self.set_tags(
+                **{
+                    "y_inner_mtype": "pd.Series",
+                    "X_inner_mtype": "pd.DataFrame",
+                    "capability:global_forecasting": False,
+                }
+            )
         super().__init__()
 
     @functools.cached_property
