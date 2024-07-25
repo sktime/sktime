@@ -882,6 +882,28 @@ class TestAllGlobalForecasters(TestAllObjects):
 
         self._check_consistency(y_test, y_pred)
 
+    def test_global_forecasting_hier_series(self, estimator_instance):
+        max_prediction_length = 3
+        fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
+        X_train, y_train, X_test, y_test = self._multiindex_hier_data(
+            max_prediction_length
+        )
+        estimator_instance.fit(y_train, X_train, fh=fh)
+
+        # pass only the last series with non-hierarchical index
+        last_index = y_test.index[-1]
+        ins_index = last_index[:-1]
+        y_test = y_test.loc[ins_index, :]
+        X_test = X_test.loc[ins_index, :]
+
+        y_pred = estimator_instance.predict(fh, y=y_test, X=X_test)
+
+        cutoff = get_cutoff(y_test, return_index=True)
+        _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
+        _assert_correct_columns(y_pred, y_test)
+
+        self._check_consistency(y_test, y_pred)
+
     def test_global_forecasting_no_X(self, estimator_instance):
         max_prediction_length = 3
         fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
