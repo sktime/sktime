@@ -1808,7 +1808,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
             ascending=scoring.get_tag("lower_is_better")
         )
         self.cv_results_ = results
-        self.best_index_ = results["value"].idxmin()
+        self.best_index_ = results.loc[:, f"rank_{scoring_name}"].argmin()
         if self.best_index_ == -1:
             raise NotFittedError(
                 f"""All fits of forecaster failed,
@@ -1906,8 +1906,12 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
 
         for (
             param_grid_dict
-        ) in self._param_grid:  # Assuming self._param_grid is now a list of dicts
-            study = optuna.create_study(direction="minimize")
+        ) in self.param_grid:  # Assuming self.param_grid is now a list of dicts
+            if scoring.get_tag("lower_is_better"):
+                direction = "minimize"
+            else:
+                direction = "maximize"
+            study = optuna.create_study(direction=direction)
             meta = {}
             meta["forecaster"] = self.forecaster
             meta["y"] = y
