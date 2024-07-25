@@ -798,7 +798,7 @@ class requires_fh_in_fit(_BaseTag):
 
 
 class capability__categorical_in_X(_BaseTag):
-    """Capability: If forecaster can handle categorical natively in exogeneous(X) data.
+    """Capability: If estimator can handle categorical natively in exogeneous(X) data.
 
     ``False`` = cannot handle categorical natively in X,
     ``True`` = can handle categorical natively in X
@@ -815,9 +815,9 @@ class capability__categorical_in_X(_BaseTag):
 
     _tags = {
         "tag_name": "capability:categorical_in_X",
-        "parent_type": "forecaster",
+        "parent_type": ["forecaster", "transformer"],
         "tag_type": "bool",
-        "short_descr": "can the forecaster natively handle categorical data in exogeneous X?",  # noqa: E501
+        "short_descr": "can the estimator natively handle categorical data in exogeneous X?",  # noqa: E501
         "user_facing": True,
     }
 
