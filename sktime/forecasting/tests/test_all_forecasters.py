@@ -49,9 +49,8 @@ from sktime.utils.validation.forecasting import check_fh
 # get all forecasters
 FH0 = 1
 
-cat_df = pd.DataFrame({"col_0": ["a", "b", "c", "a", "b", "c"]})
 INVALID_X_INPUT_TYPES = [list("foo"), tuple()]
-INVALID_y_INPUT_TYPES = [list("bar"), tuple(), cat_df]
+INVALID_y_INPUT_TYPES = [list("bar"), tuple()]
 
 # testing data
 y = make_forecasting_problem()
@@ -191,7 +190,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     @pytest.mark.parametrize("y", INVALID_y_INPUT_TYPES)
     def test_y_invalid_type_raises_error(self, estimator_instance, y):
         """Test that invalid y input types raise error."""
-        with pytest.raises(TypeError, match=r"(type|categorical)"):
+        with pytest.raises(TypeError, match=r"type"):
             estimator_instance.fit(y, fh=FH0)
 
     # todo: should these not be "negative scenarios", tested in test_all_estimators?
@@ -222,6 +221,16 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
             with pytest.raises(TypeError, match=r"categorical"):
                 estimator_instance.fit(y_train, X_train, fh=FH0)
+
+    def test_categorical_y_raises_error(self, estimator_instance):
+        """Test that categorical y in forecasters raises error.
+
+        Categorical y is not currently supported in the forecasting module.
+        """
+        y = pd.DataFrame({"col_0": ["a", "b", "c", "a", "b", "c"]})
+
+        with pytest.raises(TypeError, match=r"categorical"):
+            estimator_instance.fit(y, fh=FH0)
 
     # todo: refactor with scenarios. Need to override fh and scenario args for this.
     @pytest.mark.parametrize(
