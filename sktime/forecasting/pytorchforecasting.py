@@ -141,6 +141,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         trainer_params: Optional[dict[str, Any]] = None,
         model_path: Optional[str] = None,
         random_log_path: bool = False,
+        broadcasting: bool = False,
     ) -> None:
         self.allowed_encoder_known_variable_names = allowed_encoder_known_variable_names
         super().__init__(
@@ -151,6 +152,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
             trainer_params,
             model_path,
             random_log_path,
+            broadcasting,
         )
 
     @functools.cached_property
@@ -289,7 +291,9 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                 },
             ]
 
-        return params
+        params_broadcasting = [dict(p, **{"broadcasting": True}) for p in params]
+        params_no_broadcasting = [dict(p, **{"broadcasting": False}) for p in params]
+        return params_broadcasting + params_no_broadcasting
 
 
 class PytorchForecastingNBeats(_PytorchForecastingAdapter):
@@ -418,6 +422,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         trainer_params: Optional[dict[str, Any]] = None,
         model_path: Optional[str] = None,
         random_log_path: bool = False,
+        broadcasting: bool = False,
     ) -> None:
         super().__init__(
             model_params,
@@ -427,6 +432,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
             trainer_params,
             model_path,
             random_log_path,
+            broadcasting,
         )
 
     @functools.cached_property
@@ -554,7 +560,9 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                 },
             ]
 
-        return params
+        params_broadcasting = [dict(p, **{"broadcasting": True}) for p in params]
+        params_no_broadcasting = [dict(p, **{"broadcasting": False}) for p in params]
+        return params_broadcasting + params_no_broadcasting
 
 
 class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
@@ -689,6 +697,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
         model_path: Optional[str] = None,
         deterministic: bool = False,
         random_log_path: bool = False,
+        broadcasting: bool = False,
     ) -> None:
         self.allowed_encoder_known_variable_names = allowed_encoder_known_variable_names
         self.deterministic = deterministic
@@ -700,6 +709,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
             trainer_params,
             model_path,
             random_log_path,
+            broadcasting,
         )
 
     @functools.cached_property
@@ -837,7 +847,9 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                 },
             ]
 
-        return params
+        params_broadcasting = [dict(p, **{"broadcasting": True}) for p in params]
+        params_no_broadcasting = [dict(p, **{"broadcasting": False}) for p in params]
+        return params_broadcasting + params_no_broadcasting
 
 
 class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
@@ -968,6 +980,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
         trainer_params: Optional[dict[str, Any]] = None,
         model_path: Optional[str] = None,
         random_log_path: bool = False,
+        broadcasting: bool = False,
     ) -> None:
         super().__init__(
             model_params,
@@ -977,6 +990,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
             trainer_params,
             model_path,
             random_log_path,
+            broadcasting,
         )
 
     @functools.cached_property
@@ -1117,4 +1131,6 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                 },
             ]
 
-        return params
+        params_broadcasting = [dict(p, **{"broadcasting": True}) for p in params]
+        params_no_broadcasting = [dict(p, **{"broadcasting": False}) for p in params]
+        return params_broadcasting + params_no_broadcasting

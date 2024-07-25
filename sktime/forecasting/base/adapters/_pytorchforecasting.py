@@ -65,12 +65,10 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
             "pd-multiindex",
             "pd_multiindex_hier",
             "pd.Series",
-            "pd.DataFrame",
         ],
         "X_inner_mtype": [
             "pd-multiindex",
             "pd_multiindex_hier",
-            "pd.Series",
             "pd.DataFrame",
         ],
         "scitype:y": "univariate",
@@ -91,6 +89,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         trainer_params: Optional[dict[str, Any]] = None,
         model_path: Optional[str] = None,
         random_log_path: bool = False,
+        broadcasting: bool = False,
     ) -> None:
         self.model_params = model_params
         self.dataset_params = dataset_params
@@ -116,6 +115,15 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
             else {}
         )
         self.random_log_path = random_log_path
+        self.broadcasting = broadcasting
+        if self.broadcasting:
+            self.set_tags(
+                **{
+                    "y_inner_mtype": "pd.Series",
+                    "X_inner_mtype": "pd.DataFrame",
+                    "capability:global_forecasting": False,
+                }
+            )
         super().__init__()
 
     @functools.cached_property
@@ -202,17 +210,6 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         # convert series to frame
         _y, self._convert_to_series = _series_to_frame(y)
         _X, _ = _series_to_frame(X)
-        # store the target column names and index names (probably [None])
-        # will be renamed !
-        self._target_name = _y.columns[-1]
-        self._index_names = _y.index.names
-        self._index_len = len(self._index_names)
-        # store X, y column names (probably None or not str type)
-        # The target column and the index will be renamed
-        # before being passed to the underlying model
-        # because those names could be None or non-string type.
-        if X is not None:
-            self._X_columns = X.columns.tolist()
         # convert data to pytorch-forecasting datasets
         training, validation = self._Xy_to_dataset(
             _X, _y, self._dataset_params, self._max_prediction_length
@@ -451,6 +448,17 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         # X, y must have same index or X is None
         # assert X is None or (X.index == y.index).all()
         # might not the same order
+        # store the target column names and index names (probably [None])
+        # will be renamed !
+        self._target_name = y.columns[-1]
+        self._index_names = y.index.names
+        self._index_len = len(self._index_names)
+        # store X, y column names (probably None or not str type)
+        # The target column and the index will be renamed
+        # before being passed to the underlying model
+        # because those names could be None or non-string type.
+        if X is not None:
+            self._X_columns = X.columns.tolist()
         # rename the index to make sure it's not None
         self._new_index_names = [
             "_index_name_" + str(i) for i in range(len(self._index_names))
