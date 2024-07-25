@@ -72,7 +72,7 @@ class AutoTS(BaseForecaster):
         The initial template to use for the forecast.
         'Random' - randomly generates starting template, 'General' uses template
         included in package, 'General+Random' - both of previous.
-        Also can be overriden with import_template()
+        Also can be overridden with import_template()
     random_seed (int):
         The random seed for reproducibility.
         Random seed allows (slightly) more consistent results.
@@ -101,7 +101,7 @@ class AutoTS(BaseForecaster):
     drop_most_recent (int):
         Option to drop n most recent data points. Useful, say, for monthly sales
         data where the current (unfinished) month is included. occurs after any
-        aggregration is applied, so will be whatever is specified by frequency,
+        aggregation is applied, so will be whatever is specified by frequency,
         will drop n frequencies
     drop_data_older_than_periods (int):
         The threshold for dropping old data points.
