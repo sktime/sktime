@@ -11,6 +11,8 @@ from inspect import getmro, isclass
 
 from sktime.tests._config import EXCLUDE_ESTIMATORS
 
+LOCAL_PACKAGE = "sktime"
+
 
 def run_test_for_class(cls, return_reason=False):
     """Check if test should run for a class or function.
@@ -182,7 +184,7 @@ def _run_test_for_class(cls):
         # now we know cls is a class, so has an mro
         cls_and_parents = getmro(cls)
         cls_and_sktime_parents = [
-            x for x in cls_and_parents if x.__module__.startswith("sktime")
+            x for x in cls_and_parents if x.__module__.startswith(LOCAL_PACKAGE)
         ]
         return any(is_class_changed(x) for x in cls_and_sktime_parents)
 
