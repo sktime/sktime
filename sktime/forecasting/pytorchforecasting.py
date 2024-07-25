@@ -43,11 +43,11 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         # --------------
         # "authors": ["XinyuWu"],
         # "maintainers": ["XinyuWu"],
-        # "python_dependencies": "pytorch_forecasting"
+        # "python_dependencies": "pytorch-forecasting"
         # inherited from _PytorchForecastingAdapter
         # estimator type
         # --------------
-        "python_dependencies": ["pytorch_forecasting>=1.0.0", "torch", "lightning"],
+        "python_dependencies": ["pytorch-forecasting>=1.0.0", "torch", "lightning"],
         "capability:global_forecasting": True,
         "capability:insample": False,
         "X-y-must-have-same-index": True,
@@ -123,9 +123,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         """
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
-        try:
-            _check_soft_dependencies("pytorch_forecasting", severity="error")
-        except ModuleNotFoundError:
+        if not _check_soft_dependencies("pytorch-forecasting", severity="none"):
             params = [
                 {
                     "trainer_params": {
@@ -235,11 +233,11 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         # --------------
         # "authors": ["XinyuWu"],
         # "maintainers": ["XinyuWu"],
-        # "python_dependencies": "pytorch_forecasting"
+        # "python_dependencies": "pytorch-forecasting"
         # inherited from _PytorchForecastingAdapter
         # estimator type
         # --------------
-        "python_dependencies": ["pytorch_forecasting>=1.0.0", "torch", "lightning"],
+        "python_dependencies": ["pytorch-forecasting>=1.0.0", "torch", "lightning"],
         "capability:global_forecasting": True,
         "ignores-exogeneous-X": True,
         "capability:insample": False,
@@ -307,9 +305,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         """
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
-        try:
-            _check_soft_dependencies("pytorch_forecasting", severity="error")
-        except ModuleNotFoundError:
+        if not _check_soft_dependencies("pytorch-forecasting", severity="none"):
             params = [
                 {
                     "trainer_params": {
