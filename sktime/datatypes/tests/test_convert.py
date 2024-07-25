@@ -29,7 +29,7 @@ def _generate_fixture_tuples():
 
         conv_mat = _conversions_defined(scitype)
 
-        mtypes = scitype_to_mtype(scitype, softdeps="exclude")
+        mtypes = scitype_to_mtype(scitype, softdeps="present")
 
         if len(mtypes) == 0:
             # if there are no mtypes, this must have been reached by mistake/bug
