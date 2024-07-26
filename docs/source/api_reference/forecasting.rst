@@ -463,6 +463,8 @@ Deep learning based forecasters
     :template: class.rst
 
     PytorchForecastingTFT
+    PytorchForecastingDeepAR
+    PytorchForecastingNHiTS
     PytorchForecastingNBeats
 
 .. currentmodule:: sktime.forecasting.pykan_forecaster
