@@ -272,7 +272,7 @@ if _check_soft_dependencies("gluonts", severity="none"):
         return convert_listDataset_to_pandas(obj)
 
     def convert_pandas_to_gluonts_listDataset(obj, store=None):
-        return convert_pandas_to_listDataset(obj, is_single=True)
+        return convert_pandas_to_listDataset(obj)
 
     def convert_gluonts_PandasDataset_to_pandas(obj, store=None):
         return convert_pandasDataset_to_pandas_dataframe(obj)

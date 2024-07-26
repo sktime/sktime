@@ -1,7 +1,7 @@
 import pandas as pd
 
 
-def convert_pandas_to_listDataset(pd_dataframe: pd.DataFrame, is_single: bool = False):
+def convert_pandas_to_listDataset(pd_dataframe: pd.DataFrame):
     """Convert a given pandas DataFrame to a gluonTS ListDataset.
 
     Parameters
@@ -9,19 +9,10 @@ def convert_pandas_to_listDataset(pd_dataframe: pd.DataFrame, is_single: bool = 
     pd_dataframe : pd.DataFrame
         A valid pandas DataFrame
 
-    is_single : bool (default=False)
-        True if there is only 1 time series, false if there are multiple series
-        (Allows reusability with _series and _panel implementations)
-
     Returns
     -------
     gluonts.dataset.common.ListDataset
         A gluonTS ListDataset formed from `pd_dataframe`
-
-    Raises
-    ------
-    ValueError
-        If is_single is True, but multiple rows of entries exist in `pd_dataframe`
 
     Example
     --------
@@ -49,7 +40,7 @@ def convert_pandas_to_listDataset(pd_dataframe: pd.DataFrame, is_single: bool = 
     from gluonts.dataset.field_names import FieldName
 
     # For non-multiindexed DataFrames
-    if is_single:
+    if not isinstance(pd_dataframe.index, pd.MultiIndex):
         start_datetime = pd_dataframe.index[0]
 
         target_columns = pd_dataframe.columns[:]
@@ -58,8 +49,9 @@ def convert_pandas_to_listDataset(pd_dataframe: pd.DataFrame, is_single: bool = 
         if isinstance(pd_dataframe.index, pd.DatetimeIndex):
             freq = pd_dataframe.index.inferred_freq
 
-        elif isinstance(pd_dataframe.index, pd.PeriodIndex):
-            freq = pd_dataframe.index.freq
+        else:
+            start_datetime = pd.Timestamp(start_datetime)
+            freq = "D"
 
         # This is in the case of a RangeIndex
         else:
