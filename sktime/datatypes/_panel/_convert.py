@@ -1153,13 +1153,13 @@ if _check_soft_dependencies("gluonts", severity="none"):
         convert_gluonts_listDataset_to_pandas
     )
 
-    convert_dict[
-        ("pd-multiindex", "gluonts_PandasDataset_panel", "Panel")
-    ] = convert_pandas_multiindex_to_gluonts_pandasDataset
+    convert_dict[("pd-multiindex", "gluonts_PandasDataset_panel", "Panel")] = (
+        convert_pandas_multiindex_to_gluonts_pandasDataset
+    )
 
-    convert_dict[
-        ("gluonts_PandasDataset_panel", "pd-multiindex", "Panel")
-    ] = convert_gluonts_pandasDataset_to_pandas_multiindex
+    convert_dict[("gluonts_PandasDataset_panel", "pd-multiindex", "Panel")] = (
+        convert_gluonts_pandasDataset_to_pandas_multiindex
+    )
 
     # Extending conversions
     _extend_conversions(
