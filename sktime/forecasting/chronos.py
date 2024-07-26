@@ -1,7 +1,9 @@
-# !/usr/bin/env python3 -u
-# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-# reference: https://github.com/amazon-science/chronos-forecasting
-"""Implements Chronos forecaster by wrapping amazon's chronos."""
+"""Implements Chronos forecaster.
+
+References
+----------
+.. [1] https://github.com/amazon-science/chronos-forecasting
+"""
 
 __author__ = ["Z-Fran"]
 __all__ = ["ChronosForecaster"]
@@ -55,6 +57,11 @@ if _check_soft_dependencies("gluonts", severity="none"):
         TestSplitSampler,
         ValidationSplitSampler,
     )
+else:
+
+    class MissingValueImputation:
+        """Dummy class if gluonts is unavailable."""
+
 
 logger = logging.getLogger(__name__)
 
