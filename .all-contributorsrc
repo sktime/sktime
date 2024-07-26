@@ -2897,6 +2897,15 @@
       ]
     },
     {
+      "login": "AlexeyOm",
+      "name": "Alexey Omelchenko",
+      "avatar_url": "https://avatars.githubusercontent.com/u/11708514?v=4",
+      "profile": "https://github.com/AlexeyOm",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
       "login": "fr1ll",
       "name": "Will Sanger",
       "avatar_url": "https://avatars.githubusercontent.com/u/29168593?v=4",
@@ -2905,14 +2914,14 @@
         "code",
         "doc"
       ]
-    }
+    },
     {
       "login": "alexander-lakocy",
       "name": "Alex Lakocy",
       "avatar_url": "https://avatars.githubusercontent.com/alexander-lakocy",
       "profile": "https://github.com/alexander-lakocy",
       "contributions": [
-        "doc",
+        "doc"
       ]
     }
   ]
