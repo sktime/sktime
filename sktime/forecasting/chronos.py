@@ -37,6 +37,7 @@ if _check_soft_dependencies("transformers", severity="none"):
         Trainer,
         TrainingArguments,
     )
+
 if _check_soft_dependencies("gluonts", severity="none"):
     from gluonts.dataset.common import ListDataset
     from gluonts.itertools import Cyclic, Filter, Map
