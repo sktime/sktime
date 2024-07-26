@@ -1948,18 +1948,20 @@ def get_scoring_direction(scoring, default_direction="minimize"):
     Parameters
     ----------
     scoring : sktime metric object
-        scoring object that has 'lower_is_better' tag
-    default_direction : string, optional, default='minimize'
-        default direction to return if scoring object does not have 'lower_is_better' tag
+        Scoring object that should have a 'lower_is_better' tag.
+    default_direction : string, optional
+        Default direction to return if the scoring object does not have the 'lower_is_better' tag
+        or if the tag value is not a boolean. Defaults to 'minimize'.
 
     Returns
     -------
     direction : string
+        'minimize' if the 'lower_is_better' tag is True, 'maximize' if False, or the default direction
+        if the tag is not present or not a boolean.
     """
 
-    if not hasattr(scoring, "get_tag") or not isinstance(
-        scoring.get_tag("lower_is_better"), bool
-    ):
-        return default_direction
-
-    return "minimize" if scoring.get_tag("lower_is_better") else "maximize"
+    if hasattr(scoring, "get_tag"):
+        lower_is_better = scoring.get_tag("lower_is_better")
+        if isinstance(lower_is_better, bool):
+            return "minimize" if lower_is_better else "maximize"
+    return default_direction
