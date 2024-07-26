@@ -1942,10 +1942,14 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         return combined_results
 
 
-def get_scoring_direction(scoring):
-    # if scoring.get_tag("lower_is_better"):
-    #     direction = "minimize"
-    # else:
-    #     direction = "maximize"
-    # return direction
-    return "minimize"
+def get_scoring_direction(scoring, default_direction="minimize"):
+
+    # if not hasattr(scoring, "get_tag"):
+    #     return default_direction
+    if not isinstance(scoring.get_tag("lower_is_better"), bool):
+        return default_direction
+    if scoring.get_tag("lower_is_better"):
+        direction = "minimize"
+    else:
+        direction = "maximize"
+    return direction
