@@ -211,7 +211,7 @@ def test_evaluate_global_mode(scoring, strategy, backend):
     X = data["c0"].to_frame()
     y = data["c1"].to_frame()
 
-    from sktime.forecasting.pytorchforecasting import PytorchForecastingTFT
+    from sktime.forecasting.pytorchforecasting import PytorchForecastingDeepAR
 
     params = {
         "trainer_params": {
@@ -224,7 +224,7 @@ def test_evaluate_global_mode(scoring, strategy, backend):
         },
         "random_log_path": True,  # fix parallel file access error in CI
     }
-    forecaster = PytorchForecastingTFT(**params)
+    forecaster = PytorchForecastingDeepAR(**params)
     cv = InstanceSplitter(KFold(2))
     cv_ht = SingleWindowSplitter(fh=[1], window_length=4)
     out = evaluate(
