@@ -369,7 +369,14 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
     _tags = {
         # packaging info
         # --------------
-        # "authors": ["yarnabrina"],
+        "authors": [
+            "AzulGarza",
+            "jmoralez",
+            "yarnabrina",
+            "arnaujc91",
+            "luca-miniati",
+        ],
+        # AzulGarza, jmoralez for statsforecast theta
         # "maintainers": ["yarnabrina"],
         # "python_dependencies": "statsforecast"
         # inherited from _GeneralisedStatsForecastAdapter
