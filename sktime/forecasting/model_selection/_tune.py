@@ -1808,7 +1808,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
             ascending=scoring.get_tag("lower_is_better")
         )
         self.cv_results_ = results
-        self.best_index_ = results["value"].idxmin()
+        self.best_index_ = results.loc[:, f"rank_{scoring_name}"].argmin()
         if self.best_index_ == -1:
             raise NotFittedError(
                 f"""All fits of forecaster failed,
