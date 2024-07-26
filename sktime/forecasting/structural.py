@@ -203,7 +203,8 @@ class UnobservedComponents(_StatsModelsAdapter):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["juanitorduz"],
+        "authors": ["ChadFulton", "bashtage", "juanitorduz"],
+        # ChadFulton and bashtage for UnobservedComponents in statsmodels
         "maintainers": ["juanitorduz"],
         # python_dependencies: "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type
