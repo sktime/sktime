@@ -161,7 +161,7 @@ def test_forecastingbenchmark(tmp_path, expected_results_df, scorers):
     reason="run test only if benchmarking module has changed",
 )
 @pytest.mark.skipif(
-    not _check_soft_dependencies("pytorch_forecasting", severity="none"),
+    not _check_soft_dependencies("pytorch-forecasting", severity="none"),
     reason="skip test if required soft dependency not available",
 )
 @pytest.mark.parametrize(
