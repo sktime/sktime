@@ -107,8 +107,8 @@ def data_loader_simple() -> pd.DataFrame:
 
 def data_loader_global():
     """Return simple data for use in global mode testing."""
-    hierarchy_levels = (5, 10)
-    timepoints = 12
+    hierarchy_levels = (4, 4)
+    timepoints = 5
     data = _make_hierarchical(
         hierarchy_levels=hierarchy_levels,
         max_timepoints=timepoints,
@@ -184,7 +184,6 @@ def test_forecastingbenchmark_global_mode(
 
     benchmark = ForecastingBenchmark()
 
-    params = PytorchForecastingTFT.get_test_params()[0]
     params = {
         "trainer_params": {
             # the training process is not deterministic
@@ -203,7 +202,7 @@ def test_forecastingbenchmark_global_mode(
         InstanceSplitter(KFold(2)),
         scorers,
         global_mode=True,
-        cv_ht=SingleWindowSplitter(fh=[1], window_length=11),
+        cv_ht=SingleWindowSplitter(fh=[1], window_length=5),
     )
 
     results_file = tmp_path / "results_global_mode.csv"
