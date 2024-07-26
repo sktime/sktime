@@ -287,6 +287,15 @@ dl = [
   'transformers[torch]<4.41.0; python_version < "3.12"',
   'pykan<0.3,>=0.2; python_version > "3.9.7"',
   'pytorch-forecasting>=1.0.0; python_version < "3.11"',
+  'einshape==1.0.0',
+  'numpy==1.26.4',
+  'pandas==2.1.4',
+  'paxml==1.4.0',
+  'utilsforecast==0.1.10',
+  'jax[cuda12]==0.4.26',
+  'jaxlib==0.4.26',
+  'huggingface_hub[cli]==0.23.0',
+  'scikit-learn==1.2.2',
 ]
 mlflow = [
   "mlflow",
