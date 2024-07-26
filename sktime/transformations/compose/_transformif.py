@@ -36,7 +36,7 @@ class TransformIf(_DelegatedTransformer):
 
     In other methods, behaves as ``then_est`` or ``else_est``, as above.
 
-    Note: ``then_trafo`` and ``else_trafo`` must hae the same input/output signature,
+    Note: ``then_trafo`` and ``else_trafo`` must have the same input/output signature,
     e.g., Series-to-Series, or Series-to-Primitives.
 
     Parameters

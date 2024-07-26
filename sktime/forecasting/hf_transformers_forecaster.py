@@ -274,7 +274,7 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
             )
         else:
             raise ValueError(
-                "The model type is not inferrable from the config."
+                "The model type is not inferable from the config."
                 "Thus, the model cannot be loaded."
             )
 
