@@ -55,7 +55,7 @@ if _check_soft_dependencies("gluonts", severity="none"):
 logger = logging.getLogger(__name__)
 
 
-def left_pad_and_stack_1D(tensors: list[torch.Tensor]) -> torch.Tensor:
+def left_pad_and_stack_1D(tensors: list):
     max_len = max(len(c) for c in tensors)
     padded = []
     for c in tensors:
