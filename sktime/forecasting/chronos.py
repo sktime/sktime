@@ -15,7 +15,7 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from functools import partial
 from pathlib import Path
-from typing import Any, Literal, Optional, Union
+from typing import Any, Literal, Optional
 
 import numpy as np
 import pandas as pd
@@ -254,7 +254,7 @@ class ChronosTokenizer:
 
         Parameters
         ----------
-        context
+        label
             A tensor shaped (batch_size, time_length), containing the
             timeseries to forecast. Use left-padding with ``torch.nan``
             to align time series of different lengths.
@@ -908,9 +908,7 @@ class ChronosForecaster(HFTransformersForecaster):
 
         return self
 
-    def _prepare_and_validate_context(
-        self, context: Union[torch.Tensor, list[torch.Tensor]]
-    ):
+    def _prepare_and_validate_context(self, context):
         if isinstance(context, list):
             context = left_pad_and_stack_1D(context)
         assert isinstance(context, torch.Tensor)
