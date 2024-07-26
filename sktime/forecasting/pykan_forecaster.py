@@ -71,7 +71,8 @@ class PyKANForecaster(BaseForecaster):
         "capability:pred_int:insample": False,
         "capability:insample": False,
         "python_version": None,
-        "python_dependencies": ["kan", "torch"],
+        "python_dependencies": ["pykan", "torch"],
+        "python_dependencies_alias": {"pykan": "kan"},
     }
 
     def __init__(
@@ -176,7 +177,7 @@ class PyKANForecaster(BaseForecaster):
                     device=self.device,
                     **self._model_params,
                 ).initialize_from_another_model(model, ds_new["train_input"])
-            results = model.train(ds_new, device=self.device, **self._fit_params)
+            results = model.fit(ds_new, device=self.device, **self._fit_params)
             if len(self.test_losses) == 0 or results["test_loss"][-1] < min(
                 self.test_losses
             ):
@@ -224,10 +225,12 @@ class PyKANForecaster(BaseForecaster):
                     torch.from_numpy(X.values).reshape((1, -1)),
                 ],
                 dim=-1,
-            )
+            ).type(torch.float32)
         else:
-            input_ = torch.from_numpy(self._y.values[-self.input_layer_size :]).reshape(
-                (1, -1)
+            input_ = (
+                torch.from_numpy(self._y.values[-self.input_layer_size :])
+                .reshape((1, -1))
+                .type(torch.float32)
             )
 
         prediction = model(input_).detach().numpy().reshape((-1,))

@@ -292,8 +292,8 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         """
         # A. freq is given {use this}
         # B. freq is auto
-        #     B1. freq is infered from fh {use this}
-        #     B2. freq is not infered from fh
+        #     B1. freq is inferred from fh {use this}
+        #     B2. freq is not inferred from fh
         #         B2.1. y is date-like {raise exception}
         #         B2.2. y is not date-like
         #             B2.2.1 equispaced integers {use diff in time}
@@ -314,7 +314,7 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         y_time_index = y.index.get_level_values(-1)
         if self.freq != "auto":  # A: freq is given as non-auto
             self._freq = self.freq
-        elif fh.freq:  # B1: freq is infered from fh
+        elif fh.freq:  # B1: freq is inferred from fh
             self._freq = fh.freq
         elif isinstance(y_time_index, pandas.DatetimeIndex):  # B2.1: y is date-like
             raise ValueError(

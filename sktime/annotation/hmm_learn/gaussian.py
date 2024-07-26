@@ -17,7 +17,7 @@ class GaussianHMM(BaseHMMLearn):
     ----------
     n_components : int
         Number of states
-    covariance_type : {"sperical", "diag", "full", "tied"}, optional
+    covariance_type : {"spherical", "diag", "full", "tied"}, optional
         The type of covariance parameters to use:
         * "spherical" --- each state uses a single variance value that
             applies to all features.

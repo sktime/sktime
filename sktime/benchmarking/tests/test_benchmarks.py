@@ -1,6 +1,6 @@
 """Benchmarks tests."""
 
-from typing import Callable
+from collections.abc import Callable
 
 import pandas as pd
 import pytest
