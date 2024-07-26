@@ -4,8 +4,8 @@ import pytest
 
 from sktime.datatypes._adapter.gluonts import (
     convert_pandas_collection_to_pandasDataset,
+    convert_pandas_dataframe_to_pandasDataset,
     convert_pandas_multiindex_to_pandasDataset,
-    convert_pandas_series_to_pandasDataset,
     convert_pandas_to_listDataset,
 )
 from sktime.utils.dependencies import _check_soft_dependencies
@@ -99,11 +99,11 @@ def test_pandas_to_ListDataset(pandas_df):
             convert_pandas_collection_to_pandasDataset,
         ),
         (
-            pd.Series(
+            pd.DataFrame(
                 np.random.randn(50),
                 index=pd.date_range("2022-01-01", periods=50, freq="D"),
             ),
-            convert_pandas_series_to_pandasDataset,
+            convert_pandas_dataframe_to_pandasDataset,
         ),
     ],
 )
