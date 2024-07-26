@@ -732,8 +732,6 @@ class ChronosForecaster(HFTransformersForecaster):
         "python_dependencies": ["torch", "gluonts"],
         "y_inner_mtype": "pd.Series",
         "scitype:y": "univariate",
-        "ignores-exogeneous-X": True,
-        "requires-fh-in-fit": False,
         "authors": ["Z-Fran"],
     }
 
