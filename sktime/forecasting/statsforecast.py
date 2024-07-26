@@ -584,7 +584,15 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
     _tags = {
         # packaging info
         # --------------
-        # "authors": ["yarnabrina"],
+        "authors": [
+            "AzulGarza",
+            "jmoralez",
+            "MMenchero",
+            "yarnabrina",
+            "arnaujc91",
+            "luca-miniati",
+        ],
+        # AzulGarza, jmoralez, MMenchero for statsforecast AutoCES
         # "maintainers": ["yarnabrina"],
         # "python_dependencies": "statsforecast"
         # inherited from _GeneralisedStatsForecastAdapter
