@@ -1943,13 +1943,23 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
 
 
 def get_scoring_direction(scoring, default_direction="minimize"):
+    """Get the direction of the scoring metric.
 
-    # if not hasattr(scoring, "get_tag"):
-    #     return default_direction
-    if not isinstance(scoring.get_tag("lower_is_better"), bool):
+    Parameters
+    ----------
+    scoring : sktime metric object
+        scoring object that has 'lower_is_better' tag
+    default_direction : string, optional, default='minimize'
+        default direction to return if scoring object does not have 'lower_is_better' tag
+
+    Returns
+    -------
+    direction : string
+    """
+
+    if not hasattr(scoring, "get_tag") or not isinstance(
+        scoring.get_tag("lower_is_better"), bool
+    ):
         return default_direction
-    if scoring.get_tag("lower_is_better"):
-        direction = "minimize"
-    else:
-        direction = "maximize"
-    return direction
+
+    return "minimize" if scoring.get_tag("lower_is_better") else "maximize"

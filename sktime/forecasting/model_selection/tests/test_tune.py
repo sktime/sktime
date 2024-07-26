@@ -517,3 +517,12 @@ def test_get_scoring_direction_non_bool_tag(mock_scoring):
         assert (
             direction == test_direction
         ), f"Expected direction to be {test_direction} when lower_is_better tag is not boolian"
+
+
+def test_get_scoring_direction_without_get_tag():
+    scoring_object = []
+    test_direction = "maximise"
+    direction = get_scoring_direction(scoring_object, default_direction=test_direction)
+    assert (
+        direction == test_direction
+    ), f"Expected direction to be {test_direction} when lower_is_better tag is not boolian"
