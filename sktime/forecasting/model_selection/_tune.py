@@ -1907,7 +1907,9 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         for (
             param_grid_dict
         ) in self._param_grid:  # Assuming self._param_grid is now a list of dicts
-            study = optuna.create_study(direction="minimize")
+            study = optuna.create_study(
+                direction=get_scoring_direction(scoring=scoring)
+            )
             meta = {}
             meta["forecaster"] = self.forecaster
             meta["y"] = y
@@ -1938,3 +1940,12 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         # Combine all results into a single DataFrame
         combined_results = pd.concat(all_results, ignore_index=True)
         return combined_results
+
+
+def get_scoring_direction(scoring):
+    # if scoring.get_tag("lower_is_better"):
+    #     direction = "minimize"
+    # else:
+    #     direction = "maximize"
+    # return direction
+    return "minimize"
