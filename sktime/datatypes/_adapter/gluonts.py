@@ -53,10 +53,6 @@ def convert_pandas_to_listDataset(pd_dataframe: pd.DataFrame):
             start_datetime = pd.Timestamp(start_datetime)
             freq = "D"
 
-        # This is in the case of a RangeIndex
-        else:
-            freq = "D"
-
         return ListDataset(
             [{FieldName.START: start_datetime, FieldName.TARGET: target_values}],
             freq=freq,
