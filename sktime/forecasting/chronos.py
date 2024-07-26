@@ -878,7 +878,6 @@ class ChronosForecaster(HFTransformersForecaster):
                     max_missing_prop=self.max_missing_prop,
                 ),
                 ListDataset([dataset_item], freq=y.index.freqstr),
-                # ListDataset(dataset, freq="M")
             )
         ]
 
