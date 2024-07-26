@@ -846,7 +846,14 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
     _tags = {
         # packaging info
         # --------------
-        "authors": "luca-miniati",
+        "authors": [
+            "AzulGarza",
+            "jmoralez",
+            "luca-miniati",
+            "yarnabrina",
+            "arnaujc91",
+        ],
+        # AzulGarza and jmoralez for statsforecast MSTL
         "maintainers": "luca-miniati",
         # "python_dependencies": "statsforecast"
         # inherited from _GeneralisedStatsForecastAdapter
