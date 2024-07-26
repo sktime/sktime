@@ -2,7 +2,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements Chronos forecaster by wrapping amazon's chronos."""
 
-__author__ = ["RigvedManoj"]
+__author__ = ["Z-Fran"]
 __all__ = ["ChronosForecaster"]
 
 import ast
@@ -18,32 +18,38 @@ from typing import Any, Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
-import torch
-import transformers
-from gluonts.dataset.common import ListDataset
-from gluonts.itertools import Cyclic, Filter, Map
-from gluonts.transform import (
-    ExpectedNumInstanceSampler,
-    FilterTransformation,
-    InstanceSplitter,
-    LastValueImputation,
-    LeavesMissingValues,
-    MissingValueImputation,
-    TestSplitSampler,
-    ValidationSplitSampler,
-)
-from torch.utils.data import IterableDataset, get_worker_info
-from transformers import (
-    AutoConfig,
-    AutoModelForCausalLM,
-    AutoModelForSeq2SeqLM,
-    GenerationConfig,
-    T5Config,
-    Trainer,
-    TrainingArguments,
-)
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.hf_transformers_forecaster import HFTransformersForecaster
+
+if _check_soft_dependencies("torch", severity="none"):
+    import torch
+    from torch.utils.data import IterableDataset, get_worker_info
+
+if _check_soft_dependencies("transformers", severity="none"):
+    import transformers
+    from transformers import (
+        AutoConfig,
+        AutoModelForCausalLM,
+        AutoModelForSeq2SeqLM,
+        GenerationConfig,
+        T5Config,
+        Trainer,
+        TrainingArguments,
+    )
+if _check_soft_dependencies("gluonts", severity="none"):
+    from gluonts.dataset.common import ListDataset
+    from gluonts.itertools import Cyclic, Filter, Map
+    from gluonts.transform import (
+        ExpectedNumInstanceSampler,
+        FilterTransformation,
+        InstanceSplitter,
+        LastValueImputation,
+        LeavesMissingValues,
+        MissingValueImputation,
+        TestSplitSampler,
+        ValidationSplitSampler,
+    )
 
 logger = logging.getLogger(__name__)
 
