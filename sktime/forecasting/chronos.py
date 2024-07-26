@@ -10,16 +10,15 @@ import itertools
 import json
 import logging
 import os
-import random
 import re
 import sys
+from collections.abc import Iterator
 from copy import deepcopy
 from dataclasses import dataclass
 from functools import partial
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Literal, Optional, Tuple, Union
+from typing import Any, Literal, Optional, Union
 
-import accelerate
 import gluonts
 import numpy as np
 import pandas as pd
@@ -54,7 +53,7 @@ from sktime.forecasting.hf_transformers_forecaster import HFTransformersForecast
 logger = logging.getLogger(__name__)
 
 
-def left_pad_and_stack_1D(tensors: List[torch.Tensor]) -> torch.Tensor:
+def left_pad_and_stack_1D(tensors: list[torch.Tensor]) -> torch.Tensor:
     max_len = max(len(c) for c in tensors)
     padded = []
     for c in tensors:
@@ -74,7 +73,7 @@ def is_main_process() -> bool:
     return int(os.environ["RANK"]) == 0
 
 
-def get_training_job_info() -> Dict:
+def get_training_job_info() -> dict:
     """Get returns info about this training job."""
     job_info = {}
 
@@ -104,12 +103,11 @@ def get_training_job_info() -> Dict:
     job_info["numpy_version"] = np.__version__
     job_info["gluonts_version"] = gluonts.__version__
     job_info["transformers_version"] = transformers.__version__
-    job_info["accelerate_version"] = accelerate.__version__
 
     return job_info
 
 
-def save_training_info(ckpt_path: Path, training_config: Dict):
+def save_training_info(ckpt_path: Path, training_config: dict):
     """Save info about this training job in a json file for documentation."""
     assert ckpt_path.is_dir()
     with open(ckpt_path / "training_info.json", "w") as fp:
@@ -227,7 +225,7 @@ class ChronosConfig:
     """Holds all the chronos configuration parameters."""
 
     tokenizer_class: str
-    tokenizer_kwargs: Dict[str, Any]
+    tokenizer_kwargs: dict[str, Any]
     context_length: int
     prediction_length: int
     n_tokens: int
@@ -263,7 +261,7 @@ class ChronosTokenizer:
     def context_input_transform(
         self,
         context: torch.Tensor,
-    ) -> Tuple:
+    ) -> tuple:
         """
         Turn a batch of time series into token IDs, attention map, and tokenizer_state.
 
@@ -292,7 +290,7 @@ class ChronosTokenizer:
         """
         raise NotImplementedError()
 
-    def label_input_transform(self, label: torch.Tensor, tokenizer_state: Any) -> Tuple:
+    def label_input_transform(self, label: torch.Tensor, tokenizer_state: Any) -> tuple:
         """
         Turn a batch of label slices of time series into token IDs and attention map.
 
@@ -367,7 +365,7 @@ class MeanScaleUniformBins(ChronosTokenizer):
 
     def _input_transform(
         self, context: torch.Tensor, scale: Optional[torch.Tensor] = None
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         attention_mask = ~torch.isnan(context)
 
         if scale is None:
@@ -393,7 +391,7 @@ class MeanScaleUniformBins(ChronosTokenizer):
 
     def _append_eos_token(
         self, token_ids: torch.Tensor, attention_mask: torch.Tensor
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         batch_size = token_ids.shape[0]
         eos_tokens = torch.full((batch_size, 1), fill_value=self.config.eos_token_id)
         token_ids = torch.concat((token_ids, eos_tokens), dim=1)
@@ -404,7 +402,7 @@ class MeanScaleUniformBins(ChronosTokenizer):
 
     def context_input_transform(
         self, context: torch.Tensor
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         length = context.shape[-1]
 
         if length > self.config.context_length:
@@ -421,7 +419,7 @@ class MeanScaleUniformBins(ChronosTokenizer):
 
     def label_input_transform(
         self, label: torch.Tensor, scale: torch.Tensor
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         length = label.shape[-1]
 
         assert length == self.config.prediction_length
@@ -524,7 +522,7 @@ class ChronosDataset(IterableDataset, ShuffleMixin):
     def __init__(
         self,
         datasets: list,
-        probabilities: List[float],
+        probabilities: list[float],
         tokenizer: ChronosTokenizer,
         context_length: int = 512,
         prediction_length: int = 64,
@@ -821,7 +819,7 @@ class ChronosForecaster(HFTransformersForecaster):
         )
 
         if seed is None:
-            seed = random.randint(0, 2**32)
+            seed = np.random.randint(0, 2**31)
         self.seed = seed
         output_dir = Path(output_dir)
         self.output_dir = get_next_path("run", base_dir=output_dir, file_type="")
@@ -1023,7 +1021,7 @@ class ChronosForecaster(HFTransformersForecaster):
         return self
 
     def _prepare_and_validate_context(
-        self, context: Union[torch.Tensor, List[torch.Tensor]]
+        self, context: Union[torch.Tensor, list[torch.Tensor]]
     ):
         if isinstance(context, list):
             context = left_pad_and_stack_1D(context)
