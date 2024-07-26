@@ -207,10 +207,7 @@ class ChronosTokenizer:
     which concrete classes must implement.
     """
 
-    def context_input_transform(
-        self,
-        context: torch.Tensor,
-    ) -> tuple:
+    def context_input_transform(self, context):
         """
         Turn a batch of time series into token IDs, attention map, and tokenizer_state.
 
@@ -239,7 +236,7 @@ class ChronosTokenizer:
         """
         raise NotImplementedError()
 
-    def label_input_transform(self, label: torch.Tensor, tokenizer_state: Any) -> tuple:
+    def label_input_transform(self, label, tokenizer_state):
         """
         Turn a batch of label slices of time series into token IDs and attention map.
 
@@ -269,9 +266,7 @@ class ChronosTokenizer:
         """
         raise NotImplementedError()
 
-    def output_transform(
-        self, samples: torch.Tensor, tokenizer_state: Any
-    ) -> torch.Tensor:
+    def output_transform(self, samples, tokenizer_state):
         """
         Turn a batch of sample token IDs into real values.
 
