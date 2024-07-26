@@ -1,16 +1,15 @@
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+# reference: https://github.com/amazon-science/chronos-forecasting
 """Implements Chronos forecaster by wrapping amazon's chronos."""
 
 __author__ = ["Z-Fran"]
 __all__ = ["ChronosForecaster"]
 
-import ast
 import itertools
 import logging
 import re
 from collections.abc import Iterator
-from copy import deepcopy
 from dataclasses import dataclass
 from functools import partial
 from pathlib import Path
@@ -725,30 +724,6 @@ class ChronosForecaster(HFTransformersForecaster):
     def __init__(
         self,
         model_path: str,
-        # model_id: str = "google/t5-efficient-tiny",
-        training_data_paths: str = None,
-        probability: Optional[str] = None,
-        context_length: int = 512,
-        prediction_length: int = 64,
-        min_past: int = 64,
-        shuffle_buffer_length: int = 100,
-        model_type: str = "seq2seq",
-        random_init: bool = False,
-        tie_embeddings: bool = False,
-        output_dir: str = "./output/",
-        tokenizer_class: str = "MeanScaleUniformBins",
-        tokenizer_kwargs: str = "{'low_limit': -15.0, 'high_limit': 15.0}",
-        n_tokens: int = 4096,
-        n_special_tokens: int = 2,
-        pad_token_id: int = 0,
-        eos_token_id: int = 1,
-        use_eos_token: bool = True,
-        max_missing_prop: float = 0.9,
-        num_samples: int = 20,
-        temperature: float = 1.0,
-        top_k: int = 50,
-        top_p: float = 1.0,
-        seed: Optional[int] = None,
         fit_strategy="minimal",
         validation_split=0.2,
         config=None,
@@ -756,6 +731,14 @@ class ChronosForecaster(HFTransformersForecaster):
         compute_metrics=None,
         deterministic=False,
         callbacks=None,
+        peft_config=None,
+        random_init: bool = False,
+        tie_embeddings: bool = False,
+        min_past: int = 64,
+        shuffle_buffer_length: int = 100,
+        output_dir: str = "./output/",
+        max_missing_prop: float = 0.9,
+        seed: Optional[int] = None,
     ):
         super().__init__(
             model_path=model_path,
@@ -766,11 +749,13 @@ class ChronosForecaster(HFTransformersForecaster):
             compute_metrics=compute_metrics,
             deterministic=deterministic,
             callbacks=callbacks,
+            peft_config=peft_config,
         )
 
         if seed is None:
             seed = np.random.randint(0, 2**31)
         self.seed = seed
+
         output_dir = Path(output_dir)
         self.output_dir = get_next_path("run", base_dir=output_dir, file_type="")
         logger.info(f"Logging dir: {self.output_dir}")
@@ -800,62 +785,42 @@ class ChronosForecaster(HFTransformersForecaster):
             _training_args.update(training_args)
         self.training_args = _training_args
 
-        self.training_data_paths = training_data_paths
-        self.probability = probability
-        self.context_length = context_length
-        self.prediction_length = prediction_length
-        self.min_past = min_past
-        self.shuffle_buffer_length = shuffle_buffer_length
-        self.model_type = model_type
         self.random_init = random_init
         self.tie_embeddings = tie_embeddings
-        self.tokenizer_class = tokenizer_class
-        self.tokenizer_kwargs = tokenizer_kwargs
-        self.n_tokens = n_tokens
-        self.n_special_tokens = n_special_tokens
-        self.pad_token_id = pad_token_id
-        self.eos_token_id = eos_token_id
-        self.use_eos_token = use_eos_token
+        self.min_past = min_past
+        self.shuffle_buffer_length = shuffle_buffer_length
         self.max_missing_prop = max_missing_prop
-        self.num_samples = num_samples
-        self.temperature = temperature
-        self.top_k = top_k
-        self.top_p = top_p
 
-        assert self.model_type in ["seq2seq", "causal"]
+        _config = {
+            "model_type": "seq2seq",  # str
+            "tokenizer_class": "MeanScaleUniformBins",  # str
+            "tokenizer_kwargs": {"low_limit": -15.0, "high_limit": 15.0},  # dict
+            "n_tokens": 4096,  # int
+            "n_special_tokens": 2,  # int
+            "pad_token_id": 0,  # int,
+            "eos_token_id": 1,  # int,
+            "use_eos_token": True,  # bool
+            "context_length": 512,  # int
+            "prediction_length": 64,  # int
+            "num_samples": 20,  # int
+            "temperature": 1.0,  # float
+            "top_k": 50,  # int
+            "top_p": 1.0,  # float
+        }
+        if config is not None:
+            _config.update(config)
+        self.config = _config
+        self.chronos_config = ChronosConfig(**_config)
 
         self.model = load_model(
             model_id=self.model_path,
-            model_type=self.model_type,
-            vocab_size=self.n_tokens,
+            model_type=self.chronos_config.model_type,
+            vocab_size=self.chronos_config.n_tokens,
             random_init=self.random_init,
             tie_embeddings=self.tie_embeddings,
-            pad_token_id=self.pad_token_id,
-            eos_token_id=self.eos_token_id,
+            pad_token_id=self.chronos_config.pad_token_id,
+            eos_token_id=self.chronos_config.eos_token_id,
         )
-
-        tokenizer_kwargs = self.tokenizer_kwargs
-        if isinstance(tokenizer_kwargs, str):
-            tokenizer_kwargs = ast.literal_eval(tokenizer_kwargs)
-        assert isinstance(tokenizer_kwargs, dict)
-
-        self.chronos_config = ChronosConfig(
-            tokenizer_class=self.tokenizer_class,
-            tokenizer_kwargs=tokenizer_kwargs,
-            n_tokens=self.n_tokens,
-            n_special_tokens=self.n_special_tokens,
-            pad_token_id=self.pad_token_id,
-            eos_token_id=self.eos_token_id,
-            use_eos_token=self.use_eos_token,
-            model_type=self.model_type,
-            context_length=self.context_length,
-            prediction_length=self.prediction_length,
-            num_samples=self.num_samples,
-            temperature=self.temperature,
-            top_k=self.top_k,
-            top_p=self.top_p,
-        )
-        # Add extra items to model config so that it's saved in the ckpt
         self.model.config.chronos_config = self.chronos_config.__dict__
 
     def _fit(self, y, X=None, fh=None):
@@ -895,23 +860,6 @@ class ChronosForecaster(HFTransformersForecaster):
         logging.info(f"Using SEED: {self.seed}")
         transformers.set_seed(seed=self.seed)
 
-        raw_training_config = deepcopy(locals())
-        # training_data_paths = ast.literal_eval(self.training_data_paths)
-        # assert isinstance(training_data_paths, list)
-
-        probability = self.probability
-        if isinstance(probability, str):
-            probability = ast.literal_eval(probability)
-        # elif probability is None:
-        #     probability = [1.0 / len(training_data_paths)] * len(training_data_paths)
-        assert isinstance(probability, list)
-
-        # logger.info(
-        #     f"Loading and filtering {len(training_data_paths)} datasets "
-        #     f"for training: {training_data_paths}",
-        # )
-        logger.info(f"Mixing probabilities: {probability}")
-
         # time_series = [np.random.randn(108)]
         # start_times = [np.datetime64("2000-01", "M")] * len(time_series)
         # dataset = [
@@ -927,7 +875,7 @@ class ChronosForecaster(HFTransformersForecaster):
             Filter(
                 partial(
                     has_enough_observations,
-                    min_length=self.min_past + self.prediction_length,
+                    min_length=self.min_past + self.chronos_config.prediction_length,
                     max_missing_prop=self.max_missing_prop,
                 ),
                 ListDataset([dataset_item], freq=y.index.freqstr),
@@ -937,14 +885,14 @@ class ChronosForecaster(HFTransformersForecaster):
 
         shuffled_train_dataset = ChronosDataset(
             datasets=train_datasets,
-            probabilities=probability,
+            probabilities=[1],
             tokenizer=self.chronos_config.create_tokenizer(),
-            context_length=self.context_length,
-            prediction_length=self.prediction_length,
+            context_length=self.chronos_config.context_length,
+            prediction_length=self.chronos_config.prediction_length,
             min_past=self.min_past,
-            model_type=self.model_type,
+            model_type=self.chronos_config.model_type,
             imputation_method=LastValueImputation()
-            if self.model_type == "causal"
+            if self.chronos_config.model_type == "causal"
             else None,
             mode="training",
         ).shuffle(shuffle_buffer_length=self.shuffle_buffer_length)
@@ -962,16 +910,6 @@ class ChronosForecaster(HFTransformersForecaster):
         trainer.train()
 
         return self
-
-    def save_model(self, path: str):
-        """Save the model.
-
-        Parameters
-        ----------
-        path : str
-            The path to save the model.
-        """
-        self.model.save_pretrained(path)
 
     def _prepare_and_validate_context(
         self, context: Union[torch.Tensor, list[torch.Tensor]]
@@ -1009,7 +947,7 @@ class ChronosForecaster(HFTransformersForecaster):
 
         prediction_length = len(fh)
         if prediction_length is None:
-            prediction_length = self.prediction_length
+            prediction_length = self.chronos_config.prediction_length
 
         predictions = []
         remaining = prediction_length
@@ -1018,7 +956,7 @@ class ChronosForecaster(HFTransformersForecaster):
             token_ids, attention_mask, scale = tokenizer.context_input_transform(
                 context_tensor
             )
-            prediction_length = min(remaining, self.prediction_length)
+            prediction_length = min(remaining, self.chronos_config.prediction_length)
             preds = self.model.generate(
                 input_ids=token_ids.to(self.model.device),
                 attention_mask=attention_mask.to(self.model.device),
@@ -1026,23 +964,25 @@ class ChronosForecaster(HFTransformersForecaster):
                     min_new_tokens=prediction_length,
                     max_new_tokens=prediction_length,
                     do_sample=True,
-                    num_return_sequences=self.num_samples,
-                    eos_token_id=self.model.config.eos_token_id,
-                    pad_token_id=self.model.config.pad_token_id,
-                    temperature=self.temperature,
-                    top_k=self.top_k,
-                    top_p=self.top_p,
+                    num_return_sequences=self.chronos_config.num_samples,
+                    eos_token_id=self.chronos_config.eos_token_id,
+                    pad_token_id=self.chronos_config.pad_token_id,
+                    temperature=self.chronos_config.temperature,
+                    top_k=self.chronos_config.top_k,
+                    top_p=self.chronos_config.top_p,
                 ),
             )
 
-            if self.model_type == "seq2seq":
+            if self.chronos_config.model_type == "seq2seq":
                 preds = preds[..., 1:]  # remove the decoder start token
             else:
-                assert self.model_type == "causal"
+                assert self.chronos_config.model_type == "causal"
                 assert preds.size(-1) == token_ids.size(-1) + prediction_length
                 preds = preds[..., -prediction_length:]
 
-            preds = preds.reshape(token_ids.size(0), self.num_samples, -1)
+            preds = preds.reshape(
+                token_ids.size(0), self.chronos_config.num_samples, -1
+            )
 
             prediction = tokenizer.output_transform(preds.to(scale.device), scale)
 
@@ -1063,6 +1003,16 @@ class ChronosForecaster(HFTransformersForecaster):
         y_pred = pd.Series(values, index=row_idx, name=self._y.name)
 
         return y_pred
+
+    def save_model(self, path: str):
+        """Save the model.
+
+        Parameters
+        ----------
+        path : str
+            The path to save the model.
+        """
+        self.model.save_pretrained(path)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
