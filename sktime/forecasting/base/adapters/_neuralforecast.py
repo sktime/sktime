@@ -96,6 +96,7 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         futr_exog_list: Optional[list[str]] = None,
         verbose_fit: bool = False,
         verbose_predict: bool = False,
+        # TODO change the default value to False in v0.33.0
         broadcasting: bool = True,
     ) -> None:
         self.freq = freq
@@ -127,6 +128,13 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
                     "capability:global_forecasting": False,
                 }
             )
+        from warnings import warn
+
+        warn(
+            "DeprecationWarning: The default value of the parameter "
+            "broadcasting will be set to False in v0.33.0.",
+            DeprecationWarning,
+        )
 
     @functools.cached_property
     @abc.abstractmethod
