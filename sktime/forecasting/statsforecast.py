@@ -1,7 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Interfaces to estimators from statsforecast by Nixtla."""
 
-__author__ = ["FedericoGarza", "yarnabrina"]
+__author__ = ["AzulGarza", "yarnabrina"]
 
 __all__ = [
     "StatsForecastAutoARIMA",
@@ -179,8 +179,8 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["FedericoGarza", "yarnabrina"],
-        "maintainers": ["FedericoGarza"],
+        "authors": ["AzulGarza", "yarnabrina"],
+        "maintainers": ["AzulGarza"],
         # "python_dependencies": "statsforecast"
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
