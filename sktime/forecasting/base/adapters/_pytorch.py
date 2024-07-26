@@ -1,5 +1,4 @@
 import abc
-from abc import ABC
 
 import numpy as np
 import pandas as pd
@@ -15,10 +14,8 @@ else:
     class Dataset:
         """Dummy class if torch is unavailable."""
 
-        pass
 
-
-class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
+class BaseDeepNetworkPyTorch(BaseForecaster):
     """Abstract base class for deep learning networks using torch.nn."""
 
     _tags = {
@@ -125,9 +122,6 @@ class BaseDeepNetworkPyTorch(BaseForecaster, ABC):
         if fh is None:
             fh = self.fh
         fh = fh.to_relative(self.cutoff)
-
-        if min(fh._values) < 0:
-            raise NotImplementedError("LTSF is not supporting insample predictions.")
 
         if max(fh._values) > self.network.pred_len or min(fh._values) < 0:
             raise ValueError(

@@ -1,4 +1,5 @@
 """Tests the AutoReg model."""
+
 __author__ = ["CTFallon", "mgazian000", "jonathanbechtel"]
 
 import pytest
@@ -16,7 +17,8 @@ from sktime.tests.test_switch import run_test_for_class
 )
 def test_against_statsmodels():
     """Compare sktime's AutoREG interface with statsmodels AutoREG,
-    without exog data."""
+    without exog data.
+    """
     from statsmodels.tsa.ar_model import AutoReg as _AutoReg
 
     from sktime.datasets import load_airline
@@ -42,7 +44,8 @@ def test_against_statsmodels():
 )
 def test_against_statsmodels_fit_results():
     """Compare fit stats of sktime's AutoREG interface with statsmodels AutoREG,
-    without exog data"""
+    without exog data
+    """
     from statsmodels.tsa.ar_model import AutoReg as _AutoReg
 
     from sktime.datasets import load_airline

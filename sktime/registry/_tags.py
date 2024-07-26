@@ -479,7 +479,7 @@ class capability__feature_importance(_BaseTag):
 
     If the tag is ``True``, the estimator can produce feature importances.
 
-    Feature importances are queriable by the fitted parameter interface
+    Feature importances are queryable by the fitted parameter interface
     via ``get_fitted_params``, after calling ``fit`` of the respective estimator.
 
     If the tag is ``False``, the estimator does not produce feature importances.
@@ -544,7 +544,7 @@ class capability__train_estimate(_BaseTag):
     produce and store an estimate of their own statistical performance,
     e.g., via out-of-bag estimates, or cross-validation.
 
-    Training performance estimates are queriable by the fitted parameter interface
+    Training performance estimates are queryable by the fitted parameter interface
     via ``get_fitted_params``, after calling ``fit`` of the respective estimator.
 
     If the tag is ``False``, the estimator does not produce
@@ -616,7 +616,7 @@ class capability__exogeneous(_BaseTag):
     that can be used to improve forecasting accuracy.
 
     If the forecaster uses exogeneous data (``ignore-exogeneous-X=False``),
-    the ``X`` parmameter in ``fit``, ``predict``, and other methods
+    the ``X`` parameter in ``fit``, ``predict``, and other methods
     can be used to pass exogeneous data to the forecaster.
 
     If the ``X-y-must-have-same-index`` tag is ``True``,
@@ -793,6 +793,31 @@ class requires_fh_in_fit(_BaseTag):
         "parent_type": "forecaster",
         "tag_type": "bool",
         "short_descr": "does the forecaster require the forecasting horizon in fit?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
+class capability__categorical_in_X(_BaseTag):
+    """Capability: If forecaster can handle categorical natively in exogeneous(X) data.
+
+    ``False`` = cannot handle categorical natively in X,
+    ``True`` = can handle categorical natively in X
+
+    - String name: ``"capability:categorical_in_X"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    Exogeneous data are additional time series,
+    that can be used to improve forecasting accuracy.
+    """
+
+    _tags = {
+        "tag_name": "capability:categorical_in_X",
+        "parent_type": "forecaster",
+        "tag_type": "bool",
+        "short_descr": "can the forecaster natively handle categorical data in exogeneous X?",  # noqa: E501
         "user_facing": True,
     }
 
@@ -1058,26 +1083,26 @@ class scitype__transform_input(_BaseTag):
         :header-rows: 2
 
         * -
-            - `transform`
-            -
+          - `transform`
+          -
         * - `X`
-            - `-output`
-            - type of return
+          - `-output`
+          - type of return
         * - `Series`
-            - `Primitives`
-            - `pd.DataFrame` (1-row)
+          - `Primitives`
+          - `pd.DataFrame` (1-row)
         * - `Panel`
-            - `Primitives`
-            - `pd.DataFrame`
+          - `Primitives`
+          - `pd.DataFrame`
         * - `Series`
-            - `Series`
-            - `Series`
+          - `Series`
+          - `Series`
         * - `Panel`
-            - `Series`
-            - `Panel`
+          - `Series`
+          - `Panel`
         * - `Series`
-            - `Panel`
-            - `Panel`
+          - `Panel`
+          - `Panel`
 
     The instance indices in the in return correspond to instances in the input ``X``.
     """
@@ -1569,13 +1594,13 @@ class x_inner_mtype(_BaseTag):
         "tag_name": "X_inner_mtype",
         "parent_type": "estimator",
         "tag_type": ("list", "str"),
-        "short_descr": "which machine type(s) is the internal _fit/_predict able to deal with?",  # noqa
+        "short_descr": "which machine type(s) is the internal _fit/_predict able to deal with?",  # noqa: E501
         "user_facing": False,
     }
 
 
 class y_inner_mtype(_BaseTag):
-    """The machine type(s) the transformer can deal with internally for X.
+    """The machine type(s) the transformer can deal with internally for y.
 
     - String name: ``"y_inner_mtype"``
     - Extension developer tag
@@ -1640,7 +1665,7 @@ class y_inner_mtype(_BaseTag):
         "tag_name": "y_inner_mtype",
         "parent_type": "estimator",
         "tag_type": ("list", "str"),
-        "short_descr": "which machine type(s) is the internal _fit/_predict able to deal with?",  # noqa
+        "short_descr": "which machine type(s) is the internal _fit/_predict able to deal with?",  # noqa: E501
         "user_facing": False,
     }
 
@@ -1926,6 +1951,12 @@ ESTIMATOR_TAG_REGISTER = [
         "forecaster",
         "bool",
         "does the forecaster implement predict_variance?",
+    ),
+    (
+        "capability:global_forecasting",
+        ["forecaster"],
+        "bool",
+        "can the estimator make global forecasting?",
     ),
 ]
 
