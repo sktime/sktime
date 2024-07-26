@@ -7,11 +7,8 @@ __all__ = ["ChronosForecaster"]
 
 import ast
 import itertools
-import json
 import logging
-import os
 import re
-import sys
 from collections.abc import Iterator
 from copy import deepcopy
 from dataclasses import dataclass
@@ -19,11 +16,9 @@ from functools import partial
 from pathlib import Path
 from typing import Any, Literal, Optional, Union
 
-import gluonts
 import numpy as np
 import pandas as pd
 import torch
-import torch.distributed as dist
 import transformers
 from gluonts.dataset.common import ListDataset
 from gluonts.itertools import Cyclic, Filter, Map
@@ -64,58 +59,6 @@ def left_pad_and_stack_1D(tensors: list[torch.Tensor]) -> torch.Tensor:
         )
         padded.append(torch.concat((padding, c), dim=-1))
     return torch.stack(padded)
-
-
-def is_main_process() -> bool:
-    """Check if we're on the main process."""
-    if not dist.is_torchelastic_launched():
-        return True
-    return int(os.environ["RANK"]) == 0
-
-
-def get_training_job_info() -> dict:
-    """Get returns info about this training job."""
-    job_info = {}
-
-    # CUDA info
-    job_info["cuda_available"] = torch.cuda.is_available()
-    if torch.cuda.is_available():
-        job_info["device_count"] = torch.cuda.device_count()
-
-        job_info["device_names"] = {
-            idx: torch.cuda.get_device_name(idx)
-            for idx in range(torch.cuda.device_count())
-        }
-        job_info["mem_info"] = {
-            idx: torch.cuda.mem_get_info(device=idx)
-            for idx in range(torch.cuda.device_count())
-        }
-
-    # DDP info
-    job_info["torchelastic_launched"] = dist.is_torchelastic_launched()
-
-    if dist.is_torchelastic_launched():
-        job_info["world_size"] = dist.get_world_size()
-
-    # Versions
-    job_info["python_version"] = sys.version.replace("\n", " ")
-    job_info["torch_version"] = torch.__version__
-    job_info["numpy_version"] = np.__version__
-    job_info["gluonts_version"] = gluonts.__version__
-    job_info["transformers_version"] = transformers.__version__
-
-    return job_info
-
-
-def save_training_info(ckpt_path: Path, training_config: dict):
-    """Save info about this training job in a json file for documentation."""
-    assert ckpt_path.is_dir()
-    with open(ckpt_path / "training_info.json", "w") as fp:
-        json.dump(
-            {"training_config": training_config, "job_info": get_training_job_info()},
-            fp,
-            indent=4,
-        )
 
 
 def get_next_path(
@@ -1011,14 +954,17 @@ class ChronosForecaster(HFTransformersForecaster):
 
         trainer.train()
 
-        # if is_main_process():
-        #     model.save_pretrained(self.output_dir / "checkpoint-final")
-        #     save_training_info(
-        #         self.output_dir / "checkpoint-final",
-        #         training_config=raw_training_config,
-        #     )
-
         return self
+
+    def save_model(self, path: str):
+        """Save the model.
+
+        Parameters
+        ----------
+        path : str
+            The path to save the model.
+        """
+        self.model.save_pretrained(path)
 
     def _prepare_and_validate_context(
         self, context: Union[torch.Tensor, list[torch.Tensor]]
