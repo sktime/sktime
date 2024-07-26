@@ -1,9 +1,9 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
-"""Tests for the TransformSelectForecaster"""
+"""Tests for the TransformSelectEstimator"""
 
 import pytest
 
-from sktime.forecasting.compose import TransformSelectForecaster
+from sktime.forecasting.compose import TransformSelectEstimator
 from sktime.forecasting.croston import Croston
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
@@ -17,7 +17,7 @@ from sktime.transformations.series.tests.test_adi_cv import (
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(TransformSelectForecaster),
+    not run_test_for_class(TransformSelectEstimator),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize(
@@ -64,7 +64,7 @@ def test_forecaster_selection(
        The forecaster that should be selected by the forecaster
     """
     # Defining the forecaster
-    forecaster = TransformSelectForecaster(forecasters=forecasters)
+    forecaster = TransformSelectEstimator(forecasters=forecasters)
     forecaster.fit(series_generator(), fh=horizon)
 
     # Check if the type of the chosen forecaster matches the provided forecaster type
@@ -72,7 +72,7 @@ def test_forecaster_selection(
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(TransformSelectForecaster),
+    not run_test_for_class(TransformSelectEstimator),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize(
@@ -119,7 +119,7 @@ def test_fallback_forecaster(
         A forecaster to choose if no options from `forecasters` is viable
     """
     # Creating our forecaster
-    forecaster = TransformSelectForecaster(
+    forecaster = TransformSelectEstimator(
         forecasters=forecasters, fallback_forecaster=fallback_forecaster
     )
 
@@ -136,7 +136,7 @@ def test_fallback_forecaster(
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(TransformSelectForecaster),
+    not run_test_for_class(TransformSelectEstimator),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize(
@@ -201,7 +201,7 @@ def test_get_params(
         A function that generates a time series of a particular type
     """
     # Creating our forecaster
-    forecaster = TransformSelectForecaster(
+    forecaster = TransformSelectEstimator(
         forecasters=forecasters,
         transformer=transformer,
         fallback_forecaster=fallback_forecaster,
