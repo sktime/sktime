@@ -76,7 +76,16 @@ class VAR(_StatsModelsAdapter):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["thayeylolu", "aiwalter", "lbventura"],
+        "authors": [
+            "yogabonito",
+            "ChadFulton",
+            "bashtage",
+            "josef-pkt",
+            "thayeylolu",
+            "aiwalter",
+            "lbventura",
+        ],
+        # yogabonito, ChadFulton, bashtage, josef-pkt for statsmodels VAR
         "maintainers": "lbventura",
         # "python_dependencies": "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type
