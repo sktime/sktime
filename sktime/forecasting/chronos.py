@@ -312,9 +312,7 @@ class MeanScaleUniformBins(ChronosTokenizer):
             )
         )
 
-    def _input_transform(
-        self, context: torch.Tensor, scale: Optional[torch.Tensor] = None
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def _input_transform(self, context, scale=None):
         attention_mask = ~torch.isnan(context)
 
         if scale is None:
@@ -338,9 +336,7 @@ class MeanScaleUniformBins(ChronosTokenizer):
 
         return token_ids, attention_mask, scale
 
-    def _append_eos_token(
-        self, token_ids: torch.Tensor, attention_mask: torch.Tensor
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    def _append_eos_token(self, token_ids, attention_mask):
         batch_size = token_ids.shape[0]
         eos_tokens = torch.full((batch_size, 1), fill_value=self.config.eos_token_id)
         token_ids = torch.concat((token_ids, eos_tokens), dim=1)
@@ -349,9 +345,7 @@ class MeanScaleUniformBins(ChronosTokenizer):
 
         return token_ids, attention_mask
 
-    def context_input_transform(
-        self, context: torch.Tensor
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def context_input_transform(self, context):
         length = context.shape[-1]
 
         if length > self.config.context_length:
@@ -366,9 +360,7 @@ class MeanScaleUniformBins(ChronosTokenizer):
 
         return token_ids, attention_mask, scale
 
-    def label_input_transform(
-        self, label: torch.Tensor, scale: torch.Tensor
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    def label_input_transform(self, label, scale):
         length = label.shape[-1]
 
         assert length == self.config.prediction_length
@@ -381,9 +373,7 @@ class MeanScaleUniformBins(ChronosTokenizer):
 
         return token_ids, attention_mask
 
-    def output_transform(
-        self, samples: torch.Tensor, scale: torch.Tensor
-    ) -> torch.Tensor:
+    def output_transform(self, samples, scale):
         scale_unsqueezed = scale.unsqueeze(-1).unsqueeze(-1)
         indices = torch.clamp(
             samples - self.config.n_special_tokens - 1,
