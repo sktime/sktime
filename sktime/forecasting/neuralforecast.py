@@ -396,9 +396,9 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
                     "optimizer_kwargs": {"lr": 0.001},
                 },
             ]
+        params_broadcasting = [dict(p, **{"broadcasting": True}) for p in params]
         params_no_broadcasting = [dict(p, **{"broadcasting": False}) for p in params]
-        params.extend(params_no_broadcasting)
-        return params
+        return params_broadcasting + params_no_broadcasting
 
 
 class NeuralForecastLSTM(_NeuralForecastAdapter):
@@ -769,9 +769,9 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
                     "optimizer_kwargs": {"lr": 0.001},
                 },
             ]
+        params_broadcasting = [dict(p, **{"broadcasting": True}) for p in params]
         params_no_broadcasting = [dict(p, **{"broadcasting": False}) for p in params]
-        params.extend(params_no_broadcasting)
-        return params
+        return params_broadcasting + params_no_broadcasting
 
 
 __all__ = [
