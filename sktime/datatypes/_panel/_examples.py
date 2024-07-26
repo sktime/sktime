@@ -100,17 +100,6 @@ if _check_soft_dependencies("gluonts", severity="none"):
     df = example_dict[("pd-multiindex", "Panel", 0)]
 
     # Updating the DF to have pandas Datetime objects
-    dfs = [
-        df.assign(
-            instances=instances,
-            timepoints=pd.date_range(start="1970-01-01", periods=len(df), freq="D"),
-        ).set_index(["instances", "timepoints"])
-        for instances, df in enumerate(Xlist)
-    ]
-
-    # Updating the DataFrame
-    df = pd.concat(dfs, names=["instances", "timestamp"])
-
     list_dataset = convert_pandas_to_listDataset(df)
 
     example_dict[("gluonts_ListDataset_panel", "Panel", 0)] = list_dataset
@@ -118,11 +107,6 @@ if _check_soft_dependencies("gluonts", severity="none"):
 
     # Beginning example tests for PandasDataset
     df = example_dict[("pd-multiindex", "Panel", 0)]
-
-    df = df.assign(
-        instances=np.repeat([0, 1, 2], 3),
-        timepoints=pd.date_range(start="1970-01-01", periods=len(df), freq="D"),
-    ).set_index(["instances", "timepoints"])
 
     pandas_dataset = convert_pandas_multiindex_to_pandasDataset(
         df, item_id="instances", timepoints="timepoints", target=["var_0", "var_1"]
@@ -210,18 +194,6 @@ if _check_soft_dependencies("gluonts", severity="none"):
 
     df = example_dict[("pd-multiindex", "Panel", 1)]
 
-    # Updating the DF to have pandas Datetime objects
-    dfs = [
-        df.assign(
-            instances=instances,
-            timepoints=pd.date_range(start="1970-01-01", periods=len(df), freq="D"),
-        ).set_index(["instances", "timepoints"])
-        for instances, df in enumerate(Xlist)
-    ]
-
-    # Updating the DataFrame
-    df = pd.concat(dfs, names=["instances", "timestamp"])
-
     list_dataset = convert_pandas_to_listDataset(df)
 
     example_dict[("gluonts_ListDataset_panel", "Panel", 1)] = list_dataset
@@ -229,11 +201,6 @@ if _check_soft_dependencies("gluonts", severity="none"):
 
     # Beginning example tests for PandasDataset
     df = example_dict[("pd-multiindex", "Panel", 1)]
-
-    df = df.assign(
-        instances=np.repeat([0, 1, 2], 3),
-        timepoints=pd.date_range(start="1970-01-01", periods=len(df), freq="D"),
-    ).set_index(["instances", "timepoints"])
 
     pandas_dataset = convert_pandas_multiindex_to_pandasDataset(
         df, item_id="instances", timepoints="timepoints", target=["var_0"]
@@ -315,18 +282,6 @@ if _check_soft_dependencies("gluonts", severity="none"):
 
     df = example_dict[("pd-multiindex", "Panel", 2)]
 
-    # Updating the DF to have pandas Datetime objects
-    dfs = [
-        df.assign(
-            instances=instances,
-            timepoints=pd.date_range(start="1970-01-01", periods=len(df), freq="D"),
-        ).set_index(["instances", "timepoints"])
-        for instances, df in enumerate(Xlist)
-    ]
-
-    # Updating the DataFrame
-    df = pd.concat(dfs, names=["instances", "timestamp"])
-
     list_dataset = convert_pandas_to_listDataset(df)
 
     example_dict[("gluonts_ListDataset_panel", "Panel", 2)] = list_dataset
@@ -334,11 +289,6 @@ if _check_soft_dependencies("gluonts", severity="none"):
 
     # Beginning example tests for PandasDataset
     df = example_dict[("pd-multiindex", "Panel", 2)]
-
-    df = df.assign(
-        instances=[0, 0, 0],
-        timepoints=pd.date_range(start="1970-01-01", periods=len(df), freq="D"),
-    ).set_index(["instances", "timepoints"])
 
     pandas_dataset = convert_pandas_multiindex_to_pandasDataset(
         df, item_id="instances", timepoints="timepoints", target=["var_0"]
