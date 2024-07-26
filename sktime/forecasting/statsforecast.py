@@ -484,7 +484,14 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
     _tags = {
         # packaging info
         # --------------
-        # "authors": ["yarnabrina"],
+        "authors": [
+            "AzulGarza",
+            "jmoralez",
+            "yarnabrina",
+            "arnaujc91",
+            "luca-miniati",
+        ],
+        # AzulGarza and jmoralez for statsforecast AutoETS
         # "maintainers": ["yarnabrina"],
         # "python_dependencies": "statsforecast"
         # inherited from _GeneralisedStatsForecastAdapter
