@@ -24,6 +24,11 @@ from sktime.forecasting.hf_transformers_forecaster import HFTransformersForecast
 if _check_soft_dependencies("torch", severity="none"):
     import torch
     from torch.utils.data import IterableDataset, get_worker_info
+else:
+
+    class IterableDataset:
+        """Dummy class if torch is unavailable."""
+
 
 if _check_soft_dependencies("transformers", severity="none"):
     import transformers
@@ -1013,5 +1018,17 @@ class ChronosForecaster(HFTransformersForecaster):
         -------
         params : dict or list of dict
         """
-        params = {"model_name": "amazon/chronos-t5-small"}
+        params = {
+            "model_name": "amazon/chronos-t5-small",
+            "training_args": {
+                "per_device_train_batch_size": 4,
+                "gradient_accumulation_steps": 1,
+                "max_steps": 100,
+            },
+            "config": {
+                "prediction_length": 32,
+            },
+            "tie_embeddings": True,
+            "shuffle_buffer_length": 100_000,
+        }
         return params
