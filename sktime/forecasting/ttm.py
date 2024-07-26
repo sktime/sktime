@@ -29,7 +29,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     TinyTimeMixer Forecaster for Zero-Shot Forecasting of Multivariate Time Series.
 
     Wrapping implementation in [1]_ of method proposed in [2]_. See [3]_
-    for tutorial by creators of [2]_.
+    for tutorial by creators.
 
     TinyTimeMixer (TTM) are compact pre-trained models for Time-Series Forecasting,
     open-sourced by IBM Research. With less than 1 Million parameters, TTM introduces
