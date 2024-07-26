@@ -729,7 +729,7 @@ class ChronosForecaster(HFTransformersForecaster):
 
     # tag values are "safe defaults" which can usually be left as-is
     _tags = {
-        "python_dependencies": ["torch", "gluonts"],
+        "python_dependencies": ["torch>=2.4", "gluonts"],
         "y_inner_mtype": "pd.Series",
         "scitype:y": "univariate",
         "authors": ["Z-Fran"],
@@ -866,15 +866,6 @@ class ChronosForecaster(HFTransformersForecaster):
             # with compute capability 8 and above. See link for details.
             # https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#compute-capability-8-x
             training_args["tf32"] = False
-
-        # time_series = [np.random.randn(108)]
-        # start_times = [np.datetime64("2000-01", "M")] * len(time_series)
-        # dataset = [
-        #     {"start": start, "target": ts}
-        #     for ts, start in zip(time_series, start_times)
-        # ]
-        # from gluonts.dataset.pandas import PandasDataset
-        # ds = PandasDataset(y_train)
 
         # load data
         dataset_item = {"start": y.index[0], "target": list(y)}
