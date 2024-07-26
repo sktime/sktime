@@ -9,7 +9,6 @@ __author__ = ["Z-Fran"]
 __all__ = ["ChronosForecaster"]
 
 import itertools
-import logging
 import re
 from collections.abc import Iterator
 from dataclasses import dataclass
@@ -61,9 +60,6 @@ else:
 
     class MissingValueImputation:
         """Dummy class if gluonts is unavailable."""
-
-
-logger = logging.getLogger(__name__)
 
 
 def left_pad_and_stack_1D(tensors: list):
@@ -162,7 +158,6 @@ def load_model(
         AutoModelForSeq2SeqLM if model_type == "seq2seq" else AutoModelForCausalLM
     )
     if random_init:
-        # log_on_main("Using random initialization", logger)
         config = AutoConfig.from_pretrained(model_id)
         if isinstance(config, T5Config):
             # The default initializer_factor (1.0) in transformers is too large
@@ -170,7 +165,6 @@ def load_model(
         config.tie_word_embeddings = tie_embeddings
         model = AutoModelClass.from_config(config)
     else:
-        # log_on_main(f"Using pretrained initialization from {model_id}", logger)
         model = AutoModelClass.from_pretrained(model_id)
 
     model.resize_token_embeddings(vocab_size)
@@ -670,20 +664,34 @@ class ChronosDataset(IterableDataset, ShuffleMixin):
 
 
 class ChronosForecaster(HFTransformersForecaster):
-    """Chronos forecaster by wrapping Amazon's Chronos model [1]_.
-
-    Direct interface to Amazon Chronos, using the sktime interface.
-    All hyperparameters are exposed via the constructor.
+    """Chronos forecaster.
 
     Parameters
     ----------
-    model_name: str, required
-    top_p: float, default=1.0
-    top_k: int, default=50
-    temperature: float, default=1.0
-    num_samples: int, default=20
-    args_list: list, default=None
-    kwargs_dict: dict, default=None
+    model_path : str
+        Path to the Chronos' huggingface model.
+    fit_strategy : str, default="minimal"
+        Strategy to use for fitting (fine-tuning) the model.
+    validation_split : float, default=0.2
+        Fraction of the data to use for validation
+    config : dict, default={}
+        Configuration to use for the model.
+    training_args : dict, default={}
+        Training arguments to use for the model.
+    compute_metrics : list, default=None
+        List of metrics to compute during training.
+    deterministic : bool, default=False
+        Whether the predictions should be deterministic or not.
+    callbacks : list, default=[]
+        List of callbacks to use during training.
+    peft_config : peft.PeftConfig, default=None
+        Configuration for Parameter-Efficient Fine-Tuning.
+    random_init: bool, default=False
+    tie_embeddings: bool, default=False
+    min_past: int, default=64
+    shuffle_buffer_length: int, default=100
+    max_missing_prop: float, default=0.9
+    seed: int, optional, default=None
 
     References
     ----------
@@ -692,16 +700,28 @@ class ChronosForecaster(HFTransformersForecaster):
     Examples
     --------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.chronos import Chronos
+    >>> from sktime.forecasting.chronos import ChronosForecaster
     >>> from sktime.split import temporal_train_test_split
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> import torch # doctest: +SKIP
+    >>> import torch._dynamo # doctest: +SKIP
+    >>> torch._dynamo.config.suppress_errors = True # doctest: +SKIP
     >>> y = load_airline()
     >>> y_train, y_test = temporal_train_test_split(y)
     >>> fh = ForecastingHorizon(y_test.index, is_relative=False)
-    >>> forecaster = Chronos(
-    ...        "amazon/chronos-t5-small",
-    ...        kwargs_dict={"torch_dtype": torch.bfloat16}
+    >>> training_args={
+    ...     "output_dir": './output',
+    ...     'per_device_train_batch_size': 4,
+    ...     'gradient_accumulation_steps': 1,
+    ...     'max_steps': 100
+    ... }
+    >>> config={"prediction_length": 32}
+    >>> forecaster = ChronosForecaster(
+    ...        "amazon/chronos-t5-tiny",
+    ...        training_args=training_args,
+    ...        config=config,
+    ...        tie_embeddings=True,
+    ...        shuffle_buffer_length=100_000,
     ... )  # doctest: +SKIP
     >>> forecaster.fit(y_train)  # doctest: +SKIP
     >>> y_pred = forecaster.predict(fh) # doctest: +SKIP
@@ -733,7 +753,6 @@ class ChronosForecaster(HFTransformersForecaster):
         tie_embeddings: bool = False,
         min_past: int = 64,
         shuffle_buffer_length: int = 100,
-        output_dir: str = "./output/",
         max_missing_prop: float = 0.9,
         seed: Optional[int] = None,
     ):
@@ -749,22 +768,19 @@ class ChronosForecaster(HFTransformersForecaster):
             peft_config=peft_config,
         )
 
+        # set the seed
         if seed is None:
             seed = np.random.randint(0, 2**31)
         self.seed = seed
 
-        output_dir = Path(output_dir)
-        self.output_dir = get_next_path("run", base_dir=output_dir, file_type="")
-        logger.info(f"Logging dir: {self.output_dir}")
-
+        # set traing_args
         _training_args = {
-            "output_dir": str(self.output_dir),
+            "output_dir": "./output",
             "per_device_train_batch_size": 32,  # int
             "learning_rate": 1e-3,  # float
             "lr_scheduler_type": "linear",  # str
             "warmup_ratio": 0.0,  # float
             "optim": "adamw_torch_fused",  # str
-            "logging_dir": str(self.output_dir / "logs"),  # str
             "logging_strategy": "steps",  # str
             "logging_steps": 500,  # int
             "save_strategy": "steps",  # str
@@ -782,12 +798,7 @@ class ChronosForecaster(HFTransformersForecaster):
             _training_args.update(training_args)
         self.training_args = _training_args
 
-        self.random_init = random_init
-        self.tie_embeddings = tie_embeddings
-        self.min_past = min_past
-        self.shuffle_buffer_length = shuffle_buffer_length
-        self.max_missing_prop = max_missing_prop
-
+        # set config
         _config = {
             "model_type": "seq2seq",  # str
             "tokenizer_class": "MeanScaleUniformBins",  # str
@@ -809,6 +820,14 @@ class ChronosForecaster(HFTransformersForecaster):
         self.config = _config
         self.chronos_config = ChronosConfig(**_config)
 
+        # initialize attributes
+        self.random_init = random_init
+        self.tie_embeddings = tie_embeddings
+        self.min_past = min_past
+        self.shuffle_buffer_length = shuffle_buffer_length
+        self.max_missing_prop = max_missing_prop
+
+        # load the model
         self.model = load_model(
             model_id=self.model_path,
             model_type=self.chronos_config.model_type,
@@ -825,9 +844,6 @@ class ChronosForecaster(HFTransformersForecaster):
 
         private _fit containing the core logic, called from fit
 
-        Writes to self:
-            Sets fitted model attributes ending in "_".
-
         Parameters
         ----------
         y : pd.Series
@@ -841,6 +857,10 @@ class ChronosForecaster(HFTransformersForecaster):
         -------
         self : reference to self
         """
+        # set random seed
+        transformers.set_seed(seed=self.seed)
+
+        # check if TF32 format is available
         training_args = self.training_args
         if training_args["tf32"] and not (
             torch.cuda.is_available() and torch.cuda.get_device_capability()[0] >= 8
@@ -848,14 +868,7 @@ class ChronosForecaster(HFTransformersForecaster):
             # TF32 floating point format is available only on NVIDIA GPUs
             # with compute capability 8 and above. See link for details.
             # https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#compute-capability-8-x
-            logger.info(
-                "TF32 format is only available on devices with compute capability >= 8."
-                "Setting tf32 to False.",
-            )
             training_args["tf32"] = False
-
-        logging.info(f"Using SEED: {self.seed}")
-        transformers.set_seed(seed=self.seed)
 
         # time_series = [np.random.randn(108)]
         # start_times = [np.datetime64("2000-01", "M")] * len(time_series)
@@ -866,6 +879,7 @@ class ChronosForecaster(HFTransformersForecaster):
         # from gluonts.dataset.pandas import PandasDataset
         # ds = PandasDataset(y_train)
 
+        # load data
         dataset_item = {"start": y.index[0], "target": list(y)}
 
         train_datasets = [
@@ -894,10 +908,10 @@ class ChronosForecaster(HFTransformersForecaster):
             mode="training",
         ).shuffle(shuffle_buffer_length=self.shuffle_buffer_length)
 
-        # Define training args
+        # define training args
         training_args = TrainingArguments(**training_args)
 
-        # Create Trainer instance
+        # create Trainer instance
         trainer = Trainer(
             model=self.model,
             args=training_args,
