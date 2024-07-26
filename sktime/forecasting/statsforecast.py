@@ -702,7 +702,14 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
     _tags = {
         # packaging info
         # --------------
-        # "authors": ["yarnabrina"],
+        "authors": [
+            "MMenchero",
+            "jmoralez",
+            "yarnabrina",
+            "arnaujc91",
+            "luca-miniati",
+        ],
+        # MMenchero and jmoralez for statsforecast AutoTBATS
         # "maintainers": ["yarnabrina"],
         # "python_dependencies": "statsforecast"
         # inherited from _GeneralisedStatsForecastAdapter
