@@ -31,6 +31,7 @@ def format_nb_json(notebook_path, indent=1):
         Indentation to use for json output. Used in ``json.dump``.
     """
     import json
+
     # Read the notebook
     with open(notebook_path, encoding="utf-8") as f:
         notebook = json.load(f)
