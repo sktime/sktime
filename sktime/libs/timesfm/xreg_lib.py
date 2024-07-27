@@ -2,8 +2,8 @@
 
 import itertools
 import math
-from collections.abc import Iterable, Mapping, Sequence
-from typing import Any, Literal
+from collections.abc import Iterable, Sequence
+from typing import Any
 
 from sktime.utils.dependencies import _check_soft_dependencies
 
@@ -14,10 +14,7 @@ if _check_soft_dependencies("jax", severity="none"):
 import numpy as np
 from sklearn import preprocessing
 
-Category = int | str
-
 _TOL = 1e-6
-XRegMode = Literal["timesfm + xreg", "xreg + timesfm"]
 
 
 def _unnest(nested: Sequence[Sequence[Any]]) -> np.ndarray:
@@ -72,24 +69,16 @@ class BatchedInContextXRegBase:
 
     def __init__(
         self,
-        targets: Sequence[Sequence[float]],
-        train_lens: Sequence[int],
-        test_lens: Sequence[int],
-        train_dynamic_numerical_covariates: (
-            Mapping[str, Sequence[Sequence[float]]] | None
-        ) = None,
-        train_dynamic_categorical_covariates: (
-            Mapping[str, Sequence[Sequence[Category]]] | None
-        ) = None,
-        test_dynamic_numerical_covariates: (
-            Mapping[str, Sequence[Sequence[float]]] | None
-        ) = None,
-        test_dynamic_categorical_covariates: (
-            Mapping[str, Sequence[Sequence[Category]]] | None
-        ) = None,
-        static_numerical_covariates: Mapping[str, Sequence[float]] | None = None,
-        static_categorical_covariates: (Mapping[str, Sequence[Category]] | None) = None,
-    ) -> None:
+        targets,
+        train_lens,
+        test_lens,
+        train_dynamic_numerical_covariates=None,
+        train_dynamic_categorical_covariates=None,
+        test_dynamic_numerical_covariates=None,
+        test_dynamic_categorical_covariates=None,
+        static_numerical_covariates=None,
+        static_categorical_covariates=None,
+    ):
         self.targets = targets
         self.train_lens = train_lens
         self.test_lens = test_lens
@@ -304,15 +293,15 @@ class BatchedInContextXRegLinear(BatchedInContextXRegBase):
 
     def fit(
         self,
-        ridge: float = 0.0,
-        one_hot_encoder_drop: str | None = "first",
-        use_intercept: bool = True,
-        force_on_cpu: bool = False,
-        max_rows_per_col: int = 0,
-        max_rows_per_col_sample_seed: int = 42,
-        debug_info: bool = False,
-        assert_covariates: bool = False,
-        assert_covariate_shapes: bool = False,
+        ridge=0.0,
+        one_hot_encoder_drop="first",
+        use_intercept=True,
+        force_on_cpu=False,
+        max_rows_per_col=0,
+        max_rows_per_col_sample_seed=42,
+        debug_info=False,
+        assert_covariates=False,
+        assert_covariate_shapes=False,
     ):
         """Fits a linear model for in-context regression.
 

@@ -20,7 +20,7 @@ import multiprocessing
 import time
 from collections.abc import Sequence
 from os import path
-from typing import Any, Literal, Optional
+from typing import Any, Optional
 
 from sktime.utils.dependencies import _check_soft_dependencies
 
@@ -58,10 +58,6 @@ import numpy as np
 import pandas as pd
 
 from sktime.libs.timesfm import patched_decoder, xreg_lib
-
-Category = xreg_lib.Category
-XRegMode = xreg_lib.XRegMode
-
 
 _TOL = 1e-6
 
@@ -154,16 +150,16 @@ class TimesFm:
 
     def __init__(
         self,
-        context_len: int,
-        horizon_len: int,
-        input_patch_len: int,
-        output_patch_len: int,
-        num_layers: int,
-        model_dims: int,
-        per_core_batch_size: int = 32,
-        backend: Literal["cpu", "gpu", "tpu"] = "cpu",
-        quantiles: Sequence[float] | None = None,
-        verbose: bool = True,
+        context_len,
+        horizon_len,
+        input_patch_len,
+        output_patch_len,
+        num_layers,
+        model_dims,
+        per_core_batch_size=32,
+        backend="cpu",
+        quantiles=None,
+        verbose=True,
     ) -> None:
         self.per_core_batch_size = per_core_batch_size
         self.backend = backend
@@ -516,23 +512,19 @@ class TimesFm:
 
     def forecast_with_covariates(
         self,
-        inputs: list[Sequence[float]],
-        dynamic_numerical_covariates: (
-            dict[str, Sequence[Sequence[float]]] | None
-        ) = None,
-        dynamic_categorical_covariates: (
-            dict[str, Sequence[Sequence[Category]]] | None
-        ) = None,
-        static_numerical_covariates: dict[str, Sequence[float]] | None = None,
-        static_categorical_covariates: (dict[str, Sequence[Category]] | None) = None,
-        freq: Sequence[int] | None = None,
-        window_size: int | None = None,
-        forecast_context_len: int | None = None,
-        xreg_mode: XRegMode = "xreg + timesfm",
-        normalize_xreg_target_per_input: bool = True,
+        inputs,
+        dynamic_numerical_covariates=None,
+        dynamic_categorical_covariates=None,
+        static_numerical_covariates=None,
+        static_categorical_covariates=None,
+        freq=None,
+        window_size=None,
+        forecast_context_len=None,
+        xreg_mode="xreg + timesfm",
+        normalize_xreg_target_per_input=True,
         ridge: float = 0.0,
-        max_rows_per_col: int = 0,
-        force_on_cpu: bool = False,
+        max_rows_per_col=0,
+        force_on_cpu=False,
     ):
         """Forecasts on a list of time series with covariates.
 
