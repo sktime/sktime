@@ -285,9 +285,17 @@ dl = [
   'tensorflow<2.17,>=2; python_version < "3.12"',
   'torch; python_version < "3.12"',
   'transformers[torch]<4.41.0; python_version < "3.12"',
-  'timesfm<1.0.0; python_version < "3.11" and python_version >= "3.10"',
   'pykan<0.3,>=0.2; python_version > "3.9.7"',
   'pytorch-forecasting>=1.0.0; python_version < "3.11"',
+]
+timesfm = [
+  "tensorflow",
+  "einshape",
+  "jax",
+  "praxis",
+  "huggingface-hub",
+  "paxml",
+  "utilsforecast",
 ]
 mlflow = [
   "mlflow",
