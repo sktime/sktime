@@ -225,7 +225,7 @@ def test_check_fh_absolute_values_input_conversion_to_pandas_index(arg):
 
 
 GOOD_RELATIVE_INPUT_ARGS = [
-    pd.timedelta_range(pd.to_timedelta(1, unit="D"), periods=3, freq="D"),
+    pd.timedelta_range(pd.to_timedelta(1, freq="D"), periods=3, freq="D"),
     [np.timedelta64(x, "D") for x in range(3)],
     [timedelta(days=x) for x in range(3)],
 ]
@@ -292,8 +292,8 @@ def test_shift_index(timepoint, by):
 
 
 DURATIONS_ALLOWED = [
-    pd.TimedeltaIndex(range(3), unit="D", freq="D"),
-    pd.TimedeltaIndex(range(0, 9, 3), unit="D", freq="3D"),
+    pd.TimedeltaIndex(range(3), freq="D"),
+    pd.TimedeltaIndex(range(0, 9, 3), freq="3D"),
     pd.tseries.offsets.MonthEnd(3),
     # we also support pd.Timedelta, but it does not have freqstr so we
     # cannot automatically infer the unit during testing

@@ -39,7 +39,7 @@ TEST_CUTOFFS_TIMESTAMP = [
 TEST_CUTOFFS = [*TEST_CUTOFFS_INT_LIST, *TEST_CUTOFFS_INT_ARR, *TEST_CUTOFFS_TIMESTAMP]
 
 TEST_WINDOW_LENGTHS_INT = [1, 5]
-TEST_WINDOW_LENGTHS_TIMEDELTA = [pd.Timedelta(1, unit="D"), pd.Timedelta(5, unit="D")]
+TEST_WINDOW_LENGTHS_TIMEDELTA = [pd.Timedelta(1, freq="D"), pd.Timedelta(5, freq="D")]
 TEST_WINDOW_LENGTHS_DATEOFFSET = [pd.offsets.Day(1), pd.offsets.Day(5)]
 TEST_WINDOW_LENGTHS = [
     *TEST_WINDOW_LENGTHS_INT,
@@ -48,7 +48,7 @@ TEST_WINDOW_LENGTHS = [
 ]
 
 TEST_INITIAL_WINDOW_INT = [7, 10]
-TEST_INITIAL_WINDOW_TIMEDELTA = [pd.Timedelta(7, unit="D"), pd.Timedelta(10, unit="D")]
+TEST_INITIAL_WINDOW_TIMEDELTA = [pd.Timedelta(7, freq="D"), pd.Timedelta(10, freq="D")]
 TEST_INITIAL_WINDOW_DATEOFFSET = [pd.offsets.Day(7), pd.offsets.Day(10)]
 TEST_INITIAL_WINDOW = [
     *TEST_INITIAL_WINDOW_INT,
@@ -57,7 +57,7 @@ TEST_INITIAL_WINDOW = [
 ]
 
 TEST_STEP_LENGTHS_INT = [1, 5]
-TEST_STEP_LENGTHS_TIMEDELTA = [pd.Timedelta(1, unit="D"), pd.Timedelta(5, unit="D")]
+TEST_STEP_LENGTHS_TIMEDELTA = [pd.Timedelta(1, freq="D"), pd.Timedelta(5, freq="D")]
 TEST_STEP_LENGTHS_DATEOFFSET = [pd.offsets.Day(1), pd.offsets.Day(5)]
 TEST_STEP_LENGTHS = [
     *TEST_STEP_LENGTHS_INT,
@@ -75,16 +75,16 @@ TEST_INS_FHS = [
 TEST_FHS = [*TEST_OOS_FHS, *TEST_INS_FHS]
 
 TEST_OOS_FHS_TIMEDELTA = [
-    [pd.Timedelta(1, unit="D")],
-    [pd.Timedelta(2, unit="D"), pd.Timedelta(5, unit="D")],
+    [pd.Timedelta(1, freq="D")],
+    [pd.Timedelta(2, freq="D"), pd.Timedelta(5, freq="D")],
 ]  # out-of-sample
 TEST_INS_FHS_TIMEDELTA = [
-    pd.Timedelta(-3, unit="D"),  # single in-sample
-    [pd.Timedelta(-2, unit="D"), pd.Timedelta(-5, unit="D")],  # multiple in-sample
-    pd.Timedelta(0, unit="D"),  # last training point
+    pd.Timedelta(-3, freq="D"),  # single in-sample
+    [pd.Timedelta(-2, freq="D"), pd.Timedelta(-5, freq="D")],  # multiple in-sample
+    pd.Timedelta(0, freq="D"),  # last training point
     [
-        pd.Timedelta(-3, unit="D"),
-        pd.Timedelta(2, unit="D"),
+        pd.Timedelta(-3, freq="D"),
+        pd.Timedelta(2, freq="D"),
     ],  # mixed in-sample and out-of-sample
 ]
 TEST_FHS_TIMEDELTA = [*TEST_OOS_FHS_TIMEDELTA, *TEST_INS_FHS_TIMEDELTA]
