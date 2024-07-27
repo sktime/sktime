@@ -13,7 +13,7 @@ from sktime.transformations.series.fourier import FourierFeatures
 
 Y = load_airline()
 Y_datetime = deepcopy(Y)
-Y_datetime.index = Y_datetime.index.to_timestamp(freq="M")
+Y_datetime.index = Y_datetime.index.to_timestamp(freq="ME")
 
 
 @pytest.mark.skipif(

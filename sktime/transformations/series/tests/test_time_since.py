@@ -52,7 +52,7 @@ def df_period_monthly_idx():
     """Create timeseries with Period index, monthly frequency."""
     return pd.DataFrame(
         data={"y": [1, 1, 1, 1, 1]},
-        index=pd.period_range(start="2000-01-01", freq="M", periods=5),
+        index=pd.period_range(start="2000-01-01", freq="ME", periods=5),
     )
 
 

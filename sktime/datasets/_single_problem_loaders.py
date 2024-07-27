@@ -767,7 +767,7 @@ def load_shampoo_sales():
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
     y = pd.read_csv(path, index_col=0, dtype={1: float}).squeeze("columns")
-    y.index = pd.PeriodIndex(y.index, freq="M", name="Period")
+    y.index = pd.PeriodIndex(y.index, freq="ME", name="Period")
     y.name = "Number of shampoo sales"
     return y
 
@@ -919,7 +919,7 @@ def load_airline():
     y = pd.read_csv(path, index_col=0, dtype={1: float}).squeeze("columns")
 
     # make sure time index is properly formatted
-    y.index = pd.PeriodIndex(y.index, freq="M", name="Period")
+    y.index = pd.PeriodIndex(y.index, freq="ME", name="Period")
     y.name = "Number of airline passengers"
     return y
 
@@ -1099,7 +1099,7 @@ def load_PBS_dataset():
     y = pd.read_csv(path, index_col=0, dtype={1: float}).squeeze("columns")
 
     # make sure time index is properly formatted
-    y.index = pd.PeriodIndex(y.index, freq="M", name="Period")
+    y.index = pd.PeriodIndex(y.index, freq="ME", name="Period")
     y.name = "Number of scripts"
     return y
 

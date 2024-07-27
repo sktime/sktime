@@ -205,7 +205,7 @@ def test_check_fh_values_duplicate_input_values(arg):
 GOOD_ABSOLUTE_INPUT_ARGS = (
     pd.Index([1, 2, 3]),
     pd.period_range("2000-01-01", periods=3, freq="D"),
-    pd.date_range("2000-01-01", periods=3, freq="M"),
+    pd.date_range("2000-01-01", periods=3, freq="ME"),
     np.array([1, 2, 3]),
     [1, 2, 3],
     1,
@@ -243,7 +243,7 @@ def test_check_fh_relative_values_input_conversion_to_pandas_index(arg):
 
 
 TIMEPOINTS = [
-    pd.Period("2000", freq="M"),
+    pd.Period("2000", freq="ME"),
     pd.Timestamp("2000-01-01").to_period(freq="D"),
     1,
     3,
