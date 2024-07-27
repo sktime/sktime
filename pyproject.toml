@@ -287,15 +287,12 @@ dl = [
   'transformers[torch]<4.41.0; python_version < "3.12"',
   'pykan<0.3,>=0.2; python_version > "3.9.7"',
   'pytorch-forecasting>=1.0.0; python_version < "3.11"',
-]
-timesfm = [
-  "tensorflow",
-  "einshape",
-  "jax",
-  "praxis",
-  "huggingface-hub",
-  "paxml",
-  "utilsforecast",
+  'einshape; python_version < "3.11" and python_version >= "3.10"',
+  'jax; python_version < "3.11" and python_version >= "3.10"',
+  'praxis; python_version < "3.11" and python_version >= "3.10"',
+  'huggingface; python_version < "3.11" and python_version >= "3.10"'hub",
+  'paxml; python_version < "3.11" and python_version >= "3.10"',
+  'utilsforecast; python_version < "3.11" and python_version >= "3.10"',
 ]
 mlflow = [
   "mlflow",
