@@ -100,18 +100,7 @@ if _check_soft_dependencies("gluonts", severity="none"):
     df = example_dict[("pd-multiindex", "Panel", 0)]
 
     # Updating the DF to have pandas Datetime objects
-    dfs = [
-        df.assign(
-            series_id=series_id,
-            timepoints=pd.date_range(start="2023-01-01", periods=len(df), freq="D"),
-        ).set_index(["series_id", "timepoints"])
-        for series_id, df in enumerate(Xlist)
-    ]
-
-    # Updating the DataFrame
-    df = pd.concat(dfs, names=["series_id", "timestamp"])
-
-    list_dataset = convert_pandas_to_listDataset(df, is_single=False)
+    list_dataset = convert_pandas_to_listDataset(df)
 
     example_dict[("gluonts_ListDataset_panel", "Panel", 0)] = list_dataset
     example_dict_lossy[("gluonts_ListDataset_panel", "Panel", 0)] = True
@@ -119,13 +108,8 @@ if _check_soft_dependencies("gluonts", severity="none"):
     # Beginning example tests for PandasDataset
     df = example_dict[("pd-multiindex", "Panel", 0)]
 
-    df = df.assign(
-        series_id=np.repeat([0, 1, 2], 3),
-        timepoints=pd.date_range(start="2023-01-01", periods=len(df), freq="D"),
-    ).set_index(["series_id", "timepoints"])
-
     pandas_dataset = convert_pandas_multiindex_to_pandasDataset(
-        df, item_id="series_id", target=["var_0", "var_1"]
+        df, item_id="instances", timepoints="timepoints", target=["var_0", "var_1"]
     )
 
     example_dict[("gluonts_PandasDataset_panel", "Panel", 0)] = pandas_dataset
@@ -210,19 +194,7 @@ if _check_soft_dependencies("gluonts", severity="none"):
 
     df = example_dict[("pd-multiindex", "Panel", 1)]
 
-    # Updating the DF to have pandas Datetime objects
-    dfs = [
-        df.assign(
-            series_id=series_id,
-            timepoints=pd.date_range(start="2023-01-01", periods=len(df), freq="D"),
-        ).set_index(["series_id", "timepoints"])
-        for series_id, df in enumerate(Xlist)
-    ]
-
-    # Updating the DataFrame
-    df = pd.concat(dfs, names=["series_id", "timestamp"])
-
-    list_dataset = convert_pandas_to_listDataset(df, is_single=False)
+    list_dataset = convert_pandas_to_listDataset(df)
 
     example_dict[("gluonts_ListDataset_panel", "Panel", 1)] = list_dataset
     example_dict_lossy[("gluonts_ListDataset_panel", "Panel", 1)] = True
@@ -230,13 +202,8 @@ if _check_soft_dependencies("gluonts", severity="none"):
     # Beginning example tests for PandasDataset
     df = example_dict[("pd-multiindex", "Panel", 1)]
 
-    df = df.assign(
-        series_id=np.repeat([0, 1, 2], 3),
-        timepoints=pd.date_range(start="2023-01-01", periods=len(df), freq="D"),
-    ).set_index(["series_id", "timepoints"])
-
     pandas_dataset = convert_pandas_multiindex_to_pandasDataset(
-        df, item_id="series_id", target=["var_0"]
+        df, item_id="instances", timepoints="timepoints", target=["var_0"]
     )
 
     example_dict[("gluonts_PandasDataset_panel", "Panel", 1)] = pandas_dataset
@@ -315,19 +282,7 @@ if _check_soft_dependencies("gluonts", severity="none"):
 
     df = example_dict[("pd-multiindex", "Panel", 2)]
 
-    # Updating the DF to have pandas Datetime objects
-    dfs = [
-        df.assign(
-            series_id=series_id,
-            timepoints=pd.date_range(start="2023-01-01", periods=len(df), freq="D"),
-        ).set_index(["series_id", "timepoints"])
-        for series_id, df in enumerate(Xlist)
-    ]
-
-    # Updating the DataFrame
-    df = pd.concat(dfs, names=["series_id", "timestamp"])
-
-    list_dataset = convert_pandas_to_listDataset(df, is_single=False)
+    list_dataset = convert_pandas_to_listDataset(df)
 
     example_dict[("gluonts_ListDataset_panel", "Panel", 2)] = list_dataset
     example_dict_lossy[("gluonts_ListDataset_panel", "Panel", 2)] = True
@@ -335,13 +290,8 @@ if _check_soft_dependencies("gluonts", severity="none"):
     # Beginning example tests for PandasDataset
     df = example_dict[("pd-multiindex", "Panel", 2)]
 
-    df = df.assign(
-        series_id=[0, 0, 0],
-        timepoints=pd.date_range(start="2023-01-01", periods=len(df), freq="D"),
-    ).set_index(["series_id", "timepoints"])
-
     pandas_dataset = convert_pandas_multiindex_to_pandasDataset(
-        df, item_id="series_id", target=["var_0"]
+        df, item_id="instances", timepoints="timepoints", target=["var_0"]
     )
 
     example_dict[("gluonts_PandasDataset_panel", "Panel", 2)] = pandas_dataset
