@@ -729,7 +729,7 @@ class ChronosForecaster(HFTransformersForecaster):
 
     # tag values are "safe defaults" which can usually be left as-is
     _tags = {
-        "python_dependencies": ["torch>=2.4", "gluonts"],
+        "python_dependencies": ["torch>=2.4", "gluonts", "transformers"],
         "y_inner_mtype": "pd.Series",
         "scitype:y": "univariate",
         "authors": ["Z-Fran"],
