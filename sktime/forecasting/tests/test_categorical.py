@@ -1,11 +1,11 @@
 """Tests for checking with categorical inputs
 
 Cases where error must be raised are tested in test_all_forecasters in
-- test_y_invalid_type_raises_error
+- test_categorical_y_raises_error
 - test_categorical_X_raises_error
 """
 
-___author__ = ["Abhay-Lejith"]
+__author__ = ["Abhay-Lejith"]
 
 
 import pandas as pd
