@@ -53,7 +53,6 @@ if _check_soft_dependencies("utilsforecast", severity="none"):
 
 
 import numpy as np
-import pandas as pd
 
 from sktime.libs.timesfm import patched_decoder, xreg_lib
 
@@ -74,7 +73,7 @@ def moving_average(arr, window_size):
     return [smoothed_arr, arr - smoothed_arr]
 
 
-def freq_map(freq: str):
+def freq_map(freq):
     """freq_map."""
     freq = str.upper(freq)
     if (
@@ -107,40 +106,7 @@ def _renormalize(batch, stats):
 
 
 class TimesFm:
-    """TimesFM forecast API for inference.
-
-    This class is the scaffolding for calling TimesFM forecast. To properly use:
-      1. Create an instance with the correct hyperparameters of a TimesFM model.
-      2. Call `load_from_checkpoint` to load a compatible checkpoint.
-      3. Call `forecast` for inference.
-
-    Given the model size, this API does not shard the model weights for SPMD. All
-    parallelism happens on the data dimension.
-
-    Compilation happens during the first time `forecast` is called and uses the
-    `per_core_batch_size` to set and freeze the input signature. Subsequent calls
-    to `forecast` reflect the actual inference latency.
-
-    Attributes
-    ----------
-      per_core_batch_size: Batch size on each core for data parallelism.
-      backend: One of "cpu", "gpu" or "tpu".
-      num_devices: Number of cores provided the backend.
-      global_batch_size: per_core_batch_size * num_devices. Each batch of
-        inference task will be padded with respect to global_batch_size to
-        minimize latency.
-      context_len: Largest context length the model allows for each decode call.
-        This technically can be any large, but practically should set to the
-        context length the checkpoint was trained with.
-      horizon_len: Forecast horizon.
-      input_patch_len: Input patch len.
-      output_patch_len: Output patch len. How many timepoints is taken from a
-        single step of autoregressive decoding. Can be set as the training horizon
-        of the checkpoint.
-      mesh_shape: Shape of the data parallelism mesh.
-      mesh_name: Names of the data parallelism mesh.
-      model_p: Configuration of the TimesFM model deduced from the hparams.
-    """
+    """TimesFM."""
 
     def _logging(self, s):
         if self._verbose:
@@ -158,7 +124,7 @@ class TimesFm:
         backend="cpu",
         quantiles=None,
         verbose=True,
-    ) -> None:
+    ):
         self.per_core_batch_size = per_core_batch_size
         self.backend = backend
         self.num_devices = jax.local_device_count(self.backend)
@@ -240,7 +206,7 @@ class TimesFm:
         repo_id="google/timesfm-1.0-200m",
         checkpoint_type=FLAX,
         step=None,
-    ) -> None:
+    ):
         """load_from_checkpoint."""
         # Download the checkpoint from Hugging Face Hub if not given
         if checkpoint_path is None:
@@ -342,7 +308,7 @@ class TimesFm:
             )
         self._logging(f"Jitted decoding in {time.time() - start_time:.2f} seconds.")
 
-    def _preprocess(self, inputs, freq) -> tuple[np.array, np.array, int]:
+    def _preprocess(self, inputs, freq):
         input_ts, input_padding, inp_freq = [], [], []
 
         pmap_pad = (
@@ -389,31 +355,7 @@ class TimesFm:
         forecast_context_len=None,
         return_forecast_on_context=False,
     ):
-        """Forecasts on a list of time series.
-
-        Args:
-          inputs: list of time series forecast contexts. Each context time series
-            should be in a format convertible to JTensor by `jnp.array`.
-          freq: frequency of each context time series. 0 for high frequency
-            (default), 1 for medium, and 2 for low. Notice this is different from
-            the `freq` required by `forecast_on_df`.
-          window_size: window size of trend + residual decomposition. If None then
-            we do not do decomposition.
-          forecast_context_len: optional max context length.
-          return_forecast_on_context: True to return the forecast on the context
-            when available, i.e. after the first input patch.
-
-        Returns
-        -------
-        A tuple for JTensors:
-        - the mean forecast of size (# inputs, # forecast horizon),
-        - the full forecast (mean + quantiles) of size
-            (# inputs,  # forecast horizon, 1 + # quantiles).
-
-        Raises
-        ------
-        ValueError: If the checkpoint is not properly loaded.
-        """
+        """Forecast."""
         if not self._train_state or not self._model:
             raise ValueError(
                 "Checkpoint not loaded. Call `load_from_checkpoint` before"
@@ -518,41 +460,11 @@ class TimesFm:
         forecast_context_len=None,
         xreg_mode="xreg + timesfm",
         normalize_xreg_target_per_input=True,
-        ridge: float = 0.0,
+        ridge=0.0,
         max_rows_per_col=0,
         force_on_cpu=False,
     ):
-        """Forecasts on a list of time series with covariates.
-
-        To optimize inference speed, avoid string valued categorical covariates.
-
-        Args:
-          inputs: A list of time series forecast contexts. Each context time series
-            should be in a format convertible to JTensor by `jnp.array`.
-          dynamic_numerical_covariates: A dict of dynamic numerical covariates.
-          dynamic_categorical_covariates: A dict of dynamic categorical covariates.
-          static_numerical_covariates: A dict of static numerical covariates.
-          static_categorical_covariates: A dict of static categorical covariates.
-          freq: frequency of each context time series. 0 for high frequency
-            (default), 1 for medium, and 2 for low. Notice this is different from
-            the `freq` required by `forecast_on_df`.
-          window_size: window size of trend + residual decomposition. If None then
-            we do not do decomposition.
-          forecast_context_len: optional max context length.
-          xreg_mode: one of "xreg + timesfm" or "timesfm + xreg". "xreg + timesfm"
-            fits a model on the residuals of the TimesFM forecast. "timesfm + xreg"
-            fits a model on the targets then forecasts on the residuals via TimesFM.
-          normalize_xreg_target_per_input: whether to normalize the xreg target per
-            input in the given batch.
-          ridge: ridge penalty for the linear model.
-          max_rows_per_col: max number of rows per column for the linear model.
-          force_on_cpu: whether to force running on cpu for the linear model.
-
-        Returns
-        -------
-          A tuple of two lists. The first is the outputs of the model. The second is
-          the outputs of the xreg.
-        """
+        """forecast_with_covariates."""
         # Verify and bookkeep covariates.
         if not (
             dynamic_numerical_covariates
@@ -740,29 +652,8 @@ class TimesFm:
         window_size=None,
         num_jobs=1,
         verbose=True,
-    ) -> pd.DataFrame:
-        """Forecasts on a list of time series.
-
-        Args:
-          inputs: A pd.DataFrame of all time series. The dataframe should have a
-            `unique_id` column for identifying the time series, a `ds` column for
-            timestamps and a value column for the time series values.
-          freq: string valued `freq` of data. Notice this is different from the
-            `freq` required by `forecast`. See `freq_map` for allowed values.
-          forecast_context_len: If provided none zero, we take the last
-            `forecast_context_len` time-points from each series as the forecast
-            context instead of the `context_len` set by the model.
-          value_name: The name of the value column.
-          model_name: name of the model to be written into future df.
-          window_size: window size of trend + residual decomposition. If None then
-            we do not do decomposition.
-          num_jobs: number of parallel processes to use for dataframe processing.
-          verbose: output model states in terminal.
-
-        Returns
-        -------
-          Future forecasts dataframe.
-        """
+    ):
+        """forecast_on_df."""
         if not (
             "unique_id" in inputs.columns
             and "ds" in inputs.columns

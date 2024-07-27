@@ -2,8 +2,6 @@
 
 import itertools
 import math
-from collections.abc import Iterable, Sequence
-from typing import Any
 
 from sktime.utils.dependencies import _check_soft_dependencies
 
@@ -17,17 +15,17 @@ from sklearn import preprocessing
 _TOL = 1e-6
 
 
-def _unnest(nested: Sequence[Sequence[Any]]) -> np.ndarray:
+def _unnest(nested):
     return np.array(list(itertools.chain.from_iterable(nested)))
 
 
-def _repeat(elements: Iterable[Any], counts: Iterable[int]) -> np.ndarray:
+def _repeat(elements, counts):
     return np.array(
         list(itertools.chain.from_iterable(map(itertools.repeat, elements, counts)))
     )
 
 
-def _to_padded_jax_array(x: np.ndarray):
+def _to_padded_jax_array(x):
     if x.ndim == 1:
         (i,) = x.shape
         di = 2 ** math.ceil(math.log2(i)) - i
@@ -42,30 +40,7 @@ def _to_padded_jax_array(x: np.ndarray):
 
 
 class BatchedInContextXRegBase:
-    """Helper class for in-context regression covariate formatting.
-
-    Attributes
-    ----------
-      targets: List of targets (responses) of the in-context regression.
-      train_lens: List of lengths of each target vector from the context.
-      test_lens: List of lengths of each forecast horizon.
-      train_dynamic_numerical_covariates: Dict of covariate names mapping to the
-        dynamic numerical covariates of each forecast task on the context. Their
-        lengths should match the corresponding lengths in `train_lens`.
-      train_dynamic_categorical_covariates: Dict of covariate names mapping to the
-        dynamic categorical covariates of each forecast task on the context. Their
-        lengths should match the corresponding lengths in `train_lens`.
-      test_dynamic_numerical_covariates: Dict of covariate names mapping to the
-        dynamic numerical covariates of each forecast task on the horizon. Their
-        lengths should match the corresponding lengths in `test_lens`.
-      test_dynamic_categorical_covariates: Dict of covariate names mapping to the
-        dynamic categorical covariates of each forecast task on the horizon. Their
-        lengths should match the corresponding lengths in `test_lens`.
-      static_numerical_covariates: Dict of covariate names mapping to the static
-        numerical covariates of each forecast task.
-      static_categorical_covariates: Dict of covariate names mapping to the static
-        categorical covariates of each forecast task.
-    """
+    """BatchedInContextXRegBase."""
 
     def __init__(
         self,
@@ -95,7 +70,7 @@ class BatchedInContextXRegBase:
         self.static_numerical_covariates = static_numerical_covariates or {}
         self.static_categorical_covariates = static_categorical_covariates or {}
 
-    def _assert_covariates(self, assert_covariate_shapes: bool = False) -> None:
+    def _assert_covariates(self, assert_covariate_shapes=False):
         # Check presence.
         if (
             self.train_dynamic_numerical_covariates
@@ -217,11 +192,11 @@ class BatchedInContextXRegBase:
 
     def create_covariate_matrix(
         self,
-        one_hot_encoder_drop: str | None = "first",
-        use_intercept: bool = True,
-        assert_covariates: bool = False,
-        assert_covariate_shapes: bool = False,
-    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        one_hot_encoder_drop="first",
+        use_intercept=True,
+        assert_covariates=False,
+        assert_covariate_shapes=False,
+    ):
         """create_covariate_matrix."""
         if assert_covariates:
             self._assert_covariates(assert_covariate_shapes)
@@ -283,7 +258,7 @@ class BatchedInContextXRegBase:
 
         return _unnest(self.targets), x_train, x_test
 
-    def fit(self) -> Any:
+    def fit(self):
         """Fit."""
         raise NotImplementedError("Fit is not implemented.")
 
@@ -303,37 +278,7 @@ class BatchedInContextXRegLinear(BatchedInContextXRegBase):
         assert_covariates=False,
         assert_covariate_shapes=False,
     ):
-        """Fits a linear model for in-context regression.
-
-        Args:
-          ridge: A non-negative value for specifying the ridge regression penalty.
-            If 0 is provided, fallback to ordinary least squares. Note this penalty
-            is added to the normalized covariate matrix.
-          one_hot_encoder_drop: Which drop strategy to use for the one hot encoder.
-          use_intercept: Whether to prepare an intercept (all 1) column in the
-            matrices.
-          force_on_cpu: Whether to force execution on cpu for accelerator machines.
-          max_rows_per_col: How many rows to subsample per column. 0 for no
-            subsampling. This is for speeding up model fitting.
-          max_rows_per_col_sample_seed: The seed for the subsampling if needed by
-            `max_rows_per_col`.
-          debug_info: Whether to return debug info.
-          assert_covariates: Whether to assert the validity of the covariate inputs.
-          assert_covariate_shapes: Whether to assert the shapes of the covariate
-            inputs when `assert_covariates` is True.
-
-        Returns
-        -------
-          If `debug_info` is False:
-            The linear fits on the horizon.
-          If `debug_info` is True:
-            A tuple of:
-            - the linear fits on the horizon,
-            - the linear fits on the context,
-            - the flattened target vector,
-            - the covariate matrix for the context, and
-            - the covariate matrix for the horizon.
-        """
+        """Fit."""
         flat_targets, x_train_raw, x_test = self.create_covariate_matrix(
             one_hot_encoder_drop=one_hot_encoder_drop,
             use_intercept=use_intercept,
