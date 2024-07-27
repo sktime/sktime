@@ -12,10 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Directory to extract time covariates.
-
-Extract time covariates from datetime.
-"""
+"""time_features."""
 
 import numpy as np
 import pandas as pd
@@ -105,7 +102,7 @@ HOLIDAYS = [
 
 
 class TimeCovariates:
-    """Extract all time covariates except for holidays."""
+    """TimeCovariates."""
 
     def __init__(
         self,

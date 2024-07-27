@@ -12,13 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Pax ML model for patched time-series decoder.
-
-The file implements Residual MLPs, Patched Decoder layers and PAX ML models.
-"""
+"""patched_decoder."""
 
 import dataclasses
-from typing import Optional
 
 from sktime.utils.dependencies import _check_soft_dependencies
 
@@ -75,7 +71,6 @@ _TOLERANCE = 1e-7
 
 
 def _shift_padded_seq(mask, seq):
-    """Shifts rows of seq based on the first 0 in each row of the mask."""
     num = seq.shape[1]
 
     # Find the index of the first 0 in each row of the mask
@@ -98,21 +93,10 @@ def _shift_padded_seq(mask, seq):
 
 
 class ResidualBlock(BaseLayer):
-    """Simple feedforward block with residual connection.
-
-    Attributes
-    ----------
-      input_dims: input dimension.
-      hidden_dims: hidden dimension.
-      output_dims: output dimension.
-      dropout_prob: dropout probability.
-      layer_norm: whether to use layer norm or not.
-      dropout_tpl: config for dropout.
-      ln_tpl: config for layer norm.
-      act_tpl: config for activation in hidden layer.
-    """
+    """ResidualBlock."""
 
     if _check_soft_dependencies("praxis", severity="none"):
+        # These should not be changed or removed
         input_dims: int = 0
         hidden_dims: int = 0
         output_dims: int = 0
@@ -214,27 +198,10 @@ def _create_quantiles():
 
 
 class PatchedTimeSeriesDecoder(BaseLayer):
-    """Patch decoder layer for time-series foundation model.
-
-    Attributes
-    ----------
-      patch_len: length of input patches.
-      horizon_len: length of output patches. Referred to as `output_patch_len`
-        during inference.
-      model_dims: model dimension of stacked transformer layer.
-      hidden_dims: hidden dimensions in fully connected layers.
-      quantiles: list of quantiles for non prob model.
-      residual_block_tpl: config for residual block.
-      stacked_transformer_params_tpl: config for stacked transformer.
-      use_freq: whether to use frequency encoding.
-
-    In all of what followed, except specified otherwise, B is batch size, T is
-    sequence length of time-series. N is the number of input patches that can be
-    obtained from T. P is the input patch length and H is the horizon length. Q is
-    number of output logits. D is model dimension.
-    """
+    """PatchedTimeSeriesDecoder."""
 
     if _check_soft_dependencies("praxis", severity="none"):
+        # These should not be changed or removed
         patch_len: int = 0
         horizon_len: int = 0
         model_dims: int = 0
@@ -351,7 +318,7 @@ class PatchedTimeSeriesDecoder(BaseLayer):
     def _postprocess_output(
         self,
         model_output,
-        num_outputs: int,
+        num_outputs,
         stats,
     ):
         """Postprocess output of stacked transformer."""
@@ -398,32 +365,12 @@ class PatchedTimeSeriesDecoder(BaseLayer):
     def decode(
         self,
         inputs,
-        horizon_len: int,
-        output_patch_len: Optional[int] = None,
-        max_len: int = 512,
-        return_forecast_on_context: bool = False,
+        horizon_len,
+        output_patch_len=None,
+        max_len=512,
+        return_forecast_on_context=False,
     ):
-        """Auto-regressive decoding without caching.
-
-        Args:
-          inputs: input time-series and paddings. Time-series shape B x C, padding
-            shape shape B x (C + H) where H is the prediction length.
-          horizon_len: prediction length.
-          output_patch_len: output length to be fetched from one step of
-            auto-regressive decoding.
-          max_len: maximum training context length.
-          return_forecast_on_context: whether to return the model forecast on the
-            context except the first input patch.
-
-        Returns
-        -------
-          tuple of two forecasting results:
-          - Point (mean) output predictions as a tensor with shape B x H'.
-          - Full predictions (mean and quantiles) as a tensor with shape
-            B x H' x (1 + # quantiles).
-          In particular, if return_forecast_on_context is True, H' is H plus
-          the forecastable context length, i.e. context_len - (first) patch_len.
-        """
+        """Decode."""
         final_out = inputs[_INPUT_TS]
         context_len = final_out.shape[1]
         paddings = inputs[_INPUT_PADDING]
@@ -478,13 +425,7 @@ class PatchedTimeSeriesDecoder(BaseLayer):
 
 
 class PatchedDecoderFinetuneModel(BaseModel):
-    """Model class for finetuning patched time-series decoder.
-
-    Attributes
-    ----------
-      core_layer_tpl: config for core layer.
-      freq: freq to finetune on.
-    """
+    """PatchedDecoderFinetuneModel."""
 
     def __init__(self):
         self.core_layer_tpl = template_field(PatchedTimeSeriesDecoder)

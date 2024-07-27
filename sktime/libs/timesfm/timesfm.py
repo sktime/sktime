@@ -18,9 +18,7 @@ import collections
 import logging
 import multiprocessing
 import time
-from collections.abc import Sequence
 from os import path
-from typing import Any, Optional
 
 from sktime.utils.dependencies import _check_soft_dependencies
 
@@ -238,10 +236,10 @@ class TimesFm:
 
     def load_from_checkpoint(
         self,
-        checkpoint_path: Optional[str] = None,
-        repo_id: str = "google/timesfm-1.0-200m",
+        checkpoint_path=None,
+        repo_id="google/timesfm-1.0-200m",
         checkpoint_type=FLAX,
-        step: int | None = None,
+        step=None,
     ) -> None:
         """load_from_checkpoint."""
         # Download the checkpoint from Hugging Face Hub if not given
@@ -344,9 +342,7 @@ class TimesFm:
             )
         self._logging(f"Jitted decoding in {time.time() - start_time:.2f} seconds.")
 
-    def _preprocess(
-        self, inputs: Sequence[np.array], freq: Sequence[int]
-    ) -> tuple[np.array, np.array, int]:
+    def _preprocess(self, inputs, freq) -> tuple[np.array, np.array, int]:
         input_ts, input_padding, inp_freq = [], [], []
 
         pmap_pad = (
@@ -387,11 +383,11 @@ class TimesFm:
 
     def forecast(
         self,
-        inputs: Sequence[Any],
-        freq: Sequence[int] | None = None,
-        window_size: int | None = None,
-        forecast_context_len: int | None = None,
-        return_forecast_on_context: bool = False,
+        inputs,
+        freq=None,
+        window_size=None,
+        forecast_context_len=None,
+        return_forecast_on_context=False,
     ):
         """Forecasts on a list of time series.
 
@@ -736,14 +732,14 @@ class TimesFm:
 
     def forecast_on_df(
         self,
-        inputs: pd.DataFrame,
-        freq: str,
-        forecast_context_len: int = 0,
-        value_name: str = "values",
-        model_name: str = "timesfm",
-        window_size: int | None = None,
-        num_jobs: int = 1,
-        verbose: bool = True,
+        inputs,
+        freq,
+        forecast_context_len=0,
+        value_name="values",
+        model_name="timesfm",
+        window_size=None,
+        num_jobs=1,
+        verbose=True,
     ) -> pd.DataFrame:
         """Forecasts on a list of time series.
 
