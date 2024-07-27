@@ -1025,7 +1025,7 @@ class ChronosForecaster(HFTransformersForecaster):
         params : dict or list of dict
         """
         params = {
-            "model_name": "amazon/chronos-t5-small",
+            "model_path": "amazon/chronos-t5-tiny",
             "training_args": {
                 "per_device_train_batch_size": 4,
                 "gradient_accumulation_steps": 1,
