@@ -290,7 +290,7 @@ dl = [
   'einshape; python_version < "3.11" and python_version >= "3.10"',
   'jax; python_version < "3.11" and python_version >= "3.10"',
   'praxis; python_version < "3.11" and python_version >= "3.10"',
-  'huggingface; python_version < "3.11" and python_version >= "3.10"'hub",
+  'huggingface; python_version < "3.11" and python_version >= "3.10"',
   'paxml; python_version < "3.11" and python_version >= "3.10"',
   'utilsforecast; python_version < "3.11" and python_version >= "3.10"',
 ]
