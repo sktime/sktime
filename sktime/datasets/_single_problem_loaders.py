@@ -1443,25 +1443,39 @@ def load_forecastingdata(
 
 def load_m5(
     extract_path=None,
-    folder_path=None,
     include_events=False,
+    merged=True,
     test=False,
 ):
-    """Fetch M5 dataset from https://zenodo.org/records/12636070 .
+    r"""Fetch M5 dataset from https://zenodo.org/records/12636070 .
 
     Downloads and extracts dataset if not already downloaded. Fetched dataset is
     in the standard .csv format and loaded into an sktime-compatible in-memory
-    format (`pd_multiindex_hier`).
+    format (pd_multiindex_hier). For additional information on the dataset,
+    including its structure and contents, refer to `Notes` section.
 
     Parameters
     ----------
     extract_path : str, optional (default=None)
-        The path to extract the data to. If the provided path doesn't
-        contain the data, the function creates a folder `m5-forecasting-accuracy`
-        in the provided path. If no path is provided, the function creates
-        the `m5-forecasting-accuracy` folder in the current working directory.
-        If a path is given, it can be absolute (e.g., C:/Temp) or
-        relative (e.g., Temp or ./Temp).
+        If provided, the path should use the appropriate path separators for the
+        operating system.(e.g., forward slashes '/' for Unix-based systems,
+        backslashes '\\' for Windows).
+        If `extract_path` is provided:
+            - Check if the required files are present at the given `extract_path`.
+            - If files are not found, check if the directory "m5-forecasting-accuracy"
+              exists within the `extract_path`. Useful when the funciton has already
+              run previously with the same path.
+            - If the directory does not exist, download and extract the data into
+              "m5-forecasting-accuracy" folder in the `extract_path`.
+            - If the directory exists, takes the path to the existing directory.
+
+        if `extract_path` is None:
+            - Check if the directory "m5-forecasting-accuracy" exists within the module
+              level.
+            - If the directory exists, takes path to current directory.
+              Useful when the funciton has already run previously without any path.
+            - If the directory does not exist, download and extract the data into
+              "m5-forecasting-accuracy" folder at the module level.
 
     include_events : bool, optional (default=False)
         If `True`, the resulting dataset will include additional columns
@@ -1470,6 +1484,12 @@ def load_m5(
         If `False`, the dataset will exclude these columns, providing a
         more streamlined version of the data.
 
+    merged : bool, optional (default=True)
+        Determines the format of the output:
+        - If `True`, the function returns a single merged dataset.
+        - If `False`, the function returns three separate datasets
+           `sales_train_validation`, `sell_prices`, and `calendar`.
+
     test : bool, optional (default=False)
         Loads a smaller part of the dataset which doesn't include events
         for testing purposes. This should not be used in standard usage
@@ -1477,8 +1497,15 @@ def load_m5(
 
     Returns
     -------
-    data : pd.DataFrame of sktime type `pd_multiindex_hier`
-        The preprocessed dataframe containing the time series.
+    pd.DataFrame or tuple of pd.DataFrame
+        - If `merged_dataset` is `True`
+            data : pd.DataFrame of sktime type pd_multiindex_hier
+                The preprocessed dataframe containing the time series.
+
+        - If `merged_dataset` is `False`, returns a tuple of three dataframes:
+            sales_train_validation : pd.DataFrame of sktime type pd_multiindex_hier
+            sell_prices : pd.DataFrame
+            calander : pd.DataFrame
 
     Dataset Description
     --------------------
@@ -1494,7 +1521,7 @@ def load_m5(
     - sell_prices.csv: price data for each product and store
     - calendar.csv: calendar information including events
 
-    The returned dataframe will have a multi-index with the following levels:
+    The dataframe will have a multi-index with the following levels:
     - state_id
     - store_id
     - cat_id
@@ -1638,34 +1665,63 @@ def load_m5(
 
         df4["day"] = df4["day"].apply(lambda x: int(x.split("_")[1]))
         df4["date"] = pd.DatetimeIndex(df4["date"])
+        df4.drop(columns=["item_id"], inplace=True)
 
         return df4
 
-    if test:
-        data = create_series_data(
-            sales_train_validation,
-            calendar,
-            sell_prices,
-            include_events=False,
-            test=True,
-        )
+    if merged:
+        if test:
+            data = create_series_data(
+                sales_train_validation,
+                calendar,
+                sell_prices,
+                include_events=False,
+                test=True,
+            )
+            data.set_index(
+                ["state_id", "store_id", "cat_id", "dept_id", "date"], inplace=True
+            )
+            return data
+
+        if include_events:
+            data = create_series_data(
+                sales_train_validation, calendar, sell_prices, include_events=True
+            )
+
+        else:
+            data = create_series_data(
+                sales_train_validation, calendar, sell_prices, include_events=False
+            )
+
         data.set_index(
             ["state_id", "store_id", "cat_id", "dept_id", "date"], inplace=True
         )
+
+        data = data.sort_index()
+
         return data
 
-    if include_events:
-        data = create_series_data(
-            sales_train_validation, calendar, sell_prices, include_events=True
-        )
-
     else:
-        data = create_series_data(
-            sales_train_validation, calendar, sell_prices, include_events=False
+        start_date = pd.to_datetime("2011-01-29")
+        date_range = pd.date_range(start=start_date, periods=1941)
+        date_df = pd.DataFrame(date_range, columns=["date"])
+
+        sales_train_validation = sales_train_validation.melt(
+            id_vars=["id", "item_id", "dept_id", "cat_id", "store_id", "state_id"],
+            var_name="d",
+            value_name="sales",
         )
 
-    data.set_index(["state_id", "store_id", "cat_id", "dept_id", "date"], inplace=True)
+        sales_train_validation["d"] = (
+            sales_train_validation["d"].str.extract(r"(\d+)").astype(int)
+        )
+        date_df["d"] = range(1, 1942)
+        sales_train_validation = sales_train_validation.merge(date_df, on="d")
 
-    data = data.sort_index()
+        sales_train_validation = sales_train_validation.drop(columns=["d"])
 
-    return data
+        sales_train_validation.set_index(
+            ["state_id", "store_id", "dept_id", "cat_id", "item_id", "date"],
+            inplace=True,
+        )
+        return sales_train_validation, sell_prices, calendar
