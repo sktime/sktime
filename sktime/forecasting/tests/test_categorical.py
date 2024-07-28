@@ -35,3 +35,4 @@ def test_est_with_categorical_capability():
 
     est.fit(yt, Xt, fh=[1, 2, 3])
     est.predict(X=X[6:])
+    est.update(y[6:], X[6:])
