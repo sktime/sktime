@@ -216,9 +216,7 @@ class VmdTransformer(BaseTransformer):
         if len(data) % 2 == 1:
             data = np.append(data, data[-1])
         while K < self.kMax:
-            u, _, _ = VMD(
-                data, self.alpha, self.tau, K, self.DC, self.init, self.tol
-            )
+            u, _, _ = VMD(data, self.alpha, self.tau, K, self.DC, self.init, self.tol)
             reconstruct = sum(u)
             energy_loss_coef = np.linalg.norm(
                 (data - reconstruct), 2
@@ -253,7 +251,9 @@ class VmdTransformer(BaseTransformer):
         params0 = {"kMax": 4}
         params1 = {"K": 3, "returned_decomp": "u_hat"}
         params2 = {
-            "kMax": 3, "energy_loss_coefficient": 0.1, "returned_decomp": "omega"
+            "kMax": 3,
+            "energy_loss_coefficient": 0.1,
+            "returned_decomp": "omega",
         }
         params3 = {"K": 3, "returned_decomp": "u_both", "alpha": 1000}
 
