@@ -207,7 +207,7 @@ if _check_soft_dependencies("xarray", severity="none"):
         columns = obj.indexes[obj.dims[1]] if len(obj.dims) == 2 else None
         df = pd.DataFrame(obj.values, index=index, columns=columns)
         df = df.astype(
-            {col: "int64" for col in df.select_dtypes(include="int32").columns}
+            {col: 'int64' for col in df.select_dtypes(include='int32').columns}
         )  # this coercion is needed due to inconsistency on windows
         return df
 
