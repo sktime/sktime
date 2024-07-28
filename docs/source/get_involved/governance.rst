@@ -196,7 +196,7 @@ to the continued development of the project through ongoing engagement
 with the community.
 
 Current core developers are listed in the `core-developers
-team :doc:</about/team>`
+team <https://www.sktime.net/en/latest/about/team.html>`__
 within the sktime organisation on GitHub.
 
 .. _rights-and-responsibilities-1:
@@ -268,7 +268,7 @@ CoC committee members
 
 CoC members are contributors with special rights and responsibilities.
 The current members of the CoC committee are listed in the
-`CoC :doc:</about/team>`.
+`CoC <https://www.sktime.net/en/latest/about/team.html>`__.
 
 .. _rights-and-responsibilities-2:
 
@@ -316,7 +316,7 @@ responsibilities to avoid deadlocks and ensure a smooth progress of the
 project.
 
 Current CC members are listed in the `community-council
-team :doc:</about/team>`
+team <https://www.sktime.net/en/latest/about/team.html>`__
 within the sktime organisation on GitHub.
 
 .. _rights-and-responsibilities-3:
@@ -396,7 +396,7 @@ CC observers
 
 CC (community council) observers are core developers with additional rights and
 responsibilities. Current CC observers are listed in the `community-council
-observers :doc:</about/team>`.
+observers <https://www.sktime.net/en/latest/about/team.html`__.
 
 .. _rights-and-responsibilities-4:
 
