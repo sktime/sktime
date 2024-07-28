@@ -62,6 +62,7 @@ from sktime.utils.dependencies import _check_soft_dependencies
 
 DIRNAME = "data"
 MODULE = os.path.dirname(__file__)
+PANDAS2 = _check_soft_dependencies("pandas>=2.0.0", severity="none")
 
 
 def load_UCR_UEA_dataset(
@@ -733,6 +734,24 @@ def load_basic_motions(split=None, return_X_y=True, return_type=None):
 
 
 # forecasting data sets
+def _coerce_to_monthly_period_index(ix):
+    """Coerce a date index to a monthly period index.
+
+    Parameters
+    ----------
+    ix : pd.Index
+
+    Returns
+    -------
+    pd.PeriodIndex, with frequency "M" (pandas 1) or "ME" (pandas 2), and name "Period"
+        coerced index ix
+    """
+    if PANDAS2:
+        return pd.PeriodIndex(ix, freq="ME", name="Period")
+    else:
+        return pd.PeriodIndex(ix, freq="M", name="Period")
+
+
 def load_shampoo_sales():
     """Load the shampoo sales univariate time series dataset for forecasting.
 
@@ -767,7 +786,7 @@ def load_shampoo_sales():
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
     y = pd.read_csv(path, index_col=0, dtype={1: float}).squeeze("columns")
-    y.index = pd.PeriodIndex(y.index, freq="ME", name="Period")
+    y.index = _coerce_to_monthly_period_index(y.index)
     y.name = "Number of shampoo sales"
     return y
 
@@ -919,7 +938,7 @@ def load_airline():
     y = pd.read_csv(path, index_col=0, dtype={1: float}).squeeze("columns")
 
     # make sure time index is properly formatted
-    y.index = pd.PeriodIndex(y.index, freq="ME", name="Period")
+    y.index = _coerce_to_monthly_period_index(y.index)
     y.name = "Number of airline passengers"
     return y
 
@@ -1099,7 +1118,7 @@ def load_PBS_dataset():
     y = pd.read_csv(path, index_col=0, dtype={1: float}).squeeze("columns")
 
     # make sure time index is properly formatted
-    y.index = pd.PeriodIndex(y.index, freq="ME", name="Period")
+    y.index = _coerce_to_monthly_period_index(y.index)
     y.name = "Number of scripts"
     return y
 
