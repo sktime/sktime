@@ -621,38 +621,38 @@ if _check_soft_dependencies("gluonts", severity="none"):
             msg = f"{var_name} must be a gluonts.PandasDataset, found {type(obj)}"
             return _ret(False, msg, None, return_metadata)
 
+        if not hasattr(obj._data_entries.iterable, "iterable"):
+            msg = f"{var_name} must be formed with a multiindex DataFrame to "
+            +"be a valid `pandasDataset_panel`"
+            return _ret(False, msg, None, return_metadata)
+
         # Convert to a pandas DF for easier checks
-        df = pd.DataFrame(obj._data_entries)
-        df = df.explode("target")
+        df = obj._data_entries.iterable.iterable
 
         # Check if there are no values
         if _req("is_empty", return_metadata):
             metadata["is_empty"] = len(obj._data_entries) == 0
 
         if _req("is_univariate", return_metadata):
-            metadata["is_univariate"] = "item_id" not in df.columns
+            metadata["is_univariate"] = len(df[0][1].columns) == 1
 
         if _req("n_features", return_metadata):
-            metadata["n_features"] = len(df.columns)
+            metadata["n_features"] = len(df[0][1].columns)
 
         if _req("n_instances", return_metadata):
-            if "item_id" not in df.columns:
-                metadata["n_instances"] = 1
-
-            else:
-                metadata["n_instances"] = len(df["item_id"].unique())
+            metadata["n_instances"] = len(df)
 
         if _req("n_panels", return_metadata):
-            metadata["n_panels"] = 1
+            metadata["n_panels"] = len(df)
 
         if _req("feature_names", return_metadata):
-            metadata["feature_names"] = df.columns
+            metadata["feature_names"] = df[0][1].columns
 
         if _req("is_equally_spaced", return_metadata):
             metadata["is_equally_spaced"] = True
 
         if _req("has_nans", return_metadata):
-            metadata["has_nans"] = df.isna().any().any()
+            metadata["has_nans"] = False
 
         return _ret(True, None, metadata, return_metadata)
 

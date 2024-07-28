@@ -7,8 +7,8 @@ __author__ = ["fkiraly"]
 
 __all__ = ["create_conditional_fixtures_and_names"]
 
+from collections.abc import Callable
 from copy import deepcopy
-from typing import Callable
 
 import numpy as np
 

@@ -989,7 +989,7 @@ class AUCalibration(_BaseDistrForecastingMetric):
     Computes the unsigned area between the calibration curve and the diagonal.
 
     The calibration curve is the cumulative curve of the sample of
-    predictive cumulative distibution functions evaluated at the true values.
+    predictive cumulative distribution functions evaluated at the true values.
 
     Mathematically, let :math:`d_1, \dots, d_N` be the predictive distributions,
     let :math:`y_1, \dots, y_N` be the true values, and let :math:`F_i` be the
