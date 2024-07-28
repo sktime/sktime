@@ -9,7 +9,6 @@ import pandas as pd
 import pytest
 from pytest import raises
 
-from sktime.forecasting.var import VAR
 from sktime.tests.test_switch import run_test_for_class
 from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.plotting import plot_series
@@ -37,6 +36,8 @@ def test_plotting_dataframe_with_unused_levels():
     import matplotlib
     import matplotlib.pyplot as plt
 
+    from sktime.forecasting.var import VAR
+
     y_train = pd.DataFrame(np.random.rand(100, 3), columns=["x1", "x2", "x3"])
     forecaster = VAR(maxlags=1)
     forecaster.fit(y_train)
@@ -59,6 +60,11 @@ def test_plotting_dataframe_with_unused_levels():
 def test_plotting_basic_dataframe():
     """This example is based on the notebook 01_forecasting.ipynb."""
 
+    _check_soft_dependencies("matplotlib", "statsmodels")
+
+    import matplotlib
+    import matplotlib.pyplot as plt
+
     from sktime.datasets import load_airline
     from sktime.forecasting.theta import ThetaForecaster
 
@@ -74,4 +80,7 @@ def test_plotting_basic_dataframe():
     y_pred_ints = forecaster.predict_interval(coverage=coverage)
     y_pred = forecaster.predict()
 
-    fig, ax = plot_series(y, y_pred, labels=["y", "y_pred"], pred_interval=y_pred_ints)
+    matplotlib.use("agg")
+    plot_series(y, y_pred, labels=["y", "y_pred"], pred_interval=y_pred_ints)
+    plt.gcf().canvas.draw_idle()
+    plt.close()
