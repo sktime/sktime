@@ -109,13 +109,13 @@ def length1_index(request):
 # this is because pandas fixtures may break, they contain risky freq args
 def pytest_generate_tests(metafunc):
     if "good_absolute_input_arg" in metafunc.fixturenames:
-        metafunc.parametrize('good_absolute_input_arg', range(6), indirect=True)
+        metafunc.parametrize("good_absolute_input_arg", range(6), indirect=True)
     if "good_relative_input_arg" in metafunc.fixturenames:
-        metafunc.parametrize('good_relative_input_arg', range(3), indirect=True)
+        metafunc.parametrize("good_relative_input_arg", range(3), indirect=True)
     if "timepoint" in metafunc.fixturenames:
-        metafunc.parametrize('timepoint', range(4), indirect=True)
+        metafunc.parametrize("timepoint", range(4), indirect=True)
     if "length1_index" in metafunc.fixturenames:
-        metafunc.parametrize('length1_index', range(5), indirect=True)
+        metafunc.parametrize("length1_index", range(5), indirect=True)
 
 
 @pytest.mark.skipif(
