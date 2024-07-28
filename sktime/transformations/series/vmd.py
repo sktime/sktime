@@ -86,7 +86,7 @@ class VmdTransformer(BaseTransformer):
         which decomposition object is returned by ``transform``
 
         * ``"u"``: the decomposed modes
-        * ``"u_hat"``: the mode spectra
+        * ``"u_hat"``: the mode spectra (absolute values)
         * ``"omega"``: the mode frequencies
         * ``"u_both"``: both the decomposed modes and the mode spectra,
           these will be returned column concatenated, first the modes then the spectra
@@ -190,7 +190,7 @@ class VmdTransformer(BaseTransformer):
                 transposed = transposed[:-1]
             u_return = pd.DataFrame(transposed)
         if return_dec in ["u_hat", "u_both"]:
-            u_hat_return = pd.DataFrame(u_hat)
+            u_hat_return = pd.DataFrame(np.abs(u_hat))
         if return_dec == "omega":
             omega_return = pd.DataFrame(omega)
 
@@ -202,7 +202,7 @@ class VmdTransformer(BaseTransformer):
             return omega_return
         elif return_dec == "u_both":
             u_returns = pd.concat([u_return, u_hat_return], axis=1)
-            u_returns.columns = pd.RangeIndex(len(u.columns))
+            u_returns.columns = pd.RangeIndex(len(u_returns.columns))
             return u_returns
         else:
             raise ValueError(
