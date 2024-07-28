@@ -62,7 +62,6 @@ from sktime.utils.dependencies import _check_soft_dependencies
 
 DIRNAME = "data"
 MODULE = os.path.dirname(__file__)
-PANDAS2 = _check_soft_dependencies("pandas>=2.0.0", severity="none")
 
 
 def load_UCR_UEA_dataset(
@@ -743,13 +742,10 @@ def _coerce_to_monthly_period_index(ix):
 
     Returns
     -------
-    pd.PeriodIndex, with frequency "M" (pandas 1) or "ME" (pandas 2), and name "Period"
+    pd.PeriodIndex, with frequency "M", and name "Period"
         coerced index ix
     """
-    if PANDAS2:
-        return pd.PeriodIndex(ix, freq="ME", name="Period")
-    else:
-        return pd.PeriodIndex(ix, freq="M", name="Period")
+    return pd.PeriodIndex(ix, freq="M", name="Period")
 
 
 def load_shampoo_sales():
