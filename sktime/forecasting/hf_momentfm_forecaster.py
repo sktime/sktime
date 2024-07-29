@@ -271,6 +271,11 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             y, train_size=1 - self.train_val_split, test_size=self.train_val_split
         )
 
+        if y_train.shape[0] < 512:
+            y_train = _sample_observations(y_train)
+        if y_test.shape[0] < 512:
+            y_test = _sample_observations(y_test)
+
         train_dataset = MomentPytorchDataset(
             y=y_train,
             fh=self._fh,
@@ -336,7 +341,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             )
         return self
 
-    def _predict(self, y, fh=1, X=None):
+    def _predict(self, y, fh=None, X=None):
         """Predict method to forecast timesteps into the future.
 
         fh must be the same length as the one used to fit the model.
@@ -570,6 +575,13 @@ def _check_device(device):
     return _device
 
 
+def _sample_observations(y):
+    n_total_samples = 1000
+    y_sampled = y.sample(n=n_total_samples, replace=True)
+
+    return y_sampled
+
+
 class MomentPytorchDataset(Dataset):
     """Customized Pytorch dataset for the momentfm model."""
 
@@ -580,6 +592,7 @@ class MomentPytorchDataset(Dataset):
         self.fh = fh
         self.shape = y.shape
         self.device = device
+
         # code block to figure out masking sizes in case seq_len < 512
         if self.seq_len < self.moment_seq_len:
             self._pad_shape = (self.moment_seq_len - self.seq_len, self.shape[1])
