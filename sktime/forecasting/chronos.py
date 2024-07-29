@@ -1010,6 +1010,11 @@ class ChronosForecaster(HFTransformersForecaster):
         """
         self.model.save_pretrained(path)
 
+    def __repr__(self):
+        """Repr dunder."""
+        class_name = self.__class__.__name__
+        return f"{class_name}"
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -1024,17 +1029,39 @@ class ChronosForecaster(HFTransformersForecaster):
         -------
         params : dict or list of dict
         """
-        params = {
-            "model_path": "amazon/chronos-t5-tiny",
-            "training_args": {
-                "per_device_train_batch_size": 4,
-                "gradient_accumulation_steps": 1,
-                "max_steps": 100,
-            },
-            "config": {
-                "prediction_length": 32,
-            },
-            "tie_embeddings": True,
-            "shuffle_buffer_length": 100_000,
-        }
+        params = []
+
+        params.append(
+            {
+                "model_path": "amazon/chronos-t5-tiny",
+                "training_args": {
+                    "per_device_train_batch_size": 4,
+                    "gradient_accumulation_steps": 1,
+                    "max_steps": 100,
+                },
+                "config": {
+                    "prediction_length": 32,
+                },
+                "shuffle_buffer_length": 100_000,
+            }
+        )
+
+        params.append(
+            {
+                "model_path": "amazon/chronos-t5-tiny",
+                "training_args": {
+                    "per_device_train_batch_size": 4,
+                    "gradient_accumulation_steps": 1,
+                    "max_steps": 100,
+                },
+                "config": {
+                    "prediction_length": 16,
+                },
+                "tie_embeddings": True,
+                "random_init": True,
+                "shuffle_buffer_length": 50_000,
+                "seed": 42,
+            }
+        )
+
         return params
