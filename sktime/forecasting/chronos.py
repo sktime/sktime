@@ -1047,22 +1047,22 @@ class ChronosForecaster(HFTransformersForecaster):
             }
         )
 
-        params.append(
-            {
-                "model_path": "amazon/chronos-t5-tiny",
-                "training_args": {
-                    "per_device_train_batch_size": 4,
-                    "gradient_accumulation_steps": 1,
-                    "max_steps": 100,
-                },
-                "config": {
-                    "prediction_length": 16,
-                },
-                "tie_embeddings": True,
-                "random_init": True,
-                "shuffle_buffer_length": 50_000,
-                "seed": 42,
-            }
-        )
+        # params.append(
+        #     {
+        #         "model_path": "amazon/chronos-t5-tiny",
+        #         "training_args": {
+        #             "per_device_train_batch_size": 4,
+        #             "gradient_accumulation_steps": 1,
+        #             "max_steps": 100,
+        #         },
+        #         "config": {
+        #             "prediction_length": 16,
+        #         },
+        #         "tie_embeddings": True,
+        #         "random_init": True,
+        #         "shuffle_buffer_length": 50_000,
+        #         "seed": 42,
+        #     }
+        # )
 
         return params
