@@ -550,6 +550,76 @@ class MCNNClassifier(BaseDeepClassifier):
 
         return self
 
+    def _predict_proba(self, X, **kwargs):
+        """Find probability estimates for each class for all cases in X.
+
+        Parameters
+        ----------
+        X : an np.ndarray of shape = (n_instances, n_dimensions, series_length)
+            The training input samples.
+
+        Returns
+        -------
+        output : array of shape = [n_instances, n_classes] of probabilities
+        """
+        self.check_is_fitted()
+        X = X.transpose([0, 2, 1])
+        ori_len = X.shape[1]
+
+        # restrict slice ratio when data lenght is too large
+        current_slice_ratio = self.slice_ratio
+        if ori_len > 500:
+            current_slice_ratio = self.slice_ratio if self.slice_ratio > 0.98 else 0.98
+
+        increase_num = (
+            ori_len - int(ori_len * current_slice_ratio) + 1
+        )  # this can be used as the bath size
+        # print(increase_num)
+
+        x_test, _ = self._slice_data(X, slice_ratio=current_slice_ratio)
+        length_test = x_test.shape[1]  # length after slicing.
+
+        current_window_size = (
+            int(length_test * self.window_size)
+            if self.window_size < 1
+            else int(self.window_size)
+        )
+
+        ds_num_max = length_test / (self.best_pool_factor * current_window_size)
+        current_ds_num = int(min(self.ds_num, ds_num_max))
+
+        ma_test, ma_lengths = self.moving_average(
+            x_test, self.ma_base, self.ma_step, self.ma_num
+        )
+        ds_test, ds_lengths = self.downsample(
+            x_test, self.ds_base, self.ds_step, current_ds_num
+        )
+        test_set_x = x_test
+        data_lengths = [length_test]
+
+        # downsample part
+        if ds_lengths != []:
+            data_lengths += ds_lengths
+            test_set_x = np.concatenate([test_set_x, ds_test], axis=1)
+        # moving average part
+        if ma_lengths != []:
+            data_lengths += ma_lengths
+            test_set_x = np.concatenate([test_set_x, ma_test], axis=1)
+
+        test_num = x_test.shape[1]
+        test_num_batch = int(test_num / increase_num)
+
+        y_predicted = []
+        probs = self.model_.predict(
+            self.split_input_for_model(test_set_x, self.input_shapes)
+        )
+        for i in range(test_num_batch):
+            curr_prob = probs[i * increase_num : (i + 1) * increase_num]
+            y_predicted.append(curr_prob.mean(axis=0))
+        y_predicted = np.array(y_predicted)
+
+        return y_predicted
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
