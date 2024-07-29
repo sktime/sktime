@@ -34,13 +34,11 @@ class _DartsRegressionModelsAdapter(BaseForecaster):
         "maintainers": ["yarnabrina", "fnhirwa"],
         "python_version": ">=3.9",
         "python_dependencies": ["u8darts>=0.29"],
-        "python_dependencies_alias": {"u8darts": "darts"},
         # estimator type
         # --------------
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
-        "enforce_index_type": pd.DatetimeIndex,
         "handles-missing-data": False,
         "capability:insample": False,
     }
@@ -89,13 +87,13 @@ class _DartsRegressionModelsAdapter(BaseForecaster):
     @abc.abstractmethod
     def _lags_past_covariates(self):
         """Get the lags_past_covariates value."""
-        raise NotImplementedError("This model does not support past covariates.")
+        pass
 
     @property
     @abc.abstractmethod
     def _lags_future_covariates(self):
         """Get the lags_future_covariates value."""
-        raise NotImplementedError("This model does not support future covariates.")
+        pass
 
     @property
     def _get_lags_past_covariates(self):

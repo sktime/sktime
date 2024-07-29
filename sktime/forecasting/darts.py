@@ -3,8 +3,6 @@
 
 from typing import Optional, Union
 
-from skbase.utils.dependencies import _check_soft_dependencies
-
 from sktime.forecasting.base.adapters._darts import _DartsRegressionModelsAdapter
 from sktime.utils.warnings import warn
 
@@ -221,39 +219,34 @@ class DartsXGBModel(_DartsRegressionModelsAdapter):
         """
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
-        if _check_soft_dependencies(
-            "u8darts", package_import_alias={"u8darts": "darts"}, severity="none"
-        ):
-            params = [
-                {
-                    "num_samples": 100,
-                    "lags": 12,
-                    "output_chunk_length": 1,
-                    "add_encoders": None,
-                    "likelihood": "quantile",
-                    "quantiles": None,
-                    "random_state": None,
-                    "multi_models": False,
-                    "use_static_covariates": True,
-                    "kwargs": {
-                        "objective": "reg:squarederror",
-                    },
+        params = [
+            {
+                "num_samples": 100,
+                "lags": 12,
+                "output_chunk_length": 1,
+                "add_encoders": None,
+                "likelihood": "quantile",
+                "quantiles": None,
+                "random_state": None,
+                "multi_models": False,
+                "use_static_covariates": True,
+                "kwargs": {
+                    "objective": "reg:squarederror",
                 },
-                {
-                    "num_samples": 200,
-                    "lags": 12,
-                    "output_chunk_length": 3,
-                    "add_encoders": None,
-                    "likelihood": "poisson",
-                    "quantiles": None,
-                    "random_state": None,
-                    "multi_models": False,
-                    "use_static_covariates": True,
-                    "kwargs": {"objective": "reg:squarederror"},
-                },
-            ]
-        else:
-            params = [{}]
+            },
+            {
+                "num_samples": 200,
+                "lags": 12,
+                "output_chunk_length": 3,
+                "add_encoders": None,
+                "likelihood": "poisson",
+                "quantiles": None,
+                "random_state": None,
+                "multi_models": False,
+                "use_static_covariates": True,
+                "kwargs": {"objective": "reg:squarederror"},
+            },
+        ]
         return params
 
 
@@ -471,39 +464,35 @@ class DartsLinearRegressionModel(_DartsRegressionModelsAdapter):
         """
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
-        if _check_soft_dependencies(
-            "u8darts", package_import_alias={"u8darts": "darts"}, severity="none"
-        ):
-            params = [
-                {
-                    "num_samples": 100,
-                    "lags": 12,
-                    "output_chunk_length": 1,
-                    "add_encoders": None,
-                    "likelihood": "quantile",
-                    "quantiles": None,
-                    "random_state": None,
-                    "multi_models": False,
-                    "use_static_covariates": True,
-                    "kwargs": {
-                        "fit_intercept": True,
-                    },
+        params = [
+            {
+                "num_samples": 100,
+                "lags": 12,
+                "output_chunk_length": 1,
+                "add_encoders": None,
+                "likelihood": "quantile",
+                "quantiles": None,
+                "random_state": None,
+                "multi_models": False,
+                "use_static_covariates": True,
+                "kwargs": {
+                    "fit_intercept": True,
                 },
-                {
-                    "num_samples": 200,
-                    "lags": 12,
-                    "output_chunk_length": 3,
-                    "add_encoders": None,
-                    "likelihood": "poisson",
-                    "quantiles": None,
-                    "random_state": None,
-                    "multi_models": False,
-                    "use_static_covariates": True,
-                    "kwargs": None,
-                },
-            ]
-        else:
-            params = [{}]
+            },
+            {
+                "num_samples": 200,
+                "lags": 12,
+                "output_chunk_length": 3,
+                "add_encoders": None,
+                "likelihood": "poisson",
+                "quantiles": None,
+                "random_state": None,
+                "multi_models": False,
+                "use_static_covariates": True,
+                "kwargs": None,
+            },
+        ]
+
         return params
 
 
