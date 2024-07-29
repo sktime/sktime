@@ -68,21 +68,23 @@ class MCNNNetwork(BaseDeepNetwork):
 
         input_layers = []
         first_stage_layers = []
-
+        max_length = max([shape[0] for shape in input_shape])
         for i in range(len(input_shape)):
             input_layer = tf.keras.layers.Input(input_shape[i])
             input_layers.append(input_layer)
-
+            padded_input = tf.keras.layers.ZeroPadding1D(
+                padding=(0, max_length - input_shape[i][0])
+            )(input_layer)
             conv_layer = tf.keras.layers.Conv1D(
                 filters=256,
                 kernel_size=self.kernel_size,
                 padding=self.padding,
                 activation="sigmoid",
                 kernel_initializer="glorot_uniform",
-            )(input_layer)
+            )(padded_input)
 
             # selecting the pooling size based on the convolutional layer output size
-            pool_size = int(int(conv_layer.shape[1]) / self.pool_factor)
+            pool_size = max(1, int(int(conv_layer.shape[1]) / self.pool_factor))
 
             pool_layer = tf.keras.layers.MaxPooling1D(pool_size=pool_size)(conv_layer)
             first_stage_layers.append(pool_layer)

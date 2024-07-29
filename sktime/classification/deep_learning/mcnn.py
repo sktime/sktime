@@ -33,7 +33,7 @@ class MCNNClassifier(BaseDeepClassifier):
         The number of training batches.
     nb_epochs : int, optional (default=200)
         The number of epochs to train the model.
-    max_train_batch_size : int, optional (default=256)
+    batch_size : int, optional (default=256)
         The maximum training batch size.
     slice_ratio : float, optional (default=0.9)
         The ratio to slice the training data.
@@ -61,6 +61,7 @@ class MCNNClassifier(BaseDeepClassifier):
         "python_version": ">=3.9",
         "python_dependencies": "tensorflow==2.15.0",
         # estimator type handled by parent class
+        "capability:predict": False,
     }
 
     def __init__(
@@ -70,7 +71,7 @@ class MCNNClassifier(BaseDeepClassifier):
         window_size=3,
         nb_train_batch=10,
         nb_epochs=200,
-        max_train_batch_size=256,
+        batch_size=256,
         slice_ratio=0.9,
         padding="same",
         random_state=0,
@@ -85,7 +86,7 @@ class MCNNClassifier(BaseDeepClassifier):
         self.window_size = window_size
         self.nb_train_batch = nb_train_batch
         self.nb_epochs = nb_epochs
-        self.max_train_batch_size = max_train_batch_size
+        self.batch_size = batch_size
         self.slice_ratio = slice_ratio
         self.padding = padding
         self.random_state = random_state
@@ -372,10 +373,10 @@ class MCNNClassifier(BaseDeepClassifier):
 
         train_batch_size = int(x_train.shape[0] * increase_num / self.nb_train_batch)
         current_n_train_batch = self.nb_train_batch
-        if train_batch_size > self.max_train_batch_size:
+        if train_batch_size > self.batch_size:
             # limit the train_batch_size
             current_n_train_batch = int(
-                x_train.shape[0] * increase_num / self.max_train_batch_size
+                x_train.shape[0] * increase_num / self.batch_size
             )
 
         # data augmentation by slicing the length of the series
@@ -443,17 +444,17 @@ class MCNNClassifier(BaseDeepClassifier):
             random_state=self.random_state,
         )
 
-        model = self.build_model(self.input_shapes, nb_classes)
+        self.model_ = self.build_model(self.input_shapes, nb_classes)
 
         if self.verbose:
-            model.summary()
+            self.model_.summary()
         self.callback_ = deepcopy(self.callbacks)
 
         x = self.split_input_for_model(train_set_x, self.input_shapes)
         x_val = self.split_input_for_model(valid_set_x, self.input_shapes)
 
         # Fit the model
-        self.history = model.fit(
+        self.history = self.model_.fit(
             x,
             train_set_y,
             validation_data=(x_val, valid_set_y),
@@ -581,7 +582,7 @@ class MCNNClassifier(BaseDeepClassifier):
                 "window_size": 3,
                 "nb_train_batch": 10,
                 "nb_epochs": 1,
-                "max_train_batch_size": 256,
+                "batch_size": 256,
                 "slice_ratio": 0.9,
                 "random_state": 0,
                 "verbose": False,
@@ -599,7 +600,7 @@ class MCNNClassifier(BaseDeepClassifier):
                     "window_size": 3,
                     "nb_train_batch": 10,
                     "nb_epochs": 1,
-                    "max_train_batch_size": 256,
+                    "batch_size": 256,
                     "slice_ratio": 0.9,
                     "random_state": 0,
                     "verbose": False,
