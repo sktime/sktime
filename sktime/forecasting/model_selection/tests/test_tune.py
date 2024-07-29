@@ -353,21 +353,19 @@ def optuna_param_grids():
 
 
 def optuna_samplers():
-    if _check_soft_dependencies("optuna"):
+    try:
+        _check_soft_dependencies("optuna", severity="error")
+    except ModuleNotFoundError:
+        return [None]
+    else:
         import optuna
 
-        samplers = [
+        return [
             None,
             optuna.samplers.NSGAIISampler(seed=42),
             optuna.samplers.QMCSampler(seed=42),
             optuna.samplers.CmaEsSampler(seed=42),
         ]
-        return samplers
-
-
-@pytest.fixture(scope="module", params=optuna_samplers())
-def sampler(request):
-    return request.param
 
 
 forecasters_optuna_test = {
@@ -387,6 +385,7 @@ forecasters_optuna_test = {
     "forecaster_key, grid_key", [("NAIVE", "NAIVE"), ("PIPE", "PIPE")]
 )
 @pytest.mark.parametrize("n_iter", TEST_N_ITERS)
+@pytest.mark.parametrize("sampler", optuna_samplers())
 def test_optuna(
     forecaster_key,
     grid_key,  # This will be either "NAIVE" or "PIPE"
@@ -397,9 +396,9 @@ def test_optuna(
     sampler,
     optuna_param_grids,  # Fixture providing parameter grids
 ):
-    """Test TuneForecastingOptunaCV.
+    """Test ForecastingOptunaSearchCV.
 
-    Tests that TuneForecastingOptunaCV successfully searches the parameter
+    Tests that ForecastingOptunaSearchCV successfully searches the parameter
     distributions to identify the best parameter set
     """
     y, X = load_longley()
