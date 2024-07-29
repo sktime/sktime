@@ -610,7 +610,7 @@ class BaseTransformer(BaseEstimator):
         X_inner, y_inner, metadata = self._check_X_y(X=X, y=y, return_metadata=True)
 
         # check if we need to vectorize
-        if self._is_vectorized == "unknown":
+        if self.getattr("_is_vectorized", "unknown") == "unknown":
             vectorization_needed = isinstance(X_inner, VectorizedDF)
         else:
             vectorization_needed = self._is_vectorized
@@ -776,7 +776,7 @@ class BaseTransformer(BaseEstimator):
         X_inner, y_inner, metadata = self._check_X_y(X=X, y=y, return_metadata=True)
 
         # check if we need to vectorize
-        if self._is_vectorized == "unknown":
+        if self.getattr("_is_vectorized", "unknown") == "unknown":
             vectorization_needed = isinstance(X_inner, VectorizedDF)
         else:
             vectorization_needed = self._is_vectorized
