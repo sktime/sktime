@@ -77,12 +77,9 @@ if _check_soft_dependencies("dask", severity="none"):
 
 
 if _check_soft_dependencies("gluonts", severity="none"):
-    from gluonts.dataset.common import ListDataset
-    from gluonts.dataset.field_names import FieldName
+    from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
 
-    list_dataset = ListDataset(
-        [{FieldName.TARGET: s, FieldName.START: pd.Timestamp(2023, 1, 1)}], freq="D"
-    )
+    list_dataset = convert_pandas_to_listDataset(df)
 
     example_dict[("gluonts_ListDataset_series", "Series", 0)] = list_dataset
     example_dict_lossy[("gluonts_ListDataset_series", "Series", 0)] = True
@@ -132,19 +129,9 @@ if _check_soft_dependencies("dask", severity="none"):
     example_dict_lossy[("dask_series", "Series", 1)] = False
 
 if _check_soft_dependencies("gluonts", severity="none"):
-    from gluonts.dataset.common import ListDataset
-    from gluonts.dataset.field_names import FieldName
+    from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
 
-    list_dataset = ListDataset(
-        [
-            {
-                FieldName.TARGET: df,
-                FieldName.START: pd.Timestamp(2023, 1, 1),
-            }
-        ],
-        freq="D",
-        one_dim_target=False,  # Must be specified for multivariate datasets
-    )
+    list_dataset = convert_pandas_to_listDataset(df)
 
     example_dict[("gluonts_ListDataset_series", "Series", 1)] = list_dataset
     example_dict_lossy[("gluonts_ListDataset_series", "Series", 1)] = True
@@ -195,19 +182,9 @@ if _check_soft_dependencies("dask", severity="none"):
     example_dict_lossy[("dask_series", "Series", 2)] = False
 
 if _check_soft_dependencies("gluonts", severity="none"):
-    from gluonts.dataset.common import ListDataset
-    from gluonts.dataset.field_names import FieldName
+    from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
 
-    list_dataset = ListDataset(
-        [
-            {
-                FieldName.TARGET: df,
-                FieldName.START: pd.Timestamp(2023, 1, 1),
-            }
-        ],
-        freq="D",
-        one_dim_target=False,  # Must be specified for multivariate datasets
-    )
+    list_dataset = convert_pandas_to_listDataset(df)
 
     example_dict[("gluonts_ListDataset_series", "Series", 2)] = list_dataset
     example_dict_lossy[("gluonts_ListDataset_series", "Series", 2)] = True
@@ -252,19 +229,9 @@ if _check_soft_dependencies("xarray", severity="none"):
     example_dict_lossy[("xr.DataArray", "Series", 3)] = False
 
 if _check_soft_dependencies("gluonts", severity="none"):
-    from gluonts.dataset.common import ListDataset
-    from gluonts.dataset.field_names import FieldName
+    from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
 
-    list_dataset = ListDataset(
-        [
-            {
-                FieldName.TARGET: df,
-                FieldName.START: pd.Timestamp(2023, 1, 1),
-            }
-        ],
-        freq="D",
-        one_dim_target=False,  # Must be specified for multivariate datasets
-    )
+    list_dataset = convert_pandas_to_listDataset(df)
 
     example_dict[("gluonts_ListDataset_series", "Series", 3)] = list_dataset
     example_dict_lossy[("gluonts_ListDataset_series", "Series", 3)] = True

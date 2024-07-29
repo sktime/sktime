@@ -40,7 +40,11 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
         by default {"train": False}
     model_path: string (default=None)
-        try to load a existing model without fitting.
+        try to load a existing model without fitting. Calling the fit function is
+        still needed, but no real fitting will be performed.
+    random_log_path: bool (default=False)
+        use random root directory for logging. This parameter is for CI test in
+        Github action, not designed for end users.
 
     References
     ----------
@@ -53,19 +57,17 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         "authors": ["XinyuWu"],
         "maintainers": ["XinyuWu"],
         "python_version": ">3.8, <3.11",
-        "python_dependencies": ["pytorch_forecasting>=1.0.0"],
+        "python_dependencies": ["pytorch-forecasting>=1.0.0"],
         # estimator type
         # --------------
         "y_inner_mtype": [
             "pd-multiindex",
             "pd_multiindex_hier",
             "pd.Series",
-            "pd.DataFrame",
         ],
         "X_inner_mtype": [
             "pd-multiindex",
             "pd_multiindex_hier",
-            "pd.Series",
             "pd.DataFrame",
         ],
         "scitype:y": "univariate",
@@ -86,6 +88,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         trainer_params: Optional[dict[str, Any]] = None,
         model_path: Optional[str] = None,
         random_log_path: bool = False,
+        broadcasting: bool = False,
     ) -> None:
         self.model_params = model_params
         self.dataset_params = dataset_params
@@ -111,6 +114,15 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
             else {}
         )
         self.random_log_path = random_log_path
+        self.broadcasting = broadcasting
+        if self.broadcasting:
+            self.set_tags(
+                **{
+                    "y_inner_mtype": "pd.Series",
+                    "X_inner_mtype": "pd.DataFrame",
+                    "capability:global_forecasting": False,
+                }
+            )
         super().__init__()
 
     @functools.cached_property
@@ -142,19 +154,21 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         if self.random_log_path:
             if "logger" not in self._trainer_params.keys():
                 if "default_root_dir" not in self._trainer_params.keys():
-                    random_num = (
-                        hash(time.time_ns())
-                        + hash(self.algorithm_class)
-                        + hash(str(data.get_parameters()))
-                        + hash(randint(0, int(time.time())))  # noqa: S311
-                    )
-                    self._random_log_dir = (
-                        os.getcwd() + "/lightning_logs/" + str(abs(random_num))
-                    )
+                    self._random_log_dir = self._gen_random_log_dir(data)
                     self._trainer_params["default_root_dir"] = self._random_log_dir
 
         trainer_instance = pl.Trainer(**self._trainer_params)
         return algorithm_instance, trainer_instance
+
+    def _gen_random_log_dir(self, data=None):
+        random_num = (
+            hash(time.time_ns())
+            + hash(self.algorithm_class)
+            + hash(str(data.get_parameters()) if data else "NoDataPassed")
+            + hash(randint(0, int(time.time())))  # noqa: S311
+        )
+        random_log_dir = os.getcwd() + "/lightning_logs/" + str(abs(random_num))
+        return random_log_dir
 
     def _fit(
         self: "_PytorchForecastingAdapter",
@@ -195,17 +209,6 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         # convert series to frame
         _y, self._convert_to_series = _series_to_frame(y)
         _X, _ = _series_to_frame(X)
-        # store the target column names and index names (probably [None])
-        # will be renamed !
-        self._target_name = _y.columns[-1]
-        self._index_names = _y.index.names
-        self._index_len = len(self._index_names)
-        # store X, y column names (probably None or not str type)
-        # The target column and the index will be renamed
-        # before being passed to the underlying model
-        # because those names could be None or non-string type.
-        if X is not None:
-            self._X_columns = X.columns.tolist()
         # convert data to pytorch-forecasting datasets
         training, validation = self._Xy_to_dataset(
             _X, _y, self._dataset_params, self._max_prediction_length
@@ -226,9 +229,14 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
                     **self._validation_to_dataloader_params
                 ),
             )
-            # load model from checkpoint
-            best_model_path = self._trainer.checkpoint_callback.best_model_path
-            self.best_model = self.algorithm_class.load_from_checkpoint(best_model_path)
+            if self._trainer.checkpoint_callback is not None:
+                # load model from checkpoint
+                best_model_path = self._trainer.checkpoint_callback.best_model_path
+                self.best_model = self.algorithm_class.load_from_checkpoint(
+                    best_model_path
+                )
+            else:
+                self.best_model = self._forecaster
         else:
             # load model from disk
             self.best_model = self.algorithm_class.load_from_checkpoint(self.model_path)
@@ -304,6 +312,15 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         training, validation = self._Xy_to_dataset(
             _X, _y, self._dataset_params, self._max_prediction_length
         )
+        try:
+            if self.deterministic:
+                import torch
+
+                torch_state = torch.get_rng_state()
+                torch.manual_seed(0)
+        except AttributeError:
+            pass
+
         predictions = self.best_model.predict(
             validation.to_dataloader(**self._validation_to_dataloader_params),
             return_x=True,
@@ -315,6 +332,11 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
                 else None
             ),
         )
+        try:
+            if self.deterministic:
+                torch.set_rng_state(torch_state)
+        except AttributeError:
+            pass
         # convert pytorch-forecasting predictions to dataframe
         output = self._predictions_to_dataframe(
             predictions, self._max_prediction_length
@@ -338,6 +360,17 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         # X, y must have same index or X is None
         # assert X is None or (X.index == y.index).all()
         # might not the same order
+        # store the target column names and index names (probably [None])
+        # will be renamed !
+        self._target_name = y.columns[-1]
+        self._index_names = y.index.names
+        self._index_len = len(self._index_names)
+        # store X, y column names (probably None or not str type)
+        # The target column and the index will be renamed
+        # before being passed to the underlying model
+        # because those names could be None or non-string type.
+        if X is not None:
+            self._X_columns = X.columns.tolist()
         # rename the index to make sure it's not None
         self._new_index_names = [
             "_index_name_" + str(i) for i in range(len(self._index_names))
