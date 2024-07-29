@@ -119,11 +119,13 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         "scitype:y": "both",
         "authors": ["julian-fong"],
         "maintainers": ["julian-fong"],
+        "handles-missing-data": False,
         "y_inner_mtype": "pd.DataFrame",
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": True,
         "python_dependencies": ["momentfm", "torch", "tqdm"],
         "capability:global_forecasting": False,
+        "python_version": ">3.10",
     }
 
     def __init__(
@@ -576,7 +578,7 @@ def _check_device(device):
 
 
 def _sample_observations(y):
-    n_total_samples = 1000
+    n_total_samples = 524
     y_sampled = y.sample(n=n_total_samples, replace=True)
 
     return y_sampled
