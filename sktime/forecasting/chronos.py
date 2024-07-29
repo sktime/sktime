@@ -767,8 +767,9 @@ class ChronosForecaster(HFTransformersForecaster):
 
         # set the seed
         if seed is None:
-            seed = np.random.randint(0, 2**31)
-        self.seed = seed
+            self.seed = np.random.randint(0, 2**31)
+        else:
+            self.seed = seed
 
         # set traing_args
         _training_args = {
