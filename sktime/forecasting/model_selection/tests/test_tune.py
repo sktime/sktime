@@ -352,17 +352,22 @@ def optuna_param_grids():
         return {"NAIVE": NAIVE_GRID_OPTUNA, "PIPE": PIPE_GRID_OPTUNA}
 
 
-@pytest.fixture(scope="module")
 def optuna_samplers():
     if _check_soft_dependencies("optuna"):
         import optuna
 
-        return [
+        samplers = [
             None,
             optuna.samplers.NSGAIISampler(seed=42),
             optuna.samplers.QMCSampler(seed=42),
             optuna.samplers.CmaEsSampler(seed=42),
         ]
+        return samplers
+
+
+@pytest.fixture(scope="module", params=optuna_samplers())
+def sampler(request):
+    return request.param
 
 
 forecasters_optuna_test = {
@@ -389,7 +394,7 @@ def test_optuna(
     scoring,
     error_score,
     n_iter,
-    optuna_samplers,  # Fixture providing samplers
+    sampler,
     optuna_param_grids,  # Fixture providing parameter grids
 ):
     """Test TuneForecastingOptunaCV.
@@ -401,29 +406,28 @@ def test_optuna(
     param_grid = optuna_param_grids[grid_key]
     forecaster = forecasters_optuna_test[forecaster_key]
 
-    for sampler in optuna_samplers:  # Iterate over each sampler
-        rscv = ForecastingOptunaSearchCV(
-            forecaster,
-            param_grid=param_grid,
-            cv=cv,
-            scoring=scoring,
-            error_score=error_score,
-            sampler=sampler,
-            n_evals=n_iter,
-        )
-        rscv.fit(y, X)
+    rscv = ForecastingOptunaSearchCV(
+        forecaster,
+        param_grid=param_grid,
+        cv=cv,
+        scoring=scoring,
+        error_score=error_score,
+        sampler=sampler,
+        n_evals=n_iter,
+    )
+    rscv.fit(y, X)
 
-        param_distributions = rscv.cv_results_.params.to_list()
-        _check_cv(
-            forecaster,
-            rscv,
-            cv,
-            param_distributions,
-            y,
-            X,
-            scoring,
-        )
-        _check_fitted_params_keys(rscv.get_fitted_params())
+    param_distributions = rscv.cv_results_.params.to_list()
+    _check_cv(
+        forecaster,
+        rscv,
+        cv,
+        param_distributions,
+        y,
+        X,
+        scoring,
+    )
+    _check_fitted_params_keys(rscv.get_fitted_params())
 
 
 BACKEND_TEST = _get_parallel_test_fixtures("estimator")
