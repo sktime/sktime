@@ -44,7 +44,11 @@ import pandas as pd
 
 from sktime.datatypes._common import _req
 from sktime.datatypes._common import _ret as ret
-from sktime.datatypes._dtypekind import _get_feature_kind, _get_series_dtypekind
+from sktime.datatypes._dtypekind import (
+    DtypeKind,
+    _get_feature_kind,
+    _get_series_dtypekind,
+)
 from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.validation.series import is_in_valid_index_types
 
@@ -407,26 +411,28 @@ if _check_soft_dependencies("gluonts", severity="none"):
             else:
                 metadata["is_univariate"] = obj[0]["target"].shape[1] == 1
 
-        if _req("n_features", return_metadata):
+        req_n_feat = ["n_features", "feature_names", "feature_kind", "dtypekind_dfip"]
+        if _req(req_n_feat, return_metadata):
             # Check first if the ListDataset is empty
             if len(obj) < 1:
-                metadata["n_features"] = 0
-
+                n_features = 0
             else:
-                metadata["n_features"] = obj[0]["target"].shape[1]
+                n_features = obj[0]["target"].shape[1]
+
+        if _req("n_features", return_metadata):
+            metadata["n_features"] = n_features
+
+        if _req("feature_kind", return_metadata):
+            metadata["feature_kind"] = [DtypeKind.FLOAT] * n_features
+
+        if _req("dtypekind_dfip", return_metadata):
+            metadata["dtypekind_dfip"] = [DtypeKind.FLOAT] * n_features
 
         if _req("n_instances", return_metadata):
             metadata["n_instances"] = 1
 
         if _req("feature_names", return_metadata):
-            # Check first if the ListDataset is empty
-            if len(obj) < 1:
-                metadata["feature_names"] = []
-
-            else:
-                metadata["feature_names"] = [
-                    f"value_{i}" for i in range(obj[0]["target"].shape[1])
-                ]
+            metadata["feature_names"] = [f"value_{i}" for i in range(n_features)]
 
         for series in obj:
             # check that no dtype is object
@@ -455,6 +461,67 @@ if _check_soft_dependencies("gluonts", severity="none"):
 
         return ret(True, None, metadata, return_metadata)
 
+    def check_gluonTS_pandasDataset_series(obj, return_metadata=False, var_name="obj"):
+        from gluonts.dataset.pandas import PandasDataset
+
+        metadata = dict()
+
+        # Check for type correctness
+        if not isinstance(obj, PandasDataset):
+            msg = f"{var_name} must be a gluonts.PandasDataset, found {type(obj)}"
+            return ret(False, msg, None, return_metadata)
+
+        # Convert to a pandas DF for easier checks
+        df = obj._data_entries.iterable
+
+        # Checking if the DataFrame is stored in the appropriate place
+        if (
+            not isinstance(df, list)
+            or not isinstance(df[0], tuple)
+            or not isinstance(df[0][1], pd.DataFrame)
+        ):
+            msg = f"{var_name} was not formed with a single-instance pandas DataFrame"
+            return ret(False, msg, None, return_metadata)
+
+        df = df[0][1]
+
+        # Check if there are no values
+        if _req("is_empty", return_metadata):
+            metadata["is_empty"] = len(obj._data_entries) == 0
+
+        if _req("is_univariate", return_metadata):
+            metadata["is_univariate"] = len(df.columns) == 1
+
+        if _req("n_features", return_metadata):
+            metadata["n_features"] = 1
+
+        if _req("n_instances", return_metadata):
+            metadata["n_instances"] = 1
+
+        if _req("n_panels", return_metadata):
+            metadata["n_panels"] = 1
+
+        if _req("feature_names", return_metadata):
+            metadata["feature_names"] = df.columns
+
+        if _req("is_equally_spaced", return_metadata):
+            metadata["is_equally_spaced"] = True
+
+        if _req("has_nans", return_metadata):
+            metadata["has_nans"] = df.isna().any().any()
+
+        if _req("feature_kind", return_metadata):
+            metadata["feature_kind"] = [DtypeKind.FLOAT]
+
+        if _req("dtypekind_dfip", return_metadata):
+            metadata["dtypekind_dfip"] = [DtypeKind.FLOAT]
+
+        return ret(True, None, metadata, return_metadata)
+
     check_dict[("gluonts_ListDataset_series", "Series")] = (
         check_gluonTS_listDataset_series
+    )
+
+    check_dict[("gluonts_PandasDataset_series", "Series")] = (
+        check_gluonTS_pandasDataset_series
     )
