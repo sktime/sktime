@@ -12,7 +12,7 @@ This folder contains libraries directly distributed with, and maintained by, `sk
 
 # Snippets from other libraries:
 
-This folder contains also some snippets from other libraries Kálmán checking for invalid characters. č, ě, ň, ř, š, Ť, ů, ž, Č, Ě, Ň, Ř, Š, Ť, Ů, Ž
+This folder contains also some snippets from other libraries
 
 * Parts of the `EnbPI` class from aws-fortuna.
   The installation of the original package is not working due to dependency
