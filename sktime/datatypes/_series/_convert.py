@@ -114,7 +114,7 @@ def convert_MvS_to_np_as_Series(obj: pd.DataFrame, store=None) -> np.ndarray:
         store["columns"] = obj.columns
         store["index"] = obj.index
 
-    return obj.to_numpy(dtype="float")
+    return obj.to_numpy()
 
 
 convert_dict[("pd.DataFrame", "np.ndarray", "Series")] = convert_MvS_to_np_as_Series
@@ -130,7 +130,7 @@ def convert_UvS_to_np_as_Series(obj: pd.Series, store=None) -> np.ndarray:
         store["index"] = obj.index
         store["name"] = obj.name
 
-    return pd.DataFrame(obj).to_numpy(dtype="float")
+    return pd.DataFrame(obj).to_numpy()
 
 
 convert_dict[("pd.Series", "np.ndarray", "Series")] = convert_UvS_to_np_as_Series

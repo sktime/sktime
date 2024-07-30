@@ -127,7 +127,6 @@ class ColumnEnsembleTransformer(
         "fit_is_empty": False,
         "capability:unequal_length": True,
         "handles-missing-data": True,
-        "capability:categorical_in_X": True,
     }
 
     # for default get_params/set_params from _HeterogenousMetaEstimator
@@ -170,6 +169,7 @@ class ColumnEnsembleTransformer(
                 "capability:missing_values:removes",
                 "scitype:transform-output",
                 "scitype:transform-labels",
+                "capability:categorical_in_X",
             ]
             self.clone_tags(transformers, tags_to_clone)
         else:
@@ -192,6 +192,9 @@ class ColumnEnsembleTransformer(
             self._anytagis_then_set("handles-missing-data", False, True, l_transformers)
             self._anytagis_then_set(
                 "capability:missing_values:removes", False, True, l_transformers
+            )
+            self._anytagis_then_set(
+                "capability:categorical_in_X", True, False, l_transformers
             )
 
             # must be all the same, currently not checking
@@ -416,7 +419,6 @@ class ColumnwiseTransformer(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "univariate-only": False,
         "fit_is_empty": False,
-        "capability:categorical_in_X": True,
     }
 
     def __init__(self, transformer, columns=None):
@@ -431,6 +433,7 @@ class ColumnwiseTransformer(BaseTransformer):
             "X-y-must-have-same-index",
             "transform-returns-same-time-index",
             "skip-inverse-transform",
+            "capability:categorical_in_X",
         ]
         self.clone_tags(transformer, tag_names=tags_to_clone)
 
