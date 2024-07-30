@@ -186,13 +186,13 @@ class DartsRegressionModel(_DartsRegressionAdapter):
         from sklearn.ensemble import RandomForestRegressor
 
         params = [
-            # {
-            #     "num_samples": 100,
-            #     "lags": 2,
-            #     "add_encoders": None,
-            #     "multi_models": False,
-            #     "use_static_covariates": True,
-            # },
+            {
+                "num_samples": 100,
+                "lags": 2,
+                "add_encoders": None,
+                "multi_models": False,
+                "use_static_covariates": True,
+            },
             {"lags": [-1, -3], "model": RandomForestRegressor()},
         ]
 
