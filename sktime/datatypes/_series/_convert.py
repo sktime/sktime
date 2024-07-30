@@ -205,7 +205,14 @@ if _check_soft_dependencies("xarray", severity="none"):
 
         index = obj.indexes[obj.dims[0]]
         columns = obj.indexes[obj.dims[1]] if len(obj.dims) == 2 else None
-        return pd.DataFrame(obj.values, index=index, columns=columns)
+        df = pd.DataFrame(obj.values, index=index, columns=columns)
+        # int64 coercions are needed due to inconsistencies specifically on windows
+        df = df.astype(
+            {col: "int64" for col in df.select_dtypes(include="int32").columns}
+        )
+        if df.index.dtype == "int32":
+            df.index = df.index.astype("int64")
+        return df
 
     convert_dict[("xr.DataArray", "pd.DataFrame", "Series")] = (
         convert_xrdataarray_to_Mvs_as_Series
