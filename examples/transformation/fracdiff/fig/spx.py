@@ -1,3 +1,5 @@
+"""Fractional differentiation of S&P 500."""
+
 import sys
 
 import matplotlib.pyplot as plt
@@ -10,6 +12,7 @@ from fracdiff import Fracdiff  # noqa: E402
 
 
 def fetch_spx():
+    """Fetch 'Adj Close' value of Yahoo stocks."""
     return pandas_datareader.data.DataReader(
         "^GSPC", "yahoo", "1999-10-01", "2020-09-30"
     )["Adj Close"]

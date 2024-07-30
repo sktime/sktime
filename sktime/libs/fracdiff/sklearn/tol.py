@@ -1,3 +1,5 @@
+"""Utility functions to calculate window length from tolerance coefficients."""
+
 # found module but no type hints or library stubs
 import numpy as np
 
@@ -43,9 +45,7 @@ def window_from_tol_coef(n: float, tol_coef: float, max_window: int = 2**12) -> 
     return int(np.searchsorted(-coef, -tol_coef) + 1)  # index -> length
 
 
-def window_from_tol_memory(
-    n: float, tol_memory: float, max_window: int = 2**12
-) -> int:
+def window_from_tol_memory(n: float, tol_memory: float, max_window: int = 2**12) -> int:
     """
     Return length of window determined from tolerance to memory loss.
 

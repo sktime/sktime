@@ -1,4 +1,4 @@
-"""Fractional difference , a la "Advances in Financial Machine Learning" by M. Prado
+"""Fractional difference , a la "Advances in Financial Machine Learning" by M. Prado.
 
 Unofficial fork of the ``fracdiff`` package, maintained in ``sktime``.
 
@@ -39,5 +39,6 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
+
 from .fdiff import fdiff, fdiff_coef
 from .sklearn.fracdiff import Fracdiff

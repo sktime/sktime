@@ -1,11 +1,12 @@
 import numpy as np
 import pytest
 
-from sktime.tests.test_switch import run_test_module_changed
-
 from sktime.libs.fracdiff.fdiff import fdiff_coef
-from sktime.libs.fracdiff.sklearn.tol import window_from_tol_coef
-from sktime.libs.fracdiff.sklearn.tol import window_from_tol_memory
+from sktime.libs.fracdiff.sklearn.tol import (
+    window_from_tol_coef,
+    window_from_tol_memory,
+)
+from sktime.tests.test_switch import run_test_module_changed
 
 
 @pytest.mark.skipif(

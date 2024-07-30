@@ -1,3 +1,5 @@
+"""Fractional differentiation core implementation."""
+
 from functools import partial
 from typing import Optional
 
@@ -8,7 +10,7 @@ from scipy.special import binom  # type: ignore
 
 
 def fdiff_coef(d: float, window: int) -> np.ndarray:
-    """Returns sequence of coefficients in fracdiff operator.
+    """Return sequence of coefficients in fracdiff operator.
 
     Parameters
     ----------
@@ -43,7 +45,7 @@ def fdiff(
     window: int = 10,
     mode: str = "same",
 ) -> np.ndarray:
-    """Calculate the `n`-th differentiation along the given axis.
+    r"""Calculate the `n`-th differentiation along the given axis.
 
     Extention of ``numpy.diff`` to fractional differentiation.
 
@@ -173,6 +175,6 @@ def fdiff(
         a = np.apply_along_axis(D, axis, a)
         a = a[s]
     else:
-        raise ValueError("Invalid mode: {}".format(mode))
+        raise ValueError(f"Invalid mode: {mode}")
 
     return a

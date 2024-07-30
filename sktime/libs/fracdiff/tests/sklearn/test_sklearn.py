@@ -1,13 +1,11 @@
 import numpy as np
 import pytest
-
-from sktime.tests.test_switch import run_test_module_changed
-
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
 from sktime.libs.fracdiff.sklearn import Fracdiff
+from sktime.tests.test_switch import run_test_module_changed
 
 
 @pytest.mark.skipif(

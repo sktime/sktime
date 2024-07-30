@@ -1,16 +1,11 @@
-import pytest
-from sklearn.utils.estimator_checks import parametrize_with_checks
-from sklearn.utils.estimator_checks import check_estimator
-
 import numpy as np
+import pytest
 from numpy.testing import assert_array_equal
-from sklearn.linear_model import LogisticRegression
-from sklearn.tree import DecisionTreeRegressor
-
-from sktime.tests.test_switch import run_test_module_changed
+from sklearn.utils.estimator_checks import parametrize_with_checks
 
 from sktime.libs.fracdiff import fdiff
 from sktime.libs.fracdiff.sklearn import Fracdiff
+from sktime.tests.test_switch import run_test_module_changed
 
 
 @pytest.mark.skipif(
@@ -34,7 +29,10 @@ class TestFracdiff:
         assert_array_equal(fracdiff.fit_transform(X), out)
 
     @pytest.mark.xfail
-    @parametrize_with_checks([Fracdiff(1),])
+    @parametrize_with_checks(
+        [
+            Fracdiff(1),
+        ]
+    )
     def test_sklearn_compatible_estimator(self, estimator, check):
         check(estimator)
-

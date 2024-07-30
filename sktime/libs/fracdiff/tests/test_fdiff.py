@@ -2,16 +2,15 @@ import math
 
 import numpy as np
 import pytest
+from numpy.testing import (
+    assert_allclose,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+)
 
-from numpy.testing import assert_allclose
-from numpy.testing import assert_array_equal
-from numpy.testing import assert_equal
-from numpy.testing import assert_raises
-
+from sktime.libs.fracdiff import fdiff, fdiff_coef
 from sktime.tests.test_switch import run_test_module_changed
-
-from sktime.libs.fracdiff import fdiff
-from sktime.libs.fracdiff import fdiff_coef
 
 
 @pytest.mark.skipif(

@@ -1,19 +1,24 @@
+"""Scikit-learn transformer to compute fractional differentiation."""
+
 from typing import TypeVar
 
 import numpy
-from sklearn.base import BaseEstimator  # type: ignore
-from sklearn.base import TransformerMixin  # type: ignore
-from sklearn.utils.validation import check_array  # type: ignore
-from sklearn.utils.validation import check_is_fitted  # type: ignore
+from sklearn.base import (
+    BaseEstimator,  # type: ignore
+    TransformerMixin,  # type: ignore
+)
+from sklearn.utils.validation import (
+    check_array,  # type: ignore
+    check_is_fitted,  # type: ignore
+)
 
-from ..fdiff import fdiff
-from ..fdiff import fdiff_coef
+from ..fdiff import fdiff, fdiff_coef
 
 T = TypeVar("T", bound="Fracdiff")
 
 
 class Fracdiff(TransformerMixin, BaseEstimator):
-    """A scikit-learn transformer to compute fractional differentiation.
+    r"""A scikit-learn transformer to compute fractional differentiation.
 
     Parameters
     ----------
@@ -83,7 +88,8 @@ class Fracdiff(TransformerMixin, BaseEstimator):
         self.window_policy = window_policy
 
     def __repr__(self) -> str:
-        """
+        """Repr string of the object.
+
         Examples
         --------
         >>> Fracdiff(0.5)
@@ -91,8 +97,8 @@ class Fracdiff(TransformerMixin, BaseEstimator):
         """
         name = self.__class__.__name__
         attrs = ["d", "window", "mode", "window_policy"]
-        params = ", ".join("{}={}".format(attr, getattr(self, attr)) for attr in attrs)
-        return "{}({})".format(name, params)
+        params = ", ".join(f"{attr}={getattr(self, attr)}" for attr in attrs)
+        return f"{name}({params})"
 
     def fit(self: T, X: numpy.ndarray, y: None = None) -> T:
         """
@@ -112,6 +118,7 @@ class Fracdiff(TransformerMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
+        check_array(X, estimator=self)
         self.coef_ = fdiff_coef(self.d, self.window)
         return self
 
