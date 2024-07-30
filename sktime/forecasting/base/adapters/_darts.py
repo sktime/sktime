@@ -2,7 +2,7 @@
 """Implements adapter for Darts models."""
 
 import abc
-from typing import Optional
+from typing import Optional, Union
 
 import pandas as pd
 
@@ -10,12 +10,80 @@ from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
 __author__ = ["yarnabrina", "fnhirwa"]
 
+LAGS_TYPE = Optional[Union[int, list[int], dict[str, Union[int, list[int]]]]]
+PAST_LAGS_TYPE = Optional[Union[int, list[int], dict[str, Union[int, list[int]]]]]
+FUTURE_LAGS_TYPE = Optional[
+    Union[tuple[int, int], list[int], dict[str, Union[tuple[int, int], list[int]]]]
+]
 
-class _DartsRegressionModelsAdapter(BaseForecaster):
-    """Base adapter class for Darts Regression models.
+
+class _DartsRegressionAdapter(BaseForecaster):
+    """Base adapter class for Darts Regression Model.
 
     Parameters
     ----------
+    lags
+        Lagged target values used to predict the next time step. If an integer is given
+        the last `lags` past lags are used (from -1 backward). Otherwise a list of
+        integers with lags is required (each lag must be < 0). If a dictionary is given,
+        keys correspond to the component names
+        (of first series when using multiple series) and
+        the values correspond to the component lags(integer or list of integers).
+    lags_past_covariates
+        Number of lagged past_covariates values used to predict the next time step. If
+        an integer is given the last `lags_past_covariates` past lags are used
+        (inclusive, starting from lag -1). Otherwise a list of integers
+        with lags < 0 is required. If a dictionary is given, keys correspond to the
+        past_covariates component names(of first series when using multiple series)
+        and the values correspond to the component lags(integer or list of integers).
+    lags_future_covariates
+        Number of lagged future_covariates values used to predict the next time step. If
+        a tuple (past, future) is given the last `past` lags in the past are used
+        (inclusive, starting from lag -1) along with the first `future` future lags
+        (starting from 0 - the prediction time - up to `future - 1` included). Otherwise
+        a list of integers with lags is required. If dictionary is given,
+        keys correspond to the future_covariates component names
+        (of first series when using multiple series) and the values
+        correspond to the component lags(integer or list of integers).
+    output_chunk_shift
+    add_encoders
+        A large number of past and future covariates can be automatically generated with
+        `add_encoders`. This can be done by adding multiple pre-defined index encoders
+        and/or custom user-made functions that will be used as index encoders.
+        Additionally, a transformer such as Darts' :class:`Scaler` can be added to
+        transform the generated covariates. This happens all under one hood and only
+        needs to be specified at model creation. Read
+        :meth:`SequentialEncoder <darts.dataprocessing.encoders.SequentialEncoder>`
+        to find out more about ``add_encoders``. Default: ``None``. An example showing
+        some of ``add_encoders`` features:
+
+        .. highlight:: python
+        .. code-block:: python
+
+            add_encoders={
+                'cyclic': {'future': ['month']},
+                'datetime_attribute': {'future': ['hour', 'dayofweek']},
+                'position': {'past': ['relative'], 'future': ['relative']},
+                'custom': {'past': [lambda idx: (idx.year - 1950) / 50]},
+                'transformer': Scaler()
+            }
+        ..
+    model
+        Scikit-learn-like model with ``fit()`` and ``predict()`` methods. Also possible
+        to use model that doesn't support multi-output regression for multivariate
+        timeseries, in which case one regressor will be used per component in the
+        multivariate series. If None, defaults to:
+        ``sklearn.linear_model.LinearRegression(n_jobs=-1)``.
+    multi_models
+        If True, a separate model will be trained for each future lag to predict. If
+        False, a single model is trained to predict at step 'output_chunk_length' in the
+        future. Default: True.
+    use_static_covariates
+        Whether the model should use static covariate information in case the input
+        `series` passed to ``fit()`` contain static covariates. If ``True``, and static
+        covariates are available at fitting time, will enforce that all target `series`
+        have the same static covariate dimensionality in ``fit()`` and ``predict()``.
+
     past_covariates : Optional[List[str]], optional
         column names in ``X`` which are known only for historical data, by default None
     num_samples : Optional[int], optional
@@ -41,13 +109,33 @@ class _DartsRegressionModelsAdapter(BaseForecaster):
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "capability:insample": False,
+        "capability:pred_int": False,
     }
 
     def __init__(
-        self: "_DartsRegressionModelsAdapter",
+        self: "_DartsRegressionAdapter",
+        lags: LAGS_TYPE = None,
+        lags_past_covariates: PAST_LAGS_TYPE = None,
+        lags_future_covariates: FUTURE_LAGS_TYPE = None,
+        output_chunk_length: Optional[int] = 1,
+        output_chunk_shift: Optional[int] = 0,
+        add_encoders: Optional[dict] = None,
+        model=None,
+        multi_models: Optional[bool] = True,
+        use_static_covariates: Optional[bool] = True,
         past_covariates: Optional[list[str]] = None,
         num_samples: Optional[int] = 1000,
     ) -> None:
+        self.lags = lags
+        self.lags_past_covariates = lags_past_covariates
+        self.lags_future_covariates = lags_future_covariates
+        self.output_chunk_length = output_chunk_length
+        self.output_chunk_shift = output_chunk_shift
+        self.add_encoders = add_encoders
+        self.model = model
+        self.multi_models = multi_models
+        self.use_static_covariates = use_static_covariates
+
         if past_covariates is not None and not isinstance(past_covariates, list):
             raise TypeError(
                 f"Expected past_covariates to be a list, found {type(past_covariates)}."
@@ -83,34 +171,6 @@ class _DartsRegressionModelsAdapter(BaseForecaster):
         dataset_copy = _handle_input_index(dataset)
         return darts.TimeSeries.from_dataframe(dataset_copy)
 
-    @property
-    @abc.abstractmethod
-    def _lags_past_covariates(self):
-        """Get the lags_past_covariates value."""
-        pass
-
-    @property
-    @abc.abstractmethod
-    def _lags_future_covariates(self):
-        """Get the lags_future_covariates value."""
-        pass
-
-    @property
-    def _get_lags_past_covariates(self):
-        """Get the lags_past_covariates and lags_future_covariates values."""
-        try:
-            return self._lags_past_covariates
-        except NotImplementedError:
-            return None
-
-    @property
-    def _get_lags_future_covariates(self):
-        """Get the lags_future_covariates value."""
-        try:
-            return self._lags_future_covariates
-        except NotImplementedError:
-            return None
-
     def convert_exogenous_dataset(
         self: "_DartsRegressionModelsAdapter", dataset: Optional[pd.DataFrame]
     ):
@@ -135,17 +195,14 @@ class _DartsRegressionModelsAdapter(BaseForecaster):
             future_known_dataset = None
             future_unknown_dataset = None
 
-        elif (
-            self.past_covariates is not None
-            and self._get_lags_past_covariates is not None
-        ):
+        elif self.past_covariates is not None and self.lags_past_covariates is not None:
             future_unknown_dataset = self.convert_dataframe_to_timeseries(
                 dataset[self.past_covariates]
             )
             future_known_dataset = self.convert_dataframe_to_timeseries(
                 dataset.drop(columns=self.past_covariates)
             )
-        elif self._get_lags_future_covariates is not None:
+        elif self.lags_future_covariates is not None:
             future_unknown_dataset = None
             future_known_dataset = self.convert_dataframe_to_timeseries(dataset)
         else:
@@ -154,6 +211,7 @@ class _DartsRegressionModelsAdapter(BaseForecaster):
 
         return future_known_dataset, future_unknown_dataset
 
+    @classmethod
     @abc.abstractmethod
     def _create_forecaster(self: "_DartsRegressionModelsAdapter"):
         """Create Darts model."""
@@ -289,6 +347,141 @@ class _DartsRegressionModelsAdapter(BaseForecaster):
             ]
         return endogenous_point_predictions.loc[abs_idx]
 
+
+class _DartsRegressionModelsAdapter(_DartsRegressionAdapter):
+    """Adapter class for Darts Regression models.
+
+    Parameters
+    ----------
+    lags
+        Lagged target values used to predict the next time step. If an integer is given
+        the last `lags` past lags are used (from -1 backward). Otherwise a list of
+        integers with lags is required (each lag must be < 0). If a dictionary is given,
+        keys correspond to the component names
+        (of first series when using multiple series) and
+        the values correspond to the component lags(integer or list of integers).
+    lags_past_covariates
+        Number of lagged past_covariates values used to predict the next time step. If
+        an integer is given the last `lags_past_covariates` past lags are used
+        (inclusive, starting from lag -1). Otherwise a list of integers
+        with lags < 0 is required. If a dictionary is given, keys correspond to the
+        past_covariates component names(of first series when using multiple series)
+        and the values correspond to the component lags(integer or list of integers).
+    lags_future_covariates
+        Number of lagged future_covariates values used to predict the next time step. If
+        a tuple (past, future) is given the last `past` lags in the past are used
+        (inclusive, starting from lag -1) along with the first `future` future lags
+        (starting from 0 - the prediction time - up to `future - 1` included). Otherwise
+        a list of integers with lags is required. If dictionary is given,
+        keys correspond to the future_covariates component names
+        (of first series when using multiple series) and the values
+        correspond to the component lags(integer or list of integers).
+    output_chunk_shift
+    add_encoders
+        A large number of past and future covariates can be automatically generated with
+        `add_encoders`. This can be done by adding multiple pre-defined index encoders
+        and/or custom user-made functions that will be used as index encoders.
+        Additionally, a transformer such as Darts' :class:`Scaler` can be added to
+        transform the generated covariates. This happens all under one hood and only
+        needs to be specified at model creation. Read
+        :meth:`SequentialEncoder <darts.dataprocessing.encoders.SequentialEncoder>`
+        to find out more about ``add_encoders``. Default: ``None``. An example showing
+        some of ``add_encoders`` features:
+
+        .. highlight:: python
+        .. code-block:: python
+
+            add_encoders={
+                'cyclic': {'future': ['month']},
+                'datetime_attribute': {'future': ['hour', 'dayofweek']},
+                'position': {'past': ['relative'], 'future': ['relative']},
+                'custom': {'past': [lambda idx: (idx.year - 1950) / 50]},
+                'transformer': Scaler()
+            }
+        ..
+    model
+        Scikit-learn-like model with ``fit()`` and ``predict()`` methods. Also possible
+        to use model that doesn't support multi-output regression for multivariate
+        timeseries, in which case one regressor will be used per component in the
+        multivariate series. If None, defaults to:
+        ``sklearn.linear_model.LinearRegression(n_jobs=-1)``.
+    multi_models
+        If True, a separate model will be trained for each future lag to predict. If
+        False, a single model is trained to predict at step 'output_chunk_length' in the
+        future. Default: True.
+    use_static_covariates
+        Whether the model should use static covariate information in case the input
+        `series` passed to ``fit()`` contain static covariates. If ``True``, and static
+        covariates are available at fitting time, will enforce that all target `series`
+        have the same static covariate dimensionality in ``fit()`` and ``predict()``.
+
+    past_covariates : Optional[List[str]], optional
+        column names in ``X`` which are known only for historical data, by default None
+    num_samples : Optional[int], optional
+        Number of times a prediction is sampled from a probabilistic model, by default
+        1000
+
+    Notes
+    -----
+    If unspecified, all columns will be assumed to be known during prediction duration.
+    """
+
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["yarnabrina", "fnhirwa"],
+        "maintainers": ["yarnabrina", "fnhirwa"],
+        "python_version": ">=3.9",
+        "python_dependencies": ["u8darts>=0.29"],
+        # estimator type
+        # --------------
+        "y_inner_mtype": "pd.DataFrame",
+        "X_inner_mtype": "pd.DataFrame",
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+        "capability:insample": False,
+    }
+
+    def __init__(
+        self: "_DartsRegressionModelsAdapter",
+        lags: LAGS_TYPE = None,
+        lags_past_covariates: PAST_LAGS_TYPE = None,
+        lags_future_covariates: FUTURE_LAGS_TYPE = None,
+        output_chunk_length: Optional[int] = 1,
+        output_chunk_shift: Optional[int] = 0,
+        add_encoders: Optional[dict] = None,
+        multi_models: Optional[bool] = True,
+        use_static_covariates: Optional[bool] = True,
+        past_covariates: Optional[list[str]] = None,
+        num_samples: Optional[int] = 1000,
+    ) -> None:
+        self.lags = lags
+        self.lags_past_covariates = lags_past_covariates
+        self.lags_future_covariates = lags_future_covariates
+        self.output_chunk_length = output_chunk_length
+        self.output_chunk_shift = output_chunk_shift
+        self.add_encoders = add_encoders
+        self.multi_models = multi_models
+        self.use_static_covariates = use_static_covariates
+        self.past_covariates = past_covariates
+        self.num_samples = num_samples
+        super().__init__(
+            lags=lags,
+            lags_past_covariates=lags_past_covariates,
+            lags_future_covariates=lags_future_covariates,
+            output_chunk_length=output_chunk_length,
+            output_chunk_shift=output_chunk_shift,
+            add_encoders=add_encoders,
+            model=None,
+            multi_models=multi_models,
+            use_static_covariates=use_static_covariates,
+            past_covariates=past_covariates,
+            num_samples=num_samples,
+        )
+
+        # initialize internal variables to avoid AttributeError
+        self._forecaster = None
+
     def _predict_quantiles(
         self,
         fh: Optional[ForecastingHorizon],
@@ -404,4 +597,4 @@ def _is_int64_type(index: pd.Index) -> bool:
         return False
 
 
-__all__ = ["_DartsRegressionModelsAdapter"]
+__all__ = ["_DartsRegressionAdapter", "_DartsRegressionModelsAdapter"]
