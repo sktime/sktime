@@ -603,11 +603,11 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
                     "try_local_files_only": True,
                 }
             )
+        params_broadcasting = [dict(p, **{"broadcasting": True}) for p in test_params]
         params_no_broadcasting = [
             dict(p, **{"broadcasting": False}) for p in test_params
         ]
-        test_params.extend(params_no_broadcasting)
-        return test_params
+        return params_broadcasting + params_no_broadcasting
 
 
 class PyTorchDataset(Dataset):
