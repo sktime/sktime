@@ -48,6 +48,7 @@ from sktime.utils.validation.forecasting import check_fh
 
 # get all forecasters
 FH0 = 1
+
 INVALID_X_INPUT_TYPES = [list("foo"), tuple()]
 INVALID_y_INPUT_TYPES = [list("bar"), tuple()]
 
@@ -196,13 +197,40 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     @pytest.mark.parametrize("X", INVALID_X_INPUT_TYPES)
     def test_X_invalid_type_raises_error(self, estimator_instance, n_columns, X):
         """Test that invalid X input types raise error."""
-        y_train = _make_series(n_columns=n_columns)
-        try:
-            with pytest.raises(TypeError, match=r"type"):
-                estimator_instance.fit(y_train, X, fh=FH0)
-        except NotImplementedError as e:
-            msg = str(e).lower()
-            assert "exogenous" in msg
+        if not estimator_instance.get_tag("ignores-exogeneous-X"):
+            y_train = _make_series(n_columns=n_columns)
+            try:
+                with pytest.raises(TypeError, match=r"type"):
+                    estimator_instance.fit(y_train, X, fh=FH0)
+            except NotImplementedError as e:
+                msg = str(e).lower()
+                assert "exogenous" in msg
+
+    def test_categorical_X_raises_error(self, estimator_instance):
+        """Test that categorical X in not supported forecasters raises error.
+
+        Only test with forecasters which do not ignore exogeneous X and those that do
+        not support categorical natively. These are the cases where error is expected
+        to be raised.
+        """
+        if not estimator_instance.get_tag(
+            "ignores-exogeneous-X"
+        ) and not estimator_instance.get_tag("capability:categorical_in_X"):
+            X_train = pd.DataFrame({"col_0": ["a", "b", "c", "a", "b", "c"]})
+            y_train = _make_series(n_timepoints=6, n_columns=2)
+
+            with pytest.raises(TypeError, match=r"categorical"):
+                estimator_instance.fit(y_train, X_train, fh=FH0)
+
+    def test_categorical_y_raises_error(self, estimator_instance):
+        """Test that categorical y in forecasters raises error.
+
+        Categorical y is not currently supported in the forecasting module.
+        """
+        y = pd.DataFrame({"col_0": ["a", "b", "c", "a", "b", "c"]})
+
+        with pytest.raises(TypeError, match=r"categorical"):
+            estimator_instance.fit(y, fh=FH0)
 
     # todo: refactor with scenarios. Need to override fh and scenario args for this.
     @pytest.mark.parametrize(
