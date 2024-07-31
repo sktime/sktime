@@ -175,6 +175,7 @@ def load_tecator(split=None, return_X_y=True, return_type=None):
     The dataset contains 215 samples of meat, each with 100 spectral measurements.
     For more information see:
     https://www.openml.org/search?type=data&sort=runs&id=505&status=active
+
     References
     ----------
     [1] C.Borggaard and H.H.Thodberg, "Optimal Minimal Neural Interpretation of Spectra"
@@ -700,6 +701,7 @@ def load_basic_motions(split=None, return_X_y=True, return_type=None):
     Raises
     ------
     ValueError if argument "numpy2d"/"numpyflat" is passed as return_type
+
     Notes
     -----
     Dimensionality:     multivariate, 6
@@ -844,7 +846,7 @@ def load_lynx():
 
     Notes
     -----
-    The annual numbers of lynx trappings for 1821–1934 in Canada. This
+    The annual numbers of lynx trappings for 1821-1934 in Canada. This
     time-series records the number of skins of
     predators (lynx) that were collected over several years by the Hudson's
     Bay Company. The dataset was
@@ -866,9 +868,9 @@ def load_lynx():
 
     .. [2] Campbell, M. J. and Walker, A. M. (1977). A Survey of statistical
     work on the Mackenzie River series of
-    annual Canadian lynx trappings for the years 1821–1934 and a new
+    annual Canadian lynx trappings for the years 1821-1934 and a new
     analysis. Journal of the Royal Statistical Society
-    series A, 140, 411–431.
+    series A, 140, 411-431.
     """
     name = "Lynx"
     fname = name + ".csv"
@@ -1008,7 +1010,7 @@ def load_gun_point_segmentation():
     name = "GunPoint"
     fname = name + ".csv"
 
-    period_length = int(10)
+    period_length = 10
     change_points = np.int32([900])
 
     path = os.path.join(MODULE, DIRNAME, dir, fname)
@@ -1048,7 +1050,7 @@ def load_electric_devices_segmentation():
     name = "ElectricDevices"
     fname = name + ".csv"
 
-    period_length = int(10)
+    period_length = 10
     change_points = np.int32([1090, 4436, 5712, 7923])
 
     path = os.path.join(MODULE, DIRNAME, dir, fname)

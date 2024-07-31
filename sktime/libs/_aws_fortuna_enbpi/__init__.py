@@ -1,0 +1,1 @@
+"""Classes from aws-fortuna."""

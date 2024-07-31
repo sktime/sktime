@@ -2,6 +2,7 @@
 
 A class to create a pipeline of transformers and a parameter estimator.
 """
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.param_est.base import BaseParamFitter

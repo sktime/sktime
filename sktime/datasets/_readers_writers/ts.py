@@ -23,9 +23,9 @@ from sktime.datasets._readers_writers.utils import (
 from sktime.datatypes import MTYPE_LIST_PANEL, check_is_scitype, convert, convert_to
 from sktime.utils.validation.panel import check_X, check_X_y
 
-# ==================================================================================================
+# ===================================================================================
 # Function to read  .ts file
-# ==================================================================================================
+# ===================================================================================
 
 
 # TODO: Highle deeply nested function, refactor

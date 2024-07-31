@@ -1,4 +1,5 @@
 """Tests the ARDL model."""
+
 __author__ = ["kcc-lion"]
 
 import pytest

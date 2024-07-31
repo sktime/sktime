@@ -1,7 +1,9 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Common utilities for polars based data containers."""
+
 from sktime.datatypes._common import _req
 from sktime.datatypes._common import _ret as ret
+from sktime.datatypes._dtypekind import _get_feature_kind, _polars_dtype_to_kind
 
 
 def get_mi_cols(obj):
@@ -27,7 +29,7 @@ def is_monotonically_increasing(obj):
         import polars as pl
 
         index_df = obj.with_columns(index_cols)
-        grouped = index_df.groupby(index_cols[:-1]).agg([pl.col(index_cols[-1])])
+        grouped = index_df.group_by(index_cols[:-1]).agg([pl.col(index_cols[-1])])
         last_index_col = grouped.select([index_cols[-1]])
         for val in last_index_col.iter_rows():
             # iter rows returns a list of tuples
@@ -71,6 +73,7 @@ def convert_pandas_to_polars(
         If data contains NaN values PyArrow will convert the NaN to None
     lazy : bool, optional (default=False)
         If True, return a LazyFrame instead of a DataFrame
+
     Returns
     -------
     polars.DataFrame or polars.LazyFrame (if lazy=True)
@@ -109,12 +112,14 @@ def convert_pandas_to_polars(
     return obj
 
 
-def convert_polars_to_pandas(obj):
+def convert_polars_to_pandas(obj, infer_freq=True):
     """Convert polars DataFrame to pandas DataFrame, preserving MultiIndex.
 
     Parameters
     ----------
     obj : polars.DataFrame, polars.LazyFrame
+    infer_freq : bool, optional (default=True)
+        Infer frequency and set freq attribute of DatetimeIndex and DatetimeIndex levels
 
     Returns
     -------
@@ -123,6 +128,7 @@ def convert_polars_to_pandas(obj):
         by converting columns with names __index__[indexname] to MultiIndex levels,
         and other columns identical to those of obj.
     """
+    import pandas as pd
     from polars.lazyframe.frame import LazyFrame
 
     # convert to DataFrame if LazyFrame
@@ -141,12 +147,24 @@ def convert_polars_to_pandas(obj):
                 names[i] = None
         return names
 
+    def set_freq(obj):
+        if isinstance(obj.index, pd.DatetimeIndex):
+            obj.index.freq = pd.infer_freq(obj.index)
+
+        if isinstance(obj.index, pd.MultiIndex):
+            levels = obj.index.levels
+            if isinstance(levels[-1], pd.DatetimeIndex):
+                obj.index.levels[-1].freq = pd.infer_freq(obj.index.levels[-1])
+        return obj
+
     pd_index_names = get_index_names(obj.columns)
 
     if len(pd_index_names) > 0:
         pl_index_names = get_mi_cols(obj)
         obj = obj.set_index(pl_index_names)
         obj.index.names = pd_index_names
+        if infer_freq:
+            obj = set_freq(obj)
 
     return obj
 
@@ -217,6 +235,15 @@ def check_polars_frame(
     if _req("feature_names", return_metadata):
         feature_columns = [x for x in obj.columns if x not in index_cols]
         metadata["feature_names"] = feature_columns
+    if _req("dtypekind_dfip", return_metadata):
+        index_cols_count = len(index_cols)
+        dtype_list = obj.dtypes[index_cols_count:]
+        metadata["dtypekind_dfip"] = _polars_dtype_to_kind(dtype_list)
+    if _req("feature_kind", return_metadata):
+        index_cols_count = len(index_cols)
+        dtype_list = obj.dtypes[index_cols_count:]
+        dtype_kind = _polars_dtype_to_kind(dtype_list)
+        metadata["feature_kind"] = _get_feature_kind(dtype_kind)
 
     if scitype == "Table":
         if _req("n_instances", return_metadata):

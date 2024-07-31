@@ -1,12 +1,6 @@
 """Test extraction of features across (shifted) windows."""
+
 __author__ = ["danbartl"]
-
-from sktime.tests.test_switch import run_test_for_class
-from sktime.utils.dependencies import _check_soft_dependencies
-
-# HistGradientBoostingRegressor requires experimental flag in old sklearn versions
-if _check_soft_dependencies("sklearn<1.0", severity="none"):
-    from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 
 import random
 
@@ -28,8 +22,24 @@ from sktime.forecasting.compose import make_reduction
 from sktime.forecasting.compose._reduce import _DirectReducer, _RecursiveReducer
 from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 from sktime.split import temporal_train_test_split
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.summarize import WindowSummarizer
 from sktime.utils._testing.hierarchical import _make_hierarchical
+from sktime.utils.dependencies import _check_soft_dependencies
+
+# HistGradientBoostingRegressor requires experimental flag in old sklearn versions
+sklearn_zero_x = _check_soft_dependencies(
+    "scikit-learn<1.4",
+    severity="none",
+    package_import_alias={"scikit-learn": "sklearn"},
+)
+
+if _check_soft_dependencies(
+    "scikit-learn<1.0",
+    severity="none",
+    package_import_alias={"scikit-learn": "sklearn"},
+):
+    from sklearn.experimental import enable_hist_gradient_boosting  # noqa: F401
 
 
 @pytest.fixture
@@ -291,9 +301,9 @@ def test_equality_transfo_nontranso(regressor):
         }
     }
 
-    random_int = random.randint(1, 1000)
+    random_int = random.randint(1, 1000)  # noqa: S311
     regressor.random_state = random_int
-    forecaster = make_reduction(regressor, window_length=int(6), strategy="recursive")
+    forecaster = make_reduction(regressor, window_length=6, strategy="recursive")
     forecaster.fit(y_train)
     y_pred = forecaster.predict(fh)
     recursive_without = mean_absolute_percentage_error(y_test, y_pred, symmetric=False)

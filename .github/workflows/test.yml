@@ -326,7 +326,7 @@ jobs:
 
       - name: Install sktime and dependencies
         run: |
-          python -m pip install .[all_extras,dev,pandas1] --no-cache-dir
+          python -m pip install .[all_extras,dev,pandas1,numpy1] --no-cache-dir
 
       - name: Show dependencies
         run: python -m pip list
