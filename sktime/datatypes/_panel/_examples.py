@@ -24,6 +24,7 @@ overall, conversions from non-lossy representations to any other ones
 import numpy as np
 import pandas as pd
 
+from sktime.datatypes._dtypekind import DtypeKind
 from sktime.utils.dependencies import _check_soft_dependencies
 
 example_dict = dict()
@@ -98,6 +99,30 @@ if _check_soft_dependencies("polars", severity="none"):
     example_dict[("polars_panel", "Panel", 0)] = pl_frame
     example_dict_lossy[("polars_panel", "Panel", 0)] = False
 
+if _check_soft_dependencies("gluonts", severity="none"):
+    from sktime.datatypes._adapter.gluonts import (
+        convert_pandas_multiindex_to_pandasDataset,
+        convert_pandas_to_listDataset,
+    )
+
+    df = example_dict[("pd-multiindex", "Panel", 0)]
+
+    # Updating the DF to have pandas Datetime objects
+    list_dataset = convert_pandas_to_listDataset(df)
+
+    example_dict[("gluonts_ListDataset_panel", "Panel", 0)] = list_dataset
+    example_dict_lossy[("gluonts_ListDataset_panel", "Panel", 0)] = True
+
+    # Beginning example tests for PandasDataset
+    df = example_dict[("pd-multiindex", "Panel", 0)]
+
+    pandas_dataset = convert_pandas_multiindex_to_pandasDataset(
+        df, item_id="instances", timepoints="timepoints", target=["var_0", "var_1"]
+    )
+
+    example_dict[("gluonts_PandasDataset_panel", "Panel", 0)] = pandas_dataset
+    example_dict_lossy[("gluonts_PandasDataset_panel", "Panel", 0)] = False
+
 example_dict_metadata[("Panel", 0)] = {
     "is_univariate": False,
     "is_one_series": False,
@@ -111,6 +136,7 @@ example_dict_metadata[("Panel", 0)] = {
     "n_instances": 3,
     "n_features": 2,
     "feature_names": ["var_0", "var_1"],
+    "feature_kind": [DtypeKind.FLOAT, DtypeKind.FLOAT],
 }
 
 ###
@@ -178,6 +204,25 @@ if _check_soft_dependencies("polars", severity="none"):
 
     example_dict[("polars_panel", "Panel", 1)] = pl_frame
     example_dict_lossy[("polars_panel", "Panel", 1)] = False
+if _check_soft_dependencies("gluonts", severity="none"):
+    from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
+
+    df = example_dict[("pd-multiindex", "Panel", 1)]
+
+    list_dataset = convert_pandas_to_listDataset(df)
+
+    example_dict[("gluonts_ListDataset_panel", "Panel", 1)] = list_dataset
+    example_dict_lossy[("gluonts_ListDataset_panel", "Panel", 1)] = True
+
+    # Beginning example tests for PandasDataset
+    df = example_dict[("pd-multiindex", "Panel", 1)]
+
+    pandas_dataset = convert_pandas_multiindex_to_pandasDataset(
+        df, item_id="instances", timepoints="timepoints", target=["var_0"]
+    )
+
+    example_dict[("gluonts_PandasDataset_panel", "Panel", 1)] = pandas_dataset
+    example_dict_lossy[("gluonts_PandasDataset_panel", "Panel", 1)] = False
 
 example_dict_metadata[("Panel", 1)] = {
     "is_univariate": True,
@@ -192,6 +237,7 @@ example_dict_metadata[("Panel", 1)] = {
     "n_instances": 3,
     "n_features": 1,
     "feature_names": ["var_0"],
+    "feature_kind": [DtypeKind.FLOAT],
 }
 
 ###
@@ -254,6 +300,26 @@ if _check_soft_dependencies("polars", severity="none"):
     example_dict[("polars_panel", "Panel", 2)] = pl_frame
     example_dict_lossy[("polars_panel", "Panel", 2)] = False
 
+if _check_soft_dependencies("gluonts", severity="none"):
+    from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
+
+    df = example_dict[("pd-multiindex", "Panel", 2)]
+
+    list_dataset = convert_pandas_to_listDataset(df)
+
+    example_dict[("gluonts_ListDataset_panel", "Panel", 2)] = list_dataset
+    example_dict_lossy[("gluonts_ListDataset_panel", "Panel", 2)] = True
+
+    # Beginning example tests for PandasDataset
+    df = example_dict[("pd-multiindex", "Panel", 2)]
+
+    pandas_dataset = convert_pandas_multiindex_to_pandasDataset(
+        df, item_id="instances", timepoints="timepoints", target=["var_0"]
+    )
+
+    example_dict[("gluonts_PandasDataset_panel", "Panel", 2)] = pandas_dataset
+    example_dict_lossy[("gluonts_PandasDataset_panel", "Panel", 2)] = True
+
 example_dict_metadata[("Panel", 2)] = {
     "is_univariate": True,
     "is_one_series": True,
@@ -267,6 +333,7 @@ example_dict_metadata[("Panel", 2)] = {
     "n_instances": 1,
     "n_features": 1,
     "feature_names": ["var_0"],
+    "feature_kind": [DtypeKind.FLOAT],
 }
 
 ###
@@ -297,4 +364,5 @@ example_dict_metadata[("Panel", 3)] = {
     "n_instances": 3,
     "n_features": 1,
     "feature_names": ["var_0"],
+    "feature_kind": [DtypeKind.FLOAT],
 }

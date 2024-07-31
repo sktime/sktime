@@ -1,6 +1,7 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Class to iteratively apply differences to a time series."""
+
 __author__ = ["RNKuhns", "fkiraly", "benheid"]
 __all__ = ["Differencer"]
 

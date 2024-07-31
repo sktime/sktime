@@ -14,6 +14,11 @@ All parameter estimators in ``sktime`` can be listed using the
 using ``estimator_types="param_est"``, optionally filtered by tags.
 Valid tags can be listed using ``sktime.registry.all_tags``.
 
+A full table with tag based search is also available on the
+`Estimator Search Page <https://www.sktime.net/en/latest/estimator_overview.html>`_
+(select "parameter estimator" in the "Estimator type" dropdown).
+
+
 Parameter estimators
 --------------------
 

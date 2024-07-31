@@ -1,4 +1,5 @@
 """Tests for feature importance in time series forests."""
+
 from unittest.mock import MagicMock, patch
 
 import numpy as np

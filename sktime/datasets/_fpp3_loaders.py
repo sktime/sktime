@@ -90,7 +90,7 @@ def _decompress_file_to_temp(url, temp_folder=None):
     if temp_folder is None:
         temp_folder = tempfile.gettempdir()
     temp_dir = tempfile.mkdtemp(dir=temp_folder)
-    response = requests.get(url)
+    response = requests.get(url)  # noqa: S113
     temp_file = os.path.join(temp_dir, "foo.tar.gz")
     with open(temp_file, "wb") as f:
         f.write(response.content)

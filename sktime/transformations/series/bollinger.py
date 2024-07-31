@@ -1,6 +1,7 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Class to apply bollinger bounds to a time series."""
+
 __author__ = ["ishanpai"]
 __all__ = ["Bollinger"]
 
