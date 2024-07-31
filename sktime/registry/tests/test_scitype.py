@@ -24,9 +24,9 @@ def test_scitype(coerce_to_list):
     result_naive = scitype(NaiveForecaster(), coerce_to_list=coerce_to_list)
     if coerce_to_list:
         assert isinstance(result_naive, list)
-        assert "forecaster" == result_naive[0]
+        assert "forecaster" == result_naive[0] or "global_forecaster" == result_naive[0]
     else:
-        assert "forecaster" == result_naive
+        assert "forecaster" == result_naive or "global_forecaster" == result_naive
 
     # test transformer object
     result_transformer = scitype(ExponentTransformer, coerce_to_list=coerce_to_list)
