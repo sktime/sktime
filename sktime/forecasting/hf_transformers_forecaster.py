@@ -1,6 +1,7 @@
 """Adapter for using huggingface transformers for forecasting."""
 
 from copy import deepcopy
+from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -52,6 +53,7 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
           be raised, indicating that the 'peft' package is required. Please install
           it using `pip install peft` to use this fit strategy.
     broadcasting: bool (default=True)
+        DeprecationWarning: default value will be changed to False in v0.33.0
         multiindex data input will be broadcasted to single series.
         For each single series, one copy of this forecaster will try to
         fit and predict on it. The broadcasting is happening inside automatically,
@@ -184,7 +186,6 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
         self,
         model_path: str,
         fit_strategy="minimal",
-        broadcasting=True,
         validation_split=0.2,
         config=None,
         training_args=None,
@@ -194,6 +195,8 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
         peft_config=None,
         no_size1_batch=True,
         try_local_files_only=False,
+        # TODO change the default value to False in v0.33.0
+        broadcasting=True,
     ):
         super().__init__()
         self.model_path = model_path
@@ -224,6 +227,12 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
                     "capability:global_forecasting": False,
                 }
             )
+
+        warn(
+            "DeprecationWarning: The default value of the parameter "
+            "broadcasting will be set to False in v0.33.0.",
+            DeprecationWarning,
+        )
 
     def _fit(self, y, X, fh):
         def try_local_files_only(f: callable):
