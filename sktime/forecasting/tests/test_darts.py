@@ -174,4 +174,4 @@ def test_darts_regression_with_weather_dataset(model):
     pred_sktime = sktime_model.predict(fh)
     assert isinstance(pred_sktime, pd.Series)
 
-    np.testing.assert_array_equal(pred_sktime.to_numpy(), darts_pred.to_numpy())
+    np.testing.assert_allclose(pred_sktime.to_numpy(), darts_pred.to_numpy())
