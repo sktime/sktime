@@ -1,7 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Interfaces to estimators from darts by Unit8."""
 
-from typing import Optional, Union
+from typing import Optional
 
 from sktime.forecasting.base.adapters._darts import (
     FUTURE_LAGS_TYPE,
@@ -44,6 +44,18 @@ class DartsRegressionModel(_DartsRegressionAdapter):
         (of first series when using multiple series) and the values
         correspond to the component lags(integer or list of integers).
     output_chunk_shift
+        Optionally, the number of steps to shift the start of the output chunk into the
+        future (relative to the input chunk end). This will create a gap between the
+        input (history of target and past covariates) and output. If the model supports
+        future_covariates, the lags_future_covariates are relative to the first step in
+        the shifted output chunk. Predictions will start output_chunk_shift steps after
+        the end of the target series. If output_chunk_shift is set, the model cannot
+        generate autoregressive predictions (n > output_chunk_length).
+    output_chunk_length
+        Number of time steps predicted at once by the internal regression model. Does
+        not have to equal the forecast horizon `n` used in `predict()`. However, setting
+        `output_chunk_length` equal to the forecast horizon may be useful if the
+        covariates don't extend far enough into the future.
     add_encoders
         A large number of past and future covariates can be automatically generated with
         `add_encoders`. This can be done by adding multiple pre-defined index encoders
@@ -535,15 +547,9 @@ class DartsLinearRegressionModel(_DartsRegressionModelsAdapter):
         self: "DartsLinearRegressionModel",
         past_covariates: Optional[list[str]] = None,
         num_samples: Optional[int] = 1000,
-        lags: Optional[Union[int, list[int], dict[str, Union[int, list[int]]]]] = None,
-        lags_past_covariates: Optional[
-            Union[int, list[int], dict[str, Union[int, list[int]]]]
-        ] = None,
-        lags_future_covariates: Optional[
-            Union[
-                tuple[int, int], list[int], dict[str, Union[tuple[int, int], list[int]]]
-            ]
-        ] = None,
+        lags: LAGS_TYPE = None,
+        lags_past_covariates: PAST_LAGS_TYPE = None,
+        lags_future_covariates: FUTURE_LAGS_TYPE = None,
         output_chunk_length: Optional[int] = 1,
         add_encoders: Optional[dict] = None,
         likelihood: Optional[str] = None,

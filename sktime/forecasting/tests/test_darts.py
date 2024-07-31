@@ -1,4 +1,4 @@
-"""Test for HolidayFeatures transformer."""
+"""Test for Darts Models."""
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 
@@ -10,7 +10,11 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import load_longley
-from sktime.forecasting.darts import DartsLinearRegressionModel, DartsXGBModel
+from sktime.forecasting.darts import (
+    DartsLinearRegressionModel,
+    DartsRegressionModel,
+    DartsXGBModel,
+)
 from sktime.split import temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
 
@@ -35,6 +39,7 @@ model_kwargs = {
 import_mappings = {
     DartsXGBModel: "XGBModel",
     DartsLinearRegressionModel: "LinearRegressionModel",
+    DartsRegressionModel: "RegressionModel",
 }
 
 
@@ -51,10 +56,6 @@ def test_darts_regression_model_without_X(model):
         output_chunk_length=4,
         kwargs=kwargs,
     )
-    # try to fit with negative forecast horizon (insample prediction)
-    with pytest.raises(NotImplementedError):
-        sktime_model.fit(y_train, fh=[-2, -1, 0, 1, 2])
-
     # train the model
     sktime_model.fit(y_train, fh=[1, 2, 3, 4])
     # make prediction
@@ -69,7 +70,7 @@ def test_darts_regression_model_without_X(model):
     not run_test_for_class([DartsXGBModel, DartsLinearRegressionModel]),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-def test_darts_regression_model_with_weather_dataset(model):
+def test_darts_regression_models_with_weather_dataset(model):
     """Test with weather dataset."""
     from darts.datasets import WeatherDataset
 
@@ -133,3 +134,44 @@ def test_darts_regression_model_with_X(model):
 
     # check the index of the prediction
     pd.testing.assert_index_equal(pred.index, y_test.index, check_names=False)
+
+
+@pytest.mark.parametrize("model", [DartsRegressionModel])
+@pytest.mark.skipif(
+    not run_test_for_class(DartsRegressionModel),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_darts_regression_with_weather_dataset(model):
+    """Test with weather dataset."""
+    from darts.datasets import WeatherDataset
+    from sklearn.ensemble import RandomForestRegressor
+
+    model_to_import = import_mappings.get(model)
+    # Create and fit the model
+    imported_model = getattr(importlib.import_module("darts.models"), model_to_import)
+    darts_model = imported_model(
+        lags=12, output_chunk_length=6, model=RandomForestRegressor()
+    )
+    # Load the dataset
+    series = WeatherDataset().load()
+
+    # Predicting atmospheric pressure
+    target = series["p (mbar)"][:100]
+    target_df = target.pd_series()
+
+    darts_model.fit(target)
+
+    # Make a prediction for the next 6 time steps
+    darts_pred = darts_model.predict(6).pd_series()
+    assert isinstance(target_df, pd.Series)
+    sktime_model = model(
+        lags=12,
+        output_chunk_length=6,
+        model=RandomForestRegressor(),
+    )
+    sktime_model.fit(target_df)
+    fh = list(range(1, 7))
+    pred_sktime = sktime_model.predict(fh)
+    assert isinstance(pred_sktime, pd.Series)
+
+    np.testing.assert_array_equal(pred_sktime.to_numpy(), darts_pred.to_numpy())

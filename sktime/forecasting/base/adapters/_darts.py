@@ -7,6 +7,7 @@ from typing import Optional, Union
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.utils.warnings import warn
 
 __author__ = ["yarnabrina", "fnhirwa"]
 
@@ -46,6 +47,18 @@ class _DartsRegressionAdapter(BaseForecaster):
         (of first series when using multiple series) and the values
         correspond to the component lags(integer or list of integers).
     output_chunk_shift
+        Optional, the number of steps to shift the start of the output chunk into the
+        future (relative to the input chunk end). This will create a gap between the
+        input (history of target and past covariates) and output. If the model supports
+        future_covariates, the lags_future_covariates are relative to the first step in
+        the shifted output chunk. Predictions will start output_chunk_shift steps after
+        the end of the target series. If output_chunk_shift is set, the model cannot
+        generate autoregressive predictions (n > output_chunk_length).
+    output_chunk_length
+        Number of time steps predicted at once by the internal regression model. Does
+        not have to equal the forecast horizon `n` used in `predict()`. However, setting
+        `output_chunk_length` equal to the forecast horizon may be useful if the
+        covariates don't extend far enough into the future.
     add_encoders
         A large number of past and future covariates can be automatically generated with
         `add_encoders`. This can be done by adding multiple pre-defined index encoders
@@ -237,7 +250,8 @@ class _DartsRegressionAdapter(BaseForecaster):
             if self.get_tag("scitype:y")=="both": no restrictions apply
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
             The forecasting horizon with the steps ahead to to predict.
-            Required (non-optional) here.
+            For darts models `fh` is not used,
+            the steps ahead for prediction is determined by `output_chunk_length`.
         X : pd.DataFrame, optional (default=None)
             Exogeneous time series to fit to.
 
@@ -245,8 +259,6 @@ class _DartsRegressionAdapter(BaseForecaster):
         -------
         self : reference to self
         """
-        if fh is not None and not fh.is_all_out_of_sample(cutoff=self.cutoff):
-            raise NotImplementedError("in-sample prediction is currently not supported")
         del fh  # avoid being detected as unused by ``vulture`` like tools
         endogenous_actuals = self.convert_dataframe_to_timeseries(y)
         unknown_exogenous, known_exogenous = self.convert_exogenous_dataset(X)
@@ -285,6 +297,9 @@ class _DartsRegressionAdapter(BaseForecaster):
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
             The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon value should be less than the value
+            of ``output_chunk_length`` fitted to the model, otherwise the prediction
+            result will be from auto-regression.
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
 
@@ -295,6 +310,19 @@ class _DartsRegressionAdapter(BaseForecaster):
         """
         if not fh.is_all_out_of_sample(cutoff=self.cutoff):
             raise NotImplementedError("in-sample prediction is currently not supported")
+        non_auto_regressive_fh = ForecastingHorizon(
+            [i for i in range(1, self.output_chunk_length + 1)]
+        )
+        # warning for fh out of range of output_chunk_length
+        if max(fh.to_indexer(cutoff=self.cutoff)) > max(
+            non_auto_regressive_fh.to_indexer(cutoff=self.cutoff)
+        ):
+            warn(
+                f"Forecasting horizon values: {fh} are out of range of"
+                " output_chunk_length. The prediction will be auto-regression based.",
+                obj=self,
+                stacklevel=2,
+            )
         self.check_is_fitted()
         unknown_exogenous, known_exogenous = self.convert_exogenous_dataset(X)
         absolute_fh = fh.to_absolute(self.cutoff)
@@ -376,7 +404,11 @@ class _DartsRegressionModelsAdapter(_DartsRegressionAdapter):
         keys correspond to the future_covariates component names
         (of first series when using multiple series) and the values
         correspond to the component lags(integer or list of integers).
-    output_chunk_shift
+    output_chunk_length
+        Number of time steps predicted at once by the internal regression model. Does
+        not have to equal the forecast horizon `n` used in `predict()`. However, setting
+        `output_chunk_length` equal to the forecast horizon may be useful if the
+        covariates don't extend far enough into the future.
     add_encoders
         A large number of past and future covariates can be automatically generated with
         `add_encoders`. This can be done by adding multiple pre-defined index encoders
@@ -513,6 +545,19 @@ class _DartsRegressionModelsAdapter(_DartsRegressionAdapter):
             Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
+        non_auto_regressive_fh = ForecastingHorizon(
+            [i for i in range(1, self.output_chunk_length + 1)]
+        )
+        # warning for fh out of range of output_chunk_length
+        if max(fh.to_indexer(cutoff=self.cutoff)) > max(
+            non_auto_regressive_fh.to_indexer(cutoff=self.cutoff)
+        ):
+            warn(
+                f"Forecasting horizon values: {fh} are out of range of"
+                " output_chunk_length. The prediction will be auto-regression based.",
+                obj=self,
+                stacklevel=2,
+            )
         unknown_exogenous, known_exogenous = self.convert_exogenous_dataset(X)
         maximum_forecast_horizon = fh.to_relative(self.cutoff)[-1]
         absolute_fh = fh.to_absolute(self.cutoff)
