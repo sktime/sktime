@@ -29,7 +29,7 @@ def is_monotonically_increasing(obj):
         import polars as pl
 
         index_df = obj.with_columns(index_cols)
-        grouped = index_df.groupby(index_cols[:-1]).agg([pl.col(index_cols[-1])])
+        grouped = index_df.group_by(index_cols[:-1]).agg([pl.col(index_cols[-1])])
         last_index_col = grouped.select([index_cols[-1]])
         for val in last_index_col.iter_rows():
             # iter rows returns a list of tuples
