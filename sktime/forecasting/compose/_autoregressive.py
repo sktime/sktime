@@ -5,6 +5,9 @@ __author__ = ["geetu040"]
 
 from copy import deepcopy
 
+import numpy as np
+import pandas as pd
+
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 from sktime.utils.dependencies import _check_soft_dependencies
 
@@ -36,11 +39,7 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
         self.forecaster = forecaster
         self.horizon_length = horizon_length
         self.aggregate_method = (
-            aggregate_method
-            if aggregate_method is not None
-            else (
-                sum  # TODO: change the default aggregator
-            )
+            aggregate_method if aggregate_method is not None else np.mean
         )
 
         super().__init__()
@@ -63,25 +62,14 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
         _y = deepcopy(_y)  # make copy because we are going to add values to it
 
         for i in range(max_fh):
-            if X is not None:
-                # TODO: check for non-multi-index
+            # get sample from X containing historical and future exogenous data
+            _x = self._get_x(_y, X, i)
 
-                # keep till this index in X (hist from _y + future from _fh)
-                end_index = len(_y.index.levels[-1]) + self.horizon_length + i
-
-                # levels other than the timestamps (innermost/base level)
-                groupby_levels = list(range(len(X.index.names) - 1))
-
-                # truncate X
-                _x = X.groupby(level=groupby_levels).apply(lambda x: x.head(end_index))
-                _x.index = _x.index.droplevel(groupby_levels)
-
-            else:
-                _x = None
-
+            # forecast for self.horizon_length
             preds = self.forecaster.predict(y=_y, X=_x)
 
-            # TODO: update _y with concatenated preds
+            # use predicted values as history for next iteration
+            _y = self._concate_preds(_y, preds)
 
         # collect forecasting points from _y
         absolute_horizons = fh.to_absolute_index(self.cutoff)
@@ -89,6 +77,30 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
         preds = _y.loc[dateindex]
 
         return preds
+
+    def _get_x(self, _y, X, i):
+        if X is None:
+            return None
+
+        # TODO: check for non-multi-index
+        # keep till this index in X (hist from _y + future from _fh)
+        end_index = len(_y.index.levels[-1]) + self.horizon_length + i
+
+        # levels other than the timestamps (innermost/base level)
+        groupby_levels = list(range(len(X.index.names) - 1))
+
+        # truncate X
+        _x = X.groupby(level=groupby_levels).apply(lambda x: x.head(end_index))
+        _x.index = _x.index.droplevel(groupby_levels)
+
+        return _x
+
+    def _concate_preds(self, _y, preds):
+        # TODO: check for non-multi-indexes
+        _y = pd.concat([_y, preds])
+        _y = _y.groupby(level=_y.index.names)
+        _y = _y.apply(self.aggregate_method)
+        return _y
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
