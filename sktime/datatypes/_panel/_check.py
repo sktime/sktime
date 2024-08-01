@@ -51,6 +51,7 @@ from sktime.datatypes._dtypekind import (
     DtypeKind,
     _get_feature_kind,
     _get_panel_dtypekind,
+    _pandas_dtype_to_kind,
 )
 from sktime.datatypes._series._check import (
     _index_equally_spaced,
@@ -647,17 +648,26 @@ if _check_soft_dependencies("gluonts", severity="none"):
             metadata["is_univariate"] = len(df[0][1].columns) == 1
 
         req_n_feat = ["n_features", "feature_kind", "dtypekind_dfip"]
+
         if _req(req_n_feat, return_metadata):
             n_features = len(df[0][1].columns)
 
         if _req("n_features", return_metadata):
             metadata["n_features"] = n_features
 
-        if _req("feature_kind", return_metadata):
-            metadata["feature_kind"] = [DtypeKind.FLOAT] * n_features
-
         if _req("dtypekind_dfip", return_metadata):
-            metadata["dtypekind_dfip"] = [DtypeKind.FLOAT] * n_features
+            index_cols_count = len(df[0][1].columns)
+
+            # slicing off additional index columns
+            dtype_list = df[0][1].dtypes.to_list()[index_cols_count:]
+
+            metadata["dtypekind_dfip"] = _pandas_dtype_to_kind(dtype_list)
+
+        if _req("feature_kind", return_metadata):
+
+            dtype_list = df[0][1].dtypes.to_list()[index_cols_count:]
+            dtype_kind = _pandas_dtype_to_kind(dtype_list)
+            metadata["feature_kind"] = _get_feature_kind(dtype_kind)
 
         if _req("n_instances", return_metadata):
             metadata["n_instances"] = len(df)
