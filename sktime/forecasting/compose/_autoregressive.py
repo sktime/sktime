@@ -3,7 +3,7 @@
 
 __author__ = ["geetu040"]
 
-import pandas as pd
+from copy import deepcopy
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 from sktime.utils.dependencies import _check_soft_dependencies
@@ -26,7 +26,7 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
             "pd-multiindex",
             "pd_multiindex_hier",
         ],
-        "ignores-exogeneous-X": True,  # TODO: look at this
+        "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
         "capability:insample": False,
         "capability:global_forecasting": True,
@@ -35,7 +35,6 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
     def __init__(self, forecaster, horizon_length, aggregate_method=None):
         self.forecaster = forecaster
         self.horizon_length = horizon_length
-        # TODO: check the need for this
         self.aggregate_method = (
             aggregate_method
             if aggregate_method is not None
@@ -48,31 +47,46 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
 
     def _fit(self, y, X=None, fh=None):
         # ignore the fh provided fit
-        _fh = ForecastingHorizon(range(1, self.horizon_length))
+        _fh = ForecastingHorizon(range(1, self.horizon_length + 1))
 
         self.forecaster.fit(y=y, X=X, fh=_fh)
 
     def _predict(self, fh, X=None, y=None):
         # use fh to find the maximum length to forecast regressively
+        # TODO: see how to handle fh provided in fit
         max_fh = max(
             *(fh.to_relative(self._cutoff)._values + 1),
             self.horizon_length,
         )
 
-        # minimum number of iterations needed to exceed forecast till max_fh
-        n_iterations = (max_fh + self.horizon_length - 1) // self.horizon_length
+        _y = self._y if y is None else y
+        _y = deepcopy(_y)  # make copy because we are going to add values to it
 
-        # regressive forecasting loop
-        y_ = self._y if y is None else y
-        for _ in range(n_iterations):
-            preds = self.forecaster.predict(y=y_)
-            y_ = pd.concat([y_, preds])
-            # TODO: update this concatenation for multi-index
+        for i in range(max_fh):
+            if X is not None:
+                # TODO: check for non-multi-index
 
-        # collect forecasting points from y_
+                # keep till this index in X (hist from _y + future from _fh)
+                end_index = len(_y.index.levels[-1]) + self.horizon_length + i
+
+                # levels other than the timestamps (innermost/base level)
+                groupby_levels = list(range(len(X.index.names) - 1))
+
+                # truncate X
+                _x = X.groupby(level=groupby_levels).apply(lambda x: x.head(end_index))
+                _x.index = _x.index.droplevel(groupby_levels)
+
+            else:
+                _x = None
+
+            preds = self.forecaster.predict(y=_y, X=_x)
+
+            # TODO: update _y with concatenated preds
+
+        # collect forecasting points from _y
         absolute_horizons = fh.to_absolute_index(self.cutoff)
-        dateindex = y_.index.get_level_values(-1).map(lambda x: x in absolute_horizons)
-        preds = y_.loc[dateindex]
+        dateindex = _y.index.get_level_values(-1).map(lambda x: x in absolute_horizons)
+        preds = _y.loc[dateindex]
 
         return preds
 
