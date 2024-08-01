@@ -125,7 +125,7 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
             test_params = [
                 {
                     "forecaster": PytorchForecastingTFT(
-                        PytorchForecastingTFT.get_test_params()[0],
+                        **PytorchForecastingTFT.get_test_params()[0],
                     ),
                     "horizon_length": 3,
                     "aggregate_method": None,
