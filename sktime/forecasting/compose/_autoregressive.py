@@ -52,7 +52,6 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
 
     def _predict(self, fh, X=None, y=None):
         # use fh to find the maximum length to forecast regressively
-        # TODO: see how to handle fh provided in fit
         max_fh = max(
             *(fh.to_relative(self._cutoff)._values + 1),
             self.horizon_length,
@@ -82,7 +81,6 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
         if X is None:
             return None
 
-        # TODO: check for non-multi-index
         # keep till this index in X (hist from _y + future from _fh)
         end_index = len(_y.index.levels[-1]) + self.horizon_length + i
 
@@ -96,7 +94,6 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
         return _x
 
     def _concate_preds(self, _y, preds):
-        # TODO: check for non-multi-indexes
         _y = pd.concat([_y, preds])
         _y = _y.groupby(level=_y.index.names)
         _y = _y.apply(self.aggregate_method)
