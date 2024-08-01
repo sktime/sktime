@@ -1,5 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests for interfacing estimators from neuralforecast."""
+
 import pandas
 import pytest
 
@@ -253,7 +254,6 @@ def test_neural_forecast_with_auto_freq_on_valid_index(
     index, freq, model_class
 ) -> None:
     """Test with freq set to 'auto' on valid indexes (equispaced dates)."""
-
     y = pandas.Series(data=range(len(index)), index=index)
 
     model = model_class(freq=freq, max_steps=1, trainer_kwargs={"logger": False})
@@ -284,7 +284,6 @@ def test_neural_forecast_with_auto_freq_on_valid_index(
 )
 def test_neural_forecast_with_auto_freq_on_missing_int_like(index, model_class) -> None:
     """Test with freq set to 'auto' on int-like index with missing values."""
-
     y = pandas.Series(data=range(len(index)), index=index)
 
     model = model_class(freq="auto", max_steps=1, trainer_kwargs={"logger": False})
@@ -314,7 +313,6 @@ def test_neural_forecast_with_auto_freq_on_missing_date_like(
     index, model_class
 ) -> None:
     """Test with freq set to 'auto' on date-like index with missing values."""
-
     y = pandas.Series(data=range(len(index)), index=index)
 
     model = model_class(freq="auto", max_steps=1, trainer_kwargs={"logger": False})

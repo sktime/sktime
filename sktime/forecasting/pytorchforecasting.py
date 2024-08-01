@@ -1,7 +1,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Interfaces to estimators from pytorch-forecasting."""
+
 import functools
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from sktime.forecasting.base.adapters._pytorchforecasting import (
     _PytorchForecastingAdapter,
@@ -16,18 +17,18 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
 
     Parameters
     ----------
-    model_params :  Dict[str, Any] (default=None)
+    model_params :  dict[str, Any] (default=None)
         parameters to be passed to initialize the pytorch-forecasting TFT model [1]_
         for example: {"lstm_layers": 3, "hidden_continuous_size": 10}
-    dataset_params : Dict[str, Any] (default=None)
+    dataset_params : dict[str, Any] (default=None)
         parameters to initialize `TimeSeriesDataSet` [2]_ from `pandas.DataFrame`
         max_prediction_length will be overwrite according to fh
         time_idx, target, group_ids, time_varying_known_reals, time_varying_unknown_reals
-        will be infered from data, so you do not have to pass them
-    train_to_dataloader_params : Dict[str, Any] (default=None)
+        will be inferred from data, so you do not have to pass them
+    train_to_dataloader_params : dict[str, Any] (default=None)
         parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
         by default {"train": True}
-    validation_to_dataloader_params : Dict[str, Any] (default=None)
+    validation_to_dataloader_params : dict[str, Any] (default=None)
         parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
         by default {"train": False}
     model_path: string (default=None)
@@ -43,6 +44,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.forecasting.pytorchforecasting import PytorchForecastingTFT
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
+    >>> from sklearn.model_selection import train_test_split
     >>> # generate random data
     >>> data = _make_hierarchical(
     ...     hierarchy_levels=(5, 200), max_timepoints=50, min_timepoints=50, n_columns=3
@@ -51,11 +53,11 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
     >>> max_prediction_length = 5
     >>> fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
     >>> # split X, y data for train and test
-    >>> l1 = data.index.get_level_values(1).map(lambda x: int(x[3:]))
-    >>> X_train = data.loc[l1 < 190, ["c0", "c1"]]
-    >>> y_train = data.loc[l1 < 190, "c2"].to_frame()
-    >>> X_test = data.loc[l1 >= 180, ["c0", "c1"]]
-    >>> y_test = data.loc[l1 >= 180, "c2"].to_frame()
+    >>> x = data["c0", "c1"]
+    >>> y = data["c2"].to_frame()
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...     x, y, test_size=0.2, train_size=0.8, shuffle=False
+    ... )
     >>> len_levels = len(y_test.index.names)
     >>> y_test = y_test.groupby(level=list(range(len_levels - 1))).apply(
     ...     lambda x: x.droplevel(list(range(len_levels - 1))).iloc[:-max_prediction_length]
@@ -104,7 +106,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                 2000-02-19  5.188011
 
     [500 rows x 1 columns]
-    >>>
+
 
     References
     ----------
@@ -117,11 +119,11 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         # --------------
         # "authors": ["XinyuWu"],
         # "maintainers": ["XinyuWu"],
-        # "python_dependencies": "pytorch_forecasting"
+        # "python_dependencies": "pytorch-forecasting"
         # inherited from _PytorchForecastingAdapter
         # estimator type
         # --------------
-        "python_dependencies": ["pytorch_forecasting>=1.0.0", "torch", "lightning"],
+        "python_dependencies": ["pytorch-forecasting>=1.0.0", "torch", "lightning"],
         "capability:global_forecasting": True,
         "capability:insample": False,
         "X-y-must-have-same-index": True,
@@ -130,14 +132,15 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
 
     def __init__(
         self: "PytorchForecastingTFT",
-        model_params: Optional[Dict[str, Any]] = None,
-        allowed_encoder_known_variable_names: Optional[List[str]] = None,
-        dataset_params: Optional[Dict[str, Any]] = None,
-        train_to_dataloader_params: Optional[Dict[str, Any]] = None,
-        validation_to_dataloader_params: Optional[Dict[str, Any]] = None,
-        trainer_params: Optional[Dict[str, Any]] = None,
+        model_params: Optional[dict[str, Any]] = None,
+        allowed_encoder_known_variable_names: Optional[list[str]] = None,
+        dataset_params: Optional[dict[str, Any]] = None,
+        train_to_dataloader_params: Optional[dict[str, Any]] = None,
+        validation_to_dataloader_params: Optional[dict[str, Any]] = None,
+        trainer_params: Optional[dict[str, Any]] = None,
         model_path: Optional[str] = None,
         random_log_path: bool = False,
+        broadcasting: bool = False,
     ) -> None:
         self.allowed_encoder_known_variable_names = allowed_encoder_known_variable_names
         super().__init__(
@@ -148,6 +151,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
             trainer_params,
             model_path,
             random_log_path,
+            broadcasting,
         )
 
     @functools.cached_property
@@ -195,17 +199,21 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        try:
-            _check_soft_dependencies("pytorch_forecasting", severity="error")
-        except ModuleNotFoundError:
+        if not _check_soft_dependencies("pytorch-forecasting", severity="none"):
             params = [
                 {
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
                         "limit_train_batches": 10,  # for quick test
+                        "enable_checkpointing": False,
+                        "logger": False,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
+                    },
+                    "model_params": {
+                        "hidden_size": 8,
+                        "log_interval": -1,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
                 },
@@ -213,13 +221,15 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
                         "limit_train_batches": 10,  # for quick test
+                        "enable_checkpointing": False,
+                        "logger": False,
                     },
                     "model_params": {
                         "hidden_size": 10,
                         "dropout": 0.1,
                         "optimizer": "Adam",
                         # avoid jdb78/pytorch-forecasting#1571 bug in the CI
-                        "log_val_interval": -1,
+                        "log_interval": -1,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
@@ -244,6 +254,11 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
                         "limit_train_batches": 10,  # for quick test
+                        "enable_checkpointing": False,
+                        "logger": False,
+                    },
+                    "model_params": {
+                        "log_interval": -1,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
@@ -255,6 +270,8 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                         "callbacks": [early_stop_callback],
                         "max_epochs": 1,  # for quick test
                         "limit_train_batches": 10,  # for quick test
+                        "enable_checkpointing": False,
+                        "logger": False,
                     },
                     "model_params": {
                         "hidden_size": 10,
@@ -264,7 +281,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                         # QuantileLoss() != QuantileLoss()
                         "optimizer": "Adam",
                         # avoid jdb78/pytorch-forecasting#1571 bug in the CI
-                        "log_val_interval": -1,
+                        "log_interval": -1,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
@@ -273,7 +290,9 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                 },
             ]
 
-        return params
+        params_broadcasting = [dict(p, **{"broadcasting": True}) for p in params]
+        params_no_broadcasting = [dict(p, **{"broadcasting": False}) for p in params]
+        return params_broadcasting + params_no_broadcasting
 
 
 class PytorchForecastingNBeats(_PytorchForecastingAdapter):
@@ -281,18 +300,18 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
 
     Parameters
     ----------
-    model_params :  Dict[str, Any] (default=None)
+    model_params :  dict[str, Any] (default=None)
         parameters to be passed to initialize the pytorch-forecasting NBeats model [1]_
         for example: {"num_blocks": [5, 5], "widths": [128, 1024]}
-    dataset_params : Dict[str, Any] (default=None)
+    dataset_params : dict[str, Any] (default=None)
         parameters to initialize `TimeSeriesDataSet` [2]_ from `pandas.DataFrame`
         max_prediction_length will be overwrite according to fh
         time_idx, target, group_ids, time_varying_known_reals, time_varying_unknown_reals
-        will be infered from data, so you do not have to pass them
-    train_to_dataloader_params : Dict[str, Any] (default=None)
+        will be inferred from data, so you do not have to pass them
+    train_to_dataloader_params : dict[str, Any] (default=None)
         parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
         by default {"train": True}
-    validation_to_dataloader_params : Dict[str, Any] (default=None)
+    validation_to_dataloader_params : dict[str, Any] (default=None)
         parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
         by default {"train": False}
     model_path: string (default=None)
@@ -308,6 +327,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.forecasting.pytorchforecasting import PytorchForecastingNBeats
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
+    >>> from sklearn.model_selection import train_test_split
     >>> # generate random data
     >>> data = _make_hierarchical(
     ...     hierarchy_levels=(5, 200), max_timepoints=50, min_timepoints=50, n_columns=3
@@ -316,9 +336,9 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
     >>> max_prediction_length = 5
     >>> fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
     >>> # split y data for train and test
-    >>> l1 = data.index.get_level_values(1).map(lambda x: int(x[3:]))
-    >>> y_train = data.loc[l1 < 190, "c2"].to_frame()
-    >>> y_test = data.loc[l1 >= 180, "c2"].to_frame()
+    >>> y_train, y_test = train_test_split(
+    ...     data["c2"].to_frame(), test_size=0.2, train_size=0.8, shuffle=False
+    ... )
     >>> len_levels = len(y_test.index.names)
     >>> y_test = y_test.groupby(level=list(range(len_levels - 1))).apply(
     ...     lambda x: x.droplevel(list(range(len_levels - 1))).iloc[:-max_prediction_length]
@@ -367,7 +387,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                 2000-02-19  5.113482
 
     [500 rows x 1 columns]
-    >>>
+
 
     References
     ----------
@@ -380,11 +400,11 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         # --------------
         # "authors": ["XinyuWu"],
         # "maintainers": ["XinyuWu"],
-        # "python_dependencies": "pytorch_forecasting"
+        # "python_dependencies": "pytorch-forecasting"
         # inherited from _PytorchForecastingAdapter
         # estimator type
         # --------------
-        "python_dependencies": ["pytorch_forecasting>=1.0.0", "torch", "lightning"],
+        "python_dependencies": ["pytorch-forecasting>=1.0.0", "torch", "lightning"],
         "capability:global_forecasting": True,
         "ignores-exogeneous-X": True,
         "capability:insample": False,
@@ -394,13 +414,14 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
 
     def __init__(
         self: "PytorchForecastingNBeats",
-        model_params: Optional[Dict[str, Any]] = None,
-        dataset_params: Optional[Dict[str, Any]] = None,
-        train_to_dataloader_params: Optional[Dict[str, Any]] = None,
-        validation_to_dataloader_params: Optional[Dict[str, Any]] = None,
-        trainer_params: Optional[Dict[str, Any]] = None,
+        model_params: Optional[dict[str, Any]] = None,
+        dataset_params: Optional[dict[str, Any]] = None,
+        train_to_dataloader_params: Optional[dict[str, Any]] = None,
+        validation_to_dataloader_params: Optional[dict[str, Any]] = None,
+        trainer_params: Optional[dict[str, Any]] = None,
         model_path: Optional[str] = None,
         random_log_path: bool = False,
+        broadcasting: bool = False,
     ) -> None:
         super().__init__(
             model_params,
@@ -410,6 +431,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
             trainer_params,
             model_path,
             random_log_path,
+            broadcasting,
         )
 
     @functools.cached_property
@@ -450,17 +472,23 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        try:
-            _check_soft_dependencies("pytorch_forecasting", severity="error")
-        except ModuleNotFoundError:
+        if not _check_soft_dependencies("pytorch-forecasting", severity="none"):
             params = [
                 {
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
                         "limit_train_batches": 10,  # for quick test
+                        "enable_checkpointing": False,
+                        "logger": False,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
+                    },
+                    "model_params": {
+                        "num_blocks": [2, 2],
+                        "num_block_layers": [1, 1],
+                        "widths": 32,
+                        "log_interval": -1,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
                 },
@@ -468,12 +496,15 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
                         "limit_train_batches": 10,  # for quick test
+                        "enable_checkpointing": False,
+                        "logger": False,
                     },
                     "model_params": {
                         "num_blocks": [5, 5],
                         "num_block_layers": [5, 5],
-                        "log_interval": 10,
+                        "log_interval": -1,
                         "backcast_loss_ratio": 1.0,
+                        "widths": 32,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
@@ -496,6 +527,11 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
                         "limit_train_batches": 10,  # for quick test
+                        "enable_checkpointing": False,
+                        "logger": False,
+                    },
+                    "model_params": {
+                        "log_interval": -1,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
@@ -507,12 +543,14 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                         "callbacks": [early_stop_callback],
                         "max_epochs": 1,  # for quick test
                         "limit_train_batches": 10,  # for quick test
+                        "enable_checkpointing": False,
+                        "logger": False,
                     },
                     "model_params": {
                         "num_blocks": [5, 5],
                         "num_block_layers": [5, 5],
-                        "log_interval": 10,
                         "backcast_loss_ratio": 1.0,
+                        "log_interval": -1,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
@@ -521,7 +559,9 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                 },
             ]
 
-        return params
+        params_broadcasting = [dict(p, **{"broadcasting": True}) for p in params]
+        params_no_broadcasting = [dict(p, **{"broadcasting": False}) for p in params]
+        return params_broadcasting + params_no_broadcasting
 
 
 class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
@@ -529,18 +569,18 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
 
     Parameters
     ----------
-    model_params :  Dict[str, Any] (default=None)
+    model_params :  dict[str, Any] (default=None)
         parameters to be passed to initialize the pytorch-forecasting NBeats model [1]_
         for example: {"cell_type": "GRU", "rnn_layers": 3}
-    dataset_params : Dict[str, Any] (default=None)
+    dataset_params : dict[str, Any] (default=None)
         parameters to initialize `TimeSeriesDataSet` [2]_ from `pandas.DataFrame`
         max_prediction_length will be overwrite according to fh
         time_idx, target, group_ids, time_varying_known_reals, time_varying_unknown_reals
         will be infered from data, so you do not have to pass them
-    train_to_dataloader_params : Dict[str, Any] (default=None)
+    train_to_dataloader_params : dict[str, Any] (default=None)
         parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
         by default {"train": True}
-    validation_to_dataloader_params : Dict[str, Any] (default=None)
+    validation_to_dataloader_params : dict[str, Any] (default=None)
         parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
         by default {"train": False}
     model_path: string (default=None)
@@ -558,6 +598,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.forecasting.pytorchforecasting import PytorchForecastingDeepAR
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
+    >>> from sklearn.model_selection import train_test_split
     >>> # generate random data
     >>> data = _make_hierarchical(
     ...     hierarchy_levels=(5, 200), max_timepoints=50, min_timepoints=50, n_columns=3
@@ -566,11 +607,11 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
     >>> max_prediction_length = 5
     >>> fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
     >>> # split X, y data for train and test
-    >>> l1 = data.index.get_level_values(1).map(lambda x: int(x[3:]))
-    >>> X_train = data.loc[l1 < 190, ["c0", "c1"]]
-    >>> y_train = data.loc[l1 < 190, "c2"].to_frame()
-    >>> X_test = data.loc[l1 >= 180, ["c0", "c1"]]
-    >>> y_test = data.loc[l1 >= 180, "c2"].to_frame()
+    >>> x = data["c0", "c1"]
+    >>> y = data["c2"].to_frame()
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...     x, y, test_size=0.2, train_size=0.8, shuffle=False
+    ... )
     >>> len_levels = len(y_test.index.names)
     >>> y_test = y_test.groupby(level=list(range(len_levels - 1))).apply(
     ...     lambda x: x.droplevel(list(range(len_levels - 1))).iloc[:-max_prediction_length]
@@ -619,7 +660,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                 2000-02-19  5.121511
 
     [500 rows x 1 columns]
-    >>>
+
 
     References
     ----------
@@ -632,11 +673,11 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
         # --------------
         # "authors": ["XinyuWu"],
         # "maintainers": ["XinyuWu"],
-        # "python_dependencies": "pytorch_forecasting"
+        # "python_dependencies": "pytorch-forecasting"
         # inherited from _PytorchForecastingAdapter
         # estimator type
         # --------------
-        "python_dependencies": ["pytorch_forecasting>=1.0.0", "torch", "lightning"],
+        "python_dependencies": ["pytorch-forecasting>=1.0.0", "torch", "lightning"],
         "capability:global_forecasting": True,
         "capability:insample": False,
         "X-y-must-have-same-index": True,
@@ -645,15 +686,16 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
 
     def __init__(
         self: "PytorchForecastingDeepAR",
-        model_params: Optional[Dict[str, Any]] = None,
-        allowed_encoder_known_variable_names: Optional[List[str]] = None,
-        dataset_params: Optional[Dict[str, Any]] = None,
-        train_to_dataloader_params: Optional[Dict[str, Any]] = None,
-        validation_to_dataloader_params: Optional[Dict[str, Any]] = None,
-        trainer_params: Optional[Dict[str, Any]] = None,
+        model_params: Optional[dict[str, Any]] = None,
+        allowed_encoder_known_variable_names: Optional[list[str]] = None,
+        dataset_params: Optional[dict[str, Any]] = None,
+        train_to_dataloader_params: Optional[dict[str, Any]] = None,
+        validation_to_dataloader_params: Optional[dict[str, Any]] = None,
+        trainer_params: Optional[dict[str, Any]] = None,
         model_path: Optional[str] = None,
         deterministic: bool = False,
         random_log_path: bool = False,
+        broadcasting: bool = False,
     ) -> None:
         self.allowed_encoder_known_variable_names = allowed_encoder_known_variable_names
         self.deterministic = deterministic
@@ -665,6 +707,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
             trainer_params,
             model_path,
             random_log_path,
+            broadcasting,
         )
 
     @functools.cached_property
@@ -712,14 +755,21 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        try:
-            _check_soft_dependencies("pytorch_forecasting", severity="error")
-        except ModuleNotFoundError:
+        if not _check_soft_dependencies("pytorch-forecasting", severity="none"):
             params = [
                 {
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
                         "limit_train_batches": 10,  # for quick test
+                        "enable_checkpointing": False,
+                        "logger": False,
+                    },
+                    "model_params": {
+                        "cell_type": "GRU",
+                        "rnn_layers": 1,
+                        "hidden_size": 3,
+                        "enable_checkpointing": False,
+                        "log_interval": -1,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
@@ -731,10 +781,14 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
                         "limit_train_batches": 10,  # for quick test
+                        "enable_checkpointing": False,
+                        "logger": False,
                     },
                     "model_params": {
                         "cell_type": "GRU",
-                        "rnn_layers": 3,
+                        "rnn_layers": 2,
+                        "hidden_size": 3,
+                        "log_interval": -1,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
@@ -758,6 +812,11 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
                         "limit_train_batches": 10,  # for quick test
+                        "enable_checkpointing": False,
+                        "logger": False,
+                    },
+                    "model_params": {
+                        "log_interval": -1,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
@@ -770,10 +829,13 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                         "callbacks": [early_stop_callback],
                         "max_epochs": 1,  # for quick test
                         "limit_train_batches": 10,  # for quick test
+                        "enable_checkpointing": False,
+                        "logger": False,
                     },
                     "model_params": {
                         "cell_type": "GRU",
                         "rnn_layers": 3,
+                        "log_interval": -1,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
@@ -783,7 +845,9 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                 },
             ]
 
-        return params
+        params_broadcasting = [dict(p, **{"broadcasting": True}) for p in params]
+        params_no_broadcasting = [dict(p, **{"broadcasting": False}) for p in params]
+        return params_broadcasting + params_no_broadcasting
 
 
 class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
@@ -791,18 +855,18 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
 
     Parameters
     ----------
-    model_params :  Dict[str, Any] (default=None)
+    model_params :  dict[str, Any] (default=None)
         parameters to be passed to initialize the pytorch-forecasting NBeats model [1]_
         for example: {"interpolation_mode": "nearest", "activation": "Tanh"}
-    dataset_params : Dict[str, Any] (default=None)
+    dataset_params : dict[str, Any] (default=None)
         parameters to initialize `TimeSeriesDataSet` [2]_ from `pandas.DataFrame`
         max_prediction_length will be overwrite according to fh
         time_idx, target, group_ids, time_varying_known_reals, time_varying_unknown_reals
         will be infered from data, so you do not have to pass them
-    train_to_dataloader_params : Dict[str, Any] (default=None)
+    train_to_dataloader_params : dict[str, Any] (default=None)
         parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
         by default {"train": True}
-    validation_to_dataloader_params : Dict[str, Any] (default=None)
+    validation_to_dataloader_params : dict[str, Any] (default=None)
         parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
         by default {"train": False}
     model_path: string (default=None)
@@ -818,6 +882,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.forecasting.pytorchforecasting import PytorchForecastingNHiTS
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
+    >>> from sklearn.model_selection import train_test_split
     >>> # generate random data
     >>> data = _make_hierarchical(
     ...     hierarchy_levels=(5, 200), max_timepoints=50, min_timepoints=50, n_columns=3
@@ -826,11 +891,11 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
     >>> max_prediction_length = 5
     >>> fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
     >>> # split X, y data for train and test
-    >>> l1 = data.index.get_level_values(1).map(lambda x: int(x[3:]))
-    >>> X_train = data.loc[l1 < 190, ["c0", "c1"]]
-    >>> y_train = data.loc[l1 < 190, "c2"].to_frame()
-    >>> X_test = data.loc[l1 >= 180, ["c0", "c1"]]
-    >>> y_test = data.loc[l1 >= 180, "c2"].to_frame()
+    >>> x = data["c0", "c1"]
+    >>> y = data["c2"].to_frame()
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...     x, y, test_size=0.2, train_size=0.8, shuffle=False
+    ... )
     >>> len_levels = len(y_test.index.names)
     >>> y_test = y_test.groupby(level=list(range(len_levels - 1))).apply(
     ...     lambda x: x.droplevel(list(range(len_levels - 1))).iloc[:-max_prediction_length]
@@ -879,7 +944,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                 2000-02-19  5.047630
 
     [500 rows x 1 columns]
-    >>>
+
 
     References
     ----------
@@ -892,11 +957,11 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
         # --------------
         # "authors": ["XinyuWu"],
         # "maintainers": ["XinyuWu"],
-        # "python_dependencies": "pytorch_forecasting"
+        # "python_dependencies": "pytorch-forecasting"
         # inherited from _PytorchForecastingAdapter
         # estimator type
         # --------------
-        "python_dependencies": ["pytorch_forecasting>=1.0.0", "torch", "lightning"],
+        "python_dependencies": ["pytorch-forecasting>=1.0.0", "torch", "lightning"],
         "capability:global_forecasting": True,
         "capability:insample": False,
         "X-y-must-have-same-index": True,
@@ -905,13 +970,14 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
 
     def __init__(
         self: "PytorchForecastingNHiTS",
-        model_params: Optional[Dict[str, Any]] = None,
-        dataset_params: Optional[Dict[str, Any]] = None,
-        train_to_dataloader_params: Optional[Dict[str, Any]] = None,
-        validation_to_dataloader_params: Optional[Dict[str, Any]] = None,
-        trainer_params: Optional[Dict[str, Any]] = None,
+        model_params: Optional[dict[str, Any]] = None,
+        dataset_params: Optional[dict[str, Any]] = None,
+        train_to_dataloader_params: Optional[dict[str, Any]] = None,
+        validation_to_dataloader_params: Optional[dict[str, Any]] = None,
+        trainer_params: Optional[dict[str, Any]] = None,
         model_path: Optional[str] = None,
         random_log_path: bool = False,
+        broadcasting: bool = False,
     ) -> None:
         super().__init__(
             model_params,
@@ -921,6 +987,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
             trainer_params,
             model_path,
             random_log_path,
+            broadcasting,
         )
 
     @functools.cached_property
@@ -971,17 +1038,21 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        try:
-            _check_soft_dependencies("pytorch_forecasting", severity="error")
-        except ModuleNotFoundError:
+        if not _check_soft_dependencies("pytorch-forecasting", severity="none"):
             params = [
                 {
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
                         "limit_train_batches": 10,  # for quick test
+                        "enable_checkpointing": False,
+                        "logger": False,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
+                    },
+                    "model_params": {
+                        "hidden_size": 8,
+                        "log_interval": -1,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
                 },
@@ -989,10 +1060,14 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
                         "limit_train_batches": 10,  # for quick test
+                        "enable_checkpointing": False,
+                        "logger": False,
                     },
                     "model_params": {
                         "interpolation_mode": "nearest",
                         "activation": "Tanh",
+                        "hidden_size": 8,
+                        "log_interval": -1,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
@@ -1015,6 +1090,11 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
                         "limit_train_batches": 10,  # for quick test
+                        "enable_checkpointing": False,
+                        "logger": False,
+                    },
+                    "model_params": {
+                        "log_interval": -1,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
@@ -1026,10 +1106,13 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                         "callbacks": [early_stop_callback],
                         "max_epochs": 1,  # for quick test
                         "limit_train_batches": 10,  # for quick test
+                        "enable_checkpointing": False,
+                        "logger": False,
                     },
                     "model_params": {
                         "interpolation_mode": "nearest",
                         "activation": "Tanh",
+                        "log_interval": -1,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
@@ -1038,4 +1121,6 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                 },
             ]
 
-        return params
+        params_broadcasting = [dict(p, **{"broadcasting": True}) for p in params]
+        params_no_broadcasting = [dict(p, **{"broadcasting": False}) for p in params]
+        return params_broadcasting + params_no_broadcasting

@@ -1,6 +1,10 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests for interfacing estimators from pytorch-forecasting."""
+
+import os
+
 import pytest
+from sklearn.model_selection import train_test_split
 
 from sktime.datatypes._utilities import get_cutoff
 from sktime.forecasting.base._fh import ForecastingHorizon
@@ -53,18 +57,30 @@ def test_load_model_from_disk(model_class) -> None:
         max_timepoints=data_length,
         min_timepoints=data_length,
     )
-    l1 = data.index.get_level_values(1).map(lambda x: int(x[3:]))
-    X_train = data.loc[l1 < 90, "c0"].to_frame()
-    y_train = data.loc[l1 < 90, "c1"].to_frame()
-    X_test = data.loc[l1 >= 80, "c0"].to_frame()
-    y_test = data.loc[l1 >= 80, "c1"].to_frame()
+    x = data["c0"].to_frame()
+    y = data["c1"].to_frame()
+    X_train, _, y_train, _ = train_test_split(
+        x, y, test_size=0.1, train_size=0.9, shuffle=False
+    )
+    _, X_test, _, y_test = train_test_split(
+        x, y, test_size=0.2, train_size=0.8, shuffle=False
+    )
     max_prediction_length = 3
     fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
 
     # fit the model to generate the checkpoint
     model.fit(y_train, X_train, fh=fh)
     # get the best model path
-    best_model_path = model._trainer.checkpoint_callback.best_model_path
+    if model._trainer.checkpoint_callback is not None:
+        best_model_path = model._trainer.checkpoint_callback.best_model_path
+    else:
+        best_model_path = getattr(model, "_random_log_dir", None)
+        if best_model_path is None:
+            best_model_path = model._gen_random_log_dir()
+        if not os.path.exists(best_model_path):
+            os.makedirs(best_model_path)
+        best_model_path = best_model_path + "/last_model.pt"
+        model._trainer.save_checkpoint(best_model_path)
 
     # reload the model from best_model_path
     model = model_class(model_path=best_model_path, **model_class.get_test_params()[0])

@@ -1,4 +1,5 @@
 """Tests the VAR model."""
+
 __author__ = ["thayeylolu", "AurumnPegasus"]
 import numpy as np
 import pandas as pd

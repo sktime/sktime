@@ -1,4 +1,5 @@
 """Tests for medoids."""
+
 import numpy as np
 import pytest
 

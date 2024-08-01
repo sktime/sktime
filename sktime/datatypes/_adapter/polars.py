@@ -1,5 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Common utilities for polars based data containers."""
+
 from sktime.datatypes._common import _req
 from sktime.datatypes._common import _ret as ret
 
@@ -25,6 +26,7 @@ def convert_pandas_to_polars(
         If data contains NaN values PyArrow will convert the NaN to None
     lazy : bool, optional (default=False)
         If True, return a LazyFrame instead of a DataFrame
+
     Returns
     -------
     polars.DataFrame or polars.LazyFrame (if lazy=True)
