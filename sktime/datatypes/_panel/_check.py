@@ -664,7 +664,6 @@ if _check_soft_dependencies("gluonts", severity="none"):
             metadata["dtypekind_dfip"] = _pandas_dtype_to_kind(dtype_list)
 
         if _req("feature_kind", return_metadata):
-
             dtype_list = df[0][1].dtypes.to_list()[index_cols_count:]
             dtype_kind = _pandas_dtype_to_kind(dtype_list)
             metadata["feature_kind"] = _get_feature_kind(dtype_kind)
