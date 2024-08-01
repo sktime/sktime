@@ -105,13 +105,28 @@ class MyForecaster(_BaseGlobalForecaster):
     }
 
     # todo: add any hyper-parameters and components to constructor
-    def __init__(self, parama, paramb="default", paramc=None):
+    def __init__(self, parama, paramb="default", paramc=None, broadcasting=True):
         # todo: write any hyper-parameters to self
         self.parama = parama
         self.paramb = paramb
         self.paramc = paramc
         # IMPORTANT: the self.params should never be overwritten or mutated from now on
         # for handling defaults etc, write to other attributes, e.g., self._parama
+
+        # (for_global)
+        self.broadcasting = broadcasting
+        if self.broadcasting:
+            self.set_tags(
+                **{
+                    "y_inner_mtype": "pd.Series",
+                    "X_inner_mtype": "pd.DataFrame",
+                    "capability:global_forecasting": False,
+                }
+            )
+        # If you are extending an existing forecaster to global mode, you migth
+        # need to use the broadcasting parameter to reserve the original behavior.
+        # You can use deprecation cycle to switch the default behavior.
+        # How deprecation works in sktime can be found at https://www.sktime.net/en/stable/developer_guide/deprecation.html
 
         # leave this as is
         super().__init__()
