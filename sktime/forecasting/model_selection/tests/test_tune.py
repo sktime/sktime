@@ -42,6 +42,7 @@ from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.detrend import Detrender
 from sktime.transformations.series.impute import Imputer
 from sktime.utils._testing.hierarchical import _make_hierarchical
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.parallel import _get_parallel_test_fixtures
 
 TEST_METRICS = [MeanAbsolutePercentageError(symmetric=True), MeanSquaredError()]
@@ -329,39 +330,102 @@ def test_skoptcv_multiple_forecaster():
     assert len(sscv.cv_results_) == 5
 
 
-@pytest.mark.xfail
+@pytest.fixture(scope="module")
+def optuna_param_grids():
+    if _check_soft_dependencies("optuna"):
+        import optuna
+
+        PIPE_GRID_OPTUNA = {
+            "transformer__forecaster__degree": optuna.distributions.IntDistribution(
+                1, 2
+            ),
+            "forecaster__strategy": optuna.distributions.CategoricalDistribution(
+                ["last", "mean"]
+            ),
+        }
+        NAIVE_GRID_OPTUNA = {
+            "window_length": optuna.distributions.IntDistribution(
+                *TEST_WINDOW_LENGTHS_INT
+            )
+        }
+
+        return {"NAIVE": NAIVE_GRID_OPTUNA, "PIPE": PIPE_GRID_OPTUNA}
+
+
+def optuna_samplers():
+    try:
+        _check_soft_dependencies("optuna", severity="error")
+    except ModuleNotFoundError:
+        return [None]
+    else:
+        import optuna
+
+        return [
+            None,
+            optuna.samplers.NSGAIISampler(seed=42),
+            optuna.samplers.QMCSampler(seed=42),
+            optuna.samplers.CmaEsSampler(seed=42),
+        ]
+
+
+forecasters_optuna_test = {
+    "NAIVE": NAIVE,
+    "PIPE": PIPE,
+}
+
+
 @pytest.mark.skipif(
     not run_test_for_class(ForecastingOptunaSearchCV),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-@pytest.mark.parametrize(
-    "forecaster, param_grid", [(NAIVE, NAIVE_GRID), (PIPE, PIPE_GRID)]
-)
 @pytest.mark.parametrize("scoring", TEST_METRICS)
 @pytest.mark.parametrize("error_score", ERROR_SCORES)
 @pytest.mark.parametrize("cv", CVs)
+@pytest.mark.parametrize(
+    "forecaster_key, grid_key", [("NAIVE", "NAIVE"), ("PIPE", "PIPE")]
+)
 @pytest.mark.parametrize("n_iter", TEST_N_ITERS)
-@pytest.mark.parametrize("random_state", TEST_RANDOM_SEEDS)
-def test_optuna(forecaster, param_grid, cv, scoring, error_score, n_iter, random_state):
-    """Test TuneForecastingOptunaCV.
+@pytest.mark.parametrize("sampler", optuna_samplers())
+def test_optuna(
+    forecaster_key,
+    grid_key,  # This will be either "NAIVE" or "PIPE"
+    cv,
+    scoring,
+    error_score,
+    n_iter,
+    sampler,
+    optuna_param_grids,  # Fixture providing parameter grids
+):
+    """Test ForecastingOptunaSearchCV.
 
-    Tests that TuneForecastingOptunaCV successfully searches the parameter
+    Tests that ForecastingOptunaSearchCV successfully searches the parameter
     distributions to identify the best parameter set
     """
     y, X = load_longley()
+    param_grid = optuna_param_grids[grid_key]
+    forecaster = forecasters_optuna_test[forecaster_key]
+
     rscv = ForecastingOptunaSearchCV(
         forecaster,
         param_grid=param_grid,
         cv=cv,
         scoring=scoring,
         error_score=error_score,
+        sampler=sampler,
+        n_evals=n_iter,
     )
     rscv.fit(y, X)
 
-    param_distributions = list(
-        ParameterSampler(param_grid, n_iter, random_state=random_state)
+    param_distributions = rscv.cv_results_.params.to_list()
+    _check_cv(
+        forecaster,
+        rscv,
+        cv,
+        param_distributions,
+        y,
+        X,
+        scoring,
     )
-    _check_cv(forecaster, rscv, cv, param_distributions, y, X, scoring)
     _check_fitted_params_keys(rscv.get_fitted_params())
 
 
