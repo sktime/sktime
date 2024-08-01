@@ -54,7 +54,7 @@ class FreshPRINCE(BaseClassifier):
     References
     ----------
     .. [1] Christ, Maximilian, et al. "Time series feature extraction on basis of
-        scalable hypothesis tests (tsfresh–a python package)." Neurocomputing 307
+        scalable hypothesis tests (tsfresh-a python package)." Neurocomputing 307
         (2018): 72-77.
         https://www.sciencedirect.com/science/article/pii/S0925231218304843
 
