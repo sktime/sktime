@@ -23,10 +23,7 @@ from sktime.forecasting.model_selection import (
     ForecastingRandomizedSearchCV,
     ForecastingSkoptSearchCV,
 )
-from sktime.forecasting.model_selection._tune import (
-    BaseGridSearch,
-    get_scoring_direction,
-)
+from sktime.forecasting.model_selection._tune import BaseGridSearch
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.tests._config import (
     TEST_N_ITERS,
@@ -470,59 +467,3 @@ def test_return_n_best_forecasters(Forecaster, return_n_best_forecasters, kwargs
             )
             total_combinations = calculate_total_combinations(kwargs[key])
             assert len(searchCV.n_best_forecasters_) == total_combinations
-
-
-def test_get_scoring_direction_minimize():
-    # Mock get_tag to return True for "lower_is_better"
-    from sktime.utils.validation.forecasting import check_scoring
-
-    # Call the function under test
-    direction = get_scoring_direction(scoring=check_scoring(scoring=None))
-
-    # Assert the expected outcome
-    assert (
-        direction == "minimize"
-    ), "Expected direction to be 'minimize' when lower_is_better is True"
-
-
-from unittest.mock import patch
-
-
-class MockScoring:
-    def get_tag(self, tag_name):
-        pass  # This will be mocked
-
-
-@pytest.fixture
-def mock_scoring():
-    return MockScoring()
-
-
-def test_get_scoring_direction_maximize(mock_scoring):
-    with patch.object(mock_scoring, "get_tag", return_value=False) as mocked_get_tag:
-        direction = get_scoring_direction(mock_scoring)
-        mocked_get_tag.assert_called_once_with("lower_is_better")
-        assert (
-            direction == "maximize"
-        ), "Expected direction to be 'maximize' when lower_is_better is False"
-
-
-def test_get_scoring_direction_non_bool_tag(mock_scoring):
-    with patch.object(mock_scoring, "get_tag", return_value="test") as mocked_get_tag:
-        test_direction = "maximise"
-        direction = get_scoring_direction(
-            mock_scoring, default_direction=test_direction
-        )
-        mocked_get_tag.assert_called_once_with("lower_is_better")
-        assert (
-            direction == test_direction
-        ), f"Expected direction to be {test_direction} when lower_is_better tag is not boolian"
-
-
-def test_get_scoring_direction_without_get_tag():
-    scoring_object = []
-    test_direction = "maximise"
-    direction = get_scoring_direction(scoring_object, default_direction=test_direction)
-    assert (
-        direction == test_direction
-    ), f"Expected direction to be {test_direction} when lower_is_better tag is not boolian"

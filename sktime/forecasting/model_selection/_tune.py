@@ -1907,9 +1907,10 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         for (
             param_grid_dict
         ) in self._param_grid:  # Assuming self._param_grid is now a list of dicts
-            study = optuna.create_study(
-                direction=get_scoring_direction(scoring=scoring)
+            scoring_direction = (
+                "minimize" if scoring.get_tag("lower_is_better") else "maximize"
             )
+            study = optuna.create_study(direction=scoring_direction)
             meta = {}
             meta["forecaster"] = self.forecaster
             meta["y"] = y
@@ -1940,28 +1941,3 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         # Combine all results into a single DataFrame
         combined_results = pd.concat(all_results, ignore_index=True)
         return combined_results
-
-
-def get_scoring_direction(scoring, default_direction="minimize"):
-    """Get the direction of the scoring metric.
-
-    Parameters
-    ----------
-    scoring : sktime metric object
-        Scoring object that should have a 'lower_is_better' tag.
-    default_direction : string, optional
-        Default direction to return if the scoring object does not have the 'lower_is_better' tag
-        or if the tag value is not a boolean. Defaults to 'minimize'.
-
-    Returns
-    -------
-    direction : string
-        'minimize' if the 'lower_is_better' tag is True, 'maximize' if False, or the default direction
-        if the tag is not present or not a boolean.
-    """
-
-    if hasattr(scoring, "get_tag"):
-        lower_is_better = scoring.get_tag("lower_is_better")
-        if isinstance(lower_is_better, bool):
-            return "minimize" if lower_is_better else "maximize"
-    return default_direction
