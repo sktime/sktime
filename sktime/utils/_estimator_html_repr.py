@@ -63,6 +63,7 @@ def _write_label_html(
     outer_class="sk-label-container",
     inner_class="sk-label",
     checked=False,
+    doc_link="",
 ):
     """Write labeled html with or without a dropdown with named details."""
     out.write(f'<div class={outer_class!r}><div class="{inner_class} sk-toggleable">')
@@ -74,10 +75,19 @@ def _write_label_html(
 
         checked_str = "checked" if checked else ""
         est_id = uuid.uuid4()
+        if doc_link:
+            doc_label = "<span>Online documentation</span>"
+            if name is not None:
+                doc_label = f"<span>Documentation for {name}</span>"
+            doc_link = (
+                f'<a class="sk-estimator-doc-link"'
+                f' rel="noreferrer" target="_blank" href="{doc_link}">?{doc_label}</a>'
+            )
+
         out.write(
             '<input class="sk-toggleable__control sk-hidden--visually" '
             f'id={est_id!r} type="checkbox" {checked_str}>'
-            f"<label for={est_id!r} class={label_class!r}>{name}</label>"
+            f"<label for={est_id!r} class={label_class!r}>{name}{doc_link}</label>"
             f'<div class="sk-toggleable__content"><pre>{name_details}'
             "</pre></div>"
         )
