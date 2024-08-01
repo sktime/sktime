@@ -552,6 +552,19 @@ Generic framework adapters that expose other frameworks in the ``sktime`` interf
 
     HCrystalBallAdapter
 
+Darts models
+-------------------------------------------
+
+.. currentmodule:: sktime.forecasting.darts
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DartsRegressionModel
+    DartsLinearRegressionModel
+    DartsXGBModel
+
 Model selection and tuning
 --------------------------
 
