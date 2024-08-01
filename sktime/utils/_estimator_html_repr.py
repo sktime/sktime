@@ -132,13 +132,20 @@ def _write_base_object_html(
     """Write BaseObject to html in serial, parallel, or by itself (single)."""
     est_block = _get_visual_block(base_object)
 
+    if hasattr(base_object, "_get_doc_link"):
+        doc_link = base_object._get_doc_link()
+    else:
+        doc_link = ""
+
     if est_block.kind in ("serial", "parallel"):
         dashed_wrapped = first_call or est_block.dash_wrapped
         dash_cls = " sk-dashed-wrapped" if dashed_wrapped else ""
         out.write(f'<div class="sk-item{dash_cls}">')
 
         if base_object_label:
-            _write_label_html(out, base_object_label, base_object_label_details)
+            _write_label_html(
+                out, base_object_label, base_object_label_details, doc_link=doc_link
+            )
 
         kind = est_block.kind
         out.write(f'<div class="sk-{kind}">')
@@ -163,6 +170,7 @@ def _write_base_object_html(
             outer_class="sk-item",
             inner_class="sk-estimator",
             checked=first_call,
+            doc_link=doc_link,
         )
 
 
