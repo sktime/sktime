@@ -111,6 +111,7 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
             _y = self._concate_preds(_y, preds)
 
         # collect forecasting points from _y
+        # code works for all indexes
         absolute_horizons = fh.to_absolute_index(self.cutoff)
         dateindex = _y.index.get_level_values(-1).map(lambda x: x in absolute_horizons)
         preds = _y.loc[dateindex]
@@ -118,10 +119,16 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
         return preds
 
     def _get_x(self, _y, X, i):
+        # keep rows till this index in X (hist from _y + future from _fh)
+
         if X is None:
             return None
 
-        # keep till this index in X (hist from _y + future from _fh)
+        if not isinstance(_y.index, pd.MultiIndex):
+            end_index = len(_y.index) + self.horizon_length + i
+            return X.head(end_index)
+
+        # truncating for Multi-Index
         end_index = len(_y.index.levels[-1]) + self.horizon_length + i
 
         # levels other than the timestamps (innermost/base level)
