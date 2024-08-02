@@ -21,7 +21,7 @@ class VARReduce(BaseForecaster):
 
     Parameters
     ----------
-    lags : int
+    lags : int, optional, default=1
         The number of lagged values to include in the model.
     regressor : object, optional (default=LinearRegression())
         The regressor to use for fitting the model. Must be scikit-learn-compatible.
@@ -55,17 +55,18 @@ class VARReduce(BaseForecaster):
         "requires-fh-in-fit": False,
     }
 
-    def __init__(self, lags, regressor=None):
-        from sklearn.base import RegressorMixin
+    def __init__(self, lags=1, regressor=None):
+        from sklearn.base import RegressorMixin, clone
         from sklearn.linear_model import LinearRegression
 
         self.lags = lags
-        self.regressor = regressor if regressor is not None else LinearRegression()
-        assert isinstance(
-            self.regressor, RegressorMixin
-        ), "The regressor must be a scikit-learn compatible regressor."
-        self.coefficients = None
-        self.intercept = None
+        if regressor is None
+            self.regressor_ = clone(regressor)
+        else:
+            self.regressor_ = LinearRegression()
+
+        self.coefficients_ = None
+        self.intercept_ = None
         self.num_series = None
         super().__init__()
 
@@ -136,15 +137,15 @@ class VARReduce(BaseForecaster):
 
         # Fit the chosen regressor model for each series
         for i in range(num_series):
-            model = deepcopy(self.regressor)
+            model = deepcopy(self.regressor_)
             model.fit(X, y[:, i])
             intercepts[i] = model.intercept_
             # Reshape the coefficients to match with statsmodels VAR
             coefficients[:, :, i] = model.coef_.reshape(self.lags, num_series)
 
         # Transpose coefficients to match the desired shape
-        self.coefficients = np.transpose(coefficients, (0, 2, 1))
-        self.intercept = intercepts
+        self.coefficients_ = np.transpose(coefficients, (0, 2, 1))
+        self.intercept_ = intercepts
         return self
 
     def _predict(self, fh, X=None):
@@ -192,8 +193,8 @@ class VARReduce(BaseForecaster):
             Forecasted values for the next `steps` time points.
         """
         # Extract coefficients and intercept
-        coefs = self.coefficients
-        intercept = self.intercept
+        coefs = self.coefficients_
+        intercept = self.intercept_
 
         # Number of lags (p) and number of series (k)
         p = len(coefs)
