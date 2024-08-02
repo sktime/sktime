@@ -244,7 +244,7 @@ class _HTMLDocumentationLinkMixin:
       mixin, the default value is `sklearn`.
     - `_doc_link_template`: it corresponds to the template used to generate the
       link to the API documentation. Using this mixin, the default value is
-      `"https://sktime.net/en/{version_url}/api_reference/auto_generated/ # TODO: update
+      `"https://www.sktime.net/en/v{version_url}/api_reference/auto_generated/
       {modpath}.html"`.
     - `_doc_link_url_param_generator`: it corresponds to a function that generates the
       parameters to be used in the template when the estimator module and name are not
@@ -252,23 +252,6 @@ class _HTMLDocumentationLinkMixin:
 
     The method :meth:`_get_doc_link` generates the link to the API documentation for a
     given estimator.
-
-    This useful provides all the necessary states for
-    :func:`sklearn.utils.estimator_html_repr` to generate a link to the API
-    documentation for the estimator HTML diagram.
-
-    Examples # TODO: update
-    --------
-    If the default values for `_doc_link_module`, `_doc_link_template` are not suitable,
-    then you can override them:
-    >>> from sklearn.base import BaseEstimator
-    >>> estimator = BaseEstimator()
-    >>> estimator._doc_link_template = "https://website.com/{single_param}.html"
-    >>> def url_param_generator(estimator):
-    ...     return {"single_param": estimator.__class__.__name__}
-    >>> estimator._doc_link_url_param_generator = url_param_generator
-    >>> estimator._get_doc_link()
-    'https://website.com/BaseEstimator.html'
     """
 
     _doc_link_module = "sktime"
