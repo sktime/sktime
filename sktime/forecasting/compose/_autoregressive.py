@@ -131,5 +131,6 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
                     "aggregate_method": None,
                 }
             ]
-
+        # TODO: use NaiveForecaster instead of PytorchForecastingTFT
+        # as https://github.com/sktime/sktime/pull/6868/files is merged
         return test_params
