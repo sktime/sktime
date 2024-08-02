@@ -87,7 +87,7 @@ class ExponentialSmoothing(_StatsModelsAdapter):
         Search for good starting values using a brute force (grid)
         optimizer. If False, a naive set of starting values is used.
     random_state : int, RandomState instance or None, optional ,
-        default=None – If int, random_state is the seed used by the random
+        default=None - If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
         number generator; If None, the random number generator is the
         RandomState instance used by np.random.

@@ -51,7 +51,6 @@ class AlignerDTW(BaseAligner):
         # --------------
         "authors": ["tonigi", "fkiraly"],  # tonigi for dtw-python
         "python_dependencies": "dtw-python",
-        "python_dependencies_alias": {"dtw-python": "dtw"},
         # estimator type
         # --------------
         "capability:multiple-alignment": False,  # can align more than two sequences?
@@ -245,7 +244,7 @@ class AlignerDTWfromDist(BaseAligner):
         "capability:multiple-alignment": False,  # can align more than two sequences?
         "capability:distance": True,  # does compute/return overall distance?
         "capability:distance-matrix": True,  # does compute/return distance matrix?
-        "python_dependencies_alias": {"dtw-python": "dtw"},
+        "python_dependencies": "dtw-python",
     }
 
     def __init__(

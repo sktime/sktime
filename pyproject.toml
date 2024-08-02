@@ -248,7 +248,7 @@ docs = [
   "nbsphinx>=0.8.6",
   "numpydoc",
   "pydata-sphinx-theme",
-  "Sphinx!=7.2.0,<8.0.0",
+  "Sphinx!=7.2.0,<9.0.0",
   "sphinx-copybutton",
   "sphinx-design<0.7.0",
   "sphinx-gallery<0.18.0",
@@ -358,6 +358,9 @@ select = [
   "PT006",   # Checks for the type of parameter names passed to pytest.mark.parametrize.
   "PT007",   # Checks for the type of parameter values passed to pytest.mark.parametrize.
   "PT018",   # Checks for assertions that combine multiple independent condition
+  "RUF001", # Checks for non unicode string literals
+  "RUF002", # Checks for non unicode string literals
+  "RUF003", # Checks for non unicode string literals
 ]
 extend-select = [
   "I", # isort
@@ -390,6 +393,7 @@ ignore=[
   "C409", # Unnecessary `list` literal passed to `tuple()` (rewrite as a `tuple` literal)
   "S113", # Probable use of httpx call withour timeout
 ]
+allowed-confusables=["σ"]
 
 [tool.ruff.lint.per-file-ignores]
 

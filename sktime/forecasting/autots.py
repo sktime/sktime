@@ -215,7 +215,7 @@ class AutoTS(BaseForecaster):
         "python_version": ">=3.6",
         # estimator type
         # --------------
-        "scitype:y": "univariate",
+        "scitype:y": "both",
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "ignores-exogeneous-X": True,  # TODO: add capability
