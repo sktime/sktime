@@ -59,7 +59,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         for details.
     callbacks : list, default=[]
         List of callbacks to use during training. See `transformers.Trainer`
-    broadcasting: bool (default=True)
+    broadcasting: bool (default=False)
         multiindex data input will be broadcasted to single series.
         For each single series, one copy of this forecaster will try to
         fit and predict on it. The broadcasting is happening inside automatically,
@@ -96,7 +96,6 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     >>>
     >>> # global forecasting on multi-index dataset
     >>> forecaster = TinyTimeMixerForecaster(
-    ...     broadcasting=False,
     ...     config={
     ...             "context_length": 8,
     ...             "prediction_length": 2
@@ -453,10 +452,8 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 },
             },
         ]
-        params_no_broadcasting = [
-            dict(p, **{"broadcasting": False}) for p in test_params
-        ]
-        test_params.extend(params_no_broadcasting)
+        params_broadcasting = [dict(p, **{"broadcasting": True}) for p in test_params]
+        test_params.extend(params_broadcasting)
         return test_params
 
 
