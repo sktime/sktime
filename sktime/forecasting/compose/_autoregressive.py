@@ -13,7 +13,47 @@ from sktime.utils.dependencies import _check_soft_dependencies
 
 
 class AutoRegressiveWrapper(_BaseGlobalForecaster):
-    """AutoRegressiveWrapper."""
+    """
+    AutoRegressiveWrapper for Forecasters with Fixed Prediction Length.
+
+    This class acts as a wrapper for existing forecasting models, enabling them
+    to perform autoregressive predictions when they are originally designed
+    for fixed-length outputs. It addresses the limitations of certain
+    forecasters that can only predict a fixed number of future time steps,
+    such as the KanForecaster and many reduction-based forecasters.
+
+    By utilizing an autoregressive approach, this wrapper allows the forecaster
+    to make predictions iteratively. Each prediction is fed back into the
+    model as part of the input for subsequent predictions, which can significantly
+    enhance flexibility and efficiency, especially when training time is a
+    consideration and when dealing with varying forecasting horizons.
+
+    The `AutoRegressiveWrapper` is particularly useful in scenarios where:
+    - The underlying forecaster takes considerable time to train with
+      increased output sizes.
+    - The forecaster is integrated with probabilistic wrappers (e.g.,
+      Conformal Intervals) that require variable forecasting horizons.
+
+    The wrapped forecaster must inherit from `_BaseGlobalForecaster`, ensuring
+    that it supports the necessary interface for fitting and predicting.
+
+    Attributes
+    ----------
+    forecaster : _BaseGlobalForecaster
+        An instance of a forecasting model that is compatible with
+        the `AutoRegressiveWrapper`. This forecaster must support
+        the methods required for fitting and predicting.
+    horizon_length : int
+        The length of the forecasting horizon, defining how many time
+        steps into the future the forecaster should predict with each
+        call to the `predict` method.
+    aggregate_method : callable
+        A method for aggregating predictions over the autoregressive
+        iterations. If not specified, defaults to `numpy.mean`.
+
+    Example
+    -------
+    """
 
     _tags = {
         "scitype:y": "both",
