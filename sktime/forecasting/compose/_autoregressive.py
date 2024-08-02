@@ -95,8 +95,8 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
 
     def _concate_preds(self, _y, preds):
         _y = pd.concat([_y, preds])
-        _y = _y.groupby(level=_y.index.names)
-        _y = _y.apply(self.aggregate_method)
+        _y = _y.groupby(level=list(range(_y.index.nlevels)))
+        _y = _y.aggregate(self.aggregate_method)
         return _y
 
     @classmethod
