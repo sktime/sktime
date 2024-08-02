@@ -116,7 +116,7 @@ all_extras = [
   'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   "xarray",
-  'momentfm; python_version > "3.10"',
+  'huggingface-hub==0.20.3',
 ]
 
 # all soft dependencies compatible with pandas 2
@@ -288,7 +288,7 @@ dl = [
   'transformers[torch]<4.41.0; python_version < "3.12"',
   'pykan<0.2.2,>=0.2; python_version > "3.9.7"',
   'pytorch-forecasting>=1.0.0; python_version < "3.11"',
-  'momentfm; python_version > "3.10"',
+  'huggingface-hub==0.20.3',
 ]
 mlflow = [
   "mlflow",
