@@ -122,6 +122,13 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
         _y = self._y if y is None else y
         _y = deepcopy(_y)  # make copy because we are going to add values to it
 
+        if y is None and X is not None:
+            # special case of non global forecasting
+            # here X contains only (future) values
+            # however for the interface, X should contain (hist + future) values
+            # since this is non-global forecasting, we can use hist from self._X
+            X = pd.concat([self._X, X])
+
         for i in range(max_fh):
             # get sample from X containing historical and future exogenous data
             _x = self._get_x(_y, X, i)
