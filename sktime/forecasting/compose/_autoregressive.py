@@ -161,6 +161,12 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
         "requires-fh-in-fit": False,
         "capability:insample": False,
         "capability:global_forecasting": True,
+        # TODO:
+        # remove when PytorchForecastingTFT is replaced
+        # by NaiveForecaster in get_test_params;
+        # after https://github.com/sktime/sktime/pull/6868/files is merged.
+        # added temporarily to run CI tests
+        "python_dependencies": ["pytorch-forecasting>=1.0.0", "torch", "lightning"],
     }
 
     def __init__(self, forecaster, horizon_length, aggregate_method=None):
