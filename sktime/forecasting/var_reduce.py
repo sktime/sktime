@@ -60,7 +60,7 @@ class VARReduce(BaseForecaster):
         from sklearn.linear_model import LinearRegression
 
         self.lags = lags
-        if regressor is None
+        if regressor is None:
             self.regressor_ = clone(regressor)
         else:
             self.regressor_ = LinearRegression()
