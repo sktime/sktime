@@ -61,6 +61,13 @@ class MyForecaster(_BaseGlobalForecaster):
         descriptive explanation of paramb
     paramc : boolean, optional (default= whether paramb is not the default)
         descriptive explanation of paramc
+    broadcasting : boolean, optional (default=True)
+        Whether to broadcast over each time series with N forecasters for N time series
+        # (for_global)
+        If you are extending an existing forecaster to global mode, you migth
+        need to use the broadcasting parameter to reserve the original behavior.
+        You can use deprecation cycle to switch the default behavior.
+        How deprecation works in sktime can be found at https://www.sktime.net/en/stable/developer_guide/deprecation.html
     and so on
     """
 
