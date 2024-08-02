@@ -2,6 +2,8 @@
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__all__ = ["HCrystalBallAdapter"]
+__all__ = [
+    "HCrystalBallAdapter",
+]
 
 from sktime.forecasting.adapters._hcrystalball import HCrystalBallAdapter

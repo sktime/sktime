@@ -22,21 +22,21 @@ sktime is a library for time series analysis in Python. It provides a unified in
 
 ## :books: Documentation
 
-| Documentation              |                                                                |
-| -------------------------- | -------------------------------------------------------------- |
-| :star: **[Tutorials]**        | New to sktime? Here's everything you need to know!              |
-| :clipboard: **[Binder Notebooks]** | Example notebooks to play with in your browser.              |
-| :woman_technologist: **[User Guides]**      | How to use sktime and its features.                             |
+| Documentation                        |                                                                |
+|--------------------------------------| -------------------------------------------------------------- |
+| :star: **[Tutorials]**               | New to sktime? Here's everything you need to know!              |
+| :clipboard: **[Binder Notebooks]**   | Example notebooks to play with in your browser.              |
+| :woman_technologist: **[Examples]**  | How to use sktime and its features.                             |
 | :scissors: **[Extension Templates]** | How to build your own estimator using sktime's API.            |
-| :control_knobs: **[API Reference]**      | The detailed reference for sktime's API.                        |
+| :control_knobs: **[API Reference]**  | The detailed reference for sktime's API.                        |
 | :tv: **[Video Tutorial]**            | Our video tutorial from 2021 PyData Global.      |
-| :hammer_and_wrench: **[Changelog]**          | Changes and version history.                                   |
-| :deciduous_tree: **[Roadmap]**          | sktime's software and community development plan.                                   |
-| :pencil: **[Related Software]**          | A list of related software. |
+| :hammer_and_wrench: **[Changelog]**  | Changes and version history.                                   |
+| :deciduous_tree: **[Roadmap]**       | sktime's software and community development plan.                                   |
+| :pencil: **[Related Software]**      | A list of related software. |
 
 [tutorials]: https://www.sktime.net/en/latest/tutorials.html
 [binder notebooks]: https://mybinder.org/v2/gh/sktime/sktime/main?filepath=examples
-[user guides]: https://www.sktime.net/en/latest/user_guide.html
+[examples]: https://www.sktime.net/en/latest/examples.html
 [video tutorial]: https://github.com/sktime/sktime-tutorial-pydata-global-2021
 [api reference]: https://www.sktime.net/en/latest/api_reference.html
 [changelog]: https://www.sktime.net/en/latest/changelog.html
