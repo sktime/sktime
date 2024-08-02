@@ -53,6 +53,28 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
 
     Example
     -------
+    >>> import numpy as np
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.pytorchforecasting import PytorchForecastingTFT
+    >>> from sktime.forecasting.compose import AutoRegressiveWrapper
+    >>>
+    >>> y = load_airline()
+    >>> forecaster = PytorchForecastingTFT(trainer_params={
+    ...     "max_epochs": 5,
+    ... }) # doctest skip
+    >>> wrapper = AutoRegressiveWrapper(
+    ...     forecaster=forecaster,
+    ...     horizon_length=3, # prediction_length for forecaster
+    ...     aggregate_method=np.mean,
+    ... ) # doctest skip
+    >>>
+    >>> wrapper.fit(y) # doctest skip
+    >>>
+    >>> # forecast multiple forecasting horizons with same trained model
+    >>> preds = wrapper.predict(fh=[1, 5]) # doctest skip
+    >>> preds = wrapper.predict(fh=[8, 9, 10, 11, 12]) # doctest skip
+
+
     """
 
     _tags = {
