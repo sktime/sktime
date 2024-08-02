@@ -160,6 +160,8 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
         """
         test_params = []
         if _check_soft_dependencies("pytorch-forecasting", severity="none"):
+            import numpy as np
+
             from sktime.forecasting.pytorchforecasting import PytorchForecastingTFT
 
             test_params = [
@@ -168,7 +170,7 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
                         **PytorchForecastingTFT.get_test_params()[0],
                     ),
                     "horizon_length": 3,
-                    "aggregate_method": None,
+                    "aggregate_method": np.mean,
                 }
             ]
         # TODO: use NaiveForecaster instead of PytorchForecastingTFT
