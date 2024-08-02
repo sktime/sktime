@@ -74,7 +74,73 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
     >>> preds = wrapper.predict(fh=[1, 5]) # doctest skip
     >>> preds = wrapper.predict(fh=[8, 9, 10, 11, 12]) # doctest skip
 
+    >>> import numpy as np
+    >>> from sktime.forecasting.pytorchforecasting import PytorchForecastingTFT
+    >>> from sktime.forecasting.compose import AutoRegressiveWrapper
+    >>> from sktime.utils._testing.hierarchical import _make_hierarchical
+    >>> from sklearn.model_selection import train_test_split
+    >>>
+    >>> # generate and prepare random data
+    >>> data = _make_hierarchical(
+    ...     hierarchy_levels=(5, 200), max_timepoints=50, min_timepoints=50, n_columns=3
+    ... )
+    >>> x = data[["c0", "c1"]]
+    >>> y = data["c2"].to_frame()
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...     x, y, test_size=0.2, train_size=0.8, shuffle=False
+    ... )
+    >>> len_levels = len(y_test.index.names)
+    >>> y_test = y_test.groupby(level=list(range(len_levels - 1))).apply(
+    ...     lambda x: x.droplevel(list(range(len_levels - 1))).iloc[:-20]
+    ... )
+    >>>
+    >>> # create forecaster and wrapper
+    >>> forecaster = PytorchForecastingTFT(trainer_params={
+    ...     "max_epochs": 1,
+    ... }) # doctest skip
+    >>> wrapper = AutoRegressiveWrapper(
+    ...     forecaster=forecaster,
+    ...     horizon_length=3, # prediction_length for forecaster
+    ...     aggregate_method=np.mean,
+    ... ) # doctest skip
+    >>> wrapper.fit(y) # doctest skip
+    >>>
+    >>> # forecast multiple forecasting horizons with same trained model
+    >>>
+    >>> wrapper.predict(fh=[1, 5]) # doctest skip
+                                c2
+    h0   h1    time
+    h0_0 h1_0  2000-02-20  5.278717
+            2000-02-24  5.303032
+        h1_1  2000-02-20  5.106282
+            2000-02-24  5.119611
+        h1_10 2000-02-20  4.924220
+    ...                         ...
+    h0_4 h1_97 2000-02-24  4.815347
+        h1_98 2000-02-20  5.022863
+            2000-02-24  5.044283
+        h1_99 2000-02-20  4.714049
+            2000-02-24  4.768126
 
+    [2000 rows x 1 columns]
+    >>>
+    >>> wrapper.predict(fh=[8, 9, 10, 11, 12]) # doctest skip
+                                c2
+    h0   h1    time
+    h0_0 h1_0  2000-02-27  5.312222
+            2000-02-28  5.323535
+            2000-02-29  5.351599
+            2000-03-01  5.367970
+            2000-03-02  5.379033
+    ...                         ...
+    h0_4 h1_99 2000-02-27  4.754828
+            2000-02-28  4.766777
+            2000-02-29  4.872816
+            2000-03-01  4.886779
+            2000-03-02  4.896248
+
+    [5000 rows x 1 columns]
+    >>>
     """
 
     _tags = {
