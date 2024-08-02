@@ -244,7 +244,6 @@ class AlignerDTWfromDist(BaseAligner):
         "capability:multiple-alignment": False,  # can align more than two sequences?
         "capability:distance": True,  # does compute/return overall distance?
         "capability:distance-matrix": True,  # does compute/return distance matrix?
-        "python_dependencies": "dtw-python",
     }
 
     def __init__(
