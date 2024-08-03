@@ -83,7 +83,8 @@ class MVTSTransformerClassifier(BaseDeepClassifierPytorch):
     """
 
     _tags = {
-        "authors": ["geetu040", "gzerveas"],
+        "authors": ["gzerveas", "geetu040"],
+        # gzerveas for original code in research repository
         "maintainers": ["geetu040"],
     }
 
