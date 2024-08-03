@@ -40,7 +40,7 @@ class DtwPythonDist(_DelegatedPairwiseTransformerPanel):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["fkiraly"],
+        "authors": ["tonigi", "fkiraly"],  # tonigi for dtw-python
         "python_dependencies": "dtw-python",
         # estimator type
         # --------------
