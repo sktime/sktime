@@ -11,9 +11,12 @@ from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
 class UnobservedComponents(_StatsModelsAdapter):
-    r"""Wrapper class of the UnobservedComponents model from statsmodels.
+    r"""UnobservedComponents forecasting model from statsmodels.
 
-    Input parameters and doc-stringsare taken from the original implementation.
+    Direct interface to ``UnobservedComponents`` from
+    ``statsmodels.tsa.statespace.structural``.
+
+    Input parameters and doc-strings are taken from the original implementation.
 
     Parameters
     ----------
@@ -200,7 +203,8 @@ class UnobservedComponents(_StatsModelsAdapter):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["juanitorduz"],
+        "authors": ["ChadFulton", "bashtage", "juanitorduz"],
+        # ChadFulton and bashtage for UnobservedComponents in statsmodels
         "maintainers": ["juanitorduz"],
         # python_dependencies: "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type

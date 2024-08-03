@@ -63,7 +63,6 @@ class PyKANForecaster(BaseForecaster):
         # --------------
         "authors": ["benheid"],
         "maintainers": ["benheid"],
-        "python_version": None,
         "python_dependencies": ["pykan", "torch"],
         # estimator type
         # --------------
