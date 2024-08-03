@@ -10,7 +10,7 @@ using ``estimator_types="classifier"``, optionally filtered by tags.
 Valid tags can be listed using ``sktime.registry.all_tags``.
 
 A full table with tag based search is also available on the
-`Estimator Search Page <https://www.sktime.net/en/latest/estimator_overview.html>`_
+:doc:`Estimator Search Page </estimator_overview>`
 (select "classifier" in the "Estimator type" dropdown).
 
 

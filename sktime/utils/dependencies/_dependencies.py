@@ -31,20 +31,20 @@ def _check_soft_dependencies(
     packages : str or list/tuple of str, or length-1-tuple containing list/tuple of str
         str should be package names and/or package version specifications to check.
         Each str must be a PEP 440 compatible specifier string, for a single package.
-        For instance, the PEP 440 compatible package name such as "pandas";
-        or a package requirement specifier string such as "pandas>1.2.3".
+        For instance, the PEP 440 compatible package name such as ``"pandas"``;
+        or a package requirement specifier string such as ``"pandas>1.2.3"``.
         arg can be str, kwargs tuple, or tuple/list of str, following calls are valid:
-        `_check_soft_dependencies("package1")`
-        `_check_soft_dependencies("package1", "package2")`
-        `_check_soft_dependencies(("package1", "package2"))`
-        `_check_soft_dependencies(["package1", "package2"])`
+        ``_check_soft_dependencies("package1")``
+        ``_check_soft_dependencies("package1", "package2")``
+        ``_check_soft_dependencies(("package1", "package2"))``
+        ``_check_soft_dependencies(["package1", "package2"])``
 
     package_import_alias : ignored, present only for backwards compatibility
 
     severity : str, "error" (default), "warning", "none"
         behaviour for raising errors or warnings
 
-        * "error" - raises a `ModuleNotFoundError` if one of packages is not installed
+        * "error" - raises a ``ModuleNotFoundError`` if one of packages is not installed
         * "warning" - raises a warning if one of packages is not installed
           function returns False if one of packages is not installed, otherwise True
         * "none" - does not raise exception or warning
@@ -61,8 +61,12 @@ def _check_soft_dependencies(
 
     Raises
     ------
+    InvalidRequirement
+        if package requirement strings are not PEP 440 compatible
     ModuleNotFoundError
         error with informative message, asking to install required soft dependencies
+    TypeError, ValueError
+        on invalid arguments
 
     Returns
     -------
@@ -119,12 +123,12 @@ def _check_soft_dependencies(
             req = _normalize_requirement(req)
         except InvalidRequirement:
             msg_version = (
-                f"wrong format for package requirement string "
+                f"wrong format for package requirement string, "
                 f"passed via packages argument of _check_soft_dependencies, "
                 f'must be PEP 440 compatible requirement string, e.g., "pandas"'
-                f' or "pandas>1.1", but found "{package}"'
+                f' or "pandas>1.1", but found {package!r}'
             )
-            raise InvalidRequirement(msg_version)
+            raise InvalidRequirement(msg_version) from None
 
         package_name = req.name
         package_version_req = req.specifier
@@ -135,8 +139,8 @@ def _check_soft_dependencies(
         if pkg_env_version is None:
             if obj is None and msg is None:
                 msg = (
-                    f"'{package}' not found. "
-                    f"'{package}' is a soft dependency and not included in the "
+                    f"{package!r} not found. "
+                    f"{package!r} is a soft dependency and not included in the "
                     f"base sktime installation. Please run: `pip install {package}` to "
                     f"install the {package} package. "
                     f"To install all soft dependencies, run: `pip install "
@@ -144,9 +148,9 @@ def _check_soft_dependencies(
                 )
             elif msg is None:  # obj is not None, msg is None
                 msg = (
-                    f"{class_name} requires package '{package}' to be present "
-                    f"in the python environment, but '{package}' was not found. "
-                    f"'{package}' is a soft dependency and not included in the base "
+                    f"{class_name} requires package {package!r} to be present "
+                    f"in the python environment, but {package!r} was not found. "
+                    f"{package!r} is a soft dependency and not included in the base "
                     f"sktime installation. Please run: `pip install {package}` to "
                     f"install the {package} package. "
                     f"To install all soft dependencies, run: `pip install "
@@ -187,14 +191,16 @@ def _check_dl_dependencies(msg=None, severity="error"):
     Parameters
     ----------
     msg : str, optional, default= default message (msg below)
-        error message to be returned in the `ModuleNotFoundError`, overrides default
+        error message to be returned in the ``ModuleNotFoundError``, overrides default
+
     severity : str, "error" (default), "warning", "none"
-        behaviour for raising errors or warnings
-        "error" - raises a ModuleNotFoundError if one of packages is not installed
-        "warning" - raises a warning if one of packages is not installed
-            function returns False if one of packages is not installed, otherwise True
-        "none" - does not raise exception or warning
-            function returns False if one of packages is not installed, otherwise True
+        whether the check should raise an error, a warning, or nothing
+
+        * "error" - raises a ``ModuleNotFoundError`` if one of packages is not installed
+        * "warning" - raises a warning if one of packages is not installed
+          function returns False if one of packages is not installed, otherwise True
+        * "none" - does not raise exception or warning
+          function returns False if one of packages is not installed, otherwise True
 
     Raises
     ------
@@ -313,12 +319,21 @@ def _check_python_version(obj, package=None, msg=None, severity="error"):
     ----------
     obj : sktime estimator, BaseObject descendant
         used to check python version
+
     package : str, default = None
         if given, will be used in error message as package name
+
     msg : str, optional, default = default message (msg below)
-        error message to be returned in the `ModuleNotFoundError`, overrides default
-    severity : str, "error" (default), "warning", or "none"
+        error message to be returned in the ``ModuleNotFoundError``, overrides default
+
+    severity : str, "error" (default), "warning", "none"
         whether the check should raise an error, a warning, or nothing
+
+        * "error" - raises a ``ModuleNotFoundError`` if one of packages is not installed
+        * "warning" - raises a warning if one of packages is not installed
+          function returns False if one of packages is not installed, otherwise True
+        * "none" - does not raise exception or warning
+          function returns False if one of packages is not installed, otherwise True
 
     Returns
     -------
@@ -342,9 +357,9 @@ def _check_python_version(obj, package=None, msg=None, severity="error"):
         msg_version = (
             f"wrong format for python_version tag, "
             f'must be PEP 440 compatible specifier string, e.g., "<3.9, >= 3.6.3",'
-            f' but found "{est_specifier_tag}"'
+            f" but found {est_specifier_tag!r}"
         )
-        raise InvalidSpecifier(msg_version)
+        raise InvalidSpecifier(msg_version) from None
 
     # python sys version, e.g., "3.8.12"
     sys_version = sys.version.split(" ")[0]
@@ -383,9 +398,16 @@ def _check_env_marker(obj, package=None, msg=None, severity="error"):
     package : str, default = None
         if given, will be used in error message as package name
     msg : str, optional, default = default message (msg below)
-        error message to be returned in the `ModuleNotFoundError`, overrides default
-    severity : str, "error" (default), "warning", or "none"
+        error message to be returned in the ``ModuleNotFoundError``, overrides default
+
+    severity : str, "error" (default), "warning", "none"
         whether the check should raise an error, a warning, or nothing
+
+        * "error" - raises a ``ModuleNotFoundError`` if one of packages is not installed
+        * "warning" - raises a warning if one of packages is not installed
+          function returns False if one of packages is not installed, otherwise True
+        * "none" - does not raise exception or warning
+          function returns False if one of packages is not installed, otherwise True
 
     Returns
     -------
@@ -412,9 +434,9 @@ def _check_env_marker(obj, package=None, msg=None, severity="error"):
         msg_version = (
             f"wrong format for env_marker tag, "
             f"must be PEP 508 compatible specifier string, e.g., "
-            f'platform_system!="windows", but found "{est_marker_tag}"'
+            f'platform_system!="windows", but found {est_marker_tag!r}'
         )
-        raise InvalidMarker(msg_version)
+        raise InvalidMarker(msg_version) from None
 
     if est_marker.evaluate():
         return True
@@ -449,17 +471,21 @@ def _check_estimator_deps(obj, msg=None, severity="error"):
 
     Parameters
     ----------
-    obj : `sktime` object, `BaseObject` descendant, or list/tuple thereof
+    obj : ``sktime`` object, ``BaseObject`` descendant, or list/tuple thereof
         object(s) that this function checks compatibility of, with the python env
+
     msg : str, optional, default = default message (msg below)
-        error message to be returned in the `ModuleNotFoundError`, overrides default
-    severity : str, "error" (default), "warning", or "none"
-        behaviour for raising errors or warnings
-        "error" - raises a `ModuleNotFoundError` if environment is incompatible
-        "warning" - raises a warning if environment is incompatible
-            function returns False if environment is incompatible, otherwise True
-        "none" - does not raise exception or warning
-            function returns False if environment is incompatible, otherwise True
+        error message to be returned in the ``ModuleNotFoundError``, overrides default
+
+    severity : str, "error" (default), "warning", "none"
+        whether the check should raise an error, a warning, or nothing
+
+        * "error" - raises a ``ModuleNotFoundError`` if one of packages is not installed
+        * "warning" - raises a warning if one of packages is not installed
+          function returns False if one of packages is not installed, otherwise True
+        * "none" - does not raise exception or warning
+          function returns False if one of packages is not installed, otherwise True
+
 
     Returns
     -------
@@ -491,13 +517,10 @@ def _check_estimator_deps(obj, msg=None, severity="error"):
     compatible = compatible and _check_env_marker(obj, severity=severity)
 
     pkg_deps = obj.get_class_tag("python_dependencies", None)
-    pck_alias = obj.get_class_tag("python_dependencies_alias", None)
     if pkg_deps is not None and not isinstance(pkg_deps, list):
         pkg_deps = [pkg_deps]
     if pkg_deps is not None:
-        pkg_deps_ok = _check_soft_dependencies(
-            *pkg_deps, severity=severity, obj=obj, package_import_alias=pck_alias
-        )
+        pkg_deps_ok = _check_soft_dependencies(*pkg_deps, severity=severity, obj=obj)
         compatible = compatible and pkg_deps_ok
 
     return compatible
@@ -551,8 +574,16 @@ def _raise_at_severity(
     ----------
     msg : str
         message to raise or warn
-    severity : str, "error", "warning", or "none"
-        behaviour for raising errors or warnings
+
+    severity : str, "error" (default), "warning", "none"
+        whether the check should raise an error, a warning, or nothing
+
+        * "error" - raises a ``ModuleNotFoundError`` if one of packages is not installed
+        * "warning" - raises a warning if one of packages is not installed
+          function returns False if one of packages is not installed, otherwise True
+        * "none" - does not raise exception or warning
+          function returns False if one of packages is not installed, otherwise True
+
     exception_type : Exception, default=ModuleNotFoundError
         exception type to raise if severity="severity"
     warning_type : warning, default=Warning
