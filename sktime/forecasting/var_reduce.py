@@ -61,9 +61,14 @@ class VARReduce(BaseForecaster):
 
         self.lags = lags
         if regressor is None:
-            self.regressor_ = clone(regressor)
-        else:
+            self.regressor = LinearRegression()
             self.regressor_ = LinearRegression()
+        else:
+            self.regressor = clone(regressor)
+            self.regressor_ = clone(regressor)
+
+        # a dictionary of var_name: fitted regressor, to be filled in during fitting
+        self.regressors = {}
 
         self.coefficients_ = None
         self.intercept_ = None
@@ -76,8 +81,8 @@ class VARReduce(BaseForecaster):
 
         This function transforms the provided training data into
         a tabular format suitable for regression. Specifically,
-        The predictors X consist of lagged values of the time series, while
-        the target variables y are the current, unlagged values of the time series,
+        The predictors X consist of lagged values of the multivariate time series, while
+        the target variables y are the current, unlagged values of the multivariate time series.
 
         Parameters
         ----------
@@ -126,7 +131,8 @@ class VARReduce(BaseForecaster):
         """
         from copy import deepcopy
 
-        X, y = self.prepare_var_data(y)
+        var_names = y.columns
+        X, y = self.prepare_var_data(y) # note - from this line on, 'y' changes meaning!
         n, k = X.shape
         num_series = y.shape[1]
         self.num_series = num_series
@@ -136,9 +142,10 @@ class VARReduce(BaseForecaster):
         intercepts = np.zeros(num_series)
 
         # Fit the chosen regressor model for each series
-        for i in range(num_series):
+        for i, var_name in enumerate(var_names):
             model = deepcopy(self.regressor_)
             model.fit(X, y[:, i])
+            self.regressors[var_name] = model
             intercepts[i] = model.intercept_
             # Reshape the coefficients to match with statsmodels VAR
             coefficients[:, :, i] = model.coef_.reshape(self.lags, num_series)
@@ -163,78 +170,50 @@ class VARReduce(BaseForecaster):
         y_pred : pd.DataFrame
             Point predictions
         """
-        # Get the last observed values
-        y_last = self._y.iloc[-self.lags :].values
-        steps = len(fh)
+        from sktime.forecasting.base import ForecastingHorizon
 
-        # Produce forecasts
-        y_pred = self.forecast(y_last, steps)
+        if not isinstance(fh, ForecastingHorizon):
+            raise ValueError("`fh` must be a ForecastingHorizon object")
 
-        # Convert to DataFrame with the correct index
-        row_idx = fh.to_absolute(self.cutoff).to_pandas()
-        y_pred = pd.DataFrame(y_pred, index=row_idx, columns=self._y.columns)
+        fh = fh.to_relative(self.cutoff)
+        fh = fh.to_numpy()
+
+        # Get the last available values for prediction
+        last_values = self._y.iloc[-self.lags:].values.T
+
+        # List to store ALL predictions across all time steps and all time series
+        predictions = []
+
+        # Iterate over the steps in fh
+        for step in range(1, max(fh) + 1):
+
+            # Prepare X_pred by concatenating the lagged values
+            X_pred = np.concatenate(
+                [last_values[:, -i].reshape(-1, 1) for i in range(1, self.lags + 1)],
+                axis=1,
+            ).T
+
+            # List to store predictions for all time series just for this time step
+            y_pred_step = []
+
+            # Iterate over each time series and its corresponding regressor
+            for var_name, model in self.regressors.items():
+                y_pred_step.append(model.predict(X_pred.reshape(1, -1))[0])
+
+            # Convert the list of predictions to a numpy array
+            y_pred_step = np.array(y_pred_step)
+            predictions.append(y_pred_step)
+
+            # Update last_values by appending the current predictions
+            # and removing the oldest set of lagged values
+            last_values = np.concatenate([last_values[:, 1:], y_pred_step.reshape(-1, 1)], axis=1)
+
+        predictions = np.array(predictions)
+
+        # Convert predictions to DataFrame
+        y_pred = pd.DataFrame(predictions, index=fh, columns=self._y.columns)
 
         return y_pred
-
-    def forecast(self, y, steps):
-        """
-        Produce steps-ahead forecast, adapted from statsmodels VAR's forecast.
-
-        Parameters
-        ----------
-        y : np.ndarray (k_ar x neqs)
-            The most recent observations to base the forecast on.
-        steps : int
-            The number of steps to forecast.
-
-        Returns
-        -------
-        forecasts : np.ndarray (steps x neqs)
-            Forecasted values for the next `steps` time points.
-        """
-        # Extract coefficients and intercept
-        coefs = self.coefficients_
-        intercept = self.intercept_
-
-        # Number of lags (p) and number of series (k)
-        p = len(coefs)
-        k = coefs.shape[1]
-
-        # Ensure there are enough observations to base the forecast on
-        if y.shape[0] < p:
-            raise ValueError(
-                f"y must have at least {p} observations. Got {y.shape[0]}."
-            )
-
-        # Initialize the forecast array
-        forecasts = np.zeros((steps, k))
-
-        # Add the intercept to the forecast if available
-        if intercept is not None:
-            forecasts += intercept
-
-        # Iteratively calculate forecasts for each step
-        for h in range(1, steps + 1):
-            # Initialize the forecast for the current step
-            current_forecast = forecasts[h - 1]
-
-            # Sum the contributions from the lagged observations
-            for lag in range(1, p + 1):
-                # Determine the prior observation based on the lag
-                if h - lag <= 0:
-                    prior_y = y[h - lag - 1]  # Use the original observations
-                else:
-                    prior_y = forecasts[
-                        h - lag - 1
-                    ]  # Use the previously forecasted values
-
-                # Update the current forecast with the contribution from the current lag
-                current_forecast += np.dot(coefs[lag - 1], prior_y)
-
-            # Store the forecast for the current step
-            forecasts[h - 1] = current_forecast
-
-        return forecasts
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -255,7 +234,5 @@ class VARReduce(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sklearn.linear_model import Ridge
-
-        params = {"lags": 2, "regressor": Ridge(alpha=1.0)}
+        params = {"lags": 2}
         return params
