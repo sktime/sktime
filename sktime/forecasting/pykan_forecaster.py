@@ -1,15 +1,15 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Dummy forecasters."""
 
-__author__ = ["bheidri"]
+__author__ = ["benheid"]
 
 import pandas as pd
-from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.split import temporal_train_test_split
+from sktime.utils.dependencies import _check_soft_dependencies
 
-if _check_soft_dependencies("torch", severity="none"):
+if _check_soft_dependencies(["pykan", "torch"], severity="none"):
     import torch
     from torch.utils.data import Dataset
 else:
@@ -18,7 +18,7 @@ else:
         """Dummy class if torch is unavailable."""
 
 
-if _check_soft_dependencies("kan", severity="none"):
+if _check_soft_dependencies(["pykan", "torch"], severity="none"):
     from kan import KAN
 
 
@@ -61,9 +61,9 @@ class PyKANForecaster(BaseForecaster):
     _tags = {
         # packaging info
         # --------------
-        "authors": "benheid",
+        "authors": ["benheid"],
+        "maintainers": ["benheid"],
         "python_dependencies": ["pykan", "torch"],
-        "python_dependencies_alias": {"pykan": "kan"},
         # estimator type
         # --------------
         "y_inner_mtype": "pd.Series",
