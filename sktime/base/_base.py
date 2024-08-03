@@ -76,7 +76,7 @@ SERIALIZATION_FORMATS = {
 }
 
 
-class BaseObject(_BaseObject, _HTMLDocumentationLinkMixin):
+class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
     """Base class for parametric objects with tags in sktime.
 
     Extends skbase BaseObject with additional features.
