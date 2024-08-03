@@ -1,7 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Dummy forecasters."""
 
-__author__ = ["bheidri"]
+__author__ = ["benheid"]
 
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
@@ -18,7 +18,7 @@ else:
         """Dummy class if torch is unavailable."""
 
 
-if _check_soft_dependencies("kan", severity="none"):
+if _check_soft_dependencies("pykan", severity="none"):
     from kan import KAN
 
 
