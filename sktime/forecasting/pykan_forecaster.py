@@ -59,6 +59,14 @@ class PyKANForecaster(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["benheid"],
+        "maintainers": ["benheid"],
+        "python_version": None,
+        "python_dependencies": ["pykan", "torch"],
+        # estimator type
+        # --------------
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "scitype:y": "univariate",
@@ -70,9 +78,6 @@ class PyKANForecaster(BaseForecaster):
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
         "capability:insample": False,
-        "python_version": None,
-        "python_dependencies": ["pykan", "torch"],
-        "python_dependencies_alias": {"pykan": "kan"},
     }
 
     def __init__(
