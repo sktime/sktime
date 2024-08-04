@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 class AutoRegressiveWrapper(_BaseGlobalForecaster):
@@ -46,7 +47,7 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
         The length of the forecasting horizon, defining how many time
         steps into the future the forecaster should predict with each
         call to the `predict` method.
-    aggregate_method : callable
+    aggregate_method : callable, default=numpy.mean
         A method for aggregating predictions over the autoregressive
         iterations. If not specified, defaults to `numpy.mean`.
 
@@ -259,31 +260,37 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        import numpy as np
+        test_params = []
 
-        from sktime.forecasting.pytorchforecasting import PytorchForecastingTFT
+        # test using DummyGlobalForecaster
+        from sktime.forecasting.dummy import DummyGlobalForecaster
 
-        forecaster_params = PytorchForecastingTFT.get_test_params()[0]
-        if "broadcasting" in forecaster_params:
-            del forecaster_params["broadcasting"]
-        forecaster_params_broadcasting = {**forecaster_params, "broadcasting": True}
-        forecaster_params_no_broadcasting = {**forecaster_params, "broadcasting": False}
+        forecaster_test_params = DummyGlobalForecaster.get_test_params()
+        for forecaster_test_param in forecaster_test_params:
+            test_params.append(
+                {
+                    "forecaster": DummyGlobalForecaster(**forecaster_test_param),
+                    "horizon_length": 3,
+                    "aggregate_method": np.mean,
+                }
+            )
 
-        test_params = [
-            {
-                "forecaster": PytorchForecastingTFT(**forecaster_params_broadcasting),
-                "horizon_length": 3,
-                "aggregate_method": np.mean,
-            },
-            {
-                "forecaster": PytorchForecastingTFT(
-                    **forecaster_params_no_broadcasting
-                ),
-                "horizon_length": 3,
-                "aggregate_method": np.mean,
-            },
-        ]
+        # test using PytorchForecastingTFT
+        if _check_soft_dependencies("pytorch-forecasting", severity="none"):
+            from sktime.forecasting.pytorchforecasting import PytorchForecastingTFT
 
-        # TODO: use NaiveForecaster instead of PytorchForecastingTFT
-        # as https://github.com/sktime/sktime/pull/6868/files is merged
+            forecaster_test_param = PytorchForecastingTFT.get_test_params()[0]
+            forecaster_test_param.update(
+                {
+                    "broadcasting": False,
+                }
+            )
+            test_params.append(
+                {
+                    "forecaster": PytorchForecastingTFT(**forecaster_test_param),
+                    "horizon_length": 3,
+                    "aggregate_method": np.mean,
+                }
+            )
+
         return test_params
