@@ -181,7 +181,7 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
     def _predict(self, fh, X=None, y=None):
         # use fh to find the maximum length to forecast regressively
         max_fh = max(
-            *(fh.to_relative(self._cutoff)._values + 1),
+            *fh.to_relative(self._cutoff)._values,
             self.horizon_length,
         )
 
@@ -195,7 +195,7 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
             # since this is non-global forecasting, we can use hist from self._X
             X = pd.concat([self._X, X])
 
-        for i in range(max_fh):
+        for i in range(max_fh - self.horizon_length + 1):
             # get sample from X containing historical and future exogenous data
             _x = self._get_x(_y, X, i)
 
