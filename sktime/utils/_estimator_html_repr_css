@@ -1,3 +1,4 @@
+
 #$id {
     /* Definition of color scheme common for light and dark mode */
     --sklearn-color-text: black;
