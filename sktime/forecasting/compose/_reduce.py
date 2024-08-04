@@ -283,10 +283,7 @@ class _Reducer(_BaseWindowForecaster):
         # Note that we currently only support out-of-sample predictions. For the
         # direct and multioutput strategy, we need to check this already during fit,
         # as the fh is required for fitting.
-        raise NotImplementedError(
-            f"Generating in-sample predictions is not yet "
-            f"implemented for {self.__class__.__name__}."
-        )
+        pass
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -578,9 +575,6 @@ class _DirectReducer(_Reducer):
                     + "observation size"
                 )
 
-        if not self.fh.is_all_out_of_sample(self.cutoff):
-            raise NotImplementedError("In-sample predictions are not implemented.")
-
         yt, Xt = self._transform(y, X)
         if hasattr(Xt, "columns"):
             Xt.columns = Xt.columns.astype(str)
@@ -675,7 +669,7 @@ class _DirectReducer(_Reducer):
             return y_pred
 
         def _coerce_to_numpy(y_pred):
-            """Coerce predictions to numpy array, assumes pd.DataFram or numpy."""
+            """Coerce predictions to numpy array, assumes pd.DataFrame or numpy."""
             if isinstance(y_pred, pd.DataFrame):
                 return y_pred.values
             else:
@@ -783,9 +777,6 @@ class _MultioutputReducer(_Reducer):
         # We currently only support out-of-sample predictions. For the direct
         # strategy, we need to check this at the beginning of fit, as the fh is
         # required for fitting.
-        if not self.fh.is_all_out_of_sample(self.cutoff):
-            raise NotImplementedError("In-sample predictions are not implemented.")
-
         self.window_length_ = check_window_length(
             self.window_length, n_timepoints=len(y)
         )
@@ -1124,9 +1115,6 @@ class _DirRecReducer(_Reducer):
         # todo: logic for X below is broken. Escape X until fixed.
         if X is not None:
             X = None
-
-        if len(self.fh.to_in_sample(self.cutoff)) > 0:
-            raise NotImplementedError("In-sample predictions are not implemented")
 
         self.window_length_ = check_window_length(
             self.window_length, n_timepoints=len(y)

@@ -6,6 +6,8 @@ __author__ = ["fkiraly"]
 
 from inspect import signature
 
+from sktime.utils.adapters.forward import _clone_fitted_params
+
 
 class _PytsAdapter:
     """Mixin adapter class for pyts models."""
@@ -87,9 +89,7 @@ class _PytsAdapter:
         self._call_with_y_optional(pyts_est.fit, X, y)
 
         # write fitted params to self
-        pyts_fitted_params = self._get_fitted_params_default(pyts_est)
-        for k, v in pyts_fitted_params.items():
-            setattr(self, f"{k}_", v)
+        _clone_fitted_params(to_obj=self, from_obj=pyts_est)
 
         return self
 

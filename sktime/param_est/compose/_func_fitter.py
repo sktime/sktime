@@ -1,4 +1,5 @@
 """Implements FunctionParamFitter, a class to create custom parameter fitters."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES
 from sktime.param_est.base import BaseParamFitter

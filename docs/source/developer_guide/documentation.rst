@@ -11,7 +11,7 @@ These include:
 
 * Documenting code using NumPy docstrings and sktime conventions
 * Following ``sktime's`` docstring convention for public code artifacts and modules
-* Adding new public functionality to the :ref:`api_reference` and :ref:`user guide <user_guide>`
+* Adding new public functionality to the :ref:`api_reference` and :ref:`notebook examples <examples>`
 
 More detailed information on ``sktime's`` documentation format is provided below.
 
@@ -39,7 +39,7 @@ sktime Specific Conventions
 Beyond basic NumPy docstring formatting conventions, developers should focus on:
 
 - Ensuring all parameters (classes, functions, methods) and attributes (classes) are documented completely and consistently
-- Including links to the relevant topics in the :ref:`glossary` or :ref:`user_guide` in the extended summary
+- Including links to the relevant topics in the :ref:`glossary` or :ref:`examples` in the extended summary
 - Including an `Examples` section that demonstrates at least basic functionality in all public code artifacts
 - Adding a `See Also` section that references related sktime code artifacts as applicable
 - Including citations to relevant sources in a `References` section
@@ -75,7 +75,7 @@ the extended summary should include a short, user-friendly synopsis of the algor
 using multiple sktime estimators, the synopsis should first provide a high-level summary of the estimator components (e.g. transformer1 is applied then a classifier).
 Additional user-friendly details of the algorithm should follow (e.g. describe how the transformation and classifier work).
 
-The extended summary should also include links to relevant content in the :ref:`glossary` and :ref:`user guide <user_guide>`.
+The extended summary should also include links to relevant content in the :ref:`glossary` and :ref:`notebook examples <examples>`.
 
 If a "term" already exists in the glossary and the developer wants to link it directly they can use:
 

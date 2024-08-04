@@ -1,7 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Interfaces to estimators from statsforecast by Nixtla."""
 
-__author__ = ["FedericoGarza", "yarnabrina"]
+__author__ = ["AzulGarza", "yarnabrina"]
 
 __all__ = [
     "StatsForecastAutoARIMA",
@@ -11,7 +11,7 @@ __all__ = [
     "StatsForecastAutoTheta",
     "StatsForecastMSTL",
 ]
-from typing import Dict, List, Optional, Union
+from typing import Optional, Union
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base.adapters._generalised_statsforecast import (
@@ -179,8 +179,8 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["FedericoGarza", "yarnabrina"],
-        "maintainers": ["FedericoGarza"],
+        "authors": ["AzulGarza", "yarnabrina"],
+        "maintainers": ["AzulGarza"],
         # "python_dependencies": "statsforecast"
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
@@ -217,7 +217,7 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
         trend: bool = True,
         method: Optional[str] = None,
         offset_test_args: Optional[str] = None,
-        seasonal_test_args: Optional[Dict] = None,
+        seasonal_test_args: Optional[dict] = None,
         trace: bool = False,
         n_fits: int = 94,
         with_intercept: bool = True,
@@ -369,7 +369,14 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
     _tags = {
         # packaging info
         # --------------
-        # "authors": ["yarnabrina"],
+        "authors": [
+            "AzulGarza",
+            "jmoralez",
+            "yarnabrina",
+            "arnaujc91",
+            "luca-miniati",
+        ],
+        # AzulGarza, jmoralez for statsforecast theta
         # "maintainers": ["yarnabrina"],
         # "python_dependencies": "statsforecast"
         # inherited from _GeneralisedStatsForecastAdapter
@@ -477,7 +484,14 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
     _tags = {
         # packaging info
         # --------------
-        # "authors": ["yarnabrina"],
+        "authors": [
+            "AzulGarza",
+            "jmoralez",
+            "yarnabrina",
+            "arnaujc91",
+            "luca-miniati",
+        ],
+        # AzulGarza and jmoralez for statsforecast AutoETS
         # "maintainers": ["yarnabrina"],
         # "python_dependencies": "statsforecast"
         # inherited from _GeneralisedStatsForecastAdapter
@@ -577,7 +591,15 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
     _tags = {
         # packaging info
         # --------------
-        # "authors": ["yarnabrina"],
+        "authors": [
+            "AzulGarza",
+            "jmoralez",
+            "MMenchero",
+            "yarnabrina",
+            "arnaujc91",
+            "luca-miniati",
+        ],
+        # AzulGarza, jmoralez, MMenchero for statsforecast AutoCES
         # "maintainers": ["yarnabrina"],
         # "python_dependencies": "statsforecast"
         # inherited from _GeneralisedStatsForecastAdapter
@@ -680,7 +702,14 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
     _tags = {
         # packaging info
         # --------------
-        # "authors": ["yarnabrina"],
+        "authors": [
+            "MMenchero",
+            "jmoralez",
+            "yarnabrina",
+            "arnaujc91",
+            "luca-miniati",
+        ],
+        # MMenchero and jmoralez for statsforecast AutoTBATS
         # "maintainers": ["yarnabrina"],
         # "python_dependencies": "statsforecast"
         # inherited from _GeneralisedStatsForecastAdapter
@@ -694,7 +723,7 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
 
     def __init__(
         self,
-        seasonal_periods: Union[int, List[int]],
+        seasonal_periods: Union[int, list[int]],
         use_boxcox: Optional[bool] = None,
         use_trend: Optional[bool] = None,
         use_damped_trend: Optional[bool] = None,
@@ -817,7 +846,14 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
     _tags = {
         # packaging info
         # --------------
-        "authors": "luca-miniati",
+        "authors": [
+            "AzulGarza",
+            "jmoralez",
+            "luca-miniati",
+            "yarnabrina",
+            "arnaujc91",
+        ],
+        # AzulGarza and jmoralez for statsforecast MSTL
         "maintainers": "luca-miniati",
         # "python_dependencies": "statsforecast"
         # inherited from _GeneralisedStatsForecastAdapter
@@ -831,10 +867,10 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
 
     def __init__(
         self,
-        season_length: Union[int, List[int]],
+        season_length: Union[int, list[int]],
         trend_forecaster=None,
-        stl_kwargs: Optional[Dict] = None,
-        pred_int_kwargs: Optional[Dict] = None,
+        stl_kwargs: Optional[dict] = None,
+        pred_int_kwargs: Optional[dict] = None,
     ):
         self.season_length = season_length
         self.trend_forecaster = trend_forecaster

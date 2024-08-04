@@ -5,6 +5,7 @@ Please see the original library
 (https://github.com/statsmodels/statsmodels/blob/main/statsmodels/tsa/filters/hp_filter.py)
 Interfaces ``hp_filter`` from ``statsmodels.tsa.filters``.
 """
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["ken_maeda"]
