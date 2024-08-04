@@ -71,7 +71,8 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["mixiancmx", "luca-miniati"],
+        "authors": ["mixiancmx", "ailingzengzzz", "luca-miniati"],
+        # mixiancmx, ailingzengzzz for cure-lab code
         "maintainers": ["luca-miniati"],
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
@@ -243,7 +244,8 @@ class LTSFDLinearForecaster(BaseDeepNetworkPyTorch):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["mixiancmx", "luca-miniati"],
+        "authors": ["mixiancmx", "ailingzengzzz", "luca-miniati"],
+        # mixiancmx, ailingzengzzz for cure-lab code
         "maintainers": ["luca-miniati"],
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
@@ -415,7 +417,8 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["mixiancmx", "luca-miniati"],
+        "authors": ["mixiancmx", "ailingzengzzz", "luca-miniati"],
+        # mixiancmx, ailingzengzzz for cure-lab code
         "maintainers": ["luca-miniati"],
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
@@ -611,7 +614,8 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["mixiancmx", "geetu040"],
+        "authors": ["mixiancmx", "ailingzengzzz", "geetu040"],
+        # mixiancmx, ailingzengzzz for cure-lab code
         "maintainers": ["geetu040"],
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
