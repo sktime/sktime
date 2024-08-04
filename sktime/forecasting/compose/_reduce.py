@@ -1983,8 +1983,11 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
     def _predict(self, X=None, fh=None):
         """Predict dispatcher based on X_treatment and windows_identical."""
-        if (self.X_treatment == "shifted") and (self._windows_identical is True):
-            return self._predict_multioutput(X=X, fh=fh)
+        if self.X_treatment == "shifted":
+            if self._windows_identical is True:
+                return self._predict_multioutput(X=X, fh=fh)
+            else:
+                return self._predict_multiple(X=self._X, fh=fh)
         else:
             return self._predict_multiple(X=X, fh=fh)
 
