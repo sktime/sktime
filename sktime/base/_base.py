@@ -86,7 +86,6 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
     _tags = {
         "python_version": None,  # PEP 440 version specifier, e.g., ">=3.7"
         "python_dependencies": None,  # PEP 440 dependency strs, e.g., "pandas>=1.0"
-        "python_dependencies_alias": {"scikit-learn": "sklearn"},
         "env_marker": None,  # PEP 508 environment marker, e.g., "os_name=='posix'"
     }
 
