@@ -185,8 +185,14 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
             self.horizon_length,
         )
 
-        _y = self._y if y is None else y
-        _y = deepcopy(_y)  # make copy because we are going to add values to it
+        hist_y = self._y if y is None else y
+        hist_y = deepcopy(hist_y)  # make copy because we are going to add values to it
+
+        # calculate initial length of hist_y
+        if not isinstance(hist_y.index, pd.MultiIndex):
+            initial_length = len(hist_y.index)
+        else:
+            initial_length = len(hist_y.index.levels[-1])
 
         if y is None and X is not None:
             # special case of non global forecasting
@@ -196,44 +202,42 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
             X = pd.concat([self._X, X])
 
         for i in range(max_fh - self.horizon_length + 1):
-            # get sample from X containing historical and future exogenous data
-            _x = self._get_x(_y, X, i)
+            # truncate to the needed lengths
+            _y = self._truncate(hist_y, end_index=initial_length + i)
+            _x = self._truncate(X, end_index=initial_length + i + self.horizon_length)
 
             # forecast for self.horizon_length
             preds = self.forecaster.predict(y=_y, X=_x)
 
             # use predicted values as history for next iteration
-            _y = self._concate_preds(_y, preds)
+            hist_y = self._concate_preds(hist_y, preds)
 
-        # collect forecasting points from _y
+        # collect forecasting points from hist_y
         # code works for all indexes
         absolute_horizons = fh.to_absolute_index(self.cutoff)
-        dateindex = _y.index.get_level_values(-1).map(lambda x: x in absolute_horizons)
-        preds = _y.loc[dateindex]
+        dateindex = hist_y.index.get_level_values(-1).map(
+            lambda x: x in absolute_horizons
+        )
+        preds = hist_y.loc[dateindex]
 
         return preds
 
-    def _get_x(self, _y, X, i):
-        # keep rows till this index in X (hist from _y + future from _fh)
+    def _truncate(self, data, end_index):
+        # keep rows till this index in data
 
-        if X is None:
+        if data is None:
+            # when there is no X (exogenous data)
             return None
 
-        if not isinstance(_y.index, pd.MultiIndex):
-            end_index = len(_y.index) + self.horizon_length + i
-            return X.head(end_index)
+        if not isinstance(data.index, pd.MultiIndex):
+            return data.head(end_index)
 
         # truncating for Multi-Index
-        end_index = len(_y.index.levels[-1]) + self.horizon_length + i
-
         # levels other than the timestamps (innermost/base level)
-        groupby_levels = list(range(len(X.index.names) - 1))
-
-        # truncate X
-        _x = X.groupby(level=groupby_levels).apply(lambda x: x.head(end_index))
-        _x.index = _x.index.droplevel(groupby_levels)
-
-        return _x
+        groupby_levels = list(range(len(data.index.names) - 1))
+        data = data.groupby(level=groupby_levels).apply(lambda x: x.head(end_index))
+        data.index = data.index.droplevel(groupby_levels)
+        return data
 
     def _concate_preds(self, _y, preds):
         _y = pd.concat([_y, preds])
