@@ -175,7 +175,7 @@ def _get_packages_with_changed_specs():
         if ";" in req:
             req = req.split(";")[0]
 
-        try:
+        try:  # deal with lines that are not package requirement strings
             pkg = Requirement(req).name
         except InvalidRequirement:
             continue
