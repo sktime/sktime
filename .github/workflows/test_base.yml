@@ -33,7 +33,7 @@ jobs:
         operating-system:
           - macos-13
           - ubuntu-latest
-          - windows-latest
+          - windows-2019
     runs-on: ${{ matrix.operating-system }}
     steps:
       - name: checkout pull request branch
