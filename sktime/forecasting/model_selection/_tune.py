@@ -1900,7 +1900,15 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
             "scoring": "MeanAbsolutePercentageError(symmetric=True)",
             "update_behaviour": "no_update",
         }
-        return [params, params2, params3]
+        scorer_with_lower_is_better_false = MeanAbsolutePercentageError(symmetric=True)
+        scorer_with_lower_is_better_false.set_tags(**{"lower_is_better": False})
+        params4 = {
+            "forecaster": NaiveForecaster(strategy="mean"),
+            "cv": SingleWindowSplitter(fh=1),
+            "param_grid": {"window_length": CategoricalDistribution((2, 5))},
+            "scoring": scorer_with_lower_is_better_false,
+        }
+        return [params, params2, params3, params4]
 
     def _get_score(self, out, scoring_name):
         return out[f"mean_{scoring_name}"]
