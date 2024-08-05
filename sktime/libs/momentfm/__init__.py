@@ -1,8 +1,8 @@
 """Temporary python implementation of momentfm forecaster.
 
 Unofficial fork of the ``momentfm`` package, maintained in ``sktime``.
-For more details, please visit https://github.com/moment-timeseries-foundation-model/moment/tree/main
 Once a proper package emerges, will be replaced by the package as a dependency
+For more details, please visit https://github.com/moment-timeseries-foundation-model/moment/tree/main
 
 sktime migration: 2024, August
 
