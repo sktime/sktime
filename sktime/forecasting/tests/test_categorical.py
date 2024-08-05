@@ -10,11 +10,13 @@ __author__ = ["Abhay-Lejith"]
 
 import numpy as np
 import pandas as pd
+import pytest
 from sklearn.ensemble import HistGradientBoostingRegressor
 
 from sktime.forecasting.compose import SkforecastAutoreg
 from sktime.forecasting.compose._reduce import YfromX
 from sktime.forecasting.dummy import ForecastKnownValues
+from sktime.tests.test_switch import run_test_for_class
 
 
 def test_dummy_est_with_categorical_capability():
@@ -57,6 +59,10 @@ def create_mixed_dtype_df():
     return y_train, X_train, X_test
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(SkforecastAutoreg),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_skforecast_with_categorical():
     y_train, X_train, X_test = create_mixed_dtype_df()
 
