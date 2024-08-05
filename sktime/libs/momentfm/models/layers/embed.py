@@ -1,15 +1,18 @@
+"""Embeddings file for momentfm."""
+
 import math
 import warnings
 
 import torch
 import torch.nn as nn
-
 from momentfm.utils.masking import Masking
 
 
 class PositionalEmbedding(nn.Module):
+    """Positional Embedding."""
+
     def __init__(self, d_model, max_len=5000, model_name="MOMENT"):
-        super(PositionalEmbedding, self).__init__()
+        super().__init__()
         self.model_name = model_name
 
         # Compute the positional encodings once in log space.
@@ -28,6 +31,7 @@ class PositionalEmbedding(nn.Module):
         self.register_buffer("pe", pe)
 
     def forward(self, x):
+        """Forward function."""
         if (
             self.model_name == "MOMENT"
             or self.model_name == "TimesNet"
@@ -39,8 +43,10 @@ class PositionalEmbedding(nn.Module):
 
 
 class TokenEmbedding(nn.Module):
+    """Token Embeddings."""
+
     def __init__(self, c_in, d_model):
-        super(TokenEmbedding, self).__init__()
+        super().__init__()
         padding = 1 if torch.__version__ >= "1.5.0" else 2
         self.tokenConv = nn.Conv1d(
             in_channels=c_in,
@@ -57,6 +63,7 @@ class TokenEmbedding(nn.Module):
                 )
 
     def forward(self, x):
+        """Forward Function."""
         # x = x.permute(0, 2, 1)
         x = self.tokenConv(x)
         x = x.transpose(1, 2)
@@ -65,8 +72,10 @@ class TokenEmbedding(nn.Module):
 
 
 class FixedEmbedding(nn.Module):
+    """Fixed Embeddings."""
+
     def __init__(self, c_in, d_model):
-        super(FixedEmbedding, self).__init__()
+        super().__init__()
 
         w = torch.zeros(c_in, d_model).float()
         w.require_grad = False
@@ -83,12 +92,15 @@ class FixedEmbedding(nn.Module):
         self.emb.weight = nn.Parameter(w, requires_grad=False)
 
     def forward(self, x):
+        """Forward Function."""
         return self.emb(x).detach()
 
 
 class TemporalEmbedding(nn.Module):
+    """Temporal Embedding."""
+
     def __init__(self, d_model, embed_type="fixed", freq="h"):
-        super(TemporalEmbedding, self).__init__()
+        super().__init__()
 
         minute_size = 4
         hour_size = 24
@@ -105,6 +117,7 @@ class TemporalEmbedding(nn.Module):
         self.month_embed = Embed(month_size, d_model)
 
     def forward(self, x):
+        """Forward Function."""
         x = x.long()
         minute_x = (
             self.minute_embed(x[:, :, 4]) if hasattr(self, "minute_embed") else 0.0
@@ -118,22 +131,27 @@ class TemporalEmbedding(nn.Module):
 
 
 class TimeFeatureEmbedding(nn.Module):
+    """Time Feature Embedding."""
+
     def __init__(self, d_model, embed_type="timeF", freq="h"):
-        super(TimeFeatureEmbedding, self).__init__()
+        super().__init__()
 
         freq_map = {"h": 4, "t": 5, "s": 6, "m": 1, "a": 1, "w": 2, "d": 3, "b": 3}
         d_inp = freq_map[freq]
         self.embed = nn.Linear(d_inp, d_model, bias=False)
 
     def forward(self, x):
+        """Foward Function."""
         return self.embed(x)
 
 
 class DataEmbedding(nn.Module):
+    """Data Embeddings."""
+
     def __init__(
         self, c_in, d_model, model_name, embed_type="fixed", freq="h", dropout=0.1
     ):
-        super(DataEmbedding, self).__init__()
+        super().__init__()
         self.value_embedding = TokenEmbedding(c_in=c_in, d_model=d_model)
         self.position_embedding = PositionalEmbedding(
             d_model=d_model, model_name=model_name
@@ -146,6 +164,7 @@ class DataEmbedding(nn.Module):
         self.dropout = nn.Dropout(p=dropout)
 
     def forward(self, x, x_mark=None):
+        """Foward Function."""
         if x_mark is None:
             x = self.value_embedding(x) + self.position_embedding(x)
         else:
@@ -158,8 +177,10 @@ class DataEmbedding(nn.Module):
 
 
 class DataEmbedding_wo_pos(nn.Module):
+    """Data Embedding without positioning."""
+
     def __init__(self, c_in, d_model, embed_type="fixed", freq="h", dropout=0.1):
-        super(DataEmbedding_wo_pos, self).__init__()
+        super().__init__()
 
         self.value_embedding = TokenEmbedding(c_in=c_in, d_model=d_model)
         self.position_embedding = PositionalEmbedding(d_model=d_model)
@@ -171,6 +192,7 @@ class DataEmbedding_wo_pos(nn.Module):
         self.dropout = nn.Dropout(p=dropout)
 
     def forward(self, x, x_mark):
+        """Foward function."""
         if x_mark is None:
             x = self.value_embedding(x)
         else:
@@ -179,6 +201,8 @@ class DataEmbedding_wo_pos(nn.Module):
 
 
 class PatchEmbedding(nn.Module):
+    """Patch Embedding."""
+
     def __init__(
         self,
         d_model: int = 768,
@@ -190,7 +214,7 @@ class PatchEmbedding(nn.Module):
         value_embedding_bias: bool = False,
         orth_gain: float = 1.41,
     ):
-        super(PatchEmbedding, self).__init__()
+        super().__init__()
         self.patch_len = patch_len
         self.seq_len = seq_len
         self.stride = stride
@@ -214,6 +238,7 @@ class PatchEmbedding(nn.Module):
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x: torch.Tensor, mask: torch.Tensor = None) -> torch.Tensor:
+        """Foward Function."""
         mask = Masking.convert_seq_to_patch_view(
             mask, patch_len=self.patch_len
         ).unsqueeze(-1)
@@ -235,6 +260,8 @@ class PatchEmbedding(nn.Module):
 
 
 class Patching(nn.Module):
+    """Patching."""
+
     def __init__(self, patch_len: int, stride: int):
         super().__init__()
         self.patch_len = patch_len
@@ -246,6 +273,7 @@ class Patching(nn.Module):
             )
 
     def forward(self, x):
+        """Foward Function."""
         x = x.unfold(dimension=-1, size=self.patch_len, step=self.stride)
         # x : [batch_size x n_channels x num_patch x patch_len]
         return x
