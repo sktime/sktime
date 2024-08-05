@@ -1,3 +1,5 @@
+"""Moment model and heads file."""
+
 import logging
 import warnings
 from argparse import Namespace
@@ -6,9 +8,6 @@ from math import ceil
 
 import torch
 from huggingface_hub import PyTorchModelHubMixin
-from torch import nn
-from transformers import T5Config, T5EncoderModel, T5Model
-
 from momentfm.common import TASKS
 from momentfm.data.base import TimeseriesOutputs
 from momentfm.models.layers.embed import PatchEmbedding, Patching
@@ -19,6 +18,8 @@ from momentfm.utils.utils import (
     get_anomaly_criterion,
     get_huggingface_model_dimensions,
 )
+from torch import nn
+from transformers import T5Config, T5EncoderModel, T5Model
 
 SUPPORTED_HUGGINGFACE_MODELS = [
     "google/flan-t5-small",
@@ -30,6 +31,8 @@ SUPPORTED_HUGGINGFACE_MODELS = [
 
 
 class PretrainHead(nn.Module):
+    """Pretrained Head."""
+
     def __init__(
         self,
         d_model: int = 768,
@@ -46,12 +49,15 @@ class PretrainHead(nn.Module):
             self.linear.bias.data.zero_()
 
     def forward(self, x):
+        """Foward Function."""
         x = self.linear(self.dropout(x))
         x = x.flatten(start_dim=2, end_dim=3)
         return x
 
 
 class ClassificationHead(nn.Module):
+    """Classification Head."""
+
     def __init__(
         self,
         n_channels: int = 1,
@@ -67,9 +73,13 @@ class ClassificationHead(nn.Module):
         elif reduction == "concat":
             self.linear = nn.Linear(n_channels * d_model, n_classes)
         else:
-            raise ValueError(f"Reduction method {reduction} not implemented. Only 'mean' and 'concat' are supported.")
+            raise ValueError(
+                f"Reduction method {reduction} not implemented. "
+                f"Only 'mean' and 'concat' are supported."
+            )
 
     def forward(self, x, input_mask: torch.Tensor = None):
+        """Foward Function."""
         x = torch.mean(x, dim=1)
         x = self.dropout(x)
         y = self.linear(x)
@@ -77,6 +87,8 @@ class ClassificationHead(nn.Module):
 
 
 class ForecastingHead(nn.Module):
+    """Forecasting Head."""
+
     def __init__(
         self, head_nf: int = 768 * 64, forecast_horizon: int = 96, head_dropout: int = 0
     ):
@@ -86,6 +98,7 @@ class ForecastingHead(nn.Module):
         self.linear = nn.Linear(head_nf, forecast_horizon)
 
     def forward(self, x, input_mask: torch.Tensor = None):
+        """Foward Function."""
         x = self.flatten(x)
         x = self.linear(x)
         x = self.dropout(x)
@@ -93,6 +106,8 @@ class ForecastingHead(nn.Module):
 
 
 class MOMENT(nn.Module):
+    """Moment Class."""
+
     def __init__(self, config: Namespace | dict, **kwargs: dict):
         super().__init__()
         config = self._update_inputs(config, **kwargs)
@@ -137,12 +152,14 @@ class MOMENT(nn.Module):
     def _update_inputs(
         self, config: Namespace | dict, **kwargs: dict
     ) -> NamespaceWithDefaults:
+        """Update Inputs."""
         if isinstance(config, dict) and "model_kwargs" in kwargs:
             return NamespaceWithDefaults(**{**config, **kwargs["model_kwargs"]})
         else:
             return NamespaceWithDefaults.from_namespace(config)
 
     def _validate_inputs(self, config: NamespaceWithDefaults) -> NamespaceWithDefaults:
+        """Validate Inputs."""
         if (
             config.d_model is None
             and config.transformer_backbone in SUPPORTED_HUGGINGFACE_MODELS
@@ -185,7 +202,7 @@ class MOMENT(nn.Module):
                 self.config.d_model,
                 self.config.num_class,
                 self.config.getattr("dropout", 0.1),
-                reduction = self.config.getattr("reduction", "concat"),
+                reduction=self.config.getattr("reduction", "concat"),
             )
         elif task_name == TASKS.FORECASTING:
             num_patches = (
@@ -207,14 +224,16 @@ class MOMENT(nn.Module):
             model_config = T5Config.from_pretrained(config.transformer_backbone)
             transformer_backbone = T5Model(model_config)
             logging.info(
-                f"Initializing randomly initialized transformer from {config.transformer_backbone}."
+                f"Initializing randomly initialized transformer from "
+                f"{config.transformer_backbone}."
             )
         else:
             transformer_backbone = T5EncoderModel.from_pretrained(
                 config.transformer_backbone
             )
             logging.info(
-                f"Initializing pre-trained transformer from {config.transformer_backbone}."
+                f"Initializing pre-trained transformer from "
+                f"{config.transformer_backbone}."
             )
 
         transformer_backbone = transformer_backbone.get_encoder()
@@ -226,6 +245,7 @@ class MOMENT(nn.Module):
         return transformer_backbone
 
     def __call__(self, *args, **kwargs) -> TimeseriesOutputs:
+        """__call__ function."""
         return self.forward(*args, **kwargs)
 
     def embed(
@@ -235,6 +255,7 @@ class MOMENT(nn.Module):
         reduction: str = "mean",
         **kwargs,
     ) -> TimeseriesOutputs:
+        """Embed function."""
         batch_size, n_channels, seq_len = x_enc.shape
 
         if input_mask is None:
@@ -286,6 +307,7 @@ class MOMENT(nn.Module):
         mask: torch.Tensor = None,
         **kwargs,
     ) -> TimeseriesOutputs:
+        """Reconstruction Function."""
         batch_size, n_channels, _ = x_enc.shape
 
         if mask is None:
@@ -340,6 +362,7 @@ class MOMENT(nn.Module):
         mask: torch.Tensor = None,
         **kwargs,
     ) -> TimeseriesOutputs:
+        """Reconstruct Function."""
         if mask is None:
             mask = torch.ones_like(input_mask)
 
@@ -398,6 +421,7 @@ class MOMENT(nn.Module):
         anomaly_criterion: str = "mse",
         **kwargs,
     ) -> TimeseriesOutputs:
+        """Detect Anomalies Function."""
         outputs = self.reconstruct(x_enc=x_enc, input_mask=input_mask)
         self.anomaly_criterion = get_anomaly_criterion(anomaly_criterion)
 
@@ -413,6 +437,7 @@ class MOMENT(nn.Module):
     def forecast(
         self, x_enc: torch.Tensor, input_mask: torch.Tensor = None, **kwargs
     ) -> TimeseriesOutputs:
+        """Forecast Function."""
         batch_size, n_channels, seq_len = x_enc.shape
 
         x_enc = self.normalizer(x=x_enc, mask=input_mask, mode="norm")
@@ -445,6 +470,7 @@ class MOMENT(nn.Module):
         forecast_horizon: int = 1,
         **kwargs,
     ) -> TimeseriesOutputs:
+        """Short_forecast Function."""
         batch_size, n_channels, seq_len = x_enc.shape
         num_masked_patches = ceil(forecast_horizon / self.patch_len)
         num_masked_timesteps = num_masked_patches * self.patch_len
@@ -498,6 +524,7 @@ class MOMENT(nn.Module):
         reduction: str = "concat",
         **kwargs,
     ) -> TimeseriesOutputs:
+        """Classify Function."""
         batch_size, n_channels, seq_len = x_enc.shape
 
         if input_mask is None:
@@ -506,9 +533,9 @@ class MOMENT(nn.Module):
         x_enc = self.normalizer(x=x_enc, mask=input_mask, mode="norm")
         x_enc = torch.nan_to_num(x_enc, nan=0, posinf=0, neginf=0)
 
-        input_mask_patch_view = Masking.convert_seq_to_patch_view(
-            input_mask, self.patch_len
-        )
+        # input_mask_patch_view = Masking.convert_seq_to_patch_view(
+        #     input_mask, self.patch_len
+        # )
 
         x_enc = self.tokenizer(x=x_enc)
         enc_in = self.patch_embedding(x_enc, mask=input_mask)
@@ -529,12 +556,13 @@ class MOMENT(nn.Module):
         # Mean across channels
         if reduction == "mean":
             # [batch_size x n_patches x d_model]
-            enc_out = enc_out.mean(dim=1, keepdim=False)  
+            enc_out = enc_out.mean(dim=1, keepdim=False)
         # Concatenate across channels
         elif reduction == "concat":
             # [batch_size x n_patches x d_model * n_channels]
             enc_out = enc_out.permute(0, 2, 3, 1).reshape(
-                batch_size, n_patches, self.config.d_model * n_channels)
+                batch_size, n_patches, self.config.d_model * n_channels
+            )
 
         else:
             raise NotImplementedError(f"Reduction method {reduction} not implemented.")
@@ -550,6 +578,7 @@ class MOMENT(nn.Module):
         input_mask: torch.Tensor = None,
         **kwargs,
     ) -> TimeseriesOutputs:
+        """Foward Function."""
         if input_mask is None:
             input_mask = torch.ones_like(x_enc[:, 0, :])
 
@@ -568,6 +597,8 @@ class MOMENT(nn.Module):
 
 
 class MOMENTPipeline(MOMENT, PyTorchModelHubMixin):
+    """Moment Pipeline."""
+
     def __init__(self, config: Namespace | dict, **kwargs: dict):
         self._validate_model_kwargs(**kwargs)
         self.new_task_name = kwargs.get("model_kwargs", {}).pop(
@@ -594,14 +625,14 @@ class MOMENTPipeline(MOMENT, PyTorchModelHubMixin):
                 raise ValueError("num_class must be specified for classification.")
 
     def init(self) -> None:
+        """Init function."""
         if self.new_task_name != TASKS.RECONSTRUCTION:
             self.task_name = self.new_task_name
             self.head = self._get_head(self.new_task_name)
 
+
 def freeze_parameters(model):
-    """
-    Freeze parameters of the model
-    """
+    """Freeze parameters of the model."""
     # Freeze the parameters
     for name, param in model.named_parameters():
         param.requires_grad = False
