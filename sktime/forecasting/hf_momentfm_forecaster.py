@@ -10,9 +10,10 @@ from sktime.forecasting.base import _BaseGlobalForecaster
 from sktime.split import temporal_train_test_split
 
 if _check_soft_dependencies(["momentfm", "torch"], severity="none"):
-    import momentfm
     from torch.nn import MSELoss
     from torch.utils.data import Dataset
+
+    from sktime.libs.momentfm import MOMENTPipeline
 else:
 
     class Dataset:
@@ -249,7 +250,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         if fh is not None:
             self._fh_input = max(fh.to_relative(self.cutoff))
         self._fh = self._fh_input if fh is not None else self._fh_config
-        self._model = momentfm.MOMENTPipeline.from_pretrained(
+        self._model = MOMENTPipeline.from_pretrained(
             self._pretrained_model_name_or_path,
             model_kwargs={
                 "task_name": "forecasting",
@@ -466,8 +467,9 @@ def _run_epoch(
     val_dataloader,
 ):
     import torch.cuda.amp
-    from momentfm.utils.forecasting_metrics import get_forecasting_metrics
     from tqdm import tqdm
+
+    from sktime.libs.momentfm.utils.forecasting_metrics import get_forecasting_metrics
 
     losses = []
     for data in tqdm(train_dataloader, total=len(train_dataloader)):
