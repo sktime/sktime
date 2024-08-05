@@ -4,6 +4,7 @@
 import abc
 import functools
 import inspect
+import logging
 import os
 import time
 import typing
@@ -16,6 +17,15 @@ import pandas as pd
 from pandas.api.types import is_numeric_dtype
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
+
+try:
+    from skbase.utils.stdout_mute import StdoutMute
+except ModuleNotFoundError:
+    from sktime.utils.std_mute import _StdoutMute as StdoutMute
+try:
+    from skbase.utils.stderr_mute import StderrMute
+except ModuleNotFoundError:
+    from sktime.utils.std_mute import _StderrMute as StderrMute
 
 __all__ = ["_PytorchForecastingAdapter"]
 __author__ = ["XinyuWu"]
@@ -46,6 +56,15 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
     random_log_path: bool (default=False)
         use random root directory for logging. This parameter is for CI test in
         Github action, not designed for end users.
+    broadcasting: bool (default=False)
+        multiindex data input will be broadcasted to single series if setted to true.
+        For each single series, one copy of this forecaster will try to
+        fit and predict on it. The broadcasting is happening inside automatically,
+        from the outerside api perspective, the input and output are the same,
+        only one multiindex output from `predict`.
+    mute: bool (default=False)
+        mute console printing during calling the underlying fit and predict function.
+        It mutes aggressive printing from pytorch-forecasting and pytorch-lightning
 
     References
     ----------
@@ -90,6 +109,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         model_path: Optional[str] = None,
         random_log_path: bool = False,
         broadcasting: bool = False,
+        mute: bool = False,
     ) -> None:
         self.model_params = model_params
         self.dataset_params = dataset_params
@@ -116,6 +136,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         )
         self.random_log_path = random_log_path
         self.broadcasting = broadcasting
+        self.mute = mute
         if self.broadcasting:
             self.set_tags(
                 **{
@@ -145,11 +166,17 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
 
     def _instantiate_model(self: "_PytorchForecastingAdapter", data):
         """Instantiate the model."""
-        algorithm_instance = self.algorithm_class.from_dataset(
-            data,
-            **self.algorithm_parameters,
-            **self._model_params,
-        )
+        with (
+            StdoutMute(self.mute),
+            StderrMute(self.mute),
+            _LightningLoggerMute(self.mute),
+        ):
+            algorithm_instance = self.algorithm_class.from_dataset(
+                data,
+                **self.algorithm_parameters,
+                **self._model_params,
+            )
+
         import lightning.pytorch as pl
 
         if self.random_log_path:
@@ -158,7 +185,17 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
                     self._random_log_dir = self._gen_random_log_dir(data)
                     self._trainer_params["default_root_dir"] = self._random_log_dir
 
-        trainer_instance = pl.Trainer(**self._trainer_params)
+        with (
+            StdoutMute(self.mute),
+            StderrMute(self.mute),
+            _LightningLoggerMute(self.mute),
+        ):
+            trainer_instance = pl.Trainer(
+                **self._trainer_params,
+                enable_progress_bar=not self.mute,
+                enable_model_summary=not self.mute,
+            )
+
         return algorithm_instance, trainer_instance
 
     def _gen_random_log_dir(self, data=None):
@@ -221,15 +258,21 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
             self._train_to_dataloader_params["train"] = True
             self._validation_to_dataloader_params["train"] = False
             # call the fit function of the pytorch-forecasting model
-            self._trainer.fit(
-                self._forecaster,
-                train_dataloaders=training.to_dataloader(
-                    **self._train_to_dataloader_params
-                ),
-                val_dataloaders=validation.to_dataloader(
-                    **self._validation_to_dataloader_params
-                ),
-            )
+            with (
+                StdoutMute(self.mute),
+                StderrMute(self.mute),
+                _LightningLoggerMute(self.mute),
+            ):
+                self._trainer.fit(
+                    self._forecaster,
+                    train_dataloaders=training.to_dataloader(
+                        **self._train_to_dataloader_params
+                    ),
+                    val_dataloaders=validation.to_dataloader(
+                        **self._validation_to_dataloader_params
+                    ),
+                )
+
             if self._trainer.checkpoint_callback is not None:
                 # load model from checkpoint
                 best_model_path = self._trainer.checkpoint_callback.best_model_path
@@ -317,17 +360,23 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         except AttributeError:
             pass
 
-        predictions = self.best_model.predict(
-            validation.to_dataloader(**self._validation_to_dataloader_params),
-            return_x=True,
-            return_index=True,
-            return_decoder_lengths=True,
-            trainer_kwargs=(
-                {"default_root_dir": self._random_log_dir}
-                if "_random_log_dir" in self.__dict__.keys()
-                else None
-            ),
-        )
+        with (
+            StdoutMute(self.mute),
+            StderrMute(self.mute),
+            _LightningLoggerMute(self.mute),
+        ):
+            predictions = self.best_model.predict(
+                validation.to_dataloader(**self._validation_to_dataloader_params),
+                return_x=True,
+                return_index=True,
+                return_decoder_lengths=True,
+                trainer_kwargs=(
+                    {"default_root_dir": self._random_log_dir}
+                    if "_random_log_dir" in self.__dict__.keys()
+                    else None
+                ),
+            )
+
         try:
             if self.deterministic:
                 torch.set_rng_state(torch_state)
@@ -412,19 +461,25 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         except AttributeError:
             pass
 
-        predictions = self.best_model.predict(
-            validation.to_dataloader(**self._validation_to_dataloader_params),
-            mode="quantiles",
-            mode_kwargs={"use_metric": False, "quantiles": alpha},
-            return_x=True,
-            return_index=True,
-            return_decoder_lengths=True,
-            trainer_kwargs=(
-                {"default_root_dir": self._random_log_dir}
-                if "_random_log_dir" in self.__dict__.keys()
-                else None
-            ),
-        )
+        with (
+            StdoutMute(self.mute),
+            StderrMute(self.mute),
+            _LightningLoggerMute(self.mute),
+        ):
+            predictions = self.best_model.predict(
+                validation.to_dataloader(**self._validation_to_dataloader_params),
+                mode="quantiles",
+                mode_kwargs={"use_metric": False, "quantiles": alpha},
+                return_x=True,
+                return_index=True,
+                return_decoder_lengths=True,
+                trainer_kwargs=(
+                    {"default_root_dir": self._random_log_dir}
+                    if "_random_log_dir" in self.__dict__.keys()
+                    else None
+                ),
+            )
+
         try:
             if self.deterministic:
                 torch.set_rng_state(torch_state)
@@ -671,3 +726,49 @@ def _series_to_frame(data):
     else:
         _data = None
     return _data, converted
+
+
+class _LightningLoggerMute:
+    """A context manager to suppress lightning loggers."""
+
+    def __init__(self, active=True):
+        self.active = active
+
+    def __enter__(self):
+        """Context manager entry point."""
+        if self.active:
+            self.rank_zero = logging.getLogger("lightning.pytorch.utilities.rank_zero")
+            self.rank_zero_level = self.rank_zero.level
+            self.rank_zero.setLevel(logging.WARNING)
+            self.cuda = logging.getLogger("lightning.pytorch.accelerators.cuda")
+            self.cuda_level = self.cuda.level
+            self.cuda.setLevel(logging.WARNING)
+
+    def __exit__(self, type, value, traceback):  # noqa: A002
+        """Context manager exit point."""
+        if self.active:
+            self.rank_zero.setLevel(self.rank_zero_level)
+            self.cuda.setLevel(self.cuda_level)
+
+        if type is not None:
+            return self._handle_exit_exceptions(type, value, traceback)
+
+        # if no exception was raised, return True to indicate successful exit
+        # return statement not needed as type was None, but included for clarity
+        return True
+
+    def _handle_exit_exceptions(self, type, value, traceback):  # noqa: A002
+        """Handle exceptions raised during __exit__.
+
+        Parameters
+        ----------
+        type : type
+            The type of the exception raised.
+            Known to be not-None and Exception subtype when this method is called.
+        value : Exception
+            The exception instance raised.
+        traceback : traceback
+            The traceback object associated with the exception.
+        """
+        # by default, all exceptions are raised
+        return False
