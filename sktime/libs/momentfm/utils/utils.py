@@ -1,15 +1,19 @@
+"""Utility Function for momentfm."""
+
 import os
 import random
 from argparse import Namespace
-from typing import NamedTuple
 
 import numpy as np
 import torch
 
 
 class NamespaceWithDefaults(Namespace):
+    """Namespace class."""
+
     @classmethod
     def from_namespace(cls, namespace):
+        """Set attribute function."""
         new_instance = cls()
         for attr in dir(namespace):
             if not attr.startswith("__"):
@@ -17,15 +21,18 @@ class NamespaceWithDefaults(Namespace):
         return new_instance
 
     def getattr(self, key, default=None):
+        """Get attr function."""
         return getattr(self, key, default)
 
 
 def parse_config(config: dict) -> NamespaceWithDefaults:
+    """Parse Config function."""
     args = NamespaceWithDefaults(**config)
     return args
 
 
 def make_dir_if_not_exists(path, verbose=True):
+    """Make Directory if does not exist."""
     if not is_directory(path):
         path = path.split(".")[0]
     if not os.path.exists(path=path):
@@ -36,6 +43,7 @@ def make_dir_if_not_exists(path, verbose=True):
 
 
 def is_directory(path):
+    """Check is_directory."""
     extensions = [".pth", ".txt", ".json", ".yaml"]
 
     for ext in extensions:
@@ -45,6 +53,7 @@ def is_directory(path):
 
 
 def control_randomness(seed: int = 13):
+    """Control randomness seed function."""
     random.seed(seed)
     os.environ["PYTHONHASHSEED"] = str(seed)
     np.random.seed(seed)
@@ -55,6 +64,7 @@ def control_randomness(seed: int = 13):
 
 
 def dtype_map(dtype: str):
+    """Check dtype map."""
     map = {
         "float16": torch.float16,
         "float32": torch.float32,
@@ -71,6 +81,7 @@ def dtype_map(dtype: str):
 
 
 def get_huggingface_model_dimensions(model_name: str = "flan-t5-base"):
+    """Get HF Model dimensions."""
     from transformers import T5Config
 
     config = T5Config.from_pretrained(model_name)
@@ -78,6 +89,7 @@ def get_huggingface_model_dimensions(model_name: str = "flan-t5-base"):
 
 
 def get_anomaly_criterion(anomaly_criterion: str = "mse"):
+    """Get anomaly criterion."""
     if anomaly_criterion == "mse":
         return torch.nn.MSELoss(reduction="none")
     elif anomaly_criterion == "mae":
@@ -96,6 +108,8 @@ def _reduce(metric, reduction="mean", axis=None):
 
 
 class EarlyStopping:
+    """Class to implement early stopping."""
+
     def __init__(self, patience: int = 3, verbose: bool = False, delta: float = 0):
         self.patience = patience
         self.verbose = verbose
@@ -106,6 +120,7 @@ class EarlyStopping:
         self.delta = delta
 
     def __call__(self, validation_loss):
+        """Call method for early stopping."""
         score = -validation_loss
         if self.best_score is None:
             self.best_score = score
