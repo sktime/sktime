@@ -82,7 +82,7 @@ def good_relative_input_arg(request):
 def timepoint(request):
     """Parametrized by integer values."""
     TIMEPOINTS = [
-        pd.Period("2000", freq="ME"),
+        pd.Period("2000", freq="M"),
         pd.Timestamp("2000-01-01").to_period(freq="D"),
         1,
         3,
@@ -94,7 +94,7 @@ def timepoint(request):
 def length1_index(request):
     """Parametrized by integer values."""
     TIMEPOINTS = [
-        pd.Period("2000", freq="ME"),
+        pd.Period("2000", freq="M"),
         pd.Timestamp("2000-01-01").to_period(freq="D"),
         1,
         3,
