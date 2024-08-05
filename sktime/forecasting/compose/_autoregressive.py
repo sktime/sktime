@@ -235,7 +235,10 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
         # truncating for Multi-Index
         # levels other than the timestamps (innermost/base level)
         groupby_levels = list(range(len(data.index.names) - 1))
-        data = data.groupby(level=groupby_levels).apply(lambda x: x.head(end_index))
+        data = data.groupby(
+            level=groupby_levels,
+            group_keys=True,  # to keep stable conversion with pandas<2.0.0
+        ).apply(lambda x: x.head(end_index))
         data.index = data.index.droplevel(groupby_levels)
         return data
 
