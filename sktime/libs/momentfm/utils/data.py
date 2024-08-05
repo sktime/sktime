@@ -1,3 +1,5 @@
+"""Data Utility file in momentfm."""
+
 import numpy as np
 
 
@@ -43,7 +45,7 @@ def load_from_tsfile(
     if not full_file_path_and_name.endswith(".ts"):
         full_file_path_and_name = full_file_path_and_name + ".ts"
     # Open file
-    with open(full_file_path_and_name, "r", encoding="utf-8") as file:
+    with open(full_file_path_and_name, encoding="utf-8") as file:
         # Read in headers
         meta_data = _load_header_info(file)
         # load into list of numpy
@@ -93,12 +95,12 @@ def _load_header_info(file):
             key = tokens[0][1:]
             if key == "data":
                 if line != "@data":
-                    raise IOError("data tag should not have an associated value")
+                    raise OSError("data tag should not have an associated value")
                 return meta_data
             if key in meta_data.keys():
                 if key in boolean_keys:
                     if token_len != 2:
-                        raise IOError(f"{tokens[0]} tag requires a boolean value")
+                        raise OSError(f"{tokens[0]} tag requires a boolean value")
                     if tokens[1] == "true":
                         meta_data[key] = True
                     elif tokens[1] == "false":
@@ -109,14 +111,14 @@ def _load_header_info(file):
                     if tokens[1] == "true":
                         meta_data["classlabel"] = True
                         if token_len == 2:
-                            raise IOError(
+                            raise OSError(
                                 "if the classlabel tag is true then class values "
                                 "must be supplied"
                             )
                     elif tokens[1] == "false":
                         meta_data["classlabel"] = False
                     else:
-                        raise IOError("invalid class label value")
+                        raise OSError("invalid class label value")
                     meta_data["class_values"] = [token.strip() for token in tokens[2:]]
         if meta_data["targetlabel"]:
             meta_data["classlabel"] = False
@@ -167,13 +169,13 @@ def _load_data(file, meta_data, replace_missing_vals_with="NaN"):
                 series_length = len(channels[0].split(","))
         else:
             if current_channels != n_channels:
-                raise IOError(
+                raise OSError(
                     f"Inconsistent number of dimensions in case {n_cases}. "
                     f"Expecting {n_channels} but have read {current_channels}"
                 )
             if meta_data["univariate"]:
                 if current_channels > 1:
-                    raise IOError(
+                    raise OSError(
                         f"Seen {current_channels} in case {n_cases}."
                         f"Expecting univariate from meta data"
                     )
@@ -187,7 +189,7 @@ def _load_data(file, meta_data, replace_missing_vals_with="NaN"):
             data_series = single_channel.split(",")
             data_series = [float(x) for x in data_series]
             if len(data_series) != current_length:
-                raise IOError(
+                raise OSError(
                     f"Unequal length series, in case {n_cases} meta "
                     f"data specifies all equal {series_length} but saw "
                     f"{len(single_channel)}"
