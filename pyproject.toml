@@ -270,7 +270,7 @@ binder = [
   "pandas<2.0.0",
 ]
 cython_extras = [
-  "mrseql < 0.0.3",
+  "mrseql < 0.0.5",
   'mrsqm; python_version < "3.11"',
   "numba<0.61",
 ]
