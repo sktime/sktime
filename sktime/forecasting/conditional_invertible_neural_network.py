@@ -115,6 +115,12 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["benheid"],
+        "python_dependencies": ["FrEIA", "torch"],
+        # estimator type
+        # --------------
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "scitype:y": "univariate",
@@ -124,8 +130,6 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         "enforce_index_type": None,
         "handles-missing-data": False,
         "capability:pred_int": False,
-        "python_version": None,
-        "python_dependencies": ["FrEIA", "torch"],
     }
 
     def __init__(
