@@ -1,13 +1,18 @@
+"""Masking module for momentfm."""
+
 from typing import Optional
 
 import torch
 
 
 class Masking:
+    """Masking Module."""
+
     def __init__(
         self, mask_ratio: float = 0.3, patch_len: int = 8, stride: Optional[int] = None
     ):
-        """
+        """Masking class for momentfm.
+
         Indices with 0 mask are hidden, and with 1 are observed.
         """
         self.mask_ratio = mask_ratio
@@ -18,7 +23,8 @@ class Masking:
     def convert_seq_to_patch_view(
         mask: torch.Tensor, patch_len: int = 8, stride: Optional[int] = None
     ):
-        """
+        """Convert sequence to patch function.
+
         Input:
             mask : torch.Tensor of shape [batch_size x seq_len]
         Output
@@ -34,7 +40,8 @@ class Masking:
         mask: torch.Tensor,
         patch_len: int = 8,
     ):
-        """
+        """Convert patch to sequence function.
+
         Input:
             mask : torch.Tensor of shape [batch_size x n_patches]
         Output:
@@ -43,7 +50,8 @@ class Masking:
         return mask.repeat_interleave(patch_len, dim=-1)
 
     def generate_mask(self, x: torch.Tensor, input_mask: Optional[torch.Tensor] = None):
-        """
+        """Generate Mask Function.
+
         Input:
             x : torch.Tensor of shape
             [batch_size x n_channels x n_patches x patch_len] or
@@ -59,7 +67,8 @@ class Masking:
             return self._mask_seq_view(x, input_mask=input_mask)
 
     def _mask_patch_view(self, x, input_mask=None):
-        """
+        """Return mask for inputted patch view.
+
         Input:
             x : torch.Tensor of shape
             [batch_size x n_channels x n_patches x patch_len]
@@ -102,7 +111,8 @@ class Masking:
         return mask.long()
 
     def _mask_seq_view(self, x, input_mask=None):
-        """
+        """Return mask for inputted tensor.
+
         Input:
             x : torch.Tensor of shape
             [batch_size x n_channels x seq_len]
