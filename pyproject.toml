@@ -91,7 +91,7 @@ all_extras = [
   'hmmlearn>=0.2.7; python_version < "3.11"',
   "holidays",
   'keras-self-attention; python_version < "3.11"',
-  "matplotlib>=3.3.2",
+  "matplotlib!=3.9.1,>=3.3.2",
   "mne",
   'numba<0.61,>=0.53',
   'optuna<3.7',
@@ -134,7 +134,7 @@ all_extras_pandas2 = [
   'hmmlearn>=0.2.7; python_version < "3.11"',
   "holidays",
   'keras-self-attention; python_version < "3.11"',
-  "matplotlib>=3.3.2",
+  "matplotlib!=3.9.1,>=3.3.2",
   "mne",
   'numba<0.61,>=0.53',
   'optuna<3.7',
@@ -248,7 +248,7 @@ docs = [
   "nbsphinx>=0.8.6",
   "numpydoc",
   "pydata-sphinx-theme",
-  "Sphinx!=7.2.0,<8.0.0",
+  "Sphinx!=7.2.0,<9.0.0",
   "sphinx-copybutton",
   "sphinx-design<0.7.0",
   "sphinx-gallery<0.18.0",
@@ -270,7 +270,7 @@ binder = [
   "pandas<2.0.0",
 ]
 cython_extras = [
-  "mrseql",
+  "mrseql < 0.0.3",
   'mrsqm; python_version < "3.11"',
   "numba<0.61",
 ]
@@ -285,7 +285,7 @@ dl = [
   'tensorflow<2.17,>=2; python_version < "3.12"',
   'torch; python_version < "3.12"',
   'transformers[torch]<4.41.0; python_version < "3.12"',
-  'pykan<0.3,>=0.2; python_version > "3.9.7"',
+  'pykan<0.2.2,>=0.2; python_version > "3.9.7"',
   'pytorch-forecasting>=1.0.0; python_version < "3.11"',
   'einshape; python_version < "3.11" and python_version >= "3.10"',
   'jax; python_version < "3.11" and python_version >= "3.10"',
@@ -364,6 +364,9 @@ select = [
   "PT006",   # Checks for the type of parameter names passed to pytest.mark.parametrize.
   "PT007",   # Checks for the type of parameter values passed to pytest.mark.parametrize.
   "PT018",   # Checks for assertions that combine multiple independent condition
+  "RUF001", # Checks for non unicode string literals
+  "RUF002", # Checks for non unicode string literals
+  "RUF003", # Checks for non unicode string literals
 ]
 extend-select = [
   "I", # isort
@@ -396,6 +399,7 @@ ignore=[
   "C409", # Unnecessary `list` literal passed to `tuple()` (rewrite as a `tuple` literal)
   "S113", # Probable use of httpx call withour timeout
 ]
+allowed-confusables=["σ"]
 
 [tool.ruff.lint.per-file-ignores]
 

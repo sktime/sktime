@@ -477,6 +477,7 @@ class BaseTransformer(BaseEstimator):
         # skip everything if fit_is_empty is True and we do not need to remember data
         if self.get_tag("fit_is_empty") and not self.get_tag("remember_data", False):
             self._is_fitted = True
+            self._is_vectorized = "unknown"
             return self
 
         # if requires_X is set, X is required in fit and update
@@ -608,7 +609,14 @@ class BaseTransformer(BaseEstimator):
         # input check and conversion for X/y
         X_inner, y_inner, metadata = self._check_X_y(X=X, y=y, return_metadata=True)
 
-        if not isinstance(X_inner, VectorizedDF):
+        # check if we need to vectorize
+        if getattr(self, "_is_vectorized", "unknown") == "unknown":
+            vectorization_needed = isinstance(X_inner, VectorizedDF)
+        else:
+            vectorization_needed = self._is_vectorized
+
+        # if no vectorization needed, we call _transform directly
+        if not vectorization_needed:
             Xt = self._transform(X=X_inner, y=y_inner)
         else:
             # otherwise we call the vectorized version of predict
@@ -767,7 +775,21 @@ class BaseTransformer(BaseEstimator):
         # input check and conversion for X/y
         X_inner, y_inner, metadata = self._check_X_y(X=X, y=y, return_metadata=True)
 
-        if not isinstance(X_inner, VectorizedDF):
+        # check if we need to vectorize
+        if getattr(self, "_is_vectorized", "unknown") == "unknown":
+            vectorization_needed = isinstance(X_inner, VectorizedDF)
+        else:
+            vectorization_needed = self._is_vectorized
+
+        # if no vectorization needed, we call _inverse_transform directly
+        if not vectorization_needed:
+            # capture edge condition where:
+            # transformer is univariate, transform produces multivariate
+            # in this case the check_X_y will convert to VectorizedDF,
+            # but inverse_transform expects a DataFrame
+            # example: time series decomposition algorithms
+            if isinstance(X_inner, VectorizedDF):
+                X_inner = X_inner.X_multiindex
             Xt = self._inverse_transform(X=X_inner, y=y_inner)
         else:
             # otherwise we call the vectorized version of predict
@@ -895,7 +917,12 @@ class BaseTransformer(BaseEstimator):
               e.g., `[componentname]__[componentcomponentname]__[paramname]`, etc
         """
         # if self is not vectorized, run the default get_fitted_params
-        if not getattr(self, "_is_vectorized", False):
+        # the condition is: _is_vectorized is boolean, False, or "unknown"
+        is_vectorized = getattr(self, "_is_vectorized", False)
+        is_not_vectorized = isinstance(is_vectorized, bool) and not is_vectorized
+        is_not_vectorized = is_not_vectorized or is_vectorized == "unknown"
+
+        if is_not_vectorized:
             return super().get_fitted_params(deep=deep)
 
         # otherwise, we delegate to the instances' get_fitted_params
