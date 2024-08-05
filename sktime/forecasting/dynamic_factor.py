@@ -124,7 +124,8 @@ class DynamicFactor(_StatsModelsAdapter):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["Ris-Bali", "lbventura"],
+        "authors": ["ChadFulton", "bashtage", "Ris-Bali", "lbventura"],
+        # ChadFulton and bashtage for statemodels DynamicFactor
         "maintainers": ["Ris-Bali", "lbventura"],
         # python_dependencies: "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type
