@@ -2,14 +2,10 @@
 
 import pandas as pd
 
-from sktime.utils.dependencies import _check_soft_dependencies
-
-if _check_soft_dependencies("gluonts", severity="none"):
-    from gluonts.dataset.pandas import PandasDataset
-
+from sktime.datatypes import get_cutoff
 from sktime.forecasting.base import _BaseGlobalForecaster
 
-__author__ = ["benheid"]
+__author__ = ["benheid", "pranavvp16"]
 
 
 class MOIRAIForecaster(_BaseGlobalForecaster):
@@ -66,35 +62,39 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         "handles-missing-data": False,
         "capability:pred_int": False,
         "python_dependencies": ["salesforce-uni2ts", "gluonts", "torch"],
-        "X_inner_mtype": "pd.DataFrame",
-        "y_inner_mtype": "pd.DataFrame",
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex"],
+        "y_inner_mtype": ["pd.Series", "pd.DataFrame", "pd-multiindex"],
         "capability:insample": False,
         "capability:pred_int:insample": False,
+        "capability:global_forecasting": True,
         "python_dependencies_alias": {"salesforce-uni2ts": "uni2ts"},
     }
 
     def __init__(
         self,
         checkpoint_path: str,
-        fit_strategy=None,
         context_length=200,
         patch_size=32,
         num_samples=100,
+        num_feat_dynamic_real=0,
+        num_past_feat_dynamic_real=0,
         map_location=None,
         deterministic=False,
         batch_size=32,
     ):
         super().__init__()
         self.checkpoint_path = checkpoint_path
-        self.fit_strategy = fit_strategy
         self.context_length = context_length
         self.patch_size = patch_size
         self.num_samples = num_samples
+        self.num_feat_dynamic_real = num_feat_dynamic_real
+        self.num_past_feat_dynamic_real = num_past_feat_dynamic_real
         self.map_location = map_location
         self.deterministic = deterministic
         self.batch_size = batch_size
 
-    def _instantiate_model(self, ds, fh):
+    def _fit(self, y, X, fh):
+        # Load model and extract config
 
         from uni2ts.model.moirai import MoiraiForecast
 
@@ -103,6 +103,11 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         else:
             prediction_length = 1
 
+        if self.num_feat_dynamic_real is None and X is not None:
+            self.num_feat_dynamic_real = X.shape[1]
+        if self.num_past_feat_dynamic_real is None:
+            self.num_past_feat_dynamic_real = 0
+
         # load the sktime moirai weights by default
         model_kwargs = {
             "prediction_length": prediction_length,
@@ -110,8 +115,8 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             "patch_size": self.patch_size,
             "num_samples": self.num_samples,
             "target_dim": 2,
-            "feat_dynamic_real_dim": ds.num_feat_dynamic_real,
-            "past_feat_dynamic_real_dim": ds.num_past_feat_dynamic_real,
+            "feat_dynamic_real_dim": self.num_feat_dynamic_real,
+            "past_feat_dynamic_real_dim": self.num_past_feat_dynamic_real,
         }
 
         # Instantiate model with latest salesforce weights
@@ -120,7 +125,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
 
             model_kwargs["module"] = MoiraiModule.from_pretrained(self.checkpoint_path)
 
-            return MoiraiForecast(**model_kwargs)
+            self.model = MoiraiForecast(**model_kwargs)
 
         else:
             from huggingface_hub import hf_hub_download
@@ -129,12 +134,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
                 repo_id=self.checkpoint_path, filename="model.ckpt", revision="temp"
             )
 
-            return MoiraiForecast.load_from_checkpoint(**model_kwargs)
-
-    def _fit(self, y, X, fh):
-        # Load model and extract config
-        ds = self._get_pandas_dataset(y, X)
-        self.model = self._instantiate_model(ds, fh)
+            self.model = MoiraiForecast.load_from_checkpoint(**model_kwargs)
         self.model.to(self.map_location)
 
     def _predict(self, fh, y=None, X=None):
@@ -154,55 +154,93 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
                 "The MORAI adapter is not supporting insample predictions."
             )
 
-        self.model.eval()
+        pred_df = pd.concat([self._y, self._X], axis=1)
+        target = self._y.columns
+        future_length = 0
+        feat_dynamic_real = None
 
-        pred_index = pd.date_range(
-            self.cutoff[0], periods=max(fh._values) + 1, freq=self._y.index.freq
-        )[1:]
+        if self._X is not None:
+            feat_dynamic_real = self._X.columns
 
-        y = pd.DataFrame(columns=self._y.columns, index=pred_index)
-        y.fillna(0, inplace=True)
-        df_y = pd.concat([self._y, y], axis=0)
-        if X is not None:
-            df_x = pd.concat([self._X, X], axis=0)
-            df_test = pd.concat([df_y, df_x], axis=1)
-            ds_test = PandasDataset(
-                df_test,
-                target=self._y.columns,
-                feat_dynamic_real=self._X.columns,
-                future_length=max(fh._values),
-            )
-        else:
-            ds_test = PandasDataset(
-                df_y, target=self._y.columns, future_length=max(fh._values)
-            )
+        # Zero shot case
+        if y is None and X is not None:
+            pred_df = self._extend_df(pred_df)
+            future_length = max(fh._values) + 1
+
+        # Zero shot case with X
+        elif X is not None:
+            pred_df = self._extend_df(pred_df, X)
+            future_length = max(fh._values) + 1
+        print(pred_df.tail())
+
+        ds_test = self._get_pandas_dataset(
+            pred_df, target, feat_dynamic_real, future_length
+        )
+        print(ds_test)
 
         predictor = self.model.create_predictor(batch_size=self.batch_size)
         forecasts = predictor.predict(ds_test)
         forecast_it = iter(forecasts)
         forecast = next(forecast_it)
 
-        # return forecast.mean_ts.to_timestamp().
-        # loc[fh.to_absolute(self.cutoff)._values]
-        return forecast.mean_ts
+        return [pd.DataFrame(forecast.mean_ts)]
 
     # def get_prediction_df(self):
 
-    def _get_pandas_dataset(self, y, X):
-        if X is not None:
-            df = pd.concat([y, X], axis=1)
-            target = y.columns
-            feat_dynamic_real = X.columns
+    def _get_pandas_dataset(self, df, target, feat_dynamic_real=None, future_length=0):
+        from gluonts.dataset.pandas import PandasDataset
+
+        if isinstance(df.index, pd.MultiIndex):
+            item_id = df.index.name[0]
+            timepoints = df.index.name[-1]
+            df = df.reset_index()
+            df.set_index(timepoints, inplace=True)
+            item_id = self._y.index.names[0]
+            # freq = pd.infer_freq(df.index[:3])
+            return PandasDataset.from_long_dataframe(
+                df,
+                target=target,
+                feat_dynamic_real=feat_dynamic_real,
+                item_id=item_id,
+                future_length=future_length,
+                # freq=freq,
+            )
         else:
-            df = y
-            target = y.columns
-            feat_dynamic_real = None
-        return PandasDataset(
-            df,
-            target=target,
-            feat_dynamic_real=feat_dynamic_real,
-            freq=self._y.index.freq,
-        )
+            return PandasDataset(
+                df,
+                target=target,
+                feat_dynamic_real=feat_dynamic_real,
+                future_length=future_length,
+            )
+
+    def _extend_df(self, df, X=None):
+        cutoff = get_cutoff(self._y)
+        pred_index = pd.date_range(
+            cutoff, periods=max(self.fh._values) + 1, freq=self._y.index.freq
+        )[1:]
+
+        if isinstance(df.index, pd.MultiIndex):
+            new_index = pd.MultiIndex.from_product(
+                [df.index.get_level_values(0).unique(), pred_index],
+                names=df.index.names,
+            )
+        else:
+            new_index = pred_index
+
+        if X is not None:
+            df_y = pd.DataFrame(columns=self._y.columns, index=new_index)
+            df_y.fillna(0, inplace=True)
+            pred_df = pd.concat([df_y, X], axis=1)
+            extended_df = pd.concat([df, pred_df])
+            return extended_df.sort_index()
+        else:
+            extended_df = pd.DataFrame(columns=df.columns, index=new_index)
+            extended_df.fillna(0, inplace=True)
+            print(extended_df)
+            extended_df = pd.concat([df, extended_df])
+            return extended_df.sort_index()
+
+    # def _check_if_range_index
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
