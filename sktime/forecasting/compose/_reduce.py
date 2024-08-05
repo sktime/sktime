@@ -1633,6 +1633,8 @@ def _infer_scitype(estimator):
         inferred_skt_scitype = scitype(estimator)
         if inferred_skt_scitype in ["object", "estimator"]:
             return "tabular-regressor"
+        if inferred_skt_scitype == "regressor":
+            return "time-series-regressor"
         else:
             return inferred_skt_scitype
 
@@ -1656,7 +1658,7 @@ def _get_forecaster(scitype, strategy):
             "multioutput": MultioutputTabularRegressionForecaster,
             "dirrec": DirRecTabularRegressionForecaster,
         },
-        "regressor": {
+        "time-series-regressor": {
             "direct": DirectTimeSeriesRegressionForecaster,
             "recursive": RecursiveTimeSeriesRegressionForecaster,
             "multioutput": MultioutputTimeSeriesRegressionForecaster,
