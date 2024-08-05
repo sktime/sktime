@@ -1,9 +1,12 @@
+"""Anomaly detection metrics."""
+
 import numpy as np
 
 
 def f1_score(predict, actual):
+    """Calculate f1 score."""
     TP = np.sum(predict * actual)
-    TN = np.sum((1 - predict) * (1 - actual))
+    # TN = np.sum((1 - predict) * (1 - actual))
     FP = np.sum(predict * (1 - actual))
     FN = np.sum((1 - predict) * actual)
     precision = TP / (TP + FP + 0.00001)
@@ -13,14 +16,18 @@ def f1_score(predict, actual):
 
 
 def adjust_predicts(score, label, threshold=None, pred=None, calc_latency=False):
-    """
-    Calculate adjusted predict labels using given `score`, `threshold` (or given `pred`) and `label`.
+    """Calculate Adjusted predict labels.
+
+    Calculate adjusted predict labels using given `score`,
+    `threshold` (or given `pred`) and `label`.
     Args:
         score (np.ndarray): The anomaly score
         label (np.ndarray): The ground-truth label
         threshold (float): The threshold of anomaly score.
-            A point is labeled as "anomaly" if its score is lower than the threshold.
-        pred (np.ndarray or None): if not None, adjust `pred` and ignore `score` and `threshold`,
+            A point is labeled as "anomaly" if its score is lower than the
+            threshold.
+        pred (np.ndarray or None): if not None, adjust `pred` and ignore
+        `score` and `threshold`,
         calc_latency (bool):
     Returns:
         np.ndarray: predict labels
@@ -59,6 +66,7 @@ def adjust_predicts(score, label, threshold=None, pred=None, calc_latency=False)
 
 
 def adjbestf1(y_true: np.array, y_scores: np.array, n_splits: int = 100):
+    """Calculate adjusted best f1."""
     thresholds = np.linspace(y_scores.min(), y_scores.max(), n_splits)
     adjusted_f1 = np.zeros(thresholds.shape)
 
