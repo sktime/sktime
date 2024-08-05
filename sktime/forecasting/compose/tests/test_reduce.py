@@ -35,6 +35,7 @@ from sktime.split.tests.test_split import _get_windows
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.transformations.panel.reduce import Tabularizer
 from sktime.utils._testing.forecasting import make_forecasting_problem
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_fh
 
 N_TIMEPOINTS = [13, 17]
@@ -674,3 +675,22 @@ def test_recursive_reducer_X_not_fit_to_fh():
     assert pred3.shape == (3,)
     pred4 = forecaster.predict(X=X_test, fh=[1])
     assert pred4.shape == (1,)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.compose._reduce"])
+    or not _check_soft_dependencies("skpro"),
+    reason="run test only if reduce module has changed",
+)
+def test_make_reduction_proba():
+    """Test direct reduction via make_reduction with skpro proba regressors."""
+    from skpro.regression.dummy import DummyProbaRegressor
+
+    y = load_airline()
+    y_train, y_test = temporal_train_test_split(y, test_size=24)
+    fh = ForecastingHorizon(y_test.index, is_relative=False)
+
+    forecaster = make_reduction(DummyProbaRegressor(), strategy="direct")
+    y_pred = forecaster.fit(y_train, fh=fh).predict(fh)
+
+    assert y_pred.shape[0].shape == y_test.shape[0]
