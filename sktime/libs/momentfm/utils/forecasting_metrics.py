@@ -1,6 +1,4 @@
-"""
-# Adapted from https://github.com/Nixtla/datasetsforecast/blob/main/datasetsforecast/losses.py
-"""
+"""Adapted from https://github.com/Nixtla/datasetsforecast/blob/main/datasetsforecast/losses.py."""
 
 from dataclasses import dataclass
 from typing import Optional, Union
@@ -16,6 +14,8 @@ from .utils import _reduce
 
 
 class sMAPELoss(_Loss):
+    """sMAPELoss class."""
+
     __constants__ = ["reduction"]
 
     def __init__(self, size_average=None, reduce=None, reduction: str = "mean") -> None:
@@ -25,15 +25,14 @@ class sMAPELoss(_Loss):
         return F.l1_loss(input, torch.zeros_like(input), reduction="none")
 
     def _divide_no_nan(self, a: float, b: float) -> float:
-        """
-        Auxiliary funtion to handle divide by 0
-        """
+        """Auxiliary funtion to handle divide by 0."""
         div = a / b
         div[div != div] = 0.0
         div[div == float("inf")] = 0.0
         return div
 
     def forward(self, input: Tensor, target: Tensor) -> Tensor:
+        """Forward function."""
         delta_y = self._abs(input - target)
         scale = self._abs(target) + self._abs(input)
         error = self._divide_no_nan(delta_y, scale)
@@ -43,9 +42,7 @@ class sMAPELoss(_Loss):
 
 
 def _divide_no_nan(a: float, b: float) -> float:
-    """
-    Auxiliary funtion to handle divide by 0
-    """
+    """Auxiliary funtion to handle divide by 0."""
     div = a / b
     div[div != div] = 0.0
     div[div == float("inf")] = 0.0
@@ -54,6 +51,8 @@ def _divide_no_nan(a: float, b: float) -> float:
 
 @dataclass
 class ForecastingMetrics:
+    """Forecasting Metrics."""
+
     mae: Union[float, np.ndarray] = None
     mse: Union[float, np.ndarray] = None
     mape: Union[float, np.ndarray] = None
@@ -67,7 +66,7 @@ def mae(
     reduction: str = "mean",
     axis: Optional[int] = None,
 ) -> Union[float, np.ndarray]:
-    """
+    r"""Calculate MAE.
 
     Calculates Mean Absolute Error (MAE) between
     y and y_hat. MAE measures the relative prediction
@@ -76,12 +75,12 @@ def mae(
     value at a given time and averages these devations
     over the length of the series.
 
-    $$ \mathrm{MAE}(\\mathbf{y}_{\\tau}, \\mathbf{\hat{y}}_{\\tau}) =
+    $$ \\mathrm{MAE}(\\mathbf{y}_{\\tau}, \\mathbf{\\hat{y}}_{\\tau}) =
         \\frac{1}{H} \\sum^{t+H}_{\\tau=t+1}
-        |y_{\\tau} - \hat{y}_{\\tau}| $$
+        |y_{\\tau} - \\hat{y}_{\\tau}| $$
 
-        Parameters
-        ----------
+    Parameters
+    ----------
         y: numpy array.
             Observed values.
         y_hat: numpy array
@@ -89,15 +88,16 @@ def mae(
         reduction: str, optional.
             Type of reduction to apply to the output: 'none' | 'mean' | 'sum'.
             'none': no reduction will be applied,
-            'mean': the sum of the output will be divided by the number of elements in the output,
+            'mean': the sum of the output will be divided by the number of
+            elements in the output,
             'sum': the output will be summed.
         axis: None or int, optional.
             Axis or axes along which to average a.
             The default, axis=None, will average over all of the elements of
             the input array. If axis is negative it counts from last to first.
 
-        Returns
-        -------
+    Returns
+    -------
         mae: numpy array or double.
             Return the MAE along the specified axis.
     """
@@ -111,7 +111,7 @@ def mse(
     reduction: str = "mean",
     axis: Optional[int] = None,
 ) -> Union[float, np.ndarray]:
-    """
+    r"""Calculate MSE.
 
     Calculates Mean Squared Error (MSE) between
     y and y_hat. MSE measures the relative prediction
@@ -120,11 +120,12 @@ def mse(
     value at a given time, and averages these devations
     over the length of the series.
 
-    $$ \mathrm{MSE}(\\mathbf{y}_{\\tau}, \\mathbf{\hat{y}}_{\\tau}) =
-        \\frac{1}{H} \\sum^{t+H}_{\\tau=t+1} (y_{\\tau} - \hat{y}_{\\tau})^{2} $$
+    $$ \\mathrm{MSE}(\\mathbf{y}_{\\tau}, \\mathbf{\\hat{y}}_{\\tau}) =
+        \\frac{1}{H} \\sum^{t+H}_{\\tau=t+1} (y_{\\tau} -
+        \\hat{y}_{\\tau})^{2} $$
 
-        Parameters
-        ----------
+    Parameters
+    ----------
         y: numpy array.
             Actual test values.
         y_hat: numpy array.
@@ -132,7 +133,8 @@ def mse(
         reduction: str, optional.
             Type of reduction to apply to the output: 'none' | 'mean' | 'sum'.
             'none': no reduction will be applied,
-            'mean': the sum of the output will be divided by the number of elements in the output,
+            'mean': the sum of the output will be divided by the number of
+            elements in the output,
             'sum': the output will be summed.
         axis: None or int, optional.
             Axis or axes along which to average a.
@@ -140,8 +142,8 @@ def mse(
             elements of the input array. If axis is negative it counts
             from the last to the first axis.
 
-        Returns
-        -------
+    Returns
+    -------
         mse: numpy array or double.
             Return the MSE along the specified axis.
     """
@@ -155,7 +157,7 @@ def rmse(
     reduction: str = "mean",
     axis: Optional[int] = None,
 ) -> Union[float, np.ndarray]:
-    """
+    r"""Calculate Rmse.
 
     Calculates Root Mean Squared Error (RMSE) between
     y and y_hat. RMSE measures the relative prediction
@@ -167,11 +169,12 @@ def rmse(
     series is possible only if they share a common scale.
     RMSE has a direct connection to the L2 norm.
 
-    $$ \mathrm{RMSE}(\\mathbf{y}_{\\tau}, \\mathbf{\hat{y}}_{\\tau}) =
-        \\sqrt{\\frac{1}{H} \\sum^{t+H}_{\\tau=t+1} (y_{\\tau} - \hat{y}_{\\tau})^{2}} $$
+    $$ \\mathrm{RMSE}(\\mathbf{y}_{\\tau}, \\mathbf{\\hat{y}}_{\\tau}) =
+        \\sqrt{\\frac{1}{H} \\sum^{t+H}_{\\tau=t+1} (y_{\\tau} -
+        \\hat{y}_{\\tau})^{2}} $$
 
-        Parameters
-        ----------
+    Parameters
+    ----------
         y: numpy array.
             Observed values.
         y_hat: numpy array.
@@ -179,19 +182,20 @@ def rmse(
         reduction: str, optional.
             Type of reduction to apply to the output: 'none' | 'mean' | 'sum'.
             'none': no reduction will be applied,
-            'mean': the sum of the output will be divided by the number of elements in the output,
+            'mean': the sum of the output will be divided by the number of
+            elements in the output,
             'sum': the output will be summed.
         axis: None or int, optional.
             Axis or axes along which to average a.
             The default, axis=None, will average over all of the elements of
-            the input array. If axis is negative it counts from the last to first.
+            the input array. If axis is negative it counts from the last to
+            first.
 
-        Returns
-        -------
+    Returns
+    -------
         rmse: numpy array or double.
             Return the RMSE along the specified axis.
     """
-
     return np.sqrt(mse(y, y_hat, reduction, axis))
 
 
@@ -201,7 +205,7 @@ def mape(
     reduction: str = "mean",
     axis: Optional[int] = None,
 ) -> Union[float, np.ndarray]:
-    """
+    r"""Calculate mape.
 
     Calculates Mean Absolute Percentage Error (MAPE) between
     y and y_hat. MAPE measures the relative prediction
@@ -211,12 +215,12 @@ def mape(
     The closer to zero an observed value is, the higher penalty MAPE loss
     assigns to the corresponding error.
 
-    $$ \mathrm{MAPE}(\\mathbf{y}_{\\tau}, \\mathbf{\hat{y}}_{\\tau}) =
+    $$ \\mathrm{MAPE}(\\mathbf{y}_{\\tau}, \\mathbf{\\hat{y}}_{\\tau}) =
         \\frac{1}{H} \\sum^{t+H}_{\\tau=t+1}
-        \\frac{|y_{\\tau}-\hat{y}_{\\tau}|}{|y_{\\tau}|} $$
+        \\frac{|y_{\\tau}-\\hat{y}_{\\tau}|}{|y_{\\tau}|} $$
 
-        Parameters
-        ----------
+    Parameters
+    ----------
         y: numpy array.
             Observed values.
         y_hat: numpy array.
@@ -224,19 +228,21 @@ def mape(
         reduction: str, optional.
             Type of reduction to apply to the output: 'none' | 'mean' | 'sum'.
             'none': no reduction will be applied,
-            'mean': the sum of the output will be divided by the number of elements in the output,
+            'mean': the sum of the output will be divided by the number of
+            elements
+            in the output,
             'sum': the output will be summed.
         axis: None or int, optional.
             Axis or axes along which to average a.
             The default, axis=None, will average over all of the elements of
-            the input array. If axis is negative it counts from the last to first.
+            the input array. If axis is negative it counts from the last to
+            first.
 
-        Returns
-        -------
+    Returns
+    -------
         mape: numpy array or double.
             Return the MAPE along the specified axis.
     """
-
     delta_y = np.abs(y - y_hat)
     scale = np.abs(y)
     error = _divide_no_nan(delta_y, scale)
@@ -249,7 +255,7 @@ def smape(
     reduction: str = "mean",
     axis: Optional[int] = None,
 ) -> Union[float, np.ndarray]:
-    """
+    r"""Calculate smape.
 
     Calculates Symmetric Mean Absolute Percentage Error (SMAPE) between
     y and y_hat. SMAPE measures the relative prediction
@@ -261,12 +267,12 @@ def smape(
     0% and 200% which is desireble compared to normal MAPE that
     may be undetermined when the target is zero.
 
-    $$ \mathrm{SMAPE}_{2}(\\mathbf{y}_{\\tau}, \\mathbf{\hat{y}}_{\\tau}) =
+    $$ \\mathrm{SMAPE}_{2}(\\mathbf{y}_{\\tau}, \\mathbf{\\hat{y}}_{\\tau}) =
        \\frac{1}{H} \\sum^{t+H}_{\\tau=t+1}
-       \\frac{|y_{\\tau}-\hat{y}_{\\tau}|}{|y_{\\tau}|+|\hat{y}_{\\tau}|} $$
+       \\frac{|y_{\\tau}-\\hat{y}_{\\tau}|}{|y_{\\tau}|+|\\hat{y}_{\\tau}|} $$
 
-        Parameters
-        ----------
+    Parameters
+    ----------
         y: numpy array.
             Observed values.
         y_hat: numpy array.
@@ -274,19 +280,21 @@ def smape(
         reduction: str, optional.
             Type of reduction to apply to the output: 'none' | 'mean' | 'sum'.
             'none': no reduction will be applied,
-            'mean': the sum of the output will be divided by the number of elements in the output,
+            'mean': the sum of the output will be divided by the number of
+            elements
+            in the output,
             'sum': the output will be summed.
         axis: None or int, optional.
             Axis or axes along which to average a.
             The default, axis=None, will average over all of the elements of
-            the input array. If axis is negative it counts from the last to first.
+            the input array. If axis is negative it counts from the last to
+            first.
 
-        Returns
-        -------
+    Returns
+    -------
         smape: numpy array or double.
             Return the SMAPE along the specified axis.
     """
-
     delta_y = np.abs(y - y_hat)
     scale = np.abs(y) + np.abs(y_hat)
     error = _divide_no_nan(delta_y, scale)
@@ -306,6 +314,7 @@ def get_forecasting_metrics(
     reduction: str = "mean",
     axis: Optional[int] = None,
 ) -> Union[float, np.ndarray]:
+    """Get Forecasting Metrics."""
     return ForecastingMetrics(
         mae=mae(y=y, y_hat=y_hat, axis=axis, reduction=reduction),
         mse=mse(y=y, y_hat=y_hat, axis=axis, reduction=reduction),
