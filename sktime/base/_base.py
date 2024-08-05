@@ -82,7 +82,6 @@ class BaseObject(_BaseObject):
     _tags = {
         "python_version": None,  # PEP 440 version specifier, e.g., ">=3.7"
         "python_dependencies": None,  # PEP 440 dependency strs, e.g., "pandas>=1.0"
-        "python_dependencies_alias": {"scikit-learn": "sklearn"},
         "env_marker": None,  # PEP 508 environment marker, e.g., "os_name=='posix'"
     }
 
@@ -200,7 +199,7 @@ class BaseObject(_BaseObject):
           are in NOT_NP2_COMPATIBLE, this is a hard-coded
           list of soft dependencies that are not numpy 2 compatible
         * if any are found, adds a numpy<2.0 soft dependency to the list,
-          and sets it as a dynamic overide of the python_dependencies tag
+          and sets it as a dynamic override of the python_dependencies tag
         """
         from packaging.requirements import Requirement
 

@@ -1,7 +1,8 @@
 """Benchmarking for forecasting estimators."""
 
 import functools
-from typing import Callable, Optional, Union
+from collections.abc import Callable
+from typing import Optional, Union
 
 from sktime.benchmarking.benchmarks import BaseBenchmark
 from sktime.forecasting.base import BaseForecaster

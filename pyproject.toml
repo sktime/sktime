@@ -81,7 +81,7 @@ all_extras = [
   'autots<0.7,>=0.6.1',
   "cloudpickle",
   "dash!=2.9.0",
-  "dask<2024.6.3; extra == 'dataframe'",
+  "dask<2024.7.2; extra == 'dataframe'",
   "dtaidistance<2.4",
   "dtw-python",
   'esig==0.9.7; python_version < "3.10"',
@@ -91,7 +91,7 @@ all_extras = [
   'hmmlearn>=0.2.7; python_version < "3.11"',
   "holidays",
   'keras-self-attention; python_version < "3.11"',
-  "matplotlib>=3.3.2",
+  "matplotlib!=3.9.1,>=3.3.2",
   "mne",
   'numba<0.61,>=0.53',
   'optuna<3.7',
@@ -124,7 +124,7 @@ all_extras_pandas2 = [
   'autots<0.7,>=0.6.1',
   "cloudpickle",
   "dash!=2.9.0",
-  "dask<2024.6.3; extra == 'dataframe'",
+  "dask<2024.7.2; extra == 'dataframe'",
   "dtaidistance<2.4",
   "dtw-python",
   'esig==0.9.7; python_version < "3.10"',
@@ -134,7 +134,7 @@ all_extras_pandas2 = [
   'hmmlearn>=0.2.7; python_version < "3.11"',
   "holidays",
   'keras-self-attention; python_version < "3.11"',
-  "matplotlib>=3.3.2",
+  "matplotlib!=3.9.1,>=3.3.2",
   "mne",
   'numba<0.61,>=0.53',
   'optuna<3.7',
@@ -248,15 +248,15 @@ docs = [
   "nbsphinx>=0.8.6",
   "numpydoc",
   "pydata-sphinx-theme",
-  "Sphinx!=7.2.0,<8.0.0",
+  "Sphinx!=7.2.0,<9.0.0",
   "sphinx-copybutton",
   "sphinx-design<0.7.0",
-  "sphinx-gallery<0.17.0",
+  "sphinx-gallery<0.18.0",
   "sphinx-issues<5.0.0",
   "tabulate",
 ]
 tests = [
-  "pytest>=7.4,<8.3",
+  "pytest>=7.4,<8.4",
   "pytest-cov>=4.1,<5.1",
   "pytest-randomly<3.16,>=3.15",
   "pytest-timeout>=2.1,<2.4",
@@ -270,7 +270,7 @@ binder = [
   "pandas<2.0.0",
 ]
 cython_extras = [
-  "mrseql",
+  "mrseql < 0.0.3",
   'mrsqm; python_version < "3.11"',
   "numba<0.61",
 ]
@@ -285,7 +285,7 @@ dl = [
   'tensorflow<2.17,>=2; python_version < "3.12"',
   'torch; python_version < "3.12"',
   'transformers[torch]<4.41.0; python_version < "3.12"',
-  'pykan; python_version > "3.9.7"',
+  'pykan<0.2.2,>=0.2; python_version > "3.9.7"',
   'pytorch-forecasting>=1.0.0; python_version < "3.11"',
 ]
 mlflow = [
@@ -358,6 +358,9 @@ select = [
   "PT006",   # Checks for the type of parameter names passed to pytest.mark.parametrize.
   "PT007",   # Checks for the type of parameter values passed to pytest.mark.parametrize.
   "PT018",   # Checks for assertions that combine multiple independent condition
+  "RUF001", # Checks for non unicode string literals
+  "RUF002", # Checks for non unicode string literals
+  "RUF003", # Checks for non unicode string literals
 ]
 extend-select = [
   "I", # isort
@@ -376,7 +379,7 @@ ignore=[
   "C414", # Unnecessary `list` call within `sorted()`
   "S301", # pickle and modules that wrap it can be unsafe
   "C416", # Unnecessary list comprehension - rewrite as a generator
-  "S310", # Audit URL open for permited schemes
+  "S310", # Audit URL open for permitted schemes
   "S202", # Uses of `tarfile.extractall()`
   "S307", # Use of possibly insecure function
   "C417", # Unnecessary `map` usage (rewrite using a generator expression)
@@ -386,10 +389,11 @@ ignore=[
   "S105", # Possible hardcoded password
   "PT018", # Checks for assertions that combine multiple independent condition
   "S602", # sub process call with shell=True unsafe
-  "C419", # Unnecessary list comprehension, some are flaged yet are not
+  "C419", # Unnecessary list comprehension, some are flagged yet are not
   "C409", # Unnecessary `list` literal passed to `tuple()` (rewrite as a `tuple` literal)
   "S113", # Probable use of httpx call withour timeout
 ]
+allowed-confusables=["σ"]
 
 [tool.ruff.lint.per-file-ignores]
 

@@ -252,6 +252,7 @@ class SFA(BaseTransformer):
         self.breakpoints = self._binning(X, y)
 
         self._is_fitted = True
+        self._is_vectorized = False
         return self
 
     def _transform(self, X, y=None):

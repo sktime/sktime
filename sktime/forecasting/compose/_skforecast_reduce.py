@@ -1,7 +1,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements back-adapters for skforecast reduction models."""
 
-from typing import Callable, Optional, Union
+from collections.abc import Callable
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -108,8 +109,20 @@ class SkforecastAutoreg(BaseForecaster):
     """
 
     _tags = {
-        "authors": ["Abhay-Lejith", "yarnabrina"],
+        # packaging info
+        # --------------
+        "authors": [
+            "JoaquinAmatRodrigo",
+            "JavierEscobarOrtiz",
+            "FernandoCarazoMelo",
+            "fernando-carazo",
+            "Abhay-Lejith",
+            "yarnabrina",
+        ],
+        # JoaquinAmatRodrigo, JavierEscobarOrtiz, FernandoCarazoMelo for skforecast
         "maintainers": ["Abhay-Lejith", "yarnabrina"],
+        # estimator type
+        # --------------
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
