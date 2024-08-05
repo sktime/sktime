@@ -1553,11 +1553,6 @@ class BaseForecaster(BaseEstimator):
         # end checking y
 
         # checking X
-
-        # check: if X is ignored by inner methods, pass None to them
-        if self.get_tag("ignores-exogeneous-X"):
-            X = None
-
         if X is not None:
             # request only required metadata from checks
             X_metadata_required = ["feature_kind"]
@@ -1590,8 +1585,10 @@ class BaseForecaster(BaseEstimator):
                     raise_exception=True,
                 )
 
-            if DtypeKind.CATEGORICAL in X_metadata["feature_kind"] and not self.get_tag(
-                "capability:categorical_in_X"
+            if (
+                not self.get_tag("ignores-exogeneous-X")
+                and DtypeKind.CATEGORICAL in X_metadata["feature_kind"]
+                and not self.get_tag("capability:categorical_in_X")
             ):
                 # replace error with encoding logic in next step.
                 raise TypeError(
@@ -1609,6 +1606,10 @@ class BaseForecaster(BaseEstimator):
             # X_scitype is used below - set to None if X is None
             X_scitype = None
 
+        # extra check: if X is ignored by inner methods, pass None to them
+        if self.get_tag("ignores-exogeneous-X"):
+            X = None
+            X_scitype = None
         # end checking X
 
         # compatibility checks between X and y

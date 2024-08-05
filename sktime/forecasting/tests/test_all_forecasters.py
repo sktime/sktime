@@ -197,14 +197,13 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     @pytest.mark.parametrize("X", INVALID_X_INPUT_TYPES)
     def test_X_invalid_type_raises_error(self, estimator_instance, n_columns, X):
         """Test that invalid X input types raise error."""
-        if not estimator_instance.get_tag("ignores-exogeneous-X"):
-            y_train = _make_series(n_columns=n_columns)
-            try:
-                with pytest.raises(TypeError, match=r"type"):
-                    estimator_instance.fit(y_train, X, fh=FH0)
-            except NotImplementedError as e:
-                msg = str(e).lower()
-                assert "exogenous" in msg
+        y_train = _make_series(n_columns=n_columns)
+        try:
+            with pytest.raises(TypeError, match=r"type"):
+                estimator_instance.fit(y_train, X, fh=FH0)
+        except NotImplementedError as e:
+            msg = str(e).lower()
+            assert "exogenous" in msg
 
     def test_categorical_X_raises_error(self, estimator_instance):
         """Test that categorical X in not supported forecasters raises error.
