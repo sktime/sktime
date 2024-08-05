@@ -8,12 +8,16 @@ Cases where error must be raised are tested in test_all_forecasters in
 __author__ = ["Abhay-Lejith"]
 
 
+import numpy as np
 import pandas as pd
+from sklearn.ensemble import HistGradientBoostingRegressor
 
+from sktime.forecasting.compose import SkforecastAutoreg
+from sktime.forecasting.compose._reduce import YfromX
 from sktime.forecasting.dummy import ForecastKnownValues
 
 
-def test_est_with_categorical_capability():
+def test_dummy_est_with_categorical_capability():
     """Test that categorical data works when native support is available.
 
     This test uses the dummy forecaster with modified tags to imitate a forecaster
@@ -36,3 +40,38 @@ def test_est_with_categorical_capability():
     est.fit(yt, Xt, fh=[1, 2, 3])
     est.predict(X=X[6:])
     est.update(y[6:], X[6:])
+
+
+def create_mixed_dtype_df():
+    random_generator = np.random.default_rng(seed=0)
+    sample_data = {
+        "target_col": random_generator.standard_normal(size=50),
+        "categorical": random_generator.choice(["a", "b", "c", "d"], size=50),
+        "numeric_col": random_generator.standard_exponential(size=50),
+    }
+    df = pd.DataFrame(data=sample_data)
+    y_train = df["target_col"][:40]
+    X_train = df[["categorical", "numeric_col"]][:40]
+    X_test = df[["categorical", "numeric_col"]][40:]
+
+    return y_train, X_train, X_test
+
+
+def test_skforecast_with_categorical():
+    y_train, X_train, X_test = create_mixed_dtype_df()
+
+    regressor = HistGradientBoostingRegressor(categorical_features=["categorical"])
+    forecaster = SkforecastAutoreg(regressor, 3)
+
+    forecaster.fit(y_train, X_train)
+    forecaster.predict(10, X_test)
+
+
+def test_YfromX_with_categorical():
+    y_train, X_train, X_test = create_mixed_dtype_df()
+
+    regressor = HistGradientBoostingRegressor(categorical_features=["categorical"])
+    forecaster = YfromX(regressor)
+
+    forecaster.fit(y_train, X_train)
+    forecaster.predict(10, X_test)
