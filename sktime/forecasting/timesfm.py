@@ -49,6 +49,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         "capability:pred_int:insample": False,
         "authors": ["geetu040"],
         "maintainers": ["geetu040"],
+        "python_version": ">=3.10,<3.11",
         "python_dependencies": [
             "tensorflow",
             "einshape",
