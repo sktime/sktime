@@ -41,7 +41,7 @@ class HampelFilter(BaseTransformer):
     References
     ----------
     .. [1] Hampel F. R., "The influence curve and its role in robust estimation",
-       Journal of the American Statistical Association, 69, 382–393, 1974
+       Journal of the American Statistical Association, 69, 382-393, 1974
 
     Examples
     --------
