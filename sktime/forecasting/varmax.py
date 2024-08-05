@@ -11,7 +11,9 @@ from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
 class VARMAX(_StatsModelsAdapter):
-    r"""Wrapper for statsmodels VARMAX model.
+    r"""VARMAX forecasting model from statsmodels.
+
+    Direct interface to ``VARMAX`` from ``statsmodels.tsa.statespace.varmax``.
 
     Vector Autoregressive Moving Average with eXogenous regressors model (VARMAX)
 
@@ -209,7 +211,8 @@ class VARMAX(_StatsModelsAdapter):
     _tags = {
         # packaging info
         # --------------
-        "authors": "KatieBuc",
+        "authors": ["ChadFulton", "bashtage", "KatieBuc"],
+        # ChadFulton and bashtage for statsnodels VARMAX
         # "python_dependencies": "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type
         # --------------

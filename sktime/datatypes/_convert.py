@@ -142,6 +142,10 @@ def convert(
     )
 
     # input type checks
+    if not (
+        isinstance(to_type, list) and all(isinstance(item, str) for item in to_type)
+    ) and not isinstance(to_type, str):
+        raise TypeError("to_type must be a str or list of str")
     if not isinstance(from_type, str):
         raise TypeError("from_type must be a str")
     if as_scitype is None:

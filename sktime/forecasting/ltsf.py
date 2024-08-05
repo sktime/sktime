@@ -67,7 +67,8 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["luca-miniati"],
+        "authors": ["mixiancmx", "ailingzengzzz", "luca-miniati"],
+        # mixiancmx, ailingzengzzz for cure-lab code
         "maintainers": ["luca-miniati"],
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
@@ -236,6 +237,16 @@ class LTSFDLinearForecaster(BaseDeepNetworkPyTorch):
     Freq: M, Name: Number of airline passengers, dtype: float32
     """
 
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["mixiancmx", "ailingzengzzz", "luca-miniati"],
+        # mixiancmx, ailingzengzzz for cure-lab code
+        "maintainers": ["luca-miniati"],
+        # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
+        # estimator type vars inherited from BaseDeepNetworkPyTorch
+    }
+
     def __init__(
         self,
         seq_len,
@@ -398,6 +409,16 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
     1961-03    437.045502
     Freq: M, Name: Number of airline passengers, dtype: float32
     """
+
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["mixiancmx", "ailingzengzzz", "luca-miniati"],
+        # mixiancmx, ailingzengzzz for cure-lab code
+        "maintainers": ["luca-miniati"],
+        # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
+        # estimator type vars inherited from BaseDeepNetworkPyTorch
+    }
 
     def __init__(
         self,
