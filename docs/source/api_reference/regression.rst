@@ -9,6 +9,11 @@ All regressors in ``sktime`` can be listed using the ``sktime.registry.all_estim
 using ``estimator_types="regressor"``, optionally filtered by tags.
 Valid tags can be listed using ``sktime.registry.all_tags``.
 
+A full table with tag based search is also available on the
+:doc:`Estimator Search Page </estimator_overview>`
+(select "regresser" in the "Estimator type" dropdown).
+
+
 Composition
 -----------
 

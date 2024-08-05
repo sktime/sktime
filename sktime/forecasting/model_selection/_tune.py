@@ -1154,7 +1154,6 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         "capability:pred_int:insample": True,
         "python_dependencies": ["scikit-optimize"],
         "python_version": ">= 3.6",
-        "python_dependencies_alias": {"scikit-optimize": "skopt"},
     }
 
     def __init__(
@@ -1653,6 +1652,8 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
     n_evals : int, default=100
         Number of parameter settings that are sampled. n_iter trades
         off runtime vs quality of the solution.
+    sampler : Optuna sampler, optional (default=None)
+        e.g. optuna.samplers.TPESampler(seed=42)
 
     Attributes
     ----------
@@ -1726,7 +1727,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
     """
 
     _tags = {
-        "authors": ["gareth-brown-86", "mk406"],
+        "authors": ["gareth-brown-86", "mk406", "bastisar"],
         "maintainers": ["gareth-brown-86", "mk406"],
         "scitype:y": "both",
         "requires-fh-in-fit": False,
@@ -1752,6 +1753,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         update_behaviour="full_refit",
         error_score=np.nan,
         n_evals=100,
+        sampler=None,
     ):
         super().__init__(
             forecaster=forecaster,
@@ -1767,6 +1769,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         )
         self.param_grid = param_grid
         self.n_evals = n_evals
+        self.sampler = sampler
 
         warn(
             "ForecastingOptunaSearchCV is experimental, and interfaces may change. "
@@ -1781,6 +1784,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         cv = check_cv(self.cv)
         scoring = check_scoring(self.scoring, obj=self)
         scoring_name = f"test_{scoring.name}"
+        sampler = self.sampler
 
         if not isinstance(self.param_grid, (Mapping, Iterable)):
             raise TypeError(
@@ -1802,20 +1806,21 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
             cv,
             scoring,
             scoring_name,
+            sampler,
         )
 
-        results[f"rank_{scoring_name}"] = results["value"].rank(
+        results[f"rank_{scoring_name}"] = results[f"mean_{scoring_name}"].rank(
             ascending=scoring.get_tag("lower_is_better")
         )
         self.cv_results_ = results
-        self.best_index_ = results["value"].idxmin()
+        self.best_index_ = results[f"mean_{scoring_name}"].idxmin()
         if self.best_index_ == -1:
             raise NotFittedError(
                 f"""All fits of forecaster failed,
                 set error_score='raise' to see the exceptions.
                 Failed forecaster: {self.forecaster}"""
             )
-        self.best_score_ = results.loc[self.best_index_, "value"]
+        self.best_score_ = results.loc[self.best_index_, f"mean_{scoring_name}"]
         self.best_params_ = results.loc[self.best_index_, "params"]
         self.best_forecaster_ = self.forecaster.clone().set_params(**self.best_params_)
 
@@ -1823,7 +1828,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
             self.best_forecaster_.fit(y, X, fh)
 
         results = results.sort_values(
-            by="value", ascending=scoring.get_tag("lower_is_better")
+            by=f"mean_{scoring_name}", ascending=scoring.get_tag("lower_is_better")
         )
         self.n_best_forecasters_ = []
         self.n_best_scores_ = []
@@ -1835,7 +1840,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
             if self.refit:
                 forecaster.fit(y, X, fh)
             self.n_best_forecasters_.append((rank, forecaster))
-            score = results["value"].iloc[i]
+            score = results[f"mean_{scoring_name}"].iloc[i]
             self.n_best_scores_.append(score)
 
         return self
@@ -1899,7 +1904,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
     def _get_score(self, out, scoring_name):
         return out[f"mean_{scoring_name}"]
 
-    def _run_search(self, y, X, cv, scoring, scoring_name):
+    def _run_search(self, y, X, cv, scoring, scoring_name, sampler):
         import optuna
 
         all_results = []  # List to store results from all parameter grids
@@ -1907,7 +1912,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         for (
             param_grid_dict
         ) in self._param_grid:  # Assuming self._param_grid is now a list of dicts
-            study = optuna.create_study(direction="minimize")
+            study = optuna.create_study(direction="minimize", sampler=sampler)
             meta = {}
             meta["forecaster"] = self.forecaster
             meta["y"] = y
@@ -1937,4 +1942,4 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
 
         # Combine all results into a single DataFrame
         combined_results = pd.concat(all_results, ignore_index=True)
-        return combined_results
+        return combined_results.rename(columns={"value": f"mean_{scoring_name}"})
