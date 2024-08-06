@@ -693,4 +693,4 @@ def test_make_reduction_proba():
     forecaster = make_reduction(DummyProbaRegressor(), strategy="direct")
     y_pred = forecaster.fit(y_train, fh=fh).predict(fh)
 
-    assert y_pred.shape == y_test.shape[0]
+    assert y_pred.shape == y_test.shape
