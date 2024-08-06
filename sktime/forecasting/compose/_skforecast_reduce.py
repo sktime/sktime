@@ -109,8 +109,20 @@ class SkforecastAutoreg(BaseForecaster):
     """
 
     _tags = {
-        "authors": ["Abhay-Lejith", "yarnabrina"],
+        # packaging info
+        # --------------
+        "authors": [
+            "JoaquinAmatRodrigo",
+            "JavierEscobarOrtiz",
+            "FernandoCarazoMelo",
+            "fernando-carazo",
+            "Abhay-Lejith",
+            "yarnabrina",
+        ],
+        # JoaquinAmatRodrigo, JavierEscobarOrtiz, FernandoCarazoMelo for skforecast
         "maintainers": ["Abhay-Lejith", "yarnabrina"],
+        # estimator type
+        # --------------
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
