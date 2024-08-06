@@ -21,11 +21,11 @@ from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 try:
     from skbase.utils.stdout_mute import StdoutMute
 except ModuleNotFoundError:
-    from sktime.utils.std_mute import _StdoutMute as StdoutMute
+    from sktime.utils._std_mute import _StdoutMute as StdoutMute
 try:
     from skbase.utils.stderr_mute import StderrMute
 except ModuleNotFoundError:
-    from sktime.utils.std_mute import _StderrMute as StderrMute
+    from sktime.utils._std_mute import _StderrMute as StderrMute
 
 __all__ = ["_PytorchForecastingAdapter"]
 __author__ = ["XinyuWu"]
