@@ -18,10 +18,6 @@ else:
         """Dummy class if torch is unavailable."""
 
 
-if _check_soft_dependencies(["pykan", "torch"], severity="none"):
-    from kan import KAN
-
-
 class PyKANForecaster(BaseForecaster):
     """
     PyKANForecaster uses Kolmogorov Arnold Network [1] to forecast time series data.
@@ -130,6 +126,8 @@ class PyKANForecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        from kan import KAN
+
         output_size = max(fh.to_relative(self.cutoff)._values)
         if X is not None:
             y_train, y_test, X_train, X_test = temporal_train_test_split(
@@ -218,6 +216,8 @@ class PyKANForecaster(BaseForecaster):
             should be of the same type as seen in _fit, as in "y_inner_mtype" tag
             Point predictions
         """
+        from kan import KAN
+
         model = KAN(width=self._layer_sizes, grid=self._best_grid, **self._model_params)
         model.load_state_dict(self._state_dict)
         if X is not None:
