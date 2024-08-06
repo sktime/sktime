@@ -59,7 +59,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
             "paxml",
             "utilsforecast",
         ],
-        "env_marker": "platform_system == 'Linux'",
+        "env_marker": "sys_platform=='linux'",
         "capability:global_forecasting": True,
     }
 
