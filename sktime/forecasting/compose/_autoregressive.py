@@ -269,7 +269,7 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
         """
         test_params = []
 
-        # test using DummyGlobalForecaster
+        # test on DummyGlobalForecaster
         from sktime.forecasting.dummy import DummyGlobalForecaster
 
         forecaster_test_params = DummyGlobalForecaster.get_test_params()
@@ -282,11 +282,11 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
                 }
             )
 
-        # test using PytorchForecastingTFT
+        # test on PytorchForecastingNBeats
         if _check_soft_dependencies("pytorch-forecasting", severity="none"):
-            from sktime.forecasting.pytorchforecasting import PytorchForecastingTFT
+            from sktime.forecasting.pytorchforecasting import PytorchForecastingNBeats
 
-            forecaster_test_param = PytorchForecastingTFT.get_test_params()[0]
+            forecaster_test_param = PytorchForecastingNBeats.get_test_params()[0]
             forecaster_test_param.update(
                 {
                     "broadcasting": False,
@@ -294,7 +294,7 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
             )
             test_params.append(
                 {
-                    "forecaster": PytorchForecastingTFT(**forecaster_test_param),
+                    "forecaster": PytorchForecastingNBeats(**forecaster_test_param),
                     "horizon_length": 3,
                     "aggregate_method": np.mean,
                 }
