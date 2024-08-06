@@ -1544,6 +1544,10 @@ class BaseForecaster(BaseEstimator):
             requires_vectorization = False
         # end checking y
 
+        # check: if X is ignored by inner methods, pass None to them
+        if self.get_tag("ignores-exogeneous-X"):
+            X = None
+
         # checking X
         if X is not None:
             # request only required metadata from checks
@@ -1587,10 +1591,6 @@ class BaseForecaster(BaseEstimator):
             # X_scitype is used below - set to None if X is None
             X_scitype = None
 
-        # extra check: if X is ignored by inner methods, pass None to them
-        if self.get_tag("ignores-exogeneous-X"):
-            X = None
-            X_scitype = None
         # end checking X
 
         # compatibility checks between X and y
