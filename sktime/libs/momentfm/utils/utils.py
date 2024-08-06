@@ -41,6 +41,8 @@ if _check_soft_dependencies(["torch", "transformers"], severity="none"):
         from transformers import T5Config
 
         config = T5Config.from_pretrained(model_name)
+
+        print(config.d_model)
         return config.d_model
 
     def get_anomaly_criterion(anomaly_criterion: str = "mse"):
@@ -97,6 +99,25 @@ else:
 
         pass
 
+    def get_anomaly_criterion(anomaly_criterion: str = "mse"):
+        """Get anomaly criterion."""
+        pass
+
+    def control_randomness(seed: int = 13):
+        """Control randomness seed function."""
+        pass
+
+    def dtype_map(dtype: str):
+        """Check dtype map."""
+        pass
+
+    def get_huggingface_model_dimensions(model_name: str = "flan-t5-base"):
+        """Get HF Model dimensions."""
+        pass
+
+    def _reduce(metric, reduction="mean", axis=None):
+        pass
+
 
 class NamespaceWithDefaults(Namespace):
     """Namespace class."""
@@ -140,27 +161,3 @@ def is_directory(path):
         if ext in path:
             return False
     return True
-
-
-def get_anomaly_criterion(anomaly_criterion: str = "mse"):
-    """Get anomaly criterion."""
-    pass
-
-
-def control_randomness(seed: int = 13):
-    """Control randomness seed function."""
-    pass
-
-
-def dtype_map(dtype: str):
-    """Check dtype map."""
-    pass
-
-
-def get_huggingface_model_dimensions(model_name: str = "flan-t5-base"):
-    """Get HF Model dimensions."""
-    pass
-
-
-def _reduce(metric, reduction="mean", axis=None):
-    pass
