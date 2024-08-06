@@ -124,9 +124,9 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         "y_inner_mtype": "pd.DataFrame",
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": True,
-        "python_dependencies": ["momentfm", "torch", "tqdm", "huggingface-hub"],
+        "python_dependencies": ["torch", "tqdm", "huggingface-hub"],
         "capability:global_forecasting": True,
-        "python_version": ">3.10",
+        "python_version": ">=3.10",
     }
 
     def __init__(
