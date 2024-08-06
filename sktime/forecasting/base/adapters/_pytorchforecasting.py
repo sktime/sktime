@@ -62,8 +62,8 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         fit and predict on it. The broadcasting is happening inside automatically,
         from the outerside api perspective, the input and output are the same,
         only one multiindex output from `predict`.
-    mute: bool (default=False)
-        mute console printing during calling the underlying fit and predict function.
+    verbose: bool (default=True)
+        set it to False to mute console printing during calling the underlying fit and predict function.
         It mutes aggressive printing from pytorch-forecasting and pytorch-lightning
 
     References
@@ -109,7 +109,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         model_path: Optional[str] = None,
         random_log_path: bool = False,
         broadcasting: bool = False,
-        mute: bool = False,
+        verbose: bool = True,
     ) -> None:
         self.model_params = model_params
         self.dataset_params = dataset_params
@@ -136,7 +136,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         )
         self.random_log_path = random_log_path
         self.broadcasting = broadcasting
-        self.mute = mute
+        self.verbose = verbose
         if self.broadcasting:
             self.set_tags(
                 **{
@@ -167,9 +167,9 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
     def _instantiate_model(self: "_PytorchForecastingAdapter", data):
         """Instantiate the model."""
         with (
-            StdoutMute(self.mute),
-            StderrMute(self.mute),
-            _LightningLoggerMute(self.mute),
+            StdoutMute(not self.verbose),
+            StderrMute(not self.verbose),
+            _LightningLoggerMute(not self.verbose),
         ):
             algorithm_instance = self.algorithm_class.from_dataset(
                 data,
@@ -186,14 +186,14 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
                     self._trainer_params["default_root_dir"] = self._random_log_dir
 
         with (
-            StdoutMute(self.mute),
-            StderrMute(self.mute),
-            _LightningLoggerMute(self.mute),
+            StdoutMute(not self.verbose),
+            StderrMute(not self.verbose),
+            _LightningLoggerMute(not self.verbose),
         ):
             trainer_instance = pl.Trainer(
                 **self._trainer_params,
-                enable_progress_bar=not self.mute,
-                enable_model_summary=not self.mute,
+                enable_progress_bar=self.verbose,
+                enable_model_summary=self.verbose,
             )
 
         return algorithm_instance, trainer_instance
@@ -259,9 +259,9 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
             self._validation_to_dataloader_params["train"] = False
             # call the fit function of the pytorch-forecasting model
             with (
-                StdoutMute(self.mute),
-                StderrMute(self.mute),
-                _LightningLoggerMute(self.mute),
+                StdoutMute(not self.verbose),
+                StderrMute(not self.verbose),
+                _LightningLoggerMute(not self.verbose),
             ):
                 self._trainer.fit(
                     self._forecaster,
@@ -361,9 +361,9 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
             pass
 
         with (
-            StdoutMute(self.mute),
-            StderrMute(self.mute),
-            _LightningLoggerMute(self.mute),
+            StdoutMute(not self.verbose),
+            StderrMute(not self.verbose),
+            _LightningLoggerMute(not self.verbose),
         ):
             predictions = self.best_model.predict(
                 validation.to_dataloader(**self._validation_to_dataloader_params),
@@ -462,9 +462,9 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
             pass
 
         with (
-            StdoutMute(self.mute),
-            StderrMute(self.mute),
-            _LightningLoggerMute(self.mute),
+            StdoutMute(not self.verbose),
+            StderrMute(not self.verbose),
+            _LightningLoggerMute(not self.verbose),
         ):
             predictions = self.best_model.predict(
                 validation.to_dataloader(**self._validation_to_dataloader_params),

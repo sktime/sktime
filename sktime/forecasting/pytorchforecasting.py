@@ -43,8 +43,8 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         fit and predict on it. The broadcasting is happening inside automatically,
         from the outerside api perspective, the input and output are the same,
         only one multiindex output from `predict`.
-    mute: bool (default=False)
-        mute console printing during calling the underlying fit and predict function.
+    verbose: bool (default=True)
+        set it to False to mute console printing during calling the underlying fit and predict function.
         It mutes aggressive printing from pytorch-forecasting and pytorch-lightning
 
     Examples
@@ -151,7 +151,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         model_path: Optional[str] = None,
         random_log_path: bool = False,
         broadcasting: bool = False,
-        mute: bool = False,
+        verbose: bool = True,
     ) -> None:
         self.allowed_encoder_known_variable_names = allowed_encoder_known_variable_names
         super().__init__(
@@ -163,7 +163,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
             model_path,
             random_log_path,
             broadcasting,
-            mute,
+            verbose,
         )
 
     @functools.cached_property
@@ -228,7 +228,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                         "log_interval": -1,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
-                    "mute": True,
+                    "verbose": False,
                 },
                 {
                     "trainer_params": {
@@ -248,7 +248,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                         "max_encoder_length": 3,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
-                    "mute": True,
+                    "verbose": False,
                 },
             ]
         else:
@@ -278,7 +278,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                         "max_encoder_length": 3,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
-                    "mute": True,
+                    "verbose": False,
                 },
                 {
                     "trainer_params": {
@@ -302,7 +302,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                         "max_encoder_length": 3,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
-                    "mute": True,
+                    "verbose": False,
                 },
             ]
 
@@ -342,8 +342,8 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         fit and predict on it. The broadcasting is happening inside automatically,
         from the outerside api perspective, the input and output are the same,
         only one multiindex output from `predict`.
-    mute: bool (default=False)
-        mute console printing during calling the underlying fit and predict function.
+    verbose: bool (default=True)
+        set it to False to mute console printing during calling the underlying fit and predict function.
         It mutes aggressive printing from pytorch-forecasting and pytorch-lightning
 
     Examples
@@ -447,7 +447,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         model_path: Optional[str] = None,
         random_log_path: bool = False,
         broadcasting: bool = False,
-        mute: bool = False,
+        verbose: bool = True,
     ) -> None:
         super().__init__(
             model_params,
@@ -458,7 +458,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
             model_path,
             random_log_path,
             broadcasting,
-            mute,
+            verbose,
         )
 
     @functools.cached_property
@@ -518,7 +518,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                         "log_interval": -1,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
-                    "mute": True,
+                    "verbose": False,
                 },
                 {
                     "trainer_params": {
@@ -538,7 +538,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                         "max_encoder_length": 3,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
-                    "mute": True,
+                    "verbose": False,
                 },
             ]
         else:
@@ -566,7 +566,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                         "max_encoder_length": 3,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
-                    "mute": True,
+                    "verbose": False,
                 },
                 {
                     "trainer_params": {
@@ -586,7 +586,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                         "max_encoder_length": 3,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
-                    "mute": True,
+                    "verbose": False,
                 },
             ]
 
@@ -628,8 +628,8 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
         fit and predict on it. The broadcasting is happening inside automatically,
         from the outerside api perspective, the input and output are the same,
         only one multiindex output from `predict`.
-    mute: bool (default=False)
-        mute console printing during calling the underlying fit and predict function.
+    verbose: bool (default=True)
+        set it to False to mute console printing during calling the underlying fit and predict function.
         It mutes aggressive printing from pytorch-forecasting and pytorch-lightning
 
     Examples
@@ -737,7 +737,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
         deterministic: bool = False,
         random_log_path: bool = False,
         broadcasting: bool = False,
-        mute: bool = False,
+        verbose: bool = True,
     ) -> None:
         self.allowed_encoder_known_variable_names = allowed_encoder_known_variable_names
         self.deterministic = deterministic
@@ -750,7 +750,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
             model_path,
             random_log_path,
             broadcasting,
-            mute,
+            verbose,
         )
 
     @functools.cached_property
@@ -818,7 +818,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                         "max_encoder_length": 3,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
-                    "mute": True,
+                    "verbose": False,
                     "deterministic": True,  # to pass test_score
                 },
                 {
@@ -838,7 +838,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                         "max_encoder_length": 3,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
-                    "mute": True,
+                    "verbose": False,
                     "deterministic": True,  # to pass test_score
                 },
             ]
@@ -867,7 +867,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                         "max_encoder_length": 3,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
-                    "mute": True,
+                    "verbose": False,
                     "deterministic": True,  # to pass test_score
                 },
                 {
@@ -887,7 +887,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                         "max_encoder_length": 3,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
-                    "mute": True,
+                    "verbose": False,
                     "deterministic": True,  # to pass test_score
                 },
             ]
@@ -928,8 +928,8 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
         fit and predict on it. The broadcasting is happening inside automatically,
         from the outerside api perspective, the input and output are the same,
         only one multiindex output from `predict`.
-    mute: bool (default=False)
-        mute console printing during calling the underlying fit and predict function.
+    verbose: bool (default=True)
+        set it to False to mute console printing during calling the underlying fit and predict function.
         It mutes aggressive printing from pytorch-forecasting and pytorch-lightning
 
     Examples
@@ -1035,7 +1035,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
         model_path: Optional[str] = None,
         random_log_path: bool = False,
         broadcasting: bool = False,
-        mute: bool = False,
+        verbose: bool = True,
     ) -> None:
         super().__init__(
             model_params,
@@ -1046,7 +1046,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
             model_path,
             random_log_path,
             broadcasting,
-            mute,
+            verbose,
         )
 
     @functools.cached_property
@@ -1121,7 +1121,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                         "log_interval": -1,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
-                    "mute": True,
+                    "verbose": False,
                 },
                 {
                     "trainer_params": {
@@ -1140,7 +1140,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                         "max_encoder_length": 3,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
-                    "mute": True,
+                    "verbose": False,
                 },
             ]
         else:
@@ -1168,7 +1168,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                         "max_encoder_length": 3,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
-                    "mute": True,
+                    "verbose": False,
                 },
                 {
                     "trainer_params": {
@@ -1187,7 +1187,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                         "max_encoder_length": 3,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
-                    "mute": True,
+                    "verbose": False,
                 },
             ]
 
