@@ -357,7 +357,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y_pred = estimator_instance.predict()
         _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
 
-        if estimator_instance.get_tag("capability:pred_int:insample"):
+        can_pred = estimator_instance.get_tag("capability:pred_int:insample")
+        can_pred = can_pred and estimator_instance.get_tag("capability:pred_int")
+        if can_pred:
             y_pred_int = estimator_instance.predict_interval()
             _assert_correct_pred_time_index(y_pred_int.index, cutoff, fh)
             y_pred_q = estimator_instance.predict_quantiles()
