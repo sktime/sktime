@@ -1,4 +1,4 @@
-"""Conercion utilities for mtypes."""
+"""Coercion utilities for mtypes."""
 
 __author__ = ["fkiraly"]
 
