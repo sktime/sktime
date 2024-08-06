@@ -344,10 +344,11 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             )
         return self
 
-    def _predict(self, y, fh=None, X=None):
+    def _predict(self, y, fh, X):
         """Predict method to forecast timesteps into the future.
 
-        fh must be the same length as the one used to fit the model.
+        fh should not be passed here and
+        must be the same length as the one used to fit the model.
         """
         from torch import from_numpy
 
@@ -427,7 +428,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
 
 def _create_padding(x, pad_shape):
     """Return zero padded tensor of size seq_len, num_cols."""
-    #    For example, if num_rows = 500 and seq_len = 512
+    # For example, if num_rows = 500 and seq_len = 512
     # then x.shape[0] = 500 and pad_shape[0] = 12
     # then cat(x, zero_pad) should return (num_cols,512)
     from torch import cat, zeros
@@ -532,8 +533,7 @@ def _run_epoch(
 
     metrics = get_forecasting_metrics(y=trues, y_hat=preds, reduction="mean")
     tqdm.write(
-        f"Epoch {cur_epoch}: Test MSE: {metrics.mse:.3f}"
-        f"|Test MAE: {metrics.mae:.3f}"
+        f"Epoch {cur_epoch}: Test MSE: {metrics.mse:.3f}" f"Test MAE: {metrics.mae:.3f}"
     )
 
     return cur_epoch

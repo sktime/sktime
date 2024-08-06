@@ -113,7 +113,7 @@ if _check_soft_dependencies(
     class MOMENT(nn.Module):
         """Moment Class."""
 
-        def __init__(self, config: Namespace | dict, **kwargs: dict):
+        def __init__(self, config, **kwargs: dict):
             super().__init__()
             config = self._update_inputs(config, **kwargs)
             config = self._validate_inputs(config)
@@ -156,9 +156,7 @@ if _check_soft_dependencies(
             if self.freeze_head:
                 self.head = freeze_parameters(self.head)
 
-        def _update_inputs(
-            self, config: Namespace | dict, **kwargs: dict
-        ) -> NamespaceWithDefaults:
+        def _update_inputs(self, config, **kwargs: dict) -> NamespaceWithDefaults:
             """Update Inputs."""
             if isinstance(config, dict) and "model_kwargs" in kwargs:
                 return NamespaceWithDefaults(**{**config, **kwargs["model_kwargs"]})
@@ -630,7 +628,7 @@ if _check_soft_dependencies(
     class MOMENTPipeline(MOMENT, PyTorchModelHubMixin):
         """Moment Pipeline."""
 
-        def __init__(self, config: Namespace | dict, **kwargs: dict):
+        def __init__(self, config, **kwargs: dict):
             self._validate_model_kwargs(**kwargs)
             self.new_task_name = kwargs.get("model_kwargs", {}).pop(
                 "task_name", TASKS.RECONSTRUCTION
