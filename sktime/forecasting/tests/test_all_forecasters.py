@@ -150,12 +150,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     def test_get_fitted_params(self, estimator_instance, scenario):
         """Test get_fitted_params."""
         scenario.run(estimator_instance, method_sequence=["fit"])
-        try:
-            params = estimator_instance.get_fitted_params()
-            assert isinstance(params, dict)
 
-        except NotImplementedError:
-            pass
+        params = estimator_instance.get_fitted_params()
+        assert isinstance(params, dict)
 
     # todo: should these not be checked in test_all_estimators?
     def test_raises_not_fitted_error(self, estimator_instance):
@@ -168,11 +165,8 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             cv = SlidingWindowSplitter(fh=1, window_length=1, start_with_window=False)
             estimator_instance.update_predict(y_test, cv=cv)
 
-        try:
-            with pytest.raises(NotFittedError):
-                estimator_instance.get_fitted_params()
-        except NotImplementedError:
-            pass
+        with pytest.raises(NotFittedError):
+            estimator_instance.get_fitted_params()
 
     def test_y_multivariate_raises_error(self, estimator_instance):
         """Test that wrong y scitype raises error (uni/multivariate not supported)."""
@@ -181,6 +175,8 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             with pytest.raises(ValueError, match=r"two or more variables"):
                 estimator_instance.fit(y, fh=FH0)
 
+        # we could remove the below entirely because there are no other values,
+        # but left for clarity
         if estimator_instance.get_tag("scitype:y") in ["univariate", "both"]:
             # this should pass since "both" allows any number of variables
             # and "univariate" automatically vectorizes, behaves multivariate
@@ -198,12 +194,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     def test_X_invalid_type_raises_error(self, estimator_instance, n_columns, X):
         """Test that invalid X input types raise error."""
         y_train = _make_series(n_columns=n_columns)
-        try:
-            with pytest.raises(TypeError, match=r"type"):
-                estimator_instance.fit(y_train, X, fh=FH0)
-        except NotImplementedError as e:
-            msg = str(e).lower()
-            assert "exogenous" in msg
+
+        with pytest.raises(TypeError, match=r"type"):
+            estimator_instance.fit(y_train, X, fh=FH0)
 
     def test_categorical_X_raises_error(self, estimator_instance):
         """Test that categorical X in not supported forecasters raises error.
@@ -328,20 +321,17 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         y_train, _, X_train, X_test = temporal_train_test_split(y, X, fh=fh)
 
-        try:
-            estimator_instance.fit(y_train, X_train, fh=fh)
-            y_pred = estimator_instance.predict(X=X_test)
-            cutoff = get_cutoff(y_train, return_index=True)
-            _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
-            _assert_correct_columns(y_pred, y_train)
+        estimator_instance.fit(y_train, X_train, fh=fh)
+        y_pred = estimator_instance.predict(X=X_test)
+        cutoff = get_cutoff(y_train, return_index=True)
+        _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
+        _assert_correct_columns(y_pred, y_train)
 
-            if estimator_instance.get_tag("capability:pred_int"):
-                y_pred_int = estimator_instance.predict_interval(X=X_test)
-                _assert_correct_pred_time_index(y_pred_int.index, cutoff, fh)
-                y_pred_q = estimator_instance.predict_quantiles(X=X_test)
-                _assert_correct_pred_time_index(y_pred_q.index, cutoff, fh)
-        except NotImplementedError:
-            pass
+        if estimator_instance.get_tag("capability:pred_int"):
+            y_pred_int = estimator_instance.predict_interval(X=X_test)
+            _assert_correct_pred_time_index(y_pred_int.index, cutoff, fh)
+            y_pred_q = estimator_instance.predict_quantiles(X=X_test)
+            _assert_correct_pred_time_index(y_pred_q.index, cutoff, fh)
 
     @pytest.mark.parametrize(
         "index_fh_comb", VALID_INDEX_FH_COMBINATIONS, ids=index_fh_comb_names
@@ -363,18 +353,15 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         steps = -np.arange(len(y_train))
         fh = _make_fh(cutoff, steps, fh_type, is_relative)
 
-        try:
-            estimator_instance.fit(y_train, fh=fh)
-            y_pred = estimator_instance.predict()
-            _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
+        estimator_instance.fit(y_train, fh=fh)
+        y_pred = estimator_instance.predict()
+        _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
 
-            if estimator_instance.get_tag("capability:pred_int:insample"):
-                y_pred_int = estimator_instance.predict_interval()
-                _assert_correct_pred_time_index(y_pred_int.index, cutoff, fh)
-                y_pred_q = estimator_instance.predict_quantiles()
-                _assert_correct_pred_time_index(y_pred_q.index, cutoff, fh)
-        except NotImplementedError:
-            pass
+        if estimator_instance.get_tag("capability:pred_int:insample"):
+            y_pred_int = estimator_instance.predict_interval()
+            _assert_correct_pred_time_index(y_pred_int.index, cutoff, fh)
+            y_pred_q = estimator_instance.predict_quantiles()
+            _assert_correct_pred_time_index(y_pred_q.index, cutoff, fh)
 
     def test_predict_series_name_preserved(self, estimator_instance):
         """Test that fit/predict preserves name attribute and type of pd.Series."""
