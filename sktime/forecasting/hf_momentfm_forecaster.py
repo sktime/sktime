@@ -126,7 +126,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         "requires-fh-in-fit": True,
         "python_dependencies": ["torch", "tqdm", "huggingface-hub"],
         "capability:global_forecasting": True,
-        "python_version": ">=3.10",
+        "python_version": ">= 3.10",
     }
 
     def __init__(
