@@ -133,11 +133,7 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
             "ColumnTransformer can simply be replaced by ColumnEnsembleTransformer."
         )
 
-        sklearn_lneq_14 = _check_soft_dependencies(
-            "scikit-learn<1.4",
-            severity="none",
-            package_import_alias={"scikit-learn": "sklearn"},
-        )
+        sklearn_lneq_14 = _check_soft_dependencies("scikit-learn<1.4", severity="none")
 
         if not sklearn_lneq_14:
             raise ModuleNotFoundError(
