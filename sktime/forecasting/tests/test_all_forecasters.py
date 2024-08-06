@@ -994,6 +994,9 @@ class TestAllGlobalForecasters(TestAllObjects):
         AssertionError - if Forecaster test instance does not have "capability:pred_int"
                 and no NotImplementedError is raised when calling predict_interval
         """
+        if not self._check_global_tag(estimator_instance):
+            return None
+
         max_prediction_length = np.max(fh_int_oos)
         X_train, y_train, X_test, y_test = self._multiindex_hier_data(
             max_prediction_length
@@ -1038,6 +1041,9 @@ class TestAllGlobalForecasters(TestAllObjects):
         AssertionError - if Forecaster test instance does not have "capability:pred_int"
                 and no NotImplementedError is raised when calling predict_quantiles
         """
+        if not self._check_global_tag(estimator_instance):
+            return None
+
         max_prediction_length = np.max(fh_int_oos)
         X_train, y_train, X_test, y_test = self._multiindex_hier_data(
             max_prediction_length
@@ -1078,6 +1084,9 @@ class TestAllGlobalForecasters(TestAllObjects):
         AssertionError - if Forecaster test instance does not have "capability:pred_int"
                 and no NotImplementedError is raised when calling predict_proba
         """
+        if not self._check_global_tag(estimator_instance):
+            return None
+
         max_prediction_length = np.max(fh_int_oos)
         X_train, y_train, X_test, y_test = self._multiindex_hier_data(
             max_prediction_length
