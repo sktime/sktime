@@ -24,11 +24,7 @@ from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.validation.panel import check_X_y
 
 # delayed was moved from utils.fixes to utils.parallel in scikit-learn 1.3
-if _check_soft_dependencies(
-    "scikit-learn>=1.3",
-    package_import_alias={"scikit-learn": "sklearn"},
-    severity="none",
-):
+if _check_soft_dependencies("scikit-learn>=1.3", severity="none"):
     from sklearn.utils.parallel import delayed
 else:
     from sklearn.utils.fixes import delayed
