@@ -171,46 +171,74 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         elif X is not None:
             pred_df = self._extend_df(pred_df, X)
             future_length = max(fh._values) + 1
-        print(pred_df.tail())
 
-        ds_test = self._get_pandas_dataset(
+        ds_test, df_config = self._get_pandas_dataset(
             pred_df, target, feat_dynamic_real, future_length
         )
-        print(ds_test)
 
         predictor = self.model.create_predictor(batch_size=self.batch_size)
         forecasts = predictor.predict(ds_test)
         forecast_it = iter(forecasts)
-        forecast = next(forecast_it)
 
-        return [pd.DataFrame(forecast.mean_ts)]
+        return self._get_prediction_df(forecast_it, df_config)
 
-    # def get_prediction_df(self):
+    def _get_prediction_df(self, forecast_iter, df_config):
+        def handle_series_prediction(forecast, target):
+            pred = forecast.mean_ts
+            return pred.rename(target)
+
+        def handle_panel_predictions(forecast_iter, df_config):
+            panels = []
+            for forecast in forecast_iter:
+                df = forecast.mean_ts.reset_index()
+                df.columns = [df_config["timepoints"], df_config["target"]]
+                df[df_config["item_id"]] = forecast.item_id
+                df.set_index(
+                    [df_config["item_id"], df_config["timepoints"]], inplace=True
+                )
+                panels.append(df)
+            return pd.concat(panels)
+
+        # Assuming all forecasts are either series or panel type.
+        first_forecast = next(iter(forecast_iter))
+        if first_forecast.item_id is None:
+            return handle_series_prediction(first_forecast, df_config["target"])
+        else:
+            return handle_panel_predictions(forecast_iter, df_config)
 
     def _get_pandas_dataset(self, df, target, feat_dynamic_real=None, future_length=0):
         from gluonts.dataset.pandas import PandasDataset
 
+        df_config = {
+            "target": target[0],
+        }
+
         if isinstance(df.index, pd.MultiIndex):
-            item_id = df.index.name[0]
-            timepoints = df.index.name[-1]
+            item_id = df.index.names[0]
+            df_config["item_id"] = item_id
+            timepoints = df.index.names[-1]
+            df_config["timepoints"] = timepoints
             df = df.reset_index()
             df.set_index(timepoints, inplace=True)
-            item_id = self._y.index.names[0]
-            # freq = pd.infer_freq(df.index[:3])
-            return PandasDataset.from_long_dataframe(
-                df,
-                target=target,
-                feat_dynamic_real=feat_dynamic_real,
-                item_id=item_id,
-                future_length=future_length,
-                # freq=freq,
+            return (
+                PandasDataset.from_long_dataframe(
+                    df,
+                    target=target,
+                    feat_dynamic_real=feat_dynamic_real,
+                    item_id=item_id,
+                    future_length=future_length,
+                ),
+                df_config,
             )
         else:
-            return PandasDataset(
-                df,
-                target=target,
-                feat_dynamic_real=feat_dynamic_real,
-                future_length=future_length,
+            return (
+                PandasDataset(
+                    df,
+                    target=target,
+                    feat_dynamic_real=feat_dynamic_real,
+                    future_length=future_length,
+                ),
+                df_config,
             )
 
     def _extend_df(self, df, X=None):
