@@ -10,6 +10,11 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
+from sktime.utils.dependencies import (
+    _check_env_marker,
+    _check_estimator_deps,
+    _check_python_version,
+)
 
 
 class TimesFMForecaster(_BaseGlobalForecaster):
@@ -78,7 +83,9 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         freq=0,
         repo_id="google/timesfm-1.0-200m",
     ):
-        super().__init__()
+        _check_estimator_deps(self)
+        _check_python_version(self)
+        _check_env_marker(self)
 
         self.context_len = context_len
         self.horizon_len = horizon_len
@@ -105,6 +112,8 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         # to avoid RuntimeError
         os.environ["JAX_PLATFORM_NAME"] = backend
         os.environ["JAX_PLATFORMS"] = backend
+
+        super().__init__()
 
     def _fit(self, y, X, fh):
         # import after backend env has been set
