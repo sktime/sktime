@@ -679,7 +679,7 @@ def test_recursive_reducer_X_not_fit_to_fh():
 
 @pytest.mark.skipif(
     not run_test_module_changed(["sktime.forecasting.compose._reduce"])
-    or not _check_soft_dependencies("skpro"),
+    or not _check_soft_dependencies("skpro", severity="none"),
     reason="run test only if reduce module has changed",
 )
 def test_make_reduction_proba():
