@@ -7,13 +7,13 @@ import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import _BaseGlobalForecaster
+from sktime.libs.momentfm import MOMENTPipeline
 from sktime.split import temporal_train_test_split
 
-if _check_soft_dependencies(["momentfm", "torch"], severity="none"):
+if _check_soft_dependencies(["torch"], severity="none"):
     from torch.nn import MSELoss
     from torch.utils.data import Dataset
 
-    from sktime.libs.momentfm import MOMENTPipeline
 else:
 
     class Dataset:
