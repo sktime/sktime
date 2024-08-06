@@ -7613,7 +7613,7 @@ Highlights
 * hierarchical & global forecasting: forecaster and transformer interfaces are now compatible with hierarchical data, automatically vectorize over hierarchy levels (:pr:`2110`, :pr:`2115`, :pr:`2219`) :user:`danbartl` :user:`fkiraly`
 * probabilistic forecasting: ``predict_var`` (variance forecast) and ``predict_proba`` (full distribution forecast) interfaces; performance metrics for interval and quantile forecasts (:pr:`2100`, :pr:`2130`, :pr:`2232`) :user:`eenticott-shell` :user:`fkiraly` :user:`kejsitake`
 * dunder methods for transformer and classifier pipelines: write ``my_trafo1 * my_trafo2`` for pipeline, ``my_trafo1 + my_trafo2`` for ``FeatureUnion`` (:pr:`2090`, :pr:`2251`) :user:`fkiraly`
-* Frequently requested: ``AutoARIMA`` from ``statsforecast`` package available as ``StatsforecastAutoARIMA`` (:pr:`2251`) :user:`FedericoGarza`
+* Frequently requested: ``AutoARIMA`` from ``statsforecast`` package available as ``StatsforecastAutoARIMA`` (:pr:`2251`) :user:`AzulGarza`
 * for extenders: detailed `"creating sktime compatible estimator" guide <https://www.sktime.net/en/stable/developer_guide/add_estimators.html>`_
 * for extenders: simplified extension templates for forecasters and transformers (:pr:`2161`) :user:`fkiraly`
 
@@ -7719,7 +7719,7 @@ Distances, kernels
 Forecasting
 ^^^^^^^^^^^
 
-*  [ENH] Add ``AutoARIMA`` from StatsForecast (:pr:`2251`) :user:`FedericoGarza`
+*  [ENH] Add ``AutoARIMA`` from StatsForecast (:pr:`2251`) :user:`AzulGarza`
 *  [ENH] Naive variance prediction estimator/wrapper (:pr:`1865`) :user:`IlyasMoutawwakil`
 *  [ENH] ``predict_proba`` for forecasters, `tensorflow-probability` dependency (:pr:`2100`) :user:`fkiraly`
 *  [ENH] Probabilistic forecasting metrics (:pr:`2232`) :user:`eenticott-shell`
@@ -7841,7 +7841,7 @@ Refactored
 *  [ENH] test parameter refactor: ``RocketClassifier`` (:pr:`2166`) :user:`dionysisbacchus`
 *  [ENH] test parameter refactor: ``TimeSeriesForestClassifier`` (:pr:`2277`) :user:`lielleravid`
 *  [ENH] ``FeatureUnion`` refactor - moved to ``transformations``, tags, dunder method (:pr:`2231`) :user:`fkiraly`
-*  [ENH] ``AutoARIMA`` from ``statsforecast`` to ``StatsForecastAutoARIMA`` (:pr:`2272`) :user:`FedericoGarza`
+*  [ENH] ``AutoARIMA`` from ``statsforecast`` to ``StatsForecastAutoARIMA`` (:pr:`2272`) :user:`AzulGarza`
 
 Contributors
 ~~~~~~~~~~~~
@@ -7853,7 +7853,7 @@ Contributors
 :user:`danbartl`,
 :user:`dionysisbacchus`,
 :user:`eenticott-shell`,
-:user:`FedericoGarza`,
+:user:`AzulGarza`,
 :user:`fkiraly`,
 :user:`hmtbgc`,
 :user:`IlyasMoutawwakil`,

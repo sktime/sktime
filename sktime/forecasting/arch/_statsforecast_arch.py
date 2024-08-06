@@ -44,7 +44,16 @@ class StatsForecastGARCH(_GeneralisedStatsForecastAdapter):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["eyjo"],
+        "authors": [
+            "MMenchero",
+            "AzulGarza",
+            "jmoralez",
+            "eyjo",
+            "yarnabrina",
+            "arnaujc91",
+            "luca-miniati",
+        ],
+        # MMenchero, AzulGarza, and jmoralez for statsforecast GARCH
         "maintainers": ["eyjo"],
         # estimator type
         # --------------
