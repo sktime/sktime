@@ -23,7 +23,7 @@ def _check_soft_dependencies(
     obj=None,
     msg=None,
     suppress_import_stdout="deprecated",
-    normalize_reqs=False,
+    normalize_reqs=True,
 ):
     """Check if required soft dependencies are installed and raise error or warning.
 
@@ -60,7 +60,7 @@ def _check_soft_dependencies(
     msg : str, or None, default=None
         if str, will override the error message or warning shown with msg
 
-    normalize_reqs : bool, default=False
+    normalize_reqs : bool, default=True
         whether to normalize the requirement strings before checking them,
         by removing build metadata from versions.
         If set True, pre, post, and dev versions are removed from all version strings.
