@@ -367,6 +367,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         else:
             with pytest.raises(NotImplementedError, match="in-sample"):
                 estimator_instance.fit(y_train, fh=fh)
+                y_pred_int = estimator_instance.predict_interval()
 
     def test_predict_series_name_preserved(self, estimator_instance):
         """Test that fit/predict preserves name attribute and type of pd.Series."""
