@@ -1,3 +1,3 @@
 """Scikit learn wrappers for fractional differentiation."""
 
-from .fracdiff import Fracdiff
+from sktime.libs.fracdiff.sklearn.fracdiff import Fracdiff
