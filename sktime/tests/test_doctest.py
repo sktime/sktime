@@ -1,8 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Suite of tests for all estimators.
+"""Doctest checks directed through pytest with conditional skipping."""
 
-adapted from scikit-learn's estimator_checks
-"""
 import importlib
 import inspect
 import pkgutil
@@ -14,19 +12,46 @@ from sktime.tests.test_switch import run_test_module_changed
 EXCLUDE_MODULES_STARTING_WITH = ("all", "test", "contrib", "mlflow")
 
 
-@lru_cache
 def _all_functions(module_name):
     """Get all functions from a module, including submodules.
 
     Excludes:
 
     * modules starting with 'all' or 'test'.
-    * if the flag ``ONLY_CHANGED_MODULES`` is set, modules that have not changed.
+    * if the flag ``ONLY_CHANGED_MODULES`` is set, modules that have not changed,
+      compared to the ``main`` branch.
 
     Parameters
     ----------
     module_name : str
         Name of the module.
+
+    Returns
+    -------
+    functions_list : list
+        List of tuples (function_name, function_object).
+    """
+    res = _all_functions_cached(module_name, only_changed_modules=ONLY_CHANGED_MODULES)
+    # copy the result to avoid modifying the cached result
+    return res.copy()
+
+
+@lru_cache
+def _all_functions_cached(module_name, only_changed_modules=False):
+    """Get all functions from a module, including submodules.
+
+    Excludes:
+
+    * modules starting with 'all' or 'test'.
+    * if ``only_changed_modules`` is ``True``, modules that have not changed,
+      compared to the ``main`` branch.
+
+    Parameters
+    ----------
+    module_name : str
+        Name of the module.
+    only_changed_modules : bool, optional (default=False)
+        If True, only functions from modules that have changed are returned.
 
     Returns
     -------
@@ -49,7 +74,7 @@ def _all_functions(module_name):
             continue
 
         # Skip modules that have not changed
-        if ONLY_CHANGED_MODULES and not run_test_module_changed(modname):
+        if only_changed_modules and not run_test_module_changed(modname):
             continue
 
         # Import the module
@@ -57,6 +82,10 @@ def _all_functions(module_name):
 
         # Get all functions from the module
         for name, obj in inspect.getmembers(module, inspect.isfunction):
+            # if function is imported from another module, skip it
+            if obj.__module__ != module.__name__:
+                continue
+            # add the function to the list
             functions_list.append((name, obj))
 
     return functions_list

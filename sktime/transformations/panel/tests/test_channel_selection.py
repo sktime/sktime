@@ -1,4 +1,5 @@
 """Channel selection test code."""
+
 import pytest
 
 from sktime.datasets import load_basic_motions

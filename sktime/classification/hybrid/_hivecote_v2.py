@@ -193,7 +193,7 @@ class HIVECOTEV2(BaseClassifier):
         self._stc.fit(X, y)
 
         if self.verbose > 0:
-            print("STC ", datetime.now().strftime("%H:%M:%S %d/%m/%Y"))  # noqa
+            print("STC ", datetime.now().strftime("%H:%M:%S %d/%m/%Y"))
 
         # Find STC weight using train set estimate
         train_probs = self._stc._get_train_probs(X, y)
@@ -201,11 +201,11 @@ class HIVECOTEV2(BaseClassifier):
         self.stc_weight_ = accuracy_score(y, train_preds) ** 4
 
         if self.verbose > 0:
-            print(  # noqa
+            print(
                 "STC train estimate ",
                 datetime.now().strftime("%H:%M:%S %d/%m/%Y"),
             )
-            print("STC weight = " + str(self.stc_weight_))  # noqa
+            print("STC weight = " + str(self.stc_weight_))
 
         # Build DrCIF
         self._drcif = DrCIF(
@@ -217,7 +217,7 @@ class HIVECOTEV2(BaseClassifier):
         self._drcif.fit(X, y)
 
         if self.verbose > 0:
-            print("DrCIF ", datetime.now().strftime("%H:%M:%S %d/%m/%Y"))  # noqa
+            print("DrCIF ", datetime.now().strftime("%H:%M:%S %d/%m/%Y"))
 
         # Find DrCIF weight using train set estimate
         train_probs = self._drcif._get_train_probs(X, y)
@@ -225,11 +225,11 @@ class HIVECOTEV2(BaseClassifier):
         self.drcif_weight_ = accuracy_score(y, train_preds) ** 4
 
         if self.verbose > 0:
-            print(  # noqa
+            print(
                 "DrCIF train estimate ",
                 datetime.now().strftime("%H:%M:%S %d/%m/%Y"),
             )
-            print("DrCIF weight = " + str(self.drcif_weight_))  # noqa
+            print("DrCIF weight = " + str(self.drcif_weight_))
 
         # Build Arsenal
         self._arsenal = Arsenal(
@@ -241,7 +241,7 @@ class HIVECOTEV2(BaseClassifier):
         self._arsenal.fit(X, y)
 
         if self.verbose > 0:
-            print("Arsenal ", datetime.now().strftime("%H:%M:%S %d/%m/%Y"))  # noqa
+            print("Arsenal ", datetime.now().strftime("%H:%M:%S %d/%m/%Y"))
 
         # Find Arsenal weight using train set estimate
         train_probs = self._arsenal._get_train_probs(X, y)
@@ -249,11 +249,11 @@ class HIVECOTEV2(BaseClassifier):
         self.arsenal_weight_ = accuracy_score(y, train_preds) ** 4
 
         if self.verbose > 0:
-            print(  # noqa
+            print(
                 "Arsenal train estimate ",
                 datetime.now().strftime("%H:%M:%S %d/%m/%Y"),
             )
-            print("Arsenal weight = " + str(self.arsenal_weight_))  # noqa
+            print("Arsenal weight = " + str(self.arsenal_weight_))
 
         # Build TDE
         self._tde = TemporalDictionaryEnsemble(
@@ -265,7 +265,7 @@ class HIVECOTEV2(BaseClassifier):
         self._tde.fit(X, y)
 
         if self.verbose > 0:
-            print("TDE ", datetime.now().strftime("%H:%M:%S %d/%m/%Y"))  # noqa
+            print("TDE ", datetime.now().strftime("%H:%M:%S %d/%m/%Y"))
 
         # Find TDE weight using train set estimate
         train_probs = self._tde._get_train_probs(X, y, train_estimate_method="loocv")
@@ -273,11 +273,11 @@ class HIVECOTEV2(BaseClassifier):
         self.tde_weight_ = accuracy_score(y, train_preds) ** 4
 
         if self.verbose > 0:
-            print(  # noqa
+            print(
                 "TDE train estimate ",
                 datetime.now().strftime("%H:%M:%S %d/%m/%Y"),
             )
-            print("TDE weight = " + str(self.tde_weight_))  # noqa
+            print("TDE weight = " + str(self.tde_weight_))
 
         return self
 

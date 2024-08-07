@@ -97,12 +97,14 @@ EXCLUDED_TESTS = {
         "test_fit_does_not_overwrite_hyper_params",
         "test_save_estimators_to_file",
         "test_multiprocessing_idempotent",  # see 5658
+        "test_fit_idempotent",  # see 6637
     ],
     "ProximityForest": [
         "test_persistence_via_pickle",
         "test_fit_does_not_overwrite_hyper_params",
         "test_save_estimators_to_file",
         "test_fit_idempotent",  # see 6201
+        "test_multiprocessing_idempotent",  # see 6637
     ],
     # TapNet fails due to Lambda layer, see #3539 and #3616
     "TapNetClassifier": [
@@ -225,9 +227,6 @@ EXCLUDED_TESTS = {
     ],
     "Pipeline": ["test_inheritance"],  # does not inherit from intermediate base classes
     # networks do not support negative fh
-    "LTSFLinearForecaster": ["test_predict_time_index_in_sample_full"],
-    "LTSFDLinearForecaster": ["test_predict_time_index_in_sample_full"],
-    "LTSFNLinearForecaster": ["test_predict_time_index_in_sample_full"],
     "HFTransformersForecaster": ["test_predict_time_index_in_sample_full"],
     "PyKANForecaster": ["test_predict_time_index_in_sample_full"],
     "WEASEL": ["test_multiprocessing_idempotent"],  # see 5658
@@ -247,6 +246,7 @@ EXCLUDED_TESTS = {
         "test_save_estimators_to_file",
         "test_fit_idempotent",
     ],
+    "TSRGridSearchCV": ["test_multioutput"],  # see 6708
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish

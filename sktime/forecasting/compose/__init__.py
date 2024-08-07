@@ -29,6 +29,7 @@ __all__ = [
     "ForecastByLevel",
     "Permute",
     "YfromX",
+    "SkforecastAutoreg",
     "IgnoreX",
 ]
 
@@ -63,6 +64,7 @@ from sktime.forecasting.compose._reduce import (
     YfromX,
     make_reduction,
 )
+from sktime.forecasting.compose._skforecast_reduce import SkforecastAutoreg
 from sktime.forecasting.compose._stack import StackingForecaster
 from sktime.forecasting.compose._transform_select_forecaster import (
     TransformSelectForecaster,

@@ -22,7 +22,6 @@ def _generate_smooth_series(size: int = 750):
     Pandas.Series
         Returns the generated series in the Pandas Series format.
     """
-
     # Generating a smooth series, we keep variance low by keeping the
     # standard deviation to 0.25. Denoted as scale according to numpy docs
 
@@ -44,7 +43,6 @@ def _generate_erratic_series(size: int = 750):
     Pandas.Series
         Returns the generated series in the Pandas Series format.
     """
-
     # Generating an erratic series, we keep variance high by keeping the
     # standard deviation to 1 and then squaring the values
 
@@ -66,7 +64,6 @@ def _generate_intermittent_series(size: int = 750):
     Pandas.Series
         Returns the generated series in the Pandas Series format.
     """
-
     # Generating an intermittent series, we keep ADI high by
     # setting only 10% of all values to non-zero values
 
@@ -91,7 +88,6 @@ def _generate_lumpy_series(size: int = 750):
     Pandas.Series
         Returns the generated series in the Pandas Series format.
     """
-
     # Generating a lumpy series, we keep ADI high by
     # setting only 10% of all values to non-zero values
 
@@ -129,7 +125,6 @@ def test_adi_cv_extractor(series_generator, expected_class):
     expected_class
         The expected class to be predicted by the transformer.
     """
-
     series = series_generator()
     transformer = ADICVTransformer()
 
