@@ -119,6 +119,8 @@ class Fracdiff(TransformerMixin, BaseEstimator):
             Returns the instance itself.
         """
         check_array(X, estimator=self)
+        if hasattr(X, "shape"):
+            self.n_features_in_ = X.shape[1]
         self.coef_ = fdiff_coef(self.d, self.window)
         return self
 
@@ -141,5 +143,14 @@ class Fracdiff(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self, ["coef_"])
         check_array(X, estimator=self)
+
+        # Check that the number of features in transform matches fit
+        if hasattr(X, "shape") and X.shape[1] != self.n_features_in_:
+            raise ValueError(
+                "Error in Fracdiff transformer: "
+                f"Number of features in transform ({X.shape[1]}) does not match "
+                f"number of features in fit ({self.n_features_in_})."
+            )
+
         Xt = fdiff(X, n=self.d, axis=0, window=self.window, mode=self.mode)
         return Xt
