@@ -347,11 +347,11 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
             self._is_PeriodIndex = False
             train_indices = y.index
 
-        id, idx = self._get_id_idx(train_indices)
+        id_int, id_time = self._get_id_idx(train_indices)
 
         train_data = {
-            self.id_col: id,
-            self.time_col: idx,
+            self.id_col: id_int,
+            self.time_col: id_time,
             self.target_col: y.to_numpy().flatten(),
         }
         if self.futr_exog_list and X is None:
@@ -370,21 +370,21 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         return self
 
     def _get_id_idx(self, indices: pandas.Index):
-        """Get instance index (id) and time index (idx) from a pandas.Index.
+        """Get instance index (id_int) and time index (id_time) from a pandas.Index.
 
-        For a single time series, the instance index (id) will be a integer 1.
-        For multiIndex, the id will be a string concat of all instance levels.
+        For a single time series, the instance index (id_int) will be a integer 1.
+        For multiIndex, the id_int will be a string concat of all instance levels.
         """
         if not isinstance(indices, pandas.MultiIndex):
-            id = 1
-            idx = indices.to_numpy()
+            id_int = 1
+            id_time = indices.to_numpy()
         else:
             id_idx = indices.to_frame().values
             # with ("h0":"h0_0", "h1":"h1_1") as instance index,
-            # the id would be "h0_1h1_1"
-            id = id_idx[:, :-1].sum(axis=1)
-            idx = indices.get_level_values(-1)
-        return id, idx
+            # the id_int would be "h0_1h1_1"
+            id_int = id_idx[:, :-1].sum(axis=1)
+            id_time = indices.get_level_values(-1)
+        return id_int, id_time
 
     def _handle_PeriodIndex(self, data):
         indices = data.index
@@ -479,8 +479,8 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
             else:
                 predict_indices = X.index
 
-            id, idx = self._get_id_idx(predict_indices)
-            predict_data = {self.id_col: id, self.time_col: idx}
+            id_int, id_time = self._get_id_idx(predict_indices)
+            predict_data = {self.id_col: id_int, self.time_col: id_time}
 
             for column in self.futr_exog_list:
                 predict_data[column] = X[column].to_numpy()
@@ -503,8 +503,8 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
             else:
                 predict_indices = y.index
 
-            id, idx = self._get_id_idx(predict_indices)
-            predict_data = {self.id_col: id, self.time_col: idx}
+            id_int, id_time = self._get_id_idx(predict_indices)
+            predict_data = {self.id_col: id_int, self.time_col: id_time}
 
             predict_data[self.target_col] = y.to_numpy().flatten()
             predict_parameters["df"] = pandas.DataFrame(data=predict_data)
@@ -531,9 +531,11 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
                 id_idx = np.array(y.index.to_list())
             else:
                 id_idx = np.array(y.index.to_list())
-            id = id_idx[:, :-1].sum(axis=1)
+            id_int = id_idx[:, :-1].sum(axis=1)
             ins = id_idx[:, :-1]
-            id_ins = pandas.DataFrame(data=ins, index=id, columns=new_index_names[:-1])
+            id_ins = pandas.DataFrame(
+                data=ins, index=id_int, columns=new_index_names[:-1]
+            )
             id_ins.drop_duplicates(inplace=True)
             final_predictions = pandas.concat(
                 (model_forecasts, id_ins.loc[model_forecasts.index.tolist()]),
