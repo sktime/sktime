@@ -34,9 +34,10 @@ class TestFracdiff:
         ]
     )
     def test_sklearn_compatible_esimator(self, estimator, check):
-        SKIPPED_SKLEARN_TESTS = ["check_methods_sample_order_invariance"]
-
-        if check.__name__ in SKIPPED_SKLEARN_TESTS:
-            return None
-
-        check(estimator)
+        try:
+            check(estimator)
+        except Exception as e:
+            # diff is not permutation invariant
+            if "invariant" in str(e):
+                return None
+            raise e
