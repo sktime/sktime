@@ -1,5 +1,7 @@
 """Forecasting benchmarks tests."""
 
+import os
+
 import pandas as pd
 import pytest
 
@@ -97,7 +99,32 @@ def test_forecastingbenchmark(tmp_path, expected_results_df, scorers):
     benchmark.add_task(data_loader_simple, cv_splitter, scorers)
 
     results_file = tmp_path / "results.csv"
-    results_df = benchmark.run(results_file)
+    artefacts_store_dir = tmp_path / "artefacts"
+    results_df = benchmark.run(results_file, artefacts_store_dir)
+    assert os.path.exists(artefacts_store_dir)
+    # For each fold and scorer predictions and ground truth should be stored
+    for i in range(2):
+        for scorer in scorers:
+            assert os.path.exists(
+                os.path.join(
+                    artefacts_store_dir,
+                    "[dataset=data_loader_simple]_"
+                    + "[cv_splitter=ExpandingWindowSplitter]",
+                    "NaiveForecaster",
+                    "y_pred",
+                    f"{scorer.name}_fold_{i}.csv",
+                )
+            )
+            assert os.path.exists(
+                os.path.join(
+                    artefacts_store_dir,
+                    "[dataset=data_loader_simple]_"
+                    + "[cv_splitter=ExpandingWindowSplitter]",
+                    "NaiveForecaster",
+                    "y_test",
+                    f"{scorer.name}_fold_{i}.csv",
+                )
+            )
 
     results_df = results_df.drop(columns=["runtime_secs"])
 
