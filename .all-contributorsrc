@@ -2368,7 +2368,9 @@
       "profile": "https://github.com/hliebert",
       "contributions": [
         "bug",
-        "code"
+        "code",
+        "doc",
+        "test"
       ]
     },
     {
@@ -2922,6 +2924,15 @@
       "profile": "https://github.com/alexander-lakocy",
       "contributions": [
         "doc"
+      ]
+    },
+    {
+      "login": "mk406",
+      "name": "Miguel Krause",
+      "avatar_url": "https://avatars.githubusercontent.com/u/78024411?v=4",
+      "profile": "https://github.com/mk406",
+      "contributions": [
+        "code"
       ]
     },
     {
