@@ -34,6 +34,7 @@ __author__ = ["fkiraly"]
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_scitype, convert_to
+from sktime.datatypes._dtypekind import DtypeKind
 from sktime.datatypes._series_as_panel import convert_Series_to_Panel
 
 
@@ -503,7 +504,7 @@ class BasePairwiseTransformerPanel(BaseEstimator):
             usually df-list, list of pd.DataFrame, unless overridden
         """
         check_res = check_is_scitype(
-            X, ["Series", "Panel"], return_metadata=[], var_name=var_name
+            X, ["Series", "Panel"], return_metadata=["feature_kind"], var_name=var_name
         )
         X_valid = check_res[0]
         metadata = check_res[2]
@@ -517,6 +518,12 @@ class BasePairwiseTransformerPanel(BaseEstimator):
                 " See the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
             )
             raise TypeError(msg)
+
+        if DtypeKind.CATEGORICAL in metadata["feature_kind"]:
+            raise TypeError(
+                "Pairwise transformers do not support categorical features in "
+                f"{var_name}."
+            )
 
         X_scitype = metadata["scitype"]
 

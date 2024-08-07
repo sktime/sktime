@@ -1,5 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements ARDL Model as interface to statsmodels."""
+
 import warnings
 
 import pandas as pd
@@ -195,7 +196,8 @@ class ARDL(_StatsModelsAdapter):
     _tags = {
         # packaging info
         # --------------
-        "authors": "kcc-lion",
+        "authors": ["bashtage", "kcc-lion"],
+        # bashtage for statsmodels ARDL
         "maintainers": "kcc-lion",
         "python_dependencies": "statsmodels>=0.13.0",
         # estimator type

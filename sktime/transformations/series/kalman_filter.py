@@ -107,9 +107,7 @@ def _init_matrix(matrices, transform_func, default_val):
     return transform_func(matrices)
 
 
-def _check_conditional_dependency(
-    obj, condition, package, severity, package_import_alias=None, msg=None
-):
+def _check_conditional_dependency(obj, condition, package, severity, msg=None):
     """If ``condition`` applies, check the soft dependency ``package`` installation.
 
     Call _check_soft_dependencies.
@@ -124,9 +122,6 @@ def _check_conditional_dependency(
         Error message to attach to ModuleNotFoundError.
     package : str
         Package name for soft dependency check.
-    package_import_alias : dict with str keys and values or None, optional, default=None
-        import name is str used in python import, i.e., from import_name import ...
-        should be provided if import name differs from package name
     severity : str
         'error' or 'warning'.
 
@@ -144,12 +139,7 @@ def _check_conditional_dependency(
                 f"install the `{package}` package. "
             )
         try:
-            _check_soft_dependencies(
-                package,
-                package_import_alias=package_import_alias,
-                severity=severity,
-                obj=obj,
-            )
+            _check_soft_dependencies(package, severity=severity, obj=obj)
         except ModuleNotFoundError as e:
             raise ModuleNotFoundError(msg) from e
 
@@ -173,7 +163,7 @@ def _validate_estimate_matrices(input_ems, all_ems):
         if input_ems == "all":
             return all_ems
         if input_ems in all_ems:
-            return list([input_ems])
+            return list([input_ems])  # noqa: C410
 
         raise ValueError(
             f"If `estimate_matrices` is passed as a "

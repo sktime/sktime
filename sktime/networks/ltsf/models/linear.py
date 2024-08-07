@@ -44,6 +44,14 @@ class LTSFLinearNetwork:
     .. [2] https://github.com/cure-lab/LTSF-Linear
     """
 
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["mixiancmx", "ailingzengzzz", "luca-miniati"],
+        # mixiancmx, ailingzengzzz for cure-lab code
+        "maintainers": ["luca-miniati"],
+    }
+
     class _LTSFLinearNetwork(nn_module):
         def __init__(
             self,
@@ -136,6 +144,14 @@ class LTSFDLinearNetwork:
     .. [2] https://github.com/cure-lab/LTSF-Linear
     """
 
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["mixiancmx", "ailingzengzzz", "luca-miniati"],
+        # mixiancmx, ailingzengzzz for cure-lab code
+        "maintainers": ["luca-miniati"],
+    }
+
     class _LTSFDLinearNetwork(nn_module):
         def __init__(
             self,
@@ -144,7 +160,7 @@ class LTSFDLinearNetwork:
             in_channels,
             individual,
         ):
-            from sktime.networks.ltsf.layers import SeriesDecomposer
+            from sktime.networks.ltsf.utils.extras import SeriesDecomposer
 
             super().__init__()
             self.seq_len = seq_len
@@ -183,9 +199,10 @@ class LTSFDLinearNetwork:
 
             # x: [Batch, Input length, Channel]
             seasonal_init, trend_init = self.decompsition(x)
-            seasonal_init, trend_init = seasonal_init.permute(
-                0, 2, 1
-            ), trend_init.permute(0, 2, 1)
+            seasonal_init, trend_init = (
+                seasonal_init.permute(0, 2, 1),
+                trend_init.permute(0, 2, 1),
+            )
             if self.individual:
                 seasonal_output = zeros(
                     [seasonal_init.size(0), seasonal_init.size(1), self.pred_len],
@@ -250,6 +267,14 @@ class LTSFNLinearNetwork:
     (Vol. 37, No. 9, pp. 11121-11128).
     .. [2] https://github.com/cure-lab/LTSF-Linear
     """
+
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["mixiancmx", "ailingzengzzz", "luca-miniati"],
+        # mixiancmx, ailingzengzzz for cure-lab code
+        "maintainers": ["luca-miniati"],
+    }
 
     class _LTSFNLinearNetwork(nn_module):
         def __init__(

@@ -8,9 +8,11 @@ __all__ = ["TabularToSeriesAdaptor"]
 from inspect import signature
 
 import numpy as np
+import pandas as pd
 from sklearn.base import clone
 
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.sklearn import prep_skl_df
 
 
 class TabularToSeriesAdaptor(BaseTransformer):
@@ -104,6 +106,22 @@ class TabularToSeriesAdaptor(BaseTransformer):
           Note: passes ``y`` even if it is ``None``, or if not a named arg
         * "never": never passes ``y`` to any method.
 
+    input_type : str, one of "numpy" (default), "pandas"
+        type of data passed to the ``sklearn`` transformer
+
+        * "numpy": 2D ``np.ndarray``
+        * "pandas": ``pd.DataFrame``, with column names passed to transformer.
+          column names are coerced to strings if not already,
+          row index is reset to ``RangeIndex``.
+
+    pooling : str, one of "local" (default), "global"
+        whether to apply transformer to each series individually (local),
+        or to all series at once (global)
+
+        * "local": applies transformer to each series individually
+        * "global": applies transformer to all series at once, pooled
+          to a single 2D ``np.ndarray`` or ``pd.DataFrame``
+
     Attributes
     ----------
     transformer_ : Estimator
@@ -137,11 +155,21 @@ class TabularToSeriesAdaptor(BaseTransformer):
         "fit_is_empty": False,
     }
 
-    def __init__(self, transformer, fit_in_transform=False, pass_y="auto"):
+    def __init__(
+        self,
+        transformer,
+        fit_in_transform=False,
+        pass_y="auto",
+        input_type="numpy",
+        pooling="local",
+    ):
         self.transformer = transformer
         self.transformer_ = clone(self.transformer)
         self.fit_in_transform = fit_in_transform
         self.pass_y = pass_y
+        self.input_type = input_type
+        self.pooling = pooling
+
         self._trafo_has_X = self._trafo_has_param_and_default("fit", "X")[0]
 
         super().__init__()
@@ -168,6 +196,28 @@ class TabularToSeriesAdaptor(BaseTransformer):
         if not self._trafo_has_X:
             self.set_tags(**{"y_inner_mtype": "None"})
             self.set_tags(**{"univariate-only": True})
+
+        if pooling == "local":
+            self.set_tags(**{"scitype:instancewise": True})
+            if input_type == "numpy":
+                self.set_tags(**{"X_inner_mtype": "np.ndarray"})
+            elif input_type == "pandas":
+                self.set_tags(**{"X_inner_mtype": "pd.DataFrame"})
+            else:
+                raise ValueError(
+                    "Error in TabularToSeriesAdaptor: "
+                    f"input_type={input_type} not supported, must be one of "
+                    "'numpy', 'pandas'"
+                )
+        elif pooling == "global":
+            self.set_tags(**{"scitype:instancewise": False})
+            PANDAS_TYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
+            self.set_tags(**{"X_inner_mtype": PANDAS_TYPES})
+        else:
+            raise ValueError(
+                "Error in TabularToSeriesAdaptor: "
+                f"pooling={pooling} not supported, must be one of 'local', 'global'"
+            )
 
     def _trafo_has_param_and_default(self, method="fit", arg="y"):
         """Return if transformer.method has a parameter, and whether it has a default.
@@ -201,6 +251,16 @@ class TabularToSeriesAdaptor(BaseTransformer):
 
         The return is a dict which is passed to the method of name method.
         """
+        input_type = self.input_type
+
+        if input_type == "numpy" and isinstance(X, pd.DataFrame):
+            X = X.values
+        if input_type == "pandas" and isinstance(X, np.ndarray):
+            X = pd.DataFrame(X)
+        if input_type == "pandas":
+            X = X.reset_index(drop=True)
+            X = prep_skl_df(X)
+
         if not self._trafo_has_X:
             return {"y": X}
 
@@ -267,9 +327,16 @@ class TabularToSeriesAdaptor(BaseTransformer):
         Xt : 2D np.ndarray
             transformed version of X
         """
+        # if DataFrame, remember index for later to restore on Xt
+        was_df = isinstance(X, pd.DataFrame)
+        if was_df:
+            saved_index = X.index
+
+        # get args for fit and transform
         fit_args = self._get_args(X, y, method="fit")
         trafo_args = self._get_args(X, y, method="transform")
 
+        # apply transformer
         if self._skip_fit:
             Xt = self.transformer_.fit(**fit_args).transform(**trafo_args)
         else:
@@ -278,10 +345,17 @@ class TabularToSeriesAdaptor(BaseTransformer):
         # coerce sensibly to 2D np.ndarray
         if isinstance(Xt, (int, float, str)):
             Xt = np.array([[Xt]])
-        if not isinstance(Xt, np.ndarray):
+        if not isinstance(Xt, (np.ndarray, pd.DataFrame)):
             Xt = np.array(Xt)
-        if Xt.ndim == 1:
+        if Xt.ndim == 1 and hasattr(Xt, "reshape"):
             Xt = Xt.reshape((len(X), 1))
+
+        # restore index if DataFrame
+        if was_df:
+            if isinstance(Xt, pd.DataFrame):
+                Xt.index = saved_index
+            else:
+                Xt = pd.DataFrame(Xt, index=saved_index)
 
         return Xt
 
@@ -343,7 +417,23 @@ class TabularToSeriesAdaptor(BaseTransformer):
         params4 = {"transformer": VarianceThreshold()}
         params5 = {"transformer": LabelEncoder(), "fit_in_transform": True}
 
-        return [params1, params2, params3, params4, params5]
+        params6 = {
+            "transformer": StandardScaler(),
+            "pooling": "global",
+            "input_type": "pandas",
+        }
+        params7 = {
+            "transformer": StandardScaler(),
+            "pooling": "local",
+            "input_type": "pandas",
+        }
+        params8 = {
+            "transformer": StandardScaler(),
+            "pooling": "global",
+            "input_type": "numpy",
+        }
+
+        return [params1, params2, params3, params4, params5, params6, params7, params8]
 
 
 class PandasTransformAdaptor(BaseTransformer):

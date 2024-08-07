@@ -133,11 +133,7 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
             "ColumnTransformer can simply be replaced by ColumnEnsembleTransformer."
         )
 
-        sklearn_lneq_14 = _check_soft_dependencies(
-            "scikit-learn<1.4",
-            severity="none",
-            package_import_alias={"scikit-learn": "sklearn"},
-        )
+        sklearn_lneq_14 = _check_soft_dependencies("scikit-learn<1.4", severity="none")
 
         if not sklearn_lneq_14:
             raise ModuleNotFoundError(
@@ -199,8 +195,8 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
         for Xs, name in zip(result, names):
             if not (getattr(Xs, "ndim", 0) == 2 or isinstance(Xs, pd.Series)):
                 raise ValueError(
-                    "The output of the '{}' transformer should be 2D (scipy "
-                    "matrix, array, or pandas DataFrame).".format(name)
+                    f"The output of the '{name}' transformer should be 2D (scipy "
+                    "matrix, array, or pandas DataFrame)."
                 )
 
     @classmethod

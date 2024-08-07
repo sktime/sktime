@@ -1,7 +1,7 @@
 """E-Agglo: agglomerative clustering algorithm that preserves observation order."""
 
 import warnings
-from typing import Callable
+from collections.abc import Callable
 
 import numpy as np
 import pandas as pd
@@ -234,7 +234,7 @@ class EAgglo(BaseTransformer):
 
         for i, xi in grouped:
             self.distances[: self.n_cluster, i] = (
-                2 * grouped.apply(lambda xj: get_distance(xi, xj, self.alpha))  # noqa
+                2 * grouped.apply(lambda xj: get_distance(xi, xj, self.alpha))
                 - within[i]
                 - within
             )

@@ -86,7 +86,7 @@ genetic information, sexual orientation, disability status, physical appearance,
 body size, citizenship, nationality, national origin, ethnic or social origin, pregnancy,
 familial status, family background, veteran status, trade union membership,
 religion or belief (or lack thereof), membership of a national minority, property, age,
-socio-economic status, neurotypicality or -atypicality, education, and experience level.
+socioeconomic status, neurotypicality or -atypicality, education, and experience level.
 
 Everyone who participates in the sktime project activities is required
 to conform to this Code of Conduct. This Code of Conduct applies to all

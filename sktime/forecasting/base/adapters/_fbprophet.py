@@ -16,7 +16,8 @@ class _ProphetAdapter(BaseForecaster):
     """Base class for interfacing prophet and neuralprophet."""
 
     _tags = {
-        "authors": ["mloning", "aiwalter", "fkiraly"],
+        "authors": ["bletham", "tcuongd", "mloning", "aiwalter", "fkiraly"],
+        # bletham and tcuongd for prophet/fbprophet
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
