@@ -85,6 +85,9 @@ Time Series Segmentation
 Time Series Anomaly Detection
 -----------------------------
 
+Window-based Anomaly Detection
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 .. currentmodule:: sktime.annotation.lof
 
 .. autosummary::
@@ -93,8 +96,8 @@ Time Series Anomaly Detection
 
     SubLOF
 
-Adapters
---------
+Reduction to Tabular Anomaly Detection
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. currentmodule:: sktime.annotation.adapters
 
@@ -103,6 +106,7 @@ Adapters
     :template: class.rst
 
     PyODAnnotator
+
 
 Data Generation
 ---------------
