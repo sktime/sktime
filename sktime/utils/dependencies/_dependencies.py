@@ -62,7 +62,8 @@ def _check_soft_dependencies(
 
     normalize_reqs : bool, default=False
         whether to normalize the requirement strings before checking them,
-        by removing build metadata from versions
+        by removing build metadata from versions.
+        If set True, build metadata will be ignored in both requirements and actuals.
 
         Example: requirement "my_pkg==2.3.4.post1" will be normalized to "my_pkg==2.3.4"
 
