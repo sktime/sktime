@@ -2655,6 +2655,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "capability:pred_int": True,
+        "capability:categorical_in_X": True,
     }
 
     def __init__(self, estimator, pooling="local"):
