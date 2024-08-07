@@ -2,7 +2,7 @@
 
 This folder contains libraries directly distributed with, and maintained by, `sktime`.
 
-* `fracdiff` - a package implementing fractional differentiation of time series, 
+* `fracdiff` - a package implementing fractional differentiation of time series,
   a la "Advances in Financial Machine Learning" by M. Prado.
   Unofficial fork of abandoned package from July 2024,
   see [issue 6700](https://github.com/sktime/sktime/issues/6700).

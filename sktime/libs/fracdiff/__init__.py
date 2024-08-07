@@ -2,12 +2,12 @@
 
 Unofficial fork of the ``fracdiff`` package, maintained in ``sktime``.
 
-sktime migration: 2024, July
-Version 0.9.1 release: 2023, Feb 4 (DinoBektesevic)
+sktime migration: 2024, July (DinoBektesevic)
+Version 0.9.1 release: 2023, Feb 4 (simaki)
 
 Original authors: Shota Imaki
 
-The 2024 releases subject to following license:
+The 2023 release subject to following license:
 
 BSD 3-Clause License
 
@@ -40,5 +40,5 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
-from .fdiff import fdiff, fdiff_coef
-from .sklearn.fracdiff import Fracdiff
+from sktime.libs.fracdiff.fdiff import fdiff, fdiff_coef
+from sktime.libs.fracdiff.sklearn.fracdiff import Fracdiff
