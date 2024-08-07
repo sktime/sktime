@@ -1219,7 +1219,7 @@ def _check_predict_intervals(pred_ints, y_test, fh, coverage):
     cutoff = get_cutoff(y_test, return_index=True)
     index_pred = pred_ints.iloc[
         : 1 if isinstance(fh, int) else len(fh)
-    ].index.get_level_values(len(pred_ints.index.names) - 1)
+    ].index.get_level_values(-1)
     _assert_correct_pred_time_index(index_pred, cutoff, fh)
 
     # check columns
@@ -1256,7 +1256,7 @@ def _check_predict_quantiles(pred_quantiles, y_test, fh, alpha):
     cutoff = get_cutoff(y_test, return_index=True)
     index_pred = pred_quantiles.iloc[
         : 1 if isinstance(fh, int) else len(fh)
-    ].index.get_level_values(len(pred_quantiles.index.names) - 1)
+    ].index.get_level_values(-1)
     _assert_correct_pred_time_index(index_pred, cutoff, fh)
 
     # check columns
@@ -1294,7 +1294,7 @@ def _check_predict_proba(pred_dist, y_test, fh_int):
     try:
         pred_index = pred_dist.sigma.iloc[
             : 1 if isinstance(fh_int, int) else len(fh_int)
-        ].index.get_level_values(len(pred_dist.index.names) - 1)
+        ].index.get_level_values(-1)
     except AttributeError:
         pred_index = pred_dist.index
 
