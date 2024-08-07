@@ -353,7 +353,6 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         steps = -np.arange(len(y_train))
         fh = _make_fh(cutoff, steps, fh_type, is_relative)
 
-
         can_pred = estimator_instance.get_tag("capability:pred_int:insample")
         can_pred = can_pred and estimator_instance.get_tag("capability:pred_int")
         if can_pred:
