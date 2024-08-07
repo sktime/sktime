@@ -8,8 +8,13 @@ import pandas as pd
 import pytest
 
 from sktime.annotation.lof import SubLOF
+from sktime.tests.test_switch import run_test_for_class
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(SubLOF),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "x,interval_size,expected_intervals",
     [
@@ -50,14 +55,15 @@ from sktime.annotation.lof import SubLOF
     ],
 )
 def test_cut_into_intervals(x, interval_size, expected_intervals):
-    """Test ClaSP sparse segmentation.
-
-    Check if the predicted change points match.
-    """
+    """Check if the predicted change points match."""
     actual_intervals = SubLOF._split_into_intervals(x, interval_size)
     assert (actual_intervals == expected_intervals).all()
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(SubLOF),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "X,y_expected",
     [
