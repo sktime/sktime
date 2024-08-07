@@ -353,9 +353,10 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         steps = -np.arange(len(y_train))
         fh = _make_fh(cutoff, steps, fh_type, is_relative)
 
-        can_pred = estimator_instance.get_tag("capability:pred_int:insample")
-        can_pred = can_pred and estimator_instance.get_tag("capability:pred_int")
-        if can_pred:
+        can_pr_int = estimator_instance.get_tag("capability:pred_int")
+        can_pr_iins = estimator_instance.get_tag("capability:pred_int:insample")
+        can_pr_iins = can_pr_int and estimator_instance.get_tag("capability:pred_int")
+        if can_pred_iins:
             estimator_instance.fit(y_train, fh=fh)
             y_pred = estimator_instance.predict()
             _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
@@ -365,7 +366,11 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             y_pred_q = estimator_instance.predict_quantiles()
             _assert_correct_pred_time_index(y_pred_q.index, cutoff, fh)
         else:
-            with pytest.raises(NotImplementedError, match="in-sample"):
+            if can_pr_int:
+                match = "in-sample"
+            else:
+                match = "prediction intervals"
+            with pytest.raises(NotImplementedError, match=match):
                 estimator_instance.fit(y_train, fh=fh)
                 y_pred_int = estimator_instance.predict_interval()
 
