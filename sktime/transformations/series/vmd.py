@@ -87,7 +87,6 @@ class VmdTransformer(BaseTransformer):
 
         * ``"u"``: the decomposed modes
         * ``"u_hat"``: the mode spectra (absolute values)
-        * ``"omega"``: the mode frequencies
         * ``"u_both"``: both the decomposed modes and the mode spectra,
           these will be returned column concatenated, first the modes then the spectra
 
@@ -250,11 +249,7 @@ class VmdTransformer(BaseTransformer):
         """
         params0 = {"kMax": 4}
         params1 = {"K": 3, "returned_decomp": "u_hat"}
-        params2 = {
-            "kMax": 3,
-            "energy_loss_coefficient": 0.1,
-            "returned_decomp": "omega",
-        }
+        params2 = {"kMax": 3, "energy_loss_coefficient": 0.1}
         params3 = {"K": 3, "returned_decomp": "u_both", "alpha": 1000}
 
         return [params0, params1, params2, params3]
