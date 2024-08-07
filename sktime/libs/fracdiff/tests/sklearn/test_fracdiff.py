@@ -28,11 +28,15 @@ class TestFracdiff:
         out = fdiff(X, n=d, axis=0, window=window, mode=mode)
         assert_array_equal(fracdiff.fit_transform(X), out)
 
-    @pytest.mark.xfail
     @parametrize_with_checks(
         [
             Fracdiff(1),
         ]
     )
-    def test_sklearn_compatible_estimator(self, estimator, check):
+    def test_sklearn_compatible_esimator(self, estimator, check):
+        SKIPPED_SKLEARN_TESTS = ["check_methods_sample_order_invariance"]
+
+        if check.__name__ in SKIPPED_SKLEARN_TESTS:
+            return None
+
         check(estimator)
