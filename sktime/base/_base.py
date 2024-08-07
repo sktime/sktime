@@ -64,10 +64,7 @@ from sklearn import clone
 from sklearn.base import BaseEstimator as _BaseEstimator
 
 from sktime.exceptions import NotFittedError
-from sktime.utils._estimator_html_repr import (
-    _HTMLDocumentationLinkMixin,
-    _object_html_repr,
-)
+from sktime.utils._estimator_html_repr import _HTMLDocumentationLinkMixin
 from sktime.utils.random_state import set_random_state
 
 SERIALIZATION_FORMATS = {
@@ -409,38 +406,6 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
 
         with ZipFile(serial, "r") as file:
             return pickle.loads(file.open("_obj").read())
-
-    @property
-    def _repr_html_(self):
-        """HTML representation of BaseObject.
-
-        This is redundant with the logic of `_repr_mimebundle_`. The latter
-        should be favorted in the long term, `_repr_html_` is only
-        implemented for consumers who do not interpret `_repr_mimbundle_`.
-        """
-        if self.get_config()["display"] != "diagram":
-            raise AttributeError(
-                "_repr_html_ is only defined when the "
-                "'display' configuration option is set to "
-                "'diagram'"
-            )
-        return self._repr_html_inner
-
-    def _repr_html_inner(self):
-        """Return HTML representation of class.
-
-        This function is returned by the @property `_repr_html_` to make
-        `hasattr(BaseObject, "_repr_html_") return `True` or `False` depending
-        on `self.get_config()["display"]`.
-        """
-        return _object_html_repr(self)
-
-    def _repr_mimebundle_(self, **kwargs):
-        """Mime bundle used by jupyter kernels to display instances of BaseObject."""
-        output = {"text/plain": repr(self)}
-        if self.get_config()["display"] == "diagram":
-            output["text/html"] = _object_html_repr(self)
-        return output
 
 
 class TagAliaserMixin:
