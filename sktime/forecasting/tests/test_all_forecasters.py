@@ -255,10 +255,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         # if the tag correctly states this, we consider this fine as per contract
         # check that estimator raises error message when fitting
         if not fh_is_oos and not estimator_instance.get_tag("capability:insample"):
-            with pytest.raises(
-                NotImplementedError,
-                match="can not perform in-sample prediction",
-            ):
+            with pytest.raises(NotImplementedError, match="in-sample"):
                 estimator_instance.fit(y_train, fh=fh)
             return None
 
@@ -332,6 +329,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             _assert_correct_pred_time_index(y_pred_int.index, cutoff, fh)
             y_pred_q = estimator_instance.predict_quantiles(X=X_test)
             _assert_correct_pred_time_index(y_pred_q.index, cutoff, fh)
+        else:
+            with pytest.raises(NotImplementedError, match="prediction intervals"):
+                estimator_instance.predict_interval(X=X_test)
 
     @pytest.mark.parametrize(
         "index_fh_comb", VALID_INDEX_FH_COMBINATIONS, ids=index_fh_comb_names
@@ -353,17 +353,21 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         steps = -np.arange(len(y_train))
         fh = _make_fh(cutoff, steps, fh_type, is_relative)
 
-        estimator_instance.fit(y_train, fh=fh)
-        y_pred = estimator_instance.predict()
-        _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
 
         can_pred = estimator_instance.get_tag("capability:pred_int:insample")
         can_pred = can_pred and estimator_instance.get_tag("capability:pred_int")
         if can_pred:
+            estimator_instance.fit(y_train, fh=fh)
+            y_pred = estimator_instance.predict()
+            _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
+
             y_pred_int = estimator_instance.predict_interval()
             _assert_correct_pred_time_index(y_pred_int.index, cutoff, fh)
             y_pred_q = estimator_instance.predict_quantiles()
             _assert_correct_pred_time_index(y_pred_q.index, cutoff, fh)
+        else:
+            with pytest.raises(NotImplementedError, match="in-sample"):
+                estimator_instance.fit(y_train, fh=fh)
 
     def test_predict_series_name_preserved(self, estimator_instance):
         """Test that fit/predict preserves name attribute and type of pd.Series."""
