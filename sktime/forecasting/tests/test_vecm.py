@@ -27,7 +27,7 @@ def test_VECM_against_statsmodels():
     else:
         freq = "M"
 
-    index = pd.date_range(start="2005", end="2006-12", freq="M")
+    index = pd.date_range(start="2005", end="2006-12", freq=freq)
     df = pd.DataFrame(
         np.random.randint(0, 100, size=(23, 2)),
         columns=list("AB"),
