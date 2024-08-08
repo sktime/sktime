@@ -178,6 +178,8 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         from torch.optim.lr_scheduler import OneCycleLR
         from torch.utils.data import DataLoader
 
+        # keep a copy of y in case y is None in predict
+        self._y = y
         self._pretrained_model_name_or_path = (
             self._config["pretrained_model_name_or_path"]
             if "pretrained_model_name_or_path" in self._config.keys()
@@ -354,6 +356,9 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         fh should not be passed here and
         must be the same length as the one used to fit the model.
         """
+        # use y values from fit if y is None in predict
+        if y is None:
+            y = self._y
         index = self._fh.to_absolute_index(self.cutoff)
         from torch import from_numpy
 
