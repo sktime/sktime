@@ -356,7 +356,8 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         can_pr_int = estimator_instance.get_tag("capability:pred_int")
         can_pr_iins = estimator_instance.get_tag("capability:pred_int:insample")
-        can_pr_iins = can_pr_int and estimator_instance.get_tag("capability:pred_int")
+        can_pr_iins = can_pr_int and can_pr_iins
+        can_pr_iins = can_pr_iins and estimator_instance.get_tag("capability:insample")
         if can_pr_iins:
             estimator_instance.fit(y_train, fh=fh)
             y_pred = estimator_instance.predict()
