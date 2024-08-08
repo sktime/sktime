@@ -1,4 +1,5 @@
 """Feature union."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly", "mloning"]
@@ -112,6 +113,10 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
         # self._anytagis_then_set("capability:inverse_transform", False, True, ests)
         self._anytagis_then_set("handles-missing-data", False, True, ests)
         self._anytagis_then_set("univariate-only", True, False, ests)
+
+        # if any of the components require_X or require_y, set it for the composite
+        self._anytagis_then_set("requires_X", True, False, ests)
+        self._anytagis_then_set("requires_y", True, False, ests)
 
     @property
     def _transformer_list(self):

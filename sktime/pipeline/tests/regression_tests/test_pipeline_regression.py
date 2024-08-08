@@ -1,16 +1,15 @@
 import numpy as np
 import pandas as pd
 import pytest
-from skbase.utils.dependencies import _check_soft_dependencies
 from sklearn.linear_model import Ridge
 
 from sktime.classification.dummy import DummyClassifier
 from sktime.datasets import load_airline, load_arrow_head, load_longley
-from sktime.forecasting.compose import ForecastX, make_reduction
+from sktime.forecasting.compose import ForecastX, YfromX, make_reduction
 from sktime.forecasting.naive import NaiveForecaster
-from sktime.forecasting.sarimax import SARIMAX
 from sktime.pipeline.pipeline import Pipeline
 from sktime.split import temporal_train_test_split
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.transformations.compose import Id
 from sktime.transformations.series.boxcox import BoxCoxTransformer
 from sktime.transformations.series.detrend import Detrender
@@ -18,8 +17,13 @@ from sktime.transformations.series.difference import Differencer
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.lag import Lag
 from sktime.utils._testing.hierarchical import _bottom_hier_datagen, _make_hierarchical
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.pipeline", "sktime.transformations"]),
+    reason="Run test only if relevant modules have changed",
+)
 def test_transformer_regression():
     np.random.seed(42)
     y, X = load_longley()
@@ -48,6 +52,12 @@ def test_transformer_regression():
     pd.testing.assert_frame_equal(result, result_general)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(
+        ["sktime.pipeline", "sktime.classification", "sktime.transformations"]
+    ),
+    reason="Run test only if relevant modules have changed",
+)
 def test_classifier_regression():
     np.random.seed(42)
     X, y = load_arrow_head(split="train", return_X_y=True)
@@ -75,8 +85,11 @@ def test_classifier_regression():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not _check_soft_dependencies("skpro", severity="none")
+    or not run_test_module_changed(
+        ["sktime.pipeline", "sktime.forecasting", "sktime.transformations"]
+    ),
+    reason="Run test only if relevant modules have changed",
 )
 @pytest.mark.parametrize(
     "method",
@@ -90,7 +103,11 @@ def test_classifier_regression():
 def test_forecaster_regression(method):
     y, X = load_longley()
     y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
-    pipe = Differencer() * SARIMAX()
+
+    # fast forecaster that can use exogenous variables and make proba forecasts
+    f = _get_fcst_with_exog_and_proba()
+
+    pipe = Differencer() * f
     pipe.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4])
     result = getattr(pipe, method)(X=X_test)
     differencer = Differencer()
@@ -99,14 +116,14 @@ def test_forecaster_regression(method):
         [
             {"skobject": differencer, "name": "differencer", "edges": {"X": "y"}},
             {
-                "skobject": SARIMAX(),
-                "name": "SARIMAX",
+                "skobject": f,
+                "name": "fcst",
                 "edges": {"X": "X", "y": "differencer"},
             },
             {
                 "skobject": differencer,
                 "name": "differencer_inverse",
-                "edges": {"X": "SARIMAX"},
+                "edges": {"X": "fcst"},
                 "method": "inverse_transform",
             },
         ]
@@ -117,13 +134,21 @@ def test_forecaster_regression(method):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not _check_soft_dependencies("skpro", severity="none")
+    or not run_test_module_changed(
+        ["sktime.pipeline", "sktime.forecasting", "sktime.transformations"]
+    ),
+    reason="Run test only if relevant modules have changed",
 )
 def test_exogenous_transform_regression():
+    """Test exogenous transformations."""
     y, X = load_longley()
     y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
-    pipe = ExponentTransformer() ** SARIMAX()
+
+    # fast forecaster that can use exogenous variables and make proba forecasts
+    f = _get_fcst_with_exog_and_proba()
+
+    pipe = ExponentTransformer() ** f
     pipe.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4])
     result = pipe.predict(X=X_test)
     result_pi = pipe.predict_interval(X=X_test)
@@ -136,8 +161,8 @@ def test_exogenous_transform_regression():
                 "edges": {"X": "X"},
             },
             {
-                "skobject": SARIMAX(),
-                "name": "SARIMAX",
+                "skobject": f,
+                "name": "fcst",
                 "edges": {"X": "exponent", "y": "y"},
             },
         ]
@@ -151,13 +176,21 @@ def test_exogenous_transform_regression():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not _check_soft_dependencies("skpro", severity="none")
+    or not run_test_module_changed(
+        ["sktime.pipeline", "sktime.forecasting", "sktime.transformations"]
+    ),
+    reason="Run test only if relevant modules have changed",
 )
 def test_endogenous_exogenous_transform_regression():
+    """Test endogenous and exogenous transformations."""
     y, X = load_longley()
     y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
-    pipe = Differencer() * ExponentTransformer() ** SARIMAX()
+
+    # fast forecaster that can use exogenous variables and make proba forecasts
+    f = _get_fcst_with_exog_and_proba()
+
+    pipe = Differencer() * ExponentTransformer() ** f
     pipe.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4])
     result = pipe.predict(X=X_test)
     result_pi = pipe.predict_interval(X=X_test)
@@ -172,14 +205,14 @@ def test_endogenous_exogenous_transform_regression():
                 "edges": {"X": "X"},
             },
             {
-                "skobject": SARIMAX(),
-                "name": "SARIMAX",
+                "skobject": f,
+                "name": "fcst",
                 "edges": {"X": "exponent", "y": "differencer"},
             },
             {
                 "skobject": differencer,
                 "name": "differencer_inverse",
-                "edges": {"X": "SARIMAX"},
+                "edges": {"X": "fcst"},
                 "method": "inverse_transform",
             },
         ]
@@ -191,7 +224,14 @@ def test_endogenous_exogenous_transform_regression():
     np.testing.assert_array_equal(result_pi, result_pi_general)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(
+        ["sktime.pipeline", "sktime.forecasting", "sktime.transformations"]
+    ),
+    reason="Run test only if relevant modules have changed",
+)
 def test_feature_union_regression():
+    """Test feature union with different input types."""
     X = _bottom_hier_datagen(no_levels=1, no_bottom_nodes=2)
     pipe = Id() + Differencer() + Lag([1, 2], index_out="original")
     result = pipe.fit_transform(X)
@@ -217,7 +257,14 @@ def test_feature_union_regression():
     np.testing.assert_array_equal(result, result_general)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(
+        ["sktime.pipeline", "sktime.forecasting", "sktime.transformations"]
+    ),
+    reason="Run test only if relevant modules have changed",
+)
 def test_feature_union_subsetting_regression():
+    """Test feature union with different input types and subsetting."""
     X = _make_hierarchical(
         hierarchy_levels=(2, 2), n_columns=2, min_timepoints=3, max_timepoints=3
     )
@@ -245,6 +292,12 @@ def test_feature_union_subsetting_regression():
     np.testing.assert_array_equal(result, result_general)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(
+        ["sktime.pipeline", "sktime.forecasting", "sktime.transformations"]
+    ),
+    reason="Run test only if relevant modules have changed",
+)
 @pytest.mark.parametrize(
     "data,testing_method",
     [
@@ -292,14 +345,20 @@ def test_varying_mtypes(data, testing_method):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_module_changed(
+        ["sktime.pipeline", "sktime.forecasting", "sktime.transformations"]
+    ),
+    reason="Run test only if relevant modules have changed",
 )
 def test_forecasterX_regression():
     y, X = load_longley()
+
+    # fast forecaster that can use exogenous variables
+    yfromx = YfromX.create_test_instance()
+
     pipe = ForecastX(
         forecaster_X=NaiveForecaster(),
-        forecaster_y=SARIMAX(),
+        forecaster_y=yfromx,
     )
     pipe.fit(y, X=X, fh=[1, 2, 3])
     result = pipe.predict()
@@ -308,7 +367,7 @@ def test_forecasterX_regression():
         [
             {"skobject": NaiveForecaster(), "name": "forecastX", "edges": {"y": "X"}},
             {
-                "skobject": SARIMAX(),
+                "skobject": yfromx,
                 "name": "forecastY",
                 "edges": {"X": "forecastX", "y": "y"},
             },
@@ -320,8 +379,14 @@ def test_forecasterX_regression():
     pd.testing.assert_series_equal(result, result_general)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(
+        ["sktime.pipeline", "sktime.forecasting", "sktime.transformations"]
+    ),
+    reason="Run test only if relevant modules have changed",
+)
 def test_lagged_y_prediction():
-    # regression test for issue 5830
+    """Regression test for issue 5830."""
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y)
 
@@ -335,3 +400,12 @@ def test_lagged_y_prediction():
     pipe.fit(y=y_train)
     y_pred = pipe.predict(fh=y_test.index)
     assert y_pred.shape == y_test.shape
+
+
+def _get_fcst_with_exog_and_proba():
+    """Helper function to get a forecaster with exogenous and proba capability."""
+    from sklearn.linear_model import LinearRegression
+    from skpro.regression.residual import ResidualDouble
+
+    yfromx = YfromX(ResidualDouble(LinearRegression()))
+    return yfromx

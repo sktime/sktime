@@ -6,6 +6,8 @@ __author__ = ["fkiraly"]
 
 from inspect import signature
 
+from sktime.utils.adapters.forward import _clone_fitted_params
+
 
 class _PytsAdapter:
     """Mixin adapter class for pyts models."""
@@ -47,6 +49,26 @@ class _PytsAdapter:
         setattr(self, self._estimator_attr, cls)
         return getattr(self, self._estimator_attr)
 
+    def _call_with_y_optional(self, method, X, y=None):
+        """Call method with or without y parameter.
+
+        The y parameter is passed only if the method has it.
+
+        Parameters
+        ----------
+        method: callable
+            Method to call
+        X, y: any objects
+        """
+        # check if method has y parameter
+        # if yes, call with y, otherwise without
+        method_has_y = "y" in signature(method).parameters
+
+        if method_has_y:
+            return method(X, y)
+        else:
+            return method(X)
+
     def _fit(self, X, y=None):
         """Fit estimator training data.
 
@@ -64,19 +86,10 @@ class _PytsAdapter:
         """
         pyts_est = self._init_pyts_object()
 
-        # check if pyts_est fit has y parameter
-        # if yes, call with y, otherwise without
-        pyts_has_y = "y" in signature(pyts_est.fit).parameters
-
-        if pyts_has_y:
-            pyts_est.fit(X, y)
-        else:
-            pyts_est.fit(X)
+        self._call_with_y_optional(pyts_est.fit, X, y)
 
         # write fitted params to self
-        pyts_fitted_params = self._get_fitted_params_default(pyts_est)
-        for k, v in pyts_fitted_params.items():
-            setattr(self, f"{k}_", v)
+        _clone_fitted_params(to_obj=self, from_obj=pyts_est)
 
         return self
 
@@ -96,14 +109,7 @@ class _PytsAdapter:
         """
         pyts_est = getattr(self, self._estimator_attr)
 
-        # check if pyts_est fit has y parameter
-        # if yes, call with y, otherwise without
-        pyts_has_y = "y" in signature(pyts_est.transform).parameters
-
-        if pyts_has_y:
-            return pyts_est.transform(X, y)
-        else:
-            return pyts_est.transform(X)
+        return self._call_with_y_optional(pyts_est.transform, X, y)
 
     def _predict(self, X, y=None):
         """Predict method adapter.
@@ -121,14 +127,7 @@ class _PytsAdapter:
         """
         pyts_est = getattr(self, self._estimator_attr)
 
-        # check if pyts_est fit has y parameter
-        # if yes, call with y, otherwise without
-        pyts_has_y = "y" in signature(pyts_est.predict).parameters
-
-        if pyts_has_y:
-            return pyts_est.predict(X, y)
-        else:
-            return pyts_est.predict(X)
+        return self._call_with_y_optional(pyts_est.predict, X, y)
 
     def _predict_proba(self, X, y=None):
         """Predict_proba method adapter.
@@ -147,11 +146,12 @@ class _PytsAdapter:
         """
         pyts_est = getattr(self, self._estimator_attr)
 
-        # check if pyts_est fit has y parameter
-        # if yes, call with y, otherwise without
-        pyts_has_y = "y" in signature(pyts_est.predict_proba).parameters
-
-        if pyts_has_y:
-            return pyts_est.predict_proba(X, y)
+        # check if pyts_est has predict_proba
+        # if not, call super's _predict_proba
+        pyts_has_predict_proba = hasattr(pyts_est, "predict_proba")
+        if not pyts_has_predict_proba:
+            method = super()._predict_proba
         else:
-            return pyts_est.predict_proba(X)
+            method = pyts_est.predict_proba
+
+        return self._call_with_y_optional(method, X, y)

@@ -6,11 +6,10 @@ A transformer for the Catch22 features.
 __author__ = ["MatthewMiddlehurst", "julnow"]
 __all__ = ["Catch22"]
 
-from typing import List, Union
+from typing import Union
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
 
 from sktime.datatypes import convert_to
 from sktime.transformations.base import BaseTransformer
@@ -119,8 +118,8 @@ CATCH24_FEATURE_NAMES = list(CATCH24_SHORT_FEATURE_NAMES_DICT.keys())
 
 
 def _verify_features(
-    features: Union[int, str, List[Union[int, str]]], catch24: bool
-) -> List[int]:
+    features: Union[int, str, list[Union[int, str]]], catch24: bool
+) -> list[int]:
     feature_names = FEATURE_NAMES + CATCH24_FEATURE_NAMES if catch24 else FEATURE_NAMES
     short_feature_names = (
         SHORT_FEATURE_NAMES + CATCH24_SHORT_FEATURE_NAMES
@@ -259,14 +258,12 @@ class Catch22(BaseTransformer):
         "fit_is_empty": True,
     }
 
-    # todo 0.29.0: remove n_jobs parameter
     def __init__(
         self,
-        features: Union[int, str, List[Union[int, str]]] = "all",
+        features: Union[int, str, list[Union[int, str]]] = "all",
         catch24: bool = False,
         outlier_norm: bool = False,
         replace_nans: bool = False,
-        n_jobs="deprecated",
         col_names: str = "range",
     ):
         self.features = features
@@ -278,19 +275,6 @@ class Catch22(BaseTransformer):
 
         # todo: remove this unimplemented logic
         self._transform_features = None
-        # todo 0.29.0: remove this warning and logic
-        self.n_jobs = n_jobs
-        if n_jobs != "deprecated":
-            warn(
-                "In Catch22, the parameter "
-                "n_jobs is deprecated and will be removed in v0.29.0. "
-                "Instead, use set_config with the backend and backend:params "
-                "config fields, and set backend to 'joblib' and pass n_jobs "
-                "as a parameter of backend_params. ",
-                FutureWarning,
-                obj=self,
-            )
-            self.set_config(backend="joblib", backend_params={"n_jobs": n_jobs})
 
         super().__init__()
 
@@ -375,17 +359,14 @@ class Catch22(BaseTransformer):
 
         # todo: remove Parallel in future versions, left for
         # compatibility with `CanonicalIntervalForest`
-        n_jobs = self.n_jobs if isinstance(self.n_jobs, int) else 1
-        c22_list = Parallel(n_jobs=n_jobs)(
-            delayed(self._transform_case)(X[i], [feature]) for i in range(n_instances)
-        )
+        c22_list = [self._transform_case(X[i], [feature]) for i in range(n_instances)]
 
         if self.replace_nans:
             c22_list = np.nan_to_num(c22_list, False, 0, 0, 0)
 
         return np.asarray(c22_list)[:, 0, 0]
 
-    def _transform_case(self, X: pd.Series, f_idx: List[int]) -> np.ndarray:
+    def _transform_case(self, X: pd.Series, f_idx: list[int]) -> np.ndarray:
         """Transform data into the Catch22/24 features.
 
         Parameters
@@ -464,7 +445,7 @@ class Catch22(BaseTransformer):
 
     def _prepare_output_col_names(
         self, n_features: int
-    ) -> Union[range, List[int], List[str]]:
+    ) -> Union[range, list[int], list[str]]:
         """Prepare output column names.
 
         It selects the naming style according to self.col_names.
@@ -482,7 +463,7 @@ class Catch22(BaseTransformer):
         Returns
         -------
         Union[range, List[int], List[str]]
-            Column labels for ouput DataFrame.
+            Column labels for output DataFrame.
         """
         if self.col_names == "range":
             return range(n_features)

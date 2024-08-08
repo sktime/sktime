@@ -1,4 +1,5 @@
 """Base class for clustering."""
+
 __author__ = ["chrisholder", "TonyBagnall", "achieveordie"]
 __all__ = ["BaseClusterer"]
 
@@ -10,9 +11,10 @@ import pandas as pd
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_scitype, convert_to, scitype_to_mtype
+from sktime.datatypes._dtypekind import DtypeKind
+from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.validation import check_n_jobs
-from sktime.utils.validation._dependencies import _check_estimator_deps
 
 # Valid input types for clustering
 TimeSeriesInstances = Union[pd.DataFrame, np.ndarray]
@@ -391,6 +393,7 @@ class BaseClusterer(BaseEstimator):
             "has_nans",
             "is_univariate",
             "is_equal_length",
+            "feature_kind",
         ]
         X_valid, _, X_metadata = check_is_scitype(
             X, scitype=ALLOWED_SCITYPES, return_metadata=X_metadata_required
@@ -407,6 +410,11 @@ class BaseClusterer(BaseEstimator):
                 "where MTYPE is the string of the type specification you want for X. "
                 "Possible mtype specification strings are as follows: "
                 f"{', '.join(mtypes_messages)}"
+            )
+
+        if DtypeKind.CATEGORICAL in X_metadata["feature_kind"]:
+            raise TypeError(
+                "Clustering does not support categorical features in endogeneous y."
             )
 
         n_cases = X_metadata["n_instances"]

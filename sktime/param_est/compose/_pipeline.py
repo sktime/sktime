@@ -2,6 +2,7 @@
 
 A class to create a pipeline of transformers and a parameter estimator.
 """
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.param_est.base import BaseParamFitter
@@ -292,7 +293,7 @@ class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
         from sktime.param_est.fixed import FixedParams
         from sktime.param_est.seasonality import SeasonalityACF
         from sktime.transformations.series.exponent import ExponentTransformer
-        from sktime.utils.validation._dependencies import _check_estimator_deps
+        from sktime.utils.dependencies import _check_estimator_deps
 
         t1 = ExponentTransformer(power=2)
         t2 = ExponentTransformer(power=0.5)

@@ -8,6 +8,7 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import load_airline
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.bootstrap import (
     MovingBlockBootstrapTransformer,
     STLBootstrapTransformer,
@@ -16,15 +17,14 @@ from sktime.transformations.bootstrap._mbb import (
     _get_series_name,
     _moving_block_bootstrap,
 )
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 y = load_airline()
 y_index = y.index
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    not run_test_for_class(STLBootstrapTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_bootstrapping_transformer_no_seasonal_period():
     """Tests that an exception is raised if sp<2."""
@@ -36,8 +36,8 @@ def test_bootstrapping_transformer_no_seasonal_period():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    not run_test_for_class(STLBootstrapTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_bootstrapping_transformer_series_shorter_than_sp():
     """Tests that an exception is raised if sp>len(y)."""
@@ -51,8 +51,8 @@ def test_bootstrapping_transformer_series_shorter_than_sp():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    not run_test_for_class([STLBootstrapTransformer, MovingBlockBootstrapTransformer]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize(
     "transformer_class", [STLBootstrapTransformer, MovingBlockBootstrapTransformer]
@@ -79,8 +79,8 @@ index_return_actual_false = pd.MultiIndex.from_product(
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    not run_test_for_class([STLBootstrapTransformer, MovingBlockBootstrapTransformer]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize(
     "transformer_class, return_actual, expected_index",
@@ -116,6 +116,10 @@ def test_bootstrap_transformers_panel_format(
     assert expected_index.equals(y_hat.index) and (y_hat.columns[0] == y.name)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([STLBootstrapTransformer, MovingBlockBootstrapTransformer]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "block_length, replacement", [(1, True), (5, True), (1, False), (5, False)]
 )
@@ -136,6 +140,10 @@ def test_moving_block_bootstrap(block_length, replacement):
     )
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([STLBootstrapTransformer, MovingBlockBootstrapTransformer]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("ts", [y, y.to_frame()])
 def test_get_series_name(ts):
     """Test _get_series_name returns the right string."""

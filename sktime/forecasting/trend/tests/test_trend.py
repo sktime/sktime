@@ -1,4 +1,5 @@
 """Test trend forecasters."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["mloning", "fkiraly"]
@@ -11,9 +12,14 @@ import pytest
 from sktime.datasets import load_airline
 from sktime.forecasting.trend import PolynomialTrendForecaster, TrendForecaster
 from sktime.forecasting.trend._util import _get_X_numpy_int_from_pandas
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.forecasting import make_forecasting_problem
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([PolynomialTrendForecaster, _get_X_numpy_int_from_pandas]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_get_X_numpy():
     """Test _get_X_numpy_int_from_pandas converts to int/float as expected."""
     y = load_airline()
@@ -69,6 +75,10 @@ def get_expected_polynomial_coefs(y, degree, with_intercept=True):
     return np.linalg.lstsq(poly_matrix, y.to_numpy(), rcond=None)[0]
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([PolynomialTrendForecaster, _get_X_numpy_int_from_pandas]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def _test_trend(degree, with_intercept):
     """Check trend, helper function."""
     y = make_forecasting_problem()
@@ -82,6 +92,10 @@ def _test_trend(degree, with_intercept):
     np.testing.assert_allclose(actual, expected, rtol=1e-5)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([PolynomialTrendForecaster, _get_X_numpy_int_from_pandas]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("degree", [1, 3])
 @pytest.mark.parametrize("with_intercept", [True, False])
 def test_trend(degree, with_intercept):
@@ -90,11 +104,19 @@ def test_trend(degree, with_intercept):
 
 
 # zero trend does not work without intercept
+@pytest.mark.skipif(
+    not run_test_for_class([PolynomialTrendForecaster, _get_X_numpy_int_from_pandas]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_zero_trend():
     """Test PolynomialTrendForecaster with degree zero."""
     _test_trend(degree=0, with_intercept=True)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(PolynomialTrendForecaster, _get_X_numpy_int_from_pandas),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_constant_trend():
     """Test expected output from constant trend."""
     y = pd.Series(np.arange(30))
@@ -106,6 +128,12 @@ def test_constant_trend():
     np.testing.assert_array_almost_equal(y, y_pred)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(
+        [PolynomialTrendForecaster, TrendForecaster, _get_X_numpy_int_from_pandas]
+    ),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_trendforecaster_with_datetimeindex():
     """Test PolyonmialTrendForecaster with DatetimeIndex, see #4131."""
     df = load_airline()

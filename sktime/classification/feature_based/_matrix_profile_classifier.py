@@ -118,9 +118,11 @@ class MatrixProfileClassifier(BaseClassifier):
         """
         self._transformer = MatrixProfile(m=self.subsequence_length)
         self._estimator = _clone_estimator(
-            KNeighborsClassifier(n_neighbors=1)
-            if self.estimator is None
-            else self.estimator,
+            (
+                KNeighborsClassifier(n_neighbors=1)
+                if self.estimator is None
+                else self.estimator
+            ),
             self.random_state,
         )
 
@@ -194,4 +196,7 @@ class MatrixProfileClassifier(BaseClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        return {"subsequence_length": 4}
+        return [
+            {"subsequence_length": 4},
+            {"subsequence_length": 6, "estimator": KNeighborsClassifier(n_neighbors=3)},
+        ]

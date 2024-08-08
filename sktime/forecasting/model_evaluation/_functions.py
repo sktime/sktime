@@ -7,7 +7,7 @@ __all__ = ["evaluate"]
 
 import time
 import warnings
-from typing import Dict, List, Optional, Union
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -15,8 +15,8 @@ import pandas as pd
 from sktime.datatypes import check_is_scitype, convert_to
 from sktime.exceptions import FitFailedWarning
 from sktime.forecasting.base import ForecastingHorizon
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.parallel import parallelize
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_cv, check_scoring
 
 PANDAS_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hier"]
@@ -41,7 +41,7 @@ def _check_strategy(strategy):
         raise ValueError(f"`strategy` must be one of {valid_strategies}")
 
 
-def _check_scores(metrics) -> Dict:
+def _check_scores(metrics) -> dict:
     """Validate and coerce to BaseMetric and segregate them based on predict type.
 
     Parameters
@@ -53,7 +53,7 @@ def _check_scores(metrics) -> Dict:
     metrics_type : Dict
         The key is metric types and its value is a list of its corresponding metrics.
     """
-    if not isinstance(metrics, List):
+    if not isinstance(metrics, list):
         metrics = [metrics]
 
     metrics_type = {}
@@ -74,8 +74,8 @@ def _check_scores(metrics) -> Dict:
 
 
 def _get_column_order_and_datatype(
-    metric_types: Dict, return_data: bool = True, cutoff_dtype=None, old_naming=True
-) -> Dict:
+    metric_types: dict, return_data: bool = True, cutoff_dtype=None, old_naming=True
+) -> dict:
     """Get the ordered column name and input datatype of results."""
     others_metadata = {
         "len_train_window": "int",
@@ -244,15 +244,15 @@ def _evaluate_window(x, meta):
                     result_key = f"test_{metric.name}_{argval}"
                     y_pred_key = f"y_{scitype}_{argval}"
                     old_name_mapping[f"{scitype}_{argval}_time"] = f"{scitype}_time"
-                    old_name_mapping[
-                        f"test_{metric.name}_{argval}"
-                    ] = f"test_{metric.name}"
+                    old_name_mapping[f"test_{metric.name}_{argval}"] = (
+                        f"test_{metric.name}"
+                    )
                     old_name_mapping[f"y_{scitype}_{argval}"] = f"y_{scitype}"
 
                 # make prediction
                 if y_pred_key not in y_preds_cache.keys():
                     start_pred = time.perf_counter()
-                    y_pred = method(fh, X_test, **pred_args)
+                    y_pred = method(fh=fh, X=X_test, **pred_args)
                     pred_time = time.perf_counter() - start_pred
                     temp_result[time_key] = [pred_time]
                     y_preds_cache[y_pred_key] = [y_pred]
@@ -324,7 +324,7 @@ def evaluate(
     y,
     X=None,
     strategy: str = "refit",
-    scoring: Optional[Union[callable, List[callable]]] = None,
+    scoring: Optional[Union[callable, list[callable]]] = None,
     return_data: bool = False,
     error_score: Union[str, int, float] = np.nan,
     backend: Optional[str] = None,
@@ -348,20 +348,20 @@ def evaluate(
     2. Fit the ``forecaster`` to :math:`y_{train, 1}`, :math:`X_{train, 1}`,
        with ``fh`` set to the absolute indices of :math:`y_{test, 1}`.
     3. Use the ``forecaster`` to make a prediction ``y_pred`` with the exogeneous
-      data :math:`X_{test, i}`. Predictions are made using either ``predict``,
-      ``predict_proba`` or ``predict_quantiles``, depending on ``scoring``.
+        data :math:`X_{test, i}`. Predictions are made using either ``predict``,
+        ``predict_proba`` or ``predict_quantiles``, depending on ``scoring``.
     4. Compute the ``scoring`` function on ``y_pred`` versus :math:`y_{test, i}`
     5. If ``i == K``, terminate, otherwise
     6. Set ``i = i + 1``
     7. Ingest more data :math:`y_{train, i}`, :math:`X_{train, i}`,
        how depends on ``strategy``:
 
-        - if ``strategy == "refit"``, reset and fit ``forecaster`` via ``fit``,
-          on :math:`y_{train, i}`, :math:`X_{train, i}` to forecast :math:`y_{test, i}`
-        - if ``strategy == "update"``, update ``forecaster`` via ``update``,
-          on :math:`y_{train, i}`, :math:`X_{train, i}` to forecast :math:`y_{test, i}`
-        - if ``strategy == "no-update_params"``, forward ``forecaster`` via ``update``,
-          with argument ``update_params=False``, to the cutoff of :math:`y_{train, i}`
+      - if ``strategy == "refit"``, reset and fit ``forecaster`` via ``fit``,
+        on :math:`y_{train, i}`, :math:`X_{train, i}` to forecast :math:`y_{test, i}`
+      - if ``strategy == "update"``, update ``forecaster`` via ``update``,
+        on :math:`y_{train, i}`, :math:`X_{train, i}` to forecast :math:`y_{test, i}`
+      - if ``strategy == "no-update_params"``, forward ``forecaster`` via ``update``,
+        with argument ``update_params=False``, to the cutoff of :math:`y_{train, i}`
 
     8. Go to 3
 

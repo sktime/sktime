@@ -8,7 +8,10 @@ Welcome to the API reference for ``sktime``.
 
 The API reference provides a technical manual.
 It describes the classes and functions included in sktime.
-For a scientific manual, see the :ref:`user_guide`.
+
+For notebook examples, see the :ref:`examples`.
+
+For a list of object and estimator tags, see :ref:`tags_ref`.
 
 .. include:: includes/api_css.rst
 
@@ -32,4 +35,6 @@ For a scientific manual, see the :ref:`user_guide`.
     api_reference/deployment
     api_reference/utils
     api_reference/exceptions
+    api_reference/tags
     api_reference/pipeline
+    api_reference/benchmarking

@@ -372,7 +372,11 @@ class ContractableBOSS(BaseClassifier):
         return possible_parameters
 
     def _get_train_probs(self, X, y) -> np.ndarray:
+        from sktime.datatypes import convert_to
+
         self.check_is_fitted()
+        if not isinstance(X, np.ndarray):
+            X = convert_to(X, "numpy3D")
         X, y = check_X_y(X, y, coerce_to_numpy=True, enforce_univariate=True)
 
         n_instances, _, series_length = X.shape
@@ -393,9 +397,9 @@ class ContractableBOSS(BaseClassifier):
                 preds = clf._train_predictions
 
                 for n, pred in enumerate(preds):
-                    results[subsample[n]][
-                        self._class_dictionary[pred]
-                    ] += self.weights_[i]
+                    results[subsample[n]][self._class_dictionary[pred]] += (
+                        self.weights_[i]
+                    )
                     divisors[subsample[n]] += self.weights_[i]
 
         else:
@@ -410,9 +414,9 @@ class ContractableBOSS(BaseClassifier):
                     preds.append(clf._train_predict(j, distance_matrix))
 
                 for n, pred in enumerate(preds):
-                    results[subsample[n]][
-                        self._class_dictionary[pred]
-                    ] += self.weights_[i]
+                    results[subsample[n]][self._class_dictionary[pred]] += (
+                        self.weights_[i]
+                    )
                     divisors[subsample[n]] += self.weights_[i]
 
         for i in range(n_instances):

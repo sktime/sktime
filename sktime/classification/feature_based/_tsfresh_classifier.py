@@ -59,9 +59,24 @@ class TSFreshClassifier(BaseClassifier):
     References
     ----------
     .. [1] Christ, Maximilian, et al. "Time series feature extraction on basis of
-        scalable hypothesis tests (tsfresh–a python package)." Neurocomputing 307
+        scalable hypothesis tests (tsfresh-a python package)." Neurocomputing 307
         (2018): 72-77.
         https://www.sciencedirect.com/science/article/pii/S0925231218304843
+
+    Examples
+    --------
+    >>> from sktime.classification.feature_based import TSFreshClassifier
+    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
+    >>> clf = TSFreshClassifier(
+    ...     estimator=RandomForestClassifier(n_estimators=5),
+    ...     default_fc_parameters="efficient",
+    ... ) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
+    TSFreshClassifier(...)
+    >>> y_pred = clf.predict(X_test)  # doctest: +SKIP
     """
 
     _tags = {
@@ -138,9 +153,11 @@ class TSFreshClassifier(BaseClassifier):
             )
         )
         self._estimator = _clone_estimator(
-            RandomForestClassifier(n_estimators=200)
-            if self.estimator is None
-            else self.estimator,
+            (
+                RandomForestClassifier(n_estimators=200)
+                if self.estimator is None
+                else self.estimator
+            ),
             self.random_state,
         )
 

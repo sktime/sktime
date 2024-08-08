@@ -8,15 +8,15 @@ __author__ = ["AurumnPegasus", "achieveordie"]
 __all__ = ["BaseDeepRegressor"]
 
 import os
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 
 import numpy as np
 
 from sktime.regression.base import BaseRegressor
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
-class BaseDeepRegressor(BaseRegressor, ABC):
+class BaseDeepRegressor(BaseRegressor):
     """Abstract base class for deep learning time series regression.
 
     The base classifier provides a deep learning default method for
@@ -155,7 +155,7 @@ class BaseDeepRegressor(BaseRegressor, ABC):
         if hasattr(self, "history"):
             self.__dict__["history"] = self.history
 
-    def save(self, path=None, legacy_save=True):
+    def save(self, path=None):
         """Save serialized self to bytes-like object or to (.zip) file.
 
         Behaviour:
@@ -167,7 +167,6 @@ class BaseDeepRegressor(BaseRegressor, ABC):
         keras/ - model, optimizer and state stored inside this directory.
         history - serialized history object.
 
-
         Parameters
         ----------
         path : None or file location (str or Path)
@@ -177,48 +176,15 @@ class BaseDeepRegressor(BaseRegressor, ABC):
                 path="/home/stored/estimator" then a zip file ``estimator.zip`` will be
                 stored in ``/home/stored/``.
 
-        legacy_save : bool, default = True
-            whether to use the legacy saving method for the model. If
-            tensorflow >= 2.16.0 is installed, this is ignored.
-            The default will switch to False in sktime 0.28.0, and the
-            legacy saving method will be removed in sktime 0.29.0.
-
         Returns
         -------
         if ``path`` is None - in-memory serialized self
         if ``path`` is file location - ZipFile with reference to the file
         """
-        # TODO 0.30.0 - remove the legacy_save parameter in sktime 0.30.0
-        # TODO 0.29.0 - change the default value of legacy_save to False
         import pickle
         import shutil
         from pathlib import Path
         from zipfile import ZipFile
-
-        if legacy_save:
-            from sktime.utils.warnings import warn
-
-            warn(
-                "WARNING: In the save method of classifiers and regressors,"
-                " saving logic has changed to be compatible with tensorflow 2.16. "
-                "The old saving logic is deprecated and will be removed in "
-                "sktime 0.30.0. "
-                "If tensorflow>=2.16.0 is installed, the new saving logic is always "
-                "used. If not, by default, the legacy saving logic is used until "
-                "sktime 0.28.last, and the new logic is used from sktime 0.29.0."
-                "For safe change in an environment with tensorflow<2.16.0, "
-                "set the legacy_save parameter explicitly to False to test the "
-                "new saving logic. If no issues are found, no changes to your code "
-                "are necessary. To keep using the legacy method, set the parameter "
-                "legacy_save to True. Note that the legacy_save parameter will be "
-                "removed entirely in sktime 0.30.0.",
-                FutureWarning,
-                obj=self,
-                stacklevel=2,
-            )
-
-        if _check_soft_dependencies("tensorflow>=2.16.0", severity="none"):
-            legacy_save = False
 
         if path is None:
             _check_soft_dependencies("h5py")
@@ -251,12 +217,9 @@ class BaseDeepRegressor(BaseRegressor, ABC):
         path.mkdir()
 
         if self.model_ is not None:
-            if not legacy_save:
-                keras_path = path / "keras" / "model.keras"
-                os.makedirs(keras_path.parent, exist_ok=True)
-                self.model_.save(keras_path)
-            else:
-                self.model_.save(path / "keras/")
+            keras_path = path / "keras" / "model.keras"
+            os.makedirs(keras_path.parent, exist_ok=True)
+            self.model_.save(keras_path)
 
         with open(path / "history", "wb") as history_writer:
             pickle.dump(self.history.history, history_writer)

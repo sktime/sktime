@@ -69,6 +69,7 @@ class BaseRegressor(BasePanelMixin):
         "has_nans",
         "is_univariate",
         "is_equal_length",
+        "feature_kind",
     ]
 
     # attribute name where vectorized estimators are stored
@@ -315,7 +316,11 @@ class BaseRegressor(BasePanelMixin):
 
         Returns
         -------
-        float, R-squared score of predict(X) vs y
+        float (default) or 1D np.array of float
+            R-squared score of predict(X) vs y
+            float if multioutput="uniform_average" or "variance_weighted,
+            or y is univariate;
+            1D np.array if multioutput="raw_values" and y is multivariate
         """
         from sklearn.metrics import r2_score
 

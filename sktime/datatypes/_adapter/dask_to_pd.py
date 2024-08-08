@@ -13,10 +13,12 @@ MultiIndex columns to DataFrame columns with the name:
     __index__[index_iloc], if level has no indexname and is index_iloc-th level
 index is replaced by a string index where tuples are replaced with str coerced elements
 """
+
 import pandas as pd
 
 from sktime.datatypes._common import _req
 from sktime.datatypes._common import _ret as ret
+from sktime.datatypes._dtypekind import _get_feature_kind, _pandas_dtype_to_kind
 
 
 def _is_mi_col(x):
@@ -44,11 +46,11 @@ def convert_dask_to_pandas(obj):
 
     Parameters
     ----------
-    obj : pandas.DataFrame
+    obj : dask DataFrame
 
     Returns
     -------
-    dask DataFrame
+    pandas.DataFrame
         MultiIndex levels 0 .. -1 of X are converted to columns of name
         __index__[indexname], where indexname is name of multiindex level,
         or the integer index if the level has no name
@@ -86,7 +88,7 @@ def convert_pandas_to_dask(obj, npartitions=1, chunksize=None, sort=True):
 
     Parameters
     ----------
-    obj : dask DataFrame
+    obj : pandas.DataFrame
     npartitions : int or None, optional, default = 1
         npartitions passed to dask from_pandas when converting obj to dask
     chunksize : int or None, optional, default = None
@@ -96,7 +98,7 @@ def convert_pandas_to_dask(obj, npartitions=1, chunksize=None, sort=True):
 
     Returns
     -------
-    pandas.DataFrame
+    dask DataFrame
         MultiIndex levels 0 .. -1 of X are converted to columns of name
         __index__[indexname], where indexname is name of multiindex level,
         or the integer index if the level has no name
@@ -179,6 +181,16 @@ def check_dask_frame(
         metadata["n_features"] = len(obj.columns)
     if _req("feature_names", return_metadata):
         metadata["feature_names"] = obj.columns.to_list()
+    if _req("dtypekind_dfip", return_metadata):
+        index_cols_count = len(index_cols)
+        # slicing off additional index columns
+        dtype_list = obj.dtypes.to_list()[index_cols_count:]
+        metadata["dtypekind_dfip"] = _pandas_dtype_to_kind(dtype_list)
+    if _req("feature_kind", return_metadata):
+        index_cols_count = len(index_cols)
+        dtype_list = obj.dtypes.to_list()[index_cols_count:]
+        dtype_kind = _pandas_dtype_to_kind(dtype_list)
+        metadata["feature_kind"] = _get_feature_kind(dtype_kind)
 
     # check that columns are unique
     if not obj.columns.is_unique:

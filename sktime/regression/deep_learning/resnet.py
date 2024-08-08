@@ -8,8 +8,9 @@ from sklearn.utils import check_random_state
 import cloudpickle
 from sktime.networks.resnet import ResNetNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
-from sktime.utils.validation._dependencies import _check_dl_dependencies
-import joblib
+from sktime.utils.dependencies import _check_dl_dependencies
+
+
 class ResNetRegressor(BaseDeepRegressor):
     """Residual Neural Network Regressor adopted from [1].
 
@@ -37,25 +38,25 @@ class ResNetRegressor(BaseDeepRegressor):
         specify the optimizer and the learning rate to be used.
 
     Notes
-        -----
-        Adapted from the implementation from source code
-        https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/resnet.py
+    -----
+    Adapted from the implementation from source code
+    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/resnet.py
 
-        References
-        ----------
-            .. [1] Wang et. al, Time series classification from
-        scratch with deep neural networks: A strong baseline,
-        International joint conference on neural networks (IJCNN), 2017.
+    References
+    ----------
+        .. [1] Wang et. al, Time series classification from
+    scratch with deep neural networks: A strong baseline,
+    International joint conference on neural networks (IJCNN), 2017.
 
-        Examples
-        --------
-        >>> from sktime.regression.deep_learning.resnet import ResNetRegressor
-        >>> from sktime.datasets import load_unit_test
-        >>> X_train, y_train = load_unit_test(split="train")
-        >>> clf = ResNetRegressor(n_epochs=20, batch_size=4) # doctest: +SKIP
-        >>> clf.fit(X_train, Y_train) # doctest: +SKIP
-        ResNetRegressor(...)
-        """
+    Examples
+    --------
+    >>> from sktime.regression.deep_learning.resnet import ResNetRegressor
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> clf = ResNetRegressor(n_epochs=20, batch_size=4) # doctest: +SKIP
+    >>> clf.fit(X_train, Y_train) # doctest: +SKIP
+    ResNetRegressor(...)
+    """
     _tags = {
         # packaging info
         # --------------
@@ -198,7 +199,8 @@ class ResNetRegressor(BaseDeepRegressor):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_soft_dependencies
+
         param1 = {
             "n_epochs": 6,
             "batch_size": 4,

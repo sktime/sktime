@@ -1,4 +1,5 @@
 """Tests the VAR model."""
+
 __author__ = ["thayeylolu", "AurumnPegasus"]
 import numpy as np
 import pandas as pd
@@ -8,7 +9,7 @@ from numpy.testing import assert_allclose
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.vecm import VECM
 from sktime.split import temporal_train_test_split
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.tests.test_switch import run_test_for_class
 
 index = pd.date_range(start="2005", end="2006-12", freq="M")
 df = pd.DataFrame(
@@ -19,10 +20,10 @@ df = pd.DataFrame(
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(VECM),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
-def test_VAR_against_statsmodels():
+def test_VECM_against_statsmodels():
     """Compares Sktime's and Statsmodel's VECM."""
     from statsmodels.tsa.api import VECM as _VECM
 

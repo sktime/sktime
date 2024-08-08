@@ -37,8 +37,7 @@ experience. Accordingly, everyone who participates in the sktime project
 is expected to show respect and courtesy to other community members at
 all times.
 
-We ask all members of the community to conform to our `Code of
-Conduct <https://github.com/sktime/sktime/blob/main/CODE_OF_CONDUCT.rst>`__.
+We ask all members of the community to conform to our :ref:`code_of_conduct`.
 
 .. _roles:
 
@@ -197,7 +196,7 @@ to the continued development of the project through ongoing engagement
 with the community.
 
 Current core developers are listed in the `core-developers
-team <https://www.sktime.net/en/stable/about/team.html>`__
+team <https://www.sktime.net/en/latest/about/team.html>`__
 within the sktime organisation on GitHub.
 
 .. _rights-and-responsibilities-1:
@@ -269,7 +268,7 @@ CoC committee members
 
 CoC members are contributors with special rights and responsibilities.
 The current members of the CoC committee are listed in the
-`CoC <https://www.sktime.net/en/stable/about/team.html>`__.
+`CoC <https://www.sktime.net/en/latest/about/team.html>`__.
 
 .. _rights-and-responsibilities-2:
 
@@ -317,7 +316,7 @@ responsibilities to avoid deadlocks and ensure a smooth progress of the
 project.
 
 Current CC members are listed in the `community-council
-team <https://www.sktime.net/en/stable/about/team.html>`__
+team <https://www.sktime.net/en/latest/about/team.html>`__
 within the sktime organisation on GitHub.
 
 .. _rights-and-responsibilities-3:
@@ -397,7 +396,7 @@ CC observers
 
 CC (community council) observers are core developers with additional rights and
 responsibilities. Current CC observers are listed in the `community-council
-observers <https://www.sktime.net/en/stable/about/team.html>`__ .
+observers <https://www.sktime.net/en/latest/about/team.html`__.
 
 .. _rights-and-responsibilities-4:
 
@@ -741,7 +740,7 @@ References
 Our governance model is inspired by various existing governance
 structures. In particular, we'd like to acknowledge:
 
-* scikit-learn's `governance model <https://www.sktime.net/en/latest/governance.html>`__
+* scikit-learn's `governance model <https://scikit-learn.org/stable/governance.html>`__
 * `The Turing Way <https://github.com/alan-turing-institute/the-turing-way>`__ project
 * `The Art of Community <https://www.jonobacon.com/books/artofcommunity/>`__ by Jono Bacon
 * The `astropy <https://www.astropy.org>`__ project

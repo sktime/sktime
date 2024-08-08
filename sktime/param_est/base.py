@@ -29,8 +29,9 @@ from sktime.datatypes import (
     scitype_to_mtype,
     update_data,
 )
+from sktime.datatypes._dtypekind import DtypeKind
+from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.sklearn import is_sklearn_transformer
-from sktime.utils.validation._dependencies import _check_estimator_deps
 from sktime.utils.warnings import warn
 
 
@@ -295,7 +296,7 @@ class BaseParamFitter(BaseEstimator):
 
         # checking X
         X_valid, _, X_metadata = check_is_scitype(
-            X, scitype=ALLOWED_SCITYPES, return_metadata=[], var_name="X"
+            X, scitype=ALLOWED_SCITYPES, return_metadata=["feature_kind"], var_name="X"
         )
         msg = (
             "X must be in an sktime compatible format, "
@@ -310,6 +311,12 @@ class BaseParamFitter(BaseEstimator):
         )
         if not X_valid:
             raise TypeError(msg + mtypes_msg)
+
+        if DtypeKind.CATEGORICAL in X_metadata["feature_kind"]:
+            raise TypeError(
+                "Parameter estimators do not support categorical features in X."
+            )
+
         X_scitype = X_metadata["scitype"]
         X_mtype = X_metadata["mtype"]
         # end checking X

@@ -1,5 +1,6 @@
 """Benchmarks tests."""
-from typing import Callable
+
+from collections.abc import Callable
 
 import pandas as pd
 import pytest
@@ -7,7 +8,7 @@ import pytest
 from sktime.base import BaseEstimator
 from sktime.benchmarking import benchmarks
 from sktime.forecasting.naive import NaiveForecaster
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.tests.test_switch import run_test_module_changed
 
 
 def factory_estimator_class_task(**kwargs) -> Callable:
@@ -24,8 +25,8 @@ def factory_estimator_class_task(**kwargs) -> Callable:
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("kotsu", severity="none"),
-    reason="skip test if required soft dependencies not available",
+    not run_test_module_changed("sktime.benchmarking"),
+    reason="run test only if benchmarking module has changed",
 )
 def test_basebenchmark(tmp_path):
     """Test registering estimator, registering a simple task, and running."""
@@ -57,8 +58,8 @@ def test_basebenchmark(tmp_path):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("kotsu", severity="none"),
-    reason="skip test if required soft dependencies not available",
+    not run_test_module_changed("sktime.benchmarking"),
+    reason="run test only if benchmarking module has changed",
 )
 def test_add_estimator_args(tmp_path):
     """Test adding estimator with args specified."""
@@ -77,8 +78,8 @@ def test_add_estimator_args(tmp_path):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("kotsu", severity="none"),
-    reason="skip test if required soft dependencies not available",
+    not run_test_module_changed("sktime.benchmarking"),
+    reason="run test only if benchmarking module has changed",
 )
 def test_add_task_args(tmp_path):
     """Test adding task with args specified."""
@@ -98,8 +99,8 @@ def test_add_task_args(tmp_path):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("kotsu", severity="none"),
-    reason="skip test if required soft dependencies not available",
+    not run_test_module_changed("sktime.benchmarking"),
+    reason="run test only if benchmarking module has changed",
 )
 def test_add_task_string_entrypoint(tmp_path):
     """Test adding task using string of entrypoint."""
@@ -117,8 +118,8 @@ def test_add_task_string_entrypoint(tmp_path):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("kotsu", severity="none"),
-    reason="skip test if required soft dependencies not available",
+    not run_test_module_changed("sktime.benchmarking"),
+    reason="run test only if benchmarking module has changed",
 )
 def test_raise_id_restraint():
     """Test to ensure ID format is raised for malformed input ID."""

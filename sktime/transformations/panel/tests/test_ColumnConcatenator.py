@@ -1,11 +1,17 @@
 """Column concatenator test code."""
 
 import numpy as np
+import pytest
 
 from sktime.datasets import load_basic_motions
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.panel.compose import ColumnConcatenator
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ColumnConcatenator),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_TimeSeriesConcatenator():
     """Test the time series concatenator."""
     X, y = load_basic_motions(split="train", return_X_y=True)

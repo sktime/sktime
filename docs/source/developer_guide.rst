@@ -18,7 +18,7 @@ New developers should:
 * install a development version of ``sktime``, see :ref:`installation`
 * set up CI tests locally and ensure they know how to check them remotely, see :ref:`continuous_integration`
 * get familiar with the git workflow (:ref:`git_workflow`) and coding standards (:ref:`coding_standards`)
-* feel free, at any point in time, to post questions on Discord, or ask core developers for help (see here for a `list of core developers <https://www.sktime.net/en/stable/about/team.html>`_)
+* feel free, at any point in time, to post questions on Discord, or ask core developers for help (see here for a `list of core developers <https://www.sktime.net/en/latest/about/team.html>`_)
 
 * feel free to join the collaborative coding sessions for pair programming or getting help on developer set-up
 

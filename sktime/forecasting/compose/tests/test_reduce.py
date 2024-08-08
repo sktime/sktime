@@ -32,6 +32,7 @@ from sktime.regression.base import BaseRegressor
 from sktime.regression.interval_based import TimeSeriesForestRegressor
 from sktime.split import SlidingWindowSplitter, temporal_train_test_split
 from sktime.split.tests.test_split import _get_windows
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.transformations.panel.reduce import Tabularizer
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils.validation.forecasting import check_fh
@@ -42,6 +43,10 @@ STRATEGIES = ["recursive", "direct", "multioutput", "dirrec"]
 FH = ForecastingHorizon(1)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting", "sktime.split"]),
+    reason="run test only if forecasting or split module has changed",
+)
 @pytest.mark.parametrize("n_timepoints", N_TIMEPOINTS)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS_INT)
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
@@ -77,6 +82,10 @@ def _make_y_X(n_timepoints, n_variables):
     return y, X
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting", "sktime.split"]),
+    reason="run test only if forecasting or split module has changed",
+)
 @pytest.mark.parametrize("n_timepoints", N_TIMEPOINTS)
 @pytest.mark.parametrize("n_variables", N_VARIABLES)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS_INT)
@@ -107,6 +116,10 @@ def test_sliding_window_transform_tabular(n_timepoints, window_length, n_variabl
     assert np.all(Xt < yt[:, [0]])
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting", "sktime.split"]),
+    reason="run test only if forecasting or split module has changed",
+)
 @pytest.mark.parametrize("n_timepoints", N_TIMEPOINTS)
 @pytest.mark.parametrize("n_variables", N_VARIABLES)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS_INT)
@@ -136,6 +149,10 @@ def test_sliding_window_transform_panel(n_timepoints, window_length, n_variables
     assert np.all(Xt < yt[:, np.newaxis, [0]])
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting", "sktime.split"]),
+    reason="run test only if forecasting or split module has changed",
+)
 def test_sliding_window_transform_explicit():
     """Test sliding window transform explicit.
 
@@ -188,6 +205,10 @@ def _make_y(start, end, method="linear-trend", slope=1):
     return y
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting", "sktime.split"]),
+    reason="run test only if forecasting or split module has changed",
+)
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS_INT)
 @pytest.mark.parametrize("strategy", STRATEGIES)
@@ -226,6 +247,10 @@ def test_linear_extrapolation_endogenous_only(
     np.testing.assert_almost_equal(actual, expected)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting", "sktime.split"]),
+    reason="run test only if forecasting or split module has changed",
+)
 @pytest.mark.parametrize("fh", [1, 3, 5])
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS_INT)
 @pytest.mark.parametrize("strategy", STRATEGIES)
@@ -311,6 +336,10 @@ class _TestTimeSeriesRegressor(_Recorder, BaseRegressor):
         """
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting", "sktime.split"]),
+    reason="run test only if forecasting or split module has changed",
+)
 @pytest.mark.parametrize(
     "estimator", [_TestTabularRegressor(), _TestTimeSeriesRegressor()]
 )
@@ -363,6 +392,10 @@ def test_consistent_data_passing_to_component_estimators_in_fit_and_predict(
     assert np.all(X_fit < y_fit[:, np.newaxis, :])
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.compose._reduce"]),
+    reason="run test only if reduce module has changed",
+)
 @pytest.mark.parametrize("scitype, strategy, klass", _REGISTRY)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS_INT)
 def test_make_reduction_construct_instance(scitype, strategy, klass, window_length):
@@ -375,6 +408,10 @@ def test_make_reduction_construct_instance(scitype, strategy, klass, window_leng
     assert forecaster.get_params()["window_length"] == window_length
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting", "sktime.regression"]),
+    reason="run test only if forecasting or regression module has changed",
+)
 @pytest.mark.parametrize(
     "estimator, scitype",
     [
@@ -388,6 +425,10 @@ def test_make_reduction_infer_scitype(estimator, scitype):
     assert forecaster._estimator_scitype == scitype
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting", "sktime.split"]),
+    reason="run test only if forecasting or split module has changed",
+)
 def test_make_reduction_infer_scitype_for_sklearn_pipeline():
     """Test make_reduction.
 
@@ -399,6 +440,10 @@ def test_make_reduction_infer_scitype_for_sklearn_pipeline():
     assert forecaster._estimator_scitype == "tabular-regressor"
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.compose._reduce"]),
+    reason="run test only if reduce module has changed",
+)
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 def test_multioutput_direct_equivalence_tabular_linear_regression(fh):
     """Test multioutput and direct strategies with linear regression.
@@ -477,6 +522,10 @@ EXPECTED_AIRLINE_LINEAR_DIRECT = [
 ]
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.compose._reduce"]),
+    reason="run test only if reduce module has changed",
+)
 @pytest.mark.parametrize(
     "forecaster, expected",
     [
@@ -536,6 +585,10 @@ def test_reductions_airline_data(forecaster, expected):
     np.testing.assert_almost_equal(actual, expected)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.compose._reduce"]),
+    reason="run test only if reduce module has changed",
+)
 def test_dirrec_against_recursive_accumulated_error():
     """Test recursive and dirrec regressor strategies.
 
@@ -559,6 +612,10 @@ def test_dirrec_against_recursive_accumulated_error():
     ) < mean_absolute_percentage_error(y_test, preds_recursive)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.compose._reduce"]),
+    reason="run test only if reduce module has changed",
+)
 def test_direct_vs_recursive():
     """Test reduction forecasters.
 
@@ -590,6 +647,10 @@ def test_direct_vs_recursive():
     assert not pred_dir_max.head(1).equals(pred_dir_spec.head(1))
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.compose._reduce"]),
+    reason="run test only if reduce module has changed",
+)
 def test_recursive_reducer_X_not_fit_to_fh():
     """Test recursive reducer with X that do not fit the fh.
 

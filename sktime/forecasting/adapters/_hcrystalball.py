@@ -8,7 +8,7 @@ import pandas as pd
 from sklearn.base import clone
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 def _check_fh(fh, cutoff):

@@ -1,4 +1,5 @@
 """Shapelet transformer, from pyts."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Abhay-Lejith"]
@@ -123,7 +124,8 @@ class ShapeletTransformPyts(_PytsAdapter, BaseTransformer):
     _tags = {
         # packaging info
         # --------------
-        "authors": "Abhay-Lejith",
+        "authors": ["johannfaouzi", "Abhay-Lejith"],
+        # johannfaouzi is author of upstream pyts code
         "python_dependencies": "pyts",
         # univariate-only controls whether internal X can be univariate/multivariate
         # if True (only univariate), always applies vectorization over variables
