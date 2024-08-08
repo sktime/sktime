@@ -2955,7 +2955,7 @@
         "code",
         "test"
       ]
-    }
+    },
     {
         "login": "DinoBektesevic",
         "name": "Dino Bektesevic",
@@ -2963,6 +2963,7 @@
         "profile": "https://github.com/DinoBektesevic",
         "contributions": [
             "code",
+            "maintenance"
         ]
     }
   ]
