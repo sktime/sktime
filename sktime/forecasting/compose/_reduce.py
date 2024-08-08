@@ -36,12 +36,12 @@ from sktime.datatypes._utilities import get_time_index
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.forecasting.base._fh import _index_range
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
-from sktime.regression.base import BaseRegressor
+from sktime.registry import scitype
 from sktime.transformations.compose import FeatureUnion
 from sktime.transformations.series.summarize import WindowSummarizer
 from sktime.utils.datetime import _shift
 from sktime.utils.estimators.dispatch import construct_dispatch
-from sktime.utils.sklearn import is_sklearn_regressor, prep_skl_df
+from sktime.utils.sklearn import is_sklearn_estimator, prep_skl_df, sklearn_scitype
 from sktime.utils.validation import check_window_length
 from sktime.utils.warnings import warn
 
@@ -1614,23 +1614,29 @@ def _check_scitype(scitype):
 
 
 def _infer_scitype(estimator):
-    # We can check if estimator is an instance of scikit-learn's RegressorMixin or
-    # of sktime's BaseRegressor, otherwise we raise an error. Note that some time-series
-    # regressor also inherit from scikit-learn classes, hence the order in which we
-    # check matters and we first need to check for BaseRegressor.
-    if isinstance(estimator, BaseRegressor):
-        return "time-series-regressor"
-    elif is_sklearn_regressor(estimator):
-        return "tabular-regressor"
+    """Infer scitype from estimator.
+
+    Returns
+    -------
+    scitype : str
+        The inferred scitype of the estimator.
+
+        * if sklearn estimator, returns tabular-regressor etc, one of the returns
+          of sklearn_scitype prefixed with "tabular-".
+        * if sktime/skpro or skbase estimator, returns the scitype of the estimator
+          as found in the object_type tag.
+        * if none of the above applies, returns "tabular-regressor" as fallback default.
+    """
+    if is_sklearn_estimator(estimator):
+        return f"tabular-{sklearn_scitype(estimator)}"
     else:
-        warn(
-            "The `scitype` of the given `estimator` cannot be inferred. "
-            'Assuming "tabular-regressor" = scikit-learn regressor interface. '
-            "If this warning is followed by an unexpected exception, "
-            "please consider report as a bug on the sktime issue tracker.",
-            obj=estimator,
-        )
-        return "tabular-regressor"
+        inferred_skt_scitype = scitype(estimator)
+        if inferred_skt_scitype in ["object", "estimator"]:
+            return "tabular-regressor"
+        if inferred_skt_scitype == "regressor":
+            return "time-series-regressor"
+        else:
+            return inferred_skt_scitype
 
 
 def _check_strategy(strategy):
@@ -1658,7 +1664,21 @@ def _get_forecaster(scitype, strategy):
             "multioutput": MultioutputTimeSeriesRegressionForecaster,
             "dirrec": DirRecTimeSeriesRegressionForecaster,
         },
+        "regressor_proba": {"direct": DirectTabularRegressionForecaster},
     }
+
+    if scitype not in registry:
+        raise ValueError(
+            "Error in make_reduction, no reduction strategies defined for "
+            f"specified or inferred scitype of estimator: {scitype}. "
+            f"Valid scitypes are: {list(registry.keys())}."
+        )
+    if strategy not in registry[scitype]:
+        raise ValueError(
+            f"Error in make_reduction, strategy {strategy} not defined for "
+            f"specified or inferred scitype {scitype}. "
+            f"Valid strategies are: {list(registry[scitype].keys())}."
+        )
     return registry[scitype][strategy]
 
 

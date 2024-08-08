@@ -6,7 +6,13 @@ Welcome to sktime
 
 A unified framework for machine learning with time series.
 
-.. topic:: Register as a user, or voter for sktime committees!
+.. topic:: Register as a voter or candidate for the 2024 council elections!
+
+    Represent the community of users and developers,
+    and help shape the future of sktime. Deadline Sep 22.
+    `Register here <https://github.com/sktime/elections>`_
+
+.. topic:: Register as a user!
 
     Prioritized bugfixes, shape the tech roadmap and governance policy.
     `Register here <https://forms.gle/eVuzrCjKDRupxawL7>`_
