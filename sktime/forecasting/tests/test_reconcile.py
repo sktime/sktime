@@ -14,7 +14,7 @@ from sktime.forecasting.reconcile import ReconcilerForecaster
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.utils._testing.hierarchical import _bottom_hier_datagen, _make_hierarchical
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 # get all the methods
 METHOD_LIST = ReconcilerForecaster.METHOD_LIST
@@ -41,7 +41,7 @@ def test_reconciler_fit_predict(method, flatten, no_levels):
 
     Raises
     ------
-    This test asserts that the output of ReconcilerForecaster is actually hierarhical
+    This test asserts that the output of ReconcilerForecaster is actually hierarchical
     in that the predictions sum together appropriately. It also tests the index
     and columns of the fitted s and g matrix from each method and finally tests
     if the method works for both named and unnamed indexes

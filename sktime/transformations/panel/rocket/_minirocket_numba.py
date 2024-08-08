@@ -4,8 +4,8 @@ __author__ = ["angus924"]
 
 import numpy as np
 
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.numba.njit import njit
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("numba", severity="none"):
     from numba import prange, vectorize
@@ -350,6 +350,9 @@ def _fit_biases(X, dilations, num_features_per_dilation, quantiles, seed):
 
 def _fit_dilations(n_timepoints, num_features, max_dilations_per_kernel):
     num_kernels = 84
+
+    if num_features < 84:
+        num_features = 84
 
     num_features_per_kernel = num_features // num_kernels
     true_max_dilations_per_kernel = min(
@@ -729,17 +732,17 @@ def _transform(X, parameters):
 
                 if _padding1 == 0:
                     for feature_count in range(num_features_this_dilation):
-                        features[
-                            example_index, feature_index_start + feature_count
-                        ] = _PPV(C, biases[feature_index_start + feature_count]).mean()
+                        features[example_index, feature_index_start + feature_count] = (
+                            _PPV(C, biases[feature_index_start + feature_count]).mean()
+                        )
                 else:
                     for feature_count in range(num_features_this_dilation):
-                        features[
-                            example_index, feature_index_start + feature_count
-                        ] = _PPV(
-                            C[padding:-padding],
-                            biases[feature_index_start + feature_count],
-                        ).mean()
+                        features[example_index, feature_index_start + feature_count] = (
+                            _PPV(
+                                C[padding:-padding],
+                                biases[feature_index_start + feature_count],
+                            ).mean()
+                        )
 
                 feature_index_start = feature_index_end
 

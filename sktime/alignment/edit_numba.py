@@ -89,14 +89,14 @@ class AlignerEditNumba(BaseAligner):
     .. [2] Lei Chen, M. Tamer Özsu, and Vincent Oria. 2005. Robust and fast similarity
         search for moving object trajectories. In Proceedings of the 2005 ACM SIGMOD
         international conference on Management of data (SIGMOD '05). Association for
-        Computing Machinery, New York, NY, USA, 491–502.
+        Computing Machinery, New York, NY, USA, 491-502.
         DOI:https://doi.org/10.1145/1066157.1066213
     .. [3] Lei Chen and Raymond Ng. 2004. On the marriage of Lp-norms and edit distance.
         In Proceedings of the Thirtieth international conference on Very large data
-        bases - Volume 30 (VLDB '04). VLDB Endowment, 792–803.
+        bases - Volume 30 (VLDB '04). VLDB Endowment, 792-803.
     .. [4] Marteau, P.; F. (2009). "Time Warp Edit Distance with Stiffness Adjustment
         for Time Series Matching". IEEE Transactions on Pattern Analysis and Machine
-        Intelligence. 31 (2): 306–318.
+        Intelligence. 31 (2): 306-318.
 
     Examples
     --------
@@ -122,6 +122,7 @@ class AlignerEditNumba(BaseAligner):
         "capability:multiple-alignment": False,  # can align more than two sequences?
         "capability:distance": True,  # does compute/return overall distance?
         "capability:distance-matrix": True,  # does compute/return distance matrix?
+        "capability:unequal_length": False,  # can align sequences of unequal length?
         "alignment_type": "partial",
         "X_inner_mtype": "numpy3D",
     }

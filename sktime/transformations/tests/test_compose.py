@@ -10,6 +10,7 @@ from sklearn.preprocessing import StandardScaler
 
 from sktime.datasets import load_airline, load_unit_test
 from sktime.datatypes import get_examples
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.transformations.bootstrap import STLBootstrapTransformer
 from sktime.transformations.compose import (
     FeatureUnion,
@@ -26,9 +27,13 @@ from sktime.transformations.series.summarize import SummaryTransformer
 from sktime.transformations.series.theta import ThetaLinesTransformer
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils.deep_equals import deep_equals
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.utils.dependencies import _check_estimator_deps
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
 def test_dunder_mul():
     """Test the mul dunder method."""
     X = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
@@ -63,6 +68,10 @@ def test_dunder_mul():
     _assert_array_almost_equal(t12.fit_transform(X), t3.fit(X).inverse_transform(X))
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
 def test_dunder_add():
     """Test the add dunder method."""
     X = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
@@ -86,6 +95,10 @@ def test_dunder_add():
     _assert_array_almost_equal(t123r.fit_transform(X), t123.fit_transform(X))
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
 def test_add_sklearn_autoadapt():
     """Test the add dunder method, with sklearn coercion."""
     X = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
@@ -106,6 +119,10 @@ def test_add_sklearn_autoadapt():
     _assert_array_almost_equal(t123r.fit_transform(X), t123l.fit_transform(X))
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
 def test_mul_sklearn_autoadapt():
     """Test the mul dunder method, with sklearn coercion."""
     X = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
@@ -126,6 +143,10 @@ def test_mul_sklearn_autoadapt():
     _assert_array_almost_equal(t123r.fit_transform(X), t123l.fit_transform(X))
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
 def test_missing_unequal_tag_inference():
     """Test that TransformerPipeline infers missing/unequal tags correctly."""
     t1 = ExponentTransformer() * PaddingTransformer() * ExponentTransformer()
@@ -142,6 +163,10 @@ def test_missing_unequal_tag_inference():
     assert not t4.get_tag("capability:missing_values:removes")
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
 def test_featureunion_transform_cols():
     """Test FeatureUnion name and number of columns."""
     X = pd.DataFrame({"test1": [1, 2], "test2": [3, 4]})
@@ -173,6 +198,10 @@ def test_featureunion_transform_cols():
     assert deep_equals(Xt.columns, expected_cols), msg
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
 def test_featureunion_primitives():
     """Test that FeatureUnion is correctly applied to primitives.
 
@@ -189,6 +218,10 @@ def test_featureunion_primitives():
     assert Xt.columns[0] == "SummaryTransformer_1__mean"  # unique naming
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
 def test_sklearn_after_primitives():
     """Test that sklearn transformer after primitives is correctly applied."""
     t = SummaryTransformer() * StandardScaler()
@@ -210,6 +243,10 @@ def test_sklearn_after_primitives():
     assert X_out.iloc[0, 10] < -1.36
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
 def test_pipeline_column_vectorization():
     """Test that pipelines vectorize properly over columns."""
     X = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
@@ -221,6 +258,10 @@ def test_pipeline_column_vectorization():
     assert set(X_theta.columns) == {"a__0", "a__2", "b__0", "b__2"}
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
 def test_pipeline_inverse():
     """Tests that inverse composition works, with inverse skips.
 
@@ -241,6 +282,10 @@ def test_pipeline_inverse():
     _assert_array_almost_equal(X, Xtt)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
 def test_subset_getitem():
     """Test subsetting using the [ ] dunder, __getitem__."""
     X = pd.DataFrame({"a": [1, 2], "b": [3, 4], "c": [5, 6]})
@@ -272,6 +317,10 @@ def test_subset_getitem():
     _assert_array_almost_equal(t_none.fit_transform(X), X_theta)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
 def test_dunder_invert():
     """Test the invert dunder method, for wrapping in OptionalPassthrough."""
     X = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
@@ -288,6 +337,10 @@ def test_dunder_invert():
     )
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
 def test_dunder_neg():
     """Test the neg dunder method, for wrapping in OptionalPassthrough."""
     X = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
@@ -324,3 +377,36 @@ def test_input_output_series_panel_chain():
     Xt = bootstrap_trafo.fit_transform(X)
     assert isinstance(Xt, pd.DataFrame)
     assert isinstance(Xt.index, pd.MultiIndex)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
+def test_requires_tags_trafopipe():
+    """Test correct handling of requires_X tag, failure case in ."""
+    from sktime.transformations.compose import TransformerPipeline, YtoX
+    from sktime.transformations.series.fourier import FourierFeatures
+
+    # data with no exogenous features
+    X = load_airline()
+
+    # create a pipeline with Fourier features and ARIMA
+    pipe = TransformerPipeline(
+        steps=[
+            YtoX(),
+            FourierFeatures(
+                sp_list=[24, 24 * 7],
+                fourier_terms_list=[10, 5],
+                keep_original_columns=True,
+            ),
+        ]
+    )
+
+    assert not pipe.get_tags()["requires_X"]
+    # should not requires X as input, because YtoX does not
+
+    assert pipe.get_tags()["requires_y"]
+    # should require y as input, because YtoX does
+
+    pipe.fit_transform(X=None, y=X)

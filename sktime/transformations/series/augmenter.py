@@ -58,6 +58,16 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
             If None, rely on ``self.random_state``.
             Default is None." [3]
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.transformations.series.augmenter import WhiteNoiseAugmenter
+    >>> X = np.array([1, 2, 3, 4, 5])
+    >>> augmenter = WhiteNoiseAugmenter(scale=0.5, random_state=42)
+    >>> augmenter.fit(X)
+    WhiteNoiseAugmenter(...)
+    >>> X_augmented = augmenter.transform(X)
+
     References and Footnotes
     ----------
 
@@ -66,8 +76,8 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
         [2]: IWANA, Brian Kenji; UCHIDA, Seiichi. An empirical survey of data
         augmentation for time series classification with neural networks. Plos
         one, 2021, 16. Jg., Nr. 7, S. e0254841.
-        [3]: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.rv_continuous.random_state.html # noqa
-    """
+        [3]: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.rv_continuous.random_state.html
+    """  # noqa: E501
 
     _tags = {"python_dependencies": "scipy"}
 
@@ -135,6 +145,8 @@ class InvertAugmenter(_AugmenterTags, BaseTransformer):
 
     Examples
     --------
+    >>> from sktime.transformations.series.augmenter import InvertAugmenter
+    >>> import pandas as pd
     >>> X = pd.Series([1,2,3,4,5])
     >>> augmenter = InvertAugmenter()
     >>> Xt = augmenter.fit_transform(X)
@@ -182,8 +194,8 @@ class RandomSamplesAugmenter(_AugmenterTags, BaseTransformer):
     References and Footnotes
     ----------
 
-        [1]: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.rv_continuous.random_state.html # noqa
-    """
+        [1]: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.rv_continuous.random_state.html
+    """  # noqa: E501
 
     def __init__(
         self,

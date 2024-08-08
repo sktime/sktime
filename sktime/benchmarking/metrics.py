@@ -1,4 +1,5 @@
 """Implements metrics for pairwise and aggregate comparison."""
+
 __all__ = ["PairwiseMetric", "AggregateMetric"]
 __author__ = ["viktorkaz", "mloning"]
 

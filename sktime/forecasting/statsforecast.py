@@ -1,7 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Interfaces to estimators from statsforecast by Nixtla."""
 
-__author__ = ["FedericoGarza", "yarnabrina"]
+__author__ = ["AzulGarza", "yarnabrina"]
 
 __all__ = [
     "StatsForecastAutoARIMA",
@@ -11,14 +11,14 @@ __all__ = [
     "StatsForecastAutoTheta",
     "StatsForecastMSTL",
 ]
-from typing import Dict, List, Optional, Union
+from typing import Optional, Union
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base.adapters._generalised_statsforecast import (
     StatsForecastBackAdapter,
     _GeneralisedStatsForecastAdapter,
 )
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
@@ -179,8 +179,8 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["FedericoGarza", "yarnabrina"],
-        "maintainers": ["FedericoGarza"],
+        "authors": ["AzulGarza", "yarnabrina"],
+        "maintainers": ["AzulGarza"],
         # "python_dependencies": "statsforecast"
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
@@ -217,7 +217,7 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
         trend: bool = True,
         method: Optional[str] = None,
         offset_test_args: Optional[str] = None,
-        seasonal_test_args: Optional[Dict] = None,
+        seasonal_test_args: Optional[dict] = None,
         trace: bool = False,
         n_fits: int = 94,
         with_intercept: bool = True,
@@ -369,7 +369,14 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
     _tags = {
         # packaging info
         # --------------
-        # "authors": ["yarnabrina"],
+        "authors": [
+            "AzulGarza",
+            "jmoralez",
+            "yarnabrina",
+            "arnaujc91",
+            "luca-miniati",
+        ],
+        # AzulGarza, jmoralez for statsforecast theta
         # "maintainers": ["yarnabrina"],
         # "python_dependencies": "statsforecast"
         # inherited from _GeneralisedStatsForecastAdapter
@@ -477,7 +484,14 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
     _tags = {
         # packaging info
         # --------------
-        # "authors": ["yarnabrina"],
+        "authors": [
+            "AzulGarza",
+            "jmoralez",
+            "yarnabrina",
+            "arnaujc91",
+            "luca-miniati",
+        ],
+        # AzulGarza and jmoralez for statsforecast AutoETS
         # "maintainers": ["yarnabrina"],
         # "python_dependencies": "statsforecast"
         # inherited from _GeneralisedStatsForecastAdapter
@@ -577,7 +591,15 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
     _tags = {
         # packaging info
         # --------------
-        # "authors": ["yarnabrina"],
+        "authors": [
+            "AzulGarza",
+            "jmoralez",
+            "MMenchero",
+            "yarnabrina",
+            "arnaujc91",
+            "luca-miniati",
+        ],
+        # AzulGarza, jmoralez, MMenchero for statsforecast AutoCES
         # "maintainers": ["yarnabrina"],
         # "python_dependencies": "statsforecast"
         # inherited from _GeneralisedStatsForecastAdapter
@@ -655,10 +677,6 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
         Number of observations per unit of time. Ex: 24 Hourly data.
     use_boxcox : bool (default=None)
         Whether or not to use a Box-Cox transformation. By default tries both.
-    bc_lower_bound : float (default=0.0)
-        Lower bound for the Box-Cox transformation.
-    bc_upper_bound : float (default=1.5)
-        Upper bound for the Box-Cox transformation.
     use_trend : bool (default=None)
         Whether or not to use a trend component. By default tries both.
     use_damped_trend : bool (default=None)
@@ -666,6 +684,10 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
     use_arma_errors : bool (default=True)
         Whether or not to use a ARMA errors.
         Default is True and this evaluates both models.
+    bc_lower_bound : float (default=0.0)
+        Lower bound for the Box-Cox transformation.
+    bc_upper_bound : float (default=1.0)
+        Upper bound for the Box-Cox transformation.
 
     See Also
     --------
@@ -680,7 +702,14 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
     _tags = {
         # packaging info
         # --------------
-        # "authors": ["yarnabrina"],
+        "authors": [
+            "MMenchero",
+            "jmoralez",
+            "yarnabrina",
+            "arnaujc91",
+            "luca-miniati",
+        ],
+        # MMenchero and jmoralez for statsforecast AutoTBATS
         # "maintainers": ["yarnabrina"],
         # "python_dependencies": "statsforecast"
         # inherited from _GeneralisedStatsForecastAdapter
@@ -694,17 +723,21 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
 
     def __init__(
         self,
-        seasonal_periods: Union[int, List[int]],
+        seasonal_periods: Union[int, list[int]],
         use_boxcox: Optional[bool] = None,
         use_trend: Optional[bool] = None,
         use_damped_trend: Optional[bool] = None,
         use_arma_errors: bool = True,
+        bc_lower_bound: float = 0.0,
+        bc_upper_bound: float = 1.0,
     ):
         self.seasonal_periods = seasonal_periods
         self.use_boxcox = use_boxcox
         self.use_trend = use_trend
         self.use_damped_trend = use_damped_trend
         self.use_arma_errors = use_arma_errors
+        self.bc_lower_bound = bc_lower_bound
+        self.bc_upper_bound = bc_upper_bound
 
         super().__init__()
 
@@ -716,11 +749,13 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
 
     def _get_statsforecast_params(self) -> dict:
         return {
-            "seasonal_periods": self.seasonal_periods,
+            "season_length": self.seasonal_periods,
             "use_boxcox": self.use_boxcox,
             "use_trend": self.use_trend,
             "use_damped_trend": self.use_damped_trend,
             "use_arma_errors": self.use_arma_errors,
+            "bc_lower_bound": self.bc_lower_bound,
+            "bc_upper_bound": self.bc_upper_bound,
         }
 
     @classmethod
@@ -745,7 +780,21 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
         """
         del parameter_set  # to avoid being detected as unused by `vulture` etc.
 
-        params = [{"seasonal_periods": 3}, {"seasonal_periods": [3, 12]}]
+        params = [
+            {
+                "seasonal_periods": 3,
+                "use_boxcox": True,
+                "bc_lower_bound": 0.25,
+                "bc_upper_bound": 0.75,
+            },
+            {
+                "seasonal_periods": [3, 12],
+                "use_boxcox": False,
+                "use_trend": True,
+                "use_damped_trend": True,
+                "use_arma_errors": False,
+            },
+        ]
 
         return params
 
@@ -797,7 +846,14 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
     _tags = {
         # packaging info
         # --------------
-        "authors": "luca-miniati",
+        "authors": [
+            "AzulGarza",
+            "jmoralez",
+            "luca-miniati",
+            "yarnabrina",
+            "arnaujc91",
+        ],
+        # AzulGarza and jmoralez for statsforecast MSTL
         "maintainers": "luca-miniati",
         # "python_dependencies": "statsforecast"
         # inherited from _GeneralisedStatsForecastAdapter
@@ -811,10 +867,10 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
 
     def __init__(
         self,
-        season_length: Union[int, List[int]],
+        season_length: Union[int, list[int]],
         trend_forecaster=None,
-        stl_kwargs: Optional[Dict] = None,
-        pred_int_kwargs: Optional[Dict] = None,
+        stl_kwargs: Optional[dict] = None,
+        pred_int_kwargs: Optional[dict] = None,
     ):
         self.season_length = season_length
         self.trend_forecaster = trend_forecaster

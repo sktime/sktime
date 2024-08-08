@@ -20,7 +20,7 @@ State:
 __all__ = [
     "BaseRegressor",
 ]
-__author__ = ["mloning", "fkiraly"]
+__author__ = ["mloning", "fkiraly", "ksharma6"]
 
 import time
 
@@ -69,6 +69,7 @@ class BaseRegressor(BasePanelMixin):
         "has_nans",
         "is_univariate",
         "is_equal_length",
+        "feature_kind",
     ]
 
     # attribute name where vectorized estimators are stored
@@ -130,6 +131,27 @@ class BaseRegressor(BasePanelMixin):
                 return RegressorPipeline(regressor=self, transformers=[other])
         elif is_sklearn_transformer(other):
             return TabularToSeriesAdaptor(other) * self
+        else:
+            return NotImplemented
+
+    def __or__(self, other):
+        """Magic | method, return MultiplexRegressor.
+
+        Implemented for `other` being either a MultiplexRegressor or a regressor.
+
+        Parameters
+        ----------
+        other: `sktime` regressor or sktime MultiplexRegressor
+
+        Returns
+        -------
+        MultiplexRegressor object
+        """
+        from sktime.regression.compose import MultiplexRegressor
+
+        if isinstance(other, MultiplexRegressor) or isinstance(other, BaseRegressor):
+            multiplex_self = MultiplexRegressor([self])
+            return multiplex_self | other
         else:
             return NotImplemented
 
@@ -294,7 +316,11 @@ class BaseRegressor(BasePanelMixin):
 
         Returns
         -------
-        float, R-squared score of predict(X) vs y
+        float (default) or 1D np.array of float
+            R-squared score of predict(X) vs y
+            float if multioutput="uniform_average" or "variance_weighted,
+            or y is univariate;
+            1D np.array if multioutput="raw_values" and y is multivariate
         """
         from sklearn.metrics import r2_score
 

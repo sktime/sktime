@@ -1,4 +1,5 @@
 """Splitter obtained from repeating another splitter."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly"]
@@ -130,7 +131,7 @@ class Repeat(BaseSplitter):
                 for _ in range(self.times):
                     yield train, test
         elif self.mode == "entry" and random_repeat:
-            for _ in range(self.times):
+            for _ in range(self.splitter.get_n_splits(y)):
                 for spl_gen in spl_gens:
                     yield next(spl_gen)
         elif self.mode == "sequence" and not random_repeat:
@@ -155,7 +156,7 @@ class Repeat(BaseSplitter):
         n_splits : int
             The number of splits.
         """
-        return self._splitter.get_n_splits(y) * self.times
+        return self.splitter.get_n_splits(y) * self.times
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

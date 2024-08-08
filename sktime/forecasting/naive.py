@@ -357,7 +357,6 @@ class NaiveForecaster(_BaseWindowForecaster):
         lagger = Lag(1, keep_column_names=True, freq=freq)
 
         expected_index = fh.to_absolute(cutoff).to_pandas()
-
         if strategy == "last" and sp == 1:
             y_old = lagger.fit_transform(_y)
             y_new = pd.DataFrame(index=expected_index, columns=[0], dtype="float64")
@@ -572,9 +571,9 @@ class NaiveForecaster(_BaseWindowForecaster):
         # Formulas from:
         # https://otexts.com/fpp3/prediction-intervals.html (Table 5.2)
         partial_se_formulas = {
-            "last": sqrt_flr
-            if sp == 1
-            else lambda h: sqrt_flr(np.floor((h - 1) / sp) + 1),
+            "last": (
+                sqrt_flr if sp == 1 else lambda h: sqrt_flr(np.floor((h - 1) / sp) + 1)
+            ),
             "mean": lambda h: np.repeat(sqrt_flr(1 + (1 / window_length)), len(h)),
             "drift": lambda h: sqrt_flr(h * (1 + (h / (T - 1)))),
         }

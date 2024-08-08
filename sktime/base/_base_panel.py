@@ -23,6 +23,7 @@ from sktime.datatypes import (
     check_is_scitype,
     convert,
 )
+from sktime.datatypes._dtypekind import DtypeKind
 from sktime.utils.warnings import warn
 
 
@@ -102,7 +103,15 @@ class BasePanelMixin(BaseEstimator):
 
             return y_pred
 
-    def _fit_predict_boilerplate(self, X, y, cv, change_state, method):
+    def _fit_predict_boilerplate(
+        self,
+        X,
+        y,
+        cv,
+        change_state,
+        method,
+        return_type="single_y_pred",
+    ):
         """Boilerplate logic for fit_predict and fit_predict_proba."""
         from sklearn.model_selection import KFold
 
@@ -147,31 +156,86 @@ class BasePanelMixin(BaseEstimator):
             X = convert(
                 X,
                 from_type=X_mtype,
-                to_type="nested_univ",
+                to_type=["pd-multiindex", "nested_univ"],
                 as_scitype="Panel",
                 store_behaviour="freeze",
             )
 
-        if method == "predict_proba":
-            y_pred = np.empty([len(y), len(np.unique(y))])
-        else:
-            y_pred = np.empty_like(y)
-        y_pred[:] = -1
-        if isinstance(X, np.ndarray):
-            for tr_idx, tt_idx in cv.split(X):
-                X_train = X[tr_idx]
-                X_test = X[tt_idx]
-                y_train = y[tr_idx]
-                fitted_est = self.clone().fit(X_train, y_train)
-                y_pred[tt_idx] = getattr(fitted_est, method)(X_test)
-        else:
-            for tr_idx, tt_idx in cv.split(X):
-                X_train = X.iloc[tr_idx]
-                X_test = X.iloc[tt_idx]
-                y_train = y[tr_idx]
-                fitted_est = self.clone().fit(X_train, y_train)
-                y_pred[tt_idx] = getattr(fitted_est, method)(X_test)
+        y_preds = []
+        tt_ixx = []
 
+        if isinstance(X.index, pd.MultiIndex):
+            X_ix = X.index.get_level_values(0).unique()
+        else:
+            X_ix = np.arange(len(X))
+
+        for tr_idx, tt_idx in cv.split(X_ix):
+            X_train = self._subset(X, tr_idx)
+            X_test = self._subset(X, tt_idx)
+            y_train = self._subset(y, tr_idx)
+            fitted_est = self.clone().fit(X_train, y_train)
+            y_preds.append(getattr(fitted_est, method)(X_test))
+            tt_ixx.append(tt_idx)
+
+        if return_type == "single_y_pred":
+            return self._pool(y_preds, tt_ixx, y)
+        else:
+            return y_preds
+
+    def _subset(self, obj, ix):
+        """Subset input data by ix, for use in fit_predict_boilerplate.
+
+        Parameters
+        ----------
+        obj : pd.DataFrame or np.ndarray
+            if pd.DataFrame, instance index = first level of pd.MultiIndex
+            if np.ndarray, instance index = 0-th axis
+        ix : sklearn splitter index, e.g., ix, _ from KFold.split(X)
+
+        Returns
+        -------
+        obj_ix : obj subset by ix
+        """
+        if isinstance(obj, np.ndarray):
+            return obj[ix]
+        if not isinstance(obj, (pd.DataFrame, pd.Series)):
+            raise ValueError("obj must be a pd.DataFrame, pd.Series, or np.ndarray")
+        if not isinstance(obj.index, pd.MultiIndex):
+            return obj.iloc[ix]
+        else:
+            ix_loc = obj.index.get_level_values(0).unique()[ix]
+            return obj.loc[ix_loc]
+
+    def _pool(self, y_preds, tt_ixx, y):
+        """Pool predictions from cv splits, for use in fit_predict_boilerplate.
+
+        Parameters
+        ----------
+        y_preds : list of np.ndarray or pd.DataFrame
+            list of predictions from cv splits
+        tt_ixx : list of np.ndarray or pd.DataFrame
+            list of test indices from cv splits
+
+        Returns
+        -------
+        y_pred : np.ndarray, pooled predictions
+        """
+        y_pred = y_preds[0]
+        if isinstance(y_pred, (pd.DataFrame, pd.Series)):
+            for i in range(1, len(y_preds)):
+                y_pred = y_pred.combine_first(y_preds[i])
+            y_pred = y_pred.reindex(y.index).fillna(-1)
+        else:
+            if y_pred.ndim == 1:
+                sh = y.shape
+            else:
+                sh = (y.shape[0], y_pred.shape[1])
+            y_pred = -np.ones(sh, dtype=y.dtype)
+            for i, ix in enumerate(tt_ixx):
+                y_preds_i = y_preds[i]
+                if y_pred.ndim == 1:
+                    y_preds_i = y_preds_i.reshape(-1)
+                y_pred[ix] = y_preds_i
         return y_pred
 
     def _check_convert_X_for_predict(self, X):
@@ -302,8 +366,9 @@ class BasePanelMixin(BaseEstimator):
         capa_multioutput = self.get_tag("capability:multioutput")
         y_inner_mtype = self.get_tag("y_inner_mtype")
 
+        y_metadata_required = ["is_univariate", "feature_names", "feature_kind"]
         y_valid, y_msg, y_metadata = check_is_scitype(
-            y, "Table", return_metadata=["is_univariate", "feature_names"]
+            y, "Table", return_metadata=y_metadata_required
         )
 
         if not y_valid:
@@ -315,6 +380,15 @@ class BasePanelMixin(BaseEstimator):
             )
             check_is_error_msg(
                 y_msg, var_name="y", allowed_msg=allowed_msg, raise_exception=True
+            )
+
+        est_type = self.get_tag("object_type")  # classifier or regressor
+        if (
+            est_type == "regressor"
+            and DtypeKind.CATEGORICAL in y_metadata["feature_kind"]
+        ):
+            raise TypeError(
+                "Regressors do not support categorical features in endogeneous y."
             )
 
         y_uni = y_metadata["is_univariate"]
@@ -433,6 +507,7 @@ class BasePanelMixin(BaseEstimator):
         X_valid, msg, X_metadata = check_is_scitype(
             X, scitype="Panel", return_metadata=return_metadata
         )
+
         # raise informative error message if X is in wrong format
         allowed_msg = (
             f"Allowed scitypes for {self.EST_TYPE_PLURAL} are Panel mtypes, "
@@ -443,6 +518,12 @@ class BasePanelMixin(BaseEstimator):
         if not X_valid:
             check_is_error_msg(
                 msg, var_name="X", allowed_msg=allowed_msg, raise_exception=True
+            )
+
+        est_type = self.get_tag("object_type")  # classifier or regressor
+        if DtypeKind.CATEGORICAL in X_metadata["feature_kind"]:
+            raise TypeError(
+                f"{est_type}s do not support categorical features in exogeneous X."
             )
 
         n_cases = X_metadata["n_instances"]

@@ -2,7 +2,7 @@
 """Kalman Filter Transformers.
 
 Series based transformers, based on Kalman Filter algorithm. Contains Base class and two
-transformers which are each Adapters for external packages pykalman-bardo and FilterPy.
+transformers which are each Adapters for external packages pykalman and FilterPy.
 """
 
 __author__ = ["NoaBenAmi", "lielleravid"]
@@ -15,7 +15,7 @@ __all__ = [
 import numpy as np
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.warnings import warn
 
 
@@ -107,9 +107,7 @@ def _init_matrix(matrices, transform_func, default_val):
     return transform_func(matrices)
 
 
-def _check_conditional_dependency(
-    obj, condition, package, severity, package_import_alias=None, msg=None
-):
+def _check_conditional_dependency(obj, condition, package, severity, msg=None):
     """If ``condition`` applies, check the soft dependency ``package`` installation.
 
     Call _check_soft_dependencies.
@@ -124,9 +122,6 @@ def _check_conditional_dependency(
         Error message to attach to ModuleNotFoundError.
     package : str
         Package name for soft dependency check.
-    package_import_alias : dict with str keys and values or None, optional, default=None
-        import name is str used in python import, i.e., from import_name import ...
-        should be provided if import name differs from package name
     severity : str
         'error' or 'warning'.
 
@@ -144,12 +139,7 @@ def _check_conditional_dependency(
                 f"install the `{package}` package. "
             )
         try:
-            _check_soft_dependencies(
-                package,
-                package_import_alias=package_import_alias,
-                severity=severity,
-                obj=obj,
-            )
+            _check_soft_dependencies(package, severity=severity, obj=obj)
         except ModuleNotFoundError as e:
             raise ModuleNotFoundError(msg) from e
 
@@ -173,7 +163,7 @@ def _validate_estimate_matrices(input_ems, all_ems):
         if input_ems == "all":
             return all_ems
         if input_ems in all_ems:
-            return list([input_ems])
+            return list([input_ems])  # noqa: C410
 
         raise ValueError(
             f"If `estimate_matrices` is passed as a "
@@ -397,19 +387,27 @@ class BaseKalmanFilter:
 
 
 class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
-    """Kalman Filter is used for denoising data, or inferring the hidden state of data.
+    """Kalman Filter, from pykalman (sktime native maintenance fork).
 
     The Kalman Filter is an unsupervised algorithm, consisting of
     several mathematical equations which are used to create
     an estimate of the state of a process.
 
+    The Kalman Filter is typically used for denoising data,
+    or inferring the hidden state of data.
 
-    This class is the adapter for the ``pykalman-bardo`` package into ``sktime``.
+    This class is the adapter for the ``pykalman`` package into ``sktime``.
     ``KalmanFilterTransformerPK`` implements hidden inferred states and
     denoising, depending on the boolean input parameter ``denoising``.
     In addition, ``KalmanFilterTransformerPK`` provides parameter
     optimization via Expectation-Maximization (EM) algorithm [2]_,
-    implemented by ``pykalman-bardo``.
+    implemented by ``pykalman``.
+
+    As the ``pykalman`` package is no longer maintained, ``sktime`` now contains
+    an up-to-date maintenance fork of the ``pykalman`` package.
+
+    The maintenance fork can also be directly accessed in
+    ``sktime.libs.pykalman``.
 
     Parameters
     ----------
@@ -443,22 +441,22 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
         Initial estimated system state covariance, also referred to as ``P0``.
     transition_offsets : np.ndarray, optional (default=None)
         of shape (state_dim,) or (time_steps, state_dim).
-        State offsets, also referred to as ``b``, as described in ``pykalman-bardo``.
+        State offsets, also referred to as ``b``, as described in ``pykalman``.
     measurement_offsets : np.ndarray, optional (default=None)
         of shape (measurement_dim,) or (time_steps, measurement_dim).
         Observation (measurement) offsets, also referred to as ``d``,
-        as described in ``pykalman-bardo``.
+        as described in ``pykalman``.
     denoising : bool, optional (default=False).
         This parameter affects ``transform``. If False, then ``transform`` will be
         inferring
-        hidden state. If True, uses ``pykalman-bardo`` ``smooth`` for denoising.
+        hidden state. If True, uses ``pykalman`` ``smooth`` for denoising.
     estimate_matrices : str or list of str, optional (default=None).
         Subset of [``state_transition``, ``measurement_function``,
         ``process_noise``, ``measurement_noise``, ``initial_state``,
         ``initial_state_covariance``, ``transition_offsets``, ``measurement_offsets``]
         or - ``all``. If ``estimate_matrices`` is an iterable of strings,
         only matrices in ``estimate_matrices`` will be estimated using EM algorithm,
-        like described in ``pykalman-bardo``. If ``estimate_matrices`` is ``all``,
+        like described in ``pykalman``. If ``estimate_matrices`` is ``all``,
         then all matrices will be estimated using EM algorithm.
 
         Note - parameters estimated by EM algorithm assumed to be constant.
@@ -470,7 +468,7 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
 
     Notes
     -----
-    ``pykalman-bardo`` KalmanFilter documentation :
+    ``pykalman`` KalmanFilter documentation :
         https://pykalman.github.io/#kalmanfilter
 
     References
@@ -538,10 +536,11 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["NoaBenAmi", "lielleravid"],
+        "authors": ["duckworthd", "NoaBenAmi", "lielleravid", "mbalatsko", "gliptak"],
+        # duckworthd for the original pykalman package (abandoned later)
+        # mbalatsko, gliptak for fixes and updates
+        # NoaBenAmi, lielleravid for the sktime adapter
         "maintainers": ["NoaBenAmi"],
-        "python_dependencies": "pykalman-bardo",
-        "python_dependencies_alias": {"pykalman-bardo": "pykalman"},
         # estimator type
         # --------------
         "X_inner_mtype": "np.ndarray",  # which mtypes do _fit/_predict support for X?
@@ -704,8 +703,8 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
         This method performs the transformation of the input data
         according to the constructor input parameter ``denoising``.
         If ``denoising`` is True - then denoise data using
-        ``pykalman-bardo``'s ``smooth`` function.
-        Else, infer hidden state using ``pykalman-bardo``'s ``filter`` function.
+        ``pykalman``'s ``smooth`` function.
+        Else, infer hidden state using ``pykalman``'s ``filter`` function.
 
         Parameters
         ----------
@@ -720,7 +719,7 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
             X_transformed : np.ndarray
                 transformed version of X
         """
-        from pykalman import KalmanFilter
+        from sktime.libs.pykalman import KalmanFilter
 
         X_masked = np.ma.masked_invalid(X)
 
@@ -782,7 +781,7 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
         """Estimate matrices algorithm if requested by user.
 
         If input matrices are specified in ``estimate_matrices``,
-        this method will use the ``pykalman-bardo`` EM algorithm function
+        this method will use the ``pykalman`` EM algorithm function
         to estimate said matrices needed to calculate the Kalman Filter.
         Algorithm explained in References[2].
         If ``estimate_matrices`` is None no matrices will be estimated.
@@ -803,7 +802,7 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
             F, H, Q, R, transition_offsets, measurement_offsets,
             X0, P0 as np.ndarray.
         """
-        from pykalman import KalmanFilter
+        from sktime.libs.pykalman import KalmanFilter
 
         X_masked = np.ma.masked_invalid(X)
         estimate_matrices_ = self._get_estimate_matrices()
@@ -835,7 +834,7 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
         return F, H, Q, R, transition_offsets, measurement_offsets, X0, P0
 
     def _get_estimate_matrices(self):
-        """Map parameter names to ``pykalman-bardo`` names for use of ``em``.
+        """Map parameter names to ``pykalman`` names for use of ``em``.
 
         Returns
         -------
@@ -949,7 +948,7 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
     See Also
     --------
     KalmanFilterTransformerPK :
-        Kalman Filter transformer, adapter for the ``pykalman-bardo`` package
+        Kalman Filter transformer, adapter for the ``pykalman`` package
         into ``sktime``.
 
     Notes
@@ -1092,28 +1091,6 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
         -------
             self: reference to self
         """
-        # The below call to `_check_conditional_dependency` checks the installation
-        # of `pykalman-bardo` package, if needed. `pykalman-bardo`
-        # is used when the user requires matrices estimation
-        # (`estimate_matrices` is not None).
-        # This conditioned dependency check can be performed in
-        # `__init__` for early user feedback.
-        _check_conditional_dependency(
-            obj=self,
-            condition=(self.estimate_matrices is not None),
-            package="pykalman-bardo",
-            package_import_alias={"pykalman-bardo": "pykalman"},
-            severity="error",
-            msg=(
-                f"{self.__class__.__name__}'s matrix parameter estimation "
-                f"is performed when `estimate_matrices` "
-                f"is {self.estimate_matrices}, "
-                f"and requires `pykalman-bardo` installed. Please run: "
-                f"`pip install pykalman-bardo` to "
-                f"install the `pykalman-bardo` package. "
-            ),
-        )
-
         measurement_dim = X.shape[1]
         time_steps = X.shape[0]
         shapes = self._get_shapes(

@@ -18,6 +18,8 @@ def _coerce_to_scalar(obj):
 
 def _coerce_to_df(obj):
     """Coerce to pd.DataFrame, from polymorphic input scalar or pandas."""
+    if isinstance(obj, (float, int)):
+        return pd.DataFrame([obj])
     return pd.DataFrame(obj)
 
 

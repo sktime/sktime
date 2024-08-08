@@ -2,12 +2,13 @@
 
 Wraps kotsu benchmarking package.
 """
-from typing import Callable, Optional, Union
+
+from collections.abc import Callable
+from typing import Optional, Union
 
 import pandas as pd
 
 from sktime.base import BaseEstimator
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 # TODO: typo but need to be deprecated
@@ -82,17 +83,15 @@ class BaseBenchmark:
     """
 
     def __init__(self, id_format: Optional[str] = None):
-        _check_soft_dependencies("kotsu")
-        import kotsu
-
         from sktime.benchmarking._base_kotsu import (
             SktimeModelRegistry,
             SktimeValidationRegistry,
         )
+        from sktime.benchmarking._lib_mini_kotsu.run import run
 
         self.estimators = SktimeModelRegistry(id_format)
         self.validations = SktimeValidationRegistry(id_format)
-        self.kotsu_run = kotsu.run.run
+        self.kotsu_run = run
 
     def add_estimator(
         self,

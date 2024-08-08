@@ -1,5 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Extract peak/working hour features from datetimeindex."""
+
 __author__ = ["ali-parizad"]
 __all__ = ["PeakTimeFeature"]
 
@@ -247,6 +248,7 @@ class PeakTimeFeature(BaseTransformer):
         """Transform X and return a transformed version.
 
         private _transform containing the core logic, called from transform
+
         Parameters
         ----------
         X : pd.Series or pd.DataFrame
@@ -294,7 +296,9 @@ class PeakTimeFeature(BaseTransformer):
         df = self._extract_peaktime_features(calendar_features, datetime_freq)
 
         if self.keep_original_columns:
-            Xt = pd.concat([X, df], axis=1, copy=True)
+            to_concat = [X, df]
+            to_concat = [df for df in to_concat if not df.empty]
+            Xt = pd.concat(to_concat, axis=1, copy=True)
         else:
             Xt = df
 

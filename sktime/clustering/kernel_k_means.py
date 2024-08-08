@@ -1,5 +1,6 @@
 """Time series kernel kmeans."""
-from typing import Dict, Union
+
+from typing import Union
 
 import numpy as np
 from numpy.random import RandomState
@@ -9,7 +10,9 @@ from sktime.clustering.base import BaseClusterer
 
 
 class TimeSeriesKernelKMeans(_TslearnAdapter, BaseClusterer):
-    """Kernel algorithm wrapper tslearns implementation.
+    """Kernel k-means clustering, from tslearn.
+
+    Direct interface to ``tslearn.clustering.KernelKMeans``.
 
     Parameters
     ----------
@@ -67,7 +70,7 @@ class TimeSeriesKernelKMeans(_TslearnAdapter, BaseClusterer):
     _tags = {
         # packaging info
         # --------------
-        "authors": "fkiraly",
+        "authors": ["rtavenar", "fkiraly"],  # rtavenar credit for interfaced code
         "python_dependencies": "tslearn",
         # estimator type
         # --------------
@@ -115,7 +118,7 @@ class TimeSeriesKernelKMeans(_TslearnAdapter, BaseClusterer):
         super().__init__(n_clusters=n_clusters)
 
     @classmethod
-    def get_test_params(cls, parameter_set="default") -> Dict:
+    def get_test_params(cls, parameter_set="default") -> dict:
         """Return testing parameter settings for the estimator.
 
         Parameters

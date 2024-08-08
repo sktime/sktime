@@ -284,7 +284,7 @@ class PluginParamsForecaster(_DelegatedForecaster):
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.param_est.fixed import FixedParams
         from sktime.param_est.seasonality import SeasonalityACF
-        from sktime.utils.validation._dependencies import _check_estimator_deps
+        from sktime.utils.dependencies import _check_estimator_deps
 
         # use of dictionary to plug "foo" parameter into "sp", uses mock param_est
         params1 = {
