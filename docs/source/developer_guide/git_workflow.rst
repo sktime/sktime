@@ -18,7 +18,7 @@ The workflow consists of two main parts:
 
 
 Creating a fork - Initial one time setup
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------------------
 
 1.  Fork the `project
     repository <https://github.com/sktime/sktime>`__ by
@@ -58,7 +58,7 @@ Creating a fork - Initial one time setup
 
 
 Contributing a feature - for every new feature
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------------------------
 
 1.  `Sync <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/syncing-a-fork>`_
     the ``main`` branch of your fork with the upstream repository:
