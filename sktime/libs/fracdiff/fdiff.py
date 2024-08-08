@@ -150,15 +150,6 @@ def fdiff(
         mode = "same"
         raise DeprecationWarning("mode 'full' was renamed to 'same'.")
 
-    if isinstance(n, int) or n.is_integer():
-        np_diff_res = np.diff(a, n=int(n), axis=axis)
-        res = a.copy()
-        slices = [slice(None)] * a.ndim
-        slices[axis] = slice(int(n), None)
-        slices = tuple(slices)
-        res[slices] = np_diff_res
-        return res
-
     if a.ndim == 0:
         raise ValueError("diff requires input that is at least one dimensional")
 

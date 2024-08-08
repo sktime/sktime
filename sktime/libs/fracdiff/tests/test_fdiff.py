@@ -68,8 +68,15 @@ class TestFdiff:
         np.random.seed(42)
         a = np.random.randn(*([100] * ndim))
         for axis in range(ndim):
-            out = np.diff(a, n=int(n), axis=axis)
-            assert_array_equal(fdiff(a, n=n, axis=axis), out)
+            np_diff_res = np.diff(a, n=int(n), axis=axis)
+
+            slices = [slice(None)] * a.ndim
+            slices[axis] = slice(int(n), None)
+            slices = tuple(slices)
+
+            last_fdiff_res = fdiff(a, n=n, axis=axis)[slices]
+
+            assert_array_equal(np_diff_res, last_fdiff_res)
 
     @pytest.mark.parametrize("n", [0.5])
     @pytest.mark.parametrize("window", [2])
