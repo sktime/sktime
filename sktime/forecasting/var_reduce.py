@@ -56,15 +56,13 @@ class VARReduce(BaseForecaster):
     }
 
     def __init__(self, lags=1, regressor=None):
-        from sklearn.base import RegressorMixin, clone
+        from sklearn.base import clone
         from sklearn.linear_model import LinearRegression
 
         self.lags = lags
         if regressor is None:
-            self.regressor = LinearRegression()
             self.regressor_ = LinearRegression()
         else:
-            self.regressor = clone(regressor)
             self.regressor_ = clone(regressor)
 
         # a dictionary of var_name: fitted regressor, to be filled in during fitting
