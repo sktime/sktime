@@ -37,3 +37,4 @@ For a list of object and estimator tags, see :ref:`tags_ref`.
     api_reference/exceptions
     api_reference/tags
     api_reference/pipeline
+    api_reference/benchmarking
