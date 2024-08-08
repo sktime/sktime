@@ -42,7 +42,6 @@ if _check_soft_dependencies(["torch", "transformers"], severity="none"):
 
         config = T5Config.from_pretrained(model_name)
 
-        print(config.d_model)
         return config.d_model
 
     def get_anomaly_criterion(anomaly_criterion: str = "mse"):

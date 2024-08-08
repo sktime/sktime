@@ -237,7 +237,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         self._fh_config = (
             self._config["forecast_horizon"]
             if "forecast_horizon" in self._config.keys()
-            else self.fh
+            else None
         )
         self._device = (
             self._config["device"] if "device" in self._config.keys() else self.device
@@ -250,6 +250,10 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         if fh is not None:
             self._fh_input = max(fh.to_relative(self.cutoff))
         self._fh = self._fh_input if fh is not None else self._fh_config
+        # self._model_fh is guaranteed to be an int value
+        self._model_fh = self._fh
+        # revert self._fh back to fh to pass checks
+        self._fh = fh
         self._model = MOMENTPipeline.from_pretrained(
             self._pretrained_model_name_or_path,
             model_kwargs={
@@ -262,7 +266,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
                 "freeze_head": self._freeze_head,
                 "device": self._device,
                 "transformer_backbone": self._transformer_backbone,
-                "forecast_horizon": self._fh,
+                "forecast_horizon": self._model_fh,
             },
         )
         self._model.init()
@@ -281,7 +285,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
 
         train_dataset = MomentPytorchDataset(
             y=y_train,
-            fh=self._fh,
+            fh=self._model_fh,
             seq_len=self._seq_len,
             device=self._device,
         )
@@ -292,7 +296,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
 
         val_dataset = MomentPytorchDataset(
             y=y_test,
-            fh=self._fh,
+            fh=self._model_fh,
             seq_len=self._seq_len,
             device=self._device,
         )
@@ -350,6 +354,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         fh should not be passed here and
         must be the same length as the one used to fit the model.
         """
+        index = self._fh.to_absolute_index(self.cutoff)
         from torch import from_numpy
 
         self._model = self._model.to(self._device)
@@ -397,7 +402,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
 
         pred = forecast_output.detach().cpu().numpy().T
 
-        df_pred = pd.DataFrame(pred, columns=self._y_cols)
+        df_pred = pd.DataFrame(pred, columns=self._y_cols, index=index)
 
         return df_pred
 
