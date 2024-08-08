@@ -2,7 +2,7 @@
 
 from typing import TypeVar
 
-import numpy
+import numpy as np
 from sklearn.base import (
     BaseEstimator,  # type: ignore
     TransformerMixin,  # type: ignore
@@ -12,7 +12,7 @@ from sklearn.utils.validation import (
     check_is_fitted,  # type: ignore
 )
 
-from ..fdiff import fdiff, fdiff_coef
+from sktime.libs.fracdiff.fdiff import fdiff, fdiff_coef
 
 T = TypeVar("T", bound="Fracdiff")
 
@@ -100,7 +100,7 @@ class Fracdiff(TransformerMixin, BaseEstimator):
         params = ", ".join(f"{attr}={getattr(self, attr)}" for attr in attrs)
         return f"{name}({params})"
 
-    def fit(self: T, X: numpy.ndarray, y: None = None) -> T:
+    def fit(self: T, X: np.ndarray, y: None = None) -> T:
         """
         Fit the model with `X`.
 
@@ -119,10 +119,12 @@ class Fracdiff(TransformerMixin, BaseEstimator):
             Returns the instance itself.
         """
         check_array(X, estimator=self)
+        if hasattr(X, "shape"):
+            self.n_features_in_ = X.shape[1]
         self.coef_ = fdiff_coef(self.d, self.window)
         return self
 
-    def transform(self, X: numpy.ndarray, y: None = None) -> numpy.ndarray:
+    def transform(self, X: np.ndarray, y: None = None) -> np.ndarray:
         """
         Return the fractional differentiation of `X`.
 
@@ -141,4 +143,14 @@ class Fracdiff(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self, ["coef_"])
         check_array(X, estimator=self)
-        return fdiff(X, n=self.d, axis=0, window=self.window, mode=self.mode)
+
+        # Check that the number of features in transform matches fit
+        if hasattr(X, "shape") and X.shape[1] != self.n_features_in_:
+            raise ValueError(
+                "Error in Fracdiff transformer: "
+                f"Number of features in transform ({X.shape[1]}) does not match "
+                f"number of features in fit ({self.n_features_in_})."
+            )
+
+        Xt = fdiff(X, n=self.d, axis=0, window=self.window, mode=self.mode)
+        return Xt
