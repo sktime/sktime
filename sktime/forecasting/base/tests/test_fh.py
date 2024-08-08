@@ -56,10 +56,16 @@ def _assert_index_equal(a, b):
 @pytest.fixture(params=None)
 def good_absolute_input_arg(request):
     """Parametrized by integer values."""
+    pandas2 = _check_soft_dependencies("pandas>=2.0.0", severity="none")
+    if pandas2:
+        m_freq = "ME"
+    else:
+        m_freq = "M"
+
     params = [
         pd.Index([1, 2, 3]),
         pd.period_range("2000-01-01", periods=3, freq="D"),
-        pd.date_range("2000-01-01", periods=3, freq="ME"),
+        pd.date_range("2000-01-01", periods=3, freq=m_freq),
         np.array([1, 2, 3]),
         [1, 2, 3],
         1,
