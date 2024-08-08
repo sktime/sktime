@@ -5,12 +5,11 @@ __author__ = ["James-Large", "Withington"]
 from copy import deepcopy
 
 from sklearn.utils import check_random_state
-
+import cloudpickle
 from sktime.networks.resnet import ResNetNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.utils.validation._dependencies import _check_dl_dependencies
-
-
+import joblib
 class ResNetRegressor(BaseDeepRegressor):
     """Residual Neural Network Regressor adopted from [1].
 
@@ -37,28 +36,26 @@ class ResNetRegressor(BaseDeepRegressor):
     optimizer       : keras.optimizers object, default = Adam(lr=0.01)
         specify the optimizer and the learning rate to be used.
 
-
     Notes
-    -----
-    Adapted from the implementation from source code
-    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/resnet.py
+        -----
+        Adapted from the implementation from source code
+        https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/resnet.py
 
-    References
-    ----------
-        .. [1] Wang et. al, Time series classification from
-    scratch with deep neural networks: A strong baseline,
-    International joint conference on neural networks (IJCNN), 2017.
+        References
+        ----------
+            .. [1] Wang et. al, Time series classification from
+        scratch with deep neural networks: A strong baseline,
+        International joint conference on neural networks (IJCNN), 2017.
 
-    Examples
-    --------
-    >>> from sktime.regression.deep_learning.resnet import ResNetRegressor
-    >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train")
-    >>> clf = ResNetRegressor(n_epochs=20, batch_size=4) # doctest: +SKIP
-    >>> clf.fit(X_train, Y_train) # doctest: +SKIP
-    ResNetRegressor(...)
-    """
-
+        Examples
+        --------
+        >>> from sktime.regression.deep_learning.resnet import ResNetRegressor
+        >>> from sktime.datasets import load_unit_test
+        >>> X_train, y_train = load_unit_test(split="train")
+        >>> clf = ResNetRegressor(n_epochs=20, batch_size=4) # doctest: +SKIP
+        >>> clf.fit(X_train, Y_train) # doctest: +SKIP
+        ResNetRegressor(...)
+        """
     _tags = {
         # packaging info
         # --------------
@@ -67,7 +64,6 @@ class ResNetRegressor(BaseDeepRegressor):
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
     }
-
     def __init__(
         self,
         n_epochs=1500,
@@ -98,7 +94,7 @@ class ResNetRegressor(BaseDeepRegressor):
 
         self.history = None
         self._network = ResNetNetwork(random_state=random_state)
-
+        
     def build_model(self, input_shape, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
 
@@ -126,7 +122,6 @@ class ResNetRegressor(BaseDeepRegressor):
             if self.optimizer is None
             else self.optimizer
         )
-
         if self.metrics is None:
             metrics = [
                 "mean_squared_error",
@@ -148,7 +143,6 @@ class ResNetRegressor(BaseDeepRegressor):
         )
 
         return model
-
     def _fit(self, X, y):
         """Fit the regressor on the training set (X, y).
 
@@ -165,7 +159,6 @@ class ResNetRegressor(BaseDeepRegressor):
         """
         # Transpose to conform to Keras input style.
         X = X.transpose(0, 2, 1)
-
         check_random_state(self.random_state)
         self.input_shape = X.shape[1:]
         self.model_ = self.build_model(self.input_shape)
@@ -182,7 +175,6 @@ class ResNetRegressor(BaseDeepRegressor):
             callbacks=self.callbacks_,
         )
         return self
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -207,7 +199,6 @@ class ResNetRegressor(BaseDeepRegressor):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         from sktime.utils.validation._dependencies import _check_soft_dependencies
-
         param1 = {
             "n_epochs": 6,
             "batch_size": 4,
@@ -220,7 +211,6 @@ class ResNetRegressor(BaseDeepRegressor):
             "use_bias": True,
         }
         test_params = [param1, param2]
-
         if _check_soft_dependencies("keras", severity="none"):
             from keras.callbacks import LambdaCallback
 
@@ -230,5 +220,16 @@ class ResNetRegressor(BaseDeepRegressor):
                     "callbacks": [LambdaCallback()],
                 }
             )
-
         return test_params
+    
+    # serializing lambda functions
+    def pickling(lambda_func):
+        lf = lambda_func
+        #  serialize(lf):
+        code = lf.__code__
+        env = lf.__globals__
+        # Return a picklable representation (e.g., a dictionary)
+        return {"code": code, "env": env}
+        # returns the constructed dictionary, representing the serialized lambda function
+        # joblib.parallel.PICKLE_FUNCTIONS[type(lambda x: x)] = serialize
+        # joblib.register(type(lambda x: x), pickler=serialize)
