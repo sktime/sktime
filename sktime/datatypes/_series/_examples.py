@@ -31,6 +31,7 @@ overall, conversions from non-lossy representations to any other ones
 import numpy as np
 import pandas as pd
 
+from sktime.datatypes._dtypekind import DtypeKind
 from sktime.utils.dependencies import _check_soft_dependencies
 
 example_dict = dict()
@@ -76,12 +77,9 @@ if _check_soft_dependencies("dask", severity="none"):
 
 
 if _check_soft_dependencies("gluonts", severity="none"):
-    from gluonts.dataset.common import ListDataset
-    from gluonts.dataset.field_names import FieldName
+    from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
 
-    list_dataset = ListDataset(
-        [{FieldName.TARGET: s, FieldName.START: pd.Timestamp(2023, 1, 1)}], freq="D"
-    )
+    list_dataset = convert_pandas_to_listDataset(df)
 
     example_dict[("gluonts_ListDataset_series", "Series", 0)] = list_dataset
     example_dict_lossy[("gluonts_ListDataset_series", "Series", 0)] = True
@@ -93,6 +91,7 @@ example_dict_metadata[("Series", 0)] = {
     "has_nans": False,
     "n_features": 1,
     "feature_names": ["a"],
+    "feature_kind": [DtypeKind.FLOAT],
 }
 
 ###
@@ -130,19 +129,9 @@ if _check_soft_dependencies("dask", severity="none"):
     example_dict_lossy[("dask_series", "Series", 1)] = False
 
 if _check_soft_dependencies("gluonts", severity="none"):
-    from gluonts.dataset.common import ListDataset
-    from gluonts.dataset.field_names import FieldName
+    from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
 
-    list_dataset = ListDataset(
-        [
-            {
-                FieldName.TARGET: df,
-                FieldName.START: pd.Timestamp(2023, 1, 1),
-            }
-        ],
-        freq="D",
-        one_dim_target=False,  # Must be specified for multivariate datasets
-    )
+    list_dataset = convert_pandas_to_listDataset(df)
 
     example_dict[("gluonts_ListDataset_series", "Series", 1)] = list_dataset
     example_dict_lossy[("gluonts_ListDataset_series", "Series", 1)] = True
@@ -154,6 +143,7 @@ example_dict_metadata[("Series", 1)] = {
     "has_nans": False,
     "n_features": 2,
     "feature_names": ["a", "b"],
+    "feature_kind": [DtypeKind.FLOAT, DtypeKind.FLOAT],
 }
 
 ###
@@ -192,19 +182,9 @@ if _check_soft_dependencies("dask", severity="none"):
     example_dict_lossy[("dask_series", "Series", 2)] = False
 
 if _check_soft_dependencies("gluonts", severity="none"):
-    from gluonts.dataset.common import ListDataset
-    from gluonts.dataset.field_names import FieldName
+    from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
 
-    list_dataset = ListDataset(
-        [
-            {
-                FieldName.TARGET: df,
-                FieldName.START: pd.Timestamp(2023, 1, 1),
-            }
-        ],
-        freq="D",
-        one_dim_target=False,  # Must be specified for multivariate datasets
-    )
+    list_dataset = convert_pandas_to_listDataset(df)
 
     example_dict[("gluonts_ListDataset_series", "Series", 2)] = list_dataset
     example_dict_lossy[("gluonts_ListDataset_series", "Series", 2)] = True
@@ -216,6 +196,7 @@ example_dict_metadata[("Series", 2)] = {
     "has_nans": False,
     "n_features": 2,
     "feature_names": ["a", "b"],
+    "feature_kind": [DtypeKind.FLOAT, DtypeKind.FLOAT],
 }
 
 ###
@@ -248,19 +229,9 @@ if _check_soft_dependencies("xarray", severity="none"):
     example_dict_lossy[("xr.DataArray", "Series", 3)] = False
 
 if _check_soft_dependencies("gluonts", severity="none"):
-    from gluonts.dataset.common import ListDataset
-    from gluonts.dataset.field_names import FieldName
+    from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
 
-    list_dataset = ListDataset(
-        [
-            {
-                FieldName.TARGET: df,
-                FieldName.START: pd.Timestamp(2023, 1, 1),
-            }
-        ],
-        freq="D",
-        one_dim_target=False,  # Must be specified for multivariate datasets
-    )
+    list_dataset = convert_pandas_to_listDataset(df)
 
     example_dict[("gluonts_ListDataset_series", "Series", 3)] = list_dataset
     example_dict_lossy[("gluonts_ListDataset_series", "Series", 3)] = True
@@ -273,4 +244,5 @@ example_dict_metadata[("Series", 3)] = {
     "has_nans": False,
     "n_features": 1,
     "feature_names": ["a"],
+    "feature_kind": [DtypeKind.FLOAT],
 }

@@ -1,8 +1,8 @@
 """Time series kmeans."""
 
 __author__ = ["chrisholder", "TonyBagnall"]
-
-from typing import Callable, Union
+from collections.abc import Callable
+from typing import Union
 
 import numpy as np
 from numpy.random import RandomState
@@ -37,7 +37,7 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
         Number of times the k-means algorithm will be run with different
         centroid seeds. The final result will be the best output of n_init
         consecutive runs in terms of inertia.
-    max_iter: int, defaults = 30
+    max_iter: int, defaults = 300
         Maximum number of iterations of the k-means algorithm for a single
         run.
     tol: float, defaults = 1e-6

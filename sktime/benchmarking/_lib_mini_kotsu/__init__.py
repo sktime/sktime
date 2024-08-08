@@ -7,7 +7,7 @@ that covers remaining imports from sktime's benchmarking module.
 
 The module is currently undergoing a refactor with the following targets:
 
-* remove kotsu as a soft dependeny. The package is no longer maintained and
+* remove kotsu as a soft dependency. The package is no longer maintained and
   a dependency liability for sktime, maintainers are non-responsive.
 * replace kotsu with sktime's own benchmarking module, with an API that is closer
   to sklearn's estimator API (e.g., no separation of class and params).
