@@ -22,6 +22,17 @@ For our long-term plan, see our :ref:`roadmap`.
 Version 0.31.1 - 2024-08-07
 ---------------------------
 
+Highlights
+~~~~~~~~~~
+
+Todo - order and select
+
+* categorical support in ``X`` for estimators
+* [ENH] Add ``windows_identical`` to ``DirectReductionForecaster`` (:pr:`6650`) :user:`hliebert`
+* [ENH] de-novo implementation of ``LTSFTransformer`` based on ``cure-lab`` research code base (:pr:`6202`) :user:`geetu040`
+* [ENH] MVTS transformer classifier (:pr:`6791`) :user:`geetu040`
+* [ENH] Add Sampler to ``ForecastingOptunaSearchCV`` (:pr:`6823`) :user:`bastisar`
+* [ENH] interface to ``autots`` ensemble (:pr:`5948`) :user:`MBristle`
 
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
@@ -29,60 +40,54 @@ Dependency changes
 * ``holiday`` (soft dependency) bounds have been updated to ``>=0.29,<0.54``
 * ``dask`` (soft dependency) bounds have been updated to ``<2024.8.1``
 
-
-Enhancements
-~~~~~~~~~~~~
-
-* [ENH] add second test params dict to Aggregator (:pr:`6759`) :user:`fr1ll`
-* [ENH] interface to ``autots`` ensemble (:pr:`5948`) :user:`MBristle`
-* [ENH] Adding support for GluonTS' PandasDataset object (:pr:`6668`) :user:`shlok191`
-* [ENH] ``check_pdmultiindex_panel`` to return names of invalid ``object`` columns if there are any (:pr:`6797`) :user:`SaiRevanth25`
-* [ENH] Allow object dtype in series (:pr:`5886`) :user:`yarnabrina`
-* [ENH] ``pandas`` inner type and global pooling for ``TabularToSeriesAdaptor`` (:pr:`6752`) :user:`fkiraly`
-* [MNT] improved environment package version check (:pr:`6776`) :user:`fkiraly`
-* [ENH] converter framework tests in ``datatypes`` to cover all types, including those requiring soft dependencies (:pr:`6838`) :user:`fkiraly`
-* [ENH] add missing ``feature_kind`` metadata fields to ``gluonts`` based data container checkers (:pr:`6861`) :user:`fkiraly`
-* [ENH] enable multivariate data passed to ``autots`` interface (:pr:`6805`) :user:`fkiraly`
-* [ENH] Add Sampler to ``ForecastingOptunaSearchCV`` (:pr:`6823`) :user:`bastisar`
-* [ENH] Data Loader for M5 dataset (:pr:`6731`) :user:`SaiRevanth25`
-* [MNT] Remove package import alias related internal logic and tags (:pr:`6821`) :user:`fkiraly`
-* [ENH] Pytorch Classifier & de-novo implementation of Transformer (:pr:`6791`) :user:`geetu040`
-* [ENH] time series annotation (outliers, changepoints) - test class and full ``check_estimator`` integration (:pr:`6843`) :user:`fkiraly`
-* [MNT] make ``pyproject.toml`` parsing for differential testing more robust against non-package relevant changes (:pr:`6882`) :user:`fkiraly`
-* [ENH] formatter for jupyter notebook json in build tools (:pr:`6849`) :user:`fkiraly`
-* [ENH] Improve TestAllGlobalForecasters (:pr:`6845`) :user:`Xinyu-Wu-0000`
-* [ENH] Add scoring direction to ForecastingOptunaSearchCV (:pr:`6846`) :user:`gareth-brown-86`
-* [ENH] de-novo implementation of ``LTSFTransformer`` based on ``cure-lab`` research code base (:pr:`6202`) :user:`geetu040`
-* [ENH] Add windows_identical to DirectReductionForecaster (:pr:`6650`) :user:`hliebert`
-* [ENH] Adding categorical support: Raising error in yes/no case (:pr:`6732`) :user:`Abhay-Lejith`
-* [ENH] Link to docs in object's html repr (:pr:`6876`) :user:`mateuszkasprowicz`
-* [ENH] Vendor fracdiff library (:pr:`6777`) :user:`DinoBektesevic`
-* [ENH] updates type inference in ``make_reduction`` to use central scitype inference and allow proba tabular regressors (:pr:`6893`) :user:`fkiraly`
-* [ENH] alternative returns for ``VmdTransformer`` - mode spectra and central frequencies (:pr:`6857`) :user:`fkiraly`
-* [ENH] simplify dictionaries and alias handling in ``Catch22`` (:pr:`6104`) :user:`fkiraly`
-* [ENH] improvements to vendored ``fracdiff`` library (:pr:`6912`) :user:`fkiraly`
-* [ENH] Add binary segmentation annotator for change point detection (:pr:`6723`) :user:`Alex-JG3`
-* [ENH] making ``self._is_vectorized`` access more defensive in ``BaseTransformer`` (:pr:`6863`) :user:`fkiraly`
-
-* [ENH] Adding tag for categorical support in ``X`` (:pr:`6704`) :user:`Abhay-Lejith`
-* [ENH] added feature_kind metadata in datatype checks (:pr:`6490`) :user:`Abhay-Lejith`
-
-* [MNT] updates and fixes to type hints (:pr:`6743`) :user:`ZhipengXue97`
-* [ENH] DeepAR and  NHiTS and refinements for ``pytorch-forecasting`` interface (:pr:`6551`) :user:`Xinyu-Wu-0000`
-* [ENH] Added support for ``gluonts`` ``PandasDataset`` as a ``Series`` scitype (:pr:`6837`) :user:`shlok191`
-
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
 
 BaseObject and base framework
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* implementers no longer need to set the ``package_import_alias`` tag
+  when estimator dependencies have a different import name than the PEP 440 package name.
+  All internal logic now only uses the PEP 440 package name.
+  There is no need to remove the tag if already set, but it is no longer required.
+* estimators now have a tag ``capability:categorical_in_X: bool`` to indicate
+  that the estimator can handle categorical features in the input data ``X``.
+  Such estimator can be used with categorical and string-valued features
+  if ``X`` is passed in one of the ``pandas`` based mtypes.
+* the html representation of all objects now includes a link to the documentation
+  of the object, and is now in line with the ``sklearn`` html representation.
+
+
+Enhancements
+~~~~~~~~~~~~
+
+BaseObject and base framework
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] improved environment package version check (:pr:`6776`) :user:`fkiraly`
+* [ENH] Remove package import alias related internal logic and tags (:pr:`6821`) :user:`fkiraly`
+* [ENH] Adding tag for categorical support in ``X`` (:pr:`6704`) :user:`Abhay-Lejith`
+* [ENH] Adding categorical support: Raising error in yes/no case (:pr:`6732`) :user:`Abhay-Lejith`
+* [ENH] Link to docs in object's html repr (:pr:`6876`) :user:`mateuszkasprowicz`
 
 Benchmarking, Metrics, Splitters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Data sets and data loaders
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Data Loader for M5 dataset (:pr:`6731`) :user:`SaiRevanth25`
 
 Data types, checks, conversions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* [ENH] ``check_pdmultiindex_panel`` to return names of invalid ``object`` columns if there are any (:pr:`6797`) :user:`SaiRevanth25`
+* [ENH] Allow object dtype in series (:pr:`5886`) :user:`yarnabrina`
+* [ENH] converter framework tests in ``datatypes`` to cover all types, including those requiring soft dependencies (:pr:`6838`) :user:`fkiraly`
+* [ENH] add missing ``feature_kind`` metadata fields to ``gluonts`` based data container checkers (:pr:`6861`) :user:`fkiraly`
+* [ENH] added ``feature_kind`` metadata in datatype checks (:pr:`6490`) :user:`Abhay-Lejith`
+* [ENH] Adding support for ``gluonts`` ``PandasDataset`` object (:pr:`6668`) :user:`shlok191`
+* [ENH] Added support for ``gluonts`` ``PandasDataset`` as a ``Series`` scitype (:pr:`6837`) :user:`shlok191`
 
 Distances, kernels
 ^^^^^^^^^^^^^^^^^^
@@ -90,6 +95,15 @@ Distances, kernels
 
 Forecasting
 ^^^^^^^^^^^
+
+* [ENH] enable multivariate data passed to ``autots`` interface (:pr:`6805`) :user:`fkiraly`
+* [ENH] Add Sampler to ``ForecastingOptunaSearchCV`` (:pr:`6823`) :user:`bastisar`
+* [ENH] Improve ``TestAllGlobalForecasters`` (:pr:`6845`) :user:`Xinyu-Wu-0000`
+* [ENH] Add scoring direction to ``ForecastingOptunaSearchCV`` (:pr:`6846`) :user:`gareth-brown-86`
+* [ENH] de-novo implementation of ``LTSFTransformer`` based on ``cure-lab`` research code base (:pr:`6202`) :user:`geetu040`
+* [ENH] Add ``windows_identical`` to ``DirectReductionForecaster`` (:pr:`6650`) :user:`hliebert`
+* [ENH] updates type inference in ``make_reduction`` to use central scitype inference and allow proba tabular regressors (:pr:`6893`) :user:`fkiraly`
+* [ENH] DeepAR and  NHiTS and refinements for ``pytorch-forecasting`` interface (:pr:`6551`) :user:`Xinyu-Wu-0000`
 
 Registry and search
 ^^^^^^^^^^^^^^^^^^^
@@ -99,26 +113,38 @@ Time series alignment
 ^^^^^^^^^^^^^^^^^^^^^
 
 
-Time series annomalies, changepoints, segmentation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Time series anomalies, changepoints, segmentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* [ENH] time series annotation (outliers, changepoints) - test class and full ``check_estimator`` integration (:pr:`6843`) :user:`fkiraly`
 * [ENH] Add Windowed Local Outlier Factor Anomaly Detector (:pr:`6524`) :user:`Alex-JG3`
+* [ENH] Add binary segmentation annotator for change point detection (:pr:`6723`) :user:`Alex-JG3`
 
 Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Time series regression
-^^^^^^^^^^^^^^^^^^^^^^
-
+* [ENH] Pytorch Classifier intermediate base class for TSC (:pr:`6791`) :user:`geetu040`
+* [ENH] MVTS transformer classifier (:pr:`6791`) :user:`geetu040`
 
 Transformations
 ^^^^^^^^^^^^^^^
 
+* [ENH] add second test params dict to ``Aggregator`` (:pr:`6759`) :user:`fr1ll`
+* [ENH] ``pandas`` inner type and global pooling for ``TabularToSeriesAdaptor`` (:pr:`6752`) :user:`fkiraly`
+* [ENH] alternative returns for ``VmdTransformer`` - mode spectra and central frequencies (:pr:`6857`) :user:`fkiraly`
+* [ENH] simplify dictionaries and alias handling in ``Catch22`` (:pr:`6104`) :user:`fkiraly`
+* [ENH] making ``self._is_vectorized`` access more defensive in ``BaseTransformer`` (:pr:`6863`) :user:`fkiraly`
+
 Test framework
 ^^^^^^^^^^^^^^
 
+* [ENH] make ``pyproject.toml`` parsing for differential testing more robust against non-package relevant changes (:pr:`6882`) :user:`fkiraly`
 
+Vendor and onboard libraries
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* [ENH] Vendor fracdiff library (:pr:`6777`) :user:`DinoBektesevic`
+* [ENH] improvements to vendored ``fracdiff`` library (:pr:`6912`) :user:`fkiraly`
 
 Documentation
 ~~~~~~~~~~~~~
@@ -147,7 +173,6 @@ Documentation
 * [DOC] Add example notebook for the graphical pipeline (:pr:`5175`) :user:`benHeid`
 * [DOC] git workflow guide - chained branches, fixing header fonts (:pr:`6913`) :user:`fkiraly`
 
-
 Maintenance
 ~~~~~~~~~~~
 
@@ -156,7 +181,8 @@ Maintenance
 * [MNT] Fix spellings using ``codespell`` and ``typos`` (:pr:`6799`) :user:`yarnabrina`
 * [MNT] improved environment package version check (:pr:`6776`) :user:`fkiraly`
 * [MNT] downgrade pykan version to ``<0.2.2`` (:pr:`6853`) :user:`geetu040`
-* [ENH] add non-unicode characters check to the linter (:pr:`6807`) :user:`fnhirwa`
+* [MNT] add non-unicode characters check to the linter (:pr:`6807`) :user:`fnhirwa`
+* [MNT] updates and fixes to type hints (:pr:`6743`) :user:`ZhipengXue97`
 * [MNT] Resolve the issue with diacritics failing to be decoded on Windows (:pr:`6862`) :user:`fnhirwa`
 * [MNT] sync docstring and code formatting of dependency checker module with ``skbase`` (:pr:`6873`) :user:`fkiraly`
 * [MNT] Remove package import alias related internal logic and tags (:pr:`6821`) :user:`fkiraly`
@@ -165,7 +191,7 @@ Maintenance
 * [MNT] Fix ``pykan`` import and dependency checks (:pr:`6881`) :user:`fkiraly`
 * [MNT] temporarily pin ``matplotlib`` below ``3.9.1`` (:pr:`6890`) :user:`yarnabrina`
 * [MNT] make ``pyproject.toml`` parsing for differential testing more robust against non-package relevant changes (:pr:`6882`) :user:`fkiraly`
-* [ENH] formatter for jupyter notebook json in build tools (:pr:`6849`) :user:`fkiraly`
+* [MNT] formatter for jupyter notebook json in build tools (:pr:`6849`) :user:`fkiraly`
 * [MNT] sync differential testing utilities with ``skpro`` (:pr:`6840`) :user:`fkiraly`
 * [MNT] sync docstring and code formatting of dependency checker module with ``skbase`` (:pr:`6873`) :user:`fkiraly`
 * [MNT] fix ``.all-contributorsrc`` syntax (:pr:`6918`) :user:`fkiraly`
@@ -186,19 +212,10 @@ BaseObject and base framework
 
 * [BUG] fix ``_check_soft_dependencies`` for post and pre versions of patch versions (:pr:`6909`) :user:`fkiraly`
 
-Benchmarking, Metrics, Splitters
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-
 Data types, checks, conversions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * [BUG] fix type inconsistency in conversion ``pandas`` to ``xarray`` based ``Series`` (:pr:`6856`) :user:`fkiraly`
-
-
-Distances, kernels
-^^^^^^^^^^^^^^^^^^
-
 
 Forecasting
 ^^^^^^^^^^^
@@ -211,23 +228,10 @@ Registry and search
 
 * [BUG] fix polymorphic estimators missing in estimator overview, e.g., ``pytorch-forecasting`` forecasters (:pr:`6803`) :user:`fkiraly`
 
-
-Time series alignment
-^^^^^^^^^^^^^^^^^^^^^
-
-
-Time series annomalies, changepoints, segmentation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Time series anomalies, changepoints, segmentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * [BUG] Fix bug when predicting segments from clasp change point annotator (:pr:`6756`) :user:`Alex-JG3`
-
-
-Time series classification
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Time series regression
-^^^^^^^^^^^^^^^^^^^^^^
-
 
 Transformations
 ^^^^^^^^^^^^^^^
@@ -235,9 +239,6 @@ Transformations
 * [BUG] Refactor ``ADICVTransformer`` and fix CV calculation (:pr:`6757`) :user:`sbhobbes`
 * [BUG] fix ``BaseTransformer`` broadcasting condition in ``inverse_transform`` for decomposers (:pr:`6824`) :user:`fkiraly`
 * [BUG] fix ``MSTL`` inverse transform and use in forecasting pipeline (:pr:`6825`) :user:`fkiraly`
-
-Test framework
-^^^^^^^^^^^^^^
 
 Visualization
 ^^^^^^^^^^^^^
@@ -296,8 +297,8 @@ Dependency changes
 Deprecations and removals
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Time series annomalies, changepoints, segmentation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Time series anomalies, changepoints, segmentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * The ``fmt`` argument in time series annotators is now deprecated.
   Users should use the ``predict`` and ``transform`` methods instead,
