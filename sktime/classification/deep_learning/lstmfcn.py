@@ -1,4 +1,5 @@
 """LongShort Term Memory Fully Convolutional Network (LSTM-FCN)."""
+
 __author__ = ["jnrusson1", "solen0id"]
 
 __all__ = ["LSTMFCNClassifier"]
@@ -121,6 +122,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         n_classes: int
             The number of classes, which shall become the size of the output
              layer
+
         Returns
         -------
         output : a compiled Keras Model

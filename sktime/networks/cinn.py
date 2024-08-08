@@ -1,4 +1,5 @@
 """Conditional Invertible Neural Network (cINN) for forecasting."""
+
 __author__ = ["benHeid"]
 
 import numpy as np
@@ -13,8 +14,6 @@ else:
 
     class NNModule:
         """Dummy class if torch is unavailable."""
-
-        pass
 
 
 if _check_soft_dependencies("FrEIA", severity="none"):

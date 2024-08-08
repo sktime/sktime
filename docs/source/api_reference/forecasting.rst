@@ -10,6 +10,11 @@ All forecasters in ``sktime`` can be listed using the ``sktime.registry.all_esti
 using ``estimator_types="forecaster"``, optionally filtered by tags.
 Valid tags can be listed using ``sktime.registry.all_tags``.
 
+A full table with tag based search is also available on the
+:doc:`Estimator Search Page </estimator_overview>`
+(select "forecaster" in the "Estimator type" dropdown).
+
+
 Base
 ----
 
@@ -425,6 +430,7 @@ Deep learning based forecasters
     LTSFLinearForecaster
     LTSFDLinearForecaster
     LTSFNLinearForecaster
+    LTSFTransformerForecaster
 
 .. currentmodule:: sktime.forecasting.hf_transformers_forecaster
 
@@ -458,6 +464,8 @@ Deep learning based forecasters
     :template: class.rst
 
     PytorchForecastingTFT
+    PytorchForecastingDeepAR
+    PytorchForecastingNHiTS
     PytorchForecastingNBeats
 
 .. currentmodule:: sktime.forecasting.pykan_forecaster
@@ -492,6 +500,11 @@ Ensembles and stacking
     EnsembleForecaster
     AutoEnsembleForecaster
     StackingForecaster
+
+
+.. currentmodule:: sktime.forecasting.autots
+
+    AutoTS
 
 Hierarchical reconciliation
 ---------------------------

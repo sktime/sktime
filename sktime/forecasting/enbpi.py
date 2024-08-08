@@ -1,5 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements EnbPIForecaster."""
+
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
@@ -17,7 +18,7 @@ class EnbPIForecaster(BaseForecaster):
     """
     Ensemble Bootstrap Prediction Interval Forecaster.
 
-    The forecaster combines sktime forecasters, with tsbootstrap bootsrappers
+    The forecaster combines sktime forecasters, with tsbootstrap bootstrappers
     and the EnbPI algorithm [1] implemented in fortuna using the
     tutorial from this blogpost [2].
 

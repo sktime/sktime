@@ -7,10 +7,11 @@ __all__ = [
     "ForecastingGridSearchCV",
     "ForecastingRandomizedSearchCV",
     "ForecastingSkoptSearchCV",
+    "ForecastingOptunaSearchCV",
 ]
 
 from collections.abc import Iterable, Mapping, Sequence
-from typing import Dict, List, Optional, Union
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -84,7 +85,7 @@ class BaseGridSearch(_DelegatedForecaster):
         if tune_by_variable:
             self.set_tags(**{"scitype:y": "univariate"})
 
-        # todo 0.31.0: check if this is still necessary
+        # todo 0.32.0: check if this is still necessary
         # n_jobs is deprecated, left due to use in tutorials, books, blog posts
         if n_jobs != "deprecated":
             warn(
@@ -195,11 +196,9 @@ class BaseGridSearch(_DelegatedForecaster):
             if self.verbose > 0:
                 n_candidates = len(candidate_params)
                 n_splits = cv.get_n_splits(y)
-                print(  # noqa
-                    "Fitting {} folds for each of {} candidates,"
-                    " totalling {} fits".format(
-                        n_splits, n_candidates, n_candidates * n_splits
-                    )
+                print(
+                    f"Fitting {n_splits} folds for each of {n_candidates} candidates,"
+                    f" totalling {n_candidates * n_splits} fits"
                 )
 
             # Set meta variables for parallelization.
@@ -645,16 +644,16 @@ class ForecastingGridSearchCV(BaseGridSearch):
 
                 if isinstance(v, str) or not isinstance(v, (np.ndarray, Sequence)):
                     raise ValueError(
-                        "Parameter grid for parameter ({}) needs to"
-                        " be a list or numpy array, but got ({})."
+                        f"Parameter grid for parameter ({name}) needs to"
+                        f" be a list or numpy array, but got ({type(v)})."
                         " Single values need to be wrapped in a list"
-                        " with one element.".format(name, type(v))
+                        " with one element."
                     )
 
                 if len(v) == 0:
                     raise ValueError(
-                        "Parameter values for parameter ({}) need "
-                        "to be a non-empty sequence.".format(name)
+                        f"Parameter values for parameter ({name}) need "
+                        "to be a non-empty sequence."
                     )
 
     def _run_search(self, evaluate_candidates):
@@ -1155,19 +1154,18 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         "capability:pred_int:insample": True,
         "python_dependencies": ["scikit-optimize"],
         "python_version": ">= 3.6",
-        "python_dependencies_alias": {"scikit-optimize": "skopt"},
     }
 
     def __init__(
         self,
         forecaster,
         cv: BaseSplitter,
-        param_distributions: Union[Dict, List[Dict]],
+        param_distributions: Union[dict, list[dict]],
         n_iter: int = 10,
         n_points: Optional[int] = 1,
         random_state: Optional[int] = None,
-        scoring: Optional[List[BaseMetric]] = None,
-        optimizer_kwargs: Optional[Dict] = None,
+        scoring: Optional[list[BaseMetric]] = None,
+        optimizer_kwargs: Optional[dict] = None,
         strategy: Optional[str] = "refit",
         refit: bool = True,
         verbose: int = 0,
@@ -1290,9 +1288,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
             # hacky approach to handle unhashable type objects
             if "forecaster" in search_space:
                 forecasters = search_space.get("forecaster")
-                mapping = {
-                    num: estimator for num, estimator in enumerate(forecasters)
-                }  # noqa
+                mapping = {num: estimator for num, estimator in enumerate(forecasters)}
                 search_space["forecaster"] = list(mapping.keys())
                 mappings.append(mapping)
             else:
@@ -1304,11 +1300,9 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         if self.verbose > 0:
             n_candidates = self.n_iter
             n_splits = self.cv.get_n_splits(y)
-            print(  # noqa
-                "Fitting {} folds for each of {} candidates,"
-                " totalling {} fits".format(
-                    n_splits, n_candidates, n_candidates * n_splits
-                )
+            print(
+                f"Fitting {n_splits} folds for each of {n_candidates} candidates,"
+                f" totalling {n_candidates * n_splits} fits"
             )
 
         # Run sequential search by iterating through each optimizer and evaluates
@@ -1427,7 +1421,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         kwargs = self.optimizer_kwargs_.copy()
         # convert params space to a list ordered by the key name
         kwargs["dimensions"] = dimensions_aslist(params_space)
-        dimensions_name = list(sorted(params_space.keys()))
+        dimensions_name = sorted(params_space.keys())
         optimizer = Optimizer(**kwargs)
         # set the name of the dimensions if not set
         for i in range(len(optimizer.space.dimensions)):
@@ -1658,6 +1652,8 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
     n_evals : int, default=100
         Number of parameter settings that are sampled. n_iter trades
         off runtime vs quality of the solution.
+    sampler : Optuna sampler, optional (default=None)
+        e.g. optuna.samplers.TPESampler(seed=42)
 
     Attributes
     ----------
@@ -1731,7 +1727,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
     """
 
     _tags = {
-        "authors": ["gareth-brown-86", "mk406"],
+        "authors": ["gareth-brown-86", "mk406", "bastisar"],
         "maintainers": ["gareth-brown-86", "mk406"],
         "scitype:y": "both",
         "requires-fh-in-fit": False,
@@ -1757,6 +1753,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         update_behaviour="full_refit",
         error_score=np.nan,
         n_evals=100,
+        sampler=None,
     ):
         super().__init__(
             forecaster=forecaster,
@@ -1772,6 +1769,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         )
         self.param_grid = param_grid
         self.n_evals = n_evals
+        self.sampler = sampler
 
         warn(
             "ForecastingOptunaSearchCV is experimental, and interfaces may change. "
@@ -1786,6 +1784,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         cv = check_cv(self.cv)
         scoring = check_scoring(self.scoring, obj=self)
         scoring_name = f"test_{scoring.name}"
+        sampler = self.sampler
 
         if not isinstance(self.param_grid, (Mapping, Iterable)):
             raise TypeError(
@@ -1807,20 +1806,21 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
             cv,
             scoring,
             scoring_name,
+            sampler,
         )
 
-        results[f"rank_{scoring_name}"] = results["value"].rank(
+        results[f"rank_{scoring_name}"] = results[f"mean_{scoring_name}"].rank(
             ascending=scoring.get_tag("lower_is_better")
         )
         self.cv_results_ = results
-        self.best_index_ = results["value"].idxmin()
+        self.best_index_ = results.loc[:, f"rank_{scoring_name}"].argmin()
         if self.best_index_ == -1:
             raise NotFittedError(
                 f"""All fits of forecaster failed,
                 set error_score='raise' to see the exceptions.
                 Failed forecaster: {self.forecaster}"""
             )
-        self.best_score_ = results.loc[self.best_index_, "value"]
+        self.best_score_ = results.loc[self.best_index_, f"mean_{scoring_name}"]
         self.best_params_ = results.loc[self.best_index_, "params"]
         self.best_forecaster_ = self.forecaster.clone().set_params(**self.best_params_)
 
@@ -1828,7 +1828,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
             self.best_forecaster_.fit(y, X, fh)
 
         results = results.sort_values(
-            by="value", ascending=scoring.get_tag("lower_is_better")
+            by=f"mean_{scoring_name}", ascending=scoring.get_tag("lower_is_better")
         )
         self.n_best_forecasters_ = []
         self.n_best_scores_ = []
@@ -1840,7 +1840,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
             if self.refit:
                 forecaster.fit(y, X, fh)
             self.n_best_forecasters_.append((rank, forecaster))
-            score = results["value"].iloc[i]
+            score = results[f"mean_{scoring_name}"].iloc[i]
             self.n_best_scores_.append(score)
 
         return self
@@ -1899,12 +1899,20 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
             "scoring": "MeanAbsolutePercentageError(symmetric=True)",
             "update_behaviour": "no_update",
         }
-        return [params, params2, params3]
+        scorer_with_lower_is_better_false = MeanAbsolutePercentageError(symmetric=True)
+        scorer_with_lower_is_better_false.set_tags(**{"lower_is_better": False})
+        params4 = {
+            "forecaster": NaiveForecaster(strategy="mean"),
+            "cv": SingleWindowSplitter(fh=1),
+            "param_grid": {"window_length": CategoricalDistribution((2, 5))},
+            "scoring": scorer_with_lower_is_better_false,
+        }
+        return [params, params2, params3, params4]
 
     def _get_score(self, out, scoring_name):
         return out[f"mean_{scoring_name}"]
 
-    def _run_search(self, y, X, cv, scoring, scoring_name):
+    def _run_search(self, y, X, cv, scoring, scoring_name, sampler):
         import optuna
 
         all_results = []  # List to store results from all parameter grids
@@ -1912,7 +1920,10 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         for (
             param_grid_dict
         ) in self._param_grid:  # Assuming self._param_grid is now a list of dicts
-            study = optuna.create_study(direction="minimize")
+            scoring_direction = (
+                "minimize" if scoring.get_tag("lower_is_better") else "maximize"
+            )
+            study = optuna.create_study(direction=scoring_direction, sampler=sampler)
             meta = {}
             meta["forecaster"] = self.forecaster
             meta["y"] = y
@@ -1942,4 +1953,4 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
 
         # Combine all results into a single DataFrame
         combined_results = pd.concat(all_results, ignore_index=True)
-        return combined_results
+        return combined_results.rename(columns={"value": f"mean_{scoring_name}"})

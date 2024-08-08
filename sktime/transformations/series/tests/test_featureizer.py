@@ -1,4 +1,5 @@
 """Test YtoX."""
+
 __author__ = ["aiwalter", "fkiraly"]
 
 import pytest

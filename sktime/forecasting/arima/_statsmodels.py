@@ -5,7 +5,8 @@
 __all__ = ["StatsModelsARIMA"]
 __author__ = ["arnaujc91"]
 
-from typing import Iterable, Optional, Tuple, Union
+from collections.abc import Iterable
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -26,7 +27,7 @@ class StatsModelsARIMA(_StatsModelsAdapter):
     but with different
     fitting strategies, fitted parameters, and slightly differring behaviour.
     Users should refer to the statsmodels documentation for further details:
-    https://www.statsmodels.org/dev/examples/notebooks/generated/statespace_sarimax_faq.html  # noqa: E501
+    https://www.statsmodels.org/dev/examples/notebooks/generated/statespace_sarimax_faq.html
 
     Parameters
     ----------
@@ -159,7 +160,7 @@ class StatsModelsARIMA(_StatsModelsAdapter):
     >>> forecaster = StatsModelsARIMA(order=(0, 0, 12))  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
     >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
-    """
+    """  # noqa: E501
 
     _tags = {
         # packaging info
@@ -175,8 +176,8 @@ class StatsModelsARIMA(_StatsModelsAdapter):
 
     def __init__(
         self,
-        order: Tuple[int, int, int] = (0, 0, 0),
-        seasonal_order: Tuple[int, int, int, int] = (0, 0, 0, 0),
+        order: tuple[int, int, int] = (0, 0, 0),
+        seasonal_order: tuple[int, int, int, int] = (0, 0, 0, 0),
         trend: Optional[Union[str, Iterable]] = None,
         enforce_stationarity: bool = True,
         enforce_invertibility: bool = True,

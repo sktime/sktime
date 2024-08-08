@@ -10,6 +10,11 @@ All clusterers in ``sktime`` can be listed using the ``sktime.registry.all_estim
 using ``estimator_types="clusterer"``, optionally filtered by tags.
 Valid tags can be listed using ``sktime.registry.all_tags``.
 
+A full table with tag based search is also available on the
+:doc:`Estimator Search Page </estimator_overview>`
+(select "clustering" in the "Estimator type" dropdown).
+
+
 Clustering models
 -----------------
 

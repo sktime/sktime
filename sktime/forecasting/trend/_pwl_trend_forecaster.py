@@ -84,14 +84,15 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
     """
 
     _tags = {
-        "authors": ["sbuse"],
+        "authors": ["sbuse", "bletham", "tcuongd"],
+        # bletham, tcuongd for prophet
         "maintainers": ["sbuse"],
         "scitype:y": "univariate",
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
-        "python_dependencies": "prophet",
+        "python_dependencies": ["prophet", "numpy<2.0"],
     }
 
     def __init__(
