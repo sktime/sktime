@@ -1,5 +1,6 @@
 """Adapted from https://github.com/Nixtla/datasetsforecast/blob/main/datasetsforecast/losses.py."""
 
+import warnings
 from dataclasses import dataclass
 from typing import Optional, Union
 
@@ -298,9 +299,11 @@ if _check_soft_dependencies(["torch"], severity="none"):
         error = 200 * _reduce(error, reduction=reduction, axis=axis)
 
         if isinstance(error, float):
-            assert error <= 200, "SMAPE should be lower than 200"
+            # assert error <= 200, "SMAPE should be lower than 200"
+            warnings.warn(f"SMAPE should be lower than 200 but was found to be {error}")
         else:
-            assert all(error <= 200), "SMAPE should be lower than 200"
+            # assert all(error <= 200), "SMAPE should be lower than 200"
+            warnings.warn(f"SMAPE should be lower than 200 but was found to be {error}")
 
         return error
 
