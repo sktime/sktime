@@ -72,7 +72,7 @@ class MultiRocketMultivariate(BaseTransformer):
 
     Examples
     --------
-     >>> from sktime.transformations.panel.rocket import Rocket
+     >>> from sktime.transformations.panel.rocket import MultiRocketMultivariate
      >>> from sktime.datasets import load_basic_motions
      >>> X_train, y_train = load_basic_motions(split="train") # doctest: +SKIP
      >>> X_test, y_test = load_basic_motions(split="test") # doctest: +SKIP
@@ -274,3 +274,38 @@ class MultiRocketMultivariate(BaseTransformer):
             num_features_per_dilation,
             biases,
         )
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for transformers.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        return [
+            {},
+            {
+                "num_kernels": 5_000,
+                "max_dilations_per_kernel": 16,
+                "n_features_per_kernel": 3,
+                "normalise": True,
+            },
+            {
+                "num_kernels": 2_000,
+                "max_dilations_per_kernel": 64,
+                "n_features_per_kernel": 5,
+                "normalise": False,
+            },
+        ]
