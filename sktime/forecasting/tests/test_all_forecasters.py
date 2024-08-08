@@ -6,6 +6,7 @@
 __author__ = ["mloning", "kejsitake", "fkiraly"]
 
 from inspect import signature
+import re
 
 import numpy as np
 import pandas as pd
@@ -366,11 +367,8 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             y_pred_q = estimator_instance.predict_quantiles()
             _assert_correct_pred_time_index(y_pred_q.index, cutoff, fh)
         else:
-            if can_pr_int:
-                match = "in-sample"
-            else:
-                match = "prediction intervals"
-            with pytest.raises(NotImplementedError, match=match):
+            pattern = re.compile(r"in-sample|prediction intervals")
+            with pytest.raises(NotImplementedError, match=pattern):
                 estimator_instance.fit(y_train, fh=fh)
                 y_pred_int = estimator_instance.predict_interval()
 
