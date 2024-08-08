@@ -263,7 +263,7 @@ def piecewise_multinomial(
 
     segments_data = [
         rng.multinomial(n=n_trials, pvals=p_val, size=[length])
-        for p_val, length, in zip(p_vals, lengths)
+        for p_val, length in zip(p_vals, lengths)
     ]
     return np.concatenate(tuple(segments_data))
 

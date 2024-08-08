@@ -15,7 +15,7 @@ __all__ = [
 import numpy as np
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.warnings import warn
 
 
@@ -107,9 +107,7 @@ def _init_matrix(matrices, transform_func, default_val):
     return transform_func(matrices)
 
 
-def _check_conditional_dependency(
-    obj, condition, package, severity, package_import_alias=None, msg=None
-):
+def _check_conditional_dependency(obj, condition, package, severity, msg=None):
     """If ``condition`` applies, check the soft dependency ``package`` installation.
 
     Call _check_soft_dependencies.
@@ -124,9 +122,6 @@ def _check_conditional_dependency(
         Error message to attach to ModuleNotFoundError.
     package : str
         Package name for soft dependency check.
-    package_import_alias : dict with str keys and values or None, optional, default=None
-        import name is str used in python import, i.e., from import_name import ...
-        should be provided if import name differs from package name
     severity : str
         'error' or 'warning'.
 
@@ -144,12 +139,7 @@ def _check_conditional_dependency(
                 f"install the `{package}` package. "
             )
         try:
-            _check_soft_dependencies(
-                package,
-                package_import_alias=package_import_alias,
-                severity=severity,
-                obj=obj,
-            )
+            _check_soft_dependencies(package, severity=severity, obj=obj)
         except ModuleNotFoundError as e:
             raise ModuleNotFoundError(msg) from e
 
@@ -173,7 +163,7 @@ def _validate_estimate_matrices(input_ems, all_ems):
         if input_ems == "all":
             return all_ems
         if input_ems in all_ems:
-            return list([input_ems])
+            return list([input_ems])  # noqa: C410
 
         raise ValueError(
             f"If `estimate_matrices` is passed as a "
@@ -397,12 +387,14 @@ class BaseKalmanFilter:
 
 
 class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
-    """Kalman Filter is used for denoising data, or inferring the hidden state of data.
+    """Kalman Filter, from pykalman (sktime native maintenance fork).
 
     The Kalman Filter is an unsupervised algorithm, consisting of
     several mathematical equations which are used to create
     an estimate of the state of a process.
 
+    The Kalman Filter is typically used for denoising data,
+    or inferring the hidden state of data.
 
     This class is the adapter for the ``pykalman`` package into ``sktime``.
     ``KalmanFilterTransformerPK`` implements hidden inferred states and
@@ -410,6 +402,12 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
     In addition, ``KalmanFilterTransformerPK`` provides parameter
     optimization via Expectation-Maximization (EM) algorithm [2]_,
     implemented by ``pykalman``.
+
+    As the ``pykalman`` package is no longer maintained, ``sktime`` now contains
+    an up-to-date maintenance fork of the ``pykalman`` package.
+
+    The maintenance fork can also be directly accessed in
+    ``sktime.libs.pykalman``.
 
     Parameters
     ----------
@@ -538,9 +536,11 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["NoaBenAmi", "lielleravid"],
+        "authors": ["duckworthd", "NoaBenAmi", "lielleravid", "mbalatsko", "gliptak"],
+        # duckworthd for the original pykalman package (abandoned later)
+        # mbalatsko, gliptak for fixes and updates
+        # NoaBenAmi, lielleravid for the sktime adapter
         "maintainers": ["NoaBenAmi"],
-        "python_dependencies": "pykalman",
         # estimator type
         # --------------
         "X_inner_mtype": "np.ndarray",  # which mtypes do _fit/_predict support for X?
@@ -719,7 +719,7 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
             X_transformed : np.ndarray
                 transformed version of X
         """
-        from pykalman import KalmanFilter
+        from sktime.libs.pykalman import KalmanFilter
 
         X_masked = np.ma.masked_invalid(X)
 
@@ -802,7 +802,7 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
             F, H, Q, R, transition_offsets, measurement_offsets,
             X0, P0 as np.ndarray.
         """
-        from pykalman import KalmanFilter
+        from sktime.libs.pykalman import KalmanFilter
 
         X_masked = np.ma.masked_invalid(X)
         estimate_matrices_ = self._get_estimate_matrices()
@@ -1091,27 +1091,6 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
         -------
             self: reference to self
         """
-        # The below call to `_check_conditional_dependency` checks the installation
-        # of `pykalman` package, if needed. `pykalman`
-        # is used when the user requires matrices estimation
-        # (`estimate_matrices` is not None).
-        # This conditioned dependency check can be performed in
-        # `__init__` for early user feedback.
-        _check_conditional_dependency(
-            obj=self,
-            condition=(self.estimate_matrices is not None),
-            package="pykalman",
-            severity="error",
-            msg=(
-                f"{self.__class__.__name__}'s matrix parameter estimation "
-                f"is performed when `estimate_matrices` "
-                f"is {self.estimate_matrices}, "
-                f"and requires `pykalman` installed. Please run: "
-                f"`pip install pykalman` to "
-                f"install the `pykalman` package. "
-            ),
-        )
-
         measurement_dim = X.shape[1]
         time_steps = X.shape[0]
         shapes = self._get_shapes(

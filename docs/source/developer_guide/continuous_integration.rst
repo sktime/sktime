@@ -10,7 +10,7 @@ This page gives a summary of:
 
 If you are a contributor or developer, ensure that you have set
 up your developer environment, and installed a
-`development version <https://www.sktime.net/en/stable/installation.html>`__
+`development version :doc:</installation>`
 of ``sktime``.
 
 ``sktime`` use continuous integration (CI) services on GitHub to automatically check
@@ -36,7 +36,7 @@ We recommend:
 Prerequisite: local python environment
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Local testing requires a `development version <https://www.sktime.net/en/stable/installation.html>`__
+Local testing requires a `development version :doc:</installation>`
 of ``sktime``, follow the link for detail instructions.
 
 In your environment, ensure you have an editable development version of sktime with developer dependencies.
@@ -53,7 +53,7 @@ To install, if not already installed:
 .. note::
 
    For trouble shooting on different operating systems, please see our detailed
-   `installation instructions <https://www.sktime.net/en/latest/installation.html>`__.
+   `installation instructions :doc:</installation>`.
 
 Code quality checks
 ~~~~~~~~~~~~~~~~~~~
@@ -81,7 +81,7 @@ For contributions that are localized to estimators or objects, the ``check_estim
 utility can be used.
 
 For this, follow the instructions in the
-`estimator development guide <https://www.sktime.net/en/stable/developer_guide/add_estimators.html>`__
+`estimator development guide :doc:</developer_guide/add_estimators>`
 
 Full test suite runs via ``pytest``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -108,20 +108,21 @@ via the embedded graphical user interface.
 Running docstring examples via ``doctest``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-sktime's Python modules are equipped with docstrings that include examples
-demonstrating the usage of specific classes within each module. These examples
-can be executed using doctest to ensure the expected functionality of the
-modules after making modifications, thereby identifying any unforeseen bugs.
+``sktime``'s Python modules are equipped with docstrings that include examples
+demonstrating the usage of specific classes within each module.
 
-To run doctest on all the files with ``pytest``, navigate to the root directory and execute
-the following command:
+Docstring examples can be executed in bulk using ``doctest``,
+to ensure that this is indeed the case.
+
+To run doctest on all the files with ``pytest``,
+navigate to the root directory and execute the following command:
 
   .. code:: bash
 
       pytest --doctest-modules
 
-To run doctest on all the files without ``pytest``, navigate to the root directory and execute
-the following command:
+To run doctest on all the files without ``pytest``,
+navigate to the root directory and execute the following command:
 
 (for ``UNIX`` based OS)
   .. code:: bash

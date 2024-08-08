@@ -1,7 +1,7 @@
 __author__ = ["chrisholder", "TonyBagnall"]
 
-
-from typing import Any, Callable, Union
+from collections.abc import Callable
+from typing import Any, Union
 
 import numpy as np
 
@@ -106,7 +106,7 @@ def erp_distance(
     ----------
     .. [1] Lei Chen and Raymond Ng. 2004. On the marriage of Lp-norms and edit distance.
     In Proceedings of the Thirtieth international conference on Very large data bases
-     - Volume 30 (VLDB '04). VLDB Endowment, 792–803.
+     - Volume 30 (VLDB '04). VLDB Endowment, 792-803.
     """
     format_kwargs = {
         "window": window,
@@ -201,7 +201,7 @@ def edr_distance(
     .. [1] Lei Chen, M. Tamer Özsu, and Vincent Oria. 2005. Robust and fast similarity
     search for moving object trajectories. In Proceedings of the 2005 ACM SIGMOD
     international conference on Management of data (SIGMOD '05). Association for
-    Computing Machinery, New York, NY, USA, 491–502.
+    Computing Machinery, New York, NY, USA, 491-502.
     DOI:https://doi.org/10.1145/1066157.1066213
     """
     format_kwargs = {
@@ -744,12 +744,12 @@ def dtw_distance(
     mining Proceedings of 5th SIAM International Conference on Data Mining, 2005
     .. [3] Sakoe H. and Chiba S.: Dynamic programming algorithm optimization for
     spoken word recognition. IEEE Transactions on Acoustics, Speech, and Signal
-    Processing 26(1):43–49, 1978.
+    Processing 26(1):43-49, 1978.
     .. [4] Itakura F: Minimum prediction residual principle applied to speech
     recognition. IEEE Transactions on Acoustics, Speech, and Signal Processing 23(
-    1):67–72, 1975.
+    1):67-72, 1975.
     .. [5] Shokoohi-Yekta M et al.: Generalizing DTW to the multi-dimensional case
-    requires an adaptive approach. Data Mining and Knowledge Discovery, 31, 1–31 (2017).
+    requires an adaptive approach. Data Mining and Knowledge Discovery, 31, 1-31 (2017).
     """  # noqa: E501
     format_kwargs = {
         "window": window,
@@ -817,11 +817,12 @@ def msm_distance(
         NumbaDistance.
         If a resolved metric is not no_python compiled.
         If the metric type cannot be determined
+
     References
     ----------
     .. [1]A.  Stefan,  V.  Athitsos,  and  G.  Das.   The  Move-Split-Merge  metric
     for time  series. IEEE  Transactions  on  Knowledge  and  Data  Engineering,
-    25(6):1425–1438, 2013.
+    25(6):1425-1438, 2013.
     """
     format_kwargs = {
         "c": c,
@@ -919,7 +920,7 @@ def twe_distance(
     ----------
     .. [1] Marteau, P.; F. (2009). "Time Warp Edit Distance with Stiffness Adjustment
     for Time Series Matching". IEEE Transactions on Pattern Analysis and Machine
-    Intelligence. 31 (2): 306–318.
+    Intelligence. 31 (2): 306-318.
     """
     format_kwargs = {
         "window": window,
@@ -1505,7 +1506,7 @@ def edr_alignment_path(
     .. [1] Lei Chen, M. Tamer Özsu, and Vincent Oria. 2005. Robust and fast similarity
     search for moving object trajectories. In Proceedings of the 2005 ACM SIGMOD
     international conference on Management of data (SIGMOD '05). Association for
-    Computing Machinery, New York, NY, USA, 491–502.
+    Computing Machinery, New York, NY, USA, 491-502.
     DOI:https://doi.org/10.1145/1066157.1066213
     """
     format_kwargs = {
@@ -1592,7 +1593,7 @@ def erp_alignment_path(
     ----------
     .. [1] Lei Chen and Raymond Ng. 2004. On the marriage of Lp-norms and edit distance.
     In Proceedings of the Thirtieth international conference on Very large data bases
-     - Volume 30 (VLDB '04). VLDB Endowment, 792–803.
+     - Volume 30 (VLDB '04). VLDB Endowment, 792-803.
     """
     format_kwargs = {
         "window": window,
@@ -1762,11 +1763,12 @@ def msm_alignment_path(
         NumbaDistance.
         If a resolved metric is not no_python compiled.
         If the metric type cannot be determined
+
     References
     ----------
     .. [1]A.  Stefan,  V.  Athitsos,  and  G.  Das.   The  Move-Split-Merge  metric
     for time  series. IEEE  Transactions  on  Knowledge  and  Data  Engineering,
-    25(6):1425–1438, 2013.
+    25(6):1425-1438, 2013.
     """
     format_kwargs = {
         "c": c,
@@ -1860,7 +1862,7 @@ def twe_alignment_path(
     ----------
     .. [1] Marteau, P.; F. (2009). "Time Warp Edit Distance with Stiffness Adjustment
     for Time Series Matching". IEEE Transactions on Pattern Analysis and Machine
-    Intelligence. 31 (2): 306–318.
+    Intelligence. 31 (2): 306-318.
     """
     format_kwargs = {
         "window": window,
@@ -2110,10 +2112,10 @@ def pairwise_distance(
     Examples
     --------
     >>> import numpy as np
-    >>> from sktime.distances import pairwise_distance
+    >>> from sktime.distances import pairwise_distance  # doctest: +SKIP
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
-    >>> pairwise_distance(x_1d, y_1d, metric='dtw')
+    >>> pairwise_distance(x_1d, y_1d, metric='dtw')  # doctest: +SKIP
     array([[16., 25., 36., 49.],
            [ 9., 16., 25., 36.],
            [ 4.,  9., 16., 25.],
@@ -2121,19 +2123,19 @@ def pairwise_distance(
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
-    >>> pairwise_distance(x_2d, y_2d, metric='dtw')
+    >>> pairwise_distance(x_2d, y_2d, metric='dtw')  # doctest: +SKIP
     array([[256., 576.],
            [ 58., 256.]])
 
     >>> x_3d = np.array([[[1], [2], [3], [4]], [[5], [6], [7], [8]]])  # 3d array
     >>> y_3d = np.array([[[9], [10], [11], [12]], [[13], [14], [15], [16]]])  # 3d array
-    >>> pairwise_distance(x_3d, y_3d, metric='dtw')
+    >>> pairwise_distance(x_3d, y_3d, metric='dtw')  # doctest: +SKIP
     array([[256., 576.],
            [ 64., 256.]])
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
-    >>> pairwise_distance(x_2d, y_2d, metric='dtw', window=0.5)
+    >>> pairwise_distance(x_2d, y_2d, metric='dtw', window=0.5)  # doctest: +SKIP
     array([[256., 576.],
            [ 58., 256.]])
     """

@@ -1,12 +1,22 @@
 """Test data loaders that download from external sources."""
+
+import sys
 from urllib.request import Request, urlopen
 
 import numpy as np
 import pandas as pd
 import pytest
+from packaging.specifiers import SpecifierSet
 
-from sktime.datasets import load_forecastingdata, load_solar, load_UCR_UEA_dataset
+from sktime.datasets import (
+    load_forecastingdata,
+    load_fpp3,
+    load_m5,
+    load_solar,
+    load_UCR_UEA_dataset,
+)
 from sktime.datasets.tsf_dataset_names import tsf_all, tsf_all_datasets
+from sktime.datatypes import check_is_mtype, check_raise
 
 # test tsf download only on a random uniform subsample of datasets
 N_TSF_SUBSAMPLE = 3
@@ -91,3 +101,28 @@ def test_load_forecasting_data_invalid_name(name):
         match=f"Error in load_forecastingdata, Invalid dataset name = {name}.",
     ):
         load_forecastingdata(name=name)
+
+
+@pytest.mark.skipif(
+    sys.version.split(" ")[0] in SpecifierSet("<3.9"),
+    reason="rdata loader does not work on python 3.8",
+)
+@pytest.mark.datadownload
+def test_load_fpp3():
+    """Test loading downloaded dataset from ."""
+    olympic_running = load_fpp3("olympic_running")
+
+    assert isinstance(olympic_running, pd.DataFrame)
+    ret = check_is_mtype(olympic_running, mtype="pd_multiindex_hier")
+    assert ret is True
+
+
+@pytest.mark.datadownload
+def test_load_m5():
+    """Test loading downloaded dataset from Zenodo.org."""
+    file = "UnitTest"
+    loaded_dataset = load_m5(extract_path=file, test=True)
+    assert len(loaded_dataset) == 1913
+
+    index = check_raise(loaded_dataset, mtype="pd_multiindex_hier")
+    assert index is True

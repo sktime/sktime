@@ -30,6 +30,7 @@ Testing - required for sktime test framework and check_estimator usage:
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
+
 # todo: write an informative docstring for the file or module, remove the above
 # todo: add an appropriate copyright notice for your estimator
 #       estimators contributed to sktime should have the copyright notice at the top
@@ -37,7 +38,6 @@ copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 # todo: uncomment the following line, enter authors' GitHub IDs
 # __author__ = [authorGitHubID, anotherAuthorGitHubID]
-
 
 from sktime.split.base import BaseSplitter
 

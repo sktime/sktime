@@ -7,15 +7,12 @@ __author__ = ["miraep8"]
 import pytest
 
 from sktime.datasets import load_shampoo_sales
-from sktime.forecasting.arima import AutoARIMA
-from sktime.forecasting.compose import MultiplexForecaster
-from sktime.forecasting.ets import AutoETS
+from sktime.forecasting.compose import MultiplexForecaster, YfromX
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.model_selection import ForecastingGridSearchCV
 from sktime.forecasting.naive import NaiveForecaster
-from sktime.forecasting.theta import ThetaForecaster
 from sktime.split import ExpandingWindowSplitter
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils.validation.forecasting import check_scoring
 
 
@@ -35,8 +32,8 @@ def _score_forecasters(forecasters, cv, y):
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(ThetaForecaster, severity="none"),
-    reason="skip test if required soft dependency is not available",
+    not run_test_for_class(MultiplexForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_multiplex_forecaster_alone():
     """Test results of MultiplexForecaster.
@@ -51,7 +48,7 @@ def test_multiplex_forecaster_alone():
     # Note - we select two forecasters which are deterministic.
     forecaster_tuples = [
         ("naive", NaiveForecaster()),
-        ("theta", ThetaForecaster()),
+        ("naive2", NaiveForecaster(strategy="mean")),
     ]
     forecaster_names = [name for name, _ in forecaster_tuples]
     forecasters = [forecaster for _, forecaster in forecaster_tuples]
@@ -100,8 +97,8 @@ def test_multiplex_with_grid_search():
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(AutoARIMA, severity="none"),
-    reason="skip test if required soft dependency for AutoARIMA not available",
+    not run_test_for_class(MultiplexForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_multiplex_or_dunder():
     """Test that the MultiplexForecaster magic "|" dunder method behaves as expected.
@@ -110,14 +107,18 @@ def test_multiplex_or_dunder():
     forecaster or MultiplexForecaster objects. Here we test that it performs as expected
     on all the use cases, and raises the expected error in some others.
     """
+    yfromx = YfromX.create_test_instance()
+    naive = NaiveForecaster()
+    naive2 = NaiveForecaster(strategy="mean")
+
     # test a simple | example with two forecasters:
-    multiplex_two_forecaster = AutoETS() | NaiveForecaster()
+    multiplex_two_forecaster = yfromx | naive
     assert isinstance(multiplex_two_forecaster, MultiplexForecaster)
     assert len(multiplex_two_forecaster.forecasters) == 2
     # now test that | also works on two MultiplexForecasters:
-    multiplex_one = MultiplexForecaster([("arima", AutoARIMA()), ("ets", AutoETS())])
+    multiplex_one = MultiplexForecaster([("yfromx", yfromx), ("naive2", naive2)])
     multiplex_two = MultiplexForecaster(
-        [("theta", ThetaForecaster()), ("naive", NaiveForecaster())]
+        [("yfromx2", yfromx), ("naive", NaiveForecaster())]
     )
     multiplex_two_multiplex = multiplex_one | multiplex_two
     assert isinstance(multiplex_two_multiplex, MultiplexForecaster)

@@ -11,6 +11,8 @@ from inspect import getmro, isclass
 
 from sktime.tests._config import EXCLUDE_ESTIMATORS
 
+LOCAL_PACKAGE = "sktime"
+
 
 def run_test_for_class(cls, return_reason=False):
     """Check if test should run for a class or function.
@@ -27,7 +29,7 @@ def run_test_for_class(cls, return_reason=False):
     2. Condition 2:
 
       If the module containing the class/func has changed according to is_class_changed,
-      or one of the modules containing any parent classes in sktime,
+      or one of the modules containing any parent classes  in the local package,
       then condition 2 is met.
 
     3. Condition 3:
@@ -160,10 +162,9 @@ def _run_test_for_class(cls):
 
         If multiple reasons are present, the first one in the above list is returned.
     """
-
     from sktime.tests.test_all_estimators import ONLY_CHANGED_MODULES
+    from sktime.utils.dependencies import _check_estimator_deps
     from sktime.utils.git_diff import get_packages_with_changed_specs, is_class_changed
-    from sktime.utils.validation._dependencies import _check_estimator_deps
 
     PACKAGE_REQ_CHANGED = get_packages_with_changed_specs()
 
@@ -174,18 +175,18 @@ def _run_test_for_class(cls):
         else:
             return True
 
-    def _is_class_changed_or_sktime_parents(cls):
-        """Check if class or any of its sktime parents have changed, return bool."""
+    def _is_class_changed_or_local_parents(cls):
+        """Check if class or any of its local parents have changed, return bool."""
         # if cls is a function, not a class, default to is_class_changed
         if not isclass(cls):
             return is_class_changed(cls)
 
         # now we know cls is a class, so has an mro
         cls_and_parents = getmro(cls)
-        cls_and_sktime_parents = [
-            x for x in cls_and_parents if x.__module__.startswith("sktime")
+        cls_and_local_parents = [
+            x for x in cls_and_parents if x.__module__.startswith(LOCAL_PACKAGE)
         ]
-        return any(is_class_changed(x) for x in cls_and_sktime_parents)
+        return any(is_class_changed(x) for x in cls_and_local_parents)
 
     def _tests_covering_class_changed(cls):
         """Check if any of the tests covering cls have changed, return bool."""
@@ -239,11 +240,50 @@ def _run_test_for_class(cls):
 
     # Condition 2:
     # any of the modules containing any of the classes in the list have changed
-    # or any of the modules containing any parent classes in sktime have changed
-    cond2 = _is_class_changed_or_sktime_parents(cls)
+    # or any of the modules containing any parent classes in local package have changed
+    cond2 = _is_class_changed_or_local_parents(cls)
     if cond2:
         return True, "True_changed_class"
 
     # if none of the conditions are met, do not run the test
     # reason is that there was no change
     return False, "False_no_change"
+
+
+def run_test_module_changed(module):
+    """Check if test should run based on module changes
+
+    This switch can be used to decorate tests not pertaining to a specific class.
+
+    The function can be used to switch tests on and off
+    based on whether a target module has changed.
+
+    This checks whether the module ``module``, or any of its child modules,
+    have changed.
+
+    If ``ONLY_CHANGED_MODULES`` is False, the test is always run,
+    i.e., this function always returns True.
+
+    Parameters
+    ----------
+    module : string, or list of strings
+        modules to check for changes, e.g., ``sktime.forecasting``
+
+    Returns
+    -------
+    bool : switch to run or skip the test
+        True iff: at least one of the modules or its submodules have changed,
+        or if ``ONLY_CHANGED_MODULES`` is False
+    """
+    from sktime.tests.test_all_estimators import ONLY_CHANGED_MODULES
+    from sktime.utils.git_diff import is_module_changed
+
+    # if ONLY_CHANGED_MODULES is off: always True
+    # tests are always run if soft dependencies are present
+    if not ONLY_CHANGED_MODULES:
+        return True
+
+    if not isinstance(module, (list, tuple)):
+        module = [module]
+
+    return any(is_module_changed(mod) for mod in module)

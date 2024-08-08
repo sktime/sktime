@@ -1,5 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """A transformer to compute the time elapsed since a reference time."""
+
 from __future__ import annotations
 
 __author__ = ["KishManani"]

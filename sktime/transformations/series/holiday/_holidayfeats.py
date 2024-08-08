@@ -8,13 +8,13 @@ __all__ = ["HolidayFeatures"]
 import datetime
 from collections import defaultdict
 from datetime import date
-from typing import Dict
 
 import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
+from sktime.utils.warnings import warn
 
 
 class HolidayFeatures(BaseTransformer):
@@ -46,6 +46,7 @@ class HolidayFeatures(BaseTransformer):
         point is a holiday or not.
     keep_original_columns : bool, default=False
         Keep original columns in X passed to ``.transform()``.
+
 
     Examples
     --------
@@ -113,8 +114,8 @@ class HolidayFeatures(BaseTransformer):
 
     def __init__(
         self,
-        calendar: Dict[date, str],
-        holiday_windows: Dict[str, tuple] = None,
+        calendar: dict[date, str],
+        holiday_windows: dict[str, tuple] = None,
         include_bridge_days: bool = False,
         include_weekend: bool = False,
         return_dummies: bool = True,
@@ -168,6 +169,7 @@ class HolidayFeatures(BaseTransformer):
             return_categorical=self.return_categorical,
             return_dummies=self.return_dummies,
             return_indicator=self.return_indicator,
+            warning_instance=self,
         )
 
         if self.keep_original_columns:
@@ -221,13 +223,14 @@ class HolidayFeatures(BaseTransformer):
 
 def _generate_holidays(
     index: pd.DatetimeIndex,
-    calendar: Dict[date, str],
+    calendar: dict[date, str],
     holiday_windows: dict = None,
     include_bridge_days: bool = False,
     include_weekend: bool = False,
     return_dummies: bool = True,
     return_categorical: bool = False,
     return_indicator: bool = False,
+    warning_instance: HolidayFeatures = None,
 ) -> pd.DataFrame:
     """Generate holidays.
 
@@ -253,6 +256,8 @@ def _generate_holidays(
     return_indicator : bool, default=False
         Whether or not to return an indicator variable equal to 1 if a time
         point is a holiday or not.
+    warning_instance : HolidayFeatures, default=None
+        Instance of HolidayFeatures to raise warnings.
 
     Returns
     -------
@@ -306,35 +311,33 @@ def _generate_holidays(
             if name in holidays_by_name:
                 dates = holidays_by_name[name]
             else:
-                raise ValueError(f"holiday: {name} not found in calendar.")
+                warn(
+                    f"Holiday '{name}' not found in calendar. Skipping.",
+                    obj=warning_instance,
+                    stacklevel=2,
+                )
 
+            # We then get the number of days before and after
+            # the holiday.
+            before, after = window
+            neg_before = -before
             # For each holiday, we iterate over dates.
             for dte in dates:
-                # We then get the number of days before and after
-                # the holiday.
-                before, after = window
-
                 # Finally, we add all days within the window to the
                 # holiday, making sure that we do not overwrite
                 # already existing holidays.
-                msg = (
-                    "Holiday already exists. Please make sure holiday windows "
-                    "are not overlapping with other holidays."
-                )
-
-                for days in range(1, before + 1):
-                    date_before = dte - datetime.timedelta(days=days)
-                    if date_before not in holidays_by_date:
-                        holidays_by_date[date_before] = name
+                for days in range(neg_before, after + 1):
+                    date_window = dte + datetime.timedelta(days=days)
+                    if date_window not in holidays_by_date:
+                        holidays_by_date[date_window] = name
+                    elif holidays_by_date[date_window] != name:
+                        holidays_by_date[date_window] = f", {name}"
                     else:
-                        raise ValueError(msg)
-
-                for days in range(1, after + 1):
-                    date_after = dte + datetime.timedelta(days=days)
-                    if date_after not in holidays_by_date:
-                        holidays_by_date[date_after] = name
-                    else:
-                        raise ValueError(msg)
+                        warn(
+                            f"Conflict with holiday '{name}' on {date_window}",
+                            obj=warning_instance,
+                            stacklevel=2,
+                        )
 
     if include_bridge_days:
         # Iterate over holidays.
@@ -398,8 +401,8 @@ def _generate_holidays(
 
 def _check_params(
     index: pd.DatetimeIndex,
-    calendar: Dict[date, str],
-    holiday_windows: Dict[str, tuple],
+    calendar: dict[date, str],
+    holiday_windows: dict[str, tuple],
     include_bridge_days: bool,
     include_weekend: bool,
     return_dummies: bool,
@@ -470,7 +473,7 @@ def _check_params(
         _check_holiday_windows(holiday_windows)
 
 
-def _check_holiday_windows(holiday_windows: Dict[str, tuple]):
+def _check_holiday_windows(holiday_windows: dict[str, tuple]):
     """Check holiday windows.
 
     Parameters
@@ -501,7 +504,7 @@ def _check_holiday_windows(holiday_windows: Dict[str, tuple]):
                 )
 
 
-def _check_calendar(calendar: Dict[date, str]):
+def _check_calendar(calendar: dict[date, str]):
     """Check calendar param.
 
     Parameters

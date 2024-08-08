@@ -41,7 +41,6 @@ copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 # todo: uncomment the following line, enter authors' GitHub IDs
 # __author__ = [authorGitHubID, anotherAuthorGitHubID]
 
-
 from sktime.alignment.base import BaseAligner
 
 # todo: add any necessary imports here
@@ -101,6 +100,7 @@ class MyAligner(BaseAligner):
         "capability:multiple-alignment": False,  # can align more than two sequences?
         "capability:distance": False,  # does compute/return overall distance?
         "capability:distance-matrix": False,  # does compute/return distance matrix?
+        "capability:unequal_length": True,  # can align sequences of unequal length?
     }
 
     # todo: add any hyper-parameters and components to constructor

@@ -6,7 +6,7 @@ __author__ = ["mloning", "fkiraly"]
 
 
 from functools import reduce
-from typing import Dict, List, Union
+from typing import Union
 
 import numpy as np
 import pytest
@@ -19,6 +19,7 @@ from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.model_selection import (
     ForecastingGridSearchCV,
+    ForecastingOptunaSearchCV,
     ForecastingRandomizedSearchCV,
     ForecastingSkoptSearchCV,
 )
@@ -41,6 +42,7 @@ from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.detrend import Detrender
 from sktime.transformations.series.impute import Imputer
 from sktime.utils._testing.hierarchical import _make_hierarchical
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.parallel import _get_parallel_test_fixtures
 
 TEST_METRICS = [MeanAbsolutePercentageError(symmetric=True), MeanSquaredError()]
@@ -51,6 +53,7 @@ TUNER_CLASSES = [
     ForecastingGridSearchCV,
     ForecastingRandomizedSearchCV,
     ForecastingSkoptSearchCV,
+    ForecastingOptunaSearchCV,
 ]
 
 
@@ -327,6 +330,105 @@ def test_skoptcv_multiple_forecaster():
     assert len(sscv.cv_results_) == 5
 
 
+@pytest.fixture(scope="module")
+def optuna_param_grids():
+    if _check_soft_dependencies("optuna"):
+        import optuna
+
+        PIPE_GRID_OPTUNA = {
+            "transformer__forecaster__degree": optuna.distributions.IntDistribution(
+                1, 2
+            ),
+            "forecaster__strategy": optuna.distributions.CategoricalDistribution(
+                ["last", "mean"]
+            ),
+        }
+        NAIVE_GRID_OPTUNA = {
+            "window_length": optuna.distributions.IntDistribution(
+                *TEST_WINDOW_LENGTHS_INT
+            )
+        }
+
+        return {"NAIVE": NAIVE_GRID_OPTUNA, "PIPE": PIPE_GRID_OPTUNA}
+
+
+def optuna_samplers():
+    try:
+        _check_soft_dependencies("optuna", severity="error")
+    except ModuleNotFoundError:
+        return [None]
+    else:
+        import optuna
+
+        return [
+            None,
+            optuna.samplers.NSGAIISampler(seed=42),
+            optuna.samplers.QMCSampler(seed=42),
+            optuna.samplers.CmaEsSampler(seed=42),
+        ]
+
+
+forecasters_optuna_test = {
+    "NAIVE": NAIVE,
+    "PIPE": PIPE,
+}
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(ForecastingOptunaSearchCV),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("scoring", TEST_METRICS)
+@pytest.mark.parametrize("error_score", ERROR_SCORES)
+@pytest.mark.parametrize("cv", CVs)
+@pytest.mark.parametrize(
+    "forecaster_key, grid_key", [("NAIVE", "NAIVE"), ("PIPE", "PIPE")]
+)
+@pytest.mark.parametrize("n_iter", TEST_N_ITERS)
+@pytest.mark.parametrize("sampler", optuna_samplers())
+def test_optuna(
+    forecaster_key,
+    grid_key,  # This will be either "NAIVE" or "PIPE"
+    cv,
+    scoring,
+    error_score,
+    n_iter,
+    sampler,
+    optuna_param_grids,  # Fixture providing parameter grids
+):
+    """Test ForecastingOptunaSearchCV.
+
+    Tests that ForecastingOptunaSearchCV successfully searches the parameter
+    distributions to identify the best parameter set
+    """
+    y, X = load_longley()
+    param_grid = optuna_param_grids[grid_key]
+    forecaster = forecasters_optuna_test[forecaster_key]
+
+    rscv = ForecastingOptunaSearchCV(
+        forecaster,
+        param_grid=param_grid,
+        cv=cv,
+        scoring=scoring,
+        error_score=error_score,
+        sampler=sampler,
+        n_evals=n_iter,
+    )
+    rscv.fit(y, X)
+
+    param_distributions = rscv.cv_results_.params.to_list()
+    _check_cv(
+        forecaster,
+        rscv,
+        cv,
+        param_distributions,
+        y,
+        X,
+        scoring,
+    )
+    _check_fitted_params_keys(rscv.get_fitted_params())
+
+
 BACKEND_TEST = _get_parallel_test_fixtures("estimator")
 
 
@@ -370,6 +472,10 @@ TEST_PARAMS_LIST = [
 ]
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([ForecastingGridSearchCV, ForecastingRandomizedSearchCV]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("return_n_best_forecasters", [-1, 0, 3])
 @pytest.mark.parametrize(
     "Forecaster, kwargs",
@@ -394,7 +500,7 @@ def test_return_n_best_forecasters(Forecaster, return_n_best_forecasters, kwargs
     searchCV.fit(y, X)
     if return_n_best_forecasters == -1:
 
-        def calculate_total_combinations(param_grid: Union[List[Dict], Dict]):
+        def calculate_total_combinations(param_grid: Union[list[dict], dict]):
             if isinstance(param_grid, dict):
                 return reduce(lambda x, y: x * y, [len(x) for x in param_grid.values()])
             elif isinstance(param_grid, list):

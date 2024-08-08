@@ -1,4 +1,5 @@
 """Conditional Invertible Neural Network (cINN) for forecasting."""
+
 __author__ = ["benHeid"]
 
 from copy import deepcopy
@@ -17,7 +18,6 @@ from sktime.networks.cinn import CINNNetwork
 from sktime.transformations.merger import Merger
 from sktime.transformations.series.fourier import FourierFeatures
 from sktime.transformations.series.summarize import WindowSummarizer
-from sktime.utils.warnings import warn
 
 if _check_soft_dependencies("torch", severity="none"):
     import torch
@@ -26,8 +26,6 @@ else:
 
     class Dataset:
         """Dummy class if torch is unavailable."""
-
-        pass
 
 
 def default_sine(x, amplitude, phase, offset, amplitude2, amplitude3, phase2):
@@ -117,6 +115,12 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["benheid"],
+        "python_dependencies": ["FrEIA", "torch"],
+        # estimator type
+        # --------------
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "scitype:y": "univariate",
@@ -126,8 +130,6 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         "enforce_index_type": None,
         "handles-missing-data": False,
         "capability:pred_int": False,
-        "python_version": None,
-        "python_dependencies": ["FrEIA", "torch"],
     }
 
     def __init__(
@@ -177,18 +179,6 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         self.delta = delta
         self.val_split = val_split
         super().__init__(num_epochs, batch_size, lr=lr)
-
-        # TODO 0.30.0: remove this warning
-        warn(
-            "cINNForecaster has been renamed to CINNForecaster in sktime 0.29.0, "
-            "The estimator is available under the future name at its "
-            "current location, and will be available under its deprecated name "
-            "until 0.30.0. "
-            "To prepare for the name change, "
-            "replace cINNForecaster with CINNForecaster",
-            DeprecationWarning,
-            obj=self,
-        )
 
     def _fit(self, y, fh, X=None):
         """Fit forecaster to training data.
@@ -315,9 +305,7 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
                         ):
                             return False
                     if self.verbose:
-                        print(  # noqa
-                            epoch, i, nll.detach().numpy(), val_nll.detach().numpy()
-                        )
+                        print(epoch, i, nll.detach().numpy(), val_nll.detach().numpy())
         return True
 
     def _predict(self, X=None, fh=None):
@@ -620,7 +608,3 @@ class _EarlyStopper:
             if self.counter >= self.patience:
                 return True
         return False
-
-
-# TODO 0.30.0: remove this alias altogether
-cINNForecaster = CINNForecaster

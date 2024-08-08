@@ -16,6 +16,7 @@ from sktime.forecasting.tests._config import (
     TEST_SPS,
     TEST_WINDOW_LENGTHS_INT,
 )
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.forecasting import _assert_correct_pred_time_index
 from sktime.utils.validation.forecasting import check_fh
 
@@ -26,6 +27,10 @@ y_train = s.iloc[:n_train]
 y_test = s.iloc[n_train:]
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(NaiveForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 def test_strategy_last(fh):
     """Test last strategy."""
@@ -36,6 +41,10 @@ def test_strategy_last(fh):
     np.testing.assert_array_equal(y_pred, expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(NaiveForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS_INT)
 def test_strategy_mean(fh, window_length):
@@ -51,6 +60,10 @@ def test_strategy_mean(fh, window_length):
     np.testing.assert_array_equal(y_pred, expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(NaiveForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("sp", TEST_SPS)
 def test_strategy_last_seasonal(fh, sp):
@@ -70,6 +83,10 @@ def test_strategy_last_seasonal(fh, sp):
     np.testing.assert_array_equal(y_pred, expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(NaiveForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("sp", TEST_SPS)
 @pytest.mark.parametrize("window_length", [*TEST_WINDOW_LENGTHS_INT, None])
@@ -103,6 +120,10 @@ def test_strategy_mean_seasonal(fh, sp, window_length):
         np.testing.assert_array_equal(y_pred, expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(NaiveForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("n_seasons", [1, 3])
 @pytest.mark.parametrize("sp", TEST_SPS)
 def test_strategy_mean_seasonal_simple(n_seasons, sp):
@@ -121,6 +142,10 @@ def test_strategy_mean_seasonal_simple(n_seasons, sp):
     np.testing.assert_array_equal(y_pred, expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(NaiveForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("window_length", [*TEST_WINDOW_LENGTHS_INT, None])
 def test_strategy_drift_unit_slope(fh, window_length):
@@ -140,6 +165,10 @@ def test_strategy_drift_unit_slope(fh, window_length):
         np.testing.assert_array_equal(y_pred, expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(NaiveForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("window_length", [*TEST_WINDOW_LENGTHS_INT, None])
 def test_strategy_drift_flat_line(fh, window_length):
@@ -160,6 +189,10 @@ def test_strategy_drift_flat_line(fh, window_length):
         np.testing.assert_array_equal(y_pred, expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(NaiveForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("window_length", [*TEST_WINDOW_LENGTHS_INT, None])
 def test_strategy_drift_window_length(fh, window_length):
@@ -183,6 +216,10 @@ def test_strategy_drift_window_length(fh, window_length):
         np.testing.assert_array_equal(y_pred, expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(NaiveForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("n", [3, 5])
 @pytest.mark.parametrize("window_length", list({4, 5, *TEST_WINDOW_LENGTHS_INT}))
 @pytest.mark.parametrize("sp", list({3, 4, 8, *TEST_SPS}))
@@ -257,6 +294,10 @@ def test_strategy_mean_and_last_seasonal_additional_combinations(
         pd.testing.assert_series_equal(forecast_data, test_data)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(NaiveForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "strategy,sp,window_length",
     [
@@ -312,6 +353,10 @@ def test_naive_predict_var_backwards(strategy, sp, window_length, n_periods):
     assert lower_bound < sigma_res < upper_bound
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(NaiveForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "strategy,sp,window_length",
     [
@@ -344,6 +389,10 @@ def test_naive_predict_interval_mean(strategy, sp, window_length, fh):
     pd.testing.assert_series_equal(y_pred_interval.mean(axis=1), y_pred)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(NaiveForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "strategy,sp,lower,upper",
     [
@@ -403,6 +452,10 @@ def test_naive_predict_interval_against_R_naive(strategy, sp, lower, upper):
     pd.testing.assert_frame_equal(y_pred_ints, expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(NaiveForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("freq", ["2D", "W", "W-TUE", "M"])
 def test_naive_sp_greater_1_not_nan(freq):
     sample_dates = pd.date_range(start="2001-01-01", periods=30, freq=freq)
@@ -419,6 +472,10 @@ def test_naive_sp_greater_1_not_nan(freq):
     assert null_predictions_count == 0
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(NaiveForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_insample_with_numpy_input():
     """Test insample prediction with numpy input."""
     y = np.random.random(1000)

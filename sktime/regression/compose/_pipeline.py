@@ -1,4 +1,5 @@
 """Pipeline with a regressor."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 import numpy as np
 
@@ -277,7 +278,7 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         from sktime.transformations.series.exponent import ExponentTransformer
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         t1 = ExponentTransformer(power=2)
         t2 = ExponentTransformer(power=0.5)

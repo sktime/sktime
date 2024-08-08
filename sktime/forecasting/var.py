@@ -13,10 +13,12 @@ from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
 class VAR(_StatsModelsAdapter):
-    """A VAR model is a generalisation of the univariate autoregressive.
+    """VAR model from statsmodels.
 
-    Direct interface for ``statsmodels.tsa.vector_ar``
-    A model for forecasting a vector of time series[1].
+    Direct interface to ``statsmodels.tsa.vector_ar``.
+
+    A VAR model is a generalisation of the univariate autoregressive model
+    to multivariate time series, see [1]_.
 
     Parameters
     ----------
@@ -47,7 +49,7 @@ class VAR(_StatsModelsAdapter):
         hqic : Hannan-Quinn
         bic : Bayesian a.k.a. Schwarz
     random_state : int, RandomState instance or None, optional ,
-        default=None – If int, random_state is the seed used by the random
+        default=None - If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
         number generator; If None, the random number generator is the
         RandomState instance used by np.random.
@@ -56,7 +58,7 @@ class VAR(_StatsModelsAdapter):
     ----------
     [1] Athanasopoulos, G., Poskitt, D. S., & Vahid, F. (2012).
     Two canonical VARMA forms: Scalar component models vis-à-vis the echelon form.
-    Econometric Reviews, 31(1), 60–83, 2012.
+    Econometric Reviews, 31(1), 60-83, 2012.
 
     Examples
     --------
@@ -74,7 +76,16 @@ class VAR(_StatsModelsAdapter):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["thayeylolu", "aiwalter", "lbventura"],
+        "authors": [
+            "yogabonito",
+            "ChadFulton",
+            "bashtage",
+            "josef-pkt",
+            "thayeylolu",
+            "aiwalter",
+            "lbventura",
+        ],
+        # yogabonito, ChadFulton, bashtage, josef-pkt for statsmodels VAR
         "maintainers": "lbventura",
         # "python_dependencies": "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type
@@ -245,7 +256,9 @@ class VAR(_StatsModelsAdapter):
 
         for cov in coverage:
             alpha = 1 - cov
-
+            # A hacky way to coerce error-inducing alpha==1 into its approximant
+            if alpha >= 0.99999:
+                alpha = 0.99999
             fcast_interval = model.forecast_interval(
                 self._y.values[-n_lags:], steps=steps, alpha=alpha
             )

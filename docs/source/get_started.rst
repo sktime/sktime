@@ -62,11 +62,11 @@ tabular regression algorithms. Likewise one approach to the time series annotati
 observations that are too far from these predictions as anomalies. ``sktime`` typically incorporates these type of :term:`reductions <reduction>` through the use of composable classes that
 let users adapt one learning task to solve another related one.
 
-For more information on ``sktime's`` terminology and functionality see the :ref:`glossary` and the :ref:`user guide <user_guide>`.
+For more information on ``sktime's`` terminology and functionality see the :ref:`glossary` and the :ref:`notebook examples <examples>`.
 
 Quickstart
 ----------
-The code snippets below are designed to introduce ``sktime's`` functionality so you can start using its functionality quickly. For more detailed information see the :ref:`tutorials`,  :ref:`user_guide` and :ref:`api_reference` in ``sktime's`` :ref:`user_documentation`.
+The code snippets below are designed to introduce ``sktime's`` functionality so you can start using its functionality quickly. For more detailed information see the :ref:`tutorials`,  :ref:`examples` and :ref:`api_reference` in ``sktime's`` :ref:`user_documentation`.
 
 Forecasting
 ~~~~~~~~~~~

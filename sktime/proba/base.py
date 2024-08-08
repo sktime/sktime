@@ -11,8 +11,8 @@ import numpy as np
 import pandas as pd
 
 from sktime.base import BaseObject
+from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.pandas import df_map
-from sktime.utils.validation._dependencies import _check_estimator_deps
 
 
 class BaseDistribution(BaseObject):
@@ -29,7 +29,6 @@ class BaseDistribution(BaseObject):
         # estimator type
         # --------------
         "object_type": "distribution",  # type of object, e.g., 'distribution'
-        "python_version": None,  # PEP 440 python version specifier to limit versions
         "reserved_params": ["index", "columns"],
         "capabilities:approx": ["energy", "mean", "var", "pdfnorm"],
         "approx_mean_spl": 1000,  # sample size used in MC estimates of mean

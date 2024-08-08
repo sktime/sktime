@@ -41,7 +41,7 @@ class MatrixProfileTransformer(BaseTransformer):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["mloning"],
+        "authors": ["seanlaw", "NimaSarajpoor", "mloning"],
         "python_dependencies": "stumpy",
         # estimator type
         # --------------
