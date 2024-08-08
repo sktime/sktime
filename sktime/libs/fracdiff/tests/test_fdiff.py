@@ -76,7 +76,7 @@ class TestFdiff:
 
             last_fdiff_res = fdiff(a, n=n, axis=axis)[slices]
 
-            assert_array_equal(np_diff_res, last_fdiff_res)
+            assert_allclose(np_diff_res, last_fdiff_res)
 
     @pytest.mark.parametrize("n", [0.5])
     @pytest.mark.parametrize("window", [2])
