@@ -31,8 +31,10 @@ __all__ = [
     "YfromX",
     "SkforecastAutoreg",
     "IgnoreX",
+    "AutoRegressiveWrapper",
 ]
 
+from sktime.forecasting.compose._autoregressive import AutoRegressiveWrapper
 from sktime.forecasting.compose._bagging import BaggingForecaster
 from sktime.forecasting.compose._column_ensemble import ColumnEnsembleForecaster
 from sktime.forecasting.compose._ensemble import (
