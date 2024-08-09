@@ -14,7 +14,6 @@ import pytest
 from sktime.datatypes import check_is_mtype
 from sktime.datatypes._utilities import get_cutoff
 from sktime.exceptions import NotFittedError
-from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.forecasting.tests._config import (
     TEST_ALPHAS,
@@ -516,21 +515,6 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             or by defaulting to each other and/or _predict_proba
         """
         f = estimator_instance
-        # we skip the _DelegatedForecaster, since it implements delegation methods
-        #   which may look like the method is implemented, but in fact it is not
-        if isinstance(f, _DelegatedForecaster):
-            return None
-
-        # we skip the PytorchForecastingNBeats,
-        # since the pytorch forecasting adapter class inplements _predict_quantiles
-        # but PytorchForecastingNBeats can not perform quantile forecast
-        try:
-            from sktime.forecasting.pytorchforecasting import PytorchForecastingNBeats
-
-            if isinstance(f, PytorchForecastingNBeats):
-                return None
-        except Exception:  # noqa: S110
-            pass
 
         # PR #4465 adds base ``_predict_interval`` in ``_StatsModelsAdapter``.
         # This leads to existence of that non-functional method in all subclasses.
