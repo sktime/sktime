@@ -152,7 +152,7 @@ def test_fit_transform_datetime_monthly_idx_datetime_output(df_datetime_monthly_
     expected = pd.DataFrame(
         data={
             "time_since_2000-01-01 00:00:00": [
-                pd.Timedelta(i, freq="D") for i in (0, 31, 60, 91, 121)
+                pd.Timedelta(i, unit="D") for i in (0, 31, 60, 91, 121)
             ]
         },
         index=df_datetime_monthly_idx.index,
