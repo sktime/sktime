@@ -371,8 +371,18 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
             for param in self.model.parameters():
                 param.requires_grad = True
         elif self.fit_strategy == "peft":
-            if _check_soft_dependencies("peft", severity="error"):
+            if _check_soft_dependencies("peft", severity="none"):
                 from peft import get_peft_model
+            else:
+                raise ModuleNotFoundError(
+                    f"Error in {self.__class__.__name__}: 'peft' module not found. "
+                    "'peft' is a soft dependency and not included "
+                    "in the base sktime installation. "
+                    "To use this functionality, please install 'peft' by running: "
+                    "`pip install peft` or `pip install sktime[dl]`. "
+                    "To install all soft dependencies, "
+                    "run: `pip install sktime[all_extras]`"
+                )
             peft_config = deepcopy(self.peft_config)
             self.model = get_peft_model(self.model, peft_config)
         else:
