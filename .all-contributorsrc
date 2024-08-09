@@ -2368,7 +2368,9 @@
       "profile": "https://github.com/hliebert",
       "contributions": [
         "bug",
-        "code"
+        "code",
+        "doc",
+        "test"
       ]
     },
     {
@@ -2943,6 +2945,26 @@
         "bug",
         "test"
       ]
+    },
+    {
+      "login": "mateuszkasprowicz",
+      "name": "Mateusz Kasprowicz",
+      "avatar_url": "https://avatars.githubusercontent.com/mateuszkasprowicz",
+      "profile": "https://github.com/mateuszkasprowicz",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    },
+    {
+        "login": "DinoBektesevic",
+        "name": "Dino Bektesevic",
+        "avatar_url": "https://avatars.githubusercontent.com/u/29500910?v=4?s=100",
+        "profile": "https://github.com/DinoBektesevic",
+        "contributions": [
+            "code",
+            "maintenance"
+        ]
     }
   ]
 }
