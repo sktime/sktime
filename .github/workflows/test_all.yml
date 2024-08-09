@@ -120,7 +120,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install OSX packages
-        run: ./scripts/install_osx_dependencies.sh
+        shell: bash
+        run: ./.github/scripts/install_osx_dependencies.sh
       - name: install core, test and all soft dependencies
         run: python3 -m pip install .[all_extras_pandas2,tests]
       - name: run unit tests
