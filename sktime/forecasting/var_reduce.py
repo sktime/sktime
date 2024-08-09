@@ -59,8 +59,6 @@ class VARReduce(BaseForecaster):
         from sklearn.base import clone
         from sklearn.linear_model import LinearRegression
 
-
-
         self.regressor = regressor
         self.lags = lags
         if regressor is None:
@@ -221,7 +219,7 @@ class VARReduce(BaseForecaster):
 
         # check if the model has `.intercept_` and `.coef_` attributes, if yes, extract them
         if hasattr(model, 'intercept_') and hasattr(model, 'coef_'):
-            # Transpose coefficients to match the desired shape
+            # Transpose coefficients to match the order of statsmodels' VAR for ease of comparison
             self.coefficients_ = np.transpose(coefficients, (0, 2, 1))
             self.intercept_ = intercepts
         else:
@@ -236,21 +234,17 @@ class VARReduce(BaseForecaster):
         Parameters
         ----------
         fh : ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to to predict.
+            Default is one-step ahead forecast,
+            i.e. np.array([1])
         X : pd.DataFrame, optional (default=None)
-            Exogenous time series
+            Exogenous variables are ignored.
 
         Returns
         -------
         y_pred : pd.DataFrame
-            Point predictions
+            Series of predicted values
         """
-        from sktime.forecasting.base import ForecastingHorizon
-
-        if not isinstance(fh, ForecastingHorizon):
-            raise ValueError("`fh` must be a ForecastingHorizon object")
-
-        fh = fh.to_relative(self.cutoff).to_numpy()
 
         # Get the last available values for prediction
         y_last = self._y.iloc[-self.lags:]
@@ -259,7 +253,7 @@ class VARReduce(BaseForecaster):
         y_pred = []
 
         # Iterate over each step in the forecasting horizon
-        for _ in range(1, max(fh) + 1):
+        for _ in range(1, len(fh) + 1):
 
             # Prepare X
             X_last = self.prepare_for_predict(y_last, return_as_ndarray=False)
@@ -280,7 +274,7 @@ class VARReduce(BaseForecaster):
 
         # Concatenate the list of Series into the final DataFrame
         y_pred = pd.concat(y_pred)
-        y_pred.index=fh
+        y_pred.index=fh.to_absolute_index()
 
         return y_pred
 
