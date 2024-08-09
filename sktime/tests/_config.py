@@ -227,9 +227,6 @@ EXCLUDED_TESTS = {
     ],
     "Pipeline": ["test_inheritance"],  # does not inherit from intermediate base classes
     # networks do not support negative fh
-    "LTSFLinearForecaster": ["test_predict_time_index_in_sample_full"],
-    "LTSFDLinearForecaster": ["test_predict_time_index_in_sample_full"],
-    "LTSFNLinearForecaster": ["test_predict_time_index_in_sample_full"],
     "HFTransformersForecaster": ["test_predict_time_index_in_sample_full"],
     "PyKANForecaster": ["test_predict_time_index_in_sample_full"],
     "WEASEL": ["test_multiprocessing_idempotent"],  # see 5658
@@ -250,6 +247,13 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
     ],
     "TSRGridSearchCV": ["test_multioutput"],  # see 6708
+    # skip PytorchForecastingNBeats,
+    # since the pytorch forecasting adapter class inplements _predict_quantiles
+    # but PytorchForecastingNBeats can not perform quantile forecast
+    "PytorchForecastingNBeats": ["test_pred_int_tag"],
+    # skip the _DelegatedForecaster, since it implements delegation methods
+    # which may look like the method is implemented, but in fact it is not
+    "_DelegatedForecaster": ["test_pred_int_tag"],
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish

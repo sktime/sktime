@@ -14,7 +14,6 @@ import pytest
 from sktime.datatypes import check_is_mtype
 from sktime.datatypes._utilities import get_cutoff
 from sktime.exceptions import NotFittedError
-from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.forecasting.tests._config import (
     TEST_ALPHAS,
@@ -48,6 +47,7 @@ from sktime.utils.validation.forecasting import check_fh
 
 # get all forecasters
 FH0 = 1
+
 INVALID_X_INPUT_TYPES = [list("foo"), tuple()]
 INVALID_y_INPUT_TYPES = [list("bar"), tuple()]
 
@@ -203,6 +203,32 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         except NotImplementedError as e:
             msg = str(e).lower()
             assert "exogenous" in msg
+
+    def test_categorical_X_raises_error(self, estimator_instance):
+        """Test that categorical X in not supported forecasters raises error.
+
+        Only test with forecasters which do not ignore exogeneous X and those that do
+        not support categorical natively. These are the cases where error is expected
+        to be raised.
+        """
+        if not estimator_instance.get_tag(
+            "ignores-exogeneous-X"
+        ) and not estimator_instance.get_tag("capability:categorical_in_X"):
+            X_train = pd.DataFrame({"col_0": ["a", "b", "c", "a", "b", "c"]})
+            y_train = _make_series(n_timepoints=6, n_columns=2)
+
+            with pytest.raises(TypeError, match=r"categorical"):
+                estimator_instance.fit(y_train, X_train, fh=FH0)
+
+    def test_categorical_y_raises_error(self, estimator_instance):
+        """Test that categorical y in forecasters raises error.
+
+        Categorical y is not currently supported in the forecasting module.
+        """
+        y = pd.DataFrame({"col_0": ["a", "b", "c", "a", "b", "c"]})
+
+        with pytest.raises(TypeError, match=r"categorical"):
+            estimator_instance.fit(y, fh=FH0)
 
     # todo: refactor with scenarios. Need to override fh and scenario args for this.
     @pytest.mark.parametrize(
@@ -489,21 +515,6 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             or by defaulting to each other and/or _predict_proba
         """
         f = estimator_instance
-        # we skip the _DelegatedForecaster, since it implements delegation methods
-        #   which may look like the method is implemented, but in fact it is not
-        if isinstance(f, _DelegatedForecaster):
-            return None
-
-        # we skip the PytorchForecastingNBeats,
-        # since the pytorch forecasting adapter class inplements _predict_quantiles
-        # but PytorchForecastingNBeats can not perform quantile forecast
-        try:
-            from sktime.forecasting.pytorchforecasting import PytorchForecastingNBeats
-
-            if isinstance(f, PytorchForecastingNBeats):
-                return None
-        except Exception:  # noqa: S110
-            pass
 
         # PR #4465 adds base ``_predict_interval`` in ``_StatsModelsAdapter``.
         # This leads to existence of that non-functional method in all subclasses.
@@ -847,7 +858,8 @@ class TestAllGlobalForecasters(TestAllObjects):
         # remove max_prediction_length from the end of y_test
         y_pred = estimator_instance.predict(fh, X_test, y_test)
 
-        self._multiindex_check_time_index(y_test, y_pred, fh)
+        cutoff = get_cutoff(y_test, return_index=True)
+        _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
         _assert_correct_columns(y_pred, y_test)
 
         self._check_consistency(y_test, y_pred)
@@ -864,7 +876,8 @@ class TestAllGlobalForecasters(TestAllObjects):
 
         y_pred = estimator_instance.predict(fh, X_test, y_test)
 
-        self._multiindex_check_time_index(y_test, y_pred, fh)
+        cutoff = get_cutoff(y_test, return_index=True)
+        _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
         _assert_correct_columns(y_pred, y_test)
 
         self._check_consistency(y_test, y_pred)
@@ -946,7 +959,8 @@ class TestAllGlobalForecasters(TestAllObjects):
         )
         y_pred = estimator_instance.predict(fh, X_test, y_test)
 
-        self._multiindex_check_time_index(y_test, y_pred, fh)
+        cutoff = get_cutoff(y_test, return_index=True)
+        _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
         _assert_correct_columns(y_pred, y_test)
 
         self._check_consistency(y_test, y_pred)
@@ -963,7 +977,8 @@ class TestAllGlobalForecasters(TestAllObjects):
 
         y_pred = estimator_instance.predict(fh, y=y_test)
 
-        self._multiindex_check_time_index(y_test, y_pred, fh)
+        cutoff = get_cutoff(y_test, return_index=True)
+        _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
         _assert_correct_columns(y_pred, y_test)
 
         self._check_consistency(y_test, y_pred)
@@ -1163,13 +1178,6 @@ class TestAllGlobalForecasters(TestAllObjects):
         y_test = self._remove_last_n(y_test, max_prediction_length)
         return X_train, y_train, X_test, y_test
 
-    def _multiindex_check_time_index(self, y_test, y_pred, fh):
-        cutoff = get_cutoff(y_test, return_index=True)
-        index_pred = y_pred.iloc[
-            : 1 if isinstance(fh, int) else len(fh)
-        ].index.get_level_values(-1)
-        _assert_correct_pred_time_index(index_pred, cutoff, fh)
-
     def _check_consistency(self, y_test, y_pred):
         from sktime.datatypes import mtype
 
@@ -1217,10 +1225,7 @@ def _check_predict_intervals(pred_ints, y_test, fh, coverage):
 
     # check index (also checks forecasting horizon is more than one element)
     cutoff = get_cutoff(y_test, return_index=True)
-    index_pred = pred_ints.iloc[
-        : 1 if isinstance(fh, int) else len(fh)
-    ].index.get_level_values(len(pred_ints.index.names) - 1)
-    _assert_correct_pred_time_index(index_pred, cutoff, fh)
+    _assert_correct_pred_time_index(pred_ints.index, cutoff, fh)
 
     # check columns
     # Forecasters where name of variables do not exist
@@ -1254,10 +1259,7 @@ def _check_predict_quantiles(pred_quantiles, y_test, fh, alpha):
 
     # check index (also checks forecasting horizon is more than one element)
     cutoff = get_cutoff(y_test, return_index=True)
-    index_pred = pred_quantiles.iloc[
-        : 1 if isinstance(fh, int) else len(fh)
-    ].index.get_level_values(len(pred_quantiles.index.names) - 1)
-    _assert_correct_pred_time_index(index_pred, cutoff, fh)
+    _assert_correct_pred_time_index(pred_quantiles.index, cutoff, fh)
 
     # check columns
     expected_columns = _get_expected_columns(y_test)
@@ -1291,12 +1293,7 @@ def _check_predict_proba(pred_dist, y_test, fh_int):
     assert obj_type == "distribution"
 
     pred_cols = pred_dist.columns
-    try:
-        pred_index = pred_dist.sigma.iloc[
-            : 1 if isinstance(fh_int, int) else len(fh_int)
-        ].index.get_level_values(len(pred_dist.index.names) - 1)
-    except AttributeError:
-        pred_index = pred_dist.index
+    pred_index = pred_dist.index
 
     # check time index
     cutoff = get_cutoff(y_test, return_index=True)

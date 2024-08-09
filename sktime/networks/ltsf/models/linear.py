@@ -160,7 +160,7 @@ class LTSFDLinearNetwork:
             in_channels,
             individual,
         ):
-            from sktime.networks.ltsf.layers import SeriesDecomposer
+            from sktime.networks.ltsf.utils.extras import SeriesDecomposer
 
             super().__init__()
             self.seq_len = seq_len
