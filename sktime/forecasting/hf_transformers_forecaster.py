@@ -418,8 +418,11 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
         if X is not None:
             if not isinstance(X.index, pd.MultiIndex):
                 X = _to_multiindex(X)
-            if not isinstance(self._X.index, pd.MultiIndex):
-                _X = _to_multiindex(self._X)
+            if not self._global_forecasting:
+                if not isinstance(self._X.index, pd.MultiIndex):
+                    _X = _to_multiindex(self._X)
+                else:
+                    _X = self._X
 
         hist = _frame2numpy(hist_y).squeeze(2)
 
