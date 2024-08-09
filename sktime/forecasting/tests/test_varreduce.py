@@ -3,9 +3,11 @@ import numpy as np
 from sktime.datasets import load_longley
 from sktime.forecasting.var import VAR
 from sktime.forecasting.var_reduce import VARReduce
-import pytest
 from sktime.tests.test_switch import run_test_for_class
 
+import pytest
+
+__author__ = ["meraldoantonio"]
 
 @pytest.mark.skipif(
     not run_test_for_class([VAR, VARReduce]),
