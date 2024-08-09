@@ -1,9 +1,9 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
-"""Tests for the TransformSelectForecaster"""
+"""Tests for the TransformSelectEstimator"""
 
 import pytest
 
-from sktime.forecasting.compose import TransformSelectForecaster
+from sktime.forecasting.compose import TransformSelectEstimator
 from sktime.forecasting.croston import Croston
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
@@ -17,11 +17,11 @@ from sktime.transformations.series.tests.test_adi_cv import (
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(TransformSelectForecaster),
+    not run_test_for_class(TransformSelectEstimator),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize(
-    "forecasters, series_generator, horizon, chosen_forecaster",
+    "estimators, series_generator, horizon, chosen_estimator",
     [
         (
             {
@@ -43,9 +43,7 @@ from sktime.transformations.series.tests.test_adi_cv import (
         ),
     ],
 )
-def test_forecaster_selection(
-    forecasters, series_generator, horizon, chosen_forecaster
-):
+def test_forecaster_selection(estimators, series_generator, horizon, chosen_estimator):
     """Tests if the forecaster selects the correct forecasters on the basis
     of the output from the transformer.
 
@@ -64,19 +62,19 @@ def test_forecaster_selection(
        The forecaster that should be selected by the forecaster
     """
     # Defining the forecaster
-    forecaster = TransformSelectForecaster(forecasters=forecasters)
+    forecaster = TransformSelectEstimator(estimators=estimators)
     forecaster.fit(series_generator(), fh=horizon)
 
     # Check if the type of the chosen forecaster matches the provided forecaster type
-    assert type(forecaster.chosen_forecaster_) is type(chosen_forecaster)
+    assert type(forecaster.chosen_estimator_) is type(chosen_estimator)
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(TransformSelectForecaster),
+    not run_test_for_class(TransformSelectEstimator),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize(
-    "forecasters, series_generator, horizon, fallback_forecaster",
+    "estimators, series_generator, horizon, fallback_estimator",
     [
         (
             {
@@ -98,9 +96,7 @@ def test_forecaster_selection(
         ),
     ],
 )
-def test_fallback_forecaster(
-    forecasters, series_generator, horizon, fallback_forecaster
-):
+def test_fallback_forecaster(estimators, series_generator, horizon, fallback_estimator):
     """This function tests the validity of the fallback forecaster and what happens
     if it is not present!
 
@@ -119,28 +115,28 @@ def test_fallback_forecaster(
         A forecaster to choose if no options from `forecasters` is viable
     """
     # Creating our forecaster
-    forecaster = TransformSelectForecaster(
-        forecasters=forecasters, fallback_forecaster=fallback_forecaster
+    forecaster = TransformSelectEstimator(
+        estimators=estimators, fallback_estimator=fallback_estimator
     )
 
     # Generating the required time series
     y = series_generator()
 
-    if fallback_forecaster is None:
+    if fallback_estimator is None:
         with pytest.raises(ValueError):
             forecaster.fit(y, fh=horizon)
 
     else:
         forecaster.fit(y, fh=horizon)
-        assert type(forecaster.chosen_forecaster_) is type(fallback_forecaster)
+        assert type(forecaster.chosen_estimator_) is type(fallback_estimator)
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(TransformSelectForecaster),
+    not run_test_for_class(TransformSelectEstimator),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize(
-    "forecasters, fallback_forecaster, transformer, horizon, series_generator, params",
+    "estimators, fallback_estimator, transformer, horizon, series_generator, params",
     [
         (
             {
@@ -177,8 +173,8 @@ def test_fallback_forecaster(
     ],
 )
 def test_get_params(
-    forecasters,
-    fallback_forecaster,
+    estimators,
+    fallback_estimator,
     transformer,
     horizon,
     series_generator,
@@ -201,10 +197,10 @@ def test_get_params(
         A function that generates a time series of a particular type
     """
     # Creating our forecaster
-    forecaster = TransformSelectForecaster(
-        forecasters=forecasters,
+    forecaster = TransformSelectEstimator(
+        estimators=estimators,
         transformer=transformer,
-        fallback_forecaster=fallback_forecaster,
+        fallback_estimator=fallback_estimator,
     )
 
     # Fit the forecaster and then fetch the generated parameters
@@ -212,15 +208,15 @@ def test_get_params(
     forecaster_params = forecaster.get_params()
 
     # Check that the forecasters map correctly in the params
-    for category, forecaster in forecaster_params["forecasters"].items():
+    for category, forecaster in forecaster_params["estimators"].items():
         assert type(forecaster) is params[category]
 
     # Check the same for the fallback forecaster
-    if forecaster_params["fallback_forecaster"] is None:
-        assert fallback_forecaster is None
+    if forecaster_params["fallback_estimator"] is None:
+        assert fallback_estimator is None
 
     else:
-        assert type(forecaster_params["fallback_forecaster"] is fallback_forecaster)
+        assert type(forecaster_params["fallback_estimator"] is fallback_estimator)
 
     # Check that the extrapolated values from the transformer are of type string
     for category in forecaster_params.keys():
