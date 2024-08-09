@@ -193,9 +193,11 @@ Maintenance
 * [MNT] make ``pyproject.toml`` parsing for differential testing more robust against non-package relevant changes (:pr:`6882`) :user:`fkiraly`
 * [MNT] formatter for jupyter notebook json in build tools (:pr:`6849`) :user:`fkiraly`
 * [MNT] sync differential testing utilities with ``skpro`` (:pr:`6840`) :user:`fkiraly`
+* [MNT] Handle deprecations from ``pandas`` (:pr:`6855`) :user:`fkiraly`
 * [MNT] sync docstring and code formatting of dependency checker module with ``skbase`` (:pr:`6873`) :user:`fkiraly`
 * [MNT] fix ``.all-contributorsrc`` syntax (:pr:`6918`) :user:`fkiraly`
 * [MNT] Resolve the issue with diacritics failing to be decoded on Windows (:pr:`6862`) :user:`fnhirwa`
+* [MNT] changelog utility: fix termination condition to retrieve merged PR (:pr:`6920`) :user:`fkiraly`
 * [MNT] [Dependabot](deps): Update ``pytest`` requirement from ``<8.3,>=7.4`` to ``>=7.4,<8.4`` (:pr:`6819`) :user:`dependabot[bot]`
 * [MNT] [Dependabot](deps): Update ``dask`` requirement from ``<2024.6.3`` to ``<2024.7.2`` (:pr:`6818`) :user:`dependabot[bot]`
 * [MNT] [Dependabot](deps): Update ``sphinx-gallery`` requirement from ``<0.17.0`` to ``<0.18.0`` (:pr:`6820`) :user:`dependabot[bot]`
