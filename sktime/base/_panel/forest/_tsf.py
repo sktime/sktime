@@ -19,7 +19,6 @@ import math
 from typing import Optional
 
 import numpy as np
-from joblib import Parallel, delayed
 from numpy.random import RandomState
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.validation import check_random_state
@@ -91,6 +90,8 @@ class BaseTimeSeriesForest:
         self : object
             An fitted instance of the classifier
         """
+        from joblib import Parallel, delayed
+
         from sktime.base._base import _clone_estimator
 
         X = X.squeeze(1)
