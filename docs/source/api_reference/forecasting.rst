@@ -80,22 +80,6 @@ Uses exogeneous data at the same time stamp - simple reduction strategy.
 
     YfromX
 
-Darts models
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Support for models from the `Darts <https://github.com/unit8co/darts>`_ library.
-
-.. currentmodule:: sktime.forecasting.darts
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    DartsRegressionModel
-    DartsLinearRegressionModel
-    DartsXGBModel
-
-
 Direct and recursive - ``sktime`` native 1st generation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
