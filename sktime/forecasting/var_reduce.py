@@ -58,6 +58,9 @@ class VARReduce(BaseForecaster):
     def __init__(self, lags=1, regressor=None):
         from sklearn.base import clone
         from sklearn.linear_model import LinearRegression
+
+
+
         self.regressor = regressor
         self.lags = lags
         if regressor is None:
@@ -65,9 +68,11 @@ class VARReduce(BaseForecaster):
         else:
             self.regressor_ = clone(regressor)
 
+        assert hasattr(self.regressor_, 'fit'), "Provided egressor must implement a 'fit' method."
+        assert hasattr(self.regressor_, 'predict'), "Provided regressor must implement a 'predict' method."
+
         # a dictionary of var_name: fitted regressor, to be filled in during fitting
         self.regressors = {}
-        self.X_preds = {}
         self.coefficients_ = None
         self.intercept_ = None
         self.num_series = None
@@ -85,7 +90,8 @@ class VARReduce(BaseForecaster):
         Parameters
         ----------
         data : pd.DataFrame
-            The input multivariate time series data to be transformed.
+            The input multivariate time series data to be transformed
+            with shape (num_samples, num_series)
         return_as_ndarray : bool, optional (default=True)
             If True, returns the transformed data as numpy arrays.
             If False, returns the transformed data as pandas DataFrames.
@@ -96,15 +102,20 @@ class VARReduce(BaseForecaster):
             The lagged values as predictors.
             with shape (num_samples, num_series * lags)
         Y : np.ndarray or pd.DataFrame
+            The original, unlagged data
             with shape (num_samples, num_series).
         """
         if isinstance(data, np.ndarray):
             data = pd.DataFrame(data, columns=self.var_names)
+
+        # Generate the lagged values and rename the columns
         df = pd.concat([data.shift(i) for i in range(self.lags + 1)], axis=1)
         df.columns = [
             f"{col}_lag{i}" for i in range(self.lags + 1) for col in data.columns
         ]
         df = df.dropna()
+
+        # Separate df into X and Y
         Y = df[[f"{col}_lag0" for col in data.columns]]
         Y.columns = data.columns
         X = df.drop(columns=[f"{col}_lag0" for col in data.columns])
@@ -125,7 +136,9 @@ class VARReduce(BaseForecaster):
         Parameters
         ----------
         data : pd.DataFrame
-            The input multivariate time series data to be transformed.
+            The input multivariate time series data to be transformed
+            with shape (num_samples, num_series)
+
         return_as_ndarray : bool, optional (default=True)
             If True, returns the transformed data as a NumPy array.
             If False, returns the transformed data as a pandas DataFrame
@@ -137,21 +150,20 @@ class VARReduce(BaseForecaster):
             If returned as a DataFrame, the columns are named according to the original
             column names with the lag number appended (e.g., 'A_lag1', 'B_lag2').
         """
-        # Infer lags from self.lags
-        lags = self.lags
 
-        # Step 1: Take the last lags rows of the input data
+        # Take the last lags rows of the input data
         if isinstance(data, np.ndarray):
             data = pd.DataFrame(data, columns=self.var_names)
+        lags = self.lags
         lagged_data = data.tail(lags)
 
-        # Step 2: Invert the data
+        # Invert the data
         inverted_data = lagged_data[::-1]
 
-        # Step 3: Linearize it
+        # Linearize it
         linearized_data = inverted_data.values.flatten().reshape(1, -1)
 
-        # Step 4: Return as np.array or pd.DataFrame
+        # Return as np.array or pd.DataFrame
         if return_as_ndarray:
             return np.array(linearized_data)
         else:
@@ -159,7 +171,6 @@ class VARReduce(BaseForecaster):
             columns = []
             for lag in range(1, lags + 1):
                 columns += [f"{col}_lag{lag}" for col in data.columns]
-
             return pd.DataFrame(linearized_data, columns=columns)
 
 
@@ -218,79 +229,6 @@ class VARReduce(BaseForecaster):
             self.intercept_ = None
         return self
 
-    def predict_old(self, fh, X=None):
-        """Forecast time series at future horizon.
-
-        Parameters
-        ----------
-        fh : ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous time series
-
-        Returns
-        -------
-        y_pred : pd.DataFrame
-            Point predictions
-        """
-        from sktime.forecasting.base import ForecastingHorizon
-
-        if not isinstance(fh, ForecastingHorizon):
-            raise ValueError("`fh` must be a ForecastingHorizon object")
-
-        fh = fh.to_relative(self.cutoff)
-        fh = fh.to_numpy()
-
-        # Get the last available values for prediction
-        last_values = self._y.iloc[-self.lags:].values.T
-        last_values_no_T = self._y.iloc[-self.lags:].values
-
-        # List to store ALL predictions across all time steps and all time series
-        predictions = []
-
-        # Iterate over the steps in fh
-        self.y_pred_steps = {}
-
-        self.X_pred_steps = {}
-
-        self.last_value_steps = {}
-
-        for step in range(1, max(fh) + 1):
-
-            # Prepare X_pred by concatenating the lagged values
-            X_pred = np.concatenate(
-                [last_values[:, -i].reshape(-1, 1) for i in range(1, self.lags + 1)],
-                axis=1,
-            ).T
-
-            self.X_pred_steps[step] = X_pred
-
-            # List to store predictions for all time series just for this time step
-            y_pred_step = []
-
-            # Iterate over each time series and its corresponding regressor
-            for var_name, model in self.regressors.items():
-                y_pred_step.append(model.predict(X_pred.reshape(1, -1))[0])
-
-            # Convert the list of predictions to a numpy array
-            y_pred_step = np.array(y_pred_step)
-            self.y_pred_steps[step] = y_pred_step
-            predictions.append(y_pred_step)
-
-            # Update last_values by appending the current predictions
-            # and removing the oldest set of lagged values
-            last_values = np.concatenate([last_values[:, 1:], y_pred_step.reshape(-1, 1)], axis=1)
-
-            self.last_value_steps[step] = last_values
-
-        predictions = np.array(predictions)
-
-        # Convert predictions to DataFrame
-        y_pred = pd.DataFrame(predictions, index=fh, columns=self._y.columns)
-
-        return y_pred
-
-
 
     def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
@@ -317,36 +255,31 @@ class VARReduce(BaseForecaster):
         # Get the last available values for prediction
         y_last = self._y.iloc[-self.lags:]
 
-
         # Initialize a list to store predictions
-        predictions = []
-        self.y_pred_steps_new = {}
+        y_pred = []
+
         # Iterate over each step in the forecasting horizon
-        for step in range(1, max(fh) + 1):
-            self.y_last = y_last
-            # Prepare X_pred using the last values and tabularization
+        for _ in range(1, max(fh) + 1):
+
+            # Prepare X
             X_last = self.prepare_for_predict(y_last, return_as_ndarray=False)
 
+            # Make predictions specific to this timestep for each variable using its corresponding regressor
             y_pred_step = []
             for var_name in self.var_names:
                 model = self.regressors[var_name]
-                y_pred_step_var = model.predict(X_last).item() # prediction for 1 step for 1 variable; float
-                self.y_pred_step_var = y_pred_step_var
+                y_pred_step_var = model.predict(X_last).item() # y_pred_step_var is a float
                 y_pred_step.append(y_pred_step_var)
 
-
+            # Convert y_pred_step into a one-row DataFrame
             y_pred_step = pd.DataFrame([y_pred_step], columns = self.var_names)
-            self.y_pred_steps_new[step] = y_pred_step
-            predictions.append(y_pred_step)
+            y_pred.append(y_pred_step)
 
+            # Append the new predictions (y_pred_step) at the end of y_last
+            y_last = pd.concat([y_last, y_pred_step], axis=0)
 
-            # Update last_values with the new predictions
-            y_last = np.concatenate([y_last[1:],
-                                     y_pred_step],
-                                     axis=0)
-
-        # Convert predictions to a DataFrame
-        y_pred = pd.concat(predictions)
+        # Concatenate the list of Series into the final DataFrame
+        y_pred = pd.concat(y_pred)
         y_pred.index=fh
 
         return y_pred
