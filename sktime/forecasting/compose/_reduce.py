@@ -212,6 +212,7 @@ class _Reducer(_BaseWindowForecaster):
         "handles-missing-data": True,
         "capability:insample": False,
         "capability:pred_int": True,
+        "capability:pred_int:insample": False,
     }
 
     def __init__(
