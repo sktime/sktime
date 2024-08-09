@@ -532,7 +532,7 @@ def plot_calibration(y_true, y_pred, ax=None):
     e.g., via ``alpha`` in ``predict_quantiles``.
 
     Let :math:`y_1, \dots, y_N` be the actual values in ``y_true``,
-    and let :math:`\widehat{y}_{i,j}`, for `i = 1 \dots N, j = 1 \dota k`
+    and let :math:`\widehat{y}_{i,j}`, for `i = 1 \dots N, j = 1 \dots k`
     be quantile predictions at quantile point :math:`p_j`,
     of the conditional distribution of :math:`y_i`, as contained in ``y_pred``.
 

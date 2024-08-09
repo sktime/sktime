@@ -1608,10 +1608,10 @@
       ]
     },
     {
-      "login": "FedericoGarza",
-      "name": "Federico Garza",
+      "login": "AzulGarza",
+      "name": "Azul Garza",
       "avatar_url": "https://avatars.githubusercontent.com/u/10517170?v=4",
-      "profile": "https://github.com/FedericoGarza",
+      "profile": "https://github.com/AzulGarza",
       "contributions": [
         "code",
         "example"
@@ -2368,7 +2368,9 @@
       "profile": "https://github.com/hliebert",
       "contributions": [
         "bug",
-        "code"
+        "code",
+        "doc",
+        "test"
       ]
     },
     {
@@ -2731,7 +2733,7 @@
         "doc"
       ]
     },
-{
+    {
       "login": "ArthrowAbstract",
       "name": "Devanshu Sinha",
       "avatar_url": "https://avatars.githubusercontent.com/u/38614120?v=4",
@@ -2897,6 +2899,15 @@
       ]
     },
     {
+      "login": "AlexeyOm",
+      "name": "Alexey Omelchenko",
+      "avatar_url": "https://avatars.githubusercontent.com/u/11708514?v=4",
+      "profile": "https://github.com/AlexeyOm",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
       "login": "fr1ll",
       "name": "Will Sanger",
       "avatar_url": "https://avatars.githubusercontent.com/u/29168593?v=4",
@@ -2905,15 +2916,54 @@
         "code",
         "doc"
       ]
-    }
+    },
     {
       "login": "alexander-lakocy",
       "name": "Alex Lakocy",
       "avatar_url": "https://avatars.githubusercontent.com/alexander-lakocy",
       "profile": "https://github.com/alexander-lakocy",
       "contributions": [
-        "doc",
+        "doc"
       ]
+    },
+    {
+      "login": "mk406",
+      "name": "Miguel Krause",
+      "avatar_url": "https://avatars.githubusercontent.com/u/78024411?v=4",
+      "profile": "https://github.com/mk406",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "bastisar",
+      "name": "Sebastian Hien",
+      "avatar_url": "https://avatars.githubusercontent.com/u/142449680?v=4",
+      "profile": "https://github.com/bastisar",
+      "contributions": [
+        "code",
+        "bug",
+        "test"
+      ]
+    },
+    {
+      "login": "mateuszkasprowicz",
+      "name": "Mateusz Kasprowicz",
+      "avatar_url": "https://avatars.githubusercontent.com/mateuszkasprowicz",
+      "profile": "https://github.com/mateuszkasprowicz",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    }
+    {
+        "login": "DinoBektesevic",
+        "name": "Dino Bektesevic",
+        "avatar_url": "https://avatars.githubusercontent.com/u/29500910?v=4?s=100",
+        "profile": "https://github.com/DinoBektesevic",
+        "contributions": [
+            "code",
+        ]
     }
   ]
 }

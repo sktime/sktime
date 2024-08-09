@@ -31,7 +31,7 @@ class _MsmDistance(NumbaDistance):
     References
     ----------
     .. [1] Stefan A., Athitsos V., Das G.: The Move-Split-Merge metric for time
-    series. IEEE Transactions on Knowledge and Data Engineering 25(6):1425–1438, 2013
+    series. IEEE Transactions on Knowledge and Data Engineering 25(6):1425-1438, 2013
     """
 
     def _distance_alignment_path_factory(
