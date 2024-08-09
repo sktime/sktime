@@ -950,7 +950,9 @@ class TestAllGlobalForecasters(TestAllObjects):
     estimator_type_filter = "global_forecaster"
 
     def test_global_forecasting_tag(self, estimator_class):
-        global_forecasting_tag = estimator_class._tags["capability:global_forecasting"]
+        global_forecasting_tag = estimator_class.get_class_tag(
+            "capability:global_forecasting"
+        )
         assert global_forecasting_tag is True
 
     def test_pridect_signature(self, estimator_class):
