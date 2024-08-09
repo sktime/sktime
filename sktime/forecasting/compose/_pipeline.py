@@ -38,7 +38,10 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
 
     def _get_forecaster_index(self, estimators):
         """Get the index of the first forecaster in the list."""
-        return self._get_pipeline_scitypes(estimators).index("forecaster")
+        if "forecaster" in self._get_pipeline_scitypes(estimators):
+            return self._get_pipeline_scitypes(estimators).index("forecaster")
+        else:
+            return self._get_pipeline_scitypes(estimators).index("global_forecaster")
 
     def _check_steps(self, estimators, allow_postproc=False):
         """Check Steps.
@@ -87,22 +90,30 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         self._check_names(names)
 
         scitypes = self._get_pipeline_scitypes(estimator_tuples)
-        if not set(scitypes).issubset(["forecaster", "transformer"]):
+        if not set(scitypes).issubset(
+            ["forecaster", "global_forecaster", "transformer"]
+        ):
             raise TypeError(
                 f"estimators passed to {self_name} "
-                f"must be either transformer or forecaster"
+                f"must be either transformer or forecaster or global_forecaster"
             )
-        if scitypes.count("forecaster") != 1:
+        if (
+            scitypes.count("forecaster") != 1
+            and scitypes.count("global_forecaster") != 1
+        ):
             raise TypeError(
-                f"exactly one forecaster must be contained in the chain, "
-                f"but found {scitypes.count('forecaster')}"
+                f"exactly one forecaster or global_forecaster "
+                f"must be contained in the chain, "
+                f"but found forecaster: {scitypes.count('forecaster')}, "
+                f"global_forecaster: {scitypes.count('global_forecaster')}"
             )
 
         forecaster_ind = self._get_forecaster_index(estimator_tuples)
 
         if not allow_postproc and forecaster_ind != len(estimators) - 1:
             TypeError(
-                f"in {self_name}, last estimator must be a forecaster, "
+                f"in {self_name}, last estimator must be a "
+                f"forecaster or global_forecaster, "
                 f"but found a transformer"
             )
 
