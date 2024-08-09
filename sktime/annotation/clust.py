@@ -72,9 +72,9 @@ class ClusterSegmenter(BaseSeriesAnnotator):
         ------------
         creates fitted model (attributes ending in "_")
         """
-        cloned_clusterer = clone(self._clusterer)
         if isinstance(X, pd.Series):
             X = X.to_frame()
+        cloned_clusterer = clone(self._clusterer)
         self.n_instances, self.n_timepoints = X.shape
         X_flat = X.values.reshape(-1, 1)
         cloned_clusterer.fit(X_flat)
