@@ -3,6 +3,8 @@
 
 import abc
 import functools
+import inspect
+import logging
 import os
 import time
 import typing
@@ -15,6 +17,15 @@ import pandas as pd
 from pandas.api.types import is_numeric_dtype
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
+
+try:
+    from skbase.utils.stdout_mute import StdoutMute
+except ModuleNotFoundError:
+    from sktime.utils._std_mute import _StdoutMute as StdoutMute
+try:
+    from skbase.utils.stderr_mute import StderrMute
+except ModuleNotFoundError:
+    from sktime.utils._std_mute import _StderrMute as StderrMute
 
 __all__ = ["_PytorchForecastingAdapter"]
 __author__ = ["XinyuWu"]
@@ -45,6 +56,15 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
     random_log_path: bool (default=False)
         use random root directory for logging. This parameter is for CI test in
         Github action, not designed for end users.
+    broadcasting: bool (default=False)
+        multiindex data input will be broadcasted to single series if setted to true.
+        For each single series, one copy of this forecaster will try to
+        fit and predict on it. The broadcasting is happening inside automatically,
+        from the outerside api perspective, the input and output are the same,
+        only one multiindex output from `predict`.
+    verbose: bool (default=True)
+        set it to False to mute console printing during calling the underlying fit and predict function.
+        It mutes aggressive printing from pytorch-forecasting and pytorch-lightning
 
     References
     ----------
@@ -89,6 +109,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         model_path: Optional[str] = None,
         random_log_path: bool = False,
         broadcasting: bool = False,
+        verbose: bool = True,
     ) -> None:
         self.model_params = model_params
         self.dataset_params = dataset_params
@@ -115,6 +136,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         )
         self.random_log_path = random_log_path
         self.broadcasting = broadcasting
+        self.verbose = verbose
         if self.broadcasting:
             self.set_tags(
                 **{
@@ -144,11 +166,17 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
 
     def _instantiate_model(self: "_PytorchForecastingAdapter", data):
         """Instantiate the model."""
-        algorithm_instance = self.algorithm_class.from_dataset(
-            data,
-            **self.algorithm_parameters,
-            **self._model_params,
-        )
+        with (
+            StdoutMute(not self.verbose),
+            StderrMute(not self.verbose),
+            _LightningLoggerMute(not self.verbose),
+        ):
+            algorithm_instance = self.algorithm_class.from_dataset(
+                data,
+                **self.algorithm_parameters,
+                **self._model_params,
+            )
+
         import lightning.pytorch as pl
 
         if self.random_log_path:
@@ -157,7 +185,17 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
                     self._random_log_dir = self._gen_random_log_dir(data)
                     self._trainer_params["default_root_dir"] = self._random_log_dir
 
-        trainer_instance = pl.Trainer(**self._trainer_params)
+        with (
+            StdoutMute(not self.verbose),
+            StderrMute(not self.verbose),
+            _LightningLoggerMute(not self.verbose),
+        ):
+            trainer_instance = pl.Trainer(
+                **self._trainer_params,
+                enable_progress_bar=self.verbose,
+                enable_model_summary=self.verbose,
+            )
+
         return algorithm_instance, trainer_instance
 
     def _gen_random_log_dir(self, data=None):
@@ -220,15 +258,21 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
             self._train_to_dataloader_params["train"] = True
             self._validation_to_dataloader_params["train"] = False
             # call the fit function of the pytorch-forecasting model
-            self._trainer.fit(
-                self._forecaster,
-                train_dataloaders=training.to_dataloader(
-                    **self._train_to_dataloader_params
-                ),
-                val_dataloaders=validation.to_dataloader(
-                    **self._validation_to_dataloader_params
-                ),
-            )
+            with (
+                StdoutMute(not self.verbose),
+                StderrMute(not self.verbose),
+                _LightningLoggerMute(not self.verbose),
+            ):
+                self._trainer.fit(
+                    self._forecaster,
+                    train_dataloaders=training.to_dataloader(
+                        **self._train_to_dataloader_params
+                    ),
+                    val_dataloaders=validation.to_dataloader(
+                        **self._validation_to_dataloader_params
+                    ),
+                )
+
             if self._trainer.checkpoint_callback is not None:
                 # load model from checkpoint
                 best_model_path = self._trainer.checkpoint_callback.best_model_path
@@ -295,12 +339,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         while ``y`` should only contain historical values
         not the time points to be predicted.
         """
-        if y is None:
-            y = deepcopy(self._y)
-        if X is None:
-            X = deepcopy(self._X)
-        if X is not None and not self._global_forecasting:
-            X = pd.concat([self._X, X])
+        X, y = self._Xy_precheck(X, y)
         # convert series to frame
         _y, self._convert_to_series = _series_to_frame(y)
         _X, _ = _series_to_frame(X)
@@ -321,17 +360,23 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         except AttributeError:
             pass
 
-        predictions = self.best_model.predict(
-            validation.to_dataloader(**self._validation_to_dataloader_params),
-            return_x=True,
-            return_index=True,
-            return_decoder_lengths=True,
-            trainer_kwargs=(
-                {"default_root_dir": self._random_log_dir}
-                if "_random_log_dir" in self.__dict__.keys()
-                else None
-            ),
-        )
+        with (
+            StdoutMute(not self.verbose),
+            StderrMute(not self.verbose),
+            _LightningLoggerMute(not self.verbose),
+        ):
+            predictions = self.best_model.predict(
+                validation.to_dataloader(**self._validation_to_dataloader_params),
+                return_x=True,
+                return_index=True,
+                return_decoder_lengths=True,
+                trainer_kwargs=(
+                    {"default_root_dir": self._random_log_dir}
+                    if "_random_log_dir" in self.__dict__.keys()
+                    else None
+                ),
+            )
+
         try:
             if self.deterministic:
                 torch.set_rng_state(torch_state)
@@ -347,6 +392,118 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
             lambda x: x in absolute_horizons
         )
         return output.loc[dateindex]
+
+    def _predict_quantiles(self, fh, X, alpha, y=None):
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_quantiles containing the core logic,
+            called from predict_quantiles and default _predict_interval
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+            If ``y`` is passed (performing global forecasting), ``X`` must contain
+            all historical values and the time points to be predicted.
+        alpha : list of float, optional (default=[0.5])
+            A list of probabilities at which quantile forecasts are computed.
+        y : time series in ``sktime`` compatible format, optional (default=None)
+            Historical values of the time series that should be predicted.
+            If not None, global forecasting will be performed.
+            Only pass the historical values not the time points to be predicted.
+
+        Returns
+        -------
+        quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level being the values of alpha passed to the function.
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+            Entries are quantile forecasts, for var in col index,
+                at quantile probability in second col index, for the row index.
+        """
+        methods_list = [
+            method[0]
+            for method in inspect.getmembers(
+                self.best_model.loss, predicate=inspect.ismethod
+            )
+        ]
+        if "to_quantiles" not in methods_list:
+            raise NotImplementedError(
+                "To perform probabilistic forcast, QuantileLoss or other loss"
+                "metrics that support to_quantiles function has to be used in fit."
+                f"With {self.best_model.loss}, it doesn't support probabilistic"
+                "forcast. Details can be found:"
+                "https://pytorch-forecasting.readthedocs.io/en/stable/metrics.html"
+            )
+
+        X, y = self._Xy_precheck(X, y)
+        # convert series to frame
+        _y, self._convert_to_series = _series_to_frame(y)
+        _X, _ = _series_to_frame(X)
+        # extend index of y
+        _y = self._extend_y(_y, fh)
+        # check if dummy X is needed
+        _X = self._dummy_X(_X, _y)
+        # convert data to pytorch-forecasting datasets
+        training, validation = self._Xy_to_dataset(
+            _X, _y, self._dataset_params, self._max_prediction_length
+        )
+        try:
+            if self.deterministic:
+                import torch
+
+                torch_state = torch.get_rng_state()
+                torch.manual_seed(0)
+        except AttributeError:
+            pass
+
+        with (
+            StdoutMute(not self.verbose),
+            StderrMute(not self.verbose),
+            _LightningLoggerMute(not self.verbose),
+        ):
+            predictions = self.best_model.predict(
+                validation.to_dataloader(**self._validation_to_dataloader_params),
+                mode="quantiles",
+                mode_kwargs={"use_metric": False, "quantiles": alpha},
+                return_x=True,
+                return_index=True,
+                return_decoder_lengths=True,
+                trainer_kwargs=(
+                    {"default_root_dir": self._random_log_dir}
+                    if "_random_log_dir" in self.__dict__.keys()
+                    else None
+                ),
+            )
+
+        try:
+            if self.deterministic:
+                torch.set_rng_state(torch_state)
+        except AttributeError:
+            pass
+        # convert pytorch-forecasting predictions to dataframe
+        output = self._predictions_to_dataframe(
+            predictions, self._max_prediction_length, alpha=alpha
+        )
+
+        absolute_horizons = self.fh.to_absolute_index(self.cutoff)
+        dateindex = output.index.get_level_values(-1).map(
+            lambda x: x in absolute_horizons
+        )
+        return output.loc[dateindex]
+
+    def _Xy_precheck(self, X, y):
+        if y is None:
+            y = deepcopy(self._y)
+        if X is None:
+            X = deepcopy(self._X)
+        if X is not None and not self._global_forecasting:
+            X = pd.concat([self._X, X])
+        return X, y
 
     def _Xy_to_dataset(
         self,
@@ -451,7 +608,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         )
         return training, validation
 
-    def _predictions_to_dataframe(self, predictions, max_prediction_length):
+    def _predictions_to_dataframe(self, predictions, max_prediction_length, alpha=None):
         # output is the actual predictions points but without index
         output = predictions.output.cpu().numpy()
         # index will be combined with output
@@ -468,8 +625,6 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         )
         # make time_idx the last index
         data = data.reindex(columns=index_names)
-        # add the target column at the end
-        data[self._target_name] = output.flatten()
         # correct the time_idx after repeating
         # assume the time_idx column is continuous integers
         # it's always true as a new time_idx column is added
@@ -506,10 +661,25 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         else:
             rename_input = self._index_names
         data.index.rename(rename_input, inplace=True)
-        # set target name back to original input in fit
-        data.columns = [self._target_name]
+        # add the target column at the end
+        if alpha is not None:
+            quantiles = output.reshape((-1, len(alpha)))
+            quantiles = pd.DataFrame(
+                data=quantiles,
+                index=data.index,
+            )
+            data = pd.concat([data, quantiles], axis=1)
+            data.columns = [
+                [self._target_name if self._target_name is not None else 0]
+                * len(alpha),
+                alpha,
+            ]
+        else:
+            data[self._target_name] = output.flatten()
+        # # set target name back to original input in fit
+        # data.columns = [self._target_name]
         # convert back to pd.series if needed
-        if self._convert_to_series:
+        if self._convert_to_series and alpha is None:
             data = pd.Series(
                 data=data[self._target_name], index=data.index, name=self._target_name
             )
@@ -556,3 +726,49 @@ def _series_to_frame(data):
     else:
         _data = None
     return _data, converted
+
+
+class _LightningLoggerMute:
+    """A context manager to suppress lightning loggers."""
+
+    def __init__(self, active=True):
+        self.active = active
+
+    def __enter__(self):
+        """Context manager entry point."""
+        if self.active:
+            self.rank_zero = logging.getLogger("lightning.pytorch.utilities.rank_zero")
+            self.rank_zero_level = self.rank_zero.level
+            self.rank_zero.setLevel(logging.WARNING)
+            self.cuda = logging.getLogger("lightning.pytorch.accelerators.cuda")
+            self.cuda_level = self.cuda.level
+            self.cuda.setLevel(logging.WARNING)
+
+    def __exit__(self, type, value, traceback):  # noqa: A002
+        """Context manager exit point."""
+        if self.active:
+            self.rank_zero.setLevel(self.rank_zero_level)
+            self.cuda.setLevel(self.cuda_level)
+
+        if type is not None:
+            return self._handle_exit_exceptions(type, value, traceback)
+
+        # if no exception was raised, return True to indicate successful exit
+        # return statement not needed as type was None, but included for clarity
+        return True
+
+    def _handle_exit_exceptions(self, type, value, traceback):  # noqa: A002
+        """Handle exceptions raised during __exit__.
+
+        Parameters
+        ----------
+        type : type
+            The type of the exception raised.
+            Known to be not-None and Exception subtype when this method is called.
+        value : Exception
+            The exception instance raised.
+        traceback : traceback
+            The traceback object associated with the exception.
+        """
+        # by default, all exceptions are raised
+        return False

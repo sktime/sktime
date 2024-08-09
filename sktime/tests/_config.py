@@ -247,6 +247,13 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
     ],
     "TSRGridSearchCV": ["test_multioutput"],  # see 6708
+    # skip PytorchForecastingNBeats,
+    # since the pytorch forecasting adapter class inplements _predict_quantiles
+    # but PytorchForecastingNBeats can not perform quantile forecast
+    "PytorchForecastingNBeats": ["test_pred_int_tag"],
+    # skip the _DelegatedForecaster, since it implements delegation methods
+    # which may look like the method is implemented, but in fact it is not
+    "_DelegatedForecaster": ["test_pred_int_tag"],
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish
