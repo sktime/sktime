@@ -434,12 +434,12 @@ class Catch22(BaseTransformer):
 
         return Xt_np
 
-    def _get_feature_function(self, feature: Union[int, str]):
+    def _get_feature_function(self, feature):
         if not isinstance(feature, (int, str)):
-            raise TypeError(
-                "Invalid feature name type in Catch22._get_feature_function. "
-                f"Expected int or str, got {type(feature)}."
-            )
+            try:
+                feature = int(feature)
+            except ValueError:
+                feature = str(feature)
         if isinstance(feature, str):
             return self.__get_feature_function_str(feature)
         return self.__get_feature_function_int(feature)
