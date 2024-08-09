@@ -858,7 +858,8 @@ class TestAllGlobalForecasters(TestAllObjects):
         # remove max_prediction_length from the end of y_test
         y_pred = estimator_instance.predict(fh, X_test, y_test)
 
-        self._multiindex_check_time_index(y_test, y_pred, fh)
+        cutoff = get_cutoff(y_test, return_index=True)
+        _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
         _assert_correct_columns(y_pred, y_test)
 
         self._check_consistency(y_test, y_pred)
@@ -875,7 +876,8 @@ class TestAllGlobalForecasters(TestAllObjects):
 
         y_pred = estimator_instance.predict(fh, X_test, y_test)
 
-        self._multiindex_check_time_index(y_test, y_pred, fh)
+        cutoff = get_cutoff(y_test, return_index=True)
+        _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
         _assert_correct_columns(y_pred, y_test)
 
         self._check_consistency(y_test, y_pred)
@@ -957,7 +959,8 @@ class TestAllGlobalForecasters(TestAllObjects):
         )
         y_pred = estimator_instance.predict(fh, X_test, y_test)
 
-        self._multiindex_check_time_index(y_test, y_pred, fh)
+        cutoff = get_cutoff(y_test, return_index=True)
+        _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
         _assert_correct_columns(y_pred, y_test)
 
         self._check_consistency(y_test, y_pred)
@@ -974,7 +977,8 @@ class TestAllGlobalForecasters(TestAllObjects):
 
         y_pred = estimator_instance.predict(fh, y=y_test)
 
-        self._multiindex_check_time_index(y_test, y_pred, fh)
+        cutoff = get_cutoff(y_test, return_index=True)
+        _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
         _assert_correct_columns(y_pred, y_test)
 
         self._check_consistency(y_test, y_pred)
@@ -1174,13 +1178,6 @@ class TestAllGlobalForecasters(TestAllObjects):
         y_test = self._remove_last_n(y_test, max_prediction_length)
         return X_train, y_train, X_test, y_test
 
-    def _multiindex_check_time_index(self, y_test, y_pred, fh):
-        cutoff = get_cutoff(y_test, return_index=True)
-        index_pred = y_pred.iloc[
-            : 1 if isinstance(fh, int) else len(fh)
-        ].index.get_level_values(-1)
-        _assert_correct_pred_time_index(index_pred, cutoff, fh)
-
     def _check_consistency(self, y_test, y_pred):
         from sktime.datatypes import mtype
 
@@ -1228,10 +1225,7 @@ def _check_predict_intervals(pred_ints, y_test, fh, coverage):
 
     # check index (also checks forecasting horizon is more than one element)
     cutoff = get_cutoff(y_test, return_index=True)
-    index_pred = pred_ints.iloc[
-        : 1 if isinstance(fh, int) else len(fh)
-    ].index.get_level_values(-1)
-    _assert_correct_pred_time_index(index_pred, cutoff, fh)
+    _assert_correct_pred_time_index(pred_ints.index, cutoff, fh)
 
     # check columns
     # Forecasters where name of variables do not exist
@@ -1265,10 +1259,7 @@ def _check_predict_quantiles(pred_quantiles, y_test, fh, alpha):
 
     # check index (also checks forecasting horizon is more than one element)
     cutoff = get_cutoff(y_test, return_index=True)
-    index_pred = pred_quantiles.iloc[
-        : 1 if isinstance(fh, int) else len(fh)
-    ].index.get_level_values(-1)
-    _assert_correct_pred_time_index(index_pred, cutoff, fh)
+    _assert_correct_pred_time_index(pred_quantiles.index, cutoff, fh)
 
     # check columns
     expected_columns = _get_expected_columns(y_test)
@@ -1302,12 +1293,7 @@ def _check_predict_proba(pred_dist, y_test, fh_int):
     assert obj_type == "distribution"
 
     pred_cols = pred_dist.columns
-    try:
-        pred_index = pred_dist.sigma.iloc[
-            : 1 if isinstance(fh_int, int) else len(fh_int)
-        ].index.get_level_values(-1)
-    except AttributeError:
-        pred_index = pred_dist.index
+    pred_index = pred_dist.index
 
     # check time index
     cutoff = get_cutoff(y_test, return_index=True)
