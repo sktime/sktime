@@ -432,6 +432,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
             lambda x: x in absolute_horizons
         )
         pred = pred.loc[dateindex]
+        pred.index.names = _y.index.names
 
         return pred
 
