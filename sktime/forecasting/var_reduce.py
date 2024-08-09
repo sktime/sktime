@@ -83,7 +83,7 @@ class VARReduce(BaseForecaster):
         This function transforms the provided training data into
         a tabular format suitable for regression. Specifically,
         the predictors X consist of lagged values of the multivariate time series, while
-        the target variables y are the current, unlagged values of the multivariate time series.
+        the target variables y are the current values of the multivariate time series.
 
         Parameters
         ----------
@@ -127,8 +127,8 @@ class VARReduce(BaseForecaster):
         """
         Prepare the data for VAR prediction through tabularization.
 
-        This function extracts the last `lags` rows of the provided data, inverts their order,
-        and linearizes them into a single row suitable for input into a predictive model.
+        This function extracts the last `lags` rows of the provided data
+        and linearizes them into a single row suitable for input into the regressor.
         The number of lags is inferred from the `self.lags` attribute.
 
         Parameters
@@ -136,6 +136,7 @@ class VARReduce(BaseForecaster):
         data : pd.DataFrame
             The input multivariate time series data to be transformed
             with shape (num_samples, num_series)
+            Usually is training data
 
         return_as_ndarray : bool, optional (default=True)
             If True, returns the transformed data as a NumPy array.
@@ -193,7 +194,7 @@ class VARReduce(BaseForecaster):
         var_names = y.columns
         self.var_names = var_names
 
-        X, Y = self.prepare_for_fit(y, return_as_ndarray=False) # note - from this line on, 'y' changes meaning!
+        X, Y = self.prepare_for_fit(y, return_as_ndarray=False)
         n, k = X.shape
         num_series = y.shape[1]
         self.num_series = num_series
@@ -209,7 +210,7 @@ class VARReduce(BaseForecaster):
             model.fit(X, y)
             self.regressors[var_name] = model
 
-            # check if the model has `.intercept_` and `.coef_` attributes, if yes, extract them
+            # if the model has `.intercept_` and `.coef_` attributes, extract them
             if hasattr(model, 'intercept_') and hasattr(model, 'coef_'):
                 intercepts[i] = model.intercept_
                 # Reshape the coefficients to match with statsmodels VAR
@@ -217,9 +218,9 @@ class VARReduce(BaseForecaster):
             else:
                 pass
 
-        # check if the model has `.intercept_` and `.coef_` attributes, if yes, extract them
+        # if the model has `.intercept_` and `.coef_` attributes, extract them
         if hasattr(model, 'intercept_') and hasattr(model, 'coef_'):
-            # Transpose coefficients to match the order of statsmodels' VAR for ease of comparison
+            # Transpose coefficients to match the order of statsmodels' VAR
             self.coefficients_ = np.transpose(coefficients, (0, 2, 1))
             self.intercept_ = intercepts
         else:
@@ -252,13 +253,12 @@ class VARReduce(BaseForecaster):
         # Initialize a list to store predictions
         y_pred = []
 
-        # Iterate over each step in the forecasting horizon
         for _ in range(1, len(fh) + 1):
 
             # Prepare X
             X_last = self.prepare_for_predict(y_last, return_as_ndarray=False)
 
-            # Make predictions specific to this timestep for each variable using its corresponding regressor
+            # Make timestep specific predictions for each variable using its regressor
             y_pred_step = []
             for var_name in self.var_names:
                 model = self.regressors[var_name]
