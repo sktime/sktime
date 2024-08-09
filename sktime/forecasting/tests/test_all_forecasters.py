@@ -48,6 +48,7 @@ from sktime.utils.validation.forecasting import check_fh
 
 # get all forecasters
 FH0 = 1
+
 INVALID_X_INPUT_TYPES = [list("foo"), tuple()]
 INVALID_y_INPUT_TYPES = [list("bar"), tuple()]
 
@@ -203,6 +204,32 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         except NotImplementedError as e:
             msg = str(e).lower()
             assert "exogenous" in msg
+
+    def test_categorical_X_raises_error(self, estimator_instance):
+        """Test that categorical X in not supported forecasters raises error.
+
+        Only test with forecasters which do not ignore exogeneous X and those that do
+        not support categorical natively. These are the cases where error is expected
+        to be raised.
+        """
+        if not estimator_instance.get_tag(
+            "ignores-exogeneous-X"
+        ) and not estimator_instance.get_tag("capability:categorical_in_X"):
+            X_train = pd.DataFrame({"col_0": ["a", "b", "c", "a", "b", "c"]})
+            y_train = _make_series(n_timepoints=6, n_columns=2)
+
+            with pytest.raises(TypeError, match=r"categorical"):
+                estimator_instance.fit(y_train, X_train, fh=FH0)
+
+    def test_categorical_y_raises_error(self, estimator_instance):
+        """Test that categorical y in forecasters raises error.
+
+        Categorical y is not currently supported in the forecasting module.
+        """
+        y = pd.DataFrame({"col_0": ["a", "b", "c", "a", "b", "c"]})
+
+        with pytest.raises(TypeError, match=r"categorical"):
+            estimator_instance.fit(y, fh=FH0)
 
     # todo: refactor with scenarios. Need to override fh and scenario args for this.
     @pytest.mark.parametrize(
@@ -1219,7 +1246,7 @@ def _check_predict_intervals(pred_ints, y_test, fh, coverage):
     cutoff = get_cutoff(y_test, return_index=True)
     index_pred = pred_ints.iloc[
         : 1 if isinstance(fh, int) else len(fh)
-    ].index.get_level_values(len(pred_ints.index.names) - 1)
+    ].index.get_level_values(-1)
     _assert_correct_pred_time_index(index_pred, cutoff, fh)
 
     # check columns
@@ -1256,7 +1283,7 @@ def _check_predict_quantiles(pred_quantiles, y_test, fh, alpha):
     cutoff = get_cutoff(y_test, return_index=True)
     index_pred = pred_quantiles.iloc[
         : 1 if isinstance(fh, int) else len(fh)
-    ].index.get_level_values(len(pred_quantiles.index.names) - 1)
+    ].index.get_level_values(-1)
     _assert_correct_pred_time_index(index_pred, cutoff, fh)
 
     # check columns
@@ -1294,7 +1321,7 @@ def _check_predict_proba(pred_dist, y_test, fh_int):
     try:
         pred_index = pred_dist.sigma.iloc[
             : 1 if isinstance(fh_int, int) else len(fh_int)
-        ].index.get_level_values(len(pred_dist.index.names) - 1)
+        ].index.get_level_values(-1)
     except AttributeError:
         pred_index = pred_dist.index
 

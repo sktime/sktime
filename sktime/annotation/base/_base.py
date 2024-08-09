@@ -260,6 +260,27 @@ class BaseSeriesAnnotator(BaseEstimator):
         # method is possible for a given algorithm.
         return self.fit(X, Y).predict(X)
 
+    def fit_transform(self, X, Y=None):
+        """Fit to data, then transform it.
+
+        Fits model to X and Y with given annotation parameters
+        and returns the annotations made by the model.
+
+        Parameters
+        ----------
+        X : pd.DataFrame, pd.Series or np.ndarray
+            Data to be transformed
+        Y : pd.Series or np.ndarray, optional (default=None)
+            Target values of data to be predicted.
+
+        Returns
+        -------
+        self : pd.Series
+            Annotations for sequence X exact format depends on annotation type.
+        """
+        Y = self.fit_predict(X)
+        return self.sparse_to_dense(Y, index=X.index)
+
     def _fit(self, X, Y=None):
         """Fit to training data.
 
