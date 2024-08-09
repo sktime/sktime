@@ -20,21 +20,21 @@ class DartsRegressionModel(_DartsRegressionAdapter):
 
     Parameters
     ----------
-    lags
+    lags : One of int, list, dict, default=None
         Lagged target values used to predict the next time step. If an integer is given
         the last `lags` past lags are used (from -1 backward). Otherwise a list of
         integers with lags is required (each lag must be < 0). If a dictionary is given,
         keys correspond to the component names
         (of first series when using multiple series) and
         the values correspond to the component lags(integer or list of integers).
-    lags_past_covariates
+    lags_past_covariates : One of int, list, dict, default=None
         Number of lagged past_covariates values used to predict the next time step. If
         an integer is given the last `lags_past_covariates` past lags are used
         (inclusive, starting from lag -1). Otherwise a list of integers
         with lags < 0 is required. If a dictionary is given, keys correspond to the
         past_covariates component names(of first series when using multiple series)
         and the values correspond to the component lags(integer or list of integers).
-    lags_future_covariates
+    lags_future_covariates : One of tuple, list, dict, default=None
         Number of lagged future_covariates values used to predict the next time step. If
         a tuple (past, future) is given the last `past` lags in the past are used
         (inclusive, starting from lag -1) along with the first `future` future lags
@@ -43,7 +43,7 @@ class DartsRegressionModel(_DartsRegressionAdapter):
         keys correspond to the future_covariates component names
         (of first series when using multiple series) and the values
         correspond to the component lags(integer or list of integers).
-    output_chunk_shift
+    output_chunk_shift : int, default=0
         Optionally, the number of steps to shift the start of the output chunk into the
         future (relative to the input chunk end). This will create a gap between the
         input (history of target and past covariates) and output. If the model supports
@@ -51,12 +51,12 @@ class DartsRegressionModel(_DartsRegressionAdapter):
         the shifted output chunk. Predictions will start output_chunk_shift steps after
         the end of the target series. If output_chunk_shift is set, the model cannot
         generate autoregressive predictions (n > output_chunk_length).
-    output_chunk_length
+    output_chunk_length : int, default=1
         Number of time steps predicted at once by the internal regression model. Does
         not have to equal the forecast horizon `n` used in `predict()`. However, setting
         `output_chunk_length` equal to the forecast horizon may be useful if the
         covariates don't extend far enough into the future.
-    add_encoders
+    add_encoders : dict, default=None
         A large number of past and future covariates can be automatically generated with
         `add_encoders`. This can be done by adding multiple pre-defined index encoders
         and/or custom user-made functions that will be used as index encoders.
@@ -78,25 +78,25 @@ class DartsRegressionModel(_DartsRegressionAdapter):
                 'transformer': Scaler()
             }
         ..
-    model
+    model: object, default=None
         Scikit-learn-like model with ``fit()`` and ``predict()`` methods. Also possible
         to use model that doesn't support multi-output regression for multivariate
         timeseries, in which case one regressor will be used per component in the
         multivariate series. If None, defaults to:
         ``sklearn.linear_model.LinearRegression(n_jobs=-1)``.
-    multi_models
+    multi_models : bool, default=True
         If True, a separate model will be trained for each future lag to predict. If
         False, a single model is trained to predict at step 'output_chunk_length' in the
         future. Default: True.
-    use_static_covariates
+    use_static_covariates : bool, default=True
         Whether the model should use static covariate information in case the input
         `series` passed to ``fit()`` contain static covariates. If ``True``, and static
         covariates are available at fitting time, will enforce that all target `series`
         have the same static covariate dimensionality in ``fit()`` and ``predict()``.
 
-    past_covariates : Optional[List[str]], optional
+    past_covariates : list, default=None
         column names in ``X`` which are known only for historical data, by default None
-    num_samples : Optional[int], optional
+    num_samples : int, default=1000
         Number of times a prediction is sampled from a probabilistic model, by default
         1000
 
@@ -196,6 +196,7 @@ class DartsRegressionModel(_DartsRegressionAdapter):
         """
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
         from sklearn.ensemble import RandomForestRegressor
+        from sklearn.linear_model import LinearRegression
 
         params = [
             {
@@ -206,6 +207,7 @@ class DartsRegressionModel(_DartsRegressionAdapter):
                 "use_static_covariates": True,
             },
             {"lags": [-1, -3], "model": RandomForestRegressor()},
+            {"lags": 3, "model": LinearRegression()},
         ]
 
         return params
@@ -218,26 +220,21 @@ class DartsXGBModel(_DartsRegressionModelsAdapter):
 
     Parameters
     ----------
-    past_covariates : Optional[List[str]], optional
-        column names in ``X`` which are known only for historical data, by default None
-    num_samples : Optional[int], optional
-        Number of times a prediction is sampled from a probabilistic model, by default
-        1000
-    lags
+    lags : One of int, list, dict, default=None
         Lagged target values used to predict the next time step. If an integer is given
         the last `lags` past lags are used (from -1 backward). Otherwise a list of
         integers with lags is required (each lag must be < 0). If a dictionary is given,
         keys correspond to the component names
         (of first series when using multiple series) and
         the values correspond to the component lags(integer or list of integers).
-    lags_past_covariates
+    lags_past_covariates : One of int, list, dict, default=None
         Number of lagged past_covariates values used to predict the next time step. If
         an integer is given the last `lags_past_covariates` past lags are used
         (inclusive, starting from lag -1). Otherwise a list of integers
         with lags < 0 is required. If a dictionary is given, keys correspond to the
         past_covariates component names(of first series when using multiple series)
         and the values correspond to the component lags(integer or list of integers).
-    lags_future_covariates
+    lags_future_covariates : One of tuple, list, dict, default=None
         Number of lagged future_covariates values used to predict the next time step. If
         a tuple (past, future) is given the last `past` lags in the past are used
         (inclusive, starting from lag -1) along with the first `future` future lags
@@ -246,12 +243,12 @@ class DartsXGBModel(_DartsRegressionModelsAdapter):
         keys correspond to the future_covariates component names
         (of first series when using multiple series) and the values
         correspond to the component lags(integer or list of integers).
-    output_chunk_length
+    output_chunk_length : int, default=1
         Number of time steps predicted at once by the internal regression model. Does
         not have to equal the forecast horizon `n` used in `predict()`. However, setting
         `output_chunk_length` equal to the forecast horizon may be useful if the
         covariates don't extend far enough into the future.
-    add_encoders
+    add_encoders : dict, default=None
         A large number of past and future covariates can be automatically generated with
         `add_encoders`. This can be done by adding multiple pre-defined index encoders
         and/or custom user-made functions that will be used as index encoders.
@@ -273,25 +270,30 @@ class DartsXGBModel(_DartsRegressionModelsAdapter):
                 'transformer': Scaler()
             }
         ..
-    likelihood
+    likelihood : str, default=None
         Can be set to `poisson` or `quantile`. If set, the model will be probabilistic,
         allowing sampling at prediction time. This will overwrite any `objective`
         parameter.
-    quantiles
+    quantiles : list, default=None
         Fit the model to these quantiles if the `likelihood` is set to `quantile`.
-    random_state
+    random_state : int, default=None
         Control the randomness in the fitting procedure and for sampling. Default:
         ``None``.
-    multi_models
+    multi_models : bool, default=True
         If True, a separate model will be trained for each future lag to predict. If
         False, a single model is trained to predict at step 'output_chunk_length' in the
         future. Default: True.
-    use_static_covariates
+    use_static_covariates : bool, default=True
         Whether the model should use static covariate information in case the input
         `series` passed to ``fit()`` contain static covariates. If ``True``, and static
         covariates are available at fitting time, will enforce that all target `series`
         have the same static covariate dimensionality in ``fit()`` and ``predict()``.
-    kwargs
+    past_covariates : list, default=None
+        column names in ``X`` which are known only for historical data, by default None
+    num_samples : int, default=1000
+        Number of times a prediction is sampled from a probabilistic model, by default
+        1000
+    kwargs : dict, default=None
         Additional keyword arguments passed to `xgb.XGBRegressor`.
         Passed as a dictionary to conform to sklearn's API. Default: ``None``.
 
@@ -441,26 +443,21 @@ class DartsLinearRegressionModel(_DartsRegressionModelsAdapter):
 
     Parameters
     ----------
-    past_covariates : Optional[List[str]], optional
-        column names in ``X`` which are known only for historical data, by default None
-    num_samples : Optional[int], optional
-        Number of times a prediction is sampled from a probabilistic model, by default
-        1000
-    lags
+    lags : One of int, list, dict, default=None
         Lagged target values used to predict the next time step. If an integer is given
         the last `lags` past lags are used (from -1 backward). Otherwise a list of
         integers with lags is required (each lag must be < 0). If a dictionary is given,
         keys correspond to the component names
         (of first series when using multiple series) and
         the values correspond to the component lags(integer or list of integers).
-    lags_past_covariates
+    lags_past_covariates : One of int, list, dict, default=None
         Number of lagged past_covariates values used to predict the next time step. If
         an integer is given the last `lags_past_covariates` past lags are used
         (inclusive, starting from lag -1). Otherwise a list of integers
         with lags < 0 is required. If a dictionary is given, keys correspond to the
         past_covariates component names(of first series when using multiple series)
         and the values correspond to the component lags(integer or list of integers).
-    lags_future_covariates
+    lags_future_covariates : One of tuple, list, dict, default=None
         Number of lagged future_covariates values used to predict the next time step. If
         a tuple (past, future) is given the last `past` lags in the past are used
         (inclusive, starting from lag -1) along with the first `future` future lags
@@ -469,12 +466,12 @@ class DartsLinearRegressionModel(_DartsRegressionModelsAdapter):
         keys correspond to the future_covariates component names
         (of first series when using multiple series) and the values
         correspond to the component lags(integer or list of integers).
-    output_chunk_length
+    output_chunk_length : int, default=1
         Number of time steps predicted at once by the internal regression model. Does
         not have to equal the forecast horizon `n` used in `predict()`. However, setting
         `output_chunk_length` equal to the forecast horizon may be useful if the
         covariates don't extend far enough into the future.
-    add_encoders
+    add_encoders : dict, default=None
         A large number of past and future covariates can be automatically generated with
         `add_encoders`. This can be done by adding multiple pre-defined index encoders
         and/or custom user-made functions that will be used as index encoders.
@@ -496,24 +493,29 @@ class DartsLinearRegressionModel(_DartsRegressionModelsAdapter):
                 'transformer': Scaler()
             }
         ..
-    likelihood
+    likelihood : str, default=None
         Can be set to `poisson` or `quantile`. If set, the model will be probabilistic,
         allowing sampling at prediction time. This will overwrite any `objective`
         parameter.
-    quantiles
+    quantiles : list, default=None
         Fit the model to these quantiles if the `likelihood` is set to `quantile`.
-    random_state
+    random_state : int, default=None
         Control the randomness in the fitting procedure and for sampling. Default:
         ``None``.
-    multi_models
+    multi_models : bool, default=True
         If True, a separate model will be trained for each future lag to predict. If
         False, a single model is trained to predict at step 'output_chunk_length' in the
         future. Default: True.
-    use_static_covariates
+    use_static_covariates: bool, default=True
         Whether the model should use static covariate information in case the input
         `series` passed to ``fit()`` contain static covariates. If ``True``, and static
         covariates are available at fitting time, will enforce that all target `series`
         have the same static covariate dimensionality in ``fit()`` and ``predict()``.
+    past_covariates : list, default=None
+        column names in ``X`` which are known only for historical data, by default None
+    num_samples : int, default=1000
+        Number of times a prediction is sampled from a probabilistic model, by default
+        1000
     kwargs
         Additional keyword arguments passed to `sklearn.linear_model.LinearRegression`
         (by default), to `sklearn.linear_model.PoissonRegressor`

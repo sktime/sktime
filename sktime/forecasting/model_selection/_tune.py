@@ -1813,7 +1813,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
             ascending=scoring.get_tag("lower_is_better")
         )
         self.cv_results_ = results
-        self.best_index_ = results[f"mean_{scoring_name}"].idxmin()
+        self.best_index_ = results.loc[:, f"rank_{scoring_name}"].argmin()
         if self.best_index_ == -1:
             raise NotFittedError(
                 f"""All fits of forecaster failed,
@@ -1899,7 +1899,15 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
             "scoring": "MeanAbsolutePercentageError(symmetric=True)",
             "update_behaviour": "no_update",
         }
-        return [params, params2, params3]
+        scorer_with_lower_is_better_false = MeanAbsolutePercentageError(symmetric=True)
+        scorer_with_lower_is_better_false.set_tags(**{"lower_is_better": False})
+        params4 = {
+            "forecaster": NaiveForecaster(strategy="mean"),
+            "cv": SingleWindowSplitter(fh=1),
+            "param_grid": {"window_length": CategoricalDistribution((2, 5))},
+            "scoring": scorer_with_lower_is_better_false,
+        }
+        return [params, params2, params3, params4]
 
     def _get_score(self, out, scoring_name):
         return out[f"mean_{scoring_name}"]
@@ -1912,7 +1920,10 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         for (
             param_grid_dict
         ) in self._param_grid:  # Assuming self._param_grid is now a list of dicts
-            study = optuna.create_study(direction="minimize", sampler=sampler)
+            scoring_direction = (
+                "minimize" if scoring.get_tag("lower_is_better") else "maximize"
+            )
+            study = optuna.create_study(direction=scoring_direction, sampler=sampler)
             meta = {}
             meta["forecaster"] = self.forecaster
             meta["y"] = y

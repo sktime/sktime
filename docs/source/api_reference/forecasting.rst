@@ -80,6 +80,21 @@ Uses exogeneous data at the same time stamp - simple reduction strategy.
 
     YfromX
 
+Darts models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Support for models from the `Darts <https://github.com/unit8co/darts>`_ library.
+
+.. currentmodule:: sktime.forecasting.darts
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DartsRegressionModel
+    DartsLinearRegressionModel
+    DartsXGBModel
+
 
 Direct and recursive - ``sktime`` native 1st generation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -430,6 +445,7 @@ Deep learning based forecasters
     LTSFLinearForecaster
     LTSFDLinearForecaster
     LTSFNLinearForecaster
+    LTSFTransformerForecaster
 
 .. currentmodule:: sktime.forecasting.hf_transformers_forecaster
 
@@ -551,19 +567,6 @@ Generic framework adapters that expose other frameworks in the ``sktime`` interf
     :template: class.rst
 
     HCrystalBallAdapter
-
-Darts models
--------------------------------------------
-
-.. currentmodule:: sktime.forecasting.darts
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    DartsRegressionModel
-    DartsLinearRegressionModel
-    DartsXGBModel
 
 Model selection and tuning
 --------------------------
