@@ -54,6 +54,7 @@ from sktime.datatypes import (
     scitype_to_mtype,
     update_data,
 )
+from sktime.datatypes._dtypekind import DtypeKind
 from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.utils.datetime import _shift
 from sktime.utils.dependencies import _check_estimator_deps
@@ -105,6 +106,8 @@ class BaseForecaster(BaseEstimator):
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": False,  # is fit empty and can be skipped?
+        "capability:categorical_in_X": False,
+        # does the forecaster natively support categorical in exogeneous X?
     }
 
     # configs and default config values
@@ -1484,7 +1487,7 @@ class BaseForecaster(BaseEstimator):
         # checking y
         if y is not None:
             # request only required metadata from checks
-            y_metadata_required = ["n_features", "feature_names"]
+            y_metadata_required = ["n_features", "feature_names", "feature_kind"]
             if self.get_tag("scitype:y") != "both":
                 y_metadata_required += ["is_univariate"]
             if not self.get_tag("handles-missing-data"):
@@ -1514,6 +1517,11 @@ class BaseForecaster(BaseEstimator):
                     var_name=msg_start,
                     allowed_msg=allowed_msg,
                     raise_exception=True,
+                )
+
+            if DtypeKind.CATEGORICAL in y_metadata["feature_kind"]:
+                raise TypeError(
+                    "Forecasters do not support categorical features in endogeneous y."
                 )
 
             y_scitype = y_metadata["scitype"]
@@ -1548,7 +1556,7 @@ class BaseForecaster(BaseEstimator):
         # checking X
         if X is not None:
             # request only required metadata from checks
-            X_metadata_required = []
+            X_metadata_required = ["feature_kind"]
             if not self.get_tag("handles-missing-data"):
                 X_metadata_required += ["has_nans"]
 
@@ -1576,6 +1584,17 @@ class BaseForecaster(BaseEstimator):
                     var_name=msg_start,
                     allowed_msg=allowed_msg,
                     raise_exception=True,
+                )
+
+            if (
+                not self.get_tag("ignores-exogeneous-X")
+                and DtypeKind.CATEGORICAL in X_metadata["feature_kind"]
+                and not self.get_tag("capability:categorical_in_X")
+            ):
+                # replace error with encoding logic in next step.
+                raise TypeError(
+                    f"Forecaster {self} does not support categorical features in "
+                    "exogeneous X."
                 )
 
             X_scitype = X_metadata["scitype"]
