@@ -80,6 +80,7 @@ Uses exogeneous data at the same time stamp - simple reduction strategy.
 
     YfromX
 
+
 Direct and recursive - ``sktime`` native 1st generation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
