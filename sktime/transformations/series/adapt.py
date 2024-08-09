@@ -9,6 +9,7 @@ from inspect import signature
 
 import numpy as np
 import pandas as pd
+from scipy.sparse import csr_matrix
 from sklearn.base import clone
 
 from sktime.transformations.base import BaseTransformer
@@ -173,6 +174,12 @@ class TabularToSeriesAdaptor(BaseTransformer):
         self._trafo_has_X = self._trafo_has_param_and_default("fit", "X")[0]
 
         super().__init__()
+
+        if hasattr(transformer, "_get_tags"):
+            categorical_list = ["categorical", "1dlabels", "2dlabels"]
+            tag_values = transformer._get_tags()["X_types"]
+            if any(val in tag_values for val in categorical_list):
+                self.set_tags(**{"capability:categorical_in_X": True})
 
         if hasattr(transformer, "inverse_transform"):
             self.set_tags(**{"capability:inverse_transform": True})
@@ -342,6 +349,10 @@ class TabularToSeriesAdaptor(BaseTransformer):
         else:
             Xt = self.transformer_.transform(**trafo_args)
 
+        # converting to dense if the transformer output was in sparse format
+        # Example: sklearn OneHotEncoder's default output is sparse
+        if isinstance(Xt, csr_matrix):
+            Xt = Xt.todense()
         # coerce sensibly to 2D np.ndarray
         if isinstance(Xt, (int, float, str)):
             Xt = np.array([[Xt]])

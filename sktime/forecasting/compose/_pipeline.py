@@ -398,6 +398,7 @@ class ForecastingPipeline(_Pipeline):
         "handles-missing-data": True,
         "capability:pred_int": True,
         "X-y-must-have-same-index": False,
+        "capability:categorical_in_X": True,
     }
 
     def __init__(self, steps):
