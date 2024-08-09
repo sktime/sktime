@@ -33,7 +33,7 @@ class BinarySegmentation(BaseSeriesAnnotator):
     References
     ----------
     .. [1] Fryzlewicz, Piotr. "WILD BINARY SEGMENTATION FOR MULTIPLE CHANGE-POINT
-           DETECTION." The Annals of Statistics, vol. 42, no. 6, 2014, pp. 2243–81.
+           DETECTION." The Annals of Statistics, vol. 42, no. 6, 2014, pp. 2243-81.
            JSTOR, http://www.jstor.org/stable/43556493. Accessed 4 July 2024.
 
     Examples
