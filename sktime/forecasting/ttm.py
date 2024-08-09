@@ -1,8 +1,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implementation of TinyTimeMixer for forecasting."""
 
-__author__ = ["geetu040", "ajati", "wgifford", "vijaye12"]
-
+__author__ = ["ajati", "wgifford", "vijaye12", "geetu040"]
+# ajati, wgifford, vijaye12 for ibm-granite code
 
 import numpy as np
 import pandas as pd
@@ -132,7 +132,8 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         "capability:insample": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
-        "authors": ["geetu040", "ajati", "wgifford", "vijaye12"],
+        "authors": ["ajati", "wgifford", "vijaye12", "geetu040"],
+        # ajati, wgifford, vijaye12 for ibm-granite code
         "maintainers": ["geetu040"],
         "python_dependencies": ["transformers", "torch"],
         "capability:global_forecasting": True,
