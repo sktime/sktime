@@ -48,23 +48,32 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     validation_split : float, default=0.2
         Fraction of the data to use for validation
     config : dict, default={}
-        Configuration to use for the model. See the `transformers`
+        Configuration to use for the model. See the ``transformers``
         documentation for details.
     training_args : dict, default={}
-        Training arguments to use for the model. See `transformers.TrainingArguments`
+        Training arguments to use for the model. See ``transformers.TrainingArguments``
         for details.
-        Note that the `output_dir` argument is required.
+        Note that the ``output_dir`` argument is required.
     compute_metrics : list, default=None
-        List of metrics to compute during training. See `transformers.Trainer`
+        List of metrics to compute during training. See ``transformers.Trainer``
         for details.
     callbacks : list, default=[]
-        List of callbacks to use during training. See `transformers.Trainer`
-    broadcasting: bool (default=False)
-        multiindex data input will be broadcasted to single series.
+        List of callbacks to use during training. See ``transformers.Trainer``
+    broadcasting : bool, default=False
+        if True, multiindex data input will be broadcasted to single series.
         For each single series, one copy of this forecaster will try to
         fit and predict on it. The broadcasting is happening inside automatically,
         from the outerside api perspective, the input and output are the same,
-        only one multiindex output from `predict`.
+        only one multiindex output from ``predict``.
+    use_source_package : bool, default=False
+        If True, the model and configuration will be loaded directly from the source
+        package ``tsfm_public.models.tinytimemixer``. This is useful if you
+        want to bypass the local version of the package or when working in an
+        environment where the latest updates from the source package are needed.
+        If False, the model and configuration will be loaded from the local
+        version of package maintained in sktime because of model's unavailability
+        on pypi.
+        To install the source package, follow the instructions here [4]_.
 
     References
     ----------
@@ -74,6 +83,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     Tiny Time Mixers (TTMs): Fast Pre-trained Models for Enhanced
     Zero/Few-Shot Forecasting of Multivariate Time Series. CoRR.
     .. [3] https://github.com/ibm-granite/granite-tsfm/blob/main/notebooks/tutorial/ttm_tutorial.ipynb
+    .. [4] https://github.com/ibm-granite/granite-tsfm/tree/ttm
 
     Examples
     --------
@@ -148,7 +158,8 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         training_args=None,
         compute_metrics=None,
         callbacks=None,
-        broadcasting=True,
+        broadcasting=False,
+        use_source_package=False,
     ):
         super().__init__()
         self.model_path = model_path
@@ -161,6 +172,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         self.compute_metrics = compute_metrics
         self.callbacks = callbacks
         self.broadcasting = broadcasting
+        self.use_source_package = use_source_package
 
         if self.broadcasting:
             self.set_tags(
@@ -201,7 +213,12 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         -------
         self : reference to self
         """
-        if _check_soft_dependencies("torch", severity="error"):
+        if self.use_source_package:
+            from tsfm_public.models.tinytimemixer import (
+                TinyTimeMixerConfig,
+                TinyTimeMixerForPrediction,
+            )
+        elif _check_soft_dependencies("torch", severity="error"):
             from sktime.libs.granite_ttm import (
                 TinyTimeMixerConfig,
                 TinyTimeMixerForPrediction,
