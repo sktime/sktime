@@ -88,6 +88,8 @@ Data types, checks, conversions
 Forecasting
 ^^^^^^^^^^^
 
+* [ENH] interface to ``autots`` ensemble (:pr:`5948`) :user:`MBristle`
+* [ENH] Extension Template For Global Forecasting API (:pr:`6699`) :user:`Xinyu-Wu-0000`
 * [ENH] enable multivariate data passed to ``autots`` interface (:pr:`6805`) :user:`fkiraly`
 * [ENH] Add Sampler to ``ForecastingOptunaSearchCV`` (:pr:`6823`) :user:`bastisar`
 * [ENH] Improve ``TestAllGlobalForecasters`` (:pr:`6845`) :user:`Xinyu-Wu-0000`
@@ -141,7 +143,8 @@ Vendor and onboard libraries
 Documentation
 ~~~~~~~~~~~~~
 
-* [DOC] Add authorship credits to MatrixProfileTransformer for Stumpy authors (:pr:`6762`) :user:`alexander-lakocy`
+* [DOC] Notebook and Template For Global Forecasting API (:pr:`6699`) :user:`Xinyu-Wu-0000`
+* [DOC] Add authorship credits to ``MatrixProfileTransformer`` for Stumpy authors (:pr:`6762`) :user:`alexander-lakocy`
 * [DOC] add examples to ``StatsForecastGARCH`` and ``StatsForecastARCH`` docstrings (:pr:`6761`) :user:`melinny`
 * [DOC] Add alignment notebook example (:pr:`6768`) :user:`alexander-lakocy`
 * [DOC] fix transformers type table in API reference in accordance with sphinx guidelines (:pr:`6771`) :user:`alexander-lakocy`
