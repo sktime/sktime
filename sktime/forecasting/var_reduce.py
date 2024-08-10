@@ -66,8 +66,8 @@ class VARReduce(BaseForecaster):
         else:
             self.regressor_ = clone(regressor)
 
-        assert hasattr(self.regressor_, 'fit'), "Provided egressor must implement a 'fit' method."
-        assert hasattr(self.regressor_, 'predict'), "Provided regressor must implement a 'predict' method."
+        assert hasattr(self.regressor_, 'fit'), "Regressor must have 'fit'"
+        assert hasattr(self.regressor_, 'predict'), "Regressor must have 'predict'"
 
         # a dictionary of var_name: fitted regressor, to be filled in during fitting
         self.regressors = {}
@@ -149,7 +149,6 @@ class VARReduce(BaseForecaster):
             If returned as a DataFrame, the columns are named according to the original
             column names with the lag number appended (e.g., 'A_lag1', 'B_lag2').
         """
-
         # Take the last lags rows of the input data
         if isinstance(data, np.ndarray):
             data = pd.DataFrame(data, columns=self.var_names)
@@ -246,7 +245,6 @@ class VARReduce(BaseForecaster):
         y_pred : pd.DataFrame
             Series of predicted values
         """
-
         # Get the last available values for prediction
         y_last = self._y.iloc[-self.lags:]
 
@@ -262,7 +260,7 @@ class VARReduce(BaseForecaster):
             y_pred_step = []
             for var_name in self.var_names:
                 model = self.regressors[var_name]
-                y_pred_step_var = model.predict(X_last).item() # y_pred_step_var is a float
+                y_pred_step_var = model.predict(X_last).item() # is a float
                 y_pred_step.append(y_pred_step_var)
 
             # Convert y_pred_step into a one-row DataFrame
