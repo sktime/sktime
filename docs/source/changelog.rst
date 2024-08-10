@@ -28,6 +28,7 @@ Highlights
 * html representation of objects now has a button linking to documentation page (:pr:`6876`) :user:`mateuszkasprowicz`
 * interface to TinyTimeMixer foundation model (:pr:`6712`) :user:`geetu040`
 * interface to ``autots`` ensemble (:pr:`5948`) :user:`MBristle`
+* interface to  ``darts`` reduction models (:pr:`6712`) :user:`fnhirwa`, :user:`yarnabrina`
 * ``LTSFTransformer`` based on ``cure-lab`` research code base (:pr:`6202`) :user:`geetu040`
 * MVTS transformer classifier (:pr:`6791`) :user:`geetu040`
 * forecasters can now support categorical ``X``, as per tag (:pr:`6704`, :pr:`6732`) :user:`Abhay-Lejith`
@@ -89,6 +90,7 @@ Forecasting
 ^^^^^^^^^^^
 
 * [ENH] interface to ``autots`` ensemble (:pr:`5948`) :user:`MBristle`
+* [ENH] ``darts`` Reduction Models adapter (:pr:`6712`) :user:`fnhirwa`, :user:`yarnabrina`
 * [ENH] Extension Template For Global Forecasting API (:pr:`6699`) :user:`Xinyu-Wu-0000`
 * [ENH] enable multivariate data passed to ``autots`` interface (:pr:`6805`) :user:`fkiraly`
 * [ENH] Add Sampler to ``ForecastingOptunaSearchCV`` (:pr:`6823`) :user:`bastisar`
