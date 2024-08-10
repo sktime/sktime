@@ -5,4 +5,9 @@ __author__ = ["fkiraly"]
 
 __all__ = ["Laplace"]
 
-from skpro.distributions.laplace import Laplace
+from sktime.utils.dependencies import _check_soft_dependencies
+
+if _check_soft_dependencies("skpro", severity="none"):
+    from skpro.distributions.laplace import Laplace
+else:
+    from sktime.proba._laplace import Laplace
