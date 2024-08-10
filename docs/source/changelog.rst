@@ -95,7 +95,7 @@ Forecasting
 * [ENH] enable multivariate data passed to ``autots`` interface (:pr:`6805`) :user:`fkiraly`
 * [ENH] Add Sampler to ``ForecastingOptunaSearchCV`` (:pr:`6823`) :user:`bastisar`
 * [ENH] Improve ``TestAllGlobalForecasters`` (:pr:`6845`) :user:`Xinyu-Wu-0000`
-* [ENH] Add scoring direction to ``ForecastingOptunaSearchCV`` (:pr:`6846`) :user:`gareth-brown-86`
+* [ENH] Add scoring direction to ``ForecastingOptunaSearchCV`` (:pr:`6846`) :user:`gareth-brown-86`, :user:`mk406`
 * [ENH] de-novo implementation of ``LTSFTransformer`` based on ``cure-lab`` research code base (:pr:`6202`) :user:`geetu040`
 * [ENH] Add ``windows_identical`` to ``DirectReductionForecaster`` (:pr:`6650`) :user:`hliebert`
 * [ENH] updates type inference in ``make_reduction`` to use central scitype inference and allow proba tabular regressors (:pr:`6893`) :user:`fkiraly`
@@ -271,6 +271,7 @@ Contributors
 :user:`MBristle`,
 :user:`melinny`,
 :user:`Mitchjkjkjk`,
+:user:`mk406`,
 :user:`SaiRevanth25`,
 :user:`sbhobbes`,
 :user:`shlok191`,
