@@ -859,6 +859,21 @@ class BaseForecaster(BaseEstimator):
             raise NotImplementedError(
                 "automated vectorization for predict_proba is not implemented"
             )
+
+        warn(
+            "From sktime version 0.38.0, forecasters' predict_proba will "
+            "require skpro to be present in the python environment, "
+            "for distribution objects to represent distributional forecasts. "
+            "Until 0.35.0, predict_proba will continue working without skpro, "
+            "defaulting to return objects in sktime.proba if skpro is not present. "
+            "From 0.35.0, an error will be raised if skpro is not present "
+            "in the environment. "
+            "To silence this message, ensure skpro is installed in the environment "
+            "when calling forecasters' predict_proba. ",
+            obj=self,
+            stacklevel=2,
+        )
+
         self.check_is_fitted()
 
         # input checks and conversions
