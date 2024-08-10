@@ -33,18 +33,22 @@ __all__ = [
     "load_solar",
     "load_covid_3month",
     "load_forecastingdata",
+    "load_m5",
     "write_panel_to_tsfile",
     "write_dataframe_to_tsfile",
     "write_ndarray_to_tsfile",
     "write_results_to_uea_format",
     "write_tabular_transformation_to_arff",
     "load_tecator",
+    "load_fpp3",
+    "DATASET_NAMES_FPP3",
 ]
 
 from sktime.datasets._data_io import (
     generate_example_long_table,
     make_multi_index_dataframe,
 )
+from sktime.datasets._fpp3_loaders import DATASET_NAMES_FPP3, load_fpp3
 from sktime.datasets._readers_writers.arff import (
     load_from_arff_to_dataframe,
     write_tabular_transformation_to_arff,
@@ -74,6 +78,7 @@ from sktime.datasets._single_problem_loaders import (
     load_japanese_vowels,
     load_longley,
     load_lynx,
+    load_m5,
     load_macroeconomic,
     load_osuleaf,
     load_PBS_dataset,

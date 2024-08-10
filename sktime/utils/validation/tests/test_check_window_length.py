@@ -1,10 +1,16 @@
 #!/usr/bin/env python3 -u
 """Tests for window length."""
+
 import pytest
 
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils.validation import check_window_length
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(check_window_length),
+    reason="Run if tested function has changed.",
+)
 @pytest.mark.parametrize(
     "window_length, n_timepoints, expected",
     [
@@ -22,6 +28,10 @@ def test_check_window_length(window_length, n_timepoints, expected):
     assert check_window_length(window_length, n_timepoints) == expected
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(check_window_length),
+    reason="Run if tested function has changed.",
+)
 @pytest.mark.parametrize(
     "window_length, n_timepoints",
     [

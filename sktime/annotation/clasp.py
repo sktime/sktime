@@ -188,10 +188,6 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
         size of window for sliding, based on the period length of the data
     n_cps :                 int, default = 1
         the number of change points to search
-    fmt :                  str {"dense", "sparse"}, optional (default="sparse")
-        Annotation output format:
-        * If "sparse", a pd.Series of the found Change Points is returned
-        * If "dense", a pd.IndexSeries with the Segmentation of X is returned
     exclusion_radius : int
         Exclusion Radius for change points to be non-trivial matches
 
@@ -219,16 +215,21 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
     """
 
     _tags = {
+        "task": "change_point_detection",
+        "learning_type": "unsupervised",
         "univariate-only": True,
         "fit_is_empty": True,
         "python_dependencies": "numba",
     }  # for unit test cases
 
-    def __init__(self, period_length=10, n_cps=1, fmt="sparse", exclusion_radius=0.05):
+    def __init__(self, period_length=10, n_cps=1, exclusion_radius=0.05):
         self.period_length = int(period_length)
         self.n_cps = n_cps
         self.exclusion_radius = exclusion_radius
-        super().__init__(fmt)
+
+        super().__init__()
+
+        self._fmt = "sparse"
 
     def _fit(self, X, Y=None):
         """Do nothing, as there is no need to fit a model for ClaSP.
@@ -257,19 +258,30 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
         Returns
         -------
         Y : pd.Series or an IntervalSeries
-            Annotations for sequence X exact format depends on annotation type.
-            fmt=sparse : only the found change point locations are returned
-            fnt=dense : an interval series is returned which contains the segmetation.
+            Change points in sequence X.
+        """
+        change_points = self._predict_points(X)
+        if self._fmt == "dense":
+            return self.change_points_to_segments(
+                change_points, X.index.min(), X.index.max()
+            )
+        return change_points
+
+    def _predict_points(self, X):
+        """Predict changepoints on test/deployment data.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Data to annotate, time series.
+
+        Returns
+        -------
+        Y : pd.Series
+            Series containing the indexes of the changepoints in X.
         """
         self.found_cps, self.profiles, self.scores = self._run_clasp(X)
-
-        # Change Points
-        if self.fmt == "sparse":
-            return pd.Series(self.found_cps)
-
-        # Segmentation
-        elif self.fmt == "dense":
-            return self._get_interval_series(X, self.found_cps)
+        return pd.Series(self.found_cps)
 
     def _predict_scores(self, X):
         """Return scores in ClaSP's profile for each annotation.
@@ -286,15 +298,15 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
         """
         self.found_cps, self.profiles, self.scores = self._run_clasp(X)
 
-        # Scores of the Change Points
-        if self.fmt == "sparse":
-            return pd.Series(self.scores)
-
-        # Full Profile of Segmentation
-        # ClaSP creates multiple profiles. Hard to map.
-        # Thus, we return the main (first) one
-        elif self.fmt == "dense":
-            return pd.Series(self.profiles[0])
+        if self._fmt == "sparse":
+            # Scores of the Change Points
+            scores = pd.Series(self.scores)
+            return scores
+        elif self._fmt == "dense":
+            # ClaSP creates multiple profiles. Hard to map. Thus, we return the main
+            # (first) one
+            profile = pd.Series(self.profiles[0])
+            return profile
 
     def get_fitted_params(self):
         """Get fitted parameters.

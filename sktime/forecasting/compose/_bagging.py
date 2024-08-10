@@ -4,7 +4,7 @@
 
 __author__ = ["fkiraly", "ltsaprounis"]
 
-from typing import List, Union
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -395,7 +395,7 @@ class BaggingForecaster(BaseForecaster):
         """
         from sktime.forecasting.compose import YfromX
         from sktime.transformations.bootstrap import MovingBlockBootstrapTransformer
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         mbb = MovingBlockBootstrapTransformer(block_length=6)
         fcst = YfromX.create_test_instance()
@@ -408,7 +408,7 @@ class BaggingForecaster(BaseForecaster):
 
         return params
 
-    def _calculate_data_quantiles(self, df: pd.DataFrame, alpha: List[float]):
+    def _calculate_data_quantiles(self, df: pd.DataFrame, alpha: list[float]):
         """Generate quantiles for each time point.
 
         Parameters

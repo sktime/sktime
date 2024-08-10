@@ -42,7 +42,8 @@ import numpy as np
 import pandas as pd
 
 from sktime.datatypes._common import _req, _ret
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.datatypes._dtypekind import _get_feature_kind, _get_table_dtypekind
+from sktime.utils.dependencies import _check_soft_dependencies
 
 check_dict = dict()
 
@@ -71,6 +72,11 @@ def check_pddataframe_table(obj, return_metadata=False, var_name="obj"):
         metadata["n_features"] = len(obj.columns)
     if _req("feature_names", return_metadata):
         metadata["feature_names"] = obj.columns.to_list()
+    if _req("dtypekind_dfip", return_metadata):
+        metadata["dtypekind_dfip"] = _get_table_dtypekind(obj, "pd.DataFrame")
+    if _req("feature_kind", return_metadata):
+        dtype_kind = _get_table_dtypekind(obj, "pd.DataFrame")
+        metadata["feature_kind"] = _get_feature_kind(dtype_kind)
 
     return _ret(True, None, metadata, return_metadata)
 
@@ -100,6 +106,11 @@ def check_pdseries_table(obj, return_metadata=False, var_name="obj"):
             metadata["feature_names"] = [0]
         else:
             metadata["feature_names"] = [obj.name]
+    if _req("dtypekind_dfip", return_metadata):
+        metadata["dtypekind_dfip"] = _get_table_dtypekind(obj, "pd.Series")
+    if _req("feature_kind", return_metadata):
+        dtype_kind = _get_table_dtypekind(obj, "pd.Series")
+        metadata["feature_kind"] = _get_feature_kind(dtype_kind)
 
     # check whether index is equally spaced or if there are any nans
     #   compute only if needed
@@ -139,6 +150,11 @@ def check_numpy1d_table(obj, return_metadata=False, var_name="obj"):
         metadata["n_features"] = 1
     if _req("feature_names", return_metadata):
         metadata["feature_names"] = [0]
+    if _req("dtypekind_dfip", return_metadata):
+        metadata["dtypekind_dfip"] = _get_table_dtypekind(obj, "numpy1D")
+    if _req("feature_kind", return_metadata):
+        dtype_kind = _get_table_dtypekind(obj, "numpy1D")
+        metadata["feature_kind"] = _get_feature_kind(dtype_kind)
 
     return _ret(True, None, metadata, return_metadata)
 
@@ -172,6 +188,11 @@ def check_numpy2d_table(obj, return_metadata=False, var_name="obj"):
         metadata["n_features"] = obj.shape[1]
     if _req("feature_names", return_metadata):
         metadata["feature_names"] = list(range(obj.shape[1]))
+    if _req("dtypekind_dfip", return_metadata):
+        metadata["dtypekind_dfip"] = _get_table_dtypekind(obj, "numpy2D")
+    if _req("feature_kind", return_metadata):
+        dtype_kind = _get_table_dtypekind(obj, "numpy2D")
+        metadata["feature_kind"] = _get_feature_kind(dtype_kind)
 
     return _ret(True, None, metadata, return_metadata)
 
@@ -228,6 +249,11 @@ def check_list_of_dict_table(obj, return_metadata=False, var_name="obj"):
             metadata["n_features"] = len(all_keys)
         if _req("feature_names", return_metadata):
             metadata["feature_names"] = all_keys.tolist()
+    if _req("dtypekind_dfip", return_metadata):
+        metadata["dtypekind_dfip"] = _get_table_dtypekind(obj, "list_of_dict")
+    if _req("feature_kind", return_metadata):
+        dtype_kind = _get_table_dtypekind(obj, "list_of_dict")
+        metadata["feature_kind"] = _get_feature_kind(dtype_kind)
 
     return _ret(True, None, metadata, return_metadata)
 

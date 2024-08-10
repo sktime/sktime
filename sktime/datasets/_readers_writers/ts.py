@@ -23,9 +23,9 @@ from sktime.datasets._readers_writers.utils import (
 from sktime.datatypes import MTYPE_LIST_PANEL, check_is_scitype, convert, convert_to
 from sktime.utils.validation.panel import check_X, check_X_y
 
-# ==================================================================================================
+# ===================================================================================
 # Function to read  .ts file
-# ==================================================================================================
+# ===================================================================================
 
 
 # TODO: Highle deeply nested function, refactor
@@ -599,9 +599,11 @@ def load_from_tsfile_to_dataframe(
         elif metadata_started and data_started and len(instance_list) == 0:
             raise OSError("file contained metadata but no data")
         # Create a DataFrame from the data parsed above
-        data = pd.DataFrame(dtype=np.float32)
-        for dim in range(0, num_dimensions):
-            data["dim_" + str(dim)] = instance_list[dim]
+        data_dict = {
+            f"dim_{dim}": pd.Series(instance_list[dim]) for dim in range(num_dimensions)
+        }
+        data = pd.DataFrame(data_dict)
+
         # Check if we should return any associated class labels separately
         if class_labels:
             if return_separate_X_and_y:

@@ -1,4 +1,5 @@
 """Utilities for seasonality."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 # noqa: D100
 
@@ -10,7 +11,7 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_sp, check_y
 
 

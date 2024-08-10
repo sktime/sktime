@@ -30,12 +30,30 @@ class StatsForecastGARCH(_GeneralisedStatsForecastAdapter):
         AR parameter - number of auto-regressive lags.
     q: int (default 1)
         GARCH heteroskedasticity lag parameter - number of lags for variance term.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.arch import StatsForecastGARCH
+    >>> y = load_airline()
+    >>> forecaster = StatsForecastGARCH(p=2,q=1)
+    >>> forecaster.fit(y)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
     _tags = {
         # packaging info
         # --------------
-        "authors": ["eyjo"],
+        "authors": [
+            "MMenchero",
+            "AzulGarza",
+            "jmoralez",
+            "eyjo",
+            "yarnabrina",
+            "arnaujc91",
+            "luca-miniati",
+        ],
+        # MMenchero, AzulGarza, and jmoralez for statsforecast GARCH
         "maintainers": ["eyjo"],
         # estimator type
         # --------------
@@ -101,6 +119,15 @@ class StatsForecastARCH(_GeneralisedStatsForecastAdapter):
     ----------
     p: int (default 1)
         AR parameter - number of auto-regressive lags.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.arch import StatsForecastARCH
+    >>> y = load_airline()
+    >>> forecaster = StatsForecastARCH(p=2)
+    >>> forecaster.fit(y)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
     _tags = {
