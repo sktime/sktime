@@ -76,6 +76,7 @@ class VARReduce(BaseForecaster):
         self.num_series = None
         super().__init__()
 
+    # test formatting # test formatting # test formatting # test formatting # test formatting # test formatting # test formatting # test formatting # test formatting # test formatting
     def prepare_for_fit(self, data, return_as_ndarray=True):
         """
         Prepare the data for VAR fitting though tabularization.
