@@ -257,9 +257,9 @@ def _evaluate_window(x, meta):
                 if y_pred_key not in y_preds_cache.keys():
                     start_pred = time.perf_counter()
                     if global_mode:
-                        y_pred = method(fh, X_test, y_hist, **pred_args)
+                        y_pred = method(fh=fh, X=X_test, y=y_hist, **pred_args)
                     else:
-                        y_pred = method(fh, X_test, **pred_args)
+                        y_pred = method(fh=fh, X=X_test, **pred_args)
                     pred_time = time.perf_counter() - start_pred
                     temp_result[time_key] = [pred_time]
                     y_preds_cache[y_pred_key] = [y_pred]
