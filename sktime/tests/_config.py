@@ -251,9 +251,22 @@ EXCLUDED_TESTS = {
     # since the pytorch forecasting adapter class inplements _predict_quantiles
     # but PytorchForecastingNBeats can not perform quantile forecast
     "PytorchForecastingNBeats": ["test_pred_int_tag"],
-    # skip the _DelegatedForecaster, since it implements delegation methods
+    # skip subclasses of _DelegatedForecaster, since it implements delegation methods
     # which may look like the method is implemented, but in fact it is not
-    "_DelegatedForecaster": ["test_pred_int_tag"],
+    "DontUpdate": ["test_pred_int_tag"],
+    "FallbackForecaster": ["test_pred_int_tag"],
+    "ForecastByLevel": ["test_pred_int_tag"],
+    "ForecastingGridSearchCV": ["test_pred_int_tag"],
+    "ForecastingOptunaSearchCV": ["test_pred_int_tag"],
+    "ForecastingRandomizedSearchCV": ["test_pred_int_tag"],
+    "ForecastingSkoptSearchCV": ["test_pred_int_tag"],
+    "IgnoreX": ["test_pred_int_tag"],
+    "MultiplexForecaster": ["test_pred_int_tag"],
+    "Permute": ["test_pred_int_tag"],
+    "PluginParamsForecaster": ["test_pred_int_tag"],
+    "Prophetverse": ["test_pred_int_tag"],
+    "UpdateEvery": ["test_pred_int_tag"],
+    "UpdateRefitsEvery": ["test_pred_int_tag"],
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish
