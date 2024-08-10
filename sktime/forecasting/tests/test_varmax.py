@@ -69,6 +69,20 @@ def test_VARMAX_against_statsmodels_with_exog():
     """
     from statsmodels.tsa.api import VARMAX as _VARMAX
 
+    pandas2 = _check_soft_dependencies("pandas>=2.0.0", severity="none")
+    if pandas2:
+        freq = "ME"
+    else:
+        freq = "M"
+
+    np.random.seed(13455)
+    index = pd.date_range(start="2020-01", end="2021-12", freq=freq)
+    df = pd.DataFrame(
+        np.random.randint(0, 100, size=(23, 3)),
+        columns=list("ABC"),
+        index=pd.PeriodIndex(index),
+    )
+
     train, test = temporal_train_test_split(df.astype("float64"))
     y_train, X_train = train[["A", "B"]], train[["C"]]
     _, X_test = test[["A", "B"]], test[["C"]]
