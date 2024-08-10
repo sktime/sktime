@@ -3,9 +3,6 @@
 import os
 from collections import defaultdict
 
-import httpx
-from dateutil import parser
-
 HEADERS = {
     "Accept": "application/vnd.github.v3+json",
 }
@@ -19,7 +16,24 @@ GITHUB_REPOS = "https://api.github.com/repos"
 
 
 def fetch_merged_pull_requests(page: int = 1) -> list[dict]:
-    """Fetch a page of pull requests."""
+    """Fetch a page of merged pull requests.
+
+    Parameters
+    ----------
+    page : int, optional
+        Page number to fetch, by default 1.
+        Returns all merged pull request from the ``page``-th page of closed PRs,
+        where pages are in descending order of last update.
+
+    Returns
+    -------
+    list
+        List of merged pull requests from the ``page``-th page of closed PRs.
+        Elements of list are dictionaries with PR details, as obtained
+        from the GitHub API via ``httpx.get``, from the ``pulls`` endpoint.
+    """
+    import httpx
+
     params = {
         "base": "main",
         "state": "closed",
@@ -37,6 +51,17 @@ def fetch_merged_pull_requests(page: int = 1) -> list[dict]:
 
 
 def fetch_latest_release():  # noqa: D103
+    """Fetch the latest release from the GitHub API.
+
+    Returns
+    -------
+    dict
+        Dictionary with details of the latest release.
+        Dictionary is as obtained from the GitHub API via ``httpx.get``,
+        for ``releases/latest`` endpoint.
+    """
+    import httpx
+
     response = httpx.get(
         f"{GITHUB_REPOS}/{OWNER}/{REPO}/releases/latest", headers=HEADERS
     )
@@ -48,7 +73,17 @@ def fetch_latest_release():  # noqa: D103
 
 
 def fetch_pull_requests_since_last_release() -> list[dict]:
-    """Fetch pull requests and filter based on merged date."""
+    """Fetch all pull requests merged since last release.
+
+    Returns
+    -------
+    list
+        List of pull requests merged since the latest release.
+        Elements of list are dictionaries with PR details, as obtained
+        from the GitHub API via ``httpx.get``, through ``fetch_merged_pull_requests``.
+    """
+    from dateutil import parser
+
     release = fetch_latest_release()
     published_at = parser.parse(release["published_at"])
     print(f"Latest release {release['tag_name']} was published at {published_at}")
@@ -61,13 +96,15 @@ def fetch_pull_requests_since_last_release() -> list[dict]:
         all_pulls.extend(
             [p for p in pulls if parser.parse(p["merged_at"]) > published_at]
         )
-        is_exhausted = any(parser.parse(p["merged_at"]) < published_at for p in pulls)
+        is_exhausted = any(parser.parse(p["updated_at"]) < published_at for p in pulls)
         page += 1
     return all_pulls
 
 
 def github_compare_tags(tag_left: str, tag_right: str = "HEAD"):
     """Compare commit between two tags."""
+    import httpx
+
     response = httpx.get(
         f"{GITHUB_REPOS}/{OWNER}/{REPO}/compare/{tag_left}...{tag_right}"
     )
@@ -105,7 +142,7 @@ def assign_prs(prs, categs: list[dict[str, list[str]]]):
     #                 print(i, pr_labels)
 
     assigned["Other"] = list(
-        set(range(len(prs))) - {i for _, l in assigned.items() for i in l}
+        set(range(len(prs))) - {i for _, j in assigned.items() for i in j}
     )
 
     return assigned
@@ -124,6 +161,8 @@ def render_row(pr):
 def render_changelog(prs, assigned):
     # sourcery skip: use-named-expression
     """Render changelog."""
+    from dateutil import parser
+
     for title, _ in assigned.items():
         pr_group = [prs[i] for i in assigned[title]]
         if pr_group:

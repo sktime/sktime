@@ -64,11 +64,7 @@ class CNTCNetwork(BaseDeepNetwork):
         lstm_size=8,
         dense_size=64,
     ):
-        _check_soft_dependencies(
-            "keras-self-attention",
-            package_import_alias={"keras-self-attention": "keras_self_attention"},
-            severity="error",
-        )
+        _check_soft_dependencies("keras-self-attention", severity="error")
         _check_dl_dependencies(severity="error")
 
         self.random_state = random_state
