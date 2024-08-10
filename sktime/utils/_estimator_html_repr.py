@@ -1,6 +1,8 @@
 """Functionality to represent instance of BaseObject as html."""
+# based on the slearn module of the same name
 
 import html
+import importlib
 import uuid
 from contextlib import closing
 from inspect import isclass
@@ -10,9 +12,7 @@ from string import Template
 
 from packaging.version import parse as parse_version
 
-from .. import __version__
-
-__author__ = ["RNKuhns"]
+__author__ = ["RNKuhns", "mateuszkasprowicz"]
 
 
 class _VisualBlock:
@@ -263,9 +263,13 @@ class _HTMLDocumentationLinkMixin:
     _doc_link_module = "sktime"
     _doc_link_url_param_generator = None
 
+    def _get_version(self):
+        module = importlib.import_module(self._doc_link_module)
+        return parse_version(module.__version__).base_version
+
     @property
     def _doc_link_template(self):
-        sktime_version = parse_version(__version__).base_version
+        sktime_version = self._get_version()
         return getattr(
             self,
             "__doc_link_template",
