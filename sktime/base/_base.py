@@ -64,6 +64,7 @@ from sklearn import clone
 from sklearn.base import BaseEstimator as _BaseEstimator
 
 from sktime.exceptions import NotFittedError
+from sktime.utils._estimator_html_repr import _HTMLDocumentationLinkMixin
 from sktime.utils.random_state import set_random_state
 
 SERIALIZATION_FORMATS = {
@@ -72,7 +73,7 @@ SERIALIZATION_FORMATS = {
 }
 
 
-class BaseObject(_BaseObject):
+class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
     """Base class for parametric objects with tags in sktime.
 
     Extends skbase BaseObject with additional features.
@@ -82,7 +83,6 @@ class BaseObject(_BaseObject):
     _tags = {
         "python_version": None,  # PEP 440 version specifier, e.g., ">=3.7"
         "python_dependencies": None,  # PEP 440 dependency strs, e.g., "pandas>=1.0"
-        "python_dependencies_alias": {"scikit-learn": "sklearn"},
         "env_marker": None,  # PEP 508 environment marker, e.g., "os_name=='posix'"
     }
 

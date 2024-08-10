@@ -73,7 +73,7 @@ class BaseSplitter(BaseObject):
     by the timedelta `window_length`,
     and then the integer position of the resulting datetime
     is considered to be the training window start.
-    For example, for `cutoff = 10`, and `window_length = pd.Timedelta(6, unit="D")`,
+    For example, for `cutoff = 10`, and `window_length = pd.Timedelta(6, freq="D")`,
     we have `y[cutoff] = pd.Timestamp("2021-01-10")`,
     and `y[cutoff] - window_length = pd.Timestamp("2021-01-04")`,
     which leads to `train_start = y.loc(y[cutoff] - window_length) = 4`.
