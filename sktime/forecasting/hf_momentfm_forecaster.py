@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import _BaseGlobalForecaster
+from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 from sktime.libs.momentfm import MOMENTPipeline
 from sktime.split import temporal_train_test_split
 
@@ -127,6 +127,9 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         "python_dependencies": ["torch", "tqdm", "huggingface-hub", "transformers"],
         "capability:global_forecasting": True,
         "python_version": ">= 3.10",
+        "capability:insample": False,
+        "capability:pred_int:insample": False,
+        "capability:pred_int": False,
     }
 
     def __init__(
@@ -180,6 +183,9 @@ class MomentFMForecaster(_BaseGlobalForecaster):
 
         # keep a copy of y in case y is None in predict
         self._y = y
+        self._y_index = self._y.index
+        self._y_cols = self._y.columns
+        self._y_shape = self._y.values.shape
         self._pretrained_model_name_or_path = (
             self._config["pretrained_model_name_or_path"]
             if "pretrained_model_name_or_path" in self._config.keys()
@@ -272,14 +278,17 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             },
         )
         self._model.init()
-        self._y_cols = y.columns
-        self._y_shape = y.values.shape
 
         # preparing the datasets
         y_train, y_test = temporal_train_test_split(
             y, train_size=1 - self.train_val_split, test_size=self.train_val_split
         )
-
+        if y_train.shape[0] < 512:
+            warnings.warn(
+                "Warning: Minimum required samples for training "
+                "is 512, having less could cause inaccuracy during training"
+                ". Using a larger dataset is recommended"
+            )
         if y_train.shape[0] < 512:
             y_train = _sample_observations(y_train)
         if y_test.shape[0] < 512:
@@ -359,6 +368,11 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         # use y values from fit if y is None in predict
         if y is None:
             y = self._y
+        fh_index = (
+            ForecastingHorizon(range(1, self._model_fh + 1))
+            .to_absolute(self.cutoff)
+            ._values
+        )
         index = self._fh.to_absolute_index(self.cutoff)
         from torch import from_numpy
 
@@ -406,8 +420,8 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         forecast_output = forecast_output.squeeze(0)
 
         pred = forecast_output.detach().cpu().numpy().T
-
-        df_pred = pd.DataFrame(pred, columns=self._y_cols, index=index)
+        df_pred = pd.DataFrame(pred, columns=self._y_cols, index=fh_index)
+        df_pred = df_pred.loc[index]
 
         return df_pred
 
@@ -590,7 +604,7 @@ def _check_device(device):
 
 
 def _sample_observations(y):
-    n_total_samples = 524
+    n_total_samples = 700
     y_sampled = y.sample(n=n_total_samples, replace=True)
 
     return y_sampled
