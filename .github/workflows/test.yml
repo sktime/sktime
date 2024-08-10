@@ -198,7 +198,8 @@ jobs:
         run: python -c "import sys; print(sys.version)"
 
       - name: Install OSX packages
-        run: ./scripts/install_osx_dependencies.sh
+        shell: bash
+        run: ./.github/scripts/install_osx_dependencies.sh
 
       - name: Install sktime and dependencies
         run: |
@@ -285,7 +286,7 @@ jobs:
         run: python -c "import sys; print(sys.version)"
 
       - name: Install OSX packages
-        run: ./scripts/install_osx_dependencies.sh
+        run: ./.github/scripts/install_osx_dependencies.sh
 
       - name: Install sktime and dependencies
         shell: bash
