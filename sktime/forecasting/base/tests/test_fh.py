@@ -335,7 +335,7 @@ def test_shift_index(length1_index, by):
 
 
 DURATIONS_ALLOWED = [
-    pd.to_timedelta(range(3), unit="D"),
+    pd.TimedeltaIndex(pd.to_timedelta(range(3), unit="D"), freq="D"),
     pd.TimedeltaIndex(pd.to_timedelta(range(0, 9, 3), unit="D"), freq="3D"),
     pd.tseries.offsets.MonthEnd(3),
     # we also support pd.Timedelta, but it does not have freqstr so we
