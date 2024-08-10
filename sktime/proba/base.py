@@ -11,4 +11,4 @@ if _check_soft_dependencies("skpro", severity="none"):
     from skpro.distributions.base import BaseDistribution
     from skpro.distributions.base._base import _BaseTFDistribution
 else:
-    from sktime.proba._base import _BaseTFDistribution, BaseDistribution
+    from sktime.proba._base import BaseDistribution, _BaseTFDistribution
