@@ -66,8 +66,8 @@ class VARReduce(BaseForecaster):
         else:
             self.regressor_ = clone(regressor)
 
-        assert hasattr(self.regressor_, 'fit'), "Regressor must have 'fit'"
-        assert hasattr(self.regressor_, 'predict'), "Regressor must have 'predict'"
+        assert hasattr(self.regressor_, "fit"), "Regressor must have 'fit'"
+        assert hasattr(self.regressor_, "predict"), "Regressor must have 'predict'"
 
         # a dictionary of var_name: fitted regressor, to be filled in during fitting
         self.regressors = {}
@@ -76,7 +76,6 @@ class VARReduce(BaseForecaster):
         self.num_series = None
         super().__init__()
 
-    # test formatting # test formatting # test formatting # test formatting # test formatting # test formatting # test formatting # test formatting # test formatting # test formatting # test formatting # test formatting # test formatting # test formatting # test formatting # test formatting # test formatting # test formatting # test formatting # test formatting
     def prepare_for_fit(self, data, return_as_ndarray=True):
         """
         Prepare the data for VAR fitting though tabularization.
@@ -172,7 +171,6 @@ class VARReduce(BaseForecaster):
                 columns += [f"{col}_lag{lag}" for col in data.columns]
             return pd.DataFrame(linearized_data, columns=columns)
 
-
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
@@ -211,7 +209,7 @@ class VARReduce(BaseForecaster):
             self.regressors[var_name] = model
 
             # if the model has `.intercept_` and `.coef_` attributes, extract them
-            if hasattr(model, 'intercept_') and hasattr(model, 'coef_'):
+            if hasattr(model, "intercept_") and hasattr(model, "coef_"):
                 intercepts[i] = model.intercept_
                 # Reshape the coefficients to match with statsmodels VAR
                 coefficients[:, :, i] = model.coef_.reshape(self.lags, num_series)
@@ -219,7 +217,7 @@ class VARReduce(BaseForecaster):
                 pass
 
         # if the model has `.intercept_` and `.coef_` attributes, extract them
-        if hasattr(model, 'intercept_') and hasattr(model, 'coef_'):
+        if hasattr(model, "intercept_") and hasattr(model, "coef_"):
             # Transpose coefficients to match the order of statsmodels' VAR
             self.coefficients_ = np.transpose(coefficients, (0, 2, 1))
             self.intercept_ = intercepts
@@ -227,7 +225,6 @@ class VARReduce(BaseForecaster):
             self.coefficients_ = None
             self.intercept_ = None
         return self
-
 
     def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
@@ -247,13 +244,12 @@ class VARReduce(BaseForecaster):
             Series of predicted values
         """
         # Get the last available values for prediction
-        y_last = self._y.iloc[-self.lags:]
+        y_last = self._y.iloc[-self.lags :]
 
         # Initialize a list to store predictions
         y_pred = []
 
         for _ in range(1, len(fh) + 1):
-
             # Prepare X
             X_last = self.prepare_for_predict(y_last, return_as_ndarray=False)
 
@@ -261,11 +257,11 @@ class VARReduce(BaseForecaster):
             y_pred_step = []
             for var_name in self.var_names:
                 model = self.regressors[var_name]
-                y_pred_step_var = model.predict(X_last).item() # is a float
+                y_pred_step_var = model.predict(X_last).item()  # is a float
                 y_pred_step.append(y_pred_step_var)
 
             # Convert y_pred_step into a one-row DataFrame
-            y_pred_step = pd.DataFrame([y_pred_step], columns = self.var_names)
+            y_pred_step = pd.DataFrame([y_pred_step], columns=self.var_names)
             y_pred.append(y_pred_step)
 
             # Append the new predictions (y_pred_step) at the end of y_last
@@ -273,7 +269,7 @@ class VARReduce(BaseForecaster):
 
         # Concatenate the list of Series into the final DataFrame
         y_pred = pd.concat(y_pred)
-        y_pred.index=fh.to_absolute_index()
+        y_pred.index = fh.to_absolute_index()
 
         return y_pred
 
