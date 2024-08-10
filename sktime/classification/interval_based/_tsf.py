@@ -10,7 +10,6 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
 from sklearn.ensemble._forest import ForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 
@@ -109,6 +108,7 @@ class TimeSeriesForestClassifier(
         # --------------
         "authors": ["kkoziara", "luiszugasti", "kanand77"],
         "maintainers": ["kkoziara", "luiszugasti", "kanand77"],
+        "python_dependencies": ["joblib"],
         # estimator type
         # --------------
         "capability:feature_importance": True,
@@ -192,6 +192,8 @@ class TimeSeriesForestClassifier(
         output : np.ndarray of shape = (n_instances, n_classes)
             Predicted probabilities
         """
+        from joblib import Parallel, delayed
+
         X = X.squeeze(1)
         y_probas = Parallel(n_jobs=self.n_jobs)(
             delayed(_predict_single_classifier_proba)(
