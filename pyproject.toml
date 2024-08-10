@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.31.0"
+version = "0.31.1"
 description = "A unified framework for machine learning with time series"
 readme = "README.md"
 keywords = [
@@ -105,7 +105,7 @@ all_extras = [
   "seaborn>=0.11",
   "seasonal",
   'skforecast<0.13,>=0.12.1; python_version < "3.12"',
-  "skpro>=2,<2.5.0",
+  "skpro>=2,<2.6.0",
   'statsforecast<1.8.0,>=1.0.0; python_version < "3.12"',
   "statsmodels>=0.12.1",
   'stumpy>=1.5.1; python_version < "3.11"',
@@ -116,6 +116,7 @@ all_extras = [
   'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   "xarray",
+  "u8darts<0.31,>=0.29.0",
 ]
 
 # all soft dependencies compatible with pandas 2
@@ -146,7 +147,7 @@ all_extras_pandas2 = [
   "seaborn>=0.11",
   "seasonal",
   'skforecast<0.13,>=0.12.1; python_version < "3.12"',
-  "skpro>=2,<2.5.0",
+  "skpro>=2,<2.6.0",
   'statsforecast<1.8.0,>=1.0.0; python_version < "3.12"',
   "statsmodels>=0.12.1",
   'stumpy>=1.5.1; python_version < "3.11"',
@@ -157,6 +158,7 @@ all_extras_pandas2 = [
   'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   "xarray",
+  "u8darts<0.31,>=0.29.0",
 ]
 
 # single-task dependencies, e.g., forecasting, classification, etc.
@@ -194,7 +196,7 @@ forecasting = [
   'pmdarima!=1.8.1,<2.1,>=1.8; python_version < "3.12"',
   "prophet<1.2,>=1.1",
   'skforecast<0.13,>=0.12.1; python_version < "3.12"',
-  "skpro>=2,<2.5.0",
+  "skpro>=2,<2.6.0",
   'statsforecast<1.8.0,>=1.0.0; python_version < "3.12"',
   "statsmodels<0.15,>=0.12.1",
   'tbats<1.2,>=1.1; python_version < "3.12"',

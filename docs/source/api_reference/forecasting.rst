@@ -134,6 +134,16 @@ Direct and recursive - 3rd party
 
     SkforecastAutoreg
 
+.. currentmodule:: sktime.forecasting.darts
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DartsRegressionModel
+    DartsLinearRegressionModel
+    DartsXGBModel
+
 
 Naive forecasters
 -----------------
