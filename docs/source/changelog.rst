@@ -19,7 +19,7 @@ For upcoming changes and next releases, see our `milestones <https://github.com/
 For our long-term plan, see our :ref:`roadmap`.
 
 
-Version 0.31.1 - 2024-08-07
+Version 0.31.1 - 2024-08-10
 ---------------------------
 
 Highlights
@@ -33,7 +33,7 @@ Todo - order and select
 * [ENH] MVTS transformer classifier (:pr:`6791`) :user:`geetu040`
 * [ENH] Add Sampler to ``ForecastingOptunaSearchCV`` (:pr:`6823`) :user:`bastisar`
 * [ENH] interface to ``autots`` ensemble (:pr:`5948`) :user:`MBristle`
-
+* [ENH] Interface to TinyTimeMixer foundation model (:pr:`6712`) :user:`geetu040`
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
 
@@ -57,7 +57,6 @@ BaseObject and base framework
 * the html representation of all objects now includes a link to the documentation
   of the object, and is now in line with the ``sklearn`` html representation.
 
-
 Enhancements
 ~~~~~~~~~~~~
 
@@ -69,9 +68,6 @@ BaseObject and base framework
 * [ENH] Adding tag for categorical support in ``X`` (:pr:`6704`) :user:`Abhay-Lejith`
 * [ENH] Adding categorical support: Raising error in yes/no case (:pr:`6732`) :user:`Abhay-Lejith`
 * [ENH] Link to docs in object's html repr (:pr:`6876`) :user:`mateuszkasprowicz`
-
-Benchmarking, Metrics, Splitters
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Data sets and data loaders
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -89,10 +85,6 @@ Data types, checks, conversions
 * [ENH] Adding support for ``gluonts`` ``PandasDataset`` object (:pr:`6668`) :user:`shlok191`
 * [ENH] Added support for ``gluonts`` ``PandasDataset`` as a ``Series`` scitype (:pr:`6837`) :user:`shlok191`
 
-Distances, kernels
-^^^^^^^^^^^^^^^^^^
-
-
 Forecasting
 ^^^^^^^^^^^
 
@@ -104,14 +96,14 @@ Forecasting
 * [ENH] Add ``windows_identical`` to ``DirectReductionForecaster`` (:pr:`6650`) :user:`hliebert`
 * [ENH] updates type inference in ``make_reduction`` to use central scitype inference and allow proba tabular regressors (:pr:`6893`) :user:`fkiraly`
 * [ENH] DeepAR and  NHiTS and refinements for ``pytorch-forecasting`` interface (:pr:`6551`) :user:`Xinyu-Wu-0000`
+* [ENH] Interface to TinyTimeMixer foundation model (:pr:`6712`) :user:`geetu040`
+* [ENH] remove now superfluous try-excepts in forecasting API test suite (:pr:`6906`) :user:`fkiraly`
+* [ENH] improve ``test_global_forecasting_tag`` (:pr:`6929`) :user:`geetu040`
 
 Registry and search
 ^^^^^^^^^^^^^^^^^^^
 
-
-Time series alignment
-^^^^^^^^^^^^^^^^^^^^^
-
+* [ENH] in estimator html repr, make version retrieval safer and more flexible (:pr:`6923`) :user:`fkiraly`
 
 Time series anomalies, changepoints, segmentation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -198,6 +190,10 @@ Maintenance
 * [MNT] fix ``.all-contributorsrc`` syntax (:pr:`6918`) :user:`fkiraly`
 * [MNT] Resolve the issue with diacritics failing to be decoded on Windows (:pr:`6862`) :user:`fnhirwa`
 * [MNT] changelog utility: fix termination condition to retrieve merged PR (:pr:`6920`) :user:`fkiraly`
+* [MNT] restore ``holidays`` lower bound to ``0.29`` (:pr:`6921`) :user:`fkiraly`
+* [MNT] Updating the GHA dependencies to install OSX dependencies and setting the compiler flags (:pr:`6926`) :user:`fnhirwa`
+* [MNT] revert an erroneous instance of ``pandas`` deprecation fix (:pr:`6925`) :user:`fkiraly`
+* [MNT] Update the path to script to fix #6926 (:pr:`6933`) :user:`fnhirwa`
 * [MNT] [Dependabot](deps): Update ``pytest`` requirement from ``<8.3,>=7.4`` to ``>=7.4,<8.4`` (:pr:`6819`) :user:`dependabot[bot]`
 * [MNT] [Dependabot](deps): Update ``dask`` requirement from ``<2024.6.3`` to ``<2024.7.2`` (:pr:`6818`) :user:`dependabot[bot]`
 * [MNT] [Dependabot](deps): Update ``sphinx-gallery`` requirement from ``<0.17.0`` to ``<0.18.0`` (:pr:`6820`) :user:`dependabot[bot]`
@@ -241,6 +237,7 @@ Transformations
 * [BUG] Refactor ``ADICVTransformer`` and fix CV calculation (:pr:`6757`) :user:`sbhobbes`
 * [BUG] fix ``BaseTransformer`` broadcasting condition in ``inverse_transform`` for decomposers (:pr:`6824`) :user:`fkiraly`
 * [BUG] fix ``MSTL`` inverse transform and use in forecasting pipeline (:pr:`6825`) :user:`fkiraly`
+* [BUG] fix handling of ``numpy`` integers in refactored ``Catch22`` transformation (:pr:`6934`) :user:`fkiraly`
 
 Visualization
 ^^^^^^^^^^^^^
