@@ -46,6 +46,8 @@ class BaseDeepNetworkPyTorch(_BaseGlobalForecaster):
         criterion_kwargs=None,
         optimizer=None,
         optimizer_kwargs=None,
+        custom_dataset_train=None,
+        custom_dataset_pred=None,
         lr=0.001,
     ):
         self.num_epochs = num_epochs
@@ -55,6 +57,8 @@ class BaseDeepNetworkPyTorch(_BaseGlobalForecaster):
         self.criterion_kwargs = criterion_kwargs
         self.optimizer = optimizer
         self.optimizer_kwargs = optimizer_kwargs
+        self.custom_dataset_train = custom_dataset_train
+        self.custom_dataset_pred = custom_dataset_pred
         self.lr = lr
 
         super().__init__()
@@ -62,6 +66,12 @@ class BaseDeepNetworkPyTorch(_BaseGlobalForecaster):
         # TODO: pytorch device
         # TODO: training verbose
         # TODO: broadcasting
+        # TODO: shuffle dataset
+        # TODO: interpret in_channels/individual
+        # TODO: Deprecations
+        #       - broadcasting
+        #       - in_channels
+        #       - custom dataset?
 
     def _fit(self, y, fh, X=None):
         """Fit the network.
@@ -74,9 +84,7 @@ class BaseDeepNetworkPyTorch(_BaseGlobalForecaster):
         X : iterable-style or map-style dataset
             see (https://pytorch.org/docs/stable/data.html) for more information
         """
-        fh = fh.to_relative(self.cutoff)
-
-        self.network = self._build_network(list(fh)[-1])
+        self.network = self._build_network()
 
         self._criterion = self._instantiate_criterion()
         self._optimizer = self._instantiate_optimizer()
@@ -185,113 +193,76 @@ class BaseDeepNetworkPyTorch(_BaseGlobalForecaster):
 
         return pred
 
-    def _prepare_data(self, y):
+    def _build_train_dataset(self, y):
+        y = self._get_arrays(y)
+        return PyTorchDataset(
+            y,
+            seq_len=self.seq_len,  # from child classes
+            pred_len=self.pred_len,  # from child classes
+        )
+
+    def _build_pred_dataset(self, y):
+        y = self._get_arrays(y)
+        seq_len = self.seq_len  # from child classes
+        pred_len = 0
+        y = y[:, -seq_len:, :]
+        return PyTorchDataset(
+            y,
+            seq_len=seq_len,
+            pred_len=pred_len,
+        )
+
+    def _get_index(self, y):
+        # utility function
+        if not isinstance(y.index, pd.MultiIndex):
+            return y.index
+
+        return y.index.levels[-1]
+
+    def _get_arrays(self, y):
+        # utility function
         if not isinstance(y.index, pd.MultiIndex):
             # shape: (n_timestamps, n_cols)
             y = np.expand_dims(y.values, axis=0)
-            # self.X = np.expand_dims(X.values, axis=0) if X is not None else None
             # shape: (1, n_timestamps, n_cols)
         else:
+            # Multi-index Dataframe
             y = _frame2numpy(y)
-            # self.X = _frame2numpy(X) if X is not None else X
+            # shape: (n_series, n_timestamps, n_cols)
 
         return y
 
     def build_dataloader(self, y, split="train"):
-        y = self._prepare_data(y)
-
-        seq_len = self.network.seq_len
-        pred_len = self.network.pred_len
-
-        if split == "test":
-            # truncate y to keep only relevant history of seq_len
-            y = y[:, -seq_len:, :]
-            pred_len = 0
-
         """Build PyTorch DataLoader for training."""
         from torch.utils.data import DataLoader
 
-        if self.custom_dataset_train:
-            if hasattr(self.custom_dataset_train, "build_dataset") and callable(
-                self.custom_dataset_train.build_dataset
-            ):
-                self.custom_dataset_train.build_dataset(y)
-                dataset = self.custom_dataset_train
-            else:
-                raise NotImplementedError(
-                    "Custom Dataset `build_dataset` method is not available. Please "
-                    f"refer to the {self.__class__.__name__}.build_dataset "
-                    "documentation."
-                )
-        else:
-            dataset = PyTorchDataset(
-                y=y,
-                seq_len=seq_len,
-                pred_len=pred_len,
-            )
-
-        return DataLoader(dataset, self.batch_size, shuffle=True)
-
-    def build_pytorch_train_dataloader(self, y):
-        """Build PyTorch DataLoader for training."""
-        from torch.utils.data import DataLoader
-
-        if self.custom_dataset_train:
-            if hasattr(self.custom_dataset_train, "build_dataset") and callable(
-                self.custom_dataset_train.build_dataset
-            ):
-                self.custom_dataset_train.build_dataset(y)
-                dataset = self.custom_dataset_train
-            else:
-                raise NotImplementedError(
-                    "Custom Dataset `build_dataset` method is not available. Please "
-                    f"refer to the {self.__class__.__name__}.build_dataset "
-                    "documentation."
-                )
-        else:
-            dataset = PyTorchTrainDataset(
-                y=y,
-                seq_len=self.network.seq_len,
-                fh=self._fh.to_relative(self.cutoff)._values[-1],
-            )
-
-        return DataLoader(dataset, self.batch_size, shuffle=True)
-
-    def build_pytorch_pred_dataloader(self, y, fh):
-        """Build PyTorch DataLoader for prediction."""
-        from torch.utils.data import DataLoader
-
-        if self.custom_dataset_pred:
-            if hasattr(self.custom_dataset_pred, "build_dataset") and callable(
-                self.custom_dataset_pred.build_dataset
-            ):
-                self.custom_dataset_train.build_dataset(y)
-                dataset = self.custom_dataset_train
-            else:
-                raise NotImplementedError(
-                    "Custom Dataset `build_dataset` method is not available. Please"
-                    f"refer to the {self.__class__.__name__}.build_dataset"
-                    "documentation."
-                )
-        else:
-            dataset = PyTorchPredDataset(
-                y=y[-self.network.seq_len :],
-                seq_len=self.network.seq_len,
-            )
-
-        return DataLoader(
-            dataset,
-            self.batch_size,
+        custom_dataset = (
+            self.custom_dataset_train if split == "train" else self.custom_dataset_train
         )
 
-    def get_y_true(self, y):
-        """Get y_true values for validation."""
-        dataloader = self.build_pytorch_pred_dataloader(y)
-        y_true = [y.flatten().numpy() for _, y in dataloader]
-        return np.concatenate(y_true, axis=0)
+        if custom_dataset is not None:
+            if hasattr(custom_dataset, "build_dataset") and callable(
+                custom_dataset.build_dataset
+            ):
+                custom_dataset.build_dataset(y)
+                dataset = custom_dataset
+            else:
+                raise NotImplementedError(
+                    "Custom Dataset `build_dataset` method is not available. Please "
+                    f"refer to the {self.__class__.__name__}.build_dataset "
+                    "documentation."
+                )
+        else:
+            dataset = (
+                self._build_train_dataset(y)
+                if split == "train"
+                else self._build_pred_dataset(y)
+            )
+
+        return DataLoader(dataset, self.batch_size, shuffle=True)
 
     @abc.abstractmethod
-    def _build_network(self, fh):
+    def _build_network(self):
         pass
 
 
@@ -305,15 +276,15 @@ class PyTorchDataset(Dataset):
         pred_len: int,
     ):
         self.y = y
-        self._num, self._len, _ = self.y.shape
         self.seq_len = seq_len
         self.pred_len = pred_len
+
+        self._num, self._len, _ = self.y.shape
         self._len_single = self._len - self.seq_len - self.pred_len + 1
 
     def __len__(self):
         """Return length of dataset."""
-        true_length = self._num * max(self._len_single, 0)
-        return true_length
+        return self._num * max(self._len_single, 0)
 
     def __getitem__(self, i):
         """Return data point."""
@@ -322,8 +293,13 @@ class PyTorchDataset(Dataset):
         n = i // self._len_single
         m = i % self._len_single
 
-        hist_y = self.y[n, m : m + self.seq_len]
-        futu_y = self.y[n, m + self.seq_len : m + self.seq_len + self.pred_len]
+        hist_y_start = m  # m
+        hist_y_end = hist_y_start + self.seq_len  # m+seq
+        futu_y_start = hist_y_end  # m+seq
+        futu_y_end = hist_y_end + self.pred_len  # m+seq+pred
+
+        hist_y = self.y[n, hist_y_start:hist_y_end]
+        futu_y = self.y[n, futu_y_start:futu_y_end]
 
         hist_y = tensor(hist_y).float()
         futu_y = tensor(futu_y).float()
@@ -406,14 +382,3 @@ def _frame2numpy(data):
         (-1, length, len(data.columns))
     )
     return arr
-
-
-def _to_multiindex(data, index_name="h0", instance_name="h0_0"):
-    res = pd.DataFrame(
-        data.values,
-        index=pd.MultiIndex.from_product(
-            [[instance_name], data.index], names=[index_name, data.index.name]
-        ),
-        columns=[data.name] if isinstance(data, pd.Series) else data.columns,
-    )
-    return res
