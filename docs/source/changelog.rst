@@ -25,15 +25,15 @@ Version 0.31.1 - 2024-08-10
 Highlights
 ~~~~~~~~~~
 
-Todo - order and select
+* html representation of objects now has a button linking to documentation page (:pr:`6876`) :user:`mateuszkasprowicz`
+* interface to TinyTimeMixer foundation model (:pr:`6712`) :user:`geetu040`
+* interface to ``autots`` ensemble (:pr:`5948`) :user:`MBristle`
+* ``LTSFTransformer`` based on ``cure-lab`` research code base (:pr:`6202`) :user:`geetu040`
+* MVTS transformer classifier (:pr:`6791`) :user:`geetu040`
+* forecasters can now support categorical ``X``, as per tag (:pr:`6704`, :pr:`6732`) :user:`Abhay-Lejith`
+* ``DirectReductionForecaster`` now has an ``windows_identical`` option (:pr:`6650`) :user:`hliebert`
+* ``ForecastingOptunaSearchCV`` can now be passed custom samplers (:pr:`6823`) :user:`bastisar`
 
-* categorical support in ``X`` for estimators
-* [ENH] Add ``windows_identical`` to ``DirectReductionForecaster`` (:pr:`6650`) :user:`hliebert`
-* [ENH] de-novo implementation of ``LTSFTransformer`` based on ``cure-lab`` research code base (:pr:`6202`) :user:`geetu040`
-* [ENH] MVTS transformer classifier (:pr:`6791`) :user:`geetu040`
-* [ENH] Add Sampler to ``ForecastingOptunaSearchCV`` (:pr:`6823`) :user:`bastisar`
-* [ENH] interface to ``autots`` ensemble (:pr:`5948`) :user:`MBristle`
-* [ENH] Interface to TinyTimeMixer foundation model (:pr:`6712`) :user:`geetu040`
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
 
