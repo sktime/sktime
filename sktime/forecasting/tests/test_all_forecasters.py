@@ -522,15 +522,23 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         contains_interval_adapter = hasattr(f, "_extract_conf_int") and callable(
             f._extract_conf_int
         )
+
         implements_interval_adapter = f._has_implementation_of("_extract_conf_int")
 
         if contains_interval_adapter and not implements_interval_adapter:
             return None
 
         # check which methods are implemented
-        implements_interval = f._has_implementation_of("_predict_interval")
-        implements_quantiles = f._has_implementation_of("_predict_quantiles")
-        implements_proba = f._has_implementation_of("_predict_proba")
+        from sktime.forecasting.base import _BaseGlobalForecaster
+
+        if isinstance(f, _BaseGlobalForecaster):
+            implements_interval = f._has_implementation_of("_predict_interval", 2)
+            implements_quantiles = f._has_implementation_of("_predict_quantiles", 2)
+            implements_proba = f._has_implementation_of("_predict_proba", 2)
+        else:
+            implements_interval = f._has_implementation_of("_predict_interval")
+            implements_quantiles = f._has_implementation_of("_predict_quantiles")
+            implements_proba = f._has_implementation_of("_predict_proba")
 
         pred_int_works = implements_interval or implements_quantiles or implements_proba
 
