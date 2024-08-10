@@ -33,7 +33,7 @@ Highlights
 * MVTS transformer classifier (:pr:`6791`) :user:`geetu040`
 * forecasters can now support categorical ``X``, as per tag (:pr:`6704`, :pr:`6732`) :user:`Abhay-Lejith`
 * ``DirectReductionForecaster`` now has a ``windows_identical`` option (:pr:`6650`) :user:`hliebert`
-* ``ForecastingOptunaSearchCV`` can now be passed custom samplers (:pr:`6823`) :user:`bastisar`
+* ``ForecastingOptunaSearchCV`` can now be passed custom samplers and "higher is better" scores (:pr:`6823`, :pr:`6846`) :user:`bastisar`, :user:`gareth-brown-86`, :user:`mk406`
 
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
