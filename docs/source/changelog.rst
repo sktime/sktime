@@ -32,7 +32,7 @@ Highlights
 * ``LTSFTransformer`` based on ``cure-lab`` research code base (:pr:`6202`) :user:`geetu040`
 * MVTS transformer classifier (:pr:`6791`) :user:`geetu040`
 * forecasters can now support categorical ``X``, as per tag (:pr:`6704`, :pr:`6732`) :user:`Abhay-Lejith`
-* ``DirectReductionForecaster`` now has an ``windows_identical`` option (:pr:`6650`) :user:`hliebert`
+* ``DirectReductionForecaster`` now has a ``windows_identical`` option (:pr:`6650`) :user:`hliebert`
 * ``ForecastingOptunaSearchCV`` can now be passed custom samplers (:pr:`6823`) :user:`bastisar`
 
 Dependency changes
