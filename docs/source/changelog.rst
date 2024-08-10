@@ -19,6 +19,20 @@ For upcoming changes and next releases, see our `milestones <https://github.com/
 For our long-term plan, see our :ref:`roadmap`.
 
 
+Version 0.32.0 - 2024-08-11
+---------------------------
+
+Maintenance release, with scheduled deprecations and change actions.
+
+For last non-maintenance content updates, see 0.31.1.
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
 Version 0.31.1 - 2024-08-10
 ---------------------------
 
