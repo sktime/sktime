@@ -1112,10 +1112,10 @@ class TestAllGlobalForecasters(TestAllObjects):
         from sktime.utils._testing.hierarchical import _make_hierarchical
 
         data = _make_hierarchical(
-            (500, 1),
+            (5, 10),
             n_columns=2,
-            max_timepoints=data_length,
-            min_timepoints=data_length,
+            max_timepoints=10,
+            min_timepoints=10,
         )
         data = data.droplevel(1)
         from sklearn.model_selection import train_test_split

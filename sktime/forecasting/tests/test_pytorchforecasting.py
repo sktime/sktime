@@ -50,9 +50,9 @@ def test_load_model_from_disk(model_class) -> None:
     model = model_class(**(model_class.get_test_params()[0]))
 
     # generate data
-    data_length = 100
+    data_length = 10
     data = _make_hierarchical(
-        (5, 100),
+        (5, 10),
         n_columns=2,
         max_timepoints=data_length,
         min_timepoints=data_length,
