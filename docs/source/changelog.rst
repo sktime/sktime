@@ -30,6 +30,7 @@ Dependency changes
 ~~~~~~~~~~~~~~~~~~
 
 * ``skpro`` (soft dependency) bounds have been updated to ``>=2,<2.6.0``
+* ``skforecast`` (forecasting soft dependency) bounds have been updated to ``<0.14.0``.
 
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -68,6 +69,27 @@ Deprecations and removals
   Direct users of the ``sktime.proba`` module should,
   in addition, replace any imports from
   ``sktime.proba`` with imports from ``skpro.distributions``.
+
+Contents
+~~~~~~~~
+
+* [MNT] 0.32.0 deprecations and change actions (:pr:`6916`) :user:`fkiraly`
+* [MNT] [Dependabot](deps): Update ``skpro`` requirement from ``<2.5.0,>=2`` to ``>=2,<2.6.0`` (:pr:`6897`) :user:`dependabot[bot]`
+* [MNT] remove ``numpy 2`` incompatibility flag from ``numba`` based estimators (:pr:`6915`) :user:`fkiraly`
+* [MNT] isolate ``joblib`` (:pr:`6385`) :user:`fkiraly`
+* [MNT] handle more ``pandas`` deprecations (:pr:`6941`) :user:`fkiraly`
+* [MNT] deprecation of ``proba`` module in favour of ``skpro`` soft dependency (:pr:`6940`) :user:`fkiraly`
+* [MNT] update versions of ``pre-commit`` hooks (:pr:`6947`) :user:`yarnabrina`
+* [MNT] 0.32.0 release action - revert temporary skip ``get_test_params`` number check for 0.21.1 and 0.22.0 release (:pr:`5114`) :user:`fkiraly`
+* [MNT] Bump ``skforecast`` to ``0.13`` version allowing support for python ``3.12`` (:pr:`6946`) :user:`yarnabrina`
+* [BUG] Fix ``Xt_msg`` type in ``tranformations.base`` (:pr:`6944`) :user:`hliebert`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`fkiraly`,
+:user:`hliebert`,
+:user:`yarnabrina`
 
 
 Version 0.31.1 - 2024-08-10
