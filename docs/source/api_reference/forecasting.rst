@@ -134,6 +134,16 @@ Direct and recursive - 3rd party
 
     SkforecastAutoreg
 
+.. currentmodule:: sktime.forecasting.darts
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DartsRegressionModel
+    DartsLinearRegressionModel
+    DartsXGBModel
+
 
 Naive forecasters
 -----------------
@@ -439,6 +449,14 @@ Deep learning based forecasters
     :template: class.rst
 
     HFTransformersForecaster
+
+.. currentmodule:: sktime.forecasting.ttm
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TinyTimeMixerForecaster
 
 .. currentmodule:: sktime.forecasting.conditional_invertible_neural_network
 

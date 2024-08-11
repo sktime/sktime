@@ -52,6 +52,78 @@ def _assert_index_equal(a, b):
     assert a.equals(b)
 
 
+# fixtures
+@pytest.fixture(params=None)
+def good_absolute_input_arg(request):
+    """Parametrized by integer values."""
+    pandas2 = _check_soft_dependencies("pandas>=2.0.0", severity="none")
+    if pandas2:
+        m_freq = "ME"
+    else:
+        m_freq = "M"
+
+    params = [
+        pd.Index([1, 2, 3]),
+        pd.period_range("2000-01-01", periods=3, freq="D"),
+        pd.date_range("2000-01-01", periods=3, freq=m_freq),
+        np.array([1, 2, 3]),
+        [1, 2, 3],
+        1,
+    ]
+    return params[request.param]
+
+
+@pytest.fixture(params=None)
+def good_relative_input_arg(request):
+    """Parametrized by integer values."""
+    params = [
+        pd.timedelta_range(pd.to_timedelta(1, unit="D"), periods=3, freq="D"),
+        [np.timedelta64(x, "D") for x in range(3)],
+        [timedelta(days=x) for x in range(3)],
+    ]
+    return params[request.param]
+
+
+@pytest.fixture(params=None)
+def timepoint(request):
+    """Parametrized by integer values."""
+    TIMEPOINTS = [
+        pd.Period("2000", freq="M"),
+        pd.Timestamp("2000-01-01").to_period(freq="D"),
+        1,
+        3,
+    ]
+    return TIMEPOINTS[request.param]
+
+
+@pytest.fixture(params=None)
+def length1_index(request):
+    """Parametrized by integer values."""
+    TIMEPOINTS = [
+        pd.Period("2000", freq="M"),
+        pd.Timestamp("2000-01-01").to_period(freq="D"),
+        1,
+        3,
+    ]
+    LENGTH1_INDICES = [pd.Index([x]) for x in TIMEPOINTS]
+    LENGTH1_INDICES += [pd.DatetimeIndex(["2000-01-01"], freq="D")]
+    return LENGTH1_INDICES[request.param]
+
+
+# test generate hook to ensure fixture creation happens only on test time,
+# not on module load time
+# this is because pandas fixtures may break, they contain risky freq args
+def pytest_generate_tests(metafunc):
+    if "good_absolute_input_arg" in metafunc.fixturenames:
+        metafunc.parametrize("good_absolute_input_arg", range(6), indirect=True)
+    if "good_relative_input_arg" in metafunc.fixturenames:
+        metafunc.parametrize("good_relative_input_arg", range(3), indirect=True)
+    if "timepoint" in metafunc.fixturenames:
+        metafunc.parametrize("timepoint", range(4), indirect=True)
+    if "length1_index" in metafunc.fixturenames:
+        metafunc.parametrize("length1_index", range(5), indirect=True)
+
+
 @pytest.mark.skipif(
     not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
     reason="run only if base module has changed or datatypes module has changed",
@@ -202,62 +274,33 @@ def test_check_fh_values_duplicate_input_values(arg):
         ForecastingHorizon(arg)
 
 
-GOOD_ABSOLUTE_INPUT_ARGS = (
-    pd.Index([1, 2, 3]),
-    pd.period_range("2000-01-01", periods=3, freq="D"),
-    pd.date_range("2000-01-01", periods=3, freq="M"),
-    np.array([1, 2, 3]),
-    [1, 2, 3],
-    1,
-)
-
-
 @pytest.mark.skipif(
     not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
     reason="run only if base module has changed or datatypes module has changed",
 )
-@pytest.mark.parametrize("arg", GOOD_ABSOLUTE_INPUT_ARGS)
-def test_check_fh_absolute_values_input_conversion_to_pandas_index(arg):
+def test_check_fh_absolute_input_conversion_to_pandas_index(good_absolute_input_arg):
     """Test conversion of absolute horizons to pandas index."""
+    arg = good_absolute_input_arg
     assert is_in_valid_index_types(
         ForecastingHorizon(arg, is_relative=False).to_pandas()
     )
 
 
-GOOD_RELATIVE_INPUT_ARGS = [
-    pd.timedelta_range(pd.to_timedelta(1, unit="D"), periods=3, freq="D"),
-    [np.timedelta64(x, "D") for x in range(3)],
-    [timedelta(days=x) for x in range(3)],
-]
-
-
 @pytest.mark.skipif(
     not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
     reason="run only if base module has changed or datatypes module has changed",
 )
-@pytest.mark.parametrize("arg", GOOD_RELATIVE_INPUT_ARGS)
-def test_check_fh_relative_values_input_conversion_to_pandas_index(arg):
+def test_check_fh_relative_values_conversion_to_pandas_index(good_relative_input_arg):
     """Test conversion of relative horizons to pandas index."""
+    arg = good_relative_input_arg
     output = ForecastingHorizon(arg, is_relative=True).to_pandas()
     assert is_in_valid_index_types(output)
 
 
-TIMEPOINTS = [
-    pd.Period("2000", freq="M"),
-    pd.Timestamp("2000-01-01").to_period(freq="D"),
-    1,
-    3,
-]
-
-LENGTH1_INDICES = [pd.Index([x]) for x in TIMEPOINTS]
-LENGTH1_INDICES += [pd.DatetimeIndex(["2000-01-01"], freq="D")]
-
-
 @pytest.mark.skipif(
     not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
     reason="run only if base module has changed or datatypes module has changed",
 )
-@pytest.mark.parametrize("timepoint", TIMEPOINTS)
 @pytest.mark.parametrize("by", [-3, -1, 0, 1, 3])
 def test_shift(timepoint, by):
     """Test shifting of cutoff index element."""
@@ -276,10 +319,10 @@ def test_shift(timepoint, by):
     not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
     reason="run only if base module has changed or datatypes module has changed",
 )
-@pytest.mark.parametrize("timepoint", LENGTH1_INDICES)
 @pytest.mark.parametrize("by", [-3, -1, 0, 1, 3])
-def test_shift_index(timepoint, by):
+def test_shift_index(length1_index, by):
     """Test shifting of cutoff index, length 1 pandas.Index type."""
+    timepoint = length1_index
     ret = _shift(timepoint, by=by, return_index=True)
 
     # check output type, pandas index types inherit from each other,
@@ -292,8 +335,8 @@ def test_shift_index(timepoint, by):
 
 
 DURATIONS_ALLOWED = [
-    pd.TimedeltaIndex(range(3), unit="D", freq="D"),
-    pd.TimedeltaIndex(range(0, 9, 3), unit="D", freq="3D"),
+    pd.TimedeltaIndex(pd.to_timedelta(range(3), unit="D"), freq="D"),
+    pd.TimedeltaIndex(pd.to_timedelta(range(0, 9, 3), unit="D"), freq="3D"),
     pd.tseries.offsets.MonthEnd(3),
     # we also support pd.Timedelta, but it does not have freqstr so we
     # cannot automatically infer the unit during testing
