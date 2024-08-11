@@ -829,7 +829,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
                 f"{estimator_class.__name__}.get_test_params should return "
                 f"at least two test parameter sets, but only {len(param_list)} found."
             )
-            assert (len(param_list) > 1), msg
+            assert len(param_list) > 1, msg
 
         # this test is too harsh for the current estimator base
         # params_tested = set()
