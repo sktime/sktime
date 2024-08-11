@@ -238,7 +238,7 @@ def test_neural_forecast_with_auto_against_given_freq(model_class, freq) -> None
         (pandas.Index([1, 4, 7, 10, 13, 16]), 3),
         # DatetimeIndex
         (pandas.date_range(start="2024-01-01", periods=10), "D"),
-        (pandas.date_range(start="2024-01-01", periods=10, freq="M"), "M"),
+        (pandas.date_range(start="2024-01-01", periods=10, freq="MS"), "MS"),
         # PeriodIndex
         (pandas.period_range(start="2024-01-01", periods=10), "D"),
         (pandas.period_range(start="2024-01-01", periods=10, freq="M"), "M"),
