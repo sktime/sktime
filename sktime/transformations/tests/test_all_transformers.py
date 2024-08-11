@@ -224,12 +224,18 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
                 estimator_instance.fit_transform(X, y)
 
     def test_categorical_X_passes(self, estimator_instance):
-        """Test that error is not raised when categorical is supported in X."""
+        """Test that error is not raised when categorical is supported in X.
+
+        Not testing composites such as pipelines as they may raise error if estimators
+        used within do not support categorical.
+        """
         X = pd.DataFrame({"var_0": ["a", "b", "c", "a", "b", "c"]})
 
-        if estimator_instance.get_tag(
-            "capability:categorical_in_X"
-        ) and not estimator_instance.get_tag("requires_y"):
+        if (
+            estimator_instance.get_tag("capability:categorical_in_X")
+            and not estimator_instance.get_tag("requires_y")
+            and not estimator_instance.is_composite()
+        ):
             estimator_instance.fit_transform(X)
 
 
