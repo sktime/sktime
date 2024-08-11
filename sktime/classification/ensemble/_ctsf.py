@@ -193,6 +193,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         # --------------
         "authors": ["mloning", "AyushmaanSeth"],
         "maintainers": ["AyushmaanSeth"],
+        "python_dependencies": ["joblib"],
         # estimator type
         # --------------
         "X_inner_mtype": "nested_univ",  # nested pd.DataFrame
@@ -277,14 +278,12 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
     def _validate_estimator(self):
         if not isinstance(self.n_estimators, numbers.Integral):
             raise ValueError(
-                "n_estimators must be an integer, "
-                "got {}.".format(type(self.n_estimators))
+                f"n_estimators must be an integer, got {type(self.n_estimators)}."
             )
 
         if self.n_estimators <= 0:
             raise ValueError(
-                "n_estimators must be greater than zero, "
-                "got {}.".format(self.n_estimators)
+                f"n_estimators must be greater than zero, got {self.n_estimators}."
             )
 
         # Set base estimator

@@ -1,4 +1,5 @@
 """Slope and trend utilities."""
+
 __all__ = [
     "_slope",
     "_fit_trend",

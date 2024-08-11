@@ -13,7 +13,6 @@ from copy import deepcopy
 from inspect import getfullargspec, isclass, signature
 from tempfile import TemporaryDirectory
 
-import joblib
 import numpy as np
 import pandas as pd
 import pytest
@@ -26,7 +25,7 @@ from sktime.dists_kernels.base import (
     BasePairwiseTransformerPanel,
 )
 from sktime.exceptions import NotFittedError
-from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base import BaseForecaster, _BaseGlobalForecaster
 from sktime.registry import all_estimators
 from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.tests._config import (
@@ -899,9 +898,15 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         assert 2 >= n_base_types >= 1
 
         # If the estimator inherits from more than one base estimator type, we check if
-        # one of them is a transformer base type
+        # one of them is a transformer base type or _BaseGlobalForecaster type
+        # Global forecasters inherit from _BaseGlobalForecaster,
+        # _BaseGlobalForecaster inherit from BaseForecaster
+        # therefore, global forecasters is subclass of
+        # _BaseGlobalForecaster and BaseForecaster
         if n_base_types > 1:
-            assert issubclass(estimator_class, VALID_TRANSFORMER_TYPES)
+            assert issubclass(estimator_class, VALID_TRANSFORMER_TYPES) or issubclass(
+                estimator_class, _BaseGlobalForecaster
+            )
 
     def test_has_common_interface(self, estimator_class):
         """Check estimator implements the common interface."""
@@ -1080,6 +1085,21 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
 
         init_params = [param for param in init_params if param.name not in test_params]
 
+        allowed_param_types = [
+            str,
+            int,
+            float,
+            bool,
+            tuple,
+            type(None),
+            np.float64,
+            types.FunctionType,
+        ]
+        if _check_soft_dependencies("joblib", severity="none"):
+            from joblib import Memory
+
+            allowed_param_types += [Memory]
+
         for param in init_params:
             assert param.default != param.empty, (
                 "parameter `%s` for %s has no default value and is not "
@@ -1088,17 +1108,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             if type(param.default) is type:
                 assert param.default in [np.float64, np.int64]
             else:
-                assert type(param.default) in [
-                    str,
-                    int,
-                    float,
-                    bool,
-                    tuple,
-                    type(None),
-                    np.float64,
-                    types.FunctionType,
-                    joblib.Memory,
-                ]
+                assert type(param.default) in allowed_param_types
 
             reserved_params = estimator_class.get_class_tag("reserved_params", [])
             if param.name not in reserved_params:
@@ -1257,8 +1267,10 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             # joblib.hash has problems with pandas objects, so we use deep_equals then
             if isinstance(original_value, (pd.DataFrame, pd.Series)):
                 assert deep_equals(new_value, original_value), msg
-            else:
-                assert joblib.hash(new_value) == joblib.hash(original_value), msg
+            elif _check_soft_dependencies("joblib", severity="none"):
+                from joblib import hash
+
+                assert hash(new_value) == hash(original_value), msg
 
     def test_non_state_changing_method_contract(
         self, estimator_instance, scenario, method_nsc
