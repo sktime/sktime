@@ -29,8 +29,34 @@ For last non-maintenance content updates, see 0.31.1.
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
 
+* ``skpro`` (soft dependency) bounds have been updated to ``>=2,<2.6.0``
+
 Deprecations and removals
 ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* From ``sktime 0.38.0``, forecasters' ``predict_proba`` will
+  require ``skpro`` to be present in the python environment,
+  for distribution objects to represent distributional forecasts.
+  Until ``sktime 0.35.0``, ``predict_proba`` will continue working without ``skpro``,
+  defaulting to return objects in ``sktime.proba`` if ``skpro`` is not present.
+  From ``sktime 0.35.0``, an error will be raised upon call of
+  forecaster ``predict_proba`` if ``skpro`` is not present
+  in the environment.
+  Users of forecasters' ``predict_proba`` should ensure
+  that ``skpro`` is installed in the environment.
+
+* The probability distributions module ``sktime.proba`` deprecated and will
+  be fully replaced by ``skpro`` in ``sktime 0.38.0``.
+  Until ``sktime 0.38.0``, imports from ``sktime.proba`` will continue working,
+  defaulting to ``sktime.proba`` if ``skpro`` is not present,
+  otherwise redirecting imports to ``skpro`` objects.
+  From ``sktime 0.35.0``, an error will be raised if ``skpro`` is not present
+  in the environment, otherwise imports are redirected to ``skpro``.
+  Direct or indirect users of ``sktime.proba`` should ensure ``skpro`` is
+  installed in the environment.
+  Direct users of the ``sktime.proba`` module should,
+  in addition, replace any imports from
+  ``sktime.proba`` with imports from ``skpro.distributions``.
 
 
 Version 0.31.1 - 2024-08-10
