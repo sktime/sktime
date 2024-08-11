@@ -215,7 +215,7 @@ EXCLUDED_TESTS = {
     ],
     # SAX returns strange output format
     # this needs to be fixed, was not tested previously due to legacy exception
-    "SAXlegacy": "test_fit_transform_output",
+    "SAXlegacy": ["test_fit_transform_output"],
     "DynamicFactor": [
         "test_predict_time_index_in_sample_full",  # refer to #4765
     ],
@@ -373,6 +373,7 @@ EXCLUDED_TESTS_BY_TEST = {
 # the latter is the single source of truth
 for k, v in EXCLUDED_TESTS_BY_TEST.items():
     for est in v:
+        print(est)
         EXCLUDED_TESTS.setdefault(est, []).extend([k])
 
 # We use estimator tags in addition to class hierarchies to further distinguish
