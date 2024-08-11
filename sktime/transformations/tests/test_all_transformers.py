@@ -205,7 +205,11 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
         X = pd.DataFrame({"var_0": ["a", "b", "c", "a", "b", "c"]})
         y = pd.DataFrame({"var_0": [1, 2, 3, 4, 5, 6]})
 
-        if not estimator_instance.get_tag("capability:categorical_in_X"):
+        # SFAFast transformer requires nested dataframe for X.
+        # so testing all transformers apart from it.
+        if isinstance(estimator_instance, SFAFast):
+            pass
+        elif not estimator_instance.get_tag("capability:categorical_in_X"):
             with pytest.raises(TypeError, match=r"categorical"):
                 estimator_instance.fit_transform(X, y)
 
@@ -231,7 +235,11 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
         X = pd.DataFrame({"var_0": ["a", "b", "c", "a", "b", "c"]})
         y = pd.DataFrame({"var_0": [1, 2, 3, 4, 5, 6]})
 
-        if (
+        # SFAFast transformer requires nested dataframe for X.
+        # so testing all transformers apart from it.
+        if isinstance(estimator_instance, SFAFast):
+            pass
+        elif (
             estimator_instance.get_tag("capability:categorical_in_X")
             and not estimator_instance.is_composite()
         ):
