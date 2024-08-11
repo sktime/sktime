@@ -19,19 +19,22 @@ class MovingAverageZscoreOutlier(BaseTransformer):
     Parameters
     ----------
     window_length : int, optional (default=10)
-        Length of the sliding window for moving average calculation
+        Length of the sliding window for moving average calculation.
     threshold : float, optional (default=3.5)
-        Threshold for the modified z-score to define an outlier
+        Threshold for the z-score or modified z-score to define an outlier.
+    use_modified_z : bool, optional (default=True)
+        If True, use the modified z-score method; otherwise, use the standard z-score.
     return_bool : bool, optional (default=False)
         If True, outliers are marked with True and non-outliers with False.
         Else, outliers are marked with np.nan.
 
     Examples
     --------
-    >>> from sktime.transformations.series.outlier_detection import MovingAverageModifiedZOutlier
+    >>> from sktime.transformations.series.outlier_detection import MovingAverageZscoreOutlier
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> transformer = MovingAverageModifiedZOutlier(window_length=10)
+    >>> transformer = MovingAverageZscoreOutlier(window_length=10)
+    >>> transformer = MovingAverageZscoreOutlier(window_length=30, use_modified_z=False)
     >>> y_hat = transformer.fit_transform(y)
     """
 
@@ -156,6 +159,10 @@ class MovingAverageZscoreOutlier(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
         """
-        param1 = {"window_length": 3}
-        param2 = {"window_length": 5, "threshold": 2.5, "return_bool": True}
-        return [param1, param2]
+        param1 = {}
+        param2 = {"window_length": 10}
+        param3 = {"window_length": 10, "threshold": 3, "return_bool": True}
+        param4 = {"window_length": 30, "use_modified_z": False}
+        param5 = {"window_length": 30, "use_modified_z": False, "threshold": 2, "return_bool": True}
+        
+        return [param1, param2, param3, param4, param5]
