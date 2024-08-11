@@ -566,7 +566,7 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
                 name=y.name,
             )
         # restore index names
-        final_predictions = final_predictions.index.rename(
+        final_predictions.index = final_predictions.index.rename(
             y.index.names[0] if len(y.index.names) == 1 else y.index.names
         )
         return final_predictions
