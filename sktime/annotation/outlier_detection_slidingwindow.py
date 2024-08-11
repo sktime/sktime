@@ -48,11 +48,13 @@ class MovingAverageZscoreOutlier(BaseTransformer):
         "univariate-only": False,
     }
 
-    def __init__(self, window_length=10, threshold=3.5, return_bool=False):
+    def __init__(self, window_length=10, threshold=3.5, use_modified_z=True, return_bool=False):
         self.window_length = window_length
         self.threshold = threshold
+        self.use_modified_z = use_modified_z
         self.return_bool = return_bool
         super().__init__()
+
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -80,7 +82,7 @@ class MovingAverageZscoreOutlier(BaseTransformer):
         return Z
 
     def _transform_series(self, Z):
-        """Transform the series Z by detecting outliers using moving average and modified z-score.
+        """Transform the series Z by detecting outliers using moving average and z-score or modified z-score.
 
         Parameters
         ----------
@@ -107,18 +109,37 @@ class MovingAverageZscoreOutlier(BaseTransformer):
         for i in cv.split(Z):
             cv_window = i[0]
             window_data = Z.iloc[cv_window]
-            window_median = window_data.median()
-            window_mad = np.median(np.abs(window_data - window_median))
-            modified_z_scores = 0.6745 * (window_data - window_median) / window_mad
+
+            if cv_window[0] < self.window_length:
+                # Handle the edge case: first window- Use the data in this current window
+                if self.use_modified_z:
+                    window_median = window_data.median()
+                    window_mad = np.median(np.abs(window_data - window_median))
+                    z_scores = 0.6745 * (window_data - window_median) / window_mad
+                else:
+                    window_mean = window_data.mean()
+                    window_std = window_data.std()
+                    z_scores = (window_data - window_mean) / window_std
+
+            else:
+                # For subsequent windows, use the statistics from the previous window
+                prev_window_data = Z.iloc[cv_window - 1]
+                if self.use_modified_z:
+                    prev_median = prev_window_data.median()
+                    prev_mad = np.median(np.abs(prev_window_data - prev_median))
+                    z_scores = 0.6745 * (window_data - prev_median) / prev_mad
+                else:
+                    prev_mean = prev_window_data.mean()
+                    prev_std = prev_window_data.std()
+                    z_scores = (window_data - prev_mean) / prev_std
 
             for idx in cv_window:
-                if abs(modified_z_scores[idx]) > self.threshold:
+                if abs(z_scores[idx]) > self.threshold:
                     Z_outliers.iloc[idx] = np.nan
                 elif self.return_bool:
-                    Z_outliers.iloc[idx] = abs(modified_z_scores[idx]) > self.threshold
+                    Z_outliers.iloc[idx] = abs(z_scores[idx]) > self.threshold
 
         return Z_outliers
-
 
 
     @classmethod
