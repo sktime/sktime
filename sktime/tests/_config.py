@@ -372,7 +372,8 @@ EXCLUDED_TESTS_BY_TEST = {
 # add EXCLUDED_TESTS_BY_TEST to EXCLUDED_TESTS
 # the latter is the single source of truth
 for k, v in EXCLUDED_TESTS_BY_TEST.items():
-    EXCLUDED_TESTS.setdefault(k, []).extend(v)
+    for est in v:
+        EXCLUDED_TESTS.setdefault(est, []).extend([k])
 
 # We use estimator tags in addition to class hierarchies to further distinguish
 # estimators into different categories. This is useful for defining and running
