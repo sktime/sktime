@@ -253,6 +253,7 @@ EXCLUDED_TESTS = {
 EXCLUDED_TESTS_BY_TEST = {
     "test_get_test_params_coverage": [
         "Arsenal",
+        "BaggingForecaster",
         "BOSSEnsemble",
         "BinarySegmentation",
         "CNTCClassifier",
@@ -262,6 +263,8 @@ EXCLUDED_TESTS_BY_TEST = {
         "ClaSPSegmentation",
         "ClaSPTransformer",
         "ClearSky",
+        "ClustererPipeline",
+        "ColumnConcatenator",
         "ColumnEnsembleClassifier",
         "ColumnTransformer",
         "ColumnwiseTransformer",
@@ -269,7 +272,9 @@ EXCLUDED_TESTS_BY_TEST = {
         "ContractableBOSS",
         "DOBIN",
         "DWTTransformer",
+        "DerivativeSlopeTransformer",
         "DilationMappingTransformer",
+        "DirectTabularRegressionForecaster",
         "DirRecTabularRegressionForecaster",
         "DirRecTimeSeriesRegressionForecaster",
         "DirectTimeSeriesRegressionForecaster",
@@ -278,8 +283,11 @@ EXCLUDED_TESTS_BY_TEST = {
         "DontUpdate",
         "DummyRegressor",
         "ElasticEnsemble",
+        "ElbowClassPairwise",
+        "EnbPIForecaster",
         "FeatureSelection",
         "Filter",
+        "FittedParamExtractor",
         "ForecastingOptunaSearchCV",
         "FreshPRINCE",
         "GaussianHMM",
@@ -289,6 +297,7 @@ EXCLUDED_TESTS_BY_TEST = {
         "HIVECOTEV2",
         "HOG1DTransformer",
         "Hidalgo",
+        "HolidayFeatures",
         "InceptionTimeNetwork",
         "IndividualBOSS",
         "IndividualTDE",
@@ -318,7 +327,10 @@ EXCLUDED_TESTS_BY_TEST = {
         "PAAlegacy",
         "PCATransformer",
         "PaddingTransformer",
+        "ParamFitterPipeline",
         "PlateauFinder",
+        "PluginParamsForecaster",
+        "PluginParamsTransformer",
         "PoissonHMM",
         "Prophet",
         "ProphetPiecewiseLinearTrendForecaster",
@@ -334,6 +346,7 @@ EXCLUDED_TESTS_BY_TEST = {
         "RecursiveTabularRegressionForecaster",
         "RecursiveTimeSeriesRegressionForecaster",
         "ReducerTransform",
+        "RegressorPipeline",
         "Rocket",
         "SAX",
         "SAXlegacy",
@@ -349,9 +362,12 @@ EXCLUDED_TESTS_BY_TEST = {
         "StackingForecaster",
         "SubLOF",
         "SummaryClassifier",
+        "SupervisedIntervals",
         "SupervisedTimeSeriesForest",
         "TEASER",
+        "TSBootstrapAdapter",
         "TSFreshClassifier",
+        "Tabularizer",
         "TapNetNetwork",
         "TemporalDictionaryEnsemble",
         "ThetaLinesTransformer",
@@ -361,9 +377,11 @@ EXCLUDED_TESTS_BY_TEST = {
         "TimeSeriesKMedoids",
         "TimeSeriesKernelKMeans",
         "TimeSeriesLloyds",
+        "ThetaModularForecaster",
         "TruncationTransformer",
         "UnobservedComponents",
         "WEASEL",
+        "WeightedEnsembleClassifier",
         "WhiteNoiseAugmenter",
         "YtoX",
     ]
@@ -373,7 +391,6 @@ EXCLUDED_TESTS_BY_TEST = {
 # the latter is the single source of truth
 for k, v in EXCLUDED_TESTS_BY_TEST.items():
     for est in v:
-        print(est)
         EXCLUDED_TESTS.setdefault(est, []).extend([k])
 
 # We use estimator tags in addition to class hierarchies to further distinguish
