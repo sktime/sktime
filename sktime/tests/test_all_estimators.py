@@ -740,7 +740,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         """Check that get_test_params returns valid parameter sets."""
         param_list = estimator_class.get_test_params()
 
-        assert isinstance(param_list, list) or isinstance(param_list, dict), (
+        assert isinstance(param_list, (list, dict)), (
             "get_test_params must return list of dict or dict, "
             f"found object of type {type(param_list)}"
         )
@@ -762,24 +762,10 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             "reserved_params", tag_value_default=None
         )
         reserved_param_names = _coerce_to_list_of_str(reserved_param_names)
-        reserved_set = set(reserved_param_names)
 
         param_names = estimator_class.get_param_names()
-        unreserved_param_names = set(param_names).difference(reserved_set)
 
         key_list = [x.keys() for x in param_list]
-
-        # commenting out "no reserved params in test params for now"
-        # probably cannot ask for that, e.g., index/columns in BaseDistribution
-
-        # reserved_errs = [set(x).intersection(reserved_set) for x in key_list]
-        # reserved_errs = [x for x in reserved_errs if len(x) > 0]
-
-        # assert len(reserved_errs) == 0, (
-        #     "get_test_params return dict keys must be valid parameter names, "
-        #     "i.e., names of arguments of __init__ that are not reserved, "
-        #     f"but found the following reserved parameters as keys: {reserved_errs}"
-        # )
 
         notfound_errs = [set(x).difference(param_names) for x in key_list]
         notfound_errs = [x for x in notfound_errs if len(x) > 0]
@@ -790,15 +776,60 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             f"but found some parameters that are not __init__ args: {notfound_errs}"
         )
 
+    def test_get_test_params_coverage(self, estimator_class):
+        """Check that get_test_params has good test coverage.
+
+        Checks that:
+
+        * get_test_params returns at least two test parameter sets
+        """
+        param_list = estimator_class.get_test_params()
+
+        if isinstance(param_list, dict):
+            param_list = [param_list]
+
+        def _coerce_to_list_of_str(obj):
+            if isinstance(obj, str):
+                return obj
+            elif isinstance(obj, list):
+                return obj
+            else:
+                return []
+
+        reserved_param_names = estimator_class.get_class_tag(
+            "reserved_params", tag_value_default=None
+        )
+        reserved_param_names = _coerce_to_list_of_str(reserved_param_names)
+        reserved_set = set(reserved_param_names)
+
+        param_names = estimator_class.get_param_names()
+        unreserved_param_names = set(param_names).difference(reserved_set)
+
+        # commenting out "no reserved params in test params for now"
+        # probably cannot ask for that, e.g., index/columns in BaseDistribution
+
+        # key_list = [x.keys() for x in param_list]
+
+        # reserved_errs = [set(x).intersection(reserved_set) for x in key_list]
+        # reserved_errs = [x for x in reserved_errs if len(x) > 0]
+
+        # assert len(reserved_errs) == 0, (
+        #     "get_test_params return dict keys must be valid parameter names, "
+        #     "i.e., names of arguments of __init__ that are not reserved, "
+        #     f"but found the following reserved parameters as keys: {reserved_errs}"
+        # )
+
         if len(unreserved_param_names) > 0:
-            assert (
-                len(param_list) > 1
-            ), "get_test_params should return at least two test parameter sets"
-        params_tested = set()
-        for params in param_list:
-            params_tested = params_tested.union(params.keys())
+            msg = (
+                f"{estimator_class.__name__}.get_test_params should return "
+                f"at least two test parameter sets, but only {len(param_list)} found."
+            )
+            assert (len(param_list) > 1), msg
 
         # this test is too harsh for the current estimator base
+        # params_tested = set()
+        # for params in param_list:
+        #    params_tested = params_tested.union(params.keys())
         # params_not_tested = set(unreserved_param_names).difference(params_tested)
         # assert len(params_not_tested) == 0, (
         #     f"get_test_params should set each parameter of {estimator_class} "
