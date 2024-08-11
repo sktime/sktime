@@ -203,12 +203,11 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
     def test_categorical_X_raises_error(self, estimator_instance):
         """Test that error is raised when categorical is not supported in X."""
         X = pd.DataFrame({"var_0": ["a", "b", "c", "a", "b", "c"]})
+        y = pd.DataFrame({"var_0": [1, 2, 3, 4, 5, 6]})
 
-        if not estimator_instance.get_tag(
-            "requires_y"
-        ) and not estimator_instance.get_tag("capability:categorical_in_X"):
+        if not estimator_instance.get_tag("capability:categorical_in_X"):
             with pytest.raises(TypeError, match=r"categorical"):
-                estimator_instance.fit_transform(X)
+                estimator_instance.fit_transform(X, y)
 
     def test_categorical_y_raises_error(self, estimator_instance):
         """Test that error is raised when categorical data is passed in y."""
@@ -230,13 +229,13 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
         used within do not support categorical.
         """
         X = pd.DataFrame({"var_0": ["a", "b", "c", "a", "b", "c"]})
+        y = pd.DataFrame({"var_0": [1, 2, 3, 4, 5, 6]})
 
         if (
             estimator_instance.get_tag("capability:categorical_in_X")
-            and not estimator_instance.get_tag("requires_y")
             and not estimator_instance.is_composite()
         ):
-            estimator_instance.fit_transform(X)
+            estimator_instance.fit_transform(X, y)
 
 
 # todo: add testing of inverse_transform
