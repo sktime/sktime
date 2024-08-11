@@ -87,6 +87,7 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         "X-y-must-have-same-index": True,
         "handles-missing-data": False,
         "capability:insample": False,
+        "capability:global_forecasting": True,
     }
 
     def __init__(
@@ -128,7 +129,6 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
                     "capability:global_forecasting": False,
                 }
             )
-        from warnings import warn
 
         warn(
             "DeprecationWarning: The default value of the parameter "
@@ -536,7 +536,7 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
             id_ins = pandas.DataFrame(
                 data=ins, index=id_int, columns=new_index_names[:-1]
             )
-            id_ins.drop_duplicates(inplace=True)
+            id_ins = id_ins.drop_duplicates()
             final_predictions = pandas.concat(
                 (model_forecasts, id_ins.loc[model_forecasts.index.tolist()]),
                 axis=1,
@@ -547,14 +547,13 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
                     freq=pandas.tseries.frequencies.to_offset(self._freq)
                 )
                 final_predictions[self.time_col] = time_idx
-            final_predictions.rename(
+            final_predictions = final_predictions.rename(
                 columns={
                     self.time_col: new_index_names[-1],
                     prediction_column_names[0]: y.columns[0],
                 },
-                inplace=True,
             )
-            final_predictions.set_index(new_index_names, inplace=True)
+            final_predictions = final_predictions.set_index(new_index_names)
         else:
             model_point_predictions = model_forecasts[
                 prediction_column_names[0]
@@ -567,8 +566,7 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
                 name=y.name,
             )
         # restore index names
-        final_predictions.index.rename(
-            y.index.names[0] if len(y.index.names) == 1 else y.index.names,
-            inplace=True,
+        final_predictions = final_predictions.index.rename(
+            y.index.names[0] if len(y.index.names) == 1 else y.index.names
         )
         return final_predictions
