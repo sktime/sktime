@@ -741,14 +741,18 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         param_list = estimator_class.get_test_params()
 
         assert isinstance(param_list, (list, dict)), (
-            "get_test_params must return list of dict or dict, "
+            f"{estimator_class.__name__}.get_test_params must "
+            "return list of dict or dict, "
             f"found object of type {type(param_list)}"
         )
         if isinstance(param_list, dict):
             param_list = [param_list]
-        assert all(
-            isinstance(x, dict) for x in param_list
-        ), f"get_test_params must return list of dict or dict, found {param_list}"
+        msg = (
+            f"{estimator_class.__name__}.get_test_params must "
+            "return list of dict or dict, "
+            f"found {param_list}"
+        )
+        assert all(isinstance(x, dict) for x in param_list), msg
 
         def _coerce_to_list_of_str(obj):
             if isinstance(obj, str):
@@ -771,7 +775,8 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         notfound_errs = [x for x in notfound_errs if len(x) > 0]
 
         assert len(notfound_errs) == 0, (
-            "get_test_params return dict keys must be valid parameter names, "
+            f"{estimator_class.__name__}.get_test_params return dict keys "
+            f"must be valid parameter names of {estimator_class.__name__}, "
             "i.e., names of arguments of __init__, "
             f"but found some parameters that are not __init__ args: {notfound_errs}"
         )
