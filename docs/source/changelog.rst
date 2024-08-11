@@ -31,6 +31,17 @@ Dependency changes
 
 * ``skpro`` (soft dependency) bounds have been updated to ``>=2,<2.6.0``
 
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+* all ``sktime`` estimators and objects are now required to have at least
+  two test parameter sets in
+  ``get_test_params`` to be compliant with ``check_estimator`` contract tests.
+  This requirement was previously stated in the extension template but not enforced.
+  It is now also included in the automated tests via ``check_estimator``.
+  Estimators without (unreserved) parameters, i.e., where two
+  distinct parameter sets are not possible, are excepted from this.
+
 Deprecations and removals
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
