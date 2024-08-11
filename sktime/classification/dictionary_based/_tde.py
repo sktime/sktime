@@ -88,7 +88,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         Save the ensemble member train predictions in fit for use in _get_train_probs
         leave-one-out cross-validation.
     n_jobs : int, default=1
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``-1`` means using all processors.
     random_state : int or None, default=None
         Seed for random number generation.
@@ -146,13 +146,18 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["MatthewMiddlehurst"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:train_estimate": True,
         "capability:contractable": True,
         "capability:multithreading": True,
         "capability:predict_proba": True,
         "classifier_type": "dictionary",
-        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -443,7 +448,11 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         return possible_parameters
 
     def _get_train_probs(self, X, y, train_estimate_method="loocv") -> np.ndarray:
+        from sktime.datatypes import convert_to
+
         self.check_is_fitted()
+        if not isinstance(X, np.ndarray):
+            X = convert_to(X, "numpy3D")
         X, y = check_X_y(X, y, coerce_to_numpy=True)
 
         n_instances, n_dims, series_length = X.shape
@@ -477,9 +486,9 @@ class TemporalDictionaryEnsemble(BaseClassifier):
                 )
 
                 for n, pred in enumerate(preds):
-                    results[subsample[n]][
-                        self._class_dictionary[pred]
-                    ] += self.weights_[i]
+                    results[subsample[n]][self._class_dictionary[pred]] += (
+                        self.weights_[i]
+                    )
                     divisors[subsample[n]] += self.weights_[i]
         elif train_estimate_method.lower() == "oob":
             indices = range(n_instances)
@@ -552,7 +561,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -563,8 +572,9 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         if parameter_set == "results_comparison":
             return {
@@ -623,7 +633,7 @@ class IndividualTDE(BaseClassifier):
         Use a numba TypedDict to store word counts. May increase memory usage, but will
         be faster for larger datasets.
     n_jobs : int, default=1
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``-1`` means using all processors.
     random_state : int or None, default=None
         Seed for random, integer.
@@ -671,9 +681,14 @@ class IndividualTDE(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["MatthewMiddlehurst"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:multithreading": True,
-        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -1008,7 +1023,7 @@ def histogram_intersection(first, second):
     first : dict, numba.Dict or array
         First dictionary used in distance measurement.
     second : dict, numba.Dict or array
-        Second dictionary that will be used to measure distance from `first`.
+        Second dictionary that will be used to measure distance from ``first``.
 
     Returns
     -------

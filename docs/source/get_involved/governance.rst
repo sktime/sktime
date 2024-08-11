@@ -37,8 +37,7 @@ experience. Accordingly, everyone who participates in the sktime project
 is expected to show respect and courtesy to other community members at
 all times.
 
-We ask all members of the community to conform to our `Code of
-Conduct <https://github.com/sktime/sktime/blob/main/CODE_OF_CONDUCT.rst>`__.
+We ask all members of the community to conform to our :ref:`code_of_conduct`.
 
 .. _roles:
 
@@ -160,11 +159,17 @@ Appointment
 The contributor who contributes an algorithm is automatically appointed
 as its first maintainer.
 
-Algorithm maintainers are listed in the `CODEOWNERS <https://github
-.com/alan-turing-institute/sktime/blob/main/CODEOWNERS>`__ file.
+Algorithm maintainers are listed in the ``"maintainers"`` tag of the estimator class,
+by their GitHub ID. The GitHub ID can be linked to further information via
+the ``all-contributorsrc`` file.
+The tag can be inspected directly in the source code of the class,
+or via ``EstimatorName.get_class_tag("maintainers").``
+Inverse lookup such as "which algorithms does maintainer M maintain"
+can be carried out using ``registry.all_estimators``.
 
 When an algorithm maintainer resigns, they can appoint another contributor as the
-new algorithm maintainer. No vote is required. This change should be reflected in the ``CODEOWNERS`` file.
+new algorithm maintainer. No vote is required.
+This change should be reflected in the ``"maintainers"`` tag.
 
 Algorithm maintainers can be appointed by CC simple majority for any algorithm without maintainers.
 
@@ -191,7 +196,7 @@ to the continued development of the project through ongoing engagement
 with the community.
 
 Current core developers are listed in the `core-developers
-team <https://www.sktime.net/en/stable/about/team.html>`__
+team <https://www.sktime.net/en/latest/about/team.html>`__
 within the sktime organisation on GitHub.
 
 .. _rights-and-responsibilities-1:
@@ -263,7 +268,7 @@ CoC committee members
 
 CoC members are contributors with special rights and responsibilities.
 The current members of the CoC committee are listed in the
-`CoC <https://www.sktime.net/en/stable/about/team.html>`__.
+`CoC <https://www.sktime.net/en/latest/about/team.html>`__.
 
 .. _rights-and-responsibilities-2:
 
@@ -311,7 +316,7 @@ responsibilities to avoid deadlocks and ensure a smooth progress of the
 project.
 
 Current CC members are listed in the `community-council
-team <https://www.sktime.net/en/stable/about/team.html>`__
+team <https://www.sktime.net/en/latest/about/team.html>`__
 within the sktime organisation on GitHub.
 
 .. _rights-and-responsibilities-3:
@@ -391,7 +396,7 @@ CC observers
 
 CC (community council) observers are core developers with additional rights and
 responsibilities. Current CC observers are listed in the `community-council
-observers <https://www.sktime.net/en/stable/about/team.html>`__ .
+observers <https://www.sktime.net/en/latest/about/team.html`__.
 
 .. _rights-and-responsibilities-4:
 
@@ -664,18 +669,19 @@ We have the following guidelines:
    will have to be extended first. For extending current API, see the
    `decision making process <#Decision-making>`__ for major changes.
 
-Note that your implementation need not be in sktime to be used together
-with sktime tools. You can implement your favorite algorithm in a sktime
-compatible way in one of `our companion
-repositories <https://github.com/sktime>`__ on GitHub. We will be happy
-to list it under `related
-software <https://github.com/sktime/sktime/wiki/related-software>`__.
+Note that an algorithm need not be in sktime to be fully compatible with
+sktime interfaces. You can implement your favorite algorithm in a sktime
+compatible way in a third party codebase - open or closed - following
+the guide for implementing compatible estimators (see :ref:`developer_guide_add_estimators:`).
 
-If algorithms require major dependencies, we encourage to create a
-separate companion repository. For smaller
-dependencies which are limited to a few files, we encourage to use soft
-dependencies, which are only required for particular modules, but not
-for most of sktime's functionality and not for installing sktime.
+We are happy to list any compatible open source project under `related
+software <https://github.com/sktime/sktime/wiki/related-software>`__.
+Contributions are also welcome to any one of `our companion
+repositories <https://github.com/sktime>`__ on GitHub.
+
+Dependencies are managed on the level of estimators, hence it is entirely possible
+to maintain an algorithm primarily in a third or second party package, and add a
+thin interface to sktime proper which has that package as a dependency.
 
 .. _acknowledging-contributions:
 
@@ -734,7 +740,7 @@ References
 Our governance model is inspired by various existing governance
 structures. In particular, we'd like to acknowledge:
 
-* scikit-learn's `governance model <https://www.sktime.net/en/latest/governance.html>`__
+* scikit-learn's `governance model <https://scikit-learn.org/stable/governance.html>`__
 * `The Turing Way <https://github.com/alan-turing-institute/the-turing-way>`__ project
 * `The Art of Community <https://www.jonobacon.com/books/artofcommunity/>`__ by Jono Bacon
 * The `astropy <https://www.astropy.org>`__ project

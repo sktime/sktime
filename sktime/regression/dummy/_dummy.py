@@ -1,6 +1,6 @@
 """Dummy time series regressor."""
 
-__author__ = ["Badr-Eddine Marani"]
+__author__ = ["badrmarani"]
 __all__ = ["DummyRegressor"]
 
 import numpy as np
@@ -14,14 +14,14 @@ class DummyRegressor(BaseRegressor):
 
     This regressor serves as a simple baseline to compare against other more
     complex regressors.
-    The specific behavior of the baseline is selected with the `strategy`
+    The specific behavior of the baseline is selected with the ``strategy``
     parameter.
 
     All strategies make predictions that ignore the input feature values passed
-    as the `X` argument to `fit` and `predict`. The predictions, however,
-    typically depend on values observed in the `y` parameter passed to `fit`.
+    as the ``X`` argument to ``fit`` and ``predict``. The predictions, however,
+    typically depend on values observed in the ``y`` parameter passed to ``fit``.
 
-    Function-identical to `sklearn.dummy.DummyRegressor`, which is called
+    Function-identical to ``sklearn.dummy.DummyRegressor``, which is called
     inside.
 
     Parameters
@@ -58,6 +58,12 @@ class DummyRegressor(BaseRegressor):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "badrmarani",
+        "maintainers": "badrmarani",
+        # estimator type
+        # --------------
         "X_inner_mtype": "nested_univ",
         "capability:missing_values": True,
         "capability:unequal_length": True,

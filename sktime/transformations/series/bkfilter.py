@@ -1,7 +1,8 @@
-"""Interface to Baxter-King bandpass filter from `statsmodels`.
+"""Interface to Baxter-King bandpass filter from ``statsmodels``.
 
-Interfaces `bk_filter` from `statsmodels.tsa.filters`.
+Interfaces ``bk_filter`` from ``statsmodels.tsa.filters``.
 """
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["klam-data", "pyyim", "mgorlin"]
@@ -16,8 +17,8 @@ from sktime.transformations.base import BaseTransformer
 class BKFilter(BaseTransformer):
     """Filter a times series using the Baxter-King filter.
 
-    This is a wrapper around the `bkfilter` function from `statsmodels`.
-    (see `statsmodels.tsa.filters.bk_filter.bkfilter`).
+    This is a wrapper around the ``bkfilter`` function from ``statsmodels``.
+    (see ``statsmodels.tsa.filters.bk_filter.bkfilter``).
 
     The Baxter-King filter is intended for economic and econometric time series
     data and deals with the periodicity of the business cycle. Applying their
@@ -63,6 +64,13 @@ class BKFilter(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["klam-data", "pyyim", "mgorlin"],
+        "maintainers": "klam-data",
+        "python_dependencies": "statsmodels",
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -83,7 +91,6 @@ class BKFilter(BaseTransformer):
         # can the transformer handle unequal length time series (if passed Panel)?
         "handles-missing-data": False,  # can estimator handle missing data?
         "remember_data": False,  # whether all data seen is remembered as self._X
-        "python_dependencies": "statsmodels",
     }
 
     def __init__(
@@ -124,7 +131,7 @@ class BKFilter(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -132,8 +139,9 @@ class BKFilter(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {"low": 5, "high": 24, "K": 4}
         params2 = {}

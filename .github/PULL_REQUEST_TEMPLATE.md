@@ -53,7 +53,7 @@ Please go through the checklist below. Please feel free to remove points if they
 - [ ] I've added myself to the [list of contributors](https://github.com/sktime/sktime/blob/main/CONTRIBUTORS.md) with any new badges I've earned :-)
   How to: add yourself to the [all-contributors file](https://github.com/sktime/sktime/blob/main/.all-contributorsrc) in the `sktime` root directory (not the `CONTRIBUTORS.md`). Common badges: `code` - fixing a bug, or adding code logic. `doc` - writing or improving documentation or docstrings. `bug` - reporting or diagnosing a bug (get this plus `code` if you also fixed the bug in the PR).`maintenance` - CI, test framework, release.
   See here for [full badge reference](https://allcontributors.org/docs/en/emoji-key)
-- [ ] Optionally, I've added myself and possibly others to the [CODEOWNERS](https://github.com/sktime/sktime/blob/main/CODEOWNERS) file - do this if you want to become the owner or maintainer of an estimator you added.
+- [ ] Optionally, for added estimators: I've added myself and possibly to the `maintainers` tag - do this if you want to become the owner or maintainer of an estimator you added.
   See here for further details on the [algorithm maintainer role](https://www.sktime.net/en/latest/get_involved/governance.html#algorithm-maintainers).
 - [ ] The PR title starts with either [ENH], [MNT], [DOC], or [BUG]. [BUG] - bugfix, [MNT] - CI, test framework, [ENH] - adding or improving code, [DOC] - writing or improving documentation or docstrings.
 

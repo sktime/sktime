@@ -75,7 +75,7 @@ def _get_deps_info(deps=None):
         deps = ["sktime"]
 
     def get_version(module):
-        return module.__version__
+        return getattr(module, "__version__", None)
 
     deps_info = {}
 
@@ -85,10 +85,11 @@ def _get_deps_info(deps=None):
                 mod = sys.modules[modname]
             else:
                 mod = importlib.import_module(modname)
-            ver = get_version(mod)
-            deps_info[modname] = ver
         except ImportError:
             deps_info[modname] = None
+        else:
+            ver = get_version(mod)
+            deps_info[modname] = ver
 
     return deps_info
 

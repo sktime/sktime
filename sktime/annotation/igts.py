@@ -16,14 +16,13 @@ References
 """
 
 from dataclasses import asdict, dataclass, field
-from typing import Dict, List
 
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
 
 from sktime.base import BaseEstimator
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.utils.dependencies import _check_estimator_deps
 
 __all__ = ["InformationGainSegmentation"]
 __author__ = ["lmmentel"]
@@ -33,7 +32,7 @@ __author__ = ["lmmentel"]
 class ChangePointResult:
     k: int
     score: float
-    change_points: List[int]
+    change_points: list[int]
 
 
 def entropy(X: npt.ArrayLike) -> float:
@@ -57,7 +56,7 @@ def entropy(X: npt.ArrayLike) -> float:
     return -np.sum(p * np.log(p))
 
 
-def generate_segments(X: npt.ArrayLike, change_points: List[int]) -> npt.ArrayLike:
+def generate_segments(X: npt.ArrayLike, change_points: list[int]) -> npt.ArrayLike:
     """Generate separate segments from time series based on change points.
 
     Parameters
@@ -79,7 +78,7 @@ def generate_segments(X: npt.ArrayLike, change_points: List[int]) -> npt.ArrayLi
         yield X[start:end, :]
 
 
-def generate_segments_pandas(X: npt.ArrayLike, change_points: List) -> npt.ArrayLike:
+def generate_segments_pandas(X: npt.ArrayLike, change_points: list) -> npt.ArrayLike:
     """Generate separate segments from time series based on change points.
 
     Parameters
@@ -116,7 +115,7 @@ class IGTS:
 
     IGTS uses top-down search method to greedily find the next change point
     location that creates the maximum information gain. Once this is found, it
-    repeats the process until it finds `k_max` splits of the time series.
+    repeats the process until it finds ``k_max`` splits of the time series.
 
     .. note::
 
@@ -131,12 +130,12 @@ class IGTS:
         Maximum number of change points to find. The number of segments is thus k+1.
     step: : int, default=5
         Step size, or stride for selecting candidate locations of change points.
-        Fox example a `step=5` would produce candidates [0, 5, 10, ...].
-        Has the same meaning as `step` in `range` function.
+        Fox example a ``step=5`` would produce candidates [0, 5, 10, ...].
+        Has the same meaning as ``step`` in ``range`` function.
 
     Attributes
     ----------
-    intermediate_results_: list of `ChangePointResult`
+    intermediate_results_: list of ``ChangePointResult``
         Intermediate segmentation results for each k value, where k=1, 2, ..., k_max
 
     Notes
@@ -171,13 +170,13 @@ class IGTS:
     step: int = 5
 
     # computed attributes
-    intermediate_results_: List = field(init=False, default_factory=list)
+    intermediate_results_: list = field(init=False, default_factory=list)
 
-    def identity(self, X: npt.ArrayLike) -> List[int]:
+    def identity(self, X: npt.ArrayLike) -> list[int]:
         """Return identity segmentation, i.e. terminal indexes of the data."""
         return sorted([0, X.shape[0]])
 
-    def get_candidates(self, n_samples: int, change_points: List[int]) -> List[int]:
+    def get_candidates(self, n_samples: int, change_points: list[int]) -> list[int]:
         """Generate candidate change points.
 
         Also exclude existing change points.
@@ -198,7 +197,7 @@ class IGTS:
         )
 
     @staticmethod
-    def information_gain_score(X: npt.ArrayLike, change_points: List[int]) -> float:
+    def information_gain_score(X: npt.ArrayLike, change_points: list[int]) -> float:
         """Calculate the information gain score.
 
         The formula is based on equation (2) from [1]_.
@@ -226,11 +225,11 @@ class IGTS:
         ]
         return entropy(X) - sum(segment_entropies) / X.shape[0]
 
-    def find_change_points(self, X: npt.ArrayLike) -> List[int]:
+    def find_change_points(self, X: npt.ArrayLike) -> list[int]:
         """Find change points.
 
         Using a top-down search method, iteratively identify at most
-        `k_max` change points that increase the information gain score
+        ``k_max`` change points that increase the information gain score
         the most.
 
         Parameters
@@ -283,7 +282,7 @@ class IGTS:
 class SegmentationMixin:
     """Mixin with methods useful for segmentation problems."""
 
-    def to_classification(self, change_points: List[int]) -> npt.ArrayLike:
+    def to_classification(self, change_points: list[int]) -> npt.ArrayLike:
         """Convert change point locations to a classification vector.
 
         Change point detection results can be treated as classification
@@ -296,7 +295,7 @@ class SegmentationMixin:
         """
         return np.bincount(change_points[1:-1], minlength=change_points[-1])
 
-    def to_clusters(self, change_points: List[int]) -> npt.ArrayLike:
+    def to_clusters(self, change_points: list[int]) -> npt.ArrayLike:
         """Convert change point locations to a clustering vector.
 
         Change point detection results can be treated as clustering
@@ -325,7 +324,7 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
 
     IGTS uses top-down search method to greedily find the next change point
     location that creates the maximum information gain. Once this is found, it
-    repeats the process until it finds `k_max` splits of the time series.
+    repeats the process until it finds ``k_max`` splits of the time series.
 
     .. note::
 
@@ -341,8 +340,8 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
 
     step: : int, default=5
         Step size, or stride for selecting candidate locations of change points.
-        Fox example a `step=5` would produce candidates [0, 5, 10, ...]. Has the same
-        meaning as `step` in `range` function.
+        Fox example a ``step=5`` would produce candidates [0, 5, 10, ...]. Has the same
+        meaning as ``step`` in ``range`` function.
 
     Attributes
     ----------
@@ -350,7 +349,7 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
         Locations of change points as integer indexes. By convention change points
         include the identity segmentation, i.e. first and last index + 1 values.
 
-    intermediate_results_: list of `ChangePointResult`
+    intermediate_results_: list of ``ChangePointResult``
         Intermediate segmentation results for each k value, where k=1, 2, ..., k_max
 
     Notes
@@ -407,7 +406,7 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
         Parameters
         ----------
         X: array_like
-            2D `array_like` representing time series with sequence index along
+            2D ``array_like`` representing time series with sequence index along
             the first dimension and value series as columns.
 
         y: array_like
@@ -421,7 +420,7 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
         Parameters
         ----------
         X: array_like
-            2D `array_like` representing time series with sequence index along
+            2D ``array_like`` representing time series with sequence index along
             the first dimension and value series as columns.
 
         y: array_like
@@ -446,7 +445,7 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
         Parameters
         ----------
         X: array_like
-            2D `array_like` representing time series with sequence index along
+            2D ``array_like`` representing time series with sequence index along
             the first dimension and value series as columns.
 
         y: array_like
@@ -461,7 +460,7 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
         """
         return self.fit(X=X, y=y).predict(X=X, y=y)
 
-    def get_params(self, deep: bool = True) -> Dict:
+    def get_params(self, deep: bool = True) -> dict:
         """Return initialization parameters.
 
         Parameters
@@ -511,7 +510,7 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------

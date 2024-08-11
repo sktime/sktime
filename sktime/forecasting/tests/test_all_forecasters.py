@@ -5,6 +5,9 @@
 
 __author__ = ["mloning", "kejsitake", "fkiraly"]
 
+import re
+from inspect import signature
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -28,7 +31,11 @@ from sktime.split import (
     SlidingWindowSplitter,
     temporal_train_test_split,
 )
-from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
+from sktime.tests.test_all_estimators import (
+    BaseFixtureGenerator,
+    QuickTester,
+    TestAllObjects,
+)
 from sktime.utils._testing.forecasting import (
     _assert_correct_columns,
     _assert_correct_pred_time_index,
@@ -42,6 +49,7 @@ from sktime.utils.validation.forecasting import check_fh
 
 # get all forecasters
 FH0 = 1
+
 INVALID_X_INPUT_TYPES = [list("foo"), tuple()]
 INVALID_y_INPUT_TYPES = [list("bar"), tuple()]
 
@@ -143,12 +151,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     def test_get_fitted_params(self, estimator_instance, scenario):
         """Test get_fitted_params."""
         scenario.run(estimator_instance, method_sequence=["fit"])
-        try:
-            params = estimator_instance.get_fitted_params()
-            assert isinstance(params, dict)
 
-        except NotImplementedError:
-            pass
+        params = estimator_instance.get_fitted_params()
+        assert isinstance(params, dict)
 
     # todo: should these not be checked in test_all_estimators?
     def test_raises_not_fitted_error(self, estimator_instance):
@@ -161,11 +166,8 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             cv = SlidingWindowSplitter(fh=1, window_length=1, start_with_window=False)
             estimator_instance.update_predict(y_test, cv=cv)
 
-        try:
-            with pytest.raises(NotFittedError):
-                estimator_instance.get_fitted_params()
-        except NotImplementedError:
-            pass
+        with pytest.raises(NotFittedError):
+            estimator_instance.get_fitted_params()
 
     def test_y_multivariate_raises_error(self, estimator_instance):
         """Test that wrong y scitype raises error (uni/multivariate not supported)."""
@@ -174,6 +176,8 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             with pytest.raises(ValueError, match=r"two or more variables"):
                 estimator_instance.fit(y, fh=FH0)
 
+        # we could remove the below entirely because there are no other values,
+        # but left for clarity
         if estimator_instance.get_tag("scitype:y") in ["univariate", "both"]:
             # this should pass since "both" allows any number of variables
             # and "univariate" automatically vectorizes, behaves multivariate
@@ -191,12 +195,35 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     def test_X_invalid_type_raises_error(self, estimator_instance, n_columns, X):
         """Test that invalid X input types raise error."""
         y_train = _make_series(n_columns=n_columns)
-        try:
-            with pytest.raises(TypeError, match=r"type"):
-                estimator_instance.fit(y_train, X, fh=FH0)
-        except NotImplementedError as e:
-            msg = str(e).lower()
-            assert "exogenous" in msg
+
+        with pytest.raises(TypeError, match=r"type"):
+            estimator_instance.fit(y_train, X, fh=FH0)
+
+    def test_categorical_X_raises_error(self, estimator_instance):
+        """Test that categorical X in not supported forecasters raises error.
+
+        Only test with forecasters which do not ignore exogeneous X and those that do
+        not support categorical natively. These are the cases where error is expected
+        to be raised.
+        """
+        if not estimator_instance.get_tag(
+            "ignores-exogeneous-X"
+        ) and not estimator_instance.get_tag("capability:categorical_in_X"):
+            X_train = pd.DataFrame({"col_0": ["a", "b", "c", "a", "b", "c"]})
+            y_train = _make_series(n_timepoints=6, n_columns=2)
+
+            with pytest.raises(TypeError, match=r"categorical"):
+                estimator_instance.fit(y_train, X_train, fh=FH0)
+
+    def test_categorical_y_raises_error(self, estimator_instance):
+        """Test that categorical y in forecasters raises error.
+
+        Categorical y is not currently supported in the forecasting module.
+        """
+        y = pd.DataFrame({"col_0": ["a", "b", "c", "a", "b", "c"]})
+
+        with pytest.raises(TypeError, match=r"categorical"):
+            estimator_instance.fit(y, fh=FH0)
 
     # todo: refactor with scenarios. Need to override fh and scenario args for this.
     @pytest.mark.parametrize(
@@ -227,8 +254,10 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         # if estimator cannot forecast in-sample and fh is in-sample, terminate
         # if the tag correctly states this, we consider this fine as per contract
-        # todo: check that estimator raises error message when fitting instead
+        # check that estimator raises error message when fitting
         if not fh_is_oos and not estimator_instance.get_tag("capability:insample"):
+            with pytest.raises(NotImplementedError, match="in-sample"):
+                estimator_instance.fit(y_train, fh=fh)
             return None
 
         estimator_instance.fit(y_train, fh=fh)
@@ -245,10 +274,16 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         # if cannot forecast in-sample probabilistically, and fh is in-sample, terminate
         # if the tag correctly states this, we consider this fine as per contract
-        # todo: check that estimator raises error message when fitting instead
+        # check that estimator raises error message when fitting
         if not fh_is_oos:
             if not estimator_instance.get_tag("capability:pred_int:insample"):
-                return None
+                if estimator_instance.get_tag("capability:pred_int"):
+                    with pytest.raises(
+                        NotImplementedError,
+                        match="can not perform in-sample prediction",
+                    ):
+                        estimator_instance.predict_interval()
+                    return None
 
         if estimator_instance.get_tag("capability:pred_int"):
             y_pred_int = estimator_instance.predict_interval()
@@ -284,20 +319,20 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         y_train, _, X_train, X_test = temporal_train_test_split(y, X, fh=fh)
 
-        try:
-            estimator_instance.fit(y_train, X_train, fh=fh)
-            y_pred = estimator_instance.predict(X=X_test)
-            cutoff = get_cutoff(y_train, return_index=True)
-            _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
-            _assert_correct_columns(y_pred, y_train)
+        estimator_instance.fit(y_train, X_train, fh=fh)
+        y_pred = estimator_instance.predict(X=X_test)
+        cutoff = get_cutoff(y_train, return_index=True)
+        _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
+        _assert_correct_columns(y_pred, y_train)
 
-            if estimator_instance.get_tag("capability:pred_int"):
-                y_pred_int = estimator_instance.predict_interval(X=X_test)
-                _assert_correct_pred_time_index(y_pred_int.index, cutoff, fh)
-                y_pred_q = estimator_instance.predict_quantiles(X=X_test)
-                _assert_correct_pred_time_index(y_pred_q.index, cutoff, fh)
-        except NotImplementedError:
-            pass
+        if estimator_instance.get_tag("capability:pred_int"):
+            y_pred_int = estimator_instance.predict_interval(X=X_test)
+            _assert_correct_pred_time_index(y_pred_int.index, cutoff, fh)
+            y_pred_q = estimator_instance.predict_quantiles(X=X_test)
+            _assert_correct_pred_time_index(y_pred_q.index, cutoff, fh)
+        else:
+            with pytest.raises(NotImplementedError, match="prediction intervals"):
+                estimator_instance.predict_interval(X=X_test)
 
     @pytest.mark.parametrize(
         "index_fh_comb", VALID_INDEX_FH_COMBINATIONS, ids=index_fh_comb_names
@@ -319,18 +354,24 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         steps = -np.arange(len(y_train))
         fh = _make_fh(cutoff, steps, fh_type, is_relative)
 
-        try:
+        can_pr_int = estimator_instance.get_tag("capability:pred_int")
+        can_pr_iins = estimator_instance.get_tag("capability:pred_int:insample")
+        can_pr_iins = can_pr_int and can_pr_iins
+        can_pr_iins = can_pr_iins and estimator_instance.get_tag("capability:insample")
+        if can_pr_iins:
             estimator_instance.fit(y_train, fh=fh)
             y_pred = estimator_instance.predict()
             _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
 
-            if estimator_instance.get_tag("capability:pred_int:insample"):
+            y_pred_int = estimator_instance.predict_interval()
+            _assert_correct_pred_time_index(y_pred_int.index, cutoff, fh)
+            y_pred_q = estimator_instance.predict_quantiles()
+            _assert_correct_pred_time_index(y_pred_q.index, cutoff, fh)
+        else:
+            pattern = re.compile(r"in-sample|prediction intervals")
+            with pytest.raises(NotImplementedError, match=pattern):
+                estimator_instance.fit(y_train, fh=fh)
                 y_pred_int = estimator_instance.predict_interval()
-                _assert_correct_pred_time_index(y_pred_int.index, cutoff, fh)
-                y_pred_q = estimator_instance.predict_quantiles()
-                _assert_correct_pred_time_index(y_pred_q.index, cutoff, fh)
-        except NotImplementedError:
-            pass
 
     def test_predict_series_name_preserved(self, estimator_instance):
         """Test that fit/predict preserves name attribute and type of pd.Series."""
@@ -898,3 +939,249 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         cutoff = get_cutoff(y_train, return_index=True)
         _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
         _assert_correct_columns(y_pred, y_train)
+
+
+class TestAllGlobalForecasters(TestAllObjects):
+    """Module level tests for all global forecasters."""
+
+    estimator_type_filter = "global_forecaster"
+
+    def test_global_forecasting_tag(self, estimator_class):
+        global_forecasting_tag = estimator_class.get_class_tag(
+            "capability:global_forecasting"
+        )
+        assert global_forecasting_tag is True
+
+    def test_pridect_signature(self, estimator_class):
+        sig = signature(estimator_class.predict)
+        assert "X" in sig.parameters.keys()
+        assert "y" in sig.parameters.keys()
+
+    def _check_global_tag(self, estimator_instance):
+        global_forecast = estimator_instance.get_tag(
+            "capability:global_forecasting", tag_value_default=False, raise_error=False
+        )
+        return global_forecast
+
+    def test_global_forecasting_multiindex_hier(self, estimator_instance):
+        if not self._check_global_tag(estimator_instance):
+            return None
+
+        max_prediction_length = 3
+        fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
+        X_train, y_train, X_test, y_test = self._multiindex_hier_data(
+            max_prediction_length
+        )
+        estimator_instance.fit(y_train, X_train, fh=fh)
+
+        # remove max_prediction_length from the end of y_test
+        y_pred = estimator_instance.predict(fh, X_test, y_test)
+
+        self._multiindex_check_time_index(y_test, y_pred, fh)
+        _assert_correct_columns(y_pred, y_test)
+
+        self._check_consistency(y_test, y_pred)
+
+    def test_global_forecasting_multiindex(self, estimator_instance):
+        if not self._check_global_tag(estimator_instance):
+            return None
+
+        max_prediction_length = 3
+        fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
+        X_train, y_train, X_test, y_test = self._multiindex_data(max_prediction_length)
+
+        estimator_instance.fit(y_train, X_train, fh=fh)
+
+        y_pred = estimator_instance.predict(fh, X_test, y_test)
+
+        self._multiindex_check_time_index(y_test, y_pred, fh)
+        _assert_correct_columns(y_pred, y_test)
+
+        self._check_consistency(y_test, y_pred)
+
+    @pytest.mark.parametrize("n_columns", [1, 10])
+    def test_global_forecasting_series(self, estimator_instance, n_columns):
+        if not self._check_global_tag(estimator_instance):
+            return None
+
+        from sktime.utils._testing.series import _make_series
+
+        data = _make_series(n_columns=n_columns)
+        y_train = data
+
+        max_prediction_length = 3
+        fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
+
+        estimator_instance.fit(y=y_train, fh=fh)
+
+        # remove max_prediction_length from the end of y_train
+        y_test = self._remove_last_n(
+            _make_series(n_columns=n_columns), max_prediction_length
+        )
+        y_test.rename({0: "renamed"})
+        y_pred = estimator_instance.predict(fh, y=y_test)
+
+        cutoff = get_cutoff(y_test, return_index=True)
+        _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
+        _assert_correct_columns(y_pred, y_test)
+
+        self._check_consistency(y_test, y_pred)
+
+    def test_global_forecasting_hier_series(self, estimator_instance):
+        if not self._check_global_tag(estimator_instance):
+            return None
+
+        max_prediction_length = 3
+        fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
+        X_train, y_train, X_test, y_test = self._multiindex_hier_data(
+            max_prediction_length
+        )
+        estimator_instance.fit(y_train, X_train, fh=fh)
+
+        # pass only the last series with non-hierarchical index
+        last_index = y_test.index[-1]
+        ins_index = last_index[:-1]
+        y_test = y_test.loc[ins_index, :]
+        X_test = X_test.loc[ins_index, :]
+
+        y_pred = estimator_instance.predict(fh, y=y_test, X=X_test)
+
+        cutoff = get_cutoff(y_test, return_index=True)
+        _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
+        _assert_correct_columns(y_pred, y_test)
+
+        self._check_consistency(y_test, y_pred)
+
+    def test_global_forecasting_different_timestamps(self, estimator_instance):
+        if not self._check_global_tag(estimator_instance):
+            return None
+
+        max_prediction_length = 3
+        fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
+        X_train, y_train, X_test, y_test = self._multiindex_data(max_prediction_length)
+        estimator_instance.fit(y_train, X_train, fh=fh)
+
+        time_gap = pd.Timedelta(3650, "D")
+        X_test.index = pd.MultiIndex.from_arrays(
+            [
+                X_test.index.get_level_values(0),
+                X_test.index.get_level_values(-1) + time_gap,
+            ]
+        )
+        y_test.index = pd.MultiIndex.from_arrays(
+            [
+                y_test.index.get_level_values(0),
+                y_test.index.get_level_values(-1) + time_gap,
+            ]
+        )
+        y_pred = estimator_instance.predict(fh, X_test, y_test)
+
+        self._multiindex_check_time_index(y_test, y_pred, fh)
+        _assert_correct_columns(y_pred, y_test)
+
+        self._check_consistency(y_test, y_pred)
+
+    def test_global_forecasting_no_X(self, estimator_instance):
+        if not self._check_global_tag(estimator_instance):
+            return None
+
+        max_prediction_length = 3
+        fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
+        _, y_train, _, y_test = self._multiindex_data(max_prediction_length)
+
+        estimator_instance.fit(y=y_train, fh=fh)
+
+        y_pred = estimator_instance.predict(fh, y=y_test)
+
+        self._multiindex_check_time_index(y_test, y_pred, fh)
+        _assert_correct_columns(y_pred, y_test)
+
+        self._check_consistency(y_test, y_pred)
+
+    def _remove_last_n(self, data, n):
+        if isinstance(data.index, pd.MultiIndex):
+            len_levels = len(data.index.names)
+            data = data.groupby(level=list(range(len_levels - 1))).apply(
+                lambda x: x.droplevel(list(range(len_levels - 1))).iloc[:-n]
+            )
+        else:
+            data = data.iloc[:-n]
+        return data
+
+    def _multiindex_data(self, max_prediction_length, data_length=100):
+        from sktime.utils._testing.hierarchical import _make_hierarchical
+
+        data = _make_hierarchical(
+            (500, 1),
+            n_columns=2,
+            max_timepoints=data_length,
+            min_timepoints=data_length,
+        )
+        data = data.droplevel(1)
+        from sklearn.model_selection import train_test_split
+
+        x = data["c0"].to_frame()
+        y = data["c1"].to_frame()
+        X_train, _, y_train, _ = train_test_split(
+            x, y, test_size=0.1, train_size=0.9, shuffle=False
+        )
+        _, X_test, _, y_test = train_test_split(
+            x, y, test_size=0.2, train_size=0.8, shuffle=False
+        )
+
+        # remove max_prediction_length from the end of y_test
+        y_test = self._remove_last_n(y_test, max_prediction_length)
+        return X_train, y_train, X_test, y_test
+
+    def _multiindex_hier_data(self, max_prediction_length, data_length=100):
+        from sktime.utils._testing.hierarchical import _make_hierarchical
+
+        data = _make_hierarchical(
+            (5, 100),
+            n_columns=2,
+            max_timepoints=data_length,
+            min_timepoints=data_length,
+        )
+        from sklearn.model_selection import train_test_split
+
+        x = data["c0"].to_frame()
+        y = data["c1"].to_frame()
+        X_train, _, y_train, _ = train_test_split(
+            x, y, test_size=0.1, train_size=0.9, shuffle=False
+        )
+        _, X_test, _, y_test = train_test_split(
+            x, y, test_size=0.2, train_size=0.8, shuffle=False
+        )
+
+        # remove max_prediction_length from the end of y_test
+        y_test = self._remove_last_n(y_test, max_prediction_length)
+        return X_train, y_train, X_test, y_test
+
+    def _multiindex_check_time_index(self, y_test, y_pred, fh):
+        cutoff = get_cutoff(y_test, return_index=True)
+        index_pred = y_pred.iloc[
+            : 1 if isinstance(fh, int) else len(fh)
+        ].index.get_level_values(-1)
+        _assert_correct_pred_time_index(index_pred, cutoff, fh)
+
+    def _check_consistency(self, y_test, y_pred):
+        from sktime.datatypes import mtype
+
+        if isinstance(y_test, pd.Series):
+            assert isinstance(y_pred, pd.Series)
+            assert check_is_mtype(y_pred, "pd.Series", msg_return_dict="list")
+        elif isinstance(y_test, pd.DataFrame):
+            assert isinstance(y_pred, pd.DataFrame)
+            assert check_is_mtype(
+                y_pred,
+                mtype(y_test, exclude_mtypes=["pd_DataFrame_Table"]),
+                msg_return_dict="list",
+            )
+            msg = (
+                "returned columns after predict are not as expected. "
+                f"expected: {y_test.columns}. Found: {y_pred.columns}"
+            )
+            assert np.all(y_pred.columns == y_test.columns), msg
+
+        # check consistency of forecast hierarchy with training data
+        assert set(y_test.index.names).issubset(y_pred.index.names)

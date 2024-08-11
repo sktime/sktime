@@ -20,7 +20,7 @@ State:
 __all__ = [
     "BaseRegressor",
 ]
-__author__ = ["mloning", "fkiraly"]
+__author__ = ["mloning", "fkiraly", "ksharma6"]
 
 import time
 
@@ -58,6 +58,8 @@ class BaseRegressor(BasePanelMixin):
         "capability:train_estimate": False,
         "capability:contractable": False,
         "capability:multithreading": False,
+        "authors": "sktime developers",  # author(s) of the object
+        "maintainers": "sktime developers",  # current maintainer(s) of the object
     }
 
     # convenience constant to control which metadata of input data
@@ -67,6 +69,7 @@ class BaseRegressor(BasePanelMixin):
         "has_nans",
         "is_univariate",
         "is_equal_length",
+        "feature_kind",
     ]
 
     # attribute name where vectorized estimators are stored
@@ -95,17 +98,18 @@ class BaseRegressor(BasePanelMixin):
     def __rmul__(self, other):
         """Magic * method, return concatenated RegressorPipeline, transformers on left.
 
-        Overloaded multiplication operation for regressors. Implemented for `other`
-        being a transformer, otherwise returns `NotImplemented`.
+        Overloaded multiplication operation for regressors. Implemented for ``other``
+        being a transformer, otherwise returns ``NotImplemented``.
 
         Parameters
         ----------
-        other: `sktime` transformer, must inherit from BaseTransformer
-            otherwise, `NotImplemented` is returned
+        other: ``sktime`` transformer, must inherit from BaseTransformer
+            otherwise, ``NotImplemented`` is returned
 
         Returns
         -------
-        RegressorPipeline object, concatenation of `other` (first) with `self` (last).
+        RegressorPipeline object, concatenation of ``other`` (first) with ``self``
+        (last).
         """
         from sktime.regression.compose import RegressorPipeline
         from sktime.transformations.base import BaseTransformer
@@ -127,6 +131,27 @@ class BaseRegressor(BasePanelMixin):
                 return RegressorPipeline(regressor=self, transformers=[other])
         elif is_sklearn_transformer(other):
             return TabularToSeriesAdaptor(other) * self
+        else:
+            return NotImplemented
+
+    def __or__(self, other):
+        """Magic | method, return MultiplexRegressor.
+
+        Implemented for `other` being either a MultiplexRegressor or a regressor.
+
+        Parameters
+        ----------
+        other: `sktime` regressor or sktime MultiplexRegressor
+
+        Returns
+        -------
+        MultiplexRegressor object
+        """
+        from sktime.regression.compose import MultiplexRegressor
+
+        if isinstance(other, MultiplexRegressor) or isinstance(other, BaseRegressor):
+            multiplex_self = MultiplexRegressor([self])
+            return multiplex_self | other
         else:
             return NotImplemented
 
@@ -174,8 +199,9 @@ class BaseRegressor(BasePanelMixin):
         start = int(round(time.time() * 1000))
 
         # check and convert y for multioutput vectorization
-        y, y_metadata = self._check_y(y)
+        y, y_metadata, y_inner_mtype = self._check_y(y, return_to_mtype=True)
         self._y_metadata = y_metadata
+        self._y_inner_mtype = y_inner_mtype
         self._is_vectorized = isinstance(y, VectorizedDF)
 
         if self._is_vectorized:
@@ -290,13 +316,17 @@ class BaseRegressor(BasePanelMixin):
 
         Returns
         -------
-        float, R-squared score of predict(X) vs y
+        float (default) or 1D np.array of float
+            R-squared score of predict(X) vs y
+            float if multioutput="uniform_average" or "variance_weighted,
+            or y is univariate;
+            1D np.array if multioutput="raw_values" and y is multivariate
         """
         from sklearn.metrics import r2_score
 
         self.check_is_fitted()
 
-        return r2_score(y, self.predict(X), normalize=True, multioutput=multioutput)
+        return r2_score(y, self.predict(X), multioutput=multioutput)
 
     def _fit(self, X, y):
         """Fit time series regressor to training data.

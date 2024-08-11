@@ -23,7 +23,7 @@ __all__ = [
     "mtype",
 ]
 
-from typing import List, Union
+from typing import Union
 
 import numpy as np
 
@@ -35,7 +35,6 @@ from sktime.datatypes._proba import check_dict_Proba
 from sktime.datatypes._registry import AMBIGUOUS_MTYPES, SCITYPE_LIST, mtype_to_scitype
 from sktime.datatypes._series import check_dict_Series
 from sktime.datatypes._table import check_dict_Table
-from sktime.utils.warnings import warn
 
 # pool convert_dict-s
 check_dict = dict()
@@ -87,14 +86,13 @@ def _coerce_list_of_str(obj, var_name="obj"):
     return obj
 
 
-# todo 0.26.0: change default for msg_return_dict to "dict", update docstring
 def check_is_mtype(
     obj,
-    mtype: Union[str, List[str]],
+    mtype: Union[str, list[str]],
     scitype: str = None,
     return_metadata=False,
     var_name="obj",
-    msg_return_dict=None,
+    msg_return_dict="dict",
 ):
     """Check object for compliance with mtype specification, return metadata.
 
@@ -112,11 +110,18 @@ def check_is_mtype(
         if str, list of str, metadata return dict is subset to keys in return_metadata
     var_name: str, optional, default="obj"
         name of input in error messages
-    msg_return_dict: str, "list" or "dict", optional, default="list"
-        whether returned msg, if returned is a str, dict or list
-        if "list", msg is str if mtype is str, list of str if mtype is list
-        if "dict", msg is dict if mtype is str, list of str if mtype is list,
-        if dict, has with mtype as key and error message for mtype as value
+    msg_return_dict: str, one of ``"list"`` or ``"dict"``, optional, default="dict"
+        whether returned msg, if returned, is a str, dict or list
+
+        * if ``msg_return_dict="list"``,
+          returned ``msg`` is ``str`` if ``mtype`` is ``str``,
+          returned ``msg`` is ``list`` of ``str`` if ``mtype`` is ``list``
+
+        * if ``msg_return_dict="dict"``,
+          returned ``msg`` is ``str`` if ``mtype`` is ``str``,
+          returned ``msg`` is ``dict`` of ``str`` if ``mtype`` is ``list``.
+          If ``dict``, has str in ``mtype`` as key,
+          and error message for mtype as value.
 
     Returns
     -------
@@ -168,16 +173,8 @@ def check_is_mtype(
 
     # initialize loop variables
     if msg_return_dict is None:
-        # todo 0.26.0: remove this warning, and change default to "dict"
-        warn(
-            "From sktime 0.26.0 onwards, msg return of check_is_mtype "
-            "will default to dict if mtype is a list. "
-            "To retain the old behaviour, set msg_return_dict='list' explicitly. "
-            "To move to the new behaviour, set msg_return_dict='dict' explicitly. "
-            "Setting msg_return_dict explicitly will silence the warning."
-        )
-        msg = []
-        msg_return_dict = "list"
+        msg_return_dict = "dict"
+        msg = dict()
     elif msg_return_dict == "list":
         msg = []
     elif msg_return_dict == "dict":
@@ -232,7 +229,10 @@ def check_is_mtype(
     # c. no mtype is found - then return False and all error messages if requested
     else:
         if len(msg) == 1:
-            msg = msg[0]
+            if msg_return_dict == "list":
+                msg = msg[0]
+            else:
+                msg = list(msg.values())[0]
 
         return _ret(False, msg, None, return_metadata)
 
@@ -280,7 +280,7 @@ def check_raise(obj, mtype: str, scitype: str = None, var_name: str = "input"):
 
 def mtype(
     obj,
-    as_scitype: Union[str, List[str]] = None,
+    as_scitype: Union[str, list[str]] = None,
     exclude_mtypes=AMBIGUOUS_MTYPES,
 ):
     """Infer the mtype of an object considered as a specific scitype.
@@ -362,7 +362,7 @@ def mtype(
 
 def check_is_scitype(
     obj,
-    scitype: Union[str, List[str]],
+    scitype: Union[str, list[str]],
     return_metadata=False,
     var_name="obj",
     exclude_mtypes=AMBIGUOUS_MTYPES,
@@ -415,6 +415,7 @@ def check_is_scitype(
             "has_nans": bool, True iff the panel contains NaN values
         For scitype "Alignment":
             currently none
+
     Raises
     ------
     TypeError if scitype input argument is not of expected type

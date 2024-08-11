@@ -7,8 +7,12 @@ The :mod:`sktime.transformations` module contains classes for data
 transformations.
 
 All (simple) transformers in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
-using ``estimator_types="regressor"``, optionally filtered by tags.
+using ``estimator_types="transformer"``, optionally filtered by tags.
 Valid tags can be listed using ``sktime.registry.all_tags``.
+
+A full table with tag based search is also available on the
+:doc:`Estimator Search Page </estimator_overview>`
+(select "transformere" in the "Estimator type" dropdown).
 
 For pairwise transformers (time series distances, kernels), instead see :ref:`_transformations_pairwise_ref`.
 
@@ -137,6 +141,14 @@ These transformers extract simple summary features.
     RandomIntervalFeatureExtractor
     FittedParamExtractor
 
+.. currentmodule:: sktime.transformations.series.adi_cv
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ADICVTransformer
+
 Shapelets, wavelets, and convolution
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -148,6 +160,7 @@ Shapelets, wavelets, and convolution
 
     ShapeletTransform
     RandomShapeletTransform
+    ShapeletTransformPyts
 
 .. currentmodule:: sktime.transformations.panel.rocket
 
@@ -188,9 +201,7 @@ Dictionary-based features
     :toctree: auto_generated/
     :template: class.rst
 
-    PAA
     SFA
-    SAX
 
 Moment-based features
 ~~~~~~~~~~~~~~~~~~~~~
@@ -225,6 +236,14 @@ These transformers extract larger collections of features.
 
     Catch22
 
+.. currentmodule:: sktime.transformations.panel.catch22wrapper
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Catch22Wrapper
+
 Series-to-series transformers
 -----------------------------
 
@@ -242,6 +261,7 @@ Lagging
     :template: class.rst
 
     Lag
+    ReducerTransform
 
 Element-wise transforms
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -305,13 +325,6 @@ Detrending and Decomposition
     Deseasonalizer
     ConditionalDeseasonalizer
     STLTransformer
-
-.. currentmodule:: sktime.transformations.series.detrend.mstl
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
     MSTL
 
 .. currentmodule:: sktime.transformations.series.vmd
@@ -383,6 +396,14 @@ Filtering and denoising
 
     ThetaLinesTransformer
 
+.. currentmodule:: sktime.transformations.series.bollinger
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Bollinger
+
 Differencing, slope, kinematics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -446,6 +467,31 @@ Binning, sampling and segmentation
 
     DilationMappingTransformer
 
+.. currentmodule:: sktime.transformations.series.paa
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    PAA
+
+.. currentmodule:: sktime.transformations.series.sax
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SAX
+
+.. currentmodule:: sktime.transformations.panel.dictionary_based
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    PAAlegacy
+    SAXlegacy
+
 Missing value treatment
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -455,8 +501,15 @@ Missing value treatment
     :toctree: auto_generated/
     :template: class.rst
 
-    DropNA
     Imputer
+
+.. currentmodule:: sktime.transformations.series.dropna
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DropNA
 
 Seasonality and Date-Time Features
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -606,6 +659,20 @@ These transformers subset `X` by time points (`pandas` index or index level) or 
 
     ColumnSelect
     IndexSubset
+
+Adapters to other frameworks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Generic framework adapters that expose other frameworks in the ``sktime`` interface.
+
+.. currentmodule:: sktime.transformations.series.temporian
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TemporianTransformer
+
 
 Panel transformers
 ------------------

@@ -60,6 +60,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
     """
 
     _tags = {
+        "authors": ["mloning", "fkiraly", "indinewton"],
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": True,
         "handles-missing-data": True,
@@ -174,7 +175,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns

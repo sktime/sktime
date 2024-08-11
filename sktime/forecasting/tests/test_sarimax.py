@@ -1,4 +1,5 @@
 """Tests the SARIMAX model."""
+
 __author__ = ["TNTran92", "yarnabrina"]
 
 import pytest
@@ -91,3 +92,19 @@ def test_SARIMAX_multiple_intervals_against_statsmodels():
 
     assert_frame_equal(sktime_pred_int_70, stats_pred_int_70)
     assert_frame_equal(sktime_pred_int_80, stats_pred_int_80)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(SARIMAX),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_SARIMAX_for_exogeneous_features():
+    """Checking when X is passed to predict but not fit"""
+    from sktime.datasets import load_longley
+    from sktime.split import temporal_train_test_split
+
+    y, X = load_longley()
+    y_train, _, _, X_test = temporal_train_test_split(y, X)
+    forecaster = SARIMAX()
+    forecaster.fit(y_train)
+    forecaster.predict(fh=[1, 2, 3, 4], X=X_test)

@@ -5,10 +5,11 @@ __all__ = ["load_from_long_to_dataframe"]
 
 import pandas as pd
 
+from sktime.datasets._readers_writers.utils import get_path
 from sktime.datatypes._panel._convert import from_long_to_nested
 
 
-# TODO: original author didnt add test for this function, for research purposes?
+# TODO: original author didn't add test for this function, for research purposes?
 def load_from_long_to_dataframe(full_file_path_and_name, separator=","):
     """Load data from a long format file into a Pandas DataFrame.
 
@@ -24,6 +25,8 @@ def load_from_long_to_dataframe(full_file_path_and_name, separator=","):
     DataFrame
         A dataframe with sktime-formatted data
     """
+    full_file_path_and_name = get_path(full_file_path_and_name, ".csv")
+
     data = pd.read_csv(full_file_path_and_name, sep=separator, header=0)
     # ensure there are 4 columns in the long_format table
     if len(data.columns) != 4:

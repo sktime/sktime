@@ -13,6 +13,8 @@ the representation is considered "lossy" if the representation is incomplete
     e.g., metadata such as column names are missing
 """
 
+from copy import deepcopy
+
 from sktime.datatypes._registry import mtype_to_scitype
 
 __author__ = ["fkiraly"]
@@ -124,4 +126,5 @@ def get_examples(
         else:
             fixtures[k[2]] = example_dict.get(k)
 
-    return fixtures
+    # deepcopy to avoid side effects
+    return deepcopy(fixtures)

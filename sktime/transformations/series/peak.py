@@ -1,5 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Extract peak/working hour features from datetimeindex."""
+
 __author__ = ["ali-parizad"]
 __all__ = ["PeakTimeFeature"]
 
@@ -85,7 +86,7 @@ class PeakTimeFeature(BaseTransformer):
         first end working hour, the second one determines the second end working hour
         and so on. [working_hour_end1, working_hour_end2, working_hour_end3, ...]
     keep_original_columns :  boolean, optional, default=False
-        If True, keep original columns in main dataframe (X) passed to `.transform()`.
+        If True, keep original columns in main dataframe (X) passed to ``.transform()``.
     keep_original_peaktime_data_columns: boolean, optional, default=False
         If True, keep original peaktime_data dataframe columns including all separate
         peak/working columns, e.g., peak_hour_1, peak_hour_2, peak_week_1,
@@ -176,6 +177,13 @@ class PeakTimeFeature(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["ali-parizad"],
+        "maintainers": ["ali-parizad"],
+        "python_dependencies": "pandas>=1.2.0",  # from DateTimeProperties
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -194,7 +202,6 @@ class PeakTimeFeature(BaseTransformer):
         "transform-returns-same-time-index": True,
         "enforce_index_type": [pd.DatetimeIndex, pd.PeriodIndex],
         "skip-inverse-transform": True,
-        "python_dependencies": "pandas>=1.2.0",  # from DateTimeProperties
     }
 
     def __init__(
@@ -241,6 +248,7 @@ class PeakTimeFeature(BaseTransformer):
         """Transform X and return a transformed version.
 
         private _transform containing the core logic, called from transform
+
         Parameters
         ----------
         X : pd.Series or pd.DataFrame
@@ -288,7 +296,9 @@ class PeakTimeFeature(BaseTransformer):
         df = self._extract_peaktime_features(calendar_features, datetime_freq)
 
         if self.keep_original_columns:
-            Xt = pd.concat([X, df], axis=1, copy=True)
+            to_concat = [X, df]
+            to_concat = [df for df in to_concat if not df.empty]
+            Xt = pd.concat(to_concat, axis=1, copy=True)
         else:
             Xt = df
 
@@ -440,8 +450,9 @@ class PeakTimeFeature(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {
             "peak_day_start": [1, 4],

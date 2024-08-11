@@ -1,6 +1,8 @@
 """Rocket transformers."""
+
 __all__ = [
     "Rocket",
+    "RocketPyts",
     "MiniRocket",
     "MiniRocketMultivariate",
     "MiniRocketMultivariateVariable",
@@ -8,9 +10,16 @@ __all__ = [
     "MultiRocketMultivariate",
 ]
 
-from ._minirocket import MiniRocket
-from ._minirocket_multivariate import MiniRocketMultivariate
-from ._minirocket_multivariate_variable import MiniRocketMultivariateVariable
-from ._multirocket import MultiRocket
-from ._multirocket_multivariate import MultiRocketMultivariate
-from ._rocket import Rocket
+from sktime.transformations.panel.rocket._minirocket import MiniRocket
+from sktime.transformations.panel.rocket._minirocket_multivariate import (
+    MiniRocketMultivariate,
+)
+from sktime.transformations.panel.rocket._minirocket_multivariate_variable import (
+    MiniRocketMultivariateVariable,
+)
+from sktime.transformations.panel.rocket._multirocket import MultiRocket
+from sktime.transformations.panel.rocket._multirocket_multivariate import (
+    MultiRocketMultivariate,
+)
+from sktime.transformations.panel.rocket._rocket import Rocket
+from sktime.transformations.panel.rocket._rocket_pyts import RocketPyts

@@ -1,4 +1,5 @@
 """Tests for classes in _classes module."""
+
 from inspect import getmembers, isclass
 
 import numpy as np
@@ -11,9 +12,11 @@ from sktime.performance_metrics.forecasting import (
     _classes,
     make_forecasting_scorer,
 )
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_panel
 from sktime.utils._testing.series import _make_series
+from sktime.utils.parallel import _get_parallel_test_fixtures
 
 metric_classes = getmembers(_classes, isclass)
 
@@ -24,7 +27,14 @@ names, metrics = zip(*metric_classes)
 
 MULTIOUTPUT = ["uniform_average", "raw_values", "numpy"]
 
+# list of parallelization backends to test
+BACKENDS = _get_parallel_test_fixtures("config")
 
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 @pytest.mark.parametrize("n_columns", [1, 2])
 @pytest.mark.parametrize("multioutput", MULTIOUTPUT)
 @pytest.mark.parametrize("metric", metrics, ids=names)
@@ -76,12 +86,17 @@ def test_metric_output_direct(metric, multioutput, n_columns):
     assert np.allclose(res[1], res[2])
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+@pytest.mark.parametrize("backend", BACKENDS)
 @pytest.mark.parametrize("n_columns", [1, 2])
 @pytest.mark.parametrize(
     "multilevel", ["uniform_average", "uniform_average_time", "raw_values"]
 )
 @pytest.mark.parametrize("multioutput", MULTIOUTPUT)
-def test_metric_hierarchical(multioutput, multilevel, n_columns):
+def test_metric_hierarchical(multioutput, multilevel, n_columns, backend):
     """Test hierarchical input for metrics."""
     # create numpy weights based on n_columns
     if multioutput == "numpy":
@@ -94,6 +109,7 @@ def test_metric_hierarchical(multioutput, multilevel, n_columns):
     y_true = _make_hierarchical(random_state=42, n_columns=n_columns)
 
     metric = MeanSquaredError(multioutput=multioutput, multilevel=multilevel)
+    metric.set_config(**backend)
 
     res = metric(
         y_true=y_true,
@@ -120,6 +136,10 @@ def test_metric_hierarchical(multioutput, multilevel, n_columns):
             assert len(res) == len(y_true.columns)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 @pytest.mark.parametrize("greater_is_better", [True, False])
 def test_custom_metric(greater_is_better):
     """Test custom metric constructor, integration _DynamicForecastingErrorMetric."""
@@ -148,6 +168,10 @@ def test_custom_metric(greater_is_better):
     check_estimator(fc_scorer, raise_exceptions=True)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 @pytest.mark.parametrize("n_columns", [1, 2])
 @pytest.mark.parametrize("multioutput", MULTIOUTPUT)
 @pytest.mark.parametrize("metric", metrics, ids=names)
@@ -183,10 +207,15 @@ def test_metric_output_by_instance(metric, multioutput, n_columns):
     assert (res.index == y_true.index).all()
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+@pytest.mark.parametrize("backend", BACKENDS)
 @pytest.mark.parametrize("n_columns", [1, 2])
 @pytest.mark.parametrize("multilevel", ["uniform_average", "raw_values"])
 @pytest.mark.parametrize("multioutput", MULTIOUTPUT)
-def test_metric_hierarchical_by_index(multioutput, multilevel, n_columns):
+def test_metric_hierarchical_by_index(multioutput, multilevel, n_columns, backend):
     """Test hierarchical input for metrics."""
     # create numpy weights based on n_columns
     if multioutput == "numpy":
@@ -199,6 +228,7 @@ def test_metric_hierarchical_by_index(multioutput, multilevel, n_columns):
     y_true = _make_hierarchical(random_state=42, n_columns=n_columns)
 
     metric = MeanSquaredError(multioutput=multioutput, multilevel=multilevel)
+    metric.set_config(**backend)
 
     res = metric.evaluate_by_index(
         y_true=y_true,
@@ -222,6 +252,10 @@ def test_metric_hierarchical_by_index(multioutput, multilevel, n_columns):
     assert set(expected_index) == set(found_index)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 @pytest.mark.parametrize("metric", metrics, ids=names)
 def test_uniform_average_time(metric):
     """Tests that uniform_average_time indeed ignores index."""
@@ -248,3 +282,30 @@ def test_uniform_average_time(metric):
     )
 
     assert np.allclose(res, res_noix)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+@pytest.mark.parametrize("metric", metrics, ids=names)
+def test_metric_weights(metric):
+    """Test that weights are correctly applied to the metric."""
+    y_true = np.array([3, -0.5, 2, 7, 2])
+    y_pred = np.array([2.5, 0.5, 2, 8, 2.25])
+    wts = np.array([0.1, 0.2, 0.1, 0.3, 2.4])
+
+    y_kwargs = {
+        "y_true": y_true,
+        "y_pred": y_pred,
+        "y_pred_benchmark": y_true,
+        "y_train": y_true,
+    }
+
+    metric_obj = metric()
+    if metric_obj(**y_kwargs) == metric_obj(sample_weight=wts, **y_kwargs):
+        raise ValueError(f"Metric {metric} does not handle sample_weight correctly")
+
+    # wt_metr = metric(sample_weight=wts)
+    # res_wt = wt_metr(y_true, y_pred)
+    # assert np.allclose(res_wt, metric_obj(y_true, y_pred, sample_weight=wts))

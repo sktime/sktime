@@ -9,7 +9,7 @@ Documentation
 
    installation
    tutorials
-   user_guide
+   examples
    estimator_overview
    glossary
    changelog
@@ -39,11 +39,11 @@ Documentation
     .. grid-item-card::
         :text-align: center
 
-        Tutorials
+        Video tutorials
 
         ^^^
 
-        `sktime` tutorials.
+        ``sktime`` video tutorials.
 
         +++
 
@@ -57,20 +57,20 @@ Documentation
     .. grid-item-card::
         :text-align: center
 
-        User Guide
+        Notebook Examples
 
         ^^^
 
-        `sktime` user guide.
+        Usage examples in jupyter notebooks.
 
         +++
 
-        .. button-ref:: user_guide
+        .. button-ref:: examples
             :color: primary
             :click-parent:
             :expand:
 
-            User Guide
+            Notebook Examples
 
     .. grid-item-card::
         :text-align: center
@@ -79,7 +79,7 @@ Documentation
 
         ^^^
 
-        Overview of all estimators in `sktime`.
+        Overview of all estimators in ``sktime``.
 
         +++
 
@@ -97,7 +97,7 @@ Documentation
 
         ^^^
 
-        Glossary of common terms and API elements in `sktime`.
+        Glossary of common terms and API elements in ``sktime``.
 
         +++
 
@@ -133,7 +133,7 @@ Documentation
 
         ^^^
 
-        Software related to `sktime` and time series.
+        Software related to ``sktime`` and time series.
 
         +++
 

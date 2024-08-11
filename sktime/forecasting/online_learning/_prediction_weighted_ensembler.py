@@ -21,6 +21,12 @@ class _PredictionWeightedEnsembler:
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["magittan"],
+        "maintainers": ["magittan"],
+        # estimator type
+        # --------------
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,

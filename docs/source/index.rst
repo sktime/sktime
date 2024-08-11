@@ -6,7 +6,13 @@ Welcome to sktime
 
 A unified framework for machine learning with time series.
 
-.. topic:: Register as a user, or voter for sktime committees!
+.. topic:: Register as a voter or candidate for the 2024 council elections!
+
+    Represent the community of users and developers,
+    and help shape the future of sktime. Deadline Sep 22.
+    `Register here <https://github.com/sktime/elections>`_
+
+.. topic:: Register as a user!
 
     Prioritized bugfixes, shape the tech roadmap and governance policy.
     `Register here <https://forms.gle/eVuzrCjKDRupxawL7>`_
@@ -43,6 +49,7 @@ Contents
    get_started
    users
    installation
+   estimator_overview
    api_reference
    get_involved
    developers
@@ -73,11 +80,11 @@ Contents
     .. grid-item-card::
         :text-align: center
 
-        User Guide
+        Documentation
 
         ^^^
 
-        Find user documentation.
+        User documentation.
 
         +++
 
@@ -86,7 +93,7 @@ Contents
             :click-parent:
             :expand:
 
-            User Guide
+            Documentation
 
     .. grid-item-card::
         :text-align: center
@@ -105,6 +112,24 @@ Contents
             :expand:
 
             Installation
+
+    .. grid-item-card::
+        :text-align: center
+
+        Estimator Overview
+
+        ^^^
+
+        Overview of all estimators in ``sktime``.
+
+        +++
+
+        .. button-ref:: estimator_overview
+            :color: primary
+            :click-parent:
+            :expand:
+
+            Estimator Overview
 
     .. grid-item-card::
         :text-align: center

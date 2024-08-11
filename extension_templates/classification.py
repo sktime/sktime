@@ -33,16 +33,25 @@ Testing - required for sktime test framework and check_estimator usage:
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
-import numpy as np
+
+# todo: write an informative docstring for the file or module, remove the above
+# todo: add an appropriate copyright notice for your estimator
+#       estimators contributed to sktime should have the copyright notice at the top
+#       estimators of your own do not need to have permissive or BSD-3 copyright
+
+# todo: uncomment the following line, enter authors' GitHub IDs
+# __author__ = [authorGitHubID, anotherAuthorGitHubID]
 
 from sktime.classification.base import BaseClassifier
 
 # todo: add any necessary imports here
 
-# todo: if any imports are sktime soft dependencies:
+# todo: for imports of sktime soft dependencies:
 # make sure to fill in the "python_dependencies" tag with the package import name
+# import soft dependencies only inside methods of the class, not at the top of the file
 
 
+# todo: change class name and write docstring
 class MyTimeSeriesClassifier(BaseClassifier):
     """Custom time series classifier. todo: write docstring.
 
@@ -70,6 +79,25 @@ class MyTimeSeriesClassifier(BaseClassifier):
     # optional todo: override base class estimator default tags here if necessary
     # these are the default values, only add if different to these.
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["author1", "author2"],  # authors, GitHub handles
+        "maintainers": ["maintainer1", "maintainer2"],  # maintainers, GitHub handles
+        # author = significant contribution to code at some point
+        #     if interfacing a 3rd party estimator, ensure to give credit to the
+        #     authors of the interfaced estimator
+        # maintainer = algorithm maintainer role, "owner" of the sktime class
+        #     for 3rd party interfaces, the scope is the sktime class only
+        # specify one or multiple authors and maintainers
+        # remove maintainer tag if maintained by sktime core team
+        #
+        "python_version": None,  # PEP 440 python version specifier to limit versions
+        "python_dependencies": None,  # PEP 440 python dependencies specifier,
+        # e.g., "numba>0.53", or a list, e.g., ["numba>0.53", "numpy>=1.19.0"]
+        # delete if no python dependencies or version limitations
+        #
+        # estimator tags
+        # --------------
         "X_inner_mtype": "numpy3D",  # which type do _fit/_predict accept, usually
         "y_inner_mtype": "numpy1D",  # which type do _fit/_predict return, usually
         # this is either "numpy3D", "pd-multiindex" or "nested_univ" (nested df). Other
@@ -79,9 +107,9 @@ class MyTimeSeriesClassifier(BaseClassifier):
         "capability:unequal_length": False,
         "capability:missing_values": False,
         "capability:train_estimate": False,
+        "capability:feature_importance": False,
         "capability:contractable": False,
         "capability:multithreading": False,
-        "python_version": None,  # PEP 440 python version specifier to limit versions
     }
 
     # todo: add any hyper-parameters and components to constructor
@@ -94,6 +122,9 @@ class MyTimeSeriesClassifier(BaseClassifier):
         self.parama = parama
         self.paramb = paramb
         self.paramc = paramc
+        # IMPORTANT: the self.params should never be overwritten or mutated from now on
+        # for handling defaults etc, write to other attributes, e.g., self._parama
+        # for estimators, initialize a clone, e.g., self.est_ = est.clone()
 
         # leave this as is
         super().__init__()
@@ -194,7 +225,7 @@ class MyTimeSeriesClassifier(BaseClassifier):
     # todo: consider implementing this, optional
     # if you do not implement it, then the default _predict_proba will be called.
     # the default simply calls predict and sets probas to 0 or 1.
-    def _predict_proba(self, X) -> np.ndarray:
+    def _predict_proba(self, X):
         """Predicts labels probabilities for sequences in X.
 
         private _predict_proba containing the core logic, called from predict_proba

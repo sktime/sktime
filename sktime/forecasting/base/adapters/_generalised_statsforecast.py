@@ -1,21 +1,30 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for StatsForecast models."""
+
 from inspect import signature
-from typing import Dict
 from warnings import warn
 
 import pandas
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.utils.adapters.forward import _clone_fitted_params
 
-__all__ = ["_GeneralisedStatsForecastAdapter"]
-__author__ = ["yarnabrina"]
+__all__ = ["_GeneralisedStatsForecastAdapter", "StatsForecastBackAdapter"]
+__author__ = ["yarnabrina", "arnaujc91", "luca-miniati"]
 
 
 class _GeneralisedStatsForecastAdapter(BaseForecaster):
     """Base adapter class for StatsForecast models."""
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["yarnabrina", "arnaujc91"],
+        "maintainers": ["yarnabrina"],
+        "python_version": ">=3.8",
+        "python_dependencies": ["statsforecast"],
+        # estimator type
+        # --------------
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "scitype:y": "univariate",
@@ -23,8 +32,6 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         # "X-y-must-have-same-index": True,  # TODO: need to check (how?)
         # "enforce_index_type": None,  # TODO: need to check (how?)
         "handles-missing-data": False,
-        "python_version": ">=3.8",
-        "python_dependencies": ["statsforecast"],
     }
 
     def __init__(self):
@@ -162,6 +169,9 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
 
         self._forecaster.fit(y_fit_input, X=X_fit_input)
 
+        # clone fitted parameters to self
+        _clone_fitted_params(self, self._forecaster, overwrite=False)
+
         return self
 
     def _predict_in_or_out_of_sample(self, fh, fh_type, X=None, levels=None):
@@ -227,12 +237,12 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
             if isinstance(upper_interval_predictions, pandas.Series):
                 upper_interval_predictions = upper_interval_predictions.to_numpy()
 
-            interval_predictions[
-                (var_name, level, "lower")
-            ] = lower_interval_predictions[horizon_positions]
-            interval_predictions[
-                (var_name, level, "upper")
-            ] = upper_interval_predictions[horizon_positions]
+            interval_predictions[(var_name, level, "lower")] = (
+                lower_interval_predictions[horizon_positions]
+            )
+            interval_predictions[(var_name, level, "upper")] = (
+                upper_interval_predictions[horizon_positions]
+            )
 
         return interval_predictions
 
@@ -357,7 +367,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
 
         return final_interval_predictions
 
-    def _check_supports_pred_int(self) -> Dict[str, bool]:
+    def _check_supports_pred_int(self) -> dict[str, bool]:
         """
         Check if prediction intervals will work with forecaster.
 
@@ -450,6 +460,7 @@ class StatsForecastBackAdapter:
         self.prediction_intervals = None
 
     def __repr__(self):
+        """Representation dunder."""
         return "StatsForecastBackAdapter"
 
     def new(self):
@@ -539,6 +550,7 @@ class StatsForecastBackAdapter:
         return self.format_pred_int("fitted", fitted, pred_int, coverage, level)
 
     def format_pred_int(self, y_pred_name, y_pred, pred_int, coverage, level):
+        """Convert prediction intervals into a StatsForecast-format dictionary."""
         pred_int_prefix = "fitted-" if y_pred_name == "fitted" else ""
 
         pred_int_no_lev = pred_int.droplevel(0, axis=1)
@@ -574,7 +586,7 @@ class StatsForecastBackAdapter:
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 

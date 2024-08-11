@@ -1,7 +1,6 @@
 """Tests for STRAY (Search TRace AnomalY) outlier estimator."""
 
 import warnings
-from typing import Dict
 
 import numpy as np
 import numpy.typing as npt
@@ -130,7 +129,7 @@ class STRAY(BaseTransformer):
         ]
 
         log_alpha = np.log(1 / self.alpha)
-        bound = np.Inf
+        bound = np.inf
 
         for i in range(start, n):
             if gaps[i] > log_alpha * ghat[i]:
@@ -139,7 +138,7 @@ class STRAY(BaseTransformer):
 
         return np.where(outlier_score > bound)[0]
 
-    def _find_outliers_kNN(self, X: npt.ArrayLike, n: int) -> Dict:
+    def _find_outliers_kNN(self, X: npt.ArrayLike, n: int) -> dict:
         """Find outliers using kNN distance with maximum gap.
 
         Parameters

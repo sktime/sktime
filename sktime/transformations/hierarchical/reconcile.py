@@ -73,6 +73,12 @@ class Reconciler(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["ciaran-g", "eenticott-shell", "k1m190r"],
+        "maintainers": "ciaran-g",
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:transform-labels": "None",
@@ -231,8 +237,9 @@ class Reconciler(BaseTransformer):
         params : dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         return [{"method": x} for x in cls.METHOD_LIST]
 

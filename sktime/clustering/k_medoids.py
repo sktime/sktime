@@ -1,7 +1,8 @@
 """Time series kmedoids."""
-__author__ = ["chrisholder", "TonyBagnall"]
 
-from typing import Callable, Union
+__author__ = ["chrisholder", "TonyBagnall"]
+from collections.abc import Callable
+from typing import Union
 
 import numpy as np
 from numpy.random import RandomState
@@ -76,7 +77,12 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
     >>> y_pred = clusterer.predict(X_test)  # doctest: +SKIP
     """
 
-    _tags = {"python_dependencies": "numba"}
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["chrisholder", "TonyBagnall"],
+        "python_dependencies": "numba",
+    }
 
     def __init__(
         self,
@@ -167,7 +173,7 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -175,8 +181,9 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         return {
             "n_clusters": 2,

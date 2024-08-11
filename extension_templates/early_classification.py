@@ -34,9 +34,14 @@ Testing - required for sktime test framework and check_estimator usage:
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
-from typing import Tuple
 
-import numpy as np
+# todo: write an informative docstring for the file or module, remove the above
+# todo: add an appropriate copyright notice for your estimator
+#       estimators contributed to sktime should have the copyright notice at the top
+#       estimators of your own do not need to have permissive or BSD-3 copyright
+
+# todo: uncomment the following line, enter authors' GitHub IDs
+# __author__ = [authorGitHubID, anotherAuthorGitHubID]
 
 from sktime.classification.early_classification import BaseEarlyClassifier
 
@@ -77,6 +82,7 @@ class MyEarlyTimeSeriesClassifier(BaseEarlyClassifier):
         "capability:unequal_length": False,
         "capability:missing_values": False,
         "capability:train_estimate": False,
+        "capability:feature_importance": False,
         "capability:contractable": False,
         "capability:multithreading": False,
     }
@@ -91,6 +97,8 @@ class MyEarlyTimeSeriesClassifier(BaseEarlyClassifier):
         self.parama = parama
         self.paramb = paramb
         self.paramc = paramc
+        # IMPORTANT: the self.params should never be overwritten or mutated from now on
+        # for handling defaults etc, write to other attributes, e.g., self._parama
 
         # leave this as is
         super().__init__()
@@ -145,7 +153,7 @@ class MyEarlyTimeSeriesClassifier(BaseEarlyClassifier):
         #   3. read from self in _fit,  4. pass to interfaced_model.fit in _fit
 
     # todo: implement this, mandatory
-    def _predict(self, X) -> Tuple[np.ndarray, np.ndarray]:
+    def _predict(self, X):
         """Predict labels for sequences in X.
 
         core logic
@@ -175,7 +183,7 @@ class MyEarlyTimeSeriesClassifier(BaseEarlyClassifier):
         # decision to use the returned predictions.
 
     # todo: implement this, mandatory
-    def _update_predict(self, X) -> Tuple[np.ndarray, np.ndarray]:
+    def _update_predict(self, X):
         """Update labels for sequences in X using a larger series length.
 
         core logic
@@ -210,7 +218,7 @@ class MyEarlyTimeSeriesClassifier(BaseEarlyClassifier):
     # todo: consider implementing this, optional
     # if you do not implement it, then the default _predict_proba will be  called.
     # the default simply calls predict and sets probas to 0 or 1.
-    def _predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray]:
+    def _predict_proba(self, X):
         """Predicts labels probabilities for sequences in X.
 
         This method should update state_info with any values necessary to make future
@@ -244,7 +252,7 @@ class MyEarlyTimeSeriesClassifier(BaseEarlyClassifier):
     # todo: consider implementing this, optional
     # if you do not implement it, then the default _update_predict_proba will be called.
     # the default simply calls predict and sets probas to 0 or 1.
-    def _update_predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray]:
+    def _update_predict_proba(self, X):
         """Update labels probabilities for sequences in X using a larger series length.
 
         Uses information from previous decisions stored in state_info. This method
@@ -279,7 +287,7 @@ class MyEarlyTimeSeriesClassifier(BaseEarlyClassifier):
         # decision to use the returned predictions.
 
     # todo: implement this, mandatory
-    def _score(self, X, y) -> Tuple[float, float, float]:
+    def _score(self, X, y):
         """Scores predicted labels against ground truth labels on X.
 
         Parameters

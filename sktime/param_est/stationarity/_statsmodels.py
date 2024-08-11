@@ -53,7 +53,7 @@ class StationarityADF(BaseParamFitter):
         The ADF test statistic, of running ``adfuller`` on ``y`` in ``fit``
     pvalue_ : float : float
         MacKinnon's approximate p-value based on MacKinnon (1994, 2010),
-        obtained when running `adfuller` on ``y`` in ``fit``
+        obtained when running ``adfuller`` on ``y`` in ``fit``
     usedlag_ : int
         The number of lags used in the test.
 
@@ -71,6 +71,7 @@ class StationarityADF(BaseParamFitter):
     """
 
     _tags = {
+        "authors": "fkiraly",
         "X_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for X?
         "scitype:X": "Series",  # which X scitypes are supported natively?
         "capability:missing_values": False,  # can estimator handle missing data?
@@ -133,7 +134,7 @@ class StationarityADF(BaseParamFitter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -141,8 +142,9 @@ class StationarityADF(BaseParamFitter):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
         params2 = {
@@ -158,7 +160,7 @@ class StationarityADF(BaseParamFitter):
 class StationarityKPSS(BaseParamFitter):
     """Test for stationarity via the Kwiatkowski-Phillips-Schmidt-Shin Test.
 
-    Uses ``statsmodels.tsa.stattools.kpss`` as a test for trend-stationairty,
+    Uses ``statsmodels.tsa.stattools.kpss`` as a test for trend-stationarity,
     and derives a boolean statement whether a series is (trend-)stationary.
 
     Also returns test results for the trend-stationarity test as fitted parameters.
@@ -176,7 +178,7 @@ class StationarityKPSS(BaseParamFitter):
         * "n" : no constant, no trend.
 
     nlags : str or int, optional, default="auto". If int, must be positive.
-        Indicates the number of lags to be used internally in `kpss`.
+        Indicates the number of lags to be used internally in ``kpss``.
         If "auto", lags is calculated using the data-dependent method of Hobijn et al
         (1998). See also Andrews (1991), Newey & West (1994), and Schwert (1989).
         If "legacy", uses int(12 * (n / 100)**(1 / 4)) , as outlined in Schwert (1989).
@@ -211,6 +213,7 @@ class StationarityKPSS(BaseParamFitter):
     """
 
     _tags = {
+        "authors": "fkiraly",
         "X_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for X?
         "scitype:X": "Series",  # which X scitypes are supported natively?
         "capability:missing_values": False,  # can estimator handle missing data?
@@ -270,7 +273,7 @@ class StationarityKPSS(BaseParamFitter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -278,8 +281,9 @@ class StationarityKPSS(BaseParamFitter):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
         params2 = {"p_threshold": 0.1, "regression": "ctt", "nlags": 5}

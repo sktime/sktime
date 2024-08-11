@@ -28,7 +28,7 @@ class MatrixProfileClassifier(BaseClassifier):
         An sklearn estimator to be built using the transformed data. Defaults to a
         1-nearest neighbour classifier.
     n_jobs : int, default=1
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``-1`` means using all processors. Currently available for the classifier
         portion only.
     random_state : int or None, default=None
@@ -65,12 +65,17 @@ class MatrixProfileClassifier(BaseClassifier):
     """
 
     _tags = {
-        "capability:multithreading": True,
-        "capability:predict_proba": True,
-        "classifier_type": "distance",
+        # packaging info
+        # --------------
+        "authors": ["MatthewMiddlehurst"],
         # sklearn 1.3.0 has a bug which causes predict_proba to fail
         # see scikit-learn#26768 and sktime#4778
         "python_dependencies": "scikit-learn!=1.3.0",
+        # estimator type
+        # --------------
+        "capability:multithreading": True,
+        "capability:predict_proba": True,
+        "classifier_type": "distance",
     }
 
     def __init__(
@@ -113,9 +118,11 @@ class MatrixProfileClassifier(BaseClassifier):
         """
         self._transformer = MatrixProfile(m=self.subsequence_length)
         self._estimator = _clone_estimator(
-            KNeighborsClassifier(n_neighbors=1)
-            if self.estimator is None
-            else self.estimator,
+            (
+                KNeighborsClassifier(n_neighbors=1)
+                if self.estimator is None
+                else self.estimator
+            ),
             self.random_state,
         )
 
@@ -174,7 +181,7 @@ class MatrixProfileClassifier(BaseClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -185,7 +192,11 @@ class MatrixProfileClassifier(BaseClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        return {"subsequence_length": 4}
+        return [
+            {"subsequence_length": 4},
+            {"subsequence_length": 6, "estimator": KNeighborsClassifier(n_neighbors=3)},
+        ]

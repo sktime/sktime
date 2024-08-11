@@ -30,6 +30,13 @@ test: ## Run unit tests
 	cp setup.cfg ${TEST_DIR}
 	python -m pytest
 
+full_test: ## Run all tests
+	-rm -rf ${TEST_DIR}
+	mkdir -p ${TEST_DIR}
+	cp .coveragerc ${TEST_DIR}
+	cp setup.cfg ${TEST_DIR}
+	python -m pytest --only_changed_modules False
+
 test_without_datasets: ## Run unit tests skipping sktime/datasets
 	-rm -rf ${TEST_DIR}
 	mkdir -p ${TEST_DIR}
@@ -101,4 +108,4 @@ nb: clean
 
 dockertest:
 	docker build -t sktime -f build_tools/docker/$(PYTHON_VERSION).dockerfile .
-	docker run -it --name sktime sktime bash -c "make test"
+	docker run -it --name sktime sktime bash -c "make full_test"

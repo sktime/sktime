@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.proba.base import _BaseTFDistribution
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.utils.dependencies import _check_estimator_deps
 
 
 class TFNormal(_BaseTFDistribution):
@@ -30,6 +30,7 @@ class TFNormal(_BaseTFDistribution):
     """
 
     _tags = {
+        "authors": ["fkiraly"],
         "python_dependencies": "tensorflow_probability",
         "capabilities:approx": ["pdfnorm"],
         "capabilities:exact": ["mean", "var", "energy", "pdf", "log_pdf", "cdf"],
