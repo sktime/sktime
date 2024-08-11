@@ -495,6 +495,8 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                         "widths": [8, 8],
                         "log_interval": -1,
                     },
+                    "train_to_dataloader_params": {"batch_size": 2},
+                    "validation_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
                 },
                 {
@@ -514,6 +516,8 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
+                    "train_to_dataloader_params": {"batch_size": 2},
+                    "validation_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
                 },
             ]
@@ -544,6 +548,8 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
+                    "train_to_dataloader_params": {"batch_size": 2},
+                    "validation_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
                 },
                 {
@@ -565,6 +571,8 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
+                    "train_to_dataloader_params": {"batch_size": 2},
+                    "validation_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
                 },
             ]
@@ -784,6 +792,8 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
+                    "train_to_dataloader_params": {"batch_size": 2},
+                    "validation_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
                     "deterministic": True,  # to pass test_score
                 },
@@ -803,6 +813,8 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
+                    "train_to_dataloader_params": {"batch_size": 2},
+                    "validation_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
                     "deterministic": True,  # to pass test_score
                 },
@@ -826,11 +838,16 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                         "logger": False,
                     },
                     "model_params": {
+                        "cell_type": "GRU",
+                        "rnn_layers": 2,
+                        "hidden_size": 3,
                         "log_interval": -1,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
+                    "train_to_dataloader_params": {"batch_size": 2},
+                    "validation_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
                     "deterministic": True,  # to pass test_score
                 },
@@ -850,6 +867,8 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
+                    "train_to_dataloader_params": {"batch_size": 2},
+                    "validation_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
                     "deterministic": True,  # to pass test_score
                 },
@@ -1066,6 +1085,8 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                         "n_layers": 1,
                         "log_interval": -1,
                     },
+                    "train_to_dataloader_params": {"batch_size": 2},
+                    "validation_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
                 },
                 {
@@ -1086,6 +1107,8 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
+                    "train_to_dataloader_params": {"batch_size": 2},
+                    "validation_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
                 },
             ]
@@ -1116,6 +1139,8 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
+                    "train_to_dataloader_params": {"batch_size": 2},
+                    "validation_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
                 },
                 {
@@ -1137,6 +1162,8 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
+                    "train_to_dataloader_params": {"batch_size": 2},
+                    "validation_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
                 },
             ]
