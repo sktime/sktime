@@ -2,7 +2,6 @@
 
 import pandas as pd
 
-from sktime.datatypes import get_cutoff
 from sktime.forecasting.base import _BaseGlobalForecaster
 
 __author__ = ["benheid", "pranavvp16"]
@@ -14,14 +13,12 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
 
     Parameters
     ----------
-    checkpoint_path : str
-        Path to the checkpoint of the model.
-    fit_strategy : str, default=None
-        Strategy to fit the model. If None, the model is used as it is.
+    checkpoint_path : str, default=None
+        Path to the checkpoint of the model
     context_length : int, default=200
-        Length of the context window.
+        Length of the context window, time points the model with take input as infernce.
     patch_size : int, default=32
-        Size of the patch.
+        Time steps to perform patching with.
     num_samples : int, default=100
         Number of samples to draw.
     map_location : str, default=None
@@ -29,11 +26,11 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
     deterministic : bool, default=False
         Whether to use a deterministic model.
     batch_size : int, default=32
-        Size of the batch.
+        Number of samples in each batch of inference.
 
     Notes
     -----
-    Predictions are made based in forecasting Horizon not on lenght of X_train
+    Predictions are made based on forecasting Horizon not on lenght of X_train
 
     Examples
     --------
@@ -82,6 +79,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         num_feat_dynamic_real=0,
         num_past_feat_dynamic_real=0,
         map_location=None,
+        broadcasting=False,
         deterministic=False,
         batch_size=32,
     ):
@@ -93,8 +91,18 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         self.num_feat_dynamic_real = num_feat_dynamic_real
         self.num_past_feat_dynamic_real = num_past_feat_dynamic_real
         self.map_location = map_location
+        self.broadcasting = broadcasting
         self.deterministic = deterministic
         self.batch_size = batch_size
+
+        if self.broadcasting:
+            self.set_tags(
+                **{
+                    "y_inner_mtype": "pd.DataFrame",
+                    "X_inner_mtype": "pd.DataFrame",
+                    "capability:global_forecasting": False,
+                }
+            )
 
     def _fit(self, y, X, fh):
         # Load model and extract config
@@ -160,28 +168,37 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         target = self._y.columns
         future_length = 0
         feat_dynamic_real = None
-        is_range_index = False
+        pred_df = pd.concat([self._y, self._X], axis=1)
 
         if self._X is not None:
             feat_dynamic_real = self._X.columns
 
-        pred_df = pd.concat([self._y, self._X], axis=1)
+        is_range_index = self.check_range_index(pred_df)
 
-        # Zero shot case
-        if y is None and X is not None:
-            pred_df = self._extend_df(pred_df)
+        # New Time Series is passed
+        if y is not None and X is not None:
+            pred_df = pd.concat([y, X], axis=1)
+            print(pred_df.head(10))
+            is_range_index = self.check_range_index(pred_df)
+
+        elif y is None and X is not None:
+            pred_df = self._extend_df(pred_df, is_range_index=is_range_index)
             future_length = max(fh._values) + 1
 
         # Zero shot case with X
         elif X is not None:
-            pred_df = self._extend_df(pred_df, X)
+            pred_df = self._extend_df(pred_df, X, is_range_index=is_range_index)
             future_length = max(fh._values) + 1
 
+        print(pred_df.head())
         # Check if the index is a range index
         if self.check_range_index(pred_df):
             is_range_index = True
+            print("Range Index Detected")
             # Converts RangeIndex to Dummy DatetimeIndex
             pred_df.index = self.handle_range_index(pred_df.index)
+
+        print(pred_df)
 
         ds_test, df_config = self.create_pandas_dataset(
             pred_df, target, feat_dynamic_real, future_length
@@ -194,7 +211,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
 
         if is_range_index:
             # Get Original RangeIndex Back
-            pred_out = fh.get_expected_pred_idx(self._y, cutoff=self.cutoff + 1)
+            pred_out = fh.get_expected_pred_idx(self._y, cutoff=self.cutoff)
             predictions.index = pred_out
 
         return predictions
@@ -204,9 +221,9 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             pred = forecast.mean_ts
             return pred.rename(target[0])
 
-        def handle_panel_predictions(forecast_iter, df_config):
+        def handle_panel_predictions(forecasts_it, df_config):
             panels = []
-            for forecast in forecast_iter:
+            for forecast in forecasts_it:
                 df = forecast.mean_ts.reset_index()
                 df.columns = [df_config["timepoints"], df_config["target"][0]]
                 df[df_config["item_id"]] = forecast.item_id
@@ -218,7 +235,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
 
         forecasts = list(forecast_iter)
 
-        # Assuming all forecasts are either series or panel type.
+        # Assuming all forecasts_it are either series or panel type.
         if forecasts[0].item_id is None:
             return handle_series_prediction(forecasts[0], df_config["target"])
         else:
@@ -263,12 +280,17 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             df = df.reset_index()
             df.set_index(timepoints, inplace=True)
 
+            freq = self.infer_freq(df.index)
+            print("inside long index")
+            print(df.head(10))
+
             dataset = PandasDataset.from_long_dataframe(
                 df,
                 target=target,
                 feat_dynamic_real=dynamic_features,
                 item_id=item_id,
                 future_length=forecast_horizon,
+                freq=freq,
             )
         else:
             dataset = PandasDataset(
@@ -280,12 +302,18 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
 
         return dataset, df_config
 
-    def _extend_df(self, df, X=None):
-        cutoff = get_cutoff(self._y)
+    def _extend_df(self, df, X=None, is_range_index=False):
         index = self.return_time_index(df)
-        pred_index = pd.date_range(
-            cutoff, periods=max(self.fh._values) + 1, freq=self.infer_freq(index)
-        )[1:]
+        if is_range_index:
+            pred_index = pd.RangeIndex(
+                self.cutoff[0] + 1, self.cutoff[0] + max(self.fh._values)
+            )
+        else:
+            pred_index = pd.date_range(
+                self.cutoff[0],
+                periods=max(self.fh._values) + 1,
+                freq=self.infer_freq(index),
+            )[1:]
 
         if isinstance(df.index, pd.MultiIndex):
             # Works only for two level multiindex/panel data
@@ -305,7 +333,6 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         else:
             extended_df = pd.DataFrame(columns=df.columns, index=new_index)
             extended_df.fillna(0, inplace=True)
-            print(extended_df)
             extended_df = pd.concat([df, extended_df])
             return extended_df.sort_index()
 
@@ -323,24 +350,25 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
     def check_range_index(self, df):
         """Check if the index is a range index."""
         timepoints = self.return_time_index(df)
-        if isinstance(timepoints.get_level_values(0), pd.RangeIndex):
+        print(timepoints)
+        if isinstance(timepoints, pd.RangeIndex):
+            return True
+        elif timepoints.dtype == "int64":
             return True
         return False
 
     def handle_range_index(self, index):
         """Handle range index."""
         start_date = "2010-01-01"
-        if isinstance(index, pd.RangeIndex):
-            new_index = pd.date_range(start=start_date, periods=len(index), freq="D")
-
-        elif isinstance(index, pd.MultiIndex):
-            date_range = pd.date_range(
-                start="2010-01-01", periods=len(index.levels[-1]), freq="D"
+        if isinstance(index, pd.MultiIndex):
+            n_periods = index.levels[-1].size
+            datetime_index = pd.date_range(
+                start=start_date, periods=n_periods, freq="D"
             )
-            new_index = pd.MultiIndex.from_product(
-                [index.get_level_values(0).unique(), date_range], names=index.names
-            )
-
+            new_index = index.set_levels(datetime_index, level=-1)
+        else:
+            n_periods = index.size
+            new_index = pd.date_range(start=start_date, periods=n_periods, freq="D")
         return new_index
 
     def _get_expected_pred_idx(self, fh):
