@@ -2230,8 +2230,6 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         """
         from sklearn.linear_model import LinearRegression
 
-        from sktime.utils.dependencies import _check_soft_dependencies
-
         est = LinearRegression()
         params1 = {
             "estimator": est,
