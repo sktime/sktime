@@ -2271,11 +2271,11 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         # left here for future reference, e.g., test for non-compliant estimators
         #
         # if _check_soft_dependencies("catboost", severity="none"):
-            # from catboost import CatBoostRegressor
-
-            # est = CatBoostRegressor(learning_rate=1, depth=6, loss_function="RMSE")
-            # params6 = {"estimator": est, "window_length": 3}
-            # params.append(params6)
+        #     from catboost import CatBoostRegressor
+        #
+        #     est = CatBoostRegressor(learning_rate=1, depth=6, loss_function="RMSE")
+        #     params6 = {"estimator": est, "window_length": 3}
+        #     params.append(params6)
         return params
 
 
