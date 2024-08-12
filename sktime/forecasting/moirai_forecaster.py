@@ -138,6 +138,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
 
             self.model = MoiraiForecast(**model_kwargs)
 
+        # Instantiate model with sktime hosted weights of MOIRAI
         else:
             from huggingface_hub import hf_hub_download
 
@@ -178,27 +179,20 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         # New Time Series is passed
         if y is not None and X is not None:
             pred_df = pd.concat([y, X], axis=1)
-            print(pred_df.head(10))
             is_range_index = self.check_range_index(pred_df)
-
-        elif y is None and X is not None:
-            pred_df = self._extend_df(pred_df, is_range_index=is_range_index)
-            future_length = max(fh._values) + 1
 
         # Zero shot case with X
         elif X is not None:
             pred_df = self._extend_df(pred_df, X, is_range_index=is_range_index)
-            future_length = max(fh._values) + 1
+            future_length = max(fh._values)
 
-        print(pred_df.head())
+        print(pred_df.head(10))
+
         # Check if the index is a range index
         if self.check_range_index(pred_df):
             is_range_index = True
-            print("Range Index Detected")
             # Converts RangeIndex to Dummy DatetimeIndex
             pred_df.index = self.handle_range_index(pred_df.index)
-
-        print(pred_df)
 
         ds_test, df_config = self.create_pandas_dataset(
             pred_df, target, feat_dynamic_real, future_length
@@ -261,6 +255,8 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         -------
         dataset : PandasDataset
             Pandas dataset.
+        df_config : dict
+            Configuration of the input data.
 
         """
         from gluonts.dataset.pandas import PandasDataset
@@ -280,17 +276,12 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             df = df.reset_index()
             df.set_index(timepoints, inplace=True)
 
-            freq = self.infer_freq(df.index)
-            print("inside long index")
-            print(df.head(10))
-
             dataset = PandasDataset.from_long_dataframe(
                 df,
                 target=target,
                 feat_dynamic_real=dynamic_features,
                 item_id=item_id,
                 future_length=forecast_horizon,
-                freq=freq,
             )
         else:
             dataset = PandasDataset(
@@ -324,17 +315,11 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         else:
             new_index = pred_index
 
-        if X is not None:
-            df_y = pd.DataFrame(columns=self._y.columns, index=new_index)
-            df_y.fillna(0, inplace=True)
-            pred_df = pd.concat([df_y, X], axis=1)
-            extended_df = pd.concat([df, pred_df])
-            return extended_df.sort_index()
-        else:
-            extended_df = pd.DataFrame(columns=df.columns, index=new_index)
-            extended_df.fillna(0, inplace=True)
-            extended_df = pd.concat([df, extended_df])
-            return extended_df.sort_index()
+        df_y = pd.DataFrame(columns=self._y.columns, index=new_index)
+        df_y.fillna(0, inplace=True)
+        pred_df = pd.concat([df_y, X], axis=1)
+        extended_df = pd.concat([df, pred_df])
+        return extended_df.sort_index()
 
     def infer_freq(self, index):
         """Infer frequency of the index."""
@@ -350,7 +335,6 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
     def check_range_index(self, df):
         """Check if the index is a range index."""
         timepoints = self.return_time_index(df)
-        print(timepoints)
         if isinstance(timepoints, pd.RangeIndex):
             return True
         elif timepoints.dtype == "int64":
@@ -370,28 +354,6 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             n_periods = index.size
             new_index = pd.date_range(start=start_date, periods=n_periods, freq="D")
         return new_index
-
-    def _get_expected_pred_idx(self, fh):
-        """Get the expected prediction index."""
-        from sktime.forecasting.base import ForecastingHorizon
-
-        if isinstance(fh, ForecastingHorizon):
-            fh_idx = pd.Index(fh.to_absolute_index(self.cutoff))
-        else:
-            fh_idx = pd.Index(fh)
-        y_index = self._y.index
-
-        if isinstance(y_index, pd.MultiIndex):
-            y_inst_idx = y_index.droplevel(-1).unique()
-            if isinstance(y_inst_idx, pd.MultiIndex):
-                fh_idx = pd.Index([x + (y,) for x in y_inst_idx for y in fh_idx])
-            else:
-                fh_idx = pd.Index([(x, y) for x in y_inst_idx for y in fh_idx])
-
-        if hasattr(y_index, "names") and y_index.names is not None:
-            fh_idx.names = y_index.names
-
-        return fh_idx
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -414,5 +376,6 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         return [
             {
                 "deterministic": True,
+                "checkpoint_path": "Salesforce/moirai-1.0-R-small",
             }
         ]
