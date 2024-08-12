@@ -88,8 +88,8 @@ Panels of time series
 Toy data generators
 -------------------
 
-Hierarchical data
-^^^^^^^^^^^^^^^^^
+Hierarchical time series data
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: sktime.datasets
     :no-members:
