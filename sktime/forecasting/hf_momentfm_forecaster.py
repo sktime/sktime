@@ -10,9 +10,12 @@ from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 from sktime.libs.momentfm import MOMENTPipeline
 from sktime.split import temporal_train_test_split
 
-if _check_soft_dependencies(["torch"], severity="none"):
+if _check_soft_dependencies(["torch", "accelerate"], severity="none"):
+    from accelerate import Accelerator
     from torch.nn import MSELoss
     from torch.utils.data import Dataset
+
+    accelerator = Accelerator()
 
 else:
 
@@ -252,7 +255,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         )
         # check availability of user specified device
         self._device = _check_device(self._device)
-
+        assert self._device == accelerator.device
         cur_epoch = 0
         max_epoch = self.epochs
         if fh is not None:
@@ -323,13 +326,6 @@ class MomentFMForecaster(_BaseGlobalForecaster):
 
         criterion = self._criterion
         optimizer = Adam(self._model.parameters(), lr=self.max_lr)
-
-        # Move the model to the GPU
-        self._model = self._model.to(self._device)
-
-        # Move the loss function to the GPU
-        criterion = criterion.to(self._device)
-
         # Enable mixed precision training
         scaler = torch.cuda.amp.GradScaler()
 
@@ -345,6 +341,11 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         # Gradient clipping value
         max_norm = self.max_norm
 
+        self._model, optimizer, train_dataloader, val_dataloader, scheduler = (
+            accelerator.prepare(
+                self._model, optimizer, train_dataloader, val_dataloader, scheduler
+            )
+        )
         while cur_epoch < max_epoch:
             cur_epoch = _run_epoch(
                 cur_epoch,
@@ -507,7 +508,8 @@ def _run_epoch(
         loss = criterion(output.forecast, forecast)
 
         # Scales the loss for mixed precision training
-        scaler.scale(loss).backward()
+        scaler.scale(loss)
+        accelerator.backward(loss)
 
         # Clip gradients
         scaler.unscale_(optimizer)
@@ -624,16 +626,14 @@ class MomentPytorchDataset(Dataset):
         # code block to figure out masking sizes in case seq_len < 512
         if self.seq_len < self.moment_seq_len:
             self._pad_shape = (self.moment_seq_len - self.seq_len, self.shape[1])
-            self.input_mask = (
-                _create_mask(self.seq_len, self._pad_shape[0]).float().to(self.device)
-            )
+            self.input_mask = _create_mask(self.seq_len, self._pad_shape[0]).float()
             # Concatenate the tensors
         elif self.seq_len > self.moment_seq_len:
             # for now if seq_len > 512 than we reduce it back to 512
             self.seq_len = 512
-            self.input_mask = _create_mask(self.seq_len).float().to(self.device)
+            self.input_mask = _create_mask(self.seq_len).float()
         else:
-            self.input_mask = _create_mask(self.seq_len).float().to(self.device)
+            self.input_mask = _create_mask(self.seq_len).float()
 
     def __len__(self):
         """Return length of dataset."""
@@ -655,16 +655,12 @@ class MomentPytorchDataset(Dataset):
         )
         if self.seq_len < self.moment_seq_len:
             historical_y = _create_padding(historical_y, self._pad_shape)
-        historical_y = historical_y.float().to(self.device)
+        historical_y = historical_y.float()
         future_y = (
-            (
-                from_numpy(self.y.iloc[hist_end:pred_end].values)
-                .float()
-                .reshape(self.y.shape[1], -1)
-            )
+            from_numpy(self.y.iloc[hist_end:pred_end].values)
             .float()
-            .to(self.device)
-        )
+            .reshape(self.y.shape[1], -1)
+        ).float()
         return {
             "future_y": future_y,
             "historical_y": historical_y,

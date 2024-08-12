@@ -300,10 +300,16 @@ if _check_soft_dependencies(["torch"], severity="none"):
 
         if isinstance(error, float):
             # assert error <= 200, "SMAPE should be lower than 200"
-            warnings.warn(f"SMAPE should be lower than 200 but was found to be {error}")
+            if error <= 200:
+                warnings.warn(
+                    f"SMAPE should be lower than 200 but was found to be {error}"
+                )
         else:
             # assert all(error <= 200), "SMAPE should be lower than 200"
-            warnings.warn(f"SMAPE should be lower than 200 but was found to be {error}")
+            if all(error <= 200):
+                warnings.warn(
+                    f"SMAPE should be lower than 200 but was found to be {error}"
+                )
 
         return error
 
