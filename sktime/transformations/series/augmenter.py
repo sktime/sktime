@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Series transformers for time series augmentation."""
 
@@ -13,7 +12,6 @@ __all__ = [
 
 import numpy as np
 import pandas as pd
-from scipy.stats import norm
 from sklearn.utils import check_random_state
 
 from sktime.transformations.base import BaseTransformer
@@ -21,6 +19,12 @@ from sktime.transformations.base import BaseTransformer
 
 class _AugmenterTags:
     _tags = {
+        # packaging info
+        # ----------------
+        "authors": ["MrPr3ntice", "MFehsenfeld", "iljamaurer"],
+        "maintainers": ["MrPr3ntice", "MFehsenfeld", "iljamaurer"],
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:transform-labels": "None",
@@ -38,7 +42,7 @@ class _AugmenterTags:
 class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
     r"""Augmenter adding Gaussian (i.e. white) noise to the time series.
 
-    If `transform` is given time series :math:`X={x_1, x_2, ... , x_n}`, then
+    If ``transform`` is given time series :math:`X={x_1, x_2, ... , x_n}`, then
     returns :math:`X_t={x_1+e_1, x_2+e_2, ..., x_n+e_n}` where :math:`e_i` are
     i.i.d. random draws from a normal distribution with mean :math:`\mu` = 0
     and standard deviation :math:`\sigma` = ``scale``.
@@ -54,6 +58,16 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
             If None, rely on ``self.random_state``.
             Default is None." [3]
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.transformations.series.augmenter import WhiteNoiseAugmenter
+    >>> X = np.array([1, 2, 3, 4, 5])
+    >>> augmenter = WhiteNoiseAugmenter(scale=0.5, random_state=42)
+    >>> augmenter.fit(X)
+    WhiteNoiseAugmenter(...)
+    >>> X_augmented = augmenter.transform(X)
+
     References and Footnotes
     ----------
 
@@ -62,9 +76,10 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
         [2]: IWANA, Brian Kenji; UCHIDA, Seiichi. An empirical survey of data
         augmentation for time series classification with neural networks. Plos
         one, 2021, 16. Jg., Nr. 7, S. e0254841.
-        [3]: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.rv_continuous.random_state.html # noqa
+        [3]: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.rv_continuous.random_state.html
+    """  # noqa: E501
 
-    """
+    _tags = {"python_dependencies": "scipy"}
 
     _allowed_statistics = [np.std]
 
@@ -74,6 +89,8 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
         super().__init__()
 
     def _transform(self, X, y=None):
+        from scipy.stats import norm
+
         if self.scale in self._allowed_statistics:
             scale = self.scale(X)
         elif isinstance(self.scale, (int, float)):
@@ -88,7 +105,7 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
 class ReverseAugmenter(_AugmenterTags, BaseTransformer):
     r"""Augmenter reversing the time series.
 
-    If `transform` is given a time series :math:`X={x_1, x_2, ... , x_n}`, then
+    If ``transform`` is given a time series :math:`X={x_1, x_2, ... , x_n}`, then
     returns :math:`X_t={x_n, x_{n-1}, ..., x_2, x_1}`.
     Time series augmentation by reversing has been discussed e.g. in [1].
 
@@ -111,7 +128,6 @@ class ReverseAugmenter(_AugmenterTags, BaseTransformer):
         [1]: IWANA, Brian Kenji; UCHIDA, Seiichi. An empirical survey of data
         augmentation for time series classification with neural networks. Plos
         one, 2021, 16. Jg., Nr. 7, S. e0254841.
-
     """
 
     def __init__(self):
@@ -124,11 +140,13 @@ class ReverseAugmenter(_AugmenterTags, BaseTransformer):
 class InvertAugmenter(_AugmenterTags, BaseTransformer):
     r"""Augmenter inverting the time series by multiplying it by -1.
 
-    If `transform` is given a time series :math:`X={x_1, x_2, ... , x_n}`, then
+    If ``transform`` is given a time series :math:`X={x_1, x_2, ... , x_n}`, then
     returns :math:`X_t={-x_1, -x_2, ... , -x_n}`.
 
     Examples
     --------
+    >>> from sktime.transformations.series.augmenter import InvertAugmenter
+    >>> import pandas as pd
     >>> X = pd.Series([1,2,3,4,5])
     >>> augmenter = InvertAugmenter()
     >>> Xt = augmenter.fit_transform(X)
@@ -151,10 +169,10 @@ class InvertAugmenter(_AugmenterTags, BaseTransformer):
 class RandomSamplesAugmenter(_AugmenterTags, BaseTransformer):
     r"""Draw random samples from time series.
 
-    `transform` takes a time series :math:`X={x_1, x_2, ... , x_m}` with :math:`m`
+    ``transform`` takes a time series :math:`X={x_1, x_2, ... , x_m}` with :math:`m`
     elements and returns :math:`X_t={x_i, x_{i+1}, ... , x_n}`, where
     :math:`{x_i, x_{i+1}, ... , x_n}` are :math:`n`=``n`` random samples drawn
-    from :math:`X` (with or `without_replacement`).
+    from :math:`X` (with or ``without_replacement``).
 
     Parameters
     ----------
@@ -167,7 +185,7 @@ class RandomSamplesAugmenter(_AugmenterTags, BaseTransformer):
             time series.
     without_replacement: bool, optional (default = True)
             Whether to draw without replacement. If True, every sample of the input
-            times series `X` will appear at most once in `Xt`.
+            times series `X` will appear at most once in ``Xt``.
     random_state: None or int or ``np.random.RandomState`` instance, optional
             "If int or RandomState, use it for drawing the random variates.
             If None, rely on ``self.random_state``.
@@ -176,9 +194,8 @@ class RandomSamplesAugmenter(_AugmenterTags, BaseTransformer):
     References and Footnotes
     ----------
 
-        [1]: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.rv_continuous.random_state.html # noqa
-
-    """
+        [1]: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.rv_continuous.random_state.html
+    """  # noqa: E501
 
     def __init__(
         self,

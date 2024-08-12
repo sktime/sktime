@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 """TDE classifiers.
 
-Dictionary based TDE classifiers based on SFA transform. Contains a single
-IndividualTDE and TDE.
+Dictionary based TDE classifiers based on SFA transform. Contains a single IndividualTDE
+and TDE.
 """
 
 __author__ = ["MatthewMiddlehurst"]
@@ -10,13 +9,10 @@ __all__ = ["TemporalDictionaryEnsemble", "IndividualTDE", "histogram_intersectio
 
 import math
 import time
-import warnings
 from collections import defaultdict
 
 import numpy as np
 from joblib import Parallel, delayed
-from numba import njit, types
-from numba.typed import Dict
 from sklearn import preprocessing
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.utils import check_random_state
@@ -24,6 +20,7 @@ from sklearn.utils import check_random_state
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SFA
 from sktime.utils.validation.panel import check_X_y
+from sktime.utils.warnings import warn
 
 
 class TemporalDictionaryEnsemble(BaseClassifier):
@@ -91,7 +88,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         Save the ensemble member train predictions in fit for use in _get_train_probs
         leave-one-out cross-validation.
     n_jobs : int, default=1
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``-1`` means using all processors.
     random_state : int or None, default=None
         Seed for random number generation.
@@ -137,22 +134,29 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     >>> from sktime.classification.dictionary_based import TemporalDictionaryEnsemble
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
     >>> clf = TemporalDictionaryEnsemble(
     ...     n_parameter_samples=10,
     ...     max_ensemble_size=3,
     ...     randomly_selected_params=5,
-    ... )
-    >>> clf.fit(X_train, y_train)
+    ... ) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
     TemporalDictionaryEnsemble(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> y_pred = clf.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["MatthewMiddlehurst"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:train_estimate": True,
         "capability:contractable": True,
         "capability:multithreading": True,
+        "capability:predict_proba": True,
         "classifier_type": "dictionary",
     }
 
@@ -206,8 +210,9 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         self._weight_sum = 0
         self._prev_parameters_x = []
         self._prev_parameters_y = []
+        self._min_window = min_window
 
-        super(TemporalDictionaryEnsemble, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Fit an ensemble on cases (X,y), where y is the target variable.
@@ -234,9 +239,12 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         ending in "_" and sets is_fitted flag to True.
         """
         if self.n_parameter_samples <= self.randomly_selected_params:
-            warnings.warn(
-                "TDE Warning: n_parameter_samples <= randomly_selected_params, "
-                + "ensemble member parameters will be fully randomly selected."
+            warn(
+                "TemporalDictionaryEnsemble warning: n_parameter_samples <= "
+                "randomly_selected_params, ensemble member parameters will be "
+                "fully randomly selected.",
+                obj=self,
+                stacklevel=2,
             )
 
         self.n_instances_, self.n_dims_, self.series_length_ = X.shape
@@ -249,18 +257,20 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         # Window length parameter space dependent on series length
         max_window_searches = self.series_length_ / 4
         max_window = int(self.series_length_ * self.max_win_len_prop)
-        win_inc = int((max_window - self.min_window) / max_window_searches)
+
+        if self.min_window >= max_window:
+            self._min_window = max_window
+            warn(
+                f"TemporalDictionaryEnsemble warning: min_window = "
+                f"{self.min_window} is larger than max_window = {max_window}."
+                f" min_window has been set to {max_window}.",
+                obj=self,
+                stacklevel=2,
+            )
+
+        win_inc = int((max_window - self._min_window) / max_window_searches)
         if win_inc < 1:
             win_inc = 1
-        if self.min_window > max_window + 1:
-            raise ValueError(
-                f"Error in TemporalDictionaryEnsemble, min_window ="
-                f"{self.min_window} is bigger"
-                f" than max_window ={max_window}."
-                f" Try set min_window to be smaller than series length in "
-                f"the constructor, but the classifier may not work at "
-                f"all with very short series"
-            )
 
         possible_parameters = self._unique_parameters(max_window, win_inc)
         num_classifiers = 0
@@ -429,7 +439,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         possible_parameters = [
             [win_size, word_len, normalise, levels, igb]
             for normalise in self._norm_options
-            for win_size in range(self.min_window, max_window + 1, win_inc)
+            for win_size in range(self._min_window, max_window + 1, win_inc)
             for word_len in self._word_lengths
             for levels in self._levels
             for igb in self._igb_options
@@ -438,7 +448,11 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         return possible_parameters
 
     def _get_train_probs(self, X, y, train_estimate_method="loocv") -> np.ndarray:
+        from sktime.datatypes import convert_to
+
         self.check_is_fitted()
+        if not isinstance(X, np.ndarray):
+            X = convert_to(X, "numpy3D")
         X, y = check_X_y(X, y, coerce_to_numpy=True)
 
         n_instances, n_dims, series_length = X.shape
@@ -463,7 +477,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
                 preds = (
                     clf._train_predictions
                     if self.save_train_predictions
-                    else Parallel(n_jobs=self._threads_to_use)(
+                    else Parallel(n_jobs=self._threads_to_use, prefer="threads")(
                         delayed(clf._train_predict)(
                             i,
                         )
@@ -472,9 +486,9 @@ class TemporalDictionaryEnsemble(BaseClassifier):
                 )
 
                 for n, pred in enumerate(preds):
-                    results[subsample[n]][
-                        self._class_dictionary[pred]
-                    ] += self.weights_[i]
+                    results[subsample[n]][self._class_dictionary[pred]] += (
+                        self.weights_[i]
+                    )
                     divisors[subsample[n]] += self.weights_[i]
         elif train_estimate_method.lower() == "oob":
             indices = range(n_instances)
@@ -508,7 +522,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         required_correct = int(lowest_acc * train_size)
 
         if self._threads_to_use > 1:
-            c = Parallel(n_jobs=self._threads_to_use)(
+            c = Parallel(n_jobs=self._threads_to_use, prefer="threads")(
                 delayed(tde._train_predict)(
                     i,
                 )
@@ -547,7 +561,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -558,8 +572,9 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         if parameter_set == "results_comparison":
             return {
@@ -609,7 +624,7 @@ class IndividualTDE(BaseClassifier):
     bigrams : bool, default=False
         Whether to record word bigrams in the SFA transform.
     dim_threshold : float, default=0.85
-        Accuracy threshold as a propotion of the highest accuracy dimension for words
+        Accuracy threshold as a proportion of the highest accuracy dimension for words
         extracted from each dimensions. Only applicable for multivariate data.
     max_dims : int, default=20
         Maximum number of dimensions words are extracted from. Only applicable for
@@ -618,7 +633,7 @@ class IndividualTDE(BaseClassifier):
         Use a numba TypedDict to store word counts. May increase memory usage, but will
         be faster for larger datasets.
     n_jobs : int, default=1
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``-1`` means using all processors.
     random_state : int or None, default=None
         Seed for random, integer.
@@ -638,7 +653,7 @@ class IndividualTDE(BaseClassifier):
 
     See Also
     --------
-    TemporalDictinaryEnsemble, SFA
+    TemporalDictionaryEnsemble, SFA
 
     Notes
     -----
@@ -658,14 +673,20 @@ class IndividualTDE(BaseClassifier):
     >>> from sktime.classification.dictionary_based import IndividualTDE
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = IndividualTDE()
-    >>> clf.fit(X_train, y_train)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
+    >>> clf = IndividualTDE() # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
     IndividualTDE(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> y_pred = clf.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["MatthewMiddlehurst"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:multithreading": True,
     }
@@ -714,7 +735,7 @@ class IndividualTDE(BaseClassifier):
         self._subsample = []
         self._train_predictions = []
 
-        super(IndividualTDE, self).__init__()
+        super().__init__()
 
     # todo remove along with BOSS and SFA workarounds when Dict becomes serialisable.
     def __getstate__(self):
@@ -732,6 +753,9 @@ class IndividualTDE(BaseClassifier):
 
     def __setstate__(self, state):
         """Set current state using input pickling, required for typed Dict objects."""
+        from numba import types
+        from numba.typed import Dict
+
         self.__dict__.update(state)
         if self.typed_dict:
             nl = [None] * len(self._transformed_data)
@@ -768,6 +792,9 @@ class IndividualTDE(BaseClassifier):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
+        from numba import types
+        from numba.typed import Dict
+
         self.n_instances_, self.n_dims_, self.series_length_ = X.shape
         self._class_vals = y
 
@@ -839,6 +866,9 @@ class IndividualTDE(BaseClassifier):
         y : array-like, shape = [n_instances]
             Predicted class labels.
         """
+        from numba import types
+        from numba.typed import Dict
+
         num_cases = X.shape[0]
 
         if self.n_dims_ > 1:
@@ -876,7 +906,7 @@ class IndividualTDE(BaseClassifier):
             test_bags = self._transformers[0].transform(X)
             test_bags = test_bags[0]
 
-        classes = Parallel(n_jobs=self._threads_to_use)(
+        classes = Parallel(n_jobs=self._threads_to_use, prefer="threads")(
             delayed(self._test_nn)(
                 test_bag,
             )
@@ -993,13 +1023,19 @@ def histogram_intersection(first, second):
     first : dict, numba.Dict or array
         First dictionary used in distance measurement.
     second : dict, numba.Dict or array
-        Second dictionary that will be used to measure distance from `first`.
+        Second dictionary that will be used to measure distance from ``first``.
 
     Returns
     -------
     dist : float
         The histogram intersection distance between the first and second dictionaries.
     """
+    from numba.typed import Dict
+
+    from sktime.classification.dictionary_based._tde_numba import (
+        _histogram_intersection_dict,
+    )
+
     if isinstance(first, dict):
         sim = 0
         for word, val_a in first.items():
@@ -1015,12 +1051,3 @@ def histogram_intersection(first, second):
                 for n in range(len(first))
             ]
         )
-
-
-@njit(fastmath=True, cache=True)
-def _histogram_intersection_dict(first, second):
-    sim = 0
-    for word, val_a in first.items():
-        val_b = second.get(word, types.uint32(0))
-        sim += min(val_a, val_b)
-    return sim

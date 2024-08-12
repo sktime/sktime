@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements automatic and manually exponential time series smoothing models."""
-
 
 __author__ = ["hyang1996"]
 __all__ = ["AutoETS"]
@@ -12,7 +10,6 @@ from itertools import product
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
@@ -20,31 +17,35 @@ from sktime.forecasting.base.adapters import _StatsModelsAdapter
 class AutoETS(_StatsModelsAdapter):
     """ETS models with both manual and automatic fitting capabilities.
 
-    Manual fitting is adapted from the statsmodels version,
-    while automatic fitting is adapted from the R version of ets.
+    Manual (fixed parameter) use (``auto=False``, default) is a direct interface
+    to ``statsmodels`` ``ETSModel`` [2]_,
+    while automated tuning (``auto=True``) is an adaptation of the R version of ets
+    [3]_,
+    on top of ``statsmodels`` ``ETSModel``.
 
-    The first few parameters are the same as the ones on statsmodels
+    The first parameters are direct interfaces to the ``statsmodels`` parameters
     (from ``error`` to ``return_params``) [2]_.
 
-    The next few parameters are adapted from the ones on R
+    The remaining parameters are adaptations of the parameters of R ets
     (``auto`` to ``additive_only``) [3]_,
     and are used for automatic model selection.
 
     Parameters
     ----------
     error : str, default="add"
-        The error model. Takes one of "add" or "mul".
+        The error model. Takes one of "add" or "mul". Ignored if auto=True.
     trend : str or None, default=None
-        The trend component model. Takes one of "add", "mul", or None.
+        The trend component model. Takes one of "add", "mul", or None. Ignored if
+        auto=True.
     damped_trend : bool, default=False
-        Whether or not an included trend component is damped.
+        Whether or not an included trend component is damped. Ignored if auto=True.
     seasonal : str or None, default=None
-        The seasonality model. Takes one of "add", "mul", or None.
+        The seasonality model. Takes one of "add", "mul", or None. Ignored if auto=True.
     sp : int, default=1
         The number of periods in a complete seasonal cycle for seasonal
         (Holt-Winters) models. For example, 4 for quarterly data with an
         annual cycle or 7 for daily data with a weekly cycle. Required if
-        `seasonal` is not None.
+        ``seasonal`` is not None.
     initialization_method : str, default='estimated'
         Method for initialization of the state space model. One of:
 
@@ -52,8 +53,8 @@ class AutoETS(_StatsModelsAdapter):
         * 'heuristic'
         * 'known'
 
-        If 'known' initialization is used, then `initial_level` must be
-        passed, as well as `initial_trend` and `initial_seasonal` if
+        If 'known' initialization is used, then ``initial_level`` must be
+        passed, as well as ``initial_trend`` and ``initial_seasonal`` if
         applicable.
         'heuristic' uses a heuristic based on the data to estimate initial
         level, trend, and seasonal state. 'estimated' uses the same heuristic
@@ -64,7 +65,7 @@ class AutoETS(_StatsModelsAdapter):
     initial_trend : float or None, default=None
         The initial trend component. Only used if initialization is 'known'.
     initial_seasonal : array_like or None, default=None
-        The initial seasonal component. An array of length `seasonal_periods`.
+        The initial seasonal component. An array of length ``seasonal_periods``.
         Only used if initialization is 'known'.
     bounds : dict or None, default=None
         A dictionary with parameter names as keys and the respective bounds
@@ -89,18 +90,18 @@ class AutoETS(_StatsModelsAdapter):
         the parameters in the following order, skipping parameters that do
         not exist in the chosen model.
 
-        * `smoothing_level` (alpha)
-        * `smoothing_trend` (beta)
-        * `smoothing_seasonal` (gamma)
-        * `damping_trend` (phi)
+        * ``smoothing_level`` (alpha)
+        * ``smoothing_trend`` (beta)
+        * ``smoothing_seasonal`` (gamma)
+        * ``damping_trend`` (phi)
 
         If ``initialization_method`` was set to ``'estimated'`` (the
         default), additionally, the parameters
 
-        * `initial_level` (:math:`l_{-1}`)
-        * `initial_trend` (:math:`l_{-1}`)
-        * `initial_seasonal.0` (:math:`s_{-1}`)
-        * `initial_seasonal.<m-1>` (:math:`s_{-m}`)
+        * ``initial_level`` (:math:`l_{-1}`)
+        * ``initial_trend`` (:math:`l_{-1}`)
+        * ``initial_seasonal.0`` (:math:`s_{-1}`)
+        * ``initial_seasonal.<m-1>`` (:math:`s_{-m}`)
 
         also have to be specified.
     maxiter : int, default=1000
@@ -117,7 +118,8 @@ class AutoETS(_StatsModelsAdapter):
     return_params : bool, default=False
         Whether or not to return only the array of maximizing parameters.
     auto : bool, default=False
-        Set True to enable automatic model selection.
+        Set True to enable automatic model selection. If auto=True, then error,
+        trend, seasonal and damped_trend are ignored.
     information_criterion : str, default="aic"
         Information criterion to be used in model selection. One of:
 
@@ -140,7 +142,7 @@ class AutoETS(_StatsModelsAdapter):
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors.
     random_state : int, RandomState instance or None, optional ,
-        default=None – If int, random_state is the seed used by the random
+        default=None - If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
         number generator; If None, the random number generator is the
         RandomState instance used by np.random.
@@ -151,25 +153,38 @@ class AutoETS(_StatsModelsAdapter):
        principles and practice*, 3rd edition, OTexts: Melbourne,
        Australia. OTexts.com/fpp3. Accessed on April 19th 2020.
     .. [2] Statsmodels ETS:
+
         https://www.statsmodels.org/stable/_modules/statsmodels/tsa/exponential_smoothing/ets.html#ETSModel
     .. [3] R Version of ETS:
         https://www.rdocumentation.org/packages/forecast/versions/8.12/topics/ets
+
+    See Also
+    --------
+    StatsForecastAutoETS
 
     Examples
     --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.ets import AutoETS
     >>> y = load_airline()
-    >>> forecaster = AutoETS(auto=True, n_jobs=-1, sp=12)
-    >>> forecaster.fit(y)
+    >>> forecaster = AutoETS(auto=True, n_jobs=-1, sp=12)  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
     AutoETS(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
     """
 
     _fitted_param_names = ("aic", "aicc", "bic", "hqic")
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["hyang1996"],
+        "maintainers": ["hyang1996"],
+        "python_dependencies": ["statsmodels", "joblib"],
+        # estimator type
+        # --------------
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
+        "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": True,
     }
@@ -234,9 +249,25 @@ class AutoETS(_StatsModelsAdapter):
         self.ignore_inf_ic = ignore_inf_ic
         self.n_jobs = n_jobs
 
-        super(AutoETS, self).__init__(random_state=random_state)
+        super().__init__(random_state=random_state)
+
+        if self.auto:
+            # If auto=True, check if trend, damped_trend, seasonal, or error are not set
+            # to default values
+            if any([trend, damped_trend, seasonal]) or error != "add":
+                warnings.warn(
+                    "The user-specified parameters provided alongside auto=True in "
+                    "AutoETS may not be respected. The AutoETS function "
+                    "automatically selects the best model based on the "
+                    "information criterion, ignoring the error, trend, "
+                    "seasonal, and damped_trend parameters when auto=True"
+                    " is set. Please ensure that your intended behavior"
+                    " aligns with the automatic model selection.",
+                    stacklevel=2,
+                )
 
     def _fit_forecaster(self, y, X=None):
+        from joblib import Parallel, delayed
         from statsmodels.tsa.exponential_smoothing.ets import ETSModel as _ETSModel
 
         # Select model automatically
@@ -250,7 +281,8 @@ class AutoETS(_StatsModelsAdapter):
                 else:
                     warnings.warn(
                         "Warning: time series is not strictly positive, "
-                        "multiplicative components are ommitted"
+                        "multiplicative components are omitted",
+                        stacklevel=2,
                     )
                     error_range = ["add"]
 
@@ -385,7 +417,7 @@ class AutoETS(_StatsModelsAdapter):
                 return_params=self.return_params,
             )
 
-    def _predict(self, fh, X=None, **simulate_kwargs):
+    def _predict(self, fh, X):
         """Make forecasts.
 
         Parameters
@@ -396,7 +428,6 @@ class AutoETS(_StatsModelsAdapter):
             i.e. np.array([1])
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored.
-        **simulate_kwargs : see statsmodels ETSResults.get_prediction
 
         Returns
         -------
@@ -407,63 +438,37 @@ class AutoETS(_StatsModelsAdapter):
 
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
-        valid_indices = fh.to_absolute(self.cutoff).to_pandas()
+        valid_indices = fh.to_absolute_index(self.cutoff)
 
         y_pred = self._fitted_forecaster.predict(start=start, end=end)
+        y_pred.name = self._y.name
         return y_pred.loc[valid_indices]
 
-    def _predict_interval(self, fh, X=None, coverage=None):
-        """Compute/return prediction quantiles for a forecast.
-
-        private _predict_interval containing the core logic,
-            called from predict_interval and possibly predict_quantiles
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-            self.cutoff
+    @staticmethod
+    def _extract_conf_int(prediction_results, alpha) -> pd.DataFrame:
+        """Construct confidence interval at specified ``alpha`` for each timestep.
 
         Parameters
         ----------
-        fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
-        X : optional (default=None)
-            guaranteed to be of a type in self.get_tag("X_inner_mtype")
-            Exogeneous time series to predict from.
-        coverage : list of float (guaranteed not None and floats in [0,1] interval)
-           nominal coverage(s) of predictive interval(s)
+        prediction_results : PredictionResults
+            results class, as returned by ``self._fitted_forecaster.get_prediction``
+        alpha : float
+            one minus nominal coverage
 
         Returns
         -------
-        pred_int : pd.DataFrame
-            Column has multi-index: first level is variable name from y in fit,
-                second level coverage fractions for which intervals were computed.
-                    in the same order as in input `coverage`.
-                Third level is string "lower" or "upper", for lower/upper interval end.
-            Row index is fh. Entries are forecasts of lower/upper interval end,
-                for var in col index, at nominal coverage in second col index,
-                lower/upper depending on third col index, for the row index.
-                Upper/lower interval end forecasts are equivalent to
-                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
+        pd.DataFrame
+            confidence intervals at each timestep
+
+            The dataframe must have at least two columns ``lower`` and ``upper``, and
+            the row indices must be integers relative to ``self.cutoff``. Order of
+            columns do not matter, and row indices must be a superset of relative
+            integer horizon of ``fh``.
         """
-        valid_indices = fh.to_absolute(self.cutoff).to_pandas()
+        conf_int = prediction_results.pred_int(alpha=alpha)
+        conf_int.columns = ["lower", "upper"]
 
-        start, end = valid_indices[[0, -1]]
-        prediction_results = self._fitted_forecaster.get_prediction(
-            start=start, end=end, random_state=self.random_state
-        )
-
-        pred_int = pd.DataFrame()
-        for c in coverage:
-            pred_statsmodels = prediction_results.pred_int(1 - c)
-            pred_statsmodels.columns = ["lower", "upper"]
-            pred_int[(c, "lower")] = pred_statsmodels["lower"].loc[valid_indices]
-            pred_int[(c, "upper")] = pred_statsmodels["upper"].loc[valid_indices]
-        index = pd.MultiIndex.from_product([["Coverage"], coverage, ["lower", "upper"]])
-        pred_int.columns = index
-        return pred_int
+        return conf_int
 
     def summary(self):
         """Get a summary of the fitted forecaster.
@@ -472,3 +477,30 @@ class AutoETS(_StatsModelsAdapter):
         https://www.statsmodels.org/dev/examples/notebooks/generated/ets.html
         """
         return self._fitted_forecaster.summary()
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        params = [
+            # default setting, non-auto
+            {},
+            # "auto-ets"
+            # TODO: uncomment following line while fixing #4591
+            # {"sp": 2, "auto": True},
+            # ets (non-auto) with some non-default parameters
+            {"information_criterion": "bic", "trend": "add", "damped_trend": True},
+        ]
+
+        return params

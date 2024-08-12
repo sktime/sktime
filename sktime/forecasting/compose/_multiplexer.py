@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements forecaster for selecting among different model classes."""
 
@@ -12,7 +11,7 @@ __author__ = ["kkoralturk", "aiwalter", "fkiraly", "miraep8"]
 __all__ = ["MultiplexForecaster"]
 
 
-class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
+class MultiplexForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
     """MultiplexForecaster for selecting among different models.
 
     MultiplexForecaster facilitates a framework for performing
@@ -36,7 +35,7 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
     forecasters : list of sktime forecasters, or
         list of tuples (str, estimator) of sktime forecasters
         MultiplexForecaster can switch ("multiplex") between these forecasters.
-        These are "blueprint" forecasters, states do not change when `fit` is called.
+        These are "blueprint" forecasters, states do not change when ``fit`` is called.
     selected_forecaster: str or None, optional, Default=None.
         If str, must be one of the forecaster names.
             If no names are provided, must coincide with auto-generated name strings.
@@ -51,14 +50,14 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
     _forecasters : list of (str, forecaster) tuples
         str are identical to those passed, if passed strings are unique
         otherwise unique strings are generated from class name; if not unique,
-        the string `_[i]` is appended where `[i]` is count of occurrence up until then
+        the string ``_[i]`` is appended where ``[i]`` is count of occurrence up until
+        then
 
     Examples
     --------
     >>> from sktime.forecasting.ets import AutoETS
-    >>> from sktime.forecasting.model_selection import (
-    ...    ForecastingGridSearchCV,
-    ...    ExpandingWindowSplitter)
+    >>> from sktime.forecasting.model_selection import ForecastingGridSearchCV
+    >>> from sktime.split import ExpandingWindowSplitter
     >>> from sktime.forecasting.compose import MultiplexForecaster
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.theta import ThetaForecaster
@@ -68,19 +67,18 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
     >>> forecaster = MultiplexForecaster(forecasters=[
     ...     ("ets", AutoETS()),
     ...     ("theta", ThetaForecaster()),
-    ...     ("naive", NaiveForecaster())])
-    >>> cv = ExpandingWindowSplitter(
-    ...     start_with_window=True,
-    ...     step_length=12)
+    ...     ("naive", NaiveForecaster())])  # doctest: +SKIP
+    >>> cv = ExpandingWindowSplitter(step_length=12)  # doctest: +SKIP
     >>> gscv = ForecastingGridSearchCV(
     ...     cv=cv,
     ...     param_grid={"selected_forecaster":["ets", "theta", "naive"]},
-    ...     forecaster=forecaster)
-    >>> gscv.fit(y)
+    ...     forecaster=forecaster)  # doctest: +SKIP
+    >>> gscv.fit(y)  # doctest: +SKIP
     ForecastingGridSearchCV(...)
     """
 
     _tags = {
+        "authors": ["kkoralturk", "aiwalter", "fkiraly", "miraep8"],
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "scitype:y": "both",
@@ -94,12 +92,23 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
     #     see further details in _DelegatedForecaster docstring
     _delegate_name = "forecaster_"
 
+    # for default get_params/set_params from _HeterogenousMetaEstimator
+    # _steps_attr points to the attribute of self
+    # which contains the heterogeneous set of estimators
+    # this must be an iterable of (name: str, estimator, ...) tuples for the default
+    _steps_attr = "_forecasters"
+    # if the estimator is fittable, _HeterogenousMetaEstimator also
+    # provides an override for get_fitted_params for params from the fitted estimators
+    # the fitted estimators should be in a different attribute, _steps_fitted_attr
+    # this must be an iterable of (name: str, estimator, ...) tuples for the default
+    _steps_fitted_attr = "forecasters_"
+
     def __init__(
         self,
         forecasters: list,
         selected_forecaster=None,
     ):
-        super(MultiplexForecaster, self).__init__()
+        super().__init__()
         self.selected_forecaster = selected_forecaster
 
         self.forecasters = forecasters
@@ -111,7 +120,7 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
         )
         self._set_forecaster()
 
-        self.clone_tags(self.forecaster_)
+        self._set_delegated_tags()
         self.set_tags(**{"fit_is_empty": False})
         # this ensures that we convert in the inner estimator, not in the multiplexer
         self.set_tags(**{"y_inner_mtype": ALL_TIME_SERIES_MTYPES})
@@ -139,17 +148,19 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
     def __or__(self, other):
         """Magic | (or) method, return (right) concatenated MultiplexForecaster.
 
-        Implemented for `other` being a forecaster, otherwise returns `NotImplemented`.
+        Implemented for ``other`` being a forecaster, otherwise returns
+        ``NotImplemented``.
 
         Parameters
         ----------
-        other: `sktime` forecaster, must inherit from BaseForecaster
-            otherwise, `NotImplemented` is returned
+        other: ``sktime`` forecaster, must inherit from BaseForecaster
+            otherwise, ``NotImplemented`` is returned
 
         Returns
         -------
-        MultiplexForecaster object, concatenation of `self` (first) with `other` (last).
-            not nested, contains only non-MultiplexForecaster `sktime` forecasters
+        MultiplexForecaster object, concatenation of ``self`` (first) with ``other``
+        (last).
+            not nested, contains only non-MultiplexForecaster ``sktime`` forecasters
 
         Raises
         ------
@@ -166,17 +177,19 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
     def __ror__(self, other):
         """Magic | (or) method, return (left) concatenated MultiplexForecaster.
 
-        Implemented for `other` being a forecaster, otherwise returns `NotImplemented`.
+        Implemented for ``other`` being a forecaster, otherwise returns
+        ``NotImplemented``.
 
         Parameters
         ----------
-        other: `sktime` forecaster, must inherit from BaseForecaster
-            otherwise, `NotImplemented` is returned
+        other: ``sktime`` forecaster, must inherit from BaseForecaster
+            otherwise, ``NotImplemented`` is returned
 
         Returns
         -------
-        MultiplexForecaster object, concatenation of `self` (last) with `other` (first).
-            not nested, contains only non-MultiplexForecaster `sktime` forecasters
+        MultiplexForecaster object, concatenation of ``self`` (last) with ``other``
+        (first).
+            not nested, contains only non-MultiplexForecaster ``sktime`` forecasters
         """
         return self._dunder_concat(
             other=other,
@@ -197,34 +210,6 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
             # if None, simply clone the first forecaster to self.forecaster_
             self.forecaster_ = self._get_estimator_list(self.forecasters)[0].clone()
 
-    def get_params(self, deep=True):
-        """Get parameters for this estimator.
-
-        Parameters
-        ----------
-        deep : boolean, optional, default=True
-            If True, will return the parameters for this estimator and
-            contained subobjects that are estimators.
-
-        Returns
-        -------
-        params : mapping of string to any
-            Parameter names mapped to their values.
-        """
-        return self._get_params("_forecasters", deep=deep)
-
-    def set_params(self, **kwargs):
-        """Set the parameters of this estimator.
-
-        Valid parameter keys can be listed with ``get_params()``.
-
-        Returns
-        -------
-        self
-        """
-        self._set_params("_forecasters", **kwargs)
-        return self
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -233,7 +218,7 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------

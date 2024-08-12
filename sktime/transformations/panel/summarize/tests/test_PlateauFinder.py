@@ -1,14 +1,20 @@
-# -*- coding: utf-8 -*-
+"""Tests for PlateauFinder."""
+
 import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.panel.summarize import PlateauFinder
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(PlateauFinder),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("value", [np.nan, -10, 10, -0.5, 0.5])
 def test_PlateauFinder(value):
-    # generate test data
+    """Test PlateauFinder on test data against expected output plateau features."""
     value = np.nan
     X = pd.DataFrame(
         pd.Series(

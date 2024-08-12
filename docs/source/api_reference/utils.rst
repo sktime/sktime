@@ -6,7 +6,9 @@ Utility functions
 ``sktime`` has a number of modules dedicated to utilities:
 
 * :mod:`sktime.datatypes`, which contains utilities for data format checks and conversion.
-* :mod:`sktime.registry`, which contains utilities for estimator and tag search.
+* :mod:`sktime.pipeline`, which contains generics for pipeline construction.
+* :mod:`sktime.registry`, which contains utilities for estimator and tag search,
+  as well as serialization of estimator blueprints as strings.
 * :mod:`sktime.utils`, which contains generic utility functions.
 
 
@@ -35,6 +37,26 @@ Data Format Checking and Conversion
     mtype_to_scitype
     scitype_to_mtype
 
+
+Pipeline construction generics
+------------------------------
+
+:mod:`sktime.pipeline`
+
+.. automodule:: sktime.pipeline
+    :no-members:
+    :no-inherited-members:
+
+.. currentmodule:: sktime.pipeline
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+
+    make_pipeline
+    sklearn_to_sktime
+
+
 Estimator Search and Retrieval, Estimator Tags
 ----------------------------------------------
 
@@ -53,6 +75,27 @@ Estimator Search and Retrieval, Estimator Tags
     all_estimators
     all_tags
     check_tag_is_valid
+
+
+Estimator Blueprint Serialization
+---------------------------------
+
+:mod:`sktime.registry`
+
+.. automodule:: sktime.registry
+    :no-members:
+    :no-inherited-members:
+
+.. currentmodule:: sktime.registry
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+
+    craft
+    deps
+    imports
+
 
 Plotting
 --------

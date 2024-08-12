@@ -11,7 +11,7 @@ Installation
 
 ``sktime`` currently supports:
 
-* environments with python version 3.7, 3.8, or 3.9.
+* environments with python version 3.8, 3.9, 3.10, 3.11, or 3.12.
 * operating systems Mac OS X, Unix-like OS, Windows 8.1 and higher
 * installation via ``PyPi`` or ``conda``
 
@@ -62,11 +62,11 @@ tabular regression algorithms. Likewise one approach to the time series annotati
 observations that are too far from these predictions as anomalies. ``sktime`` typically incorporates these type of :term:`reductions <reduction>` through the use of composable classes that
 let users adapt one learning task to solve another related one.
 
-For more information on ``sktime's`` terminology and functionality see the :ref:`glossary` and the :ref:`user guide <user_guide>`.
+For more information on ``sktime's`` terminology and functionality see the :ref:`glossary` and the :ref:`notebook examples <examples>`.
 
 Quickstart
 ----------
-The code snippets below are designed to introduce ``sktime's`` functionality so you can start using its functionality quickly. For more detailed information see the :ref:`tutorials`,  :ref:`user_guide` and :ref:`api_reference` in ``sktime's`` :ref:`user_documentation`.
+The code snippets below are designed to introduce ``sktime's`` functionality so you can start using its functionality quickly. For more detailed information see the :ref:`tutorials`,  :ref:`examples` and :ref:`api_reference` in ``sktime's`` :ref:`user_documentation`.
 
 Forecasting
 ~~~~~~~~~~~
@@ -75,9 +75,9 @@ Forecasting
 
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.base import ForecastingHorizon
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
     >>> from sktime.forecasting.theta import ThetaForecaster
     >>> from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
+    >>> from sktime.split import temporal_train_test_split
 
     >>> y = load_airline()
     >>> y_train, y_test = temporal_train_test_split(y)
@@ -109,13 +109,20 @@ Time Series Classification
 Time Series Regression
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. note::
-    The time series regression API is stable. But the inclusion of a dataset to illustrate
-    its features is still in progress.
-
 .. code-block:: python
 
-    >>> from sktime.regression.compose import ComposableTimeSeriesForestRegressor
+    >>> from sktime.datasets import load_covid_3month
+    >>> from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
+    >>> from sklearn.metrics import mean_squared_error
+
+    >>> X_train, y_train = load_covid_3month(split="train")
+    >>> y_train = y_train.astype("float")
+    >>> X_test, y_test = load_covid_3month(split="test")
+    >>> y_test = y_test.astype("float")
+    >>> regressor = KNeighborsTimeSeriesRegressor()
+    >>> regressor.fit(X_train, y_train)
+    >>> y_pred = regressor.predict(X_test)
+    >>> mean_squared_error(y_test, y_pred)
 
 Time Series Clustering
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -124,7 +131,7 @@ Time Series Clustering
 
     >>> from sklearn.model_selection import train_test_split
     >>> from sktime.clustering.k_means import TimeSeriesKMeans
-    >>> from sktime.clustering.evaluation._plot_clustering import plot_cluster_algorithm
+    >>> from sktime.clustering.utils.plotting._plot_partitions import plot_cluster_algorithm
     >>> from sktime.datasets import load_arrow_head
 
     >>> X, y = load_arrow_head()
@@ -139,8 +146,8 @@ Time Series Annotation
 
 .. warning::
 
-   The time series annotation API is still experimental. Features may change
-   in future releases.
+   The time series annotation API is experimental,
+   and may change in future releases.
 
 .. code-block:: python
 

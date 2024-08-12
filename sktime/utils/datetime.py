@@ -1,13 +1,12 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 """Time format related utilities."""
 
 __author__ = ["mloning", "xiaobenbenecho", "khrapovs"]
 __all__ = []
 
+import warnings
 from functools import singledispatch
-from typing import Optional, Tuple, Union
-from warnings import warn
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -15,6 +14,7 @@ import pandas as pd
 from sktime.datatypes import VectorizedDF
 from sktime.datatypes._utilities import get_time_index
 from sktime.utils.validation.series import check_time_index, is_integer_index
+from sktime.utils.warnings import _suppress_pd22_warning
 
 
 def _coerce_duration_to_int(
@@ -61,7 +61,7 @@ def _coerce_duration_to_int(
         raise TypeError("`duration` type not understood.")
 
 
-def _get_intervals_count_and_unit(freq: str) -> Tuple[int, str]:
+def _get_intervals_count_and_unit(freq: str) -> tuple[int, str]:
     """Extract interval count and unit from frequency string.
 
     Supports eg: W, 3W, W-SUN, BQS, (B)Q(S)-MAR patterns, from which we
@@ -71,7 +71,8 @@ def _get_intervals_count_and_unit(freq: str) -> Tuple[int, str]:
     if freq is None:
         raise ValueError("frequency is missing")
     else:
-        offset = pd.tseries.frequencies.to_offset(freq)
+        with _suppress_pd22_warning:
+            offset = pd.tseries.frequencies.to_offset(freq)
         count, unit = offset.n, offset.base.freqstr
         return count, unit
 
@@ -87,6 +88,44 @@ def _get_freq(x):
             return x.freqstr
     else:
         return None
+
+
+def set_hier_freq(x):
+    """Set frequency for multiindex dataframes without frequency.
+
+    As of pandas 1.5.1, only a pd.PeriodIndex time index can have freq other None in
+    a pandas multiindex data set. A DatetimeIndex will always have a frequency equal
+    to None.
+    This function converts the DatetimeIndex to a PeriodIndex, which supports
+    frequency arguments.
+
+    Parameters
+    ----------
+    y : Panel, or Hierarchical object, or VectorizedDF with timeindex as
+        pd.DatetimeIndex or pd.PeriodIndex
+
+    Returns
+    -------
+    Series, Panel, or Hierarchical object, or VectorizedDF with pd.PeriodIndex as
+    time index and freq set.
+    """
+    if not isinstance(x.index, pd.MultiIndex):
+        raise ValueError("Only intended for use with MultiIndex.")
+
+    timepoints = get_time_index(x)
+    if not isinstance(timepoints, (pd.DatetimeIndex)):
+        raise ValueError("Set_freq only supported for DatetimeIndex.")
+
+    if timepoints.freq is not None:
+        warnings.warn("Frequency already set.", stacklevel=2)
+    else:
+        time_names = x.index.names[-1]
+        x = (
+            x.reset_index(-1)
+            .groupby(level=0, group_keys=True)
+            .apply(lambda df: df.set_index(time_names).to_period())
+        )
+    return x
 
 
 @singledispatch
@@ -135,7 +174,7 @@ def _infer_freq_from_index(index: pd.Index) -> Optional[str]:
         return index.freqstr
     else:
         try:
-            return pd.infer_freq(index, warn=False)
+            return pd.infer_freq(index)
         except (TypeError, ValueError):
             return None
 
@@ -145,7 +184,7 @@ def _shift(x, by=1, return_index=False):
 
     Parameters
     ----------
-    x : pd.Index, pd.Period, int. If pd.Index or pd.Peeriod, must have `freq` attribute.
+    x : pd.Index, pd.Period, int. If pd.Index or pd.Period, must have `freq` attribute.
         If pd.Index, must be of integer type, PeriodIndex, or DateTimeIndex
         Time point to shift
     by : int, optional, default=1
@@ -161,12 +200,8 @@ def _shift(x, by=1, return_index=False):
             if `x` is index, is coerced to index element by selecting first element
         Period shift is integer for `x: int`, and `freq` if `x` is temporal with `freq`
     """
-    # deprecate in 0.13.0 and remove in 0.14.0, pd.Timestamp will not have freq
     if isinstance(x, pd.Timestamp):
-        warn("_shift no longer supports x: pd.Timestamp fom 0.14.0", DeprecationWarning)
-        if not hasattr(x, "freq") or x.freq is None:
-            raise ValueError("No `freq` information available")
-        # raise TypeError("_shift no longer supports x: pd.Timestamp")
+        raise TypeError("_shift does not support x of type pd.Timestamp")
 
     # we ensure idx is pd.Index, x is first (and usually only) element
     if isinstance(x, pd.Index):
@@ -177,7 +212,7 @@ def _shift(x, by=1, return_index=False):
 
     # if we want index, we can simply use add dunder or shift
     if return_index:
-        if idx.is_integer():
+        if pd.api.types.is_integer_dtype(idx):
             return idx + by
         else:
             return idx.shift(by)

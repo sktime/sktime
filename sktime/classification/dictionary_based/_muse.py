@@ -1,15 +1,13 @@
-# -*- coding: utf-8 -*-
 """WEASEL+MUSE classifier.
 
-multivariate dictionary based classifier based on SFA transform, dictionaries
-and logistic regression.
+multivariate dictionary based classifier based on SFA transform, dictionaries and
+logistic regression.
 """
 
 __author__ = ["patrickzib", "BINAYKUMAR943"]
 __all__ = ["MUSE"]
 
 import math
-import warnings
 
 import numpy as np
 from joblib import Parallel, delayed
@@ -19,6 +17,7 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SFAFast
+from sktime.utils.warnings import warn
 
 
 class MUSE(BaseClassifier):
@@ -77,7 +76,7 @@ class MUSE(BaseClassifier):
         the number significantly. None applies not feature selectiona and yields large
         bag of words, e.g. much memory may be needed.
     n_jobs : int, default=1
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``-1`` means using all processors.
     random_state: int or None, default=None
         Seed for random, integer
@@ -112,16 +111,24 @@ class MUSE(BaseClassifier):
     >>> from sktime.classification.dictionary_based import MUSE
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = MUSE(window_inc=4, use_first_order_differences=False)
-    >>> clf.fit(X_train, y_train)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
+    >>> clf = MUSE(window_inc=4, use_first_order_differences=False) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
     MUSE(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> y_pred = clf.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["patrickzib", "BINAYKUMAR943"],
+        "maintainers": "BINAYKUMAR943",
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:multithreading": True,
+        "capability:predict_proba": True,
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "classifier_type": "dictionary",
     }
@@ -140,7 +147,6 @@ class MUSE(BaseClassifier):
         n_jobs=1,
         random_state=None,
     ):
-
         # currently other values than 4 are not supported.
         self.alphabet_size = alphabet_size
 
@@ -171,7 +177,7 @@ class MUSE(BaseClassifier):
         self.total_features_count = 0
         self.feature_selection = feature_selection
 
-        super(MUSE, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Build a WEASEL+MUSE classifiers from the training set (X, y).
@@ -198,9 +204,11 @@ class MUSE(BaseClassifier):
         self.highest_dim_bit = (math.ceil(math.log2(self.n_dims))) + 1
 
         if self.n_dims == 1:
-            warnings.warn(
+            warn(
                 "MUSE Warning: Input series is univariate; MUSE is designed for"
-                + " multivariate series. It is recommended WEASEL is used instead."
+                + " multivariate series. It is recommended WEASEL is used instead.",
+                obj=self,
+                stacklevel=2,
             )
 
         if self.variance and self.anova:
@@ -246,11 +254,11 @@ class MUSE(BaseClassifier):
         if type(all_words[0]) is np.ndarray:
             all_words = np.concatenate(all_words, axis=1)
         else:
-            all_words = hstack((all_words))
+            all_words = hstack(all_words)
 
         # Ridge Classifier does not give probabilities
         if not self.support_probabilities:
-            self.clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=False)
+            self.clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10))
         else:
             self.clf = LogisticRegression(
                 max_iter=5000,
@@ -321,7 +329,7 @@ class MUSE(BaseClassifier):
         if type(all_words[0]) is np.ndarray:
             all_words = np.concatenate(all_words, axis=1)
         else:
-            all_words = hstack((all_words))
+            all_words = hstack(all_words)
 
         return all_words
 
@@ -340,7 +348,7 @@ class MUSE(BaseClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -351,8 +359,9 @@ class MUSE(BaseClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         return {
             "window_inc": 4,

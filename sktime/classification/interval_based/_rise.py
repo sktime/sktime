@@ -1,17 +1,12 @@
-# -*- coding: utf-8 -*-
 """Random Interval Spectral Ensemble (RISE)."""
 
 __author__ = ["TonyBagnall"]
 __all__ = [
     "RandomIntervalSpectralEnsemble",
-    "acf",
-    "matrix_acf",
     "ps",
 ]
 
 import numpy as np
-from joblib import Parallel, delayed
-from numba import int64, jit, prange
 from sklearn.base import clone
 from sklearn.ensemble._base import _partition_estimators
 from sklearn.tree import DecisionTreeClassifier
@@ -22,6 +17,11 @@ from sktime.classification.base import BaseClassifier
 
 def _transform(X, interval, lag):
     """Compute the ACF and PS for given intervals of input data X."""
+    from sktime.classification.interval_based._rise_numba import (
+        _round_to_nearest_power_of_two,
+        acf,
+    )
+
     n_instances, _ = X.shape
     acf_x = np.empty(shape=(n_instances, lag))
     ps_len = _round_to_nearest_power_of_two(interval[1] - interval[0])
@@ -59,7 +59,7 @@ def _predict_proba_for_estimator(X, estimator, interval, lag):
 
 
 def _make_estimator(base_estimator, random_state=None):
-    """Make and configure a copy of the `base_estimator` attribute.
+    """Make and configure a copy of the ``base_estimator`` attribute.
 
     Warning: This method should be used to properly instantiate new
     sub-estimators.
@@ -145,13 +145,13 @@ class RandomIntervalSpectralEnsemble(BaseClassifier):
     acf_min_values : int, default=4
         Never use fewer than this number of terms to find a correlation.
     n_jobs : int, default=1
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``-1`` means using all processors.
     random_state : int, RandomState instance or None, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     Attributes
     ----------
@@ -176,7 +176,14 @@ class RandomIntervalSpectralEnsemble(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "TonyBagnall",
+        "python_dependencies": ["numba", "joblib"],
+        # estimator type
+        # --------------
         "capability:multithreading": True,
+        "capability:predict_proba": True,
         "classifier_type": "interval",
     }
 
@@ -202,7 +209,7 @@ class RandomIntervalSpectralEnsemble(BaseClassifier):
 
         self.base_estimator = DecisionTreeClassifier(random_state=random_state)
 
-        super(RandomIntervalSpectralEnsemble, self).__init__()
+        super().__init__()
 
     @property
     def feature_importances_(self):
@@ -231,6 +238,8 @@ class RandomIntervalSpectralEnsemble(BaseClassifier):
         -------
         self : object
         """
+        from joblib import Parallel, delayed
+
         X = X.squeeze(1)
         n_instances, self.series_length = X.shape
         self.min_interval_, self.max_interval_ = self.min_interval, self.max_interval
@@ -295,7 +304,7 @@ class RandomIntervalSpectralEnsemble(BaseClassifier):
     def _predict(self, X) -> np.ndarray:
         """Find predictions for all cases in X.
 
-        Built on top of `predict_proba`.
+        Built on top of ``predict_proba``.
 
         Parameters
         ----------
@@ -327,14 +336,16 @@ class RandomIntervalSpectralEnsemble(BaseClassifier):
         n_instances : int
             Number of cases to classify.
         n_columns : int
-            Number of attributes in X, must match `series_length` determined
-            in `fit`.
+            Number of attributes in X, must match ``series_length`` determined
+            in ``fit``.
 
         Returns
         -------
         output : array of shape = [n_instances, n_classes]
             The class probabilities of all cases.
         """
+        from joblib import Parallel, delayed
+
         X = X.squeeze(1)
 
         n_instances, n_columns = X.shape
@@ -368,7 +379,7 @@ class RandomIntervalSpectralEnsemble(BaseClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -379,8 +390,9 @@ class RandomIntervalSpectralEnsemble(BaseClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         if parameter_set == "results_comparison":
             return {"n_estimators": 10}
@@ -390,166 +402,6 @@ class RandomIntervalSpectralEnsemble(BaseClassifier):
                 "acf_lag": 10,
                 "min_interval": 5,
             }
-
-
-@jit(parallel=True, cache=True, nopython=True)
-def acf(x, max_lag):
-    """Autocorrelation function transform.
-
-    currently calculated using standard stats method. We could use inverse of power
-    spectrum, especially given we already have found it, worth testing for speed and
-    correctness. HOWEVER, for long series, it may not give much benefit, as we do not
-    use that many ACF terms.
-
-    Parameters
-    ----------
-    x : array-like shape = [interval_width]
-    max_lag: int
-        The number of ACF terms to find.
-
-    Returns
-    -------
-    y : array-like shape = [max_lag]
-    """
-    y = np.empty(max_lag)
-    length = len(x)
-    for lag in prange(1, max_lag + 1):
-        # Do it ourselves to avoid zero variance warnings
-        lag_length = length - lag
-        x1, x2 = x[:-lag], x[lag:]
-        s1 = np.sum(x1)
-        s2 = np.sum(x2)
-        m1 = s1 / lag_length
-        m2 = s2 / lag_length
-        ss1 = np.sum(x1 * x1)
-        ss2 = np.sum(x2 * x2)
-        v1 = ss1 - s1 * m1
-        v2 = ss2 - s2 * m2
-        v1_is_zero, v2_is_zero = v1 <= 1e-9, v2 <= 1e-9
-        if v1_is_zero and v2_is_zero:  # Both zero variance,
-            # so must be 100% correlated
-            y[lag - 1] = 1
-        elif v1_is_zero or v2_is_zero:  # One zero variance
-            # the other not
-            y[lag - 1] = 0
-        else:
-            y[lag - 1] = np.sum((x1 - m1) * (x2 - m2)) / np.sqrt(v1 * v2)
-        # _x = np.vstack((x[:-lag], x[lag:]))
-        # s = np.sum(_x, axis=1)
-        # ss = np.sum(_x * _x, axis=1)
-        # v = ss - s * s / l
-        # zero_variances = v <= 1e-9
-        # i = lag - 1
-        # if np.all(zero_variances):  # Both zero variance,
-        #     # so must be 100% correlated
-        #     y[i] = 1
-        # elif np.any(zero_variances):  # One zero variance
-        #     # the other not
-        #     y[i] = 0
-        # else:
-        #     m = _x - s.reshape(2, 1) / l
-        #     y[i] = (m[0] @ m[1]) / np.sqrt(np.prod(v))
-
-    return y
-
-
-#        y[lag - 1] = np.corrcoef(x[lag:], x[:-lag])[0][1]
-#        if np.isnan(y[lag - 1]) or np.isinf(y[lag-1]):
-#            y[lag-1]=0
-
-# @jit(parallel=True, cache=True, nopython=True)
-# def _acf(x, max_lag):
-#     y = np.empty(max_lag)
-#     length = len(x)
-#     n = length - np.arange(1, max_lag + 1)
-#     # _x = np.array([x[:-1], x[:0:-1]])
-#     # from_end_to_lag = slice(-1, -max_lag - 1, -1)
-#     # cs = np.cumsum(_x, axis=1)[:, from_end_to_lag]
-#     # cm = cs / n
-#     # css = np.cumsum(_x * _x, axis=1)[:, from_end_to_lag]
-#     # cv = css - cs
-#
-#     a, b = x[:-1], x[:0:-1]
-#     from_end_to_lag = slice(-1, -max_lag - 1, -1)
-#     cs1 = np.cumsum(a)[from_end_to_lag] / n
-#     cs2 = np.cumsum(b)[from_end_to_lag] / n
-#     css1 = np.cumsum(a * a)[from_end_to_lag] / n
-#     css2 = np.cumsum(b * b)[from_end_to_lag] / n
-#     cv1 = css1 - cs1 * cs1
-#     cv2 = css2 - cs2 * cs2
-#     covar = cv1 * cv2
-#
-#     for lag in prange(1, max_lag + 1):
-#         idx = lag - 1
-#         m1, m2, l = cs1[idx], cs2[idx], n[idx]
-#         y[idx] = np.sum((x[:-lag] - m1) * (x[lag:] - m2)) / l
-#     # both_zero = (cv1 <= 1e-9) & (cv2 <= 1e-9)
-#     # one_zero = (cv1 <= 1e-9) ^ (cv2 <= 1e-9)
-#     cv1_is_zero, cv2_is_zero = cv1 <= 1e-9, cv2 <= 1e-9
-#     non_zero = ~cv1_is_zero & ~cv2_is_zero
-#     y[cv1_is_zero & cv2_is_zero] = 1  # Both zero variance,
-#     # so must be 100% correlated
-#     y[cv1_is_zero ^ cv2_is_zero] = 0  # One zero variance
-#     # the other not
-#     y[non_zero] /= np.sqrt(covar[non_zero])
-#
-#     return y
-
-# @jit(parallel=True, cache=True, nopython=True)
-def matrix_acf(x, num_cases, max_lag):
-    """Autocorrelation function transform.
-
-    Calculated using standard stats method. We could use inverse of power
-    spectrum, especially given we already have found it, worth testing for speed and
-    correctness. HOWEVER, for long series, it may not give much benefit, as we do not
-    use that many ACF terms.
-
-    Parameters
-    ----------
-    x : array-like shape = [num_cases, interval_width]
-    max_lag: int
-        The number of ACF terms to find.
-
-    Returns
-    -------
-    y : array-like shape = [num_cases,max_lag]
-
-    """
-    y = np.empty(shape=(num_cases, max_lag))
-    length = x.shape[1]
-    for lag in prange(1, max_lag + 1):
-        # Could just do it ourselves ... TO TEST
-        #            s1=np.sum(x[:-lag])/x.shape()[0]
-        #            ss1=s1*s1
-        #            s2=np.sum(x[lag:])
-        #            ss2=s2*s2
-        #
-        lag_length = length - lag
-        x1, x2 = x[:, :-lag], x[:, lag:]
-        s1 = np.sum(x1, axis=1)
-        s2 = np.sum(x2, axis=1)
-        m1 = s1 / lag_length
-        m2 = s2 / lag_length
-        s12 = np.sum(x1 * x2, axis=1)
-        ss1 = np.sum(x1 * x1, axis=1)
-        ss2 = np.sum(x2 * x2, axis=1)
-        v1 = ss1 - s1 * m1
-        v2 = ss2 - s2 * m2
-        v12 = s12 - s1 * m2
-        v1_is_zero, v2_is_zero = v1 <= 1e-9, v2 <= 1e-9
-        non_zero = ~v1_is_zero & ~v2_is_zero
-        # y[:, lag - 1] = np.sum((x1 - m1[:, None]) *
-        # (x2 - m2[:, None]), axis=1)
-        y[v1_is_zero & v2_is_zero, lag - 1] = 1  # Both zero variance,
-        # so must be 100% correlated
-        y[v1_is_zero ^ v2_is_zero, lag - 1] = 0  # One zero variance
-        # the other not
-        var = (v1 * v2)[non_zero]
-        y[non_zero, lag - 1] = v12[non_zero] / np.sqrt(var)
-    #     # y[lag - 1] = np.corrcoef(x[:, lag:], x[:, -lag])[0][1]
-    #     # if np.isnan(y[lag - 1]) or np.isinf(y[lag - 1]):
-    #     #     y[lag - 1] = 0
-    return y
 
 
 def ps(x, sign=1, n=None, pad="mean"):
@@ -573,6 +425,10 @@ def ps(x, sign=1, n=None, pad="mean"):
     -------
     y : array-like shape = [len(x)/2]
     """
+    from sktime.classification.interval_based._rise_numba import (
+        _round_to_nearest_power_of_two,
+    )
+
     x_len = x.shape[-1]
     x_is_1d = x.ndim == 1
     # pad or slice series if length is not of power of 2 or n is specified
@@ -600,8 +456,3 @@ def ps(x, sign=1, n=None, pad="mean"):
     fft = np.fft.rfft(x_in_power_2)
     fft = fft[:-1] if x_is_1d else fft[:, :-1]
     return np.abs(fft)
-
-
-@jit("int64(int64)", cache=True, nopython=True)
-def _round_to_nearest_power_of_two(n):
-    return int64(1 << round(np.log2(n)))

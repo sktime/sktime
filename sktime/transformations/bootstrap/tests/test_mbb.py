@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Unit tests for Bootrstapping transformers."""
 
@@ -9,6 +8,7 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import load_airline
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.bootstrap import (
     MovingBlockBootstrapTransformer,
     STLBootstrapTransformer,
@@ -22,6 +22,10 @@ y = load_airline()
 y_index = y.index
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(STLBootstrapTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_bootstrapping_transformer_no_seasonal_period():
     """Tests that an exception is raised if sp<2."""
     with pytest.raises(NotImplementedError) as ex:
@@ -31,6 +35,10 @@ def test_bootstrapping_transformer_no_seasonal_period():
         assert "STLBootstrapTransformer does not support non-seasonal data" == ex.value
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(STLBootstrapTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_bootstrapping_transformer_series_shorter_than_sp():
     """Tests that an exception is raised if sp>len(y)."""
     with pytest.raises(ValueError) as ex:
@@ -42,6 +50,10 @@ def test_bootstrapping_transformer_series_shorter_than_sp():
         assert msg == ex.value
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([STLBootstrapTransformer, MovingBlockBootstrapTransformer]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "transformer_class", [STLBootstrapTransformer, MovingBlockBootstrapTransformer]
 )
@@ -66,6 +78,10 @@ index_return_actual_false = pd.MultiIndex.from_product(
 )
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([STLBootstrapTransformer, MovingBlockBootstrapTransformer]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "transformer_class, return_actual, expected_index",
     [
@@ -100,6 +116,10 @@ def test_bootstrap_transformers_panel_format(
     assert expected_index.equals(y_hat.index) and (y_hat.columns[0] == y.name)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([STLBootstrapTransformer, MovingBlockBootstrapTransformer]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "block_length, replacement", [(1, True), (5, True), (1, False), (5, False)]
 )
@@ -108,7 +128,7 @@ def test_moving_block_bootstrap(block_length, replacement):
 
     1. the output series has the same index as the input
     2. basic checks for the distribution of the bootstrapped values
-       i.e. actual min/max >= bootstapped min/max
+       i.e. actual min/max >= bootstrapped min/max
     """
     y_hat = _moving_block_bootstrap(
         y, block_length=block_length, replacement=replacement
@@ -120,6 +140,10 @@ def test_moving_block_bootstrap(block_length, replacement):
     )
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([STLBootstrapTransformer, MovingBlockBootstrapTransformer]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("ts", [y, y.to_frame()])
 def test_get_series_name(ts):
     """Test _get_series_name returns the right string."""

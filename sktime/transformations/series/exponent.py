@@ -1,25 +1,23 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements transformers raise time series to user provided exponent."""
 
-__author__ = ["Ryan Kuhns"]
+__author__ = ["RNKuhns"]
 __all__ = ["ExponentTransformer", "SqrtTransformer"]
-
-from warnings import warn
 
 import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.warnings import warn
 
 
 class ExponentTransformer(BaseTransformer):
     """Apply element-wise exponentiation transformation to a time series.
 
     Transformation performs the following operations element-wise:
-        * adds the constant `offset` (shift)
-        * raises to the `power` provided (exponentiation)
+        * adds the constant ``offset`` (shift)
+        * raises to the ``power`` provided (exponentiation)
     Offset="auto" computes offset as the smallest offset that ensure all elements
     are non-negative before exponentiation.
 
@@ -30,7 +28,7 @@ class ExponentTransformer(BaseTransformer):
 
     offset : "auto", int or float, default="auto"
         Offset to be added to the input timeseries prior to raising
-        the timeseries to the given `power`. If "auto" the series is checked to
+        the timeseries to the given ``power``. If "auto" the series is checked to
         determine if it contains negative values. If negative values are found
         then the offset will be equal to the absolute value of the most negative
         value. If not negative values are present the offset is set to zero.
@@ -59,7 +57,7 @@ class ExponentTransformer(BaseTransformer):
 
     Notes
     -----
-    For an input series `Z` the exponent transformation is defined as
+    For an input series ``Z`` the exponent transformation is defined as
     :math:`(Z + offset)^{power}`.
 
     Examples
@@ -72,6 +70,7 @@ class ExponentTransformer(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["RNKuhns"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -101,13 +100,14 @@ class ExponentTransformer(BaseTransformer):
                 f"Expected `offset` to be int or float, but found {type(self.offset)}."
             )
 
-        super(ExponentTransformer, self).__init__()
+        super().__init__()
 
         if abs(power) < 1e-6:
             warn(
                 "power close to zero passed to ExponentTransformer, "
                 "inverse_transform will default to identity "
-                "if called, in order to avoid division by zero"
+                "if called, in order to avoid division by zero",
+                obj=self,
             )
             self.set_tags(**{"skip-inverse-transform": True})
 
@@ -133,7 +133,7 @@ class ExponentTransformer(BaseTransformer):
         return Xt
 
     def _inverse_transform(self, X, y=None):
-        """Logic used by `inverse_transform` to reverse transformation on `X`.
+        """Logic used by ``inverse_transform`` to reverse transformation on ``X``.
 
         Parameters
         ----------
@@ -175,7 +175,7 @@ class ExponentTransformer(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -183,17 +183,18 @@ class ExponentTransformer(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         return [{"power": 2.5, "offset": 1}, {"power": 0}]
 
 
 class SqrtTransformer(ExponentTransformer):
-    """Apply element-sise square root transformation to a time series.
+    """Apply elementwise square root transformation to a time series.
 
     Transformation performs the following operations element-wise:
-        * adds the constant `offset` (shift)
+        * adds the constant ``offset`` (shift)
         * applies the square root
     Offset="auto" computes offset as the smallest offset that ensure all elements
     are non-negative before taking the square root.
@@ -202,7 +203,7 @@ class SqrtTransformer(ExponentTransformer):
     ----------
     offset : "auto", int or float, default="auto"
         Offset to be added to the input timeseries prior to raising
-        the timeseries to the given `power`. If "auto" the series is checked to
+        the timeseries to the given ``power``. If "auto" the series is checked to
         determine if it contains negative values. If negative values are found
         then the offset will be equal to the absolute value of the most negative
         value. If not negative values are present the offset is set to zero.
@@ -227,7 +228,7 @@ class SqrtTransformer(ExponentTransformer):
 
     Notes
     -----
-    For an input series `Z` the square root transformation is defined as
+    For an input series ``Z`` the square root transformation is defined as
     :math:`(Z + offset)^{0.5}`.
 
     Examples
@@ -250,7 +251,7 @@ class SqrtTransformer(ExponentTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -258,7 +259,8 @@ class SqrtTransformer(ExponentTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         return [{}, {"offset": 4.2}]

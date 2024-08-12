@@ -1,17 +1,13 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements Prophet forecaster by wrapping fbprophet."""
 
-__author__ = ["aiwalter"]
+__author__ = ["mloning", "aiwalter", "fkiraly"]
 __all__ = ["Prophet"]
 
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base.adapters import _ProphetAdapter
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("prophet", severity="warning")
 
 
 class Prophet(_ProphetAdapter):
@@ -21,10 +17,11 @@ class Prophet(_ProphetAdapter):
     All hyper-parameters are exposed via the constructor.
 
     Data can be passed in one of the sktime compatible formats,
-    naming a column `ds` such as in the prophet package is not necessary.
+    naming a column ``ds`` such as in the prophet package is not necessary.
 
-    Integer indices can also be passed, in which case internally a conversion
-    to days since Jan 1, 2000 is carried out before passing to prophet.
+    Unlike vanilla ``prophet``, also supports integer/range and period index:
+    * integer/range index is interpreted as days since Jan 1, 2000
+    * ``PeriodIndex`` is converted using the ``pandas`` method ``to_timestamp``
 
     Parameters
     ----------
@@ -49,24 +46,24 @@ class Prophet(_ProphetAdapter):
         trend. If 'logistic' specified float for 'growth_cap' must be provided.
     growth_floor: float, default=0
         Growth saturation minimum value.
-        Used only if  `growth="logistic"`, has no effect otherwise
-        (if `growth` is not `"logistic"`).
+        Used only if ``growth="logistic"``, has no effect otherwise
+        (if ``growth`` is not ``"logistic"``).
     growth_cap: float, default=None
         Growth saturation maximum aka carrying capacity.
-        Mandatory (float) iff `growth="logistic"`, has no effect and is optional,
-        otherwise (if `growth` is not `"logistic"`).
+        Mandatory (float) iff ``growth="logistic"``, has no effect and is optional,
+        otherwise (if ``growth`` is not ``"logistic"``).
     changepoints: list or None, default=None
         List of dates at which to include potential changepoints. If
         not specified, potential changepoints are selected automatically.
     n_changepoints: int, default=25
         Number of potential changepoints to include. Not used
-        if input `changepoints` is supplied. If `changepoints` is not supplied,
+        if input ``changepoints`` is supplied. If ``changepoints`` is not supplied,
         then n_changepoints potential changepoints are selected uniformly from
-        the first `changepoint_range` proportion of the history.
+        the first ``changepoint_range`` proportion of the history.
     changepoint_range: float, default=0.8
         Proportion of history in which trend changepoints will
         be estimated. Defaults to 0.8 for the first 80%. Not used if
-        `changepoints` is specified.
+        ``changepoints`` is specified.
     yearly_seasonality: str or bool or int, default="auto"
         Fit yearly seasonality.
         Can be 'auto', True, False, or a number of Fourier terms to generate.
@@ -114,6 +111,10 @@ class Prophet(_ProphetAdapter):
     stan_backend: str or None, default=None
         str as defined in StanBackendEnum. If None, will try to
         iterate over all available backends and find the working one.
+    fit_kwargs: dict or None, default=None
+        Dict with args for Prophet.fit().
+        These are additional arguments passed to the optimizing or sampling
+        functions in Stan.
 
     References
     ----------
@@ -161,6 +162,7 @@ class Prophet(_ProphetAdapter):
         uncertainty_samples=1000,
         stan_backend=None,
         verbose=0,
+        fit_kwargs=None,
     ):
         self.freq = freq
         self.add_seasonality = add_seasonality
@@ -185,8 +187,9 @@ class Prophet(_ProphetAdapter):
         self.uncertainty_samples = uncertainty_samples
         self.stan_backend = stan_backend
         self.verbose = verbose
+        self.fit_kwargs = fit_kwargs
 
-        super(Prophet, self).__init__()
+        super().__init__()
 
         # import inside method to avoid hard dependency
         from prophet.forecaster import Prophet as _Prophet
@@ -222,7 +225,7 @@ class Prophet(_ProphetAdapter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -236,5 +239,6 @@ class Prophet(_ProphetAdapter):
             "daily_seasonality": False,
             "uncertainty_samples": 10,
             "verbose": False,
+            "fit_kwargs": {"seed": 12345},
         }
         return params

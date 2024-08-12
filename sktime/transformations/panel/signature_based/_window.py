@@ -1,6 +1,6 @@
-# -*- coding: utf-8 -*-
 """
-window.py
+window.py.
+
 ======================================
 Introduces the Window module that is used when splitting the path over:
     - Global
@@ -10,9 +10,10 @@ Introduces the Window module that is used when splitting the path over:
 window types.
 Code based on window code written by Patrick Kidger.
 """
-import collections as co
-import numpy as np
 
+import collections as co
+
+import numpy as np
 
 _Pair = co.namedtuple("Pair", ("start", "end"))
 
@@ -20,8 +21,7 @@ _Pair = co.namedtuple("Pair", ("start", "end"))
 def _window_getter(
     window_name, window_depth=None, window_length=None, window_step=None
 ):
-    """Gets the window method correspondent to the given string and initialises
-    with specified parameters.
+    """Get window method correspondent to given string and initialises with parameters.
 
     Parameters
     ----------
@@ -39,7 +39,7 @@ def _window_getter(
     list:
         A list of lists where the inner lists are lists of tuples that
         denote the start and end indexes of each window.
-    """
+    """  # noqa: E501
     # Setup all available windows here
     length_step = {"length": window_length, "step": window_step}
     window_dict = {
@@ -51,9 +51,7 @@ def _window_getter(
 
     if window_name not in window_dict.keys():
         raise ValueError(
-            "Window name must be one of: {}. Got: {}.".format(
-                window_dict.keys(), window_name
-            )
+            f"Window name must be one of: {window_dict.keys()}. Got: {window_name}."
         )
 
     window_cls, window_kwargs = window_dict[window_name]
@@ -63,19 +61,21 @@ def _window_getter(
 class _Window:
     """Abstract base class for windows.
 
-    Each subclass must implement a __call__ method that returns a list of lists
-    of 2-tuples. Each 2-tuple specifies the start and end of each window.
+    Each subclass must implement a __call__ method that returns a list of lists of
+    2-tuples. Each 2-tuple specifies the start and end of each window.
 
-    These windows are grouped into a list that will (usually) cover the full
-    time series. These lists are grouped into another list for situations
-    where we consider windows of multiple scales.
+    These windows are grouped into a list that will (usually) cover the full time
+    series. These lists are grouped into another list for situations where we consider
+    windows of multiple scales.
     """
 
     def num_windows(self, length):
-        """Method that returns the total number of windows in the set.
+        """Return the total number of windows in the set.
+
         Parameters
         ----------
         length: int, The length of the input path.
+
         Returns
         -------
         int: The number of windows.
@@ -92,14 +92,15 @@ class _Global(_Window):
 
 class _ExpandingSliding(_Window):
     def __init__(self, initial_length, start_step, end_step):
-        """
+        """Build a ExpandingSliding object.
+
         Parameters
         ----------
         initial_length: int, Initial length of the input window.
         start_step: int, Initial step size.
         end_step: int, Final step size.
         """
-        super(_ExpandingSliding, self).__init__()
+        super().__init__()
         self.initial_length = initial_length
         self.start_step = start_step
         self.end_step = end_step
@@ -115,42 +116,37 @@ class _ExpandingSliding(_Window):
 
         windows = list(_call())
         if len(windows) == 0:
-            raise ValueError(
-                "Length {} too short for given window parameters.".format(length)
-            )
+            raise ValueError(f"Length {length} too short for given window parameters.")
         return [windows]
 
 
 class _Sliding(_ExpandingSliding):
-    """A window starting at zero and going to some point that increases
-    between windows.
+    """Build a Sliding object.
+
+    A window starting at zero and going to some point that increases between windows.
+
+    Parameters
+    ----------
+    length: int, The length of the window.
+    step: int, The sliding step size.
     """
 
     def __init__(self, length, step):
-        """
-        Parameters
-        ----------
-        length: int, The length of the window.
-        step: int, The sliding step size.
-        """
-        super(_Sliding, self).__init__(
-            initial_length=length, start_step=step, end_step=step
-        )
+        super().__init__(initial_length=length, start_step=step, end_step=step)
 
 
 class _Expanding(_ExpandingSliding):
     """A window of fixed length, slid along the dataset."""
 
     def __init__(self, length, step):
-        """
+        """Build a Expanding object.
+
         Parameters
         ----------
         length: int, The length of each window.
         step: int, The step size.
         """
-        super(_Expanding, self).__init__(
-            initial_length=length, start_step=0, end_step=step
-        )
+        super().__init__(initial_length=length, start_step=0, end_step=step)
 
 
 class _Dyadic(_Window):
@@ -177,7 +173,7 @@ class _Dyadic(_Window):
     """
 
     def __init__(self, depth):
-        super(_Dyadic, self).__init__()
+        super().__init__()
         self.depth = depth
 
     def __call__(self, length):
@@ -185,8 +181,8 @@ class _Dyadic(_Window):
         if self.depth > max_depth:
             raise ValueError(
                 "Chosen dyadic depth is too high for the data length. "
-                "We require depth <= {} for length {}. "
-                "Depth given is: {}.".format(max_depth, length, self.depth)
+                f"We require depth <= {max_depth} for length {length}. "
+                f"Depth given is: {self.depth}."
             )
         return self.call(float(length))
 

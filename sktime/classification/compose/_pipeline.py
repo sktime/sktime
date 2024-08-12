@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """Pipeline with a classifier."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 import numpy as np
 
@@ -14,63 +14,67 @@ __author__ = ["fkiraly"]
 __all__ = ["ClassifierPipeline", "SklearnClassifierPipeline"]
 
 
-class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
+class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
     """Pipeline of transformers and a classifier.
 
-    The `ClassifierPipeline` compositor chains transformers and a single classifier.
+    The ``ClassifierPipeline`` compositor chains transformers and a single classifier.
     The pipeline is constructed with a list of sktime transformers, plus a classifier,
         i.e., estimators following the BaseTransformer resp BaseClassifier interface.
     The transformer list can be unnamed - a simple list of transformers -
         or string named - a list of pairs of string, estimator.
 
-    For a list of transformers `trafo1`, `trafo2`, ..., `trafoN` and a classifier `clf`,
+    For a list of transformers ``trafo1``, ``trafo2``, ..., ``trafoN`` and a classifier
+    ``clf``,
         the pipeline behaves as follows:
-    `fit(X, y)` - changes styte by running `trafo1.fit_transform` on `X`,
-        them `trafo2.fit_transform` on the output of `trafo1.fit_transform`, etc
-        sequentially, with `trafo[i]` receiving the output of `trafo[i-1]`,
-        and then running `clf.fit` with `X` being the output of `trafo[N]`,
-        and `y` identical with the input to `self.fit`
-    `predict(X)` - result is of executing `trafo1.transform`, `trafo2.transform`, etc
-        with `trafo[i].transform` input = output of `trafo[i-1].transform`,
-        then running `clf.predict` on the output of `trafoN.transform`,
-        and returning the output of `clf.predict`
-    `predict_proba(X)` - result is of executing `trafo1.transform`, `trafo2.transform`,
-        etc, with `trafo[i].transform` input = output of `trafo[i-1].transform`,
-        then running `clf.predict_proba` on the output of `trafoN.transform`,
-        and returning the output of `clf.predict_proba`
+    ``fit(X, y)`` - changes styte by running ``trafo1.fit_transform`` on ``X``,
+        them ``trafo2.fit_transform`` on the output of ``trafo1.fit_transform``, etc
+        sequentially, with ``trafo[i]`` receiving the output of ``trafo[i-1]``,
+        and then running ``clf.fit`` with ``X`` being the output of ``trafo[N]``,
+        and ``y`` identical with the input to ``self.fit``
+    ``predict(X)`` - result is of executing ``trafo1.transform``, ``trafo2.transform``,
+    etc
+        with ``trafo[i].transform`` input = output of ``trafo[i-1].transform``,
+        then running ``clf.predict`` on the output of ``trafoN.transform``,
+        and returning the output of ``clf.predict``
+    ``predict_proba(X)`` - result is of executing ``trafo1.transform``,
+    ``trafo2.transform``,
+        etc, with ``trafo[i].transform`` input = output of ``trafo[i-1].transform``,
+        then running ``clf.predict_proba`` on the output of ``trafoN.transform``,
+        and returning the output of ``clf.predict_proba``
 
-    `get_params`, `set_params` uses `sklearn` compatible nesting interface
+    ``get_params``, ``set_params`` uses ``sklearn`` compatible nesting interface
         if list is unnamed, names are generated as names of classes
-        if names are non-unique, `f"_{str(i)}"` is appended to each name string
-            where `i` is the total count of occurrence of a non-unique string
+        if names are non-unique, ``f"_{str(i)}"`` is appended to each name string
+            where ``i`` is the total count of occurrence of a non-unique string
             inside the list of names leading up to it (inclusive)
 
-    `ClassifierPipeline` can also be created by using the magic multiplication
-        on any classifier, i.e., if `my_clf` inherits from `BaseClassifier`,
-            and `my_trafo1`, `my_trafo2` inherit from `BaseTransformer`, then,
-            for instance, `my_trafo1 * my_trafo2 * my_clf`
+    ``ClassifierPipeline`` can also be created by using the magic multiplication
+        on any classifier, i.e., if ``my_clf`` inherits from ``BaseClassifier``,
+            and ``my_trafo1``, ``my_trafo2`` inherit from ``BaseTransformer``, then,
+            for instance, ``my_trafo1 * my_trafo2 * my_clf``
             will result in the same object as  obtained from the constructor
-            `ClassifierPipeline(classifier=my_clf, transformers=[my_trafo1, my_trafo2])`
+            ``ClassifierPipeline(classifier=my_clf, transformers=[my_trafo1,
+            my_trafo2])``
         magic multiplication can also be used with (str, transformer) pairs,
             as long as one element in the chain is a transformer
 
     Parameters
     ----------
     classifier : sktime classifier, i.e., estimator inheriting from BaseClassifier
-        this is a "blueprint" classifier, state does not change when `fit` is called
+        this is a "blueprint" classifier, state does not change when ``fit`` is called
     transformers : list of sktime transformers, or
         list of tuples (str, transformer) of sktime transformers
-        these are "blueprint" transformers, states do not change when `fit` is called
+        these are "blueprint" transformers, states do not change when ``fit`` is called
 
     Attributes
     ----------
-    classifier_ : sktime classifier, clone of classifier in `classifier`
-        this clone is fitted in the pipeline when `fit` is called
+    classifier_ : sktime classifier, clone of classifier in ``classifier``
+        this clone is fitted in the pipeline when ``fit`` is called
     transformers_ : list of tuples (str, transformer) of sktime transformers
-        clones of transformers in `transformers` which are fitted in the pipeline
+        clones of transformers in ``transformers`` which are fitted in the pipeline
         is always in (str, transformer) format, even if transformers is just a list
         strings not passed in transformers are unique generated strings
-        i-th transformer in `transformers_` is clone of i-th in `transformers`
+        i-th transformer in ``transformers_`` is clone of i-th in ``transformers``
 
     Examples
     --------
@@ -88,10 +92,12 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
     >>> y_pred = pipeline.predict(X_test)
 
     Alternative construction via dunder method:
+
     >>> pipeline = PCATransformer() * TimeSeriesForestClassifier(n_estimators=5)
     """
 
     _tags = {
+        "authors": ["fkiraly"],
         "X_inner_mtype": "pd-multiindex",  # which type do _fit/_predict accept
         "capability:multivariate": False,
         "capability:unequal_length": False,
@@ -99,18 +105,18 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
         "capability:train_estimate": False,
         "capability:contractable": False,
         "capability:multithreading": False,
+        "capability:predict_proba": True,
     }
 
     # no default tag values - these are set dynamically below
 
     def __init__(self, classifier, transformers):
-
         self.classifier = classifier
         self.classifier_ = classifier.clone()
         self.transformers = transformers
         self.transformers_ = TransformerPipeline(transformers)
 
-        super(ClassifierPipeline, self).__init__()
+        super().__init__()
 
         # can handle multivariate iff: both classifier and all transformers can
         multivariate = classifier.get_tag("capability:multivariate", False)
@@ -133,6 +139,8 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
         unequal = unequal or self.transformers_.get_tag(
             "capability:unequal_length:removes", False
         )
+        # predict_proba is same as that of classifier
+        predict_proba = classifier.get_tag("capability:predict_proba")
         # last three tags are always False, since not supported by transformers
         tags_to_set = {
             "capability:multivariate": multivariate,
@@ -141,6 +149,7 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
             "capability:contractable": False,
             "capability:train_estimate": False,
             "capability:multithreading": False,
+            "capability:predict_proba": predict_proba,
         }
         self.set_tags(**tags_to_set)
 
@@ -155,16 +164,18 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
     def __rmul__(self, other):
         """Magic * method, return concatenated ClassifierPipeline, transformers on left.
 
-        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+        Implemented for ``other`` being a transformer, otherwise returns
+        ``NotImplemented``.
 
         Parameters
         ----------
-        other: `sktime` transformer, must inherit from BaseTransformer
-            otherwise, `NotImplemented` is returned
+        other: ``sktime`` transformer, must inherit from BaseTransformer
+            otherwise, ``NotImplemented`` is returned
 
         Returns
         -------
-        ClassifierPipeline object, concatenation of `other` (first) with `self` (last).
+        ClassifierPipeline object, concatenation of ``other`` (first) with ``self``
+        (last).
         """
         if isinstance(other, BaseTransformer):
             # use the transformers dunder to get a TransformerPipeline
@@ -236,7 +247,7 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
         return self.classifier_.predict_proba(Xt)
 
     def get_params(self, deep=True):
-        """Get parameters of estimator in `transformers`.
+        """Get parameters of estimator in ``transformers``.
 
         Parameters
         ----------
@@ -256,7 +267,7 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
         return params
 
     def set_params(self, **kwargs):
-        """Set the parameters of estimator in `transformers`.
+        """Set the parameters of estimator in ``transformers``.
 
         Valid parameter keys can be listed with ``get_params()``.
 
@@ -270,7 +281,9 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
         trafo_keys = self._get_params("_transformers", deep=True).keys()
         classif_keys = self.classifier.get_params(deep=True).keys()
         trafo_args = self._subset_dict_keys(dict_to_subset=kwargs, keys=trafo_keys)
-        classif_args = self._subset_dict_keys(dict_to_subset=kwargs, keys=classif_keys)
+        classif_args = self._subset_dict_keys(
+            dict_to_subset=kwargs, keys=classif_keys, prefix="classifier"
+        )
         if len(classif_args) > 0:
             self.classifier.set_params(**classif_args)
         if len(trafo_args) > 0:
@@ -285,7 +298,7 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -296,84 +309,95 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         # imports
         from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
+        from sktime.classification.dummy import DummyClassifier
         from sktime.transformations.series.exponent import ExponentTransformer
 
         t1 = ExponentTransformer(power=2)
         t2 = ExponentTransformer(power=0.5)
         c = KNeighborsTimeSeriesClassifier()
 
-        # construct without names
-        return {"transformers": [t1, t2], "classifier": c}
+        another_c = DummyClassifier()
+
+        params1 = {"transformers": [t1, t2], "classifier": c}
+        params2 = {"transformers": [t1], "classifier": another_c}
+
+        return [params1, params2]
 
 
-class SklearnClassifierPipeline(ClassifierPipeline):
+class SklearnClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
     """Pipeline of transformers and a classifier.
 
-    The `SklearnClassifierPipeline` chains transformers and an single classifier.
-        Similar to `ClassifierPipeline`, but uses a tabular `sklearn` classifier.
+    The ``SklearnClassifierPipeline`` chains transformers and an single classifier.
+        Similar to ``ClassifierPipeline``, but uses a tabular ``sklearn`` classifier.
     The pipeline is constructed with a list of sktime transformers, plus a classifier,
         i.e., transformers following the BaseTransformer interface,
-        classifier follows the `scikit-learn` classifier interface.
+        classifier follows the ``scikit-learn`` classifier interface.
     The transformer list can be unnamed - a simple list of transformers -
         or string named - a list of pairs of string, estimator.
 
-    For a list of transformers `trafo1`, `trafo2`, ..., `trafoN` and a classifier `clf`,
+    For a list of transformers ``trafo1``, ``trafo2``, ..., ``trafoN`` and a classifier
+    ``clf``,
         the pipeline behaves as follows:
-    `fit(X, y)` - changes styte by running `trafo1.fit_transform` on `X`,
-        them `trafo2.fit_transform` on the output of `trafo1.fit_transform`, etc
-        sequentially, with `trafo[i]` receiving the output of `trafo[i-1]`,
-        and then running `clf.fit` with `X` the output of `trafo[N]` converted to numpy,
-        and `y` identical with the input to `self.fit`.
-        `X` is converted to `numpyflat` mtype if `X` is of `Panel` scitype;
-        `X` is converted to `numpy2D` mtype if `X` is of `Table` scitype.
-    `predict(X)` - result is of executing `trafo1.transform`, `trafo2.transform`, etc
-        with `trafo[i].transform` input = output of `trafo[i-1].transform`,
-        then running `clf.predict` on the numpy converted output of `trafoN.transform`,
-        and returning the output of `clf.predict`.
-        Output of `trasfoN.transform` is converted to numpy, as in `fit`.
-    `predict_proba(X)` - result is of executing `trafo1.transform`, `trafo2.transform`,
-        etc, with `trafo[i].transform` input = output of `trafo[i-1].transform`,
-        then running `clf.predict_proba` on the output of `trafoN.transform`,
-        and returning the output of `clf.predict_proba`.
-        Output of `trasfoN.transform` is converted to numpy, as in `fit`.
+    ``fit(X, y)`` - changes styte by running ``trafo1.fit_transform`` on ``X``,
+        them ``trafo2.fit_transform`` on the output of ``trafo1.fit_transform``, etc
+        sequentially, with ``trafo[i]`` receiving the output of ``trafo[i-1]``,
+        and then running ``clf.fit`` with ``X`` the output of ``trafo[N]`` converted to
+        numpy,
+        and ``y`` identical with the input to ``self.fit``.
+        ``X`` is converted to ``numpyflat`` mtype if ``X`` is of ``Panel`` scitype;
+        ``X`` is converted to ``numpy2D`` mtype if ``X`` is of ``Table`` scitype.
+    ``predict(X)`` - result is of executing ``trafo1.transform``, ``trafo2.transform``,
+    etc
+        with ``trafo[i].transform`` input = output of ``trafo[i-1].transform``,
+        then running ``clf.predict`` on the numpy converted output of
+        ``trafoN.transform``,
+        and returning the output of ``clf.predict``.
+        Output of ``trasfoN.transform`` is converted to numpy, as in ``fit``.
+    ``predict_proba(X)`` - result is of executing ``trafo1.transform``,
+    ``trafo2.transform``,
+        etc, with ``trafo[i].transform`` input = output of ``trafo[i-1].transform``,
+        then running ``clf.predict_proba`` on the output of ``trafoN.transform``,
+        and returning the output of ``clf.predict_proba``.
+        Output of ``trasfoN.transform`` is converted to numpy, as in ``fit``.
 
-    `get_params`, `set_params` uses `sklearn` compatible nesting interface
+    ``get_params``, ``set_params`` uses ``sklearn`` compatible nesting interface
         if list is unnamed, names are generated as names of classes
-        if names are non-unique, `f"_{str(i)}"` is appended to each name string
-            where `i` is the total count of occurrence of a non-unique string
+        if names are non-unique, ``f"_{str(i)}"`` is appended to each name string
+            where ``i`` is the total count of occurrence of a non-unique string
             inside the list of names leading up to it (inclusive)
 
-    `SklearnClassifierPipeline` can also be created by using the magic multiplication
-        between `sktime` transformers and `sklearn` classifiers,
-            and `my_trafo1`, `my_trafo2` inherit from `BaseTransformer`, then,
-            for instance, `my_trafo1 * my_trafo2 * my_clf`
+    ``SklearnClassifierPipeline`` can also be created by using the magic multiplication
+        between ``sktime`` transformers and ``sklearn`` classifiers,
+            and ``my_trafo1``, ``my_trafo2`` inherit from ``BaseTransformer``, then,
+            for instance, ``my_trafo1 * my_trafo2 * my_clf``
             will result in the same object as  obtained from the constructor
-            `SklearnClassifierPipeline(classifier=my_clf, transformers=[t1, t2])`
+            ``SklearnClassifierPipeline(classifier=my_clf, transformers=[t1, t2])``
         magic multiplication can also be used with (str, transformer) pairs,
             as long as one element in the chain is a transformer
 
     Parameters
     ----------
     classifier : sklearn classifier, i.e., inheriting from sklearn ClassifierMixin
-        this is a "blueprint" classifier, state does not change when `fit` is called
+        this is a "blueprint" classifier, state does not change when ``fit`` is called
     transformers : list of sktime transformers, or
         list of tuples (str, transformer) of sktime transformers
-        these are "blueprint" transformers, states do not change when `fit` is called
+        these are "blueprint" transformers, states do not change when ``fit`` is called
 
     Attributes
     ----------
-    classifier_ : sklearn classifier, clone of classifier in `classifier`
-        this clone is fitted in the pipeline when `fit` is called
+    classifier_ : sklearn classifier, clone of classifier in ``classifier``
+        this clone is fitted in the pipeline when ``fit`` is called
     transformers_ : list of tuples (str, transformer) of sktime transformers
-        clones of transformers in `transformers` which are fitted in the pipeline
+        clones of transformers in ``transformers`` which are fitted in the pipeline
         is always in (str, transformer) format, even if transformers is just a list
         strings not passed in transformers are unique generated strings
-        i-th transformer in `transformers_` is clone of i-th in `transformers`
+        i-th transformer in ``transformers_`` is clone of i-th in ``transformers``
 
     Examples
     --------
@@ -391,23 +415,24 @@ class SklearnClassifierPipeline(ClassifierPipeline):
     >>> y_pred = pipeline.predict(X_test)
 
     Alternative construction via dunder method:
+
     >>> pipeline = t1 * t2 * KNeighborsClassifier()
     """
 
     _tags = {
         "X_inner_mtype": "pd-multiindex",  # which type do _fit/_predict accept
-        "capability:multivariate": False,
-        "capability:unequal_length": False,
+        "capability:multivariate": True,
+        "capability:unequal_length": True,
         "capability:missing_values": True,
         "capability:train_estimate": False,
         "capability:contractable": False,
         "capability:multithreading": False,
+        "capability:predict_proba": True,
     }
 
     # no default tag values - these are set dynamically below
 
     def __init__(self, classifier, transformers):
-
         from sklearn.base import clone
 
         self.classifier = classifier
@@ -415,11 +440,10 @@ class SklearnClassifierPipeline(ClassifierPipeline):
         self.transformers = transformers
         self.transformers_ = TransformerPipeline(transformers)
 
-        super(ClassifierPipeline, self).__init__()
+        super().__init__()
 
-        # can handle multivariate iff all transformers can
-        # sklearn transformers always support multivariate
-        multivariate = not self.transformers_.get_tag("univariate-only", True)
+        # all sktime and sklearn transformers always support multivariate
+        multivariate = True
         # can handle missing values iff transformer chain removes missing data
         # sklearn classifiers might be able to handle missing data (but no tag there)
         # so better set the tag liberally
@@ -441,19 +465,29 @@ class SklearnClassifierPipeline(ClassifierPipeline):
         }
         self.set_tags(**tags_to_set)
 
+    @property
+    def _transformers(self):
+        return self.transformers_._steps
+
+    @_transformers.setter
+    def _transformers(self, value):
+        self.transformers_._steps = value
+
     def __rmul__(self, other):
         """Magic * method, return concatenated ClassifierPipeline, transformers on left.
 
-        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+        Implemented for ``other`` being a transformer, otherwise returns
+        ``NotImplemented``.
 
         Parameters
         ----------
-        other: `sktime` transformer, must inherit from BaseTransformer
-            otherwise, `NotImplemented` is returned
+        other: ``sktime`` transformer, must inherit from BaseTransformer
+            otherwise, ``NotImplemented`` is returned
 
         Returns
         -------
-        ClassifierPipeline object, concatenation of `other` (first) with `self` (last).
+        ClassifierPipeline object, concatenation of ``other`` (first) with ``self``
+        (last).
         """
         if isinstance(other, BaseTransformer):
             # use the transformers dunder to get a TransformerPipeline
@@ -549,8 +583,28 @@ class SklearnClassifierPipeline(ClassifierPipeline):
             # if sklearn classifier does not have predict_proba
             return BaseClassifier._predict_proba(self, X)
 
+    def get_params(self, deep=True):
+        """Get parameters of estimator in ``transformers``.
+
+        Parameters
+        ----------
+        deep : boolean, optional, default=True
+            If True, will return the parameters for this estimator and
+            contained sub-objects that are estimators.
+
+        Returns
+        -------
+        params : mapping of string to any
+            Parameter names mapped to their values.
+        """
+        params = dict()
+        trafo_params = self._get_params("_transformers", deep=deep)
+        params.update(trafo_params)
+
+        return params
+
     def set_params(self, **kwargs):
-        """Set the parameters of estimator in `transformers`.
+        """Set the parameters of estimator in ``transformers``.
 
         Valid parameter keys can be listed with ``get_params()``.
 
@@ -564,7 +618,9 @@ class SklearnClassifierPipeline(ClassifierPipeline):
         trafo_keys = self._get_params("_transformers", deep=True).keys()
         classif_keys = self.classifier.get_params(deep=True).keys()
         trafo_args = self._subset_dict_keys(dict_to_subset=kwargs, keys=trafo_keys)
-        classif_args = self._subset_dict_keys(dict_to_subset=kwargs, keys=classif_keys)
+        classif_args = self._subset_dict_keys(
+            dict_to_subset=kwargs, keys=classif_keys, prefix="classifier"
+        )
         if len(classif_args) > 0:
             self.classifier.set_params(**classif_args)
         if len(trafo_args) > 0:
@@ -579,7 +635,7 @@ class SklearnClassifierPipeline(ClassifierPipeline):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -590,8 +646,9 @@ class SklearnClassifierPipeline(ClassifierPipeline):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         from sklearn.neighbors import KNeighborsClassifier
 

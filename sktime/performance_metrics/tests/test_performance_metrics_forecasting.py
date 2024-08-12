@@ -1,53 +1,55 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Tests for performance metrics forecasting."""
 
-__author__ = ["Tomasz Chodakowski", "Ryan Kuhns"]
+__author__ = ["tch", "RNKuhns"]
 
-import pytest
 import numpy as np
 import pandas as pd
+import pytest
 from pandas.api.types import is_numeric_dtype
-from sktime.utils._testing.series import _make_series
+
 from sktime.performance_metrics.forecasting import (
-    MeanAbsoluteScaledError,
-    MedianAbsoluteScaledError,
-    MeanSquaredScaledError,
-    MedianSquaredScaledError,
-    MeanAbsoluteError,
-    MeanSquaredError,
-    MedianAbsoluteError,
-    MedianSquaredError,
-    MeanAbsolutePercentageError,
-    MedianAbsolutePercentageError,
-    MeanSquaredPercentageError,
-    MedianSquaredPercentageError,
-    MeanRelativeAbsoluteError,
-    MedianRelativeAbsoluteError,
     GeometricMeanRelativeAbsoluteError,
     GeometricMeanRelativeSquaredError,
+    MeanAbsoluteError,
+    MeanAbsolutePercentageError,
+    MeanAbsoluteScaledError,
     MeanAsymmetricError,
+    MeanRelativeAbsoluteError,
+    MeanSquaredError,
+    MeanSquaredPercentageError,
+    MeanSquaredScaledError,
+    MedianAbsoluteError,
+    MedianAbsolutePercentageError,
+    MedianAbsoluteScaledError,
+    MedianRelativeAbsoluteError,
+    MedianSquaredError,
+    MedianSquaredPercentageError,
+    MedianSquaredScaledError,
     RelativeLoss,
-    mean_absolute_scaled_error,
-    median_absolute_scaled_error,
-    mean_squared_scaled_error,
-    median_squared_scaled_error,
-    mean_absolute_error,
-    mean_squared_error,
-    median_absolute_error,
-    median_squared_error,
-    mean_absolute_percentage_error,
-    median_absolute_percentage_error,
-    mean_squared_percentage_error,
-    median_squared_percentage_error,
-    mean_relative_absolute_error,
-    median_relative_absolute_error,
     geometric_mean_relative_absolute_error,
     geometric_mean_relative_squared_error,
+    mean_absolute_error,
+    mean_absolute_percentage_error,
+    mean_absolute_scaled_error,
     mean_asymmetric_error,
+    mean_relative_absolute_error,
+    mean_squared_error,
+    mean_squared_percentage_error,
+    mean_squared_scaled_error,
+    median_absolute_error,
+    median_absolute_percentage_error,
+    median_absolute_scaled_error,
+    median_relative_absolute_error,
+    median_squared_error,
+    median_squared_percentage_error,
+    median_squared_scaled_error,
     relative_loss,
 )
 from sktime.performance_metrics.tests._config import RANDOM_SEED
+from sktime.tests.test_switch import run_test_module_changed
+from sktime.utils._testing.series import _make_series
 
 # For multiple comparisons of equality between functions and classes
 rng = np.random.default_rng(RANDOM_SEED)
@@ -369,7 +371,7 @@ LOSS_RESULTS = {
 
 
 def _call_metrics(metric_func, metric_class, y_true, y_pred, y_train, y_pred_benchmark):
-    """Call function and class metrics and return results"""
+    """Call function and class metrics and return results."""
     class_attrs = metric_class.get_params()
     function_metric = metric_func(
         y_true,
@@ -387,11 +389,14 @@ def _call_metrics(metric_func, metric_class, y_true, y_pred, y_train, y_pred_ben
     return function_metric, class_metric
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 @pytest.mark.parametrize("metric_func_name", LOSS_RESULTS.keys())
 @pytest.mark.parametrize("n_test_case", [1, 2, 3])
 def test_univariate_loss_expected_zero(n_test_case, metric_func_name):
-    # Test cases where the expected loss is zero for perfect forecast.
-
+    """Test cases where the expected loss is zero for perfect forecast."""
     metric_class = LOSS_RESULTS[metric_func_name]["class"]
     metric_func = LOSS_RESULTS[metric_func_name]["func"]
 
@@ -423,9 +428,14 @@ def test_univariate_loss_expected_zero(n_test_case, metric_func_name):
     )
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 @pytest.mark.parametrize("metric_func_name", LOSS_RESULTS.keys())
 @pytest.mark.parametrize("n_test_case", [1, 2, 3])
 def test_univariate_loss_against_expected_value(n_test_case, metric_func_name):
+    """Test univariate loss against expected value."""
     metric_class = LOSS_RESULTS[metric_func_name]["class"]
     metric_func = LOSS_RESULTS[metric_func_name]["func"]
     true_loss = LOSS_RESULTS[metric_func_name][f"test_case_{n_test_case}"]
@@ -458,9 +468,14 @@ def test_univariate_loss_against_expected_value(n_test_case, metric_func_name):
     )
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 @pytest.mark.parametrize("metric_func_name", LOSS_RESULTS.keys())
 @pytest.mark.parametrize("random_state", RANDOM_STATES)
 def test_univariate_metric_function_class_equality(metric_func_name, random_state):
+    """Tests that loss function and class should return equal values."""
     metric_class = LOSS_RESULTS[metric_func_name]["class"]
     metric_func = LOSS_RESULTS[metric_func_name]["func"]
 
@@ -483,9 +498,14 @@ def test_univariate_metric_function_class_equality(metric_func_name, random_stat
     )
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 @pytest.mark.parametrize("random_state", RANDOM_STATES)
 @pytest.mark.parametrize("metric_func_name", LOSS_RESULTS.keys())
 def test_univariate_function_output_type(metric_func_name, random_state):
+    """Tests that loss function with univariate input should return scalar number."""
     metric_func = LOSS_RESULTS[metric_func_name]["func"]
     y = _make_series(n_timepoints=75, random_state=random_state)
     y_train, y_true = y.iloc[:50], y.iloc[50:]
@@ -503,8 +523,13 @@ def test_univariate_function_output_type(metric_func_name, random_state):
     )
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 @pytest.mark.parametrize("metric_func_name", LOSS_RESULTS.keys())
 def test_y_true_y_pred_inconsistent_n_outputs_raises_error(metric_func_name):
+    """Error should be raised when y_true and y_pred have different number of output."""
     metric_func = LOSS_RESULTS[metric_func_name]["func"]
     y = _make_series(n_timepoints=75, random_state=RANDOM_STATES[0])
     y_train, y_true = y.iloc[:50], y.iloc[50:]
@@ -521,8 +546,13 @@ def test_y_true_y_pred_inconsistent_n_outputs_raises_error(metric_func_name):
         metric_func(y_true, y_pred, y_train=y_train, y_pred_benchmark=y_pred_benchmark)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 @pytest.mark.parametrize("metric_func_name", LOSS_RESULTS.keys())
 def test_y_true_y_pred_inconsistent_n_timepoints_raises_error(metric_func_name):
+    """Error should be raised if input variables have inconsistent number of samples."""
     metric_func = LOSS_RESULTS[metric_func_name]["func"]
     y = _make_series(n_timepoints=75, random_state=RANDOM_STATES[0])
     y_train, y_true = y.iloc[:50], y.iloc[50:]
@@ -536,8 +566,13 @@ def test_y_true_y_pred_inconsistent_n_timepoints_raises_error(metric_func_name):
         metric_func(y_true, y_pred, y_train=y_train, y_pred_benchmark=y_pred_benchmark)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 @pytest.mark.parametrize("metric_func_name", LOSS_RESULTS.keys())
 def test_y_true_y_pred_inconsistent_n_variables_raises_error(metric_func_name):
+    """Error should be raised when y_true and y_pred have different number of output."""
     metric_func = LOSS_RESULTS[metric_func_name]["func"]
     y = _make_series(n_timepoints=75, random_state=RANDOM_STATES[0])
     y_train, y_true = y.iloc[:50], y.iloc[50:]

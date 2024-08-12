@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Wraps the UnobservedComponents (state space) model from statsmodels."""
@@ -12,9 +11,12 @@ from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
 class UnobservedComponents(_StatsModelsAdapter):
-    r"""Wrapper class of the UnobservedComponents model from statsmodels.
+    r"""UnobservedComponents forecasting model from statsmodels.
 
-    Input parameters and doc-stringsare taken from the original implementation.
+    Direct interface to ``UnobservedComponents`` from
+    ``statsmodels.tsa.statespace.structural``.
+
+    Input parameters and doc-strings are taken from the original implementation.
 
     Parameters
     ----------
@@ -23,7 +25,7 @@ class UnobservedComponents(_StatsModelsAdapter):
         be a string specification of the level / trend component.
     trend : bool, optional
         Whether or not to include a trend component. Default is False. If True,
-        `level` must also be True.
+        ``level`` must also be True.
     seasonal : {int, None}, optional
         The period of the seasonal component, if any. Default is None.
     freq_seasonal : {list[dict], None}, optional.
@@ -75,15 +77,15 @@ class UnobservedComponents(_StatsModelsAdapter):
     start_params : array_like, optional
         Initial guess of the solution for the loglikelihood maximization.
     transformed : bool, optional
-        Whether or not `start_params` is already transformed. Default is
+        Whether or not ``start_params`` is already transformed. Default is
         True.
     includes_fixed : bool, optional
-        If parameters were previously fixed with the `fix_params` method,
-        this argument describes whether or not `start_params` also includes
+        If parameters were previously fixed with the ``fix_params`` method,
+        this argument describes whether or not ``start_params`` also includes
         the fixed parameters, in addition to the free parameters. Default
         is False.
     cov_type : str, optional
-        The `cov_type` keyword governs the method for calculating the
+        The ``cov_type`` keyword governs the method for calculating the
         covariance matrix of parameter estimates. Can be one of:
         - 'opg' for the outer product of gradient estimator
         - 'oim' for the observed information matrix estimator, calculated
@@ -112,7 +114,7 @@ class UnobservedComponents(_StatsModelsAdapter):
             approximations computed using finite difference methods use a
             centered approximation. Default is False.
     method : str, optional
-        The `method` determines which solver from `scipy.optimize`
+        The ``method`` determines which solver from ``scipy.optimize``
         is used, and it can be chosen from among the following strings:
         - 'newton' for Newton-Raphson
         - 'nm' for Nelder-Mead
@@ -122,7 +124,7 @@ class UnobservedComponents(_StatsModelsAdapter):
         - 'cg' for conjugate gradient
         - 'ncg' for Newton-conjugate gradient
         - 'basinhopping' for global basin-hopping solver
-        The explicit arguments in `fit` are passed to the solver,
+        The explicit arguments in ``fit`` are passed to the solver,
         with the exception of the basin-hopping solver. Each
         solver has several optional arguments that are not the same across
         solvers. See the notes section below (or scipy.optimize) for the
@@ -146,14 +148,14 @@ class UnobservedComponents(_StatsModelsAdapter):
         The method by which the score vector is calculated. 'harvey' uses
         the method from Harvey (1989), 'approx' uses either finite
         difference or complex step differentiation depending upon the
-        value of `optim_complex_step`, and None uses the built-in gradient
+        value of ``optim_complex_step``, and None uses the built-in gradient
         approximation of the optimizer. Default is None. This keyword is
         only relevant if the optimization method uses the score.
     optim_complex_step : bool, optional
         Whether or not to use complex step differentiation when
         approximating the score; if False, finite difference approximation
         is used. Default is True. This keyword is only relevant if
-        `optim_score` is set to 'harvey' or 'approx'.
+        ``optim_score`` is set to 'harvey' or 'approx'.
     optim_hessian : {'opg','oim','approx'}, optional
         The method by which the Hessian is numerically approximated. 'opg'
         uses outer product of gradients, 'oim' uses the information
@@ -167,7 +169,7 @@ class UnobservedComponents(_StatsModelsAdapter):
         prediction), although out-of-sample forecasting is possible.
         Default is False.
     random_state : int, RandomState instance or None, optional ,
-        default=None – If int, random_state is the seed used by the random
+        default=None - If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
         number generator; If None, the random number generator is the
         RandomState instance used by np.random.
@@ -179,8 +181,8 @@ class UnobservedComponents(_StatsModelsAdapter):
 
     References
     ----------
-    .. [1] Seabold, Skipper, and Josef Perktold. “statsmodels: Econometric
-       and statistical modeling with python.” Proceedings of the 9th Python
+    .. [1] Seabold, Skipper, and Josef Perktold. "statsmodels: Econometric
+       and statistical modeling with python." Proceedings of the 9th Python
        in Science Conference. 2010.
 
     .. [2] Durbin, James, and Siem Jan Koopman. 2012.
@@ -192,14 +194,23 @@ class UnobservedComponents(_StatsModelsAdapter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.structural import UnobservedComponents
     >>> y = load_airline()
-    >>> forecaster = UnobservedComponents(level='local linear trend')
-    >>> forecaster.fit(y)
+    >>> forecaster = UnobservedComponents(level='local linear trend')  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
     UnobservedComponents(...)
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["ChadFulton", "bashtage", "juanitorduz"],
+        # ChadFulton and bashtage for UnobservedComponents in statsmodels
+        "maintainers": ["juanitorduz"],
+        # python_dependencies: "statsmodels" - inherited from _StatsModelsAdapter
+        # estimator type
+        # --------------
         "capability:pred_int": True,
+        "capability:pred_int:insample": True,
         "handles-missing-data": False,
         "ignores-exogeneous-X": False,
     }
@@ -276,7 +287,7 @@ class UnobservedComponents(_StatsModelsAdapter):
         self.flags = flags
         self.low_memory = low_memory
 
-        super(UnobservedComponents, self).__init__(random_state=random_state)
+        super().__init__(random_state=random_state)
 
     def _fit_forecaster(self, y, X=None):
         """Fit to training data.
@@ -332,62 +343,37 @@ class UnobservedComponents(_StatsModelsAdapter):
             low_memory=self.low_memory,
         )
 
-    def _predict_interval(self, fh, X=None, coverage=None):
-        """Compute/return prediction quantiles for a forecast.
-
-        private _predict_interval containing the core logic,
-            called from predict_interval and possibly predict_quantiles
+    @staticmethod
+    def _extract_conf_int(prediction_results, alpha) -> pd.DataFrame:
+        """Construct confidence interval at specified ``alpha`` for each timestep.
 
         Parameters
         ----------
-        fh : int, list, np.array or ForecastingHorizon
-            Forecasting horizon, default = y.index (in-sample forecast)
-        X : pd.DataFrame, optional (default=None)
-            Exogenous time series
-        coverage : list of float (guaranteed not None and floats in [0,1] interval)
-           nominal coverage(s) of predictive interval(s)
+        prediction_results : PredictionResults
+            results class, as returned by ``self._fitted_forecaster.get_prediction``
+        alpha : float
+            one minus nominal coverage
 
         Returns
         -------
-        pred_int : pd.DataFrame
-            Column has multi-index: first level is variable name from y in fit,
-                second level coverage fractions for which intervals were computed.
-                    in the same order as in input `coverage`.
-                Third level is string "lower" or "upper", for lower/upper interval end.
-            Row index is fh. Entries are forecasts of lower/upper interval end,
-                for var in col index, at nominal coverage in second col index,
-                lower/upper depending on third col index, for the row index.
-                Upper/lower interval end forecasts are equivalent to
-                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
+        pd.DataFrame
+            confidence intervals at each timestep
 
-        See Also
-        --------
-        statsmodels.tsa.statespace.mlemodel.PredictionResults.summary_frame
+            The dataframe must have at least two columns ``lower`` and ``upper``, and
+            the row indices must be integers relative to ``self.cutoff``. Order of
+            columns do not matter, and row indices must be a superset of relative
+            integer horizon of ``fh``.
         """
-        valid_indices = fh.to_absolute(self.cutoff).to_pandas()
+        conf_int = prediction_results.conf_int(alpha=alpha)
+        conf_int.columns = ["lower", "upper"]
 
-        start, end = valid_indices[[0, -1]]
-        prediction_results = self._fitted_forecaster.get_prediction(
-            start=start, end=end, exog=X
-        )
-        pred_int = pd.DataFrame()
-        for c in coverage:
-            alpha = 1 - c
-            pred_statsmodels = prediction_results.summary_frame(alpha=alpha)
-            pred_int[(c, "lower")] = pred_statsmodels["mean_ci_lower"].loc[
-                valid_indices
-            ]
-            pred_int[(c, "upper")] = pred_statsmodels["mean_ci_upper"].loc[
-                valid_indices
-            ]
-        index = pd.MultiIndex.from_product([["Coverage"], coverage, ["lower", "upper"]])
-        pred_int.columns = index
-        return pred_int
+        return conf_int
 
     def summary(self):
         """Get a summary of the fitted forecaster.
 
         This is the same as the implementation in statsmodels:
+
         https://www.statsmodels.org/dev/examples/notebooks/generated/statespace_structural_harvey_jaeger.html
         """
         return self._fitted_forecaster.summary()
@@ -401,7 +387,7 @@ class UnobservedComponents(_StatsModelsAdapter):
         initial_state=None,
         anchor=None,
         repetitions=None,
-        **kwargs
+        **kwargs,
     ):
         r"""Simulate a new time series following the state space model.
 
@@ -420,30 +406,30 @@ class UnobservedComponents(_StatsModelsAdapter):
             If specified, these are the shocks to the measurement equation,
             :math:`\varepsilon_t`. If unspecified, these are automatically
             generated using a pseudo-random number generator. If specified,
-            must be shaped `nsimulations` x `k_endog`, where `k_endog` is the
+            must be shaped ``nsimulations`` x ``k_endog``, where ``k_endog`` is the
             same as in the state space model.
         state_shocks : array_like, optional
             If specified, these are the shocks to the state equation,
             :math:`\eta_t`. If unspecified, these are automatically
             generated using a pseudo-random number generator. If specified,
-            must be shaped `nsimulations` x `k_posdef` where `k_posdef` is the
+            must be shaped ``nsimulations`` x ``k_posdef`` where ``k_posdef`` is the
             same as in the state space model.
         initial_state : array_like, optional
             If specified, this is the initial state vector to use in
-            simulation, which should be shaped (`k_states` x 1), where
-            `k_states` is the same as in the state space model. If unspecified,
+            simulation, which should be shaped (``k_states`` x 1), where
+            ``k_states`` is the same as in the state space model. If unspecified,
             but the model has been initialized, then that initialization is
-            used. This must be specified if `anchor` is anything other than
-            "start" or 0 (or else you can use the `simulate` method on a
+            used. This must be specified if ``anchor`` is anything other than
+            "start" or 0 (or else you can use the ``simulate`` method on a
             results object rather than on the model object).
         anchor : int, str, or datetime, optional
             First period for simulation. The simulation will be conditional on
-            all existing datapoints prior to the `anchor`.  Type depends on the
-            index of the given `endog` in the model. Two special cases are the
-            strings 'start' and 'end'. `start` refers to beginning the
-            simulation at the first period of the sample, and `end` refers to
+            all existing datapoints prior to the ``anchor``.  Type depends on the
+            index of the given ``endog`` in the model. Two special cases are the
+            strings 'start' and 'end'. ``start`` refers to beginning the
+            simulation at the first period of the sample, and ``end`` refers to
             beginning the simulation at the first period after the sample.
-            Integer values can run from 0 to `nobs`, or can be negative to
+            Integer values can run from 0 to ``nobs``, or can be negative to
             apply negative indexing. Finally, if a date/time index was provided
             to the model, then this argument can be a date string to parse or a
             datetime type. Default is 'start'.
@@ -457,14 +443,14 @@ class UnobservedComponents(_StatsModelsAdapter):
         Returns
         -------
         simulated_obs : ndarray
-            An array of simulated observations. If `repetitions=None`, then it
+            An array of simulated observations. If ``repetitions=None``, then it
             will be shaped (nsimulations x k_endog) or (nsimulations,) if
-            `k_endog=1`. Otherwise it will be shaped
+            ``k_endog=1``. Otherwise it will be shaped
             (nsimulations x k_endog x repetitions). If the model was given
             Pandas input then the output will be a Pandas object. If
-            `k_endog > 1` and `repetitions` is not None, then the output will
+            ``k_endog > 1`` and ``repetitions`` is not None, then the output will
             be a Pandas DataFrame that has a MultiIndex for the columns, with
-            the first level containing the names of the `endog` variables and
+            the first level containing the names of the ``endog`` variables and
             the second level containing the repetition number.
         """
         return self._fitted_forecaster.simulate(
@@ -475,7 +461,7 @@ class UnobservedComponents(_StatsModelsAdapter):
             anchor=anchor,
             repetitions=repetitions,
             exog=X,
-            **kwargs
+            **kwargs,
         )
 
     def plot_diagnostics(
@@ -500,7 +486,7 @@ class UnobservedComponents(_StatsModelsAdapter):
         fig : Figure, optional
             If given, subplots are created in this figure instead of in a new
             figure. Note that the 2x2 grid will be created in the provided
-            figure using `fig.add_subplot()`.
+            figure using ``fig.add_subplot()``.
         figsize : tuple, optional
             If a figure is created, this argument allows specifying a size.
             The tuple is (width, height).
@@ -530,14 +516,15 @@ class UnobservedComponents(_StatsModelsAdapter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         return {"level": "local level"}

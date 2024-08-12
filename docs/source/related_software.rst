@@ -192,6 +192,8 @@ Specific model implementations
      - Fully convolutional neural networks for state-of-the-art time series classification
    * - `WTTE-RNN <https://github.com/ragulpr/wtte-rnn/>`_
      - Time to event forecast by RNN based Weibull density estimation
+   * - `TimeSeers <https://github.com/MBrouns/timeseers/>`_
+     - alternative to Prophet for timeseries modelling when multiple time series are expected
 
 
 Time series databases and frameworks
@@ -202,7 +204,7 @@ Time series databases and frameworks
 
    * - Project Name
      - Description
-   * - `artic <https://github.com/manahl/arctic>`_
+   * - `arctic <https://github.com/manahl/arctic>`_
      - High performance datastore for time series and tick data
    * - `automl_service <https://github.com/crawles/automl_service>`_
      - Fully automated time series classification pipeline, deployed as a web service

@@ -18,6 +18,14 @@ Time Series Segmentation
 
     ClaSPSegmentation
 
+.. currentmodule:: sktime.annotation.eagglo
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    EAgglo
+
 .. currentmodule:: sktime.annotation.hmm_learn.gaussian
 
 .. autosummary::
@@ -34,7 +42,7 @@ Time Series Segmentation
 
     GMMHMM
 
-.. currentmodule:: sktime.annotation.ggc
+.. currentmodule:: sktime.annotation.ggs
 
 .. autosummary::
     :toctree: auto_generated/
@@ -58,6 +66,14 @@ Time Series Segmentation
 
     InformationGainSegmentation
 
+.. currentmodule:: sktime.annotation.hmm_learn.poisson
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    PoissonHMM
+
 .. currentmodule:: sktime.annotation.stray
 
 .. autosummary::
@@ -66,8 +82,22 @@ Time Series Segmentation
 
     STRAY
 
-Adapters
---------
+Time Series Anomaly Detection
+-----------------------------
+
+Window-based Anomaly Detection
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. currentmodule:: sktime.annotation.lof
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SubLOF
+
+Reduction to Tabular Anomaly Detection
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. currentmodule:: sktime.annotation.adapters
 
@@ -76,6 +106,7 @@ Adapters
     :template: class.rst
 
     PyODAnnotator
+
 
 Data Generation
 ---------------

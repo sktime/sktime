@@ -1,15 +1,13 @@
-# -*- coding: utf-8 -*-
 """TEASER early classifier.
 
-An early classifier using a one class SVM's to determine decision safety with a
-time series classifier.
+An early classifier using a one class SVM's to determine decision safety with a time
+series classifier.
 """
 
 __author__ = ["MatthewMiddlehurst", "patrickzib"]
 __all__ = ["TEASER"]
 
 import copy
-from typing import Tuple
 
 import numpy as np
 from joblib import Parallel, delayed
@@ -50,16 +48,17 @@ class TEASER(BaseEarlyClassifier):
         safe. Defaults to a tuned one-class SVM classifier.
     one_class_param_grid: dict or list of dict, default=None
         The hyper-parameters for the one-class classifier to learn using grid-search.
-        Dictionary with parameters names (`str`) as keys and lists of parameter settings
+        Dictionary with parameters names (``str``) as keys and lists of parameter
+        settings
         to try as values, or a list of such dictionaries.
     classification_points : List or None, default=None
         List of integer time series time stamps to build classifiers and allow
         predictions at. Early predictions must have a series length that matches a value
         in the _classification_points List. Duplicate values will be removed, and the
-        full series length will be appeneded if not present.
+        full series length will be appended if not present.
         If None, will use 20 thresholds linearly spaces from 0 to the series length.
     n_jobs : int, default=1
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``-1`` means using all processors.
     random_state : int or None, default=None
         Seed for random number generation.
@@ -79,7 +78,7 @@ class TEASER(BaseEarlyClassifier):
     state_info : 2d np.ndarray (4 columns)
         Information stored about input instances after the decision-making process in
         update/predict methods. Used in update methods to make decisions based on
-        the resutls of previous method calls.
+        the results of previous method calls.
         Records in order: the time stamp index, the number of consecutive decisions
         made, the predicted class and the series length.
 
@@ -94,19 +93,20 @@ class TEASER(BaseEarlyClassifier):
     >>> from sktime.classification.interval_based import TimeSeriesForestClassifier
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
     >>> clf = TEASER(
     ...     classification_points=[6, 16, 24],
     ...     estimator=TimeSeriesForestClassifier(n_estimators=5),
-    ... )
-    >>> clf.fit(X_train, y_train)
+    ... ) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
     TEASER(...)
-    >>> y_pred, decisions = clf.predict(X_test)
+    >>> y_pred, decisions = clf.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
+        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -139,7 +139,7 @@ class TEASER(BaseEarlyClassifier):
         self._svm_nu = 0.05
         self._svm_tol = 1e-4
 
-        super(TEASER, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         m = getattr(self.estimator, "predict_proba", None)
@@ -205,15 +205,15 @@ class TEASER(BaseEarlyClassifier):
 
         return self
 
-    def _predict(self, X) -> Tuple[np.ndarray, np.ndarray]:
+    def _predict(self, X) -> tuple[np.ndarray, np.ndarray]:
         out = self._predict_proba(X)
         return self._proba_output_to_preds(out)
 
-    def _update_predict(self, X) -> Tuple[np.ndarray, np.ndarray]:
+    def _update_predict(self, X) -> tuple[np.ndarray, np.ndarray]:
         out = self._update_predict_proba(X)
         return self._proba_output_to_preds(out)
 
-    def _predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray]:
+    def _predict_proba(self, X) -> tuple[np.ndarray, np.ndarray]:
         n_instances, _, series_length = X.shape
 
         # maybe use the largest index that is smaller than the series length
@@ -250,9 +250,11 @@ class TEASER(BaseEarlyClassifier):
 
         probas = np.array(
             [
-                probas[new_state_info[i][0]][i]
-                if accept_decision[i]
-                else [-1 for _ in range(self.n_classes_)]
+                (
+                    probas[new_state_info[i][0]][i]
+                    if accept_decision[i]
+                    else [-1 for _ in range(self.n_classes_)]
+                )
                 for i in range(n_instances)
             ]
         )
@@ -261,7 +263,7 @@ class TEASER(BaseEarlyClassifier):
 
         return probas, accept_decision
 
-    def _update_predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray]:
+    def _update_predict_proba(self, X) -> tuple[np.ndarray, np.ndarray]:
         n_instances, _, series_length = X.shape
 
         # maybe use the largest index that is smaller than the series length
@@ -324,9 +326,11 @@ class TEASER(BaseEarlyClassifier):
 
         probas = np.array(
             [
-                probas[max(0, new_state_info[i][0] - last_idx)][i]
-                if accept_decision[i]
-                else [-1 for _ in range(self.n_classes_)]
+                (
+                    probas[max(0, new_state_info[i][0] - last_idx)][i]
+                    if accept_decision[i]
+                    else [-1 for _ in range(self.n_classes_)]
+                )
                 for i in range(n_instances)
             ]
         )
@@ -335,7 +339,7 @@ class TEASER(BaseEarlyClassifier):
 
         return probas, accept_decision
 
-    def _score(self, X, y) -> Tuple[float, float, float]:
+    def _score(self, X, y) -> tuple[float, float, float]:
         self._predict(X)
         hm, acc, earl = self._compute_harmonic_mean(self.state_info, y)
 
@@ -351,7 +355,7 @@ class TEASER(BaseEarlyClassifier):
 
     def _fit_estimator(self, X, y, i):
         rs = 255 if self.random_state == 0 else self.random_state
-        rs = None if self.random_state is None else rs * 37 * (i + 1)
+        rs = None if self.random_state is None else rs * 37 * (i + 1) % 2**31
         rng = check_random_state(rs)
 
         default = (
@@ -429,7 +433,7 @@ class TEASER(BaseEarlyClassifier):
 
     def _predict_proba_for_estimator(self, X, i):
         rs = 255 if self.random_state == 0 else self.random_state
-        rs = None if self.random_state is None else rs * 37 * (i + 1)
+        rs = None if self.random_state is None else rs * 37 * (i + 1) % 2**31
         rng = check_random_state(rs)
 
         probas = self._estimators[i].predict_proba(
@@ -487,7 +491,6 @@ class TEASER(BaseEarlyClassifier):
     def _predict_oc_classifier(
         self, X_oc, n_consecutive_predictions, idx, estimator_preds, state_info
     ):
-
         # stores whether we have made a final decision on a prediction, if true
         # state info won't be edited in later time stamps
         finished = state_info[:, 1] >= n_consecutive_predictions
@@ -511,11 +514,13 @@ class TEASER(BaseEarlyClassifier):
         # record consecutive class decisions
         state_info = np.array(
             [
-                self._update_state_info(
-                    accept_decision, estimator_preds, state_info, i, idx
+                (
+                    self._update_state_info(
+                        accept_decision, estimator_preds, state_info, i, idx
+                    )
+                    if not finished[i]
+                    else state_info[i]
                 )
-                if not finished[i]
-                else state_info[i]
                 for i in range(n_instances)
             ]
         )
@@ -549,9 +554,9 @@ class TEASER(BaseEarlyClassifier):
             earliness,
         )
 
-    def _update_state_info(self, acccept_decision, preds, state_info, idx, time_stamp):
+    def _update_state_info(self, accept_decision, preds, state_info, idx, time_stamp):
         # consecutive predictions, add one if positive decision and same class
-        if acccept_decision[idx] and preds[idx] == state_info[idx][2]:
+        if accept_decision[idx] and preds[idx] == state_info[idx][2]:
             return (
                 time_stamp,
                 state_info[idx][1] + 1,
@@ -562,7 +567,7 @@ class TEASER(BaseEarlyClassifier):
         else:
             return (
                 time_stamp,
-                1 if acccept_decision[idx] else 0,
+                1 if accept_decision[idx] else 0,
                 preds[idx],
                 self._classification_points[time_stamp],
             )
@@ -571,11 +576,13 @@ class TEASER(BaseEarlyClassifier):
         rng = check_random_state(self.random_state)
         preds = np.array(
             [
-                self.classes_[
-                    int(rng.choice(np.flatnonzero(out[0][i] == out[0][i].max())))
-                ]
-                if out[1][i]
-                else -1
+                (
+                    self.classes_[
+                        int(rng.choice(np.flatnonzero(out[0][i] == out[0][i].max())))
+                    ]
+                    if out[1][i]
+                    else -1
+                )
                 for i in range(len(out[0]))
             ]
         )
@@ -589,7 +596,7 @@ class TEASER(BaseEarlyClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -597,12 +604,14 @@ class TEASER(BaseEarlyClassifier):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class.
         """
+        from sktime.classification.dummy import DummyClassifier
         from sktime.classification.feature_based import Catch22Classifier
+        from sktime.utils.dependencies import _check_soft_dependencies
 
-        params = {
-            "classification_points": [3],
-            "estimator": Catch22Classifier(
-                estimator=RandomForestClassifier(n_estimators=2)
-            ),
-        }
+        if _check_soft_dependencies("numba", severity="none"):
+            est = Catch22Classifier(estimator=RandomForestClassifier(n_estimators=2))
+        else:
+            est = DummyClassifier()
+
+        params = {"classification_points": [3], "estimator": est}
         return params

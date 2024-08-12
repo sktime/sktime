@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """Discrete wavelet transform."""
+
 import math
 
 import numpy as np
@@ -8,7 +8,7 @@ import pandas as pd
 from sktime.datatypes import convert
 from sktime.transformations.base import BaseTransformer
 
-__author__ = "Vincent Nicholson"
+__author__ = ["vnicholson1"]
 
 
 class DWTTransformer(BaseTransformer):
@@ -19,10 +19,22 @@ class DWTTransformer(BaseTransformer):
     Parameters
     ----------
     num_levels : int, number of levels to perform the Haar wavelet
-                 transformation.
+        transformation.
+
+    Example
+    -------
+    >>> from sktime.transformations.panel.dwt import DWTTransformer
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.datatypes import convert
+    >>>
+    >>> y = load_airline()
+    >>> y = convert(y, to="Panel")
+    >>> transformer = DWTTransformer(num_levels=3)
+    >>> y_transformed = transformer.fit_transform(y)
     """
 
     _tags = {
+        "authors": "vnicholson1",
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -35,7 +47,7 @@ class DWTTransformer(BaseTransformer):
 
     def __init__(self, num_levels=3):
         self.num_levels = num_levels
-        super(DWTTransformer, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -89,9 +101,8 @@ class DWTTransformer(BaseTransformer):
     def _extract_wavelet_coefficients(self, data):
         """Extract wavelet coefficients of a 2d array of time series.
 
-        The coefficients correspond to the wavelet coefficients
-        from levels 1 to num_levels followed by the approximation
-        coefficients of the highest level.
+        The coefficients correspond to the wavelet coefficients from levels 1 to
+        num_levels followed by the approximation coefficients of the highest level.
         """
         num_levels = self.num_levels
         res = []

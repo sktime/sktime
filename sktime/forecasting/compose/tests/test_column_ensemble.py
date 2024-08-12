@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 """Unit tests of ColumnEnsembleForecaster functionality."""
 
@@ -10,18 +9,25 @@ import pandas as pd
 import pytest
 
 from sktime.forecasting.compose import ColumnEnsembleForecaster
-from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.naive import NaiveForecaster
+from sktime.forecasting.sarimax import SARIMAX
 from sktime.forecasting.trend import PolynomialTrendForecaster
+from sktime.tests.test_switch import run_test_for_class
+from sktime.transformations.hierarchical.aggregate import Aggregator
+from sktime.transformations.hierarchical.reconcile import Reconciler
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ColumnEnsembleForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "forecasters",
     [
         [
             ("trend", PolynomialTrendForecaster(), 0),
             ("naive", NaiveForecaster(), 1),
-            ("ses", ExponentialSmoothing(), 2),
+            ("ses", NaiveForecaster(strategy="mean"), 2),
         ]
     ],
 )
@@ -37,6 +43,10 @@ def test_column_ensemble_shape(forecasters, fh):
     assert actual.shape == (len(fh), y.shape[1])
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ColumnEnsembleForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "forecasters",
     [
@@ -56,6 +66,10 @@ def test_invalid_forecasters_indices(forecasters):
         forecaster.fit(y, fh=[1, 2])
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ColumnEnsembleForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_column_ensemble_string_cols():
     """Check that ColumnEnsembleForecaster works with string columns."""
     df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
@@ -66,11 +80,36 @@ def test_column_ensemble_string_cols():
     fc.predict()
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ColumnEnsembleForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_column_ensemble_multivariate_and_int():
     """Check that ColumnEnsembleForecaster works with string columns."""
     df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6], "c": [7, 8, 9]})
     fc = ColumnEnsembleForecaster(
-        [("ab", NaiveForecaster(), ["a", 1]), ("c", NaiveForecaster(), 2)]
+        [("ab", NaiveForecaster(), ["a", 1]), ("c", NaiveForecaster(), np.int64(2))]
     )
     fc.fit(df, fh=[1, 42])
     fc.predict()
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([ColumnEnsembleForecaster, SARIMAX, Aggregator, Reconciler]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_column_ensemble_hierarchical():
+    """Tests column ensemble with hierarchical reconciliation, see bug #3784."""
+    from sktime.datatypes import get_examples
+    from sktime.datatypes._utilities import get_window
+
+    X = get_examples("pd_multiindex_hier")[0]
+    y = get_examples("pd_multiindex_hier")[1]
+
+    X_train = get_window(X, lag=1)
+    y_train = get_window(y, lag=1)
+
+    f = Aggregator() * (Aggregator() ** SARIMAX()) * Reconciler()
+
+    f_hat = ColumnEnsembleForecaster(f)
+    f_hat.fit(y=y_train, X=X_train, fh=1)

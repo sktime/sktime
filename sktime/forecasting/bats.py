@@ -1,21 +1,17 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements BATS algorithm.
 
-BATS refers to Exponential smoothing state space model with Box-Cox
-transformation, ARMA errors, Trend and Seasonal components.
+BATS refers to Exponential smoothing state space model with Box-Cox transformation, ARMA
+errors, Trend and Seasonal components.
 
 Wrapping implementation in [1]_ of method proposed in [2]_.
 """
 
-__author__ = ["Martin Walter"]
+__author__ = ["aiwalter"]
 __all__ = ["BATS"]
 
 from sktime.forecasting.base.adapters import _TbatsAdapter
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("tbats", severity="warning")
 
 
 class BATS(_TbatsAdapter):
@@ -74,6 +70,7 @@ class BATS(_TbatsAdapter):
         When not provided BATS shall try to utilize all available cpu cores.
     multiprocessing_start_method: str, optional (default='spawn')
         How threads should be started. See also:
+
         https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
     context: abstract.ContextInterface, optional (default=None)
         For advanced users only. Provide this to override default behaviors
@@ -81,6 +78,7 @@ class BATS(_TbatsAdapter):
     See Also
     --------
     TBATS
+    StatsForecastAutoTBATS
 
     References
     ----------
@@ -90,6 +88,7 @@ class BATS(_TbatsAdapter):
        smoothing, Journal of the American Statistical Association, 106(496), 1513-1527.
        DOI: https://doi.org/10.1198/jasa.2011.tm09771
     .. [3] G. Skorupa. Multiple Seasonalities using TBATS in Python.
+
        https://medium.com/intive-developers/forecasting-time-series-with-multiple-seasonalities-using-tbats-in-python-398a00ac0e8a
     .. [4] R.J. Hyndman, G. Athanasopoulos. Forecasting: Principles and Practice.
        https://otexts.com/fpp2/complexseasonality.html
@@ -129,14 +128,13 @@ class BATS(_TbatsAdapter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
-
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict
         """
-        params = {
+        params1 = {
             "use_box_cox": False,
             "use_trend": False,
             "use_damped_trend": False,
@@ -144,4 +142,10 @@ class BATS(_TbatsAdapter):
             "use_arma_errors": False,
             "n_jobs": 1,
         }
-        return params
+
+        params2 = {
+            "use_box_cox": False,
+            "sp": [2, 12],
+        }
+
+        return [params1, params2]

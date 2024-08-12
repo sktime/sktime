@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 """Composer that creates distance from aligner."""
 
 __author__ = ["fkiraly"]
 
 import numpy as np
 
-from sktime.dists_kernels._base import BasePairwiseTransformerPanel
+from sktime.dists_kernels.base import BasePairwiseTransformerPanel
 
 
 class DistFromAligner(BasePairwiseTransformerPanel):
@@ -15,19 +14,23 @@ class DistFromAligner(BasePairwiseTransformerPanel):
 
     Components
     ----------
-    aligner: BaseAligner, must implement get_distances method
+    aligner: BaseAligner, must implement get_distance method
         if None, distance is equal zero
     """
 
     _tags = {
+        "authors": ["fkiraly"],
         "symmetric": True,  # all the distances are symmetric
+        "capability:unequal_length": True,  # aligners can usually handle unequal length
     }
 
     def __init__(self, aligner=None):
-
         self.aligner = aligner
 
-        super(DistFromAligner, self).__init__()
+        super().__init__()
+
+        if aligner is not None:
+            self.clone_tags(aligner, "capability:unequal_length")
 
     def _transform(self, X, X2=None):
         """Compute distance/kernel matrix.
@@ -84,7 +87,7 @@ class DistFromAligner(BasePairwiseTransformerPanel):
         """Test parameters for DistFromAligner."""
         # importing inside to avoid circular dependencies
         from sktime.alignment.dtw_python import AlignerDTW
-        from sktime.utils.validation._dependencies import _check_estimator_deps
+        from sktime.utils.dependencies import _check_estimator_deps
 
         if _check_estimator_deps(AlignerDTW, severity="none"):
             return {"aligner": AlignerDTW()}

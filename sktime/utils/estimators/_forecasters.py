@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 __author__ = ["ltsaprounis"]
 
 import pandas as pd
@@ -43,10 +41,10 @@ class MockUnivariateForecasterLogger(BaseForecaster, _MockEstimatorMixin):
 
     def __init__(self, prediction_constant: float = 10):
         self.prediction_constant = prediction_constant
-        super(MockUnivariateForecasterLogger, self).__init__()
+        super().__init__()
 
     @_method_logger
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -78,7 +76,7 @@ class MockUnivariateForecasterLogger(BaseForecaster, _MockEstimatorMixin):
         return self
 
     @_method_logger
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -103,7 +101,7 @@ class MockUnivariateForecasterLogger(BaseForecaster, _MockEstimatorMixin):
         y_pred : pd.Series
             Point predictions
         """
-        index = fh.to_absolute(self.cutoff)
+        index = fh.to_absolute_index(self.cutoff)
         return pd.Series(self.prediction_constant, index=index)
 
     @_method_logger
@@ -144,7 +142,7 @@ class MockUnivariateForecasterLogger(BaseForecaster, _MockEstimatorMixin):
         return self
 
     @_method_logger
-    def _predict_quantiles(self, fh, X=None, alpha=None):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -175,12 +173,15 @@ class MockUnivariateForecasterLogger(BaseForecaster, _MockEstimatorMixin):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second-level col index, for each row index.
         """
-        fh_index = fh.to_absolute(self.cutoff)
-        col_index = pd.MultiIndex.from_product([["Quantiles"], alpha])
+        var_names = self._get_varnames()
+        var_name = var_names[0]
+
+        fh_index = fh.to_absolute_index(self.cutoff)
+        col_index = pd.MultiIndex.from_product([var_names, alpha])
         pred_quantiles = pd.DataFrame(columns=col_index, index=fh_index)
 
         for a in alpha:
-            pred_quantiles[("Quantiles", a)] = pd.Series(
+            pred_quantiles[(var_name, a)] = pd.Series(
                 self.prediction_constant * 2 * a, index=fh_index
             )
 
@@ -222,9 +223,9 @@ class MockForecaster(BaseForecaster):
 
     def __init__(self, prediction_constant: float = 10):
         self.prediction_constant = prediction_constant
-        super(MockForecaster, self).__init__()
+        super().__init__()
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -255,7 +256,7 @@ class MockForecaster(BaseForecaster):
         """
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -280,7 +281,7 @@ class MockForecaster(BaseForecaster):
         y_pred : pd.Series
             Point predictions
         """
-        index = fh.to_absolute(self.cutoff)
+        index = fh.to_absolute_index(self.cutoff)
         return pd.DataFrame(
             self.prediction_constant, index=index, columns=self._y.columns
         )
@@ -321,7 +322,7 @@ class MockForecaster(BaseForecaster):
         """
         return self
 
-    def _predict_quantiles(self, fh, X=None, alpha=None):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -354,16 +355,14 @@ class MockForecaster(BaseForecaster):
         """
         cols = self._y.columns
 
-        if len(cols) == 1:
-            cols = ["Quantiles"]
-
         col_index = pd.MultiIndex.from_product([cols, alpha])
-        fh_index = fh.to_absolute(self.cutoff)
+        fh_index = fh.to_absolute_index(self.cutoff)
         pred_quantiles = pd.DataFrame(index=fh_index, columns=col_index)
 
         for col, a in col_index:
+            multiple = a if self.prediction_constant > 0 else (1 - a)
             pred_quantiles[col, a] = pd.Series(
-                self.prediction_constant * 2 * a, index=fh_index
+                self.prediction_constant * 2 * multiple, index=fh_index
             )
 
         return pred_quantiles

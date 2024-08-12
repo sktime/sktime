@@ -1,7 +1,4 @@
-# -*- coding: utf-8 -*-
-
-"""
-Hidden Markov Model based annotation from hmmlearn.
+"""Hidden Markov Model based annotation from hmmlearn.
 
 This code provides a base interface template for models
 from hmmlearn for using that library for annotation of time series.
@@ -26,11 +23,13 @@ class BaseHMMLearn(BaseSeriesAnnotator):
         "univariate-only": True,
         "fit_is_empty": True,
         "python_dependencies": "hmmlearn",
+        "task": "segmentation",
+        "learning_type": "unsupervised",
     }  # for unit test cases
     _hmm_estimator = None
 
     def __init__(self):
-        super(BaseHMMLearn, self).__init__()
+        super().__init__()
 
     @staticmethod
     def _fix_input(X):

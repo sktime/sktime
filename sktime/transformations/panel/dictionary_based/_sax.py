@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Symbolic Aggregate approXimation (SAX) transformer."""
 
 import sys
@@ -8,18 +7,12 @@ import pandas as pd
 import scipy.stats
 
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.panel.dictionary_based import PAA
+from sktime.transformations.panel.dictionary_based import PAAlegacy as PAA
 
-#    TO DO: verify this returned pandas is consistent with sktime
-#    definition. Timestamps?
-
-# from numba import types
-# from numba.experimental import jitclass
-
-__author__ = "MatthewMiddlehurst"
+__author__ = ["MatthewMiddlehurst"]
 
 
-class SAX(BaseTransformer):
+class SAXlegacy(BaseTransformer):
     """Symbolic Aggregate approXimation (SAX) transformer.
 
     as described in
@@ -61,6 +54,7 @@ class SAX(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["MatthewMiddlehurst"],
         "univariate-only": True,
         "fit_is_empty": True,
         "scitype:transform-input": "Series",
@@ -89,7 +83,9 @@ class SAX(BaseTransformer):
         self.return_pandas_data_series = return_pandas_data_series
         self.words = []
 
-        super(SAX, self).__init__(_output_convert="off")
+        super().__init__()
+
+        self.set_config(**{"output_conversion": "off"})
 
     # todo: looks like this just loops over series instances
     # so should be refactored to work on Series directly
@@ -205,7 +201,7 @@ class SAX(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -213,8 +209,9 @@ class SAX(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         # small word length, window size for testing
         params = {"word_length": 2, "window_size": 4}

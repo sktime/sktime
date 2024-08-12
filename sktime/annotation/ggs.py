@@ -1,7 +1,24 @@
-# -*- coding: utf-8 -*-
-"""
-Greedy Gaussian Segmentation (GGS).
+"""Greedy Gaussian Segmentation (GGS).
 
+The method approximates solutions for the problem of breaking a
+multivariate time series into segments, where the data in each segment
+could be modeled as independent samples from a multivariate Gaussian
+distribution. It uses a dynamic programming search algorithm with
+a heuristic that allows finding approximate solution in linear time with
+respect to the data length and always yields locally optimal choice.
+
+This module is structured with the ``GGS`` that implements the actual
+segmentation algorithm and a ``GreedyGaussianSegmentation`` that
+interfaces the algorithm with the sklearn/sktime api. The benefit
+behind that design is looser coupling between the logic and the
+interface introduced to allow for easier changes of either part
+since segmentation still has an experimental nature. When making
+algorithm changes you probably want to look into ``GGS`` when
+evolving the sktime/sklearn interface look into ``GreedyGaussianSegmentation``.
+This design also allows adapting ``GGS`` to other interfaces.
+
+Notes
+-----
 Based on the work from [1]_.
 
 - source code adapted based on: https://github.com/cvxgrp/GGS
@@ -11,41 +28,71 @@ References
 ----------
 .. [1] Hallac, D., Nystrup, P. & Boyd, S.
    "Greedy Gaussian segmentation of multivariate time series.",
-    Adv Data Anal Classif 13, 727–751 (2019).
+    Adv Data Anal Classif 13, 727-751 (2019).
     https://doi.org/10.1007/s11634-018-0335-0
 """
 
 import logging
 import math
-from typing import Dict, List, Tuple
+from dataclasses import dataclass, field
 
 import numpy as np
 import numpy.typing as npt
-from attrs import asdict, define, field
+import pandas as pd
 from sklearn.utils.validation import check_random_state
 
-from sktime.base import BaseEstimator
+from sktime.annotation.base._base import BaseSeriesAnnotator
+from sktime.utils.dependencies import _check_estimator_deps
 
 logger = logging.getLogger(__name__)
 
 
-@define
+@dataclass
 class GGS:
-    """
-    Greedy Gaussian Segmentation.
+    """Greedy Gaussian Segmentation.
+
+    The method approximates solutions for the problem of breaking a
+    multivariate time series into segments, where the data in each segment
+    could be modeled as independent samples from a multivariate Gaussian
+    distribution. It uses a dynamic programming search algorithm with
+    a heuristic that allows finding approximate solution in linear time with
+    respect to the data length and always yields locally optimal choice.
+
+    Greedy Gaussian Segmentation (GGS) fits a segmented gaussian model (SGM)
+    to the data by computing the approximate solution to the combinatorial
+    problem of finding the approximate covariance-regularized  maximum
+    log-likelihood for fixed number of change points and a reagularization
+    strength. It follows an interactive procedure
+    where a new breakpoint is added and then adjusting all breakpoints to
+    (approximately) maximize the objective. It is similar to the top-down
+    search used in other change point detection problems.
 
     Parameters
     ----------
     k_max: int, default=10
-        Maximum number of change points to find
+        Maximum number of change points to find. The number of segments is thus k+1.
     lamb: : float, default=1.0
-        Regularization parameter lambda
+        Regularization parameter lambda (>= 0), which controls the amount of
+        (inverse) covariance regularization, see Eq (1) in [1]_. Regularization
+        is introduced to reduce issues for high-dimensional problems. Setting
+        ``lamb`` to zero will ignore regularization, whereas large values of
+        lambda will favour simpler models.
     max_shuffles: int, default=250
-        maximum number of shuffles
+        Maximum number of shuffles
     verbose: bool, default=False
         If ``True`` verbose output is enabled.
     random_state: int or np.random.RandomState, default=None
         Either random seed or an instance of ``np.random.RandomState``
+
+    Attributes
+    ----------
+    change_points_: array_like, default=[]
+        Locations of change points as integer indexes. By convention change points
+        include the identity segmentation, i.e. first and last index + 1 values.
+    _intermediate_change_points: List[List[int]], default=[]
+        Intermediate values of change points for each value of k = 1...k_max
+    _intermediate_ll: List[float], default=[]
+        Intermediate values for log-likelihood for each value of k = 1...k_max
 
     Notes
     -----
@@ -57,9 +104,9 @@ class GGS:
     References
     ----------
     .. [1] Hallac, D., Nystrup, P. & Boyd, S.,
-       "Greedy Gaussian segmentation of multivariate time series.",
-       Adv Data Anal Classif 13, 727–751 (2019).
-       https://doi.org/10.1007/s11634-018-0335-0
+    "Greedy Gaussian segmentation of multivariate time series.",
+    Adv Data Anal Classif 13, 727-751 (2019).
+    https://doi.org/10.1007/s11634-018-0335-0
     """
 
     k_max: int = 10
@@ -68,32 +115,32 @@ class GGS:
     verbose: bool = False
     random_state: int = None
 
-    change_points_: npt.ArrayLike = field(init=False, default=[])
-    _intermediate_change_points: List[List[int]] = field(init=False, default=[])
-    _intermediate_ll: List[float] = field(init=False, default=[])
+    change_points_: npt.ArrayLike = field(init=False, default_factory=list)
+    _intermediate_change_points: list[list[int]] = field(
+        init=False, default_factory=list
+    )
+    _intermediate_ll: list[float] = field(init=False, default_factory=list)
 
-    def initialize_intermediates(self):
-        """Fit."""
+    def initialize_intermediates(self) -> None:
+        """Initialize the state for the estimator."""
         self._intermediate_change_points = []
         self._intermediate_ll = []
 
-    def log_likelihood(self, cov: float, nrows: int, ncols: int) -> float:
-        """
-        Compute the GGS log likelihood.
+    def log_likelihood(self, data: npt.ArrayLike) -> float:
+        """Compute the GGS log-likelihood of the segmented Gaussian model.
 
         Parameters
         ----------
-        cov: float
-            covariance
-        nrows: int
-            number of observations
-        ncols: int
-            number of columns
+        data: array_like
+            2D ``array_like`` representing time series with sequence index along
+            the first dimension and value series as columns.
 
         Returns
         -------
         log_likelihood
         """
+        nrows, ncols = data.shape
+        cov = np.cov(data.T, bias=True)
         (_, logdet) = np.linalg.slogdet(
             cov + float(self.lamb) * np.identity(ncols) / nrows
         )
@@ -103,17 +150,19 @@ class GGS:
         )
 
     def cumulative_log_likelihood(
-        self, data: npt.ArrayLike, change_points: List[int]
+        self, data: npt.ArrayLike, change_points: list[int]
     ) -> float:
-        """
-        Calculate cumulative GGS log likelihood for all segments.
+        """Calculate cumulative GGS log-likelihood for all segments.
 
         Args
         ----
         data: array_like
-            time series data
+            2D ``array_like`` representing time series with sequence index along
+            the first dimension and value series as columns.
         change_points: list of ints
-            list of indexes of change points
+            Locations of change points as integer indexes.
+            By convention, change points
+            include the identity segmentation, i.e. first and last index + 1 values.
 
         Returns
         -------
@@ -122,19 +171,21 @@ class GGS:
         log_likelihood = 0
         for start, stop in zip(change_points[:-1], change_points[1:]):
             segment = data[start:stop, :]
-            nrows, ncols = segment.shape
-            cov = np.cov(segment.T, bias=True)
-            log_likelihood -= self.log_likelihood(cov, nrows, ncols)
+            log_likelihood -= self.log_likelihood(segment)
         return log_likelihood
 
-    def add_new_change_point(self, data: npt.ArrayLike) -> Tuple[int, float]:
-        """
-        Add change point.
+    def add_new_change_point(self, data: npt.ArrayLike) -> tuple[int, float]:
+        """Add change point.
+
+        This methods finds a new change point by that splits the segment and
+        optimizes the objective function. See section 3.1 on split subroutine
+        in [1]_.
 
         Parameters
         ----------
         data: array_like
-            time series data
+            2D ``array_like`` representing time series with sequence index along
+            the first dimension and value series as columns.
 
         Returns
         -------
@@ -145,14 +196,14 @@ class GGS:
         m, n = data.shape
         orig_mean = np.mean(data, axis=0)
         orig_cov = np.cov(data.T, bias=True)
-        orig_ll = self.log_likelihood(orig_cov, m, n)
-        totSum = m * (orig_cov + np.outer(orig_mean, orig_mean))
+        orig_ll = self.log_likelihood(data)
+        total_sum = m * (orig_cov + np.outer(orig_mean, orig_mean))
         mu_left = data[0, :] / n
         mu_right = (m * orig_mean - data[0, :]) / (m - 1)
         runSum = np.outer(data[0, :], data[0, :])
         # Loop through all samples
         # find point where breaking the segment would have the largest LL increase
-        minLL = orig_ll
+        min_ll = orig_ll
         new_index = 0
         for i in range(2, m - 1):
             # Update parameters
@@ -160,51 +211,59 @@ class GGS:
             mu_left = ((i - 1) * mu_left + data[i - 1, :]) / (i)
             mu_right = ((m - i + 1) * mu_right - data[i - 1, :]) / (m - i)
             sigLeft = runSum / (i) - np.outer(mu_left, mu_left)
-            sigRight = (totSum - runSum) / (m - i) - np.outer(mu_right, mu_right)
+            sigRight = (total_sum - runSum) / (m - i) - np.outer(mu_right, mu_right)
 
             # Compute Cholesky, LogDet, and Trace
             Lleft = np.linalg.cholesky(sigLeft + float(self.lamb) * np.identity(n) / i)
             Lright = np.linalg.cholesky(
                 sigRight + float(self.lamb) * np.identity(n) / (m - i)
             )
-            llLeft = 2 * sum(map(math.log, np.diag(Lleft)))
-            llRight = 2 * sum(map(math.log, np.diag(Lright)))
-            (trLeft, trRight) = (0, 0)
+            ll_left = 2 * sum(map(math.log, np.diag(Lleft)))
+            ll_right = 2 * sum(map(math.log, np.diag(Lright)))
+            (trace_left, trace_right) = (0, 0)
             if self.lamb > 0:
-                trLeft = math.pow(np.linalg.norm(np.linalg.inv(Lleft)), 2)
-                trRight = math.pow(np.linalg.norm(np.linalg.inv(Lright)), 2)
+                trace_left = math.pow(np.linalg.norm(np.linalg.inv(Lleft)), 2)
+                trace_right = math.pow(np.linalg.norm(np.linalg.inv(Lright)), 2)
             LL = (
-                i * llLeft
-                - float(self.lamb) * trLeft
-                + (m - i) * llRight
-                - float(self.lamb) * trRight
+                i * ll_left
+                - float(self.lamb) * trace_left
+                + (m - i) * ll_right
+                - float(self.lamb) * trace_right
             )
             # Keep track of the best point so far
-            if LL < minLL:
-                minLL = LL
+            if LL < min_ll:
+                min_ll = LL
                 new_index = i
         # Return break, increase in LL
-        return new_index, minLL - orig_ll
+        return new_index, min_ll - orig_ll
 
     def adjust_change_points(
-        self, data: npt.ArrayLike, change_points: List[int], new_index: List[int]
-    ) -> List[int]:
-        """
-        Adjust change points.
+        self, data: npt.ArrayLike, change_points: list[int], new_index: list[int]
+    ) -> list[int]:
+        """Adjust change points.
+
+        This method adjusts the positions of all change points until the
+        result is 1-OPT, i.e., no change of any one breakpoint improves
+        the objective.
 
         Parameters
         ----------
         data: array_like
-            time series data
+            2D ``array_like`` representing time series with sequence index along
+            the first dimension and value series as columns.
         change_points: list of ints
-            change points indexes
+            Locations of change points as integer indexes.
+            By convention, change points
+            include the identity segmentation, i.e. first and last index + 1 values.
         new_index: list of ints
-            new change points
+            New change points
 
         Returns
         -------
         change_points: list of ints
-            change point indexes
+            Locations of change points as integer indexes.
+            By convention, change points
+            include the identity segmentation, i.e. first and last index + 1 values.
         """
         rng = check_random_state(self.random_state)
         bp = change_points[:]
@@ -250,25 +309,26 @@ class GGS:
                 return bp
         return bp
 
-    def initialize_change_points(self, data: npt.ArrayLike) -> List[int]:
+    def identity_segmentation(self, data: npt.ArrayLike) -> list[int]:
         """Initialize change points."""
         return [0, data.shape[0] + 1]
 
-    def find_change_points(self, data: npt.ArrayLike) -> List[int]:
+    def find_change_points(self, data: npt.ArrayLike) -> list[int]:
         """
-        Find ``k`` change points on the data at a specific lambda.
+        Search iteratively  for up to ``k_max`` change points.
 
         Parameters
         ----------
         data: array_like
-            time series data
+            2D ``array_like`` representing time series with sequence index along
+            the first dimension and value series as columns.
 
         Returns
         -------
         The K change points, along with all intermediate change points (for k < K)
         and their corresponding covariance-regularized maximum likelihoods.
         """
-        change_points = self.initialize_change_points(data)
+        change_points = self.identity_segmentation(data)
         self._intermediate_change_points = [change_points[:]]
         self._intermediate_ll = [self.cumulative_log_likelihood(data, change_points)]
 
@@ -296,9 +356,8 @@ class GGS:
                 logger.info(f"Change point occurs at: {new_index}, LL: {new_value}")
 
             # Adjust current locations of the change points
-            change_points = self.adjust_change_points(data, change_points, [new_index])[
-                :
-            ]
+            change_points = self.adjust_change_points(data, change_points, [new_index])
+            change_points = change_points[:]
 
             # Calculate likelihood
             ll = self.cumulative_log_likelihood(data, change_points)
@@ -307,33 +366,48 @@ class GGS:
 
         return change_points
 
-    def predict(self, X: npt.ArrayLike):
-        """Predict."""
-        self.change_points_ = self.find_change_points(X)
 
-        labels = np.zeros(X.shape[0], dtype=np.int32)
-        for i, (start, stop) in enumerate(
-            zip(self.change_points_[:-1], self.change_points_[1:])
-        ):
-            labels[start:stop] = i
-        return labels
-
-
-class GreedyGaussianSegmentation(BaseEstimator):
+class GreedyGaussianSegmentation(BaseSeriesAnnotator):
     """Greedy Gaussian Segmentation Estimator.
+
+    The method approximates solutions for the problem of breaking a
+    multivariate time series into segments, where the data in each segment
+    could be modeled as independent samples from a multivariate Gaussian
+    distribution. It uses a dynamic programming search algorithm with
+    a heuristic that allows finding approximate solution in linear time with
+    respect to the data length and always yields locally optimal choice.
+
+    Greedy Gaussian Segmentation (GGS) fits a segmented gaussian model (SGM)
+    to the data by computing the approximate solution to the combinatorial
+    problem of finding the approximate covariance-regularized  maximum
+    log-likelihood for fixed number of change points and a reagularization
+    strength. It follows an interactive procedure
+    where a new breakpoint is added and then adjusting all breakpoints to
+    (approximately) maximize the objective. It is similar to the top-down
+    search used in other change point detection problems.
 
     Parameters
     ----------
     k_max: int, default=10
-        Maximum number of change points to find
+        Maximum number of change points to find. The number of segments is thus k+1.
     lamb: : float, default=1.0
-        Regularization parameter lambda
+        Regularization parameter lambda (>= 0), which controls the amount of
+        (inverse) covariance regularization, see Eq (1) in [1]_. Regularization
+        is introduced to reduce issues for high-dimensional problems. Setting
+        ``lamb`` to zero will ignore regularization, whereas large values of
+        lambda will favour simpler models.
     max_shuffles: int, default=250
-        maximum number of shuffles
+        Maximum number of shuffles
     verbose: bool, default=False
         If ``True`` verbose output is enabled.
     random_state: int or np.random.RandomState, default=None
         Either random seed or an instance of ``np.random.RandomState``
+
+    Attributes
+    ----------
+    change_points_: array_like, default=[]
+        Locations of change points as integer indexes. By convention change points
+        include the identity segmentation, i.e. first and last index + 1 values.
 
     Notes
     -----
@@ -346,9 +420,15 @@ class GreedyGaussianSegmentation(BaseEstimator):
     ----------
     .. [1] Hallac, D., Nystrup, P. & Boyd, S.,
        "Greedy Gaussian segmentation of multivariate time series.",
-       Adv Data Anal Classif 13, 727–751 (2019).
+       Adv Data Anal Classif 13, 727-751 (2019).
        https://doi.org/10.1007/s11634-018-0335-0
     """
+
+    _tags = {
+        "fit_is_empty": True,
+        "task": "segmentation",
+        "learning_type": "unsupervised",
+    }
 
     def __init__(
         self,
@@ -358,15 +438,17 @@ class GreedyGaussianSegmentation(BaseEstimator):
         verbose: bool = False,
         random_state: int = None,
     ):
-        # this is ugly and necessary only because of dum `test_constructor`
+        # this is ugly and necessary only because of dumb `test_constructor`
         self.k_max = k_max
         self.lamb = lamb
         self.max_shuffles = max_shuffles
         self.verbose = verbose
         self.random_state = random_state
 
-        self._adaptee_class = GGS
-        self._adaptee = self._adaptee_class(
+        _check_estimator_deps(self)
+        super().__init__()
+
+        self._adaptee = GGS(
             k_max=k_max,
             lamb=lamb,
             max_shuffles=max_shuffles,
@@ -374,33 +456,47 @@ class GreedyGaussianSegmentation(BaseEstimator):
             random_state=random_state,
         )
 
-    def fit(self, X: npt.ArrayLike, y: npt.ArrayLike = None):
-        """Fit method for compatibility with sklearn-type estimator interface.
+    @property
+    def _intermediate_change_points(self) -> list[list[int]]:
+        """Intermediate values of change points for each value of k = 1...k_max.
 
-        It sets the internal state of the estimator and returns the initialized
-        instance.
+        Default value is an empty list.
+        """
+        return self._adaptee._intermediate_change_points
+
+    @property
+    def _intermediate_ll(self) -> list[float]:
+        """Intermediate values for log-likelihood for each value of k = 1...k_max.
+
+        Default value is an empty list.
+        """
+        return self._adaptee._intermediate_ll
+
+    def _fit(self, X, Y=None):
+        """Fit method for compatibility with sklearn-type estimator interface.
 
         Parameters
         ----------
-        X: array_like
-            2D `array_like` representing time series with sequence index along
-            the first dimension and value series as columns.
+        X: array_like (1D or 2D), pd.Series, or pd.DataFrame
+            1D array of timeseries values, or 2D array with index along the first
+            dimension and columns representing features of the timeseries. If pd.Series,
+            the values of the timeseries are the values of the series. If pd.DataFrame,
+            each column represents a feature of the timeseries.
         y: array_like
             Placeholder for compatibility with sklearn-api, not used, default=None.
         """
-        self._adaptee.initialize_intermediates()
         return self
 
-    def predict(self, X: npt.ArrayLike, y: npt.ArrayLike = None) -> npt.ArrayLike:
+    def _predict(self, X) -> npt.ArrayLike:
         """Perform segmentation.
 
         Parameters
         ----------
-        X: array_like
-            2D `array_like` representing time series with sequence index along
-            the first dimension and value series as columns.
-        y: array_like
-            Placeholder for compatibility with sklearn-api, not used, default=None.
+        X: array_like (1D or 2D), pd.Series, or pd.DataFrame
+            1D array of timeseries values, or 2D array with index along the first
+            dimension and columns representing features of the timeseries. If pd.Series,
+            the values of the timeseries are the values of the series. If pd.DataFrame,
+            each column represents a feature of the timeseries.
 
         Returns
         -------
@@ -409,18 +505,34 @@ class GreedyGaussianSegmentation(BaseEstimator):
             dimension of X. The numerical values represent distinct segments
             labels for each of the data points.
         """
-        return self._adaptee.predict(X)
+        if isinstance(X, pd.Series):
+            X = X.values[:, np.newaxis]
+        elif isinstance(X, pd.DataFrame):
+            X = X.values
+        elif len(X.shape) == 1:
+            X = X[:, np.newaxis]
+        elif len(X.shape) > 2:
+            raise ValueError("X must not have more than two dimensions.")
+        self._adaptee.initialize_intermediates()
+        self.change_points_ = self._adaptee.find_change_points(X)
 
-    def fit_predict(self, X: npt.ArrayLike, y: npt.ArrayLike = None) -> npt.ArrayLike:
-        """Perform fit and predict.
+        labels = np.zeros(X.shape[0], dtype=np.int32)
+        for i, (start, stop) in enumerate(
+            zip(self.change_points_[:-1], self.change_points_[1:])
+        ):
+            labels[start:stop] = i
+        return labels
+
+    def fit_predict(self, X) -> npt.ArrayLike:
+        """Perform segmentation.
 
         Parameters
         ----------
-        X: array_like
-            2D `array_like` representing time series with sequence index along
-            the first dimension and value series as columns.
-        y: array_like
-            Placeholder for compatibility with sklearn-api, not used, default=None.
+        X: array_like (1D or 2D), pd.Series, or pd.DataFrame
+            1D array of timeseries values, or 2D array with index along the first
+            dimension and columns representing features of the timeseries. If pd.Series,
+            the values of the timeseries are the values of the series. If pd.DataFrame,
+            each column represents a feature of the timeseries.
 
         Returns
         -------
@@ -429,40 +541,21 @@ class GreedyGaussianSegmentation(BaseEstimator):
             dimension of X. The numerical values represent distinct segments
             labels for each of the data points.
         """
-        return self.fit(X, y).predict(X, y)
+        return self.fit(X, None).predict(X)
 
-    def get_params(self, deep: bool = True) -> Dict:
-        """Return initialization parameters.
-
-        Parameters
-        ----------
-        deep: bool
-            Dummy argument for compatibility with sklearn-api, not used.
-
-        Returns
-        -------
-        params: dict
-            Dictionary with the estimator's initialization parameters, with
-            keys being argument names and values being argument values.
-        """
-        return asdict(self._adaptee, filter=lambda attr, value: attr.init is True)
-
-    def set_params(self, **parameters):
-        """Set the parameters of this object.
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
 
         Parameters
         ----------
-        parameters : dict
-            Initialization parameters for th estimator.
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
-        self : reference to self (after parameters have been set)
+        params : dict or list of dict
         """
-        for key, value in parameters.items():
-            setattr(self._adaptee, key, value)
-        return self
-
-    def __repr__(self) -> str:
-        """Return a string representation of the estimator."""
-        return self._adaptee.__repr__()
+        params = {"k_max": 10, "lamb": 1.0}
+        return params

@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 """ContractableBOSS classifier.
 
-Dictionary based cBOSS classifier based on SFA transform. Improves the
-ensemble structure of the original BOSS algorithm.
+Dictionary based cBOSS classifier based on SFA transform. Improves the ensemble
+structure of the original BOSS algorithm.
 """
 
 __author__ = ["MatthewMiddlehurst", "BINAYKUMAR943"]
@@ -11,7 +10,6 @@ __all__ = ["ContractableBOSS", "pairwise_distances"]
 
 import math
 import time
-import warnings
 
 import numpy as np
 from sklearn.utils import check_random_state
@@ -29,8 +27,8 @@ class ContractableBOSS(BaseClassifier):
     described in Middlehurst, Vickers and Bagnall (2019). [1, 2]_
 
     Overview: Input "n" series of length "m" and cBOSS randomly samples
-    `n_parameter_samples` parameter sets, evaluting each with LOOCV. It then
-    retains `max_ensemble_size` classifiers with the highest accuracy
+    ``n_parameter_samples`` parameter sets, evaluating each with LOOCV. It then
+    retains ``max_ensemble_size`` classifiers with the highest accuracy
     There are three primary parameters:
         - alpha: alphabet size
         - w: window length
@@ -53,7 +51,7 @@ class ContractableBOSS(BaseClassifier):
         If search is randomised, number of parameter combos to try.
     max_ensemble_size : int or None, default = 50
         Maximum number of classifiers to retain. Will limit number of retained
-        classifiers even if more than `max_ensemble_size` are within threshold.
+        classifiers even if more than ``max_ensemble_size`` are within threshold.
     max_win_len_prop : int or float, default = 1
         Maximum window length as a proportion of the series length.
     min_window : int, default = 10
@@ -63,20 +61,11 @@ class ContractableBOSS(BaseClassifier):
     contract_max_n_parameter_samples : int, default=np.inf
         Max number of parameter combinations to consider when time_limit_in_minutes is
         set.
-    typed_dict : bool, default="deprecated"
-        Use a numba TypedDict to store word counts. May increase memory usage, but will
-        be faster for larger datasets. As the Dict cannot be pickled currently, there
-        will be some overhead converting it to a python dict with multiple threads and
-        pickling.
-
-        .. deprecated:: 0.13.3
-            ``typed_dict`` was deprecated in version 0.13.3 and will be removed in 0.15.
-
     save_train_predictions : bool, default=False
         Save the ensemble member train predictions in fit for use in _get_train_probs
         leave-one-out cross-validation.
     n_jobs : int, default = 1
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``-1`` means using all processors.
     feature_selection: {"chi2", "none", "random"}, default: none
         Sets the feature selections strategy to be used. Chi2 reduces the number
@@ -95,8 +84,8 @@ class ContractableBOSS(BaseClassifier):
     n_instances_ : int
         Number of instances. Extracted from the data.
     n_estimators_ : int
-        The final number of classifiers used. Will be <= `max_ensemble_size` if
-        `max_ensemble_size` has been specified.
+        The final number of classifiers used. Will be <= ``max_ensemble_size`` if
+        ``max_ensemble_size`` has been specified.
     series_length_ : int
         Length of all series (assumed equal).
     estimators_ : list
@@ -132,17 +121,27 @@ class ContractableBOSS(BaseClassifier):
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = ContractableBOSS(n_parameter_samples=10, max_ensemble_size=3)
-    >>> clf.fit(X_train, y_train)
+    >>> clf = ContractableBOSS(
+    ...     n_parameter_samples=10, max_ensemble_size=3
+    ... ) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
     ContractableBOSS(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> y_pred = clf.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["MatthewMiddlehurst", "BINAYKUMAR943"],
+        "maintainers": "BINAYKUMAR943",
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:train_estimate": True,
         "capability:contractable": True,
         "capability:multithreading": True,
         "classifier_type": "dictionary",
+        "capability:predict_proba": True,
     }
 
     def __init__(
@@ -153,7 +152,6 @@ class ContractableBOSS(BaseClassifier):
         min_window=10,
         time_limit_in_minutes=0.0,
         contract_max_n_parameter_samples=np.inf,
-        typed_dict="deprecated",
         save_train_predictions=False,
         feature_selection="none",
         n_jobs=1,
@@ -166,7 +164,6 @@ class ContractableBOSS(BaseClassifier):
 
         self.time_limit_in_minutes = time_limit_in_minutes
         self.contract_max_n_parameter_samples = contract_max_n_parameter_samples
-        self.typed_dict = typed_dict
         self.save_train_predictions = save_train_predictions
         self.n_jobs = n_jobs
         self.random_state = random_state
@@ -183,7 +180,7 @@ class ContractableBOSS(BaseClassifier):
         self._norm_options = [True, False]
         self._alphabet_size = 4
 
-        super(ContractableBOSS, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Fit a cBOSS ensemble on cases (X,y), where y is the target variable.
@@ -214,12 +211,6 @@ class ContractableBOSS(BaseClassifier):
 
         self.estimators_ = []
         self.weights_ = []
-
-        if self.typed_dict != "deprecated":
-            warnings.warn(
-                "``typed_dict`` was deprecated in version 0.13.3 and "
-                "will be removed in 0.15."
-            )
 
         # Window length parameter space dependent on series length
         max_window_searches = self.series_length_ / 4
@@ -381,7 +372,11 @@ class ContractableBOSS(BaseClassifier):
         return possible_parameters
 
     def _get_train_probs(self, X, y) -> np.ndarray:
+        from sktime.datatypes import convert_to
+
         self.check_is_fitted()
+        if not isinstance(X, np.ndarray):
+            X = convert_to(X, "numpy3D")
         X, y = check_X_y(X, y, coerce_to_numpy=True, enforce_univariate=True)
 
         n_instances, _, series_length = X.shape
@@ -402,9 +397,9 @@ class ContractableBOSS(BaseClassifier):
                 preds = clf._train_predictions
 
                 for n, pred in enumerate(preds):
-                    results[subsample[n]][
-                        self._class_dictionary[pred]
-                    ] += self.weights_[i]
+                    results[subsample[n]][self._class_dictionary[pred]] += (
+                        self.weights_[i]
+                    )
                     divisors[subsample[n]] += self.weights_[i]
 
         else:
@@ -419,9 +414,9 @@ class ContractableBOSS(BaseClassifier):
                     preds.append(clf._train_predict(j, distance_matrix))
 
                 for n, pred in enumerate(preds):
-                    results[subsample[n]][
-                        self._class_dictionary[pred]
-                    ] += self.weights_[i]
+                    results[subsample[n]][self._class_dictionary[pred]] += (
+                        self.weights_[i]
+                    )
                     divisors[subsample[n]] += self.weights_[i]
 
         for i in range(n_instances):
@@ -464,7 +459,7 @@ class ContractableBOSS(BaseClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -475,8 +470,9 @@ class ContractableBOSS(BaseClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         if parameter_set == "results_comparison":
             return {"n_parameter_samples": 10, "max_ensemble_size": 5}

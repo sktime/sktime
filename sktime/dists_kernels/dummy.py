@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 """Dummy distances/kernels."""
 
 __author__ = ["fkiraly"]
 
 import numpy as np
 
-from sktime.dists_kernels._base import BasePairwiseTransformerPanel
+from sktime.dists_kernels.base import BasePairwiseTransformerPanel
 
 SUPPORTED_MTYPES = ["df-list", "nested_univ", "numpy3D"]
 
@@ -20,6 +19,7 @@ class ConstantPwTrafoPanel(BasePairwiseTransformerPanel):
     """
 
     _tags = {
+        "authors": "fkiraly",
         "X_inner_mtype": SUPPORTED_MTYPES,
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:multivariate": True,  # can estimator handle multivariate data?
@@ -27,10 +27,9 @@ class ConstantPwTrafoPanel(BasePairwiseTransformerPanel):
     }
 
     def __init__(self, constant=0):
-
         self.constant = constant
 
-        super(ConstantPwTrafoPanel, self).__init__()
+        super().__init__()
 
     def _transform(self, X, X2=None):
         """Compute distance/kernel matrix.

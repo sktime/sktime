@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
 """Tests for STRAY (Search TRace AnomalY) outlier estimator."""
 
 import warnings
-from typing import Dict
 
 import numpy as np
 import numpy.typing as npt
@@ -23,7 +21,7 @@ class STRAY(BaseTransformer):
     ability to detect clusters of outliers in multi-dimensional data without
     requiring a model of the typical behavior of the system. However, it suffers
     from some limitations that affect its accuracy. STRAY is an extension of
-    HDoutliers that uses extreme value theory for the anomolous threshold
+    HDoutliers that uses extreme value theory for the anomalous threshold
     calculation, to deal with data streams that exhibit non-stationary behavior.
 
     Parameters
@@ -42,7 +40,7 @@ class STRAY(BaseTransformer):
         Proportion of possible candidates for outliers. This defines the starting point
         for the bottom up searching algorithm.
     size_threshold : int, optional (default=50)
-        Sample size to calculate an emperical threshold.
+        Sample size to calculate an empirical threshold.
     outlier_tail : str {"min", "max"}, optional (default="max")
         Direction of the outlier tail.
 
@@ -99,7 +97,7 @@ class STRAY(BaseTransformer):
         self.p = p
         self.size_threshold = size_threshold
         self.outlier_tail = outlier_tail
-        super(STRAY, self).__init__()
+        super().__init__()
 
     def _find_threshold(self, outlier_score: npt.ArrayLike, n: int) -> npt.ArrayLike:
         """Find Outlier Threshold.
@@ -131,7 +129,7 @@ class STRAY(BaseTransformer):
         ]
 
         log_alpha = np.log(1 / self.alpha)
-        bound = np.Inf
+        bound = np.inf
 
         for i in range(start, n):
             if gaps[i] > log_alpha * ghat[i]:
@@ -140,7 +138,7 @@ class STRAY(BaseTransformer):
 
         return np.where(outlier_score > bound)[0]
 
-    def _find_outliers_kNN(self, X: npt.ArrayLike, n: int) -> Dict:
+    def _find_outliers_kNN(self, X: npt.ArrayLike, n: int) -> dict:
         """Find outliers using kNN distance with maximum gap.
 
         Parameters
@@ -187,9 +185,7 @@ class STRAY(BaseTransformer):
         """
         r = np.shape(X)[0]
         idx_dropna = np.array([i for i in range(r) if not np.isnan(X[i]).any()])
-        X_dropna = X[
-            idx_dropna,
-        ]
+        X_dropna = X[idx_dropna,]
 
         n = np.shape(X_dropna)[0]
         outliers = self._find_outliers_kNN(X_dropna, n)
@@ -259,7 +255,8 @@ class STRAY(BaseTransformer):
             warnings.warn(
                 "Warning: Input data X differs from that given to fit(). "
                 "Refitting with new input data, not storing updated public class "
-                "attributes. For this, explicitly use fit(X) or fit_transform(X)."
+                "attributes. For this, explicitly use fit(X) or fit_transform(X).",
+                stacklevel=2,
             )
             return new_obj.y_.astype(bool)
 

@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """Distance computation."""
+
 __author__ = ["chrisholder", "TonyBagnall"]
 __all__ = [
     "distance",

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Testing mtype/scitypes lookup."""
 
 __author__ = ["fkiraly"]
@@ -11,7 +10,7 @@ from sktime.datatypes._registry import (
     mtype_to_scitype,
     scitype_to_mtype,
 )
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 MTYPE_SCITYPE_PAIRS = [(k[0], k[1]) for k in MTYPE_REGISTER]
 

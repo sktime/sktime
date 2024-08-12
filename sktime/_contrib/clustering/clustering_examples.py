@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """Clustering usage tests and examples."""
+
 import numpy as np
 
 from sktime.clustering.k_means import TimeSeriesKMeans

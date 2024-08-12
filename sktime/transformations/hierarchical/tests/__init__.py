@@ -1,2 +1,1 @@
-# -*- coding: utf-8 -*-
-"""Tests hierarchical transfromations to predictions."""
+"""Tests hierarchical transformations to predictions."""

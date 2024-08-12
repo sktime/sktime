@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Implementation of a SignatureClassifier.
 
 Utilises the signature method of feature extraction.
@@ -7,6 +6,7 @@ and methodologies described in the paper:
     "A Generalised Signature Method for Time Series"
     [arxiv](https://arxiv.org/pdf/2006.00873.pdf).
 """
+
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
@@ -33,8 +33,8 @@ class SignatureClassifier(BaseClassifier):
 
     Note that the final classifier used on the UEA datasets involved tuning
     the hyper-parameters:
-        - `depth` over [1, 2, 3, 4, 5, 6]
-        - `window_depth` over [2, 3, 4]
+        - ``depth`` over [1, 2, 3, 4, 5, 6]
+        - ``window_depth`` over [2, 3, 4]
         - RandomForestClassifier hyper-parameters.
     as these were found to be the most dataset dependent hyper-parameters.
 
@@ -50,7 +50,7 @@ class SignatureClassifier(BaseClassifier):
     window_name: str, default="dyadic"
         The name of the window transform to apply.
     window_depth: int, default=3
-        The depth of the dyadic window. (Active only if `window_name == 'dyadic']`.
+        The depth of the dyadic window. (Active only if ``window_name == 'dyadic']``.
     window_length: int, default=None
         The length of the sliding/expanding window. (Active only if `window_name in
         ['sliding, 'expanding'].
@@ -72,7 +72,7 @@ class SignatureClassifier(BaseClassifier):
     signature_method: sklearn.Pipeline
         An sklearn pipeline that performs the signature feature extraction step.
     pipeline: sklearn.Pipeline
-        The classifier appended to the `signature_method` pipeline to make a
+        The classifier appended to the ``signature_method`` pipeline to make a
         classification pipeline.
     n_classes_ : int
         Number of classes. Extracted from the data.
@@ -91,10 +91,17 @@ class SignatureClassifier(BaseClassifier):
     """
 
     _tags = {
-        "capability:multivariate": True,
-        "classifier_type": "feature",
+        # packaging info
+        # --------------
+        "authors": "jambo6",
+        "maintainers": "jambo6",
         "python_dependencies": "esig",
         "python_version": "<3.10",
+        # estimator type
+        # --------------
+        "capability:multivariate": True,
+        "capability:predict_proba": True,
+        "classifier_type": "feature",
     }
 
     def __init__(
@@ -121,7 +128,7 @@ class SignatureClassifier(BaseClassifier):
         self.depth = depth
         self.random_state = random_state
 
-        super(SignatureClassifier, self).__init__()
+        super().__init__()
 
         self.signature_method = SignatureTransformer(
             augmentation_list,
@@ -211,7 +218,7 @@ class SignatureClassifier(BaseClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -222,8 +229,9 @@ class SignatureClassifier(BaseClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         if parameter_set == "results_comparison":
             return {"estimator": RandomForestClassifier(n_estimators=10)}

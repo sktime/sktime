@@ -1,21 +1,17 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements TBATS algorithm.
 
-TBATS refers to Exponential smoothing state space model with Trigonometric
-Seasonality, Box-Cox transformation, ARMA errors, Trend and Seasonal components.
+TBATS refers to Exponential smoothing state space model with Trigonometric Seasonality,
+Box-Cox transformation, ARMA errors, Trend and Seasonal components.
 
 Wrapping implementation in [1]_ of method proposed in [2]_.
 """
 
-__author__ = ["Martin Walter"]
+__author__ = ["aiwalter"]
 __all__ = ["TBATS"]
 
 from sktime.forecasting.base.adapters import _TbatsAdapter
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("tbats", severity="warning")
 
 
 class TBATS(_TbatsAdapter):
@@ -76,6 +72,7 @@ class TBATS(_TbatsAdapter):
         When not provided BATS shall try to utilize all available cpu cores.
     multiprocessing_start_method: str, optional (default='spawn')
         How threads should be started. See also:
+
         https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
     context: abstract.ContextInterface, optional (default=None)
         For advanced users only. Provide this to override default behaviors
@@ -83,6 +80,7 @@ class TBATS(_TbatsAdapter):
     See Also
     --------
     BATS
+    StatsForecastAutoTBATS
 
     References
     ----------
@@ -92,6 +90,7 @@ class TBATS(_TbatsAdapter):
        smoothing, Journal of the American Statistical Association, 106(496), 1513-1527.
        DOI: https://doi.org/10.1198/jasa.2011.tm09771
     .. [3] G. Skorupa. Multiple Seasonalities using TBATS in Python.
+
        https://medium.com/intive-developers/forecasting-time-series-with-multiple-seasonalities-using-tbats-in-python-398a00ac0e8a
     .. [4] R.J. Hyndman, G. Athanasopoulos. Forecasting: Principles and Practice.
        https://otexts.com/fpp2/complexseasonality.html
@@ -131,14 +130,14 @@ class TBATS(_TbatsAdapter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
         -------
         params : dict or list of dict
         """
-        params = {
+        params1 = {
             "use_box_cox": False,
             "use_trend": False,
             "use_damped_trend": False,
@@ -146,4 +145,20 @@ class TBATS(_TbatsAdapter):
             "use_arma_errors": False,
             "n_jobs": 1,
         }
-        return params
+        params2 = {
+            "use_box_cox": False,
+            "use_trend": True,
+            "use_damped_trend": True,
+            "sp": [],
+            "use_arma_errors": True,
+            "n_jobs": 2,
+        }
+        params3 = {
+            "use_box_cox": False,
+            "use_trend": False,
+            "use_damped_trend": False,
+            "sp": 3,
+            "use_arma_errors": False,
+            "n_jobs": 1,
+        }
+        return [params1, params2, params3]

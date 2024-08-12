@@ -1,19 +1,26 @@
-# -*- coding: utf-8 -*-
+"""Tests for SFA utilities."""
+
 import sys
 
 import numpy as np
 import pytest
 
 from sktime.datasets import load_gunpoint
-from sktime.transformations.panel.dictionary_based._sfa import SFA
 from sktime.datatypes._panel._convert import from_nested_to_2d_array
+from sktime.tests.test_switch import run_test_for_class
+from sktime.transformations.panel.dictionary_based._sfa import SFA
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(SFA),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 # Check the transformer has changed the data correctly.
 @pytest.mark.parametrize(
     "binning_method", ["equi-depth", "equi-width", "information-gain", "kmeans"]
 )
 def test_transformer(binning_method):
+    """Test SFA transformer expected output."""
     # load training data
     X, y = load_gunpoint(split="train", return_X_y=True)
 
@@ -33,9 +40,14 @@ def test_transformer(binning_method):
     _ = p.transform(X, y)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(SFA),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("use_fallback_dft", [True, False])
 @pytest.mark.parametrize("norm", [True, False])
 def test_dft_mft(use_fallback_dft, norm):
+    """Test DFT and MFT functions."""
     # load training data
     X, y = load_gunpoint(split="train", return_X_y=True)
     X_tab = from_nested_to_2d_array(X, return_numpy=True)
@@ -55,7 +67,11 @@ def test_dft_mft(use_fallback_dft, norm):
     ).fit(X, y)
 
     if use_fallback_dft:
-        dft = p._discrete_fourier_transform(X_tab[0], word_length, norm, 1, True)
+        from sktime.transformations.panel.dictionary_based._sfa_numba import (
+            _discrete_fourier_transform,
+        )
+
+        dft = _discrete_fourier_transform(X_tab[0], word_length, norm, 1, True)
     else:
         dft = p._fast_fourier_transform(X_tab[0])
 
@@ -77,7 +93,7 @@ def test_dft_mft(use_fallback_dft, norm):
     mft = p._mft(X_tab[0])
     for i in range(len(X_tab[0]) - window_size + 1):
         if use_fallback_dft:
-            dft = p._discrete_fourier_transform(
+            dft = _discrete_fourier_transform(
                 X_tab[0, i : window_size + i], word_length, norm, 1, True
             )
         else:
@@ -89,8 +105,13 @@ def test_dft_mft(use_fallback_dft, norm):
     assert len(mft[0]) == word_length
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(SFA),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("binning_method", ["equi-depth", "information-gain"])
 def test_sfa_anova(binning_method):
+    """Test SFA expected breakpoints."""
     # load training data
     X, y = load_gunpoint(split="train", return_X_y=True)
 
@@ -124,6 +145,10 @@ def test_sfa_anova(binning_method):
     _ = p2.transform(X, y)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(SFA),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 # test word lengths larger than the window-length
 @pytest.mark.parametrize("word_length", [6, 7])
 @pytest.mark.parametrize("alphabet_size", [4, 5])
@@ -134,6 +159,7 @@ def test_sfa_anova(binning_method):
 def test_word_lengths(
     word_length, alphabet_size, window_size, bigrams, levels, use_fallback_dft
 ):
+    """Test expected word lengths."""
     # load training data
     X, y = load_gunpoint(split="train", return_X_y=True)
 
@@ -150,7 +176,12 @@ def test_word_lengths(
     _ = p.transform(X, y)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(SFA),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_bit_size():
+    """Test expected bit size on training data."""
     # load training data
     X, y = load_gunpoint(split="train", return_X_y=True)
 
@@ -173,7 +204,12 @@ def test_bit_size():
     assert len(p.word_list(list(w[0][0].keys())[0])[0]) == 40
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(SFA),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_typed_dict():
+    """Test word list from typed dict."""
     # load training data
     X, y = load_gunpoint(split="train", return_X_y=True)
 

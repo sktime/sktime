@@ -1,42 +1,80 @@
-# -*- coding: utf-8 -*-
+"""Tests for scipy interface."""
+
 import numpy as np
+import pytest
 
-from sktime.utils._testing.panel import make_transformer_problem
 from sktime.dists_kernels.scipy_dist import ScipyDist
+from sktime.tests.test_switch import run_test_for_class
+from sktime.utils._testing.panel import make_transformer_problem
 
-X1 = make_transformer_problem(
-    n_instances=5,
-    n_columns=5,
-    n_timepoints=5,
-    random_state=1,
-    return_numpy=True,
-    panel=False,
-)
-X2 = make_transformer_problem(
-    n_instances=5,
-    n_columns=5,
-    n_timepoints=5,
-    random_state=2,
-    return_numpy=True,
-    panel=False,
-)
 
-X1_df = make_transformer_problem(
-    n_instances=5,
-    n_columns=5,
-    n_timepoints=5,
-    random_state=1,
-    return_numpy=False,
-    panel=False,
-)
-X2_df = make_transformer_problem(
-    n_instances=5,
-    n_columns=5,
-    n_timepoints=5,
-    random_state=2,
-    return_numpy=False,
-    panel=False,
-)
+@pytest.fixture
+def X1():
+    return make_transformer_problem(
+        n_instances=5,
+        n_columns=5,
+        n_timepoints=5,
+        random_state=1,
+        return_numpy=True,
+        panel=False,
+    )
+
+
+@pytest.fixture
+def X2():
+    return make_transformer_problem(
+        n_instances=5,
+        n_columns=5,
+        n_timepoints=5,
+        random_state=2,
+        return_numpy=True,
+        panel=False,
+    )
+
+
+@pytest.fixture
+def X1_df():
+    return make_transformer_problem(
+        n_instances=5,
+        n_columns=5,
+        n_timepoints=5,
+        random_state=1,
+        return_numpy=False,
+        panel=False,
+    )
+
+
+@pytest.fixture
+def X2_df():
+    return make_transformer_problem(
+        n_instances=5,
+        n_columns=5,
+        n_timepoints=5,
+        random_state=2,
+        return_numpy=False,
+        panel=False,
+    )
+
+
+def _get_kul_name():
+    """Get name of kul... distance.
+
+    Utility to bridge deprecation of kulsinski distance in scipy.
+    Name pre-1.11.0 is kulsinski, and from 1.11.0 it is kulczynski1.
+
+    Returns
+    -------
+    name : str
+        one of "kulsinski" (if scipy < 1.11.0) and "kulczynski1" (if scipy >= 1.11.0)
+    """
+    try:
+        from scipy.spatial.distance import kulczynski1  # noqa: F401
+
+        name = "kulczynski1"
+    except Exception:
+        name = "kulsinski"
+
+    return name
 
 
 # potential parameters
@@ -52,7 +90,7 @@ METRIC_VALUES = [
     "hamming",
     "jaccard",
     "jensenshannon",
-    "kulsinski",
+    _get_kul_name(),
     "mahalanobis",
     "matching",
     "minkowski",
@@ -68,7 +106,12 @@ P_VALUES = [1, 2, 5, 10]
 COLALIGN_VALUES = ["intersect", "force-align", "none"]
 
 
-def test_scipydist():
+@pytest.mark.skipif(
+    not run_test_for_class(ScipyDist),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_scipydist(X1, X2, X1_df, X2_df):
+    """Test runner for numpy and dataframe tests."""
     # test numpy
     _run_scipy_dist_test(X1, X2)
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """DrCIF classifier.
 
 interval based DrCIF classifier extracting catch22 features from random intervals on
@@ -12,7 +11,6 @@ import math
 import time
 
 import numpy as np
-from joblib import Parallel, delayed
 from sklearn.base import BaseEstimator
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import check_random_state
@@ -21,7 +19,6 @@ from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
 from sktime.classification.sklearn._continuous_interval_tree import (
     ContinuousIntervalTree,
-    _drcif_feature,
 )
 from sktime.transformations.panel.catch22 import Catch22
 from sktime.utils.validation.panel import check_X_y
@@ -30,7 +27,7 @@ from sktime.utils.validation.panel import check_X_y
 class DrCIF(BaseClassifier):
     """Diverse Representation Canonical Interval Forest Classifier (DrCIF).
 
-    Extension of the CIF algorithm using multple representations. Implementation of the
+    Extension of the CIF algorithm using multiple representations. Implementation of the
     interval based forest making use of the catch22 feature set on randomly selected
     intervals on the base series, periodogram representation and differences
     representation described in the HIVE-COTE 2.0 paper Middlehurst et al (2021). [1]_
@@ -62,13 +59,15 @@ class DrCIF(BaseClassifier):
         Maximum length of an interval per representation as an int for all
         representations or list for individual settings, if None set to
         (representation_length / 2).
-    base_estimator : BaseEstimator or str, default="DTC"
+    base_estimator : BaseEstimator or str, default="CIT"
         Base estimator for the ensemble, can be supplied a sklearn BaseEstimator or a
         string for suggested options.
         "DTC" uses the sklearn DecisionTreeClassifier using entropy as a splitting
-        measure.
+        measure (sklearn.tree.DecisionTreeClassifier).
         "CIT" uses the sktime ContinuousIntervalTree, an implementation of the original
-        tree used with embedded attribute processing for faster predictions.
+        tree used with embedded attribute processing for faster predictions
+        (sktime.classification.interval_based.ContinuousIntervalTree).
+        In order to pass parameters to estimators, pass a BaseEstimator instance.
     time_limit_in_minutes : int, default=0
         Time contract to limit build time in minutes, overriding n_estimators.
         Default of 0 means n_estimators is used.
@@ -77,7 +76,7 @@ class DrCIF(BaseClassifier):
     save_transformed_data : bool, default=False
         Save the data transformed in fit for use in _get_train_probs.
     n_jobs : int, default=1
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``-1`` means using all processors.
     random_state : int or None, default=None
         Seed for random number generation.
@@ -131,18 +130,27 @@ class DrCIF(BaseClassifier):
     >>> from sktime.classification.interval_based import DrCIF
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = DrCIF(n_estimators=3, n_intervals=2, att_subsample_size=2)
-    >>> clf.fit(X_train, y_train)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
+    >>> clf = DrCIF(
+    ...     n_estimators=3, n_intervals=2, att_subsample_size=2
+    ... ) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
     DrCIF(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> y_pred = clf.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "MatthewMiddlehurst",
+        "python_dependencies": ["numba", "joblib"],
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:train_estimate": True,
         "capability:contractable": True,
         "capability:multithreading": True,
+        "capability:predict_proba": True,
         "classifier_type": "interval",
     }
 
@@ -190,25 +198,27 @@ class DrCIF(BaseClassifier):
         self._att_subsample_size = att_subsample_size
         self._min_interval = min_interval
         self._max_interval = max_interval
-        self._base_estimator = base_estimator
 
-        super(DrCIF, self).__init__()
+        super().__init__()
+
+        if isinstance(base_estimator, str):
+            if base_estimator.lower() == "dtc":
+                self._base_estimator = DecisionTreeClassifier(criterion="entropy")
+            elif base_estimator.lower() == "cit":
+                self._base_estimator = ContinuousIntervalTree()
+        elif isinstance(base_estimator, BaseEstimator):
+            self._base_estimator = _clone_estimator(base_estimator)
+        else:
+            raise ValueError("DrCIF invalid base estimator given")
 
     def _fit(self, X, y):
+        from joblib import Parallel, delayed
+
         self.n_instances_, self.n_dims_, self.series_length_ = X.shape
 
         time_limit = self.time_limit_in_minutes * 60
         start_time = time.time()
         train_time = 0
-
-        if self.base_estimator.lower() == "dtc":
-            self._base_estimator = DecisionTreeClassifier(criterion="entropy")
-        elif self.base_estimator.lower() == "cit":
-            self._base_estimator = ContinuousIntervalTree()
-        elif isinstance(self.base_estimator, BaseEstimator):
-            self._base_estimator = self.base_estimator
-        else:
-            raise ValueError("DrCIF invalid base estimator given.")
 
         X_p = np.zeros(
             (
@@ -359,6 +369,8 @@ class DrCIF(BaseClassifier):
         )
 
     def _predict_proba(self, X) -> np.ndarray:
+        from joblib import Parallel, delayed
+
         n_test_instances, _, series_length = X.shape
         if series_length != self.series_length_:
             raise ValueError(
@@ -400,7 +412,13 @@ class DrCIF(BaseClassifier):
         return output
 
     def _get_train_probs(self, X, y) -> np.ndarray:
+        from joblib import Parallel, delayed
+
+        from sktime.datatypes import convert_to
+
         self.check_is_fitted()
+        if not isinstance(X, np.ndarray):
+            X = convert_to(X, "numpy3D")
         X, y = check_X_y(X, y, coerce_to_numpy=True)
 
         # handle the single-class-label case
@@ -448,6 +466,10 @@ class DrCIF(BaseClassifier):
         return results
 
     def _fit_estimator(self, X, X_p, X_d, y, idx):
+        from sktime.classification.sklearn._continuous_interval_tree_numba import (
+            _drcif_feature,
+        )
+
         c22 = Catch22(outlier_norm=True)
         T = [X, X_p, X_d]
         rs = 255 if self.random_state == 0 else self.random_state
@@ -515,7 +537,7 @@ class DrCIF(BaseClassifier):
         tree = _clone_estimator(self._base_estimator, random_state=rs)
         transformed_x = transformed_x.T
         transformed_x = transformed_x.round(8)
-        if self.base_estimator == "CIT":
+        if isinstance(self._base_estimator, ContinuousIntervalTree):
             transformed_x = np.nan_to_num(
                 transformed_x, False, posinf=np.nan, neginf=np.nan
             )
@@ -534,6 +556,10 @@ class DrCIF(BaseClassifier):
     def _predict_proba_for_estimator(
         self, X, X_p, X_d, classifier, intervals, dims, atts
     ):
+        from sktime.classification.sklearn._continuous_interval_tree_numba import (
+            _drcif_feature,
+        )
+
         c22 = Catch22(outlier_norm=True)
         if isinstance(self._base_estimator, ContinuousIntervalTree):
             return classifier._predict_proba_drcif(
@@ -605,7 +631,7 @@ class DrCIF(BaseClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -616,15 +642,25 @@ class DrCIF(BaseClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         if parameter_set == "results_comparison":
             return {"n_estimators": 10, "n_intervals": 2, "att_subsample_size": 4}
         else:
-            return {
-                "n_estimators": 2,
-                "n_intervals": 2,
-                "att_subsample_size": 2,
-                "save_transformed_data": True,
-            }
+            return [
+                {
+                    "n_estimators": 2,
+                    "n_intervals": 2,
+                    "att_subsample_size": 2,
+                    "save_transformed_data": True,
+                },
+                {
+                    "n_estimators": 2,
+                    "n_intervals": 2,
+                    "att_subsample_size": 2,
+                    "base_estimator": ContinuousIntervalTree(),
+                    "save_transformed_data": True,
+                },
+            ]

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 """Implements Theta-lines transformation for use with Theta forecasting."""
@@ -21,11 +20,11 @@ class ThetaLinesTransformer(BaseTransformer):
 
     Overview: Input :term:`univariate series <Univariate time series>` of length
     "n" and ThetaLinesTransformer modifies the local curvature of the time series
-    using Theta-coefficient values passed through the parameter `theta`.
+    using Theta-coefficient values passed through the parameter ``theta``.
 
     Each Theta-coefficient is applied directly to the second differences of the input
     series. The resulting transformed series (Theta-lines) are returned as a
-    pd.DataFrame of shape `len(input series) * len(theta)`.
+    pd.DataFrame of shape ``len(input series) * len(theta)``.
 
     Parameters
     ----------
@@ -61,6 +60,11 @@ class ThetaLinesTransformer(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["GuzalBulatova", "mloning"],
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -76,7 +80,7 @@ class ThetaLinesTransformer(BaseTransformer):
 
     def __init__(self, theta=(0, 2)):
         self.theta = theta
-        super(ThetaLinesTransformer, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.

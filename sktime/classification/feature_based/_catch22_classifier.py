@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Catch22 Classifier.
 
 Pipeline classifier using the Catch22 transformer and an estimator.
@@ -21,20 +20,20 @@ class Catch22Classifier(_DelegatedClassifier):
     This classifier simply transforms the input data using the Catch22 [1]
     transformer and builds a provided estimator using the transformed data.
 
-    Shorthand for the pipeline `Catch22(outlier_norm, replace_nans) * estimator`
+    Shorthand for the pipeline ``Catch22(outlier_norm, replace_nans) * estimator``
 
     Parameters
     ----------
     outlier_norm : bool, optional, default=False
-        Normalise each series during the two outlier catch22 features, which can take a
-        while to process for large values
+        Normalise each series during the two outlier Catch22 features, which can take a
+        while to process for large values.
     replace_nans : bool, optional, default=True
-        Replace NaN or inf values from the catch22 transform with 0.
+        Replace NaN or inf values from the Catch22 transform with 0.
     estimator : sklearn classifier, optional, default=None
         An sklearn estimator to be built using the transformed data.
         Defaults to sklearn RandomForestClassifier(n_estimators=200)
     n_jobs : int, optional, default=1
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``-1`` means using all processors.
     random_state : int or None, optional, default=None
         Seed for random, integer.
@@ -71,19 +70,27 @@ class Catch22Classifier(_DelegatedClassifier):
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
     >>> clf = Catch22Classifier(
     ...     estimator=RandomForestClassifier(n_estimators=5),
     ...     outlier_norm=True,
-    ... )
-    >>> clf.fit(X_train, y_train)
+    ... ) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
     Catch22Classifier(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> y_pred = clf.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["MatthewMiddlehurst", "RavenRudi", "fkiraly"],
+        "maintainers": ["RavenRudi"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:multithreading": True,
+        "capability:predict_proba": True,
         "classifier_type": "feature",
     }
 
@@ -102,7 +109,7 @@ class Catch22Classifier(_DelegatedClassifier):
         self.n_jobs = n_jobs
         self.random_state = random_state
 
-        super(Catch22Classifier, self).__init__()
+        super().__init__()
 
         transformer = Catch22(
             outlier_norm=self.outlier_norm, replace_nans=self.replace_nans
@@ -127,7 +134,7 @@ class Catch22Classifier(_DelegatedClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -138,8 +145,9 @@ class Catch22Classifier(_DelegatedClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         if parameter_set == "results_comparison":
             return {

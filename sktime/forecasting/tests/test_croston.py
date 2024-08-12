@@ -1,12 +1,17 @@
-# -*- coding: utf-8 -*-
-from sktime.forecasting.croston import Croston
-from sktime.datasets import load_PBS_dataset
-import pytest
+"""Tests for Croston estimator."""
+
 import numpy as np
+import pytest
 
-# test the Croston's Method against the R package
+from sktime.datasets import load_PBS_dataset
+from sktime.forecasting.croston import Croston
+from sktime.tests.test_switch import run_test_for_class
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(Croston),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "smoothing, fh, r_forecast",
     [
@@ -16,7 +21,8 @@ import numpy as np
     ],
 )
 def test_Croston_against_r_implementation(smoothing, fh, r_forecast):
-    """
+    """Test Croston estimator against the R package implementing the same algorithm.
+
     Testing forecasted values estimated by the R package of the Croston's method
     against the Croston method in sktime.
     R code to generate the hardcoded value for fh=10:
@@ -28,7 +34,7 @@ def test_Croston_against_r_implementation(smoothing, fh, r_forecast):
         forecast <- croston(y,h = 10)
     Output:
         0.8688921
-    """
+    """  # noqa: E501
     y = load_PBS_dataset()
     forecaster = Croston(smoothing)
     forecaster.fit(y)

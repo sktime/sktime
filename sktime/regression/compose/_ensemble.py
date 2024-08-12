@@ -1,16 +1,13 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements a composite Time series Forest Regressor that accepts a pipeline."""
 
-__author__ = ["Markus Löning", "AyushmaanSeth"]
+__author__ = ["mloning", "AyushmaanSeth"]
 __all__ = ["ComposableTimeSeriesForestRegressor"]
 
 import numbers
-from warnings import warn
 
 import numpy as np
-from joblib import Parallel, delayed
 from sklearn.ensemble._base import _partition_estimators
 from sklearn.ensemble._forest import (
     _generate_unsampled_indices,
@@ -20,11 +17,12 @@ from sklearn.metrics import r2_score
 from sklearn.pipeline import Pipeline
 from sklearn.tree import DecisionTreeRegressor
 
+from sktime.base._panel.forest._composable import BaseTimeSeriesForest
 from sktime.regression.base import BaseRegressor
-from sktime.series_as_features.base.estimators._ensemble import BaseTimeSeriesForest
 from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor
 from sktime.utils.slope_and_trend import _slope
 from sktime.utils.validation.panel import check_X, check_X_y
+from sktime.utils.warnings import warn
 
 
 class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
@@ -35,7 +33,7 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
     regressors on various sub-samples of a transformed dataset and uses
     averaging to improve the predictive accuracy and control over-fitting.
     The sub-sample size is always the same as the original input sample size
-    but the samples are drawn with replacement if `bootstrap=True` (default).
+    but the samples are drawn with replacement if ``bootstrap=True`` (default).
 
     Parameters
     ----------
@@ -44,23 +42,23 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         and a decision tree regressor as final estimator.
     n_estimators : integer, optional (default=100)
         The number of trees in the forest.
-    criterion : string, optional (default="mse")
-        The function to measure the quality of a split. Supported criteria
-        are "mse" for the mean squared error, which is equal to variance
-        reduction as feature selection criterion and minimizes the L2 loss
-        using the mean of each terminal node, "friedman_mse", which uses mean
-        squared error with Friedman's improvement score for potential splits,
-        and "mae" for the mean absolute error, which minimizes the L1 loss
-        using the median of each terminal node.
+    criterion : string, optional (default="squared_error")
+        The function to measure the quality of a split. Supported criteria are
+        "squared_error" for the mean squared error, which is equal to variance reduction
+        as feature selection criterion and minimizes the L2 loss using the mean of each
+        terminal node, "friedman_mse", which uses mean squared error with Friedman's
+        improvement score for potential splits, "absolute_error" for the mean absolute
+        error, which minimizes the L1 loss using the median of each terminal node,
+        and "poisson" which uses reduction in Poisson deviance to find splits.
     max_depth : integer or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
-        - If int, then consider `min_samples_split` as the minimum number.
-        - If float, then `min_samples_split` is a fraction and
-          `ceil(min_samples_split * n_samples)` are the minimum
+        - If int, then consider ``min_samples_split`` as the minimum number.
+        - If float, then ``min_samples_split`` is a fraction and
+          ``ceil(min_samples_split * n_samples)`` are the minimum
           number of samples for each split.
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node.
@@ -68,9 +66,9 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         least ``min_samples_leaf`` training samples in each of the left and
         right branches.  This may have the effect of smoothing the model,
         especially in regression.
-        - If int, then consider `min_samples_leaf` as the minimum number.
-        - If float, then `min_samples_leaf` is a fraction and
-          `ceil(min_samples_leaf * n_samples)` are the minimum
+        - If int, then consider ``min_samples_leaf`` as the minimum number.
+        - If float, then ``min_samples_leaf`` is a fraction and
+          ``ceil(min_samples_leaf * n_samples)`` are the minimum
           number of samples for each node.
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the sum total of weights (of all
@@ -78,14 +76,14 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         equal weight when sample_weight is not provided.
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
-        - If int, then consider `max_features` features at each split.
-        - If float, then `max_features` is a fraction and
-          `int(max_features * n_features)` features are considered at each
+        - If int, then consider ``max_features`` features at each split.
+        - If float, then ``max_features`` is a fraction and
+          ``int(max_features * n_features)`` features are considered at each
           split.
-        - If "auto", then `max_features=sqrt(n_features)`.
-        - If "sqrt", then `max_features=sqrt(n_features)` (same as "auto").
-        - If "log2", then `max_features=log2(n_features)`.
-        - If None, then `max_features=n_features`.
+        - If "auto", then ``max_features=sqrt(n_features)``.
+        - If "sqrt", then ``max_features=sqrt(n_features)`` (same as "auto").
+        - If "log2", then ``max_features=log2(n_features)``.
+        - If None, then ``max_features=n_features``.
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
         effectively inspect more than ``max_features`` features.
@@ -104,23 +102,20 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         left child, and ``N_t_R`` is the number of samples in the right child.
         ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
         if ``sample_weight`` is passed.
-    min_impurity_split : float, (default=1e-7)
-        Threshold for early stopping in tree growth. A node will split
-        if its impurity is above the threshold, otherwise it is a leaf.
     bootstrap : boolean, optional (default=True)
         Whether bootstrap samples are used when building trees.
     oob_score : bool (default=False)
         Whether to use out-of-bag samples to estimate
         the generalization accuracy.
     n_jobs : int or None, optional (default=None)
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors.
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
     verbose : int, optional (default=0)
         Controls the verbosity when fitting and predicting.
     warm_start : bool, optional (default=False)
@@ -163,18 +158,23 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         Decision function computed with out-of-bag estimate on the training
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
-        `oob_decision_function_` might contain NaN.
+        ``oob_decision_function_`` might contain NaN.
     class_weight: dict, list of dicts, "balanced", "balanced_subsample" or \
         None, optional (default=None)
         Not needed here, added in the constructor to align with base class \
             sharing both Classifier and Regressor parameters.
     """
 
+    _tags = {
+        "python_dependencies": ["joblib"],
+        "X_inner_mtype": "nested_univ",  # nested pd.DataFrame
+    }
+
     def __init__(
         self,
         estimator=None,
         n_estimators=100,
-        criterion="mse",
+        criterion="squared_error",
         max_depth=None,
         min_samples_split=2,
         min_samples_leaf=1,
@@ -182,7 +182,6 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         max_features=None,
         max_leaf_nodes=None,
         min_impurity_decrease=0.0,
-        min_impurity_split=None,
         bootstrap=False,
         oob_score=False,
         n_jobs=None,
@@ -191,7 +190,6 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         warm_start=False,
         max_samples=None,
     ):
-
         self.estimator = estimator
         # Assign values, even though passed on to base estimator below,
         # necessary here for cloning
@@ -203,11 +201,10 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         self.max_features = max_features
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
-        self.min_impurity_split = min_impurity_split
         self.max_samples = max_samples
 
         # Pass on params.
-        super(ComposableTimeSeriesForestRegressor, self).__init__(
+        super().__init__(
             base_estimator=None,
             n_estimators=n_estimators,
             estimator_params=None,
@@ -219,22 +216,41 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
             warm_start=warm_start,
             max_samples=max_samples,
         )
+        BaseRegressor.__init__(self)
 
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False
 
-    def _validate_estimator(self):
+    def fit(self, X, y, **kwargs):
+        """Wrap fit to call BaseRegressor.fit.
 
+        This is a fix to get around the problem with multiple inheritance. The problem
+        is that if we just override _fit, this class inherits the fit from the sklearn
+        class BaseTimeSeriesForest. This is the simplest solution, albeit a little
+        hacky.
+        """
+        return BaseRegressor.fit(self, X=X, y=y, **kwargs)
+
+    def predict(self, X, **kwargs) -> np.ndarray:
+        """Wrap predict to call BaseRegressor.predict."""
+        return BaseRegressor.predict(self, X=X, **kwargs)
+
+    def predict_proba(self, X, **kwargs) -> np.ndarray:
+        """Wrap predict_proba to call BaseRegressor.predict_proba."""
+        return BaseRegressor.predict_proba(self, X=X, **kwargs)
+
+    def _fit(self, X, y):
+        BaseTimeSeriesForest._fit(self, X=X, y=y)
+
+    def _validate_estimator(self):
         if not isinstance(self.n_estimators, numbers.Integral):
             raise ValueError(
-                "n_estimators must be an integer, "
-                "got {0}.".format(type(self.n_estimators))
+                "n_estimators must be an integer, " f"got {type(self.n_estimators)}."
             )
 
         if self.n_estimators <= 0:
             raise ValueError(
-                "n_estimators must be greater than zero, "
-                "got {0}.".format(self.n_estimators)
+                "n_estimators must be greater than zero, " f"got {self.n_estimators}."
             )
 
         # Set base estimator
@@ -252,7 +268,7 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
                 ),
                 ("clf", DecisionTreeRegressor(random_state=self.random_state)),
             ]
-            self.estimator_ = Pipeline(steps)
+            self._estimator = Pipeline(steps)
 
         else:
             # else check given estimator is a pipeline with prior
@@ -263,7 +279,7 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
                 raise ValueError(
                     "Last step in `estimator` must be DecisionTreeRegressor."
                 )
-            self.estimator_ = self.estimator
+            self._estimator = self.estimator
 
         # Set parameters according to naming in pipeline
         estimator_params = {
@@ -275,9 +291,8 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
             "max_features": self.max_features,
             "max_leaf_nodes": self.max_leaf_nodes,
             "min_impurity_decrease": self.min_impurity_decrease,
-            "min_impurity_split": self.min_impurity_split,
         }
-        final_estimator = self.estimator_.steps[-1][0]
+        final_estimator = self._estimator.steps[-1][0]
         self.estimator_params = {
             f"{final_estimator}__{pname}": pval
             for pname, pval in estimator_params.items()
@@ -287,35 +302,30 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         for pname, pval in self.estimator_params.items():
             self.__setattr__(pname, pval)
 
-    def fit(self, X, y, **kwargs):
-        """Wrap BaseForest._fit.
+    def _predict(self, X):
+        """Predict class for X.
 
-        This is a temporary measure prior to the BaseRegressor refactor.
-        """
-        X, y = check_X_y(X, y, coerce_to_numpy=True, enforce_univariate=True)
-        return BaseTimeSeriesForest._fit(self, X, y, **kwargs)
-
-    def predict(self, X):
-        """Predict regression target for X.
-
-        The predicted regression target of an input sample is computed as the
-        mean predicted regression targets of the trees in the forest.
+        The predicted class of an input sample is a vote by the trees in
+        the forest, weighted by their probability estimates. That is,
+        the predicted class is the one with highest mean probability
+        estimate across the trees.
 
         Parameters
         ----------
-        X : array-like or sparse matrix of shape = [n_samples, n_features]
+        X : array-like or sparse matrix of shape (n_samples, n_features)
             The input samples. Internally, its dtype will be converted to
             ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csr_matrix``.
 
         Returns
         -------
-        y : array of shape = [n_samples] or [n_samples, n_outputs]
-            The predicted values.
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
+            The predicted classes.
         """
-        self.check_is_fitted()
-        # Check data
+        from joblib import Parallel, delayed
+
         X = check_X(X, enforce_univariate=True)
+
         X = self._validate_X_predict(X)
 
         # Assign chunk of trees to jobs
@@ -354,9 +364,10 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
 
         if (n_predictions == 0).any():
             warn(
-                "Some inputs do not have OOB scores. "
+                "Some inputs in ComposableTimeSeriesRegressor do not have OOB scores. "
                 "This probably means too few trees were used "
-                "to compute any reliable oob estimates."
+                "to compute any reliable oob estimates.",
+                obj=self,
             )
             n_predictions[n_predictions == 0] = 1
 
@@ -373,16 +384,14 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
 
         self.oob_score_ /= self.n_outputs_
 
+    # TODO - Implement this abstract method properly.
+    def _set_oob_score_and_attributes(self, X, y):
+        raise NotImplementedError("Not implemented.")
+
     def _validate_y_class_weight(self, y):
         # in regression, we don't validate class weights
         # TODO remove from regression
         return y, None
-
-    def _fit(self, X, y):
-        """Empty method to satisfy abstract parent. Needs refactoring."""
-
-    def _predict(self, X):
-        """Empty method to satisfy abstract parent. Needs refactoring."""
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -392,14 +401,15 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         return {"n_estimators": 3}

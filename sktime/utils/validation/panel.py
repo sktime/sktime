@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Utilities for validating panel data."""
 
 __author__ = ["mloning"]
@@ -129,6 +128,7 @@ def check_y(y, enforce_min_instances=1, coerce_to_numpy=False):
     Returns
     -------
     y : pd.Series or np.array
+
     Raises
     ------
     ValueError
@@ -179,6 +179,7 @@ def check_X_y(
     -------
     X : pd.DataFrame or np.array
     y : pd.Series
+
     Raises
     ------
     ValueError

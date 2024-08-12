@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements transformers for detecting outliers in a time series."""
 
@@ -7,11 +6,12 @@ __author__ = ["aiwalter"]
 __all__ = ["HampelFilter"]
 
 import warnings
+from math import ceil
 
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.model_selection import SlidingWindowSplitter
+from sktime.split import SlidingWindowSplitter
 from sktime.transformations.base import BaseTransformer
 
 
@@ -24,13 +24,13 @@ class HampelFilter(BaseTransformer):
     Parameters
     ----------
     window_length : int, optional (default=10)
-        Lenght of the sliding window
-    n_sigma : int, optional
-        Defines how strong a point must outly to be an "outlier", by default 3
-    k : float, optional
+        Length of the sliding window
+    n_sigma : int, optional (default=3)
+        Defines how strong a point must outly to be an "outlier"
+    k : float, optional (default = 1.4826)
         A constant scale factor which is dependent on the distribution,
         for Gaussian it is approximately 1.4826, by default 1.4826
-    return_bool : bool, optional
+    return_bool : bool, optional (default=False)
         If True, outliers are filled with True and non-outliers with False.
         Else, outliers are filled with np.nan.
 
@@ -41,7 +41,7 @@ class HampelFilter(BaseTransformer):
     References
     ----------
     .. [1] Hampel F. R., "The influence curve and its role in robust estimation",
-       Journal of the American Statistical Association, 69, 382–393, 1974
+       Journal of the American Statistical Association, 69, 382-393, 1974
 
     Examples
     --------
@@ -53,6 +53,7 @@ class HampelFilter(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["aiwalter"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -68,12 +69,11 @@ class HampelFilter(BaseTransformer):
     }
 
     def __init__(self, window_length=10, n_sigma=3, k=1.4826, return_bool=False):
-
         self.window_length = window_length
         self.n_sigma = n_sigma
         self.k = k
         self.return_bool = return_bool
-        super(HampelFilter, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -121,11 +121,15 @@ class HampelFilter(BaseTransformer):
         if Z.isnull().values.any():
             warnings.warn(
                 """Series contains nan values, more nan might be
-                added if there are outliers"""
+                added if there are outliers""",
+                stacklevel=2,
             )
 
         cv = SlidingWindowSplitter(
-            window_length=self.window_length, step_length=1, start_with_window=True
+            fh=0,
+            window_length=self.window_length,
+            step_length=1,
+            start_with_window=True,
         )
         half_window_length = int(self.window_length / 2)
 
@@ -151,7 +155,7 @@ class HampelFilter(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -159,40 +163,36 @@ class HampelFilter(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        return {"window_length": 3}
+        param1 = {"window_length": 3}
+        param2 = {}
+        param3 = {"window_length": 5, "n_sigma": 2, "k": 1.7, "return_bool": True}
+        return [param1, param2, param3]
 
 
 def _hampel_filter(Z, cv, n_sigma, half_window_length, k):
     for i in cv.split(Z):
         cv_window = i[0]
-        cv_median = np.nanmedian(Z[cv_window])
-        cv_sigma = k * np.nanmedian(np.abs(Z[cv_window] - cv_median))
+        cv_median = np.nanmedian(Z.iloc[cv_window])
+        cv_sigma = k * np.nanmedian(np.abs(Z.iloc[cv_window] - cv_median))
 
-        # find outliers at start and end of z
-        if (
-            cv_window[0] <= half_window_length
-            or cv_window[-1] >= len(Z) - half_window_length
-        ) and (cv_window[0] in [0, len(Z) - cv.window_length - 1]):
-
-            # first half of the first window
-            if cv_window[0] <= half_window_length:
-                idx_range = range(cv_window[0], half_window_length + 1)
-
-            # last half of the last window
+        is_start_window = cv_window[-1] == cv.window_length - 1
+        is_end_window = cv_window[-1] == len(Z) - 1
+        if is_start_window:
+            idx_range = range(cv_window[0], half_window_length + 1)
+        elif is_end_window:
+            if cv.window_length % 2 == 0:
+                start_end_win = half_window_length
             else:
-                idx_range = range(len(Z) - half_window_length - 1, len(Z))
-            for j in idx_range:
-                Z.iloc[j] = _compare(
-                    value=Z.iloc[j],
-                    cv_median=cv_median,
-                    cv_sigma=cv_sigma,
-                    n_sigma=n_sigma,
-                )
+                start_end_win = ceil(cv.window_length / 2)
+            idx_range = range(len(Z) - start_end_win, len(Z))
         else:
-            idx = cv_window[0] + half_window_length
+            idx_range = [cv_window[0] + half_window_length]
+
+        for idx in idx_range:
             Z.iloc[idx] = _compare(
                 value=Z.iloc[idx],
                 cv_median=cv_median,

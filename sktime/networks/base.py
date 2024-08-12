@@ -1,15 +1,16 @@
-# -*- coding: utf-8 -*-
 """Abstract base class for deep learning networks."""
 
 __author__ = ["Withington", "TonyBagnall"]
 
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 
 from sktime.base import BaseObject
 
 
-class BaseDeepNetwork(BaseObject, ABC):
+class BaseDeepNetwork(BaseObject):
     """Abstract base class for deep learning networks."""
+
+    _tags = {"object_type": "network"}
 
     @abstractmethod
     def build_network(self, input_shape, **kwargs):

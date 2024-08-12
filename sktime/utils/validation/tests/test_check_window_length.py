@@ -1,10 +1,16 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
+"""Tests for window length."""
+
 import pytest
 
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils.validation import check_window_length
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(check_window_length),
+    reason="Run if tested function has changed.",
+)
 @pytest.mark.parametrize(
     "window_length, n_timepoints, expected",
     [
@@ -18,9 +24,14 @@ from sktime.utils.validation import check_window_length
     ],
 )
 def test_check_window_length(window_length, n_timepoints, expected):
+    """Test that checks window length."""
     assert check_window_length(window_length, n_timepoints) == expected
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(check_window_length),
+    reason="Run if tested function has changed.",
+)
 @pytest.mark.parametrize(
     "window_length, n_timepoints",
     [
@@ -36,5 +47,6 @@ def test_check_window_length(window_length, n_timepoints, expected):
     ],
 )
 def test_window_length_bad_arg(window_length, n_timepoints):
+    """Test that checks window length with bad argument(s)."""
     with pytest.raises(ValueError):
         check_window_length(window_length, n_timepoints)

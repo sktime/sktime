@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """Compositors that control stream and refitting behaviour of update."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly"]
@@ -9,13 +9,6 @@ import pandas as pd
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES
 from sktime.datatypes._utilities import get_window
 from sktime.forecasting.base._delegate import _DelegatedForecaster
-
-# prepare tags to clone - exceptions are TAGS_TO_KEEP
-TAGS_TO_KEEP = ["fit_is_empty", "X_inner_mtype", "y_inner_mtype"]
-# fit must be executed to fit the wrapped estimator and remember the cutoff
-# mtype tags are set so X/y is passed through, conversions happen in wrapped estimator
-TAGS_TO_CLONE = _DelegatedForecaster().get_tags().keys()
-TAGS_TO_CLONE = list(set(TAGS_TO_CLONE).difference(TAGS_TO_KEEP))
 
 
 class UpdateRefitsEvery(_DelegatedForecaster):
@@ -45,9 +38,13 @@ class UpdateRefitsEvery(_DelegatedForecaster):
         default = 0, i.e., refit window ends with and includes cutoff
     """
 
+    # attribute for _DelegatedForecaster, which then delegates
+    #     all non-overridden methods are same as of getattr(self, _delegate_name)
+    #     see further details in _DelegatedForecaster docstring
     _delegate_name = "forecaster_"
 
     _tags = {
+        "authors": "fkiraly",
         "fit_is_empty": False,
         "requires-fh-in-fit": False,
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
@@ -64,11 +61,12 @@ class UpdateRefitsEvery(_DelegatedForecaster):
         self.refit_window_size = refit_window_size
         self.refit_window_lag = refit_window_lag
 
-        super(UpdateRefitsEvery, self).__init__()
+        super().__init__()
 
-        self.clone_tags(forecaster, TAGS_TO_CLONE)
+        self._set_delegated_tags(self.forecaster_)
+        self.set_tags(**{"fit_is_empty": False})
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -98,7 +96,7 @@ class UpdateRefitsEvery(_DelegatedForecaster):
         self : reference to self
         """
         # we need to remember the time we last fit, to compare to it in _update
-        self.last_fit_cutoff_ = self.cutoff
+        self.last_fit_cutoff_ = self.cutoff[0]
         estimator = self._get_delegate()
         estimator.fit(y=y, fh=fh, X=X)
         return self
@@ -138,7 +136,7 @@ class UpdateRefitsEvery(_DelegatedForecaster):
         self : reference to self
         """
         estimator = self._get_delegate()
-        time_since_last_fit = self.cutoff - self.last_fit_cutoff_
+        time_since_last_fit = self.cutoff[0] - self.last_fit_cutoff_
         refit_interval = self.refit_interval
         refit_window_size = self.refit_window_size
         refit_window_lag = self.refit_window_lag
@@ -152,14 +150,14 @@ class UpdateRefitsEvery(_DelegatedForecaster):
         if isinstance(time_since_last_fit, pd.Timedelta):
             if isinstance(refit_window_lag, int):
                 lag = min(refit_window_lag, len(_y))
-                refit_window_lag = self.cutoff - _y.index[-lag]
+                refit_window_lag = self.cutoff[0] - _y.index[-lag]
             if isinstance(refit_window_size, int):
                 _y_lag = get_window(_y, lag=refit_window_lag)
                 window_size = min(refit_window_size, len(_y_lag))
                 refit_window_size = _y_lag.index[-window_size]
             if isinstance(refit_interval, int):
                 index = min(refit_interval, len(_y))
-                refit_interval = self.cutoff - _y.index[-index]
+                refit_interval = self.cutoff[0] - _y.index[-index]
         # case distinction based on whether the refit_interval period has elapsed
         #   if yes: call fit, on the specified window sub-set of all observed data
         if time_since_last_fit >= refit_interval and update_params:
@@ -177,7 +175,7 @@ class UpdateRefitsEvery(_DelegatedForecaster):
             estimator.fit(y=y_win, X=X_win, fh=fh, update_params=update_params)
 
             # remember that we just fitted the estimator
-            self.last_fit_cutoff_ = self.cutoff
+            self.last_fit_cutoff_ = self.cutoff[0]
         else:
             # if no: call update as usual
             estimator.update(y=y, X=X, update_params=update_params)
@@ -192,8 +190,9 @@ class UpdateRefitsEvery(_DelegatedForecaster):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.forecasting.trend import TrendForecaster
 
@@ -213,7 +212,7 @@ class UpdateEvery(_DelegatedForecaster):
         update_window controls the lookback window on which refitting is done
             refit data is cutoff (inclusive) to cutoff minus refit_window (exclusive)
 
-    Caution: default value of update_interval means *no updates* after `fit`.
+    Caution: default value of update_interval means *no updates* after ``fit``.
 
     Parameters
     ----------
@@ -227,9 +226,13 @@ class UpdateEvery(_DelegatedForecaster):
             if int, will be interpreted as number of time stamps seen since last update
     """
 
+    # attribute for _DelegatedForecaster, which then delegates
+    #     all non-overridden methods are same as of getattr(self, _delegate_name)
+    #     see further details in _DelegatedForecaster docstring
     _delegate_name = "forecaster_"
 
     _tags = {
+        "authors": "fkiraly",
         "fit_is_empty": False,
         "requires-fh-in-fit": False,
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
@@ -242,11 +245,12 @@ class UpdateEvery(_DelegatedForecaster):
 
         self.update_interval = update_interval
 
-        super(UpdateEvery, self).__init__()
+        super().__init__()
 
-        self.clone_tags(forecaster, TAGS_TO_KEEP)
+        self._set_delegated_tags(self.forecaster_)
+        self.set_tags(**{"fit_is_empty": False})
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -276,7 +280,7 @@ class UpdateEvery(_DelegatedForecaster):
         self : reference to self
         """
         # we need to remember the time we last fit, to compare to it in _update
-        self.last_update_cutoff_ = self.cutoff
+        self.last_update_cutoff_ = self.cutoff[0]
         estimator = self._get_delegate()
         estimator.fit(y=y, fh=fh, X=X)
         return self
@@ -316,7 +320,7 @@ class UpdateEvery(_DelegatedForecaster):
         self : reference to self
         """
         estimator = self._get_delegate()
-        time_since_last_update = self.cutoff - self.last_update_cutoff_
+        time_since_last_update = self.cutoff[0] - self.last_update_cutoff_
         update_interval = self.update_interval
 
         _y = self._y
@@ -327,7 +331,7 @@ class UpdateEvery(_DelegatedForecaster):
         if isinstance(time_since_last_update, pd.Timedelta):
             if isinstance(update_interval, int):
                 index = min(update_interval, len(_y))
-                update_interval = self.cutoff - _y.index[-index]
+                update_interval = self.cutoff[0] - _y.index[-index]
         # case distinction based on whether the update_interval period has elapsed
         # (None update_interval means infinite update_interval)
         #   if yes: call inner update with update_params=True, aka "true" update
@@ -335,7 +339,7 @@ class UpdateEvery(_DelegatedForecaster):
             estimator.update(y=y, X=X, update_params=update_params)
 
             # remember that we just updated the estimator
-            self.last_update_cutoff_ = self.cutoff
+            self.last_update_cutoff_ = self.cutoff[0]
         else:
             # if no: call update, but with update_params=False
             estimator.update(y=y, X=X, update_params=False)
@@ -350,8 +354,9 @@ class UpdateEvery(_DelegatedForecaster):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.forecasting.trend import TrendForecaster
 
@@ -367,7 +372,7 @@ class DontUpdate(_DelegatedForecaster):
     """Turns off updates, i.e., ensures that forecaster is only fit and never updated.
 
     This is useful when comparing forecasters that update with forecasters that don't,
-    in a set-up where all forecasters' `update` has `update_params=True` set.
+    in a set-up where all forecasters' ``update`` has ``update_params=True`` set.
 
     Shorthand for UpdateEvery with default values.
 
@@ -389,9 +394,13 @@ class DontUpdate(_DelegatedForecaster):
         default = 0, i.e., refit window ends with and includes cutoff
     """
 
+    # attribute for _DelegatedForecaster, which then delegates
+    #     all non-overridden methods are same as of getattr(self, _delegate_name)
+    #     see further details in _DelegatedForecaster docstring
     _delegate_name = "forecaster_"
 
     _tags = {
+        "authors": "fkiraly",
         "fit_is_empty": False,
         "requires-fh-in-fit": False,
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
@@ -402,9 +411,10 @@ class DontUpdate(_DelegatedForecaster):
         self.forecaster = forecaster
         self.forecaster_ = forecaster.clone()
 
-        super(DontUpdate, self).__init__()
+        super().__init__()
 
-        self.clone_tags(forecaster, TAGS_TO_CLONE)
+        self._set_delegated_tags(self.forecaster_)
+        self.set_tags(**{"fit_is_empty": False})
 
     def _update(self, y, X=None, update_params=True):
         """Update time series to incremental training data.
@@ -454,8 +464,9 @@ class DontUpdate(_DelegatedForecaster):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.forecasting.trend import TrendForecaster
 

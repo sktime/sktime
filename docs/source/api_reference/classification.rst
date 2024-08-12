@@ -5,6 +5,15 @@ Time series classification
 
 The :mod:`sktime.classification` module contains algorithms and composition tools for time series classification.
 
+All classifiers in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
+using ``estimator_types="classifier"``, optionally filtered by tags.
+Valid tags can be listed using ``sktime.registry.all_tags``.
+
+A full table with tag based search is also available on the
+:doc:`Estimator Search Page </estimator_overview>`
+(select "classifier" in the "Estimator type" dropdown).
+
+
 Composition
 -----------
 
@@ -14,7 +23,56 @@ Composition
     :toctree: auto_generated/
     :template: class.rst
 
+    ClassifierPipeline
     ColumnEnsembleClassifier
+    SklearnClassifierPipeline
+    MultiplexClassifier
+
+Model selection and tuning
+--------------------------
+
+.. currentmodule:: sktime.classification.model_selection
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TSCGridSearchCV
+
+Ensembles
+---------
+
+.. currentmodule:: sktime.classification.ensemble
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BaggingClassifier
+    ComposableTimeSeriesForestClassifier
+    WeightedEnsembleClassifier
+
+Deep learning
+-------------
+
+.. currentmodule:: sktime.classification.deep_learning
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    CNNClassifier
+    CNTCClassifier
+    FCNClassifier
+    LSTMFCNClassifier
+    InceptionTimeClassifier
+    MACNNClassifier
+    MLPClassifier
+    MCDCNNClassifier
+    MVTSTransformerClassifier
+    ResNetClassifier
+    SimpleRNNClassifier
+    TapNetClassifier
 
 Dictionary-based
 ----------------
@@ -25,13 +83,14 @@ Dictionary-based
     :toctree: auto_generated/
     :template: class.rst
 
-    IndividualBOSS
+    BOSSVSClassifierPyts
     BOSSEnsemble
     ContractableBOSS
-    WEASEL
-    MUSE
+    IndividualBOSS
     IndividualTDE
+    MUSE
     TemporalDictionaryEnsemble
+    WEASEL
 
 Distance-based
 --------------
@@ -42,11 +101,14 @@ Distance-based
     :toctree: auto_generated/
     :template: class.rst
 
-    KNeighborsTimeSeriesClassifier
     ElasticEnsemble
+    KNeighborsTimeSeriesClassifier
+    KNeighborsTimeSeriesClassifierPyts
+    KNeighborsTimeSeriesClassifierTslearn
     ProximityForest
-    ProximityTree
     ProximityStump
+    ProximityTree
+    ShapeDTW
 
 Dummy
 -----
@@ -58,6 +120,35 @@ Dummy
     :template: class.rst
 
     DummyClassifier
+
+Early classification
+--------------------
+
+.. currentmodule:: sktime.classification.early_classification
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ProbabilityThresholdEarlyClassifier
+    TEASER
+
+Feature-based
+-------------
+
+.. currentmodule:: sktime.classification.feature_based
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Catch22Classifier
+    FreshPRINCE
+    MatrixProfileClassifier
+    RandomIntervalClassifier
+    SignatureClassifier
+    SummaryClassifier
+    TSFreshClassifier
 
 Hybrid
 ------
@@ -80,12 +171,25 @@ Interval-based
     :toctree: auto_generated/
     :template: class.rst
 
-    TimeSeriesForestClassifier
-    SupervisedTimeSeriesForest
     CanonicalIntervalForest
     DrCIF
     RandomIntervalSpectralEnsemble
+    SupervisedTimeSeriesForest
+    TimeSeriesForestClassifier
 
+Kernel-based
+------------
+
+.. currentmodule:: sktime.classification.kernel_based
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimeSeriesSVC
+    TimeSeriesSVCTslearn
+    Arsenal
+    RocketClassifier
 
 Shapelet-based
 --------------
@@ -97,32 +201,53 @@ Shapelet-based
     :template: class.rst
 
     ShapeletTransformClassifier
+    ShapeletLearningClassifierPyts
+    ShapeletLearningClassifierTslearn
+    MrSEQL
+    MrSQM
 
-Kernel-based
-------------
 
-.. currentmodule:: sktime.classification.kernel_based
+sklearn classifiers
+-------------------
+
+This section contains classifiers which are not time series classifiers but
+simple tabular classifiers in ``sklearn`` compatible API.
+
+They are used internally in time series classifiers, but can also be used
+directly in a tabular setting.
+
+.. currentmodule:: sktime.classification.sklearn
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    RocketClassifier
-    Arsenal
+    ContinuousIntervalTree
+    RotationForest
 
-Feature-based
--------------
+Base
+----
 
-.. currentmodule:: sktime.classification.feature_based
+.. currentmodule:: sktime.classification
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    Catch22Classifier
-    MatrixProfileClassifier
-    TSFreshClassifier
-    SignatureClassifier
-    FreshPRINCE
-    SummaryClassifier
-    RandomIntervalClassifier
+    BaseClassifier
+
+.. currentmodule:: sktime.classification.deep_learning.base
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BaseDeepClassifier
+
+.. currentmodule:: sktime.classification.early_classification.base
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BaseEarlyClassifier

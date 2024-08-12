@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
 """Cluster plotting tools."""
 
-__author__ = ["Christopher Holder", "Tony Bagnall"]
+__author__ = ["chrisholder", "TonyBagnall"]
 __all__ = ["plot_cluster_algorithm"]
 
 import numpy as np
@@ -10,7 +9,7 @@ import pandas as pd
 from sktime.clustering.base import TimeSeriesInstances
 from sktime.clustering.partitioning import TimeSeriesLloyds
 from sktime.datatypes import convert_to
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 def _plot(cluster_values, center, axes):
@@ -74,6 +73,7 @@ def plot_cluster_algorithm(model: TimeSeriesLloyds, X: TimeSeriesInstances, k: i
     import matplotlib.patches as mpatches
     import matplotlib.pyplot as plt
 
+    predict_series = X
     if isinstance(X, pd.DataFrame):
         predict_series = convert_to(X, "numpy3D")
     plt.figure(figsize=(5, 10))

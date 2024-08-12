@@ -1,13 +1,13 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements composite forecasters."""
 
-__author__ = ["mloning"]
-
 __all__ = [
+    "HierarchyEnsembleForecaster",
     "ColumnEnsembleForecaster",
     "EnsembleForecaster",
+    "TransformSelectForecaster",
+    "FallbackForecaster",
     "AutoEnsembleForecaster",
     "TransformedTargetForecaster",
     "ForecastingPipeline",
@@ -20,10 +20,17 @@ __all__ = [
     "RecursiveTimeSeriesRegressionForecaster",
     "DirRecTabularRegressionForecaster",
     "DirRecTimeSeriesRegressionForecaster",
+    "DirectReductionForecaster",
     "StackingForecaster",
     "MultiplexForecaster",
     "make_reduction",
     "BaggingForecaster",
+    "FhPlexForecaster",
+    "ForecastByLevel",
+    "Permute",
+    "YfromX",
+    "SkforecastAutoreg",
+    "IgnoreX",
 ]
 
 from sktime.forecasting.compose._bagging import BaggingForecaster
@@ -32,13 +39,20 @@ from sktime.forecasting.compose._ensemble import (
     AutoEnsembleForecaster,
     EnsembleForecaster,
 )
+from sktime.forecasting.compose._fallback import FallbackForecaster
+from sktime.forecasting.compose._fhplex import FhPlexForecaster
+from sktime.forecasting.compose._grouped import ForecastByLevel
+from sktime.forecasting.compose._hierarchy_ensemble import HierarchyEnsembleForecaster
+from sktime.forecasting.compose._ignore_x import IgnoreX
 from sktime.forecasting.compose._multiplexer import MultiplexForecaster
 from sktime.forecasting.compose._pipeline import (
     ForecastingPipeline,
     ForecastX,
+    Permute,
     TransformedTargetForecaster,
 )
 from sktime.forecasting.compose._reduce import (
+    DirectReductionForecaster,
     DirectTabularRegressionForecaster,
     DirectTimeSeriesRegressionForecaster,
     DirRecTabularRegressionForecaster,
@@ -47,6 +61,11 @@ from sktime.forecasting.compose._reduce import (
     MultioutputTimeSeriesRegressionForecaster,
     RecursiveTabularRegressionForecaster,
     RecursiveTimeSeriesRegressionForecaster,
+    YfromX,
     make_reduction,
 )
+from sktime.forecasting.compose._skforecast_reduce import SkforecastAutoreg
 from sktime.forecasting.compose._stack import StackingForecaster
+from sktime.forecasting.compose._transform_select_forecaster import (
+    TransformSelectForecaster,
+)

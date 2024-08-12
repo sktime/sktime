@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Utilities to profile computational and memory performance of estimators."""
 
 from inspect import isclass
@@ -25,7 +24,6 @@ def profile_classifier(
     Each experiment is repeated n_replicates times.
 
     Of each experiment, time spent in fit and time spent in predict is measured.
-
 
     Parameters
     ----------

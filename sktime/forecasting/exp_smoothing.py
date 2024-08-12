@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements Holt-Winters exponential smoothing."""
@@ -12,7 +11,7 @@ from sktime.forecasting.base.adapters import _StatsModelsAdapter
 class ExponentialSmoothing(_StatsModelsAdapter):
     """Holt-Winters exponential smoothing forecaster.
 
-    Direct interface for `statsmodels.tsa.holtwinters`.
+    Direct interface for ``statsmodels.tsa.holtwinters``.
 
     Default settings use simple exponential smoothing without trend and
     seasonality components.
@@ -42,8 +41,8 @@ class ExponentialSmoothing(_StatsModelsAdapter):
     initialization_method:{'estimated','heuristic','legacy-heuristic','known',None},
         default='estimated'
         Method for initialize the recursions.
-        If 'known' initialization is used, then `initial_level` must be
-        passed, as well as `initial_trend` and `initial_seasonal` if
+        If 'known' initialization is used, then ``initial_level`` must be
+        passed, as well as ``initial_trend`` and ``initial_seasonal`` if
         applicable.
         'heuristic' uses a heuristic based on the data to estimate initial
         level, trend, and seasonal state. 'estimated' uses the same heuristic
@@ -71,7 +70,7 @@ class ExponentialSmoothing(_StatsModelsAdapter):
         starting values are determined using a combination of grid search
         and reasonable values based on the initial values of the data. See
         the notes for the structure of the model parameters.
-    method : str, default "L-BFGS-B"
+    method : str, default "SLSQP"
         The minimizer used. Valid options are "L-BFGS-B" , "TNC",
         "SLSQP" (default), "Powell", "trust-constr", "basinhopping" (also
         "bh") and "least_squares" (also "ls"). basinhopping tries multiple
@@ -88,7 +87,7 @@ class ExponentialSmoothing(_StatsModelsAdapter):
         Search for good starting values using a brute force (grid)
         optimizer. If False, a naive set of starting values is used.
     random_state : int, RandomState instance or None, optional ,
-        default=None – If int, random_state is the seed used by the random
+        default=None - If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
         number generator; If None, the random number generator is the
         RandomState instance used by np.random.
@@ -103,11 +102,21 @@ class ExponentialSmoothing(_StatsModelsAdapter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
     >>> y = load_airline()
-    >>> forecaster = ExponentialSmoothing(trend='add', seasonal='multiplicative', sp=12)
-    >>> forecaster.fit(y)
+    >>> forecaster = ExponentialSmoothing(
+    ...     trend='add', seasonal='multiplicative', sp=12
+    ... )  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
     ExponentialSmoothing(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
     """
+
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["bashtage", "wooqo", "mloning", "big-o"],
+        # "python_dependencies": "statsmodels" - inherited from _StatsModelsAdapter
+        # estimator type tags inherited from _StatsModelsAdapter
+    }
 
     _fitted_param_names = (
         "initial_level",
@@ -194,3 +203,53 @@ class ExponentialSmoothing(_StatsModelsAdapter):
             minimize_kwargs=self.minimize_kwargs,
             use_brute=self.use_brute,
         )
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str , default = "default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+            There are currently no reserved values for forecasters.
+
+        Returns
+        -------
+        params :dict or list of dict , default = {}
+            parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in `params
+        """
+        params = [
+            {},
+            {
+                "trend": "mul",
+                "damped_trend": True,
+                "seasonal": "mul",
+                "sp": 2,
+                "use_boxcox": False,
+                "initialization_method": "heuristic",
+                "smoothing_level": 0.1,
+                "smoothing_trend": 0.1,
+                "damping_trend": 0.42,
+                "method": "least_squares",
+            },
+            {
+                "trend": "add",
+                "damped_trend": False,
+                "seasonal": "add",
+                "sp": 2,
+                "use_boxcox": False,
+                "initialization_method": "estimated",
+                "smoothing_level": 0.3,
+                "smoothing_trend": 0.5,
+                "damping_trend": 0.28,
+                "method": "SLSQP",
+            },
+        ]
+
+        return params

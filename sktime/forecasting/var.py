@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Implements VAR Model as interface to statsmodels."""
 
 __all__ = ["VAR"]
@@ -14,11 +13,12 @@ from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
 class VAR(_StatsModelsAdapter):
-    """
-    A VAR model is a generalisation of the univariate autoregressive.
+    """VAR model from statsmodels.
 
-    Direct interface for `statsmodels.tsa.vector_ar`
-    A model for forecasting a vector of time series[1].
+    Direct interface to ``statsmodels.tsa.vector_ar``.
+
+    A VAR model is a generalisation of the univariate autoregressive model
+    to multivariate time series, see [1]_.
 
     Parameters
     ----------
@@ -38,7 +38,7 @@ class VAR(_StatsModelsAdapter):
     missing: str, optional (default='none')
         A string specifying if data is missing
     freq: str, tuple, datetime.timedelta, DateOffset or None, optional (default=None)
-        A frequency specification for either `dates` or the row labels from
+        A frequency specification for either ``dates`` or the row labels from
         the endog / exog data.
     dates: array_like, optional (default=None)
         An array like object containing dates.
@@ -49,7 +49,7 @@ class VAR(_StatsModelsAdapter):
         hqic : Hannan-Quinn
         bic : Bayesian a.k.a. Schwarz
     random_state : int, RandomState instance or None, optional ,
-        default=None – If int, random_state is the seed used by the random
+        default=None - If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
         number generator; If None, the random number generator is the
         RandomState instance used by np.random.
@@ -58,28 +58,45 @@ class VAR(_StatsModelsAdapter):
     ----------
     [1] Athanasopoulos, G., Poskitt, D. S., & Vahid, F. (2012).
     Two canonical VARMA forms: Scalar component models vis-à-vis the echelon form.
-    Econometric Reviews, 31(1), 60–83, 2012.
+    Econometric Reviews, 31(1), 60-83, 2012.
 
     Examples
     --------
     >>> from sktime.forecasting.var import VAR
     >>> from sktime.datasets import load_longley
     >>> _, y = load_longley()
-    >>> forecaster = VAR()
-    >>> forecaster.fit(y)
+    >>> forecaster = VAR()  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
     VAR(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
     """
 
     _fitted_param_names = ("aic", "fpe", "hqic", "bic")
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": [
+            "yogabonito",
+            "ChadFulton",
+            "bashtage",
+            "josef-pkt",
+            "thayeylolu",
+            "aiwalter",
+            "lbventura",
+        ],
+        # yogabonito, ChadFulton, bashtage, josef-pkt for statsmodels VAR
+        "maintainers": "lbventura",
+        # "python_dependencies": "statsmodels" - inherited from _StatsModelsAdapter
+        # estimator type
+        # --------------
         "scitype:y": "multivariate",
         "y_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
         "univariate-only": False,
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
+        "capability:pred_int:insample": False,
     }
 
     def __init__(
@@ -104,7 +121,7 @@ class VAR(_StatsModelsAdapter):
         self.freq = freq
         self.ic = ic
 
-        super(VAR, self).__init__(random_state=random_state)
+        super().__init__(random_state=random_state)
 
     def _fit_forecaster(self, y, X=None):
         """Fit forecaster to training data.
@@ -137,9 +154,8 @@ class VAR(_StatsModelsAdapter):
         )
         return self
 
-    def _predict(self, fh, X=None):
-        """
-        Wrap Statmodel's VAR forecast method.
+    def _predict(self, fh, X):
+        """Wrap Statmodel's VAR forecast method.
 
         Parameters
         ----------
@@ -182,16 +198,16 @@ class VAR(_StatsModelsAdapter):
                 y_pred_insample if y_pred_insample is not None else y_pred_outsample
             )
 
-        index = fh.to_absolute(self.cutoff)
+        index = fh.to_absolute_index(self.cutoff)
         index.name = self._y.index.name
         y_pred = pd.DataFrame(
             y_pred[fh.to_indexer(self.cutoff), :],
-            index=fh.to_absolute(self.cutoff),
+            index=index,
             columns=self._y.columns,
         )
         return y_pred
 
-    def _predict_interval(self, fh, X=None, coverage: [float] = None):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -219,7 +235,7 @@ class VAR(_StatsModelsAdapter):
         pred_int : pd.DataFrame
             Column has multi-index: first level is variable name from y in fit,
                 second level coverage fractions for which intervals were computed.
-                    in the same order as in input `coverage`.
+                    in the same order as in input ``coverage``.
                 Third level is string "lower" or "upper", for lower/upper interval end.
             Row index is fh, with additional (upper) levels equal to instance levels,
                 from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
@@ -239,9 +255,10 @@ class VAR(_StatsModelsAdapter):
         df_list = []
 
         for cov in coverage:
-
             alpha = 1 - cov
-
+            # A hacky way to coerce error-inducing alpha==1 into its approximant
+            if alpha >= 0.99999:
+                alpha = 0.99999
             fcast_interval = model.forecast_interval(
                 self._y.values[-n_lags:], steps=steps, alpha=alpha
             )
@@ -299,8 +316,9 @@ class VAR(_StatsModelsAdapter):
             columns=pd.MultiIndex.from_tuples(final_columns),
         )
 
-        final_df.index = fh.to_absolute(self.cutoff)
-        final_df.index.name = self._y.index.name
+        index = fh.to_absolute_index(self.cutoff)
+        index.name = self._y.index.name
+        final_df.index = index
 
         return final_df
 
@@ -312,12 +330,14 @@ class VAR(_StatsModelsAdapter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
-
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict
         """
-        params = {"maxlags": 3}
-        return params
+        params1 = {"maxlags": 3}
+
+        params2 = {"trend": "ctt"}  # breaks with "ic": "aic"}, see #4055
+
+        return [params1, params2]

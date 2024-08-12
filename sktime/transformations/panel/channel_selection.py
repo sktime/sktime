@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Channel Selection techniques for Multivariate Time Series Classification.
 
 A transformer that selects a subset of channels/dimensions for time series
@@ -14,7 +13,6 @@ import time
 
 import numpy as np
 import pandas as pd
-from scipy.spatial.distance import euclidean
 from sklearn.neighbors import NearestCentroid
 
 from sktime.datatypes import convert
@@ -24,6 +22,8 @@ from sktime.transformations.base import BaseTransformer
 
 def _eu_dist(x, y):
     """Calculate the euclidean distance."""
+    from scipy.spatial.distance import euclidean
+
     return euclidean(x, y)
 
 
@@ -33,7 +33,12 @@ def _detect_knee_point(values, indices):
     all_coords = np.vstack((range(n_points), values)).T
     first_point = all_coords[0]
     line_vec = all_coords[-1] - all_coords[0]
-    line_vec_norm = line_vec / np.sqrt(np.sum(line_vec**2))
+
+    line_vec_abs = np.sqrt(np.sum(line_vec**2))
+    if line_vec_abs == 0:  # ensuring normalization is correct in case of zero vector
+        line_vec_abs = 1
+    line_vec_norm = line_vec / line_vec_abs
+
     vec_from_first = all_coords - first_point
     scalar_prod = np.sum(vec_from_first * np.tile(line_vec_norm, (n_points, 1)), axis=1)
     vec_from_first_parallel = np.outer(scalar_prod, line_vec_norm)
@@ -52,7 +57,7 @@ class _distance_matrix:
     """Create distance matrix."""
 
     def distance(self, centroid_frame):
-        """Fuction to create DM."""
+        """Create distance matrix."""
         distance_pair = list(
             itertools.combinations(range(0, centroid_frame.shape[0]), 2)
         )
@@ -61,7 +66,6 @@ class _distance_matrix:
         map_cls = centroid_frame.class_vals.to_dict()
         distance_frame = pd.DataFrame()
         for class_ in distance_pair:
-
             class_pair = []
             # calculate the distance of centroid here
             for _, (q, t) in enumerate(
@@ -154,8 +158,8 @@ class ElbowClassSum(BaseTransformer):
 
     References
     ----------
-    ..[1]: Bhaskar Dhariyal et al. “Fast Channel Selection for Scalable Multivariate
-    Time Series Classification.” AALTD, ECML-PKDD, Springer, 2021
+    ..[1]: Bhaskar Dhariyal et al. "Fast Channel Selection for Scalable Multivariate
+    Time Series Classification." AALTD, ECML-PKDD, Springer, 2021
 
     Examples
     --------
@@ -168,6 +172,7 @@ class ElbowClassSum(BaseTransformer):
     >>> Xt = cs.transform(X)
 
     Any sktime compatible distance can be used, e.g., DTW distance:
+
     >>> from sktime.dists_kernels import DtwDist
     >>>
     >>> cs = ElbowClassSum(distance=DtwDist())
@@ -177,6 +182,8 @@ class ElbowClassSum(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["haskarb", "a-pasos-ruiz", "TonyBagnall", "fkiraly"],
+        "maintainers": ["haskarb"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         # "scitype:transform-output": "Primitives",
@@ -193,10 +200,9 @@ class ElbowClassSum(BaseTransformer):
     }
 
     def __init__(self, distance=None):
-
         self.distance = distance
 
-        super(ElbowClassSum, self).__init__()
+        super().__init__()
 
         from sktime.dists_kernels import (
             BasePairwiseTransformerPanel,
@@ -230,7 +236,7 @@ class ElbowClassSum(BaseTransformer):
         t = self.distance_
 
         start = int(round(time.time() * 1000))
-        centroid_obj = _shrunk_centroid(0)
+        centroid_obj = _shrunk_centroid(1e-5)
 
         X_np = convert(X, "nested_univ", "numpy3D")
         centroids = centroid_obj.create_centroid(X_np, y)
@@ -254,8 +260,7 @@ class ElbowClassSum(BaseTransformer):
         return self
 
     def _transform(self, X, y=None):
-        """
-        Transform X and return a transformed version.
+        """Transform X and return a transformed version.
 
         Parameters
         ----------
@@ -277,15 +282,16 @@ class ElbowClassSum(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.dists_kernels import DtwDist
 
@@ -329,8 +335,8 @@ class ElbowClassPairwise(BaseTransformer):
 
     References
     ----------
-    ..[1]: Bhaskar Dhariyal et al. “Fast Channel Selection for Scalable Multivariate
-    Time Series Classification.” AALTD, ECML-PKDD, Springer, 2021
+    ..[1]: Bhaskar Dhariyal et al. "Fast Channel Selection for Scalable Multivariate
+    Time Series Classification." AALTD, ECML-PKDD, Springer, 2021
 
     Examples
     --------
@@ -357,10 +363,11 @@ class ElbowClassPairwise(BaseTransformer):
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
         "capability:unequal_length": False,
         # can the transformer handle unequal length time series (if passed Panel)?
+        "python_dependencies": "scipy",
     }
 
     def __init__(self):
-        super(ElbowClassPairwise, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y):
         """Fit ECP to a specified X and y.
@@ -375,16 +382,15 @@ class ElbowClassPairwise(BaseTransformer):
         Returns
         -------
         self : reference to self.
-
         """
         self.channels_selected_ = []
         start = int(round(time.time() * 1000))
-        centroid_obj = _shrunk_centroid(0)
+        centroid_obj = _shrunk_centroid(1e-5)
         df = centroid_obj.create_centroid(X.copy(), y)
         obj = _distance_matrix()
         self.distance_frame_ = obj.distance(df)
 
-        for pairdistance in self.distance_frame_.iteritems():
+        for pairdistance in self.distance_frame_.items():
             distance = pairdistance[1].sort_values(ascending=False).values
             indices = pairdistance[1].sort_values(ascending=False).index
 
@@ -395,8 +401,7 @@ class ElbowClassPairwise(BaseTransformer):
         return self
 
     def _transform(self, X, y=None):
-        """
-        Transform X and return a transformed version.
+        """Transform X and return a transformed version.
 
         Parameters
         ----------

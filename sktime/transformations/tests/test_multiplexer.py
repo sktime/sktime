@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests for MultiplexTransformer and associated dunders."""
 
@@ -13,16 +12,21 @@ from sklearn.base import clone
 from sktime.datasets import load_shampoo_sales
 from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.model_evaluation import evaluate
-from sktime.forecasting.model_selection import (
-    ExpandingWindowSplitter,
-    ForecastingGridSearchCV,
-)
+from sktime.forecasting.model_selection import ForecastingGridSearchCV
 from sktime.forecasting.naive import NaiveForecaster
+from sktime.split import ExpandingWindowSplitter
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.transformations.compose import MultiplexTransformer
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.utils.validation.forecasting import check_scoring
 
+RELEVANT_MODULES = ["sktime.transformations", "sktime.forecasting", "sktime.split"]
 
+
+@pytest.mark.skipif(
+    not run_test_module_changed(RELEVANT_MODULES),
+    reason="run test only if anything in relevant modules has changed",
+)
 def test_multiplex_transformer_alone():
     """Test behavior of MultiplexTransformer.
 
@@ -70,12 +74,16 @@ def _find_best_transformer(forecaster, transformers, cv, y):
     return best_name
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(RELEVANT_MODULES),
+    reason="run test only if anything in relevant modules has changed",
+)
 def test_multiplex_transformer_in_grid():
     """Test behavior of MultiplexTransformer.
 
     It often makes sense to use MultiplexTransformer in conjunction with
-    ForecastingGridSearchCV within a pipeline.  Here we check that when you do that
-    you get the expected result.
+    ForecastingGridSearchCV within a pipeline.  Here we check that when you do that you
+    get the expected result.
     """
     y = load_shampoo_sales()
     # randomly make some of the values nans:
@@ -87,9 +95,7 @@ def test_multiplex_transformer_in_grid():
     ]
     transformer_names = [name for name, _ in transformer_tuples]
     multiplex_transformer = MultiplexTransformer(transformers=transformer_tuples)
-    cv = ExpandingWindowSplitter(
-        initial_window=24, step_length=12, start_with_window=True, fh=[1, 2, 3]
-    )
+    cv = ExpandingWindowSplitter(initial_window=24, step_length=12, fh=[1, 2, 3])
     pipe = TransformedTargetForecaster(
         steps=[
             ("multiplex", multiplex_transformer),
@@ -112,12 +118,16 @@ def test_multiplex_transformer_in_grid():
     assert gscv_best_name == best_name
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(RELEVANT_MODULES),
+    reason="run test only if anything in relevant modules has changed",
+)
 def test_multiplex_or_dunder():
     """Test that the MultiplexTransforemer magic "|" dunder works.
 
-    A MultiplexTransformer can be created by using the "|" dunder method on
-    either transformer or MultiplexTransformer objects. Here we test that it performs
-    as expected on all the use cases, and raises the expected error in some others.
+    A MultiplexTransformer can be created by using the "|" dunder method on either
+    transformer or MultiplexTransformer objects. Here we test that it performs as
+    expected on all the use cases, and raises the expected error in some others.
     """
     # test a simple | example with two transformers:
     multiplex_two_transformers = ExponentTransformer(2) | ExponentTransformer(3)

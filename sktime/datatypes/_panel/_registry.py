@@ -1,7 +1,7 @@
-# -*- coding: utf-8 -*-
-"""Registry of mtypes for Panel scitype. See datatypes._registry for API."""
+"""Registry of mtypes for Panel scitype.
 
-import pandas as pd
+See datatypes._registry for API.
+"""
 
 __all__ = [
     "MTYPE_REGISTER_PANEL",
@@ -35,8 +35,23 @@ MTYPE_REGISTER_PANEL = [
         "pd.DataFrame in long format, cols = (index, time_index, column)",
     ),
     ("df-list", "Panel", "list of pd.DataFrame"),
+    (
+        "gluonts_ListDataset_panel",
+        "Panel",
+        "gluonTS representation of univariate and multivariate time series",
+    ),
+    (
+        "gluonts_PandasDataset_panel",
+        "Panel",
+        "gluonTS representation of a pandas DataFrame",
+    ),
 ]
 
-MTYPE_SOFT_DEPS_PANEL = {"xr.DataArray": "xarray"}
+MTYPE_SOFT_DEPS_PANEL = {
+    "xr.DataArray": "xarray",
+    "dask_panel": "dask",
+    "gluonts_ListDataset_panel": "gluonts",
+    "gluonts_PandasDataset_panel": "gluonts",
+}
 
-MTYPE_LIST_PANEL = pd.DataFrame(MTYPE_REGISTER_PANEL)[0].values
+MTYPE_LIST_PANEL = [x[0] for x in MTYPE_REGISTER_PANEL]

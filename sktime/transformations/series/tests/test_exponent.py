@@ -1,18 +1,23 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Tests for the power transformers."""
 
-__author__ = ["Ryan Kuhns"]
+__author__ = ["RNKuhns"]
 __all__ = []
 
 import pytest
 
-from sktime.utils._testing.series import _make_series
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.exponent import ExponentTransformer, SqrtTransformer
+from sktime.utils._testing.series import _make_series
 
 power_transformers = [ExponentTransformer, SqrtTransformer]
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(power_transformers),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("power_transformer", power_transformers)
 @pytest.mark.parametrize("_offset", ["a", [1, 2.3]])
 def test_wrong_offset_type_raises_error(power_transformer, _offset):
@@ -27,6 +32,10 @@ def test_wrong_offset_type_raises_error(power_transformer, _offset):
 
 # Test only applies to PowerTransformer b/c SqrtTransformer doesn't have power
 # hyperparameter
+@pytest.mark.skipif(
+    not run_test_for_class(power_transformers),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("power_transformer", power_transformers[:1])
 @pytest.mark.parametrize("_power", ["a", [1, 2.3]])
 def test_wrong_power_type_raises_error(power_transformer, _power):

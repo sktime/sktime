@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for Mock estimators base classes and utils."""
 
 __author__ = ["ltsaprounis"]
@@ -11,6 +10,7 @@ from sktime.clustering.base import BaseClusterer
 from sktime.datasets import load_airline
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.naive import NaiveForecaster
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.series.boxcox import BoxCoxTransformer
 from sktime.utils.estimators import make_mock_estimator
@@ -19,6 +19,10 @@ from sktime.utils.estimators._base import _method_logger, _MockEstimatorMixin
 y_series = load_airline().iloc[:-5]
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.utils.estimators"),
+    reason="Run test if estimators module has changed.",
+)
 @pytest.mark.parametrize(
     "base", [BaseForecaster, BaseClassifier, BaseClusterer, BaseTransformer]
 )
@@ -27,19 +31,16 @@ def test_mixin(base):
 
     class _DummyClass(base, _MockEstimatorMixin):
         def __init__(self):
-            super(_DummyClass, self).__init__()
+            super().__init__()
 
         def _fit(self):
             """Empty method, here for testing purposes."""
-            pass
 
         def _predict(self):
             """Empty method, here for testing purposes."""
-            pass
 
         def _score(self):
             """Empty method, here for testing purposes."""
-            pass
 
     dummy_instance = _DummyClass()
     assert hasattr(dummy_instance, "log")
@@ -47,6 +48,10 @@ def test_mixin(base):
     assert hasattr(dummy_instance, "_MockEstimatorMixin__log")
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.utils.estimators"),
+    reason="Run test if estimators module has changed.",
+)
 def test_add_log_item():
     """Test _MockEstimatorMixin.add_log_item behaviour."""
     mixin = _MockEstimatorMixin()
@@ -56,6 +61,10 @@ def test_add_log_item():
     assert mixin.log[1] == 2
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.utils.estimators"),
+    reason="Run test if estimators module has changed.",
+)
 def test_log_is_property():
     """Test _MockEstimatorMixin.log can't be overwritten."""
     mixin = _MockEstimatorMixin()
@@ -64,18 +73,20 @@ def test_log_is_property():
         assert "can't set attribute" in str(excinfo.value)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.utils.estimators"),
+    reason="Run test if estimators module has changed.",
+)
 def test_method_logger_exception():
     """Test that _method_logger only works for _MockEstimatorMixin subclasses."""
 
     class _DummyClass:
         def __init__(self) -> None:
             """Empty method, here for testing purposes."""
-            pass
 
         @_method_logger
         def _method(self):
             """Empty method, here for testing purposes."""
-            pass
 
     with pytest.raises(TypeError) as excinfo:
         dummy_instance = _DummyClass()
@@ -83,27 +94,28 @@ def test_method_logger_exception():
         assert "Estimator is not a Mock Estimator" in str(excinfo.value)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.utils.estimators"),
+    reason="Run test if estimators module has changed.",
+)
 def test_method_logger():
     """Test that method logger returns the correct output."""
 
     class _DummyClass(_MockEstimatorMixin):
         def __init__(self) -> None:
-            super(_DummyClass, self).__init__()
+            super().__init__()
 
         @_method_logger
         def _method1(self, positional_param, optional_param="test_optional"):
             """Empty method, here for testing purposes."""
-            pass
 
         @_method_logger
         def _method2(self, positional_param, optional_param="test_optional_2"):
             """Empty method, here for testing purposes."""
-            pass
 
         @_method_logger
         def _method3(self):
             """Empty method, here for testing purposes."""
-            pass
 
     dummy_instance = _DummyClass()
     dummy_instance._method1("test_positional")
@@ -144,6 +156,10 @@ def test_method_logger():
     ]
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.utils.estimators"),
+    reason="Run test if estimators module has changed.",
+)
 @pytest.mark.parametrize(
     "estimator_class, method_regex, logged_methods",
     [
@@ -162,6 +178,10 @@ def test_make_mock_estimator(estimator_class, method_regex, logged_methods):
     assert set(methods_called) >= set(logged_methods)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.utils.estimators"),
+    reason="Run test if estimators module has changed.",
+)
 @pytest.mark.parametrize(
     "estimator_class, estimator_kwargs",
     [

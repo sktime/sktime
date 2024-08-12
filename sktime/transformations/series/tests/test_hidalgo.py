@@ -1,8 +1,10 @@
-# -*- coding: utf-8 -*-
 """Test for hidalgo segmentation."""
+
 import numpy as np
+import pytest
 from sklearn.utils.validation import check_random_state
 
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.hidalgo import Hidalgo
 
 # generate dataset
@@ -18,12 +20,20 @@ for j in range(3):
     X[5:, j] = np.random.normal(2, 1, 5)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(Hidalgo),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_X():
     """Test if innput data is of expected dimension and type."""
     assert isinstance(X, np.ndarray), "X should be a numpy array"
     assert len(np.shape(X)) == 2, "X should be a two-dimensional numpy array"
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(Hidalgo),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_get_neighbourhood_params():
     """Test for neighbourhood parameter generation."""
     model = Hidalgo(K=2, n_iter=10, burn_in=0.5, sampling_rate=2, seed=1)
@@ -130,6 +140,10 @@ def test_get_neighbourhood_params():
     assert np.allclose(Iout_track_actual, Iout_track_expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(Hidalgo),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_initialise_params():
     """Test for initialise parameters."""
     model = Hidalgo(K=2, n_iter=10, burn_in=0.5, sampling_rate=2, seed=1)
@@ -214,6 +228,10 @@ def test_initialise_params():
     assert N_in_actual == N_in_expected
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(Hidalgo),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_gibbs():
     """Test _transform method including gibbs sampling iterations."""
     expected = [
@@ -281,8 +299,6 @@ def test_gibbs():
         _rng,
     )
     sampling = np.reshape(sampling, (10, 17))
-    actual = sampling[
-        [6, 8],
-    ]
+    actual = sampling[[6, 8],]
 
     assert np.allclose(actual, expected)

@@ -1,20 +1,13 @@
-# -*- coding: utf-8 -*-
 """Signature rescaling methods.
 
-rescaling.py
-=========================
-This implements the pre- and post- signature
-rescaling methods along with generic scaling methods along feature
-dimensions of 3D tensors.
-Code for `rescale_path` and `rescale_signature` written by Patrick Kidger.
+rescaling.py ========================= This implements the pre- and post- signature
+rescaling methods along with generic scaling methods along feature dimensions of 3D
+tensors. Code for `rescale_path` and `rescale_signature` written by Patrick Kidger.
 """
+
 import math
 
 import numpy as np
-
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("esig", severity="warning")
 
 
 def _rescale_path(path, depth):
@@ -69,11 +62,10 @@ def _rescale_signature(signature, channels, depth):
     # Verify shape
     if sigdim != signature.shape[-1]:
         raise ValueError(
-            "A path with {} channels to depth {} should yield a "
-            "signature with {} features. Input signature has {} "
-            "features which is inconsistent.".format(
-                channels, depth, sigdim, signature.shape[-1]
-            )
+            f"A path with {channels} channels to depth {depth} should yield a "
+            f"signature with {sigdim} features. "
+            f"Input signature has {signature.shape[-1]} "
+            "features which is inconsistent."
         )
 
     end = 0

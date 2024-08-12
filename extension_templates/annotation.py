@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Extension template for series annotation.
+"""Extension template for series annotation.
 
 Purpose of this implementation template:
     quick implementation of new estimators following the template
@@ -16,7 +14,8 @@ How to use this implementation template to implement a new estimator:
 - change docstrings for functions and the file
 - ensure interface compatibility by sktime.utils.estimator_checks.check_estimator
 - once complete: use as a local library, or contribute to sktime via PR
-- more details: https://www.sktime.org/en/stable/developer_guide/add_estimators.html
+- more details:
+  https://www.sktime.net/en/stable/developer_guide/add_estimators.html
 
 Mandatory implements:
     fitting         - _fit(self, X, Y=None)
@@ -25,7 +24,7 @@ Mandatory implements:
 Optional implements:
     updating        - _update(self, X, Y=None)
 
-Testing - implement if sktime forecaster (not needed locally):
+Testing - required for sktime test framework and check_estimator usage:
     get default parameters for test instance(s) - get_test_params()
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
@@ -43,16 +42,6 @@ class MySeriesAnnotator(BaseSeriesAnnotator):
 
     Parameters
     ----------
-    fmt : str {"dense", "sparse"}, optional (default="dense")
-        Annotation output format:
-        * If "sparse", a sub-series of labels for only the outliers in X is returned,
-        * If "dense", a series of labels for all values in X is returned.
-    labels : str {"indicator", "score"}, optional (default="indicator")
-        Annotation output labels:
-        * If "indicator", returned values are boolean, indicating whether a value is an
-        outlier,
-        * If "score", returned values are floats, giving the outlier score.
-
     parama : int
         descriptive explanation of parama
     paramb : string, optional (default='default')
@@ -70,6 +59,12 @@ class MySeriesAnnotator(BaseSeriesAnnotator):
     and so on
     """
 
+    # Change the `task` and `learning_type` as needed
+    _tags = {
+        "task": "segmentation",
+        "learning_type": "unsupervised",
+    }
+
     # todo: add any hyper-parameters and components to constructor
     def __init__(
         self,
@@ -78,11 +73,9 @@ class MySeriesAnnotator(BaseSeriesAnnotator):
         est2=None,
         paramb="default",
         paramc=None,
-        fmt="dense",
-        labels="indicator",
     ):
         # estimators should precede parameters
-        #  if estimators have default values, set None and initalize below
+        #  if estimators have default values, set None and initialize below
 
         # todo: write any hyper-parameters and components to self
         self.est = est
@@ -90,8 +83,7 @@ class MySeriesAnnotator(BaseSeriesAnnotator):
         self.paramb = paramb
         self.paramc = paramc
 
-        # todo: change "MySeriesAnnotator" to the name of the class
-        super(MySeriesAnnotator, self).__init__(fmt=fmt, labels=labels)
+        super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc
@@ -125,6 +117,7 @@ class MySeriesAnnotator(BaseSeriesAnnotator):
             training data to fit model to, time series
         Y : pd.Series, optional
             ground truth annotations for training if annotator is supervised
+
         Returns
         -------
         self : returns a reference to self
@@ -169,6 +162,7 @@ class MySeriesAnnotator(BaseSeriesAnnotator):
             training data to update model with, time series
         Y : pd.Series, optional
             ground truth annotations for training if annotator is supervised
+
         Returns
         -------
         self : returns a reference to self
@@ -217,6 +211,15 @@ class MySeriesAnnotator(BaseSeriesAnnotator):
         #   It can be used in custom, estimator specific tests, for "special" settings.
         # A parameter dictionary must be returned *for all values* of parameter_set,
         #   i.e., "parameter_set not available" errors should never be raised.
+        #
+        # A good parameter set should primarily satisfy two criteria,
+        #   1. Chosen set of parameters should have a low testing time,
+        #      ideally in the magnitude of few seconds for the entire test suite.
+        #       This is vital for the cases where default values result in
+        #       "big" models which not only increases test time but also
+        #       run into the risk of test workers crashing.
+        #   2. There should be a minimum two such parameter sets with different
+        #      sets of values to ensure a wide range of code coverage is provided.
         #
         # example 1: specify params as dictionary
         # any number of params can be specified

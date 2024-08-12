@@ -1,50 +1,50 @@
-# -*- coding: utf-8 -*-
 """Pipelines for pairwise panel transformers."""
 
 __author__ = ["fkiraly"]
 
 from sktime.base import _HeterogenousMetaEstimator
-from sktime.dists_kernels._base import BasePairwiseTransformerPanel
+from sktime.dists_kernels.base import BasePairwiseTransformerPanel
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.compose import TransformerPipeline
 
 SUPPORTED_MTYPES = ["pd-multiindex", "nested_univ", "df-list", "numpy3D"]
 
 
-class PwTrafoPanelPipeline(BasePairwiseTransformerPanel, _HeterogenousMetaEstimator):
+class PwTrafoPanelPipeline(_HeterogenousMetaEstimator, BasePairwiseTransformerPanel):
     """Pipeline of transformers and a pairwise panel transformer.
 
-    `PwTrafoPanelPipeline` chains transformers and a pairwise transformer at the end.
+    ``PwTrafoPanelPipeline`` chains transformers and a pairwise transformer at the end.
     The pipeline is constructed with a list of sktime transformers (BaseTransformer),
         plus a pairwise panel transformer, following BasePairwiseTransformerPanel.
     The transformer list can be unnamed - a simple list of transformers -
         or string named - a list of pairs of string, estimator.
 
-    For a list of transformers `trafo1`, `trafo2`, ..., `trafoN` and an estimator `est`,
+    For a list of transformers ``trafo1``, ``trafo2``, ..., ``trafoN`` and an estimator
+    ``est``,
         the pipeline behaves as follows:
-    `transform(X)` - running `trafo1.fit_transform` on `X`,
-        them `trafo2.fit_transform` on the output of `trafo1.fit_transform`, etc
-        sequentially, with `trafo[i]` receiving the output of `trafo[i-1]`.
-        Then passes output of `trafo[N]` to `pw_trafo.transform`, as `X`.
-        Same chain of transformers is run on `X2` and passed, if not `None`.
+    ``transform(X)`` - running ``trafo1.fit_transform`` on ``X``,
+        them ``trafo2.fit_transform`` on the output of ``trafo1.fit_transform``, etc
+        sequentially, with ``trafo[i]`` receiving the output of ``trafo[i-1]``.
+        Then passes output of ``trafo[N]`` to ``pw_trafo.transform``, as ``X``.
+        Same chain of transformers is run on ``X2`` and passed, if not ``None``.
 
-    `PwTrafoPanelPipeline` can also be created by using the magic multiplication
-        on any parameter estimator: if `pw_t` is `BasePairwiseTransformerPanel`,
-            and `my_trafo1`, `my_trafo2` inherit from `BaseTransformer`, then,
-            for instance, `my_trafo1 * my_trafo2 * pw_t`
+    ``PwTrafoPanelPipeline`` can also be created by using the magic multiplication
+        on any parameter estimator: if ``pw_t`` is ``BasePairwiseTransformerPanel``,
+            and ``my_trafo1``, ``my_trafo2`` inherit from ``BaseTransformer``, then,
+            for instance, ``my_trafo1 * my_trafo2 * pw_t``
             will result in the same object as  obtained from the constructor
-            `PwTrafoPanelPipeline(pw_trafo=pw_t, transformers=[my_trafo1, my_trafo2])`
+            ``PwTrafoPanelPipeline(pw_trafo=pw_t, transformers=[my_trafo1, my_trafo2])``
         magic multiplication can also be used with (str, transformer) pairs,
             as long as one element in the chain is a transformer
 
     Parameters
     ----------
     pw_trafo : pairwise panel transformer,
-        i.e., estimator inheriting from BasePairwiseTransformerPane
-        this is a "blueprint" estimator, state does not change when `fit` is called
+        i.e., estimator inheriting from BasePairwiseTransformerPanel
+        this is a "blueprint" estimator, state does not change when ``fit`` is called
     transformers : list of sktime transformers, or
         list of tuples (str, transformer) of sktime transformers
-        these are "blueprint" transformers, states do not change when `fit` is called
+        these are "blueprint" transformers, states do not change when ``fit`` is called
 
     Examples
     --------
@@ -60,6 +60,7 @@ class PwTrafoPanelPipeline(BasePairwiseTransformerPanel, _HeterogenousMetaEstima
     """
 
     _tags = {
+        "authors": "fkiraly",
         "X_inner_mtype": SUPPORTED_MTYPES,
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:multivariate": True,  # can estimator handle multivariate data?
@@ -67,12 +68,11 @@ class PwTrafoPanelPipeline(BasePairwiseTransformerPanel, _HeterogenousMetaEstima
     }
 
     def __init__(self, pw_trafo, transformers):
-
         self.pw_trafo = pw_trafo
         self.transformers = transformers
         self.transformers_ = TransformerPipeline(transformers)
 
-        super(PwTrafoPanelPipeline, self).__init__()
+        super().__init__()
 
         # can handle multivariate iff: both classifier and all transformers can
         multivariate = pw_trafo.get_tag("capability:multivariate", False)
@@ -87,10 +87,14 @@ class PwTrafoPanelPipeline(BasePairwiseTransformerPanel, _HeterogenousMetaEstima
             "capability:missing_values:removes", False
         )
 
+        # type of trafo is the same
+        trafo_type = pw_trafo.get_tag("pwtrafo_type", "distance")
+
         # set the pipeline tags to the above
         tags_to_set = {
             "capability:multivariate": multivariate,
             "capability:missing_values": missing,
+            "pwtrafo_type": trafo_type,
         }
         self.set_tags(**tags_to_set)
 
@@ -105,16 +109,18 @@ class PwTrafoPanelPipeline(BasePairwiseTransformerPanel, _HeterogenousMetaEstima
     def __rmul__(self, other):
         """Magic * method, return concatenated PwTrafoPanelPipeline, trafos on left.
 
-        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+        Implemented for ``other`` being a transformer, otherwise returns
+        ``NotImplemented``.
 
         Parameters
         ----------
-        other: `sktime` transformer, must inherit from BaseTransformer
-            otherwise, `NotImplemented` is returned
+        other: ``sktime`` transformer, must inherit from BaseTransformer
+            otherwise, ``NotImplemented`` is returned
 
         Returns
         -------
-        ParamFitterPipeline object, concatenation of `other` (first) with `self` (last).
+        ParamFitterPipeline object, concatenation of ``other`` (first) with ``self``
+        (last).
         """
         if isinstance(other, BaseTransformer):
             # use the transformers dunder to get a TransformerPipeline
@@ -166,7 +172,7 @@ class PwTrafoPanelPipeline(BasePairwiseTransformerPanel, _HeterogenousMetaEstima
         return distmat
 
     def get_params(self, deep=True):
-        """Get parameters of estimator in `transformers`.
+        """Get parameters of estimator in ``transformers``.
 
         Parameters
         ----------
@@ -186,7 +192,7 @@ class PwTrafoPanelPipeline(BasePairwiseTransformerPanel, _HeterogenousMetaEstima
         return params
 
     def set_params(self, **kwargs):
-        """Set the parameters of estimator in `transformers`.
+        """Set the parameters of estimator in ``transformers``.
 
         Valid parameter keys can be listed with ``get_params()``.
 
@@ -209,12 +215,38 @@ class PwTrafoPanelPipeline(BasePairwiseTransformerPanel, _HeterogenousMetaEstima
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        """Test parameters for DistFromAligner."""
-        from sktime.dists_kernels.compose_tab_to_panel import AggrDist
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+            There are currently no reserved values for distance/kernel transformers.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        from sktime.dists_kernels.compose_tab_to_panel import AggrDist, FlatDist
+        from sktime.transformations.series.boxcox import BoxCoxTransformer
         from sktime.transformations.series.exponent import ExponentTransformer
 
-        params = {
+        # transformer has no fit, two transformers, list without names
+        params1 = {
             "pw_trafo": AggrDist.create_test_instance(),
-            "transformers": [ExponentTransformer()],
+            "transformers": [ExponentTransformer(), ExponentTransformer(3)],
         }
-        return params
+
+        # transformer has fit, 1 transformer, name/estimator pair list
+        params2 = {
+            "pw_trafo": FlatDist.create_test_instance(),
+            "transformers": [("boxcox", BoxCoxTransformer())],
+        }
+
+        return [params1, params2]

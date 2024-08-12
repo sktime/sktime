@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Bootstrapping methods for time series."""
 
 __author__ = ["ltsaprounis"]
 
 from copy import copy
-from typing import Tuple, Union
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -41,7 +40,7 @@ class STLBootstrapTransformer(BaseTransformer):
     Parameters
     ----------
     n_series : int, optional
-        The number of bootstraped time series that will be generated, by default 10.
+        The number of bootstrapped time series that will be generated, by default 10.
     sp : int, optional
         Seasonal periodicity of the data in integer form, by default 12.
         Must be an integer >= 2
@@ -124,7 +123,7 @@ class STLBootstrapTransformer(BaseTransformer):
     See Also
     --------
     sktime.transformations.bootstrap.MovingBlockBootstrapTransformer :
-        Transofrmer that applies the Moving Block Bootstrapping method to create
+        Transformer that applies the Moving Block Bootstrapping method to create
         a panel of synthetic time series.
 
     References
@@ -144,18 +143,18 @@ class STLBootstrapTransformer(BaseTransformer):
     >>> from sktime.transformations.bootstrap import STLBootstrapTransformer
     >>> from sktime.datasets import load_airline
     >>> from sktime.utils.plotting import plot_series  # doctest: +SKIP
-    >>> y = load_airline()
-    >>> transformer = STLBootstrapTransformer(10)
-    >>> y_hat = transformer.fit_transform(y)
-    >>> series_list = []
-    >>> names = []
-    >>> for group, series in y_hat.groupby(level=[0], as_index=False):
+    >>> y = load_airline()  # doctest: +SKIP
+    >>> transformer = STLBootstrapTransformer(10)  # doctest: +SKIP
+    >>> y_hat = transformer.fit_transform(y)  # doctest: +SKIP
+    >>> series_list = []  # doctest: +SKIP
+    >>> names = []  # doctest: +SKIP
+    >>> for group, series in y_hat.groupby(level=0, as_index=False):
     ...     series.index = series.index.droplevel(0)
     ...     series_list.append(series)
-    ...     names.append(group)
+    ...     names.append(group)  # doctest: +SKIP
     >>> plot_series(*series_list, labels=names)  # doctest: +SKIP
     (...)
-    >>> print(y_hat.head()) # doctest: +NORMALIZE_WHITESPACE
+    >>> print(y_hat.head())  # doctest: +SKIP
                           Number of airline passengers
     series_id time_index
     actual    1949-01                            112.0
@@ -166,6 +165,12 @@ class STLBootstrapTransformer(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "ltsaprounis",
+        "python_dependencies": "statsmodels",
+        # estimator type
+        # --------------
         # todo: what is the scitype of X: Series, or Panel
         "scitype:transform-input": "Series",
         # todo: what scitype is returned: Primitives, Series, Panel
@@ -184,7 +189,6 @@ class STLBootstrapTransformer(BaseTransformer):
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
-        "python_dependencies": "statsmodels",
     }
 
     def __init__(
@@ -194,7 +198,7 @@ class STLBootstrapTransformer(BaseTransformer):
         block_length: int = None,
         sampling_replacement: bool = False,
         return_actual: bool = True,
-        lambda_bounds: Tuple = None,
+        lambda_bounds: tuple = None,
         lambda_method: str = "guerrero",
         seasonal: int = 7,
         trend: int = None,
@@ -231,7 +235,7 @@ class STLBootstrapTransformer(BaseTransformer):
         self.outer_iter = outer_iter
         self.random_state = random_state
 
-        super(STLBootstrapTransformer, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -384,7 +388,7 @@ class STLBootstrapTransformer(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -392,8 +396,9 @@ class STLBootstrapTransformer(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params = [
             {"sp": 3},
@@ -423,7 +428,7 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
     Parameters
     ----------
     n_series : int, optional
-        The number of bootstraped time series that will be generated, by default 10
+        The number of bootstrapped time series that will be generated, by default 10
     block_length : int, optional
         The length of the block in the MBB method, by default None.
         If not provided, the following heuristic is used, the block length will the
@@ -439,7 +444,7 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
     See Also
     --------
     sktime.transformations.bootstrap.STLBootstrapTransformer :
-        Transofrmer that utilises BoxCox, STL and Moving Block Bootstrapping to create
+        Transformer that utilises BoxCox, STL and Moving Block Bootstrapping to create
         a panel of similar time series.
 
     References
@@ -514,7 +519,7 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
         self.return_actual = return_actual
         self.random_state = random_state
 
-        super(MovingBlockBootstrapTransformer, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -597,7 +602,7 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -605,8 +610,9 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params = [
             {"block_length": 5},

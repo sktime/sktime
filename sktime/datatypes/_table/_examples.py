@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Example generation for testing.
 
 Exports dict of examples, useful for testing as fixtures.
@@ -24,6 +23,9 @@ overall, conversions from non-lossy representations to any other ones
 
 import numpy as np
 import pandas as pd
+
+from sktime.datatypes._dtypekind import DtypeKind
+from sktime.utils.dependencies import _check_soft_dependencies
 
 example_dict = dict()
 example_dict_lossy = dict()
@@ -57,12 +59,23 @@ list_of_dict = [{"a": 1.0}, {"a": 4.0}, {"a": 0.5}, {"a": -3.0}]
 example_dict[("list_of_dict", "Table", 0)] = list_of_dict
 example_dict_lossy[("list_of_dict", "Table", 0)] = False
 
+if _check_soft_dependencies(["polars", "pyarrow"], severity="none"):
+    import polars as pl
+
+    example_dict[("polars_eager_table", "Table", 0)] = pl.DataFrame(df)
+    example_dict_lossy[("polars_eager_table", "Table", 0)] = False
+
+    example_dict[("polars_lazy_table", "Table", 0)] = pl.LazyFrame(df)
+    example_dict_lossy[("polars_lazy_table", "Table", 0)] = False
 
 example_dict_metadata[("Table", 0)] = {
     "is_univariate": True,
     "is_empty": False,
     "has_nans": False,
     "n_instances": 4,
+    "n_features": 1,
+    "feature_names": ["a"],
+    "feature_kind": [DtypeKind.FLOAT],
 }
 
 ###
@@ -94,9 +107,21 @@ list_of_dict = [
 example_dict[("list_of_dict", "Table", 1)] = list_of_dict
 example_dict_lossy[("list_of_dict", "Table", 1)] = False
 
+if _check_soft_dependencies(["polars", "pyarrow"], severity="none"):
+    import polars as pl
+
+    example_dict[("polars_eager_table", "Table", 1)] = pl.DataFrame(df)
+    example_dict_lossy[("polars_eager_table", "Table", 1)] = False
+
+    example_dict[("polars_lazy_table", "Table", 1)] = pl.LazyFrame(df)
+    example_dict_lossy[("polars_lazy_table", "Table", 1)] = False
+
 example_dict_metadata[("Table", 1)] = {
     "is_univariate": False,
     "is_empty": False,
     "has_nans": False,
     "n_instances": 4,
+    "n_features": 2,
+    "feature_names": ["a", "b"],
+    "feature_kind": [DtypeKind.FLOAT, DtypeKind.FLOAT],
 }

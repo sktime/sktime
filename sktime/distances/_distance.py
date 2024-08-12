@@ -1,25 +1,17 @@
-# -*- coding: utf-8 -*-
 __author__ = ["chrisholder", "TonyBagnall"]
 
-
-from typing import Any, Callable, Union
+from collections.abc import Callable
+from typing import Any, Union
 
 import numpy as np
-from numba import njit
 
-from sktime.distances._ddtw import DerivativeCallable, _DdtwDistance, average_of_slope
+from sktime.distances._ddtw import _DdtwDistance
 from sktime.distances._dtw import _DtwDistance
 from sktime.distances._edr import _EdrDistance
 from sktime.distances._erp import _ErpDistance
 from sktime.distances._euclidean import _EuclideanDistance
 from sktime.distances._lcss import _LcssDistance
 from sktime.distances._msm import _MsmDistance
-from sktime.distances._numba_utils import (
-    _compute_pairwise_distance,
-    _make_3d_series,
-    _numba_to_timeseries,
-    to_numba_timeseries,
-)
 from sktime.distances._resolve_metric import (
     _resolve_dist_instance,
     _resolve_metric_to_factory,
@@ -98,6 +90,8 @@ def erp_distance(
 
     Examples
     --------
+    >>> import numpy as np
+    >>> from sktime.distances import erp_distance
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> erp_distance(x_1d, y_1d)
@@ -112,7 +106,7 @@ def erp_distance(
     ----------
     .. [1] Lei Chen and Raymond Ng. 2004. On the marriage of Lp-norms and edit distance.
     In Proceedings of the Thirtieth international conference on Very large data bases
-     - Volume 30 (VLDB '04). VLDB Endowment, 792–803.
+     - Volume 30 (VLDB '04). VLDB Endowment, 792-803.
     """
     format_kwargs = {
         "window": window,
@@ -190,6 +184,8 @@ def edr_distance(
 
     Examples
     --------
+    >>> import numpy as np
+    >>> from sktime.distances import edr_distance
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> edr_distance(x_1d, y_1d)
@@ -205,7 +201,7 @@ def edr_distance(
     .. [1] Lei Chen, M. Tamer Özsu, and Vincent Oria. 2005. Robust and fast similarity
     search for moving object trajectories. In Proceedings of the 2005 ACM SIGMOD
     international conference on Management of data (SIGMOD '05). Association for
-    Computing Machinery, New York, NY, USA, 491–502.
+    Computing Machinery, New York, NY, USA, 491-502.
     DOI:https://doi.org/10.1145/1066157.1066213
     """
     format_kwargs = {
@@ -306,7 +302,7 @@ def wddtw_distance(
     window: Union[float, None] = None,
     itakura_max_slope: Union[float, None] = None,
     bounding_matrix: Union[np.ndarray, None] = None,
-    compute_derivative: DerivativeCallable = average_of_slope,
+    compute_derivative=None,
     g: float = 0.0,
     **kwargs: Any,
 ) -> float:
@@ -377,14 +373,16 @@ def wddtw_distance(
 
     Examples
     --------
+    >>> import numpy as np
+    >>> from sktime.distances import wddtw_distance
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
-    >>> wddtw_distance(x_1d, y_1d)
+    >>> wddtw_distance(x_1d, y_1d) # doctest: +SKIP
     0.0
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
-    >>> wddtw_distance(x_2d, y_2d)
+    >>> wddtw_distance(x_2d, y_2d) # doctest: +SKIP
     0.0
 
     References
@@ -393,6 +391,11 @@ def wddtw_distance(
     warping for time series classification, Pattern Recognition, Volume 44, Issue 9,
     2011, Pages 2231-2240, ISSN 0031-3203, https://doi.org/10.1016/j.patcog.2010.09.022.
     """
+    if compute_derivative is None:
+        from sktime.distances._ddtw_numba import average_of_slope
+
+        compute_derivative = average_of_slope
+
     format_kwargs = {
         "window": window,
         "itakura_max_slope": itakura_max_slope,
@@ -475,6 +478,8 @@ def wdtw_distance(
 
     Examples
     --------
+    >>> import numpy as np
+    >>> from sktime.distances import wdtw_distance
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> wdtw_distance(x_1d, y_1d)
@@ -508,7 +513,7 @@ def ddtw_distance(
     window: Union[float, None] = None,
     itakura_max_slope: Union[float, None] = None,
     bounding_matrix: np.ndarray = None,
-    compute_derivative: DerivativeCallable = average_of_slope,
+    compute_derivative=None,
     **kwargs: Any,
 ) -> float:
     r"""Compute the derivative dynamic time warping (DDTW) distance between time series.
@@ -574,14 +579,15 @@ def ddtw_distance(
     Examples
     --------
     >>> import numpy as np
+    >>> from sktime.distances import ddtw_distance
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
-    >>> ddtw_distance(x_1d, y_1d)
+    >>> ddtw_distance(x_1d, y_1d) # doctest: +SKIP
     0.0
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
-    >>> ddtw_distance(x_2d, y_2d)
+    >>> ddtw_distance(x_2d, y_2d) # doctest: +SKIP
     0.0
 
     References
@@ -590,6 +596,11 @@ def ddtw_distance(
         First SIAM International Conference on Data Mining.
         1. 10.1137/1.9781611972719.1.
     """
+    if compute_derivative is None:
+        from sktime.distances._ddtw_numba import average_of_slope
+
+        compute_derivative = average_of_slope
+
     format_kwargs = {
         "window": window,
         "itakura_max_slope": itakura_max_slope,
@@ -611,16 +622,64 @@ def dtw_distance(
 ) -> float:
     r"""Compute the dynamic time warping (DTW) distance between two time series.
 
-    Originally proposed in [1]_ DTW computes the distance between two time series by
-    considering their alignments during the calculation. This is done by measuring
-    the pointwise distance (normally using Euclidean) between all elements of the two
-    time series and then using dynamic programming to find the warping path
-    that minimises the total pointwise distance between realigned series.
+    Originally proposed in [1]_, DTW is an elastic
+    distance measure, i.e., it is a distance computed after realigning (warping)
+    two time series to best match each other via time axis distortions [2]_.
 
-    Mathematically dtw can be defined as:
+    This function computes time warping distances only for:
+    * sequences, time index is ignored
+    * two time series of equal length
+    * the Euclidean pairwise distance
 
-    .. math::
-        dtw(x, y) = \sqrt{\sum_{(i, j) \in \pi} \|x_{i} - y_{j}\|^2}
+    For unequal length time series, use ``sktime.dists_kernels.DistFromAligner``
+    with a time warping aligner such as ``sktime.aligners.AlignerDTW``.
+    To use arbitrary pairwise distances, use ``sktime.aligners.AlignerDTWfromDist``.
+
+    Mathematically, for two sequences
+    :math:'\mathbf{a}=\{a_1,a_2,\ldots,a_m\}' and :math:'\mathbf{b}=\{b_1,b_2,\ldots,
+    b_n\}',  (assumed equal length for simplicity), DTW first calculates
+    the pairwise distance matrix :math:'M(
+    \mathbf{a},\mathbf{b})', the :math:'m \times n',
+    between series :math:'\mathbf{a}' and :math:'\mathbf{b}',
+    where :math:'M_{i,j} = d(a_i, b_j)', for a chosen distance measure
+    :math:`d: \mathbb{R}^h \times \mathbb{R}^h \rightarrow \mathbb{R}`.
+    In this estimator, the squared Euclidean distance is used, i.e.,
+    :math:`d(x, y):= (x-y)^2`. A warping path
+    .. math::  P=((i_1, j_1), (i_2, j_2), \ldots, (i_s, j_s))
+    is an ordered tuple of indices
+    :math:`i_k \in \{1, \dots, m\}, j_k \in \{1, \dots, n\}`
+    which define a traversal path of matrix :math:'M'.
+    This implementation assumes for warping paths that:
+    * closed paths: :math:`i_1 = j_1 = 1`; :math:`i_s = m, j_s = n`
+    * monotonous paths: :math:`i_k \le i_{k+1}, j_k \le j_{k+1}` for all :math:`k`
+    * strictly monotonous paths: :math:`(i_k, j_k) \neq (i_{k+1}, j_{k+1})` for all
+    :math:`k`
+    The DTW path between sequences is the path through :math:'M' that minimizes the total
+    distance,
+    over all valid paths (satisfying the above assumptions), given the sequences.
+    Formally:
+    The distance for a warping path :math:'P' of length :math:'s' is
+    .. math::  D_P(\mathbf{a},\mathbf{b}) = \sum_{k=1}^s M_{i_k,j_k}.
+    If :math:'\mathcal{P}' is the set of all possible paths, the DTW path :math:'P^*'
+    is the path that has the minimum distance amongst those:
+    .. math::  P^* = \argmin_{P\in \mathcal{P}} D_{P}(\mathbf{a},\mathbf{b}).
+    The DTW distance between the two sequences :math:'\mathbf{a},\mathbf{b}' is
+    the minimum warping path distance:
+    .. math:: d_{dtw}(\mathbf{a}, \mathbf{b}) = \min_{P\in \mathcal{P}} D_{P}(\mathbf{a},\mathbf{b}) =
+    D_{P^*}(\mathbf{a},\mathbf{b}).
+    The optimal warping path $P^*$ can be found exactly through dynamic programming.
+    This can be a time consuming operation, and it is common to put a
+    restriction on the amount of warping allowed. This is implemented through
+    the ``bounding_matrix`` structure, that restricts allowable warpings by a mask.
+    Common bounding strategies include the Sakoe-Chiba band [3]_ and the Itakura
+    parallelogram [4_]. The Sakoe-Chiba band creates a warping path window that has
+    the same width along the diagonal of :math:'M'. The Itakura paralleogram allows
+    for less warping at the start or end of the sequence than in the middle.
+
+    If the function is called with multivariate time series, note that
+    the matrix :math:'M' is computed with the multivariate squared Euclidean distance,
+    :math:`d(x, y):= (x-y)^2` = \sum_{i=1}^h (x_i - y_i)^2`
+    This is sometimes called the "dependent" version of DTW, DTW_D, see [5]_.
 
     Parameters
     ----------
@@ -665,6 +724,7 @@ def dtw_distance(
     Examples
     --------
     >>> import numpy as np
+    >>> from sktime.distances import dtw_distance
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> dtw_distance(x_1d, y_1d)
@@ -680,7 +740,17 @@ def dtw_distance(
     .. [1] H. Sakoe, S. Chiba, "Dynamic programming algorithm optimization for
            spoken word recognition," IEEE Transactions on Acoustics, Speech and
            Signal Processing, vol. 26(1), pp. 43--49, 1978.
-    """
+    .. [2] Ratanamahatana C and Keogh E.: Three myths about dynamic time warping data
+    mining Proceedings of 5th SIAM International Conference on Data Mining, 2005
+    .. [3] Sakoe H. and Chiba S.: Dynamic programming algorithm optimization for
+    spoken word recognition. IEEE Transactions on Acoustics, Speech, and Signal
+    Processing 26(1):43-49, 1978.
+    .. [4] Itakura F: Minimum prediction residual principle applied to speech
+    recognition. IEEE Transactions on Acoustics, Speech, and Signal Processing 23(
+    1):67-72, 1975.
+    .. [5] Shokoohi-Yekta M et al.: Generalizing DTW to the multi-dimensional case
+    requires an adaptive approach. Data Mining and Knowledge Discovery, 31, 1-31 (2017).
+    """  # noqa: E501
     format_kwargs = {
         "window": window,
         "itakura_max_slope": itakura_max_slope,
@@ -747,11 +817,12 @@ def msm_distance(
         NumbaDistance.
         If a resolved metric is not no_python compiled.
         If the metric type cannot be determined
+
     References
     ----------
     .. [1]A.  Stefan,  V.  Athitsos,  and  G.  Das.   The  Move-Split-Merge  metric
     for time  series. IEEE  Transactions  on  Knowledge  and  Data  Engineering,
-    25(6):1425–1438, 2013.
+    25(6):1425-1438, 2013.
     """
     format_kwargs = {
         "c": c,
@@ -834,6 +905,7 @@ def twe_distance(
     Examples
     --------
     >>> import numpy as np
+    >>> from sktime.distances import twe_distance
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> twe_distance(x_1d, y_1d)
@@ -848,7 +920,7 @@ def twe_distance(
     ----------
     .. [1] Marteau, P.; F. (2009). "Time Warp Edit Distance with Stiffness Adjustment
     for Time Series Matching". IEEE Transactions on Pattern Analysis and Machine
-    Intelligence. 31 (2): 306–318.
+    Intelligence. 31 (2): 306-318.
     """
     format_kwargs = {
         "window": window,
@@ -900,6 +972,7 @@ def squared_distance(x: np.ndarray, y: np.ndarray, **kwargs: Any) -> float:
     Examples
     --------
     >>> import numpy as np
+    >>> from sktime.distances import squared_distance
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> squared_distance(x_1d, y_1d)
@@ -953,6 +1026,7 @@ def euclidean_distance(x: np.ndarray, y: np.ndarray, **kwargs: Any) -> float:
     Examples
     --------
     >>> import numpy as np
+    >>> from sktime.distances import euclidean_distance
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> euclidean_distance(x_1d, y_1d)
@@ -1155,7 +1229,7 @@ def ddtw_alignment_path(
     window: Union[float, None] = None,
     itakura_max_slope: Union[float, None] = None,
     bounding_matrix: np.ndarray = None,
-    compute_derivative: DerivativeCallable = average_of_slope,
+    compute_derivative=None,
     **kwargs: Any,
 ) -> AlignmentPathReturn:
     r"""Compute the derivative dynamic time warping (DDTW) alignment path.
@@ -1231,6 +1305,11 @@ def ddtw_alignment_path(
         First SIAM International Conference on Data Mining.
         1. 10.1137/1.9781611972719.1.
     """
+    if compute_derivative is None:
+        from sktime.distances._ddtw_numba import average_of_slope
+
+        compute_derivative = average_of_slope
+
     format_kwargs = {
         "window": window,
         "itakura_max_slope": itakura_max_slope,
@@ -1251,7 +1330,7 @@ def wddtw_alignment_path(
     window: Union[float, None] = None,
     itakura_max_slope: Union[float, None] = None,
     bounding_matrix: Union[np.ndarray, None] = None,
-    compute_derivative: DerivativeCallable = average_of_slope,
+    compute_derivative=None,
     g: float = 0.0,
     **kwargs: Any,
 ) -> AlignmentPathReturn:
@@ -1333,6 +1412,11 @@ def wddtw_alignment_path(
     warping for time series classification, Pattern Recognition, Volume 44, Issue 9,
     2011, Pages 2231-2240, ISSN 0031-3203, https://doi.org/10.1016/j.patcog.2010.09.022.
     """
+    if compute_derivative is None:
+        from sktime.distances._ddtw_numba import average_of_slope
+
+        compute_derivative = average_of_slope
+
     format_kwargs = {
         "window": window,
         "itakura_max_slope": itakura_max_slope,
@@ -1422,7 +1506,7 @@ def edr_alignment_path(
     .. [1] Lei Chen, M. Tamer Özsu, and Vincent Oria. 2005. Robust and fast similarity
     search for moving object trajectories. In Proceedings of the 2005 ACM SIGMOD
     international conference on Management of data (SIGMOD '05). Association for
-    Computing Machinery, New York, NY, USA, 491–502.
+    Computing Machinery, New York, NY, USA, 491-502.
     DOI:https://doi.org/10.1145/1066157.1066213
     """
     format_kwargs = {
@@ -1509,7 +1593,7 @@ def erp_alignment_path(
     ----------
     .. [1] Lei Chen and Raymond Ng. 2004. On the marriage of Lp-norms and edit distance.
     In Proceedings of the Thirtieth international conference on Very large data bases
-     - Volume 30 (VLDB '04). VLDB Endowment, 792–803.
+     - Volume 30 (VLDB '04). VLDB Endowment, 792-803.
     """
     format_kwargs = {
         "window": window,
@@ -1679,11 +1763,12 @@ def msm_alignment_path(
         NumbaDistance.
         If a resolved metric is not no_python compiled.
         If the metric type cannot be determined
+
     References
     ----------
     .. [1]A.  Stefan,  V.  Athitsos,  and  G.  Das.   The  Move-Split-Merge  metric
     for time  series. IEEE  Transactions  on  Knowledge  and  Data  Engineering,
-    25(6):1425–1438, 2013.
+    25(6):1425-1438, 2013.
     """
     format_kwargs = {
         "c": c,
@@ -1777,7 +1862,7 @@ def twe_alignment_path(
     ----------
     .. [1] Marteau, P.; F. (2009). "Time Warp Edit Distance with Stiffness Adjustment
     for Time Series Matching". IEEE Transactions on Pattern Analysis and Machine
-    Intelligence. 31 (2): 306–318.
+    Intelligence. 31 (2): 306-318.
     """
     format_kwargs = {
         "window": window,
@@ -1853,6 +1938,7 @@ def distance(
     Examples
     --------
     >>> import numpy as np
+    >>> from sktime.distances import distance
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> distance(x_1d, y_1d, metric='dtw')
@@ -1873,6 +1959,8 @@ def distance(
     float
         Distance between the x and y.
     """
+    from sktime.distances._numba_utils import to_numba_timeseries
+
     _x = to_numba_timeseries(x)
     _y = to_numba_timeseries(y)
 
@@ -1939,6 +2027,9 @@ def distance_factory(
         If a resolved metric is not no_python compiled.
         If the metric type cannot be determined.
     """
+    from sktime.distances._numba_utils import _numba_to_timeseries, to_numba_timeseries
+    from sktime.utils.numba.njit import njit
+
     if x is None:
         x = np.zeros((1, 10))
     if y is None:
@@ -2021,9 +2112,10 @@ def pairwise_distance(
     Examples
     --------
     >>> import numpy as np
+    >>> from sktime.distances import pairwise_distance  # doctest: +SKIP
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
-    >>> pairwise_distance(x_1d, y_1d, metric='dtw')
+    >>> pairwise_distance(x_1d, y_1d, metric='dtw')  # doctest: +SKIP
     array([[16., 25., 36., 49.],
            [ 9., 16., 25., 36.],
            [ 4.,  9., 16., 25.],
@@ -2031,22 +2123,27 @@ def pairwise_distance(
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
-    >>> pairwise_distance(x_2d, y_2d, metric='dtw')
+    >>> pairwise_distance(x_2d, y_2d, metric='dtw')  # doctest: +SKIP
     array([[256., 576.],
            [ 58., 256.]])
 
     >>> x_3d = np.array([[[1], [2], [3], [4]], [[5], [6], [7], [8]]])  # 3d array
     >>> y_3d = np.array([[[9], [10], [11], [12]], [[13], [14], [15], [16]]])  # 3d array
-    >>> pairwise_distance(x_3d, y_3d, metric='dtw')
+    >>> pairwise_distance(x_3d, y_3d, metric='dtw')  # doctest: +SKIP
     array([[256., 576.],
            [ 64., 256.]])
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
-    >>> pairwise_distance(x_2d, y_2d, metric='dtw', window=0.5)
+    >>> pairwise_distance(x_2d, y_2d, metric='dtw', window=0.5)  # doctest: +SKIP
     array([[256., 576.],
            [ 58., 256.]])
     """
+    from sktime.distances._numba_utils import (
+        _compute_pairwise_distance,
+        _make_3d_series,
+    )
+
     _x = _make_3d_series(x)
     if y is None:
         y = x
@@ -2120,13 +2217,15 @@ def distance_alignment_path(
     Returns
     -------
     list[tuple]
-        List of tuples containing the alginment path for the distance.
+        List of tuples containing the alignment path for the distance.
     float
         Distance between the x and y.
     np.ndarray (of shape (len(x), len(y)).
         Optional return only given if return_cost_matrix = True.
         Cost matrix used to compute the distance.
     """
+    from sktime.distances._numba_utils import to_numba_timeseries
+
     _x = to_numba_timeseries(x)
     _y = to_numba_timeseries(y)
 
@@ -2201,6 +2300,9 @@ def distance_alignment_path_factory(
     Callable[[np.ndarray, np.ndarray], Union[np.ndarray, np.ndarray]]
         Callable for the distance path.
     """
+    from sktime.distances._numba_utils import _numba_to_timeseries, to_numba_timeseries
+    from sktime.utils.numba.njit import njit
+
     if x is None:
         x = np.zeros((1, 10))
     if y is None:
@@ -2301,10 +2403,8 @@ _METRIC_INFOS = [
 ]
 
 _METRICS = {info.canonical_name: info for info in _METRIC_INFOS}
-_METRIC_ALIAS = dict((alias, info) for info in _METRIC_INFOS for alias in info.aka)
-_METRIC_CALLABLES = dict(
-    (info.canonical_name, info.dist_func) for info in _METRIC_INFOS
-)
+_METRIC_ALIAS = {alias: info for info in _METRIC_INFOS for alias in info.aka}
+_METRIC_CALLABLES = {info.canonical_name: info.dist_func for info in _METRIC_INFOS}
 _METRICS_NAMES = list(_METRICS.keys())
 
 ALL_DISTANCES = (
