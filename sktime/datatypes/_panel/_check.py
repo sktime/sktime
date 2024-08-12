@@ -582,9 +582,6 @@ if _check_soft_dependencies("gluonts", severity="none"):
         if _req(["dtypekind_dfip", "feature_kind"], return_metadata):
             dtypes = []
 
-            # Each ListDataset always has a DateTime index value
-            dtypes.append(DtypeKind.DATETIME)
-
             # Each entry in a ListDataset is formed with an ndarray.
             # Basing off definitions in _dtypekind, assigning values of FLOAT
 
