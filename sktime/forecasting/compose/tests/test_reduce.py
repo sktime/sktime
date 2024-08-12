@@ -455,7 +455,9 @@ def test_make_reduction_with_catboost():
     """
     from catboost import CatBoostRegressor
 
-    estimator = CatBoostRegressor(learning_rate=1, depth=6, loss_function="RMSE")
+    estimator = CatBoostRegressor(
+        learning_rate=1, depth=6, loss_function="RMSE", verbose=False
+    )
 
     forecaster = make_reduction(estimator, scitype="infer")
     assert forecaster._estimator_scitype == "tabular-regressor"
