@@ -1,4 +1,5 @@
 """Demo data for hierarchical forecasting."""
+
 import numpy as np
 
 __author__ = ["marrov"]
