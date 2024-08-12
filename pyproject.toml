@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.31.0"
+version = "0.32.1"
 description = "A unified framework for machine learning with time series"
 readme = "README.md"
 keywords = [
@@ -81,7 +81,7 @@ all_extras = [
   'autots<0.7,>=0.6.1',
   "cloudpickle",
   "dash!=2.9.0",
-  "dask<2024.7.2; extra == 'dataframe'",
+  "dask<2024.8.1; extra == 'dataframe'",
   "dtaidistance<2.4",
   "dtw-python",
   'esig==0.9.7; python_version < "3.10"',
@@ -91,7 +91,7 @@ all_extras = [
   'hmmlearn>=0.2.7; python_version < "3.11"',
   "holidays",
   'keras-self-attention; python_version < "3.11"',
-  "matplotlib>=3.3.2",
+  "matplotlib!=3.9.1,>=3.3.2",
   "mne",
   'numba<0.61,>=0.53',
   'optuna<3.7',
@@ -104,8 +104,8 @@ all_extras = [
   "scikit_posthocs>=0.6.5",
   "seaborn>=0.11",
   "seasonal",
-  'skforecast<0.13,>=0.12.1; python_version < "3.12"',
-  "skpro>=2,<2.5.0",
+  "skforecast<0.14,>=0.12.1",
+  "skpro>=2,<2.6.0",
   'statsforecast<1.8.0,>=1.0.0; python_version < "3.12"',
   "statsmodels>=0.12.1",
   'stumpy>=1.5.1; python_version < "3.11"',
@@ -116,6 +116,7 @@ all_extras = [
   'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   "xarray",
+  "u8darts<0.31,>=0.29.0",
 ]
 
 # all soft dependencies compatible with pandas 2
@@ -124,7 +125,7 @@ all_extras_pandas2 = [
   'autots<0.7,>=0.6.1',
   "cloudpickle",
   "dash!=2.9.0",
-  "dask<2024.7.2; extra == 'dataframe'",
+  "dask<2024.8.1; extra == 'dataframe'",
   "dtaidistance<2.4",
   "dtw-python",
   'esig==0.9.7; python_version < "3.10"',
@@ -134,7 +135,7 @@ all_extras_pandas2 = [
   'hmmlearn>=0.2.7; python_version < "3.11"',
   "holidays",
   'keras-self-attention; python_version < "3.11"',
-  "matplotlib>=3.3.2",
+  "matplotlib!=3.9.1,>=3.3.2",
   "mne",
   'numba<0.61,>=0.53',
   'optuna<3.7',
@@ -145,8 +146,8 @@ all_extras_pandas2 = [
   "scikit_posthocs>=0.6.5",
   "seaborn>=0.11",
   "seasonal",
-  'skforecast<0.13,>=0.12.1; python_version < "3.12"',
-  "skpro>=2,<2.5.0",
+  "skforecast<0.14,>=0.12.1",
+  "skpro>=2,<2.6.0",
   'statsforecast<1.8.0,>=1.0.0; python_version < "3.12"',
   "statsmodels>=0.12.1",
   'stumpy>=1.5.1; python_version < "3.11"',
@@ -157,6 +158,7 @@ all_extras_pandas2 = [
   'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   "xarray",
+  "u8darts<0.31,>=0.29.0",
 ]
 
 # single-task dependencies, e.g., forecasting, classification, etc.
@@ -193,8 +195,8 @@ forecasting = [
   'autots<0.7,>=0.6.1',
   'pmdarima!=1.8.1,<2.1,>=1.8; python_version < "3.12"',
   "prophet<1.2,>=1.1",
-  'skforecast<0.13,>=0.12.1; python_version < "3.12"',
-  "skpro>=2,<2.5.0",
+  "skforecast<0.14,>=0.12.1",
+  "skpro>=2,<2.6.0",
   'statsforecast<1.8.0,>=1.0.0; python_version < "3.12"',
   "statsmodels<0.15,>=0.12.1",
   'tbats<1.2,>=1.1; python_version < "3.12"',
@@ -214,7 +216,7 @@ regression = [
 transformations = [
   'esig<0.10,>=0.9.7; python_version < "3.11"',
   "filterpy<1.5,>=1.4.5",
-  "holidays>=0.52,<0.54",
+  "holidays>=0.29,<0.55",
   "mne>=1.5,<1.8",
   'numba<0.61,>=0.53',
   "pycatch22>=0.4,<0.4.6",
@@ -303,6 +305,9 @@ numpy1 = [
 pandas1 = [
   "pandas<2.0.0",
 ]
+compatibility_tests = [
+  "catboost",
+]
 
 [project.urls]
 "API Reference" = "https://www.sktime.net/en/stable/api_reference.html"
@@ -320,6 +325,7 @@ requires = [
 
 [tool.setuptools.package-data]
 sktime = [
+  "utils/_estimator_html_repr.css",
   "*.csv",
   "*.csv.gz",
   "*.arff",
