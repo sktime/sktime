@@ -1631,7 +1631,7 @@ def _infer_scitype(estimator):
     if is_sklearn_estimator(estimator):
         return f"tabular-{sklearn_scitype(estimator)}"
     else:
-        inferred_skt_scitype = scitype(estimator)
+        inferred_skt_scitype = scitype(estimator, raise_on_unknown=False)
         if inferred_skt_scitype in ["object", "estimator"]:
             return "tabular-regressor"
         if inferred_skt_scitype == "regressor":
