@@ -115,15 +115,6 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
     """  # noqa: E501
 
     _tags = {
-        # packaging info
-        # --------------
-        # "authors": ["XinyuWu"],
-        # "maintainers": ["XinyuWu"],
-        # "python_dependencies": "pytorch-forecasting"
-        # inherited from _PytorchForecastingAdapter
-        # estimator type
-        # --------------
-        "python_dependencies": ["pytorch-forecasting>=1.0.0", "torch", "lightning"],
         "capability:global_forecasting": True,
         "capability:insample": False,
         "X-y-must-have-same-index": True,
@@ -402,15 +393,6 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
     """  # noqa: E501
 
     _tags = {
-        # packaging info
-        # --------------
-        # "authors": ["XinyuWu"],
-        # "maintainers": ["XinyuWu"],
-        # "python_dependencies": "pytorch-forecasting"
-        # inherited from _PytorchForecastingAdapter
-        # estimator type
-        # --------------
-        "python_dependencies": ["pytorch-forecasting>=1.0.0", "torch", "lightning"],
         "capability:global_forecasting": True,
         "ignores-exogeneous-X": True,
         "capability:insample": False,
@@ -680,15 +662,6 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
     """  # noqa: E501
 
     _tags = {
-        # packaging info
-        # --------------
-        # "authors": ["XinyuWu"],
-        # "maintainers": ["XinyuWu"],
-        # "python_dependencies": "pytorch-forecasting"
-        # inherited from _PytorchForecastingAdapter
-        # estimator type
-        # --------------
-        "python_dependencies": ["pytorch-forecasting>=1.0.0", "torch", "lightning"],
         "capability:global_forecasting": True,
         "capability:insample": False,
         "X-y-must-have-same-index": True,
@@ -965,15 +938,6 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
     """  # noqa: E501
 
     _tags = {
-        # packaging info
-        # --------------
-        # "authors": ["XinyuWu"],
-        # "maintainers": ["XinyuWu"],
-        # "python_dependencies": "pytorch-forecasting"
-        # inherited from _PytorchForecastingAdapter
-        # estimator type
-        # --------------
-        "python_dependencies": ["pytorch-forecasting>=1.0.0", "torch", "lightning"],
         "capability:global_forecasting": True,
         "capability:insample": False,
         "X-y-must-have-same-index": True,
