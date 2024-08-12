@@ -53,7 +53,7 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
           be raised, indicating that the 'peft' package is required. Please install
           it using `pip install peft` to use this fit strategy.
     broadcasting: bool (default=True)
-        DeprecationWarning: default value will be changed to False in v0.33.0
+        DeprecationWarning: default value will be changed to False in v0.34.0
         multiindex data input will be broadcasted to single series.
         For each single series, one copy of this forecaster will try to
         fit and predict on it. The broadcasting is happening inside automatically,
@@ -195,7 +195,7 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
         peft_config=None,
         no_size1_batch=True,
         try_local_files_only=False,
-        # TODO change the default value to False in v0.33.0
+        # TODO change the default value to False in v0.34.0
         broadcasting=True,
     ):
         super().__init__()
@@ -230,7 +230,7 @@ class HFTransformersForecaster(_BaseGlobalForecaster):
 
         warn(
             "DeprecationWarning: The default value of the parameter "
-            "broadcasting will be set to False in v0.33.0.",
+            "broadcasting will be set to False in v0.34.0.",
             DeprecationWarning,
         )
 
