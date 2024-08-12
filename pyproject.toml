@@ -305,6 +305,9 @@ numpy1 = [
 pandas1 = [
   "pandas<2.0.0",
 ]
+compatibility_tests = [
+  "catboost",
+]
 
 [project.urls]
 "API Reference" = "https://www.sktime.net/en/stable/api_reference.html"

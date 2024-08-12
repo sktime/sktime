@@ -1631,7 +1631,7 @@ def _infer_scitype(estimator):
     if is_sklearn_estimator(estimator):
         return f"tabular-{sklearn_scitype(estimator)}"
     else:
-        inferred_skt_scitype = scitype(estimator)
+        inferred_skt_scitype = scitype(estimator, raise_on_unknown=False)
         if inferred_skt_scitype in ["object", "estimator"]:
             return "tabular-regressor"
         if inferred_skt_scitype == "regressor":
@@ -2260,7 +2260,21 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
             "windows_identical": False,
         }
         params5 = {"estimator": est, "window_length": 0}
-        return [params1, params2, params3, params4, params5]
+
+        params = [params1, params2, params3, params4, params5]
+
+        # this fails because catboost is not sklearn compatible
+        # and fails set_params contracts already in sklearn;
+        # so it also fails them in sktime...
+        # left here for future reference, e.g., test for non-compliant estimators
+        #
+        # if _check_soft_dependencies("catboost", severity="none"):
+        #     from catboost import CatBoostRegressor
+        #
+        #     est = CatBoostRegressor(learning_rate=1, depth=6, loss_function="RMSE")
+        #     params6 = {"estimator": est, "window_length": 3}
+        #     params.append(params6)
+        return params
 
 
 class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
