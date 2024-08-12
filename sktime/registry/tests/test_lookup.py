@@ -4,8 +4,8 @@
 __author__ = ["fkiraly"]
 
 import pytest
+from skbase.base import BaseObject
 
-from sktime.base import BaseObject
 from sktime.registry import all_estimators, all_tags, scitype
 from sktime.registry._base_classes import (
     BASE_CLASS_LOOKUP,
