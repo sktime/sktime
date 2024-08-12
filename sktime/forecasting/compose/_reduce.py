@@ -2230,6 +2230,8 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         """
         from sklearn.linear_model import LinearRegression
 
+        from sktime.utils.dependencies import _check_soft_dependencies
+
         est = LinearRegression()
         params1 = {
             "estimator": est,
@@ -2260,7 +2262,16 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
             "windows_identical": False,
         }
         params5 = {"estimator": est, "window_length": 0}
-        return [params1, params2, params3, params4, params5]
+
+        params = [params1, params2, params3, params4, params5]
+
+        if _check_soft_dependencies("catboost", severity="none"):
+            from catboost import CatBoostRegressor
+
+            est = CatBoostRegressor(learning_rate=1, depth=6, loss_function='RMSE')
+            params6 = {"estimator": est, "window_length": 3}
+            params.append(params6)
+        return params
 
 
 class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
