@@ -127,7 +127,13 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         "y_inner_mtype": "pd.DataFrame",
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": True,
-        "python_dependencies": ["torch", "tqdm", "huggingface-hub", "transformers"],
+        "python_dependencies": [
+            "torch",
+            "tqdm",
+            "huggingface-hub",
+            "transformers",
+            "accelerate",
+        ],
         "capability:global_forecasting": True,
         "python_version": ">= 3.10",
         "capability:insample": False,
@@ -255,7 +261,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         )
         # check availability of user specified device
         self._device = _check_device(self._device)
-        assert self._device == accelerator.device
+        assert self._device == str(accelerator.device)
         cur_epoch = 0
         max_epoch = self.epochs
         if fh is not None:
