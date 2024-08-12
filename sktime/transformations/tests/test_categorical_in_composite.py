@@ -32,7 +32,7 @@ def test_ColumnEnsemble_with_categorical():
         {"categorical": ["a", "b", "c", "a", "b", "c"], "num_col": [1, 2, 3, 4, 5, 6]}
     )
 
-    encoder = TabularToSeriesAdaptor(LabelEncoder())
+    encoder = TabularToSeriesAdaptor(LabelEncoder(), pooling="global")
     trafo = ColumnEnsembleTransformer(
         transformers=[
             ("trafo", BoxCoxTransformer(), "num_col"),

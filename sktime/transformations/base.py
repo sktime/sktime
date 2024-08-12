@@ -1088,7 +1088,9 @@ class BaseTransformer(BaseEstimator):
         if DtypeKind.CATEGORICAL in X_metadata["feature_kind"] and not self.get_tag(
             "capability:categorical_in_X"
         ):
-            raise TypeError("Transformers do not support categorical features in X.")
+            raise TypeError(
+                f"Transformer {self} does not support categorical features in X."
+            )
 
         X_scitype = X_metadata["scitype"]
         X_mtype = X_metadata["mtype"]
