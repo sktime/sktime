@@ -579,7 +579,7 @@ if _check_soft_dependencies("gluonts", severity="none"):
         if _req("n_features", return_metadata):
             metadata["n_features"] = n_features
 
-        if _req(["dtypekind_dfip", "feature_kind"], metadata):
+        if _req(["dtypekind_dfip", "feature_kind"], return_metadata):
             dtypes = []
 
             # Each ListDataset always has a DateTime index value
