@@ -579,7 +579,7 @@ if _check_soft_dependencies("gluonts", severity="none"):
         if _req("n_features", return_metadata):
             metadata["n_features"] = n_features
 
-        if _req("dtypekind_dfip", return_metadata):
+        if _req(["dtypekind_dfip", "feature_kind"], metadata):
             dtypes = []
 
             # Each ListDataset always has a DateTime index value
@@ -589,10 +589,12 @@ if _check_soft_dependencies("gluonts", severity="none"):
             # Basing off definitions in _dtypekind, assigning values of FLOAT
 
             dtypes.extend([DtypeKind.FLOAT] * len(obj))
-            metadata["dtypekind_dfip"] = dtypes
 
-        if _req("feature_kind", return_metadata):
-            metadata["feature_kind"] = _get_feature_kind(metadata["dtypekind_dfip"])
+            if _req("dtypekind_dfip", return_metadata):
+                metadata["dtypekind_dfip"] = dtypes
+
+            if _req("feature_kind", return_metadata):
+                metadata["feature_kind"] = _get_feature_kind(dtypes)
 
         if _req("n_instances", return_metadata):
             metadata["n_instances"] = len(obj)
