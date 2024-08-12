@@ -105,7 +105,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
     optimizer_kwargs : dict (default=None) [8]_
         dict of parameters to pass to the user defined optimizer
     broadcasting : bool (default=True)
-        DeprecationWarning: default value will be changed to False in v0.33.0
+        DeprecationWarning: default value will be changed to False in v0.34.0
         multiindex data input will be broadcasted to single series, and for each single series,
         one copy of this forecaster will try to fit and predict on it. The broadcasting is
         happening inside automatically, from the outerside api perspective, the input and
@@ -211,7 +211,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         trainer_kwargs: Optional[dict] = None,
         optimizer=None,
         optimizer_kwargs: dict = None,
-        # TODO change the default value to False in v0.33.0
+        # TODO change the default value to False in v0.34.0
         broadcasting: bool = True,
     ):
         self.input_size = input_size
@@ -490,7 +490,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
     optimizer_kwargs : dict (default=None) [8]_
         dict of parameters to pass to the user defined optimizer
     broadcasting : bool (default=True)
-        DeprecationWarning: default value will be changed to False in v0.33.0
+        DeprecationWarning: default value will be changed to False in v0.34.0
         multiindex data input will be broadcasted to single series, and for each single series,
         one copy of this forecaster will try to fit and predict on it. The broadcasting is
         happening inside automatically, from the outerside api perspective, the input and
@@ -591,7 +591,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         trainer_kwargs: Optional[dict] = None,
         optimizer=None,
         optimizer_kwargs: dict = None,
-        # TODO change the default value to False in v0.33.0
+        # TODO change the default value to False in v0.34.0
         broadcasting: bool = True,
     ):
         self.input_size = input_size
