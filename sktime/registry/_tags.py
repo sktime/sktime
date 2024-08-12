@@ -1621,7 +1621,7 @@ ESTIMATOR_TAG_REGISTER = [
         "sktime version from which this estimator class originates",
     ),
     (
-         "skip-inverse-transform",
+        "skip-inverse-transform",
         "transformer",
         "bool",
         "behaviour flag: skips inverse_transform when called yes/no",
