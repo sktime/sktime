@@ -6,7 +6,7 @@
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
 
 class VARReduce(BaseForecaster):
@@ -201,12 +201,18 @@ class VARReduce(BaseForecaster):
         coefficients = np.zeros((self.lags, num_series, num_series))
         intercepts = np.zeros(num_series)
 
-        # Fit the chosen regressor model for each series
+        # Initialize a placeholder for in-sample predictons
+        self.y_pred_insample = pd.DataFrame(index=y.index[self.lags :])
+
+        # Fit the chosen regressor model for each series and save it
         for i, var_name in enumerate(var_names):
             model = deepcopy(self.regressor_)
             y = Y[var_name]
             model.fit(X, y)
             self.regressors[var_name] = model
+
+            # Use the model to perform in-sample prediction and save them
+            self.y_pred_insample[var_name] = model.predict(X)
 
             # if the model has `.intercept_` and `.coef_` attributes, extract them
             if hasattr(model, "intercept_") and hasattr(model, "coef_"):
@@ -243,34 +249,64 @@ class VARReduce(BaseForecaster):
         y_pred : pd.DataFrame
             Series of predicted values
         """
-        # Get the last available values for prediction
-        y_last = self._y.iloc[-self.lags :]
+        y_pred_outsample = pd.DataFrame()
+        y_pred_insample = pd.DataFrame()
+        fh_int = fh.to_relative(self.cutoff)
 
-        # Initialize a list to store predictions
-        y_pred = []
+        # ---- insample forecasts  -----
+        if fh_int.min() <= 0:
+            # Create a new `fh` object with only in-sample values
+            # and use it to filter previously-created in-sample predictions
+            fh_insample = fh_int.to_in_sample(cutoff=self.cutoff)
+            insample_index = fh_insample.to_absolute_index(cutoff=self.cutoff)
+            y_pred_insample = self.y_pred_insample.loc[insample_index]
 
-        for _ in range(1, len(fh) + 1):
-            # Prepare X
-            X_last = self.prepare_for_predict(y_last, return_as_ndarray=False)
+        # ---- outsample forecasts (if needed) ----
+        if fh_int.max() > 0:
+            # Get the last available values for prediction
+            y_last = self._y.iloc[-self.lags :]
 
-            # Make timestep specific predictions for each variable using its regressor
-            y_pred_step = []
-            for var_name in self.var_names:
-                model = self.regressors[var_name]
-                y_pred_step_var = model.predict(X_last).item()  # is a float
-                y_pred_step.append(y_pred_step_var)
+            # Initialize a list to store out-of-sample predictions
+            y_pred_outsample = []
 
-            # Convert y_pred_step into a one-row DataFrame
-            y_pred_step = pd.DataFrame([y_pred_step], columns=self.var_names)
-            y_pred.append(y_pred_step)
+            # Generate as many future forecast steps as the maximum number in fh_int
+            for _ in range(0, fh_int[-1]):
+                # Prepare X
+                X_last = self.prepare_for_predict(y_last, return_as_ndarray=False)
 
-            # Append the new predictions (y_pred_step) at the end of y_last
-            y_last = pd.concat([y_last, y_pred_step], axis=0)
+                # One timestep prediction for each variable using its regressor
+                y_pred_step = []
+                for var_name in self.var_names:
+                    model = self.regressors[var_name]
+                    y_pred_step_var = model.predict(X_last).item()  # is a float
+                    y_pred_step.append(y_pred_step_var)
 
-        # Concatenate the list of Series into the final DataFrame
-        y_pred = pd.concat(y_pred)
-        y_pred.index = fh.to_absolute_index()
+                # Convert y_pred_step into a one-row DataFrame
+                y_pred_step = pd.DataFrame([y_pred_step], columns=self.var_names)
+                y_pred_outsample.append(y_pred_step)
 
+                # Append the new predictions (y_pred_step) at the end of y_last
+                y_last = pd.concat([y_last, y_pred_step], axis=0)
+
+            # Concatenate the list of Series into the final DataFrame
+            y_pred_outsample = pd.concat(y_pred_outsample)
+
+            # Create an index for all generated forecasts
+            fh_outsample_all = ForecastingHorizon(
+                range(1, fh_int[-1] + 1), is_relative=True, freq=fh.freq
+            )
+            fh_outsample_all = fh_outsample_all.to_absolute(cutoff=self.cutoff)
+            y_pred_outsample.index = fh_outsample_all.to_absolute_index()
+
+            # Create a new `fh` object with only the required outsample indices
+            fh_outsample = fh_int.to_out_of_sample(cutoff=self.cutoff)
+            fh_outsample = fh_outsample.to_absolute(cutoff=self.cutoff)
+
+            # Use it to filter the previously generated outsample forecasts
+            outsample_index = fh_outsample.to_absolute_index()
+            y_pred_outsample = y_pred_outsample.loc[outsample_index]
+
+        y_pred = pd.concat([y_pred_insample, y_pred_outsample])
         return y_pred
 
     @classmethod
