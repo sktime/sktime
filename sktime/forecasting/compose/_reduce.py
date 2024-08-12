@@ -2265,12 +2265,17 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
         params = [params1, params2, params3, params4, params5]
 
-        if _check_soft_dependencies("catboost", severity="none"):
-            from catboost import CatBoostRegressor
+        # this fails because catboost is not sklearn compatible
+        # and fails set_params contracts already in sklearn;
+        # so it also fails them in sktime...
+        # left here for future reference, e.g., test for non-compliant estimators
+        #
+        # if _check_soft_dependencies("catboost", severity="none"):
+            # from catboost import CatBoostRegressor
 
-            est = CatBoostRegressor(learning_rate=1, depth=6, loss_function="RMSE")
-            params6 = {"estimator": est, "window_length": 3}
-            params.append(params6)
+            # est = CatBoostRegressor(learning_rate=1, depth=6, loss_function="RMSE")
+            # params6 = {"estimator": est, "window_length": 3}
+            # params.append(params6)
         return params
 
 
