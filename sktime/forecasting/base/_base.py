@@ -57,7 +57,7 @@ from sktime.datatypes import (
 from sktime.datatypes._dtypekind import DtypeKind
 from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.utils.datetime import _shift
-from sktime.utils.dependencies import _check_estimator_deps
+from sktime.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
 from sktime.utils.validation.series import check_equal_time_index
 from sktime.utils.warnings import warn
@@ -860,6 +860,23 @@ class BaseForecaster(BaseEstimator):
             raise NotImplementedError(
                 "automated vectorization for predict_proba is not implemented"
             )
+
+        # todo 0.35.0: replace warning by soft dependency exception
+        if not _check_soft_dependencies("skpro", severity="none"):
+            warn(
+                "From sktime version 0.38.0, forecasters' predict_proba will "
+                "require skpro to be present in the python environment, "
+                "for distribution objects to represent distributional forecasts. "
+                "Until 0.35.0, predict_proba will continue working without skpro, "
+                "defaulting to return objects in sktime.proba if skpro is not present. "
+                "From 0.35.0, an error will be raised if skpro is not present "
+                "in the environment. "
+                "To silence this message, ensure skpro is installed in the environment "
+                "when calling forecasters' predict_proba. ",
+                obj=self,
+                stacklevel=2,
+            )
+
         self.check_is_fitted()
 
         # input checks and conversions
