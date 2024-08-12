@@ -212,6 +212,7 @@ class _Reducer(_BaseWindowForecaster):
         "handles-missing-data": True,
         "capability:insample": False,
         "capability:pred_int": True,
+        "capability:pred_int:insample": False,
     }
 
     def __init__(
@@ -1827,7 +1828,7 @@ class _ReducerMixin:
         return fh_idx
 
 
-# TODO (release 0.32.0)
+# TODO (release 0.33.0)
 # change the default of `windows_identical` to `False`
 # update the docstring for parameter `windows_identical`
 # remove the corresponding warning and simplify __init__
@@ -1911,7 +1912,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
           length corresponds to (total observations + 1 - window_length +
           forecasting horizon).
 
-        Default value will change to `False` in version 0.32.0.
+        Default value will change to `False` in version 0.33.0.
     """
 
     _tags = {
@@ -1944,7 +1945,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         if windows_identical == "changing_value":
             warn(
                 "In `DirectReductionForecaster`, the default value of parameter "
-                "`windows_identical` will change to `False` in version 0.32.0. "
+                "`windows_identical` will change to `False` in version 0.33.0. "
                 "Before the introduction of `windows_identical`, the parameter "
                 "defaulted implicitly to `True` when `X_treatment` was set to "
                 "`shifted`, and to `False` when `X_treatment` was set to "

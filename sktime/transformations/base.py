@@ -1320,7 +1320,7 @@ class BaseTransformer(BaseEstimator):
                 Xt_valid, Xt_msg, metadata = check_is_mtype(
                     Xt,
                     ALLOWED_OUT_MTYPES,
-                    msg_return_dict="list",
+                    msg_return_dict="dict",
                     return_metadata=Xt_metadata_required,
                 )
 
