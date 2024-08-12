@@ -186,8 +186,6 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             pred_df = self._extend_df(pred_df, X, is_range_index=is_range_index)
             future_length = max(fh._values)
 
-        print(pred_df.head(10))
-
         # Check if the index is a range index
         if self.check_range_index(pred_df):
             is_range_index = True
@@ -209,6 +207,31 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             predictions.index = pred_out
 
         return predictions
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        return [
+            {
+                "deterministic": True,
+                "checkpoint_path": "Salesforce/moirai-1.0-R-small",
+            }
+        ]
 
     def _get_prediction_df(self, forecast_iter, df_config):
         def handle_series_prediction(forecast, target):
@@ -354,28 +377,3 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             n_periods = index.size
             new_index = pd.date_range(start=start_date, periods=n_periods, freq="D")
         return new_index
-
-    @classmethod
-    def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator.
-
-        Parameters
-        ----------
-        parameter_set : str, default="default"
-            Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
-
-        Returns
-        -------
-        params : dict or list of dict, default = {}
-            Parameters to create testing instances of the class
-            Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
-        """
-        return [
-            {
-                "deterministic": True,
-                "checkpoint_path": "Salesforce/moirai-1.0-R-small",
-            }
-        ]
