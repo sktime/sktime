@@ -63,7 +63,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         "capability:pred_int": False,
         "python_dependencies": ["salesforce-uni2ts", "gluonts", "torch"],
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex"],
-        "y_inner_mtype": ["pd.Series", "pd.DataFrame", "pd-multiindex"],
+        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex"],
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
@@ -185,6 +185,11 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         elif X is not None:
             pred_df = self._extend_df(pred_df, X, is_range_index=is_range_index)
             future_length = max(fh._values)
+
+        # check whether the index is a PeriodIndex
+        if isinstance(pred_df.index, pd.PeriodIndex):
+            time_idx = self.return_time_index(pred_df)
+            pred_df.index = time_idx.to_timestamp(freq=time_idx.freq)
 
         # Check if the index is a range index
         if self.check_range_index(pred_df):
