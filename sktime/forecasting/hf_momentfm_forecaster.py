@@ -179,7 +179,6 @@ class MomentFMForecaster(_BaseGlobalForecaster):
 
     def _fit(self, fh, y, X=None):
         """Assumes y is a single or multivariate time series."""
-        import torch.cuda.amp
         from torch.optim import Adam
         from torch.optim.lr_scheduler import OneCycleLR
         from torch.utils.data import DataLoader
@@ -327,7 +326,6 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         criterion = self._criterion
         optimizer = Adam(self._model.parameters(), lr=self.max_lr)
         # Enable mixed precision training
-        scaler = torch.cuda.amp.GradScaler()
 
         # Create a OneCycleLR scheduler
         total_steps = len(train_dataloader) * max_epoch
@@ -352,7 +350,6 @@ class MomentFMForecaster(_BaseGlobalForecaster):
                 criterion,
                 optimizer,
                 scheduler,
-                scaler,
                 self._model,
                 max_norm,
                 train_dataloader,
@@ -447,6 +444,8 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         params_set = []
         params1 = {}
         params_set.append(params1)
+        params2 = {"batch_size": 2}
+        params_set.append(params2)
 
         return params_set
 
@@ -486,7 +485,6 @@ def _run_epoch(
     criterion,
     optimizer,
     scheduler,
-    scaler,
     model,
     max_norm,
     train_dataloader,
@@ -507,16 +505,11 @@ def _run_epoch(
             output = model(timeseries, input_mask)
         loss = criterion(output.forecast, forecast)
 
-        # Scales the loss for mixed precision training
-        # scaler.scale(loss)
         accelerator.backward(loss)
 
         # Clip gradients
-        # scaler.unscale_(optimizer)
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)
 
-        # scaler.step(optimizer)
-        # scaler.update()
         optimizer.step()
         optimizer.zero_grad(set_to_none=True)
 
