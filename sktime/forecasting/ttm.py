@@ -468,6 +468,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                     "max_steps": 10,
                     "output_dir": "test_output",
                     "per_device_train_batch_size": 32,
+                    "report_to": "none",
                 },
             },
         ]
@@ -495,7 +496,7 @@ def _pad_truncate(data, seq_len, pad_value=0):
 
     # Truncate or pad each sequence in data
     if original_seq_len > seq_len:
-        truncated_data = data[:, :seq_len, :]
+        truncated_data = data[:, -seq_len:, :]
         mask = np.ones_like(truncated_data)
     else:
         truncated_data = np.pad(
