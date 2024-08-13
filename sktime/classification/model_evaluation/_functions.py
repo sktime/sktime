@@ -11,10 +11,143 @@ import numpy as np
 from sklearn.model_selection import KFold
 
 from sktime.datatypes import check_is_scitype, convert_to
+from sktime.split import InstanceSplitter
 from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_scoring
 
 PANDAS_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hier"]
+
+
+# def _evaluate_window(x, meta):
+#     # unpack args
+#     i, (y_train, y_test, X_train, X_test) = x
+#     classifier = meta["classifier"]
+#     scoring = meta["scoring"]
+#     return_data = meta["return_data"]
+#     error_score = meta["error_score"]
+#     cutoff_dtype = meta["cutoff_dtype"]
+
+#     # set default result values in case estimator fitting fails
+#     score = error_score
+#     fit_time = np.nan
+#     pred_time = np.nan
+#     cutoff = pd.Period(pd.NaT) if cutoff_dtype.startswith("period") else pd.NA
+#     y_pred = pd.NA
+#     temp_result = dict()
+#     y_preds_cache = dict()
+#     old_naming = True
+#     old_name_mapping = {}
+
+#     try:
+#         # fit/update
+#         start_fit = time.perf_counter()
+#         if i == 0:
+#             classifier = classifier.clone()
+#             classifier.fit(y=y_train, X=X_train)
+#         else:  # if strategy in ["update", "no-update_params"]:
+#             update_params = strategy == "update"
+#             forecaster.update(y_train, X_train, update_params=update_params)
+#         fit_time = time.perf_counter() - start_fit
+
+#         # predict based on metrics
+#         pred_type = {
+#             "pred_quantiles": "predict_quantiles",
+#             "pred_interval": "predict_interval",
+#             "pred_proba": "predict_proba",
+#             "pred": "predict",
+#         }
+#         # cache prediction from the first scitype and reuse it to
+#         #compute other metrics
+#         for scitype in scoring:
+#             method = getattr(forecaster, pred_type[scitype])
+#             if len(set(map(lambda metric: metric.name, scoring.get(scitype)))) != len(
+#                 scoring.get(scitype)
+#             ):
+#                 old_naming = False
+#             for metric in scoring.get(scitype):
+#                 pred_args = _get_pred_args_from_metric(scitype, metric)
+#                 if pred_args == {}:
+#                     time_key = f"{scitype}_time"
+#                     result_key = f"test_{metric.name}"
+#                     y_pred_key = f"y_{scitype}"
+#                 else:
+#                     argval = list(pred_args.values())[0]
+#                     time_key = f"{scitype}_{argval}_time"
+#                     result_key = f"test_{metric.name}_{argval}"
+#                     y_pred_key = f"y_{scitype}_{argval}"
+#                     old_name_mapping[f"{scitype}_{argval}_time"] = f"{scitype}_time"
+#                     old_name_mapping[f"test_{metric.name}_{argval}"] = (
+#                         f"test_{metric.name}"
+#                     )
+#                     old_name_mapping[f"y_{scitype}_{argval}"] = f"y_{scitype}"
+
+#                 # make prediction
+#                 if y_pred_key not in y_preds_cache.keys():
+#                     start_pred = time.perf_counter()
+#                     y_pred = method(fh, X_test, **pred_args)
+#                     pred_time = time.perf_counter() - start_pred
+#                     temp_result[time_key] = [pred_time]
+#                     y_preds_cache[y_pred_key] = [y_pred]
+#                 else:
+#                     y_pred = y_preds_cache[y_pred_key][0]
+
+#                 score = metric(y_test, y_pred, y_train=y_train)
+#                 temp_result[result_key] = [score]
+
+#         # get cutoff
+#         cutoff = forecaster.cutoff
+
+#     except Exception as e:
+#         if error_score == "raise":
+#             raise e
+#         else:  # assign default value when fitting failed
+#             for scitype in scoring:
+#                 temp_result[f"{scitype}_time"] = [pred_time]
+#                 if return_data:
+#                     temp_result[f"y_{scitype}"] = [y_pred]
+#                 for metric in scoring.get(scitype):
+#                     temp_result[f"test_{metric.name}"] = [score]
+#             warnings.warn(
+#                 f"""
+#                 In evaluate, fitting of forecaster {type(forecaster).__name__} failed,
+#                 you can set error_score='raise' in evaluate to see
+#                 the exception message.
+#                 Fit failed for the {i}-th data split, on training data y_train with
+#                 cutoff {cutoff}, and len(y_train)={len(y_train)}.
+#                 The score will be set to {error_score}.
+#                 Failed forecaster with parameters: {forecaster}.
+#                 """,
+#                 FitFailedWarning,
+#                 stacklevel=2,
+#             )
+
+#     if pd.isnull(cutoff):
+#         cutoff_ind = cutoff
+#     else:
+#         cutoff_ind = cutoff[0]
+
+#     # Storing the remaining evaluate detail
+#     temp_result["fit_time"] = [fit_time]
+#     temp_result["len_train_window"] = [len(y_train)]
+#     temp_result["cutoff"] = [cutoff_ind]
+#     if return_data:
+#         temp_result["y_train"] = [y_train]
+#         temp_result["y_test"] = [y_test]
+#         temp_result.update(y_preds_cache)
+#     result = pd.DataFrame(temp_result)
+#     result = result.astype({"len_train_window": int, "cutoff": cutoff_dtype})
+#     if old_naming:
+#         result = result.rename(columns=old_name_mapping)
+#     column_order = _get_column_order_and_datatype(
+#         scoring, return_data, cutoff_dtype, old_naming=old_naming
+#     )
+#     result = result.reindex(columns=column_order.keys())
+
+#     # Return forecaster if "update"
+#     if strategy == "update" or (strategy == "no-update_params" and i == 0):
+#         return result, forecaster
+#     else:
+#         return result
 
 
 def evaluate(
@@ -177,140 +310,71 @@ def evaluate(
         "cutoff_dtype": cutoff_dtype,
     }
 
+    def gen_y_X_train_test(y, X, cv):
+        """Generate joint splits of y, X as per cv.
 
-# def _evaluate_window(x, meta):
-#     # unpack args
-#     i, (y_train, y_test, X_train, X_test) = x
-#     fh = meta["fh"]
-#     forecaster = meta["forecaster"]
-#     strategy = meta["strategy"]
-#     scoring = meta["scoring"]
-#     return_data = meta["return_data"]
-#     error_score = meta["error_score"]
-#     cutoff_dtype = meta["cutoff_dtype"]
+        Yields
+        ------
+        y_train : i-th train split of y as per cv
+        y_test : i-th test split of y as per cv
+        X_train : i-th train split of y as per cv.
+        X_test : i-th test split of y as per cv.
+        """
+        splitter = InstanceSplitter(cv)
 
-#     # set default result values in case estimator fitting fails
-#     score = error_score
-#     fit_time = np.nan
-#     pred_time = np.nan
-#     cutoff = pd.Period(pd.NaT) if cutoff_dtype.startswith("period") else pd.NA
-#     y_pred = pd.NA
-#     temp_result = dict()
-#     y_preds_cache = dict()
-#     old_naming = True
-#     old_name_mapping = {}
-#     if fh is None:
-#         fh = _select_fh_from_y(y_test)
+        geny = splitter.split(y)
+        genx = splitter.split(X)
 
-#     try:
-#         # fit/update
-#         start_fit = time.perf_counter()
-#         if i == 0 or strategy == "refit":
-#             forecaster = forecaster.clone()
-#             forecaster.fit(y=y_train, X=X_train, fh=fh)
-#         else:  # if strategy in ["update", "no-update_params"]:
-#             update_params = strategy == "update"
-#             forecaster.update(y_train, X_train, update_params=update_params)
-#         fit_time = time.perf_counter() - start_fit
+        for (y_train, y_test), (X_train, X_test) in zip(geny, genx):
+            yield y_train, y_test, X_train, X_test
 
-#         # predict based on metrics
-#         pred_type = {
-#             "pred_quantiles": "predict_quantiles",
-#             "pred_interval": "predict_interval",
-#             "pred_proba": "predict_proba",
-#             "pred": "predict",
-#         }
-#        # cache prediction from the first scitype and reuse it to compute other metrics
-#         for scitype in scoring:
-#             method = getattr(forecaster, pred_type[scitype])
-#             if len(set(map(lambda metric: metric.name, scoring.get(scitype)))) != len(
-#                 scoring.get(scitype)
-#             ):
-#                 old_naming = False
-#             for metric in scoring.get(scitype):
-#                 pred_args = _get_pred_args_from_metric(scitype, metric)
-#                 if pred_args == {}:
-#                     time_key = f"{scitype}_time"
-#                     result_key = f"test_{metric.name}"
-#                     y_pred_key = f"y_{scitype}"
-#                 else:
-#                     argval = list(pred_args.values())[0]
-#                     time_key = f"{scitype}_{argval}_time"
-#                     result_key = f"test_{metric.name}_{argval}"
-#                     y_pred_key = f"y_{scitype}_{argval}"
-#                     old_name_mapping[f"{scitype}_{argval}_time"] = f"{scitype}_time"
-#                     old_name_mapping[f"test_{metric.name}_{argval}"] = (
-#                         f"test_{metric.name}"
-#                     )
-#                     old_name_mapping[f"y_{scitype}_{argval}"] = f"y_{scitype}"
+    # generator for y and X splits to iterate over below
+    # yx_splits = gen_y_X_train_test(y, X, cv)
+    pass
+    # # sequential strategies cannot be parallelized
+    # not_parallel = strategy in ["update", "no-update_params"]
 
-#                 # make prediction
-#                 if y_pred_key not in y_preds_cache.keys():
-#                     start_pred = time.perf_counter()
-#                     y_pred = method(fh, X_test, **pred_args)
-#                     pred_time = time.perf_counter() - start_pred
-#                     temp_result[time_key] = [pred_time]
-#                     y_preds_cache[y_pred_key] = [y_pred]
-#                 else:
-#                     y_pred = y_preds_cache[y_pred_key][0]
+    # # dispatch by backend and strategy
+    # if not_parallel:
+    #     # Run temporal cross-validation sequentially
+    #     results = []
+    #     for x in enumerate(yx_splits):
+    #         is_first = x[0] == 0  # first iteration
+    #         if strategy == "update" or (strategy == "no-update_params" and is_first):
+    #             result, forecaster = _evaluate_window(x, _evaluate_window_kwargs)
+    #             _evaluate_window_kwargs["forecaster"] = forecaster
+    #         else:
+    #             result = _evaluate_window(x, _evaluate_window_kwargs)
+    #         results.append(result)
+    # else:
+    #     if backend == "dask":
+    #         backend_in = "dask_lazy"
+    #     else:
+    #         backend_in = backend
+    #     results = parallelize(
+    #         fun=_evaluate_window,
+    #         iter=enumerate(yx_splits),
+    #         meta=_evaluate_window_kwargs,
+    #         backend=backend_in,
+    #         backend_params=backend_params,
+    #     )
 
-#                 score = metric(y_test, y_pred, y_train=y_train)
-#                 temp_result[result_key] = [score]
+    # # final formatting of dask dataframes
+    # if backend in ["dask", "dask_lazy"] and not not_parallel:
+    #     import dask.dataframe as dd
 
-#         # get cutoff
-#         cutoff = forecaster.cutoff
+    #     metadata = _get_column_order_and_datatype(scoring, return_data, cutoff_dtype)
 
-#     except Exception as e:
-#         if error_score == "raise":
-#             raise e
-#         else:  # assign default value when fitting failed
-#             for scitype in scoring:
-#                 temp_result[f"{scitype}_time"] = [pred_time]
-#                 if return_data:
-#                     temp_result[f"y_{scitype}"] = [y_pred]
-#                 for metric in scoring.get(scitype):
-#                     temp_result[f"test_{metric.name}"] = [score]
-#             warnings.warn(
-#                 f"""
-#                 In evaluate, fitting of forecaster {type(forecaster).__name__} failed,
-#                 you can set error_score='raise' in evaluate to see
-#                 the exception message.
-#                 Fit failed for the {i}-th data split, on training data y_train with
-#                 cutoff {cutoff}, and len(y_train)={len(y_train)}.
-#                 The score will be set to {error_score}.
-#                 Failed forecaster with parameters: {forecaster}.
-#                 """,
-#                 FitFailedWarning,
-#                 stacklevel=2,
-#             )
+    #     results = dd.from_delayed(results, meta=metadata)
+    #     if backend == "dask":
+    #         results = results.compute()
+    # else:
+    #     results = pd.concat(results)
 
-#     if pd.isnull(cutoff):
-#         cutoff_ind = cutoff
-#     else:
-#         cutoff_ind = cutoff[0]
+    # # final formatting of results DataFrame
+    # results = results.reset_index(drop=True)
 
-#     # Storing the remaining evaluate detail
-#     temp_result["fit_time"] = [fit_time]
-#     temp_result["len_train_window"] = [len(y_train)]
-#     temp_result["cutoff"] = [cutoff_ind]
-#     if return_data:
-#         temp_result["y_train"] = [y_train]
-#         temp_result["y_test"] = [y_test]
-#         temp_result.update(y_preds_cache)
-#     result = pd.DataFrame(temp_result)
-#     result = result.astype({"len_train_window": int, "cutoff": cutoff_dtype})
-#     if old_naming:
-#         result = result.rename(columns=old_name_mapping)
-#     column_order = _get_column_order_and_datatype(
-#         scoring, return_data, cutoff_dtype, old_naming=old_naming
-#     )
-#     result = result.reindex(columns=column_order.keys())
-
-#     # Return forecaster if "update"
-#     if strategy == "update" or (strategy == "no-update_params" and i == 0):
-#         return result, forecaster
-#     else:
-#         return result
+    # return results
 
 
 def _check_scores(metrics) -> dict:
