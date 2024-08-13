@@ -19,6 +19,20 @@ For upcoming changes and next releases, see our `milestones <https://github.com/
 For our long-term plan, see our :ref:`roadmap`.
 
 
+Version 0.31.2 - 2024-08-13
+---------------------------
+
+Hotfix release for using ``make_reduction`` with not fully ``sklearn`` compliant
+tabular regressors such as from ``catboost``.
+
+For last non-maintenance content updates, see 0.31.1.
+
+Contents
+~~~~~~~~
+
+* [BUG] fix ``make_reduction`` type inference for non-sklearn estimators
+
+
 Version 0.31.1 - 2024-08-10
 ---------------------------
 
