@@ -269,12 +269,12 @@ class PytorchDataset(Dataset):
         """Get item at index."""
         x = self.X[i]
         x = torch.tensor(x, dtype=torch.float)
-
+        inputs = {"X": x}
         # to make it reusable for predict
         if self.y is None:
-            return x
+            return inputs
 
         # return y during fit
         y = self.y[i]
         y = torch.tensor(y, dtype=torch.long)
-        return x, y
+        return inputs, y
