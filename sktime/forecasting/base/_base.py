@@ -53,9 +53,10 @@ from sktime.datatypes import (
     scitype_to_mtype,
     update_data,
 )
+from sktime.datatypes._dtypekind import DtypeKind
 from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.utils.datetime import _shift
-from sktime.utils.dependencies import _check_estimator_deps
+from sktime.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
 from sktime.utils.validation.series import check_equal_time_index
 from sktime.utils.warnings import warn
@@ -104,6 +105,8 @@ class BaseForecaster(BaseEstimator):
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": False,  # is fit empty and can be skipped?
+        "capability:categorical_in_X": False,
+        # does the forecaster natively support categorical in exogeneous X?
     }
 
     # configs and default config values
@@ -856,6 +859,23 @@ class BaseForecaster(BaseEstimator):
             raise NotImplementedError(
                 "automated vectorization for predict_proba is not implemented"
             )
+
+        # todo 0.35.0: replace warning by soft dependency exception
+        if not _check_soft_dependencies("skpro", severity="none"):
+            warn(
+                "From sktime version 0.38.0, forecasters' predict_proba will "
+                "require skpro to be present in the python environment, "
+                "for distribution objects to represent distributional forecasts. "
+                "Until 0.35.0, predict_proba will continue working without skpro, "
+                "defaulting to return objects in sktime.proba if skpro is not present. "
+                "From 0.35.0, an error will be raised if skpro is not present "
+                "in the environment. "
+                "To silence this message, ensure skpro is installed in the environment "
+                "when calling forecasters' predict_proba. ",
+                obj=self,
+                stacklevel=2,
+            )
+
         self.check_is_fitted()
 
         # input checks and conversions
@@ -1483,7 +1503,7 @@ class BaseForecaster(BaseEstimator):
         # checking y
         if y is not None:
             # request only required metadata from checks
-            y_metadata_required = ["n_features", "feature_names"]
+            y_metadata_required = ["n_features", "feature_names", "feature_kind"]
             if self.get_tag("scitype:y") != "both":
                 y_metadata_required += ["is_univariate"]
             if not self.get_tag("handles-missing-data"):
@@ -1513,6 +1533,11 @@ class BaseForecaster(BaseEstimator):
                     var_name=msg_start,
                     allowed_msg=allowed_msg,
                     raise_exception=True,
+                )
+
+            if DtypeKind.CATEGORICAL in y_metadata["feature_kind"]:
+                raise TypeError(
+                    "Forecasters do not support categorical features in endogeneous y."
                 )
 
             y_scitype = y_metadata["scitype"]
@@ -1547,7 +1572,7 @@ class BaseForecaster(BaseEstimator):
         # checking X
         if X is not None:
             # request only required metadata from checks
-            X_metadata_required = []
+            X_metadata_required = ["feature_kind"]
             if not self.get_tag("handles-missing-data"):
                 X_metadata_required += ["has_nans"]
 
@@ -1575,6 +1600,17 @@ class BaseForecaster(BaseEstimator):
                     var_name=msg_start,
                     allowed_msg=allowed_msg,
                     raise_exception=True,
+                )
+
+            if (
+                not self.get_tag("ignores-exogeneous-X")
+                and DtypeKind.CATEGORICAL in X_metadata["feature_kind"]
+                and not self.get_tag("capability:categorical_in_X")
+            ):
+                # replace error with encoding logic in next step.
+                raise TypeError(
+                    f"Forecaster {self} does not support categorical features in "
+                    "exogeneous X."
                 )
 
             X_scitype = X_metadata["scitype"]
