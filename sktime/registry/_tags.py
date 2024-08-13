@@ -207,8 +207,6 @@ class python_version(_BaseTag):
 
     - ``"python_version"``: Python version specifier (PEP 440) for the object,
     - ``"python_dependencies"``: list of required Python packages (PEP 440)
-    - ``"python_dependencies_alias"``: alias for package names,
-      if different from import names
     - ``"env_marker"``: environment marker for the object (PEP 508)
     - ``"requires_cython"``: whether the object requires a C compiler present
 
@@ -253,8 +251,6 @@ class python_dependencies(_BaseTag):
 
     - ``"python_version"``: Python version specifier (PEP 440) for the object,
     - ``"python_dependencies"``: list of required Python packages (PEP 440)
-    - ``"python_dependencies_alias"``: alias for package names,
-      if different from import names
     - ``"env_marker"``: environment marker for the object (PEP 508)
     - ``"requires_cython"``: whether the object requires a C compiler present
 
@@ -287,55 +283,6 @@ class python_dependencies(_BaseTag):
     }
 
 
-class python_dependencies_alias(_BaseTag):
-    """Alias for Python package dependency names for the object.
-
-    Part of packaging metadata for the object.
-
-    - String name: ``"python_dependencies_alias"``
-    - Private tag, developer and framework facing
-    - Values: dict of str, key = PEP 440 package name, value = import name
-    - Example: ``{"scikit-learn": "sklearn"}``
-    - Example 2: ``{"dtw-python": "dtw", "scikit-learn": "sklearn"}``
-    - Default: no aliases (``None``)
-
-    ``sktime`` manages objects and estimators like mini-packages,
-    with their own dependencies and compatibility requirements.
-    Dependencies are specified in the tags:
-
-    - ``"python_version"``: Python version specifier (PEP 440) for the object,
-    - ``"python_dependencies"``: list of required Python packages (PEP 440)
-    - ``"python_dependencies_alias"``: alias for package names,
-      if different from import names
-    - ``"env_marker"``: environment marker for the object (PEP 508)
-    - ``"requires_cython"``: whether the object requires a C compiler present
-
-    The ``python_dependencies_alias`` tag of an object is dict,
-    providing import name aliases for package names in the ``python_dependencies`` tag,
-    if the package name differs from the import name.
-
-    The tag is used in packaging metadata for the object,
-    and is used internally to check compatibility of the object with
-    the build environment, to raise informative error messages.
-
-    This tag is required if the package name of a dependency is different
-    from the import name of the package, e.g., ``"dtw-python"`` and ``"dtw"``.
-    If not set, the package name is assumed to be identical with the import name.
-
-    Developers should note that elements of this ``dict`` are not passed on
-    via field inheritance, unlike the tags themselves.
-    Hence, if multiple aliases are required, they need to be set in the same tag.
-    """
-
-    _tags = {
-        "tag_name": "python_dependencies_alias",
-        "parent_type": "object",
-        "tag_type": "dict",
-        "short_descr": "alias for package names in python_dependencies, key-value pairs are package name, import name",  # noqa: E501
-        "user_facing": False,
-    }
-
-
 class env_marker(_BaseTag):
     """Environment marker requirement for the object (PEP 508).
 
@@ -353,8 +300,6 @@ class env_marker(_BaseTag):
 
     - ``"python_version"``: Python version specifier (PEP 440) for the object,
     - ``"python_dependencies"``: list of required Python packages (PEP 440)
-    - ``"python_dependencies_alias"``: alias for package names,
-      if different from import names
     - ``"env_marker"``: environment marker for the object (PEP 508)
     - ``"requires_cython"``: whether the object requires a C compiler present
 
@@ -398,8 +343,6 @@ class requires_cython(_BaseTag):
 
     - ``"python_version"``: Python version specifier (PEP 440) for the object,
     - ``"python_dependencies"``: list of required Python packages (PEP 440)
-    - ``"python_dependencies_alias"``: alias for package names,
-      if different from import names
     - ``"env_marker"``: environment marker for the object (PEP 508)
     - ``"requires_cython"``: whether the object requires a C compiler present
 
@@ -479,7 +422,7 @@ class capability__feature_importance(_BaseTag):
 
     If the tag is ``True``, the estimator can produce feature importances.
 
-    Feature importances are queriable by the fitted parameter interface
+    Feature importances are queryable by the fitted parameter interface
     via ``get_fitted_params``, after calling ``fit`` of the respective estimator.
 
     If the tag is ``False``, the estimator does not produce feature importances.
@@ -544,7 +487,7 @@ class capability__train_estimate(_BaseTag):
     produce and store an estimate of their own statistical performance,
     e.g., via out-of-bag estimates, or cross-validation.
 
-    Training performance estimates are queriable by the fitted parameter interface
+    Training performance estimates are queryable by the fitted parameter interface
     via ``get_fitted_params``, after calling ``fit`` of the respective estimator.
 
     If the tag is ``False``, the estimator does not produce
@@ -616,7 +559,7 @@ class capability__exogeneous(_BaseTag):
     that can be used to improve forecasting accuracy.
 
     If the forecaster uses exogeneous data (``ignore-exogeneous-X=False``),
-    the ``X`` parmameter in ``fit``, ``predict``, and other methods
+    the ``X`` parameter in ``fit``, ``predict``, and other methods
     can be used to pass exogeneous data to the forecaster.
 
     If the ``X-y-must-have-same-index`` tag is ``True``,
@@ -776,6 +719,16 @@ class requires_fh_in_fit(_BaseTag):
     If the tag is ``False``, the forecasting horizon can be passed in the ``fit``
     method, but this is not required. In this case, it must be passed later,
     whenever ``predict`` or other prediction methods are called.
+
+    Whether the ``fh`` is required in ``fit`` is an intrinsic property of the
+    forecasting algorithm and not a user setting.
+
+    For instance, direct reduction to tabular regression
+    requires the ``fh`` as it is used by the fitting algorithm to lag the endogeneous
+    against the exogeneous data. In contrast, recursive reduction to tabular regression
+    does not require the ``fh`` in ``fit``, as only the prediction step
+    requires the forecasting horizon, when applying the fitted tabular regression model
+    by sliding it forward over the ``fh`` steps.
     """
 
     _tags = {
@@ -783,6 +736,31 @@ class requires_fh_in_fit(_BaseTag):
         "parent_type": "forecaster",
         "tag_type": "bool",
         "short_descr": "does the forecaster require the forecasting horizon in fit?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
+class capability__categorical_in_X(_BaseTag):
+    """Capability: If forecaster can handle categorical natively in exogeneous(X) data.
+
+    ``False`` = cannot handle categorical natively in X,
+    ``True`` = can handle categorical natively in X
+
+    - String name: ``"capability:categorical_in_X"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    Exogeneous data are additional time series,
+    that can be used to improve forecasting accuracy.
+    """
+
+    _tags = {
+        "tag_name": "capability:categorical_in_X",
+        "parent_type": "forecaster",
+        "tag_type": "bool",
+        "short_descr": "can the forecaster natively handle categorical data in exogeneous X?",  # noqa: E501
         "user_facing": True,
     }
 
@@ -917,6 +895,36 @@ class capability__multioutput(_BaseTag):
     }
 
 
+class capability__predict_proba(_BaseTag):
+    """Capability: the classifier can predict class probabilities.
+
+    - String name: ``"capability:predict_proba"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to classifiers only.
+
+    If the tag is ``True``, the classifier implements a non-default ``predict_proba``
+    method, which can be used to predict class probabilities.
+
+    If the tag is ``False``, the classifier's ``predict_proba`` defaults to
+    predicting zero/one class probabilities, equivalent to the ``predict`` output.
+    """
+
+    _tags = {
+        "tag_name": "capability:predict_proba",
+        "parent_type": "classifier",
+        "tag_type": "bool",
+        "short_descr": (
+            "does the classifier implement a non-default predict_proba method? "
+            "i.e., not just 0/1 probabilities obtained from predict?"
+        ),
+        "user_facing": True,
+    }
+
+
 # Transformations
 # ---------------
 
@@ -1018,26 +1026,26 @@ class scitype__transform_input(_BaseTag):
         :header-rows: 2
 
         * -
-            - `transform`
-            -
+          - `transform`
+          -
         * - `X`
-            - `-output`
-            - type of return
+          - `-output`
+          - type of return
         * - `Series`
-            - `Primitives`
-            - `pd.DataFrame` (1-row)
+          - `Primitives`
+          - `pd.DataFrame` (1-row)
         * - `Panel`
-            - `Primitives`
-            - `pd.DataFrame`
+          - `Primitives`
+          - `pd.DataFrame`
         * - `Series`
-            - `Series`
-            - `Series`
+          - `Series`
+          - `Series`
         * - `Panel`
-            - `Series`
-            - `Panel`
+          - `Series`
+          - `Panel`
         * - `Series`
-            - `Panel`
-            - `Panel`
+          - `Panel`
+          - `Panel`
 
     The instance indices in the in return correspond to instances in the input ``X``.
     """
@@ -1418,10 +1426,10 @@ class capability__inverse_transform__exact(_BaseTag):
 
 
 class transform_returns_same_time_index(_BaseTag):
-    """Behaviour flag: transformer returns same time index as input.
+    """Property: transformer returns same time index as input.
 
     - String name: ``"transform-returns-same-time-index"``
-    - Public behaviour flag
+    - Public property tag
     - Values: boolean, ``True`` / ``False``
     - Example: ``True``
     - Default: ``False``
@@ -1443,7 +1451,7 @@ class transform_returns_same_time_index(_BaseTag):
     If the tag is ``False``, the returned series will in general have a different
     time index than the input series.
 
-    If ``sciptye:transform-output`` is ``"Primitives"``, this tag is irrelevant
+    If ``scitype:transform-output`` is ``"Primitives"``, this tag is irrelevant
     and will have value ``False``.
 
     Besides being informative to the user, this tag is also used internally
@@ -1456,6 +1464,152 @@ class transform_returns_same_time_index(_BaseTag):
         "tag_type": "bool",
         "short_descr": "does transform return same time index as input?",
         "user_facing": True,
+    }
+
+
+# Developer tags
+# --------------
+
+
+class x_inner_mtype(_BaseTag):
+    """The machine type(s) the transformer can deal with internally for X.
+
+    - String name: ``"X_inner_mtype"``
+    - Extension developer tag
+    - Values: str or list of string, from the list of :term:`mtype` strings
+    - Example: ``"pd.DataFrame"``
+    - Default: specific to estimator type, see extension template
+
+    Estimators in ``sktime`` support a variety of input data types, following
+    one of many possible machine types, short: :term:`mtype` specifications.
+
+    Internally, the estimator may support only a subset of these types,
+    for instance due to the implementation of the estimator, or due to
+    interfacing with external libraries that use a specific data format.
+
+    The ``sktime`` extension contracts allow the extender to specify the
+    internal :term:`mtype` support, in this case the methods the extender
+    needs to implement guarantee that the arguments are of the correct type,
+    by carrying out the necessary conversions and coercions.
+
+    For instance, an extender implementing ``_fit`` with an ``X`` argument
+    and ``X_inner_mtype`` set to ``"pd.DataFrame"`` can assume that the ``X``
+    argument follows the ``pd.DataFrame`` :term:`mtype` specification - while
+    users can pass any supported mtype to the public ``fit`` method.
+
+    Tags named ``X_inner_mtype``, ``y_inner_mtype``, etc, apply this
+    specification to the respective arguments in the method signature.
+
+    The four main patterns in using the "inner mtype" tag are as follows:
+
+    * specifying a single string. In this case, internal methods will provide
+      the extender with inputs in the specified machine type.
+    * specifying a list of strings, of the same :mtype:`scitype`.
+      In this case, the boilerplate layer will
+      first attempt to find the first :term:`mtype` in the list.
+    * specifying a list of strings, all of different :mtype:`scitype`.
+      This will convert the input to the mtype of the same scitype. This is especially
+      useful if the implementer wants to deal with scitype broadcasting internally,
+      in this case it is recommended to specify similar mtypes, such as
+      ``"pd.DataFrame"``, ``"pd-multiindex"``, ``"pd_multiindex_hier``,
+      which allow dealing with the different types simultaneously.
+    * specifying all possible mtypes, by setting the default to a list such as
+      ``ALL_TIME_SERIES_MTYPES`` from the ``datatypes`` module.
+      As all mtypes are supported, inputs will be passed through to ``_fit`` etc,
+      without any conversion and coercion. This is useful for composites,
+      where the extender wants to ensure that components should carry out
+      the necessary conversions and coercions.
+
+    More generally, for an arbitrary list of mtypes, the boilerplate logic will:
+
+    * first checks whether the mtype of the input is on the list. If yes,
+      the input will be passed through as is.
+    * if the mtype of the input is not on the list, the boilerplate will attempt to
+      identify the first mtype of the same scitype as the input, and coerce to that.
+    * if no mtype of same scitype is found, it will attempt to coerce to the
+      "simplest" adjacent scitype, e.g., from ``"pd.DataFrame"`` to ``"pd-multiindex"``.
+
+    In all cases, ordering is important, as the first mtype in the list is the
+    one that will be used as target type for conversions.
+    """
+
+    _tags = {
+        "tag_name": "X_inner_mtype",
+        "parent_type": "estimator",
+        "tag_type": ("list", "str"),
+        "short_descr": "which machine type(s) is the internal _fit/_predict able to deal with?",  # noqa: E501
+        "user_facing": False,
+    }
+
+
+class y_inner_mtype(_BaseTag):
+    """The machine type(s) the transformer can deal with internally for y.
+
+    - String name: ``"y_inner_mtype"``
+    - Extension developer tag
+    - Values: str or list of string, from the list of :term:`mtype` strings
+    - Example: ``"pd.DataFrame"``
+    - Default: specific to estimator type, see extension template
+
+    Estimators in ``sktime`` support a variety of input data types, following
+    one of many possible machine types, short: :term:`mtype` specifications.
+
+    Internally, the estimator may support only a subset of these types,
+    for instance due to the implementation of the estimator, or due to
+    interfacing with external libraries that use a specific data format.
+
+    The ``sktime`` extension contracts allow the extender to specify the
+    internal :term:`mtype` support, in this case the methods the extender
+    needs to implement guarantee that the arguments are of the correct type,
+    by carrying out the necessary conversions and coercions.
+
+    For instance, an extender implementing ``_fit`` with an ``X`` argument
+    and ``X_inner_mtype`` set to ``"pd.DataFrame"`` can assume that the ``X``
+    argument follows the ``pd.DataFrame`` :term:`mtype` specification - while
+    users can pass any supported mtype to the public ``fit`` method.
+
+    Tags named ``X_inner_mtype``, ``y_inner_mtype``, etc, apply this
+    specification to the respective arguments in the method signature.
+
+    The four main patterns in using the "inner mtype" tag are as follows:
+
+    * specifying a single string. In this case, internal methods will provide
+      the extender with inputs in the specified machine type.
+    * specifying a list of strings, of the same :mtype:`scitype`.
+      In this case, the boilerplate layer will
+      first attempt to find the first :term:`mtype` in the list.
+    * specifying a list of strings, all of different :mtype:`scitype`.
+      This will convert the input to the mtype of the same scitype. This is especially
+      useful if the implementer wants to deal with scitype broadcasting internally,
+      in this case it is recommended to specify similar mtypes, such as
+      ``"pd.DataFrame"``, ``"pd-multiindex"``, ``"pd_multiindex_hier``,
+      which allow dealing with the different types simultaneously.
+    * specifying all possible mtypes, by setting the default to a list such as
+      ``ALL_TIME_SERIES_MTYPES`` from the ``datatypes`` module.
+      As all mtypes are supported, inputs will be passed through to ``_fit`` etc,
+      without any conversion and coercion. This is useful for composites,
+      where the extender wants to ensure that components should carry out
+      the necessary conversions and coercions.
+
+    More generally, for an arbitrary list of mtypes, the boilerplate logic will:
+
+    * first checks whether the mtype of the input is on the list. If yes,
+      the input will be passed through as is.
+    * if the mtype of the input is not on the list, the boilerplate will attempt to
+      identify the first mtype of the same scitype as the input, and coerce to that.
+    * if no mtype of same scitype is found, it will attempt to coerce to the
+      "simplest" adjacent scitype, e.g., from ``"pd.DataFrame"`` to ``"pd-multiindex"``.
+
+    In all cases, ordering is important, as the first mtype in the list is the
+    one that will be used as target type for conversions.
+    """
+
+    _tags = {
+        "tag_name": "y_inner_mtype",
+        "parent_type": "estimator",
+        "tag_type": ("list", "str"),
+        "short_descr": "which machine type(s) is the internal _fit/_predict able to deal with?",  # noqa: E501
+        "user_facing": False,
     }
 
 
@@ -1497,63 +1651,10 @@ ESTIMATOR_TAG_REGISTER = [
         "which scitypes does X internally support?",
     ),
     (
-        "scitype:y",
-        "forecaster",
-        ("str", ["univariate", "multivariate", "both"]),
-        "which series type does the forecaster support? multivariate means >1 vars",
-    ),
-    (
-        "y_inner_mtype",
-        ["forecaster", "transformer"],
-        (
-            "list",
-            [
-                "pd.Series",
-                "pd.DataFrame",
-                "np.ndarray",
-                "nested_univ",
-                "pd-multiindex",
-                "numpy3D",
-                "df-list",
-            ],
-        ),
-        "which machine type(s) is the internal _fit/_predict able to deal with?",
-    ),
-    (
-        "X_inner_mtype",
-        [
-            "clusterer",
-            "forecaster",
-            "transformer",
-            "transformer-pairwise-panel",
-            "param_est",
-        ],
-        (
-            "list",
-            [
-                "pd.Series",
-                "pd.DataFrame",
-                "np.ndarray",
-                "nested_univ",
-                "pd-multiindex",
-                "numpy3D",
-                "df-list",
-            ],
-        ),
-        "which machine type(s) is the internal _fit/_predict able to deal with?",
-    ),
-    (
         "scitype:instancewise",
         "transformer",
         "bool",
         "does the transformer transform instances independently?",
-    ),
-    (
-        "capability:predict_proba",
-        "classifier",
-        "bool",
-        "does the classifier implement a non-default predict_proba, "
-        "i.e., not just 0/1 probabilities obtained from predict?",
     ),
     (
         "capability:unequal_length:removes",
@@ -1774,6 +1875,15 @@ ESTIMATOR_TAG_REGISTER = [
         "bool",
         "can the estimator handle missing data (NA, np.nan) in inputs?",
     ),
+    (
+        "scitype:y",  # -> capability:multivariate
+        # the scitype:y tag should be kept but for separate use,
+        # a list of the internal scitypes supported by the estimator
+        # or the base scitype of the target data
+        "forecaster",
+        ("str", ["univariate", "multivariate", "both"]),
+        "which series type does the forecaster support? multivariate means >1 vars",
+    ),
     # ---------------------------
     # to be deprecated or removed
     # ---------------------------
@@ -1784,6 +1894,18 @@ ESTIMATOR_TAG_REGISTER = [
         "forecaster",
         "bool",
         "does the forecaster implement predict_variance?",
+    ),
+    (
+        "capability:global_forecasting",
+        ["forecaster"],
+        "bool",
+        "can the estimator make global forecasting?",
+    ),
+    (
+        "python_dependencies_alias",
+        "object",
+        "dict",
+        "deprecated tag for dependency import aliases",
     ),
 ]
 

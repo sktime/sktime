@@ -9,7 +9,6 @@ from warnings import catch_warnings, simplefilter
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
 from numpy import float64 as DOUBLE
 from sklearn.base import clone
 from sklearn.ensemble._forest import (
@@ -139,6 +138,7 @@ class BaseTimeSeriesForest(BaseForest):
         -------
         self : object
         """
+        from joblib import Parallel, delayed
         from scipy.sparse import issparse
 
         # Validate or convert input data

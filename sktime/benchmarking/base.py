@@ -7,7 +7,6 @@ import os
 from warnings import warn
 
 import numpy as np
-from joblib import dump, load
 
 
 class BaseDataset:
@@ -144,6 +143,8 @@ class HDDBaseResults(BaseResults):
 
     def save(self):
         """Save results object as master file."""
+        from joblib import dump, load
+
         file = os.path.join(self.path, "results.pickle")
 
         # if file does not exist already, create a new one

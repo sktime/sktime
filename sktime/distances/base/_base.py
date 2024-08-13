@@ -1,6 +1,7 @@
 __author__ = ["chrisholder", "TonyBagnall"]
 
-from typing import Callable, NamedTuple, Set
+from collections.abc import Callable
+from typing import NamedTuple
 
 import numpy as np
 
@@ -258,7 +259,7 @@ class MetricInfo(NamedTuple):
     # Name of the distance
     canonical_name: str
     # All aliases, including canonical_name
-    aka: Set[str]
+    aka: set[str]
     # Python distance function (can use numba inside but callable must be in python)
     dist_func: Callable[[np.ndarray, np.ndarray], float]
     # NumbaDistance class

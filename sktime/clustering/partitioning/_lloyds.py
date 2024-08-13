@@ -1,6 +1,7 @@
 __author__ = ["chrisholder", "TonyBagnall"]
 
-from typing import Callable, Tuple, Union
+from collections.abc import Callable
+from typing import Union
 
 import numpy as np
 from numpy.random import RandomState
@@ -371,7 +372,7 @@ class TimeSeriesLloyds(BaseClusterer):
             X = average_of_slope_transform(X)
         return self._assign_clusters(X, self.cluster_centers_)[0]
 
-    def _fit_one_init(self, X) -> Tuple[np.ndarray, np.ndarray, float, int]:
+    def _fit_one_init(self, X) -> tuple[np.ndarray, np.ndarray, float, int]:
         """Perform one pass of kmeans.
 
         This is done because the initial center assignment greatly effects the final
@@ -438,7 +439,7 @@ class TimeSeriesLloyds(BaseClusterer):
 
     def _assign_clusters(
         self, X: np.ndarray, cluster_centres: np.ndarray
-    ) -> Tuple[np.ndarray, float]:
+    ) -> tuple[np.ndarray, float]:
         """Assign each instance to a cluster.
 
         This is done by computing the distance between each instance and

@@ -4,7 +4,7 @@
 __author__ = ["ltsaprounis", "blazingbhavneek"]
 
 import warnings
-from typing import List, Optional
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -26,7 +26,14 @@ class FourierFeatures(BaseTransformer):
     Where :math:`t` is the elapsed time since the beginning of the seasonal period and
     :math:`sp` the total time of the seasonal period.
 
-    The transformed output is a pandas DataFrame that includes the fourier terms as
+    The transformed output is a series that contains all requested Fourier terms.
+
+    Warning: the output will contain only the Fourier terms under default settings,
+    and discard the original columns of the input data, to avoid multiplication
+    of the original data in a pipeline or ``FeatureUnion``.
+    To keep the original columns, set ``keep_original_columns=True``.
+
+    Names of the columns are generated as follows:
     additional columns with the naming convention stated above (sin_sp_k and cos_sp_k).
     The numbers of Fourier terms :math:`K` in the fourier_terms_list
     determines the number of Fourier terms that will be used for each seasonal period,
@@ -130,8 +137,8 @@ class FourierFeatures(BaseTransformer):
 
     def __init__(
         self,
-        sp_list: List[float],
-        fourier_terms_list: List[int],
+        sp_list: list[float],
+        fourier_terms_list: list[int],
         freq: Optional[str] = None,
         keep_original_columns: Optional[bool] = False,
     ):

@@ -23,7 +23,6 @@ import pandas as pd
 
 from sktime.transformations.series.clasp import ClaSPTransformer
 from sktime.utils.validation.series import check_series
-from sktime.utils.warnings import warn
 
 
 def find_dominant_window_sizes(X, offset=0.05):
@@ -223,29 +222,14 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
         "python_dependencies": "numba",
     }  # for unit test cases
 
-    # todo 0.31.0: remove fmt argument, remove _fmt attribute and warning
-    def __init__(
-        self, period_length=10, n_cps=1, fmt="deprecated", exclusion_radius=0.05
-    ):
+    def __init__(self, period_length=10, n_cps=1, exclusion_radius=0.05):
         self.period_length = int(period_length)
         self.n_cps = n_cps
         self.exclusion_radius = exclusion_radius
-        self.fmt = fmt
 
         super().__init__()
 
-        if fmt == "deprecated":
-            self._fmt = "sparse"
-            warn(
-                f"Warning from {type(self).__name__}: fmt argument will be removed in"
-                " 0.31.0. For behaviour equivalent to fmt=dense, use transform instead "
-                "of predict. In 0.31.0 the behaviour of predict will equivalent to the"
-                " current behaviour of predict when fmt=sparse.",
-                DeprecationWarning,
-                obj=self,
-            )
-        else:
-            self._fmt = fmt
+        self._fmt = "sparse"
 
     def _fit(self, X, Y=None):
         """Do nothing, as there is no need to fit a model for ClaSP.

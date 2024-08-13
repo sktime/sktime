@@ -77,6 +77,12 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
         The classes labels.
     estimator_ : RegressorPipeline
         RocketRegressor as a RegressorPipeline, fitted to data internally
+    num_kernels_ : int
+        The true number of kernels used in the rocket transform. When
+        rocket_transform="rocket", this is num_kernels. When rocket_transform
+        is either "minirocket" or "multirocket", this is num_kernels rounded
+        down to the nearest multiple of 84. It is 84 if num_kernels is less
+        than 84.
 
     See Also
     --------
@@ -127,6 +133,16 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
     ):
         self.num_kernels = num_kernels
         self.rocket_transform = rocket_transform
+
+        if rocket_transform in ["multirocket", "minirocket"]:
+            if self.num_kernels < 84:
+                self.num_kernels_ = 84
+            else:
+                self.num_kernels_ = (self.num_kernels // 84) * 84
+
+        else:
+            self.num_kernels_ = num_kernels
+
         self.max_dilations_per_kernel = max_dilations_per_kernel
         self.n_features_per_kernel = n_features_per_kernel
         self.use_multivariate = use_multivariate
@@ -220,4 +236,13 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        return {"num_kernels": 20}
+        params1 = {"num_kernels": 20}
+        params2 = {
+            "num_kernels": 30,
+            "rocket_transform": "rocket",
+            "max_dilations_per_kernel": 24,
+            "n_features_per_kernel": 3,
+        }
+        params3 = {"num_kernels": 20, "rocket_transform": "minirocket"}
+        params4 = {"num_kernels": 20, "rocket_transform": "multirocket"}
+        return [params1, params2, params3, params4]
