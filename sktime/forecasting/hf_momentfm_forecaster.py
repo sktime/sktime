@@ -15,7 +15,7 @@ if _check_soft_dependencies(["torch", "accelerate"], severity="none"):
     from torch.nn import MSELoss
     from torch.utils.data import Dataset
 
-    accelerator = Accelerator()
+    accelerator = Accelerator(mixed_precision="fp16")
 
 else:
 
@@ -127,13 +127,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         "y_inner_mtype": "pd.DataFrame",
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": True,
-        "python_dependencies": [
-            "torch",
-            "tqdm",
-            "huggingface-hub",
-            "transformers",
-            "accelerate",
-        ],
+        "python_dependencies": ["torch", "tqdm", "huggingface-hub", "transformers"],
         "capability:global_forecasting": True,
         "python_version": ">= 3.10",
         "capability:insample": False,
@@ -514,15 +508,16 @@ def _run_epoch(
         loss = criterion(output.forecast, forecast)
 
         # Scales the loss for mixed precision training
-        scaler.scale(loss)
+        # scaler.scale(loss)
         accelerator.backward(loss)
 
         # Clip gradients
-        scaler.unscale_(optimizer)
+        # scaler.unscale_(optimizer)
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)
 
-        scaler.step(optimizer)
-        scaler.update()
+        # scaler.step(optimizer)
+        # scaler.update()
+        optimizer.step()
         optimizer.zero_grad(set_to_none=True)
 
         losses.append(loss.item())
@@ -533,7 +528,6 @@ def _run_epoch(
 
     # Step the learning rate scheduler
     scheduler.step()
-    cur_epoch += 1
 
     # Evaluate the model on the test split
     trues, preds, histories, losses = [], [], [], []
@@ -567,7 +561,7 @@ def _run_epoch(
     tqdm.write(
         f"Epoch {cur_epoch}: Test MSE: {metrics.mse:.3f}" f"Test MAE: {metrics.mae:.3f}"
     )
-
+    cur_epoch += 1
     return cur_epoch
 
 
