@@ -8,17 +8,33 @@ __all__ = ["evaluate"]
 from typing import Optional, Union
 
 import numpy as np
+import pandas as pd
 from sklearn.model_selection import KFold
 
 from sktime.datatypes import check_is_scitype, convert_to
 from sktime.split import InstanceSplitter
 from sktime.utils.dependencies import _check_soft_dependencies
+from sktime.utils.parallel import parallelize
 from sktime.utils.validation.forecasting import check_scoring
 
 PANDAS_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hier"]
 
 
-# def _evaluate_window(x, meta):
+def _get_pred_args_from_metric(scitype, metric):
+    pred_args = {
+        "pred_quantiles": "alpha",
+    }
+    if scitype in pred_args.keys():
+        val = getattr(metric, pred_args[scitype], None)
+        if val is not None:
+            return {pred_args[scitype]: val}
+    return {}
+
+
+def _evaluate_window(x, meta):
+    pass
+
+
 #     # unpack args
 #     i, (y_train, y_test, X_train, X_test) = x
 #     classifier = meta["classifier"]
@@ -52,7 +68,6 @@ PANDAS_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hi
 #         # predict based on metrics
 #         pred_type = {
 #             "pred_quantiles": "predict_quantiles",
-#             "pred_interval": "predict_interval",
 #             "pred_proba": "predict_proba",
 #             "pred": "predict",
 #         }
@@ -128,14 +143,14 @@ PANDAS_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hi
 
 #     # Storing the remaining evaluate detail
 #     temp_result["fit_time"] = [fit_time]
-#     temp_result["len_train_window"] = [len(y_train)]
+
 #     temp_result["cutoff"] = [cutoff_ind]
 #     if return_data:
 #         temp_result["y_train"] = [y_train]
 #         temp_result["y_test"] = [y_test]
 #         temp_result.update(y_preds_cache)
 #     result = pd.DataFrame(temp_result)
-#     result = result.astype({"len_train_window": int, "cutoff": cutoff_dtype})
+#     result = result.astype({"cutoff": cutoff_dtype})
 #     if old_naming:
 #         result = result.rename(columns=old_name_mapping)
 #     column_order = _get_column_order_and_datatype(
@@ -329,52 +344,44 @@ def evaluate(
             yield y_train, y_test, X_train, X_test
 
     # generator for y and X splits to iterate over below
-    # yx_splits = gen_y_X_train_test(y, X, cv)
-    pass
-    # # sequential strategies cannot be parallelized
-    # not_parallel = strategy in ["update", "no-update_params"]
+    yx_splits = gen_y_X_train_test(y, X, cv)
 
-    # # dispatch by backend and strategy
-    # if not_parallel:
-    #     # Run temporal cross-validation sequentially
-    #     results = []
-    #     for x in enumerate(yx_splits):
-    #         is_first = x[0] == 0  # first iteration
-    #         if strategy == "update" or (strategy == "no-update_params" and is_first):
-    #             result, forecaster = _evaluate_window(x, _evaluate_window_kwargs)
-    #             _evaluate_window_kwargs["forecaster"] = forecaster
-    #         else:
-    #             result = _evaluate_window(x, _evaluate_window_kwargs)
-    #         results.append(result)
-    # else:
-    #     if backend == "dask":
-    #         backend_in = "dask_lazy"
-    #     else:
-    #         backend_in = backend
-    #     results = parallelize(
-    #         fun=_evaluate_window,
-    #         iter=enumerate(yx_splits),
-    #         meta=_evaluate_window_kwargs,
-    #         backend=backend_in,
-    #         backend_params=backend_params,
-    #     )
+    # Run temporal cross-validation sequentially
+    results = []
+    for x in enumerate(yx_splits):
+        result, classifier = _evaluate_window(x, _evaluate_window_kwargs)
+        _evaluate_window_kwargs["classifier"] = classifier
+        results.append(result)
 
-    # # final formatting of dask dataframes
-    # if backend in ["dask", "dask_lazy"] and not not_parallel:
-    #     import dask.dataframe as dd
+    if backend == "dask":
+        backend_in = "dask_lazy"
+    else:
+        backend_in = backend
 
-    #     metadata = _get_column_order_and_datatype(scoring, return_data, cutoff_dtype)
+    results = parallelize(
+        fun=_evaluate_window,
+        iter=enumerate(yx_splits),
+        meta=_evaluate_window_kwargs,
+        backend=backend_in,
+        backend_params=backend_params,
+    )
 
-    #     results = dd.from_delayed(results, meta=metadata)
-    #     if backend == "dask":
-    #         results = results.compute()
-    # else:
-    #     results = pd.concat(results)
+    # final formatting of dask dataframes
+    if backend in ["dask", "dask_lazy"]:
+        import dask.dataframe as dd
 
-    # # final formatting of results DataFrame
-    # results = results.reset_index(drop=True)
+        metadata = _get_column_order_and_datatype(scoring, return_data, cutoff_dtype)
 
-    # return results
+        results = dd.from_delayed(results, meta=metadata)
+        if backend == "dask":
+            results = results.compute()
+    else:
+        results = pd.concat(results)
+
+    # final formatting of results DataFrame
+    results = results.reset_index(drop=True)
+
+    return results
 
 
 def _check_scores(metrics) -> dict:
@@ -407,3 +414,38 @@ def _check_scores(metrics) -> dict:
         else:
             metrics_type[scitype].append(metric)
     return metrics_type
+
+
+def _get_column_order_and_datatype(
+    metric_types: dict, return_data: bool = True, cutoff_dtype=None, old_naming=True
+) -> dict:
+    """Get the ordered column name and input datatype of results."""
+    others_metadata = {
+        "cutoff": cutoff_dtype,
+    }
+    y_metadata = {
+        "y_train": "object",
+        "y_test": "object",
+    }
+    fit_metadata, metrics_metadata = {"fit_time": "float"}, {}
+    for scitype in metric_types:
+        for metric in metric_types.get(scitype):
+            pred_args = _get_pred_args_from_metric(scitype, metric)
+            if pred_args == {} or old_naming:
+                time_key = f"{scitype}_time"
+                result_key = f"test_{metric.name}"
+                y_pred_key = f"y_{scitype}"
+            else:
+                argval = list(pred_args.values())[0]
+                time_key = f"{scitype}_{argval}_time"
+                result_key = f"test_{metric.name}_{argval}"
+                y_pred_key = f"y_{scitype}_{argval}"
+            fit_metadata[time_key] = "float"
+            metrics_metadata[result_key] = "float"
+            if return_data:
+                y_metadata[y_pred_key] = "object"
+    fit_metadata.update(others_metadata)
+    if return_data:
+        fit_metadata.update(y_metadata)
+    metrics_metadata.update(fit_metadata)
+    return metrics_metadata.copy()
