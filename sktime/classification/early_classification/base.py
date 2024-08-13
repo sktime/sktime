@@ -432,7 +432,6 @@ class BaseEarlyClassifier(BaseEstimator):
         raise RuntimeError("abstract method")
 
     def _update_predict(self, X) -> tuple[np.ndarray, np.ndarray]:
-
         """Update label prediction for sequences in X at a larger series length.
 
         Abstract method, must be implemented.
