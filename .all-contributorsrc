@@ -211,6 +211,7 @@
       "contributions": [
         "bug",
         "code",
+        "ideas",
         "projectManagement",
         "test"
       ]
@@ -2976,15 +2977,15 @@
       ]
     },
     {
-        "login": "janasberger",
-        "name": "Jana Schmidberger",
-        "avatar_url": "https://avatars.githubusercontent.com/u/111234477?v=4",
-        "profile": "https://github.com/janasberger",
-        "contributions": [
-          "business",
-          "ideas",
-          "projectManagement"
-        ]
+      "login": "janasberger",
+      "name": "Jana Schmidberger",
+      "avatar_url": "https://avatars.githubusercontent.com/u/111234477?v=4",
+      "profile": "https://github.com/janasberger",
+      "contributions": [
+        "business",
+        "ideas",
+        "projectManagement"
+      ]
     },
     {
       "login": "kirilral",
@@ -2992,10 +2993,10 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/34281484?v=4",
       "profile": "https://github.com/kirilral",
       "contributions": [
-          "ideas",
-          "mentoring",
-          "projectManagement",
-          "talk"
+        "ideas",
+        "mentoring",
+        "projectManagement",
+        "talk"
       ]
     },
     {
@@ -3005,6 +3006,7 @@
       "profile": "https://github.com/onyekaugochukwu",
       "contributions": [
         "business",
+        "doc",
         "ideas",
         "mentoring",
         "projectManagement"
