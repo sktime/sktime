@@ -10,11 +10,6 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
-from sktime.utils.dependencies import (
-    _check_env_marker,
-    _check_estimator_deps,
-    _check_python_version,
-)
 
 
 class TimesFMForecaster(_BaseGlobalForecaster):
