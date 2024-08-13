@@ -22,7 +22,7 @@ if _check_soft_dependencies("torch", severity="none"):
 class GRUClassifier(BaseDeepClassifierPytorch):
     """Gate Recurrent Unit (GRU) for time series classification.
 
-    This classifier has been wrapped around implementations from [1]_ and [2]_.
+    This classifier has been wrapped around implementations from [1]_, [2]_ and [3]_.
 
     Parameters
     ----------
@@ -70,7 +70,11 @@ class GRUClassifier(BaseDeepClassifierPytorch):
     .. [1] Cho, Kyunghyun, et al. "Learning phrase representations
         using RNN encoder-decoder for statistical machine translation."
         arXiv preprint arXiv:1406.1078 (2014).
-    .. [2] https://pytorch.org/docs/stable/generated/torch.nn.GRU.html
+    .. [2] Junyoung Chung, Caglar Gulcehre, KyungHyun Cho, Yoshua Bengio.
+        Empirical Evaluation of Gated Recurrent Neural Networks on Sequence Modeling.
+        arXiv preprint arXiv:1412.3555 (2014).
+    .. [3] https://pytorch.org/docs/stable/generated/torch.nn.GRU.html
+
     """
 
     _tags = {

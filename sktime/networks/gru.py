@@ -19,7 +19,7 @@ else:
 class GRU(NNModule):
     """Gated Recurrent Unit (GRU) for time series classification.
 
-    Network originally defined in [1]_.
+    Network originally defined in [1]_, [2]_ and [3]_.
 
     Parameters
     ----------
@@ -51,6 +51,10 @@ class GRU(NNModule):
     .. [1] Cho, Kyunghyun, et al. "Learning phrase representations
         using RNN encoder-decoder for statistical machine translation."
         arXiv preprint arXiv:1406.1078 (2014).
+    .. [2] Junyoung Chung, Caglar Gulcehre, KyungHyun Cho, Yoshua Bengio.
+        Empirical Evaluation of Gated Recurrent Neural Networks on Sequence Modeling.
+        arXiv preprint arXiv:1412.3555 (2014).
+    .. [3] https://pytorch.org/docs/stable/generated/torch.nn.GRU.html
     """
 
     _tags = {
