@@ -29,6 +29,7 @@ __author__ = ["fkiraly"]
 from sktime.alignment.utils.utils_align import convert_align_to_align_loc, reindex_iloc
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_scitype, convert
+from sktime.datatypes._dtypekind import DtypeKind
 
 
 class BaseAligner(BaseEstimator):
@@ -72,13 +73,16 @@ class BaseAligner(BaseEstimator):
         # if fit is called, estimator is reset, including fitted state
         self.reset()
 
-        METADATA_TO_QUERY = ["is_equal_length", "n_instances"]
+        METADATA_TO_QUERY = ["is_equal_length", "n_instances", "feature_kind"]
         valid, msg, X_metadata = check_is_scitype(
             X, scitype="Panel", return_metadata=METADATA_TO_QUERY, var_name="X"
         )
 
         if not valid:
             raise TypeError(msg)
+
+        if DtypeKind.CATEGORICAL in X_metadata["feature_kind"]:
+            raise TypeError("Aligners do not support categorical features in X.")
 
         self._check_capabilities(X_metadata)
 
