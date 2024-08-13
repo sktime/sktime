@@ -83,10 +83,6 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         freq=0,
         repo_id="google/timesfm-1.0-200m",
     ):
-        _check_estimator_deps(self)
-        _check_python_version(self)
-        _check_env_marker(self)
-
         self.context_len = context_len
         self.horizon_len = horizon_len
         self.input_patch_len = input_patch_len
