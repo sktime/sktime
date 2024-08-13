@@ -21,8 +21,8 @@ from sktime.utils.dependencies import _check_soft_dependencies
         (
             pd.DataFrame(
                 {
-                    "series_id": np.zeros(50, dtype=int),
-                    "time": pd.date_range("2022-01-01", periods=50, freq="D"),
+                    "instances": np.zeros(50, dtype=int),
+                    "timepoints": pd.date_range("2022-01-01", periods=50, freq="D"),
                     "target": np.random.randn(50),
                 }
             )
@@ -30,8 +30,8 @@ from sktime.utils.dependencies import _check_soft_dependencies
         (
             pd.DataFrame(
                 {
-                    "series_id": np.repeat(np.arange(3), 50),
-                    "time": np.tile(
+                    "instances": np.repeat(np.arange(3), 50),
+                    "timepoints": np.tile(
                         pd.date_range("2022-01-01", periods=50, freq="D"), 3
                     ),
                     "0": np.random.randn(150),
@@ -44,7 +44,7 @@ from sktime.utils.dependencies import _check_soft_dependencies
 )
 def test_pandas_to_ListDataset(pandas_df):
     # Make the pandas DF multiindex
-    pandas_df = pandas_df.set_index(["series_id", "time"])
+    pandas_df = pandas_df.set_index(["instances", "timepoints"])
 
     generated_list = convert_pandas_to_listDataset(pandas_df)
     idx = 0
@@ -66,12 +66,12 @@ def test_pandas_to_ListDataset(pandas_df):
         (
             pd.DataFrame(
                 {
-                    "series_id": ["A", "A", "A", "B", "B", "B", "C", "C", "C"],
+                    "instances": ["A", "A", "A", "B", "B", "B", "C", "C", "C"],
                     "timepoints": pd.date_range("2022-01-01", periods=9, freq="D"),
                     "target": np.random.randn(9),
                 },
             )
-            .set_index(["series_id", "timepoints"])
+            .set_index(["instances", "timepoints"])
             .sort_index(),
             convert_pandas_multiindex_to_pandasDataset,
         ),
@@ -79,19 +79,19 @@ def test_pandas_to_ListDataset(pandas_df):
             {
                 "A": pd.DataFrame(
                     {
-                        "timestamp": pd.date_range("2022-01-01", periods=50, freq="D"),
+                        "timepoints": pd.date_range("2022-01-01", periods=50, freq="D"),
                         "target": np.random.randn(50),
                     }
                 ),
                 "B": pd.DataFrame(
                     {
-                        "timestamp": pd.date_range("2022-01-01", periods=50, freq="D"),
+                        "timepoints": pd.date_range("2022-01-01", periods=50, freq="D"),
                         "target": np.random.randn(50),
                     }
                 ),
                 "C": pd.DataFrame(
                     {
-                        "timestamp": pd.date_range("2022-01-01", periods=50, freq="D"),
+                        "timepoints": pd.date_range("2022-01-01", periods=50, freq="D"),
                         "target": np.random.randn(50),
                     }
                 ),

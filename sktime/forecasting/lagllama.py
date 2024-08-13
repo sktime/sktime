@@ -41,6 +41,28 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
 
     trainer_kwargs: dict, optional (default={"num_epochs": 50})
         The arguments to pass to the GluonTS trainer.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.lagllama import LagLlamaForecaster
+    >>> import pandas as pd
+
+    >>> y = load_airline().to_timestamp(freq='M')
+    >>> y = pd.DataFrame(y)
+    >>> y = y.rename({"Number of airline passengers": "target"})
+
+    >>> forecaster = LagLlamaForecaster(
+    ...     model_path=None,
+    ...     device=None,
+    ...     context_length=128,
+    ...     prediction_length=3,
+    ...     )
+
+    >>> forecaster.fit(y, fh=[1, 2, 3])
+
+    >>> y_pred = forecaster.predict()
+    >>> y_pred
     """
 
     _tags = {
@@ -65,7 +87,7 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         "authors": ["shlok191"],
         "maintainers": ["shlok191"],
         "python_version": None,
-        "python_dependencies": ["gluonts", "huggingface_hub", "lag_llama"],
+        "python_dependencies": ["gluonts", "huggingface-hub", "lag-llama"],
     }
 
     def __init__(

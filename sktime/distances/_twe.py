@@ -21,7 +21,7 @@ class _TweDistance(NumbaDistance):
     ----------
     .. [1] Marteau, P.; F. (2009). "Time Warp Edit Distance with Stiffness Adjustment
     for Time Series Matching". IEEE Transactions on Pattern Analysis and Machine
-    Intelligence. 31 (2): 306–318.
+    Intelligence. 31 (2): 306-318.
     """
 
     def _distance_alignment_path_factory(
