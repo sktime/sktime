@@ -702,6 +702,14 @@ These transformations ensure all series in a panel have equal length
 
     TruncationTransformer
 
+.. currentmodule:: sktime.transformations.panel.subsequence_extraction
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SubsequenceExtractionTransformer
+
 
 Dimension reduction
 ~~~~~~~~~~~~~~~~~~~
