@@ -280,6 +280,10 @@ datasets = [
   "rdata",
   "requests",
 ]
+pytorch-forecasting= [
+'pytorch-forecasting>=1.0.0; python_version < "3.11"',
+'torch<2.4.0; python_version < "3.12"',
+]
 dl = [
   'FrEIA; python_version < "3.12"',
   'neuralforecast<1.8.0,>=1.6.4; python_version < "3.11"',
@@ -288,7 +292,7 @@ dl = [
   'torch; python_version < "3.12"',
   'transformers[torch]<4.41.0; python_version < "3.12"',
   'pykan<0.2.2,>=0.2; python_version > "3.9.7"',
-  'pytorch-forecasting>=1.0.0; python_version < "3.11"',
+  'sktime[pytorch-forecasting]',
 ]
 mlflow = [
   "mlflow",
