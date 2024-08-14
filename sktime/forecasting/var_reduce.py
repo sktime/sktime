@@ -328,5 +328,7 @@ class VARReduce(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = {"lags": 2}
-        return params
+        params1 = {"lags": 2}
+        params2 = {"lags": 3}
+
+        return [params1, params2]
