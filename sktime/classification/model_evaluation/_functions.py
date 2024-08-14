@@ -5,6 +5,8 @@
 __author__ = ["ksharma6"]
 __all__ = ["evaluate"]
 
+import time
+import warnings
 from typing import Optional, Union
 
 import numpy as np
@@ -12,12 +14,80 @@ import pandas as pd
 from sklearn.model_selection import KFold
 
 from sktime.datatypes import check_is_scitype, convert_to
+from sktime.exceptions import FitFailedWarning
 from sktime.split import InstanceSplitter
 from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.parallel import parallelize
 from sktime.utils.validation.forecasting import check_scoring
 
 PANDAS_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hier"]
+
+
+def _check_scores(metrics) -> dict:
+    """Validate and coerce to BaseMetric and segregate them based on predict type.
+
+    Parameters
+    ----------
+    metrics : sktime accepted metrics object or a list of them or None
+
+    Return
+    ------
+    metrics_type : Dict
+        The key is metric types and its value is a list of its corresponding metrics.
+    """
+    if not isinstance(metrics, list):
+        metrics = [metrics]
+
+    metrics_type = {}
+    for metric in metrics:
+        metric = check_scoring(metric)
+        # collect predict type
+        if hasattr(metric, "get_tag"):
+            scitype = metric.get_tag(
+                "scitype:y_pred", raise_error=False, tag_value_default="pred"
+            )
+        else:  # If no scitype exists then metric is a point forecast type
+            scitype = "pred"
+        if scitype not in metrics_type.keys():
+            metrics_type[scitype] = [metric]
+        else:
+            metrics_type[scitype].append(metric)
+    return metrics_type
+
+
+def _get_column_order_and_datatype(
+    metric_types: dict, return_data: bool = True, cutoff_dtype=None, old_naming=True
+) -> dict:
+    """Get the ordered column name and input datatype of results."""
+    others_metadata = {
+        "cutoff": cutoff_dtype,
+    }
+    y_metadata = {
+        "y_train": "object",
+        "y_test": "object",
+    }
+    fit_metadata, metrics_metadata = {"fit_time": "float"}, {}
+    for scitype in metric_types:
+        for metric in metric_types.get(scitype):
+            pred_args = _get_pred_args_from_metric(scitype, metric)
+            if pred_args == {} or old_naming:
+                time_key = f"{scitype}_time"
+                result_key = f"test_{metric.name}"
+                y_pred_key = f"y_{scitype}"
+            else:
+                argval = list(pred_args.values())[0]
+                time_key = f"{scitype}_{argval}_time"
+                result_key = f"test_{metric.name}_{argval}"
+                y_pred_key = f"y_{scitype}_{argval}"
+            fit_metadata[time_key] = "float"
+            metrics_metadata[result_key] = "float"
+            if return_data:
+                y_metadata[y_pred_key] = "object"
+    fit_metadata.update(others_metadata)
+    if return_data:
+        fit_metadata.update(y_metadata)
+    metrics_metadata.update(fit_metadata)
+    return metrics_metadata.copy()
 
 
 def _get_pred_args_from_metric(scitype, metric):
@@ -32,137 +102,128 @@ def _get_pred_args_from_metric(scitype, metric):
 
 
 def _evaluate_window(x, meta):
-    pass
+    # unpack args
+    i, (y_train, y_test, X_train, X_test) = x
+    classifier = meta["classifier"]
+    scoring = meta["scoring"]
+    return_data = meta["return_data"]
+    error_score = meta["error_score"]
+    cutoff_dtype = meta["cutoff_dtype"]
 
+    # set default result values in case estimator fitting fails
+    score = error_score
+    fit_time = np.nan
+    pred_time = np.nan
+    cutoff = pd.Period(pd.NaT) if cutoff_dtype.startswith("period") else pd.NA
+    y_pred = pd.NA
+    temp_result = dict()
+    y_preds_cache = dict()
+    old_naming = True
+    old_name_mapping = {}
 
-#     # unpack args
-#     i, (y_train, y_test, X_train, X_test) = x
-#     classifier = meta["classifier"]
-#     scoring = meta["scoring"]
-#     return_data = meta["return_data"]
-#     error_score = meta["error_score"]
-#     cutoff_dtype = meta["cutoff_dtype"]
+    try:
+        # fit
+        start_fit = time.perf_counter()
 
-#     # set default result values in case estimator fitting fails
-#     score = error_score
-#     fit_time = np.nan
-#     pred_time = np.nan
-#     cutoff = pd.Period(pd.NaT) if cutoff_dtype.startswith("period") else pd.NA
-#     y_pred = pd.NA
-#     temp_result = dict()
-#     y_preds_cache = dict()
-#     old_naming = True
-#     old_name_mapping = {}
+        classifier = classifier.clone()
+        classifier.fit(y=y_train, X=X_train)
 
-#     try:
-#         # fit/update
-#         start_fit = time.perf_counter()
-#         if i == 0:
-#             classifier = classifier.clone()
-#             classifier.fit(y=y_train, X=X_train)
-#         else:  # if strategy in ["update", "no-update_params"]:
-#             update_params = strategy == "update"
-#             forecaster.update(y_train, X_train, update_params=update_params)
-#         fit_time = time.perf_counter() - start_fit
+        fit_time = time.perf_counter() - start_fit
 
-#         # predict based on metrics
-#         pred_type = {
-#             "pred_quantiles": "predict_quantiles",
-#             "pred_proba": "predict_proba",
-#             "pred": "predict",
-#         }
-#         # cache prediction from the first scitype and reuse it to
-#         #compute other metrics
-#         for scitype in scoring:
-#             method = getattr(forecaster, pred_type[scitype])
-#             if len(set(map(lambda metric: metric.name, scoring.get(scitype)))) != len(
-#                 scoring.get(scitype)
-#             ):
-#                 old_naming = False
-#             for metric in scoring.get(scitype):
-#                 pred_args = _get_pred_args_from_metric(scitype, metric)
-#                 if pred_args == {}:
-#                     time_key = f"{scitype}_time"
-#                     result_key = f"test_{metric.name}"
-#                     y_pred_key = f"y_{scitype}"
-#                 else:
-#                     argval = list(pred_args.values())[0]
-#                     time_key = f"{scitype}_{argval}_time"
-#                     result_key = f"test_{metric.name}_{argval}"
-#                     y_pred_key = f"y_{scitype}_{argval}"
-#                     old_name_mapping[f"{scitype}_{argval}_time"] = f"{scitype}_time"
-#                     old_name_mapping[f"test_{metric.name}_{argval}"] = (
-#                         f"test_{metric.name}"
-#                     )
-#                     old_name_mapping[f"y_{scitype}_{argval}"] = f"y_{scitype}"
+        # predict based on metrics
+        pred_type = {
+            "pred_quantiles": "predict_quantiles",
+            "pred_proba": "predict_proba",
+            "pred": "predict",
+        }
+        # cache prediction from the first scitype and reuse it to
+        # compute other metrics
+        for scitype in scoring:
+            method = getattr(classifier, pred_type[scitype])
+            if len(set(map(lambda metric: metric.name, scoring.get(scitype)))) != len(
+                scoring.get(scitype)
+            ):
+                old_naming = False
+            for metric in scoring.get(scitype):
+                pred_args = _get_pred_args_from_metric(scitype, metric)
+                if pred_args == {}:
+                    time_key = f"{scitype}_time"
+                    result_key = f"test_{metric.name}"
+                    y_pred_key = f"y_{scitype}"
+                else:
+                    argval = list(pred_args.values())[0]
+                    time_key = f"{scitype}_{argval}_time"
+                    result_key = f"test_{metric.name}_{argval}"
+                    y_pred_key = f"y_{scitype}_{argval}"
+                    old_name_mapping[f"{scitype}_{argval}_time"] = f"{scitype}_time"
+                    old_name_mapping[f"test_{metric.name}_{argval}"] = (
+                        f"test_{metric.name}"
+                    )
+                    old_name_mapping[f"y_{scitype}_{argval}"] = f"y_{scitype}"
 
-#                 # make prediction
-#                 if y_pred_key not in y_preds_cache.keys():
-#                     start_pred = time.perf_counter()
-#                     y_pred = method(fh, X_test, **pred_args)
-#                     pred_time = time.perf_counter() - start_pred
-#                     temp_result[time_key] = [pred_time]
-#                     y_preds_cache[y_pred_key] = [y_pred]
-#                 else:
-#                     y_pred = y_preds_cache[y_pred_key][0]
+                # make prediction
+                if y_pred_key not in y_preds_cache.keys():
+                    start_pred = time.perf_counter()
+                    y_pred = method(X_test, **pred_args)
+                    pred_time = time.perf_counter() - start_pred
+                    temp_result[time_key] = [pred_time]
+                    y_preds_cache[y_pred_key] = [y_pred]
+                else:
+                    y_pred = y_preds_cache[y_pred_key][0]
 
-#                 score = metric(y_test, y_pred, y_train=y_train)
-#                 temp_result[result_key] = [score]
+                score = metric(y_test, y_pred, y_train=y_train)
+                temp_result[result_key] = [score]
 
-#         # get cutoff
-#         cutoff = forecaster.cutoff
+        # get cutoff
+        cutoff = classifier.cutoff
 
-#     except Exception as e:
-#         if error_score == "raise":
-#             raise e
-#         else:  # assign default value when fitting failed
-#             for scitype in scoring:
-#                 temp_result[f"{scitype}_time"] = [pred_time]
-#                 if return_data:
-#                     temp_result[f"y_{scitype}"] = [y_pred]
-#                 for metric in scoring.get(scitype):
-#                     temp_result[f"test_{metric.name}"] = [score]
-#             warnings.warn(
-#                 f"""
-#                 In evaluate, fitting of forecaster {type(forecaster).__name__} failed,
-#                 you can set error_score='raise' in evaluate to see
-#                 the exception message.
-#                 Fit failed for the {i}-th data split, on training data y_train with
-#                 cutoff {cutoff}, and len(y_train)={len(y_train)}.
-#                 The score will be set to {error_score}.
-#                 Failed forecaster with parameters: {forecaster}.
-#                 """,
-#                 FitFailedWarning,
-#                 stacklevel=2,
-#             )
+    except Exception as e:
+        if error_score == "raise":
+            raise e
+        else:  # assign default value when fitting failed
+            for scitype in scoring:
+                temp_result[f"{scitype}_time"] = [pred_time]
+                if return_data:
+                    temp_result[f"y_{scitype}"] = [y_pred]
+                for metric in scoring.get(scitype):
+                    temp_result[f"test_{metric.name}"] = [score]
+            warnings.warn(
+                f"""
+                In evaluate, fitting of classifier {type(classifier).__name__} failed,
+                you can set error_score='raise' in evaluate to see
+                the exception message.
+                Fit failed for the {i}-th data split, on training data y_train with
+                cutoff {cutoff}, and len(y_train)={len(y_train)}.
+                The score will be set to {error_score}.
+                Failed classifier with parameters: {classifier}.
+                """,
+                FitFailedWarning,
+                stacklevel=2,
+            )
 
-#     if pd.isnull(cutoff):
-#         cutoff_ind = cutoff
-#     else:
-#         cutoff_ind = cutoff[0]
+    if pd.isnull(cutoff):
+        cutoff_ind = cutoff
+    else:
+        cutoff_ind = cutoff[0]
 
-#     # Storing the remaining evaluate detail
-#     temp_result["fit_time"] = [fit_time]
+    # Storing the remaining evaluate detail
+    temp_result["fit_time"] = [fit_time]
 
-#     temp_result["cutoff"] = [cutoff_ind]
-#     if return_data:
-#         temp_result["y_train"] = [y_train]
-#         temp_result["y_test"] = [y_test]
-#         temp_result.update(y_preds_cache)
-#     result = pd.DataFrame(temp_result)
-#     result = result.astype({"cutoff": cutoff_dtype})
-#     if old_naming:
-#         result = result.rename(columns=old_name_mapping)
-#     column_order = _get_column_order_and_datatype(
-#         scoring, return_data, cutoff_dtype, old_naming=old_naming
-#     )
-#     result = result.reindex(columns=column_order.keys())
+    temp_result["cutoff"] = [cutoff_ind]
+    if return_data:
+        temp_result["y_train"] = [y_train]
+        temp_result["y_test"] = [y_test]
+        temp_result.update(y_preds_cache)
+    result = pd.DataFrame(temp_result)
+    result = result.astype({"cutoff": cutoff_dtype})
+    if old_naming:
+        result = result.rename(columns=old_name_mapping)
+    column_order = _get_column_order_and_datatype(
+        scoring, return_data, cutoff_dtype, old_naming=old_naming
+    )
+    result = result.reindex(columns=column_order.keys())
 
-#     # Return forecaster if "update"
-#     if strategy == "update" or (strategy == "no-update_params" and i == 0):
-#         return result, forecaster
-#     else:
-#         return result
+    return result, classifier
 
 
 def evaluate(
@@ -382,70 +443,3 @@ def evaluate(
     results = results.reset_index(drop=True)
 
     return results
-
-
-def _check_scores(metrics) -> dict:
-    """Validate and coerce to BaseMetric and segregate them based on predict type.
-
-    Parameters
-    ----------
-    metrics : sktime accepted metrics object or a list of them or None
-
-    Return
-    ------
-    metrics_type : Dict
-        The key is metric types and its value is a list of its corresponding metrics.
-    """
-    if not isinstance(metrics, list):
-        metrics = [metrics]
-
-    metrics_type = {}
-    for metric in metrics:
-        metric = check_scoring(metric)
-        # collect predict type
-        if hasattr(metric, "get_tag"):
-            scitype = metric.get_tag(
-                "scitype:y_pred", raise_error=False, tag_value_default="pred"
-            )
-        else:  # If no scitype exists then metric is a point forecast type
-            scitype = "pred"
-        if scitype not in metrics_type.keys():
-            metrics_type[scitype] = [metric]
-        else:
-            metrics_type[scitype].append(metric)
-    return metrics_type
-
-
-def _get_column_order_and_datatype(
-    metric_types: dict, return_data: bool = True, cutoff_dtype=None, old_naming=True
-) -> dict:
-    """Get the ordered column name and input datatype of results."""
-    others_metadata = {
-        "cutoff": cutoff_dtype,
-    }
-    y_metadata = {
-        "y_train": "object",
-        "y_test": "object",
-    }
-    fit_metadata, metrics_metadata = {"fit_time": "float"}, {}
-    for scitype in metric_types:
-        for metric in metric_types.get(scitype):
-            pred_args = _get_pred_args_from_metric(scitype, metric)
-            if pred_args == {} or old_naming:
-                time_key = f"{scitype}_time"
-                result_key = f"test_{metric.name}"
-                y_pred_key = f"y_{scitype}"
-            else:
-                argval = list(pred_args.values())[0]
-                time_key = f"{scitype}_{argval}_time"
-                result_key = f"test_{metric.name}_{argval}"
-                y_pred_key = f"y_{scitype}_{argval}"
-            fit_metadata[time_key] = "float"
-            metrics_metadata[result_key] = "float"
-            if return_data:
-                y_metadata[y_pred_key] = "object"
-    fit_metadata.update(others_metadata)
-    if return_data:
-        fit_metadata.update(y_metadata)
-    metrics_metadata.update(fit_metadata)
-    return metrics_metadata.copy()
