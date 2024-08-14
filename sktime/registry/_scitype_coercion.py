@@ -2,9 +2,6 @@
 
 __author__ = ["fkiraly"]
 
-from sktime.registry._scitype import scitype
-from sktime.utils.sklearn import is_sklearn_estimator, sklearn_scitype
-
 _coerce_register = dict()
 
 
@@ -67,6 +64,9 @@ def coerce_scitype(
     TypeError if ``raise_on_mismatch``, and ``from_scitype`` is not None, and
         the detected scitype does not match the expected scitype ``from_scitype``.
     """
+    from sktime.registry._scitype import scitype
+    from sktime.utils.sklearn import is_sklearn_estimator, sklearn_scitype
+
     if from_scitype is None or raise_on_mismatch:
         if is_sklearn_estimator(obj):
             detected_scitype = f"{sklearn_scitype(obj)}_tabular"
