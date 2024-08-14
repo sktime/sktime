@@ -1,4 +1,8 @@
-"""Subsequence extraction - extract subsequences of equal length based on conditions."""
+"""Subsequence extraction transformer.
+
+A transformer for the extraction of subsequences of specified length based on
+maximal/minimal rolling aggregates.
+"""
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -12,10 +16,10 @@ __author__ = ["wirrywoo"]
 
 class SubsequenceExtractionTransformer(BaseTransformer):
     """
-    Extract subsequences of specified length based on various conditions.
+    Extract subsequences of specified length based on rolling aggregatess.
 
-    Aims to identify subsequences of specified length that yields the maximal/minimal
-    rolling mean/median.
+    A transformer for the extraction of subsequences of specified length based on
+    maximal/minimal rolling aggregates.
 
     Parameters
     ----------
@@ -78,31 +82,27 @@ class SubsequenceExtractionTransformer(BaseTransformer):
         -------
         self : reference to self
         """
-        self.X_aggregate = X.rolling(window=self.subsequence_len)
+        if self.subsequence_len > len(X):
+            raise ValueError(
+                f"Subsequence length parameter ({self.subsequence_len}) is not less \
+                than or equal to the minimum sequence length of X ({len(X)})."
+            )
 
-        if self.aggregate == "mean":
-            self.X_aggregate = self.X_aggregate.mean()
-        elif self.aggregate == "median":
-            self.X_aggregate = self.X_aggregate.median()
-        else:
+        if self.aggregate not in ["mean", "median"]:
             raise ValueError(
                 f"{self.aggregate} is currently not supported for parameter aggregate"
             )
 
-        try:
-            if self.method == "max":
-                self.indices = self.X_aggregate.dropna().idxmax()
-            elif self.method == "min":
-                self.indices = self.X_aggregate.dropna().idxmin()
-            else:
-                raise ValueError(
-                    f"{self.method} is currently not supported for parameter method"
-                )
-        except ValueError:
+        if self.method not in ["max", "min"]:
             raise ValueError(
-                f"Subsequence length parameter ({self.subsequence_len}) is not less \
-                than minimum sequence length of X ({len(X)})."
+                f"{self.method} is currently not supported for parameter method"
             )
+
+        self.X_aggregate = getattr(
+            X.rolling(window=self.subsequence_len), self.aggregate
+        )().dropna()
+
+        self.indices = getattr(self.X_aggregate, f"idx{self.method}")()
 
         return self
 
