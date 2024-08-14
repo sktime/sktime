@@ -213,6 +213,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                     },
                     "model_params": {
                         "hidden_size": 8,
+                        "lstm_layers": 1,
                         "log_interval": -1,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
@@ -225,7 +226,8 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                         "logger": False,
                     },
                     "model_params": {
-                        "hidden_size": 10,
+                        "hidden_size": 8,
+                        "lstm_layers": 1,
                         "dropout": 0.1,
                         "optimizer": "Adam",
                         # avoid jdb78/pytorch-forecasting#1571 bug in the CI
@@ -259,6 +261,8 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                     },
                     "model_params": {
                         "log_interval": -1,
+                        "hidden_size": 8,
+                        "lstm_layers": 1,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
@@ -274,7 +278,8 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                         "logger": False,
                     },
                     "model_params": {
-                        "hidden_size": 10,
+                        "hidden_size": 8,
+                        "lstm_layers": 1,
                         "dropout": 0.1,
                         # "loss": QuantileLoss(),
                         # can not pass test_set_params and test_set_params_sklearn
@@ -485,9 +490,9 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                         "max_encoder_length": 3,
                     },
                     "model_params": {
-                        "num_blocks": [2, 2],
+                        "num_blocks": [1, 1],
                         "num_block_layers": [1, 1],
-                        "widths": 32,
+                        "widths": [8, 8],
                         "log_interval": -1,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
@@ -500,11 +505,11 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                         "logger": False,
                     },
                     "model_params": {
-                        "num_blocks": [5, 5],
-                        "num_block_layers": [5, 5],
+                        "num_blocks": [1, 1],
+                        "num_block_layers": [1, 1],
+                        "widths": [8, 8],
                         "log_interval": -1,
                         "backcast_loss_ratio": 1.0,
-                        "widths": 32,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
@@ -531,6 +536,9 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                         "logger": False,
                     },
                     "model_params": {
+                        "num_blocks": [1, 1],
+                        "num_block_layers": [1, 1],
+                        "widths": [8, 8],
                         "log_interval": -1,
                     },
                     "dataset_params": {
@@ -547,9 +555,11 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                         "logger": False,
                     },
                     "model_params": {
-                        "num_blocks": [5, 5],
-                        "num_block_layers": [5, 5],
+                        "num_blocks": [1, 1],
+                        "num_block_layers": [1, 1],
+                        "widths": [8, 8],
                         "backcast_loss_ratio": 1.0,
+                        "dropout": 0.2,
                         "log_interval": -1,
                     },
                     "dataset_params": {
@@ -1052,6 +1062,8 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     },
                     "model_params": {
                         "hidden_size": 8,
+                        "n_blocks": [1, 1],
+                        "n_layers": 1,
                         "log_interval": -1,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
@@ -1067,6 +1079,8 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                         "interpolation_mode": "nearest",
                         "activation": "Tanh",
                         "hidden_size": 8,
+                        "n_blocks": [1, 1],
+                        "n_layers": 1,
                         "log_interval": -1,
                     },
                     "dataset_params": {
@@ -1094,6 +1108,9 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                         "logger": False,
                     },
                     "model_params": {
+                        "hidden_size": 8,
+                        "n_blocks": [1, 1],
+                        "n_layers": 1,
                         "log_interval": -1,
                     },
                     "dataset_params": {
@@ -1112,6 +1129,9 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     "model_params": {
                         "interpolation_mode": "nearest",
                         "activation": "Tanh",
+                        "hidden_size": 8,
+                        "n_blocks": [1, 1],
+                        "n_layers": 1,
                         "log_interval": -1,
                     },
                     "dataset_params": {

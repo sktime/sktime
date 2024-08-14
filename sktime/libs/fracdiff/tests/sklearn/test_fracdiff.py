@@ -28,11 +28,16 @@ class TestFracdiff:
         out = fdiff(X, n=d, axis=0, window=window, mode=mode)
         assert_array_equal(fracdiff.fit_transform(X), out)
 
-    @pytest.mark.xfail
     @parametrize_with_checks(
         [
             Fracdiff(1),
         ]
     )
-    def test_sklearn_compatible_estimator(self, estimator, check):
-        check(estimator)
+    def test_sklearn_compatible_esimator(self, estimator, check):
+        try:
+            check(estimator)
+        except Exception as e:
+            # diff is not permutation invariant
+            if "invariant" in str(e):
+                return None
+            raise e

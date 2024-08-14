@@ -47,27 +47,42 @@ def fdiff(
 ) -> np.ndarray:
     r"""Calculate the `n`-th differentiation along the given axis.
 
-    Extention of ``numpy.diff`` to fractional differentiation.
+    Extension of ``numpy.diff`` to fractional differentiation for
+    fractional differences.
+
+    If ``n`` is an integer, this function
+    returns the same output as ``numpy.diff``,
+    in indices ``n:`` along the given axis.
+    The remaining indices are filled with values identical to ``a``.
+
+    This is for consistency with the fractional differentiation,
+    which returns an array of the same shape as the input array.
 
     Parameters
     ----------
-    a : array_like
+    a : array_like, coercible to a numpy array.
         The input array.
+
     n : float, default=1.0
         The order of differentiation.
-        If ``n`` is an integer, returns the same output with ``numpy.diff``.
+
     axis : int, default=-1
         The axis along which differentiation is performed, default is the last axis.
+
     prepend : array_like, optional
         Values to prepend to ``a`` along axis prior to performing the differentiation.
         Scalar values are expanded to arrays with length 1 in the direction of axis and
         the shape of the input array in along all other axes.
         Otherwise the dimension and shape must match ``a`` except along axis.
+
     append : array_like, optional
         Values to append.
+
     window : int, default=10
         Number of observations to compute each element in the output.
+
     mode : {"same", "valid"}, default="same"
+
         "same" (default) :
             At the beginning of the time series,
             return elements where at least one coefficient of fracdiff is used.
@@ -75,6 +90,7 @@ def fdiff(
             where :math:`L_{\\mathrm{in}}` is the length of ``a`` along ``axis``
             (plus the lengths of ``append`` and ``prepend``).
             Boundary effects may be seen at the at the beginning of a time-series.
+
         "valid" :
             Return elements where all coefficients of fracdiff are used.
             Output size along ``axis`` is
@@ -85,9 +101,8 @@ def fdiff(
 
     Returns
     -------
-    fdiff : numpy.ndarray
+    fdiff : ``numpy.ndarray`` of same shape as ``a``
         The fractional differentiation.
-        The shape of the output is the same as ``a`` except along ``axis``.
 
     Examples
     --------
@@ -123,24 +138,39 @@ def fdiff(
     array([[ 1. ,  3. ,  6. , 10. , 15. ],
            [-0.5,  3.5,  3. ,  3. ,  3.5]])
     """
-    if mode == "full":
-        mode = "same"
-        raise DeprecationWarning("mode 'full' was renamed to 'same'.")
-
-    if isinstance(n, int) or n.is_integer():
-        prepend = np._NoValue if prepend is None else prepend  # type: ignore
-        append = np._NoValue if append is None else append  # type: ignore
-        return np.diff(a, n=int(n), axis=axis, prepend=prepend, append=append)
-
-    if a.ndim == 0:
-        raise ValueError("diff requires input that is at least one dimensional")
-
     a = np.asanyarray(a)
     # Mypy complains:
     # fracdiff/fdiff.py:135: error: Module has no attribute "normalize_axis_index"
     axis = np.core.multiarray.normalize_axis_index(axis, a.ndim)  # type: ignore
     dtype = a.dtype if np.issubdtype(a.dtype, np.floating) else np.float64
 
+    a = _combine_pre_append(a, prepend, append, axis)
+
+    if mode == "full":
+        mode = "same"
+        raise DeprecationWarning("mode 'full' was renamed to 'same'.")
+
+    if a.ndim == 0:
+        raise ValueError("diff requires input that is at least one dimensional")
+
+    if mode == "valid":
+        D = partial(np.convolve, fdiff_coef(n, window).astype(dtype), mode="valid")
+        a = np.apply_along_axis(D, axis, a)
+    elif mode == "same":
+        # Convolve with the mode 'full' and cut last
+        D = partial(np.convolve, fdiff_coef(n, window).astype(dtype), mode="full")
+        s = tuple(
+            slice(a.shape[axis]) if i == axis else slice(None) for i in range(a.ndim)
+        )
+        a = np.apply_along_axis(D, axis, a)
+        a = a[s]
+    else:
+        raise ValueError(f"Invalid mode: {mode}")
+
+    return a
+
+
+def _combine_pre_append(a, prepend, append, axis):
     combined = []
     if prepend is not None:
         prepend = np.asanyarray(prepend)
@@ -162,19 +192,5 @@ def fdiff(
 
     if len(combined) > 1:
         a = np.concatenate(combined, axis)
-
-    if mode == "valid":
-        D = partial(np.convolve, fdiff_coef(n, window).astype(dtype), mode="valid")
-        a = np.apply_along_axis(D, axis, a)
-    elif mode == "same":
-        # Convolve with the mode 'full' and cut last
-        D = partial(np.convolve, fdiff_coef(n, window).astype(dtype), mode="full")
-        s = tuple(
-            slice(a.shape[axis]) if i == axis else slice(None) for i in range(a.ndim)
-        )
-        a = np.apply_along_axis(D, axis, a)
-        a = a[s]
-    else:
-        raise ValueError(f"Invalid mode: {mode}")
 
     return a
