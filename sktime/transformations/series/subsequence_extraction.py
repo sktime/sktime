@@ -1,7 +1,7 @@
 """Subsequence extraction transformer.
 
 A transformer for the extraction of subsequences of specified length based on
-maximal/minimal rolling aggregates.
+maximal/minimal rolling window aggregates.
 """
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
@@ -19,7 +19,7 @@ class SubsequenceExtractionTransformer(BaseTransformer):
     Extract subsequences of specified length based on rolling aggregatess.
 
     A transformer for the extraction of subsequences of specified length based on
-    maximal/minimal rolling aggregates.
+    maximal/minimal rolling window aggregates.
 
     Parameters
     ----------
@@ -33,7 +33,7 @@ class SubsequenceExtractionTransformer(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.panel.subsequence_extraction import (
+    >>> from sktime.transformations.series.subsequence_extraction import (
     >>>     SubsequenceExtractionTransformer
     >>> )
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
