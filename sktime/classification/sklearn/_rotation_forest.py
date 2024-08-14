@@ -11,7 +11,6 @@ import time
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
 from sklearn.base import BaseEstimator
 from sklearn.decomposition import PCA
 from sklearn.tree import DecisionTreeClassifier
@@ -159,6 +158,8 @@ class RotationForest(BaseEstimator):
         Changes state by creating a fitted model that updates attributes
         ending in "_".
         """
+        from joblib import Parallel, delayed
+
         if isinstance(X, np.ndarray) and len(X.shape) == 3 and X.shape[1] == 1:
             X = np.reshape(X, (X.shape[0], -1))
         elif isinstance(X, pd.DataFrame) and len(X.shape) == 2:
@@ -289,6 +290,8 @@ class RotationForest(BaseEstimator):
         y : array-like, shape = [n_instances, n_classes_]
             Predicted probabilities using the ordering in classes_.
         """
+        from joblib import Parallel, delayed
+
         if not self._is_fitted:
             raise NotFittedError(
                 f"This instance of {self.__class__.__name__} has not "
@@ -333,6 +336,8 @@ class RotationForest(BaseEstimator):
         return output
 
     def _get_train_probs(self, X, y):
+        from joblib import Parallel, delayed
+
         if not self._is_fitted:
             raise NotFittedError(
                 f"This instance of {self.__class__.__name__} has not "

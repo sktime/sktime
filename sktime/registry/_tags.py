@@ -207,8 +207,6 @@ class python_version(_BaseTag):
 
     - ``"python_version"``: Python version specifier (PEP 440) for the object,
     - ``"python_dependencies"``: list of required Python packages (PEP 440)
-    - ``"python_dependencies_alias"``: alias for package names,
-      if different from import names
     - ``"env_marker"``: environment marker for the object (PEP 508)
     - ``"requires_cython"``: whether the object requires a C compiler present
 
@@ -253,8 +251,6 @@ class python_dependencies(_BaseTag):
 
     - ``"python_version"``: Python version specifier (PEP 440) for the object,
     - ``"python_dependencies"``: list of required Python packages (PEP 440)
-    - ``"python_dependencies_alias"``: alias for package names,
-      if different from import names
     - ``"env_marker"``: environment marker for the object (PEP 508)
     - ``"requires_cython"``: whether the object requires a C compiler present
 
@@ -287,55 +283,6 @@ class python_dependencies(_BaseTag):
     }
 
 
-class python_dependencies_alias(_BaseTag):
-    """Alias for Python package dependency names for the object.
-
-    Part of packaging metadata for the object.
-
-    - String name: ``"python_dependencies_alias"``
-    - Private tag, developer and framework facing
-    - Values: dict of str, key = PEP 440 package name, value = import name
-    - Example: ``{"scikit-learn": "sklearn"}``
-    - Example 2: ``{"dtw-python": "dtw", "scikit-learn": "sklearn"}``
-    - Default: no aliases (``None``)
-
-    ``sktime`` manages objects and estimators like mini-packages,
-    with their own dependencies and compatibility requirements.
-    Dependencies are specified in the tags:
-
-    - ``"python_version"``: Python version specifier (PEP 440) for the object,
-    - ``"python_dependencies"``: list of required Python packages (PEP 440)
-    - ``"python_dependencies_alias"``: alias for package names,
-      if different from import names
-    - ``"env_marker"``: environment marker for the object (PEP 508)
-    - ``"requires_cython"``: whether the object requires a C compiler present
-
-    The ``python_dependencies_alias`` tag of an object is dict,
-    providing import name aliases for package names in the ``python_dependencies`` tag,
-    if the package name differs from the import name.
-
-    The tag is used in packaging metadata for the object,
-    and is used internally to check compatibility of the object with
-    the build environment, to raise informative error messages.
-
-    This tag is required if the package name of a dependency is different
-    from the import name of the package, e.g., ``"dtw-python"`` and ``"dtw"``.
-    If not set, the package name is assumed to be identical with the import name.
-
-    Developers should note that elements of this ``dict`` are not passed on
-    via field inheritance, unlike the tags themselves.
-    Hence, if multiple aliases are required, they need to be set in the same tag.
-    """
-
-    _tags = {
-        "tag_name": "python_dependencies_alias",
-        "parent_type": "object",
-        "tag_type": "dict",
-        "short_descr": "alias for package names in python_dependencies, key-value pairs are package name, import name",  # noqa: E501
-        "user_facing": False,
-    }
-
-
 class env_marker(_BaseTag):
     """Environment marker requirement for the object (PEP 508).
 
@@ -353,8 +300,6 @@ class env_marker(_BaseTag):
 
     - ``"python_version"``: Python version specifier (PEP 440) for the object,
     - ``"python_dependencies"``: list of required Python packages (PEP 440)
-    - ``"python_dependencies_alias"``: alias for package names,
-      if different from import names
     - ``"env_marker"``: environment marker for the object (PEP 508)
     - ``"requires_cython"``: whether the object requires a C compiler present
 
@@ -398,8 +343,6 @@ class requires_cython(_BaseTag):
 
     - ``"python_version"``: Python version specifier (PEP 440) for the object,
     - ``"python_dependencies"``: list of required Python packages (PEP 440)
-    - ``"python_dependencies_alias"``: alias for package names,
-      if different from import names
     - ``"env_marker"``: environment marker for the object (PEP 508)
     - ``"requires_cython"``: whether the object requires a C compiler present
 
@@ -1957,6 +1900,12 @@ ESTIMATOR_TAG_REGISTER = [
         ["forecaster"],
         "bool",
         "can the estimator make global forecasting?",
+    ),
+    (
+        "python_dependencies_alias",
+        "object",
+        "dict",
+        "deprecated tag for dependency import aliases",
     ),
 ]
 

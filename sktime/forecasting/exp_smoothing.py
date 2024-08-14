@@ -113,7 +113,7 @@ class ExponentialSmoothing(_StatsModelsAdapter):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["mloning", "big-o"],
+        "authors": ["bashtage", "wooqo", "mloning", "big-o"],
         # "python_dependencies": "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type tags inherited from _StatsModelsAdapter
     }

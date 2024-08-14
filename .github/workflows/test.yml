@@ -197,8 +197,9 @@ jobs:
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
-      - name: Install OS packages
-        run: brew install libomp
+      - name: Install OSX packages
+        shell: bash
+        run: ./.github/scripts/install_osx_dependencies.sh
 
       - name: Install sktime and dependencies
         run: |
@@ -284,9 +285,12 @@ jobs:
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
+      - name: Install OSX packages
+        run: ./.github/scripts/install_osx_dependencies.sh
+
       - name: Install sktime and dependencies
-        run: |
-          python -m pip install .[all_extras_pandas2,dev,dl] --no-cache-dir
+        shell: bash
+        run: python -m pip install .[all_extras_pandas2,dev,dl,compatibility_tests] --no-cache-dir
 
       - name: Show dependencies
         run: python -m pip list

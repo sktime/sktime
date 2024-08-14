@@ -35,6 +35,7 @@ from sktime.split.tests.test_split import _get_windows
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.transformations.panel.reduce import Tabularizer
 from sktime.utils._testing.forecasting import make_forecasting_problem
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_fh
 
 N_TIMEPOINTS = [13, 17]
@@ -441,6 +442,33 @@ def test_make_reduction_infer_scitype_for_sklearn_pipeline():
 
 
 @pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting", "sktime.split"])
+    or not _check_soft_dependencies("catboost", severity="none"),
+    reason="run test only if forecasting or split module has changed",
+)
+def test_make_reduction_with_catboost():
+    """Test make_reduction with catboost.
+
+    catboost is an example of a package that does not fully comply with the
+    sklearn API. We therefore need to rely on the branch of scitype inference
+    that assumes the estimator is a tabular regressor.
+    """
+    from catboost import CatBoostRegressor
+
+    estimator = CatBoostRegressor(
+        learning_rate=1, depth=6, loss_function="RMSE", verbose=False
+    )
+
+    forecaster = make_reduction(estimator, scitype="infer")
+    assert forecaster._estimator_scitype == "tabular-regressor"
+
+    fh = [1, 2, 3]
+    y, X = make_forecasting_problem(make_X=True)
+    y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, fh=fh)
+    forecaster.fit(y_train, X_train, fh=fh).predict(fh, X_test)
+
+
+@pytest.mark.skipif(
     not run_test_module_changed(["sktime.forecasting.compose._reduce"]),
     reason="run test only if reduce module has changed",
 )
@@ -674,3 +702,22 @@ def test_recursive_reducer_X_not_fit_to_fh():
     assert pred3.shape == (3,)
     pred4 = forecaster.predict(X=X_test, fh=[1])
     assert pred4.shape == (1,)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.compose._reduce"])
+    or not _check_soft_dependencies("skpro", severity="none"),
+    reason="run test only if reduce module has changed",
+)
+def test_make_reduction_proba():
+    """Test direct reduction via make_reduction with skpro proba regressors."""
+    from skpro.regression.dummy import DummyProbaRegressor
+
+    y = load_airline()
+    y_train, y_test = temporal_train_test_split(y, test_size=24)
+    fh = ForecastingHorizon(y_test.index, is_relative=False)
+
+    forecaster = make_reduction(DummyProbaRegressor(), strategy="direct")
+    y_pred = forecaster.fit(y_train, fh=fh).predict(fh)
+
+    assert y_pred.shape == y_test.shape
