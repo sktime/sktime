@@ -98,12 +98,6 @@ class SubsequenceExtractionTransformer(BaseTransformer):
                 f"{self.method} is currently not supported for parameter method"
             )
 
-        self.X_aggregate = getattr(
-            X.rolling(window=self.subsequence_len), self.aggregate
-        )().dropna()
-
-        self.indices = getattr(self.X_aggregate, f"idx{self.method}")()
-
         return self
 
     def _transform(self, X, y=None):
@@ -125,8 +119,15 @@ class SubsequenceExtractionTransformer(BaseTransformer):
             transformed version of X
         """
         index_list = X.index.get_level_values(X.index.names[-1])
+
+        X_aggregate = getattr(
+            X.rolling(window=self.subsequence_len), self.aggregate
+        )().dropna()
+
+        indices = getattr(X_aggregate, f"idx{self.method}")()
+
         upper = (
-            pd.Categorical(self.indices, categories=index_list, ordered=True).codes + 1
+            pd.Categorical(indices, categories=index_list, ordered=True).codes + 1
         )
         lower = upper - self.subsequence_len
 
@@ -157,5 +158,14 @@ class SubsequenceExtractionTransformer(BaseTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        params = [{"subsequence_len": 3}, {"subsequence_len": 5}]
+        params = [
+            {
+                "subsequence_len": 3
+            },
+            {
+                "subsequence_len": 5,
+                "aggregate": "median",
+                "method": "min"
+            }
+        ]
         return params
