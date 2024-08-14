@@ -27,7 +27,7 @@ BASE_CLASS_SCITYPE_LIST - list of string
 
 ---
 
-BASE_CLASS_LIST - list of string
+BASE_CLASS_LIST - list of classes
     elements are 1-st entries of BASE_CLASS_REGISTER, in same order
 
 ---
