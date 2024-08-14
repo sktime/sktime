@@ -68,6 +68,7 @@ EXCLUDE_ESTIMATORS = [
     "GreedyGaussianSegmentation",
     "HMM",
     "BinarySegmentation",
+    "SubLOF",
 ]
 
 
