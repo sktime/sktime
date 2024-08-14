@@ -30,6 +30,7 @@ These loaders can be used to access reference datasets for benchmarking.
 
     load_forecastingdata
     load_fpp3
+    load_m5
     load_UCR_UEA_dataset
 
 
