@@ -63,6 +63,11 @@ EXCLUDE_ESTIMATORS = [
     "SARIMAX",
     "StatsModelsARIMA",
     "ShapeletLearningClassifierTslearn",
+    # Annotators that are not compliant with the BaseSeriesAnnotator class
+    "ClaSPSegmentation",
+    "GreedyGaussianSegmentation",
+    "HMM",
+    "BinarySegmentation",
 ]
 
 
