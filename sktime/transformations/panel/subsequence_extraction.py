@@ -1,6 +1,4 @@
-"""Subsequence extraction transformer - extract subsequences of specified length that
-meet some criterion with respect to an aggregate function.
-"""
+"""Subsequence extraction - extract subsequences of equal length based on conditions."""
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -14,6 +12,10 @@ __author__ = ["wirrywoo"]
 
 class SubsequenceExtractionTransformer(BaseTransformer):
     """
+    Extract subsequences of specified length based on various conditions.
+
+    Aims to identify subsequences of specified length that yields the maximal/minimal
+    rolling mean/median.
 
     Parameters
     ----------
