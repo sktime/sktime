@@ -457,6 +457,14 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         """
         test_params = [
             {
+                "training_args": {
+                    "max_steps": 5,
+                    "output_dir": "test_output",
+                    "per_device_train_batch_size": 4,
+                    "report_to": "none",
+                },
+            },
+            {
                 "model_path": "ibm/TTM",
                 "revision": "main",
                 "config": {
@@ -465,9 +473,9 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 },
                 "validation_split": 0.2,
                 "training_args": {
-                    "max_steps": 10,
+                    "max_steps": 5,
                     "output_dir": "test_output",
-                    "per_device_train_batch_size": 32,
+                    "per_device_train_batch_size": 4,
                     "report_to": "none",
                 },
             },
