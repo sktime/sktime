@@ -408,6 +408,15 @@ ignore=[
   "PT019",  # Fixture `_` without value is injected as parameter, use `@pytest.mark.usefixtures` instead
   "PT006" # Checks for the type of parameter names passed to pytest.mark.parametrize.
 ]
+"sktime/libs/uni2ts/*.py" = [
+  "F722",
+  "F821",
+  "D100",
+  "D101",
+  "D102",
+  "D103",
+  "D104",
+]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
