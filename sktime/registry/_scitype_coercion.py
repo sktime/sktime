@@ -5,7 +5,6 @@ __author__ = ["fkiraly"]
 from sktime.registry._scitype import scitype
 from sktime.utils.sklearn import is_sklearn_estimator, sklearn_scitype
 
-
 _coerce_register = dict()
 
 
