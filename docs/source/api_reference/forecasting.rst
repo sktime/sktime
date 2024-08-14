@@ -11,7 +11,7 @@ using ``estimator_types="forecaster"``, optionally filtered by tags.
 Valid tags can be listed using ``sktime.registry.all_tags``.
 
 A full table with tag based search is also available on the
-`Estimator Search Page <https://www.sktime.net/en/latest/estimator_overview.html>`_
+:doc:`Estimator Search Page </estimator_overview>`
 (select "forecaster" in the "Estimator type" dropdown).
 
 
@@ -133,6 +133,16 @@ Direct and recursive - 3rd party
     :template: class.rst
 
     SkforecastAutoreg
+
+.. currentmodule:: sktime.forecasting.darts
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DartsRegressionModel
+    DartsLinearRegressionModel
+    DartsXGBModel
 
 
 Naive forecasters
@@ -430,6 +440,7 @@ Deep learning based forecasters
     LTSFLinearForecaster
     LTSFDLinearForecaster
     LTSFNLinearForecaster
+    LTSFTransformerForecaster
 
 .. currentmodule:: sktime.forecasting.hf_transformers_forecaster
 
@@ -438,6 +449,14 @@ Deep learning based forecasters
     :template: class.rst
 
     HFTransformersForecaster
+
+.. currentmodule:: sktime.forecasting.ttm
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TinyTimeMixerForecaster
 
 .. currentmodule:: sktime.forecasting.conditional_invertible_neural_network
 

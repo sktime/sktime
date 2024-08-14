@@ -68,11 +68,7 @@ class TapNetNetwork(BaseDeepNetwork):
         random_state=1,
         padding="same",
     ):
-        _check_soft_dependencies(
-            "keras-self-attention",
-            package_import_alias={"keras-self-attention": "keras_self_attention"},
-            severity="error",
-        )
+        _check_soft_dependencies("keras-self-attention", severity="error")
         _check_dl_dependencies(severity="error")
 
         super().__init__()

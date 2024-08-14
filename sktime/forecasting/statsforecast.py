@@ -1,7 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Interfaces to estimators from statsforecast by Nixtla."""
 
-__author__ = ["FedericoGarza", "yarnabrina"]
+__author__ = ["AzulGarza", "yarnabrina"]
 
 __all__ = [
     "StatsForecastAutoARIMA",
@@ -179,8 +179,8 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["FedericoGarza", "yarnabrina"],
-        "maintainers": ["FedericoGarza"],
+        "authors": ["AzulGarza", "yarnabrina"],
+        "maintainers": ["AzulGarza"],
         # "python_dependencies": "statsforecast"
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
@@ -369,7 +369,14 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
     _tags = {
         # packaging info
         # --------------
-        # "authors": ["yarnabrina"],
+        "authors": [
+            "AzulGarza",
+            "jmoralez",
+            "yarnabrina",
+            "arnaujc91",
+            "luca-miniati",
+        ],
+        # AzulGarza, jmoralez for statsforecast theta
         # "maintainers": ["yarnabrina"],
         # "python_dependencies": "statsforecast"
         # inherited from _GeneralisedStatsForecastAdapter
@@ -477,7 +484,14 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
     _tags = {
         # packaging info
         # --------------
-        # "authors": ["yarnabrina"],
+        "authors": [
+            "AzulGarza",
+            "jmoralez",
+            "yarnabrina",
+            "arnaujc91",
+            "luca-miniati",
+        ],
+        # AzulGarza and jmoralez for statsforecast AutoETS
         # "maintainers": ["yarnabrina"],
         # "python_dependencies": "statsforecast"
         # inherited from _GeneralisedStatsForecastAdapter
@@ -577,7 +591,15 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
     _tags = {
         # packaging info
         # --------------
-        # "authors": ["yarnabrina"],
+        "authors": [
+            "AzulGarza",
+            "jmoralez",
+            "MMenchero",
+            "yarnabrina",
+            "arnaujc91",
+            "luca-miniati",
+        ],
+        # AzulGarza, jmoralez, MMenchero for statsforecast AutoCES
         # "maintainers": ["yarnabrina"],
         # "python_dependencies": "statsforecast"
         # inherited from _GeneralisedStatsForecastAdapter
@@ -680,7 +702,14 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
     _tags = {
         # packaging info
         # --------------
-        # "authors": ["yarnabrina"],
+        "authors": [
+            "MMenchero",
+            "jmoralez",
+            "yarnabrina",
+            "arnaujc91",
+            "luca-miniati",
+        ],
+        # MMenchero and jmoralez for statsforecast AutoTBATS
         # "maintainers": ["yarnabrina"],
         # "python_dependencies": "statsforecast"
         # inherited from _GeneralisedStatsForecastAdapter
@@ -817,7 +846,14 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
     _tags = {
         # packaging info
         # --------------
-        "authors": "luca-miniati",
+        "authors": [
+            "AzulGarza",
+            "jmoralez",
+            "luca-miniati",
+            "yarnabrina",
+            "arnaujc91",
+        ],
+        # AzulGarza and jmoralez for statsforecast MSTL
         "maintainers": "luca-miniati",
         # "python_dependencies": "statsforecast"
         # inherited from _GeneralisedStatsForecastAdapter
