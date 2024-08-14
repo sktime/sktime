@@ -526,6 +526,9 @@ def evaluate(
 
     ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
 
+    if isinstance(y, tuple):
+        y, X = y
+
     y_valid, _, _ = check_is_scitype(y, scitype=ALLOWED_SCITYPES, return_metadata=True)
     if not y_valid:
         raise TypeError(
