@@ -1,7 +1,11 @@
 """Adapter for using MOIRAI Forecasters."""
 
-import pandas as pd
+from unittest.mock import patch
 
+import pandas as pd
+from skbase.utils.dependencies import _check_soft_dependencies
+
+import sktime.libs.uni2ts
 from sktime.forecasting.base import _BaseGlobalForecaster
 
 __author__ = ["benheid", "pranavvp16"]
@@ -38,7 +42,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
     >>> import pandas as pd
     >>> import numpy as np
     >>> morai_forecaster = MOIRAIForecaster(
-    ...     checkpoint_path=f"Salesforce/moirai-1.0-R-small"
+    ...     checkpoint_path=f"sktime/moirai-1.0-R-small"
     ... )
     >>> y = np.random.normal(0, 1, (30, 2))
     >>> X = y * 2 + np.random.normal(0, 1, (30,1))
@@ -61,7 +65,15 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         "enforce_index_type": None,
         "handles-missing-data": False,
         "capability:pred_int": False,
-        "python_dependencies": ["salesforce-uni2ts", "gluonts", "torch"],
+        "python_dependencies": [
+            "gluonts",
+            "torch",
+            "jaxtyping",
+            "einops",
+            "huggingface-hub",
+            "hydra-core",
+            "lightning",
+        ],
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex"],
         "capability:insample": False,
@@ -82,6 +94,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         broadcasting=False,
         deterministic=False,
         batch_size=32,
+        use_source_package=False,
     ):
         super().__init__()
         self.checkpoint_path = checkpoint_path
@@ -94,6 +107,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         self.broadcasting = broadcasting
         self.deterministic = deterministic
         self.batch_size = batch_size
+        self.use_source_package = use_source_package
 
         if self.broadcasting:
             self.set_tags(
@@ -104,10 +118,17 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
                 }
             )
 
+    # Apply a patch to fit for redirecting imports to sktime.libs.uni2ts
+    @patch.dict("sys.modules", {"uni2ts": sktime.libs.uni2ts})
     def _fit(self, y, X, fh):
         # Load model and extract config
 
-        from uni2ts.model.moirai import MoiraiForecast
+        if self.use_source_package:
+            if _check_soft_dependencies("uni2ts", severity="none"):
+                from uni2ts.model.moirai import MoiraiForecast
+
+        else:
+            from sktime.libs.uni2ts.forecast import MoiraiForecast
 
         if fh is not None:
             prediction_length = max(fh.to_relative(self.cutoff))
@@ -130,23 +151,13 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             "past_feat_dynamic_real_dim": self.num_past_feat_dynamic_real,
         }
 
-        # Instantiate model with latest salesforce weights
-        if self.checkpoint_path.startswith("Salesforce"):
-            from uni2ts.model.moirai import MoiraiModule
+        from huggingface_hub import hf_hub_download
 
-            model_kwargs["module"] = MoiraiModule.from_pretrained(self.checkpoint_path)
+        model_kwargs["checkpoint_path"] = hf_hub_download(
+            repo_id=self.checkpoint_path, filename="model.ckpt"
+        )
 
-            self.model = MoiraiForecast(**model_kwargs)
-
-        # Instantiate model with sktime hosted weights of MOIRAI
-        else:
-            from huggingface_hub import hf_hub_download
-
-            model_kwargs["checkpoint_path"] = hf_hub_download(
-                repo_id=self.checkpoint_path, filename="model.ckpt", revision="temp"
-            )
-
-            self.model = MoiraiForecast.load_from_checkpoint(**model_kwargs)
+        self.model = MoiraiForecast.load_from_checkpoint(**model_kwargs)
         self.model.to(self.map_location)
 
     def _predict(self, fh, y=None, X=None):
