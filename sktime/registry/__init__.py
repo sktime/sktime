@@ -15,6 +15,7 @@ from sktime.registry._base_classes import (
 from sktime.registry._craft import craft, deps, imports
 from sktime.registry._lookup import all_estimators, all_tags
 from sktime.registry._scitype import scitype
+from sktime.registry._scitype_coercion import coerce_scitype
 from sktime.registry._tags import (
     ESTIMATOR_TAG_LIST,
     ESTIMATOR_TAG_REGISTER,
@@ -25,6 +26,7 @@ __all__ = [
     "all_estimators",
     "all_tags",
     "check_tag_is_valid",
+    "coerce_scitype",
     "craft",
     "deps",
     "imports",
