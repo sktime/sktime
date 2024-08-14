@@ -1,20 +1,20 @@
 """Subsequence extraction transformer - extract subsequences of specified length that
-meet some criterion with respect to an aggregate function."""
+meet some criterion with respect to an aggregate function.
+"""
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.panel.padder import PaddingTransformer
 
 __all__ = ["SubsequenceExtractionTransformer"]
-__author__ = ['wirrywoo']
+__author__ = ["wirrywoo"]
 
 
 class SubsequenceExtractionTransformer(BaseTransformer):
     """
+
     Parameters
     ----------
     subsequence_len : int
@@ -22,11 +22,14 @@ class SubsequenceExtractionTransformer(BaseTransformer):
     aggregate : {'mean', 'median'}, default 'mean'
         Function used to aggregate all values in subsequence to a scalar or primitive.
     method : {'max', 'min'}, default 'max'
-        Function used to decide which subsequence to return from the set of scalars or primitives.
+        Function used to decide which subsequence to return from the set of scalars or
+        primitives.
 
     Examples
     --------
-    >>> from sktime.transformations.panel.subsequence_extraction import SubsequenceExtractionTransformer
+    >>> from sktime.transformations.panel.subsequence_extraction import (
+    >>>     SubsequenceExtractionTransformer
+    >>> )
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> X = _make_hierarchical(same_cutoff=False)
     >>> subseq_extract = SubsequenceExtractionTransformer(subsequence_len = 3)
@@ -73,16 +76,16 @@ class SubsequenceExtractionTransformer(BaseTransformer):
         -------
         self : reference to self
         """
-
-        self.X_padded = PaddingTransformer(fill_value=np.nan).fit_transform(X)
-        self.X_aggregate = self.X_padded.rolling(window = self.subsequence_len)
+        self.X_aggregate = X.rolling(window=self.subsequence_len)
 
         if self.aggregate == "mean":
             self.X_aggregate = self.X_aggregate.mean()
         elif self.aggregate == "median":
             self.X_aggregate = self.X_aggregate.median()
         else:
-            raise ValueError(f"{self.aggregate} is currently not supported for parameter aggregate")
+            raise ValueError(
+                f"{self.aggregate} is currently not supported for parameter aggregate"
+            )
 
         try:
             if self.method == "max":
@@ -90,9 +93,14 @@ class SubsequenceExtractionTransformer(BaseTransformer):
             elif self.method == "min":
                 self.indices = self.X_aggregate.dropna().idxmin()
             else:
-                raise ValueError(f"{self.method} is currently not supported for parameter method")
+                raise ValueError(
+                    f"{self.method} is currently not supported for parameter method"
+                )
         except ValueError:
-            raise ValueError(f"Subsequence length parameter ({self.subsequence_len}) is not less than minimum sequence length of X ({len(X)}).")
+            raise ValueError(
+                f"Subsequence length parameter ({self.subsequence_len}) is not less \
+                than minimum sequence length of X ({len(X)})."
+            )
 
         return self
 
@@ -114,13 +122,17 @@ class SubsequenceExtractionTransformer(BaseTransformer):
             each cell of Xt contains pandas.Series
             transformed version of X
         """
-        
-        upper = self.indices + 1
+        index_list = X.index.get_level_values(X.index.names[-1])
+        upper = (
+            pd.Categorical(self.indices, categories=index_list, ordered=True).codes + 1
+        )
         lower = upper - self.subsequence_len
 
-        dfs = [X[col].iloc[l:u].reset_index(drop=True) 
-            for col, l, u in zip(X.columns, lower, upper)]
-        
+        dfs = [
+            X[col].iloc[l:u].reset_index(drop=True)
+            for col, l, u in zip(X.columns, lower, upper)
+        ]
+
         return pd.concat(dfs, axis=1, ignore_index=False)
 
     @classmethod
@@ -143,6 +155,5 @@ class SubsequenceExtractionTransformer(BaseTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-
-        params = {"subsequence_len": 3}
+        params = [{"subsequence_len": 3}, {"subsequence_len": 5}]
         return params
