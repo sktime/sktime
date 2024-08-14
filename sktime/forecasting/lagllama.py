@@ -22,10 +22,6 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
     context_length: int, optional (default=32)
         The number of prior timestep data entries provided.
 
-    prediction_length: int, optional (default=100)
-        The length of future of timesteps to predict
-        (synonymous to forecast horizon).
-
     num_samples: int, optional (default=10)
         Number of sample paths desired for evaluation.
 
@@ -39,27 +35,30 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
     lr: float, optional (default=5e-5)
         The learning rate of the model.
 
+    shuffle_buffer_length: int, optional (default=1000)
+        The size of the buffer from which training samples are drawn
+
     trainer_kwargs: dict, optional (default={"num_epochs": 50})
         The arguments to pass to the GluonTS trainer.
 
     Examples
     --------
-    >>> from sktime.datasets import load_airline
+    >>> from gluonts.dataset.repository.datasets import get_dataset
     >>> from sktime.forecasting.lagllama import LagLlamaForecaster
-    >>> import pandas as pd
+    >>> from gluonts.dataset.common import ListDataset
 
-    >>> y = load_airline().to_timestamp(freq='M')
-    >>> y = pd.DataFrame(y)
-    >>> y = y.rename({"Number of airline passengers": "target"})
+    >>> dataset = get_dataset("m4_weekly")
+
+    # Converts to a GluonTS ListDataset, a format supported by sktime!
+    >>> train_dataset = ListDataset(dataset.train, freq='W')
 
     >>> forecaster = LagLlamaForecaster(
-    ...     model_path=None,
-    ...     device=None,
-    ...     context_length=128,
-    ...     prediction_length=3,
+    ...     context_length=dataset.metadata.prediction_length * 3,
+    ...     prediction_length=dataset.metadata.prediction_length,
+    ...     lr=5e-4,
     ...     )
 
-    >>> forecaster.fit(y, fh=[1, 2, 3])
+    >>> forecaster.fit(train_dataset)
 
     >>> y_pred = forecaster.predict()
     >>> y_pred
@@ -67,12 +66,12 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
 
     _tags = {
         "y_inner_mtype": [
-            "gluonts_PandasDataset_panel",
-            "gluonts_PandasDataset_series",
+            "gluonts_ListDataset_series",
+            "gluonts_ListDataset_panel",
         ],
         "X_inner_mtype": [
-            "gluonts_PandasDataset_panel",
-            "gluonts_PandasDataset_series",
+            "gluonts_ListDataset_series",
+            "gluonts_ListDataset_panel",
         ],
         "scitype:y": "both",
         "ignores-exogeneous-X": True,
@@ -95,12 +94,12 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         model_path=None,
         device=None,
         context_length=None,
-        prediction_length=None,
         num_samples=None,
         batch_size=None,
         nonnegative_pred_samples=None,
         lr=None,
         trainer_kwargs=None,
+        shuffle_buffer_length=None,
     ):
         # Initializing parent class
         super().__init__()
@@ -120,9 +119,6 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         self.context_length = context_length
         self.context_length_ = 32 if not context_length else context_length
 
-        self.prediction_length = prediction_length
-        self.prediction_length_ = 100 if not prediction_length else prediction_length
-
         self.num_samples = num_samples
         self.num_samples_ = 10 if not num_samples else num_samples
 
@@ -132,6 +128,11 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         # Now storing the training related variables
         self.lr = lr
         self.lr_ = 5e-5 if not lr else lr
+
+        self.shuffle_buffer_length = shuffle_buffer_length
+        self.shuffle_buffer_length_ = (
+            1000 if not shuffle_buffer_length else shuffle_buffer_length
+        )
 
         self.trainer_kwargs = trainer_kwargs
         self.trainer_kwargs_ = (
@@ -208,8 +209,8 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         y : GluonTS PandasDataset Object, optional (default=None)
             Time series to which to fit the forecaster.
 
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+        fh : guaranteed to be ForecastingHorizon or None
+            The length of future of timesteps to predict
 
         X : GluonTS PandasDataset Object, optional (default=None)
             Exogeneous time series to fit to.
@@ -224,7 +225,7 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         # forecasting horizon
         self.estimator_ = LagLlamaEstimator(
             ckpt_path="lag-llama.ckpt",
-            prediction_length=(32 if not fh else fh.to_pandas()[-1]),
+            prediction_length=fh,
             context_length=self.context_length_,
             input_size=self.estimator_args["input_size"],
             n_layer=self.estimator_args["n_layer"],
@@ -248,8 +249,11 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
 
         # Lastly, training the model
         if y is not None:
-            print(y)
-            self.predictor_ = self.estimator_.train(y, cache_data=True)
+            self.predictor_ = self.estimator_.train(
+                y,
+                cache_data=True,
+                shuffle_buffer_length=self.shuffle_buffer_length_,
+            )
 
     def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.

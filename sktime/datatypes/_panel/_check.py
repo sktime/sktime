@@ -571,10 +571,7 @@ if _check_soft_dependencies("gluonts", severity="none"):
         req_n_feat = ["n_features", "feature_names", "feature_kind", "dtypekind_dfip"]
         if _req(req_n_feat, return_metadata):
             # Check first if the ListDataset is empty
-            if len(obj) < 1:
-                n_features = 0
-            else:
-                n_features = obj[0]["target"].shape[1]
+            n_features = len(obj)
 
         if _req("n_features", return_metadata):
             metadata["n_features"] = n_features
