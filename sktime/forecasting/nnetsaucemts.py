@@ -47,6 +47,7 @@ __all__ = [
     "MTS",
 ]
 
+import nnetsauce as ns 
 from sktime.forecasting.base import BaseForecaster
 
 # todo: add any necessary imports here
