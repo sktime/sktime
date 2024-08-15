@@ -181,7 +181,7 @@ def convert_pandas_dataframe_to_pandasDataset(pd_dataframe: pd.DataFrame):
 
     # Checking for index validity
     if not isinstance(pd_dataframe.index, (pd.DatetimeIndex, pd.PeriodIndex)):
-        raise ValueError("The dataframe must have a DateTimeIndex or PeriodIndex!")
+        raise ValueError("The dataframe must have a DateTimeIndex or PeriodIndex")
 
     return PandasDataset(pd_dataframe)
 
@@ -293,8 +293,8 @@ def convert_pandasDataset_to_pandas(
     pandasDataset : gluonts.dataset.pandas.PandasDataset
         A gluonTS PandasDataset
 
-    item_id : str
-        A column dedicated to time series labels ('series_id' by default)
+    item_id : str (optional, default="instances")
+        A column dedicated to time series labels, "instances" by default
 
     timepoints: str (optional, default="timepoints")
         The name of the timepoints column, "timepoints" by default

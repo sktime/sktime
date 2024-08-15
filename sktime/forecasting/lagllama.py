@@ -32,6 +32,7 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         If True, ensures all predicted samples are passed
         through ReLU,and are thus positive or 0.
 
+    rope_scaling
     lr: float, optional (default=5e-5)
         The learning rate of the model.
 
@@ -45,6 +46,7 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
     --------
     >>> from gluonts.dataset.repository.datasets import get_dataset
     >>> from sktime.forecasting.lagllama import LagLlamaForecaster
+    >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from gluonts.dataset.common import ListDataset
 
     >>> dataset = get_dataset("m4_weekly")
@@ -54,11 +56,11 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
 
     >>> forecaster = LagLlamaForecaster(
     ...     context_length=dataset.metadata.prediction_length * 3,
-    ...     prediction_length=dataset.metadata.prediction_length,
     ...     lr=5e-4,
     ...     )
 
-    >>> forecaster.fit(train_dataset)
+    >>> fh=ForecastingHorizon(range(dataset.metadata.prediction_length))
+    >>> forecaster.fit(train_dataset,fh = fh)
 
     >>> y_pred = forecaster.predict()
     >>> y_pred
@@ -105,7 +107,6 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         super().__init__()
 
         import torch
-        from lag_llama.gluon.estimator import LagLlamaEstimator
 
         # Defining private variable values
         self.model_path = model_path
@@ -155,45 +156,10 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
             )
 
         # Load in the lag llama checkpoint
-        ckpt = torch.load("./lag-llama.ckpt", map_location=self.device_)
+        ckpt = torch.load("lag-llama.ckpt", map_location=self.device_)
 
         estimator_args = ckpt["hyper_parameters"]["model_kwargs"]
         self.estimator_args = estimator_args
-
-        # By default, we maintain RoPE scaling
-        # We provide the user an option to disable in fit() function
-        rope_scaling_arguments = {
-            "type": "linear",
-            "factor": max(
-                1.0,
-                (self.context_length_ + self.prediction_length_)
-                / estimator_args["context_length"],
-            ),
-        }
-
-        # Creating our LagLlama estimator
-        self.estimator_ = LagLlamaEstimator(
-            ckpt_path="lag-llama.ckpt",
-            prediction_length=self.prediction_length_,
-            context_length=self.context_length_,
-            input_size=estimator_args["input_size"],
-            n_layer=estimator_args["n_layer"],
-            n_embd_per_head=estimator_args["n_embd_per_head"],
-            n_head=estimator_args["n_head"],
-            scaling=estimator_args["scaling"],
-            time_feat=estimator_args["time_feat"],
-            batch_size=self.batch_size_,
-            device=self.device_,
-            rope_scaling=rope_scaling_arguments,
-        )
-
-        lightning_module = self.estimator_.create_lightning_module()
-        transformation = self.estimator_.create_transformation()
-
-        # Finally, we create our predictor!
-        self.predictor_ = self.estimator_.create_predictor(
-            transformation, lightning_module
-        )
 
     # todo: implement this, mandatory
     def _fit(self, y, X, fh):
@@ -225,7 +191,7 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         # forecasting horizon
         self.estimator_ = LagLlamaEstimator(
             ckpt_path="lag-llama.ckpt",
-            prediction_length=fh,
+            prediction_length=len(fh),
             context_length=self.context_length_,
             input_size=self.estimator_args["input_size"],
             n_layer=self.estimator_args["n_layer"],
@@ -371,15 +337,18 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = {
-            "model_path": None,
-            "device": None,
-            "context_length": 32,
-            "num_samples": 16,
-            "batch_size": 32,
-            "shuffle_buffer_length": 64,
-            "nonnegative_pred_samples": False,
-            "lr": 5e-5,
-        }
+        params = [
+            {},
+            {
+                "model_path": None,
+                "device": None,
+                "context_length": 32,
+                "num_samples": 16,
+                "batch_size": 32,
+                "shuffle_buffer_length": 64,
+                "nonnegative_pred_samples": False,
+                "lr": 5e-5,
+            },
+        ]
 
         return params

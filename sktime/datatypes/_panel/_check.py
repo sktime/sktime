@@ -48,9 +48,9 @@ from pandas.core.dtypes.cast import is_nested_object
 
 from sktime.datatypes._common import _req, _ret
 from sktime.datatypes._dtypekind import (
+    DtypeKind,
     _get_feature_kind,
     _get_panel_dtypekind,
-    _pandas_dtype_to_kind,
 )
 from sktime.datatypes._series._check import (
     _index_equally_spaced,
@@ -541,7 +541,6 @@ if _check_soft_dependencies("dask", severity="none"):
     check_dict[("dask_panel", "Panel")] = check_dask_panel
 
 if _check_soft_dependencies("gluonts", severity="none"):
-    from sktime.datatypes._dtypekind import DtypeKind
 
     def check_gluonTS_listDataset_panel(obj, return_metadata=False, var_name="obj"):
         metadata = dict()
@@ -576,19 +575,11 @@ if _check_soft_dependencies("gluonts", severity="none"):
         if _req("n_features", return_metadata):
             metadata["n_features"] = n_features
 
-        if _req(["dtypekind_dfip", "feature_kind"], return_metadata):
-            dtypes = []
+        if _req("feature_kind", return_metadata):
+            metadata["feature_kind"] = [DtypeKind.FLOAT] * n_features
 
-            # Each entry in a ListDataset is formed with an ndarray.
-            # Basing off definitions in _dtypekind, assigning values of FLOAT
-
-            dtypes.extend([DtypeKind.FLOAT] * len(obj))
-
-            if _req("dtypekind_dfip", return_metadata):
-                metadata["dtypekind_dfip"] = dtypes
-
-            if _req("feature_kind", return_metadata):
-                metadata["feature_kind"] = _get_feature_kind(dtypes)
+        if _req("dtypekind_dfip", return_metadata):
+            metadata["dtypekind_dfip"] = [DtypeKind.FLOAT] * n_features
 
         if _req("n_instances", return_metadata):
             metadata["n_instances"] = len(obj)
@@ -638,8 +629,10 @@ if _check_soft_dependencies("gluonts", severity="none"):
             return _ret(False, msg, None, return_metadata)
 
         if not hasattr(obj._data_entries.iterable, "iterable"):
-            msg = f"{var_name} must be formed with a multiindex DataFrame to be"
-            +"a valid `pandasDataset_panel`"
+            msg = (
+                f"{var_name} must be formed with a multiindex DataFrame to "
+                f"be a valid `pandasDataset_panel`"
+            )
             return _ret(False, msg, None, return_metadata)
 
         # Convert to a pandas DF for easier checks
@@ -653,25 +646,17 @@ if _check_soft_dependencies("gluonts", severity="none"):
             metadata["is_univariate"] = len(df[0][1].columns) == 1
 
         req_n_feat = ["n_features", "feature_kind", "dtypekind_dfip"]
-
         if _req(req_n_feat, return_metadata):
             n_features = len(df[0][1].columns)
 
         if _req("n_features", return_metadata):
             metadata["n_features"] = n_features
 
-        if _req("dtypekind_dfip", return_metadata):
-            index_cols_count = len(df[0][1].columns)
-
-            # slicing off additional index columns
-            dtype_list = df[0][1].dtypes.to_list()[index_cols_count:]
-
-            metadata["dtypekind_dfip"] = _pandas_dtype_to_kind(dtype_list)
-
         if _req("feature_kind", return_metadata):
-            dtype_list = df[0][1].dtypes.to_list()[index_cols_count:]
-            dtype_kind = _pandas_dtype_to_kind(dtype_list)
-            metadata["feature_kind"] = _get_feature_kind(dtype_kind)
+            metadata["feature_kind"] = [DtypeKind.FLOAT] * n_features
+
+        if _req("dtypekind_dfip", return_metadata):
+            metadata["dtypekind_dfip"] = [DtypeKind.FLOAT] * n_features
 
         if _req("n_instances", return_metadata):
             metadata["n_instances"] = len(df)
