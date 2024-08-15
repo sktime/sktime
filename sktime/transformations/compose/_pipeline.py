@@ -6,7 +6,6 @@ __author__ = ["fkiraly"]
 __all__ = ["TransformerPipeline"]
 
 from sktime.base._meta import _HeterogenousMetaEstimator
-from sktime.registry import coerce_scitype
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.compose._common import CORE_MTYPES
 from sktime.utils.sklearn import (
@@ -225,6 +224,7 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
         """
         from sktime.classification.compose import SklearnClassifierPipeline
         from sktime.clustering.compose import SklearnClustererPipeline
+        from sktime.registry import coerce_scitype
         from sktime.regression.compose import SklearnRegressorPipeline
 
         other = coerce_scitype(other, "transformer")
@@ -266,6 +266,8 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
         (last).
             not nested, contains only non-TransformerPipeline ``sktime`` steps
         """
+        from sktime.registry import coerce_scitype
+
         other = coerce_scitype(other, "transformer")
         return self._dunder_concat(
             other=other,

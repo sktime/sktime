@@ -7,7 +7,6 @@ __all__ = ["MultiplexTransformer"]
 
 from sktime.base._meta import _HeterogenousMetaEstimator
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES
-from sktime.registry import coerce_scitype
 from sktime.transformations._delegate import _DelegatedTransformer
 from sktime.transformations.base import BaseTransformer
 
@@ -219,6 +218,8 @@ class MultiplexTransformer(_HeterogenousMetaEstimator, _DelegatedTransformer):
         ------
         ValueError if other is not of type MultiplexTransformer or BaseTransformer.
         """
+        from sktime.registry import coerce_scitype
+
         other = coerce_scitype(other, "transformer")
         return self._dunder_concat(
             other=other,
@@ -245,6 +246,8 @@ class MultiplexTransformer(_HeterogenousMetaEstimator, _DelegatedTransformer):
             (first). not nested, contains only non-MultiplexTransformer ``sktime``
             transformers
         """
+        from sktime.registry import coerce_scitype
+
         other = coerce_scitype(other, "transformer")
         return self._dunder_concat(
             other=other,
