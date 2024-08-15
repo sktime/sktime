@@ -172,7 +172,7 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
             not nested, contains only non-FeatureUnion ``sktime`` transformers
         """
         from sktime.registry import coerce_scitype
-    
+
         other = coerce_scitype(other, "transformer")
         return self._dunder_concat(
             other=other,
