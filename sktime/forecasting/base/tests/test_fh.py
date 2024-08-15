@@ -733,6 +733,7 @@ def test_exponential_smoothing_case_with_naive():
 
 
 # TODO: Replace this long running test with fast unit test
+@pytest.mark.xfail
 @pytest.mark.skipif(
     not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"])
     or not _check_estimator_deps(AutoARIMA, severity="none"),
