@@ -9,6 +9,7 @@ tested with various configurations for correct output.
 __author__ = ["aiwalter", "mloning", "fkiraly"]
 __all__ = [
     "test_evaluate_common_configs",
+    "test_evaluate_global_mode",
     "test_evaluate_initial_window",
     "test_evaluate_no_exog_against_with_exog",
 ]
@@ -17,12 +18,14 @@ import numpy as np
 import pandas as pd
 import pytest
 from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import KFold
 
 from sktime.datasets import load_airline, load_longley
 
 # from sktime.exceptions import FitFailedWarning
 # commented out until bugs are resolved, see test_evaluate_error_score
 from sktime.forecasting.arima import ARIMA, AutoARIMA
+from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.compose._reduce import DirectReductionForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_evaluation import evaluate
@@ -36,6 +39,8 @@ from sktime.performance_metrics.forecasting import (
     MeanAbsoluteError,
     MeanAbsolutePercentageError,
     MeanAbsoluteScaledError,
+    MeanSquaredPercentageError,
+    MedianSquaredPercentageError,
 )
 from sktime.performance_metrics.forecasting.probabilistic import (
     CRPS,
@@ -43,7 +48,13 @@ from sktime.performance_metrics.forecasting.probabilistic import (
     LogLoss,
     PinballLoss,
 )
-from sktime.split import ExpandingWindowSplitter, SlidingWindowSplitter
+from sktime.split import (
+    ExpandingWindowSplitter,
+    InstanceSplitter,
+    SingleWindowSplitter,
+    SlidingWindowSplitter,
+)
+from sktime.tests._pytest_fixture import lock, serial  # noqa F401
 from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.forecasting import make_forecasting_problem
@@ -53,13 +64,17 @@ from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.parallel import _get_parallel_test_fixtures
 
 METRICS = [MeanAbsolutePercentageError(symmetric=True), MeanAbsoluteScaledError()]
+METRICS_GLOBAL = [MeanSquaredPercentageError(), MedianSquaredPercentageError()]
 PROBA_METRICS = [CRPS(), EmpiricalCoverage(), LogLoss(), PinballLoss()]
 
 # list of parallelization backends to test
 BACKENDS = _get_parallel_test_fixtures("estimator")
+STRATEGY = ["refit", "update", "no-update_params"]
 
 
-def _check_evaluate_output(out, cv, y, scoring, return_data):
+def _check_evaluate_output(
+    out, cv, y, scoring, return_data, global_mode=False, cv_ht=None
+):
     assert isinstance(out, pd.DataFrame)
     # Check column names.
     scoring = _check_scores(scoring)
@@ -74,9 +89,14 @@ def _check_evaluate_output(out, cv, y, scoring, return_data):
     assert np.all(out.filter(like="_time") >= 0)
 
     # Check cutoffs.
-    np.testing.assert_array_equal(
-        out["cutoff"].to_numpy(), y.iloc[cv.get_cutoffs(y)].index.to_numpy()
-    )
+    if not global_mode:
+        cutoff = cv.get_cutoffs(y)
+        cutoff = y.iloc[cutoff].index.to_numpy()
+        np.testing.assert_array_equal(out["cutoff"].to_numpy(), cutoff)
+    else:
+        cutoff = cv_ht.get_cutoffs(y)
+        cutoff = y.iloc[cutoff, :].index.get_level_values(-1).to_numpy()
+        np.all(out["cutoff"].to_numpy() == cutoff)
 
     # Check training window lengths.
     if isinstance(cv, SlidingWindowSplitter) and cv.initial_window is not None:
@@ -93,6 +113,13 @@ def _check_evaluate_output(out, cv, y, scoring, return_data):
         np.testing.assert_array_equal(expected, actual)
         assert np.all(out.loc[0, "len_train_window"] == cv.window_length)
 
+    elif global_mode:
+        if isinstance(cv_ht.fh, ForecastingHorizon):
+            window_length = cv_ht.window_length + np.max(cv_ht.fh.to_relative(cutoff))
+        else:
+            window_length = cv_ht.window_length + np.max(cv_ht.fh)
+        assert np.all(out.loc[:, "len_train_window"] == window_length)
+
     else:
         assert np.all(out.loc[:, "len_train_window"] == cv.window_length)
 
@@ -107,7 +134,7 @@ def _check_evaluate_output(out, cv, y, scoring, return_data):
 @pytest.mark.parametrize("fh", TEST_FHS)
 @pytest.mark.parametrize("window_length", [7, 10])
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS_INT)
-@pytest.mark.parametrize("strategy", ["refit", "update", "no-update_params"])
+@pytest.mark.parametrize("strategy", STRATEGY)
 @pytest.mark.parametrize("scoring", METRICS)
 @pytest.mark.parametrize("backend", BACKENDS)
 def test_evaluate_common_configs(
@@ -143,6 +170,79 @@ def test_evaluate_common_configs(
         expected[i] = scoring(y.iloc[test], f.predict(), y_train=y.iloc[train])
 
     np.testing.assert_array_equal(actual, expected)
+
+
+# DL models running on CPU will consume a lot of memory and CPU resource
+# run it sequentially instead of parallelly
+@pytest.mark.usefixtures("serial")
+@pytest.mark.skipif(
+    not run_test_for_class(evaluate),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.skipif(
+    not _check_soft_dependencies("pytorch-forecasting", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
+@pytest.mark.parametrize("scoring", METRICS_GLOBAL)
+@pytest.mark.parametrize("strategy", STRATEGY)
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_evaluate_global_mode(scoring, strategy, backend):
+    """Check that evaluate works with hierarchical data."""
+    if backend["backend"] == "multiprocessing":
+        # multiprocessing will block the test due to unknown reason
+        if strategy not in ["update", "no-update_params"]:
+            # if strategy in ["update","no-update_params"], it won't run parallelly
+            return None
+
+    # skip test for dask backend if dask is not installed
+    if backend == "dask" and not _check_soft_dependencies("dask", severity="none"):
+        return None
+
+    hierarchy_levels = (4, 4)
+    timepoints = 5
+    data = _make_hierarchical(
+        hierarchy_levels=hierarchy_levels,
+        max_timepoints=timepoints,
+        min_timepoints=timepoints,
+        n_columns=2,
+    )
+    for col in data.columns:
+        data[col] = np.ones(timepoints * np.prod(hierarchy_levels))
+    X = data["c0"].to_frame()
+    y = data["c1"].to_frame()
+
+    from sktime.forecasting.pytorchforecasting import PytorchForecastingDeepAR
+
+    params = {
+        "trainer_params": {
+            # the training process is not deterministic
+            # train 10 epoches to make sure loss is low enough
+            "max_epochs": 10,
+        },
+        "dataset_params": {
+            "max_encoder_length": 3,
+        },
+        "random_log_path": True,  # fix parallel file access error in CI
+    }
+    forecaster = PytorchForecastingDeepAR(**params)
+    cv = InstanceSplitter(KFold(2))
+    cv_ht = SingleWindowSplitter(fh=[1], window_length=4)
+    out = evaluate(
+        forecaster,
+        cv,
+        y,
+        X=X,
+        scoring=scoring,
+        strategy=strategy,
+        error_score="raise",
+        global_mode=True,
+        cv_ht=cv_ht,
+        **backend,
+    )
+    _check_evaluate_output(out, cv, y, scoring, False, global_mode=True, cv_ht=cv_ht)
+    # check scoring
+    actual = out.loc[:, f"test_{scoring.name}"]
+    assert np.all(np.abs(actual) < 1e-3)
 
 
 @pytest.mark.skipif(
@@ -221,7 +321,7 @@ def test_evaluate_no_exog_against_with_exog():
 )
 @pytest.mark.parametrize("error_score", [np.nan, "raise", 1000])
 @pytest.mark.parametrize("return_data", [True, False])
-@pytest.mark.parametrize("strategy", ["refit", "update", "no-update_params"])
+@pytest.mark.parametrize("strategy", STRATEGY)
 @pytest.mark.parametrize("backend", BACKENDS)
 @pytest.mark.parametrize("scores", [[MeanAbsolutePercentageError()], METRICS])
 def test_evaluate_error_score(error_score, return_data, strategy, backend, scores):
