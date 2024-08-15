@@ -85,26 +85,26 @@ class GRUClassifier(BaseDeepClassifierPytorch):
     }
 
     def __init__(
-        self,
+        self: "GRUClassifier",
         # model specific
-        hidden_dim=256,
-        n_layers=4,
-        batch_first=False,
-        bias=True,
-        init_weights=True,
-        dropout=0.0,
-        fc_dropout=0.0,
-        bidirectional=False,
+        hidden_dim: int = 256,
+        n_layers: int = 4,
+        batch_first: bool = False,
+        bias: bool = True,
+        init_weights: bool = True,
+        dropout: float = 0.0,
+        fc_dropout: float = 0.0,
+        bidirectional: bool = False,
         # base classifier specific
-        num_epochs=10,
-        batch_size=8,
+        num_epochs: int = 10,
+        batch_size: int = 8,
         optimizer=None,
         criterion=None,
-        criterion_kwargs=None,
-        optimizer_kwargs=None,
-        lr=0.001,
-        verbose=False,
-        random_state=None,
+        criterion_kwargs: dict = None,
+        optimizer_kwargs: dict = None,
+        lr: float = 0.001,
+        verbose: bool = False,
+        random_state: int = None,
     ):
         self.hidden_dim = hidden_dim
         self.n_layers = n_layers

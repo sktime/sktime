@@ -67,10 +67,10 @@ class GRU(NNModule):
     }
 
     def __init__(
-        self,
-        input_size,
-        hidden_dim,
-        n_layers,
+        self: "GRU",
+        input_size: int,
+        hidden_dim: int,
+        n_layers: int,
         batch_first=False,
         bias=True,
         num_classes=None,
@@ -108,12 +108,7 @@ class GRU(NNModule):
                 nn.init.xavier_uniform_(param.data)
             elif "weight_hh" in name:
                 nn.init.orthogonal_(param.data)
-            elif "bias_ih" in name:
-                param.data.fill_(0)
-                # set forget bias to 1
-                hidden_size = param.size(0) // 4
-                param.data[hidden_size : 2 * hidden_size].fill_(1)
-            elif "bias_hh" in name:
+            elif "bias" in name:
                 param.data.fill_(0)
 
     def forward(self, X):
@@ -135,3 +130,134 @@ class GRU(NNModule):
         output = gru_out[:, -1, :]
         output = self.fc(fc_dropout(output))
         return output
+
+
+class GRUFCNN(NNModule):
+    """GRU with Convolutional Neural Network (FCNN) for time series classification.
+
+    Network originally defined in [1]_.
+    Implementation adapted from [2]_ and [3]_.
+
+    Parameters
+    ----------
+    input_size : int
+        Number of features in the input time series.
+    hidden_dim : int
+        Number of features in the hidden state.
+    gru_layers : int
+        Number of GRU layers.
+    batch_first : bool
+        If True, then the input and output tensors are provided
+        as (batch, seq, feature), default is False.
+    bias : bool
+        If False, then the layer does not use bias weights, default is True.
+    num_classes : int
+        Number of classes to predict.
+    init_weights : bool
+        If True, then the weights are initialized, default is True.
+    dropout : float
+        Dropout rate to apply. default is 0.0
+    fc_dropout : float
+        Dropout rate to apply to the fully connected layer. default is 0.0
+    bidirectional : bool
+        If True, then the GRU is bidirectional, default is False.
+    conv_layers : list
+        List of integers specifying the number of filters in each convolutional layer.
+        default is [128, 256, 128].
+    kernel_sizes : list
+        List of integers specifying the kernel size in each convolutional layer.
+        default is [7, 5, 3].
+    squeeze_excitation : bool
+        If True, then the squeeze and excitation block is applied, default is False.
+    se_ratio : float
+        Squeeze and excitation ratio, default is 0.'
+
+    References
+    ----------
+    .. [1] Elsayed, et al. "Deep Gated Recurrent and Convolutional Network Hybrid Model
+        for Univariate Time Series Classification."
+        arXiv preprint arXiv:1812.07683 (2018).
+    .. [2] https://github.com/NellyElsayed/GRU-FCN-model-for-univariate-time-series-classification
+    .. [3] https://github.com/titu1994/LSTM-FCN
+
+    """
+
+    _tags = {
+        # packaging info
+        # --------------
+        "author": ["fnhirwa"],
+        "maintainers": ["fnhirwa"],
+        "python_version": ">=3.9",
+        "python_dependencies": "torch",
+    }
+
+    def __init__(
+        self: "GRUFCNN",
+        input_size: int,
+        hidden_dim: int,
+        gru_layers: int,
+        batch_first: bool = False,
+        bias: bool = True,
+        num_classes: int = None,
+        init_weights: bool = True,
+        dropout: float = 0.0,
+        fc_dropout: float = 0.0,
+        bidirectional: bool = False,
+        conv_layers: list = [128, 256, 128],
+        kernel_sizes: list = [7, 5, 3],
+        squeeze_excitation: bool = False,
+        se_ratio: float = 0,
+    ):
+        super().__init__()
+        self.hidden_dim = hidden_dim
+        self.gru_layers = gru_layers
+        self.init_weights = init_weights
+        self.dropout = dropout
+        self.bidirectional = bidirectional
+        self.gru = nn.GRU(
+            input_size=input_size,
+            hidden_size=hidden_dim,
+            num_layers=gru_layers,
+            batch_first=batch_first,
+            bias=bias,
+            dropout=dropout,
+            bidirectional=bidirectional,
+        )
+        self.fc_dropout = fc_dropout
+        self.num_classes = num_classes
+        self.init_weights = init_weights
+        self.conv_layers = conv_layers
+        self.kernel_sizes = kernel_sizes
+        self.squeeze_excitation = squeeze_excitation
+        self.se_ratio = se_ratio
+        if self.init_weights:
+            self.apply(self._init_gru_weights)
+            self.apply(self._init_conv_weights)
+
+    def _init_gru_weights(self, module):
+        # adapted from https://www.kaggle.com/code/junkoda/pytorch-lstm-with-tensorflow-like-initialization #noqa: E501
+        # Tensoflow like initialization
+        # this initialization is only GlorotUniform means xavier_uniform
+        for name, param in module.named_parameters():
+            if "weight_ih" in name or "weight_hh" in name:
+                nn.init.xavier_uniform_(param.data)
+            elif "bias" in name:
+                param.data.fill_(0)
+
+    def _init_conv_weights(self, module):
+        # the initialization is based on the original paper
+        for name, param in module.named_parameters():
+            if "weight" in name:
+                nn.init.kaiming_normal_(param.data)
+            elif "bias" in name:
+                param.data.fill_(0)
+
+    def forward(self):
+        """Forward pass through the network.
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input tensor.
+        """
+        pass
