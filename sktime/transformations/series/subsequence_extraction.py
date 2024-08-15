@@ -126,9 +126,7 @@ class SubsequenceExtractionTransformer(BaseTransformer):
 
         indices = getattr(X_aggregate, f"idx{self.method}")()
 
-        upper = (
-            pd.Categorical(indices, categories=index_list, ordered=True).codes + 1
-        )
+        upper = pd.Categorical(indices, categories=index_list, ordered=True).codes + 1
         lower = upper - self.subsequence_len
 
         dfs = [
@@ -159,13 +157,7 @@ class SubsequenceExtractionTransformer(BaseTransformer):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params = [
-            {
-                "subsequence_len": 3
-            },
-            {
-                "subsequence_len": 5,
-                "aggregate": "median",
-                "method": "min"
-            }
+            {"subsequence_len": 3},
+            {"subsequence_len": 5, "aggregate": "median", "method": "min"},
         ]
         return params
