@@ -197,9 +197,8 @@ jobs:
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
-      - name: Install OSX packages
-        shell: bash
-        run: ./.github/scripts/install_osx_dependencies.sh
+      - name: Install OS packages
+        run: brew install libomp
 
       - name: Install sktime and dependencies
         run: |
@@ -284,9 +283,6 @@ jobs:
 
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
-
-      - name: Install OSX packages
-        run: ./.github/scripts/install_osx_dependencies.sh
 
       - name: Install sktime and dependencies
         shell: bash
