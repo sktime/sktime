@@ -160,7 +160,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
         transformer,
         fit_in_transform=False,
         pass_y="auto",
-        input_type="numpy",
+        input_type="pandas",
         pooling="local",
     ):
         self.transformer = transformer
