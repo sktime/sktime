@@ -1,7 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implements ReducedVAR where user can choose the type of Regressor to use."""
+"""Implements VARReduce, a VAR-like model combining tabularization with regression."""
 
-# __author__ = [meraldoantonio]
+__author__ = ["meraldoantonio"]
 
 import numpy as np
 import pandas as pd
@@ -11,13 +11,30 @@ from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
 class VARReduce(BaseForecaster):
     """
-    VAR-like reduced forecaster.
+    A flexible VAR-like forecaster that combines tabularization with regression.
 
-    It reduces multivariate time series to tabular regression and trains a regressor.
-    Any scikit-learn compatible regressor can be used; by default, `LinearRegression`,
-    is used, making it behave like a traditional VAR. Users can specify other
-    regressors such as `ElasticNet` to introduce regularization and potentially
-    enhance performance with large datasets or in the presence of multicollinearity.
+    Fitting proceeds in two steps:
+    1. Tabularization: For each time step and each time series within the
+       multivariate input data, lagged values `X` are generated.
+       These, along with the training data themselves,
+       are reshaped into a table to facilitate regression.
+
+    2. Regression: For each series `y` in the input data, a separate regressor is
+       trained using `y` and the common predictors `X`.
+
+    For forecasting, recent observations in the input data are converted to lagged
+    predictors and passed to the trained regressors to obtain forecasted values.
+
+    By default, `LinearRegression` is used, yielding results equivalent to
+    a traditional VAR model. Alternatively, any scikit-learn compatible regressor can
+    be used to introduce regularization and/or non-linearity.
+
+    For example:
+    - VARReduce(regressor = Ridge()) is equivalent to VAR with L2 regularization;
+    - VARReduce(regressor = Lasso()) is equivalent to VAR with L1 regularization.
+    These two models can be used to incorporate regularization and prevent overfitting
+    when the input data contain a large number of individual time series relative to
+    data points.
 
     Parameters
     ----------
@@ -28,19 +45,29 @@ class VARReduce(BaseForecaster):
 
     Attributes
     ----------
-    coefficients : np.ndarray, shape (lags, num_series, num_series)
-        The estimated coefficients of the model
-    intercept : np.ndarray, shape (num_series,)
-        The intercept term of the model for each time series.
+    coefficients_ : np.ndarray, shape (lags, num_series, num_series)
+        The estimated coefficients of the model;
+        only available if the regressor has `coef_` attribute
+    intercept_ : np.ndarray, shape (num_series,)
+        The intercept for each time series;
+        only available if the regressor has `coef_` attribute
     num_series : int
         The number of time series being modeled.
+    var_names : list of str
+        The names of the time series being modeled
+
+    References
+    ----------
+    .. [1] Lütkepohl, H. "New Introduction to Multiple Time Series Analysis".
+    Springer, 2005.
 
     Examples
     --------
     >>> from sktime.forecasting.var_reduce import VARReduce
+    >>> from sklearn.linear_model import Lasso
     >>> from sktime.datasets import load_longley
     >>> _, y = load_longley()
-    >>> forecaster = VARReduce()  # doctest: +SKIP
+    >>> forecaster = VARReduce(regressor=Lasso())  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
     VARReduce(...)
     >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
@@ -69,21 +96,23 @@ class VARReduce(BaseForecaster):
         assert hasattr(self.regressor_, "fit"), "Regressor must have 'fit'"
         assert hasattr(self.regressor_, "predict"), "Regressor must have 'predict'"
 
-        # a dictionary of var_name: fitted regressor, to be filled in during fitting
+        # dictionary of var_name: fitted regressor;
+        # filled in during fitting
         self.regressors = {}
         self.coefficients_ = None
         self.intercept_ = None
         self.num_series = None
+        self.var_names = None
         super().__init__()
 
-    def prepare_for_fit(self, data, return_as_ndarray=True):
+    def _prepare_for_fit(self, data, return_as_ndarray=True):
         """
         Prepare the data for VAR fitting though tabularization.
 
         This function transforms the provided training data into
         a tabular format suitable for regression. Specifically,
         the predictors X consist of lagged values of the multivariate time series, while
-        the target variables y are the current values of the multivariate time series.
+        the target variables Y are the current values of the multivariate time series.
 
         Parameters
         ----------
@@ -123,7 +152,7 @@ class VARReduce(BaseForecaster):
         else:
             return X, Y
 
-    def prepare_for_predict(self, data, return_as_ndarray=True):
+    def _prepare_for_predict(self, data, return_as_ndarray=True):
         """
         Prepare the data for VAR prediction through tabularization.
 
@@ -192,7 +221,7 @@ class VARReduce(BaseForecaster):
         var_names = y.columns
         self.var_names = var_names
 
-        X, Y = self.prepare_for_fit(y, return_as_ndarray=False)
+        X, Y = self._prepare_for_fit(y, return_as_ndarray=False)
         n, k = X.shape
         num_series = y.shape[1]
         self.num_series = num_series
@@ -201,18 +230,13 @@ class VARReduce(BaseForecaster):
         coefficients = np.zeros((self.lags, num_series, num_series))
         intercepts = np.zeros(num_series)
 
-        # Initialize a placeholder for in-sample predictons
-        self.y_pred_insample = pd.DataFrame(index=y.index[self.lags :])
-
-        # Fit the chosen regressor model for each series and save it
+        # For each target series `y` in `Y`, a separate regressor is
+        # trained using `y` and the common predictors `X`.
         for i, var_name in enumerate(var_names):
             model = deepcopy(self.regressor_)
             y = Y[var_name]
             model.fit(X, y)
             self.regressors[var_name] = model
-
-            # Use the model to perform in-sample prediction and save them
-            self.y_pred_insample[var_name] = model.predict(X)
 
             # if the model has `.intercept_` and `.coef_` attributes, extract them
             if hasattr(model, "intercept_") and hasattr(model, "coef_"):
@@ -255,13 +279,25 @@ class VARReduce(BaseForecaster):
 
         # ---- insample forecasts  -----
         if fh_int.min() <= 0:
+            # Reproduce the original X we used for fitting
+            X, _ = self._prepare_for_fit(self._y, return_as_ndarray=False)
+
+            # Initialize a placeholder for in-sample predictons
+            self._y_pred_insample = pd.DataFrame(index=self._y.index[self.lags :])
+
+            # Extract the fitted regressor for each series
+            for i, var_name in enumerate(self.var_names):
+                model = self.regressors[var_name]
+                # Use the model to perform in-sample prediction and save them
+                self._y_pred_insample[var_name] = model.predict(X)
+
             # Create a new `fh` object with only in-sample values
             # and use it to filter previously-created in-sample predictions
             fh_insample = fh_int.to_in_sample(cutoff=self.cutoff)
             insample_index = fh_insample.to_absolute_index(cutoff=self.cutoff)
-            y_pred_insample = self.y_pred_insample.loc[insample_index]
+            y_pred_insample = self._y_pred_insample.loc[insample_index]
 
-        # ---- outsample forecasts (if needed) ----
+        # ---- outsample forecasts ----
         if fh_int.max() > 0:
             # Get the last available values for prediction
             y_last = self._y.iloc[-self.lags :]
@@ -272,7 +308,7 @@ class VARReduce(BaseForecaster):
             # Generate as many future forecast steps as the maximum number in fh_int
             for _ in range(0, fh_int[-1]):
                 # Prepare X
-                X_last = self.prepare_for_predict(y_last, return_as_ndarray=False)
+                X_last = self._prepare_for_predict(y_last, return_as_ndarray=False)
 
                 # One timestep prediction for each variable using its regressor
                 y_pred_step = []
@@ -306,6 +342,7 @@ class VARReduce(BaseForecaster):
             outsample_index = fh_outsample.to_absolute_index()
             y_pred_outsample = y_pred_outsample.loc[outsample_index]
 
+        # Concatenate filtered y_pred_insample and y_pred_outsample
         y_pred = pd.concat([y_pred_insample, y_pred_outsample])
         return y_pred
 
@@ -328,7 +365,10 @@ class VARReduce(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params1 = {"lags": 2}
-        params2 = {"lags": 3}
+        from sklearn.ensemble import RandomForestRegressor
+        from sklearn.svm import SVR
+
+        params1 = {"lags": 2, "regressor": RandomForestRegressor()}
+        params2 = {"lags": 3, "regressor": SVR(kernel="rbf")}
 
         return [params1, params2]
