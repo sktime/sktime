@@ -375,9 +375,9 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
             "model_path": None,
             "device": None,
             "context_length": 32,
-            "prediction_length": 100,
-            "num_samples": 10,
+            "num_samples": 16,
             "batch_size": 32,
+            "shuffle_buffer_length": 64,
             "nonnegative_pred_samples": False,
             "lr": 5e-5,
         }
