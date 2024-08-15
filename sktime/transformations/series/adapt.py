@@ -160,7 +160,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
         transformer,
         fit_in_transform=False,
         pass_y="auto",
-        input_type="pandas",
+        input_type="numpy",
         pooling="local",
     ):
         self.transformer = transformer
@@ -425,8 +425,11 @@ class TabularToSeriesAdaptor(BaseTransformer):
         }
         params3 = {"transformer": VarianceThreshold(), "pass_y": "fit"}
         params4 = {"transformer": VarianceThreshold()}
-        params5 = {"transformer": LabelEncoder(), "fit_in_transform": True}
-
+        params5 = {
+            "transformer": LabelEncoder(),
+            "fit_in_transform": True,
+            "pooling": "global",
+        }
         params6 = {
             "transformer": StandardScaler(),
             "pooling": "global",
