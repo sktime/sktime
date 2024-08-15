@@ -72,14 +72,14 @@ class MTS(BaseForecaster):
     _tags = {
         # scitype:y controls whether internal y can be univariate/multivariate
         # if multivariate is not valid, applies vectorization over variables
-        "scitype:y": "univariate",
+        "scitype:y": "both",
         # fill in "univariate" or "both"
         #   "univariate": inner _fit, _predict, receives only single-column DataFrame
         #   "both": inner _predict gets pd.DataFrame series with any number of columns
         #
         # specify one or multiple authors and maintainers, only for sktime contribution
-        "authors": ["author1", "author2"],  # authors, GitHub handles
-        "maintainers": ["maintainer1", "maintainer2"],  # maintainers, GitHub handles
+        "authors": ["thierrymoudiki"],  # authors, GitHub handles
+        "maintainers": ["thierrymoudiki"],  # maintainers, GitHub handles
         # author = significant contribution to code at some point
         #     if interfacing a 3rd party estimator, ensure to give credit to the
         #     authors of the interfaced estimator
