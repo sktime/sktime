@@ -56,11 +56,6 @@ class VARReduce(BaseForecaster):
     var_names : list of str
         The names of the time series being modeled
 
-    References
-    ----------
-    .. [1] Lütkepohl, H. "New Introduction to Multiple Time Series Analysis".
-    Springer, 2005.
-
     Examples
     --------
     >>> from sktime.forecasting.var_reduce import VARReduce
