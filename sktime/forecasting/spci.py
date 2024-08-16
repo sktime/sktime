@@ -5,6 +5,8 @@ _all_ = ["SPCIForecaster"]
 __author__ = ["ksharma6"]
 
 
+from skpro.regression.base import BaseProbaRegressor
+
 from sktime.forecasting.base import BaseForecaster
 
 # todo: add any necessary imports here
@@ -15,12 +17,12 @@ from sktime.forecasting.base import BaseForecaster
 
 
 # todo: change class name and write docstring
-class SPCI(BaseForecaster):
+class SPCI(BaseForecaster, BaseProbaRegressor):
     """Sequential Predictive Conformal Inference Forecaster.
 
     SPCI is a model-free and distribution-free framework that combines
     a Sktime forecaster with a quantile regression model to perform Conformal
-    Predictions on time series data [1]
+    Predictions on time series data [1].
 
     The algorithm works like so:
     1. Obtain point predictions, ``y_preds``, and point prediction residuals,
@@ -35,13 +37,12 @@ class SPCI(BaseForecaster):
 
     returns: Prediction intervals
 
-    Parameters (need to update)
+    Parameters
     ----------
-    forecaster : estimator
-        The base forecaster for point predictions.
-    regressor: quantile regression model
-        Regressor predicts
-    alpha: float, significance level, default=.05
+    forecaster : estimator object
+        The base forecaster to fit in order to make point predictions.
+    regressor: estimator object
+        The base regressor to fit in order to predict quantiles.
     random_state : int, RandomState instance or None, default=None
         Random state for reproducibility.
 
@@ -177,15 +178,22 @@ class SPCI(BaseForecaster):
     #  alternatively, descendants can set tags in __init__ (avoid this if possible)
 
     # todo: add any hyper-parameters and components to constructor
-    def __init__(self, est, parama, est2=None, paramb="default", paramc=None):
+    def __init__(
+        self,
+        X,
+        y,
+        forecaster,
+        regressor,
+        random_state=None,
+    ):
         # estimators should precede parameters
         #  if estimators have default values, set None and initialize below
 
         # todo: write any hyper-parameters and components to self
-        self.est = est
-        self.parama = parama
-        self.paramb = paramb
-        self.paramc = paramc
+        self.est = None
+        self.parama = None
+        self.paramb = None
+        self.paramc = None
         # IMPORTANT: the self.params should never be overwritten or mutated from now on
         # for handling defaults etc, write to other attributes, e.g., self._parama
         # for estimators, initialize a clone, e.g., self.est_ = est.clone()
@@ -287,7 +295,6 @@ class SPCI(BaseForecaster):
             should be of the same type as seen in _fit, as in "y_inner_mtype" tag
             Point predictions
         """
-
         # implement here
         # IMPORTANT: avoid side effects to X, fh
 
@@ -329,77 +336,8 @@ class SPCI(BaseForecaster):
         -------
         self : reference to self
         """
+        pass
 
-        # implement here
-        # IMPORTANT: avoid side effects to X, fh
-
-    # todo: consider implementing this, optional
-    # if not implementing, delete the _update_predict_single method
-    def _update_predict_single(self, y, fh, X=None, update_params=True):
-        """Update forecaster and then make forecasts.
-
-        Implements default behaviour of calling update and predict sequentially, but can
-        be overwritten by subclasses to implement more efficient updating algorithms
-        when available.
-        """
-        self.update(y, X, update_params=update_params)
-        return self.predict(fh, X)
-        # implement here
-        # IMPORTANT: avoid side effects to y, X, fh
-
-    # todo: consider implementing one of _predict_quantiles and _predict_interval
-    #   if one is implemented, the other one works automatically
-    #   when interfacing or implementing, consider which of the two is easier
-    #   both can be implemented if desired, but usually that is not necessary
-    #
-    # if _predict_var or _predict_proba is implemented, this will have a default
-    #   implementation which uses _predict_proba or _predict_var under normal assumption
-    #
-    # if implementing _predict_interval, delete _predict_quantiles
-    # if not implementing either, delete both methods
-    def _predict_quantiles(self, fh, X, alpha):
-        """Compute/return prediction quantiles for a forecast.
-
-        private _predict_quantiles containing the core logic,
-            called from predict_quantiles and possibly predict_interval
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-            self.cutoff
-
-        Parameters
-        ----------
-        fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
-        X :  sktime time series object, optional (default=None)
-            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
-            Exogeneous time series for the forecast
-        alpha : list of float (guaranteed not None and floats in [0,1] interval)
-            A list of probabilities at which quantile forecasts are computed.
-
-        Returns
-        -------
-        quantiles : pd.DataFrame
-            Column has multi-index: first level is variable name from y in fit,
-                second level being the values of alpha passed to the function.
-            Row index is fh, with additional (upper) levels equal to instance levels,
-                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
-            Entries are quantile forecasts, for var in col index,
-                at quantile probability in second col index, for the row index.
-        """
-        # implement here
-        # IMPORTANT: avoid side effects to y, X, fh, alpha
-        #
-        # Note: unlike in predict_quantiles where alpha can be float or list of float
-        #   alpha in _predict_quantiles is guaranteed to be a list of float
-
-    # implement one of _predict_interval or _predict_quantiles (above), or delete both
-    #
-    # if implementing _predict_quantiles, delete _predict_interval
-    # if not implementing either, delete both methods
     def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
@@ -438,146 +376,8 @@ class SPCI(BaseForecaster):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        # implement here
-        # IMPORTANT: avoid side effects to y, X, fh, coverage
-        #
-        # Note: unlike in predict_interval where coverage can be float or list of float
-        #   coverage in _predict_interval is guaranteed to be a list of float
+        pass
 
-    # todo: consider implementing _predict_var
-    #
-    # if _predict_proba or interval/quantiles are implemented, this will have a default
-    #   implementation which uses _predict_proba or quantiles under normal assumption
-    #
-    # if not implementing, delete _predict_var
-    def _predict_var(self, fh, X=None, cov=False):
-        """Forecast variance at future horizon.
-
-        private _predict_var containing the core logic, called from predict_var
-
-        Parameters
-        ----------
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
-            If not passed in _fit, guaranteed to be passed here
-        X :  sktime time series object, optional (default=None)
-            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
-            Exogeneous time series for the forecast
-        cov : bool, optional (default=False)
-            if True, computes covariance matrix forecast.
-            if False, computes marginal variance forecasts.
-
-        Returns
-        -------
-        pred_var : pd.DataFrame, format dependent on `cov` variable
-            If cov=False:
-                Column names are exactly those of `y` passed in `fit`/`update`.
-                    For nameless formats, column index will be a RangeIndex.
-                Row index is fh, with additional levels equal to instance levels,
-                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
-                Entries are variance forecasts, for var in col index.
-                A variance forecast for given variable and fh index is a predicted
-                    variance for that variable and index, given observed data.
-            If cov=True:
-                Column index is a multiindex: 1st level is variable names (as above)
-                    2nd level is fh.
-                Row index is fh, with additional levels equal to instance levels,
-                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
-                Entries are (co-)variance forecasts, for var in col index, and
-                    covariance between time index in row and col.
-                Note: no covariance forecasts are returned between different variables.
-        """
-        # implement here
-        # implementing the cov=True case is optional and can be omitted
-
-    # todo: consider implementing _predict_proba
-    #
-    # if interval/quantiles or _predict_var are implemented, this will have a default
-    #   implementation which uses variance or quantiles under normal assumption
-    #
-    # if not implementing, delete _predict_proba
-    def _predict_proba(self, fh, X, marginal=True):
-        """Compute/return fully probabilistic forecasts.
-
-        private _predict_proba containing the core logic, called from predict_proba
-
-        Parameters
-        ----------
-        fh : int, list, np.array or ForecastingHorizon (not optional)
-            The forecasting horizon encoding the time stamps to forecast at.
-            if has not been passed in fit, must be passed, not optional
-        X : sktime time series object, optional (default=None)
-                Exogeneous time series for the forecast
-            Should be of same scitype (Series, Panel, or Hierarchical) as y in fit
-            if self.get_tag("X-y-must-have-same-index"),
-                X.index must contain fh.index and y.index both
-        marginal : bool, optional (default=True)
-            whether returned distribution is marginal by time index
-
-        Returns
-        -------
-        pred_dist : sktime BaseDistribution
-            predictive distribution
-            if marginal=True, will be marginal distribution by time point
-            if marginal=False and implemented by method, will be joint
-        """
-        # implement here
-        # returned BaseDistribution should have same index and columns
-        # as the predict return
-        #
-        # implementing the marginal=False case is optional and can be omitted
-
-    # todo: consider implementing this, optional
-    # if not implementing, delete the method
-    def _predict_moving_cutoff(self, y, cv, X=None, update_params=True):
-        """Make single-step or multi-step moving cutoff predictions.
-
-        Parameters
-        ----------
-        y : pd.Series
-        cv : temporal cross-validation generator
-        X : pd.DataFrame
-        update_params : bool
-
-        Returns
-        -------
-        y_pred = pd.Series
-        """
-
-        # implement here
-        # IMPORTANT: avoid side effects to y, X, cv
-
-    # todo: consider implementing this, optional
-    # implement only if different from default:
-    #   default retrieves all self attributes ending in "_"
-    #   and returns them with keys that have the "_" removed
-    # if not implementing, delete the method
-    #   avoid overriding get_fitted_params
-    def _get_fitted_params(self):
-        """Get fitted parameters.
-
-        private _get_fitted_params, called from get_fitted_params
-
-        State required:
-            Requires state to be "fitted".
-
-        Returns
-        -------
-        fitted_params : dict with str keys
-            fitted parameters, keyed by names of fitted parameter
-        """
-        # implement here
-        #
-        # when this function is reached, it is already guaranteed that self is fitted
-        #   this does not need to be checked separately
-        #
-        # parameters of components should follow the sklearn convention:
-        #   separate component name from parameter name by double-underscore
-        #   e.g., componentname__paramname
-
-    # todo: implement this if this is an estimator contributed to sktime
-    #   or to run local automated unit and integration testing of estimator
-    #   method should return default parameters, so that a test instance can be created
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
