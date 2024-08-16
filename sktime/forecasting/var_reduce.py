@@ -345,19 +345,23 @@ class VARReduce(BaseForecaster):
             self._y_pred_insample = pd.DataFrame(index=self._y.index[self.lags :])
 
             if self.multioutput_regressor is not None:
-                self._y_pred_insample = self.multioutput_regressor.predict(X)
+                self._y_pred_insample = pd.DataFrame(
+                    self.multioutput_regressor.predict(X),
+                    index=X.index,
+                    columns=self.var_names,
+                )
             else:
                 # Extract the fitted regressor for each series
-                for i, var_name in enumerate(self.var_names):
+                for var_name in self.var_names:
                     model = self.regressors[var_name]
                     # Use the model to perform in-sample prediction and save them
                     self._y_pred_insample[var_name] = model.predict(X)
 
-                # Create a new `fh` object with only in-sample values
-                # and use it to filter previously-created in-sample predictions
-                fh_insample = fh_int.to_in_sample(cutoff=self.cutoff)
-                insample_index = fh_insample.to_absolute_index(cutoff=self.cutoff)
-                y_pred_insample = self._y_pred_insample.loc[insample_index]
+            # Create a new `fh` object with only in-sample values
+            # and use it to filter previously-created in-sample predictions
+            fh_insample = fh_int.to_in_sample(cutoff=self.cutoff)
+            insample_index = fh_insample.to_absolute_index(cutoff=self.cutoff)
+            y_pred_insample = self._y_pred_insample.loc[insample_index]
 
         # ---- outsample forecasts ----
         if fh_int.max() > 0:
