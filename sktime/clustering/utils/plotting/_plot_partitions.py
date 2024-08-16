@@ -6,7 +6,6 @@ __all__ = ["plot_cluster_algorithm"]
 import numpy as np
 import pandas as pd
 
-from sktime.clustering.partitioning import BaseTimeSeriesLloyds
 from sktime.datatypes import convert_to
 from sktime.utils.dependencies import _check_soft_dependencies
 
