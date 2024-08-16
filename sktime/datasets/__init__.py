@@ -42,6 +42,7 @@ __all__ = [
     "load_tecator",
     "load_fpp3",
     "DATASET_NAMES_FPP3",
+    "load_stallion",
 ]
 
 from sktime.datasets._data_io import (
@@ -85,6 +86,7 @@ from sktime.datasets._single_problem_loaders import (
     load_plaid,
     load_shampoo_sales,
     load_solar,
+    load_stallion,
     load_tecator,
     load_UCR_UEA_dataset,
     load_unit_test,
