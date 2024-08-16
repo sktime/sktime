@@ -104,3 +104,76 @@ def test_prophet_fit_kwargs_are_passed_down(fit_kwargs: dict):
         # we don't care about its actual value here
         call_kwargs.pop("df")
         assert call_kwargs == (fit_kwargs or {})
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Prophet),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_prophet_added_seasonality_is_not_regressor():
+    """Test that an single added seasonality is not added as a regressor"""
+    import random
+
+    from sktime.datasets import load_airline
+    from sktime.forecasting.fbprophet import Prophet
+
+    y = (
+        load_airline()
+        .to_frame()
+        .assign(test_condition=lambda df: random.choices([True, False], k=len(df)))  # noqa: S311
+    )
+
+    forecaster = Prophet(
+        add_seasonality={
+            "name": "testing",
+            "period": 7,
+            "fourier_order": 20,
+            "condition_name": "test_condition",
+        },
+    )
+
+    forecaster.fit(y=y["Number of airline passengers"], X=y[["test_condition"]])
+    assert forecaster.is_fitted
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Prophet),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_prophet_added_seasonalities_are_not_regressors():
+    """Test that multiple added seasonalities are not added as regressors"""
+    import random
+
+    from sktime.datasets import load_airline
+    from sktime.forecasting.fbprophet import Prophet
+
+    y = (
+        load_airline()
+        .to_frame()
+        .assign(
+            test_condition1=lambda df: random.choices([True, False], k=len(df)),  # noqa: S311
+            test_condition2=lambda df: random.choices([True, False], k=len(df)),  # noqa: S311
+        )
+    )
+
+    forecaster = Prophet(
+        add_seasonality=[
+            {
+                "name": "testing1",
+                "period": 7,
+                "fourier_order": 20,
+                "condition_name": "test_condition1",
+            },
+            {
+                "name": "testing2",
+                "period": 7,
+                "fourier_order": 20,
+                "condition_name": "test_condition2",
+            },
+        ]
+    )
+
+    forecaster.fit(
+        y=y["Number of airline passengers"], X=y[["test_condition1", "test_condition2"]]
+    )
+    assert forecaster.is_fitted
