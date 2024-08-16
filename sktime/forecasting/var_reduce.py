@@ -282,9 +282,9 @@ class VARReduce(BaseForecaster):
             # if the model has `.intercept_` and `.coef_` attributes, extract them
             if hasattr(model, "intercept_") and hasattr(model, "coef_"):
                 self.coefficients_ = model.coef_.reshape(
-                    (self.lags, self.num_series, self.num_series)
+                    (self.num_series, self.lags, self.num_series)
                 )
-                self.coefficients_ = np.transpose(self.coefficients_, (0, 2, 1))
+                self.coefficients_ = np.transpose(self.coefficients_, (1, 0, 2))
                 self.intercept_ = model.intercept_
         except ValueError:
             # Exception means regressor doesn't support multioutput;
@@ -345,9 +345,7 @@ class VARReduce(BaseForecaster):
             self._y_pred_insample = pd.DataFrame(index=self._y.index[self.lags :])
 
             if self.multioutput_regressor is not None:
-                self._y_pred_insample = self.multioutput_regressor.predict(
-                    X.reshape(1, -1)
-                )
+                self._y_pred_insample = self.multioutput_regressor.predict(X)
             else:
                 # Extract the fitted regressor for each series
                 for i, var_name in enumerate(self.var_names):
