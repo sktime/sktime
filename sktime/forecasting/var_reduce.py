@@ -13,25 +13,73 @@ class VARReduce(BaseForecaster):
     """
     A flexible VAR-like forecaster that combines tabularization with regression.
 
+    The input data `Y_in` is a multivariate time series data containing `n` time series.
+    An example with `n` = 2:
+
+    +---------+-----+-----+
+    |  index  | ts1 | ts2 |
+    +---------+-----+-----+
+    |    1    | 11  | 6   |
+    |    2    | 12  | 7   |
+    |    3    | 13  | 8   |
+    |    4    | 14  | 9   |
+    |    5    | 15  | 10  |
+    +---------+-----+-----+
+
     Fitting proceeds in two steps:
-    1. Tabularization: For each time step and each time series within the
-       multivariate input data, lagged values `X` are generated.
-       These, along with the training data themselves,
-       are reshaped into a table to facilitate regression.
+    1. Tabularization:
+        For each time step and each time series within `Y_in`,
+        lagged values `X` are generated. The number of lagged values
+        are determined by the `lags` parameters.
 
-    2. Regression: For each series `y` in the input data, a separate regressor is
-       trained using `y` and the common predictors `X`.
+        Below is the `X` for the sample `Y_in` with `lags` = 2.
+        Note how the earliest two timesteps are left out as no
+        corresponding lag value is available.
 
-    For forecasting, recent observations in the input data are converted to lagged
-    predictors and passed to the trained regressors to obtain forecasted values.
+        +---------+----------+----------+----------+----------+
+        |  index  | ts1_lag1 | ts2_lag1 | ts1_lag2 | ts2_lag2 |
+        +---------+----------+----------+----------+----------+
+        |    3    | 12       | 7        | 11       | 6        |
+        |    4    | 13       | 8        | 12       | 7        |
+        |    5    | 14       | 9        | 13       | 8        |
+        +---------+----------+----------+----------+----------+
+
+    2. Regression:
+        If a regressor that supports multioutput is chosen, it is
+        fitted with `Y_in` as a target and `X` as predictors.
+
+        Otherwise, for each series in `Y_in`, a separate regressor is
+        trained using the common predictors `X` created earlier.
+        The target is the series itself (i.e. the current values).
+        For example, below is the target for `ts1`.
+        Note the removal of the first 2 timesteps for alignment with `X`.
+
+        +---------+-----+
+        |  index  | ts1 |
+        +---------+-----+
+        |    3    | 13  |
+        |    4    | 14  |
+        |    5    | 15  |
+        +---------+-----+
+
+    For forecasting, the last `lags` observations in `Y_in` are
+    reframed as lagged predictors `X_forecast` and passed to the
+    trained regressors to obtain the forecasts.
+    `X_forecast` is shown below.
+
+    +---------+----------+----------+----------+----------+
+    |  index  | ts1_lag1 | ts2_lag1 | ts1_lag2 | ts2_lag2 |
+    +---------+----------+----------+----------+----------+
+    |    6    | 15       | 10       | 14       | 9        |
+    +---------+----------+----------+----------+----------+
 
     By default, `LinearRegression` is used, yielding results equivalent to
     a traditional VAR model. Alternatively, any scikit-learn compatible regressor can
     be used to introduce regularization and/or non-linearity.
 
     For example:
-    - VARReduce(regressor = Ridge()) is equivalent to VAR with L2 regularization;
-    - VARReduce(regressor = Lasso()) is equivalent to VAR with L1 regularization.
+        - VARReduce(regressor = Ridge()) is equivalent to VAR with L2 regularization;
+        - VARReduce(regressor = Lasso()) is equivalent to VAR with L1 regularization.
     These two models can be used to incorporate regularization and prevent overfitting
     when the input data contain a large number of individual time series relative to
     data points.
