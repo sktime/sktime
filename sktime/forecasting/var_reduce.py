@@ -129,7 +129,7 @@ class VARReduce(BaseForecaster):
         from sklearn.base import clone
         from sklearn.linear_model import LinearRegression
 
-        self.regressor = regressor
+        self.regressor = regressor  # not used/modified
         self.lags = lags
         if regressor is None:
             self.regressor_ = LinearRegression()
@@ -142,6 +142,7 @@ class VARReduce(BaseForecaster):
         # dictionary of var_name: fitted regressor;
         # filled in during fitting
         self.regressors = {}
+        self.multioutput_regressor = None
         self.coefficients_ = None
         self.intercept_ = None
         self.num_series = None
@@ -273,31 +274,46 @@ class VARReduce(BaseForecaster):
         coefficients = np.zeros((self.lags, num_series, num_series))
         intercepts = np.zeros(num_series)
 
-        # For each target series `y` in `Y`, a separate regressor is
-        # trained using `y` and the common predictors `X`.
-        for i, var_name in enumerate(var_names):
+        # Try multioutput fitting
+        try:
             model = deepcopy(self.regressor_)
-            y = Y[var_name]
-            model.fit(X, y)
-            self.regressors[var_name] = model
+            model.fit(X, Y)
+            self.multioutput_regressor = model
+            # if the model has `.intercept_` and `.coef_` attributes, extract them
+            if hasattr(model, "intercept_") and hasattr(model, "coef_"):
+                self.coefficients_ = model.coef_.reshape(
+                    (self.lags, self.num_series, self.num_series)
+                )
+                self.coefficients_ = np.transpose(self.coefficients_, (0, 2, 1))
+                self.intercept_ = model.intercept_
+        except ValueError:
+            # Exception means regressor doesn't support multioutput;
+            # for each target series `y` in `Y`, a separate regressor is
+            # trained using `y` and the common predictors `X`.
+            # TODO: use sklearn's MultiOutputRegressor to unify API
+            for i, var_name in enumerate(var_names):
+                model = deepcopy(self.regressor_)
+                y = Y[var_name]
+                model.fit(X, y)
+                self.regressors[var_name] = model
+
+                # if the model has `.intercept_` and `.coef_` attributes, extract them
+                if hasattr(model, "intercept_") and hasattr(model, "coef_"):
+                    intercepts[i] = model.intercept_
+                    # Reshape the coefficients to match with statsmodels VAR
+                    coefficients[:, :, i] = model.coef_.reshape(self.lags, num_series)
+                else:
+                    pass
 
             # if the model has `.intercept_` and `.coef_` attributes, extract them
             if hasattr(model, "intercept_") and hasattr(model, "coef_"):
-                intercepts[i] = model.intercept_
-                # Reshape the coefficients to match with statsmodels VAR
-                coefficients[:, :, i] = model.coef_.reshape(self.lags, num_series)
+                # Transpose coefficients to match the order of statsmodels' VAR
+                self.coefficients_ = np.transpose(coefficients, (0, 2, 1))
+                self.intercept_ = intercepts
             else:
-                pass
-
-        # if the model has `.intercept_` and `.coef_` attributes, extract them
-        if hasattr(model, "intercept_") and hasattr(model, "coef_"):
-            # Transpose coefficients to match the order of statsmodels' VAR
-            self.coefficients_ = np.transpose(coefficients, (0, 2, 1))
-            self.intercept_ = intercepts
-        else:
-            self.coefficients_ = None
-            self.intercept_ = None
-        return self
+                self.coefficients_ = None
+                self.intercept_ = None
+            return self
 
     def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
@@ -328,17 +344,22 @@ class VARReduce(BaseForecaster):
             # Initialize a placeholder for in-sample predictons
             self._y_pred_insample = pd.DataFrame(index=self._y.index[self.lags :])
 
-            # Extract the fitted regressor for each series
-            for i, var_name in enumerate(self.var_names):
-                model = self.regressors[var_name]
-                # Use the model to perform in-sample prediction and save them
-                self._y_pred_insample[var_name] = model.predict(X)
+            if self.multioutput_regressor is not None:
+                self._y_pred_insample = self.multioutput_regressor.predict(
+                    X.reshape(1, -1)
+                )
+            else:
+                # Extract the fitted regressor for each series
+                for i, var_name in enumerate(self.var_names):
+                    model = self.regressors[var_name]
+                    # Use the model to perform in-sample prediction and save them
+                    self._y_pred_insample[var_name] = model.predict(X)
 
-            # Create a new `fh` object with only in-sample values
-            # and use it to filter previously-created in-sample predictions
-            fh_insample = fh_int.to_in_sample(cutoff=self.cutoff)
-            insample_index = fh_insample.to_absolute_index(cutoff=self.cutoff)
-            y_pred_insample = self._y_pred_insample.loc[insample_index]
+                # Create a new `fh` object with only in-sample values
+                # and use it to filter previously-created in-sample predictions
+                fh_insample = fh_int.to_in_sample(cutoff=self.cutoff)
+                insample_index = fh_insample.to_absolute_index(cutoff=self.cutoff)
+                y_pred_insample = self._y_pred_insample.loc[insample_index]
 
         # ---- outsample forecasts ----
         if fh_int.max() > 0:
@@ -353,15 +374,20 @@ class VARReduce(BaseForecaster):
                 # Prepare X
                 X_last = self._prepare_for_predict(y_last, return_as_ndarray=False)
 
-                # One timestep prediction for each variable using its regressor
-                y_pred_step = []
-                for var_name in self.var_names:
-                    model = self.regressors[var_name]
-                    y_pred_step_var = model.predict(X_last).item()  # is a float
-                    y_pred_step.append(y_pred_step_var)
+                if self.multioutput_regressor is not None:
+                    y_pred_step = self.multioutput_regressor.predict(X_last)
+                    y_pred_step = pd.DataFrame(y_pred_step, columns=self.var_names)
+                else:
+                    # One timestep prediction for each variable using its regressor
+                    y_pred_step = []
+                    for var_name in self.var_names:
+                        model = self.regressors[var_name]
+                        y_pred_step_var = model.predict(X_last).item()  # is a float
+                        y_pred_step.append(y_pred_step_var)
 
-                # Convert y_pred_step into a one-row DataFrame
-                y_pred_step = pd.DataFrame([y_pred_step], columns=self.var_names)
+                    # Convert y_pred_step into a one-row DataFrame
+                    y_pred_step = pd.DataFrame([y_pred_step], columns=self.var_names)
+
                 y_pred_outsample.append(y_pred_step)
 
                 # Append the new predictions (y_pred_step) at the end of y_last
