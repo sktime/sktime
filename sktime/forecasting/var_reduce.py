@@ -33,7 +33,7 @@ class VARReduce(BaseForecaster):
         are determined by the `lags` parameters.
 
         Below is the `X` for the sample `Y_in` with `lags` = 2.
-        Note how the earliest two timesteps are left out as no
+        Note the absence of the earliest two timesteps as no
         corresponding lag value is available.
 
         +---------+----------+----------+----------+----------+
