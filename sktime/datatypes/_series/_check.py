@@ -384,6 +384,28 @@ if _check_soft_dependencies("dask", severity="none"):
 
     check_dict[("dask_series", "Series")] = check_dask_series
 
+
+if _check_soft_dependencies("polars", severity="none"):
+    from sktime.datatypes._adapter.polars import check_polars_frame
+
+    def check_polars_series(obj, return_metadata=False, var_name="obj"):
+        metadict = check_polars_frame(
+            obj=obj,
+            return_metadata=return_metadata,
+            var_name=var_name,
+            scitype="Series",
+        )
+
+        if isinstance(metadict, tuple) and metadict[0]:
+            # update dict with Series specific keys
+            if _req("is_equally_spaced", return_metadata):
+                metadict[2]["is_equally_spaced"] = "NA"
+
+        return metadict
+
+    check_dict[("pl.DataFrame", "Series")] = check_polars_series
+
+
 if _check_soft_dependencies("gluonts", severity="none"):
 
     def check_gluonTS_listDataset_series(obj, return_metadata=False, var_name="obj"):
