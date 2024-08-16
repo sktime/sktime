@@ -282,7 +282,8 @@ def _get_installed_packages_private():
     # in this case, the *first* occurrence of the package in the list is the one
     # that gets imported, not the last. Thus, for correct version checking,
     # we need to reverse the list.
-    packages = {dist.metadata["Name"]: dist.version for dist in reversed(dists)}
+    dists = reversed(list(dists))  # cast to list because chain is not reversible
+    packages = {dist.metadata["Name"]: dist.version for dist in dists}
     return packages
 
 
