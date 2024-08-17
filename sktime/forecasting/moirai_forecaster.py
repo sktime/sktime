@@ -245,7 +245,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         return [
             {
                 "deterministic": True,
-                "checkpoint_path": "Salesforce/moirai-1.0-R-small",
+                "checkpoint_path": "sktime/moirai-1.0-R-small",
             }
         ]
 
