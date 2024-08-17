@@ -23,9 +23,13 @@ def test_load_macroeconomic():
 
 
 @pytest.mark.parametrize("special_dates", [True, False])
-def test_load_stallion(special_dates):
+@pytest.mark.parametrize("verbose", [True, False])
+@pytest.mark.parametrize("download", [True, False])
+def test_load_stallion(special_dates, verbose, download):
     from sktime.datasets import load_stallion
 
-    y, x = load_stallion(special_dates)
+    y, x = load_stallion(
+        special_dates=special_dates, verbose=verbose, download=download
+    )
     check_raise(x, "pd_multiindex_hier")
     check_raise(y, "pd_multiindex_hier")
