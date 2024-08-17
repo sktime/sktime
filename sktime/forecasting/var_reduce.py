@@ -45,26 +45,15 @@ class VARReduce(BaseForecaster):
         +---------+----------+----------+----------+----------+
 
     2. Regression:
-        If a regressor that supports multioutput is chosen, it is
-        fitted with `Y_in` as a target and `X` as predictors.
-
-        Otherwise, for each series in `Y_in`, a separate regressor is
-        trained using the common predictors `X` created earlier.
-        The target is the series itself (i.e. the current values).
-        For example, below is the target for `ts1`.
-        Note the removal of the first 2 timesteps for alignment with `X`.
-
-        +---------+-----+
-        |  index  | ts1 |
-        +---------+-----+
-        |    3    | 13  |
-        |    4    | 14  |
-        |    5    | 15  |
-        +---------+-----+
+        The chosen regressor is fitted with `Y_in` as a target
+        and `X` as predictors. Care is taken to first remove the
+        first `lags` data points in `Y_in` as they do not have
+        corresponding indices in `X` (i.e. the first two data
+        points in the above example).
 
     For forecasting, the last `lags` observations in `Y_in` are
     reframed as lagged predictors `X_forecast` and passed to the
-    trained regressors to obtain the forecasts.
+    trained regressor to obtain the forecasts.
     `X_forecast` is shown below.
 
     +---------+----------+----------+----------+----------+
@@ -80,6 +69,7 @@ class VARReduce(BaseForecaster):
     For example:
         - VARReduce(regressor = Ridge()) is equivalent to VAR with L2 regularization;
         - VARReduce(regressor = Lasso()) is equivalent to VAR with L1 regularization.
+
     These two models can be used to incorporate regularization and prevent overfitting
     when the input data contain a large number of individual time series relative to
     data points.
@@ -139,10 +129,6 @@ class VARReduce(BaseForecaster):
         assert hasattr(self.regressor_, "fit"), "Regressor must have 'fit'"
         assert hasattr(self.regressor_, "predict"), "Regressor must have 'predict'"
 
-        # dictionary of var_name: fitted regressor;
-        # filled in during fitting
-        self.regressors = {}
-        self.multioutput_regressor = None
         self.coefficients_ = None
         self.intercept_ = None
         self.num_series = None
@@ -170,10 +156,10 @@ class VARReduce(BaseForecaster):
         Returns
         -------
         X : np.ndarray or pd.DataFrame
-            The lagged values as predictors.
+            The lagged values as predictors;
             with shape (num_samples, num_series * lags)
         Y : np.ndarray or pd.DataFrame
-            The original, unlagged data
+            The original, unlagged data;
             with shape (num_samples, num_series).
         """
         if isinstance(data, np.ndarray):
@@ -260,60 +246,31 @@ class VARReduce(BaseForecaster):
         -------
         self : reference to self
         """
-        from copy import deepcopy
+        from sklearn.multioutput import MultiOutputRegressor
 
-        var_names = y.columns
-        self.var_names = var_names
+        self.var_names = y.columns
+        self.num_series = y.shape[1]
 
         X, Y = self._prepare_for_fit(y, return_as_ndarray=False)
-        n, k = X.shape
-        num_series = y.shape[1]
-        self.num_series = num_series
 
-        # Initialize placeholders for coefficients and intercepts
-        coefficients = np.zeros((self.lags, num_series, num_series))
-        intercepts = np.zeros(num_series)
+        native_multioutput_support = self.regressor_._get_tags().get(
+            "multioutput", False
+        )
+        if not native_multioutput_support:
+            self.regressor_ = MultiOutputRegressor(self.regressor_)
+        self.regressor_.fit(X, Y)
 
-        # Try multioutput fitting
-        try:
-            model = deepcopy(self.regressor_)
-            model.fit(X, Y)
-            self.multioutput_regressor = model
-            # if the model has `.intercept_` and `.coef_` attributes, extract them
-            if hasattr(model, "intercept_") and hasattr(model, "coef_"):
-                self.coefficients_ = model.coef_.reshape(
-                    (self.lags, self.num_series, self.num_series)
-                )
-                self.coefficients_ = np.transpose(self.coefficients_, (0, 2, 1))
-                self.intercept_ = model.intercept_
-        except ValueError:
-            # Exception means regressor doesn't support multioutput;
-            # for each target series `y` in `Y`, a separate regressor is
-            # trained using `y` and the common predictors `X`.
-            # TODO: use sklearn's MultiOutputRegressor to unify API
-            for i, var_name in enumerate(var_names):
-                model = deepcopy(self.regressor_)
-                y = Y[var_name]
-                model.fit(X, y)
-                self.regressors[var_name] = model
-
-                # if the model has `.intercept_` and `.coef_` attributes, extract them
-                if hasattr(model, "intercept_") and hasattr(model, "coef_"):
-                    intercepts[i] = model.intercept_
-                    # Reshape the coefficients to match with statsmodels VAR
-                    coefficients[:, :, i] = model.coef_.reshape(self.lags, num_series)
-                else:
-                    pass
-
-            # if the model has `.intercept_` and `.coef_` attributes, extract them
-            if hasattr(model, "intercept_") and hasattr(model, "coef_"):
-                # Transpose coefficients to match the order of statsmodels' VAR
-                self.coefficients_ = np.transpose(coefficients, (0, 2, 1))
-                self.intercept_ = intercepts
-            else:
-                self.coefficients_ = None
-                self.intercept_ = None
-            return self
+        # if the model has `.intercept_` and `.coef_` attributes, extract them
+        if hasattr(self.regressor_, "intercept_") and hasattr(self.regressor_, "coef_"):
+            self.coefficients_ = self.regressor_.coef_.reshape(
+                (self.num_series, self.lags, self.num_series)
+            )
+            self.coefficients_ = np.transpose(self.coefficients_, (1, 0, 2))
+            self.intercept_ = self.regressor_.intercept_
+        else:
+            self.coefficients_ = None
+            self.intercept_ = None
+        return self
 
     def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
@@ -341,25 +298,17 @@ class VARReduce(BaseForecaster):
             # Reproduce the original X we used for fitting
             X, _ = self._prepare_for_fit(self._y, return_as_ndarray=False)
 
-            # Initialize a placeholder for in-sample predictons
-            self._y_pred_insample = pd.DataFrame(index=self._y.index[self.lags :])
+            self._y_pred_insample = pd.DataFrame(
+                self.regressor_.predict(X),
+                index=X.index,
+                columns=self.var_names,
+            )
 
-            if self.multioutput_regressor is not None:
-                self._y_pred_insample = self.multioutput_regressor.predict(
-                    X.reshape(1, -1)
-                )
-            else:
-                # Extract the fitted regressor for each series
-                for i, var_name in enumerate(self.var_names):
-                    model = self.regressors[var_name]
-                    # Use the model to perform in-sample prediction and save them
-                    self._y_pred_insample[var_name] = model.predict(X)
-
-                # Create a new `fh` object with only in-sample values
-                # and use it to filter previously-created in-sample predictions
-                fh_insample = fh_int.to_in_sample(cutoff=self.cutoff)
-                insample_index = fh_insample.to_absolute_index(cutoff=self.cutoff)
-                y_pred_insample = self._y_pred_insample.loc[insample_index]
+            # Create a new `fh` object with only in-sample values
+            # and use it to filter previously-created in-sample predictions
+            fh_insample = fh_int.to_in_sample(cutoff=self.cutoff)
+            insample_index = fh_insample.to_absolute_index(cutoff=self.cutoff)
+            y_pred_insample = self._y_pred_insample.loc[insample_index]
 
         # ---- outsample forecasts ----
         if fh_int.max() > 0:
@@ -373,21 +322,8 @@ class VARReduce(BaseForecaster):
             for _ in range(0, fh_int[-1]):
                 # Prepare X
                 X_last = self._prepare_for_predict(y_last, return_as_ndarray=False)
-
-                if self.multioutput_regressor is not None:
-                    y_pred_step = self.multioutput_regressor.predict(X_last)
-                    y_pred_step = pd.DataFrame(y_pred_step, columns=self.var_names)
-                else:
-                    # One timestep prediction for each variable using its regressor
-                    y_pred_step = []
-                    for var_name in self.var_names:
-                        model = self.regressors[var_name]
-                        y_pred_step_var = model.predict(X_last).item()  # is a float
-                        y_pred_step.append(y_pred_step_var)
-
-                    # Convert y_pred_step into a one-row DataFrame
-                    y_pred_step = pd.DataFrame([y_pred_step], columns=self.var_names)
-
+                y_pred_step = self.regressor_.predict(X_last)
+                y_pred_step = pd.DataFrame(y_pred_step, columns=self.var_names)
                 y_pred_outsample.append(y_pred_step)
 
                 # Append the new predictions (y_pred_step) at the end of y_last
