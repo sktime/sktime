@@ -2965,6 +2965,16 @@
             "code",
             "maintenance"
         ]
+    },
+    {
+        "login": "wpdonders",
+        "name": "Wouter Donders",
+        "avatar_url": "https://avatars.githubusercontent.com/u/1868824?v=4?s=100",
+        "profile": "https://github.com/wpdonders",
+        "contributions": [
+            "code",
+            "test"
+        ]
     }
   ]
 }
