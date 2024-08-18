@@ -505,13 +505,14 @@ def get_base_class_lookup(mixin=False):
     return base_class_lookup
 
 
-class series_to_primitives_transformer(_BaseScitypeOfObject):
+class transformer_series_to_primitives(_BaseScitypeOfObject):
     """LEGACY - time series to primitives transformer."""
 
     _tags = {
         "scitype_name": "series-to-primitives-trafo",
         "short_descr": "time series to primitives transformer",
         "parent_scitype": "transformer",
+        "mixin": True,
     }
 
     @classmethod
@@ -521,13 +522,14 @@ class series_to_primitives_transformer(_BaseScitypeOfObject):
         return _SeriesToPrimitivesTransformer
 
 
-class series_to_series_transformer(_BaseScitypeOfObject):
+class transformer_series_to_series(_BaseScitypeOfObject):
     """LEGACY - time series to time series transformer."""
 
     _tags = {
         "scitype_name": "series-to-series-trafo",
         "short_descr": "time series to time series transformer",
         "parent_scitype": "transformer",
+        "mixin": True,
     }
 
     @classmethod
@@ -537,13 +539,14 @@ class series_to_series_transformer(_BaseScitypeOfObject):
         return _SeriesToSeriesTransformer
 
 
-class panel_to_tabular_transformer(_BaseScitypeOfObject):
+class transformer_panel_to_tabular(_BaseScitypeOfObject):
     """LEGACY - panel to tabular transformer."""
 
     _tags = {
         "scitype_name": "panel-to-tabular-trafo",
         "short_descr": "panel to tabular transformer",
         "parent_scitype": "transformer",
+        "mixin": True,
     }
 
     @classmethod
@@ -553,13 +556,14 @@ class panel_to_tabular_transformer(_BaseScitypeOfObject):
         return _PanelToTabularTransformer
 
 
-class panel_to_panel_transformer(_BaseScitypeOfObject):
+class transformer_panel_to_panel(_BaseScitypeOfObject):
     """LEGACY - panel to panel transformer."""
 
     _tags = {
         "scitype_name": "panel-to-panel-trafo",
         "short_descr": "panel to panel transformer",
         "parent_scitype": "transformer",
+        "mixin": True,
     }
 
     @classmethod
