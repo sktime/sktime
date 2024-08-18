@@ -399,7 +399,7 @@ def _construct_base_class_register(mixin=False):
     return register
 
 
-def get_base_class_register(mixin=False, include_basobjs=True):
+def get_base_class_register(mixin=False, include_baseobjs=True):
     """Return register of object scitypes and base classes in sktime.
 
     Parameters
@@ -420,7 +420,7 @@ def get_base_class_register(mixin=False, include_basobjs=True):
     """
     raw_list = _construct_base_class_register(mixin=mixin)
 
-    if not include_basobjs:
+    if not include_baseobjs:
         raw_list = [x for x in raw_list if x[0] not in ["object", "estimator"]]
 
     # for downwards scompatibility, move the "distributions" to the end of the list
@@ -443,7 +443,7 @@ def _construct_scitype_list(mixin=False):
     return scitype_list
 
 
-def get_obj_scitype_list(mixin=False, include_basobjs=True, return_descriptions=False):
+def get_obj_scitype_list(mixin=False, include_baseobjs=True, return_descriptions=False):
     """Return list of object scitype shorthands in sktime.
 
     Parameters
@@ -466,7 +466,7 @@ def get_obj_scitype_list(mixin=False, include_basobjs=True, return_descriptions=
     """
     raw_list = _construct_scitype_list(mixin=mixin)
 
-    if not include_basobjs:
+    if not include_baseobjs:
         raw_list = [x for x in raw_list if x[0] not in ["object", "estimator"]]
 
     # for downwards scompatibility, move the "distributions" to the end of the list
@@ -495,7 +495,7 @@ def get_base_class_list(mixin=False, include_baseobjs=True):
     base_class_list : list of classes
         elements are base classes
     """
-    register = get_base_class_register(mixin=mixin, include_basobjs=include_basobjs)
+    register = get_base_class_register(mixin=mixin, include_baseobjs=include_baseobjs)
     return [x[1] for x in register]
 
 
