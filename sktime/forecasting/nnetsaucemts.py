@@ -146,6 +146,7 @@ class MTS(BaseForecaster):
         # col_idx = self._y.index
         #
         # y_pred = pd.DataFrame(values, index=row_ind, columns=col_idx)
+        return [1, 2, 3]
 
         # IMPORTANT: avoid side effects to X, fh
 
@@ -199,6 +200,6 @@ class MTS(BaseForecaster):
         # example 2: specify params as list of dictionary
         # note: Only first dictionary will be used by create_test_instance
         # params = [{"est": value1, "parama": value2},
-        #           {"est": value3, "parama": value4}]
-        #
+        #           {"est": value3, "parama": value4}]        
         # return params
+        return        
