@@ -10,7 +10,7 @@ import numbers
 import os
 import types
 from copy import deepcopy
-from inspect import getfullargspec, isclass, signature
+from inspect import getfullargspec, isclass, issubclass, signature
 from tempfile import TemporaryDirectory
 
 import numpy as np
@@ -26,16 +26,14 @@ from sktime.dists_kernels.base import (
 )
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base import BaseForecaster, _BaseGlobalForecaster
-from sktime.registry import all_estimators
+from sktime.registry import all_estimators, get_base_class_list, scitype
 from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.tests._config import (
     EXCLUDE_ESTIMATORS,
     EXCLUDED_TESTS,
     NON_STATE_CHANGING_METHODS,
     NON_STATE_CHANGING_METHODS_ARRAYLIKE,
-    VALID_ESTIMATOR_BASE_TYPES,
     VALID_ESTIMATOR_TAGS,
-    VALID_TRANSFORMER_TYPES,
 )
 from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing._conditional_fixtures import (
@@ -924,11 +922,13 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         if issubclass(estimator_class, Pipeline):
             return
 
+        VALID_BASE_CLS = tuple(get_base_class_list(include_baseobjs=False))
+        VALID_MIXIN = get_base_class_list(mixin=True)
+        VALID_SECOND_CLS = tuple(VALID_MIXIN + [_BaseGlobalForecaster])
+
         # Usually estimators inherit only from one BaseEstimator type, but in some cases
         # they may be predictor and transformer at the same time (e.g. pipelines)
-        n_base_types = sum(
-            issubclass(estimator_class, cls) for cls in VALID_ESTIMATOR_BASE_TYPES
-        )
+        n_base_types = sum(issubclass(estimator_class, cls) for cls in VALID_BASE_CLS)
 
         assert 2 >= n_base_types >= 1
 
@@ -939,19 +939,20 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         # therefore, global forecasters is subclass of
         # _BaseGlobalForecaster and BaseForecaster
         if n_base_types > 1:
-            assert issubclass(estimator_class, VALID_TRANSFORMER_TYPES) or issubclass(
-                estimator_class, _BaseGlobalForecaster
-            )
+            assert issubclass(estimator_class, VALID_SECOND_CLS)
 
     def test_has_common_interface(self, estimator_class):
         """Check estimator implements the common interface."""
         estimator = estimator_class
 
+        is_est = issubclass(estimator_class, BaseEstimator)
+
         # Check class for type of attribute
-        if isinstance(estimator_class, BaseEstimator):
+        if issubclass(estimator_class, BaseEstimator):
             assert isinstance(estimator.is_fitted, property)
 
-        required_methods = _list_required_methods(estimator_class)
+        est_scitype = scitype(estimator_class)
+        required_methods = _list_required_methods(est_scitype, is_est=is_est)
 
         for attr in required_methods:
             assert hasattr(
