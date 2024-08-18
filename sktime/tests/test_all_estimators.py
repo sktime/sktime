@@ -35,7 +35,6 @@ from sktime.tests._config import (
     NON_STATE_CHANGING_METHODS_ARRAYLIKE,
     VALID_ESTIMATOR_BASE_TYPES,
     VALID_ESTIMATOR_TAGS,
-    VALID_ESTIMATOR_TYPES,
     VALID_TRANSFORMER_TYPES,
 )
 from sktime.tests.test_switch import run_test_for_class
@@ -1566,9 +1565,3 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             # skip them for the underlying network
             if vars(estimator._network).get(key) is not None:
                 assert vars(estimator._network)[key] == value
-
-    def _get_err_msg(estimator):
-        return (
-            f"Invalid estimator type: {type(estimator)}. Valid estimator types are: "
-            f"{VALID_ESTIMATOR_TYPES}"
-        )

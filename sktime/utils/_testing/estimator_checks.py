@@ -22,15 +22,7 @@ from sktime.dists_kernels import BasePairwiseTransformer, BasePairwiseTransforme
 from sktime.forecasting.base import BaseForecaster
 from sktime.registry import scitype
 from sktime.regression.base import BaseRegressor
-from sktime.tests._config import VALID_ESTIMATOR_TYPES
 from sktime.transformations.base import BaseTransformer
-
-
-def _get_err_msg(estimator):
-    return (
-        f"Invalid estimator type: {type(estimator)}. Valid estimator types are: "
-        f"{VALID_ESTIMATOR_TYPES}"
-    )
 
 
 def _list_required_methods(estimator):
