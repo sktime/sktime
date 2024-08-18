@@ -293,7 +293,7 @@ class _HTMLDocumentationLinkMixin:
             "__doc_link_template",
             (
                 f"https://www.sktime.net/en/v{sktime_version}"
-                "/api_reference/auto_generated/{path_reduced}.html"
+                "/api_reference/auto_generated/{reduced_path}.html"
             ),
         )
 
@@ -319,9 +319,9 @@ class _HTMLDocumentationLinkMixin:
 
         if self._doc_link_url_param_generator is None:
             modpath = str(self.__class__)[8:-2]
-            path_reduced = _get_reduced_path(modpath)
+            reduced_path = _get_reduced_path(modpath)
 
-            return self._doc_link_template.format(path_reduced=path_reduced)
+            return self._doc_link_template.format(reduced_path=reduced_path)
         return self._doc_link_template.format(
             **self._doc_link_url_param_generator(self)
         )
