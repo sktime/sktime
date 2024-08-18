@@ -51,7 +51,7 @@ def _list_required_methods(est_scitype, is_est=True):
     if is_est:
         required_methods += MUST_HAVE_FOR_ESTIMATORS
 
-    if est_scitype in  BASE_CLASSES_THAT_MUST_HAVE_PREDICT:
+    if est_scitype in BASE_CLASSES_THAT_MUST_HAVE_PREDICT:
         required_methods += ["predict"]
 
     if est_scitype in BASE_CLASSES_THAT_MUST_HAVE_TRANSFORM:
