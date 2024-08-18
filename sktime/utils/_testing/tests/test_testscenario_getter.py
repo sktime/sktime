@@ -6,12 +6,17 @@ __all__ = []
 import numpy as np
 import pytest
 
-from sktime.registry import BASE_CLASS_LIST, BASE_CLASS_SCITYPE_LIST
+from sktime.registry import get_base_class_lookup, get_obj_scitype_list
 from sktime.utils._testing.scenarios import TestScenario
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
 
 
-@pytest.mark.parametrize("estimator_class", BASE_CLASS_LIST)
+@pytest.fixture(params=get_obj_scitype_list())
+def estimator_class(request):
+    lookup = get_base_class_lookup()
+    return lookup[request.param]
+
+
 def test_get_scenarios_for_class(estimator_class):
     """Test retrieval of scenarios by class."""
     scenarios = retrieve_scenarios(obj=estimator_class)
@@ -25,7 +30,7 @@ def test_get_scenarios_for_class(estimator_class):
     # assert len(scenarios) > 0
 
 
-@pytest.mark.parametrize("scitype_string", BASE_CLASS_SCITYPE_LIST)
+@pytest.mark.parametrize("scitype_string", get_obj_scitype_list())
 def test_get_scenarios_for_string(scitype_string):
     """Test retrieval of scenarios by string."""
     scenarios = retrieve_scenarios(obj=scitype_string)
