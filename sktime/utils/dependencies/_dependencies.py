@@ -15,7 +15,6 @@ from packaging.specifiers import InvalidSpecifier, Specifier, SpecifierSet
 from packaging.version import InvalidVersion, Version
 
 
-# todo 0.32.0: remove suppress_import_stdout argument
 def _check_soft_dependencies(
     *packages,
     package_import_alias="deprecated",

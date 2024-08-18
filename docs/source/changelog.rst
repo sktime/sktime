@@ -19,6 +19,113 @@ For upcoming changes and next releases, see our `milestones <https://github.com/
 For our long-term plan, see our :ref:`roadmap`.
 
 
+Version 0.31.2 - 2024-08-13
+---------------------------
+
+Hotfix release for using ``make_reduction`` with not fully ``sklearn`` compliant
+tabular regressors such as from ``catboost``.
+
+For last non-maintenance content updates, see 0.31.1.
+
+Contents
+~~~~~~~~
+
+* [BUG] fix ``make_reduction`` type inference for non-sklearn estimators
+
+Notes
+^^^^^
+
+This is a hotfix for 0.31.1 release, fixing a regression. This release is not contained
+in the 0.32.0 or 0.32.1 releases.
+
+
+Version 0.32.1 - 2024-08-12
+---------------------------
+
+Hotfix release for using ``make_reduction`` with not fully ``sklearn`` compliant
+tabular regressors such as from ``catboost``.
+
+For last non-maintenance content updates, see 0.31.1.
+
+Contents
+~~~~~~~~
+
+* [BUG] fix ``make_reduction`` type inference for non-sklearn estimators
+
+
+Version 0.32.0 - 2024-08-11
+---------------------------
+
+Maintenance release, with scheduled deprecations and change actions.
+
+For last non-maintenance content updates, see 0.31.1.
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``skpro`` (soft dependency) bounds have been updated to ``>=2,<2.6.0``
+* ``skforecast`` (forecasting soft dependency) bounds have been updated to ``<0.14.0``.
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+* all ``sktime`` estimators and objects are now required to have at least
+  two test parameter sets in
+  ``get_test_params`` to be compliant with ``check_estimator`` contract tests.
+  This requirement was previously stated in the extension template but not enforced.
+  It is now also included in the automated tests via ``check_estimator``.
+  Estimators without (unreserved) parameters, i.e., where two
+  distinct parameter sets are not possible, are excepted from this.
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* From ``sktime 0.38.0``, forecasters' ``predict_proba`` will
+  require ``skpro`` to be present in the python environment,
+  for distribution objects to represent distributional forecasts.
+  Until ``sktime 0.35.0``, ``predict_proba`` will continue working without ``skpro``,
+  defaulting to return objects in ``sktime.proba`` if ``skpro`` is not present.
+  From ``sktime 0.35.0``, an error will be raised upon call of
+  forecaster ``predict_proba`` if ``skpro`` is not present
+  in the environment.
+  Users of forecasters' ``predict_proba`` should ensure
+  that ``skpro`` is installed in the environment.
+
+* The probability distributions module ``sktime.proba`` deprecated and will
+  be fully replaced by ``skpro`` in ``sktime 0.38.0``.
+  Until ``sktime 0.38.0``, imports from ``sktime.proba`` will continue working,
+  defaulting to ``sktime.proba`` if ``skpro`` is not present,
+  otherwise redirecting imports to ``skpro`` objects.
+  From ``sktime 0.35.0``, an error will be raised if ``skpro`` is not present
+  in the environment, otherwise imports are redirected to ``skpro``.
+  Direct or indirect users of ``sktime.proba`` should ensure ``skpro`` is
+  installed in the environment.
+  Direct users of the ``sktime.proba`` module should,
+  in addition, replace any imports from
+  ``sktime.proba`` with imports from ``skpro.distributions``.
+
+Contents
+~~~~~~~~
+
+* [MNT] 0.32.0 deprecations and change actions (:pr:`6916`) :user:`fkiraly`
+* [MNT] [Dependabot](deps): Update ``skpro`` requirement from ``<2.5.0,>=2`` to ``>=2,<2.6.0`` (:pr:`6897`) :user:`dependabot[bot]`
+* [MNT] remove ``numpy 2`` incompatibility flag from ``numba`` based estimators (:pr:`6915`) :user:`fkiraly`
+* [MNT] isolate ``joblib`` (:pr:`6385`) :user:`fkiraly`
+* [MNT] handle more ``pandas`` deprecations (:pr:`6941`) :user:`fkiraly`
+* [MNT] deprecation of ``proba`` module in favour of ``skpro`` soft dependency (:pr:`6940`) :user:`fkiraly`
+* [MNT] update versions of ``pre-commit`` hooks (:pr:`6947`) :user:`yarnabrina`
+* [MNT] 0.32.0 release action - revert temporary skip ``get_test_params`` number check for 0.21.1 and 0.22.0 release (:pr:`5114`) :user:`fkiraly`
+* [MNT] Bump ``skforecast`` to ``0.13`` version allowing support for python ``3.12`` (:pr:`6946`) :user:`yarnabrina`
+* [BUG] Fix ``Xt_msg`` type in ``tranformations.base`` (:pr:`6944`) :user:`hliebert`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`fkiraly`,
+:user:`hliebert`,
+:user:`yarnabrina`
+
+
 Version 0.31.1 - 2024-08-10
 ---------------------------
 
