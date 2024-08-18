@@ -399,13 +399,15 @@ def _construct_base_class_register(mixin=False):
     return register
 
 
-def get_base_class_register(mixin=False):
+def get_base_class_register(mixin=False, include_basobjs=True):
     """Return register of object scitypes and base classes in sktime.
 
     Parameters
     ----------
     mixin : bool, optional (default=False)
         whether to return only full base classes (False) or only mixin classes (True)
+    include_baseobjs : bool, optional (default=True)
+          whether to include the BaseObject and BaseEstimator classes in the lookup
 
     Returns
     -------
@@ -417,6 +419,9 @@ def get_base_class_register(mixin=False):
         * 2 : string - plain English description of the scitype
     """
     raw_list = _construct_base_class_register(mixin=mixin)
+
+    if not include_basobjs:
+        raw_list = [x for x in raw_list if x[0] not in ["object", "estimator"]]
 
     # for downwards scompatibility, move the "distributions" to the end of the list
     distr = [x for x in raw_list if x[0] == "distribution"]
@@ -438,13 +443,15 @@ def _construct_scitype_list(mixin=False):
     return scitype_list
 
 
-def get_obj_scitype_list(mixin=False, return_descriptions=False):
+def get_obj_scitype_list(mixin=False, include_basobjs=True, return_descriptions=False):
     """Return list of object scitype shorthands in sktime.
 
     Parameters
     ----------
     mixin : bool, optional (default=False)
         whether to return only full base classes (False) or only mixin classes (True)
+    include_baseobjs : bool, optional (default=True)
+          whether to include the BaseObject and BaseEstimator classes in the lookup
     return_descriptions : bool, optional (default=False)
         whether to return descriptions along with scitype shorthands
 
@@ -459,6 +466,9 @@ def get_obj_scitype_list(mixin=False, return_descriptions=False):
     """
     raw_list = _construct_scitype_list(mixin=mixin)
 
+    if not include_basobjs:
+        raw_list = [x for x in raw_list if x[0] not in ["object", "estimator"]]
+
     # for downwards scompatibility, move the "distributions" to the end of the list
     distr = [x for x in raw_list if x[0] == "distribution"]
     rest = [x for x in raw_list if x[0] != "distribution"]
@@ -470,37 +480,41 @@ def get_obj_scitype_list(mixin=False, return_descriptions=False):
         return [x[0] for x in reordered_list].copy()
 
 
-def get_base_class_list(mixin=False):
+def get_base_class_list(mixin=False, include_baseobjs=True):
     """Return list of base classes in sktime.
 
     Parameters
     ----------
     mixin : bool, optional (default=False)
         whether to return only full base classes (False) or only mixin classes (True)
+    include_baseobjs : bool, optional (default=True)
+          whether to include the BaseObject and BaseEstimator classes in the lookup
 
     Returns
     -------
     base_class_list : list of classes
         elements are base classes
     """
-    register = get_base_class_register(mixin=mixin)
+    register = get_base_class_register(mixin=mixin, include_basobjs=include_basobjs)
     return [x[1] for x in register]
 
 
-def get_base_class_lookup(mixin=False):
+def get_base_class_lookup(mixin=False, include_baseobjs=True):
     """Return lookup dictionary of scitype shorthands to base classes in sktime.
 
     Parameters
     ----------
     mixin : bool, optional (default=False)
         whether to return only full base classes (False) or only mixin classes (True)
+    include_baseobjs : bool, optional (default=True)
+          whether to include the BaseObject and BaseEstimator classes in the lookup
 
     Returns
     -------
     base_class_lookup : dict
         keys/entries are scitype shorthands/base classes
     """
-    register = get_base_class_register(mixin=mixin)
+    register = get_base_class_register(mixin=mixin, include_baseobjs=include_baseobjs)
     base_class_lookup = {x[0]: x[1] for x in register}
     return base_class_lookup
 
