@@ -9,7 +9,6 @@ from inspect import signature
 
 import numpy as np
 import pandas as pd
-from scipy.sparse import csr_matrix
 from sklearn.base import clone
 
 from sktime.transformations.base import BaseTransformer
@@ -207,7 +206,13 @@ class TabularToSeriesAdaptor(BaseTransformer):
         if pooling == "local":
             self.set_tags(**{"scitype:instancewise": True})
             if input_type == "numpy":
-                self.set_tags(**{"X_inner_mtype": "np.ndarray"})
+                self.set_tags(
+                    **{
+                        "X_inner_mtype": "np.ndarray",
+                        # categorical is not supported in numpy yet.
+                        "capability:categorical_in_X": False,
+                    }
+                )
             elif input_type == "pandas":
                 self.set_tags(**{"X_inner_mtype": "pd.DataFrame"})
             else:
@@ -351,7 +356,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
 
         # converting to dense if the transformer output was in sparse format
         # Example: sklearn OneHotEncoder's default output is sparse
-        if isinstance(Xt, csr_matrix):
+        if str(type(Xt)) == "<class 'scipy.sparse._csr.csr_matrix'>":
             Xt = Xt.todense()
         # coerce sensibly to 2D np.ndarray
         if isinstance(Xt, (int, float, str)):
@@ -427,7 +432,6 @@ class TabularToSeriesAdaptor(BaseTransformer):
         params3 = {"transformer": VarianceThreshold(), "pass_y": "fit"}
         params4 = {"transformer": VarianceThreshold()}
         params5 = {"transformer": LabelEncoder(), "fit_in_transform": True}
-
         params6 = {
             "transformer": StandardScaler(),
             "pooling": "global",
