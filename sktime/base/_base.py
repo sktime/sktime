@@ -207,7 +207,7 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         from packaging.requirements import Requirement
 
         # pypi package names of soft dependencies that are not numpy 2 compatibleS
-        NOT_NP2_COMPATIBLE = ["prophet"]
+        NOT_NP2_COMPATIBLE = ["prophet", "pmdarima"]
 
         softdeps = self.get_class_tag("python_dependencies", [])
         if softdeps is None:
