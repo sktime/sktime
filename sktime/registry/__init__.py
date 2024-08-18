@@ -3,14 +3,14 @@
 from sktime.registry._alias import resolve_alias
 from sktime.registry._alias_str import ALIAS_DICT
 from sktime.registry._base_classes import (
-    BASE_CLASS_LIST,
-    BASE_CLASS_LOOKUP,
-    BASE_CLASS_REGISTER,
-    BASE_CLASS_SCITYPE_LIST,
     TRANSFORMER_MIXIN_LIST,
     TRANSFORMER_MIXIN_LOOKUP,
     TRANSFORMER_MIXIN_REGISTER,
     TRANSFORMER_MIXIN_SCITYPE_LIST,
+    get_base_class_list,
+    get_base_class_lookup,
+    get_base_class_register,
+    get_obj_scitype_list,
 )
 from sktime.registry._craft import craft, deps, imports
 from sktime.registry._lookup import all_estimators, all_tags
@@ -42,3 +42,14 @@ __all__ = [
     "TRANSFORMER_MIXIN_LOOKUP",
     "TRANSFORMER_MIXIN_SCITYPE_LIST",
 ]
+
+
+def __getattr__(name):
+    getter_dict = {
+        "BASE_CLASS_LOOKUP": get_base_class_lookup,
+        "BASE_CLASS_REGISTER": get_base_class_register,
+        "BASE_CLASS_LIST": get_base_class_list,
+        "BASE_CLASS_SCITYPE_LIST": get_obj_scitype_list,
+    }
+    if name in getter_dict:
+        return getter_dict[name]()

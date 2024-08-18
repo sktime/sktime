@@ -436,34 +436,46 @@ def get_base_class_register(mixin=False):
 
 @lru_cache
 def _construct_scitype_list(mixin=False):
-    """Generate the scitype lists from the register."""
+    """Generate list of scitype strings from the register."""
     clss = _get_base_classes(mixin=mixin)
 
-    scitype_strs = [cl.get_class_tags()["scitype_name"] for cl in clss]
-    return scitype_strs
+    scitype_list = []
+    for cl in clss:
+        tags = cl.get_class_tags()
+        scitype_list.append((tags["scitype_name"], tags["short_descr"]))
+    return scitype_list
 
 
-def get_scitype_list(mixin=False):
-    """Return list of scitype shorthands in sktime.
+def get_obj_scitype_list(mixin=False, return_descriptions=False):
+    """Return list of object scitype shorthands in sktime.
 
     Parameters
     ----------
     mixin : bool, optional (default=False)
         whether to return only full base classes (False) or only mixin classes (True)
+    return_descriptions : bool, optional (default=False)
+        whether to return descriptions along with scitype shorthands
 
     Returns
     -------
-    scitype_list : list of string
-        elements are scitype shorthands
+    scitype_list : list of string or list of tuple
+        elements are scitype shorthands.
+        If ``return_descriptions`` is False, elements are strings.
+        If ``return_descriptions`` is True, elements are pairs of strings,
+        where the first element is the scitype shorthand and the second is the
+        description.
     """
     raw_list = _construct_scitype_list(mixin=mixin)
 
     # for downwards scompatibility, move the "distributions" to the end of the list
-    distr = [x for x in raw_list if x == "distribution"]
-    rest = [x for x in raw_list if x != "distribution"]
+    distr = [x for x in raw_list if x[0] == "distribution"]
+    rest = [x for x in raw_list if x[0] != "distribution"]
     reordered_list = rest + distr
 
-    return reordered_list.copy()
+    if return_descriptions:
+        return reordered_list.copy()
+    else:
+        return [x[0] for x in reordered_list].copy()
 
 
 def get_base_class_list(mixin=False):
@@ -499,13 +511,6 @@ def get_base_class_lookup(mixin=False):
     register = get_base_class_register(mixin=mixin)
     base_class_lookup = {x[0]: x[1] for x in register}
     return base_class_lookup
-
-
-BASE_CLASS_SCITYPE_LIST = get_scitype_list(mixin=False)
-
-BASE_CLASS_LIST = get_base_class_list(mixin=False)
-
-BASE_CLASS_LOOKUP = get_base_class_lookup(mixin=False)
 
 
 TRANSFORMER_MIXIN_REGISTER = [
