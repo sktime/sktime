@@ -55,15 +55,7 @@ import inspect
 import sys
 from functools import lru_cache
 
-import pandas as pd
-
 from sktime.base import BaseObject
-from sktime.transformations.base import (
-    _PanelToPanelTransformer,
-    _PanelToTabularTransformer,
-    _SeriesToPrimitivesTransformer,
-    _SeriesToSeriesTransformer,
-)
 
 
 class _BaseScitypeOfObject(BaseObject):
@@ -513,29 +505,65 @@ def get_base_class_lookup(mixin=False):
     return base_class_lookup
 
 
-TRANSFORMER_MIXIN_REGISTER = [
-    (
-        "series-to-primitive-trafo",
-        _SeriesToPrimitivesTransformer,
-        "time-series-to-primitives transformer",
-    ),
-    (
-        "series-to-series-trafo",
-        _SeriesToSeriesTransformer,
-        "time-series-to-time-series transformer",
-    ),
-    (
-        "panel-to-tabular-trafo",
-        _PanelToTabularTransformer,
-        "panel-to-tabular transformer",
-    ),
-    ("panel-to-panel-trafo", _PanelToPanelTransformer, "panel-to-panel transformer"),
-]
+class series_to_primitives_transformer(_BaseScitypeOfObject):
+    """LEGACY - time series to primitives transformer."""
 
-TRANSFORMER_MIXIN_SCITYPE_LIST = pd.DataFrame(TRANSFORMER_MIXIN_REGISTER)[0].tolist()
+    _tags = {
+        "scitype_name": "series-to-primitives-trafo",
+        "short_descr": "time series to primitives transformer",
+        "parent_scitype": "transformer",
+    }
 
-TRANSFORMER_MIXIN_LIST = pd.DataFrame(TRANSFORMER_MIXIN_REGISTER)[1].tolist()
+    @classmethod
+    def get_base_class(cls):
+        from sktime.transformations.base import _SeriesToPrimitivesTransformer
 
-TRANSFORMER_MIXIN_LOOKUP = dict(
-    zip(TRANSFORMER_MIXIN_SCITYPE_LIST, TRANSFORMER_MIXIN_LIST)
-)
+        return _SeriesToPrimitivesTransformer
+
+
+class series_to_series_transformer(_BaseScitypeOfObject):
+    """LEGACY - time series to time series transformer."""
+
+    _tags = {
+        "scitype_name": "series-to-series-trafo",
+        "short_descr": "time series to time series transformer",
+        "parent_scitype": "transformer",
+    }
+
+    @classmethod
+    def get_base_class(cls):
+        from sktime.transformations.base import _SeriesToSeriesTransformer
+
+        return _SeriesToSeriesTransformer
+
+
+class panel_to_tabular_transformer(_BaseScitypeOfObject):
+    """LEGACY - panel to tabular transformer."""
+
+    _tags = {
+        "scitype_name": "panel-to-tabular-trafo",
+        "short_descr": "panel to tabular transformer",
+        "parent_scitype": "transformer",
+    }
+
+    @classmethod
+    def get_base_class(cls):
+        from sktime.transformations.base import _PanelToTabularTransformer
+
+        return _PanelToTabularTransformer
+
+
+class panel_to_panel_transformer(_BaseScitypeOfObject):
+    """LEGACY - panel to panel transformer."""
+
+    _tags = {
+        "scitype_name": "panel-to-panel-trafo",
+        "short_descr": "panel to panel transformer",
+        "parent_scitype": "transformer",
+    }
+
+    @classmethod
+    def get_base_class(cls):
+        from sktime.transformations.base import _PanelToPanelTransformer
+
+        return _PanelToPanelTransformer

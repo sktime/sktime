@@ -3,10 +3,6 @@
 from sktime.registry._alias import resolve_alias
 from sktime.registry._alias_str import ALIAS_DICT
 from sktime.registry._base_classes import (
-    TRANSFORMER_MIXIN_LIST,
-    TRANSFORMER_MIXIN_LOOKUP,
-    TRANSFORMER_MIXIN_REGISTER,
-    TRANSFORMER_MIXIN_SCITYPE_LIST,
     get_base_class_list,
     get_base_class_lookup,
     get_base_class_register,
@@ -53,3 +49,14 @@ def __getattr__(name):
     }
     if name in getter_dict:
         return getter_dict[name]()
+
+    # legacy transformer mixins,
+    # handled for downward compatibility
+    legacy_trafo_mixin_dict = {
+        "TRANSFORMER_MIXIN_LOOKUP": get_base_class_lookup,
+        "TRANSFORMER_MIXIN_REGISTER": get_base_class_register,
+        "TRANSFORMER_MIXIN_LIST": get_base_class_list,
+        "TRANSFORMER_MIXIN_SCITYPE_LIST": get_obj_scitype_list,
+    }
+    if name in legacy_trafo_mixin_dict:
+        return legacy_trafo_mixin_dict[name](mixin=True)
