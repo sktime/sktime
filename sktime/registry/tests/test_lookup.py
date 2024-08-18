@@ -9,7 +9,6 @@ from sktime.registry import all_estimators, all_tags, scitype
 from sktime.registry._base_classes import get_base_class_lookup, get_obj_scitype_list
 from sktime.registry._lookup import _check_estimator_types
 
-
 # shorthands for easy reading
 b = get_obj_scitype_list()
 b = [x for x in b if x not in ["object", "estimator"]]
