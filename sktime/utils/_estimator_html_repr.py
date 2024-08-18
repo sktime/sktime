@@ -1,5 +1,5 @@
 """Functionality to represent instance of BaseObject as html."""
-# based on the slearn module of the same name
+# based on the sklearn module of the same name
 
 import html
 import importlib
@@ -264,12 +264,12 @@ class _HTMLDocumentationLinkMixin:
     """Mixin class allowing to generate a link to the API documentation.
 
     This mixin relies on three attributes:
-    - `_doc_link_module`: it corresponds to the root module (e.g. `sklearn`). Using this
-      mixin, the default value is `sklearn`.
+    - `_doc_link_module`: it corresponds to the root module (e.g. `sktime`). Using this
+      mixin, the default value is `sktime`.
     - `_doc_link_template`: it corresponds to the template used to generate the
       link to the API documentation. Using this mixin, the default value is
-      `"https://www.sktime.net/en/v{version_url}/api_reference/auto_generated/
-      {modpath}.html"`.
+      `"https://www.sktime.net/en/v{sktime_version}/api_reference/auto_generated/
+      {path_reduced}.html"`.
     - `_doc_link_url_param_generator`: it corresponds to a function that generates the
       parameters to be used in the template when the estimator module and name are not
       sufficient.
