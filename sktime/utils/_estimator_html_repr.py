@@ -242,6 +242,24 @@ def _object_html_repr(base_object):
         return html_output
 
 
+def _get_reduced_path(input_path_string):
+    """Remove submodules starting with an underscore to get a reduced path string."""
+    substrings = input_path_string.split(".")
+
+    index_to_remove = None
+    for i, substring in enumerate(substrings):
+        if substring.startswith("_"):
+            index_to_remove = i
+            break
+
+    if index_to_remove is not None:
+        substrings = substrings[:index_to_remove] + substrings[-1:]
+
+    result_string = ".".join(substrings)
+
+    return result_string
+
+
 class _HTMLDocumentationLinkMixin:
     """Mixin class allowing to generate a link to the API documentation.
 
@@ -275,7 +293,7 @@ class _HTMLDocumentationLinkMixin:
             "__doc_link_template",
             (
                 f"https://www.sktime.net/en/v{sktime_version}"
-                "/api_reference/auto_generated/{modpath}.html"
+                "/api_reference/auto_generated/{path_reduced}.html"
             ),
         )
 
@@ -300,10 +318,10 @@ class _HTMLDocumentationLinkMixin:
             return ""
 
         if self._doc_link_url_param_generator is None:
-            modclass = self.__class__
-            modpath = str(modclass)[8:-2]
+            modpath = str(self.__class__)[8:-2]
+            path_reduced = _get_reduced_path(modpath)
 
-            return self._doc_link_template.format(modpath=modpath)
+            return self._doc_link_template.format(path_reduced=path_reduced)
         return self._doc_link_template.format(
             **self._doc_link_url_param_generator(self)
         )
