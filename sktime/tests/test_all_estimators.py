@@ -10,7 +10,7 @@ import numbers
 import os
 import types
 from copy import deepcopy
-from inspect import getfullargspec, isclass, issubclass, signature
+from inspect import getfullargspec, isclass, signature
 from tempfile import TemporaryDirectory
 
 import numpy as np
