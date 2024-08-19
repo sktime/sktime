@@ -128,6 +128,7 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
         # we let all X inputs through to be handled by first transformer
         "X_inner_mtype": CORE_MTYPES,
         "univariate-only": False,
+        "capability:categorical_in_X": True,
     }
 
     # no further default tag values - these are set dynamically below
