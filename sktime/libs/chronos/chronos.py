@@ -11,7 +11,6 @@ import warnings
 from dataclasses import dataclass
 from typing import Any, Literal, Optional, Union
 
-import chronos
 import torch
 import torch.nn as nn
 from transformers import (
@@ -51,7 +50,7 @@ class ChronosConfig:
 
     def create_tokenizer(self) -> "ChronosTokenizer":
         """Create a tokenizer object."""
-        class_ = getattr(chronos, self.tokenizer_class)
+        class_ = eval(self.tokenizer_class)
         return class_(**self.tokenizer_kwargs, config=self)
 
 
