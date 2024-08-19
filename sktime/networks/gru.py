@@ -10,9 +10,13 @@ if _check_soft_dependencies("torch", severity="none"):
     import torch.nn as nn
 
     NNModule = nn.Module
+    NNSequential = nn.Sequential
 else:
 
     class NNModule:
+        """Dummy class if torch is unavailable."""
+
+    class NNSequential:
         """Dummy class if torch is unavailable."""
 
 
@@ -305,7 +309,7 @@ class GRUFCNN(NNModule):
         return x
 
 
-class Conv(nn.Sequential):
+class Conv(NNSequential):
     """Convolutional Block for FCN.
 
     Parameters
