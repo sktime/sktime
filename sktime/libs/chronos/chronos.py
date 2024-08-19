@@ -24,6 +24,9 @@ else:
         class no_grad:
             """Dummy class if torch is unavailable."""
 
+        class Tensor:
+            """Dummy class if torch is unavailable."""
+
     class nn:
         """Dummy class if torch is unavailable."""
 
