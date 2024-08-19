@@ -156,9 +156,9 @@ class GRUFCNN(NNModule):
     init_weights : bool
         If True, then the weights are initialized, default is True.
     dropout : float
-        Dropout rate to apply. default is 0.0
-    fc_dropout : float
-        Dropout rate to apply to the fully connected layer. default is 0.0
+        Dropout rate to apply inside gru cell. default is 0.0
+    gru_dropout : float
+        Dropout rate to apply to the gru output layer. default is 0.0
     bidirectional : bool
         If True, then the GRU is bidirectional, default is False.
     conv_layers : list
@@ -167,10 +167,6 @@ class GRUFCNN(NNModule):
     kernel_sizes : list
         List of integers specifying the kernel size in each convolutional layer.
         default is [7, 5, 3].
-    squeeze_excitation : bool
-        If True, then the squeeze and excitation block is applied, default is False.
-    se_ratio : float
-        Squeeze and excitation ratio, default is 0.'
 
     References
     ----------
@@ -201,12 +197,10 @@ class GRUFCNN(NNModule):
         num_classes: int = None,
         init_weights: bool = True,
         dropout: float = 0.0,
-        fc_dropout: float = 0.0,
+        gru_dropout: float = 0.0,
         bidirectional: bool = False,
         conv_layers: list = [128, 256, 128],
         kernel_sizes: list = [7, 5, 3],
-        squeeze_excitation: bool = False,
-        se_ratio: float = 0,
     ):
         super().__init__()
         self.hidden_dim = hidden_dim
@@ -214,6 +208,7 @@ class GRUFCNN(NNModule):
         self.init_weights = init_weights
         self.dropout = dropout
         self.bidirectional = bidirectional
+        # gru
         self.gru = nn.GRU(
             input_size=input_size,
             hidden_size=hidden_dim,
@@ -223,13 +218,41 @@ class GRUFCNN(NNModule):
             dropout=dropout,
             bidirectional=bidirectional,
         )
-        self.fc_dropout = fc_dropout
+        self.gru_dropout = gru_dropout
         self.num_classes = num_classes
         self.init_weights = init_weights
         self.conv_layers = conv_layers
         self.kernel_sizes = kernel_sizes
-        self.squeeze_excitation = squeeze_excitation
-        self.se_ratio = se_ratio
+
+        # fcn
+        self.permute = Permute(0, 2, 1)
+        self.conv1 = Conv(
+            in_channels=input_size,
+            out_channels=conv_layers[0],
+            kernel_size=kernel_sizes[0],
+        )
+        self.conv2 = Conv(
+            in_channels=conv_layers[0],
+            out_channels=conv_layers[1],
+            kernel_size=kernel_sizes[1],
+        )
+        self.conv3 = Conv(
+            in_channels=conv_layers[1],
+            out_channels=conv_layers[2],
+            kernel_size=kernel_sizes[2],
+        )
+        self.globalavgpool = nn.AdaptiveAvgPool1d(1)
+
+        # combined
+        self.concat = Concat()
+        self.grudropout = (
+            nn.Dropout(self.gru_dropout) if self.gru_dropout else nn.Identity()
+        )  # noqa: E501
+        self.fc = nn.Linear(
+            hidden_dim * (1 + bidirectional) + conv_layers[-1], num_classes
+        )
+
+        # weights initialization
         if self.init_weights:
             self.apply(self._init_gru_weights)
             self.apply(self._init_conv_weights)
@@ -247,12 +270,115 @@ class GRUFCNN(NNModule):
     def _init_conv_weights(self, module):
         # the initialization is based on the original paper
         for name, param in module.named_parameters():
-            if "weight" in name:
+            if "weight_ih" in name or "weight_hh" in name:
                 nn.init.kaiming_normal_(param.data)
             elif "bias" in name:
                 param.data.fill_(0)
 
-    def forward(self):
+    def forward(self, X):
+        """Forward pass through the network.
+
+        Parameters
+        ----------
+        X : torch.Tensor
+            Input tensor.
+        """
+        if isinstance(X, np.ndarray):
+            X = torch.from_numpy(X).float()
+
+        # GRU
+        gru_out, _ = self.gru(X)
+        gru_out = gru_out[:, -1, :]
+        gru_out = self.grudropout(gru_out)  # apply dropout
+
+        # FCN
+        x = self.permute(X)
+        x = self.conv1(x)
+        x = self.conv2(x)
+        x = self.conv3(x)
+        x = self.globalavgpool(x)
+        x = x.view(x.size(0), -1)
+
+        # Concatenate
+        x = self.concat(gru_out, x)
+        x = self.fc(x)
+        return x
+
+
+class Conv(nn.Sequential):
+    """Convolutional Block for FCN.
+
+    Parameters
+    ----------
+    in_channels : int
+        Number of input channels.
+    out_channels : int
+        Number of output channels.
+    kernel_size : int
+        Size of the kernel.
+    padding : str
+        Padding type, default is 'same'.
+    """
+
+    def __init__(
+        self: "Conv",
+        in_channels: int,
+        out_channels: int,
+        kernel_size: int,
+        padding="same",
+    ):
+        super().__init__(
+            nn.Conv1d(
+                in_channels=in_channels,
+                out_channels=out_channels,
+                kernel_size=kernel_size,
+                padding=padding,
+            ),
+            nn.BatchNorm1d(out_channels),
+            nn.ReLU(),
+        )
+
+
+class Concat(NNModule):
+    """Concatenation of two tensors.
+
+    Parameters
+    ----------
+    dim : int
+        Dimension along which to concatenate.
+    """
+
+    def __init__(self: "Concat", dim: int = 1):
+        super().__init__()
+        self.dim = dim
+
+    def forward(self, x1, x2):
+        """Forward pass through the network.
+
+        Parameters
+        ----------
+        x1 : torch.Tensor
+            Input tensor 1.
+        x2 : torch.Tensor
+            Input tensor 2.
+        """
+        return torch.cat((x1, x2), dim=self.dim)
+
+
+class Permute(NNModule):
+    """Permute the dimensions of a tensor.
+
+    Parameters
+    ----------
+    dims : tuple
+        New order of dimensions.
+    """
+
+    def __init__(self: "Permute", *dims: tuple):
+        super().__init__()
+        self.dims = dims
+
+    def forward(self, x):
         """Forward pass through the network.
 
         Parameters
@@ -260,4 +386,4 @@ class GRUFCNN(NNModule):
         x : torch.Tensor
             Input tensor.
         """
-        pass
+        return x.permute(self.dims)
