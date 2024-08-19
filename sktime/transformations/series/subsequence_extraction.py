@@ -1,12 +1,17 @@
 """Subsequence extraction transformer.
 
-A transformer for the extraction of subsequences of specified length based on
-maximal/minimal rolling window aggregates.
+A transformer for the extraction of contiguous subsequences of specified
+length based on maximal/minimal rolling window aggregates.
 """
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
+import warnings
+from functools import partial
+
+import numpy as np
 import pandas as pd
+from numpy._core._multiarray_umath import _ArrayFunctionDispatcher
 
 from sktime.transformations.base import BaseTransformer
 
@@ -15,19 +20,33 @@ __author__ = ["wirrywoo"]
 
 
 class SubsequenceExtractionTransformer(BaseTransformer):
-    """
-    Extract subsequences of specified length based on rolling aggregatess.
+    r"""
+    Extract contiguous subsequences of specified length based on rolling aggregates.
 
-    A transformer for the extraction of subsequences of specified length based on
-    maximal/minimal rolling window aggregates.
+    A transformer for the extraction of contiguous subsequences of specified
+    length based on maximal/minimal rolling window aggregates.
+
+    Given a sequence :math:`\\{x_1, x_2, \cdots, x_n \\}` and `subseq_len` integer
+    :math:`k` such that :math:`0 < k \leq n`, the transformer's task is to find index
+    :math:`i` satisfying :math:`1 \leq i \leq i + k - 1 \leq n` such that for given
+    `aggregate_fn` :math:`A: \mathbb{R}^k \longrightarrow \mathbb{R}`:
+
+    1. :math:`A(x_{i}, \cdots, x_{i+k-1})` is maximal when `selector = 'max'`, and
+    2. :math:`A(x_{i}, \cdots, x_{i+k-1})` is minimal when `selector = 'min'`.
+
+    When `aggregate_fn = np.sum` and `selector = 'max'`, the problem degenerates to the
+    `maximum sum subarray problem <https://en.wikipedia.org/wiki/Maximum_subarray_problem>`_.
 
     Parameters
     ----------
-    subsequence_len : int
-        Length of the subsequence. Must be less than the lengths of all input series.
-    aggregate : {'mean', 'median'}, default 'mean'
-        Function used to aggregate all values in subsequence to a scalar or primitive.
-    method : {'max', 'min'}, default 'max'
+    subseq_len : int
+        Length of the subsequence in .iloc units. Must be less than the lengths of all
+        input series.
+    aggregate_fn : np._core._multiarray_umath._ArrayFunctionDispatcher, default: np.sum
+        NumPy callable used to aggregate values in contiguous subsequence to a scalar.
+    kwargs : dict, default: {}
+        Dictionary of additional keyword arguments to pass to aggregate_fn.
+    selector : {'max', 'min'}, default: 'max'
         Function used to decide which subsequence to return from the set of scalars or
         primitives.
 
@@ -38,9 +57,14 @@ class SubsequenceExtractionTransformer(BaseTransformer):
     >>> )
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> X = _make_hierarchical(same_cutoff=False)
-    >>> subseq_extract = SubsequenceExtractionTransformer(subsequence_len = 3)
+    >>> subseq_extract = SubsequenceExtractionTransformer(subseq_len = 3)
     >>> subseq_extract.fit(X)
     >>> X_transformed = subseq_extract.transform(X)
+
+    References
+    ----------
+    Jon Bentley. 1984. Programming pearls: algorithm design techniques.
+    Commun. ACM 27, 9 (Sept. 1984), 865-873. https://doi.org/10.1145/358234.381162
     """
 
     _tags = {
@@ -58,10 +82,11 @@ class SubsequenceExtractionTransformer(BaseTransformer):
         "handles-missing-data": False,
     }
 
-    def __init__(self, subsequence_len, aggregate="mean", method="max"):
-        self.subsequence_len = subsequence_len
-        self.aggregate = aggregate
-        self.method = method
+    def __init__(self, subseq_len, aggregate_fn=np.sum, kwargs={}, selector="max"):
+        self.subseq_len = subseq_len
+        self.aggregate_fn = aggregate_fn
+        self.kwargs = kwargs
+        self.selector = selector
 
         super().__init__()
 
@@ -82,21 +107,19 @@ class SubsequenceExtractionTransformer(BaseTransformer):
         -------
         self : reference to self
         """
-        if self.subsequence_len > len(X):
+        if self.subseq_len > len(X):
             raise ValueError(
-                f"Subsequence length parameter ({self.subsequence_len}) is not less \
+                f"Subsequence length parameter ({self.subseq_len}) is not less \
                 than or equal to the minimum sequence length of X ({len(X)})."
             )
 
-        if self.aggregate not in ["mean", "median"]:
+        if not (isinstance(self.aggregate_fn, _ArrayFunctionDispatcher)):
             raise ValueError(
-                f"{self.aggregate} is currently not supported for parameter aggregate"
+                f"{self.aggregate_fn} is not supported for parameter aggregate"
             )
 
-        if self.method not in ["max", "min"]:
-            raise ValueError(
-                f"{self.method} is currently not supported for parameter method"
-            )
+        if self.selector not in ["max", "min"]:
+            raise ValueError(f"{self.selector} is not supported for parameter selector")
 
         return self
 
@@ -120,14 +143,17 @@ class SubsequenceExtractionTransformer(BaseTransformer):
         """
         index_list = X.index.get_level_values(X.index.names[-1])
 
-        X_aggregate = getattr(
-            X.rolling(window=self.subsequence_len), self.aggregate
-        )().dropna()
+        with warnings.catch_warnings():
+            warnings.simplefilter(action="ignore", category=FutureWarning)
+            fnc = partial(self.aggregate_fn, **self.kwargs)
+            X_aggregate = getattr(X.rolling(window=self.subseq_len), "agg")(
+                fnc.func, **fnc.keywords
+            ).dropna()
 
-        indices = getattr(X_aggregate, f"idx{self.method}")()
+        indices = getattr(X_aggregate, f"idx{self.selector}")()
 
         upper = pd.Categorical(indices, categories=index_list, ordered=True).codes + 1
-        lower = upper - self.subsequence_len
+        lower = upper - self.subseq_len
 
         dfs = [
             X[col].iloc[l:u].reset_index(drop=True)
@@ -157,7 +183,12 @@ class SubsequenceExtractionTransformer(BaseTransformer):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params = [
-            {"subsequence_len": 3},
-            {"subsequence_len": 5, "aggregate": "median", "method": "min"},
+            {
+                "subseq_len": 3,
+                "aggregate_fn": np.average,
+                "kwargs": {"weights": [0.5, 0.3, 0.2], "axis": 0},
+                "selector": "max",
+            },
+            {"subseq_len": 5, "aggregate_fn": np.median, "selector": "min"},
         ]
         return params
