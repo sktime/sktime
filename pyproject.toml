@@ -409,13 +409,13 @@ ignore=[
   "PT006" # Checks for the type of parameter names passed to pytest.mark.parametrize.
 ]
 "sktime/libs/uni2ts/*.py" = [
-  "F722",
-  "F821",
-  "D100",
-  "D101",
-  "D102",
-  "D103",
-  "D104",
+  "F722", # Checks for forward annotations that include invalid syntax.
+  "F821", # Checks for uses of undefined names.
+  "D100", # Missing docstring in public module
+  "D101", # Missing docstring in public class
+  "D102", # Missing docstring in public method
+  "D103", # Missing docstring in public function
+  "D104", # Missing docstring in public package
 ]
 
 [tool.ruff.lint.pydocstyle]
