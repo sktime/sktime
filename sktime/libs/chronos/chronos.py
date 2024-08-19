@@ -18,6 +18,12 @@ if _check_soft_dependencies("torch", severity="none"):
     import torch.nn as nn
 else:
 
+    class torch:
+        """Dummy class if torch is unavailable."""
+
+        class no_grad:
+            """Dummy class if torch is unavailable."""
+
     class nn:
         """Dummy class if torch is unavailable."""
 
@@ -277,7 +283,11 @@ class ChronosModel(nn.Module):
         """The device where the model is stored."""
         return self.model.device
 
-    def encode(self, input_ids, attention_mask):
+    def encode(
+        self,
+        input_ids: torch.Tensor,
+        attention_mask: torch.Tensor,
+    ):
         """
         Extract the encoder embedding for the given token sequences.
 
@@ -305,14 +315,14 @@ class ChronosModel(nn.Module):
 
     def forward(
         self,
-        input_ids,
-        attention_mask,
+        input_ids: torch.Tensor,
+        attention_mask: torch.Tensor,
         prediction_length: Optional[int] = None,
         num_samples: Optional[int] = None,
         temperature: Optional[float] = None,
         top_k: Optional[int] = None,
         top_p: Optional[float] = None,
-    ):
+    ) -> torch.Tensor:
         """
         Predict future sample tokens for the given token sequences.
 
@@ -397,7 +407,9 @@ class ChronosPipeline:
     tokenizer: ChronosTokenizer
     model: ChronosModel
 
-    def _prepare_and_validate_context(self, context):
+    def _prepare_and_validate_context(
+        self, context: Union[torch.Tensor, list[torch.Tensor]]
+    ):
         if isinstance(context, list):
             context = left_pad_and_stack_1D(context)
         assert isinstance(context, torch.Tensor)
@@ -408,7 +420,9 @@ class ChronosPipeline:
         return context
 
     @torch.no_grad()
-    def embed(self, context):
+    def embed(
+        self, context: Union[torch.Tensor, list[torch.Tensor]]
+    ) -> tuple[torch.Tensor, Any]:
         """
         Get encoder embeddings for the given time series.
 
