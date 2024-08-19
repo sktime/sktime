@@ -183,7 +183,7 @@ class ChronosForecaster(BaseForecaster):
         )
         params.append(
             {
-                "model_path": "amazon/chronos-t5-samll",
+                "model_path": "amazon/chronos-t5-small",
                 "config": {
                     "num_samples": 20,
                 },
