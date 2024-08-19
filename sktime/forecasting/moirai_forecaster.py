@@ -90,6 +90,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         "python_dependencies": [
             "gluonts",
             "torch",
+            "jax",
             "jaxtyping",
             "einops",
             "huggingface-hub",
@@ -143,8 +144,15 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
                 }
             )
 
-    # Apply a patch to fit for redirecting imports to sktime.libs.uni2ts
+    # Apply a patch for redirecting imports to sktime.libs.uni2ts
     @patch.dict("sys.modules", {"uni2ts": sktime.libs.uni2ts})
+    def _instantiate_patched_model(self, model_kwargs):
+        """Instantiate the model from the vendor package."""
+        from sktime.libs.uni2ts.forecast import MoiraiForecast
+
+        self.model = MoiraiForecast.load_from_checkpoint(**model_kwargs)
+        self.model.to(self.map_location)
+
     def _fit(self, y, X, fh):
         if fh is not None:
             prediction_length = max(fh.to_relative(self.cutoff))
@@ -166,21 +174,20 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             "past_feat_dynamic_real_dim": self.num_past_feat_dynamic_real,
         }
 
-        # Load model from source package
-        if self.use_source_package:
-            if _check_soft_dependencies("uni2ts", severity="none"):
-                from uni2ts.model.moirai import MoiraiForecast
-        # Load model from sktime
-        else:
-            from sktime.libs.uni2ts.forecast import MoiraiForecast
-
-        # Add checkpoint path to model_kwargs
         model_kwargs["checkpoint_path"] = hf_hub_download(
             repo_id=self.checkpoint_path, filename="model.ckpt"
         )
 
-        self.model = MoiraiForecast.load_from_checkpoint(**model_kwargs)
-        self.model.to(self.map_location)
+        # Load model from source package
+        if self.use_source_package:
+            if _check_soft_dependencies("uni2ts", severity="none"):
+                from uni2ts.model.moirai import MoiraiForecast
+
+                self.model = MoiraiForecast.load_from_checkpoint(**model_kwargs)
+                self.model.to(self.map_location)
+        # Load model from sktime
+        else:
+            self._instantiate_patched_model(model_kwargs)
 
     def _predict(self, fh, y=None, X=None):
         if self.deterministic:

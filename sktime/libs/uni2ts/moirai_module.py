@@ -1,22 +1,13 @@
 from functools import partial
 
-from skbase.utils.dependencies import _check_soft_dependencies
-
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-    import torch.nn.functional as F
-    from torch import nn
-    from torch.distributions import Distribution
-    from torch.utils._pytree import tree_map
-
-if _check_soft_dependencies("huggingface_hub", severity="none"):
-    from huggingface_hub import PyTorchModelHubMixin
-
-if _check_soft_dependencies("hydra", severity="none"):
-    from hydra.utils import instantiate
-
-if _check_soft_dependencies("jaxtyping", severity="none"):
-    from jaxtyping import Bool, Float, Int
+import torch
+import torch.nn.functional as F
+from huggingface_hub import PyTorchModelHubMixin
+from hydra.utils import instantiate
+from jaxtyping import Bool, Float, Int
+from torch import nn
+from torch.distributions import Distribution
+from torch.utils._pytree import tree_map
 
 from .common.torch_util import mask_fill, packed_attention_mask
 from .distribution import DistributionOutput
@@ -47,7 +38,6 @@ def encode_distr_output(
 
 
 def decode_distr_output(config: dict[str, str | float | int]) -> DistributionOutput:
-    print(config)
     return instantiate(config, _convert_="all")
 
 
