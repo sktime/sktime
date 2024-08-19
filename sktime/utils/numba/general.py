@@ -1,4 +1,5 @@
 """General numba utilities."""
+
 import numpy as np
 
 import sktime.utils.numba.stats as stats  # noqa E402
