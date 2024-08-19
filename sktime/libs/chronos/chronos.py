@@ -444,15 +444,16 @@ class ChronosPipeline:
             or the length of the longest time series, if a list of 1D tensors was
             provided, and the extra 1 is for EOS.
         """
-        context_tensor = self._prepare_and_validate_context(context=context)
-        token_ids, attention_mask, tokenizer_state = (
-            self.tokenizer.context_input_transform(context_tensor)
-        )
-        embeddings = self.model.encode(
-            input_ids=token_ids.to(self.model.device),
-            attention_mask=attention_mask.to(self.model.device),
-        ).cpu()
-        return embeddings, tokenizer_state
+        with torch.no_grad():
+            context_tensor = self._prepare_and_validate_context(context=context)
+            token_ids, attention_mask, tokenizer_state = (
+                self.tokenizer.context_input_transform(context_tensor)
+            )
+            embeddings = self.model.encode(
+                input_ids=token_ids.to(self.model.device),
+                attention_mask=attention_mask.to(self.model.device),
+            ).cpu()
+            return embeddings, tokenizer_state
 
     def predict(
         self,

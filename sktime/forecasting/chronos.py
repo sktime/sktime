@@ -14,6 +14,13 @@ from sktime.libs.chronos import ChronosPipeline
 
 if _check_soft_dependencies("torch", severity="none"):
     import torch
+else:
+
+    class torch:
+        """Dummy class if torch is unavailable."""
+
+        bfloat16 = None
+
 
 if _check_soft_dependencies("transformers", severity="none"):
     import transformers
