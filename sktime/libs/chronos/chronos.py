@@ -11,15 +11,19 @@ import warnings
 from dataclasses import dataclass
 from typing import Any, Literal, Optional, Union
 
-import torch
-import torch.nn as nn
-from transformers import (
-    AutoConfig,
-    AutoModelForCausalLM,
-    AutoModelForSeq2SeqLM,
-    GenerationConfig,
-    PreTrainedModel,
-)
+from skbase.utils.dependencies import _check_soft_dependencies
+
+if _check_soft_dependencies("torch", severity="none"):
+    import torch
+
+if _check_soft_dependencies("transformers", severity="none"):
+    from transformers import (
+        AutoConfig,
+        AutoModelForCausalLM,
+        AutoModelForSeq2SeqLM,
+        GenerationConfig,
+        PreTrainedModel,
+    )
 
 
 @dataclass
@@ -238,7 +242,7 @@ class MeanScaleUniformBins(ChronosTokenizer):
         return self.centers[indices] * scale_unsqueezed
 
 
-class ChronosModel(nn.Module):
+class ChronosModel(torch.nn.Module):
     """
     Wraps a ``PreTrainedModel`` object from ``transformers``.
 
