@@ -26,11 +26,9 @@ else:
         class Tensor:
             """Dummy class if torch is unavailable."""
 
-        class no_grad:
-            """Dummy class if torch is unavailable."""
-
-            def __init__(self):
-                pass
+        def no_grad():
+            """Is Dummy method if torch is unavailable."""
+            pass
 
     class nn:
         """Dummy class if torch is unavailable."""
