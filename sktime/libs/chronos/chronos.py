@@ -21,6 +21,9 @@ else:
     class nn:
         """Dummy class if torch is unavailable."""
 
+        class Module:
+            """Dummy class if torch is unavailable."""
+
 
 if _check_soft_dependencies("transformers", severity="none"):
     from transformers import (
