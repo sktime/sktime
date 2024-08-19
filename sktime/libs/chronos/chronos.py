@@ -15,6 +15,8 @@ from skbase.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("torch", severity="none"):
     import torch
+
+    torch.no_grad()
     import torch.nn as nn
 else:
 
@@ -24,8 +26,11 @@ else:
         class Tensor:
             """Dummy class if torch is unavailable."""
 
-        def no_grad(self):
-            """Is Dummy method if torch is unavailable."""
+        class no_grad:
+            """Dummy class if torch is unavailable."""
+
+            def __init__(self):
+                pass
 
     class nn:
         """Dummy class if torch is unavailable."""
