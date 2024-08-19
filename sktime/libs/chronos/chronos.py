@@ -277,11 +277,7 @@ class ChronosModel(nn.Module):
         """The device where the model is stored."""
         return self.model.device
 
-    def encode(
-        self,
-        input_ids: torch.Tensor,
-        attention_mask: torch.Tensor,
-    ):
+    def encode(self, input_ids, attention_mask):
         """
         Extract the encoder embedding for the given token sequences.
 
@@ -309,14 +305,14 @@ class ChronosModel(nn.Module):
 
     def forward(
         self,
-        input_ids: torch.Tensor,
-        attention_mask: torch.Tensor,
+        input_ids,
+        attention_mask,
         prediction_length: Optional[int] = None,
         num_samples: Optional[int] = None,
         temperature: Optional[float] = None,
         top_k: Optional[int] = None,
         top_p: Optional[float] = None,
-    ) -> torch.Tensor:
+    ):
         """
         Predict future sample tokens for the given token sequences.
 
@@ -401,9 +397,7 @@ class ChronosPipeline:
     tokenizer: ChronosTokenizer
     model: ChronosModel
 
-    def _prepare_and_validate_context(
-        self, context: Union[torch.Tensor, list[torch.Tensor]]
-    ):
+    def _prepare_and_validate_context(self, context):
         if isinstance(context, list):
             context = left_pad_and_stack_1D(context)
         assert isinstance(context, torch.Tensor)
@@ -414,9 +408,7 @@ class ChronosPipeline:
         return context
 
     @torch.no_grad()
-    def embed(
-        self, context: Union[torch.Tensor, list[torch.Tensor]]
-    ) -> tuple[torch.Tensor, Any]:
+    def embed(self, context):
         """
         Get encoder embeddings for the given time series.
 
