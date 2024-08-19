@@ -3,11 +3,13 @@
 from unittest.mock import patch
 
 import pandas as pd
-from huggingface_hub import hf_hub_download
 from skbase.utils.dependencies import _check_soft_dependencies
 
 import sktime.libs.uni2ts
 from sktime.forecasting.base import _BaseGlobalForecaster
+
+if _check_soft_dependencies("huggingface_hub", severity="none"):
+    from huggingface_hub import hf_hub_download
 
 __author__ = ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"]
 # gorold, chenghaoliu89, liu-jc are from SalesforceAIResearch/uni2ts
@@ -46,12 +48,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         environment where the latest updates from the source package are needed.
         If False, the model and configuration will be loaded from the local
         version of package maintained in sktime.
-        To install the source package, follow the instructions here [4]_.
-
-
-    Notes
-    -----
-    Predictions are made based on forecasting Horizon not on lenght of X_train
+        To install the source package, follow the instructions here [2]_.
 
     Examples
     --------
@@ -330,7 +327,8 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             Configuration of the input data.
 
         """
-        from gluonts.dataset.pandas import PandasDataset
+        if _check_soft_dependencies("gluonts", severity="none"):
+            from gluonts.dataset.pandas import PandasDataset
 
         # Add target to config
         df_config = {
