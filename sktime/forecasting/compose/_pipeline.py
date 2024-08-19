@@ -747,9 +747,9 @@ class TransformedTargetForecaster(_Pipeline):
         sequentially, with ``tp[i]`` receiving the output of ``tp[i-1]``,
 
     ``predict(X, fh)`` - result is of executing ``f.predict``, with ``X=X``, ``fh=fh``,
-        then running ``tp1.inverse_transform`` with ``X=`` the output of ``f``, ``y=X``,
+        then running ``tN.inverse_transform`` with ``X=`` the output of ``f``, ``y=X``,
         then ``t2.inverse_transform`` on ``X=`` the output of ``t1.inverse_transform``,
-        etc, sequentially, with ``t[i]`` receiving the output of ``t[i-1]`` as ``X``,
+        etc, sequentially, with ``t[i-1]`` receiving the output of ``t[i]`` as ``X``,
         then running ``tp1.fit_transform`` with ``X=`` the output of ``t[N]s``, ``y=X``,
         then ``tp2.fit_transform`` on ``X=`` the output of ``tp1.fit_transform``, etc,
         sequentially, with ``tp[i]`` receiving the output of ``tp[i-1]``,
