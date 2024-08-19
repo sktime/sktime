@@ -83,11 +83,15 @@ class StationarityADFArch(BaseParamFitter):
     """
 
     _tags = {
-        "authors": ["Vasudeva-bit"],
-        "maintainers": ["Vasudeva-bit"],
+        # packaging info
+        # --------------
+        "authors": ["bashtage", "Vasudeva-bit"],  # bashtage for arch package
+        "maintainers": "Vasudeva-bit",
+        "python_dependencies": "arch",
+        # estimator type
+        # --------------
         "X_inner_mtype": ["pd.Series", "np.ndarray"],
         "scitype:X": "Series",
-        "python_dependencies": "arch",
     }
 
     def __init__(
@@ -236,11 +240,14 @@ class StationarityDFGLS(BaseParamFitter):
     """
 
     _tags = {
-        "authors": ["Vasudeva-bit"],
-        "maintainers": ["Vasudeva-bit"],
-        "X_inner_mtype": ["pd.Series", "np.ndarray"],
-        "scitype:X": "Series",
+        # packaging info
+        # --------------
+        "authors": ["bashtage", "Vasudeva-bit"],  # bashtage for arch package
+        "maintainers": "Vasudeva-bit",
         "python_dependencies": "arch",
+        # estimator type
+        # --------------        "X_inner_mtype": ["pd.Series", "np.ndarray"],
+        "scitype:X": "Series",
     }
 
     def __init__(
@@ -380,11 +387,14 @@ class StationarityPhillipsPerron(BaseParamFitter):
     """
 
     _tags = {
-        "authors": ["Vasudeva-bit"],
-        "maintainers": ["Vasudeva-bit"],
-        "X_inner_mtype": ["pd.Series", "np.ndarray"],
-        "scitype:X": "Series",
+        # packaging info
+        # --------------
+        "authors": ["bashtage", "Vasudeva-bit"],  # bashtage for arch package
+        "maintainers": "Vasudeva-bit",
         "python_dependencies": "arch",
+        # estimator type
+        # --------------        "X_inner_mtype": ["pd.Series", "np.ndarray"],
+        "scitype:X": "Series",
     }
 
     def __init__(
@@ -516,11 +526,14 @@ class StationarityKPSSArch(BaseParamFitter):
     """
 
     _tags = {
-        "authors": ["Vasudeva-bit"],
-        "maintainers": ["Vasudeva-bit"],
-        "X_inner_mtype": ["pd.Series", "np.ndarray"],
-        "scitype:X": "Series",
+        # packaging info
+        # --------------
+        "authors": ["bashtage", "Vasudeva-bit"],  # bashtage for arch package
+        "maintainers": "Vasudeva-bit",
         "python_dependencies": "arch",
+        # estimator type
+        # --------------        "X_inner_mtype": ["pd.Series", "np.ndarray"],
+        "scitype:X": "Series",
     }
 
     def __init__(
@@ -659,11 +672,15 @@ class StationarityZivotAndrews(BaseParamFitter):
     """
 
     _tags = {
-        "authors": ["Vasudeva-bit"],
-        "maintainers": ["Vasudeva-bit"],
+        # packaging info
+        # --------------
+        "authors": ["bashtage", "Vasudeva-bit"],  # bashtage for arch package
+        "maintainers": "Vasudeva-bit",
+        "python_dependencies": "arch",
+        # estimator type
+        # --------------
         "X_inner_mtype": ["pd.Series", "np.ndarray"],
         "scitype:X": "Series",
-        "python_dependencies": "arch",
     }
 
     def __init__(
@@ -809,11 +826,14 @@ class StationarityVarianceRatio(BaseParamFitter):
     """
 
     _tags = {
-        "authors": ["Vasudeva-bit"],
-        "maintainers": ["Vasudeva-bit"],
-        "X_inner_mtype": ["pd.Series", "np.ndarray"],
-        "scitype:X": "Series",
+        # packaging info
+        # --------------
+        "authors": ["bashtage", "Vasudeva-bit"],  # bashtage for arch package
+        "maintainers": "Vasudeva-bit",
         "python_dependencies": "arch",
+        # estimator type
+        # --------------        "X_inner_mtype": ["pd.Series", "np.ndarray"],
+        "scitype:X": "Series",
     }
 
     def __init__(

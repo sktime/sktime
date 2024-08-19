@@ -7,7 +7,6 @@ import os
 
 import numpy as np
 import pandas as pd
-from joblib import load
 
 from sktime.benchmarking.base import BaseResults, HDDBaseResults, _PredictionsWrapper
 
@@ -223,6 +222,8 @@ class HDDResults(HDDBaseResults):
 
     def load_fitted_strategy(self, strategy_name, dataset_name, cv_fold):
         """Load saved (fitted) strategy."""
+        from joblib import load
+
         for strategy_name, dataset_name in self._iter():
             key = (
                 self._generate_key(

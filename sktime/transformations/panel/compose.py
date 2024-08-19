@@ -133,11 +133,7 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
             "ColumnTransformer can simply be replaced by ColumnEnsembleTransformer."
         )
 
-        sklearn_lneq_14 = _check_soft_dependencies(
-            "scikit-learn<1.4",
-            severity="none",
-            package_import_alias={"scikit-learn": "sklearn"},
-        )
+        sklearn_lneq_14 = _check_soft_dependencies("scikit-learn<1.4", severity="none")
 
         if not sklearn_lneq_14:
             raise ModuleNotFoundError(
@@ -295,6 +291,7 @@ class ColumnConcatenator(BaseTransformer):
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
+        "capability:categorical_in_X": True,
     }
 
     def _transform(self, X, y=None):

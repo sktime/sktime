@@ -47,7 +47,11 @@ import pandas as pd
 from pandas.core.dtypes.cast import is_nested_object
 
 from sktime.datatypes._common import _req, _ret
-from sktime.datatypes._dtypekind import _get_feature_kind, _get_panel_dtypekind
+from sktime.datatypes._dtypekind import (
+    _get_feature_kind,
+    _get_panel_dtypekind,
+    _pandas_dtype_to_kind,
+)
 from sktime.datatypes._series._check import (
     _index_equally_spaced,
     check_pddataframe_series,
@@ -537,6 +541,7 @@ if _check_soft_dependencies("dask", severity="none"):
     check_dict[("dask_panel", "Panel")] = check_dask_panel
 
 if _check_soft_dependencies("gluonts", severity="none"):
+    from sktime.datatypes._dtypekind import DtypeKind
 
     def check_gluonTS_listDataset_panel(obj, return_metadata=False, var_name="obj"):
         metadata = dict()
@@ -563,13 +568,30 @@ if _check_soft_dependencies("gluonts", severity="none"):
             else:
                 metadata["is_univariate"] = obj[0]["target"].shape[1] == 1
 
-        if _req("n_features", return_metadata):
+        req_n_feat = ["n_features", "feature_names", "feature_kind", "dtypekind_dfip"]
+        if _req(req_n_feat, return_metadata):
             # Check first if the ListDataset is empty
             if len(obj) < 1:
-                metadata["n_features"] = 0
-
+                n_features = 0
             else:
-                metadata["n_features"] = obj[0]["target"].shape[1]
+                n_features = obj[0]["target"].shape[1]
+
+        if _req("n_features", return_metadata):
+            metadata["n_features"] = n_features
+
+        if _req(["dtypekind_dfip", "feature_kind"], return_metadata):
+            dtypes = []
+
+            # Each entry in a ListDataset is formed with an ndarray.
+            # Basing off definitions in _dtypekind, assigning values of FLOAT
+
+            dtypes.extend([DtypeKind.FLOAT] * len(obj))
+
+            if _req("dtypekind_dfip", return_metadata):
+                metadata["dtypekind_dfip"] = dtypes
+
+            if _req("feature_kind", return_metadata):
+                metadata["feature_kind"] = _get_feature_kind(dtypes)
 
         if _req("n_instances", return_metadata):
             metadata["n_instances"] = len(obj)
@@ -581,11 +603,8 @@ if _check_soft_dependencies("gluonts", severity="none"):
             # Check first if the ListDataset is empty
             if len(obj) < 1:
                 metadata["feature_names"] = []
-
             else:
-                metadata["feature_names"] = [
-                    f"value_{i}" for i in range(obj[0]["target"].shape[1])
-                ]
+                metadata["feature_names"] = [f"value_{i}" for i in range(n_features)]
 
         for series in obj:
             # check that no dtype is object
@@ -636,8 +655,26 @@ if _check_soft_dependencies("gluonts", severity="none"):
         if _req("is_univariate", return_metadata):
             metadata["is_univariate"] = len(df[0][1].columns) == 1
 
+        req_n_feat = ["n_features", "feature_kind", "dtypekind_dfip"]
+
+        if _req(req_n_feat, return_metadata):
+            n_features = len(df[0][1].columns)
+
         if _req("n_features", return_metadata):
-            metadata["n_features"] = len(df[0][1].columns)
+            metadata["n_features"] = n_features
+
+        if _req("dtypekind_dfip", return_metadata):
+            index_cols_count = len(df[0][1].columns)
+
+            # slicing off additional index columns
+            dtype_list = df[0][1].dtypes.to_list()[index_cols_count:]
+
+            metadata["dtypekind_dfip"] = _pandas_dtype_to_kind(dtype_list)
+
+        if _req("feature_kind", return_metadata):
+            dtype_list = df[0][1].dtypes.to_list()[index_cols_count:]
+            dtype_kind = _pandas_dtype_to_kind(dtype_list)
+            metadata["feature_kind"] = _get_feature_kind(dtype_kind)
 
         if _req("n_instances", return_metadata):
             metadata["n_instances"] = len(df)
