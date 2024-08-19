@@ -101,6 +101,12 @@ class GRU(NNModule):
         self.fc_dropout = fc_dropout
         self.num_classes = num_classes
         self.init_weights = init_weights
+        self.out_dropout = (
+            nn.Dropout(self.fc_dropout) if self.fc_dropout else nn.Identity()
+        )
+        self.fc = nn.Linear(
+            self.hidden_dim * (1 + self.bidirectional), self.num_classes
+        )
         if self.init_weights:
             self.apply(self._init_weights)
 
@@ -123,16 +129,13 @@ class GRU(NNModule):
         x : torch.Tensor
             Input tensor.
         """
-        fc_dropout = nn.Dropout(self.fc_dropout) if self.fc_dropout else nn.Identity()  # noqa: E501
-        self.fc = nn.Linear(
-            self.hidden_dim * (1 + self.bidirectional), self.num_classes
-        )
         if isinstance(X, np.ndarray):
             X = torch.from_numpy(X).float()
 
         gru_out, _ = self.gru(X)
         output = gru_out[:, -1, :]
-        output = self.fc(fc_dropout(output))
+        output = self.out_dropout(output)
+        output = self.fc(output)
         return output
 
 
@@ -251,7 +254,7 @@ class GRUFCNN(NNModule):
         self.concat = Concat()
         self.grudropout = (
             nn.Dropout(self.gru_dropout) if self.gru_dropout else nn.Identity()
-        )  # noqa: E501
+        )
         self.fc = nn.Linear(
             hidden_dim * (1 + bidirectional) + conv_layers[-1], num_classes
         )

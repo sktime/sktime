@@ -1,4 +1,4 @@
-"""Gate Recurrent Unit (GRU) for time series classification."""
+"""Gated Recurrent Unit (GRU) for time series classification."""
 
 import numpy as np
 
@@ -20,7 +20,7 @@ if _check_soft_dependencies("torch", severity="none"):
 
 
 class GRUClassifier(BaseDeepClassifierPytorch):
-    """Gate Recurrent Unit (GRU) for time series classification.
+    """Gated Recurrent Unit (GRU) for time series classification.
 
     This classifier has been wrapped around implementations from [1]_, [2]_ and [3]_.
 
@@ -98,8 +98,8 @@ class GRUClassifier(BaseDeepClassifierPytorch):
         # base classifier specific
         num_epochs: int = 10,
         batch_size: int = 8,
-        optimizer=None,
-        criterion=None,
+        optimizer: str = None,
+        criterion: str = None,
         criterion_kwargs: dict = None,
         optimizer_kwargs: dict = None,
         lr: float = 0.001,
@@ -302,7 +302,7 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
         num_epochs: int = 10,
         batch_size: int = 8,
         optimizer: str = "Adam",
-        criterion=None,
+        criterion: str = None,
         criterion_kwargs: dict = None,
         optimizer_kwargs: dict = None,
         lr: float = 0.01,
