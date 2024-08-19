@@ -33,6 +33,10 @@ if _check_soft_dependencies("transformers", severity="none"):
         GenerationConfig,
         PreTrainedModel,
     )
+else:
+
+    class PreTrainedModel:
+        """Dummy class if transformers is unavailable."""
 
 
 @dataclass
