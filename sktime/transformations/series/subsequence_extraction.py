@@ -26,25 +26,26 @@ class SubsequenceExtractionTransformer(BaseTransformer):
     A transformer for the extraction of contiguous subsequences of specified
     length based on maximal/minimal rolling window aggregates.
 
-    Given a sequence :math:`\\{x_1, x_2, \cdots, x_n \\}` and `subseq_len` integer
+    Given a sequence :math:`\\{x_1, x_2, \cdots, x_n \\}` and ``subseq_len`` integer
     :math:`k` such that :math:`0 < k \leq n`, the transformer's task is to find index
     :math:`i` satisfying :math:`1 \leq i \leq i + k - 1 \leq n` such that for given
-    `aggregate_fn` :math:`A: \mathbb{R}^k \longrightarrow \mathbb{R}`:
+    ``aggregate_fn`` :math:`A: \mathbb{R}^k \longrightarrow \mathbb{R}`:
 
-    1. :math:`A(x_{i}, \cdots, x_{i+k-1})` is maximal when `selector = 'max'`, and
-    2. :math:`A(x_{i}, \cdots, x_{i+k-1})` is minimal when `selector = 'min'`.
+    1. :math:`A(x_{i}, \cdots, x_{i+k-1})` is maximal when ``selector = 'max'``, and
+    2. :math:`A(x_{i}, \cdots, x_{i+k-1})` is minimal when ``selector = 'min'``.
 
-    When `aggregate_fn = np.sum` and `selector = 'max'`, the problem degenerates to the
-    `maximum sum subarray problem <https://en.wikipedia.org/wiki/Maximum_subarray_problem>`_.
+    The `maximum sum subarray problem <https://en.wikipedia.org/wiki/Maximum_subarray_problem>`_
+    is a special case and can be obtained by setting ``aggregate_fn = np.sum`` and
+    ``selector = 'max'``.
 
     Parameters
     ----------
+    aggregate_fn : np._core._multiarray_umath._ArrayFunctionDispatcher
+        NumPy callable used to aggregate values in contiguous subsequence to a scalar.
     subseq_len : int
         Length of the subsequence in .iloc units. Must be less than the lengths of all
         input series.
-    aggregate_fn : np._core._multiarray_umath._ArrayFunctionDispatcher, default: np.sum
-        NumPy callable used to aggregate values in contiguous subsequence to a scalar.
-    kwargs : dict, default: {}
+    kwargs : dict, default: None
         Dictionary of additional keyword arguments to pass to aggregate_fn.
     selector : {'max', 'min'}, default: 'max'
         Function used to decide which subsequence to return from the set of scalars or
@@ -82,9 +83,9 @@ class SubsequenceExtractionTransformer(BaseTransformer):
         "handles-missing-data": False,
     }
 
-    def __init__(self, subseq_len, aggregate_fn=np.sum, kwargs={}, selector="max"):
-        self.subseq_len = subseq_len
+    def __init__(self, aggregate_fn, subseq_len, kwargs=None, selector="max"):
         self.aggregate_fn = aggregate_fn
+        self.subseq_len = subseq_len
         self.kwargs = kwargs
         self.selector = selector
 
@@ -115,7 +116,7 @@ class SubsequenceExtractionTransformer(BaseTransformer):
 
         if not (isinstance(self.aggregate_fn, _ArrayFunctionDispatcher)):
             raise ValueError(
-                f"{self.aggregate_fn} is not supported for parameter aggregate"
+                f"{self.aggregate_fn} is not supported for parameter aggregate_fn"
             )
 
         if self.selector not in ["max", "min"]:
@@ -145,7 +146,7 @@ class SubsequenceExtractionTransformer(BaseTransformer):
 
         with warnings.catch_warnings():
             warnings.simplefilter(action="ignore", category=FutureWarning)
-            fnc = partial(self.aggregate_fn, **self.kwargs)
+            fnc = partial(self.aggregate_fn, **(self.kwargs or {}))
             X_aggregate = getattr(X.rolling(window=self.subseq_len), "agg")(
                 fnc.func, **fnc.keywords
             ).dropna()
@@ -172,7 +173,6 @@ class SubsequenceExtractionTransformer(BaseTransformer):
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return ``"default"`` set.
 
-
         Returns
         -------
         params : dict or list of dict, default = {}
@@ -190,5 +190,6 @@ class SubsequenceExtractionTransformer(BaseTransformer):
                 "selector": "max",
             },
             {"subseq_len": 5, "aggregate_fn": np.median, "selector": "min"},
+            {"subseq_len": 8, "aggregate_fn": np.mean},
         ]
         return params
