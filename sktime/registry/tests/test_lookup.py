@@ -10,7 +10,7 @@ from sktime.registry._base_classes import get_base_class_lookup, get_obj_scitype
 from sktime.registry._lookup import _check_estimator_types
 
 # shorthands for easy reading
-b = get_obj_scitype_list(include_baseobjs=False)
+b = get_obj_scitype_list(include_baseobjs=True)
 BASE_CLASS_SCITYPE_LIST = b
 
 n = len(b)
@@ -26,7 +26,7 @@ def _to_list(obj):
     if not isinstance(obj, list):
         return [obj]
     else:
-        return obj
+        return obj.copy()
 
 
 def _get_type_tuple(estimator_scitype):
@@ -43,7 +43,7 @@ def _get_type_tuple(estimator_scitype):
     """
     scitypes = _to_list(estimator_scitype)
     if estimator_scitype is not None:
-        lookup = get_base_class_lookup(include_baseobjs=False)
+        lookup = get_base_class_lookup(include_baseobjs=True)
         estimator_classes = tuple(lookup[scitype] for scitype in scitypes)
     else:
         from skbase.base import BaseObject
