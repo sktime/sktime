@@ -40,8 +40,9 @@ class SubsequenceExtractionTransformer(BaseTransformer):
 
     Parameters
     ----------
-    aggregate_fn : np._core._multiarray_umath._ArrayFunctionDispatcher
-        NumPy callable used to aggregate values in contiguous subsequence to a scalar.
+    aggregate_fn : callable of signature ``np.ndarray -> float``
+        Callable function in ``numpy`` used to aggregate values in contiguous
+        subsequence to a scalar.
     subseq_len : int
         Length of the subsequence in .iloc units. Must be less than the lengths of all
         input series.
@@ -58,7 +59,8 @@ class SubsequenceExtractionTransformer(BaseTransformer):
     >>> )
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> X = _make_hierarchical(same_cutoff=False)
-    >>> subseq_extract = SubsequenceExtractionTransformer(subseq_len = 3)
+    >>> subseq_extract = SubsequenceExtractionTransformer(
+    >>>     aggregate_fn = np.sum, subseq_len = 3)
     >>> subseq_extract.fit(X)
     >>> X_transformed = subseq_extract.transform(X)
 
