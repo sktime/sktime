@@ -60,3 +60,5 @@ def __getattr__(name):
     }
     if name in legacy_trafo_mixin_dict:
         return legacy_trafo_mixin_dict[name](mixin=True)
+
+    raise AttributeError(f"module {__name__} has no attribute {name}")
