@@ -9,7 +9,7 @@ Authors: Lorenzo Stella <stellalo@amazon.com>, Abdul Fatir Ansari <ansarnd@amazo
 
 import warnings
 from dataclasses import dataclass
-from typing import Any, Literal, Optional, Union, dict, list
+from typing import Any, Literal, Optional, Union
 
 import chronos
 import torch
