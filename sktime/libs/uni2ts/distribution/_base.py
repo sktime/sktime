@@ -17,14 +17,23 @@ import abc
 from collections.abc import Callable
 from typing import Any, Optional, TypeVar
 
-import torch
-from einops import rearrange
-from torch import nn
-from torch.distributions import AffineTransform, Distribution, TransformedDistribution
-from torch.utils._pytree import tree_flatten, tree_map, tree_unflatten
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.libs.uni2ts.common.core import abstract_class_property
 from sktime.libs.uni2ts.module.ts_embed import MultiOutSizeLinear
+
+if _check_soft_dependencies("torch", severity="none"):
+    import torch
+    from torch import nn
+    from torch.distributions import (
+        AffineTransform,
+        Distribution,
+        TransformedDistribution,
+    )
+    from torch.utils._pytree import tree_flatten, tree_map, tree_unflatten
+
+if _check_soft_dependencies("einops", severity="none"):
+    from einops import rearrange
 
 T = TypeVar("T")
 

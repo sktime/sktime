@@ -15,10 +15,13 @@
 
 from typing import Optional
 
-import torch
-from torch.distributions import Distribution, Gamma, constraints
-from torch.distributions.utils import broadcast_all, lazy_property, logits_to_probs
-from torch.nn import functional as F
+from skbase.utils.dependencies import _check_soft_dependencies
+
+if _check_soft_dependencies("torch", severity="none"):
+    import torch
+    from torch.distributions import Distribution, Gamma, constraints
+    from torch.distributions.utils import broadcast_all, lazy_property, logits_to_probs
+    from torch.nn import functional as F
 
 from ._base import DistributionOutput
 

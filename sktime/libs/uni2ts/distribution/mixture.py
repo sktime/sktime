@@ -16,12 +16,15 @@
 from functools import reduce
 from typing import Callable, Optional
 
-import torch
-from torch.distributions import Categorical, Distribution, constraints
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.libs.uni2ts.common.torch_util import unsqueeze_trailing_dims
 
 from ._base import DistributionOutput
+
+if _check_soft_dependencies("torch", severity="none"):
+    import torch
+    from torch.distributions import Categorical, Distribution, constraints
 
 
 class Mixture(Distribution):

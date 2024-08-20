@@ -5,11 +5,8 @@ from unittest.mock import patch
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
+import sktime.libs.uni2ts
 from sktime.forecasting.base import _BaseGlobalForecaster
-
-if _check_soft_dependencies("torch", severity="none"):
-    import sktime.libs.uni2ts
-
 
 if _check_soft_dependencies("huggingface-hub", severity="none"):
     from huggingface_hub import hf_hub_download

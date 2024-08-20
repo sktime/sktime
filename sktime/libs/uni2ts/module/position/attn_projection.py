@@ -17,9 +17,14 @@ import abc
 from functools import cached_property
 from typing import Any, Optional
 
-import torch
-from einops import einsum, rearrange, repeat
-from torch import nn
+from skbase.utils.dependencies import _check_soft_dependencies
+
+if _check_soft_dependencies("torch", severity="none"):
+    import torch
+    from torch import nn
+
+if _check_soft_dependencies("einops", severity="none"):
+    from einops import einsum, rearrange, repeat
 
 
 class Projection(nn.Module, abc.ABC):

@@ -15,8 +15,11 @@
 
 from typing import Optional
 
-import torch
-from torch import nn
+from skbase.utils.dependencies import _check_soft_dependencies
+
+if _check_soft_dependencies("torch", severity="none"):
+    import torch
+    from torch import nn
 
 
 class RMSNorm(nn.Module):

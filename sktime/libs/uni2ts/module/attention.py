@@ -17,10 +17,15 @@ import math
 from collections.abc import Callable
 from typing import Optional
 
-import torch
-import torch.nn.functional as F
-from einops import rearrange, repeat
-from torch import nn
+from skbase.utils.dependencies import _check_soft_dependencies
+
+if _check_soft_dependencies("torch", severity="none"):
+    import torch
+    import torch.nn.functional as F
+    from torch import nn
+
+if _check_soft_dependencies("einops", severity="none"):
+    from einops import rearrange, repeat
 
 from .position import AttentionBias, QueryKeyProjection
 

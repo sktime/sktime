@@ -14,11 +14,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from typing import Callable, TypeVar
+from typing import TypeVar
 
-import torch
-from torch.distributions import LogNormal
-from torch.nn import functional as F
+from skbase.utils.dependencies import _check_soft_dependencies
+
+if _check_soft_dependencies("torch", severity="none"):
+    import torch
+    from torch.distributions import LogNormal
+    from torch.nn import functional as F
 
 from ._base import DistributionOutput
 

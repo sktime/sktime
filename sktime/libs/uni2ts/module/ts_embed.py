@@ -16,9 +16,14 @@
 import math
 from typing import Optional
 
-import torch
-from einops import einsum, rearrange
-from torch import nn
+from skbase.utils.dependencies import _check_soft_dependencies
+
+if _check_soft_dependencies("torch", severity="none"):
+    import torch
+    from torch import nn
+
+if _check_soft_dependencies("einops", severity="none"):
+    from einops import einsum, rearrange
 
 from sktime.libs.uni2ts.common.torch_util import size_to_mask
 

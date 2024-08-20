@@ -15,9 +15,14 @@
 
 import abc
 
-import torch
-from einops import rearrange
-from torch import nn
+from skbase.utils.dependencies import _check_soft_dependencies
+
+if _check_soft_dependencies("torch", severity="none"):
+    import torch
+    from torch import nn
+
+if _check_soft_dependencies("einops", severity="none"):
+    from einops import rearrange
 
 
 class AttentionBias(nn.Module, abc.ABC):

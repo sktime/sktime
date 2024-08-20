@@ -13,10 +13,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from skbase.utils.dependencies import _check_soft_dependencies
 
-import torch
-from torch.distributions import StudentT
-from torch.nn import functional as F
+if _check_soft_dependencies("torch", severity="none"):
+    import torch
+    from torch.distributions import StudentT
+    from torch.nn import functional as F
 
 from ._base import DistributionOutput
 

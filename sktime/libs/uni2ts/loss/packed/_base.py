@@ -16,11 +16,14 @@
 import abc
 from typing import Any
 
-import torch
-from einops import rearrange, reduce
-from torch.distributions import Distribution
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.libs.uni2ts.common.torch_util import safe_div
+
+if _check_soft_dependencies("torch", severity="none"):
+    import torch
+    from einops import rearrange, reduce
+    from torch.distributions import Distribution
 
 
 class PackedLoss(abc.ABC):
