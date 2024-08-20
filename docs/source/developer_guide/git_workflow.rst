@@ -18,7 +18,7 @@ The workflow consists of two main parts:
 
 
 Creating a fork - Initial one time setup
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------------------
 
 1.  Fork the `project
     repository <https://github.com/sktime/sktime>`__ by
@@ -58,7 +58,7 @@ Creating a fork - Initial one time setup
 
 
 Contributing a feature - for every new feature
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------------------------
 
 1.  `Sync <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/syncing-a-fork>`_
     the ``main`` branch of your fork with the upstream repository:
@@ -170,6 +170,19 @@ description that this PR depends on the previous PR.
 
 Further, whenever making changes to the previous branch, ensure to update
 the dependent branch with the latest changes from the previous branch.
+
+The general workflow for ensuring that all branches in the chain are up-to-date,
+is as follows. Assume we have branches A, B, C, etc, where A depends on ``main``,
+B depends on A, C depends on B, etc.
+
+After any change to any of the branches:
+
+1. update your fork from the upstream repository
+2. merge ``main`` into A, and resolve any conflicts
+3. merge A into B, and resolve any conflicts
+4. merge B into C, and resolve any conflicts
+5. etc, until all branches in the chain have been merged and resolved
+
 
 Cleaning up
 ~~~~~~~~~~~

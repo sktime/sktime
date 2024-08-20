@@ -734,6 +734,21 @@ def load_basic_motions(split=None, return_X_y=True, return_type=None):
 
 
 # forecasting data sets
+def _coerce_to_monthly_period_index(ix):
+    """Coerce a date index to a monthly period index.
+
+    Parameters
+    ----------
+    ix : pd.Index
+
+    Returns
+    -------
+    pd.PeriodIndex, with frequency "M", and name "Period"
+        coerced index ix
+    """
+    return pd.PeriodIndex(ix, freq="M", name="Period")
+
+
 def load_shampoo_sales():
     """Load the shampoo sales univariate time series dataset for forecasting.
 
@@ -768,7 +783,7 @@ def load_shampoo_sales():
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
     y = pd.read_csv(path, index_col=0, dtype={1: float}).squeeze("columns")
-    y.index = pd.PeriodIndex(y.index, freq="M", name="Period")
+    y.index = _coerce_to_monthly_period_index(y.index)
     y.name = "Number of shampoo sales"
     return y
 
@@ -920,7 +935,7 @@ def load_airline():
     y = pd.read_csv(path, index_col=0, dtype={1: float}).squeeze("columns")
 
     # make sure time index is properly formatted
-    y.index = pd.PeriodIndex(y.index, freq="M", name="Period")
+    y.index = _coerce_to_monthly_period_index(y.index)
     y.name = "Number of airline passengers"
     return y
 
@@ -1100,7 +1115,7 @@ def load_PBS_dataset():
     y = pd.read_csv(path, index_col=0, dtype={1: float}).squeeze("columns")
 
     # make sure time index is properly formatted
-    y.index = pd.PeriodIndex(y.index, freq="M", name="Period")
+    y.index = _coerce_to_monthly_period_index(y.index)
     y.name = "Number of scripts"
     return y
 
@@ -1665,6 +1680,7 @@ def load_m5(
 
         df4["day"] = df4["day"].apply(lambda x: int(x.split("_")[1]))
         df4["date"] = pd.DatetimeIndex(df4["date"])
+        df4["date"] = df4["date"].dt.to_period("D")
         df4.drop(columns=["item_id"], inplace=True)
 
         return df4
