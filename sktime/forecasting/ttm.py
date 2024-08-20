@@ -38,7 +38,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     Parameters
     ----------
     model_path : str, default="ibm/TTM"
-        Path of the model to use for forecasting.
+        Path to the huggingface model to use for forecasting.
     revision: str, default="main"
         Revision of the model to use:
         - "main": For loading model with context_length of 512
