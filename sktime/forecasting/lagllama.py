@@ -147,7 +147,30 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         estimator_args = ckpt["hyper_parameters"]["model_kwargs"]
         self.estimator_args = estimator_args
 
-    # todo: implement this, mandatory
+    def _reform_y(self, y):
+        from gluonts.dataset.common import ListDataset
+
+        shape = y[0]["target"].shape
+        print(shape)
+
+        if len(shape) == 2 and shape[1] == 1:
+            new_values = []
+
+            # Updating the ListDatset to flatten univariate target values
+            for data_entry in y:
+                target = data_entry["target"]
+
+                if len(target.shape) == 2 and target.shape[1] == 1:
+                    data_entry["target"] = target.flatten()
+
+                new_values.append(data_entry)
+
+            new_y = ListDataset(new_values, one_dim_target=True, freq="D")
+
+            return new_y
+
+        return y
+
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
@@ -191,21 +214,6 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
             trainer_kwargs=self.trainer_kwargs_,
         )
 
-        from gluonts.dataset.common import ListDataset
-
-        new_values = []
-
-        # Updating the ListDatset to flatten univariate target values
-        for data_entry in y:
-            target = data_entry["target"]
-
-            if len(target.shape) == 2 and target.shape[1] == 1:
-                data_entry["target"] = target.flatten()
-
-            new_values.append(data_entry)
-
-        new_y = ListDataset(new_values, one_dim_target=True, freq="D")
-
         lightning_module = self.estimator_.create_lightning_module()
         transformation = self.estimator_.create_transformation()
 
@@ -214,10 +222,13 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
             transformation, lightning_module
         )
 
+        # Updating y value to make it compatible with LagLlama
+        y = self._reform_y(y)
+
         # Lastly, training the model
         if y is not None:
             self.predictor_ = self.estimator_.train(
-                new_y,
+                y,
                 cache_data=True,
                 shuffle_buffer_length=self.shuffle_buffer_length_,
             )
