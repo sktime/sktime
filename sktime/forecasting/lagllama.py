@@ -191,6 +191,21 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
             trainer_kwargs=self.trainer_kwargs_,
         )
 
+        from gluonts.dataset.common import ListDataset
+
+        new_values = []
+
+        # Updating the ListDatset to flatten univariate target values
+        for data_entry in y:
+            target = data_entry["target"]
+
+            if len(target.shape) == 2 and target.shape[1] == 1:
+                data_entry["target"] = target.flatten()
+
+            new_values.append(data_entry)
+
+        new_y = ListDataset(new_values, one_dim_target=True, freq="D")
+
         lightning_module = self.estimator_.create_lightning_module()
         transformation = self.estimator_.create_transformation()
 
@@ -202,7 +217,7 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         # Lastly, training the model
         if y is not None:
             self.predictor_ = self.estimator_.train(
-                y,
+                new_y,
                 cache_data=True,
                 shuffle_buffer_length=self.shuffle_buffer_length_,
             )
