@@ -43,6 +43,7 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
         An instance of a forecasting model that is compatible with
         the `AutoRegressiveWrapper`. This forecaster must support
         the methods required for fitting and predicting.
+    # TODO: None
     horizon_length : int
         The length of the forecasting horizon, defining how many time
         steps into the future the forecaster should predict with each
@@ -163,9 +164,10 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
         "capability:global_forecasting": True,
     }
 
-    def __init__(self, forecaster, horizon_length, aggregate_method=None):
+    def __init__(self, forecaster, horizon_length=None, aggregate_method=None):
         self.forecaster = forecaster
         self.horizon_length = horizon_length
+        self._horizon_length = None
         self.aggregate_method = (
             aggregate_method if aggregate_method is not None else np.mean
         )
@@ -173,8 +175,21 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
         super().__init__()
 
     def _fit(self, y, X=None, fh=None):
-        # ignore the fh provided fit
-        _fh = ForecastingHorizon(range(1, self.horizon_length + 1))
+        if self.horizon_length is None and fh is None:
+            # TODO: improve message here
+            raise Exception("Both horizon_length and fh cannot be None")
+
+        if fh is not None:
+            max_fh = max(fh.to_relative(self._cutoff)._values)
+            if self.horizon_length is None:
+                self._horizon_length = max_fh
+            else:
+                self._horizon_length = max(max_fh, self.horizon_length)
+        else:
+            self._horizon_length = self.horizon_length
+
+        # create a new fh for forecaster
+        _fh = ForecastingHorizon(range(1, self._horizon_length + 1))
 
         self.forecaster.fit(y=y, X=X, fh=_fh)
 
@@ -182,7 +197,7 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
         # use fh to find the maximum length to forecast regressively
         max_fh = max(
             *fh.to_relative(self._cutoff)._values,
-            self.horizon_length,
+            self._horizon_length,
         )
 
         hist_y = self._y if y is None else y
@@ -201,12 +216,12 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
             # since this is non-global forecasting, we can use hist from self._X
             X = pd.concat([self._X, X])
 
-        for i in range(max_fh - self.horizon_length + 1):
+        for i in range(max_fh - self._horizon_length + 1):
             # truncate to the needed lengths
             _y = self._truncate(hist_y, end_index=initial_length + i)
-            _x = self._truncate(X, end_index=initial_length + i + self.horizon_length)
+            _x = self._truncate(X, end_index=initial_length + i + self._horizon_length)
 
-            # forecast for self.horizon_length
+            # forecast for self._horizon_length
             preds = self.forecaster.predict(y=_y, X=_x)
 
             # use predicted values as history for next iteration
