@@ -121,8 +121,9 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         "python_dependencies": ["FrEIA", "torch"],
         # estimator type
         # --------------
-        "y_inner_mtype": "pd.Series",
-        "X_inner_mtype": "pd.DataFrame",
+        # TODO: remove these
+        # "y_inner_mtype": "pd.Series",
+        # "X_inner_mtype": "pd.DataFrame",
         "scitype:y": "univariate",
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
@@ -209,29 +210,39 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         -------
         self : reference to self
         """
+        index = self._get_index(y)
+        _y = np.squeeze(
+            self._get_arrays(y),  # (series, timestamps, 1)
+            axis=-1,
+        )  # (series, timestamps)
+        _X = X  # TODO: fill this
+
         # Fit the rolling mean forecaster
         rolling_mean = WindowSummarizer(
             lag_feature={
                 self.lag_feature: [[-self.window_size // 2, self.window_size // 2]]
             },
             truncate="fill",
-        ).fit_transform(y)
+        ).fit_transform(_y)
+        rolling_mean = rolling_mean[~np.isnan(rolling_mean)]
 
         self.function = CurveFitForecaster(
             self._f_statistic,
             {"p0": self._init_param_f_statistic},
             normalise_index=True,
         )
-        self.function.fit(rolling_mean.dropna())
+        self.function.fit(rolling_mean)
         self.fourier_features = FourierFeatures(
             sp_list=self._sp_list, fourier_terms_list=self._fourier_terms_list
         )
-        self.fourier_features.fit(y)
+        self.fourier_features.fit(_y)
 
-        split_index = int(len(y) * (1 - self.val_split))
+        split_index = int(len(index) * (1 - self.val_split))
 
         dataset = self._prepare_data(
-            y[:split_index], X[:split_index] if X is not None else None
+            _y[:, :split_index],
+            _X[:, :split_index] if X is not None else None,
+            index=index,
         )
         data_loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True)
 
@@ -362,11 +373,12 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
             list(fh.to_absolute(self.cutoff))
         ]
 
-    def _prepare_data(self, yz, X, z=None):
+    def _prepare_data(self, yz, X, z=None, index=None):
         cal_features = self.fourier_features.transform(yz)
         statistics = self.function.predict(
-            fh=ForecastingHorizon(yz.index, is_relative=False)
+            fh=ForecastingHorizon(index, is_relative=False)
         )
+        # TODO: code after this needs to be updated
         to_concatenate = (
             [X, cal_features, statistics.to_frame()]
             if X is not None
