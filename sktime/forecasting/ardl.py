@@ -196,7 +196,8 @@ class ARDL(_StatsModelsAdapter):
     _tags = {
         # packaging info
         # --------------
-        "authors": "kcc-lion",
+        "authors": ["bashtage", "kcc-lion"],
+        # bashtage for statsmodels ARDL
         "maintainers": "kcc-lion",
         "python_dependencies": "statsmodels>=0.13.0",
         # estimator type
