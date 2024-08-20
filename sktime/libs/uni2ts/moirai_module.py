@@ -12,10 +12,6 @@ if _check_soft_dependencies("torch", severity="none"):
 if _check_soft_dependencies("huggingface-hub", severity="none"):
     from huggingface_hub import PyTorchModelHubMixin
 
-if _check_soft_dependencies("hydra-core", severity="none"):
-    from hydra.utils import instantiate
-
-
 from .common.torch_util import mask_fill, packed_attention_mask
 from .distribution import DistributionOutput
 from .module.norm import RMSNorm
