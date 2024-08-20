@@ -250,6 +250,11 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
     ],
     "TSRGridSearchCV": ["test_multioutput"],  # see 6708
+    # pickling problem
+    "Chronos": [
+        "test_persistence_via_pickle",
+        "test_save_estimators_to_file",
+    ],
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish

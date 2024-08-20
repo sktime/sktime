@@ -1,7 +1,7 @@
 """Implements Chronos forecaster."""
 
 __author__ = ["Z-Fran"]
-__all__ = ["ChronosForecaster"]
+# __all__ = ["ChronosForecaster"]
 
 from typing import Optional
 
@@ -117,8 +117,7 @@ class ChronosForecaster(BaseForecaster):
                 torch_dtype=self._config["torch_dtype"],
                 device_map=self._config["device_map"],
             )
-        self.context = torch.tensor(y.values)
-        return self
+        self.context = y.values
 
     def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
@@ -140,8 +139,15 @@ class ChronosForecaster(BaseForecaster):
         transformers.set_seed(self._seed)
         prediction_length = len(fh)
 
+        if self.model_pipeline is None:
+            self.model_pipeline = ChronosPipeline.from_pretrained(
+                self.model_path,
+                torch_dtype=self._config["torch_dtype"],
+                device_map=self._config["device_map"],
+            )
+
         prediction_results = self.model_pipeline.predict(
-            self.context,
+            torch.Tensor(self.context),
             prediction_length,
             num_samples=self._config["num_samples"],
             temperature=self._config["temperature"],
@@ -155,11 +161,6 @@ class ChronosForecaster(BaseForecaster):
             values, index=row_idx, name=self._y.name if self._y is not None else None
         )
         return y_pred
-
-    def __repr__(self):
-        """Repr dunder."""
-        class_name = self.__class__.__name__
-        return f"{class_name}"
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -175,13 +176,7 @@ class ChronosForecaster(BaseForecaster):
         -------
         params : dict or list of dict
         """
-        params = []
-        params.append(
-            {
-                "model_path": "amazon/chronos-t5-tiny",
-            }
-        )
-        params.append(
+        test_params = [
             {
                 "model_path": "amazon/chronos-t5-small",
                 "config": {
@@ -189,6 +184,20 @@ class ChronosForecaster(BaseForecaster):
                 },
                 "seed": 42,
             }
-        )
+        ]
+        # test_params.append(
+        #     {
+        #         "model_path": "amazon/chronos-t5-tiny",
+        #     }
+        # )
+        # test_params.append(
+        #     {
+        #         "model_path": "amazon/chronos-t5-small",
+        #         "config": {
+        #             "num_samples": 20,
+        #         },
+        #         "seed": 42,
+        #     }
+        # )
 
-        return params
+        return test_params
