@@ -142,8 +142,9 @@ class GRU(NNModule):
 class GRUFCNN(NNModule):
     """GRU with Convolutional Neural Network (FCNN) for time series classification.
 
-    Network originally defined in [1]_.
-    Implementation adapted from [2]_ and [3]_.
+    This network was originally defined in [1]_.
+    The current implementation uses PyTorch and references
+    the TensorFlow implementations in [2]_ and [3]_.
 
     Parameters
     ----------

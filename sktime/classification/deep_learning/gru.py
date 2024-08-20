@@ -6,17 +6,7 @@ from sktime.classification.deep_learning._pytorch import BaseDeepClassifierPytor
 from sktime.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("torch", severity="none"):
-    import torch
-
     from sktime.networks.gru import GRU, GRUFCNN
-
-    OPTIMIZERS = {
-        "Adadelta": torch.optim.Adadelta,
-        "Adam": torch.optim.Adam,
-        "AdamW": torch.optim.AdamW,
-        "SGD": torch.optim.SGD,
-        "Adagrad": torch.optim.Adagrad,
-    }
 
 
 class GRUClassifier(BaseDeepClassifierPytorch):
@@ -141,7 +131,6 @@ class GRUClassifier(BaseDeepClassifierPytorch):
         )
 
         self.criterions = {}
-        self.optimizers = OPTIMIZERS
 
     def _build_network(self, X, y):
         # n_instances, n_dims, n_timesteps = X.shape
@@ -220,7 +209,9 @@ class GRUClassifier(BaseDeepClassifierPytorch):
 class GRUFCNNClassifier(BaseDeepClassifierPytorch):
     """GRU-FCN for time series classification.
 
-    This classifier has been wrapped around implementations from [1]_, [2]_ and [3]_.
+    The network used in this classifier is originally defined in [1]_.
+    The current implementation uses PyTorch and references
+    the TensorFlow implementations in [2]_ and [3]_.
 
     Parameters
     ----------
@@ -346,8 +337,6 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
         )
 
         self.criterions = {}
-        # paper used Adam optimizer
-        self.optimizers = OPTIMIZERS
 
     def _build_network(self, X, y):
         # n_instances, n_dims, n_timesteps = X.shape
