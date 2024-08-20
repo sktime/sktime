@@ -165,6 +165,8 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
     }
 
     def __init__(self, forecaster, horizon_length=None, aggregate_method=None):
+        super().__init__()
+
         self.forecaster = forecaster
         self.horizon_length = horizon_length
         self._horizon_length = None
@@ -172,12 +174,17 @@ class AutoRegressiveWrapper(_BaseGlobalForecaster):
             aggregate_method if aggregate_method is not None else np.mean
         )
 
-        super().__init__()
+        gt = forecaster.get_tag(
+            "capability:global_forecasting", tag_value_default=False, raise_error=False
+        )
+        if not gt:
+            # TODO: improve the error message
+            raise ValueError("forecaster should be global")
 
     def _fit(self, y, X=None, fh=None):
         if self.horizon_length is None and fh is None:
             # TODO: improve message here
-            raise Exception("Both horizon_length and fh cannot be None")
+            raise ValueError("Both horizon_length and fh cannot be None")
 
         if fh is not None:
             max_fh = max(fh.to_relative(self._cutoff)._values)
