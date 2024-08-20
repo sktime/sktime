@@ -19,7 +19,6 @@ from typing import Optional
 
 import torch
 import torch.nn.functional as F
-from jaxtyping import Bool, Float, Int
 from torch import nn
 
 from .attention import GroupedQueryAttention
@@ -49,11 +48,11 @@ class TransformerEncoderLayer(nn.Module):
 
     def forward(
         self,
-        x: Float[torch.Tensor, "*batch time_len dim"],
-        attn_mask: Optional[Bool[torch.Tensor, "*batch time_len time_len"]] = None,
-        var_id: Optional[Int[torch.Tensor, "*batch time_len"]] = None,
-        time_id: Optional[Int[torch.Tensor, "*batch time_len"]] = None,
-    ) -> Float[torch.Tensor, "*batch time_len dim"]:
+        x: [torch.Tensor, "*batch time_len dim"],
+        attn_mask=None,
+        var_id=None,
+        time_id=None,
+    ) -> [torch.Tensor, "*batch time_len dim"]:
         if self.pre_norm:
             x = x + self._sa_block(
                 self.norm1(x), attn_mask, var_id=var_id, time_id=time_id
@@ -69,11 +68,11 @@ class TransformerEncoderLayer(nn.Module):
 
     def _sa_block(
         self,
-        x: Float[torch.Tensor, "*batch time_len dim"],
-        attn_mask: Optional[Bool[torch.Tensor, "*batch time_len time_len"]],
-        var_id: Optional[Int[torch.Tensor, "*batch time_len"]] = None,
-        time_id: Optional[Int[torch.Tensor, "*batch time_len"]] = None,
-    ) -> Float[torch.Tensor, "*batch time_len dim"]:
+        x: [torch.Tensor, "*batch time_len dim"],
+        attn_mask,
+        var_id=None,
+        time_id=None,
+    ) -> [torch.Tensor, "*batch time_len dim"]:
         x = self.self_attn(
             x,
             x,
@@ -197,11 +196,11 @@ class TransformerEncoder(nn.Module):
 
     def forward(
         self,
-        x: Float[torch.Tensor, "*batch time_len dim"],
-        attn_mask: Optional[Bool[torch.Tensor, "*batch time_len time_len"]] = None,
-        var_id: Optional[Int[torch.Tensor, "*batch time_len"]] = None,
-        time_id: Optional[Int[torch.Tensor, "*batch time_len"]] = None,
-    ) -> Float[torch.Tensor, "*batch time_len dim"]:
+        x: [torch.Tensor, "*batch time_len dim"],
+        attn_mask=None,
+        var_id=None,
+        time_id=None,
+    ) -> [torch.Tensor, "*batch time_len dim"]:
         for layer in self.layers:
             x = layer(x, attn_mask, var_id=var_id, time_id=time_id)
         return self.norm(x)

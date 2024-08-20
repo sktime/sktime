@@ -17,7 +17,6 @@
 from typing import Callable, TypeVar
 
 import torch
-from jaxtyping import Float, PyTree
 from torch.distributions import LogNormal
 from torch.nn import functional as F
 
@@ -35,17 +34,15 @@ class LogNormalOutput(DistributionOutput):
     @property
     def domain_map(
         self,
-    ) -> PyTree[
-        Callable[[Float[torch.Tensor, "*batch 1"]], Float[torch.Tensor, "*batch"]], "T"
-    ]:
+    ):
         """Domain map for LogNormal distribution."""
         return dict(loc=self._loc, scale=self._scale)
 
     @staticmethod
-    def _loc(loc: Float[torch.Tensor, "*batch 1"]) -> Float[torch.Tensor, "*batch"]:
+    def _loc(loc: [torch.Tensor, "*batch 1"]):
         return loc.squeeze(-1)
 
     @staticmethod
-    def _scale(scale: Float[torch.Tensor, "*batch 1"]) -> Float[torch.Tensor, "*batch"]:
+    def _scale(scale: [torch.Tensor, "*batch 1"]):
         epsilon = torch.finfo(scale.dtype).eps
         return F.softplus(scale).clamp_min(epsilon).squeeze(-1)

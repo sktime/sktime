@@ -17,7 +17,6 @@ import abc
 
 import torch
 from einops import rearrange
-from jaxtyping import Float, Int
 from torch import nn
 
 
@@ -40,11 +39,11 @@ class AttentionBias(nn.Module, abc.ABC):
     @abc.abstractmethod
     def forward(
         self,
-        query: Float[torch.Tensor, "*batch group hpg q_len dim"],
-        key: Float[torch.Tensor, "*batch group hpg kv_len dim"],
-        query_id: Int[torch.Tensor, "*batch 1 1 q_len"],
-        kv_id: Int[torch.Tensor, "*batch 1 1 kv_len"],
-    ) -> Float[torch.Tensor, "*batch #group #hpg q_len kv_len"]: ...
+        query: [torch.Tensor, "*batch group hpg q_len dim"],
+        key: [torch.Tensor, "*batch group hpg kv_len dim"],
+        query_id: [torch.Tensor, "*batch 1 1 q_len"],
+        kv_id: [torch.Tensor, "*batch 1 1 kv_len"],
+    ) -> [torch.Tensor, "*batch #group #hpg q_len kv_len"]: ...
 
 
 class BinaryAttentionBias(AttentionBias):
@@ -54,11 +53,11 @@ class BinaryAttentionBias(AttentionBias):
 
     def forward(
         self,
-        query: Float[torch.Tensor, "*batch group hpg q_len dim"],
-        key: Float[torch.Tensor, "*batch group hpg kv_len dim"],
-        query_id: Int[torch.Tensor, "*batch 1 1 q_len"],
-        kv_id: Int[torch.Tensor, "*batch 1 1 kv_len"],
-    ) -> Float[torch.Tensor, "*batch #group #hpg q_len kv_len"]:
+        query: [torch.Tensor, "*batch group hpg q_len dim"],
+        key: [torch.Tensor, "*batch group hpg kv_len dim"],
+        query_id: [torch.Tensor, "*batch 1 1 q_len"],
+        kv_id: [torch.Tensor, "*batch 1 1 kv_len"],
+    ) -> [torch.Tensor, "*batch #group #hpg q_len kv_len"]:
         ind = torch.eq(query_id.unsqueeze(-1), kv_id.unsqueeze(-2))
         weight = rearrange(self.emb.weight, "two num_heads -> two num_heads 1 1")
         bias = rearrange(  # try to avoid advanced indexing

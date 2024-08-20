@@ -17,7 +17,6 @@
 
 import numpy as np
 import torch
-from jaxtyping import Bool, Float, Int
 
 numpy_to_torch_dtype_dict = {
     bool: torch.bool,
@@ -36,8 +35,8 @@ numpy_to_torch_dtype_dict = {
 
 # noqa: F722
 def packed_attention_mask(
-    sample_id: Int[torch.Tensor, "*batch seq_len"],  # noqa: F722
-) -> Bool[torch.Tensor, "*batch seq_len seq_len"]:  # noqa: F722
+    sample_id: [torch.Tensor, "*batch seq_len"],
+) -> [torch.Tensor, "*batch seq_len seq_len"]:
     """
     Create a packed attention mask for self-attention.
 
@@ -55,10 +54,10 @@ def packed_attention_mask(
 
 
 def mask_fill(
-    tensor: Float[torch.Tensor, "*batch dim"],  # noqa: F722
-    mask: Bool[torch.Tensor, "*batch"],  # noqa: F722
-    value: Float[torch.Tensor, "dim"],  # noqa: F722, F821
-) -> Float[torch.Tensor, "*batch dim"]:  # noqa: F722
+    tensor: [torch.Tensor, "*batch dim"],
+    mask,
+    value: [torch.Tensor, "dim"],
+) -> [torch.Tensor, "*batch dim"]:
     """
     Fill masked values with a given value.
 
@@ -102,8 +101,8 @@ def safe_div(
 
 def size_to_mask(
     max_size: int,
-    sizes: Int[torch.Tensor, "*batch"],  # noqa: F722
-) -> Bool[torch.Tensor, "*batch max_size"]:  # noqa: F722
+    sizes,
+) -> [torch.Tensor, "*batch max_size"]:
     """
     Create a mask for a given size.
 

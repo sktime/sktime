@@ -15,13 +15,11 @@
 
 import math
 from collections.abc import Callable
-from functools import partial
 from typing import Optional
 
 import torch
 import torch.nn.functional as F
 from einops import rearrange, repeat
-from jaxtyping import Bool, Float, Int
 from torch import nn
 
 from .position import AttentionBias, QueryKeyProjection
@@ -31,13 +29,10 @@ from .position import AttentionBias, QueryKeyProjection
 
 
 def native_scaled_dot_product_attention(
-    query: Float[torch.Tensor, "*batch group hpg q_len dim"],
-    key: Float[torch.Tensor, "*batch group hpg kv_len dim"],
-    value: Float[torch.Tensor, "*batch group hpg kv_len dim"],
-    attn_mask: Optional[
-        Bool[torch.Tensor, "*batch #group #hpg q_len kv_len"]
-        | Float[torch.Tensor, "*batch #group #hpg q_len kv_len"]
-    ] = None,
+    query: [torch.Tensor, "*batch group hpg q_len dim"],
+    key: [torch.Tensor, "*batch group hpg kv_len dim"],
+    value: [torch.Tensor, "*batch group hpg kv_len dim"],
+    attn_mask=None,
     dropout_p: float = 0.0,
     scale: Optional[float] = None,
 ):
@@ -62,8 +57,8 @@ class GroupedQueryAttention(nn.Module):
         num_heads: int,
         num_groups: int,
         bias: bool = True,
-        norm_layer: Optional[type[nn.Module] | partial[nn.Module]] = nn.LayerNorm,
-        softmax_scale: Optional[float] = None,
+        norm_layer=nn.LayerNorm,
+        softmax_scale=None,
         attn_dropout_p: float = 0.0,
         var_attn_bias: Optional[Callable[[], AttentionBias]] = None,
         time_attn_bias: Optional[Callable[[], AttentionBias]] = None,
@@ -99,14 +94,11 @@ class GroupedQueryAttention(nn.Module):
 
     def _get_var_id(
         self,
-        query: Float[torch.Tensor, "*batch group hpg q_len dim"],
-        key: Float[torch.Tensor, "*batch group hpg kv_len dim"],
-        query_var_id: Optional[Int[torch.Tensor, "*batch q_len"]],
-        kv_var_id: Optional[Int[torch.Tensor, "*batch kv_len"]],
-    ) -> tuple[
-        Optional[Int[torch.Tensor, "*batch #group #hpg q_len"]],
-        Optional[Int[torch.Tensor, "*batch #group #hpg kv_len"]],
-    ]:
+        query,
+        key,
+        query_var_id,
+        kv_var_id,
+    ):
         if self.var_attn_bias is not None or self.var_qk_proj is not None:
             if query_var_id is None:
                 query_var_id = repeat(
@@ -128,14 +120,11 @@ class GroupedQueryAttention(nn.Module):
 
     def _get_time_id(
         self,
-        query: Float[torch.Tensor, "*batch group hpg q_len dim"],
-        key: Float[torch.Tensor, "*batch group hpg kv_len dim"],
-        query_time_id: Optional[Int[torch.Tensor, "*batch q_len"]],
-        kv_time_id: Optional[Int[torch.Tensor, "*batch kv_len"]],
-    ) -> tuple[
-        Optional[Int[torch.Tensor, "*batch 1 1 q_len"]],
-        Optional[Int[torch.Tensor, "*batch 1 1 kv_len"]],
-    ]:
+        query,
+        key,
+        query_time_id,
+        kv_time_id,
+    ):
         if self.time_attn_bias is not None or self.time_qk_proj is not None:
             if query_time_id is None:
                 query_time_id = repeat(
@@ -159,17 +148,14 @@ class GroupedQueryAttention(nn.Module):
 
     def _update_attn_mask(
         self,
-        attn_mask: Optional[Bool[torch.Tensor, "*batch q_len kv_len"]],
-        query: Float[torch.Tensor, "*batch group hpg q_len dim"],
-        key: Float[torch.Tensor, "*batch group hpg kv_len dim"],
-        query_var_id: Optional[Int[torch.Tensor, "*batch 1 1 q_len"]] = None,
-        kv_var_id: Optional[Int[torch.Tensor, "*batch 1 1 kv_len"]] = None,
-        query_time_id: Optional[Int[torch.Tensor, "*batch 1 1 q_len"]] = None,
-        kv_time_id: Optional[Int[torch.Tensor, "*batch 1 1 kv_len"]] = None,
-    ) -> Optional[
-        Bool[torch.Tensor, "*batch #group #hpg q_len kv_len"]
-        | Float[torch.Tensor, "*batch #group #hpg q_len kv_len"]
-    ]:
+        attn_mask,
+        query,
+        key,
+        query_var_id=None,
+        kv_var_id=None,
+        query_time_id=None,
+        kv_time_id=None,
+    ):
         if attn_mask is not None:
             attn_mask = rearrange(
                 attn_mask,
@@ -206,16 +192,13 @@ class GroupedQueryAttention(nn.Module):
 
     def _qk_proj(
         self,
-        query: Float[torch.Tensor, "*batch group hpg q_len dim"],
-        key: Float[torch.Tensor, "*batch group hpg kv_len dim"],
-        query_var_id: Optional[Int[torch.Tensor, "*batch #group #hpg q_len"]],
-        kv_var_id: Optional[Int[torch.Tensor, "*batch #group #hpg kv_len"]],
-        query_time_id: Optional[Int[torch.Tensor, "*batch #group #hpg q_len"]],
-        kv_time_id: Optional[Int[torch.Tensor, "*batch #group #hpg kv_len"]],
-    ) -> tuple[
-        Float[torch.Tensor, "*batch group hpg q_len dim"],
-        Float[torch.Tensor, "*batch group hpg kv_len dim"],
-    ]:
+        query,
+        key,
+        query_var_id,
+        kv_var_id,
+        query_time_id,
+        kv_time_id,
+    ):
         if self.var_qk_proj is not None:
             query, key = self.var_qk_proj(
                 query, key, query_id=query_var_id, kv_id=kv_var_id
@@ -230,15 +213,15 @@ class GroupedQueryAttention(nn.Module):
 
     def forward(
         self,
-        query: Float[torch.Tensor, "*batch q_len dim"],
-        key: Float[torch.Tensor, "*batch kv_len dim"],
-        value: Float[torch.Tensor, "*batch kv_len dim"],
-        attn_mask: Optional[Bool[torch.Tensor, "*batch q_len kv_len"]] = None,
-        query_var_id: Optional[Int[torch.Tensor, "*batch q_len"]] = None,
-        kv_var_id: Optional[Int[torch.Tensor, "*batch kv_len"]] = None,
-        query_time_id: Optional[Int[torch.Tensor, "*batch q_len"]] = None,
-        kv_time_id: Optional[Int[torch.Tensor, "*batch kv_len"]] = None,
-    ) -> Float[torch.Tensor, "*batch q_len dim"]:
+        query,
+        key,
+        value,
+        attn_mask=None,
+        query_var_id=None,
+        kv_var_id=None,
+        query_time_id=None,
+        kv_time_id=None,
+    ):
         query = self.q_proj(query)
         key = self.k_proj(key)
         value = self.v_proj(value)

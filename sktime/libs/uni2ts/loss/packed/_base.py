@@ -14,11 +14,10 @@
 #  limitations under the License.
 
 import abc
-from typing import Any, Optional
+from typing import Any
 
 import torch
 from einops import rearrange, reduce
-from jaxtyping import Bool, Float, Int
 from torch.distributions import Distribution
 
 from sktime.libs.uni2ts.common.torch_util import safe_div
@@ -28,12 +27,12 @@ class PackedLoss(abc.ABC):
     def __call__(
         self,
         pred: Any,
-        target: Float[torch.Tensor, "*batch seq_len #dim"],
-        prediction_mask: Optional[Bool[torch.Tensor, "*batch seq_len"]],
-        observed_mask: Optional[Bool[torch.Tensor, "*batch seq_len #dim"]] = None,
-        sample_id: Optional[Int[torch.Tensor, "*batch seq_len"]] = None,
-        variate_id: Optional[Int[torch.Tensor, "*batch seq_len"]] = None,
-    ) -> Float[torch.Tensor, ""]:
+        target: [torch.Tensor, "*batch seq_len #dim"],
+        prediction_mask,
+        observed_mask,
+        sample_id,
+        variate_id,
+    ) -> [torch.Tensor, ""]:
         if observed_mask is None:
             observed_mask = torch.ones_like(target, dtype=torch.bool)
         if sample_id is None:
@@ -52,21 +51,21 @@ class PackedLoss(abc.ABC):
     def _loss_func(
         self,
         pred: Any,
-        target: Float[torch.Tensor, "*batch seq_len #dim"],
-        prediction_mask: Bool[torch.Tensor, "*batch seq_len"],
-        observed_mask: Bool[torch.Tensor, "*batch seq_len #dim"],
-        sample_id: Int[torch.Tensor, "*batch seq_len"],
-        variate_id: Int[torch.Tensor, "*batch seq_len"],
-    ) -> Float[torch.Tensor, "*batch seq_len #dim"]: ...
+        target: [torch.Tensor, "*batch seq_len #dim"],
+        prediction_mask: [torch.Tensor, "*batch seq_len"],
+        observed_mask: [torch.Tensor, "*batch seq_len #dim"],
+        sample_id: [torch.Tensor, "*batch seq_len"],
+        variate_id: [torch.Tensor, "*batch seq_len"],
+    ) -> [torch.Tensor, "*batch seq_len #dim"]: ...
 
     def reduce_loss(
         self,
-        loss: Float[torch.Tensor, "*batch seq_len #dim"],
-        prediction_mask: Optional[Bool[torch.Tensor, "*batch seq_len"]],
-        observed_mask: Optional[Bool[torch.Tensor, "*batch seq_len #dim"]],
-        sample_id: Optional[Int[torch.Tensor, "*batch seq_len"]],
-        variate_id: Optional[Int[torch.Tensor, "*batch seq_len"]],
-    ) -> Float[torch.Tensor, ""]:
+        loss: [torch.Tensor, "*batch seq_len #dim"],
+        prediction_mask,
+        observed_mask,
+        sample_id,
+        variate_id,
+    ) -> [torch.Tensor, ""]:
         id_mask = torch.logical_and(
             torch.eq(sample_id.unsqueeze(-1), sample_id.unsqueeze(-2)),
             torch.eq(variate_id.unsqueeze(-1), variate_id.unsqueeze(-2)),
@@ -100,9 +99,9 @@ class PackedDistributionLoss(PackedLoss):
     def _loss_func(
         self,
         pred: Distribution,
-        target: Float[torch.Tensor, "*batch seq_len #dim"],
-        prediction_mask: Bool[torch.Tensor, "*batch seq_len"],
-        observed_mask: Bool[torch.Tensor, "*batch seq_len #dim"],
-        sample_id: Int[torch.Tensor, "*batch seq_len"],
-        variate_id: Int[torch.Tensor, "*batch seq_len"],
-    ) -> Float[torch.Tensor, "*batch seq_len #dim"]: ...
+        target: [torch.Tensor, "*batch seq_len #dim"],
+        prediction_mask: [torch.Tensor, "*batch seq_len"],
+        observed_mask: [torch.Tensor, "*batch seq_len #dim"],
+        sample_id: [torch.Tensor, "*batch seq_len"],
+        variate_id: [torch.Tensor, "*batch seq_len"],
+    ) -> [torch.Tensor, "*batch seq_len #dim"]: ...

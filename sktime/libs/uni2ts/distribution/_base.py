@@ -19,7 +19,6 @@ from typing import Any, Optional, TypeVar
 
 import torch
 from einops import rearrange
-from jaxtyping import Float, PyTree
 from torch import nn
 from torch.distributions import AffineTransform, Distribution, TransformedDistribution
 from torch.utils._pytree import tree_flatten, tree_map, tree_unflatten
@@ -31,16 +30,14 @@ T = TypeVar("T")
 
 
 # TODO: Replace with tree_map when multiple trees supported
-def tree_map_multi(
-    func: Callable, tree: PyTree[Any, "T"], *other: PyTree[Any, "T"]
-) -> PyTree[Any, "T"]:
+def tree_map_multi(func: Callable, tree: [Any, "T"], *other: [Any, "T"]) -> [Any, "T"]:
     leaves, treespec = tree_flatten(tree)
     other_leaves = [tree_flatten(o)[0] for o in other]
     return_leaves = [func(*leaf) for leaf in zip(leaves, *other_leaves)]
     return tree_unflatten(return_leaves, treespec)
 
 
-def convert_to_module(tree: PyTree[nn.Module, "T"]) -> PyTree[nn.Module, "T"]:
+def convert_to_module(tree: [nn.Module, "T"]) -> [nn.Module, "T"]:
     if isinstance(tree, dict):
         return nn.ModuleDict(
             {key: convert_to_module(child) for key, child in tree.items()}
@@ -50,7 +47,7 @@ def convert_to_module(tree: PyTree[nn.Module, "T"]) -> PyTree[nn.Module, "T"]:
     return tree
 
 
-def convert_to_container(tree: PyTree[nn.Module, "T"]) -> PyTree[nn.Module, "T"]:
+def convert_to_container(tree: [nn.Module, "T"]) -> [nn.Module, "T"]:
     if isinstance(tree, nn.ModuleDict):
         return {key: convert_to_container(child) for key, child in tree.items()}
     if isinstance(tree, nn.ModuleList):
@@ -63,8 +60,8 @@ class DistrParamProj(nn.Module):
         self,
         in_features: int,
         out_features: int | tuple[int, ...] | list[int],
-        args_dim: PyTree[int, "T"],
-        domain_map: PyTree[Callable[[torch.Tensor], torch.Tensor], "T"],
+        args_dim: [int, "T"],
+        domain_map: [Callable[[torch.Tensor], torch.Tensor], "T"],
         proj_layer: Callable[..., nn.Module] = MultiOutSizeLinear,
         **kwargs: Any,
     ):
@@ -92,7 +89,7 @@ class DistrParamProj(nn.Module):
             out_features if isinstance(out_features, int) else max(out_features)
         )
 
-    def forward(self, *args) -> PyTree[Float[torch.Tensor, "*batch out dim"], "T"]:  # noqa: F722
+    def forward(self, *args) -> [[torch.Tensor, "*batch out dim"], "T"]:  # noqa: F722
         params_unbounded = tree_map(
             lambda proj: rearrange(
                 proj(*args),
@@ -138,7 +135,7 @@ class DistributionOutput:
 
     def distribution(
         self,
-        distr_params: PyTree[torch.Tensor, "T"],
+        distr_params: [torch.Tensor, "T"],
         loc: Optional[torch.Tensor] = None,
         scale: Optional[torch.Tensor] = None,
         validate_args: Optional[bool] = None,
@@ -150,18 +147,18 @@ class DistributionOutput:
 
     def _distribution(
         self,
-        distr_params: PyTree[torch.Tensor, "T"],
+        distr_params: [torch.Tensor, "T"],
         validate_args: Optional[bool] = None,
     ) -> Distribution:
         return self.distr_cls(**distr_params, validate_args=validate_args)
 
     @property
     @abc.abstractmethod
-    def args_dim(self) -> PyTree[int, "T"]: ...
+    def args_dim(self) -> [int, "T"]: ...
 
     @property
     @abc.abstractmethod
-    def domain_map(self) -> PyTree[Callable[[torch.Tensor], torch.Tensor], "T"]: ...
+    def domain_map(self) -> [Callable[[torch.Tensor], torch.Tensor], "T"]: ...
 
     def get_param_proj(
         self,

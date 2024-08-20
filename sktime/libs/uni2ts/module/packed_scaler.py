@@ -13,11 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from typing import Optional
 
 import torch
 from einops import reduce
-from jaxtyping import Bool, Float, Int
 from torch import nn
 
 from sktime.libs.uni2ts.common.torch_util import safe_div
@@ -26,10 +24,10 @@ from sktime.libs.uni2ts.common.torch_util import safe_div
 class PackedScaler(nn.Module):
     def forward(
         self,
-        target: Float[torch.Tensor, "*batch seq_len #dim"],
-        observed_mask: Bool[torch.Tensor, "*batch seq_len #dim"] = None,
-        sample_id: Int[torch.Tensor, "*batch seq_len"] = None,
-        variate_id: Optional[Int[torch.Tensor, "*batch seq_len"]] = None,
+        target: [torch.Tensor, "*batch seq_len #dim"],
+        observed_mask: [torch.Tensor, "*batch seq_len #dim"] = None,
+        sample_id: [torch.Tensor, "*batch seq_len"] = None,
+        variate_id=None,
     ):
         if observed_mask is None:
             observed_mask = torch.ones_like(target, dtype=torch.bool)
@@ -49,13 +47,13 @@ class PackedScaler(nn.Module):
 
     def _get_loc_scale(
         self,
-        target: Float[torch.Tensor, "*batch seq_len #dim"],
-        observed_mask: Bool[torch.Tensor, "*batch seq_len #dim"],
-        sample_id: Int[torch.Tensor, "*batch seq_len"],
-        variate_id: Int[torch.Tensor, "*batch seq_len"],
+        target: [torch.Tensor, "*batch seq_len #dim"],
+        observed_mask: [torch.Tensor, "*batch seq_len #dim"],
+        sample_id: [torch.Tensor, "*batch seq_len"],
+        variate_id: [torch.Tensor, "*batch seq_len"],
     ) -> tuple[
-        Float[torch.Tensor, "*batch seq_len #dim"],
-        Float[torch.Tensor, "*batch seq_len #dim"],
+        [torch.Tensor, "*batch seq_len #dim"],
+        [torch.Tensor, "*batch seq_len #dim"],
     ]:
         raise NotImplementedError
 
@@ -63,13 +61,11 @@ class PackedScaler(nn.Module):
 class PackedNOPScaler(PackedScaler):
     def _get_loc_scale(
         self,
-        target: Float[torch.Tensor, "*batch seq_len #dim"],
-        observed_mask: Bool[torch.Tensor, "*batch seq_len #dim"],
-        sample_id: Int[torch.Tensor, "*batch seq_len"],
-        variate_id: Int[torch.Tensor, "*batch seq_len"],
-    ) -> tuple[
-        Float[torch.Tensor, "*batch 1 #dim"], Float[torch.Tensor, "*batch 1 #dim"]
-    ]:
+        target: [torch.Tensor, "*batch seq_len #dim"],
+        observed_mask: [torch.Tensor, "*batch seq_len #dim"],
+        sample_id: [torch.Tensor, "*batch seq_len"],
+        variate_id: [torch.Tensor, "*batch seq_len"],
+    ) -> tuple[[torch.Tensor, "*batch 1 #dim"], [torch.Tensor, "*batch 1 #dim"]]:
         loc = torch.zeros_like(target, dtype=target.dtype)
         scale = torch.ones_like(target, dtype=target.dtype)
         return loc, scale
@@ -83,13 +79,11 @@ class PackedStdScaler(PackedScaler):
 
     def _get_loc_scale(
         self,
-        target: Float[torch.Tensor, "*batch seq_len #dim"],
-        observed_mask: Bool[torch.Tensor, "*batch seq_len #dim"],
-        sample_id: Int[torch.Tensor, "*batch seq_len"],
-        variate_id: Int[torch.Tensor, "*batch seq_len"],
-    ) -> tuple[
-        Float[torch.Tensor, "*batch 1 #dim"], Float[torch.Tensor, "*batch 1 #dim"]
-    ]:
+        target: [torch.Tensor, "*batch seq_len #dim"],
+        observed_mask: [torch.Tensor, "*batch seq_len #dim"],
+        sample_id: [torch.Tensor, "*batch seq_len"],
+        variate_id: [torch.Tensor, "*batch seq_len"],
+    ) -> tuple[[torch.Tensor, "*batch 1 #dim"], [torch.Tensor, "*batch 1 #dim"]]:
         id_mask = torch.logical_and(
             torch.eq(sample_id.unsqueeze(-1), sample_id.unsqueeze(-2)),
             torch.eq(variate_id.unsqueeze(-1), variate_id.unsqueeze(-2)),

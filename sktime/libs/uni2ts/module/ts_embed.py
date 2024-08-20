@@ -18,15 +18,12 @@ from typing import Optional
 
 import torch
 from einops import einsum, rearrange
-from jaxtyping import Float, Int
 from torch import nn
 
 from sktime.libs.uni2ts.common.torch_util import size_to_mask
 
 
-def fs2idx(
-    feat_size: Int[torch.Tensor, "*batch"], feat_sizes: Int[torch.Tensor, "num_feats"]
-) -> Int[torch.Tensor, "*batch"]:
+def fs2idx(feat_size, feat_sizes):
     return (
         (rearrange(feat_size, "... -> ... 1") == feat_sizes)
         .to(torch.long)
@@ -88,9 +85,9 @@ class MultiInSizeLinear(nn.Module):
 
     def forward(
         self,
-        x: Float[torch.Tensor, "*batch max_feat"],
-        in_feat_size: Int[torch.Tensor, "*batch"],
-    ) -> Float[torch.Tensor, "*batch out_feat"]:
+        x: [torch.Tensor, "*batch max_feat"],
+        in_feat_size,
+    ) -> [torch.Tensor, "*batch out_feat"]:
         out = 0
         for idx, feat_size in enumerate(self.in_features_ls):
             weight = self.weight[idx] * self.mask[idx]
@@ -167,9 +164,9 @@ class MultiOutSizeLinear(nn.Module):
 
     def forward(
         self,
-        x: Float[torch.Tensor, "*batch in_feat"],
-        out_feat_size: Int[torch.Tensor, "*batch"],
-    ) -> Float[torch.Tensor, "*batch max_feat"]:
+        x: [torch.Tensor, "*batch in_feat"],
+        out_feat_size,
+    ) -> [torch.Tensor, "*batch max_feat"]:
         out = 0
         for idx, feat_size in enumerate(self.out_features_ls):
             weight = self.weight[idx] * self.mask[idx]

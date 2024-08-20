@@ -13,10 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from typing import Callable, Optional
+from typing import Optional
 
 import torch
-from jaxtyping import Float, PyTree
 from torch.distributions import Distribution, Gamma, constraints
 from torch.distributions.utils import broadcast_all, lazy_property, logits_to_probs
 from torch.nn import functional as F
@@ -104,19 +103,17 @@ class NegativeBinomialOutput(DistributionOutput):
     @property
     def domain_map(
         self,
-    ) -> PyTree[
-        Callable[[Float[torch.Tensor, "*batch 1"]], Float[torch.Tensor, "*batch"]], "T"
-    ]:
+    ):
         return dict(total_count=self._total_count, logits=self._logits)
 
     @staticmethod
     def _total_count(
-        total_count: Float[torch.Tensor, "*batch 1"],
-    ) -> Float[torch.Tensor, "*batch"]:
+        total_count: [torch.Tensor, "*batch 1"],
+    ):
         return F.softplus(total_count).squeeze(-1)
 
     @staticmethod
     def _logits(
-        logits: Float[torch.Tensor, "*batch 1"],
-    ) -> Float[torch.Tensor, "*batch"]:
+        logits: [torch.Tensor, "*batch 1"],
+    ):
         return logits.squeeze(-1)

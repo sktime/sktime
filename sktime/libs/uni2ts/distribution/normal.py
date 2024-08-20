@@ -16,7 +16,6 @@
 from typing import Callable, Optional
 
 import torch
-from jaxtyping import Float, PyTree
 from torch.distributions import Normal
 from torch.nn import functional as F
 
@@ -28,18 +27,18 @@ class NormalOutput(DistributionOutput):
     args_dim = dict(loc=1, scale=1)
 
     @property
-    def domain_map(self) -> PyTree[Callable, "T"]:
+    def domain_map(self) -> [Callable, "T"]:
         return dict(
             loc=self._loc,
             scale=self._scale,
         )
 
     @staticmethod
-    def _loc(loc: Float[torch.Tensor, "*batch 1"]) -> Float[torch.Tensor, "*batch"]:
+    def _loc(loc: [torch.Tensor, "*batch 1"]):
         return loc.squeeze(-1)
 
     @staticmethod
-    def _scale(scale: Float[torch.Tensor, "*batch 1"]) -> Float[torch.Tensor, "*batch"]:
+    def _scale(scale: [torch.Tensor, "*batch 1"]):
         epsilon = torch.finfo(scale.dtype).eps
         return F.softplus(scale).clamp_min(epsilon).squeeze(-1)
 
@@ -54,18 +53,16 @@ class NormalFixedScaleOutput(DistributionOutput):
     @property
     def domain_map(
         self,
-    ) -> PyTree[
-        Callable[[Float[torch.Tensor, "*batch 1"]], Float[torch.Tensor, "*batch"]], "T"
-    ]:
+    ):
         return dict(loc=self._loc)
 
     @staticmethod
-    def _loc(loc: Float[torch.Tensor, "*batch 1"]) -> Float[torch.Tensor, "*batch"]:
+    def _loc(loc: [torch.Tensor, "*batch 1"]):
         return loc.squeeze(-1)
 
     def _distribution(
         self,
-        distr_params: PyTree[Float[torch.Tensor, "*batch 1"], "T"],
+        distr_params,
         validate_args: Optional[bool] = None,
     ) -> Normal:
         loc = distr_params["loc"]

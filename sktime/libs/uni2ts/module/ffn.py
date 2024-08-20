@@ -18,7 +18,6 @@ from typing import Optional
 
 import torch
 import torch.nn.functional as F
-from jaxtyping import Float
 from torch import nn
 
 
@@ -48,15 +47,13 @@ class FeedForward(nn.Module):
         self.dropout2 = nn.Dropout(ffn_dropout_p)
         self.activation = activation
 
-    def forward(
-        self, x: Float[torch.Tensor, "... in_dim"]
-    ) -> Float[torch.Tensor, "... out_dim"]:
+    def forward(self, x: [torch.Tensor, "... in_dim"]) -> [torch.Tensor, "... out_dim"]:
         x = self._in_proj(x)
         return self.dropout2(self.fc2(self.dropout1(x)))
 
     def _in_proj(
-        self, x: Float[torch.Tensor, "... in_dim"]
-    ) -> Float[torch.Tensor, "... out_dim"]:
+        self, x: [torch.Tensor, "... in_dim"]
+    ) -> [torch.Tensor, "... out_dim"]:
         return self.activation(self.fc1(x))
 
 
@@ -85,6 +82,6 @@ class GatedLinearUnitFeedForward(FeedForward):
         return (int(dim * 2 / 3) + 7) // 8 * 8
 
     def _in_proj(
-        self, x: Float[torch.Tensor, "... in_dim"]
-    ) -> Float[torch.Tensor, "... out_dim"]:
+        self, x: [torch.Tensor, "... in_dim"]
+    ) -> [torch.Tensor, "... out_dim"]:
         return self.activation(self.fc_gate(x)) * self.fc1(x)

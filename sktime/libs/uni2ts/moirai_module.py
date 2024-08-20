@@ -9,14 +9,11 @@ if _check_soft_dependencies("torch", severity="none"):
     from torch.distributions import Distribution
     from torch.utils._pytree import tree_map
 
-if _check_soft_dependencies("huggingface_hub", severity="none"):
+if _check_soft_dependencies("huggingface-hub", severity="none"):
     from huggingface_hub import PyTorchModelHubMixin
 
 if _check_soft_dependencies("hydra-core", severity="none"):
     from hydra.utils import instantiate
-
-if _check_soft_dependencies(["jax", "jaxtyping"], severity="none"):
-    from jaxtyping import Bool, Float, Int
 
 
 from .common.torch_util import mask_fill, packed_attention_mask
@@ -107,13 +104,13 @@ class MoiraiModule(
 
     def forward(
         self,
-        target: Float[torch.Tensor, "*batch seq_len max_patch"],
-        observed_mask: Bool[torch.Tensor, "*batch seq_len max_patch"],
-        sample_id: Int[torch.Tensor, "*batch seq_len"],
-        time_id: Int[torch.Tensor, "*batch seq_len"],
-        variate_id: Int[torch.Tensor, "*batch seq_len"],
-        prediction_mask: Bool[torch.Tensor, "*batch seq_len"],
-        patch_size: Int[torch.Tensor, "*batch seq_len"],
+        target: [torch.Tensor, "*batch seq_len max_patch"],
+        observed_mask: [torch.Tensor, "*batch seq_len max_patch"],
+        sample_id: [torch.Tensor, "*batch seq_len"],
+        time_id: [torch.Tensor, "*batch seq_len"],
+        variate_id: [torch.Tensor, "*batch seq_len"],
+        prediction_mask: [torch.Tensor, "*batch seq_len"],
+        patch_size: [torch.Tensor, "*batch seq_len"],
     ) -> Distribution:
         loc, scale = self.scaler(
             target,

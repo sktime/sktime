@@ -17,7 +17,6 @@ from functools import reduce
 from typing import Callable, Optional
 
 import torch
-from jaxtyping import PyTree
 from torch.distributions import Categorical, Distribution, constraints
 
 from sktime.libs.uni2ts.common.torch_util import unsqueeze_trailing_dims
@@ -177,7 +176,7 @@ class MixtureOutput(DistributionOutput):
 
     def _distribution(
         self,
-        distr_params: PyTree[torch.Tensor, "T"],
+        distr_params: [torch.Tensor, "T"],
         validate_args: Optional[bool] = None,
     ) -> Distribution:
         return self.distr_cls(
@@ -194,14 +193,14 @@ class MixtureOutput(DistributionOutput):
         )
 
     @property
-    def args_dim(self) -> PyTree[int, "T"]:
+    def args_dim(self) -> [int, "T"]:
         return dict(
             weights_logits=len(self.components),
             components=[comp.args_dim for comp in self.components],
         )
 
     @property
-    def domain_map(self) -> PyTree[Callable[[torch.Tensor], torch.Tensor], "T"]:
+    def domain_map(self) -> [Callable[[torch.Tensor], torch.Tensor], "T"]:
         return dict(
             weights_logits=lambda x: x,
             components=[comp.domain_map for comp in self.components],

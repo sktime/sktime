@@ -19,7 +19,6 @@ from typing import Any, Optional
 
 import torch
 from einops import einsum, rearrange, repeat
-from jaxtyping import Float, Int
 from torch import nn
 
 
@@ -34,9 +33,9 @@ class Projection(nn.Module, abc.ABC):
     @abc.abstractmethod
     def forward(
         self,
-        x: Float[torch.Tensor, "*batch group hpg seq dim"],
-        seq_id: Optional[Int[torch.Tensor, "*batch #group #hpg seq"]],
-    ) -> Float[torch.Tensor, "*batch group hpg seq dim"]: ...
+        x: [torch.Tensor, "*batch group hpg seq dim"],
+        seq_id,
+    ) -> [torch.Tensor, "*batch group hpg seq dim"]: ...
 
 
 class RotaryProjection(Projection):
@@ -78,15 +77,15 @@ class RotaryProjection(Projection):
             self.register_buffer("sin", torch.sin(m_theta), persistent=False)
 
     @staticmethod
-    def _rotate(x: Float[torch.Tensor, "... dim"]) -> Float[torch.Tensor, "... dim"]:
+    def _rotate(x: [torch.Tensor, "... dim"]) -> [torch.Tensor, "... dim"]:
         x1, x2 = rearrange(x, "... (dim r) -> r ... dim", r=2)
         return rearrange([-x2, x1], "r ... dim -> ... (dim r)", r=2)  # noqa
 
     def forward(
         self,
-        x: Float[torch.Tensor, "*batch group hpg seq dim"],
-        seq_id: Optional[Int[torch.Tensor, "*batch #group #hpg seq"]],
-    ) -> Float[torch.Tensor, "*batch group hpg seq dim"]:
+        x: [torch.Tensor, "*batch group hpg seq dim"],
+        seq_id,
+    ) -> [torch.Tensor, "*batch group hpg seq dim"]:
         self._init_freq(max_len=seq_id.max() + 1)
         rot_cos = self.cos[seq_id]
         rot_sin = self.sin[seq_id]
@@ -149,13 +148,13 @@ class QueryKeyProjection(nn.Module):
 
     def forward(
         self,
-        query: Float[torch.Tensor, "*batch group hpg q_len dim"],
-        key: Float[torch.Tensor, "*batch group hpg kv_len dim"],
-        query_id: Optional[Int[torch.Tensor, "*batch #group #hpg q_len"]],
-        kv_id: Optional[Int[torch.Tensor, "*batch #group #hpg kv_len"]],
+        query: [torch.Tensor, "*batch group hpg q_len dim"],
+        key: [torch.Tensor, "*batch group hpg kv_len dim"],
+        query_id,
+        kv_id,
     ) -> tuple[
-        Float[torch.Tensor, "*batch group hpg seq dim"],
-        Float[torch.Tensor, "*batch group hpg seq dim"],
+        [torch.Tensor, "*batch group hpg seq dim"],
+        [torch.Tensor, "*batch group hpg seq dim"],
     ]:
         if self.partial_factor is not None:
             queries = list(query.split(self.split_sizes, dim=-1))
