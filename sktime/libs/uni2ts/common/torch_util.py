@@ -1,4 +1,3 @@
-# noqa: D100
 #  Copyright (c) 2024, Salesforce, Inc.
 #  SPDX-License-Identifier: Apache-2
 #
@@ -16,7 +15,10 @@
 
 
 import numpy as np
-import torch
+from skbase.utils.dependencies import _check_soft_dependencies
+
+if _check_soft_dependencies("torch", severity="none"):
+    import torch
 
 numpy_to_torch_dtype_dict = {
     bool: torch.bool,

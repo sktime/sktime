@@ -8,7 +8,7 @@ from skbase.utils.dependencies import _check_soft_dependencies
 import sktime.libs.uni2ts
 from sktime.forecasting.base import _BaseGlobalForecaster
 
-if _check_soft_dependencies("huggingface_hub", severity="none"):
+if _check_soft_dependencies("huggingface-hub", severity="none"):
     from huggingface_hub import hf_hub_download
 
 __author__ = ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"]
@@ -63,7 +63,6 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
     >>> index = pd.date_range("2020-01-01", periods=30, freq="D")
     >>> y = pd.DataFrame(y, index=index)
     >>> X = pd.DataFrame(X, columns=["x1", "x2"], index=index)
-    >>> df = pd.concat([y, X], axis=1)
     >>> morai_forecaster.fit(y, X=X)
     >>> X_test = pd.DataFrame(np.random.normal(0, 1, (10, 2)),
     ...                      columns=["x1", "x2"],
@@ -87,11 +86,8 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         "python_dependencies": [
             "gluonts",
             "torch",
-            "jax",
-            "jaxtyping",
             "einops",
             "huggingface-hub",
-            "hydra-core",
             "lightning",
         ],
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex"],
