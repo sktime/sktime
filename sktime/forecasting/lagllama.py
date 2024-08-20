@@ -3,7 +3,6 @@
 
 __author__ = ["shlok191"]
 
-import subprocess
 
 from sktime.forecasting.base import _BaseGlobalForecaster
 
@@ -32,7 +31,6 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         If True, ensures all predicted samples are passed
         through ReLU,and are thus positive or 0.
 
-    rope_scaling
     lr: float, optional (default=5e-5)
         The learning rate of the model.
 
@@ -67,14 +65,8 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
     """
 
     _tags = {
-        "y_inner_mtype": [
-            "gluonts_ListDataset_series",
-            "gluonts_ListDataset_panel",
-        ],
-        "X_inner_mtype": [
-            "gluonts_ListDataset_series",
-            "gluonts_ListDataset_panel",
-        ],
+        "y_inner_mtype": ["gluonts_ListDataset_panel", "gluonts_ListDataset_series"],
+        "X_inner_mtype": ["gluonts_ListDataset_panel", "gluonts_ListDataset_series"],
         "scitype:y": "both",
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": True,
@@ -107,6 +99,7 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         super().__init__()
 
         import torch
+        from huggingface_hub import hf_hub_download
 
         # Defining private variable values
         self.model_path = model_path
@@ -115,7 +108,7 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         )
 
         self.device = device
-        self.device_ = torch.device("cpu") if not device else torch.device("device")
+        self.device_ = torch.device("cpu") if not device else torch.device(device)
 
         self.context_length = context_length
         self.context_length_ = 32 if not context_length else context_length
@@ -137,26 +130,19 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
 
         self.trainer_kwargs = trainer_kwargs
         self.trainer_kwargs_ = (
-            {"max_epochs": 50} if not trainer_kwargs else trainer_kwargs
+            {"max_epochs": 10} if not trainer_kwargs else trainer_kwargs
         )
 
         # Not storing private variables for boolean specific values
         self.nonnegative_pred_samples = nonnegative_pred_samples
 
         # Downloading the LagLlama weights from Hugging Face
-        url = self.model_path_
-        c = f"huggingface-cli download {url} lag-llama.ckpt --local-dir ."
-
-        status = subprocess.run(c, shell=True, check=True, capture_output=True)
-
-        # Checking if the command ran successfully
-        if status.returncode != 0:
-            raise RuntimeError(
-                "Failed to fetch the pretrained model weights from HuggingFace!"
-            )
+        self.ckpt_url_ = hf_hub_download(
+            repo_id=self.model_path_, filename="lag-llama.ckpt"
+        )
 
         # Load in the lag llama checkpoint
-        ckpt = torch.load("lag-llama.ckpt", map_location=self.device_)
+        ckpt = torch.load(self.ckpt_url_, map_location=self.device_)
 
         estimator_args = ckpt["hyper_parameters"]["model_kwargs"]
         self.estimator_args = estimator_args
@@ -190,7 +176,7 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         # Creating a new LagLlama estimator with the appropriate
         # forecasting horizon
         self.estimator_ = LagLlamaEstimator(
-            ckpt_path="lag-llama.ckpt",
+            ckpt_path=self.ckpt_url_,
             prediction_length=len(fh),
             context_length=self.context_length_,
             input_size=self.estimator_args["input_size"],
@@ -338,15 +324,18 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params = [
-            {},
             {
-                "model_path": None,
-                "device": None,
-                "context_length": 32,
+                "context_length": 50,
                 "num_samples": 16,
                 "batch_size": 32,
                 "shuffle_buffer_length": 64,
-                "nonnegative_pred_samples": False,
+                "lr": 5e-5,
+            },
+            {
+                "context_length": 50,
+                "num_samples": 16,
+                "batch_size": 32,
+                "shuffle_buffer_length": 64,
                 "lr": 5e-5,
             },
         ]

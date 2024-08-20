@@ -39,12 +39,17 @@ def convert_pandas_to_listDataset(pd_dataframe: pd.DataFrame):
     from gluonts.dataset.common import ListDataset
     from gluonts.dataset.field_names import FieldName
 
+    one_dim_target = False
+
     # For non-multiindexed DataFrames
     if not isinstance(pd_dataframe.index, pd.MultiIndex):
         start_datetime = pd_dataframe.index[0]
+        target_values = pd_dataframe.values
 
-        target_columns = pd_dataframe.columns[:]
-        target_values = pd_dataframe[target_columns]
+        # Converts data from lists of lists to 1 list for univariate time series
+        if target_values.shape[1] == 1:
+            one_dim_target = True
+            target_values = target_values.flatten()
 
         if isinstance(pd_dataframe.index, pd.DatetimeIndex):
             freq = pd_dataframe.index.inferred_freq
@@ -59,7 +64,7 @@ def convert_pandas_to_listDataset(pd_dataframe: pd.DataFrame):
         return ListDataset(
             [{FieldName.START: start_datetime, FieldName.TARGET: target_values}],
             freq=freq,
-            one_dim_target=False,
+            one_dim_target=one_dim_target,
         )
 
     dataset = []
@@ -76,10 +81,11 @@ def convert_pandas_to_listDataset(pd_dataframe: pd.DataFrame):
             start_datetime = pd.Timestamp(start_datetime)
 
         # Isolating multivariate values for each time series
-        target_column = data.columns[:]
+        target_values = data.values
 
-        target_values = data[target_column]
-        target_values = target_values.reset_index(drop=True)
+        if target_values.shape[1] == 1:
+            one_dim_target = True
+            target_values = target_values.flatten()
 
         dataset.append(
             {
@@ -102,12 +108,7 @@ def convert_pandas_to_listDataset(pd_dataframe: pd.DataFrame):
         freq = "D"
 
     # Converting the dataset to a GluonTS ListDataset
-    list_dataset = ListDataset(
-        dataset,
-        freq=freq,
-        one_dim_target=False,
-    )
-
+    list_dataset = ListDataset(dataset, freq=freq, one_dim_target=one_dim_target)
     return list_dataset
 
 
