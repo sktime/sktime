@@ -39,7 +39,7 @@ if _check_soft_dependencies("torch", severity="none"):
 if _check_soft_dependencies("einops", severity="none"):
     from einops import rearrange, reduce, repeat
 
-if _check_soft_dependencies("gluonts", severity="none"):
+if _check_soft_dependencies(["gluonts", "torch"], severity="none"):
     from gluonts.model import Input, InputSpec
     from gluonts.torch import PyTorchPredictor
     from gluonts.transform import (
