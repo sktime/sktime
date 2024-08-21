@@ -750,9 +750,10 @@ class TransformedTargetForecaster(_Pipeline):
         then running ``tN.inverse_transform`` with ``X=`` the output of ``f``, ``y=X``,
         then ``t2.inverse_transform`` on ``X=`` the output of ``t1.inverse_transform``,
         etc, sequentially, with ``t[i-1]`` receiving the output of ``t[i]`` as ``X``,
-        then running ``tp1.fit_transform`` with ``X=`` the output of ``t[N]s``, ``y=X``,
-        then ``tp2.fit_transform`` on ``X=`` the output of ``tp1.fit_transform``, etc,
-        sequentially, with ``tp[i]`` receiving the output of ``tp[i-1]``,
+        then running ``tp1.transform`` with ``X=`` the output of ``t1``, ``y=X``,
+        then ``tp2.transform`` on ``X=`` the output of ``tp1.transform``, etc,
+        sequentially, with ``tp[i]`` receiving the output of ``tp[i-1]``.
+        The output of ``tpM`` is returned, or of ``t1.inverse_transform`` if ``M=0``.
 
     ``predict_interval(X, fh)``, ``predict_quantiles(X, fh)`` - as ``predict(X, fh)``,
         with ``predict_interval`` or ``predict_quantiles`` substituted for ``predict``
@@ -795,7 +796,7 @@ class TransformedTargetForecaster(_Pipeline):
     forecaster_ : estimator, reference to the unique forecaster in ``steps_``
     transformers_pre_ : list of tuples (str, transformer) of sktime transformers
         reference to pairs in ``steps_`` that precede ``forecaster_``
-    transformers_ost_ : list of tuples (str, transformer) of sktime transformers
+    transformers_post_ : list of tuples (str, transformer) of sktime transformers
         reference to pairs in ``steps_`` that succeed ``forecaster_``
 
     Examples
