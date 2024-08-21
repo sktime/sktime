@@ -132,11 +132,11 @@ class GRU(NNModule):
         if isinstance(X, np.ndarray):
             X = torch.from_numpy(X).float()
 
-        gru_out, _ = self.gru(X)
-        output = gru_out[:, -1, :]
-        output = self.out_dropout(output)
-        output = self.fc(output)
-        return output
+        X, _ = self.gru(X)
+        X = X[:, -1, :]
+        X = self.out_dropout(X)
+        X = self.fc(X)
+        return X
 
 
 class GRUFCNN(NNModule):
@@ -300,17 +300,17 @@ class GRUFCNN(NNModule):
         gru_out = self.grudropout(gru_out)  # apply dropout
 
         # FCN
-        x = self.permute(X)
-        x = self.conv1(x)
-        x = self.conv2(x)
-        x = self.conv3(x)
-        x = self.globalavgpool(x)
-        x = x.view(x.size(0), -1)
+        X = self.permute(X)
+        X = self.conv1(X)
+        X = self.conv2(X)
+        X = self.conv3(X)
+        X = self.globalavgpool(X)
+        X = X.view(X.size(0), -1)
 
         # Concatenate
-        x = self.concat(gru_out, x)
-        x = self.fc(x)
-        return x
+        X = self.concat(gru_out, X)
+        X = self.fc(X)
+        return X
 
 
 class Conv(NNSequential):
