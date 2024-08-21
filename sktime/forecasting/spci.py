@@ -180,8 +180,6 @@ class SPCI(BaseForecaster, BaseProbaRegressor):
     # todo: add any hyper-parameters and components to constructor
     def __init__(
         self,
-        X,
-        y,
         forecaster,
         regressor,
         random_state=None,
@@ -190,10 +188,9 @@ class SPCI(BaseForecaster, BaseProbaRegressor):
         #  if estimators have default values, set None and initialize below
 
         # todo: write any hyper-parameters and components to self
-        self.est = None
-        self.parama = None
-        self.paramb = None
-        self.paramc = None
+        self.forecaster = forecaster.clone()
+        self.regressor = regressor.clone()
+        self.random_state = random_state
         # IMPORTANT: the self.params should never be overwritten or mutated from now on
         # for handling defaults etc, write to other attributes, e.g., self._parama
         # for estimators, initialize a clone, e.g., self.est_ = est.clone()
