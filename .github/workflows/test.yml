@@ -296,11 +296,6 @@ jobs:
       - name: Run tests
         run: make test_without_datasets
 
-      - name: Publish code coverage
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-
   test-unix-pandas1:
     needs: test-nosoftdeps
     strategy:
@@ -335,8 +330,3 @@ jobs:
 
       - name: Run tests
         run: make test_without_datasets
-
-      - name: Publish code coverage
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
