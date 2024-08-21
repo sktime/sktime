@@ -93,7 +93,7 @@ class MoiraiForecast(L.LightningModule):
         context_length: int,
         module_kwargs: Optional[dict[str, Any]] = None,
         module=None,
-        patch_size: int | str = "auto",
+        patch_size="auto",
         num_samples: int = 100,
     ):
         assert (module is not None) or (
