@@ -84,7 +84,7 @@ class DistrParamProj(nn.Module):
     def __init__(
         self,
         in_features: int,
-        out_features: int | tuple[int, ...] | list[int],
+        out_features,
         args_dim: [int, "T"],
         domain_map,
         proj_layer,
@@ -188,7 +188,7 @@ class DistributionOutput:
     def get_param_proj(
         self,
         in_features: int,
-        out_features: int | tuple[int, ...] | list[int],
+        out_features,
         proj_layer: Callable[..., nn.Module] = MultiOutSizeLinear,
         **kwargs: Any,
     ) -> nn.Module:

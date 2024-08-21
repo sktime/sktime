@@ -112,7 +112,7 @@ class MoiraiForecast(L.LightningModule):
         feat_dynamic_real_dim: Optional[int] = None,
         past_feat_dynamic_real_dim: Optional[int] = None,
         context_length: Optional[int] = None,
-        patch_size: Optional[int | str] = None,
+        patch_size=None,
         num_samples: Optional[int] = None,
     ):
         kwargs = {

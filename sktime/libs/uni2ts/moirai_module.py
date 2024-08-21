@@ -45,7 +45,7 @@ from .common.torch_util import mask_fill, packed_attention_mask
 
 def encode_distr_output(
     distr_output,
-) -> dict[str, str | float | int]:
+):
     def _encode(val):
         if not isinstance(val, DistributionOutput):
             return val
@@ -58,8 +58,8 @@ def encode_distr_output(
     return _encode(distr_output)
 
 
-def decode_distr_output(config: dict[str, str | float | int]):
-    return instantiate(config, _convert_="all")
+# def decode_distr_output(config):
+#     return instantiate(config, _convert_="all")
 
 
 class MoiraiModule(

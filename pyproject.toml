@@ -113,6 +113,7 @@ all_extras = [
   'tbats>=1.1',
   'temporian<0.9.0,>=0.7.0,!=0.8.0; python_version < "3.12" and sys_platform != "win32"',
   'tensorflow<2.17,>=2; python_version < "3.12"',
+  'tsbootstrap<0.2,>=0.1.0',
   'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   "xarray",
@@ -224,6 +225,7 @@ transformations = [
   "statsmodels<0.15,>=0.12.1",
   'stumpy<1.13,>=1.5.1; python_version < "3.12"',
   'temporian<0.9.0,>=0.7.0,!=0.8.0; python_version < "3.12" and sys_platform != "win32"',
+  'tsbootstrap<0.2,>=0.1.0',
   'tsfresh<0.21,>=0.17; python_version < "3.12"',
 ]
 
@@ -289,7 +291,8 @@ dl = [
   'transformers[torch]<4.41.0; python_version < "3.12"',
   'pykan<0.2.2,>=0.2; python_version > "3.9.7"',
   'pytorch-forecasting>=1.0.0; python_version < "3.11"',
-  'gluonts[torch]; python_version < "3.12"',
+  'lightning>=2.0; python_version < "3.12"',
+  'gluonts>=0.14.3; python_version < "3.12"',
   'einops>0.7.0; python_version < "3.12"',
   'huggingface-hub>=0.23.0; python_version < "3.12"',
 ]
