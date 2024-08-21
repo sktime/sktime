@@ -84,23 +84,12 @@ if _check_soft_dependencies("polars", severity="none"):
     example_dict_lossy[("pl.DataFrame", "Series", 0)] = False
 
 if _check_soft_dependencies("gluonts", severity="none"):
-    from gluonts.dataset.pandas import PandasDataset
-
     from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
 
     list_dataset = convert_pandas_to_listDataset(df)
 
     example_dict[("gluonts_ListDataset_series", "Series", 0)] = list_dataset
     example_dict_lossy[("gluonts_ListDataset_series", "Series", 0)] = True
-
-    # Creating a dateTimeIndex for the series
-    date_time_index = pd.date_range(start="2023-01-01", freq="D", periods=len(s))
-    series = pd.Series(s, index=date_time_index)
-
-    pandas_dataset = PandasDataset(series)
-
-    example_dict[("gluonts_PandasDataset_series", "Series", 0)] = pandas_dataset
-    example_dict_lossy[("gluonts_PandasDataset_series", "Series", 0)] = True
 
 example_dict_metadata[("Series", 0)] = {
     "is_univariate": True,
@@ -283,8 +272,6 @@ if _check_soft_dependencies("polars", severity="none"):
 
 
 if _check_soft_dependencies("gluonts", severity="none"):
-    from gluonts.dataset.pandas import PandasDataset
-
     from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
 
     list_dataset = convert_pandas_to_listDataset(df)
@@ -292,14 +279,6 @@ if _check_soft_dependencies("gluonts", severity="none"):
     example_dict[("gluonts_ListDataset_series", "Series", 3)] = list_dataset
     example_dict_lossy[("gluonts_ListDataset_series", "Series", 3)] = True
 
-    # Creating a dateTimeIndex for the series
-    date_time_index = pd.date_range(start="2023-01-01", freq="D", periods=len(s))
-    series = pd.Series(s, index=date_time_index)
-
-    pandas_dataset = PandasDataset(series)
-
-    example_dict[("gluonts_PandasDataset_series", "Series", 0)] = pandas_dataset
-    example_dict_lossy[("gluonts_PandasDataset_series", "Series", 0)] = True
 
 example_dict_metadata[("Series", 3)] = {
     "is_univariate": True,

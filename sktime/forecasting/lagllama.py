@@ -3,7 +3,6 @@
 
 __author__ = ["shlok191"]
 
-import subprocess
 
 from sktime.forecasting.base import _BaseGlobalForecaster
 
@@ -45,6 +44,7 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
     --------
     >>> from gluonts.dataset.repository.datasets import get_dataset
     >>> from sktime.forecasting.lagllama import LagLlamaForecaster
+    >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from gluonts.dataset.common import ListDataset
 
     >>> dataset = get_dataset("m4_weekly")
@@ -54,25 +54,19 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
 
     >>> forecaster = LagLlamaForecaster(
     ...     context_length=dataset.metadata.prediction_length * 3,
-    ...     prediction_length=dataset.metadata.prediction_length,
     ...     lr=5e-4,
     ...     )
 
-    >>> forecaster.fit(train_dataset)
+    >>> fh=ForecastingHorizon(range(dataset.metadata.prediction_length))
+    >>> forecaster.fit(train_dataset,fh = fh)
 
     >>> y_pred = forecaster.predict()
     >>> y_pred
     """
 
     _tags = {
-        "y_inner_mtype": [
-            "gluonts_ListDataset_series",
-            "gluonts_ListDataset_panel",
-        ],
-        "X_inner_mtype": [
-            "gluonts_ListDataset_series",
-            "gluonts_ListDataset_panel",
-        ],
+        "y_inner_mtype": ["gluonts_ListDataset_panel", "gluonts_ListDataset_series"],
+        "X_inner_mtype": ["gluonts_ListDataset_panel", "gluonts_ListDataset_series"],
         "scitype:y": "both",
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": True,
@@ -105,7 +99,7 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         super().__init__()
 
         import torch
-        from lag_llama.gluon.estimator import LagLlamaEstimator
+        from huggingface_hub import hf_hub_download
 
         # Defining private variable values
         self.model_path = model_path
@@ -114,7 +108,7 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         )
 
         self.device = device
-        self.device_ = torch.device("cpu") if not device else torch.device("device")
+        self.device_ = torch.device("cpu") if not device else torch.device(device)
 
         self.context_length = context_length
         self.context_length_ = 32 if not context_length else context_length
@@ -136,66 +130,47 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
 
         self.trainer_kwargs = trainer_kwargs
         self.trainer_kwargs_ = (
-            {"max_epochs": 50} if not trainer_kwargs else trainer_kwargs
+            {"max_epochs": 10} if not trainer_kwargs else trainer_kwargs
         )
 
         # Not storing private variables for boolean specific values
         self.nonnegative_pred_samples = nonnegative_pred_samples
 
         # Downloading the LagLlama weights from Hugging Face
-        url = self.model_path_
-        c = f"huggingface-cli download {url} lag-llama.ckpt --local-dir ."
-
-        status = subprocess.run(c, shell=True, check=True, capture_output=True)
-
-        # Checking if the command ran successfully
-        if status.returncode != 0:
-            raise RuntimeError(
-                "Failed to fetch the pretrained model weights from HuggingFace!"
-            )
+        self.ckpt_url_ = hf_hub_download(
+            repo_id=self.model_path_, filename="lag-llama.ckpt"
+        )
 
         # Load in the lag llama checkpoint
-        ckpt = torch.load("./lag-llama.ckpt", map_location=self.device_)
+        ckpt = torch.load(self.ckpt_url_, map_location=self.device_)
 
         estimator_args = ckpt["hyper_parameters"]["model_kwargs"]
         self.estimator_args = estimator_args
 
-        # By default, we maintain RoPE scaling
-        # We provide the user an option to disable in fit() function
-        rope_scaling_arguments = {
-            "type": "linear",
-            "factor": max(
-                1.0,
-                (self.context_length_ + self.prediction_length_)
-                / estimator_args["context_length"],
-            ),
-        }
+    def _reform_y(self, y):
+        from gluonts.dataset.common import ListDataset
 
-        # Creating our LagLlama estimator
-        self.estimator_ = LagLlamaEstimator(
-            ckpt_path="lag-llama.ckpt",
-            prediction_length=self.prediction_length_,
-            context_length=self.context_length_,
-            input_size=estimator_args["input_size"],
-            n_layer=estimator_args["n_layer"],
-            n_embd_per_head=estimator_args["n_embd_per_head"],
-            n_head=estimator_args["n_head"],
-            scaling=estimator_args["scaling"],
-            time_feat=estimator_args["time_feat"],
-            batch_size=self.batch_size_,
-            device=self.device_,
-            rope_scaling=rope_scaling_arguments,
-        )
+        shape = y[0]["target"].shape
+        print(shape)
 
-        lightning_module = self.estimator_.create_lightning_module()
-        transformation = self.estimator_.create_transformation()
+        if len(shape) == 2 and shape[1] == 1:
+            new_values = []
 
-        # Finally, we create our predictor!
-        self.predictor_ = self.estimator_.create_predictor(
-            transformation, lightning_module
-        )
+            # Updating the ListDatset to flatten univariate target values
+            for data_entry in y:
+                target = data_entry["target"]
 
-    # todo: implement this, mandatory
+                if len(target.shape) == 2 and target.shape[1] == 1:
+                    data_entry["target"] = target.flatten()
+
+                new_values.append(data_entry)
+
+            new_y = ListDataset(new_values, one_dim_target=True, freq="D")
+
+            return new_y
+
+        return y
+
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
@@ -224,8 +199,8 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         # Creating a new LagLlama estimator with the appropriate
         # forecasting horizon
         self.estimator_ = LagLlamaEstimator(
-            ckpt_path="lag-llama.ckpt",
-            prediction_length=fh,
+            ckpt_path=self.ckpt_url_,
+            prediction_length=len(fh),
             context_length=self.context_length_,
             input_size=self.estimator_args["input_size"],
             n_layer=self.estimator_args["n_layer"],
@@ -246,6 +221,9 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         self.predictor_ = self.estimator_.create_predictor(
             transformation, lightning_module
         )
+
+        # Updating y value to make it compatible with LagLlama
+        y = self._reform_y(y)
 
         # Lastly, training the model
         if y is not None:
@@ -371,15 +349,21 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = {
-            "model_path": None,
-            "device": None,
-            "context_length": 32,
-            "prediction_length": 100,
-            "num_samples": 10,
-            "batch_size": 32,
-            "nonnegative_pred_samples": False,
-            "lr": 5e-5,
-        }
+        params = [
+            {
+                "context_length": 50,
+                "num_samples": 16,
+                "batch_size": 32,
+                "shuffle_buffer_length": 64,
+                "lr": 5e-5,
+            },
+            {
+                "context_length": 50,
+                "num_samples": 16,
+                "batch_size": 32,
+                "shuffle_buffer_length": 64,
+                "lr": 5e-5,
+            },
+        ]
 
         return params
