@@ -202,6 +202,7 @@ forecasting = [
   'statsforecast<1.8.0,>=1.0.0; python_version < "3.12"',
   "statsmodels<0.15,>=0.12.1",
   'tbats<1.2,>=1.1; python_version < "3.12"',
+  "u8darts<0.31,>=0.29.0",
 ]
 networks = [
   "keras-self-attention<0.52,>=0.51",
