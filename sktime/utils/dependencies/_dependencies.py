@@ -5,7 +5,6 @@ __author__ = ["fkiraly", "mloning"]
 import sys
 import warnings
 from functools import lru_cache
-from importlib.metadata import distributions
 from importlib.util import find_spec
 from inspect import isclass
 
@@ -273,9 +272,19 @@ def _get_installed_packages_private():
     Same as _get_installed_packages, but internal to avoid mutating the lru_cache
     by accident.
     """
+    from importlib.metadata import distributions, version
+
     dists = distributions()
-    packages = {dist.metadata["Name"]: dist.version for dist in dists}
-    return packages
+    package_names = {dist.metadata["Name"] for dist in dists}
+    package_versions = {pkg_name: version(pkg_name) for pkg_name in package_names}
+    # developer note:
+    # we cannot just use distributions naively,
+    # because the same top level package name may appear *twice*,
+    # e.g., in a situation where a virtual env overrides a base env,
+    # such as in deployment environments like databricks.
+    # the "version" contract ensures we always get the version that corresponds
+    # to the importable distribution, i.e., the top one in the sys.path.
+    return package_versions
 
 
 def _get_installed_packages():
