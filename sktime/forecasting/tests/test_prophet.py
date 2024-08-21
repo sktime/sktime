@@ -114,11 +114,10 @@ def test_prophet_fit_kwargs_are_passed_down(fit_kwargs: dict):
 def test_prophet_fitted_params(constant_timeseries):
     """
     Test if the fitted parameters have the expected number of dimensions.
-    
+
     For constant timeseries, get_fitted_params was raising unexpeceted error
     (see issue #6982)
     """
-
     expected_param_ndims = {
         "k": 0,
         "m": 0,
@@ -129,6 +128,7 @@ def test_prophet_fitted_params(constant_timeseries):
 
     if not constant_timeseries:
         from sktime.datasets import load_airline
+
         y = load_airline()
     else:
         y = pd.DataFrame(
