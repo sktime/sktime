@@ -20,25 +20,25 @@ from skbase.utils.dependencies import _check_soft_dependencies
 if _check_soft_dependencies("torch", severity="none"):
     import torch
 
-numpy_to_torch_dtype_dict = {
-    bool: torch.bool,
-    np.uint8: torch.uint8,
-    np.int8: torch.int8,
-    np.int16: torch.int16,
-    np.int32: torch.int32,
-    np.int64: torch.int64,
-    np.float16: torch.float16,
-    np.float32: torch.float32,
-    np.float64: torch.float64,
-    np.complex64: torch.complex64,
-    np.complex128: torch.complex128,
-}
+    numpy_to_torch_dtype_dict = {
+        bool: torch.bool,
+        np.uint8: torch.uint8,
+        np.int8: torch.int8,
+        np.int16: torch.int16,
+        np.int32: torch.int32,
+        np.int64: torch.int64,
+        np.float16: torch.float16,
+        np.float32: torch.float32,
+        np.float64: torch.float64,
+        np.complex64: torch.complex64,
+        np.complex128: torch.complex128,
+    }
 
 
 # noqa: F722
 def packed_attention_mask(
-    sample_id: [torch.Tensor, "*batch seq_len"],
-) -> [torch.Tensor, "*batch seq_len seq_len"]:
+    sample_id,
+):
     """
     Create a packed attention mask for self-attention.
 
@@ -56,10 +56,10 @@ def packed_attention_mask(
 
 
 def mask_fill(
-    tensor: [torch.Tensor, "*batch dim"],
+    tensor,
     mask,
-    value: [torch.Tensor, "dim"],
-) -> [torch.Tensor, "*batch dim"]:
+    value,
+):
     """
     Fill masked values with a given value.
 
@@ -79,9 +79,9 @@ def mask_fill(
 
 
 def safe_div(
-    numer: torch.Tensor,
-    denom: torch.Tensor,
-) -> torch.Tensor:
+    numer,
+    denom,
+):
     """
     Safe division.
 
@@ -104,7 +104,7 @@ def safe_div(
 def size_to_mask(
     max_size: int,
     sizes,
-) -> [torch.Tensor, "*batch max_size"]:
+):
     """
     Create a mask for a given size.
 
@@ -121,7 +121,7 @@ def size_to_mask(
     return torch.lt(mask, sizes.unsqueeze(-1))
 
 
-def unsqueeze_trailing_dims(x: torch.Tensor, shape: torch.Size) -> torch.Tensor:
+def unsqueeze_trailing_dims(x, shape):
     """
     Unsqueeze trailing dimensions.
 

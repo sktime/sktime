@@ -23,19 +23,18 @@ from sktime.libs.uni2ts.common.torch_util import safe_div
 if _check_soft_dependencies("torch", severity="none"):
     import torch
     from einops import rearrange, reduce
-    from torch.distributions import Distribution
 
 
 class PackedLoss(abc.ABC):
     def __call__(
         self,
         pred: Any,
-        target: [torch.Tensor, "*batch seq_len #dim"],
+        target,
         prediction_mask,
         observed_mask,
         sample_id,
         variate_id,
-    ) -> [torch.Tensor, ""]:
+    ):
         if observed_mask is None:
             observed_mask = torch.ones_like(target, dtype=torch.bool)
         if sample_id is None:
@@ -54,21 +53,22 @@ class PackedLoss(abc.ABC):
     def _loss_func(
         self,
         pred: Any,
-        target: [torch.Tensor, "*batch seq_len #dim"],
-        prediction_mask: [torch.Tensor, "*batch seq_len"],
-        observed_mask: [torch.Tensor, "*batch seq_len #dim"],
-        sample_id: [torch.Tensor, "*batch seq_len"],
-        variate_id: [torch.Tensor, "*batch seq_len"],
-    ) -> [torch.Tensor, "*batch seq_len #dim"]: ...
-
-    def reduce_loss(
-        self,
-        loss: [torch.Tensor, "*batch seq_len #dim"],
+        target,
         prediction_mask,
         observed_mask,
         sample_id,
         variate_id,
-    ) -> [torch.Tensor, ""]:
+    ):
+        pass
+
+    def reduce_loss(
+        self,
+        loss,
+        prediction_mask,
+        observed_mask,
+        sample_id,
+        variate_id,
+    ):
         id_mask = torch.logical_and(
             torch.eq(sample_id.unsqueeze(-1), sample_id.unsqueeze(-2)),
             torch.eq(variate_id.unsqueeze(-1), variate_id.unsqueeze(-2)),
@@ -101,10 +101,11 @@ class PackedDistributionLoss(PackedLoss):
     @abc.abstractmethod
     def _loss_func(
         self,
-        pred: Distribution,
-        target: [torch.Tensor, "*batch seq_len #dim"],
-        prediction_mask: [torch.Tensor, "*batch seq_len"],
-        observed_mask: [torch.Tensor, "*batch seq_len #dim"],
-        sample_id: [torch.Tensor, "*batch seq_len"],
-        variate_id: [torch.Tensor, "*batch seq_len"],
-    ) -> [torch.Tensor, "*batch seq_len #dim"]: ...
+        pred,
+        target,
+        prediction_mask,
+        observed_mask,
+        sample_id,
+        variate_id,
+    ):
+        pass

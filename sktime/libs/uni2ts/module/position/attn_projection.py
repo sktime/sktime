@@ -23,6 +23,13 @@ if _check_soft_dependencies("torch", severity="none"):
     import torch
     from torch import nn
 
+else:
+
+    class nn:
+        class Module:
+            pass
+
+
 if _check_soft_dependencies("einops", severity="none"):
     from einops import einsum, rearrange, repeat
 
@@ -38,9 +45,9 @@ class Projection(nn.Module, abc.ABC):
     @abc.abstractmethod
     def forward(
         self,
-        x: [torch.Tensor, "*batch group hpg seq dim"],
+        x,
         seq_id,
-    ) -> [torch.Tensor, "*batch group hpg seq dim"]: ...
+    ): ...
 
 
 class RotaryProjection(Projection):
@@ -82,15 +89,15 @@ class RotaryProjection(Projection):
             self.register_buffer("sin", torch.sin(m_theta), persistent=False)
 
     @staticmethod
-    def _rotate(x: [torch.Tensor, "... dim"]) -> [torch.Tensor, "... dim"]:
+    def _rotate(x):
         x1, x2 = rearrange(x, "... (dim r) -> r ... dim", r=2)
         return rearrange([-x2, x1], "r ... dim -> ... (dim r)", r=2)  # noqa
 
     def forward(
         self,
-        x: [torch.Tensor, "*batch group hpg seq dim"],
+        x,
         seq_id,
-    ) -> [torch.Tensor, "*batch group hpg seq dim"]:
+    ):
         self._init_freq(max_len=seq_id.max() + 1)
         rot_cos = self.cos[seq_id]
         rot_sin = self.sin[seq_id]
@@ -153,14 +160,11 @@ class QueryKeyProjection(nn.Module):
 
     def forward(
         self,
-        query: [torch.Tensor, "*batch group hpg q_len dim"],
-        key: [torch.Tensor, "*batch group hpg kv_len dim"],
+        query,
+        key,
         query_id,
         kv_id,
-    ) -> tuple[
-        [torch.Tensor, "*batch group hpg seq dim"],
-        [torch.Tensor, "*batch group hpg seq dim"],
-    ]:
+    ):
         if self.partial_factor is not None:
             queries = list(query.split(self.split_sizes, dim=-1))
             keys = list(key.split(self.split_sizes, dim=-1))

@@ -16,8 +16,7 @@
 from skbase.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("torch", severity="none"):
-    import torch
-    from torch.distributions import Distribution
+    pass
 
 from ._base import PackedDistributionLoss
 
@@ -25,11 +24,11 @@ from ._base import PackedDistributionLoss
 class PackedNLLLoss(PackedDistributionLoss):
     def _loss_func(
         self,
-        pred: Distribution,
-        target: [torch.Tensor, "*batch seq_len #dim"],
-        prediction_mask: [torch.Tensor, "*batch seq_len"],
-        observed_mask: [torch.Tensor, "*batch seq_len #dim"],
-        sample_id: [torch.Tensor, "*batch seq_len"],
-        variate_id: [torch.Tensor, "*batch seq_len"],
-    ) -> [torch.Tensor, "*batch seq_len #dim"]:
+        pred,
+        target,
+        prediction_mask,
+        observed_mask,
+        sample_id,
+        variate_id,
+    ):
         return -pred.log_prob(target)

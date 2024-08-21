@@ -5,7 +5,9 @@ from unittest.mock import patch
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-import sktime.libs.uni2ts
+if _check_soft_dependencies("lightning", severity="none"):
+    import sktime.libs.uni2ts
+
 from sktime.forecasting.base import _BaseGlobalForecaster
 
 if _check_soft_dependencies("huggingface-hub", severity="none"):
@@ -138,13 +140,16 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             )
 
     # Apply a patch for redirecting imports to sktime.libs.uni2ts
-    @patch.dict("sys.modules", {"uni2ts": sktime.libs.uni2ts})
-    def _instantiate_patched_model(self, model_kwargs):
-        """Instantiate the model from the vendor package."""
+    if _check_soft_dependencies("lightning", severity="none"):
         from sktime.libs.uni2ts.forecast import MoiraiForecast
 
-        self.model = MoiraiForecast.load_from_checkpoint(**model_kwargs)
-        self.model.to(self.map_location)
+        @patch.dict("sys.modules", {"uni2ts": sktime.libs.uni2ts})
+        def _instantiate_patched_model(self, model_kwargs):
+            """Instantiate the model from the vendor package."""
+            from sktime.libs.uni2ts.forecast import MoiraiForecast
+
+            self.model = MoiraiForecast.load_from_checkpoint(**model_kwargs)
+            self.model.to(self.map_location)
 
     def _fit(self, y, X, fh):
         if fh is not None:

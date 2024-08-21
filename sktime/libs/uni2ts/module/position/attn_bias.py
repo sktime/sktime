@@ -20,6 +20,12 @@ from skbase.utils.dependencies import _check_soft_dependencies
 if _check_soft_dependencies("torch", severity="none"):
     import torch
     from torch import nn
+else:
+    # Create Dummy class
+    class nn:
+        class Module:
+            pass
+
 
 if _check_soft_dependencies("einops", severity="none"):
     from einops import rearrange
@@ -44,11 +50,11 @@ class AttentionBias(nn.Module, abc.ABC):
     @abc.abstractmethod
     def forward(
         self,
-        query: [torch.Tensor, "*batch group hpg q_len dim"],
-        key: [torch.Tensor, "*batch group hpg kv_len dim"],
-        query_id: [torch.Tensor, "*batch 1 1 q_len"],
-        kv_id: [torch.Tensor, "*batch 1 1 kv_len"],
-    ) -> [torch.Tensor, "*batch #group #hpg q_len kv_len"]: ...
+        query,
+        key,
+        query_id,
+        kv_id,
+    ): ...
 
 
 class BinaryAttentionBias(AttentionBias):
@@ -58,11 +64,11 @@ class BinaryAttentionBias(AttentionBias):
 
     def forward(
         self,
-        query: [torch.Tensor, "*batch group hpg q_len dim"],
-        key: [torch.Tensor, "*batch group hpg kv_len dim"],
-        query_id: [torch.Tensor, "*batch 1 1 q_len"],
-        kv_id: [torch.Tensor, "*batch 1 1 kv_len"],
-    ) -> [torch.Tensor, "*batch #group #hpg q_len kv_len"]:
+        query,
+        key,
+        query_id,
+        kv_id,
+    ):
         ind = torch.eq(query_id.unsqueeze(-1), kv_id.unsqueeze(-2))
         weight = rearrange(self.emb.weight, "two num_heads -> two num_heads 1 1")
         bias = rearrange(  # try to avoid advanced indexing

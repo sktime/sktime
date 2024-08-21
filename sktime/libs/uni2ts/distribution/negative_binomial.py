@@ -23,7 +23,28 @@ if _check_soft_dependencies("torch", severity="none"):
     from torch.distributions.utils import broadcast_all, lazy_property, logits_to_probs
     from torch.nn import functional as F
 
-from ._base import DistributionOutput
+    from ._base import DistributionOutput
+
+else:
+    # Create Dummy class
+    class Distribution:
+        pass
+
+    class DistributionOutput:
+        pass
+
+    class constraints:
+        def positive(self):
+            pass
+
+        def real(self):
+            pass
+
+        def nonnegative(self):
+            pass
+
+    def lazy_property(func):
+        return func
 
 
 class NegativeBinomial(Distribution):
@@ -36,8 +57,8 @@ class NegativeBinomial(Distribution):
 
     def __init__(
         self,
-        total_count: float | torch.Tensor,
-        logits: float | torch.Tensor,
+        total_count,
+        logits,
         validate_args: Optional[bool] = None,
     ):
         (
@@ -48,7 +69,7 @@ class NegativeBinomial(Distribution):
         batch_shape = self.logits.size()
         super().__init__(batch_shape, validate_args=validate_args)
 
-    def expand(self, batch_shape: torch.Size, _instance=None) -> "NegativeBinomial":
+    def expand(self, batch_shape, _instance=None):
         new = self._get_checked_instance(NegativeBinomial, _instance)
         batch_shape = torch.Size(batch_shape)
         new.total_count = self.total_count.expand(batch_shape)
@@ -64,7 +85,7 @@ class NegativeBinomial(Distribution):
     def probs(self):
         return logits_to_probs(self.logits, is_binary=True)
 
-    def sample(self, sample_shape: torch.Size = torch.Size()) -> torch.Tensor:
+    def sample(self, sample_shape):
         with torch.no_grad():
             sample = torch.poisson(
                 Gamma(
@@ -75,7 +96,7 @@ class NegativeBinomial(Distribution):
             )
         return sample
 
-    def log_prob(self, value: torch.Tensor) -> torch.Tensor:
+    def log_prob(self, value):
         if self._validate_args:
             self._validate_sample(value)
         log_unnormalized_prob = (
@@ -91,11 +112,11 @@ class NegativeBinomial(Distribution):
         return torch.lgamma(x) + torch.lgamma(y) - torch.lgamma(x + y)
 
     @property
-    def mean(self) -> torch.Tensor:
+    def mean(self):
         return self.total_count * torch.exp(self.logits)
 
     @property
-    def variance(self) -> torch.Tensor:
+    def variance(self):
         return self.mean / torch.sigmoid(-self.logits)
 
 
@@ -111,12 +132,12 @@ class NegativeBinomialOutput(DistributionOutput):
 
     @staticmethod
     def _total_count(
-        total_count: [torch.Tensor, "*batch 1"],
+        total_count,
     ):
         return F.softplus(total_count).squeeze(-1)
 
     @staticmethod
     def _logits(
-        logits: [torch.Tensor, "*batch 1"],
+        logits,
     ):
         return logits.squeeze(-1)

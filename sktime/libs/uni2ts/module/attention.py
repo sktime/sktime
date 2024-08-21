@@ -23,6 +23,15 @@ if _check_soft_dependencies("torch", severity="none"):
     import torch
     import torch.nn.functional as F
     from torch import nn
+else:
+    # Create Dummy class
+    class nn:
+        class Module:
+            pass
+
+        class LayerNorm:
+            pass
+
 
 if _check_soft_dependencies("einops", severity="none"):
     from einops import rearrange, repeat
@@ -34,9 +43,9 @@ from .position import AttentionBias, QueryKeyProjection
 
 
 def native_scaled_dot_product_attention(
-    query: [torch.Tensor, "*batch group hpg q_len dim"],
-    key: [torch.Tensor, "*batch group hpg kv_len dim"],
-    value: [torch.Tensor, "*batch group hpg kv_len dim"],
+    query,
+    key,
+    value,
     attn_mask=None,
     dropout_p: float = 0.0,
     scale: Optional[float] = None,

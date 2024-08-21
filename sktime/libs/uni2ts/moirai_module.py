@@ -3,30 +3,48 @@ from functools import partial
 from skbase.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("torch", severity="none"):
-    import torch
     import torch.nn.functional as F
     from torch import nn
-    from torch.distributions import Distribution
     from torch.utils._pytree import tree_map
+
+    from .distribution import DistributionOutput
+    from .module.norm import RMSNorm
+    from .module.position import (
+        BinaryAttentionBias,
+        QueryKeyProjection,
+        RotaryProjection,
+    )
+    from .module.transformer import TransformerEncoder
+    from .module.ts_embed import MultiInSizeLinear
+else:
+
+    class nn:
+        class Module:
+            pass
+
+    class DistributionOutput:
+        pass
+
 
 if _check_soft_dependencies("huggingface-hub", severity="none"):
     from huggingface_hub import PyTorchModelHubMixin
+else:
+    # Create Dummy class
+    class PyTorchModelHubMixin:
+        def __init__(self):
+            pass
+
+        pass
+
+
+if _check_soft_dependencies("einops", severity="none"):
+    from .module.packed_scaler import PackedNOPScaler, PackedStdScaler
 
 from .common.torch_util import mask_fill, packed_attention_mask
-from .distribution import DistributionOutput
-from .module.norm import RMSNorm
-from .module.packed_scaler import PackedNOPScaler, PackedStdScaler
-from .module.position import (
-    BinaryAttentionBias,
-    QueryKeyProjection,
-    RotaryProjection,
-)
-from .module.transformer import TransformerEncoder
-from .module.ts_embed import MultiInSizeLinear
 
 
 def encode_distr_output(
-    distr_output: DistributionOutput,
+    distr_output,
 ) -> dict[str, str | float | int]:
     def _encode(val):
         if not isinstance(val, DistributionOutput):
@@ -40,18 +58,17 @@ def encode_distr_output(
     return _encode(distr_output)
 
 
-def decode_distr_output(config: dict[str, str | float | int]) -> DistributionOutput:
+def decode_distr_output(config: dict[str, str | float | int]):
     return instantiate(config, _convert_="all")
 
 
 class MoiraiModule(
     nn.Module,
     PyTorchModelHubMixin,
-    coders={DistributionOutput: (encode_distr_output, decode_distr_output)},
 ):
     def __init__(
         self,
-        distr_output: DistributionOutput,
+        distr_output,
         d_model: int,
         num_layers: int,
         patch_sizes: tuple[int, ...],  # tuple[int, ...] | list[int]
@@ -100,14 +117,14 @@ class MoiraiModule(
 
     def forward(
         self,
-        target: [torch.Tensor, "*batch seq_len max_patch"],
-        observed_mask: [torch.Tensor, "*batch seq_len max_patch"],
-        sample_id: [torch.Tensor, "*batch seq_len"],
-        time_id: [torch.Tensor, "*batch seq_len"],
-        variate_id: [torch.Tensor, "*batch seq_len"],
-        prediction_mask: [torch.Tensor, "*batch seq_len"],
-        patch_size: [torch.Tensor, "*batch seq_len"],
-    ) -> Distribution:
+        target,
+        observed_mask,
+        sample_id,
+        time_id,
+        variate_id,
+        prediction_mask,
+        patch_size,
+    ):
         loc, scale = self.scaler(
             target,
             observed_mask * ~prediction_mask.unsqueeze(-1),

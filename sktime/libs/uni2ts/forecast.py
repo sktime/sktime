@@ -14,7 +14,6 @@
 #  limitations under the License.
 
 import math
-from collections.abc import Generator
 from contextlib import contextmanager
 from copy import deepcopy
 from typing import Any, Optional
@@ -25,9 +24,17 @@ from skbase.utils.dependencies import _check_soft_dependencies
 if _check_soft_dependencies("lightning", severity="none"):
     import lightning as L
 
+else:
+    # Create Dummy class
+    class L:
+        class LightningModule:
+            pass
+
+
 if _check_soft_dependencies("torch", severity="none"):
     import torch
-    from torch.distributions import Distribution
+
+    from .moirai_module import MoiraiModule
 
 if _check_soft_dependencies("einops", severity="none"):
     from einops import rearrange, reduce, repeat
@@ -40,7 +47,6 @@ if _check_soft_dependencies("gluonts", severity="none"):
         AsNumpyArray,
         ExpandDimArray,
         TestSplitSampler,
-        Transformation,
     )
     from gluonts.transform.split import TFTInstanceSplitter
 
@@ -48,18 +54,16 @@ if _check_soft_dependencies("gluonts", severity="none"):
 from sktime.libs.uni2ts.common.torch_util import safe_div
 from sktime.libs.uni2ts.loss.packed import PackedNLLLoss as _PackedNLLLoss
 
-from .moirai_module import MoiraiModule
-
 
 class SampleNLLLoss(_PackedNLLLoss):
     def reduce_loss(
         self,
-        loss: [torch.Tensor, "batch seq_len #dim"],
+        loss,
         prediction_mask,
         observed_mask,
         sample_id,
         variate_id,
-    ) -> [torch.Tensor, "batch"]:
+    ):
         id_mask = torch.logical_and(
             torch.eq(sample_id.unsqueeze(-1), sample_id.unsqueeze(-2)),
             torch.eq(variate_id.unsqueeze(-1), variate_id.unsqueeze(-2)),
@@ -88,7 +92,7 @@ class MoiraiForecast(L.LightningModule):
         past_feat_dynamic_real_dim: int,
         context_length: int,
         module_kwargs: Optional[dict[str, Any]] = None,
-        module: Optional[MoiraiModule] = None,
+        module=None,
         patch_size: int | str = "auto",
         num_samples: int = 100,
     ):
@@ -110,7 +114,7 @@ class MoiraiForecast(L.LightningModule):
         context_length: Optional[int] = None,
         patch_size: Optional[int | str] = None,
         num_samples: Optional[int] = None,
-    ) -> Generator["MoiraiForecast", None, None]:
+    ):
         kwargs = {
             "prediction_length": prediction_length,
             "target_dim": target_dim,
@@ -134,7 +138,7 @@ class MoiraiForecast(L.LightningModule):
         self,
         batch_size: int,
         device: str = "auto",
-    ) -> PyTorchPredictor:
+    ):
         ts_fields = []
         if self.hparams.feat_dynamic_real_dim > 0:
             ts_fields.append("feat_dynamic_real")
@@ -160,7 +164,7 @@ class MoiraiForecast(L.LightningModule):
             device=device,
         )
 
-    def describe_inputs(self, batch_size: int = 1) -> InputSpec:
+    def describe_inputs(self, batch_size: int = 1):
         data = {
             "past_target": Input(
                 shape=(
@@ -247,15 +251,15 @@ class MoiraiForecast(L.LightningModule):
 
     def forward(
         self,
-        past_target: [torch.Tensor, "batch past_time tgt"],
-        past_observed_target: [torch.Tensor, "batch past_time tgt"],
-        past_is_pad: [torch.Tensor, "batch past_time"],
+        past_target,
+        past_observed_target,
+        past_is_pad,
         feat_dynamic_real=None,
         observed_feat_dynamic_real=None,
         past_feat_dynamic_real=None,
         past_observed_feat_dynamic_real=None,
         num_samples: Optional[int] = None,
-    ) -> [torch.Tensor, "batch sample future_time *tgt"]:
+    ):
         if self.hparams.patch_size == "auto":
             val_loss = []
             preds = []
@@ -354,14 +358,14 @@ class MoiraiForecast(L.LightningModule):
     def _val_loss(
         self,
         patch_size: int,
-        target: [torch.Tensor, "batch time tgt"],
-        observed_target: [torch.Tensor, "batch time tgt"],
-        is_pad: [torch.Tensor, "batch time"],
+        target,
+        observed_target,
+        is_pad,
         feat_dynamic_real=None,
         observed_feat_dynamic_real=None,
         past_feat_dynamic_real=None,
         past_observed_feat_dynamic_real=None,
-    ) -> [torch.Tensor, "batch"]:
+    ):
         # convert format
         (
             target,
@@ -408,14 +412,14 @@ class MoiraiForecast(L.LightningModule):
     def _get_distr(
         self,
         patch_size: int,
-        past_target: [torch.Tensor, "batch past_time tgt"],
-        past_observed_target: [torch.Tensor, "batch past_time tgt"],
-        past_is_pad: [torch.Tensor, "batch past_time"],
+        past_target,
+        past_observed_target,
+        past_is_pad,
         feat_dynamic_real=None,
         observed_feat_dynamic_real=None,
         past_feat_dynamic_real=None,
         past_observed_feat_dynamic_real=None,
-    ) -> Distribution:
+    ):
         # convert format
         (
             target,
@@ -450,11 +454,11 @@ class MoiraiForecast(L.LightningModule):
     @staticmethod
     def _patched_seq_pad(
         patch_size: int,
-        x: torch.Tensor,
+        x,
         dim: int,
         left: bool = True,
         value: Optional[float] = None,
-    ) -> torch.Tensor:
+    ):
         if dim >= 0:
             dim = -x.ndim + dim
         pad_length = -x.size(dim) % patch_size
@@ -468,10 +472,8 @@ class MoiraiForecast(L.LightningModule):
     def _generate_time_id(
         self,
         patch_size: int,
-        past_observed_target: [torch.Tensor, "batch past_seq tgt"],
-    ) -> tuple[
-        [torch.Tensor, "batch past_token"], [torch.Tensor, "batch future_token"]
-    ]:
+        past_observed_target,
+    ):
         past_seq_id = reduce(
             self._patched_seq_pad(patch_size, past_observed_target, -2, left=True),
             "... (seq patch) dim -> ... seq",
@@ -496,9 +498,9 @@ class MoiraiForecast(L.LightningModule):
     def _convert(
         self,
         patch_size: int,
-        past_target: [torch.Tensor, "batch past_time tgt"],
-        past_observed_target: [torch.Tensor, "batch past_time tgt"],
-        past_is_pad: [torch.Tensor, "batch past_time"],
+        past_target,
+        past_observed_target,
+        past_is_pad,
         future_target=None,
         future_observed_target=None,
         future_is_pad=None,
@@ -506,14 +508,7 @@ class MoiraiForecast(L.LightningModule):
         observed_feat_dynamic_real=None,
         past_feat_dynamic_real=None,
         past_observed_feat_dynamic_real=None,
-    ) -> tuple[
-        [torch.Tensor, "batch combine_seq patch"],  # target
-        [torch.Tensor, "batch combine_seq patch"],  # observed_mask
-        [torch.Tensor, "batch combine_seq"],  # sample_id
-        [torch.Tensor, "batch combine_seq"],  # time_id
-        [torch.Tensor, "batch combine_seq"],  # variate_id
-        [torch.Tensor, "batch combine_seq"],  # prediction_mask
-    ]:
+    ):
         batch_shape = past_target.shape[:-2]
         device = past_target.device
 
@@ -909,9 +904,9 @@ class MoiraiForecast(L.LightningModule):
     def _format_preds(
         self,
         patch_size: int,
-        preds: [torch.Tensor, "sample batch combine_seq patch"],
+        preds,
         target_dim: int,
-    ) -> [torch.Tensor, "batch sample future_time *tgt"]:
+    ):
         start = target_dim * self.context_token_length(patch_size)
         end = start + target_dim * self.prediction_token_length(patch_size)
         preds = preds[..., start:end, :patch_size]
@@ -922,7 +917,7 @@ class MoiraiForecast(L.LightningModule):
         )[..., : self.hparams.prediction_length, :]
         return preds.squeeze(-1)
 
-    def get_default_transform(self) -> Transformation:
+    def get_default_transform(self):
         transform = AsNumpyArray(
             field="target",
             expected_ndim=1 if self.hparams.target_dim == 1 else 2,

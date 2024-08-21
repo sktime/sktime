@@ -13,22 +13,26 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from typing import Optional
 
 from skbase.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("torch", severity="none"):
     import torch
     from torch import nn
+else:
+
+    class nn:
+        class Module:
+            pass
 
 
 class RMSNorm(nn.Module):
     def __init__(
         self,
-        normalized_shape: int | list[int] | torch.Size,
+        normalized_shape,
         eps: float = 1e-5,
         weight: bool = True,
-        dtype: Optional[torch.dtype] = None,
+        dtype=None,
     ):
         super().__init__()
         if isinstance(normalized_shape, int):
@@ -43,9 +47,7 @@ class RMSNorm(nn.Module):
         else:
             self.register_parameter("weight", None)
 
-    def forward(
-        self, x: [torch.Tensor, "*batch normalized_shape"]
-    ) -> [torch.Tensor, "*batch normalized_shape"]:
+    def forward(self, x):
         output = x * torch.rsqrt(
             x.pow(2).mean(dim=self.mean_dim, keepdim=True) + self.eps
         )

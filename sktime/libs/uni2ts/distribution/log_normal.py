@@ -22,8 +22,15 @@ if _check_soft_dependencies("torch", severity="none"):
     import torch
     from torch.distributions import LogNormal
     from torch.nn import functional as F
+    from ._base import DistributionOutput
+else:
 
-from ._base import DistributionOutput
+    class DistributionOutput:  # dummy class
+        pass
+
+    class LogNormal:
+        pass
+
 
 T = TypeVar("T")
 
@@ -42,10 +49,10 @@ class LogNormalOutput(DistributionOutput):
         return dict(loc=self._loc, scale=self._scale)
 
     @staticmethod
-    def _loc(loc: [torch.Tensor, "*batch 1"]):
+    def _loc(loc):
         return loc.squeeze(-1)
 
     @staticmethod
-    def _scale(scale: [torch.Tensor, "*batch 1"]):
+    def _scale(scale):
         epsilon = torch.finfo(scale.dtype).eps
         return F.softplus(scale).clamp_min(epsilon).squeeze(-1)

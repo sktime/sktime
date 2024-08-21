@@ -20,6 +20,12 @@ if _check_soft_dependencies("torch", severity="none"):
     from torch.distributions import StudentT
     from torch.nn import functional as F
 
+else:
+    # Create Dummy class
+    class StudentT:
+        pass
+
+
 from ._base import DistributionOutput
 
 
@@ -34,14 +40,14 @@ class StudentTOutput(DistributionOutput):
         return dict(df=self._df, loc=self._loc, scale=self._scale)
 
     @staticmethod
-    def _df(df: [torch.Tensor, "*batch 1"]):
+    def _df(df):
         return (2.0 + F.softplus(df)).squeeze(-1)
 
     @staticmethod
-    def _loc(loc: [torch.Tensor, "*batch 1"]):
+    def _loc(loc):
         return loc.squeeze(-1)
 
     @staticmethod
-    def _scale(scale: [torch.Tensor, "*batch 1"]):
+    def _scale(scale):
         epsilon = torch.finfo(scale.dtype).eps
         return F.softplus(scale).clamp_min(epsilon).squeeze(-1)

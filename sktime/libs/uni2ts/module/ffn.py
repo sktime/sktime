@@ -13,15 +13,25 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from collections.abc import Callable
 from typing import Optional
 
 from skbase.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("torch", severity="none"):
-    import torch
     import torch.nn.functional as F
     from torch import nn
+else:
+
+    class nn:
+        class Module:
+            pass
+
+    class F:
+        def gelu(self):
+            pass
+
+        def silu(self):
+            pass
 
 
 class FeedForward(nn.Module):
@@ -30,7 +40,7 @@ class FeedForward(nn.Module):
         in_dim: int,
         hidden_dim: Optional[int] = None,
         out_dim: Optional[int] = None,
-        activation: Callable[[torch.Tensor], torch.Tensor] = F.gelu,
+        activation=F.gelu,
         bias: bool = True,
         ffn_dropout_p: float = 0.0,
     ):
@@ -50,13 +60,11 @@ class FeedForward(nn.Module):
         self.dropout2 = nn.Dropout(ffn_dropout_p)
         self.activation = activation
 
-    def forward(self, x: [torch.Tensor, "... in_dim"]) -> [torch.Tensor, "... out_dim"]:
+    def forward(self, x):
         x = self._in_proj(x)
         return self.dropout2(self.fc2(self.dropout1(x)))
 
-    def _in_proj(
-        self, x: [torch.Tensor, "... in_dim"]
-    ) -> [torch.Tensor, "... out_dim"]:
+    def _in_proj(self, x):
         return self.activation(self.fc1(x))
 
 
@@ -66,7 +74,7 @@ class GatedLinearUnitFeedForward(FeedForward):
         in_dim: int,
         hidden_dim: Optional[int] = None,
         out_dim: Optional[int] = None,
-        activation: Callable[[torch.Tensor], torch.Tensor] = F.silu,
+        activation=F.silu,
         bias: bool = True,
         ffn_dropout_p: float = 0.0,
     ):
@@ -84,7 +92,5 @@ class GatedLinearUnitFeedForward(FeedForward):
     def adjust_hidden_dim(dim):
         return (int(dim * 2 / 3) + 7) // 8 * 8
 
-    def _in_proj(
-        self, x: [torch.Tensor, "... in_dim"]
-    ) -> [torch.Tensor, "... out_dim"]:
+    def _in_proj(self, x):
         return self.activation(self.fc_gate(x)) * self.fc1(x)

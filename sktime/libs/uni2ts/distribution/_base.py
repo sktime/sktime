@@ -20,10 +20,8 @@ from typing import Any, Optional, TypeVar
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.libs.uni2ts.common.core import abstract_class_property
-from sktime.libs.uni2ts.module.ts_embed import MultiOutSizeLinear
 
 if _check_soft_dependencies("torch", severity="none"):
-    import torch
     from torch import nn
     from torch.distributions import (
         AffineTransform,
@@ -31,6 +29,24 @@ if _check_soft_dependencies("torch", severity="none"):
         TransformedDistribution,
     )
     from torch.utils._pytree import tree_flatten, tree_map, tree_unflatten
+
+    from sktime.libs.uni2ts.module.ts_embed import MultiOutSizeLinear
+
+else:
+    # Create Dummy class
+    class nn:
+        class Module:
+            pass
+
+    class Distribution:
+        pass
+
+    class TransformedDistribution:
+        pass
+
+    class MultiOutSizeLinear:
+        pass
+
 
 if _check_soft_dependencies("einops", severity="none"):
     from einops import rearrange
@@ -46,7 +62,7 @@ def tree_map_multi(func: Callable, tree: [Any, "T"], *other: [Any, "T"]) -> [Any
     return tree_unflatten(return_leaves, treespec)
 
 
-def convert_to_module(tree: [nn.Module, "T"]) -> [nn.Module, "T"]:
+def convert_to_module(tree):
     if isinstance(tree, dict):
         return nn.ModuleDict(
             {key: convert_to_module(child) for key, child in tree.items()}
@@ -56,7 +72,7 @@ def convert_to_module(tree: [nn.Module, "T"]) -> [nn.Module, "T"]:
     return tree
 
 
-def convert_to_container(tree: [nn.Module, "T"]) -> [nn.Module, "T"]:
+def convert_to_container(tree):
     if isinstance(tree, nn.ModuleDict):
         return {key: convert_to_container(child) for key, child in tree.items()}
     if isinstance(tree, nn.ModuleList):
@@ -70,8 +86,8 @@ class DistrParamProj(nn.Module):
         in_features: int,
         out_features: int | tuple[int, ...] | list[int],
         args_dim: [int, "T"],
-        domain_map: [Callable[[torch.Tensor], torch.Tensor], "T"],
-        proj_layer: Callable[..., nn.Module] = MultiOutSizeLinear,
+        domain_map,
+        proj_layer,
         **kwargs: Any,
     ):
         super().__init__()
@@ -98,7 +114,7 @@ class DistrParamProj(nn.Module):
             out_features if isinstance(out_features, int) else max(out_features)
         )
 
-    def forward(self, *args) -> [[torch.Tensor, "*batch out dim"], "T"]:  # noqa: F722
+    def forward(self, *args):
         params_unbounded = tree_map(
             lambda proj: rearrange(
                 proj(*args),
@@ -116,9 +132,9 @@ class DistrParamProj(nn.Module):
 class AffineTransformed(TransformedDistribution):
     def __init__(
         self,
-        base_dist: Distribution,
-        loc: Optional[torch.Tensor | float] = None,
-        scale: Optional[torch.Tensor | float] = None,
+        base_dist,
+        loc,
+        scale,
         validate_args: Optional[bool] = None,
     ):
         self.loc = loc if loc is not None else 0.0
@@ -130,11 +146,11 @@ class AffineTransformed(TransformedDistribution):
         )
 
     @property
-    def mean(self) -> torch.Tensor:
+    def mean(self):
         return self.base_dist.mean * self.scale + self.loc
 
     @property
-    def variance(self) -> torch.Tensor:
+    def variance(self):
         return self.base_dist.variance * self.scale**2
 
 
@@ -144,11 +160,11 @@ class DistributionOutput:
 
     def distribution(
         self,
-        distr_params: [torch.Tensor, "T"],
-        loc: Optional[torch.Tensor] = None,
-        scale: Optional[torch.Tensor] = None,
+        distr_params,
+        loc,
+        scale,
         validate_args: Optional[bool] = None,
-    ) -> Distribution:
+    ):
         distr = self._distribution(distr_params, validate_args=validate_args)
         if loc is not None or scale is not None:
             distr = AffineTransformed(distr, loc=loc, scale=scale)
@@ -156,9 +172,9 @@ class DistributionOutput:
 
     def _distribution(
         self,
-        distr_params: [torch.Tensor, "T"],
+        distr_params,
         validate_args: Optional[bool] = None,
-    ) -> Distribution:
+    ):
         return self.distr_cls(**distr_params, validate_args=validate_args)
 
     @property
@@ -167,7 +183,7 @@ class DistributionOutput:
 
     @property
     @abc.abstractmethod
-    def domain_map(self) -> [Callable[[torch.Tensor], torch.Tensor], "T"]: ...
+    def domain_map(self): ...
 
     def get_param_proj(
         self,

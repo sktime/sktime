@@ -14,13 +14,18 @@
 #  limitations under the License.
 
 import math
-from typing import Optional
 
 from skbase.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("torch", severity="none"):
     import torch
     from torch import nn
+else:
+
+    class nn:
+        class Module:
+            pass
+
 
 if _check_soft_dependencies("einops", severity="none"):
     from einops import einsum, rearrange
@@ -42,7 +47,7 @@ class MultiInSizeLinear(nn.Module):
         in_features_ls: tuple[int, ...],
         out_features: int,
         bias: bool = True,
-        dtype: Optional[torch.dtype] = None,
+        dtype=None,
     ):
         super().__init__()
         self.in_features_ls = in_features_ls
@@ -90,9 +95,9 @@ class MultiInSizeLinear(nn.Module):
 
     def forward(
         self,
-        x: [torch.Tensor, "*batch max_feat"],
+        x,
         in_feat_size,
-    ) -> [torch.Tensor, "*batch out_feat"]:
+    ):
         out = 0
         for idx, feat_size in enumerate(self.in_features_ls):
             weight = self.weight[idx] * self.mask[idx]
@@ -119,7 +124,7 @@ class MultiOutSizeLinear(nn.Module):
         out_features_ls: tuple[int, ...],
         dim: int = 1,
         bias: bool = True,
-        dtype: Optional[torch.dtype] = None,
+        dtype=None,
     ):
         super().__init__()
         self.in_features = in_features
@@ -169,9 +174,9 @@ class MultiOutSizeLinear(nn.Module):
 
     def forward(
         self,
-        x: [torch.Tensor, "*batch in_feat"],
+        x,
         out_feat_size,
-    ) -> [torch.Tensor, "*batch max_feat"]:
+    ):
         out = 0
         for idx, feat_size in enumerate(self.out_features_ls):
             weight = self.weight[idx] * self.mask[idx]

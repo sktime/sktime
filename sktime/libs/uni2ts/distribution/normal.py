@@ -22,6 +22,12 @@ if _check_soft_dependencies("torch", severity="none"):
     from torch.distributions import Normal
     from torch.nn import functional as F
 
+else:
+    # Create Dummy class
+    class Normal:
+        pass
+
+
 from ._base import DistributionOutput
 
 
@@ -37,11 +43,11 @@ class NormalOutput(DistributionOutput):
         )
 
     @staticmethod
-    def _loc(loc: [torch.Tensor, "*batch 1"]):
+    def _loc(loc):
         return loc.squeeze(-1)
 
     @staticmethod
-    def _scale(scale: [torch.Tensor, "*batch 1"]):
+    def _scale(scale):
         epsilon = torch.finfo(scale.dtype).eps
         return F.softplus(scale).clamp_min(epsilon).squeeze(-1)
 
@@ -60,7 +66,7 @@ class NormalFixedScaleOutput(DistributionOutput):
         return dict(loc=self._loc)
 
     @staticmethod
-    def _loc(loc: [torch.Tensor, "*batch 1"]):
+    def _loc(loc):
         return loc.squeeze(-1)
 
     def _distribution(

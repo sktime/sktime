@@ -20,13 +20,24 @@ from typing import Optional
 from skbase.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("torch", severity="none"):
-    import torch
     import torch.nn.functional as F
     from torch import nn
+else:
+
+    class nn:
+        class Module:
+            pass
+
+        class LayerNorm:
+            pass
+
+    class F:
+        def silu(self):
+            pass
+
 
 from .attention import GroupedQueryAttention
 from .ffn import FeedForward, GatedLinearUnitFeedForward
-from .position import AttentionBias, QueryKeyProjection
 
 
 class TransformerEncoderLayer(nn.Module):
@@ -51,11 +62,11 @@ class TransformerEncoderLayer(nn.Module):
 
     def forward(
         self,
-        x: [torch.Tensor, "*batch time_len dim"],
+        x,
         attn_mask=None,
         var_id=None,
         time_id=None,
-    ) -> [torch.Tensor, "*batch time_len dim"]:
+    ):
         if self.pre_norm:
             x = x + self._sa_block(
                 self.norm1(x), attn_mask, var_id=var_id, time_id=time_id
@@ -71,11 +82,11 @@ class TransformerEncoderLayer(nn.Module):
 
     def _sa_block(
         self,
-        x: [torch.Tensor, "*batch time_len dim"],
+        x,
         attn_mask,
         var_id=None,
         time_id=None,
-    ) -> [torch.Tensor, "*batch time_len dim"]:
+    ):
         x = self.self_attn(
             x,
             x,
@@ -99,18 +110,14 @@ class TransformerEncoder(nn.Module):
         pre_norm: bool = True,
         attn_dropout_p: float = 0.0,
         dropout_p: float = 0.0,
-        norm_layer: Optional[Callable[[int], nn.Module]] = nn.LayerNorm,
-        activation: Callable[[torch.Tensor], torch.Tensor] = F.silu,
+        norm_layer=nn.LayerNorm,
+        activation=F.silu,
         use_glu: bool = True,
         use_qk_norm: bool = True,
-        var_attn_bias_layer: Optional[Callable[[int, int, int], AttentionBias]] = None,
-        time_attn_bias_layer: Optional[Callable[[int, int, int], AttentionBias]] = None,
-        var_qk_proj_layer: Optional[
-            Callable[[int, int, int], QueryKeyProjection]
-        ] = None,
-        time_qk_proj_layer: Optional[
-            Callable[[int, int, int], QueryKeyProjection]
-        ] = None,
+        var_attn_bias_layer=None,
+        time_attn_bias_layer=None,
+        var_qk_proj_layer=None,
+        time_qk_proj_layer=None,
         shared_var_attn_bias: bool = False,
         shared_time_attn_bias: bool = False,
         shared_var_qk_proj: bool = False,
@@ -189,7 +196,7 @@ class TransformerEncoder(nn.Module):
         num_groups: int,
         layer: Callable,
         shared_layer: bool,
-    ) -> Optional[Callable[[], nn.Module]]:
+    ):
         if layer is None:
             return None
         if shared_layer:
@@ -199,11 +206,11 @@ class TransformerEncoder(nn.Module):
 
     def forward(
         self,
-        x: [torch.Tensor, "*batch time_len dim"],
+        x,
         attn_mask=None,
         var_id=None,
         time_id=None,
-    ) -> [torch.Tensor, "*batch time_len dim"]:
+    ):
         for layer in self.layers:
             x = layer(x, attn_mask, var_id=var_id, time_id=time_id)
         return self.norm(x)

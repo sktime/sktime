@@ -14,17 +14,35 @@
 #  limitations under the License.
 
 from functools import reduce
-from typing import Callable, Optional
+from typing import Optional
 
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.libs.uni2ts.common.torch_util import unsqueeze_trailing_dims
 
-from ._base import DistributionOutput
-
 if _check_soft_dependencies("torch", severity="none"):
     import torch
     from torch.distributions import Categorical, Distribution, constraints
+
+    from ._base import DistributionOutput
+
+else:
+    # Create Dummy class
+    class DistributionOutput:
+        pass
+
+    class Categorical:
+        pass
+
+    class Distribution:
+        pass
+
+    class constraints:
+        class Constraint:
+            pass
+
+        def dependent_property(self):
+            pass
 
 
 class Mixture(Distribution):
@@ -68,7 +86,7 @@ class Mixture(Distribution):
             validate_args=validate_args,
         )
 
-    def expand(self, batch_shape: torch.Size, _instance=None) -> "Mixture":
+    def expand(self, batch_shape, _instance=None):
         new = self._get_checked_instance(Mixture, _instance)
         batch_shape = torch.Size(batch_shape)
         new.weights = self.weights.expand(batch_shape)
@@ -81,7 +99,7 @@ class Mixture(Distribution):
         new._validate_args = self._validate_args
         return new
 
-    def log_prob(self, value: torch.Tensor) -> torch.Tensor:
+    def log_prob(self, value):
         if self._validate_args:
             self._validate_sample(value)
 
@@ -128,7 +146,7 @@ class Mixture(Distribution):
         )
         return (weights_log_probs + components_log_probs).logsumexp(dim=0)
 
-    def sample(self, sample_shape: torch.Size = torch.Size()) -> torch.Tensor:
+    def sample(self, sample_shape):
         with torch.no_grad():
             components_samples = torch.stack(
                 [comp.sample(sample_shape) for comp in self.components], dim=-1
@@ -148,13 +166,13 @@ class Mixture(Distribution):
         return constraints.real
 
     @property
-    def mean(self) -> torch.Tensor:
+    def mean(self):
         weights_probs = torch.stack(self.weights.probs.unbind(dim=-1))
         components_means = torch.stack([comp.mean for comp in self.components])
         return (weights_probs * components_means).sum(dim=0)
 
     @property
-    def variance(self) -> torch.Tensor:
+    def variance(self):
         # Law of total variance: Var(Y) = E[Var(Y|X)] + Var(E[Y|X])
         weights_probs = torch.stack(self.weights.probs.unbind(dim=-1))
         components_var = torch.stack([comp.variance for comp in self.components])
@@ -165,7 +183,7 @@ class Mixture(Distribution):
         ) - self.mean.pow(2.0)
         return expected_cond_var + var_cond_expectation
 
-    def cdf(self, value: torch.Tensor) -> torch.Tensor:
+    def cdf(self, value):
         weights_prob = self.weights.probs
         components_cdf = torch.stack([comp.cdf(value) for comp in self.components])
         return (weights_prob * components_cdf).sum(dim=0)
@@ -179,9 +197,9 @@ class MixtureOutput(DistributionOutput):
 
     def _distribution(
         self,
-        distr_params: [torch.Tensor, "T"],
+        distr_params,
         validate_args: Optional[bool] = None,
-    ) -> Distribution:
+    ):
         return self.distr_cls(
             weights=Categorical(
                 logits=distr_params["weights_logits"], validate_args=validate_args
@@ -203,7 +221,7 @@ class MixtureOutput(DistributionOutput):
         )
 
     @property
-    def domain_map(self) -> [Callable[[torch.Tensor], torch.Tensor], "T"]:
+    def domain_map(self):
         return dict(
             weights_logits=lambda x: x,
             components=[comp.domain_map for comp in self.components],
