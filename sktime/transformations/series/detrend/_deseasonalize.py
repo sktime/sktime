@@ -59,9 +59,9 @@ class Deseasonalizer(BaseTransformer):
     --------
     >>> from sktime.transformations.series.detrend import Deseasonalizer
     >>> from sktime.datasets import load_airline
-    >>> y = load_airline()  # doctest: +SKIP
-    >>> transformer = Deseasonalizer()  # doctest: +SKIP
-    >>> y_hat = transformer.fit_transform(y)  # doctest: +SKIP
+    >>> y = load_airline()
+    >>> transformer = Deseasonalizer()
+    >>> y_hat = transformer.fit_transform(y)
     """
 
     _tags = {
@@ -295,9 +295,9 @@ class ConditionalDeseasonalizer(Deseasonalizer):
     --------
     >>> from sktime.transformations.series.detrend import ConditionalDeseasonalizer
     >>> from sktime.datasets import load_airline
-    >>> y = load_airline()  # doctest: +SKIP
-    >>> transformer = ConditionalDeseasonalizer(sp=12)  # doctest: +SKIP
-    >>> y_hat = transformer.fit_transform(y)  # doctest: +SKIP
+    >>> y = load_airline()
+    >>> transformer = ConditionalDeseasonalizer(sp=12)
+    >>> y_hat = transformer.fit_transform(y)
     """
 
     def __init__(self, seasonality_test=None, sp=1, model="additive"):
@@ -463,9 +463,9 @@ class STLTransformer(BaseTransformer):
     --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.transformations.series.detrend import STLTransformer
-    >>> X = load_airline()  # doctest: +SKIP
-    >>> transformer = STLTransformer(sp=12)  # doctest: +SKIP
-    >>> Xt = transformer.fit_transform(X)  # doctest: +SKIP
+    >>> X = load_airline()
+    >>> transformer = STLTransformer(sp=12)
+    >>> Xt = transformer.fit_transform(X)
     """
 
     _tags = {

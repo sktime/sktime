@@ -41,9 +41,9 @@ class PAA(BaseTransformer):
 
     >>> X = arange(10)
     >>> paa = PAA(frames=3)
-    >>> paa.fit_transform(X)  # doctest: +SKIP
+    >>> paa.fit_transform(X)
     array([1.2, 4.5, 7.8])
-    >>> paa = PAA(frame_size=3)  # doctest: +SKIP
+    >>> paa = PAA(frame_size=3)
     array([1, 4, 7, 9])
     """
 

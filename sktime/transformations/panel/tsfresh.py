@@ -218,8 +218,8 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
     >>> ts_eff = TSFreshFeatureExtractor(
     ...     default_fc_parameters="efficient", disable_progressbar=True
-    ... ) # doctest: +SKIP
-    >>> X_transform1 = ts_eff.fit_transform(X_train) # doctest: +SKIP
+    ... )
+    >>> X_transform1 = ts_eff.fit_transform(X_train)
     >>> features_to_calc = [
     ...     "dim_0__quantile__q_0.6",
     ...     "dim_0__longest_strike_above_mean",
@@ -227,8 +227,8 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
     ... ]
     >>> ts_custom = TSFreshFeatureExtractor(
     ...     kind_to_fc_parameters=features_to_calc, disable_progressbar=True
-    ... ) # doctest: +SKIP
-    >>> X_transform2 = ts_custom.fit_transform(X_train) # doctest: +SKIP
+    ... )
+    >>> X_transform2 = ts_custom.fit_transform(X_train)
     """
 
     _tags = {"X_inner_mtype": "pd-long"}
@@ -441,8 +441,8 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
     >>> ts_eff = TSFreshRelevantFeatureExtractor(
     ...     default_fc_parameters="efficient", disable_progressbar=True
-    ... ) # doctest: +SKIP
-    >>> X_transform1 = ts_eff.fit_transform(X_train, y_train) # doctest: +SKIP
+    ... )
+    >>> X_transform1 = ts_eff.fit_transform(X_train, y_train)
     >>> features_to_calc = [
     ...     "dim_0__quantile__q_0.6",
     ...     "dim_0__longest_strike_above_mean",
@@ -450,8 +450,8 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
     ... ]
     >>> ts_custom = TSFreshRelevantFeatureExtractor(
     ...     kind_to_fc_parameters=features_to_calc, disable_progressbar=True
-    ... ) # doctest: +SKIP
-    >>> X_transform2 = ts_custom.fit_transform(X_train, y_train) # doctest: +SKIP
+    ... )
+    >>> X_transform2 = ts_custom.fit_transform(X_train, y_train)
     """
 
     _tags = {

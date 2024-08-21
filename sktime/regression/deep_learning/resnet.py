@@ -54,8 +54,8 @@ class ResNetRegressor(BaseDeepRegressor):
     >>> from sktime.regression.deep_learning.resnet import ResNetRegressor
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train")
-    >>> clf = ResNetRegressor(n_epochs=20, batch_size=4) # doctest: +SKIP
-    >>> clf.fit(X_train, Y_train) # doctest: +SKIP
+    >>> clf = ResNetRegressor(n_epochs=20, batch_size=4)
+    >>> clf.fit(X_train, Y_train)
     ResNetRegressor(...)
     """
 

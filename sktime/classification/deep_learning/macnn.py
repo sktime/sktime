@@ -72,8 +72,8 @@ class MACNNClassifier(BaseDeepClassifier):
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train")
     >>> X_test, y_test = load_unit_test(split="test")
-    >>> macnn = MACNNClassifier(n_epochs=3) # doctest: +SKIP
-    >>> macnn.fit(X_train, y_train) # doctest: +SKIP
+    >>> macnn = MACNNClassifier(n_epochs=3)
+    >>> macnn.fit(X_train, y_train)
     MACNNClassifier(...)
     """
 

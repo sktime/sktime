@@ -119,7 +119,7 @@ class MSTL(BaseTransformer):
     Examples
     --------
     Simple use case: decompose a time series into trend, seasonal, residual components
-    >>> import matplotlib.pyplot as plt  # doctest: +SKIP
+    >>> import matplotlib.pyplot as plt
     >>> from sktime.datasets import load_airline
     >>> from sktime.transformations.series.detrend import MSTL
     >>> y = load_airline()
@@ -127,9 +127,9 @@ class MSTL(BaseTransformer):
     >>> mstl = MSTL(return_components=True)
     >>> mstl.fit(y)
     >>> res = mstl.transform(y)
-    >>> res.plot()  # doctest: +SKIP
-    >>> plt.tight_layout()  # doctest: +SKIP
-    >>> plt.show()  # doctest: +SKIP
+    >>> res.plot()
+    >>> plt.tight_layout()
+    >>> plt.show()
 
     MSTL can be pipelined with a forecaster for multiple deseasonalized forecasts.
     The following example uses a simple trend forecaster, applied

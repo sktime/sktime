@@ -52,24 +52,24 @@ class OptionalPassthrough(_DelegatedTransformer):
     >>> pipe = TransformedTargetForecaster(steps=[
     ...     ("deseasonalizer", OptionalPassthrough(Deseasonalizer())),
     ...     ("scaler", OptionalPassthrough(TabularToSeriesAdaptor(StandardScaler()))),
-    ...     ("forecaster", NaiveForecaster())])  # doctest: +SKIP
+    ...     ("forecaster", NaiveForecaster())])
     >>> # putting it all together in a grid search
     >>> cv = SlidingWindowSplitter(
     ...     initial_window=60,
     ...     window_length=24,
     ...     start_with_window=True,
-    ...     step_length=48)  # doctest: +SKIP
+    ...     step_length=48)
     >>> param_grid = {
     ...     "deseasonalizer__passthrough" : [True, False],
     ...     "scaler__transformer__transformer__with_mean": [True, False],
     ...     "scaler__passthrough" : [True, False],
-    ...     "forecaster__strategy": ["drift", "mean", "last"]}  # doctest: +SKIP
+    ...     "forecaster__strategy": ["drift", "mean", "last"]}
     >>> gscv = ForecastingGridSearchCV(
     ...     forecaster=pipe,
     ...     param_grid=param_grid,
     ...     cv=cv,
-    ...     n_jobs=-1)  # doctest: +SKIP
-    >>> gscv_fitted = gscv.fit(load_airline())  # doctest: +SKIP
+    ...     n_jobs=-1)
+    >>> gscv_fitted = gscv.fit(load_airline())
     """
 
     _tags = {

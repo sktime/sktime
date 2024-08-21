@@ -69,11 +69,11 @@ class MiniRocketMultivariateVariable(BaseTransformer):
     >>> X_test, _ = load_japanese_vowels(split="test", return_X_y=True)
     >>> pre_clf = MiniRocketMultivariateVariable(
     ...     pad_value_short_series=0.0
-    ... ) # doctest: +SKIP
-    >>> pre_clf.fit(X_train, y=None) # doctest: +SKIP
+    ... )
+    >>> pre_clf.fit(X_train, y=None)
     MiniRocketMultivariateVariable(...)
-    >>> X_transformed = pre_clf.transform(X_test) # doctest: +SKIP
-    >>> X_transformed.shape # doctest: +SKIP
+    >>> X_transformed = pre_clf.transform(X_test)
+    >>> X_transformed.shape
     (370, 9996)
 
     Raises

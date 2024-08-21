@@ -65,31 +65,31 @@ class AutoREG(_StatsModelsAdapter):
     --------
     Use AutoREG to forecast univariate data.
 
-    >>> from sktime.forecasting.auto_reg import AutoREG  # doctest: +SKIP
+    >>> from sktime.forecasting.auto_reg import AutoREG
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> data = load_airline()
-    >>> autoreg_sktime = AutoREG(lags=2, trend="c")  # doctest: +SKIP
-    >>> autoreg_sktime.fit(y=data)  # doctest: +SKIP
+    >>> autoreg_sktime = AutoREG(lags=2, trend="c")
+    >>> autoreg_sktime.fit(y=data)
     AutoREG(lags=2)
     >>> fh = ForecastingHorizon([x for x in range(1, 13)])
-    >>> y_pred = autoreg_sktime.predict(fh=fh)  # doctest: +SKIP
+    >>> y_pred = autoreg_sktime.predict(fh=fh)
 
 
     Use AutoREG to forecast with exogenous data.
 
-    >>> from sktime.forecasting.auto_reg import AutoREG  # doctest: +SKIP
+    >>> from sktime.forecasting.auto_reg import AutoREG
     >>> from sktime.datasets import load_longley
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> y, X_og = load_longley()
     >>> X_oos = X_og.iloc[-5:, :]
     >>> y, X = y.iloc[:-5], X_og.iloc[:-5, :]
     >>> X, X_oos = X[["GNPDEFL", "GNP"]], X_oos[["GNPDEFL", "GNP"]]
-    >>> autoreg_sktime = AutoREG(lags=2, trend="c")  # doctest: +SKIP
-    >>> autoreg_sktime.fit(y=y, X=X)  # doctest: +SKIP
+    >>> autoreg_sktime = AutoREG(lags=2, trend="c")
+    >>> autoreg_sktime.fit(y=y, X=X)
     AutoREG(lags=2)
     >>> fh = ForecastingHorizon([x for x in range(1, 4)])
-    >>> y_pred = autoreg_sktime.predict(X=X_oos, fh=fh)  # doctest: +SKIP
+    >>> y_pred = autoreg_sktime.predict(X=X_oos, fh=fh)
     """
 
     _tags = {

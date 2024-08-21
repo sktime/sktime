@@ -60,13 +60,13 @@ class SeasonalityACF(BaseParamFitter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.param_est.seasonality import SeasonalityACF
     >>>
-    >>> X = load_airline().diff()[1:]  # doctest: +SKIP
-    >>> sp_est = SeasonalityACF()  # doctest: +SKIP
-    >>> sp_est.fit(X)  # doctest: +SKIP
+    >>> X = load_airline().diff()[1:]
+    >>> sp_est = SeasonalityACF()
+    >>> sp_est.fit(X)
     SeasonalityACF(...)
-    >>> sp_est.get_fitted_params()["sp"]  # doctest: +SKIP
+    >>> sp_est.get_fitted_params()["sp"]
     12
-    >>> sp_est.get_fitted_params()["sp_significant"]  # doctest: +SKIP
+    >>> sp_est.get_fitted_params()["sp_significant"]
     array([12, 11])
 
     Series should be stationary before applying ACF.
@@ -76,13 +76,13 @@ class SeasonalityACF(BaseParamFitter):
     >>> from sktime.param_est.seasonality import SeasonalityACF
     >>> from sktime.transformations.series.difference import Differencer
     >>>
-    >>> X = load_airline()  # doctest: +SKIP
-    >>> sp_est = Differencer() * SeasonalityACF()  # doctest: +SKIP
-    >>> sp_est.fit(X)  # doctest: +SKIP
+    >>> X = load_airline()
+    >>> sp_est = Differencer() * SeasonalityACF()
+    >>> sp_est.fit(X)
     ParamFitterPipeline(...)
-    >>> sp_est.get_fitted_params()["sp"]  # doctest: +SKIP
+    >>> sp_est.get_fitted_params()["sp"]
     12
-    >>> sp_est.get_fitted_params()["sp_significant"]  # doctest: +SKIP
+    >>> sp_est.get_fitted_params()["sp_significant"]
     array([12, 11])
     """
 
@@ -268,10 +268,10 @@ class SeasonalityACFqstat(BaseParamFitter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.param_est.seasonality import SeasonalityACFqstat
     >>> X = load_airline().diff()[1:]
-    >>> sp_est = SeasonalityACFqstat(candidate_sp=[3, 7, 12])  # doctest: +SKIP
-    >>> sp_est.fit(X)  # doctest: +SKIP
+    >>> sp_est = SeasonalityACFqstat(candidate_sp=[3, 7, 12])
+    >>> sp_est.fit(X)
     SeasonalityACFqstat(...)
-    >>> sp_est.get_fitted_params()["sp_significant"]  # doctest: +SKIP
+    >>> sp_est.get_fitted_params()["sp_significant"]
     array([12,  7,  3])
     """
 
@@ -446,13 +446,13 @@ class SeasonalityPeriodogram(BaseParamFitter):
     --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.param_est.seasonality import SeasonalityPeriodogram
-    >>> X = load_airline().diff()[1:]  # doctest: +SKIP
-    >>> sp_est = SeasonalityPeriodogram()  # doctest: +SKIP
-    >>> sp_est.fit(X)  # doctest: +SKIP
+    >>> X = load_airline().diff()[1:]
+    >>> sp_est = SeasonalityPeriodogram()
+    >>> sp_est.fit(X)
     SeasonalityPeriodogram(...)
-    >>> sp_est.get_fitted_params()["sp"]  # doctest: +SKIP
+    >>> sp_est.get_fitted_params()["sp"]
     6
-    >>> sp_est.get_fitted_params()["sp_significant"]  # doctest: +SKIP
+    >>> sp_est.get_fitted_params()["sp_significant"]
     array([6, 12, 14, 4, 10, 5])
     """
 

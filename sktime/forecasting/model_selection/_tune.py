@@ -590,10 +590,10 @@ class ForecastingGridSearchCV(BaseGridSearch):
     ...     },
     ...     ],
     ...     cv=cv,
-    ... )  # doctest: +SKIP
-    >>> gscv.fit(y)  # doctest: +SKIP
+    ... )
+    >>> gscv.fit(y)
     ForecastingGridSearchCV(...)
-    >>> y_pred = gscv.predict(fh=[1,2,3])  # doctest: +SKIP
+    >>> y_pred = gscv.predict(fh=[1,2,3])
     """
 
     def __init__(
@@ -1137,10 +1137,10 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
     ...     param_distributions=param_distributions,
     ...     cv=cv,
     ...     n_iter=5,
-    ...     random_state=10)  # doctest: +SKIP
-    >>> sscv.fit(y)  # doctest: +SKIP
+    ...     random_state=10)
+    >>> sscv.fit(y)
     ForecastingSkoptSearchCV(...)
-    >>> y_pred = sscv.predict(fh)  # doctest: +SKIP
+    >>> y_pred = sscv.predict(fh)
     """
 
     _tags = {

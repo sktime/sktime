@@ -41,14 +41,14 @@ class CFFilter(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.cffilter import CFFilter # doctest: +SKIP
-    >>> import pandas as pd # doctest: +SKIP
-    >>> import statsmodels.api as sm # doctest: +SKIP
-    >>> dta = sm.datasets.macrodata.load_pandas().data # doctest: +SKIP
-    >>> index = pd.date_range(start='1959Q1', end='2009Q4', freq='Q') # doctest: +SKIP
-    >>> dta.set_index(index, inplace=True) # doctest: +SKIP
-    >>> cf = CFFilter(6, 24, True) # doctest: +SKIP
-    >>> cycles = cf.fit_transform(X=dta[['realinv']]) # doctest: +SKIP
+    >>> from sktime.transformations.series.cffilter import CFFilter
+    >>> import pandas as pd
+    >>> import statsmodels.api as sm
+    >>> dta = sm.datasets.macrodata.load_pandas().data
+    >>> index = pd.date_range(start='1959Q1', end='2009Q4', freq='Q')
+    >>> dta.set_index(index, inplace=True)
+    >>> cf = CFFilter(6, 24, True)
+    >>> cycles = cf.fit_transform(X=dta[['realinv']])
     """
 
     _tags = {

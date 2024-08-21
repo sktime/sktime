@@ -440,13 +440,13 @@ class StatsForecastBackAdapter:
     >>> from sktime.forecasting.ets import AutoETS
 
     >>> y = load_airline()
-    >>> trend_forecaster = AutoETS() # doctest: +SKIP
-    >>> model = StatsForecastMSTL( # doctest: +SKIP
+    >>> trend_forecaster = AutoETS()
+    >>> model = StatsForecastMSTL(
             season_length=[3,12],
             trend_forecaster=trend_forecaster
         )
-    >>> fitted_model = model.fit(y=y) # doctest: +SKIP
-    >>> y_pred = fitted_model.predict(fh=[1,2,3]) # doctest: +SKIP
+    >>> fitted_model = model.fit(y=y)
+    >>> y_pred = fitted_model.predict(fh=[1,2,3])
     """
 
     _tags = {

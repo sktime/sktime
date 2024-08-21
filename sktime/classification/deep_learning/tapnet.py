@@ -80,8 +80,8 @@ class TapNetClassifier(BaseDeepClassifier):
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train")
     >>> X_test, y_test = load_unit_test(split="test")
-    >>> tapnet = TapNetClassifier(n_epochs=20,batch_size=4)  # doctest: +SKIP
-    >>> tapnet.fit(X_train, y_train) # doctest: +SKIP
+    >>> tapnet = TapNetClassifier(n_epochs=20,batch_size=4)
+    >>> tapnet.fit(X_train, y_train)
     TapNetClassifier(...)
     """
 

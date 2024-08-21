@@ -103,12 +103,12 @@ class AlignerEditNumba(BaseAligner):
     >>> from sktime.datasets import load_unit_test
     >>> from sktime.dists_kernels.edit_dist import EditDist
     >>>
-    >>> X, _ = load_unit_test(return_type="pd-multiindex")  # doctest: +SKIP
-    >>> d = EditDist("edr")  # doctest: +SKIP
-    >>> distmat = d.transform(X)  # doctest: +SKIP
+    >>> X, _ = load_unit_test(return_type="pd-multiindex")
+    >>> d = EditDist("edr")
+    >>> distmat = d.transform(X)
 
     distances are also callable, this does the same:
-    >>> distmat = d(X)  # doctest: +SKIP
+    >>> distmat = d(X)
     """
 
     _tags = {

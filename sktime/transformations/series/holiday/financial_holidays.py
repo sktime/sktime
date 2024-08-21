@@ -59,12 +59,12 @@ class FinancialHolidaysTransformer(BaseTransformer):
     >>>
     >>> y = pandas.Series(data, index=index, name="random")
     >>>
-    >>> y_t = FinancialHolidaysTransformer("XNYS").fit_transform(y)  # doctest: +SKIP
-    >>> y_t.dtype  # doctest: +SKIP
+    >>> y_t = FinancialHolidaysTransformer("XNYS").fit_transform(y)
+    >>> y_t.dtype
     dtype('bool')
-    >>> y_t.sum()  # doctest: +SKIP
+    >>> y_t.sum()
     10
-    >>> y_t.name  # doctest: +SKIP
+    >>> y_t.name
     'XNYS_holidays'
     """
 

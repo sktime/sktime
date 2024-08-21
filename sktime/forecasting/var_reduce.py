@@ -100,10 +100,10 @@ class VARReduce(BaseForecaster):
     >>> from sklearn.linear_model import Lasso
     >>> from sktime.datasets import load_longley
     >>> _, y = load_longley()
-    >>> forecaster = VARReduce(regressor=Lasso())  # doctest: +SKIP
-    >>> forecaster.fit(y)  # doctest: +SKIP
+    >>> forecaster = VARReduce(regressor=Lasso())
+    >>> forecaster.fit(y)
     VARReduce(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
     _tags = {

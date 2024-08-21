@@ -115,10 +115,10 @@ class ShapeletTransformPyts(_PytsAdapter, BaseTransformer):
     ...     ShapeletTransformPyts
     ... )
     >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train") # doctest: +SKIP
-    >>> stp = ShapeletTransformPyts() # doctest: +SKIP
-    >>> stp.fit(X_train,y_train) # doctest: +SKIP
-    >>> stp.transform(X_train) # doctest: +SKIP
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> stp = ShapeletTransformPyts()
+    >>> stp.fit(X_train,y_train)
+    >>> stp.transform(X_train)
     """
 
     _tags = {

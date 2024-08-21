@@ -62,11 +62,11 @@ class StationarityADF(BaseParamFitter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.param_est.stationarity import StationarityADF
     >>>
-    >>> X = load_airline()  # doctest: +SKIP
-    >>> sty_est = StationarityADF()  # doctest: +SKIP
-    >>> sty_est.fit(X)  # doctest: +SKIP
+    >>> X = load_airline()
+    >>> sty_est = StationarityADF()
+    >>> sty_est.fit(X)
     StationarityADF(...)
-    >>> sty_est.get_fitted_params()["stationary"]  # doctest: +SKIP
+    >>> sty_est.get_fitted_params()["stationary"]
     False
     """
 
@@ -204,11 +204,11 @@ class StationarityKPSS(BaseParamFitter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.param_est.stationarity import StationarityKPSS
     >>>
-    >>> X = load_airline()  # doctest: +SKIP
-    >>> sty_est = StationarityKPSS()  # doctest: +SKIP
-    >>> sty_est.fit(X)  # doctest: +SKIP
+    >>> X = load_airline()
+    >>> sty_est = StationarityKPSS()
+    >>> sty_est.fit(X)
     StationarityKPSS(...)
-    >>> sty_est.get_fitted_params()["stationary"]  # doctest: +SKIP
+    >>> sty_est.get_fitted_params()["stationary"]
     False
     """
 

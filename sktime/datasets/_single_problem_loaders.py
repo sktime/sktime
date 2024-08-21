@@ -1131,7 +1131,7 @@ def load_macroeconomic():
     Examples
     --------
     >>> from sktime.datasets import load_macroeconomic
-    >>> y = load_macroeconomic()  # doctest: +SKIP
+    >>> y = load_macroeconomic()
 
     Notes
     -----
@@ -1243,8 +1243,8 @@ def load_solar(
 
     Examples
     --------
-    >>> from sktime.datasets import load_solar  # doctest: +SKIP
-    >>> y = load_solar()  # doctest: +SKIP
+    >>> from sktime.datasets import load_solar
+    >>> y = load_solar()
     """
     name = "solar"
     fname = name + ".csv"

@@ -1306,26 +1306,26 @@ class ForecastX(BaseForecaster):
 
     >>> y, X = load_longley()
     >>> fh = ForecastingHorizon([1, 2, 3])
-    >>> pipe = ForecastX(  # doctest: +SKIP
+    >>> pipe = ForecastX(
     ...     forecaster_X=VAR(),
     ...     forecaster_y=ARIMA(),
     ... )
-    >>> pipe = pipe.fit(y, X=X, fh=fh)  # doctest: +SKIP
+    >>> pipe = pipe.fit(y, X=X, fh=fh)
     >>> # this now works without X from the future of y!
-    >>> y_pred = pipe.predict(fh=fh)  # doctest: +SKIP
+    >>> y_pred = pipe.predict(fh=fh)
 
     to forecast only some columns, use the ``columns`` arg,
     and pass known columns to ``predict``:
 
     >>> columns = ["ARMED", "POP"]
-    >>> pipe = ForecastX(  # doctest: +SKIP
+    >>> pipe = ForecastX(
     ...     forecaster_X=VAR(),
     ...     forecaster_y=SARIMAX(),
     ...     columns=columns,
     ... )
-    >>> pipe = pipe.fit(y_train, X=X_train, fh=fh)  # doctest: +SKIP
+    >>> pipe = pipe.fit(y_train, X=X_train, fh=fh)
     >>> # dropping ["ARMED", "POP"] = columns where we expect not to have future values
-    >>> y_pred = pipe.predict(fh=fh, X=X_test.drop(columns=columns))  # doctest: +SKIP
+    >>> y_pred = pipe.predict(fh=fh, X=X_test.drop(columns=columns))
 
     Notes
     -----

@@ -2675,12 +2675,12 @@ class YfromX(BaseForecaster, _ReducerMixin):
 
     YfromX can also be used with skpro probabilistic regressors,
     in this case the resulting forecaster will be capable of probabilistic forecasts:
-    >>> from skpro.regression.residual import ResidualDouble  # doctest: +SKIP
-    >>> reg_proba = ResidualDouble(LinearRegression())  # doctest: +SKIP
-    >>> f = YfromX(reg_proba)  # doctest: +SKIP
-    >>> f.fit(y=y_train, X=X_train, fh=fh)  # doctest: +SKIP
+    >>> from skpro.regression.residual import ResidualDouble
+    >>> reg_proba = ResidualDouble(LinearRegression())
+    >>> f = YfromX(reg_proba)
+    >>> f.fit(y=y_train, X=X_train, fh=fh)
     YfromX(...)
-    >>> y_pred = f.predict_interval(X=X_test)  # doctest: +SKIP
+    >>> y_pred = f.predict_interval(X=X_test)
     """
 
     _tags = {

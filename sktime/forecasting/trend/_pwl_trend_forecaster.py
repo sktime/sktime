@@ -77,10 +77,10 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
     >>> y =load_airline().to_timestamp(freq='M')
     >>> y_train, y_test = temporal_train_test_split(y)
     >>> fh = ForecastingHorizon(y.index, is_relative=False)
-    >>> forecaster =  ProphetPiecewiseLinearTrendForecaster() # doctest: +SKIP
-    >>> forecaster.fit(y_train) # doctest: +SKIP
+    >>> forecaster =  ProphetPiecewiseLinearTrendForecaster()
+    >>> forecaster.fit(y_train)
     ProphetPiecewiseLinearTrendForecaster(...)
-    >>> y_pred = forecaster.predict(fh) # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh)
     """
 
     _tags = {

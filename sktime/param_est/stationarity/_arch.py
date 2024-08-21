@@ -74,11 +74,11 @@ class StationarityADFArch(BaseParamFitter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.param_est.stationarity import StationarityADFArch
     >>>
-    >>> X = load_airline()  # doctest: +SKIP
-    >>> sty_est = StationarityADFArch()  # doctest: +SKIP
-    >>> sty_est.fit(X)  # doctest: +SKIP
+    >>> X = load_airline()
+    >>> sty_est = StationarityADFArch()
+    >>> sty_est.fit(X)
     StationarityADFArch(...)
-    >>> sty_est.get_fitted_params()["stationary"]  # doctest: +SKIP
+    >>> sty_est.get_fitted_params()["stationary"]
     False
     """
 
@@ -231,11 +231,11 @@ class StationarityDFGLS(BaseParamFitter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.param_est.stationarity import StationarityDFGLS
     >>>
-    >>> X = load_airline()  # doctest: +SKIP
-    >>> sty_est = StationarityDFGLS()  # doctest: +SKIP
-    >>> sty_est.fit(X)  # doctest: +SKIP
+    >>> X = load_airline()
+    >>> sty_est = StationarityDFGLS()
+    >>> sty_est.fit(X)
     StationarityDFGLS(...)
-    >>> sty_est.get_fitted_params()["stationary"]  # doctest: +SKIP
+    >>> sty_est.get_fitted_params()["stationary"]
     False
     """
 
@@ -378,11 +378,11 @@ class StationarityPhillipsPerron(BaseParamFitter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.param_est.stationarity import StationarityPhillipsPerron
     >>>
-    >>> X = load_airline()  # doctest: +SKIP
-    >>> sty_est = StationarityPhillipsPerron()  # doctest: +SKIP
-    >>> sty_est.fit(X)  # doctest: +SKIP
+    >>> X = load_airline()
+    >>> sty_est = StationarityPhillipsPerron()
+    >>> sty_est.fit(X)
     StationarityPhillipsPerron(...)
-    >>> sty_est.get_fitted_params()["stationary"]  # doctest: +SKIP
+    >>> sty_est.get_fitted_params()["stationary"]
     False
     """
 
@@ -517,11 +517,11 @@ class StationarityKPSSArch(BaseParamFitter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.param_est.stationarity import StationarityKPSSArch
     >>>
-    >>> X = load_airline()  # doctest: +SKIP
-    >>> sty_est = StationarityKPSSArch()  # doctest: +SKIP
-    >>> sty_est.fit(X)  # doctest: +SKIP
+    >>> X = load_airline()
+    >>> sty_est = StationarityKPSSArch()
+    >>> sty_est.fit(X)
     StationarityKPSSArch(...)
-    >>> sty_est.get_fitted_params()["stationary"]  # doctest: +SKIP
+    >>> sty_est.get_fitted_params()["stationary"]
     True
     """
 
@@ -663,11 +663,11 @@ class StationarityZivotAndrews(BaseParamFitter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.param_est.stationarity import StationarityZivotAndrews
     >>>
-    >>> X = load_airline()  # doctest: +SKIP
-    >>> sty_est = StationarityZivotAndrews()  # doctest: +SKIP
-    >>> sty_est.fit(X)  # doctest: +SKIP
+    >>> X = load_airline()
+    >>> sty_est = StationarityZivotAndrews()
+    >>> sty_est.fit(X)
     StationarityZivotAndrews(...)
-    >>> sty_est.get_fitted_params()["stationary"]  # doctest: +SKIP
+    >>> sty_est.get_fitted_params()["stationary"]
     False
     """
 
@@ -817,11 +817,11 @@ class StationarityVarianceRatio(BaseParamFitter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.param_est.stationarity import StationarityVarianceRatio
     >>>
-    >>> X = load_airline()  # doctest: +SKIP
-    >>> sty_est = StationarityVarianceRatio()  # doctest: +SKIP
-    >>> sty_est.fit(X)  # doctest: +SKIP
+    >>> X = load_airline()
+    >>> sty_est = StationarityVarianceRatio()
+    >>> sty_est.fit(X)
     StationarityVarianceRatio(...)
-    >>> sty_est.get_fitted_params()["stationary"]  # doctest: +SKIP
+    >>> sty_est.get_fitted_params()["stationary"]
     True
     """
 

@@ -74,35 +74,35 @@ class PluginParamsForecaster(_DelegatedForecaster):
     >>> from sktime.param_est.seasonality import SeasonalityACF
     >>> from sktime.transformations.series.difference import Differencer
     >>>
-    >>> y = load_airline()  # doctest: +SKIP
+    >>> y = load_airline()
     >>>
     >>> # sp_est is a seasonality estimator
     >>> # ACF assumes stationarity so we concat with differencing first
-    >>> sp_est = Differencer() * SeasonalityACF()  # doctest: +SKIP
+    >>> sp_est = Differencer() * SeasonalityACF()
     >>>
     >>> # fcst is a forecaster with a "sp" parameter which we want to tune
-    >>> fcst = NaiveForecaster()  # doctest: +SKIP
+    >>> fcst = NaiveForecaster()
     >>>
     >>> # sp_auto is auto-tuned via PluginParamsForecaster
-    >>> sp_auto = PluginParamsForecaster(sp_est, fcst)  # doctest: +SKIP
+    >>> sp_auto = PluginParamsForecaster(sp_est, fcst)
     >>>
     >>> # fit sp_auto to data, predict, and inspect the tuned sp parameter
-    >>> sp_auto.fit(y, fh=[1, 2, 3])  # doctest: +SKIP
+    >>> sp_auto.fit(y, fh=[1, 2, 3])
     PluginParamsForecaster(...)
-    >>> y_pred = sp_auto.predict()  # doctest: +SKIP
-    >>> sp_auto.forecaster_.get_params()["sp"]  # doctest: +SKIP
+    >>> y_pred = sp_auto.predict()
+    >>> sp_auto.forecaster_.get_params()["sp"]
     12
     >>> # shorthand ways to specify sp_auto, via dunder, does the same
-    >>> sp_auto = sp_est * fcst  # doctest: +SKIP
+    >>> sp_auto = sp_est * fcst
     >>> # or entire pipeline in one go
-    >>> sp_auto = Differencer() * SeasonalityACF() * NaiveForecaster()  # doctest: +SKIP
+    >>> sp_auto = Differencer() * SeasonalityACF() * NaiveForecaster()
 
     using dictionary to plug "foo" parameter into "sp"
 
     >>> from sktime.param_est.fixed import FixedParams
     >>> sp_plugin = PluginParamsForecaster(
     ...     FixedParams({"foo": 12}), NaiveForecaster(), params={"sp": "foo"}
-    ... )  # doctest: +SKIP
+    ... )
     """
 
     _tags = {

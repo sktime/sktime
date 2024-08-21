@@ -66,12 +66,12 @@ class MiniRocketMultivariate(BaseTransformer):
      >>> from sktime.transformations.panel.rocket import MiniRocketMultivariate
      >>> from sktime.datasets import load_basic_motions
      >>> X_train, y_train = load_basic_motions(split="train")
-     >>> X_test, y_test = load_basic_motions(split="test") # doctest: +SKIP
-     >>> trf = MiniRocketMultivariate(num_kernels=512) # doctest: +SKIP
-     >>> trf.fit(X_train) # doctest: +SKIP
+     >>> X_test, y_test = load_basic_motions(split="test")
+     >>> trf = MiniRocketMultivariate(num_kernels=512)
+     >>> trf.fit(X_train)
      MiniRocketMultivariate(...)
-     >>> X_train = trf.transform(X_train) # doctest: +SKIP
-     >>> X_test = trf.transform(X_test) # doctest: +SKIP
+     >>> X_train = trf.transform(X_train)
+     >>> X_test = trf.transform(X_test)
     """
 
     _tags = {

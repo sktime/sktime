@@ -47,8 +47,8 @@ class SameLocSplitter(BaseSplitter):
 
     these two are the same:
 
-    >>> list(cv_tpl.split(y_template)) # doctest: +SKIP
-    >>> list(splitter.split(y)) # doctest: +SKIP
+    >>> list(cv_tpl.split(y_template))
+    >>> list(splitter.split(y))
     """
 
     _tags = {

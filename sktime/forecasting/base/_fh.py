@@ -225,17 +225,17 @@ class ForecastingHorizon:
 
         List as ForecastingHorizon
 
-    >>> ForecastingHorizon([1, 2, 3])  # doctest: +SKIP
+    >>> ForecastingHorizon([1, 2, 3])
     >>> # ForecastingHorizon([1, 2, 3], is_relative=True)
 
         Numpy as ForecastingHorizon
 
-    >>> ForecastingHorizon(np.arange(1, 7))  # doctest: +SKIP
+    >>> ForecastingHorizon(np.arange(1, 7))
     >>> # ForecastingHorizon([1, 2, 3, 4, 5, 6], is_relative=True)
 
         Absolute ForecastingHorizon with a pandas Index
 
-    >>> ForecastingHorizon(y_test.index, is_relative=False) # doctest: +SKIP
+    >>> ForecastingHorizon(y_test.index, is_relative=False)
     >>> # ForecastingHorizon(['1960-07', ..., '1960-12'], is_relative=False)
 
         Converting
@@ -246,12 +246,12 @@ class ForecastingHorizon:
     Period('1960-06', 'M')
     >>> # to_relative
     >>> fh = ForecastingHorizon(y_test.index, is_relative=False)
-    >>> fh.to_relative(cutoff=cutoff)  # doctest: +SKIP
+    >>> fh.to_relative(cutoff=cutoff)
     >>> # ForecastingHorizon([1, 2, 3, 4, 5, 6], is_relative=True)
 
     >>> # to_absolute
     >>> fh = ForecastingHorizon([1, 2, 3, 4, 5, 6], is_relative=True)
-    >>> fh = fh.to_absolute(cutoff=cutoff) # doctest: +SKIP
+    >>> fh = fh.to_absolute(cutoff=cutoff)
     >>> # ForecastingHorizon(['1960-07', ..., '1960-12'], is_relative=False)
 
         Automatically casted ForecastingHorizon from list when calling predict()
@@ -260,13 +260,13 @@ class ForecastingHorizon:
     >>> forecaster.fit(y_train)
     NaiveForecaster(...)
     >>> y_pred = forecaster.predict(fh=[1,2,3])
-    >>> forecaster.fh  # doctest: +SKIP
+    >>> forecaster.fh
     >>> # ForecastingHorizon([1, 2, 3], dtype='int64', is_relative=True)
 
         This is identical to give an object of ForecastingHorizon
 
     >>> y_pred = forecaster.predict(fh=ForecastingHorizon([1,2,3]))
-    >>> forecaster.fh  # doctest: +SKIP
+    >>> forecaster.fh
     >>> # ForecastingHorizon([1, 2, 3], dtype='int64', is_relative=True)
     """
 

@@ -167,10 +167,10 @@ class AutoETS(_StatsModelsAdapter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.ets import AutoETS
     >>> y = load_airline()
-    >>> forecaster = AutoETS(auto=True, n_jobs=-1, sp=12)  # doctest: +SKIP
-    >>> forecaster.fit(y)  # doctest: +SKIP
+    >>> forecaster = AutoETS(auto=True, n_jobs=-1, sp=12)
+    >>> forecaster.fit(y)
     AutoETS(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
     _fitted_param_names = ("aic", "aicc", "bic", "hqic")

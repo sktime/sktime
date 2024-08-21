@@ -32,11 +32,11 @@ class TSBootstrapAdapter(BaseTransformer):
     >>> from tsbootstrap import (
     ...    MovingBlockBootstrap,
     ...    MovingBlockBootstrapConfig
-    ... ) # doctest: +SKIP
+    ... )
     >>> y = load_airline()
-    >>> config = MovingBlockBootstrapConfig(10, n_bootstraps=10)  # doctest: +SKIP
-    >>> bootstrap = TSBootstrapAdapter(MovingBlockBootstrap(config))  # doctest: +SKIP
-    >>> result = bootstrap.fit_transform(y)  # doctest: +SKIP
+    >>> config = MovingBlockBootstrapConfig(10, n_bootstraps=10)
+    >>> bootstrap = TSBootstrapAdapter(MovingBlockBootstrap(config))
+    >>> result = bootstrap.fit_transform(y)
     """
 
     _tags = {

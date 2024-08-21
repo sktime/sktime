@@ -55,10 +55,10 @@ class MLPRegressor(BaseDeepRegressor):
     >>> from sktime.regression.deep_learning.mlp import MLPRegressor
     >>> X_train, y_train = load_unit_test(return_X_y=True, split="train")
     >>> X_test, y_test = load_unit_test(return_X_y=True, split="test")
-    >>> regressor = MLPRegressor() # doctest: +SKIP
-    >>> regressor.fit(X_train, y_train) # doctest: +SKIP
+    >>> regressor = MLPRegressor()
+    >>> regressor.fit(X_train, y_train)
     MLPRegressor(...)
-    >>> y_pred = regressor.predict(X_test) # doctest: +SKIP
+    >>> y_pred = regressor.predict(X_test)
     """
 
     _tags = {

@@ -67,33 +67,33 @@ class PluginParamsTransformer(_DelegatedTransformer):
     >>> from sktime.transformations.series.detrend import Deseasonalizer
     >>> from sktime.transformations.series.difference import Differencer
     >>>
-    >>> X = load_airline()  # doctest: +SKIP
+    >>> X = load_airline()
     >>>
     >>> # sp_est is a seasonality estimator
     >>> # ACF assumes stationarity so we concat with differencing first
-    >>> sp_est = Differencer() * SeasonalityACF()  # doctest: +SKIP
+    >>> sp_est = Differencer() * SeasonalityACF()
 
     >>> # trafo is a forecaster with a "sp" parameter which we want to tune
-    >>> trafo = Deseasonalizer()  # doctest: +SKIP
-    >>> sp_auto = PluginParamsTransformer(sp_est, trafo)  # doctest: +SKIP
+    >>> trafo = Deseasonalizer()
+    >>> sp_auto = PluginParamsTransformer(sp_est, trafo)
     >>>
     >>> # fit sp_auto to data, transform, and inspect the tuned sp parameter
-    >>> sp_auto.fit(X)  # doctest: +SKIP
+    >>> sp_auto.fit(X)
     PluginParamsTransformer(...)
-    >>> Xt = sp_auto.transform(X)  # doctest: +SKIP
-    >>> sp_auto.transformer_.get_params()["sp"]  # doctest: +SKIP
+    >>> Xt = sp_auto.transform(X)
+    >>> sp_auto.transformer_.get_params()["sp"]
     12
     >>> # shorthand ways to specify sp_auto, via dunder, does the same
-    >>> sp_auto = sp_est * trafo  # doctest: +SKIP
+    >>> sp_auto = sp_est * trafo
     >>> # or entire pipeline in one go
-    >>> sp_auto = Differencer() * SeasonalityACF() * Deseasonalizer()  # doctest: +SKIP
+    >>> sp_auto = Differencer() * SeasonalityACF() * Deseasonalizer()
 
     using dictionary to plug "foo" parameter into "sp"
 
     >>> from sktime.param_est.fixed import FixedParams
     >>> sp_plugin = PluginParamsTransformer(
     ...     FixedParams({"foo": 12}), Deseasonalizer(), params={"sp": "foo"}
-    ... )  # doctest: +SKIP
+    ... )
     """
 
     _tags = {

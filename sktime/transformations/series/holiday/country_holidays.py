@@ -58,12 +58,12 @@ class CountryHolidaysTransformer(BaseTransformer):
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>>
-    >>> y_t = CountryHolidaysTransformer("US").fit_transform(y)  # doctest: +SKIP
-    >>> y_t.dtype  # doctest: +SKIP
+    >>> y_t = CountryHolidaysTransformer("US").fit_transform(y)
+    >>> y_t.dtype
     dtype('bool')
-    >>> y_t.sum()  # doctest: +SKIP
+    >>> y_t.sum()
     14
-    >>> y_t.name  # doctest: +SKIP
+    >>> y_t.name
     'US_holidays'
     """
 

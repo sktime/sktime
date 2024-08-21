@@ -183,7 +183,7 @@ class TemporalTrainTestSplitter(BaseSplitter):
     >>> from sktime.split import TemporalTrainTestSplitter
     >>> ts = np.arange(10)
     >>> splitter = TemporalTrainTestSplitter(test_size=0.3)
-    >>> list(splitter.split(ts)) # doctest: +SKIP
+    >>> list(splitter.split(ts))
     """
 
     _tags = {"split_hierarchical": False}

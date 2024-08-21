@@ -157,9 +157,9 @@ class StatsModelsARIMA(_StatsModelsAdapter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.arima import StatsModelsARIMA
     >>> y = load_airline()
-    >>> forecaster = StatsModelsARIMA(order=(0, 0, 12))  # doctest: +SKIP
-    >>> forecaster.fit(y)  # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
+    >>> forecaster = StatsModelsARIMA(order=(0, 0, 12))
+    >>> forecaster.fit(y)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """  # noqa: E501
 
     _tags = {

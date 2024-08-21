@@ -177,15 +177,15 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
     >>> from sktime.classification.ensemble import ComposableTimeSeriesForestClassifier
     >>> from sktime.classification.kernel_based import RocketClassifier
     >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train") # doctest: +SKIP
-    >>> X_test, y_test = load_unit_test(split="test") # doctest: +SKIP
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> X_test, y_test = load_unit_test(split="test")
     >>> clf = ComposableTimeSeriesForestClassifier(
     ...     RocketClassifier(num_kernels=100),
     ...     n_estimators=10,
-    ... )  # doctest: +SKIP
-    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
+    ... )
+    >>> clf.fit(X_train, y_train)
     ComposableTimeSeriesForestClassifier(...)
-    >>> y_pred = clf.predict(X_test)  # doctest: +SKIP
+    >>> y_pred = clf.predict(X_test)
     """
 
     _tags = {

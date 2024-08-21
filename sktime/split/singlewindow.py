@@ -57,7 +57,7 @@ class SingleWindowSplitter(BaseSplitter):
     >>> from sktime.split import SingleWindowSplitter
     >>> ts = np.arange(10)
     >>> splitter = SingleWindowSplitter(fh=[2, 4], window_length=3)
-    >>> list(splitter.split(ts)) # doctest: +SKIP
+    >>> list(splitter.split(ts))
     [(array([3, 4, 5]), array([7, 9]))]
     """
 

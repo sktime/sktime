@@ -76,15 +76,15 @@ class ConformalIntervals(BaseForecaster):
 
     Examples
     --------
-    >>> from sktime.datasets import load_airline  # doctest: +SKIP
-    >>> from sktime.forecasting.conformal import ConformalIntervals  # doctest: +SKIP
-    >>> from sktime.forecasting.naive import NaiveForecaster  # doctest: +SKIP
-    >>> y = load_airline()  # doctest: +SKIP
-    >>> forecaster = NaiveForecaster(strategy="drift")  # doctest: +SKIP
-    >>> conformal_forecaster = ConformalIntervals(forecaster)  # doctest: +SKIP
-    >>> conformal_forecaster.fit(y, fh=[1, 2, 3])  # doctest: +SKIP
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.conformal import ConformalIntervals
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> y = load_airline()
+    >>> forecaster = NaiveForecaster(strategy="drift")
+    >>> conformal_forecaster = ConformalIntervals(forecaster)
+    >>> conformal_forecaster.fit(y, fh=[1, 2, 3])
     ConformalIntervals(...)
-    >>> pred_int = conformal_forecaster.predict_interval()  # doctest: +SKIP
+    >>> pred_int = conformal_forecaster.predict_interval()
 
     recommended use of ConformalIntervals together with ForecastingGridSearch
     is by 1. first running grid search, 2. then ConformalIntervals on the tuned params
@@ -97,25 +97,25 @@ class ConformalIntervals(BaseForecaster):
     >>> from sktime.split import ExpandingWindowSplitter
     >>> from sktime.param_est.plugin import PluginParamsForecaster
     >>> # part 1 = grid search
-    >>> cv = ExpandingWindowSplitter(fh=[1, 2, 3])  # doctest: +SKIP
-    >>> forecaster = NaiveForecaster()  # doctest: +SKIP
-    >>> param_grid = {"strategy" : ["last", "mean", "drift"]}  # doctest: +SKIP
+    >>> cv = ExpandingWindowSplitter(fh=[1, 2, 3])
+    >>> forecaster = NaiveForecaster()
+    >>> param_grid = {"strategy" : ["last", "mean", "drift"]}
     >>> gscv = ForecastingGridSearchCV(
     ...     forecaster=forecaster,
     ...     param_grid=param_grid,
     ...     cv=cv,
-    ... )  # doctest: +SKIP
+    ... )
     >>> # part 2 = plug in results of grid search into conformal intervals estimator
     >>> conformal_with_fallback = ConformalIntervals(NaiveForecaster())
     >>> gscv_with_conformal = PluginParamsForecaster(
     ...     gscv,
     ...     conformal_with_fallback,
     ...     params={"forecaster": "best_forecaster"},
-    ... )  # doctest: +SKIP
-    >>> y = load_airline()  # doctest: +SKIP
-    >>> gscv_with_conformal.fit(y, fh=[1, 2, 3])  # doctest: +SKIP
+    ... )
+    >>> y = load_airline()
+    >>> gscv_with_conformal.fit(y, fh=[1, 2, 3])
     PluginParamsForecaster(...)
-    >>> y_pred_quantiles = gscv_with_conformal.predict_quantiles()  # doctest: +SKIP
+    >>> y_pred_quantiles = gscv_with_conformal.predict_quantiles()
     """
 
     _tags = {

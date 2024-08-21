@@ -53,8 +53,8 @@ class SimpleRNNClassifier(BaseDeepClassifier):
     >>> from sktime.classification.deep_learning.rnn import SimpleRNNClassifier
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train")
-    >>> clf = SimpleRNNClassifier(n_epochs=20,batch_size=20) # doctest: +SKIP
-    >>> clf.fit(X_train, y_train) # doctest: +SKIP
+    >>> clf = SimpleRNNClassifier(n_epochs=20,batch_size=20)
+    >>> clf.fit(X_train, y_train)
     ResNetClassifier(...)
     """
 
