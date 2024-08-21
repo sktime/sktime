@@ -186,7 +186,7 @@ class ARDL(_StatsModelsAdapter):
     >>> X = data[["realcons", "realinv"]]
     >>> X_oos = oos[["realcons", "realinv"]]
     >>> ardl = ARDL(lags=2, order={"realcons": 1, "realinv": 2}, trend="c")\
-  
+
     >>> ardl.fit(y=y, X=X)
     ARDL(lags=2, order={'realcons': 1, 'realinv': 2})
     >>> fh = ForecastingHorizon([1, 2, 3])

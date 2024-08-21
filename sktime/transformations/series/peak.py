@@ -134,7 +134,7 @@ class PeakTimeFeature(BaseTransformer):
     Examples
     --------
     >>> from sktime.transformations.series.peak import PeakTimeFeature
-    >>> from sktime.datasets import 
+    >>> from sktime.datasets import load_solar
     >>> y = load_solar()
     >>> y = y.tz_localize(None)
     >>> y = y.asfreq("H")

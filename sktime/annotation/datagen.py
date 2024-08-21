@@ -171,7 +171,7 @@ def piecewise_normal(
 
     >>> from sktime.annotation.datagen import piecewise_normal
     >>> piecewise_normal([1, 2, 3], lengths=[2, 4, 8], std_dev=[0, 0.5, 1.0])\
-      
+
     array([1.        , 1.        , 2.32384427, 2.76151493, 1.88292331,
         1.88293152, 4.57921282, 3.76743473, 2.53052561, 3.54256004,
         2.53658231, 2.53427025, 3.24196227, 1.08671976])

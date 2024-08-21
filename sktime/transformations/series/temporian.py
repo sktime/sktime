@@ -33,8 +33,7 @@ class TemporianTransformer(BaseTransformer):
     >>> import temporian as tp
     >>>
     >>> def function(evset):
-    ...     return evset.simple_moving_average(tp.duration.days(3 * 365))  \
-      
+    ...     return evset.simple_moving_average(tp.duration.days(3 * 365))
     >>> transformer = TemporianTransformer(function=function)
     >>> X = load_airline()
     >>> X_averaged = transformer.fit_transform(X)
