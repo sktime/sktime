@@ -149,7 +149,6 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
         }
         self.set_tags(**tags_to_set)
 
-
         tags_to_clone = [
             "capability:out_of_sample",
             "capability:predict",
