@@ -211,6 +211,8 @@
       "contributions": [
         "bug",
         "code",
+        "ideas",
+        "projectManagement",
         "test"
       ]
     },
@@ -1777,6 +1779,7 @@
         "mentoring",
         "question",
         "review",
+        "talk",
         "tutorial"
       ]
     },
@@ -2018,6 +2021,8 @@
       "contributions": [
         "code",
         "ideas",
+        "projectManagement",
+        "talk",
         "test"
       ]
     },
@@ -2217,7 +2222,12 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/54272586?v=4",
       "profile": "https://github.com/marrov",
       "contributions": [
-        "doc"
+        "design",
+        "doc",
+        "ideas",
+        "mentoring",
+        "projectManagement",
+        "talk"
       ]
     },
     {
@@ -2977,6 +2987,42 @@
             "code",
             "test"
         ]
+    },
+    {
+      "login": "janasberger",
+      "name": "Jana Schmidberger",
+      "avatar_url": "https://avatars.githubusercontent.com/u/111234477?v=4",
+      "profile": "https://github.com/janasberger",
+      "contributions": [
+        "business",
+        "ideas",
+        "projectManagement"
+      ]
+    },
+    {
+      "login": "kirilral",
+      "name": "Kiril Ralinovski",
+      "avatar_url": "https://avatars.githubusercontent.com/u/34281484?v=4",
+      "profile": "https://github.com/kirilral",
+      "contributions": [
+        "ideas",
+        "mentoring",
+        "projectManagement",
+        "talk"
+      ]
+    },
+    {
+      "login": "onyekaugochukwu",
+      "name": "Ugochukwu Onyeka",
+      "avatar_url": "https://avatars.githubusercontent.com/u/92909501?v=4",
+      "profile": "https://github.com/onyekaugochukwu",
+      "contributions": [
+        "business",
+        "doc",
+        "ideas",
+        "mentoring",
+        "projectManagement"
+      ]
     }
   ]
 }
