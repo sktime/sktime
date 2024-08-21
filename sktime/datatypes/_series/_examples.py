@@ -75,6 +75,13 @@ if _check_soft_dependencies("dask", severity="none"):
     example_dict[("dask_series", "Series", 0)] = df_dask
     example_dict_lossy[("dask_series", "Series", 0)] = False
 
+if _check_soft_dependencies("polars", severity="none"):
+    from polars import DataFrame
+
+    pl_df = DataFrame({"__index__0": [0, 1, 2, 3], "a": [1, 4, 0.5, -3]}, strict=False)
+
+    example_dict[("pl.DataFrame", "Series", 0)] = pl_df
+    example_dict_lossy[("pl.DataFrame", "Series", 0)] = False
 
 if _check_soft_dependencies("gluonts", severity="none"):
     from gluonts.dataset.pandas import PandasDataset
@@ -139,6 +146,19 @@ if _check_soft_dependencies("dask", severity="none"):
     example_dict[("dask_series", "Series", 1)] = df_dask
     example_dict_lossy[("dask_series", "Series", 1)] = False
 
+
+if _check_soft_dependencies("polars", severity="none"):
+    from polars import DataFrame
+
+    pl_df = DataFrame(
+        {"__index__0": [0, 1, 2, 3], "a": [1, 4, 0.5, -3], "b": [3, 7, 2, -3 / 7]},
+        strict=False,
+    )
+
+    example_dict[("pl.DataFrame", "Series", 1)] = pl_df
+    example_dict_lossy[("pl.DataFrame", "Series", 1)] = False
+
+
 if _check_soft_dependencies("gluonts", severity="none"):
     from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
 
@@ -192,6 +212,19 @@ if _check_soft_dependencies("dask", severity="none"):
     example_dict[("dask_series", "Series", 2)] = df_dask
     example_dict_lossy[("dask_series", "Series", 2)] = False
 
+
+if _check_soft_dependencies("polars", severity="none"):
+    from polars import DataFrame
+
+    pl_df = DataFrame(
+        {"__index__0": [0, 1, 2, 3], "a": [1, 4, 0.5, 3], "b": [3, 7, 2, 3 / 7]},
+        strict=False,
+    )
+
+    example_dict[("pl.DataFrame", "Series", 2)] = pl_df
+    example_dict_lossy[("pl.DataFrame", "Series", 2)] = False
+
+
 if _check_soft_dependencies("gluonts", severity="none"):
     from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
 
@@ -238,6 +271,16 @@ if _check_soft_dependencies("xarray", severity="none"):
 
     example_dict[("xr.DataArray", "Series", 3)] = da
     example_dict_lossy[("xr.DataArray", "Series", 3)] = False
+
+
+if _check_soft_dependencies("polars", severity="none"):
+    from polars import DataFrame
+
+    pl_df = DataFrame({"__index__0": [0, 1, 2, 3], "a": [1, 4, 0.5, 3]}, strict=False)
+
+    example_dict[("pl.DataFrame", "Series", 3)] = pl_df
+    example_dict_lossy[("pl.DataFrame", "Series", 3)] = False
+
 
 if _check_soft_dependencies("gluonts", severity="none"):
     from gluonts.dataset.pandas import PandasDataset
