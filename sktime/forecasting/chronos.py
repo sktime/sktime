@@ -176,7 +176,13 @@ class ChronosForecaster(BaseForecaster):
         -------
         params : dict or list of dict
         """
-        test_params = [
+        test_params = []
+        test_params.append(
+            {
+                "model_path": "amazon/chronos-t5-tiny",
+            }
+        )
+        test_params.append(
             {
                 "model_path": "amazon/chronos-t5-small",
                 "config": {
@@ -184,20 +190,6 @@ class ChronosForecaster(BaseForecaster):
                 },
                 "seed": 42,
             }
-        ]
-        # test_params.append(
-        #     {
-        #         "model_path": "amazon/chronos-t5-tiny",
-        #     }
-        # )
-        # test_params.append(
-        #     {
-        #         "model_path": "amazon/chronos-t5-small",
-        #         "config": {
-        #             "num_samples": 20,
-        #         },
-        #         "seed": 42,
-        #     }
-        # )
+        )
 
         return test_params

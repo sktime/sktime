@@ -248,7 +248,7 @@ EXCLUDED_TESTS = {
     ],
     "TSRGridSearchCV": ["test_multioutput"],  # see 6708
     # pickling problem
-    "Chronos": [
+    "ChronosForecaster": [
         "test_persistence_via_pickle",
         "test_save_estimators_to_file",
     ],
