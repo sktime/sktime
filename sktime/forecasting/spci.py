@@ -41,7 +41,7 @@ class SPCI(BaseForecaster, BaseProbaRegressor):
     ----------
     forecaster : estimator object
         The base forecaster to fit in order to make point predictions.
-    regressor: estimator object
+    regressor: skpro regressor object
         The base regressor to fit in order to predict quantiles.
     random_state : int, RandomState instance or None, default=None
         Random state for reproducibility.
@@ -49,7 +49,7 @@ class SPCI(BaseForecaster, BaseProbaRegressor):
 
     Examples
     --------
-    continue
+    continue - return once implementation is completed.
 
     References
     ----------
@@ -219,37 +219,29 @@ class SPCI(BaseForecaster, BaseProbaRegressor):
         #   self.clone_tags(est2, ["enforce_index_type", "handles-missing-data"])
 
     # todo: implement this, mandatory
-    def _fit(self, y, X, fh):
-        """Fit forecaster to training data.
-
-        private _fit containing the core logic, called from fit
-
-        Writes to self:
-            Sets fitted model attributes ending in "_".
+    def _fit(self, y, X):
+        """Fit forecaster to training data with fh=1.
 
         Parameters
         ----------
-        y : sktime time series object
-            guaranteed to be of an mtype in self.get_tag("y_inner_mtype")
-            Time series to which to fit the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
-            Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
-            Otherwise, if not passed in _fit, guaranteed to be passed in _predict
-        X :  sktime time series object, optional (default=None)
-            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
-            Exogeneous time series to fit to.
+        y : sktime compatible tabular data container, Table scitype
+            numpy1D iterable, of shape [n_instances]
+        X : sktime compatible time series panel data container, Panel scitype, e.g.,
+             pd-multiindex: pd.DataFrame with columns = variables,
+             index = pd.MultiIndex with first level = instance indices,
+             second level = time indices
+             numpy3D: 3D np.array (any number of dimensions, equal length series)
+             of shape [n_instances, n_dimensions, series_length]
+             or of any other supported Panel mtype
+             for list of mtypes, see datatypes.SCITYPE_REGISTER
+             for specifications, see examples/AA_datatypes_and_datasets.ipynb
+
 
         Returns
         -------
         self : reference to self
         """
-
+        self._fh = 1
         # implement here
         # IMPORTANT: avoid side effects to y, X, fh
         #
@@ -265,69 +257,47 @@ class SPCI(BaseForecaster, BaseProbaRegressor):
         #   3. read from self in _fit,  4. pass to interfaced_model.fit in _fit
 
     # todo: implement this, mandatory
-    def _predict(self, fh, X):
-        """Forecast time series at future horizon.
-
-        private _predict containing the core logic, called from predict
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-            self.cutoff
+    def _predict(self, X):
+        """Forecast time series at fh = 1.
 
         Parameters
         ----------
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
-            If not passed in _fit, guaranteed to be passed here
-        X : sktime time series object, optional (default=None)
-            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
-            Exogeneous time series for the forecast
+        X : sktime compatible time series panel data container, Panel scitype, e.g.,
+             pd-multiindex: pd.DataFrame with columns = variables,
+             index = pd.MultiIndex with first level = instance indices,
+             second level = time indices
+             numpy3D: 3D np.array (any number of dimensions, equal length series)
+             of shape [n_instances, n_dimensions, series_length]
+             or of any other supported Panel mtype
+             for list of mtypes, see datatypes.SCITYPE_REGISTER
+             for specifications, see examples/AA_datatypes_and_datasets.ipynb
 
         Returns
         -------
-        y_pred : sktime time series object
-            should be of the same type as seen in _fit, as in "y_inner_mtype" tag
-            Point predictions
+        y : sktime compatible tabular data container, Table scitype
+            numpy1D iterable, of shape [n_instances]
         """
         # implement here
         # IMPORTANT: avoid side effects to X, fh
 
     # todo: consider implementing this, optional
     # if not implementing, delete the _update method
-    def _update(self, y, X=None, update_params=True):
-        """Update time series to incremental training data.
-
-        private _update containing the core logic, called from update
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-            self.cutoff
-
-        Writes to self:
-            Sets fitted model attributes ending in "_", if update_params=True.
-            Does not write to self if update_params=False.
+    def _update(self, y, X, update_params=True):
+        """Update time series to increment training data.
 
         Parameters
         ----------
-        y : sktime time series object
-            guaranteed to be of an mtype in self.get_tag("y_inner_mtype")
-            Time series with which to update the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
-        X :  sktime time series object, optional (default=None)
-            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
-            Exogeneous time series for the forecast
-        update_params : bool, optional (default=True)
-            whether model parameters should be updated
+        y : sktime compatible tabular data container, Table scitype
+            numpy1D iterable, of shape [n_instances]
+        X : sktime compatible time series panel data container, Panel scitype, e.g.,
+             pd-multiindex: pd.DataFrame with columns = variables,
+             index = pd.MultiIndex with first level = instance indices,
+             second level = time indices
+             numpy3D: 3D np.array (any number of dimensions, equal length series)
+             of shape [n_instances, n_dimensions, series_length]
+             or of any other supported Panel mtype
+             for list of mtypes, see datatypes.SCITYPE_REGISTER
+             for specifications, see examples/AA_datatypes_and_datasets.ipynb
 
         Returns
         -------
@@ -335,28 +305,20 @@ class SPCI(BaseForecaster, BaseProbaRegressor):
         """
         pass
 
-    def _predict_interval(self, fh, X, coverage):
-        """Compute/return prediction quantiles for a forecast.
-
-        private _predict_interval containing the core logic,
-            called from predict_interval and possibly predict_quantiles
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-            self.cutoff
+    def _predict_interval(self, X, coverage):
+        """Compute/return prediction quantiles from forecast prediction residuals.
 
         Parameters
         ----------
-        fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
-        X :  sktime time series object, optional (default=None)
-            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
-            Exogeneous time series for the forecast
-        coverage : list of float (guaranteed not None and floats in [0,1] interval)
-           nominal coverage(s) of predictive interval(s)
+        X : sktime compatible time series panel data container, Panel scitype, e.g.,
+             pd-multiindex: pd.DataFrame with columns = variables,
+             index = pd.MultiIndex with first level = instance indices,
+             second level = time indices
+             numpy3D: 3D np.array (any number of dimensions, equal length series)
+             of shape [n_instances, n_dimensions, series_length]
+             or of any other supported Panel mtype
+             for list of mtypes, see datatypes.SCITYPE_REGISTER
+             for specifications, see examples/AA_datatypes_and_datasets.ipynb
 
         Returns
         -------
@@ -373,7 +335,7 @@ class SPCI(BaseForecaster, BaseProbaRegressor):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        pass
+        # logic will contain _predict_residuals(forecasts_preds)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
