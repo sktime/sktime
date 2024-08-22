@@ -421,7 +421,7 @@ class DartsXGBModel(_DartsRegressionModelsAdapter):
                 },
             },
             {
-                "num_samples": 200,
+                "num_samples": 50,
                 "lags": 12,
                 "output_chunk_length": 3,
                 "add_encoders": None,
