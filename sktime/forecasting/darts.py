@@ -407,8 +407,8 @@ class DartsXGBModel(_DartsRegressionModelsAdapter):
 
         params = [
             {
-                "num_samples": 100,
-                "lags": 12,
+                "num_samples": 50,
+                "lags": 6,
                 "output_chunk_length": 1,
                 "add_encoders": None,
                 "likelihood": "quantile",
@@ -422,7 +422,7 @@ class DartsXGBModel(_DartsRegressionModelsAdapter):
             },
             {
                 "num_samples": 50,
-                "lags": 12,
+                "lags": 6,
                 "output_chunk_length": 3,
                 "add_encoders": None,
                 "likelihood": "poisson",
