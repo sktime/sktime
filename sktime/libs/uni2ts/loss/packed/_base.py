@@ -22,6 +22,8 @@ from sktime.libs.uni2ts.common.torch_util import safe_div
 
 if _check_soft_dependencies("torch", severity="none"):
     import torch
+
+if _check_soft_dependencies("einops", severity="none"):
     from einops import rearrange, reduce
 
 
