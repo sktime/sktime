@@ -150,8 +150,10 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
     def _reform_y(self, y):
         from gluonts.dataset.common import ListDataset
 
+        if y is None:
+            return None
+
         shape = y[0]["target"].shape
-        print(shape)
 
         if len(shape) == 2 and shape[1] == 1:
             new_values = []
@@ -181,13 +183,13 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
 
         Parameters
         ----------
-        y : GluonTS PandasDataset Object, optional (default=None)
+        y : GluonTS ListDataset Object, optional (default=None)
             Time series to which to fit the forecaster.
 
         fh : guaranteed to be ForecastingHorizon or None
             The length of future of timesteps to predict
 
-        X : GluonTS PandasDataset Object, optional (default=None)
+        X : GluonTS ListDataset Object, optional (default=None)
             Exogeneous time series to fit to.
 
         Returns
@@ -226,14 +228,11 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         y = self._reform_y(y)
 
         # Lastly, training the model
-        if y is not None:
-            self.predictor_ = self.estimator_.train(
-                y,
-                cache_data=True,
-                shuffle_buffer_length=self.shuffle_buffer_length_,
-            )
+        self.predictor_ = self.estimator_.train(
+            y, cache_data=True, shuffle_buffer_length=self.shuffle_buffer_length_
+        )
 
-    def _predict(self, fh=None, X=None):
+    def _predict(self, fh, X=None, y=None):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -251,25 +250,28 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
             The forecasting horizon is not read here, please set it as
             `prediction_length` during initialization or when calling the fit function
 
-        X : GluonTS PandasDataset Object (default=None)
+        X : GluonTS ListDataset Object (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
 
+        y : GluonTS ListDataset Object (default=None)
+            guaranteed to be of an mtype in self.get_tag("y_inner_mtype")
+
         Returns
         -------
-        y_pred : GluonTS PandasDataset Object
+        y_pred : GluonTS ListDataset Object
             should be of the same type as seen in _fit, as in "y_inner_mtype" tag
             Point predictions
         """
         from gluonts.evaluation import make_evaluation_predictions
 
         # Creating a forecaster object
-        forecast_it, _ = make_evaluation_predictions(
-            dataset=X, predictor=self.predictor_, num_samples=self.num_samples_
+        forecasts, _ = make_evaluation_predictions(
+            dataset=y, predictor=self.predictor_, num_samples=self.num_samples_
         )
 
         # Forming a list of the forecasting iterations
-        forecasts = list(forecast_it)
+        forecasts = list(forecasts)
 
         return forecasts
 
@@ -304,11 +306,11 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         from gluonts.evaluation import make_evaluation_predictions
 
         # Obtaining our evaluations
-        forecast_it, _ = make_evaluation_predictions(
+        forecasts, _ = make_evaluation_predictions(
             dataset=X, predictor=self.predictor_, num_samples=self.num_samples_
         )
 
-        forecasts = list(forecast_it)
+        forecasts = list(forecasts)
 
         # Stores all intervals
         intervals = []
