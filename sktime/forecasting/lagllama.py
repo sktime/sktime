@@ -51,6 +51,7 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
 
     # Converts to a GluonTS ListDataset, a format supported by sktime!
     >>> train_dataset = ListDataset(dataset.train, freq='W')
+    >>> test_dataset = ListDataset(dataset.test, freq='W')
 
     >>> forecaster = LagLlamaForecaster(
     ...     context_length=dataset.metadata.prediction_length * 3,
@@ -58,9 +59,9 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
     ...     )
 
     >>> fh=ForecastingHorizon(range(dataset.metadata.prediction_length))
-    >>> forecaster.fit(train_dataset,fh = fh)
+    >>> forecaster.fit(y=train_dataset,fh = fh)
+    >>> y_pred = forecaster.predict(y=test_dataset)
 
-    >>> y_pred = forecaster.predict()
     >>> y_pred
     """
 
