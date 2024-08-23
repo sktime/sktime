@@ -204,38 +204,45 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
                 "The MORAI adapter is not supporting insample predictions."
             )
 
+        _y = self._y.copy()
+        _X = None
+        if self._X is not None:
+            _X = self._X.copy()
+
         # Zero shot case with X and fit data as context
         _use_fit_data_as_context = False
         if X is not None and y is None:
             _use_fit_data_as_context = True
 
+        # Override to data in fit as new timeseries is passed
         elif y is not None:
-            self._y = y
-            self._X = X
+            _y = y.copy()
+            if X is not None:
+                _X = X.copy()
 
-        if isinstance(self._y, pd.Series):
-            target = [self._y.name]
-            self._y, _is_converted_to_df = self._series_to_df(self._y)
+        if isinstance(_y, pd.Series):
+            target = [_y.name]
+            _y, _is_converted_to_df = self._series_to_df(_y)
         else:
-            target = self._y.columns
+            target = _y.columns
 
         # Store the original index and target name
         self._target_name = target
         self._len_of_targets = len(target)
 
         target = [f"target_{i}" for i in range(self._len_of_targets)]
-        self._y.columns = target
+        _y.columns = target
 
         future_length = 0
         feat_dynamic_real = None
 
-        if self._X is not None:
+        if _X is not None:
             feat_dynamic_real = [
                 f"feat_dynamic_real_{i}" for i in range(self._X.shape[1])
             ]
-            self._X.columns = feat_dynamic_real
+            _X.columns = feat_dynamic_real
 
-        pred_df = pd.concat([self._y, self._X], axis=1)
+        pred_df = pd.concat([_y, _X], axis=1)
         is_range_index = self.check_range_index(pred_df)
         is_period_index = self.check_period_index(pred_df)
 
@@ -257,9 +264,6 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         if is_range_index:
             pred_df.index = self.handle_range_index(pred_df.index)
 
-        print("Df being passed")
-        print(pred_df)
-
         ds_test, df_config = self.create_pandas_dataset(
             pred_df, target, feat_dynamic_real, future_length
         )
@@ -269,7 +273,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         forecast_it = iter(forecasts)
         predictions = self._get_prediction_df(forecast_it, df_config)
 
-        pred_out = fh.get_expected_pred_idx(self._y, cutoff=self.cutoff)
+        pred_out = fh.get_expected_pred_idx(_y, cutoff=self.cutoff)
         predictions.index = pred_out
 
         return predictions
