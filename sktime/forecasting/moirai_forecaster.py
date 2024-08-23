@@ -92,8 +92,13 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             "huggingface-hub",
             "lightning",
         ],
-        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex"],
-        "y_inner_mtype": ["pd.Series", "pd.DataFrame", "pd-multiindex"],
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "y_inner_mtype": [
+            "pd.Series",
+            "pd.DataFrame",
+            "pd-multiindex",
+            "pd_multiindex_hier",
+        ],
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
@@ -263,6 +268,9 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         # Check if the index is a range index
         if is_range_index:
             pred_df.index = self.handle_range_index(pred_df.index)
+
+        if pred_df.index.nlevels >= 3:
+            pred_df = self._convert_hierarchical_to_panel(pred_df)
 
         ds_test, df_config = self.create_pandas_dataset(
             pred_df, target, feat_dynamic_real, future_length
@@ -520,3 +528,25 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             y = y.to_frame()
             is_converted = True
         return y, is_converted
+
+    def _convert_hierarchical_to_panel(self, df):
+        # Flatten the MultiIndex to a panel type DataFrame
+        data = df.copy()
+        flattened_index = [("*".join(map(str, x[:-1])), x[-1]) for x in data.index]
+        # Create a new MultiIndex with the flattened level and the last level unchanged
+        data.index = pd.MultiIndex.from_tuples(
+            flattened_index, names=["Flattened_Level", data.index.names[-1]]
+        )
+        return data
+
+    # def _convert_panel_to_hierarchical(self, df):
+    #     data = df.reset_index()
+    #     split_levels = data['Flattened_Level'].str.split('*', expand=True)
+    #     index_names = split_levels.columns.tolist()
+    #     data_converted = pd.concat([split_levels,
+    #       data.drop(columns=['Flattened_Level'])], axis=1)
+    #     data_converted = data_converted.set_index(index_names +
+    #       [data.index.names[-1]]
+    #       )
+    #
+    #     return data_converted
