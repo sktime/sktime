@@ -33,6 +33,8 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         Number of samples to draw.
     map_location : str, default=None
         Hardware to use for the model.
+    target_dim : int, default=2
+        Dimension of the target.
     deterministic : bool, default=False
         Whether to use a deterministic model.
     batch_size : int, default=32
@@ -117,6 +119,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         num_feat_dynamic_real=0,
         num_past_feat_dynamic_real=0,
         map_location=None,
+        target_dim=2,
         broadcasting=False,
         deterministic=False,
         batch_size=32,
@@ -130,6 +133,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         self.num_feat_dynamic_real = num_feat_dynamic_real
         self.num_past_feat_dynamic_real = num_past_feat_dynamic_real
         self.map_location = map_location
+        self.target_dim = target_dim
         self.broadcasting = broadcasting
         self.deterministic = deterministic
         self.batch_size = batch_size
@@ -172,7 +176,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             "context_length": self.context_length,
             "patch_size": self.patch_size,
             "num_samples": self.num_samples,
-            "target_dim": 2,
+            "target_dim": self.target_dim,
             "feat_dynamic_real_dim": self.num_feat_dynamic_real,
             "past_feat_dynamic_real_dim": self.num_past_feat_dynamic_real,
         }
@@ -263,7 +267,8 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         # check whether the index is a PeriodIndex
         if isinstance(pred_df.index, pd.PeriodIndex):
             time_idx = self.return_time_index(pred_df)
-            pred_df.index = time_idx.to_timestamp(freq=time_idx.freq)
+            pred_df.index = time_idx.to_timestamp()
+            pred_df.index.freq = None
 
         # Check if the index is a range index
         if is_range_index:
@@ -271,6 +276,8 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
 
         if pred_df.index.nlevels >= 3:
             pred_df = self._convert_hierarchical_to_panel(pred_df)
+
+        print(pred_df)
 
         ds_test, df_config = self.create_pandas_dataset(
             pred_df, target, feat_dynamic_real, future_length
@@ -461,6 +468,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         df_y.fillna(0, inplace=True)
         pred_df = pd.concat([df_y, X], axis=1)
         extended_df = pd.concat([df, pred_df])
+        extended_df.fillna(0, inplace=True)
         return extended_df.sort_index()
 
     def infer_freq(self, index):
