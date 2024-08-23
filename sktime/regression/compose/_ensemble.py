@@ -8,7 +8,6 @@ __all__ = ["ComposableTimeSeriesForestRegressor"]
 import numbers
 
 import numpy as np
-from joblib import Parallel, delayed
 from sklearn.ensemble._base import _partition_estimators
 from sklearn.ensemble._forest import (
     _generate_unsampled_indices,
@@ -167,6 +166,7 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
     """
 
     _tags = {
+        "python_dependencies": ["joblib"],
         "X_inner_mtype": "nested_univ",  # nested pd.DataFrame
     }
 
@@ -245,14 +245,12 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
     def _validate_estimator(self):
         if not isinstance(self.n_estimators, numbers.Integral):
             raise ValueError(
-                "n_estimators must be an integer, "
-                "got {}.".format(type(self.n_estimators))
+                "n_estimators must be an integer, " f"got {type(self.n_estimators)}."
             )
 
         if self.n_estimators <= 0:
             raise ValueError(
-                "n_estimators must be greater than zero, "
-                "got {}.".format(self.n_estimators)
+                "n_estimators must be greater than zero, " f"got {self.n_estimators}."
             )
 
         # Set base estimator
@@ -324,6 +322,8 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             The predicted classes.
         """
+        from joblib import Parallel, delayed
+
         X = check_X(X, enforce_univariate=True)
 
         X = self._validate_X_predict(X)

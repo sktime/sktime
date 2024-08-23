@@ -37,7 +37,7 @@ class BaseSeriesAnnotator(BaseEstimator):
     task : str {"segmentation", "change_point_detection", "anomaly_detection"}
         The main annotation task:
         * If ``segmentation``, the annotator divides timeseries into discrete chunks
-        based on certain criteria. The same label can be applied at mulitple
+        based on certain criteria. The same label can be applied at multiple
         disconnected regions of the timeseries.
         * If ``change_point_detection``, the annotator finds points where the
         statistical properties of the timeseries change significantly.
@@ -260,6 +260,27 @@ class BaseSeriesAnnotator(BaseEstimator):
         # method is possible for a given algorithm.
         return self.fit(X, Y).predict(X)
 
+    def fit_transform(self, X, Y=None):
+        """Fit to data, then transform it.
+
+        Fits model to X and Y with given annotation parameters
+        and returns the annotations made by the model.
+
+        Parameters
+        ----------
+        X : pd.DataFrame, pd.Series or np.ndarray
+            Data to be transformed
+        Y : pd.Series or np.ndarray, optional (default=None)
+            Target values of data to be predicted.
+
+        Returns
+        -------
+        self : pd.Series
+            Annotations for sequence X exact format depends on annotation type.
+        """
+        Y = self.fit_predict(X)
+        return self.sparse_to_dense(Y, index=X.index)
+
     def _fit(self, X, Y=None):
         """Fit to training data.
 
@@ -365,7 +386,9 @@ class BaseSeriesAnnotator(BaseEstimator):
         X = check_series(X)
 
         if self.task == "change_point_detection":
-            return self.segments_to_change_points(self.predict_points(X))
+            return self.change_points_to_segments(
+                self.predict_points(X), start=X.index.min(), end=X.index.max()
+            )
         elif self.task == "segmentation":
             return self._predict_segments(X)
 
@@ -535,7 +558,7 @@ class BaseSeriesAnnotator(BaseEstimator):
         """
         if y_sparse.index.is_overlapping:
             raise NotImplementedError(
-                "Cannot convert overlapping segments to a dense formet yet."
+                "Cannot convert overlapping segments to a dense format yet."
             )
 
         interval_indexes = y_sparse.index.get_indexer(index)

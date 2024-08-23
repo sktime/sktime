@@ -1,4 +1,5 @@
 """Columnwise transformer."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly", "mloning"]
@@ -168,6 +169,7 @@ class ColumnEnsembleTransformer(
                 "capability:missing_values:removes",
                 "scitype:transform-output",
                 "scitype:transform-labels",
+                "capability:categorical_in_X",
             ]
             self.clone_tags(transformers, tags_to_clone)
         else:
@@ -190,6 +192,9 @@ class ColumnEnsembleTransformer(
             self._anytagis_then_set("handles-missing-data", False, True, l_transformers)
             self._anytagis_then_set(
                 "capability:missing_values:removes", False, True, l_transformers
+            )
+            self._anytagis_then_set(
+                "capability:categorical_in_X", True, False, l_transformers
             )
 
             # must be all the same, currently not checking
@@ -428,6 +433,7 @@ class ColumnwiseTransformer(BaseTransformer):
             "X-y-must-have-same-index",
             "transform-returns-same-time-index",
             "skip-inverse-transform",
+            "capability:categorical_in_X",
         ]
         self.clone_tags(transformer, tag_names=tags_to_clone)
 

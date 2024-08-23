@@ -15,37 +15,16 @@ measures e.g. set_distance_params(measure_type=None, param_values_to_set=None,
 param_names=None)
 """
 
-__author__ = ["jasonlines", "TonyBagnall", "chrisholder", "fkiraly"]
+__author__ = ["fkiraly", "jasonlines", "TonyBagnall", "chrisholder"]
 __all__ = ["KNeighborsTimeSeriesClassifier"]
 
-from inspect import signature
-
-import numpy as np
-import pandas as pd
 from sklearn.neighbors import KNeighborsClassifier
 
+from sktime.base._panel.knn import _BaseKnnTimeSeriesEstimator
 from sktime.classification.base import BaseClassifier
-from sktime.datatypes import convert
-from sktime.distances import pairwise_distance
-
-# add new distance string codes here
-DISTANCES_SUPPORTED = [
-    "euclidean",
-    # Euclidean will default to the base class distance
-    "squared",
-    "dtw",
-    "ddtw",
-    "wdtw",
-    "wddtw",
-    "lcss",
-    "edr",
-    "erp",
-    "msm",
-    "twe",
-]
 
 
-class KNeighborsTimeSeriesClassifier(BaseClassifier):
+class KNeighborsTimeSeriesClassifier(_BaseKnnTimeSeriesEstimator, BaseClassifier):
     """KNN Time Series Classifier.
 
     An adapted version of the scikit-learn KNeighborsClassifier for time series data.
@@ -159,272 +138,19 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         leaf_size=30,
         n_jobs=None,
     ):
-        self.n_neighbors = n_neighbors
-        self.weights = weights
-        self.algorithm = algorithm
-        self.distance = distance
-        self.distance_params = distance_params
-        self.distance_mtype = distance_mtype
-        self.pass_train_distances = pass_train_distances
-        self.leaf_size = leaf_size
-        self.n_jobs = n_jobs
+        self._knn_cls = KNeighborsClassifier
 
-        super().__init__()
-
-        # input check for supported distance strings
-        if isinstance(distance, str) and distance not in DISTANCES_SUPPORTED:
-            raise ValueError(
-                f"Unrecognised distance measure string: {distance}. "
-                f"Allowed values for string codes are: {DISTANCES_SUPPORTED}. "
-                "Alternatively, pass a callable distance measure into the constructor."
-            )
-
-        self.knn_estimator_ = KNeighborsClassifier(
+        super().__init__(
             n_neighbors=n_neighbors,
+            weights=weights,
             algorithm=algorithm,
-            metric="precomputed",
-            metric_params=distance_params,
+            distance=distance,
+            distance_params=distance_params,
+            distance_mtype=distance_mtype,
+            pass_train_distances=pass_train_distances,
             leaf_size=leaf_size,
             n_jobs=n_jobs,
-            weights=weights,
         )
-
-        # the distances in sktime.distances want numpy3D
-        #   otherwise all Panel formats are ok
-        if isinstance(distance, str):
-            self.set_tags(X_inner_mtype="numpy3D")
-            self.set_tags(**{"capability:unequal_length": False})
-            self.set_tags(**{"capability:missing_values": False})
-        elif distance_mtype is not None:
-            self.set_tags(X_inner_mtype=distance_mtype)
-
-        from sktime.dists_kernels import BasePairwiseTransformerPanel
-
-        # inherit capability tags from distance, if it is an estimator
-        if isinstance(distance, BasePairwiseTransformerPanel):
-            inherit_tags = [
-                "capability:missing_values",
-                "capability:unequal_length",
-                "capability:multivariate",
-            ]
-            self.clone_tags(distance, inherit_tags)
-
-    def _distance(self, X, X2=None):
-        """Compute distance - unified interface to str code and callable."""
-        distance = self.distance
-        distance_params = self.distance_params
-        if distance_params is None:
-            distance_params = {}
-
-        if isinstance(distance, str):
-            return pairwise_distance(X, X2, distance, **distance_params)
-        else:
-            if X2 is not None:
-                return distance(X, X2, **distance_params)
-            # if X2 is None, check if distance allows None X2 to mean "X2=X"
-            else:
-                sig = signature(distance).parameters
-                X2_sig = sig[list(sig.keys())[1]]
-                if X2_sig.default is not None:
-                    return distance(X, X2, **distance_params)
-                else:
-                    return distance(X, **distance_params)
-
-    def _one_element_distance_npdist(self, x, y, n_vars=None):
-        if n_vars is None:
-            n_vars = self.n_vars_
-        x = np.reshape(x, (1, n_vars, -1))
-        y = np.reshape(y, (1, n_vars, -1))
-        return self._distance(x, y)[0, 0]
-
-    def _one_element_distance_sktime_dist(self, x, y, n_vars=None):
-        if n_vars is None:
-            n_vars = self.n_vars_
-        if n_vars == 1:
-            x = np.reshape(x, (1, n_vars, -1))
-            y = np.reshape(y, (1, n_vars, -1))
-        elif self._X_metadata["is_equal_length"]:
-            x = np.reshape(x, (-1, n_vars))
-            y = np.reshape(y, (-1, n_vars))
-            x_ix = pd.MultiIndex.from_product([[0], range(len(x))])
-            y_ix = pd.MultiIndex.from_product([[0], range(len(y))])
-            x = pd.DataFrame(x, index=x_ix)
-            y = pd.DataFrame(y, index=y_ix)
-        else:  # multivariate, unequal length
-            # in _convert_X_to_sklearn, we have encoded the length as the first column
-            # this was coerced to float, so we round to avoid rounding errors
-            x_len = round(x[0])
-            y_len = round(y[0])
-            # pd.pivot switches the axes, compared to numpy
-            x = np.reshape(x[1:], (n_vars, -1)).T
-            y = np.reshape(y[1:], (n_vars, -1)).T
-            # cut to length
-            x = x[:x_len]
-            y = y[:y_len]
-            x_ix = pd.MultiIndex.from_product([[0], range(x_len)])
-            y_ix = pd.MultiIndex.from_product([[0], range(y_len)])
-            x = pd.DataFrame(x, index=x_ix)
-            y = pd.DataFrame(y, index=y_ix)
-        return self._distance(x, y)[0, 0]
-
-    def _convert_X_to_sklearn(self, X):
-        """Convert X to 2D numpy for sklearn."""
-        # special treatment for unequal length series
-        if not self._X_metadata["is_equal_length"]:
-            # then we know we are dealing with pd-multiindex
-            # as a trick to deal with unequal length data,
-            # we flatten encode the length as the first column
-            X_w_ix = X.reset_index(-1)
-            X_pivot = X_w_ix.pivot(columns=[X_w_ix.columns[0]])
-            # fillna since this creates nan but sklearn does not accept these
-            # the fill value does not matter as the distance ignores it
-            X_pivot = X_pivot.fillna(0).to_numpy()
-            X_lens = X.groupby(X_w_ix.index).size().to_numpy()
-            # add the first column, encoding length of individual series
-            X_w_lens = np.concatenate([X_lens[:, None], X_pivot], axis=1)
-            return X_w_lens
-
-        # equal length series case
-        if isinstance(X, np.ndarray):
-            X_mtype = "numpy3D"
-        else:
-            X_mtype = "pd-multiindex"
-        return convert(X, from_type=X_mtype, to_type="numpyflat")
-
-    def _fit(self, X, y):
-        """Fit the model using X as training data and y as target values.
-
-        Parameters
-        ----------
-        X : sktime compatible Panel data container, of mtype X_inner_mtype,
-            with n time series to fit the estimator to
-        y : {array-like, sparse matrix}
-            Target values of shape = [n]
-        """
-        self.n_vars_ = X.shape[1]
-        if self.algorithm == "brute":
-            return self._fit_precomp(X=X, y=y)
-        else:
-            return self._fit_dist(X=X, y=y)
-
-    def _fit_dist(self, X, y):
-        """Fit the model using adapted distance metric."""
-        # sklearn wants distance callabel element-wise,
-        # numpy1D x numpy1D -> float
-        # sktime distance classes are Panel x Panel -> numpy2D
-        # and the numba distances are numpy3D x numpy3D -> numpy2D
-        # so we need to wrap the sktime distances
-        if isinstance(self.distance, str):
-            # numba distances
-            metric = self._one_element_distance_npdist
-        else:
-            # sktime distance classes
-            metric = self._one_element_distance_sktime_dist
-
-        algorithm = self.algorithm
-        if algorithm == "brute_incr":
-            algorithm = "brute"
-
-        self.knn_estimator_ = KNeighborsClassifier(
-            n_neighbors=self.n_neighbors,
-            algorithm=algorithm,
-            metric=metric,
-            leaf_size=self.leaf_size,
-            n_jobs=self.n_jobs,
-            weights=self.weights,
-        )
-
-        X = self._convert_X_to_sklearn(X)
-        self.knn_estimator_.fit(X, y)
-        return self
-
-    def _fit_precomp(self, X, y):
-        """Fit the model using precomputed distance matrix."""
-        # store full data as indexed X
-        self._X = X
-
-        if self.pass_train_distances:
-            dist_mat = self._distance(X)
-        else:
-            n = self._X_metadata["n_instances"]
-            # if we do not want/need to pass train-train distances,
-            #   we still need to pass a zeros matrix, this means "do not consider"
-            # citing the sklearn KNeighborsClassifier docs on distance matrix input:
-            # "X may be a sparse graph, in which case only "nonzero" elements
-            #   may be considered neighbors."
-            dist_mat = np.zeros([n, n], dtype="float")
-
-        self.knn_estimator_.fit(dist_mat, y)
-
-        return self
-
-    def kneighbors(self, X, n_neighbors=None, return_distance=True):
-        """Find the K-neighbors of a point.
-
-        Returns indices of and distances to the neighbors of each point.
-
-        Parameters
-        ----------
-        X : sktime-compatible data format, Panel or Series, with n_samples series
-        n_neighbors : int
-            Number of neighbors to get (default is the value
-            passed to the constructor).
-        return_distance : boolean, optional. Defaults to True.
-            If False, distances will not be returned
-
-        Returns
-        -------
-        dist : array
-            Array representing the lengths to points, only present if
-            return_distance=True
-        ind : array
-            Indices of the nearest points in the population matrix.
-        """
-        self.check_is_fitted()
-
-        # boilerplate input checks for predict-like methods
-        X = self._check_convert_X_for_predict(X)
-
-        # self._X should be the stored _X
-        dist_mat = self._distance(X, self._X)
-
-        result = self.knn_estimator_.kneighbors(
-            dist_mat, n_neighbors=n_neighbors, return_distance=return_distance
-        )
-
-        # result is either dist, or (dist, ind) pair, depending on return_distance
-        return result
-
-    def _predict(self, X):
-        """Predict the class labels for the provided data.
-
-        Parameters
-        ----------
-        X : sktime-compatible Panel data, of mtype X_inner_mtype, with n_samples series
-            data to predict class labels for
-
-        Returns
-        -------
-        y : array of shape [n_samples] or [n_samples, n_outputs]
-            Class labels for each data sample.
-        """
-        if self.algorithm == "brute":
-            return self._predict_precomp(X)
-        else:
-            return self._predict_dist(X)
-
-    def _predict_dist(self, X):
-        """Predict using adapted distance metric."""
-        X = self._convert_X_to_sklearn(X)
-        y_pred = self.knn_estimator_.predict(X)
-        return y_pred
-
-    def _predict_precomp(self, X):
-        """Predict using precomputed distance matrix."""
-        # self._X should be the stored _X
-        dist_mat = self._distance(X, self._X)
-        y_pred = self.knn_estimator_.predict(dist_mat)
-        return y_pred
 
     def _predict_proba(self, X):
         """Return probability estimates for the test data X.
@@ -448,14 +174,14 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
 
     def _predict_proba_dist(self, X):
         """Predict (proba) using adapted distance metric."""
-        X = self._convert_X_to_sklearn(X)
+        X = self._dist_adapt._convert_X_to_sklearn(X)
         y_pred = self.knn_estimator_.predict_proba(X)
         return y_pred
 
     def _predict_proba_precomp(self, X):
         """Predict (proba) using precomputed distance matrix."""
         # self._X should be the stored _X
-        dist_mat = self._distance(X, self._X)
+        dist_mat = self._dist_adapt._distance(X, self._X)
         y_pred = self.knn_estimator_.predict_proba(dist_mat)
         return y_pred
 

@@ -21,6 +21,7 @@ def get_test_class_registry():
         keys are scitypes, values are test classes TestAll[Scitype]
     """
     from sktime.alignment.tests.test_all_aligners import TestAllAligners
+    from sktime.annotation.tests.test_all_annotators import TestAllAnnotators
     from sktime.classification.early_classification.tests.test_all_early_classifiers import (  # noqa E501
         TestAllEarlyClassifiers,
     )
@@ -29,7 +30,10 @@ def get_test_class_registry():
         TestAllPairwiseTransformers,
         TestAllPanelTransformers,
     )
-    from sktime.forecasting.tests.test_all_forecasters import TestAllForecasters
+    from sktime.forecasting.tests.test_all_forecasters import (
+        TestAllForecasters,
+        TestAllGlobalForecasters,
+    )
     from sktime.param_est.tests.test_all_param_est import TestAllParamFitters
     from sktime.proba.tests.test_all_distrs import TestAllDistributions
     from sktime.regression.tests.test_all_regressors import TestAllRegressors
@@ -53,8 +57,10 @@ def get_test_class_registry():
     testclass_dict["distribution"] = TestAllDistributions
     testclass_dict["early_classifier"] = TestAllEarlyClassifiers
     testclass_dict["forecaster"] = TestAllForecasters
+    testclass_dict["global_forecaster"] = TestAllGlobalForecasters
     testclass_dict["param_est"] = TestAllParamFitters
     testclass_dict["regressor"] = TestAllRegressors
+    testclass_dict["series-annotator"] = TestAllAnnotators
     testclass_dict["splitter"] = TestAllSplitters
     testclass_dict["transformer"] = TestAllTransformers
     testclass_dict["transformer-pairwise"] = TestAllPairwiseTransformers

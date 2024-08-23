@@ -1,4 +1,5 @@
 """Interval based time series classifiers."""
+
 __all__ = [
     "TimeSeriesForestClassifier",
     "RandomIntervalSpectralEnsemble",
