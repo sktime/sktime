@@ -3,9 +3,12 @@
 
 __author__ = ["felipeangelimvieira"]  # fkiraly for adapter
 
+from typing import Any, Optional, Union
+
 import pandas as pd
 
 from sktime.forecasting.base._delegate import _DelegatedForecaster
+from sktime.transformations.base import BaseTransformer
 
 
 def placeholder(cls):
@@ -174,25 +177,25 @@ class Prophetverse(_DelegatedForecaster):
 
     def __init__(
         self,
-        changepoint_interval=25,
-        changepoint_range=0.8,
-        changepoint_prior_scale=0.001,
-        offset_prior_scale=0.1,
-        feature_transformer=None,
-        capacity_prior_scale=0.2,
-        capacity_prior_loc=1.1,
-        noise_scale=0.05,
-        trend="linear",
-        mcmc_samples=2000,
-        mcmc_warmup=200,
-        mcmc_chains=4,
-        inference_method="map",
-        optimizer_name="Adam",
-        optimizer_kwargs=None,
-        optimizer_steps=100_000,
-        exogenous_effects=None,
+        changepoint_interval: int = 25,
+        changepoint_range: float = 0.8,
+        changepoint_prior_scale: float = 0.001,
+        offset_prior_scale: float = 0.1,
+        feature_transformer: Optional[BaseTransformer] = None,
+        capacity_prior_scale: float = 0.2,
+        capacity_prior_loc: float = 1.1,
+        noise_scale: float = 0.05,
+        trend: str = "linear",
+        mcmc_samples: int = 2000,
+        mcmc_warmup: int = 200,
+        mcmc_chains: int = 4,
+        inference_method: str = "map",
+        optimizer_name: str = "Adam",
+        optimizer_kwargs: Optional[dict[str, Any]] = None,
+        optimizer_steps: int = 100_000,
+        exogenous_effects: Optional[list] = None,
         default_effect=None,
-        scale=None,
+        scale: float = None,
         rng_key=None,
     ):
         self.changepoint_interval = changepoint_interval
@@ -356,3 +359,49 @@ class HierarchicalProphet:
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
     }
+
+    def __init__(
+        self,
+        trend="linear",
+        changepoint_interval: int = 25,
+        changepoint_range: Union[float, int] = 0.8,
+        changepoint_prior_scale: float = 0.001,
+        offset_prior_scale: float = 0.1,
+        capacity_prior_scale: float = 0.2,
+        capacity_prior_loc: float = 1.1,
+        feature_transformer: BaseTransformer = None,
+        exogenous_effects: Optional[list] = None,
+        default_effect=None,
+        shared_features: list[str] = None,
+        mcmc_samples: int = 2000,
+        mcmc_warmup: int = 200,
+        mcmc_chains: int = 4,
+        inference_method: str = "map",
+        optimizer_name: str = "Adam",
+        optimizer_kwargs: Optional[dict[str, Any]] = None,
+        optimizer_steps: int = 100_000,
+        noise_scale: float = 0.05,
+        correlation_matrix_concentration: float = 1.0,
+        rng_key=None,
+    ):
+        self.trend = trend
+        self.changepoint_interval = changepoint_interval
+        self.changepoint_range = changepoint_range
+        self.changepoint_prior_scale = changepoint_prior_scale
+        self.offset_prior_scale = offset_prior_scale
+        self.capacity_prior_scale = capacity_prior_scale
+        self.capacity_prior_loc = capacity_prior_loc
+        self.feature_transformer = feature_transformer
+        self.exogenous_effects = exogenous_effects
+        self.default_effect = default_effect
+        self.shared_features = shared_features
+        self.mcmc_samples = mcmc_samples
+        self.mcmc_warmup = mcmc_warmup
+        self.mcmc_chains = mcmc_chains
+        self.inference_method = inference_method
+        self.optimizer_name = optimizer_name
+        self.optimizer_kwargs = optimizer_kwargs
+        self.optimizer_steps = optimizer_steps
+        self.noise_scale = noise_scale
+        self.correlation_matrix_concentration = correlation_matrix_concentration
+        self.rng_key = rng_key
