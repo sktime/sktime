@@ -126,6 +126,30 @@ class Prophetverse(_DelegatedForecaster):
 
     rng_key : jax.random.PRNGKey or None (default
         Random number generator key.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.prophetverse import Prophetverse
+    >>> from prophetverse.effects.fourier import LinearFourierSeasonality
+    >>> from prophetverse.utils.regex import no_input_columns
+    >>> y = load_airline()
+    >>> model = Prophetverse(
+    ...     exogenous_effects=[
+    ...         (
+    ...             "seasonality",
+    ...             LinearFourierSeasonality(
+    ...                 sp_list=[12],
+    ...                 fourier_terms_list=[3],
+    ...                 freq="M",
+    ...                 effect_mode="multiplicative",
+    ...             ),
+    ...             no_input_columns,
+    ...         )
+    ...     ],
+    ... )
+    >>> model.fit(y)
+    >>> model.predict(fh=[1, 2, 3])
     """
 
     _tags = {
@@ -198,3 +222,137 @@ class Prophetverse(_DelegatedForecaster):
         from prophetverse.sktime import Prophet
 
         self._delegate = Prophet(**self.get_params())
+
+
+class HierarchicalProphet:
+    """A Bayesian hierarchical time series forecasting model based on Meta's Prophet.
+
+    This method forecasts all bottom series in a hierarchy at once, using a
+    MultivariateNormal as the likelihood function and LKJ priors for the correlation
+    matrix.
+
+    This forecaster is particularly interesting if you want to fit shared coefficients
+    across series. In that case, `shared_features` parameter should be a list of
+    feature names that should have that behaviour.
+
+    Parameters
+    ----------
+    trend : Union[str, BaseEffect], optional, default="linear"
+        Type of trend to use. Can also be a custom effect object.
+
+    changepoint_interval : int, optional, default=25
+        Number of potential changepoints to sample in the history.
+
+    changepoint_range : Union[float, int], optional, default=0.8
+        Proportion of the history in which trend changepoints will be estimated.
+
+        * If float, must be between 0 and 1 (inclusive).
+          The range will be that proportion of the training history.
+
+        * If int, can be positive or negative.
+          Absolute value must be less than the number of training points.
+          The range will be that number of points.
+          A negative int indicates the number of points
+          counting from the end of the history, a positive int from the beginning.
+
+    changepoint_prior_scale : float, optional, default=0.001
+        Regularization parameter controlling the flexibility
+        of the automatic changepoint selection.
+
+    offset_prior_scale : float, optional, default=0.1
+        Scale parameter for the prior distribution of the offset.
+        The offset is the constant term in the piecewise trend equation.
+
+    capacity_prior_scale : float, optional, default=0.2
+        Scale parameter for the prior distribution of the capacity.
+
+    capacity_prior_loc : float, optional, default=1.1
+        Location parameter for the prior distribution of the capacity.
+
+    feature_transformer : BaseTransformer or None, optional, default=None
+        A transformer to preprocess the exogenous features.
+
+    exogenous_effects : list of AbstractEffect or None, optional, default=None
+        A list defining the exogenous effects to be used in the model.
+
+    default_effect : AbstractEffect or None, optional, default=None
+        The default effect to be used when no effect is specified for a variable.
+
+    shared_features : list, optional, default=[]
+        List of features shared across all series in the hierarchy.
+
+    mcmc_samples : int, optional, default=2000
+        Number of MCMC samples to draw.
+
+    mcmc_warmup : int, optional, default=200
+        Number of warmup steps for MCMC.
+
+    mcmc_chains : int, optional, default=4
+        Number of MCMC chains.
+
+    inference_method : str, optional, default='map'
+        Inference method to use. Either "map" or "mcmc".
+
+    optimizer_name : str, optional, default='Adam'
+        Name of the optimizer to use.
+
+    optimizer_kwargs : dict or None, optional, default={'step_size': 1e-4}
+        Additional keyword arguments for the optimizer.
+
+    optimizer_steps : int, optional, default=100_000
+        Number of optimization steps.
+
+    noise_scale : float, optional, default=0.05
+        Scale parameter for the noise.
+
+    correlation_matrix_concentration : float, optional, default=1.0
+        Concentration parameter for the correlation matrix.
+
+    rng_key : jax.random.PRNGKey or None, optional, default=None
+        Random number generator key.
+
+    Examples
+    --------
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.transformations.hierarchical.aggregate import Aggregator
+    >>> from sktime.utils._testing.hierarchical import _bottom_hier_datagen
+    >>> from sktime.forecasting.prophetverse import HierarchicalProphet
+    >>> agg = Aggregator()
+    >>> y = _bottom_hier_datagen(
+    ...     no_bottom_nodes=3,
+    ...     no_levels=1,
+    ...     random_seed=123,
+    ...     length=7,
+    ... )
+    >>> y = agg.fit_transform(y)
+    >>> forecaster = HierarchicalProphet()
+    >>> forecaster.fit(y)
+    >>> forecaster.predict(fh=[1])
+    """
+
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": "felipeangelimvieira",
+        "maintainers": "felipeangelimvieira",
+        "python_dependencies": "prophetverse",
+        # estimator type
+        "scitype:y": "univariate",
+        "ignores-exogeneous-X": False,
+        "handles-missing-data": False,
+        "y_inner_mtype": [
+            "pd.DataFrame",
+            "pd-multiindex",
+            "pd_multiindex_hier",
+        ],
+        "X_inner_mtype": [
+            "pd.DataFrame",
+            "pd-multiindex",
+            "pd_multiindex_hier",
+        ],  # which types do _fit, _predict, assume for X?
+        "requires-fh-in-fit": False,
+        "X-y-must-have-same-index": False,
+        "fit_is_empty": False,
+        "capability:pred_int": True,
+        "capability:pred_int:insample": True,
+    }
