@@ -1,0 +1,7 @@
+contact_links:
+  - name: "\U0001F4AC All other questions and general chat"
+    url: https://discord.com/invite/54ACzaFsn7
+    about: Chat with the sktime community on Discord
+  - name: "\u2709\uFE0F Code of Conduct incident reporting"
+    url: https://www.sktime.net/en/latest/get_involved/code_of_conduct.html#incident-reporting-guidelines
+    about: Report an incident to the Code of Conduct committee

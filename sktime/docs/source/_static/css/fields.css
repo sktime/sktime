@@ -1,0 +1,83 @@
+
+/*
+body {
+    font-family: Helvetica, Arial, sans-serif !important;
+    font-style: 100%;
+}
+*/
+
+table.docutils tr {
+    border-style: solid none solid none;
+    border-width: 1px 0 1px 0;
+    border-color: #ddd;
+}
+
+div.body p, div.body dd, div.body li {
+    line-height: 1.5em;
+}
+
+div.body {
+    font-size: 0.9em;
+}
+
+div.body p {
+    margin-top: 1.2em;
+    margin-bottom: .1em;
+}
+
+div.body p, div.body dd, div.body li {
+    line-height: 1.5em;
+}
+
+table.docutils td, table.docutils th {
+    padding: 1px 8px 1px 5px !important;
+    border-top: 0;
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 1px solid #aaa;
+}
+
+.field-odd, .field-even {
+    background-color: #fff;
+}
+
+.field-name {
+    background-color: #F0F7FA;
+}
+
+.field-body {
+    background-color: #fff;
+}
+
+th.field-name {
+    white-space: nowrap;
+}
+
+.field-odd, .field-even {
+    background-color: #fff;
+}
+
+.field-name {
+    background-color: #F0F7FA;
+}
+
+.field-body {
+    background-color: #fff;
+}
+
+h2 > a.reference {
+    font-weight: bold;
+    color: #2878A2;
+    text-decoration: none;
+    word-wrap: break-word;
+    font-family: Arial, sans-serif;
+}
+
+a.reference > code.xref {
+    background: transparent;
+    border: none;
+    font-size: 1.1em;
+    font-family: monospace;
+    padding: 2px 4px;
+    color: #2980B9 !important;
+}
