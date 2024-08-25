@@ -23,8 +23,16 @@ class SlopeTransformer(BaseTransformer):
 
     Parameters
     ----------
-    num_intervals : int, number of approx equal segments
-                    to split the time series into.
+    num_intervals : int, optional, default=8
+        number of approx equal segments to split the time series into.
+
+    Examples
+    --------
+    >>> from sktime.transformations.panel.slope import SlopeTransformer
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> transformer = SlopeTransformer()
+    >>> y_transformed = transformer.fit_transform(y)
     """
 
     _tags = {
