@@ -94,7 +94,7 @@ def prediction_ratio(
     return pred_change_points.size / true_change_points.size
 
 
-def padded_f1(true_change_points, pred_change_points, threshold):
+def padded_f1(true_change_points, pred_change_points, pad):
     """Calculate padded F1 score for change point detection.
 
     Parameters
@@ -103,25 +103,28 @@ def padded_f1(true_change_points, pred_change_points, threshold):
         True change point positions. Can be integers, floats or datetimes.
     precicted_change_points: pd.Series
         Precicted change point positions. Can be integers, floats or datetimes.
-    threshold: int, float, timdelta
-        Threshold used to pad the true change points. If a predicted change point falls
-        withing the interval of the padded change point, the true change point is
-        treated as having been correctly identified.
+    pad: int, float, timdelta
+        Used to pad the true change points. If a predicted change point falls within
+        the range of the padded change then then change point has been correctly
+        identified.
 
     Returns
     -------
-        Padded f1 ratio
+    float
+        Padded f1 score
     """
-    boundary_left = true_change_points - threshold
-    boundary_right = true_change_points + threshold
+    true_change_points = pd.Series(true_change_points)
+    pred_change_points = pd.Series(pred_change_points)
 
+    boundary_left = true_change_points - pad
+    boundary_right = true_change_points + pad
     true_cp_intervals = pd.IntervalIndex.from_arrays(boundary_left, boundary_right)
 
     false_positives = 0
     tp_and_fn = pd.Series(False, index=true_cp_intervals)
     for cp in pred_change_points:
-        boolean_mask = true_cp_intervals.contains(cp)
-        if boolean_mask.all():
+        boolean_mask = tp_and_fn.index.contains(cp)
+        if boolean_mask.any() is False:
             false_positives += 1
         else:
             tp_and_fn = tp_and_fn | boolean_mask
@@ -129,8 +132,10 @@ def padded_f1(true_change_points, pred_change_points, threshold):
     true_positives = tp_and_fn.sum()
     false_negatives = (~tp_and_fn).sum()
 
-    precision = true_positives / (true_positives + false_positives)
-    recall = true_positives / (true_positives + false_negatives)
+    # Avoid division by zero to mimic sklearn behaviour
+    denom = 2 * true_positives + false_positives + false_negatives
+    if denom == 0:
+        return 0.0
 
-    padded_f1 = (2 * precision * recall) / (precision + recall)
+    padded_f1 = 2 * true_positives / denom
     return padded_f1
