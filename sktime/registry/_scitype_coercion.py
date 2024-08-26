@@ -21,11 +21,18 @@ def coerce_scitype(
     to_scitype,
     from_scitype=None,
     clone_obj=True,
-    raise_on_unknown=True,
+    raise_on_unknown=False,
     raise_on_mismatch=False,
     msg="Error in object scitype check.",
 ):
-    """Determine scitype string of obj.
+    """Coerce obj to a given scitype.
+
+    This function is used to coerce an object to a given scitype.
+    If no source scitype or no valid coercion function is found,
+    the object is returned unmodified under default settings.
+
+    The function can also be used to raise errors if the scitype of the object
+    does not match the expected scitype, or if no scitype can be determined.
 
     Parameters
     ----------
@@ -39,7 +46,7 @@ def coerce_scitype(
     clone_obj : bool, optional, default = True
         if True, a clone of ``obj`` is used inside coercion composites.
         if False, the original object is passed unmodified.
-    raise_on_unknown : bool, optional, default = True
+    raise_on_unknown : bool, optional, default = False
         if True, raises an error if no scitype can be determined for obj.
         if False, unidentified scitypes will be treated as "object" scitype.
     raise_on_mismatch : bool, optional, default = False
@@ -51,12 +58,10 @@ def coerce_scitype(
 
     Returns
     -------
-    scitype : str, or list of str of sktime scitype strings from BASE_CLASS_REGISTER
-        str, sktime scitype string, if exactly one scitype can be determined for obj
-        or force_single_scitype is True, and if coerce_to_list is False
-        list of str, of scitype strings, if more than one scitype are determined,
-        or if coerce_to_list is True
-        obj has scitype if it inherits from class in same row of BASE_CLASS_REGISTER
+    coerced_obj : obj, coerced to the desired scitype
+        if a coercion function is found in the register, the object ``obj`` is coerced,
+        otherwise the object ``obj`` is returned unmodified.
+        Coercions are obtained from the ``_coerce_register`` dictionary.
 
     Raises
     ------
