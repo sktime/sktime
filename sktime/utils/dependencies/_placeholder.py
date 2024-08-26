@@ -35,6 +35,7 @@ def _placeholder_record(module_name, obj_name=None, dependencies=None, condition
     condition : bool, optional, default=True
         Condition to check before loading the object.
     """
+
     def decorator(cls):
         from sktime.utils.dependencies import _check_estimator_deps
 
