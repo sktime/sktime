@@ -6,7 +6,9 @@ e.g., estimators with sktime compatible interfaces from 2nd and 3rd party packag
 """
 
 
-def placeholder(cls, module_name, obj_name=None, dependencies=None, condition=True):
+def _placeholder_record(
+    cls, module_name, obj_name=None, dependencies=None, condition=True
+):
     """Replace placeholder cls with imported object if installed, otherwise return it.
 
     Ensures that decorated object is replaced with
