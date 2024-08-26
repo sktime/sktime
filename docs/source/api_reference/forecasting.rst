@@ -419,6 +419,7 @@ Structural time series models
     :template: class.rst
 
     Prophetverse
+    HierarchicalProphet
 
 .. currentmodule:: sktime.forecasting.structural
 
