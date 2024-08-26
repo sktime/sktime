@@ -310,7 +310,7 @@ class _ProphetAdapter(BaseForecaster):
         """
         fitted_params = {}
         for name in ["k", "m", "sigma_obs"]:
-            fitted_params[name] = self._forecaster.params[name][0][0]
+            fitted_params[name] = self._forecaster.params[name].flatten()[0]
         for name in ["delta", "beta"]:
             fitted_params[name] = self._forecaster.params[name][0]
         return fitted_params

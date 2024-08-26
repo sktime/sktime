@@ -177,3 +177,41 @@ def test_prophet_added_seasonalities_are_not_regressors():
         y=y["Number of airline passengers"], X=y[["test_condition1", "test_condition2"]]
     )
     assert forecaster.is_fitted
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Prophet),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("constant_timeseries", [True, False])
+def test_prophet_fitted_params(constant_timeseries):
+    """
+    Test if the fitted parameters have the expected number of dimensions.
+
+    For constant timeseries, get_fitted_params was raising unexpeceted error
+    (see issue #6982)
+    """
+    expected_param_ndims = {
+        "k": 0,
+        "m": 0,
+        "sigma_obs": 0,
+        "delta": 1,
+        "beta": 1,
+    }
+
+    if not constant_timeseries:
+        from sktime.datasets import load_airline
+
+        y = load_airline()
+    else:
+        y = pd.DataFrame(
+            index=pd.period_range(start="2022-01", periods=18, freq="Q"),
+            data={"value": 0},
+        )
+    forecaster = Prophet()
+    forecaster.fit(y)
+    fitted_params = forecaster.get_fitted_params()
+
+    # Assert parameters have the expected number of dimensions
+    for param, expected_ndim in expected_param_ndims.items():
+        assert fitted_params[param].ndim == expected_ndim
