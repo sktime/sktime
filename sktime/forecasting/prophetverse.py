@@ -6,29 +6,10 @@ __author__ = ["felipeangelimvieira"]  # fkiraly for adapter
 import pandas as pd
 
 from sktime.forecasting.base._delegate import _DelegatedForecaster
+from sktime.utils.dependencies import _placeholder_record
 
 
-def placeholder(cls):
-    """Delegate to prophetverse if installed, otherwise use placeholder.
-
-    If prophetverse 0.3 or higher is installed, this will directly
-    return the forecaster imported from prophetverse.
-    """
-    from sktime.utils.dependencies import _check_soft_dependencies
-
-    try:
-        if _check_soft_dependencies("prophetverse>=0.3.0", severity="none"):
-            from prophetverse.sktime import Prophetverse
-
-            return Prophetverse
-    except Exception:  # noqa: S110
-        pass
-
-    # else we return the placeholder, which is a delegator
-    return cls
-
-
-@placeholder
+@_placeholder_record("prophetverse.sktime", dependencies="prophetverse>=0.3.0")
 class Prophetverse(_DelegatedForecaster):
     """Univariate prophetverse forecaster - prophet model implemented in numpyro.
 
