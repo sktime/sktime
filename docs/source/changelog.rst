@@ -198,15 +198,15 @@ Forecasting
 
 * [ENH] interface to ``autots`` ensemble (:pr:`5948`) :user:`MBristle`
 * [ENH] ``darts`` Reduction Models adapter (:pr:`6712`) :user:`fnhirwa`, :user:`yarnabrina`
-* [ENH] Extension Template For Global Forecasting API (:pr:`6699`) :user:`Xinyu-Wu-0000`
+* [ENH] Extension Template For Global Forecasting API (:pr:`6699`) :user:`XinyuWuu`
 * [ENH] enable multivariate data passed to ``autots`` interface (:pr:`6805`) :user:`fkiraly`
 * [ENH] Add Sampler to ``ForecastingOptunaSearchCV`` (:pr:`6823`) :user:`bastisar`
-* [ENH] Improve ``TestAllGlobalForecasters`` (:pr:`6845`) :user:`Xinyu-Wu-0000`
+* [ENH] Improve ``TestAllGlobalForecasters`` (:pr:`6845`) :user:`XinyuWuu`
 * [ENH] Add scoring direction to ``ForecastingOptunaSearchCV`` (:pr:`6846`) :user:`gareth-brown-86`, :user:`mk406`
 * [ENH] de-novo implementation of ``LTSFTransformer`` based on ``cure-lab`` research code base (:pr:`6202`) :user:`geetu040`
 * [ENH] Add ``windows_identical`` to ``DirectReductionForecaster`` (:pr:`6650`) :user:`hliebert`
 * [ENH] updates type inference in ``make_reduction`` to use central scitype inference and allow proba tabular regressors (:pr:`6893`) :user:`fkiraly`
-* [ENH] DeepAR and  NHiTS and refinements for ``pytorch-forecasting`` interface (:pr:`6551`) :user:`Xinyu-Wu-0000`
+* [ENH] DeepAR and  NHiTS and refinements for ``pytorch-forecasting`` interface (:pr:`6551`) :user:`XinyuWuu`
 * [ENH] Interface to TinyTimeMixer foundation model (:pr:`6712`) :user:`geetu040`
 * [ENH] remove now superfluous try-excepts in forecasting API test suite (:pr:`6906`) :user:`fkiraly`
 * [ENH] improve ``test_global_forecasting_tag`` (:pr:`6929`) :user:`geetu040`
@@ -252,7 +252,7 @@ Vendor and onboard libraries
 Documentation
 ~~~~~~~~~~~~~
 
-* [DOC] Notebook and Template For Global Forecasting API (:pr:`6699`) :user:`Xinyu-Wu-0000`
+* [DOC] Notebook and Template For Global Forecasting API (:pr:`6699`) :user:`XinyuWuu`
 * [DOC] Add authorship credits to ``MatrixProfileTransformer`` for Stumpy authors (:pr:`6762`) :user:`alexander-lakocy`
 * [DOC] add examples to ``StatsForecastGARCH`` and ``StatsForecastARCH`` docstrings (:pr:`6761`) :user:`melinny`
 * [DOC] Add alignment notebook example (:pr:`6768`) :user:`alexander-lakocy`
@@ -331,7 +331,7 @@ Forecasting
 ^^^^^^^^^^^
 
 * [BUG] Fix ``pykan`` dependency and set lower bound (:pr:`6789`) :user:`benHeid`
-* [BUG] correct dependency tag for ``pytorch-forecasting`` forecasters: rename ``pytorch_forecasting`` to correct package name ``pytorch-forecasting`` (:pr:`6830`) :user:`Xinyu-Wu-0000`
+* [BUG] correct dependency tag for ``pytorch-forecasting`` forecasters: rename ``pytorch_forecasting`` to correct package name ``pytorch-forecasting`` (:pr:`6830`) :user:`XinyuWuu`
 
 Registry and search
 ^^^^^^^^^^^^^^^^^^^
@@ -384,7 +384,7 @@ Contributors
 :user:`shlok191`,
 :user:`SultanOrazbayev`,
 :user:`szepeviktor`,
-:user:`Xinyu-Wu-0000`,
+:user:`XinyuWuu`,
 :user:`yarnabrina`,
 :user:`ZhipengXue97`
 
@@ -458,7 +458,7 @@ Highlights
 * ``HFTransformersForecaster`` (hugging face transformers connector) now has a user friendly interface for applying PEFT methods (:pr:`6457`) :user:`geetu040`
 * ``ForecastingOptunaSearchCV`` for hyper-parameter tuning of forecasters via ``optuna`` (:pr:`6630`) :user:`mk406`, :user:`gareth-brown-86`
 * ``prophetverse`` package forecasters are now indexed by ``sktime`` (:pr:`6614`) :user:`felipeangelimvieira`
-* ``pytorch-forecasting`` adapter, experimental global forecasting API (:pr:`6228`) :user:`Xinyu-Wu-0000`
+* ``pytorch-forecasting`` adapter, experimental global forecasting API (:pr:`6228`) :user:`XinyuWuu`
 * ``skforecast`` adapter for reduction strategies (:pr:`6531`) :user:`Abhay-Lejith`, :user:`yarnabrina`
 * EnbPI based forecaster with components from ``aws-fortuna`` (:pr:`6449`) :user:`benHeid`
 * DTW distances and aligners from ``dtaidistance`` (:pr:`6578`) :user:`fkiraly`
@@ -536,12 +536,12 @@ Distances, kernels
 Forecasting
 ^^^^^^^^^^^
 
-* [ENH] ``pytorch-forecasting`` adapter with Global Forecasting API (:pr:`6228`) :user:`Xinyu-Wu-0000`
+* [ENH] ``pytorch-forecasting`` adapter with Global Forecasting API (:pr:`6228`) :user:`XinyuWuu`
 * [ENH] fitted parameter forwarding utility, forward ``statsforecast`` estimators' fitted parameters (:pr:`6349`) :user:`fkiraly`
 * [ENH] EnbPI based forecaster with components from ``aws-fortuna`` (:pr:`6449`) :user:`benHeid`
 * [ENH] ``skforecast`` ForecasterAutoreg adapter  (:pr:`6531`) :user:`Abhay-Lejith`, :user:`yarnabrina`
 * [ENH] Extend ``HFTransformersForecaster`` for PEFT methods (:pr:`6457`) :user:`geetu040`
-* [ENH] in ``BaseForecaster``, move check for ``capability:insample`` to ``_check_fh`` boilerplate (:pr:`6593`) :user:`Xinyu-Wu-0000`
+* [ENH] in ``BaseForecaster``, move check for ``capability:insample`` to ``_check_fh`` boilerplate (:pr:`6593`) :user:`XinyuWuu`
 * [ENH] indexing ``prophetverse`` forecaster (:pr:`6614`) :user:`fkiraly`
 * [ENH] ``ForecastingOptunaSearchCV`` for hyper-parameter tuning of forecasters via ``optuna`` (:pr:`6630`) :user:`mk406`, :user:`gareth-brown-86`
 
@@ -693,7 +693,7 @@ Contributors
 :user:`shlok191`,
 :user:`Spinachboul`,
 :user:`TheoWeih`,
-:user:`Xinyu-Wu-0000`,
+:user:`XinyuWuu`,
 :user:`yarnabrina`,
 :user:`Z-Fran`
 
@@ -1489,7 +1489,7 @@ Data types, checks, conversions
 Distances, kernels
 ^^^^^^^^^^^^^^^^^^
 
-* [ENH] Second test parameter set for shapeDTW (:pr:`6093`) :user:`Xinyu-Wu-0000`
+* [ENH] Second test parameter set for shapeDTW (:pr:`6093`) :user:`XinyuWuu`
 * [ENH] add ``colalign`` functionality to ``ScipyDist`` class as specified in the docstrings (:pr:`6110`) :user:`fnhirwa`
 
 Forecasting
@@ -1531,7 +1531,7 @@ Transformations
 * [ENH] Shapelet transform interfacing ``pyts`` (:pr:`6082`) :user:`Abhay-Lejith`
 * [ENH] Add a ``test_mstl`` module checking if ``transform`` returns desired components by :user:`kcentric` (:pr:`6084`)
 * [ENH] add test cases for ``HampelFilter`` by :user:`fkiraly` (:pr:`6087`)
-* [ENH] Second test parameter set for Kalman Filter (:pr:`6095`) :user:`Xinyu-Wu-0000`
+* [ENH] Second test parameter set for Kalman Filter (:pr:`6095`) :user:`XinyuWuu`
 * [ENH] Add ``MSTL`` import statement in ``detrend`` by :user:`geetu040` (:pr:`6116`)
 
 Test framework
@@ -1608,7 +1608,7 @@ Fixes
 Distances, kernels
 ^^^^^^^^^^^^^^^^^^
 
-* [BUG] Fix various issues in shapeDTW (:pr:`6093`) :user:`Xinyu-Wu-0000`
+* [BUG] Fix various issues in shapeDTW (:pr:`6093`) :user:`XinyuWuu`
 * [BUG] resolve redundant or problematic statements in ``numba`` bounding matrix routines (:pr:`6183`) :user:`albertoazzari`
 
 Estimator registry
@@ -1691,7 +1691,7 @@ Contributors
 :user:`tiloye`,
 :user:`tpvasconcelos`,
 :user:`vandit98`,
-:user:`Xinyu-Wu-0000`,
+:user:`XinyuWuu`,
 :user:`YashKhare20`
 
 
