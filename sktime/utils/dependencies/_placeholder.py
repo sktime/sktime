@@ -37,6 +37,7 @@ def _placeholder_record(module_name, obj_name=None, dependencies=None, condition
     """
 
     def decorator(cls):
+        nonlocal obj_name
         from sktime.utils.dependencies import _check_estimator_deps
 
         if obj_name is None:  # noqa: F823
