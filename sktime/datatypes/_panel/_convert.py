@@ -845,7 +845,11 @@ def from_nested_to_multi_index_adp(obj, store=None):
         time_index = store["index_names"][1]
     else:
         instance_index = obj.index.names[0]
-        time_index = obj.iloc[0, 0].index.names[0]
+        ser = obj.iloc[0, 0]
+        if hasattr(ser, "index"):
+            time_index = ser.index.names[0]
+        else:
+            time_index = None
 
     res = from_nested_to_multi_index(
         X=obj, instance_index=instance_index, time_index=time_index
