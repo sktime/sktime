@@ -7,31 +7,11 @@ from typing import Any, Optional, Union
 
 import pandas as pd
 
-from sktime.forecasting.base._delegate import _DelegatedForecaster
-from sktime.transformations.base import BaseTransformer
+from sktime.forecasting.base._delegate import BaseForecaster, _DelegatedForecaster
+from sktime.utils.dependencies import _placeholder_record
 
 
-def placeholder(cls):
-    """Delegate to prophetverse if installed, otherwise use placeholder.
-
-    If prophetverse 0.3 or higher is installed, this will directly
-    return the forecaster imported from prophetverse.
-    """
-    from sktime.utils.dependencies import _check_soft_dependencies
-
-    try:
-        if _check_soft_dependencies("prophetverse>=0.3.0", severity="none"):
-            from prophetverse.sktime import Prophetverse
-
-            return Prophetverse
-    except Exception:  # noqa: S110
-        pass
-
-    # else we return the placeholder, which is a delegator
-    return cls
-
-
-@placeholder
+@_placeholder_record("prophetverse.sktime", dependencies="prophetverse>=0.3.0")
 class Prophetverse(_DelegatedForecaster):
     """Univariate prophetverse forecaster - prophet model implemented in numpyro.
 
@@ -181,7 +161,7 @@ class Prophetverse(_DelegatedForecaster):
         changepoint_range: float = 0.8,
         changepoint_prior_scale: float = 0.001,
         offset_prior_scale: float = 0.1,
-        feature_transformer: Optional[BaseTransformer] = None,
+        feature_transformer=None,
         capacity_prior_scale: float = 0.2,
         capacity_prior_loc: float = 1.1,
         noise_scale: float = 0.05,
@@ -227,7 +207,8 @@ class Prophetverse(_DelegatedForecaster):
         self._delegate = Prophet(**self.get_params())
 
 
-class HierarchicalProphet:
+@_placeholder_record("prophetverse.sktime")
+class HierarchicalProphet(BaseForecaster):
     """A Bayesian hierarchical time series forecasting model based on Meta's Prophet.
 
     This method forecasts all bottom series in a hierarchy at once, using a
@@ -369,7 +350,7 @@ class HierarchicalProphet:
         offset_prior_scale: float = 0.1,
         capacity_prior_scale: float = 0.2,
         capacity_prior_loc: float = 1.1,
-        feature_transformer: BaseTransformer = None,
+        feature_transformer=None,
         exogenous_effects: Optional[list] = None,
         default_effect=None,
         shared_features: list[str] = None,
@@ -405,3 +386,5 @@ class HierarchicalProphet:
         self.noise_scale = noise_scale
         self.correlation_matrix_concentration = correlation_matrix_concentration
         self.rng_key = rng_key
+
+        super().__init__()
