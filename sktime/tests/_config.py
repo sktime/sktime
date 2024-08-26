@@ -335,6 +335,7 @@ EXCLUDED_TESTS_BY_TEST = {
         "Prophet",
         "ProphetPiecewiseLinearTrendForecaster",
         "Prophetverse",
+        "HierarchicalProphet",
         "PyODAnnotator",
         "RandomIntervalClassifier",
         "RandomIntervalFeatureExtractor",
