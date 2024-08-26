@@ -6,9 +6,7 @@ e.g., estimators with sktime compatible interfaces from 2nd and 3rd party packag
 """
 
 
-def _placeholder_record(
-    cls, module_name, obj_name=None, dependencies=None, condition=True
-):
+def _placeholder_record(module_name, obj_name=None, dependencies=None, condition=True):
     """Replace placeholder cls with imported object if installed, otherwise return it.
 
     Ensures that decorated object is replaced with
@@ -37,34 +35,37 @@ def _placeholder_record(
     condition : bool, optional, default=True
         Condition to check before loading the object.
     """
-    from sktime.utils.dependencies import _check_estimator_deps
+    def decorator(cls):
+        from sktime.utils.dependencies import _check_estimator_deps
 
-    if obj_name is None:
-        obj_name = cls.__name__
+        if obj_name is None:  # noqa: F823
+            obj_name = cls.__name__
 
-    load_condition = condition
+        load_condition = condition
 
-    deps_satisfied = _check_estimator_deps(cls, severity="none")
+        deps_satisfied = _check_estimator_deps(cls, severity="none")
 
-    if dependencies is not None:
-        from sktime.utils.dependencies import _check_soft_dependencies
+        if dependencies is not None:
+            from sktime.utils.dependencies import _check_soft_dependencies
 
-        added_deps_satisfied = _check_soft_dependencies(dependencies, severity="none")
-        deps_satisfied = deps_satisfied and added_deps_satisfied
+            added_deps_sat = _check_soft_dependencies(dependencies, severity="none")
+            deps_satisfied = deps_satisfied and added_deps_sat
 
-    load_condition = load_condition and deps_satisfied
+        load_condition = load_condition and deps_satisfied
 
-    if not load_condition:
+        if not load_condition:
+            return cls
+
+        try:
+            # parse import_str to get the module and class name
+            module = __import__(module_name, fromlist=[obj_name])
+            imported_cls = getattr(module, obj_name)
+
+            return imported_cls
+        except Exception:  # noqa: S110
+            pass
+
+        # on failure, we also return the placeholder record itself
         return cls
 
-    try:
-        # parse import_str to get the module and class name
-        module = __import__(module_name, fromlist=[obj_name])
-        imported_cls = getattr(module, obj_name)
-
-        return imported_cls
-    except Exception:  # noqa: S110
-        pass
-
-    # on failure, we also return the placeholder record itself
-    return cls
+    return decorator
