@@ -157,8 +157,18 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             """Instantiate the model from the vendor package."""
             from sktime.libs.uni2ts.forecast import MoiraiForecast
 
-            self.model = MoiraiForecast.load_from_checkpoint(**model_kwargs)
-            self.model.to(self.map_location)
+            if self.checkpoint_path.startswith("Salesforce"):
+                from sktime.libs.uni2ts.moirai_module import MoiraiModule
+
+                model_kwargs["module"] = MoiraiModule.from_pretrained(
+                    self.checkpoint_path
+                )
+                return MoiraiForecast(**model_kwargs)
+            else:
+                model_kwargs["checkpoint_path"] = hf_hub_download(
+                    repo_id=self.checkpoint_path, filename="model.ckpt"
+                )
+                return MoiraiForecast.load_from_checkpoint(**model_kwargs)
 
     def _fit(self, y, X, fh):
         if fh is not None:
@@ -181,20 +191,26 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             "past_feat_dynamic_real_dim": self.num_past_feat_dynamic_real,
         }
 
-        model_kwargs["checkpoint_path"] = hf_hub_download(
-            repo_id=self.checkpoint_path, filename="model.ckpt"
-        )
-
         # Load model from source package
         if self.use_source_package:
             if _check_soft_dependencies("uni2ts", severity="none"):
-                from uni2ts.model.moirai import MoiraiForecast
+                from uni2ts.model.moirai import MoiraiForecast, MoiraiModule
 
-                self.model = MoiraiForecast.load_from_checkpoint(**model_kwargs)
-                self.model.to(self.map_location)
+                if self.checkpoint_path.startswith("Salesforce"):
+                    model_kwargs["module"] = MoiraiModule.from_pretrained(
+                        self.checkpoint_path
+                    )
+                    self.model = MoiraiForecast(**model_kwargs)
+                else:
+                    model_kwargs["checkpoint_path"] = hf_hub_download(
+                        repo_id=self.checkpoint_path, filename="model.ckpt"
+                    )
+                    self.model = MoiraiForecast.load_from_checkpoint(**model_kwargs)
+                    self.model.to(self.map_location)
         # Load model from sktime
         else:
-            self._instantiate_patched_model(model_kwargs)
+            self.model = self._instantiate_patched_model(model_kwargs)
+            self.model.to(self.map_location)
 
     def _predict(self, fh, y=None, X=None):
         if self.deterministic:

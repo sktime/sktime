@@ -44,8 +44,10 @@ from .common.torch_util import mask_fill, packed_attention_mask
 
 
 def encode_distr_output(
-    distr_output,
+    distr_output: DistributionOutput,
 ):
+    """Serialize function for DistributionOutput."""
+
     def _encode(val):
         if not isinstance(val, DistributionOutput):
             return val
@@ -58,17 +60,21 @@ def encode_distr_output(
     return _encode(distr_output)
 
 
-# def decode_distr_output(config):
-#     return instantiate(config, _convert_="all")
+def decode_distr_output(config) -> DistributionOutput:
+    """Deserialize function for DistributionOutput."""
+    from hydra.utils import instantiate
+
+    return instantiate(config, _convert_="all")
 
 
 class MoiraiModule(
     nn.Module,
     PyTorchModelHubMixin,
+    coders={DistributionOutput: (encode_distr_output, decode_distr_output)},
 ):
     def __init__(
         self,
-        distr_output,
+        distr_output: DistributionOutput,
         d_model: int,
         num_layers: int,
         patch_sizes: tuple[int, ...],  # tuple[int, ...] | list[int]
@@ -125,6 +131,28 @@ class MoiraiModule(
         prediction_mask,
         patch_size,
     ):
+        """
+        Define the forward pass of MoiraiModule.
+
+        This method expects processed inputs.
+
+        1. Apply scaling to observations
+        2. Project from observations to representations
+        3. Replace prediction window with learnable mask
+        4. Apply transformer layers
+        5. Project from representations to distribution parameters
+        6. Return distribution object
+
+        :param target: input data
+        :param observed_mask: binary mask for missing values, 1 if observed, 0 otherwise
+        :param sample_id: indices indicating the sample index (for packing)
+        :param time_id: indices indicating the time index
+        :param variate_id: indices indicating the variate index
+        :param prediction_mask: binary mask for prediction horizon,
+        1 if part of the horizon, 0 otherwise
+        :param patch_size: patch size for each token
+        :return: predictive distribution
+        """
         loc, scale = self.scaler(
             target,
             observed_mask * ~prediction_mask.unsqueeze(-1),
