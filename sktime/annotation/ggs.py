@@ -28,14 +28,13 @@ References
 ----------
 .. [1] Hallac, D., Nystrup, P. & Boyd, S.
    "Greedy Gaussian segmentation of multivariate time series.",
-    Adv Data Anal Classif 13, 727–751 (2019).
+    Adv Data Anal Classif 13, 727-751 (2019).
     https://doi.org/10.1007/s11634-018-0335-0
 """
 
 import logging
 import math
 from dataclasses import dataclass, field
-from typing import List, Tuple
 
 import numpy as np
 import numpy.typing as npt
@@ -43,7 +42,7 @@ import pandas as pd
 from sklearn.utils.validation import check_random_state
 
 from sktime.annotation.base._base import BaseSeriesAnnotator
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.utils.dependencies import _check_estimator_deps
 
 logger = logging.getLogger(__name__)
 
@@ -106,7 +105,7 @@ class GGS:
     ----------
     .. [1] Hallac, D., Nystrup, P. & Boyd, S.,
     "Greedy Gaussian segmentation of multivariate time series.",
-    Adv Data Anal Classif 13, 727–751 (2019).
+    Adv Data Anal Classif 13, 727-751 (2019).
     https://doi.org/10.1007/s11634-018-0335-0
     """
 
@@ -117,10 +116,10 @@ class GGS:
     random_state: int = None
 
     change_points_: npt.ArrayLike = field(init=False, default_factory=list)
-    _intermediate_change_points: List[List[int]] = field(
+    _intermediate_change_points: list[list[int]] = field(
         init=False, default_factory=list
     )
-    _intermediate_ll: List[float] = field(init=False, default_factory=list)
+    _intermediate_ll: list[float] = field(init=False, default_factory=list)
 
     def initialize_intermediates(self) -> None:
         """Initialize the state for the estimator."""
@@ -151,7 +150,7 @@ class GGS:
         )
 
     def cumulative_log_likelihood(
-        self, data: npt.ArrayLike, change_points: List[int]
+        self, data: npt.ArrayLike, change_points: list[int]
     ) -> float:
         """Calculate cumulative GGS log-likelihood for all segments.
 
@@ -175,7 +174,7 @@ class GGS:
             log_likelihood -= self.log_likelihood(segment)
         return log_likelihood
 
-    def add_new_change_point(self, data: npt.ArrayLike) -> Tuple[int, float]:
+    def add_new_change_point(self, data: npt.ArrayLike) -> tuple[int, float]:
         """Add change point.
 
         This methods finds a new change point by that splits the segment and
@@ -239,8 +238,8 @@ class GGS:
         return new_index, min_ll - orig_ll
 
     def adjust_change_points(
-        self, data: npt.ArrayLike, change_points: List[int], new_index: List[int]
-    ) -> List[int]:
+        self, data: npt.ArrayLike, change_points: list[int], new_index: list[int]
+    ) -> list[int]:
         """Adjust change points.
 
         This method adjusts the positions of all change points until the
@@ -310,11 +309,11 @@ class GGS:
                 return bp
         return bp
 
-    def identity_segmentation(self, data: npt.ArrayLike) -> List[int]:
+    def identity_segmentation(self, data: npt.ArrayLike) -> list[int]:
         """Initialize change points."""
         return [0, data.shape[0] + 1]
 
-    def find_change_points(self, data: npt.ArrayLike) -> List[int]:
+    def find_change_points(self, data: npt.ArrayLike) -> list[int]:
         """
         Search iteratively  for up to ``k_max`` change points.
 
@@ -421,11 +420,15 @@ class GreedyGaussianSegmentation(BaseSeriesAnnotator):
     ----------
     .. [1] Hallac, D., Nystrup, P. & Boyd, S.,
        "Greedy Gaussian segmentation of multivariate time series.",
-       Adv Data Anal Classif 13, 727–751 (2019).
+       Adv Data Anal Classif 13, 727-751 (2019).
        https://doi.org/10.1007/s11634-018-0335-0
     """
 
-    _tags = {"fit_is_empty": True}
+    _tags = {
+        "fit_is_empty": True,
+        "task": "segmentation",
+        "learning_type": "unsupervised",
+    }
 
     def __init__(
         self,
@@ -443,7 +446,7 @@ class GreedyGaussianSegmentation(BaseSeriesAnnotator):
         self.random_state = random_state
 
         _check_estimator_deps(self)
-        super().__init__(fmt="dense", labels="int_label")
+        super().__init__()
 
         self._adaptee = GGS(
             k_max=k_max,
@@ -454,7 +457,7 @@ class GreedyGaussianSegmentation(BaseSeriesAnnotator):
         )
 
     @property
-    def _intermediate_change_points(self) -> List[List[int]]:
+    def _intermediate_change_points(self) -> list[list[int]]:
         """Intermediate values of change points for each value of k = 1...k_max.
 
         Default value is an empty list.
@@ -462,7 +465,7 @@ class GreedyGaussianSegmentation(BaseSeriesAnnotator):
         return self._adaptee._intermediate_change_points
 
     @property
-    def _intermediate_ll(self) -> List[float]:
+    def _intermediate_ll(self) -> list[float]:
         """Intermediate values for log-likelihood for each value of k = 1...k_max.
 
         Default value is an empty list.

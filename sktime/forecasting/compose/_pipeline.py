@@ -13,7 +13,6 @@ from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.registry import scitype
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.series import check_series
 from sktime.utils.warnings import warn
 
@@ -163,7 +162,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                         if len(levels) == 1:
                             levels = levels[0]
                         yt[ix] = y.xs(ix, level=levels, axis=1)
-                        # todo 0.29.0 - check why this cannot be easily removed
+                        # todo 0.33.0 - check why this cannot be easily removed
                         # in theory, we should get rid of the "Coverage" case treatment
                         # (the legacy naming convention was removed in 0.23.0)
                         # deal with the "Coverage" case, we need to get rid of this
@@ -398,6 +397,7 @@ class ForecastingPipeline(_Pipeline):
         "handles-missing-data": True,
         "capability:pred_int": True,
         "X-y-must-have-same-index": False,
+        "capability:categorical_in_X": True,
     }
 
     def __init__(self, steps):
@@ -700,8 +700,9 @@ class ForecastingPipeline(_Pipeline):
                 if isinstance(y, ForecastingHorizon) and requires_y:
                     y = y.to_absolute_index(self.cutoff)
                     y = pd.DataFrame(index=y)
-                else:
+                elif isinstance(y, ForecastingHorizon) and not requires_y:
                     y = None
+                # else we just pass on y
                 X = transformer.transform(X=X, y=y)
         return X
 
@@ -713,7 +714,7 @@ class ForecastingPipeline(_Pipeline):
 #     for _, _, transformer in self._iter_transformers():
 #         Zt = transformer.transform(Zt)
 #     return Zt
-
+#
 # def inverse_transform(self, Z, X=None):
 #     self.check_is_fitted()
 #     Zt = check_series(Z, enforce_multivariate=True)
@@ -1376,13 +1377,13 @@ class ForecastX(BaseForecaster):
         self.fh_X = fh_X
         self.behaviour = behaviour
         self.columns = columns
-        self.forecaster_X_exogeneous = forecaster_X_exogeneous
         if isinstance(forecaster_X_exogeneous, str):
             if forecaster_X_exogeneous not in ["None", "complement"]:
                 raise ValueError(
                     'forecaster_X_exogeneous must be one of "None", "complement",'
                     "or a pandas.Index coercible"
                 )
+        self.forecaster_X_exogeneous = forecaster_X_exogeneous
 
         if predict_behaviour not in ["use_forecasts", "use_actuals"]:
             raise ValueError(
@@ -1506,7 +1507,7 @@ class ForecastX(BaseForecaster):
         # either columns explicitly specified through the `columns` argument
         # or all columns in the `X` argument passed in `fit` call are future-unknown
         if self.columns is None or len(self.columns) == 0:
-            # `self._X` is guranteed to exist and be a DataFrame at this point
+            # `self._X` is guaranteed to exist and be a DataFrame at this point
             # ensured by `self.X_was_None_` check in `_get_forecaster_X_prediction`
             unknown_columns = self._X.columns
         else:
@@ -1583,9 +1584,11 @@ class ForecastX(BaseForecaster):
             return None
 
         if ixx == "complement":
-            X_for_fcX = X.drop(columns=self.columns)
+            X_for_fcX = X.drop(columns=self.columns, errors="ignore")
+
             if X_for_fcX.shape[1] < 1:
                 return None
+
             return X_for_fcX
 
         ixx_pd = pd.Index(ixx)
@@ -1784,8 +1787,10 @@ class ForecastX(BaseForecaster):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        from sktime.forecasting.arima import ARIMA
         from sktime.forecasting.compose import YfromX
         from sktime.forecasting.naive import NaiveForecaster
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         fs, _ = YfromX.create_test_instances_and_names()
         fx = fs[0]
@@ -1794,9 +1799,8 @@ class ForecastX(BaseForecaster):
         params1 = {"forecaster_X": fx, "forecaster_y": fy}
 
         # example with probabilistic capability
-        if _check_soft_dependencies("pmdarima", severity="none"):
-            from sktime.forecasting.arima import ARIMA
-
+        # todo 0.33.0: check if numpy<2 is still needed
+        if _check_soft_dependencies(["pmdarima", "numpy<2"], severity="none"):
             fy_proba = ARIMA()
         else:
             fy_proba = NaiveForecaster()

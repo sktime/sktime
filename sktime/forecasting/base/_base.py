@@ -34,7 +34,7 @@ State:
 
 __author__ = ["mloning", "big-o", "fkiraly", "sveameyer13", "miraep8", "ciaran-g"]
 
-__all__ = ["BaseForecaster"]
+__all__ = ["BaseForecaster", "_BaseGlobalForecaster"]
 
 from copy import deepcopy
 from itertools import product
@@ -53,9 +53,10 @@ from sktime.datatypes import (
     scitype_to_mtype,
     update_data,
 )
+from sktime.datatypes._dtypekind import DtypeKind
 from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.utils.datetime import _shift
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
 from sktime.utils.validation.series import check_equal_time_index
 from sktime.utils.warnings import warn
@@ -104,6 +105,8 @@ class BaseForecaster(BaseEstimator):
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": False,  # is fit empty and can be skipped?
+        "capability:categorical_in_X": False,
+        # does the forecaster natively support categorical in exogeneous X?
     }
 
     # configs and default config values
@@ -616,7 +619,7 @@ class BaseForecaster(BaseEstimator):
         # input checks and conversions
 
         # check fh and coerce to ForecastingHorizon, if not already passed in fit
-        fh = self._check_fh(fh)
+        fh = self._check_fh(fh, pred_int=True)
 
         # default alpha
         if alpha is None:
@@ -702,7 +705,7 @@ class BaseForecaster(BaseEstimator):
         # input checks and conversions
 
         # check fh and coerce to ForecastingHorizon, if not already passed in fit
-        fh = self._check_fh(fh)
+        fh = self._check_fh(fh, pred_int=True)
 
         # check alpha and coerce to list
         coverage = check_alpha(coverage, name="coverage")
@@ -789,7 +792,7 @@ class BaseForecaster(BaseEstimator):
         # input checks and conversions
 
         # check fh and coerce to ForecastingHorizon, if not already passed in fit
-        fh = self._check_fh(fh)
+        fh = self._check_fh(fh, pred_int=True)
 
         # check and convert X
         X_inner = self._check_X(X=X)
@@ -856,12 +859,29 @@ class BaseForecaster(BaseEstimator):
             raise NotImplementedError(
                 "automated vectorization for predict_proba is not implemented"
             )
+
+        # todo 0.35.0: replace warning by soft dependency exception
+        if not _check_soft_dependencies("skpro", severity="none"):
+            warn(
+                "From sktime version 0.38.0, forecasters' predict_proba will "
+                "require skpro to be present in the python environment, "
+                "for distribution objects to represent distributional forecasts. "
+                "Until 0.35.0, predict_proba will continue working without skpro, "
+                "defaulting to return objects in sktime.proba if skpro is not present. "
+                "From 0.35.0, an error will be raised if skpro is not present "
+                "in the environment. "
+                "To silence this message, ensure skpro is installed in the environment "
+                "when calling forecasters' predict_proba. ",
+                obj=self,
+                stacklevel=2,
+            )
+
         self.check_is_fitted()
 
         # input checks and conversions
 
         # check fh and coerce to ForecastingHorizon, if not already passed in fit
-        fh = self._check_fh(fh)
+        fh = self._check_fh(fh, pred_int=True)
 
         # check and convert X
         X_inner = self._check_X(X=X)
@@ -1172,15 +1192,15 @@ class BaseForecaster(BaseEstimator):
 
         self.check_is_fitted()
 
-        # check fh and coerce to ForecastingHorizon, if not already passed in fit
-        fh = self._check_fh(fh)
-
         # input checks and minor coercions on X, y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
         # update internal _X/_y with the new X/y
         # this also updates cutoff from y
         self._update_y_X(y_inner, X_inner)
+
+        # check fh and coerce to ForecastingHorizon, if not already passed in fit
+        fh = self._check_fh(fh)
 
         # checks and conversions complete, pass to inner update_predict_single
         if not self._is_vectorized:
@@ -1483,7 +1503,7 @@ class BaseForecaster(BaseEstimator):
         # checking y
         if y is not None:
             # request only required metadata from checks
-            y_metadata_required = ["n_features", "feature_names"]
+            y_metadata_required = ["n_features", "feature_names", "feature_kind"]
             if self.get_tag("scitype:y") != "both":
                 y_metadata_required += ["is_univariate"]
             if not self.get_tag("handles-missing-data"):
@@ -1513,6 +1533,11 @@ class BaseForecaster(BaseEstimator):
                     var_name=msg_start,
                     allowed_msg=allowed_msg,
                     raise_exception=True,
+                )
+
+            if DtypeKind.CATEGORICAL in y_metadata["feature_kind"]:
+                raise TypeError(
+                    "Forecasters do not support categorical features in endogeneous y."
                 )
 
             y_scitype = y_metadata["scitype"]
@@ -1547,7 +1572,7 @@ class BaseForecaster(BaseEstimator):
         # checking X
         if X is not None:
             # request only required metadata from checks
-            X_metadata_required = []
+            X_metadata_required = ["feature_kind"]
             if not self.get_tag("handles-missing-data"):
                 X_metadata_required += ["has_nans"]
 
@@ -1575,6 +1600,17 @@ class BaseForecaster(BaseEstimator):
                     var_name=msg_start,
                     allowed_msg=allowed_msg,
                     raise_exception=True,
+                )
+
+            if (
+                not self.get_tag("ignores-exogeneous-X")
+                and DtypeKind.CATEGORICAL in X_metadata["feature_kind"]
+                and not self.get_tag("capability:categorical_in_X")
+            ):
+                # replace error with encoding logic in next step.
+                raise TypeError(
+                    f"Forecaster {self} does not support categorical features in "
+                    "exogeneous X."
                 )
 
             X_scitype = X_metadata["scitype"]
@@ -1751,6 +1787,7 @@ class BaseForecaster(BaseEstimator):
                 pd.Series, pd.DataFrame, np.ndarray, of Series scitype
                 pd.multiindex, numpy3D, nested_univ, df-list, of Panel scitype
                 pd_multiindex_hier, of Hierarchical scitype
+
         Notes
         -----
         Set self._cutoff to pandas.Index containing latest index seen in ``y``.
@@ -1771,7 +1808,7 @@ class BaseForecaster(BaseEstimator):
 
         return self._fh
 
-    def _check_fh(self, fh):
+    def _check_fh(self, fh, pred_int=False):
         """Check, set and update the forecasting horizon.
 
         Called from all methods where fh can be passed:
@@ -1791,6 +1828,7 @@ class BaseForecaster(BaseEstimator):
         Parameters
         ----------
         fh : None, int, list, np.ndarray or ForecastingHorizon
+        pred_int: Check pred_int:insample tag instead of insample tag.
 
         Returns
         -------
@@ -1878,6 +1916,23 @@ class BaseForecaster(BaseEstimator):
                     "horizon, please re-fit the forecaster. " + msg
                 )
             # if existing one and new match, ignore new one
+        in_sample_pred = (
+            self.get_tag("capability:insample")
+            if not pred_int
+            else self.get_tag("capability:pred_int:insample")
+        )
+        if (
+            not in_sample_pred
+            and self._fh is not None
+            and not self._fh.is_all_out_of_sample(self._cutoff)
+        ):
+            msg = (
+                f"{self.__class__.__name__} "
+                f"can not perform in-sample prediction. "
+                f"Found fh with in sample index: "
+                f"{fh}"
+            )
+            raise NotImplementedError(msg)
 
         return self._fh
 
@@ -2538,6 +2593,151 @@ class BaseForecaster(BaseEstimator):
 
 # initialize dynamic docstrings
 BaseForecaster._init_dynamic_doc()
+
+
+class _BaseGlobalForecaster(BaseForecaster):
+    """Base global forecaster template class.
+
+    This class is a temporal solution, might be merged into BaseForecaster later.
+
+    The base forecaster specifies the methods and method signatures that all
+    global forecasters have to implement.
+
+    Specific implementations of these methods is deferred to concrete forecasters.
+
+    """
+
+    _tags = {"object_type": ["global_forecaster", "forecaster"]}
+
+    def predict(self, fh=None, X=None, y=None):
+        """Forecast time series at future horizon.
+
+        State required:
+            Requires state to be "fitted", i.e., ``self.is_fitted=True``.
+
+        Accesses in self:
+
+            * Fitted model attributes ending in "_".
+            * ``self.cutoff``, ``self.is_fitted``
+
+        Writes to self:
+            Stores ``fh`` to ``self.fh`` if ``fh`` is passed and has not been passed
+            previously.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ``ForecastingHorizon``, optional (default=None)
+            The forecasting horizon encoding the time stamps to forecast at.
+            Should not be passed if has already been passed in ``fit``.
+            If has not been passed in fit, must be passed, not optional
+
+        X : time series in ``sktime`` compatible format, optional (default=None)
+            Exogeneous time series to use in prediction.
+            Should be of same scitype (``Series``, ``Panel``, or ``Hierarchical``)
+            as ``y`` in ``fit``.
+            If ``self.get_tag("X-y-must-have-same-index")``,
+            ``X.index`` must contain ``fh`` index reference.
+            If ``y`` is not passed (not performing global forecasting), ``X`` should
+            only contain the time points to be predicted.
+            If ``y`` is passed (performing global forecasting), ``X`` must contain
+            all historical values and the time points to be predicted.
+
+        y : time series in ``sktime`` compatible format, optional (default=None)
+            Historical values of the time series that should be predicted.
+            If not None, global forecasting will be performed.
+            Only pass the historical values not the time points to be predicted.
+
+        Returns
+        -------
+        y_pred : time series in sktime compatible data container format
+            Point forecasts at ``fh``, with same index as ``fh``.
+            ``y_pred`` has same type as the ``y`` that has been passed most recently:
+            ``Series``, ``Panel``, ``Hierarchical`` scitype, same format (see above)
+
+        Notes
+        -----
+        If ``y`` is not None, global forecast will be performed.
+        In global forecast mode,
+        ``X`` should contain all historical values and the time points to be predicted,
+        while ``y`` should only contain historical values
+        not the time points to be predicted.
+
+        If ``y`` is None, non global forecast will be performed.
+        In non global forecast mode,
+        ``X`` should only contain the time points to be predicted,
+        while ``y`` should only contain historical values
+        not the time points to be predicted.
+        """
+        # check global forecasting tag
+        gf = self.get_tag(
+            "capability:global_forecasting", tag_value_default=False, raise_error=False
+        )
+        if not gf and y is not None:
+            ValueError("no global forecasting support!")
+
+        # handle inputs
+        self.check_is_fitted()
+        if y is None:
+            self._global_forecasting = False
+        else:
+            self._global_forecasting = True
+        # check and convert X/y
+        X_inner, y_inner = self._check_X_y(X=X, y=y)
+
+        # this also updates cutoff from y
+        # be cautious, in fit self._X and self._y is also updated but not here!
+        if y_inner is not None:
+            self._set_cutoff_from_y(y_inner)
+
+        # check fh and coerce to ForecastingHorizon, if not already passed in fit
+        fh = self._check_fh(fh)
+
+        # we call the ordinary _predict if no looping/vectorization needed
+        if not self._is_vectorized:
+            y_pred = self._predict(fh=fh, X=X_inner, y=y_inner)
+        else:
+            # otherwise we call the vectorized version of predict
+            y_pred = self._vectorize("predict", y=y_inner, X=X_inner, fh=fh)
+
+        # convert to output mtype, identical with last y mtype seen
+        y_out = convert_to(
+            y_pred,
+            self._y_metadata["mtype"],
+            store=self._converter_store_y,
+            store_behaviour="freeze",
+        )
+
+        return y_out
+
+    def _predict(self, fh, X, y):
+        """Forecast time series at future horizon.
+
+        private _predict containing the core logic, called from predict
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+            If not passed in _fit, guaranteed to be passed here
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
+        y : time series in ``sktime`` compatible format, optional (default=None)
+            Historical values of the time series that should be predicted.
+
+        Returns
+        -------
+        y_pred : pd.Series
+            Point predictions
+        """
+        raise NotImplementedError("abstract method")
 
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):

@@ -4,8 +4,8 @@ __author__ = ["angus924"]
 
 import numpy as np
 
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.numba.njit import njit
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("numba", severity="none"):
     from numba import prange
@@ -98,7 +98,7 @@ def _apply_kernel_univariate(X, weights, length, bias, dilation, padding):
     output_length = (n_timepoints + (2 * padding)) - ((length - 1) * dilation)
 
     _ppv = 0
-    _max = np.NINF
+    _max = -np.inf
 
     end = (n_timepoints + padding) - ((length - 1) * dilation)
 
@@ -131,7 +131,7 @@ def _apply_kernel_multivariate(
     output_length = (n_timepoints + (2 * padding)) - ((length - 1) * dilation)
 
     _ppv = 0
-    _max = np.NINF
+    _max = -np.inf
 
     end = (n_timepoints + padding) - ((length - 1) * dilation)
 

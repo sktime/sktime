@@ -8,6 +8,7 @@ The ``datasets`` module contains:
 * loaders which fetch datasets from data repositories on the internet,
   and retrieve them as in-memory datasets in ``sktime`` compatible formats
 * loaders which fetch an individual dataset, usually for illustration purposes
+* toy data generators for didactic and illustrative purposes
 * utilities to write to, and load from, time series specific file formats
 
 Loaders from dataset repositories
@@ -29,6 +30,8 @@ These loaders can be used to access reference datasets for benchmarking.
     :template: function.rst
 
     load_forecastingdata
+    load_fpp3
+    load_m5
     load_UCR_UEA_dataset
 
 
@@ -62,7 +65,6 @@ Single time series
 Panels of time series
 ^^^^^^^^^^^^^^^^^^^^^
 
-
 .. automodule:: sktime.datasets
     :no-members:
     :no-inherited-members:
@@ -81,6 +83,25 @@ Panels of time series
     load_japanese_vowels
     load_macroeconomic
     load_osuleaf
+
+
+Toy data generators
+-------------------
+
+Hierarchical time series data
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automodule:: sktime.datasets
+    :no-members:
+    :no-inherited-members:
+
+.. currentmodule:: sktime.datasets
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+
+    load_hierarchical_sales_toydata
 
 
 Loading from and writing to files

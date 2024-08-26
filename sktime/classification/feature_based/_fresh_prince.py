@@ -54,7 +54,7 @@ class FreshPRINCE(BaseClassifier):
     References
     ----------
     .. [1] Christ, Maximilian, et al. "Time series feature extraction on basis of
-        scalable hypothesis tests (tsfresh–a python package)." Neurocomputing 307
+        scalable hypothesis tests (tsfresh-a python package)." Neurocomputing 307
         (2018): 72-77.
         https://www.sciencedirect.com/science/article/pii/S0925231218304843
 
@@ -195,7 +195,11 @@ class FreshPRINCE(BaseClassifier):
         return self._rotf.predict_proba(self._tsfresh.transform(X))
 
     def _get_train_probs(self, X, y) -> np.ndarray:
+        from sktime.datatypes import convert_to
+
         self.check_is_fitted()
+        if not isinstance(X, np.ndarray):
+            X = convert_to(X, "numpy3D")
         X, y = check_X_y(X, y, coerce_to_numpy=True)
 
         n_instances, n_dims, series_length = X.shape

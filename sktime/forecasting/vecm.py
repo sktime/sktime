@@ -1,7 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """VECM Forecaster."""
 
-
 __all__ = ["VECM"]
 __author__ = ["thayeylolu", "AurumnPegasus"]
 
@@ -12,9 +11,12 @@ from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
 class VECM(_StatsModelsAdapter):
-    r"""A VECM model, or Vector Error Correction Model, is a restricted.
+    r"""Vector Error Correction Model, from statsmodels.
 
-    VAR model used for nonstationary series that are cointegrated.r
+    Direct interface to ``statsmodels.tsa.vector_ar.vecm``.
+
+    A VECM, Vector Error Correction Model model is a restricted
+    VAR model, used for nonstationary series that are cointegrated.
 
     Parameters
     ----------
@@ -65,7 +67,7 @@ class VECM(_StatsModelsAdapter):
     >>> from sktime.forecasting.vecm import VECM
     >>> from sktime.split import temporal_train_test_split
     >>> from sktime.forecasting.base import ForecastingHorizon
-    >>> index = pd.date_range(start="2005", end="2006-12", freq="M")
+    >>> index = pd.date_range(start="2005", end="2006-12", freq="ME")
     >>> df = pd.DataFrame(np.random.randint(0, 100, size=(23, 2)),
     ... columns=list("AB"),
     ... index=pd.PeriodIndex(index))
@@ -79,7 +81,14 @@ class VECM(_StatsModelsAdapter):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["thayeylolu", "AurumnPegasus"],
+        "authors": [
+            "yogabonito",
+            "bashtage",
+            "josef-pkt",
+            "thayeylolu",
+            "AurumnPegasus",
+        ],
+        # yogabonito, bashtage, josef-pkt for VECM from statsmodels
         # "python_dependencies": "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type
         # --------------

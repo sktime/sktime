@@ -42,16 +42,6 @@ class MySeriesAnnotator(BaseSeriesAnnotator):
 
     Parameters
     ----------
-    fmt : str {"dense", "sparse"}, optional (default="dense")
-        Annotation output format:
-        * If "sparse", a sub-series of labels for only the outliers in X is returned,
-        * If "dense", a series of labels for all values in X is returned.
-    labels : str {"indicator", "score"}, optional (default="indicator")
-        Annotation output labels:
-        * If "indicator", returned values are boolean, indicating whether a value is an
-        outlier,
-        * If "score", returned values are floats, giving the outlier score.
-
     parama : int
         descriptive explanation of parama
     paramb : string, optional (default='default')
@@ -69,6 +59,12 @@ class MySeriesAnnotator(BaseSeriesAnnotator):
     and so on
     """
 
+    # Change the `task` and `learning_type` as needed
+    _tags = {
+        "task": "segmentation",
+        "learning_type": "unsupervised",
+    }
+
     # todo: add any hyper-parameters and components to constructor
     def __init__(
         self,
@@ -77,8 +73,6 @@ class MySeriesAnnotator(BaseSeriesAnnotator):
         est2=None,
         paramb="default",
         paramc=None,
-        fmt="dense",
-        labels="indicator",
     ):
         # estimators should precede parameters
         #  if estimators have default values, set None and initialize below
@@ -89,8 +83,7 @@ class MySeriesAnnotator(BaseSeriesAnnotator):
         self.paramb = paramb
         self.paramc = paramc
 
-        # leave this as is
-        super().__init__(fmt=fmt, labels=labels)
+        super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc
@@ -124,6 +117,7 @@ class MySeriesAnnotator(BaseSeriesAnnotator):
             training data to fit model to, time series
         Y : pd.Series, optional
             ground truth annotations for training if annotator is supervised
+
         Returns
         -------
         self : returns a reference to self
@@ -168,6 +162,7 @@ class MySeriesAnnotator(BaseSeriesAnnotator):
             training data to update model with, time series
         Y : pd.Series, optional
             ground truth annotations for training if annotator is supervised
+
         Returns
         -------
         self : returns a reference to self

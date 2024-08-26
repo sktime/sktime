@@ -1,4 +1,5 @@
 """Transformer pipeline."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly"]
@@ -44,6 +45,11 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
         ``trafo2.update``, ``trafo2.transform``, ..., ``trafoN.update``,
         where ``trafo[i].update`` and ``trafo[i].transform`` receive as input
         the output of ``trafo[i-1].transform``
+
+    For transformers in the pipeline that use the ``y`` argument, the ``y`` argument
+    passed to ``TransformerPipeline.fit`` or ``transform`` is passed to
+    all such transformers in the pipeline. No transformations or inverse transformations
+    are applied to ``y`` in the pipeline.
 
     The ``get_params``, ``set_params`` uses ``sklearn`` compatible nesting interface
     if list is unnamed, names are generated as names of classes
@@ -122,6 +128,7 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
         # we let all X inputs through to be handled by first transformer
         "X_inner_mtype": CORE_MTYPES,
         "univariate-only": False,
+        "capability:categorical_in_X": True,
     }
 
     # no further default tag values - these are set dynamically below
@@ -149,6 +156,8 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
 
         # input mtype and input type are as of the first estimator
         self.clone_tags(first_trafo, ["scitype:transform-input"])
+        # chain requires X if and only if first estimator requires X
+        self.clone_tags(first_trafo, ["requires_X"])
         # output type is that of last estimator, if no "Primitives" occur in the middle
         # if "Primitives" occur in the middle, then output is set to that too
         # this is in a case where "Series-to-Series" is applied to primitive df
@@ -166,6 +175,7 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
         self._anytagis_then_set("fit_is_empty", False, True, ests)
         self._anytagis_then_set("transform-returns-same-time-index", False, True, ests)
         self._anytagis_then_set("skip-inverse-transform", False, True, ests)
+        self._anytagis_then_set("requires_y", True, False, ests)
 
         # self can inverse transform if for all est, we either skip or can inv-transform
         skips = [est.get_tag("skip-inverse-transform") for _, est in ests]

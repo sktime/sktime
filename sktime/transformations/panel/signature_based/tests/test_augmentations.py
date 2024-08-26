@@ -1,6 +1,9 @@
 """Test the signature module augmentations."""
-import numpy as np
 
+import numpy as np
+import pytest
+
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.panel.signature_based._augmentations import (
     _AddTime,
     _BasePoint,
@@ -10,7 +13,20 @@ from sktime.transformations.panel.signature_based._augmentations import (
     _make_augmentation_pipeline,
 )
 
+OBJS_TO_TEST = [
+    _AddTime,
+    _BasePoint,
+    _CumulativeSum,
+    _InvisibilityReset,
+    _LeadLag,
+    _make_augmentation_pipeline,
+]
 
+
+@pytest.mark.skipif(
+    not run_test_for_class(OBJS_TO_TEST),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_augmentations():
     """Test the signature module augmentations."""
     # Build an array X, note that this is [n_sample, n_channels, length] shape.

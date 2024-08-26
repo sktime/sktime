@@ -1,4 +1,5 @@
 """Tests for feature importance in time series forests."""
+
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -6,6 +7,7 @@ import pandas as pd
 import pytest
 
 from sktime.classification.interval_based import TimeSeriesForestClassifier
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.panel import make_classification_problem
 
 TESTED_MODULE = "sktime.classification.interval_based._tsf"
@@ -16,6 +18,10 @@ X_train, y_train = make_classification_problem()
 @patch(
     f"{TESTED_MODULE}.TimeSeriesForestClassifier."
     f"_extract_feature_importance_by_feature_type_per_tree"
+)
+@pytest.mark.skipif(
+    not run_test_for_class(TimeSeriesForestClassifier),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("n_estimators", [2, 5])
 def test_time_series_forest_classifier_feature_importance(
@@ -118,6 +124,10 @@ def test_time_series_forest_classifier_feature_importance(
     pd.testing.assert_frame_equal(expected_fi, fi)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(TimeSeriesForestClassifier),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("number_of_intervals", [2, 5])
 @pytest.mark.parametrize("feature_type", ["mean", "std", "slope"])
 def test__extract_feature_importance_by_feature_type_per_tree(

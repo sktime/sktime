@@ -7,12 +7,17 @@ import numpy as np
 import pytest
 
 from sktime.datasets import load_airline
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.scaledlogit import ScaledLogitTransformer
 from sktime.utils.warnings import warn
 
 TEST_SERIES = np.array([30, 40, 60])
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ScaledLogitTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "lower, upper, output",
     [
@@ -29,6 +34,10 @@ def test_scaledlogit_transform(lower, upper, output):
     assert np.all(output == y_transformed)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ScaledLogitTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "lower, upper, message",
     [

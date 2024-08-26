@@ -30,7 +30,7 @@ from sktime.forecasting.tests._config import (
     VALID_INDEX_FH_COMBINATIONS,
 )
 from sktime.split import temporal_train_test_split
-from sktime.tests.test_switch import run_test_for_class
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.forecasting import _make_fh, make_forecasting_problem
 from sktime.utils._testing.series import _make_index, _make_series
 from sktime.utils.datetime import (
@@ -41,7 +41,7 @@ from sktime.utils.datetime import (
     _shift,
     infer_freq,
 )
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 from sktime.utils.validation.series import is_in_valid_index_types, is_integer_index
 
 
@@ -52,6 +52,82 @@ def _assert_index_equal(a, b):
     assert a.equals(b)
 
 
+# fixtures
+@pytest.fixture(params=None)
+def good_absolute_input_arg(request):
+    """Parametrized by integer values."""
+    pandas2 = _check_soft_dependencies("pandas>=2.0.0", severity="none")
+    if pandas2:
+        m_freq = "ME"
+    else:
+        m_freq = "M"
+
+    params = [
+        pd.Index([1, 2, 3]),
+        pd.period_range("2000-01-01", periods=3, freq="D"),
+        pd.date_range("2000-01-01", periods=3, freq=m_freq),
+        np.array([1, 2, 3]),
+        [1, 2, 3],
+        1,
+    ]
+    return params[request.param]
+
+
+@pytest.fixture(params=None)
+def good_relative_input_arg(request):
+    """Parametrized by integer values."""
+    params = [
+        pd.timedelta_range(pd.to_timedelta(1, unit="D"), periods=3, freq="D"),
+        [np.timedelta64(x, "D") for x in range(3)],
+        [timedelta(days=x) for x in range(3)],
+    ]
+    return params[request.param]
+
+
+@pytest.fixture(params=None)
+def timepoint(request):
+    """Parametrized by integer values."""
+    TIMEPOINTS = [
+        pd.Period("2000", freq="M"),
+        pd.Timestamp("2000-01-01").to_period(freq="D"),
+        1,
+        3,
+    ]
+    return TIMEPOINTS[request.param]
+
+
+@pytest.fixture(params=None)
+def length1_index(request):
+    """Parametrized by integer values."""
+    TIMEPOINTS = [
+        pd.Period("2000", freq="M"),
+        pd.Timestamp("2000-01-01").to_period(freq="D"),
+        1,
+        3,
+    ]
+    LENGTH1_INDICES = [pd.Index([x]) for x in TIMEPOINTS]
+    LENGTH1_INDICES += [pd.DatetimeIndex(["2000-01-01"], freq="D")]
+    return LENGTH1_INDICES[request.param]
+
+
+# test generate hook to ensure fixture creation happens only on test time,
+# not on module load time
+# this is because pandas fixtures may break, they contain risky freq args
+def pytest_generate_tests(metafunc):
+    if "good_absolute_input_arg" in metafunc.fixturenames:
+        metafunc.parametrize("good_absolute_input_arg", range(6), indirect=True)
+    if "good_relative_input_arg" in metafunc.fixturenames:
+        metafunc.parametrize("good_relative_input_arg", range(3), indirect=True)
+    if "timepoint" in metafunc.fixturenames:
+        metafunc.parametrize("timepoint", range(4), indirect=True)
+    if "length1_index" in metafunc.fixturenames:
+        metafunc.parametrize("length1_index", range(5), indirect=True)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
 @pytest.mark.parametrize(
     "index_type, fh_type, is_relative", VALID_INDEX_FH_COMBINATIONS
 )
@@ -152,6 +228,10 @@ def test_fh(index_type, fh_type, is_relative, steps):
     assert fh.is_all_out_of_sample(cutoff) == is_oos
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
 def test_fh_method_delegation():
     """Test ForecastingHorizon delegated methods."""
     fh = ForecastingHorizon(1)
@@ -169,6 +249,10 @@ BAD_INPUT_ARGS = (
 )
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
 @pytest.mark.parametrize("arg", BAD_INPUT_ARGS)
 def test_check_fh_values_bad_input_types(arg):
     """Negative test for bad ForecastingHorizon arguments."""
@@ -179,6 +263,10 @@ def test_check_fh_values_bad_input_types(arg):
 DUPLICATE_INPUT_ARGS = (np.array([1, 2, 2]), [3, 3, 1])
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
 @pytest.mark.parametrize("arg", DUPLICATE_INPUT_ARGS)
 def test_check_fh_values_duplicate_input_values(arg):
     """Negative test for ForecastingHorizon input arguments."""
@@ -186,50 +274,33 @@ def test_check_fh_values_duplicate_input_values(arg):
         ForecastingHorizon(arg)
 
 
-GOOD_ABSOLUTE_INPUT_ARGS = (
-    pd.Index([1, 2, 3]),
-    pd.period_range("2000-01-01", periods=3, freq="D"),
-    pd.date_range("2000-01-01", periods=3, freq="M"),
-    np.array([1, 2, 3]),
-    [1, 2, 3],
-    1,
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
 )
-
-
-@pytest.mark.parametrize("arg", GOOD_ABSOLUTE_INPUT_ARGS)
-def test_check_fh_absolute_values_input_conversion_to_pandas_index(arg):
+def test_check_fh_absolute_input_conversion_to_pandas_index(good_absolute_input_arg):
     """Test conversion of absolute horizons to pandas index."""
+    arg = good_absolute_input_arg
     assert is_in_valid_index_types(
         ForecastingHorizon(arg, is_relative=False).to_pandas()
     )
 
 
-GOOD_RELATIVE_INPUT_ARGS = [
-    pd.timedelta_range(pd.to_timedelta(1, unit="D"), periods=3, freq="D"),
-    [np.timedelta64(x, "D") for x in range(3)],
-    [timedelta(days=x) for x in range(3)],
-]
-
-
-@pytest.mark.parametrize("arg", GOOD_RELATIVE_INPUT_ARGS)
-def test_check_fh_relative_values_input_conversion_to_pandas_index(arg):
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
+def test_check_fh_relative_values_conversion_to_pandas_index(good_relative_input_arg):
     """Test conversion of relative horizons to pandas index."""
+    arg = good_relative_input_arg
     output = ForecastingHorizon(arg, is_relative=True).to_pandas()
     assert is_in_valid_index_types(output)
 
 
-TIMEPOINTS = [
-    pd.Period("2000", freq="M"),
-    pd.Timestamp("2000-01-01").to_period(freq="D"),
-    int(1),
-    3,
-]
-
-LENGTH1_INDICES = [pd.Index([x]) for x in TIMEPOINTS]
-LENGTH1_INDICES += [pd.DatetimeIndex(["2000-01-01"], freq="D")]
-
-
-@pytest.mark.parametrize("timepoint", TIMEPOINTS)
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
 @pytest.mark.parametrize("by", [-3, -1, 0, 1, 3])
 def test_shift(timepoint, by):
     """Test shifting of cutoff index element."""
@@ -244,10 +315,14 @@ def test_shift(timepoint, by):
         assert timepoint == ret
 
 
-@pytest.mark.parametrize("timepoint", LENGTH1_INDICES)
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
 @pytest.mark.parametrize("by", [-3, -1, 0, 1, 3])
-def test_shift_index(timepoint, by):
+def test_shift_index(length1_index, by):
     """Test shifting of cutoff index, length 1 pandas.Index type."""
+    timepoint = length1_index
     ret = _shift(timepoint, by=by, return_index=True)
 
     # check output type, pandas index types inherit from each other,
@@ -260,8 +335,8 @@ def test_shift_index(timepoint, by):
 
 
 DURATIONS_ALLOWED = [
-    pd.TimedeltaIndex(range(3), unit="D", freq="D"),
-    pd.TimedeltaIndex(range(0, 9, 3), unit="D", freq="3D"),
+    pd.TimedeltaIndex(pd.to_timedelta(range(3), unit="D"), freq="D"),
+    pd.TimedeltaIndex(pd.to_timedelta(range(0, 9, 3), unit="D"), freq="3D"),
     pd.tseries.offsets.MonthEnd(3),
     # we also support pd.Timedelta, but it does not have freqstr so we
     # cannot automatically infer the unit during testing
@@ -275,6 +350,10 @@ DURATIONS_NOT_ALLOWED = [
 ]
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
 @pytest.mark.parametrize("duration", DURATIONS_ALLOWED)
 def test_coerce_duration_to_int(duration):
     """Test coercion of duration to int."""
@@ -291,6 +370,10 @@ def test_coerce_duration_to_int(duration):
         assert ret == 1
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
 @pytest.mark.parametrize("duration", DURATIONS_NOT_ALLOWED)
 def test_coerce_duration_to_int_with_non_allowed_durations(duration):
     """Test coercion of duration to int."""
@@ -298,6 +381,10 @@ def test_coerce_duration_to_int_with_non_allowed_durations(duration):
         _coerce_duration_to_int(duration, freq=_get_freq(duration))
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
 @pytest.mark.parametrize("n_timepoints", [3, 5])
 @pytest.mark.parametrize("index_type", INDEX_TYPE_LOOKUP.keys())
 def test_get_duration(n_timepoints, index_type):
@@ -339,6 +426,10 @@ def _get_expected_freqstr(freqstr):
     return freqstr
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
 @pytest.mark.parametrize("freqstr", FREQUENCY_STRINGS)
 def test_to_absolute_freq(freqstr):
     """Test conversion when anchorings included in frequency."""
@@ -350,6 +441,10 @@ def test_to_absolute_freq(freqstr):
     assert abs_fh._values.freqstr == _get_expected_freqstr(freqstr)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
 @pytest.mark.parametrize("freqstr", FREQUENCY_STRINGS)
 def test_absolute_to_absolute_with_integer_horizon(freqstr):
     """Test converting between absolute and relative with integer horizon."""
@@ -365,6 +460,10 @@ def test_absolute_to_absolute_with_integer_horizon(freqstr):
     assert fh_freqstr == _get_expected_freqstr(freqstr)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
 @pytest.mark.parametrize("freqstr", FIXED_FREQUENCY_STRINGS)
 def test_absolute_to_absolute_with_timedelta_horizon(freqstr):
     """Test converting between absolute and relative."""
@@ -383,6 +482,10 @@ def test_absolute_to_absolute_with_timedelta_horizon(freqstr):
     assert converted_abs_fh._values.freqstr == _get_expected_freqstr(freqstr)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
 @pytest.mark.parametrize("freqstr", FREQUENCY_STRINGS)
 def test_relative_to_relative_with_integer_horizon(freqstr):
     """Test converting between relative and absolute with integer horizons."""
@@ -396,6 +499,10 @@ def test_relative_to_relative_with_integer_horizon(freqstr):
     assert_array_equal(fh, converted_rel_fh)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
 @pytest.mark.parametrize("freqstr", FIXED_FREQUENCY_STRINGS)
 def test_relative_to_relative_with_timedelta_horizon(freqstr):
     """Test converting between relative and absolute with timedelta horizons."""
@@ -412,6 +519,10 @@ def test_relative_to_relative_with_timedelta_horizon(freqstr):
     assert_array_equal(converted_rel_fh, np.arange(1, 4))
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
 @pytest.mark.parametrize("freq", FREQUENCY_STRINGS)
 def test_to_relative(freq: str):
     """Test conversion to relative.
@@ -427,6 +538,10 @@ def test_to_relative(freq: str):
     assert_array_equal(fh_rel, np.arange(5))
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
 @pytest.mark.parametrize("idx", range(5))
 @pytest.mark.parametrize("freq", FREQUENCY_STRINGS)
 def test_to_absolute_int(idx: int, freq: str):
@@ -440,6 +555,10 @@ def test_to_absolute_int(idx: int, freq: str):
     assert_array_equal(fh + idx, absolute_int)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
 @pytest.mark.parametrize("idx", range(5))
 @pytest.mark.parametrize("freq", FREQUENCY_STRINGS)
 def test_to_absolute_int_fh_with_freq(idx: int, freq: str):
@@ -452,6 +571,10 @@ def test_to_absolute_int_fh_with_freq(idx: int, freq: str):
     assert_array_equal(fh + idx, absolute_int)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
 @pytest.mark.parametrize("freqstr", ["W-WED", "W-SUN", "W-SAT"])
 def test_estimator_fh(freqstr):
     """Test model fitting with anchored frequency."""
@@ -467,6 +590,10 @@ def test_estimator_fh(freqstr):
     assert_array_equal(pred.index.to_numpy(), expected_fh.to_numpy())
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
 @pytest.mark.parametrize("freq", ["G", "W1"])
 def test_error_with_incorrect_string_frequency(freq: str):
     """Test error with incorrect string frequency string."""
@@ -478,6 +605,10 @@ def test_error_with_incorrect_string_frequency(freq: str):
         fh.freq = freq
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
 @pytest.mark.parametrize("freqstr", ["M", "D"])
 def test_frequency_setter(freqstr):
     """Test frequency setter."""
@@ -493,7 +624,8 @@ def test_frequency_setter(freqstr):
 
 # TODO: Replace this long running test with fast unit test
 @pytest.mark.skipif(
-    not run_test_for_class(AutoETS),
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"])
+    or not _check_estimator_deps(AutoETS, severity="none"),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_auto_ets():
@@ -515,6 +647,10 @@ def test_auto_ets():
     )
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
 def test_auto_ets_case_with_naive():
     """Test failure case from #1435.
 
@@ -538,7 +674,8 @@ def test_auto_ets_case_with_naive():
 
 # TODO: Replace this long running test with fast unit test
 @pytest.mark.skipif(
-    not run_test_for_class(ExponentialSmoothing),
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"])
+    or not _check_estimator_deps(ExponentialSmoothing, severity="none"),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_exponential_smoothing():
@@ -565,6 +702,10 @@ def test_exponential_smoothing():
     )
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
 def test_exponential_smoothing_case_with_naive():
     """Test failure case from #1876.
 
@@ -592,9 +733,12 @@ def test_exponential_smoothing_case_with_naive():
 
 
 # TODO: Replace this long running test with fast unit test
+# todo 0.33.0: check whether numpy 2 bound is still necessary
 @pytest.mark.skipif(
-    not run_test_for_class(AutoARIMA),
-    reason="run test only if softdeps are present and incrementally (if requested)",
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"])
+    or not _check_estimator_deps(AutoARIMA, severity="none")
+    or _check_soft_dependencies("numpy>=2.0", severity="none"),
+    reason="run only if base module has changed or datatypes module has changed",
 )
 def test_auto_arima():
     """Test failure case from #805.
@@ -638,6 +782,10 @@ def test_auto_arima():
     )
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
 def test_auto_arima_case_with_naive():
     """Test failure case from #805.
 
@@ -682,6 +830,10 @@ def test_auto_arima_case_with_naive():
     )
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
 def test_extract_freq_from_inputs() -> None:
     """Test extract frequency from inputs."""
     assert _check_freq(None) is None
@@ -690,18 +842,30 @@ def test_extract_freq_from_inputs() -> None:
     assert _check_freq("D") == "D"
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
 @pytest.mark.parametrize("freq", FREQUENCY_STRINGS)
 def test_extract_freq_from_cutoff(freq: str) -> None:
     """Test extract frequency from cutoff."""
     assert _extract_freq_from_cutoff(pd.Period("2020", freq=freq)) == freq
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
 @pytest.mark.parametrize("x", [1, pd.Timestamp("2020")])
 def test_extract_freq_from_cutoff_with_wrong_input(x) -> None:
     """Test extract frequency from cutoff with wrong input."""
     assert _extract_freq_from_cutoff(x) is None
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
 def test_regular_spaced_fh_of_different_periodicity():
     """Test for failure condition from bug #4462.
 
@@ -717,36 +881,60 @@ def test_regular_spaced_fh_of_different_periodicity():
     naive.predict([1, 3, 5])
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
 def test_standard_range_in_fh():
     """Test using most common ``range`` without start/step."""
     standard_range = ForecastingHorizon(values=range(1, 5 + 1))
     assert (standard_range == ForecastingHorizon(values=[1, 2, 3, 4, 5])).all()
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
 def test_range_with_positive_step_in_fh():
     """Test using ``range`` with positive step."""
     range_with_positive_step = ForecastingHorizon(values=range(0, 5, 2))
     assert (range_with_positive_step == ForecastingHorizon(values=[0, 2, 4])).all()
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
 def test_range_with_negative_step_in_fh():
     """Test using ``range`` with negative step."""
     range_with_negative_step = ForecastingHorizon(values=range(3, -5, -2))
     assert (range_with_negative_step == ForecastingHorizon(values=[3, 1, -1, -3])).all()
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
 def test_range_sorting_in_fh():
     """Test that ``range`` is independent of order."""
     standard_range = ForecastingHorizon(values=range(5))
     assert (standard_range == ForecastingHorizon(values=[0, 3, 4, 1, 2])).all()
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
 def test_empty_range_in_fh():
     """Test when ``range`` has zero length."""
     empty_range = ForecastingHorizon(values=range(-5))
     assert (empty_range == ForecastingHorizon(values=[])).all()
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
 def test_fh_expected_pred():
     """Test for expected prediction index method."""
     fh = ForecastingHorizon([1, 2, 3])
@@ -793,6 +981,10 @@ def test_fh_expected_pred():
     assert y_pred_idx.equals(y_pred_idx_expected)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
 def test_tz_preserved():
     """Test that time zone information is preserved in to_absolute.
 
@@ -802,3 +994,63 @@ def test_tz_preserved():
     fh_absolute = ForecastingHorizon(range(100), freq="h").to_absolute(cutoff)
 
     assert fh_absolute[0].tz == cutoff.tz
+
+
+# the "XE" frequencies are not supported by pandas 1 or 2.0.X
+FREQ_STR_FOR_PD22 = ["Y", "2Y", "M", "3M"]
+
+if _check_soft_dependencies("pandas>=2.1.0", severity="none"):
+    FREQ_STR_FOR_PD22 += [
+        "YE",
+        "2YE",
+        "ME",
+        "3ME",
+        "MS",
+        "3MS",
+        "QS",
+        "3QS",
+        "YS",
+        "3YS",
+    ]
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
+@pytest.mark.parametrize("freq", FREQ_STR_FOR_PD22)
+def test_pandas22_freq(freq):
+    """Test that to_absolute and to_relative conversions work with all freqs.
+
+    Failure case in bug #6499.
+    """
+    fh = ForecastingHorizon([1, 2, 3])
+
+    datetime_ = pd.date_range("1/1/1870", periods=20, freq=freq)
+    cutoff = datetime_[[-1]]
+    cutoff.freq = datetime_.freq
+
+    fh.to_absolute(cutoff)  # failure 1
+    fh.to_absolute(cutoff).to_relative(cutoff)  # failure 2
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("pandas>=2.1.0", severity="none"),
+    reason="frequency logic requires pandas>=2.1.0",
+)
+@pytest.mark.parametrize("ts", [True, False])
+def test_pandas22_freq_roundtrip(ts):
+    """Test that to_absolute and to_relative conversions work with the airline data.
+
+    Failure case in bug #6572.
+    """
+    y = load_airline()
+    if ts:
+        y.index = y.index.to_timestamp()
+
+    f = NaiveForecaster(strategy="last")
+    f.fit(y)
+
+    fh = ForecastingHorizon([0], is_relative=True)
+    fh.to_absolute(f.cutoff)
+    fh.to_absolute(f.cutoff).to_relative(f.cutoff)

@@ -6,18 +6,28 @@ A transformer for the Catch22 features.
 __author__ = ["MatthewMiddlehurst", "julnow"]
 __all__ = ["Catch22"]
 
-from typing import List, Union
+from typing import Union
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
 
 from sktime.datatypes import convert_to
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.warnings import warn
 
 
-def get_methods_dict(which="catch22"):
+def get_methods_dict(which="all"):
+    """Get the dictionary of Catch22 or Catch24 methods.
+
+    Parameters
+    ----------
+    which : str, one of {"all", "catch22", "catch24"}, optional, default="all"
+        Which dictionary to return. If "catch22", returns the dictionary of Catch22
+        methods. If "catch24", returns the dictionary of Catch24 methods. If "all",
+        returns a dictionary with both Catch22 and Catch24 methods.
+        Order of the features is the same as in the original Catch-22 implementation,
+        22 is mean, 23 is standard deviation (as in catch-24).
+    """
     from sktime.transformations.panel._catch22_numba import (
         _catch24_mean,
         _catch24_std,
@@ -45,7 +55,7 @@ def get_methods_dict(which="catch22"):
         _SP_Summaries_welch_rect_centroid,
     )
 
-    CATCH22_METHODS_DICT = {
+    METHODS_DICT = {
         "DN_HistogramMode_5": _DN_HistogramMode_5,
         "DN_HistogramMode_10": _DN_HistogramMode_10,
         "SB_BinaryStats_diff_longstretch0": _SB_BinaryStats_diff_longstretch0,
@@ -68,13 +78,17 @@ def get_methods_dict(which="catch22"):
         "SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1": _SC_FluctAnal_2_rsrangefit_50_1_logi,  # noqa: E501
         "SB_TransitionMatrix_3ac_sumdiagcov": _SB_TransitionMatrix_3ac_sumdiagcov,
         "PD_PeriodicityWang_th0_01": _PD_PeriodicityWang_th0_01,
+        "DN_Mean": _catch24_mean,
+        "DN_Spread_Std": _catch24_std,
     }
-    CATCH24_METHODS_DICT = {"DN_Mean": _catch24_mean, "DN_Spread_Std": _catch24_std}
+    keys = list(METHODS_DICT.keys())
 
     if which == "catch22":
-        return CATCH22_METHODS_DICT
+        return {k: METHODS_DICT[k] for k in keys[:22]}
     elif which == "catch24":
-        return CATCH24_METHODS_DICT
+        return {k: METHODS_DICT[k] for k in keys[22:]}
+    elif which == "all":
+        return METHODS_DICT
     else:
         raise ValueError(
             "Invalid value for parameter 'which' in catch22.get_methods_dict, "
@@ -105,28 +119,26 @@ SHORT_FEATURE_NAMES_DICT = {
     "SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1": "rs_range",
     "SB_TransitionMatrix_3ac_sumdiagcov": "transition_matrix",
     "PD_PeriodicityWang_th0_01": "periodicity",
-}
-SHORT_FEATURE_NAMES = list(SHORT_FEATURE_NAMES_DICT.values())
-FEATURE_NAMES = list(SHORT_FEATURE_NAMES_DICT.keys())
-feature_names = FEATURE_NAMES  # for backwards compatibility, this variable was public
-
-CATCH24_SHORT_FEATURE_NAMES_DICT = {
     "DN_Mean": "mean",
     "DN_Spread_Std": "std",
 }
-CATCH24_SHORT_FEATURE_NAMES = list(CATCH24_SHORT_FEATURE_NAMES_DICT.values())
-CATCH24_FEATURE_NAMES = list(CATCH24_SHORT_FEATURE_NAMES_DICT.keys())
+
+ALL_FEATURE_NAMES = list(SHORT_FEATURE_NAMES_DICT.keys())
+ALL_SHORT_FEATURE_NAMES = list(SHORT_FEATURE_NAMES_DICT.values())
+
+CATCH22_FEATURE_NAMES = ALL_FEATURE_NAMES[:22]
+CATCH22_SHORT_FEATURE_NAMES = ALL_SHORT_FEATURE_NAMES[:22]
+
+feature_names = CATCH22_FEATURE_NAMES  # for backwards compatibility, this was public
+FEATURE_NAMES = CATCH22_FEATURE_NAMES  # for backwards compatibility, this was public
 
 
-def _verify_features(
-    features: Union[int, str, List[Union[int, str]]], catch24: bool
-) -> List[int]:
-    feature_names = FEATURE_NAMES + CATCH24_FEATURE_NAMES if catch24 else FEATURE_NAMES
+def _verify_features(features, catch24: bool):
+    feature_names = ALL_FEATURE_NAMES if catch24 else CATCH22_FEATURE_NAMES
     short_feature_names = (
-        SHORT_FEATURE_NAMES + CATCH24_SHORT_FEATURE_NAMES
-        if catch24
-        else SHORT_FEATURE_NAMES
+        ALL_SHORT_FEATURE_NAMES if catch24 else CATCH22_SHORT_FEATURE_NAMES
     )
+
     f_idx = []
     if isinstance(features, str):
         if features == "all":
@@ -259,14 +271,12 @@ class Catch22(BaseTransformer):
         "fit_is_empty": True,
     }
 
-    # todo 0.29.0: remove n_jobs parameter
     def __init__(
         self,
-        features: Union[int, str, List[Union[int, str]]] = "all",
+        features: Union[int, str, list[Union[int, str]]] = "all",
         catch24: bool = False,
         outlier_norm: bool = False,
         replace_nans: bool = False,
-        n_jobs="deprecated",
         col_names: str = "range",
     ):
         self.features = features
@@ -278,24 +288,10 @@ class Catch22(BaseTransformer):
 
         # todo: remove this unimplemented logic
         self._transform_features = None
-        # todo 0.29.0: remove this warning and logic
-        self.n_jobs = n_jobs
-        if n_jobs != "deprecated":
-            warn(
-                "In Catch22, the parameter "
-                "n_jobs is deprecated and will be removed in v0.29.0. "
-                "Instead, use set_config with the backend and backend:params "
-                "config fields, and set backend to 'joblib' and pass n_jobs "
-                "as a parameter of backend_params. ",
-                FutureWarning,
-                obj=self,
-            )
-            self.set_config(backend="joblib", backend_params={"n_jobs": n_jobs})
 
         super().__init__()
 
-        self.METHODS_DICT = get_methods_dict("catch22")
-        self.CATCH24_METHODS_DICT = get_methods_dict("catch24")
+        self.METHODS_DICT = get_methods_dict("all")
 
     def _set_col_names(self, col_names: str) -> str:
         """Set valid column names type.
@@ -375,17 +371,14 @@ class Catch22(BaseTransformer):
 
         # todo: remove Parallel in future versions, left for
         # compatibility with `CanonicalIntervalForest`
-        n_jobs = self.n_jobs if isinstance(self.n_jobs, int) else 1
-        c22_list = Parallel(n_jobs=n_jobs)(
-            delayed(self._transform_case)(X[i], [feature]) for i in range(n_instances)
-        )
+        c22_list = [self._transform_case(X[i], [feature]) for i in range(n_instances)]
 
         if self.replace_nans:
             c22_list = np.nan_to_num(c22_list, False, 0, 0, 0)
 
         return np.asarray(c22_list)[:, 0, 0]
 
-    def _transform_case(self, X: pd.Series, f_idx: List[int]) -> np.ndarray:
+    def _transform_case(self, X: pd.Series, f_idx: list[int]) -> np.ndarray:
         """Transform data into the Catch22/24 features.
 
         Parameters
@@ -441,30 +434,34 @@ class Catch22(BaseTransformer):
 
         return Xt_np
 
-    def _get_feature_function(self, feature: Union[int, str]):
+    def _get_feature_function(self, feature):
+        if not isinstance(feature, (int, str)):
+            try:
+                feature = int(feature)
+            except ValueError:
+                feature = str(feature)
         if isinstance(feature, str):
             return self.__get_feature_function_str(feature)
         return self.__get_feature_function_int(feature)
 
     def __get_feature_function_str(self, feature: str):
-        if feature in FEATURE_NAMES:
+        if feature in ALL_FEATURE_NAMES:
             return self.METHODS_DICT.get(feature)
-        if feature in CATCH24_FEATURE_NAMES:
-            return self.CATCH24_METHODS_DICT.get(feature)
         else:
             return self.__get_feature_function_int(int(str))
 
     def __get_feature_function_int(self, feature: int):
-        if feature < 22:
-            return self.METHODS_DICT.get(FEATURE_NAMES[feature])
-        if 22 <= feature < 24:
-            return self.CATCH24_METHODS_DICT.get(CATCH24_FEATURE_NAMES[feature - 22])
+        if isinstance(feature, int):
+            return self.METHODS_DICT.get(ALL_FEATURE_NAMES[feature])
         else:
-            raise KeyError(f"No feature with name: {feature}")
+            raise TypeError(
+                "Invalide type in Catch22.__get_feature_function_int. "
+                f"Expected int, got {type(feature)}."
+            )
 
     def _prepare_output_col_names(
         self, n_features: int
-    ) -> Union[range, List[int], List[str]]:
+    ) -> Union[range, list[int], list[str]]:
         """Prepare output column names.
 
         It selects the naming style according to self.col_names.
@@ -482,22 +479,17 @@ class Catch22(BaseTransformer):
         Returns
         -------
         Union[range, List[int], List[str]]
-            Column labels for ouput DataFrame.
+            Column labels for output DataFrame.
         """
         if self.col_names == "range":
             return range(n_features)
         elif self.col_names == "int_feat":
             return self.f_idx
         elif self.col_names == "str_feat":
-            all_feature_names = (
-                FEATURE_NAMES + CATCH24_FEATURE_NAMES if self.catch24 else FEATURE_NAMES
-            )
-            return [all_feature_names[i] for i in self.f_idx]
+            return [ALL_FEATURE_NAMES[i] for i in self.f_idx]
         elif self.col_names == "short_str_feat":
             all_short_feature_names = (
-                SHORT_FEATURE_NAMES + CATCH24_SHORT_FEATURE_NAMES
-                if self.catch24
-                else SHORT_FEATURE_NAMES
+                ALL_SHORT_FEATURE_NAMES if self.catch24 else CATCH22_SHORT_FEATURE_NAMES
             )
             return [all_short_feature_names[i] for i in self.f_idx]
         elif self.col_names == "auto":
