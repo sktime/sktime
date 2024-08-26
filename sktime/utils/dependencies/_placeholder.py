@@ -37,11 +37,14 @@ def _placeholder_record(module_name, obj_name=None, dependencies=None, condition
     """
 
     def decorator(cls):
-        nonlocal obj_name
         from sktime.utils.dependencies import _check_estimator_deps
 
-        if obj_name is None:  # noqa: F823
-            obj_name = cls.__name__
+        # we need to write to a new var _obj_name
+        # or obj_name will be considered local and lead to "not assigned" error
+        if obj_name is None:
+            _obj_name = cls.__name__
+        else:
+            _obj_name = obj_name
 
         load_condition = condition
 
@@ -60,8 +63,8 @@ def _placeholder_record(module_name, obj_name=None, dependencies=None, condition
 
         try:
             # parse import_str to get the module and class name
-            module = __import__(module_name, fromlist=[obj_name])
-            imported_cls = getattr(module, obj_name)
+            module = __import__(module_name, fromlist=[_obj_name])
+            imported_cls = getattr(module, _obj_name)
 
             return imported_cls
         except Exception:  # noqa: S110
