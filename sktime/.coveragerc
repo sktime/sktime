@@ -1,0 +1,10 @@
+[report]
+show_missing = True
+
+[run]
+source = sktime
+omit =
+    */setup.py
+    */sktime/__init__.py
+    */sktime/setup.py
+    */sktime/_contrib/*
