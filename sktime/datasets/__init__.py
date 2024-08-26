@@ -21,6 +21,7 @@ __all__ = [
     "load_electric_devices_segmentation",
     "load_acsf1",
     "load_macroeconomic",
+    "load_hierarchical_sales_toydata",
     "generate_example_long_table",
     "load_from_arff_to_dataframe",
     "load_from_long_to_dataframe",
@@ -49,6 +50,7 @@ from sktime.datasets._data_io import (
     make_multi_index_dataframe,
 )
 from sktime.datasets._fpp3_loaders import DATASET_NAMES_FPP3, load_fpp3
+from sktime.datasets._hierarchical_demo import load_hierarchical_sales_toydata
 from sktime.datasets._readers_writers.arff import (
     load_from_arff_to_dataframe,
     write_tabular_transformation_to_arff,

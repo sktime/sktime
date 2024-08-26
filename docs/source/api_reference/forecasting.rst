@@ -320,6 +320,14 @@ All "ARIMA" and "Auto-ARIMA" models below include SARIMAX capability.
 
     VAR
 
+.. currentmodule:: sktime.forecasting.var_reduce
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    VARReduce
+
 .. currentmodule:: sktime.forecasting.varmax
 
 .. autosummary::
@@ -411,6 +419,7 @@ Structural time series models
     :template: class.rst
 
     Prophetverse
+    HierarchicalProphet
 
 .. currentmodule:: sktime.forecasting.structural
 
