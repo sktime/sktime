@@ -280,15 +280,8 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         return [params1, params2, params3]
 
     def _sk_visual_block_(self):
-        _, estimators = zip(*self.steps)
+        names, estimators = zip(*self._steps)
 
-        def _get_name(name, est):
-            if est is None or est == "passthrough":
-                return f"{name}: passthrough"
-            # Is an estimator
-            return f"{name}: {est.__class__.__name__}"
-
-        names = [_get_name(name, est) for name, est in self.steps]
         name_details = [str(est) for est in estimators]
         return _VisualBlock(
             "serial",
