@@ -82,6 +82,11 @@ class TimeSeriesKMedoids(BaseTimeSeriesLloyds):
         # --------------
         "authors": ["chrisholder", "TonyBagnall"],
         "python_dependencies": "numba",
+        # estimator type
+        # --------------
+        "capability:out_of_sample": True,
+        "capability:predict": True,
+        "capability:predict_proba": False,
     }
 
     def __init__(
