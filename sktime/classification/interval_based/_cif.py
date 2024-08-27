@@ -9,7 +9,6 @@ __all__ = ["CanonicalIntervalForest"]
 import math
 
 import numpy as np
-from joblib import Parallel, delayed
 from sklearn.base import BaseEstimator
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import check_random_state
@@ -120,7 +119,7 @@ class CanonicalIntervalForest(BaseClassifier):
         # packaging info
         # --------------
         "authors": "MatthewMiddlehurst",
-        "python_dependencies": "numba",
+        "python_dependencies": ["numba", "joblib"],
         # estimator type
         # --------------
         "capability:multivariate": True,
@@ -168,6 +167,8 @@ class CanonicalIntervalForest(BaseClassifier):
         super().__init__()
 
     def _fit(self, X, y):
+        from joblib import Parallel, delayed
+
         self.n_instances_, self.n_dims_, self.series_length_ = X.shape
 
         if self.base_estimator.lower() == "dtc":
@@ -222,6 +223,8 @@ class CanonicalIntervalForest(BaseClassifier):
         )
 
     def _predict_proba(self, X) -> np.ndarray:
+        from joblib import Parallel, delayed
+
         n_test_instances, _, series_length = X.shape
         if series_length != self.series_length_:
             raise ValueError(

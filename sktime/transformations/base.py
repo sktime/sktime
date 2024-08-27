@@ -64,6 +64,7 @@ from sktime.datatypes import (
     mtype_to_scitype,
     update_data,
 )
+from sktime.datatypes._dtypekind import DtypeKind
 from sktime.datatypes._series_as_panel import convert_to_scitype
 from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.sklearn import (
@@ -134,6 +135,8 @@ class BaseTransformer(BaseEstimator):
         # todo: rename to capability:missing_values
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
+        "capability:categorical_in_X": False,
+        # does the transformer natively support categorical in exogeneous X?
         "remember_data": False,  # whether all data seen is remembered as self._X
         "python_version": None,  # PEP 440 python version specifier to limit versions
         "authors": "sktime developers",  # author(s) of the object
@@ -1057,7 +1060,7 @@ class BaseTransformer(BaseEstimator):
         ALLOWED_MTYPES = self.ALLOWED_INPUT_MTYPES
 
         # checking X
-        X_metadata_required = ["is_univariate"]
+        X_metadata_required = ["is_univariate", "feature_kind"]
 
         X_valid, msg, X_metadata = check_is_mtype(
             X,
@@ -1080,6 +1083,13 @@ class BaseTransformer(BaseEstimator):
             msg = {k: v for k, v in msg.items() if k in ALLOWED_MTYPES}
             check_is_error_msg(
                 msg, var_name=msg_X, allowed_msg=allowed_msg, raise_exception=True
+            )
+
+        if DtypeKind.CATEGORICAL in X_metadata["feature_kind"] and not self.get_tag(
+            "capability:categorical_in_X"
+        ):
+            raise TypeError(
+                f"Transformer {self} does not support categorical features in X."
             )
 
         X_scitype = X_metadata["scitype"]
@@ -1118,7 +1128,10 @@ class BaseTransformer(BaseEstimator):
                 y_possible_scitypes = ["Panel", "Hierarchical"]
 
             y_valid, msg, y_metadata = check_is_scitype(
-                y, scitype=y_possible_scitypes, return_metadata=[], var_name="y"
+                y,
+                scitype=y_possible_scitypes,
+                return_metadata=["feature_kind"],
+                var_name="y",
             )
 
             # raise informative error message if y is is in wrong format
@@ -1131,6 +1144,11 @@ class BaseTransformer(BaseEstimator):
                 msg_y = msg_start + "y"
                 check_is_error_msg(
                     msg, var_name=msg_y, allowed_msg=allowed_msg, raise_exception=True
+                )
+
+            if DtypeKind.CATEGORICAL in y_metadata["feature_kind"]:
+                raise TypeError(
+                    "Transformers do not support categorical features in y."
                 )
 
             y_scitype = y_metadata["scitype"]
@@ -1304,7 +1322,7 @@ class BaseTransformer(BaseEstimator):
                 Xt_valid, Xt_msg, metadata = check_is_mtype(
                     Xt,
                     ALLOWED_OUT_MTYPES,
-                    msg_return_dict="list",
+                    msg_return_dict="dict",
                     return_metadata=Xt_metadata_required,
                 )
 

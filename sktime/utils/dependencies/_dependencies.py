@@ -5,7 +5,6 @@ __author__ = ["fkiraly", "mloning"]
 import sys
 import warnings
 from functools import lru_cache
-from importlib.metadata import distributions
 from importlib.util import find_spec
 from inspect import isclass
 
@@ -15,14 +14,13 @@ from packaging.specifiers import InvalidSpecifier, Specifier, SpecifierSet
 from packaging.version import InvalidVersion, Version
 
 
-# todo 0.32.0: remove suppress_import_stdout argument
 def _check_soft_dependencies(
     *packages,
     package_import_alias="deprecated",
     severity="error",
     obj=None,
     msg=None,
-    suppress_import_stdout="deprecated",
+    normalize_reqs=True,
 ):
     """Check if required soft dependencies are installed and raise error or warning.
 
@@ -59,6 +57,16 @@ def _check_soft_dependencies(
     msg : str, or None, default=None
         if str, will override the error message or warning shown with msg
 
+    normalize_reqs : bool, default=True
+        whether to normalize the requirement strings before checking them,
+        by removing build metadata from versions.
+        If set True, pre, post, and dev versions are removed from all version strings.
+
+        Example if True:
+        requirement "my_pkg==2.3.4.post1" will be normalized to "my_pkg==2.3.4";
+        an actual version "my_pkg==2.3.4.post1" will be considered compatible with
+        "my_pkg==2.3.4". If False, the this situation would raise an error.
+
     Raises
     ------
     InvalidRequirement
@@ -72,18 +80,13 @@ def _check_soft_dependencies(
     -------
     boolean - whether all packages are installed, only if no exception is raised
     """
-    # todo 0.32.0: remove this warning
-    if suppress_import_stdout != "deprecated":
+    # todo 0.33.0: remove this warning
+    if package_import_alias != "deprecated":
         warnings.warn(
-            "In sktime _check_soft_dependencies, the suppress_import_stdout argument "
+            "In sktime _check_soft_dependencies, the package_import_alias argument "
             "is deprecated and no longer has any effect. "
-            "The argument will be removed in version 0.32.0, so users of the "
-            "_check_soft_dependencies utility should not pass this argument anymore. "
-            "The _check_soft_dependencies utility also no longer causes imports, "
-            "hence no stdout "
-            "output is created from imports, for any setting of the "
-            "suppress_import_stdout argument. If you wish to import packages "
-            "and make use of stdout prints, import the package directly instead.",
+            "The argument will be removed in version 0.33.0, so users of the "
+            "_check_soft_dependencies utility should not pass this argument anymore.",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -120,7 +123,8 @@ def _check_soft_dependencies(
     for package in packages:
         try:
             req = Requirement(package)
-            req = _normalize_requirement(req)
+            if normalize_reqs:
+                req = _normalize_requirement(req)
         except InvalidRequirement:
             msg_version = (
                 f"wrong format for package requirement string, "
@@ -134,6 +138,8 @@ def _check_soft_dependencies(
         package_version_req = req.specifier
 
         pkg_env_version = _get_pkg_version(package_name)
+        if normalize_reqs:
+            pkg_env_version = _normalize_version(pkg_env_version)
 
         # if package not present, make the user aware of installation reqs
         if pkg_env_version is None:
@@ -266,9 +272,19 @@ def _get_installed_packages_private():
     Same as _get_installed_packages, but internal to avoid mutating the lru_cache
     by accident.
     """
+    from importlib.metadata import distributions, version
+
     dists = distributions()
-    packages = {dist.metadata["Name"]: dist.version for dist in dists}
-    return packages
+    package_names = {dist.metadata["Name"] for dist in dists}
+    package_versions = {pkg_name: version(pkg_name) for pkg_name in package_names}
+    # developer note:
+    # we cannot just use distributions naively,
+    # because the same top level package name may appear *twice*,
+    # e.g., in a situation where a virtual env overrides a base env,
+    # such as in deployment environments like databricks.
+    # the "version" contract ensures we always get the version that corresponds
+    # to the importable distribution, i.e., the top one in the sys.path.
+    return package_versions
 
 
 def _get_installed_packages():
@@ -543,12 +559,9 @@ def _normalize_requirement(req):
     # Process each specifier in the requirement
     normalized_specs = []
     for spec in req.specifier:
-        # Parse the version and remove the build metadata
-        spec_v = Version(spec.version)
-        version_wo_build_metadata = f"{spec_v.major}.{spec_v.minor}.{spec_v.micro}"
-
         # Create a new specifier without the build metadata
-        normalized_spec = Specifier(f"{spec.operator}{version_wo_build_metadata}")
+        normalized_version = _normalize_version(spec.version)
+        normalized_spec = Specifier(f"{spec.operator}{normalized_version}")
         normalized_specs.append(normalized_spec)
 
     # Reconstruct the specifier set
@@ -558,6 +571,29 @@ def _normalize_requirement(req):
     normalized_req = Requirement(f"{req.name}{normalized_specifier_set}")
 
     return normalized_req
+
+
+def _normalize_version(version):
+    """Normalize version string by removing build metadata.
+
+    Parameters
+    ----------
+    version : packaging.version.Version
+        version object to normalize, e.g., Version("1.2.3+foobar")
+
+    Returns
+    -------
+    normalized_version : packaging.version.Version
+        normalized version object with build metadata removed, e.g., Version("1.2.3")
+    """
+    if version is None:
+        return None
+    if not isinstance(version, Version):
+        version_obj = Version(version)
+    else:
+        version_obj = version
+    normalized_version = f"{version_obj.major}.{version_obj.minor}.{version_obj.micro}"
+    return normalized_version
 
 
 def _raise_at_severity(

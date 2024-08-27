@@ -130,6 +130,7 @@ class SkforecastAutoreg(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
+        "capability:categorical_in_X": True,
         "python_version": ">=3.8,<3.13",
         "python_dependencies": ["skforecast>=0.12.1"],
     }
