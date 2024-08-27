@@ -273,7 +273,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         self._is_period_index = self.check_period_index(pred_df)
 
         if _use_fit_data_as_context:
-            future_length = len(X)
+            future_length = self._get_future_length(X)
             first_seen_index = X.index[0]
             X_to_extend = X.copy()
             X_to_extend.columns = feat_dynamic_real
@@ -611,3 +611,10 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         data_converted = data_converted.set_index(index_names + [last_index_name])
 
         return data_converted
+
+    def _get_future_length(self, X):
+        """Get the future length."""
+        if isinstance(X.index, pd.MultiIndex):
+            return len(X.index.get_level_values(-1).unique())
+        else:
+            return len(X)
