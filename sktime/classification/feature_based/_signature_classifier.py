@@ -95,7 +95,7 @@ class SignatureClassifier(BaseClassifier):
         # --------------
         "authors": "jambo6",
         "maintainers": "jambo6",
-        "python_dependencies": "esig",
+        "python_dependencies": ["esig", "numpy<2.0"],
         "python_version": "<3.10",
         # estimator type
         # --------------
