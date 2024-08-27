@@ -19,24 +19,149 @@ For upcoming changes and next releases, see our `milestones <https://github.com/
 For our long-term plan, see our :ref:`roadmap`.
 
 
-Version 0.31.2 - 2024-08-13
+Version 0.32.2 - 2024-08-26
 ---------------------------
 
-Hotfix release for using ``make_reduction`` with not fully ``sklearn`` compliant
-tabular regressors such as from ``catboost``.
+Highlights
+~~~~~~~~~~
 
-For last non-maintenance content updates, see 0.31.1.
+* ``HierarchicalProphet`` forecaster from ``prophetverse`` (:pr:`7028`) :user:`felipeangelimvieira`
+* Regularized VAR reduction forecaster, ``VARReduce`` (:pr:`6725`) :user:`meraldoantonio`
+* Interface to TimesFM Forecaster (:pr:`6571`) :user:`geetu040`
+* Subsequence Extraction Transformer (:pr:`6967`) :user:`wirrywoo`
+* Framework support for categorical data has been extended to transformers and pipelines (:pr:`6924`) :user:`Abhay-Lejith`
+* Clusterer tags for capability to assign cluster centers (:pr:`7018`) :user:`fkiraly`
 
-Contents
-~~~~~~~~
+Dependency changes
+~~~~~~~~~~~~~~~~~~
 
-* [BUG] fix ``make_reduction`` type inference for non-sklearn estimators
+* ``holiday`` (transformations soft dependency) bounds have been updated to ``>=0.29,<0.56``
+* ``dask`` (data container and parallelization back-end) bounds have been updated to ``<2024.8.2``
 
-Notes
-^^^^^
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
 
-This is a hotfix for 0.31.1 release, fixing a regression. This release is not contained
-in the 0.32.0 or 0.32.1 releases.
+New tags for clusterers have been added to characterize capabilities
+to assign cluster centers. The following boolean tags have been added:
+
+* ``capability:predict``, whether the clusterer can assign cluster labels via ``predict``
+* ``capability:predict_proba``, for probabilistic cluster assignment
+* ``capability: out_of_sample``, for out-of-sample cluster assignment.
+  If False, the clusterer can only assign clusters to data points seen during fitting.
+
+Enhancements
+~~~~~~~~~~~~
+
+BaseObject and base framework
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] placeholder record decorator (:pr:`7029`) :user:`fkiraly`
+
+Data sets and data loaders
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Hierarchical sales toydata generator from workshops (:pr:`6953`) :user:`marrov`
+* [ENH] Convert the date column to a period with daily frequency in ``load_m5`` (:pr:`6990`) :user:`SaiRevanth25`
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Polars ``Series`` scitype supports  (:pr:`6485`) :user:`pranavvp16`
+* [ENH] Polars ``Panel`` scitype support  (:pr:`6552`) :user:`pranavvp16`
+* [ENH] Addition of ``feature_kind`` metadata attribute to ``gluonts`` datatypes (:pr:`6871`) :user:`shlok191`
+
+Forecasting
+^^^^^^^^^^^
+
+* [ENH] interface to TimesFM Forecaster (:pr:`6571`) :user:`geetu040`
+* [ENH] New regularized VAR reduction forecaster, ``VARReduce`` (:pr:`6725`) :user:`meraldoantonio`
+* [ENH] Add ``HierarchicalProphet`` estimator to ``prophetverse`` module (:pr:`7028`) :user:`felipeangelimvieira`
+
+Time series clustering
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] clusterer tags for capability to assign cluster centers (:pr:`7018`) :user:`fkiraly`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [ENH] Extending categorical support in X to transformers and pipelines (:pr:`6924`) :user:`Abhay-Lejith`
+* [ENH] Subsequence Extraction Transformer (:pr:`6967`) :user:`wirrywoo`
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] minor improvements to docstring of ``Bollinger`` (bands) (:pr:`6978`) :user:`fkiraly`
+* [DOC] Update ``.all-contributorsrc`` with council roles (:pr:`6962`) :user:`fkiraly`
+* [DOC] update soft dependency handling guide for estimators (:pr:`7000`) :user:`fkiraly`
+* [DOC] improvements to docstrings for panel tasks - time series classification, regression, clustering (:pr:`6991`) :user:`fkiraly`
+* [DOC] update XinyuWuu's user name (:pr:`7030`) :user:`fkiraly`
+* [DOC] fixes to ``TransformedTargetForecaster`` docstring (:pr:`7002`) :user:`fkiraly`
+* [DOC] update intro notebook with material from ISF and EuroSciPy 2024 (:pr:`7013`) :user:`fkiraly`
+* [DOC] Fix docstring for ``ExpandingCutoffSplitter`` (:pr:`7033`) :user:`ninedigits`
+* [DOC] fix incorrect import in ``EnbPIForecaster`` docstring (:pr:`7015`) :user:`fkiraly`
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] Refactor ``show_versions`` to use ``dependencies`` module (:pr:`6883`) :user:`fkiraly`
+* [MNT] sync changelog with hotfix branch ``anirban-sktime-0.31.2`` (:pr:`6963`) :user:`yarnabrina`
+* [MNT] add ``numpy 2`` incompatibility flag to ``pmdarima`` dependency (:pr:`6974`) :user:`fkiraly`
+* [MNT] decorate ``test_auto_arima`` with ``numpy 2`` skip until final fix/diagnosis (:pr:`6973`) :user:`fkiraly`
+* [MNT] remove ``tsbootstrap`` dependency from public dependency sets (:pr:`6966`) :user:`fkiraly`
+* [MNT] rename base class ``TimeSeriesLloyds`` to ``BaseTimeSeriesLloyds`` (:pr:`6992`) :user:`fkiraly`
+* [MNT] remove module level ``numba`` import warnings (:pr:`6999`) :user:`fkiraly`
+* [MNT] ``esig`` based estimators: add ``numpy<2`` bound (:pr:`7036`) :user:`fkiraly`
+* [MNT] [Dependabot](deps): Bump ``tj-actions/changed-files`` from 44 to 45 (:pr:`7019`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``holidays`` requirement from ``<0.55,>=0.29`` to ``>=0.29,<0.56`` (:pr:`7006`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``dask`` requirement from ``<2024.8.1`` to ``<2024.8.2`` (:pr:`7005`) :user:`dependabot[bot]`
+
+Fixes
+~~~~~
+
+BaseObject and base framework
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fix ``test_softdep_error`` dependency handling check if environment marker tag is not satisfied (:pr:`6961`) :user:`fkiraly`
+* [BUG] fix dependency checkers in case of multiple distributions available in environment, e.g., on databricks (:pr:`6986`) :user:`fkiraly`, :user:`toandaominh1997`
+
+Benchmarking and Metrics
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] Fix ``ForecastingBenchmark`` giving an error when the dataloader returns the tuple (y, X) (:pr:`6971`) :user:`SaiRevanth25`
+
+Data sets and data loaders
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] Fix ``nested_univ`` converter inconsistent handling of index level names (:pr:`7026`) :user:`pranavvp16`
+
+Forecasting
+^^^^^^^^^^^
+
+* [BUG] ``TinyTimeMixerForecaster``: fix truncating index and update ``test_params`` (:pr:`6965`) :user:`geetu040`
+* [BUG] Do not add season condition names as extra regressors in Prophet (:pr:`6988`) :user:`wpdonders`
+* [BUG] Fix ``Prophet`` ``_get_fitted_params ``error when the timeseries is constant (:pr:`7011`) :user:`felipeangelimvieira`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`Abhay-Lejith`,
+:user:`felipeangelimvieira`,
+:user:`fkiraly`,
+:user:`geetu040`,
+:user:`marrov`,
+:user:`meraldoantonio`,
+:user:`ninedigits`,
+:user:`pranavvp16`,
+:user:`SaiRevanth25`,
+:user:`shlok191`,
+:user:`toandaominh1997`,
+:user:`wirrywoo`,
+:user:`wpdonders`,
+:user:`yarnabrina`
 
 
 Version 0.32.1 - 2024-08-12
@@ -126,6 +251,29 @@ Contributors
 :user:`yarnabrina`
 
 
+Version 0.31.2 - 2024-08-13
+---------------------------
+
+Hotfix release, released after hotfix release 0.32.1,
+to apply the same hotfix to 0.31.X versions as well.
+
+Hotfix for using ``make_reduction`` with not fully ``sklearn`` compliant
+tabular regressors such as from ``catboost``.
+
+For last non-maintenance content updates, see 0.31.1.
+
+Contents
+~~~~~~~~
+
+* [BUG] fix ``make_reduction`` type inference for non-sklearn estimators
+
+Notes
+^^^^^
+
+This is a hotfix for 0.31.1 release, fixing a regression. This release is not contained
+in the 0.32.0 or 0.32.1 releases.
+
+
 Version 0.31.1 - 2024-08-10
 ---------------------------
 
@@ -145,8 +293,8 @@ Highlights
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
 
-* ``holiday`` (soft dependency) bounds have been updated to ``>=0.29,<0.54``
-* ``dask`` (soft dependency) bounds have been updated to ``<2024.8.1``
+* ``holiday`` (transformations soft dependency) bounds have been updated to ``>=0.29,<0.54``
+* ``dask`` (data container and parallelization back-end) bounds have been updated to ``<2024.8.1``
 
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
