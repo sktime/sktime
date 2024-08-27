@@ -97,6 +97,14 @@ if _check_soft_dependencies("dask", severity="none"):
     example_dict[("dask_panel", "Panel", 0)] = df_dask
     example_dict_lossy[("dask_panel", "Panel", 0)] = False
 
+if _check_soft_dependencies("polars", severity="none"):
+    from sktime.datatypes._adapter.polars import convert_pandas_to_polars
+
+    pl_frame = convert_pandas_to_polars(example_dict[("pd-multiindex", "Panel", 0)])
+
+    example_dict[("polars_panel", "Panel", 0)] = pl_frame
+    example_dict_lossy[("polars_panel", "Panel", 0)] = False
+
 if _check_soft_dependencies("gluonts", severity="none"):
     from sktime.datatypes._adapter.gluonts import (
         convert_pandas_multiindex_to_pandasDataset,
@@ -199,6 +207,13 @@ if _check_soft_dependencies("dask", severity="none"):
     example_dict[("dask_panel", "Panel", 1)] = df_dask
     example_dict_lossy[("dask_panel", "Panel", 1)] = False
 
+if _check_soft_dependencies("polars", severity="none"):
+    from sktime.datatypes._adapter.polars import convert_pandas_to_polars
+
+    pl_frame = convert_pandas_to_polars(example_dict[("pd-multiindex", "Panel", 1)])
+
+    example_dict[("polars_panel", "Panel", 1)] = pl_frame
+    example_dict_lossy[("polars_panel", "Panel", 1)] = False
 if _check_soft_dependencies("gluonts", severity="none"):
     from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
 
@@ -289,6 +304,14 @@ if _check_soft_dependencies("dask", severity="none"):
 
     example_dict[("dask_panel", "Panel", 2)] = df_dask
     example_dict_lossy[("dask_panel", "Panel", 2)] = False
+
+if _check_soft_dependencies("polars", severity="none"):
+    from sktime.datatypes._adapter.polars import convert_pandas_to_polars
+
+    pl_frame = convert_pandas_to_polars(example_dict[("pd-multiindex", "Panel", 2)])
+
+    example_dict[("polars_panel", "Panel", 2)] = pl_frame
+    example_dict_lossy[("polars_panel", "Panel", 2)] = False
 
 if _check_soft_dependencies("gluonts", severity="none"):
     from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
