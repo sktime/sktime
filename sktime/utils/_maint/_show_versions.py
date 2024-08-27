@@ -63,7 +63,7 @@ def _get_deps_info(deps=None, source="distributions"):
     deps : optional, list of strings with package names
         if None, behaves as deps = ["sktime"].
 
-    source : str, optional one of "importlib" (default) or "version"
+    source : str, optional one of "distributions" (default) or "import"
         source of version information
 
         * "distributions" - uses importlib.distributions. In this case,
@@ -77,8 +77,8 @@ def _get_deps_info(deps=None, source="distributions"):
     -------
     deps_info: dict
         version information on libraries in `deps`
-        keys are package names, import names if source is "version",
-        and PEP 440 package strings if source is "importlib";
+        keys are package names, import names if source is "import",
+        and PEP 440 package strings if source is "distributions";
         values are PEP 440 version strings
         of the import as present in the current python environment
     """
