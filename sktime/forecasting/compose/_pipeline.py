@@ -13,6 +13,7 @@ from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.registry import scitype
+from sktime.utils._estimator_html_repr import _VisualBlock
 from sktime.utils.validation.series import check_series
 from sktime.utils.warnings import warn
 
@@ -277,6 +278,25 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         params3 = {"steps": [Detrender(), YfromX.create_test_instance()]}
 
         return [params1, params2, params3]
+
+    def _sk_visual_block_(self):
+        _, estimators = zip(*self.steps)
+
+        def _get_name(name, est):
+            if est is None or est == "passthrough":
+                return f"{name}: passthrough"
+            # Is an estimator
+            return f"{name}: {est.__class__.__name__}"
+
+        names = [_get_name(name, est) for name, est in self.steps]
+        name_details = [str(est) for est in estimators]
+        return _VisualBlock(
+            "serial",
+            estimators,
+            names=names,
+            name_details=name_details,
+            dash_wrapped=False,
+        )
 
 
 # we ensure that internally we convert to pd.DataFrame for now
