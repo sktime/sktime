@@ -147,7 +147,7 @@ def _coerce_list_of_str(obj):
 
 
 def _get_soft_deps(est):
-    """Return soft dependencies of an estimator, as list of str and its alias."""
+    """Return soft dependencies of an estimator, as list of str."""
     softdeps = est.get_class_tag("python_dependencies", None)
     softdeps = _coerce_list_of_str(softdeps)
     if softdeps is None:
