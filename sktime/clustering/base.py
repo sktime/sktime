@@ -25,6 +25,8 @@ class BaseClusterer(BaseEstimator):
     """
 
     _tags = {
+        "authors": "sktime developers",  # author(s) of the object
+        "maintainers": "sktime developers",  # current maintainer(s) of the object
         "object_type": "clusterer",  # type of object
         "X_inner_mtype": "numpy3D",  # which type do _fit/_predict accept, usually
         # this is either "numpy3D" or "nested_univ" (nested pd.DataFrame). Other
@@ -33,8 +35,9 @@ class BaseClusterer(BaseEstimator):
         "capability:unequal_length": False,
         "capability:missing_values": False,
         "capability:multithreading": False,
-        "authors": "sktime developers",  # author(s) of the object
-        "maintainers": "sktime developers",  # current maintainer(s) of the object
+        "capability:out_of_sample": True,
+        "capability:predict": True,
+        "capability:predict_proba": True,
     }
 
     def __init__(self, n_clusters: int = None):

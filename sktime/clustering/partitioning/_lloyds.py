@@ -154,7 +154,7 @@ def _kmeans_plus_plus(
     return centers
 
 
-class TimeSeriesLloyds(BaseClusterer):
+class BaseTimeSeriesLloyds(BaseClusterer):
     """Abstract class that implements time series Lloyds algorithm.
 
     Parameters
