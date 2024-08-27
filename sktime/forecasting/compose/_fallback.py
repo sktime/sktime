@@ -30,16 +30,6 @@ def _check_nan_policy_option(nan_predict_policy):
     return nan_predict_policy
 
 
-def _has_nan(array_like):
-    """Return true if an array like variable has any null values."""
-    import pandas as pd
-
-    for i in array_like:
-        if pd.isnull(i):
-            return True
-    return False
-
-
 class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
     """Forecaster that sequentially tries a list of forecasting models.
 
@@ -156,9 +146,6 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
 
     def _validate_y_pred(self, y_pred):
         if self.nan_predict_policy in ("warn", "raise"):
-<<<<<<< HEAD
-            has_nans = _has_nan(y_pred.values)
-=======
             last_mtype = self._y_mtype_last_seen
             _, _, metadata = check_is_mtype(
                 y_pred,
@@ -166,7 +153,6 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
                 return_metadata=["has_nans"],
             )
             has_nans = metadata["has_nans"]
->>>>>>> upstream/main
             if has_nans:
                 msg = f"Null value presents in predict: {y_pred}"
                 if self.nan_predict_policy == "raise":
