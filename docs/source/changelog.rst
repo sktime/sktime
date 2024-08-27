@@ -19,6 +19,18 @@ For upcoming changes and next releases, see our `milestones <https://github.com/
 For our long-term plan, see our :ref:`roadmap`.
 
 
+Version 0.32.3 - 2024-08-27
+---------------------------
+
+Hotfix release with bugfix for html representation of forecasting pipelines.
+
+For last non-maintenance content updates, see 0.32.2.
+
+Contents
+~~~~~~~~
+
+* [BUG] fix html display for ``TransformedTargetForecaster`` and ``ForecastingPipeline``
+
 Version 0.32.2 - 2024-08-26
 ---------------------------
 
