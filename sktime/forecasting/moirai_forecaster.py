@@ -274,18 +274,13 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
 
         if _use_fit_data_as_context:
             future_length = len(X)
+            first_seen_index = X.index[0]
             X_to_extend = X.copy()
             X_to_extend.columns = feat_dynamic_real
             _X = pd.concat([_X, X_to_extend]).sort_index()
-            print(_X)
             pred_df = pd.concat([_y, _X], axis=1).sort_index()
             pred_df.fillna(0, inplace=True)
 
-            # pred_df, _df_index = self._extend_df(
-            #     pred_df,
-            #     _y,
-            #     X_to_extend,
-            # )
         # check whether the index is a PeriodIndex
         if isinstance(pred_df.index, pd.PeriodIndex):
             time_idx = self.return_time_index(pred_df)
@@ -296,10 +291,10 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         if self._is_range_index:
             pred_df.index = self.handle_range_index(pred_df.index)
 
+        _is_hierarchical = False
         if pred_df.index.nlevels >= 3:
             pred_df = self._convert_hierarchical_to_panel(pred_df)
-
-        print(pred_df.head(10))
+            _is_hierarchical = True
 
         ds_test, df_config = self.create_pandas_dataset(
             pred_df, target, feat_dynamic_real, future_length
@@ -311,11 +306,14 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         predictions = self._get_prediction_df(forecast_it, df_config)
         print(predictions.head(10))
 
-        if _use_fit_data_as_context and self._y.index.nlevels >= 3:
+        if _is_hierarchical:
             predictions = self._convert_panel_to_hierarchical(predictions)
         else:
             pred_out = fh.get_expected_pred_idx(_y, cutoff=self.cutoff)
             predictions.index = pred_out
+
+        if _use_fit_data_as_context:
+            predictions = predictions.loc[first_seen_index:]
 
         return predictions
 
