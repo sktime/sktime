@@ -29,7 +29,7 @@ def is_monotonically_increasing(obj):
         import polars as pl
 
         index_df = obj.with_columns(index_cols)
-        grouped = index_df.groupby(index_cols[:-1]).agg([pl.col(index_cols[-1])])
+        grouped = index_df.group_by(index_cols[:-1]).agg([pl.col(index_cols[-1])])
         last_index_col = grouped.select([index_cols[-1]])
         for val in last_index_col.iter_rows():
             # iter rows returns a list of tuples
@@ -251,14 +251,6 @@ def check_polars_frame(
                 metadata["n_instances"] = obj.height
             else:
                 metadata["n_instances"] = "NA"
-
-    if scitype in ["Panel", "Hierarchical"]:
-        if _req("n_instances", return_metadata):
-            if exp_type_str == "LazyFrame":
-                metadata["n_instances"] = "NA"
-            else:
-                instance_cols = index_cols[:-1]
-                metadata["n_instances"] = len(obj[instance_cols].unique())
 
     # check if there are any nans
     #   compute only if needed
