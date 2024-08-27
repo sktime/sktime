@@ -10,7 +10,7 @@ if _check_soft_dependencies("lightning", severity="none"):
 
 from sktime.forecasting.base import _BaseGlobalForecaster
 
-if _check_soft_dependencies("huggingface-hub", severity="none"):
+if _check_soft_dependencies("huggingface_hub", severity="none"):
     from huggingface_hub import hf_hub_download
 
 __author__ = ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"]
@@ -238,7 +238,6 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         _use_fit_data_as_context = False
         if X is not None and y is None:
             _use_fit_data_as_context = True
-            # _X = X.copy()
 
         # Override to data in fit as new timeseries is passed
         elif y is not None:
@@ -276,12 +275,16 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             future_length = len(X)
             X_to_extend = X.copy()
             X_to_extend.columns = feat_dynamic_real
-            pred_df, _df_index = self._extend_df(
-                pred_df,
-                _y,
-                X_to_extend,
-            )
+            _X = pd.concat([_X, X_to_extend]).sort_index()
+            print(_X)
+            pred_df = pd.concat([_y, _X], axis=1).sort_index()
+            pred_df.fillna(0, inplace=True)
 
+            # pred_df, _df_index = self._extend_df(
+            #     pred_df,
+            #     _y,
+            #     X_to_extend,
+            # )
         # check whether the index is a PeriodIndex
         if isinstance(pred_df.index, pd.PeriodIndex):
             time_idx = self.return_time_index(pred_df)
@@ -295,7 +298,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         if pred_df.index.nlevels >= 3:
             pred_df = self._convert_hierarchical_to_panel(pred_df)
 
-        # print(pred_df)
+        print(pred_df.head(10))
 
         ds_test, df_config = self.create_pandas_dataset(
             pred_df, target, feat_dynamic_real, future_length
@@ -305,7 +308,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         forecasts = predictor.predict(ds_test)
         forecast_it = iter(forecasts)
         predictions = self._get_prediction_df(forecast_it, df_config)
-        # print(predictions)
+        print(predictions.head(10))
 
         if _use_fit_data_as_context and self._y.index.nlevels >= 3:
             predictions = self._convert_panel_to_hierarchical(predictions)
@@ -415,6 +418,8 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             df_config["item_id"] = item_id
             timepoints = df.index.names[-1]
             df_config["timepoints"] = timepoints
+            time_idx = self.return_time_index(df)
+            freq = self.infer_freq(time_idx)
 
             # Reset index to create a non-multiindex dataframe
             df = df.reset_index()
@@ -426,6 +431,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
                 feat_dynamic_real=dynamic_features,
                 item_id=item_id,
                 future_length=forecast_horizon,
+                freq=freq,
             )
         else:
             dataset = PandasDataset(
@@ -437,67 +443,69 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
 
         return dataset, df_config
 
-    def _extend_df(self, df, _y, X=None):
-        """Extend the input dataframe up to the timepoints that need to be predicted.
-
-        Parameters
-        ----------
-        df : pd.DataFrame
-            Input data that needs to be extended
-        X : pd.DataFrame, default=None
-            Assumes that X has future timepoints and is concatenated to the input data,
-            if X is present in the input, but None here the values of X are assumed
-            to be 0 in future timepoints that need to be predicted.
-        is_range_index : bool, default=False
-            If True, the index is a range index.
-        is_period_index : bool, default=False
-            If True, the index is a period index.
-
-        Returns
-        -------
-        pd.DataFrame
-            Extended dataframe with future timepoints.
-        """
-        index = self.return_time_index(df)
-
-        # Extend the index to the future timepoints
-        # respective to index last seen
-
-        if self._is_range_index:
-            pred_index = pd.RangeIndex(
-                self.cutoff[0] + 1, self.cutoff[0] + max(self.fh._values)
-            )
-        elif self._is_period_index:
-            pred_index = pd.period_range(
-                self.cutoff[0],
-                periods=max(self.fh._values) + 1,
-                freq=index.freq,
-            )[1:]
-        else:
-            pred_index = pd.date_range(
-                self.cutoff[0],
-                periods=max(self.fh._values) + 1,
-                freq=self.infer_freq(index),
-            )[1:]
-
-        if isinstance(df.index, pd.MultiIndex):
-            # Works for any number of levels in the MultiIndex
-            index_levels = [
-                df.index.get_level_values(i).unique()
-                for i in range(df.index.nlevels - 1)
-            ]
-            index_levels.append(pred_index)
-            new_index = pd.MultiIndex.from_product(index_levels, names=df.index.names)
-        else:
-            new_index = pred_index
-
-        df_y = pd.DataFrame(columns=_y.columns, index=new_index)
-        df_y.fillna(0, inplace=True)
-        pred_df = pd.concat([df_y, X], axis=1)
-        extended_df = pd.concat([df, pred_df])
-        extended_df.fillna(0, inplace=True)
-
-        return extended_df, df_y
+    # def _extend_df(self, df, _y, X=None):
+    #     """Extend the input dataframe up to the timepoints that need to be predicted.
+    #
+    #     Parameters
+    #     ----------
+    #     df : pd.DataFrame
+    #         Input data that needs to be extended
+    #     X : pd.DataFrame, default=None
+    #         Assumes that X has future timepoints and is
+    #         concatenated to the input data,
+    #         if X is present in the input, but None here the values of X are assumed
+    #         to be 0 in future timepoints that need to be predicted.
+    #     is_range_index : bool, default=False
+    #         If True, the index is a range index.
+    #     is_period_index : bool, default=False
+    #         If True, the index is a period index.
+    #
+    #     Returns
+    #     -------
+    #     pd.DataFrame
+    #         Extended dataframe with future timepoints.
+    #     """
+    #     index = self.return_time_index(df)
+    #
+    #     # Extend the index to the future timepoints
+    #     # respective to index last seen
+    #
+    #     if self._is_range_index:
+    #         pred_index = pd.RangeIndex(
+    #             self.cutoff[0] + 1, self.cutoff[0] + max(self.fh._values)
+    #         )
+    #     elif self._is_period_index:
+    #         pred_index = pd.period_range(
+    #             self.cutoff[0],
+    #             periods=max(self.fh._values) + 1,
+    #             freq=index.freq,
+    #         )[1:]
+    #     else:
+    #         pred_index = pd.date_range(
+    #             self.cutoff[0],
+    #             periods=max(self.fh._values) + 1,
+    #             freq=self.infer_freq(index),
+    #         )[1:]
+    #
+    #     if isinstance(df.index, pd.MultiIndex):
+    #         # Works for any number of levels in the MultiIndex
+    #         index_levels = [
+    #             df.index.get_level_values(i).unique()
+    #             for i in range(df.index.nlevels - 1)
+    #         ]
+    #         index_levels.append(pred_index)
+    #         new_index = pd.MultiIndex.from_product(index_levels, names=df.index.names)
+    #     else:
+    #         new_index = pred_index
+    #
+    #     df_y = pd.DataFrame(columns=_y.columns, index=new_index)
+    #     df_y.fillna(0, inplace=True)
+    #     pred_df = pd.concat([df_y, X], axis=1)
+    #     extended_df = pd.concat([df, pred_df])
+    #     extended_df = extended_df.sort_index()
+    #     extended_df.fillna(0, inplace=True)
+    #
+    #     return extended_df, df_y
 
     def infer_freq(self, index):
         """
@@ -574,8 +582,6 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             flattened_index, names=["Flattened_Level", data.index.names[-1]]
         )
         return data
-
-    import pandas as pd
 
     def _convert_panel_to_hierarchical(self, df):
         # Store the original index names
