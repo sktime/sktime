@@ -6,6 +6,7 @@ import os
 import sys
 
 import sktime
+from sktime.utils._estimator_html_repr import _get_reduced_path
 
 # -- Path setup --------------------------------------------------------------
 
@@ -509,13 +510,12 @@ def _make_estimator_overview(app):
         modpath = str(obj_class)[8:-2]
         path_parts = modpath.split(".")
         del path_parts[-2]
-        clean_path = ".".join(path_parts)
         import_path = ".".join(path_parts[:-1])
         # adds html link reference
+        reduced_path = _get_reduced_path(modpath)
         obj_name = (
-            """<a href='#'"""
-            f"""onclick="go2URL('api_reference/auto_generated/{clean_path}.html',"""
-            f"""'api_reference/auto_generated/{modpath}.html', event)">{obj_name}</a>"""
+            f"""<a href='api_reference/auto_generated/{reduced_path}.html'>"""
+            f"""{obj_name}</a>"""
         )
 
         # determine the "main" object type
