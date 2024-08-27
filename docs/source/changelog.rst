@@ -65,8 +65,9 @@ Data sets and data loaders
 Data types, checks, conversions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* [ENH] Series scitype support for Polars  (:pr:`6485`) :user:`pranavvp16`
-* [ENH] Addition of ``feature_kind`` metadata attribute to GluonTS Datatypes (:pr:`6871`) :user:`shlok191`
+* [ENH] Polars ``Series`` scitype supports  (:pr:`6485`) :user:`pranavvp16`
+* [ENH] Polars ``Panel`` scitype support  (:pr:`6552`) :user:`pranavvp16`
+* [ENH] Addition of ``feature_kind`` metadata attribute to ``gluonts`` datatypes (:pr:`6871`) :user:`shlok191`
 
 Forecasting
 ^^^^^^^^^^^
@@ -101,6 +102,7 @@ Documentation
 Maintenance
 ~~~~~~~~~~~
 
+* [MNT] Refactor ``show_versions`` to use ``dependencies`` module (:pr:`6883`) :user:`fkiraly`
 * [MNT] sync changelog with hotfix branch ``anirban-sktime-0.31.2`` (:pr:`6963`) :user:`yarnabrina`
 * [MNT] add ``numpy 2`` incompatibility flag to ``pmdarima`` dependency (:pr:`6974`) :user:`fkiraly`
 * [MNT] decorate ``test_auto_arima`` with ``numpy 2`` skip until final fix/diagnosis (:pr:`6973`) :user:`fkiraly`
