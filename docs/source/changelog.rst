@@ -27,9 +27,10 @@ Highlights
 
 * ``HierarchicalProphet`` forecaster from ``prophetverse`` (:pr:`7028`) :user:`felipeangelimvieira`
 * Regularized VAR reduction forecaster, ``VARReduce`` (:pr:`6725`) :user:`meraldoantonio`
+* Interface to TimesFM Forecaster (:pr:`6571`) :user:`geetu040`
 * Subsequence Extraction Transformer (:pr:`6967`) :user:`wirrywoo`
 * Framework support for categorical data has been extended to transformers and pipelines (:pr:`6924`) :user:`Abhay-Lejith`
-* clusterer tags for capability to assign cluster centers (:pr:`7018`) :user:`fkiraly`
+* Clusterer tags for capability to assign cluster centers (:pr:`7018`) :user:`fkiraly`
 
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
@@ -72,6 +73,7 @@ Data types, checks, conversions
 Forecasting
 ^^^^^^^^^^^
 
+* [ENH] interface to TimesFM Forecaster (:pr:`6571`) :user:`geetu040`
 * [ENH] New regularized VAR reduction forecaster, ``VARReduce`` (:pr:`6725`) :user:`meraldoantonio`
 * [ENH] Add ``HierarchicalProphet`` estimator to ``prophetverse`` module (:pr:`7028`) :user:`felipeangelimvieira`
 
