@@ -19,24 +19,83 @@ For upcoming changes and next releases, see our `milestones <https://github.com/
 For our long-term plan, see our :ref:`roadmap`.
 
 
-Version 0.31.2 - 2024-08-13
+Version 0.32.2 - 2024-08-26
 ---------------------------
 
-Hotfix release for using ``make_reduction`` with not fully ``sklearn`` compliant
-tabular regressors such as from ``catboost``.
+Highlights
+~~~~~~~~~~
 
-For last non-maintenance content updates, see 0.31.1.
+Dependency changes
+~~~~~~~~~~~~~~~~~~
 
-Contents
-~~~~~~~~
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
 
-* [BUG] fix ``make_reduction`` type inference for non-sklearn estimators
+Enhancements
+~~~~~~~~~~~~
 
-Notes
-^^^^^
+BaseObject and base framework
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This is a hotfix for 0.31.1 release, fixing a regression. This release is not contained
-in the 0.32.0 or 0.32.1 releases.
+Data sets and data loaders
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Forecasting
+^^^^^^^^^^^
+
+Registry and search
+^^^^^^^^^^^^^^^^^^^
+
+Time series anomalies, changepoints, segmentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Transformations
+^^^^^^^^^^^^^^^
+
+Test framework
+^^^^^^^^^^^^^^
+
+Documentation
+~~~~~~~~~~~~~
+
+Maintenance
+~~~~~~~~~~~
+
+Fixes
+~~~~~
+
+BaseObject and base framework
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Data sets and data loaders
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Forecasting
+^^^^^^^^^^^
+
+Registry and search
+^^^^^^^^^^^^^^^^^^^
+
+Time series anomalies, changepoints, segmentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Transformations
+^^^^^^^^^^^^^^^
+
+Test framework
+^^^^^^^^^^^^^^
 
 
 Version 0.32.1 - 2024-08-12
@@ -124,6 +183,29 @@ Contributors
 :user:`fkiraly`,
 :user:`hliebert`,
 :user:`yarnabrina`
+
+
+Version 0.31.2 - 2024-08-13
+---------------------------
+
+Hotfix release, released after hotfix release 0.32.1,
+to apply the same hotfix to 0.31.X versions as well.
+
+Hotfix for using ``make_reduction`` with not fully ``sklearn`` compliant
+tabular regressors such as from ``catboost``.
+
+For last non-maintenance content updates, see 0.31.1.
+
+Contents
+~~~~~~~~
+
+* [BUG] fix ``make_reduction`` type inference for non-sklearn estimators
+
+Notes
+^^^^^
+
+This is a hotfix for 0.31.1 release, fixing a regression. This release is not contained
+in the 0.32.0 or 0.32.1 releases.
 
 
 Version 0.31.1 - 2024-08-10
