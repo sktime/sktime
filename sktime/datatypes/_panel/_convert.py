@@ -1127,6 +1127,30 @@ if _check_soft_dependencies("dask", severity="none"):
         "dask_panel", "pd-multiindex", convert_dict, mtype_universe=MTYPE_LIST_PANEL
     )
 
+if _check_soft_dependencies("polars", severity="none"):
+    from sktime.datatypes._adapter.polars import (
+        convert_pandas_to_polars,
+        convert_polars_to_pandas,
+    )
+
+    def convert_polars_to_pd_as_panel(obj, store=None):
+        return convert_polars_to_pandas(obj)
+
+    convert_dict[("polars_panel", "pd-multiindex", "Panel")] = (
+        convert_polars_to_pd_as_panel
+    )
+
+    def convert_pd_to_polars_as_panel(obj, store=None):
+        return convert_pandas_to_polars(obj)
+
+    convert_dict[("pd-multiindex", "polars_panel", "Panel")] = (
+        convert_pd_to_polars_as_panel
+    )
+
+    _extend_conversions(
+        "polars_panel", "pd-multiindex", convert_dict, mtype_universe=MTYPE_LIST_PANEL
+    )
+
 if _check_soft_dependencies("gluonts", severity="none"):
     from sktime.datatypes._adapter.gluonts import (
         convert_listDataset_to_pandas,

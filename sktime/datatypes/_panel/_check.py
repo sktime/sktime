@@ -540,6 +540,81 @@ if _check_soft_dependencies("dask", severity="none"):
 
     check_dict[("dask_panel", "Panel")] = check_dask_panel
 
+if _check_soft_dependencies("polars", severity="none"):
+    import polars as pl
+
+    from sktime.datatypes._adapter.polars import check_polars_frame, get_mi_cols
+
+    def check_polars_panel(obj, return_metadata=False, var_name="obj", panel=True):
+        metadict = check_polars_frame(
+            obj=obj,
+            return_metadata=return_metadata,
+            var_name=var_name,
+            scitype="Panel",
+        )
+
+        if isinstance(metadict, tuple) and metadict[0]:
+            requires_series_grps = [
+                "n_instances",
+                "is_one_series",
+                "is_equal_length",
+                "is_equally_spaced",
+            ]
+
+            if _req(requires_series_grps, return_metadata):
+                if isinstance(obj, pl.LazyFrame):
+                    for key in requires_series_grps:
+                        metadict[1][key] = "NA"
+                else:
+                    mi_cols = get_mi_cols(obj)
+                    levels = mi_cols[:-1]
+                    if len(mi_cols) == 1:
+                        levels = levels[0]
+                    series_groups = obj.group_by(levels).agg(
+                        [
+                            pl.col(mi_cols[-1]).alias(
+                                "level_values"
+                            ),  # index values in each level
+                            pl.len().alias("size"),  # Calculate the size of each group
+                        ]
+                    )
+                    n_series = series_groups.shape[0]
+
+                    if _req("n_instances", return_metadata):
+                        metadict[2]["n_instances"] = n_series
+                    if _req("is_one_series", return_metadata):
+                        metadict[2]["is_one_series"] = n_series == 1
+                    if _req("is_equal_length", return_metadata):
+                        metadict[2]["is_equal_length"] = _list_all_equal(
+                            series_groups["size"].to_numpy()
+                        )
+                    if _req("is_equally_spaced", return_metadata):
+                        metadict[2]["is_equally_spaced"] = "NA"
+
+            requires_panel_grps = ["n_panels", "is_one_panel"]
+            if _req(requires_panel_grps, return_metadata):
+                if isinstance(obj, pl.LazyFrame):
+                    for key in requires_panel_grps:
+                        metadict[1][key] = "NA"
+                else:
+                    if panel:
+                        n_panels = 1
+                    else:
+                        mi_cols = get_mi_cols(obj)
+                        panel_groups = obj.group_by(mi_cols[:-2]).agg(
+                            [pl.col(mi_cols[-2])]
+                        )
+                        n_panels = panel_groups.shape[0]
+
+                    if _req("n_panels", return_metadata):
+                        metadict[2]["n_panels"] = n_panels
+                    if _req("is_one_panel", return_metadata):
+                        metadict[2]["is_one_panel"] = n_panels == 1
+
+        return metadict
+
+    check_dict[("polars_panel", "Panel")] = check_polars_panel
+
 if _check_soft_dependencies("gluonts", severity="none"):
     from sktime.datatypes._dtypekind import DtypeKind
 
