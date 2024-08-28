@@ -221,7 +221,7 @@ class SPCI(BaseForecaster):
 
     # todo: implement this, mandatory
     def _fit(self, y, X):
-        """Fit forecaster to training data or regressor_proba to prediction residuals.
+        """Fit to training data with fh=1.
 
         Parameters
         ----------
@@ -242,6 +242,7 @@ class SPCI(BaseForecaster):
         -------
         self : reference to self
         """
+        self.fh = 1
         # implement here
         # IMPORTANT: avoid side effects to y, X, fh
         #
@@ -258,7 +259,7 @@ class SPCI(BaseForecaster):
 
     # todo: implement this, mandatory
     def _predict(self, X):
-        """Make point prediction at next time step with fh = 1.
+        """Calculate quantile intervals using forecast predictions.
 
         Parameters
         ----------
@@ -277,6 +278,11 @@ class SPCI(BaseForecaster):
         y : sktime compatible tabular data container, Table scitype
             numpy1D iterable, of shape [n_instances]
         """
+
+        # forecast_preds = forecaster.predict(X)
+        # proba_regressor = proba_regressor.fit(forecast_preds)
+        # quantile_preds = proba_regressor.predict(forecast_preds)
+        # return quantile_preds
         # implement here
         # IMPORTANT: avoid side effects to X, fh
 
