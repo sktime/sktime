@@ -56,3 +56,18 @@ def test_padded_f1_for_worst_score(true_cps, pred_cps, threshold):
     """Ensure padded F1 score returns 0.0 when no of the change points are detected."""
     padded_f1 = metrics.padded_f1(pd.Series(true_cps), pd.Series(pred_cps), threshold)
     assert padded_f1 == 0.0
+
+
+@pytest.mark.parametrize(
+    "true_cps,pred_cps,thresh,expected_value",
+    [
+        ([5, 20], [5, 10], 2, 0.5),
+        ([5, 12, 13], [5, 10], 1, 0.4),
+        ([4, 10], [5, 12], 1, 0.5),
+        ([4, 10], [5, 12], 2, 1.0),
+    ],
+)
+def test_padded_f1_against_known_score(true_cps, pred_cps, thresh, expected_value):
+    """Test padded f1 against pre-calculated tests where we know the expected value"""
+    padded_f1 = metrics.padded_f1(pd.Series(true_cps), pd.Series(pred_cps), thresh)
+    assert padded_f1 == expected_value
