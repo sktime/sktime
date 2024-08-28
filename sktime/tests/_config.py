@@ -29,7 +29,6 @@ EXCLUDE_ESTIMATORS = [
     "TapNetClassifier",
     "ResNetClassifier",  # known ResNetClassifier sporafic failures, see #3954
     "LSTMFCNClassifier",  # unknown cause, see bug report #4033
-    "TimeSeriesLloyds",  # an abstract class, but does not follow naming convention
     # DL classifier suspected to cause hangs and memouts, see #4610
     "FCNClassifier",
     "MACNNClassifier",
@@ -335,6 +334,7 @@ EXCLUDED_TESTS_BY_TEST = {
         "Prophet",
         "ProphetPiecewiseLinearTrendForecaster",
         "Prophetverse",
+        "HierarchicalProphet",
         "PyODAnnotator",
         "RandomIntervalClassifier",
         "RandomIntervalFeatureExtractor",
@@ -376,7 +376,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "TimeSeriesForestRegressor",
         "TimeSeriesKMedoids",
         "TimeSeriesKernelKMeans",
-        "TimeSeriesLloyds",
         "ThetaModularForecaster",
         "TruncationTransformer",
         "UnobservedComponents",
