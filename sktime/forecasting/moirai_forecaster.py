@@ -10,7 +10,11 @@ if _check_soft_dependencies("lightning", severity="none"):
 
 from sktime.forecasting.base import _BaseGlobalForecaster
 
-if _check_soft_dependencies("huggingface_hub", severity="none"):
+if _check_soft_dependencies(
+    "huggingface-hub",
+    severity="none",
+    package_import_alias={"huggingface-hub": "huggingface_hub"},
+):
     from huggingface_hub import hf_hub_download
 
 
