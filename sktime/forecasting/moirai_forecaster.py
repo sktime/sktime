@@ -282,7 +282,9 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             pred_df.fillna(0, inplace=True)
         else:
             if _X is not None:
-                future_length = len(_X.index.get_level_values(-1).unique()) - len(_y.index.get_level_values(-1).unique())
+                future_length = len(_X.index.get_level_values(-1).unique()) - len(
+                    _y.index.get_level_values(-1).unique()
+                )
             else:
                 future_length = 0
         # check whether the index is a PeriodIndex
@@ -310,15 +312,24 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         predictions = self._get_prediction_df(forecast_it, df_config)
         if isinstance(_y.index.get_level_values(-1), pd.DatetimeIndex):
             if isinstance(predictions.index, pd.MultiIndex):
-                predictions.index = predictions.index.set_levels(levels=predictions.index.get_level_values(-1).to_timestamp().unique(), level=-1)
+                predictions.index = predictions.index.set_levels(
+                    levels=predictions.index.get_level_values(-1)
+                    .to_timestamp()
+                    .unique(),
+                    level=-1,
+                )
             else:
                 predictions.index = predictions.index.to_timestamp()
         if _is_hierarchical:
-            predictions = self._convert_panel_to_hierarchical(predictions, _y.index.names)
+            predictions = self._convert_panel_to_hierarchical(
+                predictions, _y.index.names
+            )
         pred_out = fh.get_expected_pred_idx(_y, cutoff=self.cutoff)
         if self._is_range_index:
             predictions.index = predictions.index.to_timestamp()
-            predictions.index = (predictions.index - pd.Timestamp("2010-01-01")).map(lambda x: x.days) + _y.index[0]
+            predictions.index = (predictions.index - pd.Timestamp("2010-01-01")).map(
+                lambda x: x.days
+            ) + _y.index[0]
         predictions = predictions.loc[pred_out]
 
         if _use_fit_data_as_context:
@@ -574,7 +585,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             n_periods = index.size
             new_index = pd.date_range(start=start_date, periods=n_periods, freq="D")
         return new_index
-    
+
     def _undo_range_index(self, index, cutoff):
         start_date = "2010-01-01"
 
