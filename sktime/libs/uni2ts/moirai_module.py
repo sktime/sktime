@@ -23,8 +23,7 @@ else:
             pass
 
     class DistributionOutput:
-        def __init_subclass__(cls, *args, **kwargs):
-            pass
+        pass
 
 
 if _check_soft_dependencies("huggingface_hub", severity="none"):
@@ -33,6 +32,8 @@ else:
     # Create Dummy class
     class PyTorchModelHubMixin:
         def __init__(self):
+            pass
+        def __init_subclass__(cls, *args, **kwargs) -> None:
             pass
 
         pass
