@@ -280,7 +280,11 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             _X = pd.concat([_X, X_to_extend]).sort_index()
             pred_df = pd.concat([_y, _X], axis=1).sort_index()
             pred_df.fillna(0, inplace=True)
-
+        else:
+            if _X is not None:
+                future_length = len(_X.index.get_level_values(-1).unique()) - len(_y.index.get_level_values(-1).unique())
+            else:
+                future_length = 0
         # check whether the index is a PeriodIndex
         if isinstance(pred_df.index, pd.PeriodIndex):
             time_idx = self.return_time_index(pred_df)
@@ -304,13 +308,18 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         forecasts = predictor.predict(ds_test)
         forecast_it = iter(forecasts)
         predictions = self._get_prediction_df(forecast_it, df_config)
-        print(predictions.head(10))
-
+        if isinstance(_y.index.get_level_values(-1), pd.DatetimeIndex):
+            if isinstance(predictions.index, pd.MultiIndex):
+                predictions.index = predictions.index.set_levels(levels=predictions.index.get_level_values(-1).to_timestamp().unique(), level=-1)
+            else:
+                predictions.index = predictions.index.to_timestamp()
         if _is_hierarchical:
-            predictions = self._convert_panel_to_hierarchical(predictions)
-        else:
-            pred_out = fh.get_expected_pred_idx(_y, cutoff=self.cutoff)
-            predictions.index = pred_out
+            predictions = self._convert_panel_to_hierarchical(predictions, _y.index.names)
+        pred_out = fh.get_expected_pred_idx(_y, cutoff=self.cutoff)
+        if self._is_range_index:
+            predictions.index = predictions.index.to_timestamp()
+            predictions.index = (predictions.index - pd.Timestamp("2010-01-01")).map(lambda x: x.days) + _y.index[0]
+        predictions = predictions.loc[pred_out]
 
         if _use_fit_data_as_context:
             predictions = predictions.loc[first_seen_index:]
@@ -341,7 +350,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
                 "checkpoint_path": "sktime/moirai-1.0-R-small",
             },
             {
-                "deterministic": False,
+                "deterministic": True,
                 "checkpoint_path": "sktime/moirai-1.0-R-small",
             },
         ]
@@ -521,6 +530,8 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         As `freq=None` is returned in case of multiindex timepoints.
 
         """
+        if isinstance(index, pd.PeriodIndex):
+            return index.freq
         return pd.infer_freq(index[:3])
 
     def return_time_index(self, df):
@@ -563,6 +574,16 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             n_periods = index.size
             new_index = pd.date_range(start=start_date, periods=n_periods, freq="D")
         return new_index
+    
+    def _undo_range_index(self, index, cutoff):
+        start_date = "2010-01-01"
+
+        if isinstance(index, pd.MultiIndex):
+            n_periods = index.levels[-1].size
+            datetime_index = pd.date_range(
+                start=start_date, periods=n_periods, freq="D"
+            )
+            new_index = index.set_levels(datetime_index, level=-1)
 
     def _series_to_df(self, y):
         """Convert series to DataFrame."""
@@ -582,16 +603,17 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         )
         return data
 
-    def _convert_panel_to_hierarchical(self, df):
+    def _convert_panel_to_hierarchical(self, df, original_index_names=None):
         # Store the original index names
-        original_index_names = df.index.names
+        if original_index_names is None:
+            original_index_names = df.index.names
 
         # Reset the index to get 'Flattened_Level' as a column
         data = df.reset_index()
 
         # Split the 'Flattened_Level' column into multiple columns
         split_levels = data["Flattened_Level"].str.split("*", expand=True)
-
+        split_levels.columns = original_index_names[:-1]
         # Get the names of the split levels as a list of column names
         index_names = split_levels.columns.tolist()
 
