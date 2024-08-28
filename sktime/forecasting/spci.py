@@ -8,6 +8,7 @@ __author__ = ["ksharma6"]
 from skpro.regression.base import BaseProbaRegressor
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.naive import NaiveForecaster
 
 # todo: add any necessary imports here
 
@@ -17,7 +18,7 @@ from sktime.forecasting.base import BaseForecaster
 
 
 # todo: change class name and write docstring
-class SPCI(BaseForecaster, BaseProbaRegressor):
+class SPCI(BaseForecaster):
     """Sequential Predictive Conformal Inference Forecaster.
 
     SPCI is a model-free and distribution-free framework that combines
@@ -180,22 +181,22 @@ class SPCI(BaseForecaster, BaseProbaRegressor):
     # todo: add any hyper-parameters and components to constructor
     def __init__(
         self,
-        forecaster,
-        regressor,
+        forecaster=None,
+        regressor_proba=None,
         random_state=None,
     ):
-        # estimators should precede parameters
-        #  if estimators have default values, set None and initialize below
-
-        # todo: write any hyper-parameters and components to self
-        self.forecaster = forecaster.clone()
-        self.regressor = regressor.clone()
+        self.forecaster = forecaster
+        self.forecaster_ = (
+            forecaster.clone() if forecaster is not None else NaiveForecaster()
+        )
+        self.regressor_proba = regressor_proba
+        self.regressor_proba = (
+            regressor_proba.clone()
+            if regressor_proba is not None
+            else BaseProbaRegressor()
+        )
         self.random_state = random_state
-        # IMPORTANT: the self.params should never be overwritten or mutated from now on
-        # for handling defaults etc, write to other attributes, e.g., self._parama
-        # for estimators, initialize a clone, e.g., self.est_ = est.clone()
 
-        # leave this as is
         super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
