@@ -586,16 +586,6 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             new_index = pd.date_range(start=start_date, periods=n_periods, freq="D")
         return new_index
 
-    def _undo_range_index(self, index, cutoff):
-        start_date = "2010-01-01"
-
-        if isinstance(index, pd.MultiIndex):
-            n_periods = index.levels[-1].size
-            datetime_index = pd.date_range(
-                start=start_date, periods=n_periods, freq="D"
-            )
-            new_index = index.set_levels(datetime_index, level=-1)
-
     def _series_to_df(self, y):
         """Convert series to DataFrame."""
         is_converted = False
