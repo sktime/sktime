@@ -98,6 +98,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             "einops",
             "huggingface-hub",
             "lightning",
+            "hydra-core",
         ],
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": [
@@ -115,6 +116,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         "python_dependencies_alias": {
             "salesforce-uni2ts": "uni2ts",
             "huggingface-hub": "huggingface_hub",
+            "hydra-core": "hydra",
         },
     }
 
@@ -369,7 +371,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             },
             {
                 "deterministic": True,
-                "checkpoint_path": "sktime/moirai-1.0-R-small",
+                "checkpoint_path": "Salesforce/moirai-1.0-R-small",
             },
         ]
 
