@@ -112,6 +112,11 @@ def padded_f1(true_change_points, pred_change_points, pad):
     -------
     float
         Padded f1 score
+
+    References
+    ----------
+    .. [1] Gerrit J. J. van den Burg and Christopher K. I. Williams, An Evaluation of
+           Change Point Detection Algorithms, 2022, https://arxiv.org/abs/2003.06222
     """
     true_change_points = pd.Series(true_change_points)
     pred_change_points = pd.Series(pred_change_points)
