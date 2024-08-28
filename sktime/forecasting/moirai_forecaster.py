@@ -159,7 +159,11 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             )
 
     # Apply a patch for redirecting imports to sktime.libs.uni2ts
-    if _check_soft_dependencies("lightning", severity="none"):
+    if _check_soft_dependencies(
+        ["lightning", "huggingface_hub"],
+        severity="none",
+        package_import_alias={"huggingface-hub": "huggingface_hub"},
+    ):
         from sktime.libs.uni2ts.forecast import MoiraiForecast
 
         @patch.dict("sys.modules", {"uni2ts": sktime.libs.uni2ts})
