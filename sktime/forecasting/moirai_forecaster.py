@@ -108,7 +108,8 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         "authors": ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"],
         # gorold, chenghaoliu89, liu-jc are from SalesforceAIResearch/uni2ts
         "maintainers": ["pranavvp16"],
-        "python_dependencies_alias": {"salesforce-uni2ts": "uni2ts"},
+        "python_dependencies_alias": {"salesforce-uni2ts": "uni2ts",
+                                      "huggingface-hub": "huggingface_hub"},
     }
 
     def __init__(
