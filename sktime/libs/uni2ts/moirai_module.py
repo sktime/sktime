@@ -33,6 +33,7 @@ else:
     class PyTorchModelHubMixin:
         def __init__(self):
             pass
+
         def __init_subclass__(cls, *args, **kwargs) -> None:
             pass
 
