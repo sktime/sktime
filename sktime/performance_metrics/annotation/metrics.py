@@ -122,9 +122,10 @@ def padded_f1(true_change_points, pred_change_points, pad):
 
     false_positives = 0
     tp_and_fn = pd.Series(False, index=true_cp_intervals)
+
     for cp in pred_change_points:
         boolean_mask = tp_and_fn.index.contains(cp)
-        if boolean_mask.any() is False:
+        if not boolean_mask.any():
             false_positives += 1
         else:
             tp_and_fn = tp_and_fn | boolean_mask
