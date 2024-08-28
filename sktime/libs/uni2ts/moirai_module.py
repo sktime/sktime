@@ -35,6 +35,7 @@ else:
             pass
 
         def __init_subclass__(cls, *args, **kwargs) -> None:
+            """Dummy method."""
             pass
 
         pass
