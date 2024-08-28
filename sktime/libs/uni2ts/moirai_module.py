@@ -23,7 +23,8 @@ else:
             pass
 
     class DistributionOutput:
-        pass
+        def __init_subclass__(cls, *args, **kwargs):
+            pass
 
 
 if _check_soft_dependencies("huggingface_hub", severity="none"):
