@@ -221,7 +221,7 @@ class SPCI(BaseForecaster):
 
     # todo: implement this, mandatory
     def _fit(self, y, X):
-        """Fit forecaster to training data with fh=1.
+        """Fit forecaster to training data or regressor_proba to prediction residuals.
 
         Parameters
         ----------
@@ -242,7 +242,6 @@ class SPCI(BaseForecaster):
         -------
         self : reference to self
         """
-        self._fh = 1
         # implement here
         # IMPORTANT: avoid side effects to y, X, fh
         #
@@ -259,7 +258,7 @@ class SPCI(BaseForecaster):
 
     # todo: implement this, mandatory
     def _predict(self, X):
-        """Forecast time series at fh = 1.
+        """Make point prediction at next time step with fh = 1.
 
         Parameters
         ----------
