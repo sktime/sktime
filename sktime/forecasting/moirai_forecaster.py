@@ -160,7 +160,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
 
     # Apply a patch for redirecting imports to sktime.libs.uni2ts
     if _check_soft_dependencies(
-        ["lightning", "huggingface_hub"],
+        ["lightning", "huggingface-hub"],
         severity="none",
         package_import_alias={"huggingface-hub": "huggingface_hub"},
     ):
