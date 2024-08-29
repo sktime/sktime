@@ -27,7 +27,7 @@ else:
 
 
 if _check_soft_dependencies(
-    "huggingface_hub",
+    "huggingface-hub",
     severity="none",
     package_import_alias={"huggingface-hub": "huggingface_hub"},
 ):
