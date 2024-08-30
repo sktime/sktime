@@ -451,7 +451,8 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             timepoints = df.index.names[-1]
             df_config["timepoints"] = timepoints
             time_idx = self.return_time_index(df)
-            freq = self.infer_freq(time_idx)
+            if not self._is_range_index:
+                freq = self.infer_freq(time_idx)
 
             # Reset index to create a non-multiindex dataframe
             df = df.reset_index()
