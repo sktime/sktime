@@ -2,7 +2,6 @@
 
 from unittest.mock import patch
 
-import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
@@ -572,7 +571,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         timepoints = self.return_time_index(df)
         if isinstance(timepoints, pd.RangeIndex):
             return True
-        elif np.issubdtype(timepoints.dtype, np.integer):
+        elif timepoints.is_integer():
             return True
         return False
 
