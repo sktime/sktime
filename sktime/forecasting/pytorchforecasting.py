@@ -785,7 +785,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                     "model_params": {
                         "cell_type": "GRU",
                         "rnn_layers": 1,
-                        "hidden_size": 3,
+                        "hidden_size": 2,
                         "enable_checkpointing": False,
                         "log_interval": -1,
                     },
@@ -806,7 +806,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                     "model_params": {
                         "cell_type": "LSTM",
                         "rnn_layers": 1,
-                        "hidden_size": 3,
+                        "hidden_size": 2,
                         "log_interval": -1,
                     },
                     "dataset_params": {
@@ -836,6 +836,10 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                         "logger": False,
                     },
                     "model_params": {
+                        "cell_type": "GRU",
+                        "rnn_layers": 1,
+                        "hidden_size": 2,
+                        "enable_checkpointing": False,
                         "log_interval": -1,
                     },
                     "dataset_params": {
@@ -857,6 +861,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                         "cell_type": "LSTM",
                         "rnn_layers": 1,
                         "log_interval": -1,
+                        "hidden_size": 2,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
