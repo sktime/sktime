@@ -804,8 +804,8 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                         "logger": False,
                     },
                     "model_params": {
-                        "cell_type": "GRU",
-                        "rnn_layers": 2,
+                        "cell_type": "LSTM",
+                        "rnn_layers": 1,
                         "hidden_size": 3,
                         "log_interval": -1,
                     },
@@ -854,8 +854,8 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                         "logger": False,
                     },
                     "model_params": {
-                        "cell_type": "GRU",
-                        "rnn_layers": 3,
+                        "cell_type": "LSTM",
+                        "rnn_layers": 1,
                         "log_interval": -1,
                     },
                     "dataset_params": {
@@ -1074,7 +1074,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "model_params": {
-                        "hidden_size": 8,
+                        "hidden_size": 4,
                         "n_blocks": [1, 1],
                         "n_layers": 1,
                         "log_interval": -1,
@@ -1091,7 +1091,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     "model_params": {
                         "interpolation_mode": "nearest",
                         "activation": "Tanh",
-                        "hidden_size": 8,
+                        "hidden_size": 4,
                         "n_blocks": [1, 1],
                         "n_layers": 1,
                         "log_interval": -1,
@@ -1122,7 +1122,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                         "logger": False,
                     },
                     "model_params": {
-                        "hidden_size": 8,
+                        "hidden_size": 4,
                         "n_blocks": [1, 1],
                         "n_layers": 1,
                         "log_interval": -1,
@@ -1144,7 +1144,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     "model_params": {
                         "interpolation_mode": "nearest",
                         "activation": "Tanh",
-                        "hidden_size": 8,
+                        "hidden_size": 4,
                         "n_blocks": [1, 1],
                         "n_layers": 1,
                         "log_interval": -1,
