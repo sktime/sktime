@@ -10,7 +10,7 @@ This page gives a summary of:
 
 If you are a contributor or developer, ensure that you have set
 up your developer environment, and installed a
-`development version :doc:</installation>`
+:doc:`development version </installation>`
 of ``sktime``.
 
 ``sktime`` use continuous integration (CI) services on GitHub to automatically check
