@@ -87,7 +87,7 @@ Development versions
 --------------------
 To install the latest development version of ``sktime``, or earlier versions, the sequence of steps is as follows:
 
-Step 1 - ``git`` clone the ``sktime`` repository, the latest version or an earlier version.
+| Step 1 - ``git`` clone the ``sktime`` repository, the latest version or an earlier version.
 | Step 2 - ensure build requirements are satisfied
 | Step 3 - ``pip`` install the package from a ``git`` clone, with the ``editable`` parameter.
 
