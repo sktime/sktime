@@ -785,7 +785,6 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                         "cell_type": "GRU",
                         "rnn_layers": 1,
                         "hidden_size": 2,
-                        "enable_checkpointing": False,
                         "log_interval": -1,
                     },
                     "dataset_params": {
@@ -836,7 +835,6 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                         "cell_type": "GRU",
                         "rnn_layers": 1,
                         "hidden_size": 2,
-                        "enable_checkpointing": False,
                         "log_interval": -1,
                     },
                     "dataset_params": {
