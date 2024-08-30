@@ -123,19 +123,19 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
     >>> y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, test_size=4)
     >>>
     >>> # creating model instance configuring the hyperparameters
-    >>> model = NeuralForecastRNN(  # doctest: +SKIP
+    >>> model = NeuralForecastRNN(
     ...     "A-DEC", futr_exog_list=["ARMED", "POP"], max_steps=5
     ... )
     >>>
     >>> # fitting the model
-    >>> model.fit(y_train, X=X_train, fh=[1, 2, 3, 4])  # doctest: +SKIP
+    >>> model.fit(y_train, X=X_train, fh=[1, 2, 3, 4])
     Seed set to 1
     Epoch 4: 100%|█| 1/1 [00:00<00:00, 42.85it/s, v_num=870, train_loss_step=0.589,
     train_loss_epoc
     NeuralForecastRNN(freq='A-DEC', futr_exog_list=['ARMED', 'POP'], max_steps=5)
     >>>
     >>> # getting point predictions
-    >>> model.predict(X=X_test)  # doctest: +SKIP
+    >>> model.predict(X=X_test)
     Predicting DataLoader 0: 100%|██████████████████████████████████| 1/1 [00:00<00:00,
     198.64it/s]
     1959    66241.984375
@@ -497,18 +497,18 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
     >>> y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, test_size=4)
     >>>
     >>> # creating model instance configuring the hyperparameters
-    >>> model = NeuralForecastLSTM(  # doctest: +SKIP
+    >>> model = NeuralForecastLSTM(
     ...     "A-DEC", futr_exog_list=["ARMED", "POP"], max_steps=5
     ... )
     >>>
     >>> # fitting the model
-    >>> model.fit(y_train, X=X_train, fh=[1, 2, 3, 4])  # doctest: +SKIP
+    >>> model.fit(y_train, X=X_train, fh=[1, 2, 3, 4])
     Seed set to 1
     Epoch 4: 100%|█| 1/1 [00:00<00:00, 42.85it/s, v_num=870, train_loss_step=0.589, train_loss_epoc
     NeuralForecastLSTM(freq='A-DEC', futr_exog_list=['ARMED', 'POP'], max_steps=5)
     >>>
     >>> # getting point predictions
-    >>> model.predict(X=X_test)  # doctest: +SKIP
+    >>> model.predict(X=X_test)
     Predicting DataLoader 0: 100%|██████████████████████████████████| 1/1 [00:00<00:00, 198.64it/s]
     1959    64083.226562
     1960    64426.304688

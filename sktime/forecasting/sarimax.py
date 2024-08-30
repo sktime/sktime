@@ -215,11 +215,11 @@ class SARIMAX(_StatsModelsAdapter):
     >>> from sktime.forecasting.sarimax import SARIMAX
     >>> y = load_airline()
     >>> forecaster = SARIMAX(
-    ...     order=(1, 0, 0), trend="t", seasonal_order=(1, 0, 0, 6))  # doctest: +SKIP
+    ...     order=(1, 0, 0), trend="t", seasonal_order=(1, 0, 0, 6))
     ... )
-    >>> forecaster.fit(y)  # doctest: +SKIP
+    >>> forecaster.fit(y)
     SARIMAX(...)
-    >>> y_pred = forecaster.predict(fh=y.index)  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=y.index)
     """  # noqa: E501
 
     _tags = {

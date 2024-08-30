@@ -54,14 +54,14 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
 
     Examples
     --------
-    >>> from sktime.forecasting.ltsf import LTSFLinearForecaster # doctest: +SKIP
+    >>> from sktime.forecasting.ltsf import LTSFLinearForecaster
     >>> from sktime.datasets import load_airline
-    >>> model = LTSFLinearForecaster(10, 3) # doctest: +SKIP
+    >>> model = LTSFLinearForecaster(10, 3)
     >>> y = load_airline()
-    >>> model.fit(y, fh=[1,2,3]) # doctest: +SKIP
+    >>> model.fit(y, fh=[1,2,3])
     LTSFLinearForecaster(pred_len=3, seq_len=10)
-    >>> y_pred = model.predict() # doctest: +SKIP
-    >>> y_pred # doctest: +SKIP
+    >>> y_pred = model.predict()
+    >>> y_pred
     1961-01    515.456726
     1961-02    576.704712
     1961-03    559.859680
@@ -227,14 +227,14 @@ class LTSFDLinearForecaster(BaseDeepNetworkPyTorch):
 
     Examples
     --------
-    >>> from sktime.forecasting.ltsf import LTSFDLinearForecaster # doctest: +SKIP
+    >>> from sktime.forecasting.ltsf import LTSFDLinearForecaster
     >>> from sktime.datasets import load_airline
-    >>> model = LTSFDLinearForecaster(10, 3) # doctest: +SKIP
+    >>> model = LTSFDLinearForecaster(10, 3)
     >>> y = load_airline()
-    >>> model.fit(y, fh=[1,2,3]) # doctest: +SKIP
+    >>> model.fit(y, fh=[1,2,3])
     LTSFDLinearForecaster(pred_len=3, seq_len=10)
-    >>> y_pred = model.predict() # doctest: +SKIP
-    >>> y_pred # doctest: +SKIP
+    >>> y_pred = model.predict()
+    >>> y_pred
     1961-01    436.494476
     1961-02    433.659851
     1961-03    479.309631
@@ -400,14 +400,14 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
 
     Examples
     --------
-    >>> from sktime.forecasting.ltsf import LTSFNLinearForecaster # doctest: +SKIP
+    >>> from sktime.forecasting.ltsf import LTSFNLinearForecaster
     >>> from sktime.datasets import load_airline
-    >>> model = LTSFNLinearForecaster(10, 3) # doctest: +SKIP
+    >>> model = LTSFNLinearForecaster(10, 3)
     >>> y = load_airline()
-    >>> model.fit(y, fh=[1,2,3]) # doctest: +SKIP
+    >>> model.fit(y, fh=[1,2,3])
     LTSFNLinearForecaster(pred_len=3, seq_len=10)
-    >>> y_pred = model.predict() # doctest: +SKIP
-    >>> y_pred # doctest: +SKIP
+    >>> y_pred = model.predict()
+    >>> y_pred
     1961-01    455.628082
     1961-02    433.349640
     1961-03    437.045502
@@ -600,15 +600,15 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
 
     Examples
     --------
-    >>> from sktime.forecasting.ltsf import LTSFTransformerForecaster # doctest: +SKIP
+    >>> from sktime.forecasting.ltsf import LTSFTransformerForecaster
     >>> from sktime.datasets import load_airline
     >>>
     >>> y = load_airline()
     >>>
-    >>> model = LTSFTransformerForecaster(10, 5, 5) # doctest: +SKIP
-    >>> model.fit(y, fh=[1, 2, 3, 4, 5]) # doctest: +SKIP
+    >>> model = LTSFTransformerForecaster(10, 5, 5)
+    >>> model.fit(y, fh=[1, 2, 3, 4, 5])
     LTSFTransformerForecaster(context_len=5, pred_len=5, seq_len=10)
-    >>> pred = model.predict() # doctest: +SKIP
+    >>> pred = model.predict()
     """
 
     _tags = {

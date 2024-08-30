@@ -89,7 +89,7 @@ class ExpandingCutoffSplitter(BaseSplitter):
     >>> y = pd.DataFrame(index=pd.PeriodIndex(date_range, freq='Q'))
     >>> cutoff = pd.Period('2021-Q1')
     >>> cv = ExpandingCutoffSplitter(cutoff=cutoff, fh=[1, 2], step_length=1)
-    >>> list(cv.split(y)) # doctest: +SKIP
+    >>> list(cv.split(y))
     [(array([0, 1, 2, 3]), array([4, 5])), (array([0, 1, 2, 3, 4]), array([5, 6]))]
     """
 

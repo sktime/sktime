@@ -30,14 +30,13 @@ class TemporianTransformer(BaseTransformer):
     --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.transformations.series.temporian import TemporianTransformer
-    >>> import temporian as tp  # doctest: +SKIP
+    >>> import temporian as tp
     >>>
-    >>> def function(evset):  # doctest: +SKIP
-    ...     return evset.simple_moving_average(tp.duration.days(3 * 365))  \
-        # doctest: +SKIP
-    >>> transformer = TemporianTransformer(function=function)  # doctest: +SKIP
-    >>> X = load_airline()  # doctest: +SKIP
-    >>> X_averaged = transformer.fit_transform(X)  # doctest: +SKIP
+    >>> def function(evset):
+    ...     return evset.simple_moving_average(tp.duration.days(3 * 365))
+    >>> transformer = TemporianTransformer(function=function)
+    >>> X = load_airline()
+    >>> X_averaged = transformer.fit_transform(X)
 
     References
     ----------

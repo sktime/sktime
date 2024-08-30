@@ -45,12 +45,12 @@ class YtoX(BaseTransformer):
     ...     [
     ...             YtoX(),
     ...             FourierFeatures(sp_list=[24, 24 * 7], fourier_terms_list=[10, 5]),
-    ...             ARIMA(order=(1, 1, 1))  # doctest: +SKIP,
+    ...             ARIMA(order=(1, 1, 1)),
     ...     ]
-    ... )  # doctest: +SKIP
+    ... )
     >>>
     >>> # fit and forecast, using Fourier features as exogenous data
-    >>> pred = pipe.fit_predict(y, fh=[1, 2, 3, 4, 5])  # doctest: +SKIP
+    >>> pred = pipe.fit_predict(y, fh=[1, 2, 3, 4, 5])
 
     Use case: using lagged endogenous variables as exogeneous data.
 
@@ -68,11 +68,11 @@ class YtoX(BaseTransformer):
     >>>
     >>> # we need to specify index_out="original" as otherwise ARIMA gets 1 and 2 ahead
     >>> # use lagged_y_trafo to generate X
-    >>> forecaster = lagged_y_trafo ** SARIMAX()  # doctest: +SKIP
+    >>> forecaster = lagged_y_trafo ** SARIMAX()
     >>>
     >>> # fit and forecast next value, with lagged y as exogenous data
-    >>> forecaster.fit(y, fh=[1])  # doctest: +SKIP
-    >>> y_pred = forecaster.predict()  # doctest: +SKIP
+    >>> forecaster.fit(y, fh=[1])
+    >>> y_pred = forecaster.predict()
 
     Use case: using summarized endogenous variables as exogeneous data.
 
@@ -81,7 +81,7 @@ class YtoX(BaseTransformer):
     >>> from sktime.transformations.compose import YtoX
     >>> from sktime.forecasting.compose import make_reduction
     >>> from sktime.forecasting.compose import ForecastingPipeline
-    >>> from sklearn.ensemble import GradientBoostingRegressor  # doctest: +SKIP
+    >>> from sklearn.ensemble import GradientBoostingRegressor
     >>>
     >>> # data with no exogenous features
     >>> y = load_airline()
@@ -102,7 +102,7 @@ class YtoX(BaseTransformer):
     ...     strategy="recursive",
     ...     pooling="global",
     ...     window_length=12,
-    ... )  # doctest: +SKIP
+    ... )
     >>>
     >>> # create the pipeline
     >>> pipe = ForecastingPipeline(
@@ -111,10 +111,10 @@ class YtoX(BaseTransformer):
     ...         ("summarizer", WindowSummarizer(**kwargs)),
     ...         ("forecaster", forecaster),
     ...     ]
-    ... )  # doctest: +SKIP
+    ... )
     >>>
     >>> # fit and forecast, with summarized y as exogenous data
-    >>> preds = pipe.fit_predict(y=y, fh=range(1, 20))  # doctest: +SKIP
+    >>> preds = pipe.fit_predict(y=y, fh=range(1, 20))
     """
 
     _tags = {

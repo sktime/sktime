@@ -53,7 +53,7 @@ class ExpandingGreedySplitter(BaseSplitter):
 
     >>> ts = np.arange(10)
     >>> splitter = ExpandingGreedySplitter(test_size=3, folds=2)
-    >>> list(splitter.split(ts))  # doctest: +SKIP
+    >>> list(splitter.split(ts))
     [
         (array([0, 1, 2, 3]), array([4, 5, 6])),
         (array([0, 1, 2, 3, 4, 5, 6]), array([7, 8, 9]))

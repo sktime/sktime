@@ -51,9 +51,9 @@ class SAX(BaseTransformer):
 
     >>> X = arange(10)
     >>> sax = SAX(word_size=3, alphabet_size=5)
-    >>> sax.fit_transform(X)  # doctest: +SKIP
+    >>> sax.fit_transform(X)
     array([0, 2, 4])
-    >>> sax = SAX(frame_size=2, alphabet_size=5)  # doctest: +SKIP
+    >>> sax = SAX(frame_size=2, alphabet_size=5)
     array([0, 1, 2, 3, 4])
     """
 

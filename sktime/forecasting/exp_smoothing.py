@@ -104,10 +104,10 @@ class ExponentialSmoothing(_StatsModelsAdapter):
     >>> y = load_airline()
     >>> forecaster = ExponentialSmoothing(
     ...     trend='add', seasonal='multiplicative', sp=12
-    ... )  # doctest: +SKIP
-    >>> forecaster.fit(y)  # doctest: +SKIP
+    ... )
+    >>> forecaster.fit(y)
     ExponentialSmoothing(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
     _tags = {

@@ -78,8 +78,8 @@ class MVTSTransformerClassifier(BaseDeepClassifierPytorch):
     >>> X_test, _ = load_unit_test(split="test")
     >>>
     >>> model = MVTSTransformerClassifier()
-    >>> model.fit(X_train, y_train)  # doctest: +SKIP
-    >>> preds = model.predict(X_test)  # doctest: +SKIP
+    >>> model.fit(X_train, y_train)
+    >>> preds = model.predict(X_test)
     """
 
     _tags = {

@@ -92,10 +92,10 @@ class HFTransformersForecaster(BaseForecaster):
     ...         "use_cpu": True,
     ...         "label_length": 2,
     ...    },
-    ... ) # doctest: +SKIP
-    >>> forecaster.fit(y) # doctest: +SKIP
+    ... )
+    >>> forecaster.fit(y)
     >>> fh = [1, 2, 3]
-    >>> y_pred = forecaster.predict(fh) # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh)
 
     >>> from sktime.forecasting.hf_transformers_forecaster import (
     ...     HFTransformersForecaster,
@@ -124,10 +124,10 @@ class HFTransformersForecaster(BaseForecaster):
     ...        target_modules=["q_proj", "v_proj"],
     ...        lora_dropout=0.01,
     ...    )
-    ... ) # doctest: +SKIP
-    >>> forecaster.fit(y) # doctest: +SKIP
+    ... )
+    >>> forecaster.fit(y)
     >>> fh = [1, 2, 3]
-    >>> y_pred = forecaster.predict(fh) # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh)
     """
 
     _tags = {

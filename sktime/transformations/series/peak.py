@@ -133,11 +133,11 @@ class PeakTimeFeature(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.peak import PeakTimeFeature  # doctest: +SKIP
-    >>> from sktime.datasets import   # doctest: +SKIP
-    >>> y = load_solar()  # doctest: +SKIP
-    >>> y = y.tz_localize(None)  # doctest: +SKIP
-    >>> y = y.asfreq("H")  # doctest: +SKIP
+    >>> from sktime.transformations.series.peak import PeakTimeFeature
+    >>> from sktime.datasets import load_solar
+    >>> y = load_solar()
+    >>> y = y.tz_localize(None)
+    >>> y = y.asfreq("H")
 
     Example 1: one interval for peak hour and working hour.
     (based on one start/end interval)
@@ -147,8 +147,8 @@ class PeakTimeFeature(BaseTransformer):
     >>> transformer = PeakTimeFeature(ts_freq="H",
     ... peak_hour_start=[6], peak_hour_end=[9],
     ... working_hour_start=[8], working_hour_end=[16]
-    ... )  # doctest: +SKIP
-    >>> y_hat_peak = transformer.fit_transform(y)  # doctest: +SKIP
+    ... )
+    >>> y_hat_peak = transformer.fit_transform(y)
 
     Example 2: two intervals for peak hour and  working hour.
     (based on two start/end intervals)
@@ -158,8 +158,8 @@ class PeakTimeFeature(BaseTransformer):
     >>> transformer = PeakTimeFeature(ts_freq="H",
     ... peak_hour_start=[6, 16], peak_hour_end=[9, 20],
     ... working_hour_start=[8, 15], working_hour_end=[12, 19]
-    ... )  # doctest: +SKIP
-    >>> y_hat_peak = transformer.fit_transform(y)  # doctest: +SKIP
+    ... )
+    >>> y_hat_peak = transformer.fit_transform(y)
 
     Example 3: We may have peak for different seasonality
     Here is an example for peak hour, peak day, peak week, peak month for
@@ -172,8 +172,8 @@ class PeakTimeFeature(BaseTransformer):
     ... peak_day_start=[1, 2], peak_day_end=[2, 3],
     ... peak_week_start=[35, 45], peak_week_end=[40, 52],
     ... peak_month_start=[1, 7], peak_month_end=[6, 12]
-    ... )  # doctest: +SKIP
-    >>> y_hat_peak = transformer.fit_transform(y)  # doctest: +SKIP
+    ... )
+    >>> y_hat_peak = transformer.fit_transform(y)
     """
 
     _tags = {

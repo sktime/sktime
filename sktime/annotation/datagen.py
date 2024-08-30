@@ -160,18 +160,18 @@ def piecewise_normal(
     Examples
     --------
     >>> from sktime.annotation.datagen import piecewise_normal
-    >>> piecewise_normal([1, 2, 3], lengths=[2, 4, 8], random_state=42) # doctest: +SKIP
+    >>> piecewise_normal([1, 2, 3], lengths=[2, 4, 8], random_state=42)
     array([1.49671415, 0.8617357 , 2.64768854, 3.52302986, 1.76584663,
         1.76586304, 4.57921282, 3.76743473, 2.53052561, 3.54256004,
         2.53658231, 2.53427025, 3.24196227, 1.08671976])
 
     >>> from sktime.annotation.datagen import piecewise_normal
-    >>> piecewise_normal([1, 2, 3], lengths=[2, 4, 8], std_dev=0) # doctest: +SKIP
+    >>> piecewise_normal([1, 2, 3], lengths=[2, 4, 8], std_dev=0)
     array([1., 1., 2., 2., 2., 2., 3., 3., 3., 3., 3., 3., 3., 3.])
 
     >>> from sktime.annotation.datagen import piecewise_normal
     >>> piecewise_normal([1, 2, 3], lengths=[2, 4, 8], std_dev=[0, 0.5, 1.0])\
-        # doctest: +SKIP
+
     array([1.        , 1.        , 2.32384427, 2.76151493, 1.88292331,
         1.88293152, 4.57921282, 3.76743473, 2.53052561, 3.54256004,
         2.53658231, 2.53427025, 3.24196227, 1.08671976])
@@ -226,7 +226,7 @@ def piecewise_multinomial(
     --------
     >>> from sktime.annotation.datagen import piecewise_multinomial
     >>> piecewise_multinomial(20, lengths=[3, 2], p_vals=[[1/4, 3/4], \
-        [3/4, 1/4]], random_state=42) # doctest: +SKIP
+        [3/4, 1/4]], random_state=42)
     array([[ 4, 16],
        [ 8, 12],
        [ 6, 14],
@@ -235,7 +235,7 @@ def piecewise_multinomial(
 
     >>> from sktime.annotation.datagen import piecewise_multinomial
     >>> piecewise_multinomial(10, lengths=[2, 4, 8], \
-        p_vals=[[1, 0], [0, 1], [1, 0]]) # doctest: +SKIP
+        p_vals=[[1, 0], [0, 1], [1, 0]])
     array([[10,  0],
        [10,  0],
        [ 0, 10],

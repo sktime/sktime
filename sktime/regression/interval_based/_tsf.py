@@ -73,10 +73,10 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train")
     >>> X_test, y_test = load_unit_test(split="test")
-    >>> regressor = TimeSeriesForestRegressor(n_estimators=150) # doctest: +SKIP
-    >>> regressor.fit(X_train, y_train) # doctest: +SKIP
+    >>> regressor = TimeSeriesForestRegressor(n_estimators=150)
+    >>> regressor.fit(X_train, y_train)
     TimeSeriesForestRegressor(n_estimators=150)
-    >>> y_pred = regressor.predict(X_test) # doctest: +SKIP
+    >>> y_pred = regressor.predict(X_test)
     """
 
     _tags = {

@@ -71,10 +71,10 @@ class TimeSeriesKMedoids(BaseTimeSeriesLloyds):
     >>> from sktime.clustering.k_medoids import TimeSeriesKMedoids
     >>> X_train, y_train = load_arrow_head(split="train")
     >>> X_test, y_test = load_arrow_head(split="test")
-    >>> clusterer = TimeSeriesKMedoids(n_clusters=3)  # doctest: +SKIP
-    >>> clusterer.fit(X_train)  # doctest: +SKIP
+    >>> clusterer = TimeSeriesKMedoids(n_clusters=3)
+    >>> clusterer.fit(X_train)
     TimeSeriesKMedoids(n_clusters=3)
-    >>> y_pred = clusterer.predict(X_test)  # doctest: +SKIP
+    >>> y_pred = clusterer.predict(X_test)
     """
 
     _tags = {

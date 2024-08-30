@@ -79,15 +79,15 @@ class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
     >>> from sktime.datasets import load_airline
     >>>
     >>> X = load_airline()
-    >>> pipe = ParamFitterPipeline(SeasonalityACF(), [Differencer()])  # doctest: +SKIP
-    >>> pipe.fit(X)  # doctest: +SKIP
+    >>> pipe = ParamFitterPipeline(SeasonalityACF(), [Differencer()])
+    >>> pipe.fit(X)
     ParamFitterPipeline(...)
-    >>> pipe.get_fitted_params()["sp"]  # doctest: +SKIP
+    >>> pipe.get_fitted_params()["sp"]
     12
 
     Alternative construction via dunder method:
 
-    >>> pipe = Differencer() * SeasonalityACF()  # doctest: +SKIP
+    >>> pipe = Differencer() * SeasonalityACF()
     """
 
     _tags = {

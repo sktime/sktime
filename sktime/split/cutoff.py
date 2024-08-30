@@ -151,7 +151,7 @@ class CutoffSplitter(BaseSplitter):
     >>> from sktime.split import CutoffSplitter
     >>> ts = np.arange(10)
     >>> splitter = CutoffSplitter(fh=[2, 4], cutoffs=np.array([3, 5]), window_length=3)
-    >>> list(splitter.split(ts)) # doctest: +SKIP
+    >>> list(splitter.split(ts))
     [(array([1, 2, 3]), array([5, 7])), (array([3, 4, 5]), array([7, 9]))]
     """
 

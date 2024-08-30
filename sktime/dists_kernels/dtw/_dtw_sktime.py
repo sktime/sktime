@@ -113,13 +113,13 @@ class DtwDist(BasePairwiseTransformerPanel):
     >>> from sktime.datasets import load_unit_test
     >>> from sktime.dists_kernels.dtw import DtwDist
     >>>
-    >>> X, _ = load_unit_test(return_type="pd-multiindex")  # doctest: +SKIP
-    >>> d = DtwDist(weighted=True, derivative=True)  # doctest: +SKIP
-    >>> distmat = d.transform(X)  # doctest: +SKIP
+    >>> X, _ = load_unit_test(return_type="pd-multiindex")
+    >>> d = DtwDist(weighted=True, derivative=True)
+    >>> distmat = d.transform(X)
 
     distances are also callable, this does the same:
 
-    >>> distmat = d(X)  # doctest: +SKIP
+    >>> distmat = d(X)
     """
 
     _tags = {

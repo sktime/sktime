@@ -50,37 +50,37 @@ class HolidayFeatures(BaseTransformer):
 
     Examples
     --------
-    >>> import numpy as np  # doctest: +SKIP
-    >>> import pandas as pd  # doctest: +SKIP
-    >>> from datetime import date  # doctest: +SKIP
-    >>> from holidays import country_holidays, financial_holidays  # doctest: +SKIP
-    >>> values = np.random.normal(size=365)  # doctest: +SKIP
-    >>> index = pd.date_range("2000-01-01", periods=365, freq="D")  # doctest: +SKIP
-    >>> X = pd.DataFrame(values, index=index)  # doctest: +SKIP
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> from datetime import date
+    >>> from holidays import country_holidays, financial_holidays
+    >>> values = np.random.normal(size=365)
+    >>> index = pd.date_range("2000-01-01", periods=365, freq="D")
+    >>> X = pd.DataFrame(values, index=index)
 
     Returns country holiday features with custom holiday windows
 
     >>> transformer = HolidayFeatures(
     ...    calendar=country_holidays(country="FR"),
     ...    return_categorical=True,
-    ...    holiday_windows={"Noël": (1, 3), "Jour de l'an": (1, 0)})  # doctest: +SKIP
-    >>> yt = transformer.fit_transform(X)  # doctest: +SKIP
+    ...    holiday_windows={"Noël": (1, 3), "Jour de l'an": (1, 0)})
+    >>> yt = transformer.fit_transform(X)
 
     Returns financial holiday features
 
     >>> transformer = HolidayFeatures(
     ...    calendar=financial_holidays(market="NYSE"),
     ...    return_categorical=True,
-    ...    include_weekend=True)  # doctest: +SKIP
-    >>> yt = transformer.fit_transform(X)  # doctest: +SKIP
+    ...    include_weekend=True)
+    >>> yt = transformer.fit_transform(X)
 
     Returns custom made holiday features
 
     >>> transformer = HolidayFeatures(
     ...    calendar={date(2000,1,14): "Regional Holiday",
     ...              date(2000, 1, 26): "Regional Holiday"},
-    ...    return_categorical=True)  # doctest: +SKIP
-    >>> yt = transformer.fit_transform(X)  # doctest: +SKIP
+    ...    return_categorical=True)
+    >>> yt = transformer.fit_transform(X)
 
     References
     ----------

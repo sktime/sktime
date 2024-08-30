@@ -76,10 +76,10 @@ class BaggingForecaster(BaseForecaster):
     >>> y = load_airline()
     >>> forecaster = BaggingForecaster(
     ...     STLBootstrapTransformer(sp=12), NaiveForecaster(sp=12)
-    ... )  # doctest: +SKIP
-    >>> forecaster.fit(y)  # doctest: +SKIP
+    ... )
+    >>> forecaster.fit(y)
     BaggingForecaster(...)
-    >>> y_hat = forecaster.predict([1,2,3])  # doctest: +SKIP
+    >>> y_hat = forecaster.predict([1,2,3])
     """
 
     _tags = {

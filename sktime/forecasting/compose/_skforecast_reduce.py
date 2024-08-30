@@ -71,16 +71,16 @@ class SkforecastAutoreg(BaseForecaster):
     >>> from sklearn.linear_model import LinearRegression
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> forecaster = SkforecastAutoreg(  # doctest: +SKIP
+    >>> forecaster = SkforecastAutoreg(
     ...     LinearRegression(), 2
     ... )
-    >>> forecaster.fit(y)  # doctest: +SKIP
+    >>> forecaster.fit(y)
     SkforecastAutoreg(lags=2, regressor=LinearRegression())
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
-    >>> y_pred_int = forecaster.predict_interval(  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])
+    >>> y_pred_int = forecaster.predict_interval(
     ...     fh=[2], coverage=[0.9, 0.95]
     ... )
-    >>> y_pred_qtl = forecaster.predict_quantiles(  # doctest: +SKIP
+    >>> y_pred_qtl = forecaster.predict_quantiles(
     ...     fh=[1, 3], alpha=[0.8, 0.3, 0.2, 0.7]
     ... )
 
@@ -93,16 +93,16 @@ class SkforecastAutoreg(BaseForecaster):
     >>> y_test = y.tail(n=4)
     >>> X_train = X.head(n=12)
     >>> X_test = X.tail(n=4)
-    >>> forecaster = SkforecastAutoreg(  # doctest: +SKIP
+    >>> forecaster = SkforecastAutoreg(
     ...     RandomForestRegressor(), [2, 4]
     ... )
-    >>> forecaster.fit(y_train, X=X_train)  # doctest: +SKIP
+    >>> forecaster.fit(y_train, X=X_train)
     SkforecastAutoreg(lags=[2, 4], regressor=RandomForestRegressor())
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3], X=X_test)  # doctest: +SKIP
-    >>> y_pred_int = forecaster.predict_interval(  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3], X=X_test)
+    >>> y_pred_int = forecaster.predict_interval(
     ...     fh=[1, 3], X=X_test, coverage=[0.6, 0.4]
     ... )
-    >>> y_pred_qtl = forecaster.predict_quantiles(  # doctest: +SKIP
+    >>> y_pred_qtl = forecaster.predict_quantiles(
     ...     fh=[1, 3], X=X_test, alpha=[0.01, 0.5]
     ... )
 

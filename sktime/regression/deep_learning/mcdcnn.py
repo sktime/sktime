@@ -72,8 +72,8 @@ class MCDCNNRegressor(BaseDeepRegressor):
     >>> from sktime.regression.deep_learning.mcdcnn import MCDCNNRegressor
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train")
-    >>> mcdcnn = MCDCNNRegressor(n_epochs=1, kernel_size=4) # doctest: +SKIP
-    >>> mcdcnn.fit(X_train, y_train) # doctest: +SKIP
+    >>> mcdcnn = MCDCNNRegressor(n_epochs=1, kernel_size=4)
+    >>> mcdcnn.fit(X_train, y_train)
     MCDCNRegressor(...)
     """
 

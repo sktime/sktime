@@ -112,18 +112,18 @@ class ShapeDTW(BaseClassifier):
     Examples
     --------
     >>> from sktime.classification.distance_based import ShapeDTW
-    >>> from sktime.datasets import load_unit_test  # doctest: +SKIP
-    >>> X_train, y_train = load_unit_test(split="train")  # doctest: +SKIP
-    >>> X_test, y_test = load_unit_test(split="test")  # doctest: +SKIP
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> X_test, y_test = load_unit_test(split="test")
     >>> clf = ShapeDTW(n_neighbors=1,
     ...     subsequence_length=30,
     ...     shape_descriptor_function="raw",
     ...     shape_descriptor_functions=None,
     ...     metric_params=None,
-    ... )  # doctest: +SKIP
-    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
+    ... )
+    >>> clf.fit(X_train, y_train)
     ShapeDTW(...)
-    >>> y_pred = clf.predict(X_test)  # doctest: +SKIP
+    >>> y_pred = clf.predict(X_test)
     """
 
     _tags = {

@@ -63,7 +63,7 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
     >>> from sktime.split import ExpandingWindowSplitter
     >>> ts = np.arange(10)
     >>> splitter = ExpandingWindowSplitter(fh=[2, 4], initial_window=5, step_length=2)
-    >>> list(splitter.split(ts)) # doctest: +SKIP
+    >>> list(splitter.split(ts))
     '[(array([0, 1, 2, 3, 4]), array([6, 8]))]'
     """
 

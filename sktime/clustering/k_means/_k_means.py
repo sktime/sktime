@@ -77,10 +77,10 @@ class TimeSeriesKMeans(BaseTimeSeriesLloyds):
     >>> from sktime.clustering.k_means import TimeSeriesKMeans
     >>> X_train, y_train = load_arrow_head(split="train")
     >>> X_test, y_test = load_arrow_head(split="test")
-    >>> clusterer = TimeSeriesKMeans(n_clusters=3)  # doctest: +SKIP
-    >>> clusterer.fit(X_train)  # doctest: +SKIP
+    >>> clusterer = TimeSeriesKMeans(n_clusters=3)
+    >>> clusterer.fit(X_train)
     TimeSeriesKMeans(n_clusters=3)
-    >>> y_pred = clusterer.predict(X_test)  # doctest: +SKIP
+    >>> y_pred = clusterer.predict(X_test)
     """
 
     _tags = {

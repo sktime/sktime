@@ -168,12 +168,12 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.statsforecast import StatsForecastAutoARIMA
     >>> y = load_airline()
-    >>> forecaster = StatsForecastAutoARIMA(  # doctest: +SKIP
+    >>> forecaster = StatsForecastAutoARIMA(
     ...     sp=12, d=0, max_p=2, max_q=2
     ... )
-    >>> forecaster.fit(y)  # doctest: +SKIP
+    >>> forecaster.fit(y)
     StatsForecastAutoARIMA(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
     _tags = {
@@ -838,9 +838,9 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
     >>> from sktime.forecasting.statsforecast import StatsForecastMSTL
 
     >>> y = load_airline()
-    >>> model = StatsForecastMSTL(season_length=[3,12]) # doctest: +SKIP
-    >>> fitted_model = model.fit(y=y) # doctest: +SKIP
-    >>> y_pred = fitted_model.predict(fh=[1,2,3]) # doctest: +SKIP
+    >>> model = StatsForecastMSTL(season_length=[3,12])
+    >>> fitted_model = model.fit(y=y)
+    >>> y_pred = fitted_model.predict(fh=[1,2,3])
     """
 
     _tags = {

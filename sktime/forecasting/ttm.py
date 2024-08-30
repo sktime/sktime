@@ -90,9 +90,9 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     >>> from sktime.forecasting.ttm import TinyTimeMixerForecaster
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> forecaster = TinyTimeMixerForecaster() # doctest: +SKIP
-    >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
-    >>> y_pred = forecaster.predict() # doctest: +SKIP
+    >>> forecaster = TinyTimeMixerForecaster()
+    >>> forecaster.fit(y, fh=[1, 2, 3])
+    >>> y_pred = forecaster.predict()
 
     >>> from sktime.forecasting.ttm import TinyTimeMixerForecaster
     >>> from sktime.datasets import load_tecator
@@ -115,11 +115,11 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     ...         "output_dir": "test_output",
     ...         "per_device_train_batch_size": 32,
     ...     },
-    ... ) # doctest: +SKIP
+    ... )
     >>>
     >>> # train and predict
-    >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
-    >>> y_pred = forecaster.predict() # doctest: +SKIP
+    >>> forecaster.fit(y, fh=[1, 2, 3])
+    >>> y_pred = forecaster.predict()
     """
 
     _tags = {

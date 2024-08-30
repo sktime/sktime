@@ -44,14 +44,14 @@ class HPFilter(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.hpfilter import HPFilter # doctest: +SKIP
-    >>> import pandas as pd # doctest: +SKIP
-    >>> import statsmodels.api as sm # doctest: +SKIP
-    >>> dta = sm.datasets.macrodata.load_pandas().data # doctest: +SKIP
-    >>> index = pd.period_range('1959Q1', '2009Q3', freq='Q') # doctest: +SKIP
-    >>> dta.set_index(index, inplace=True) # doctest: +SKIP
-    >>> hp = HPFilter(1600) # doctest: +SKIP
-    >>> cycles = hp.fit_transform(X=dta[['realinv']]) # doctest: +SKIP
+    >>> from sktime.transformations.series.hpfilter import HPFilter
+    >>> import pandas as pd
+    >>> import statsmodels.api as sm
+    >>> dta = sm.datasets.macrodata.load_pandas().data
+    >>> index = pd.period_range('1959Q1', '2009Q3', freq='Q')
+    >>> dta.set_index(index, inplace=True)
+    >>> hp = HPFilter(1600)
+    >>> cycles = hp.fit_transform(X=dta[['realinv']])
     """
 
     _tags = {

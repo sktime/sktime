@@ -53,8 +53,8 @@ class SimpleRNNRegressor(BaseDeepRegressor):
     >>> from sktime.regression.deep_learning.rnn import SimpleRNNRegressor
     >>> from sktime.datasets import load_unit_test
     >>> X_train, Y_train = load_unit_test(split="train")
-    >>> clf = SimpleRNNRegressor(n_epochs=20, batch_size=4) # doctest: +SKIP
-    >>> clf.fit(X_train, Y_train) # doctest: +SKIP
+    >>> clf = SimpleRNNRegressor(n_epochs=20, batch_size=4)
+    >>> clf.fit(X_train, Y_train)
     SimpleRNNRegressor(...)
     """
 

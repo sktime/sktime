@@ -262,10 +262,10 @@ class AutoARIMA(_PmdArimaAdapter):
     >>> y = load_airline()
     >>> forecaster = AutoARIMA(
     ...     sp=12, d=0, max_p=2, max_q=2, suppress_warnings=True
-    ... ) # doctest: +SKIP
-    >>> forecaster.fit(y)  # doctest: +SKIP
+    ... )
+    >>> forecaster.fit(y)
     AutoARIMA(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """  # noqa: E501
 
     _tags = {
@@ -674,13 +674,13 @@ class ARIMA(_PmdArimaAdapter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.arima import ARIMA
     >>> y = load_airline()
-    >>> forecaster = ARIMA(  # doctest: +SKIP
+    >>> forecaster = ARIMA(
     ...     order=(1, 1, 0),
     ...     seasonal_order=(0, 1, 0, 12),
     ...     suppress_warnings=True)
-    >>> forecaster.fit(y)  # doctest: +SKIP
+    >>> forecaster.fit(y)
     ARIMA(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """  # noqa: E501
 
     _tags = {
