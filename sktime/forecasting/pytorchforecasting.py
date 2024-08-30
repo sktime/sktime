@@ -779,7 +779,6 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
                         "limit_train_batches": 2,  # for quick test
-                        "enable_checkpointing": False,
                         "logger": False,
                     },
                     "model_params": {
@@ -800,7 +799,6 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
                         "limit_train_batches": 2,  # for quick test
-                        "enable_checkpointing": False,
                         "logger": False,
                     },
                     "model_params": {
@@ -832,7 +830,6 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
                         "limit_train_batches": 2,  # for quick test
-                        "enable_checkpointing": False,
                         "logger": False,
                     },
                     "model_params": {
@@ -854,7 +851,6 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                         "callbacks": [early_stop_callback],
                         "max_epochs": 1,  # for quick test
                         "limit_train_batches": 2,  # for quick test
-                        "enable_checkpointing": False,
                         "logger": False,
                     },
                     "model_params": {
