@@ -74,19 +74,25 @@ jobs:
     outputs:
       obj_list: ${{ steps.get-change-list.outputs.obj_list }}
     steps:
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
+      - uses: actions/checkout@v4
 
-    - name: Get list of names of changed classes
-      id: get-change-list
-      run: |
-        echo "::set-output name=obj_list::$(python -c 'from sktime.tests.test_switch import _get_all_changed_classes; import json; print(json.dumps(_get_all_changed_classes()))')"
+      - run: git remote set-branches origin 'main'
 
-    - name: Print changed classes
-      run: |
-        echo "Changed classes: ${{ steps.get-change-list.outputs.obj_list }}"
+      - run: git fetch --depth 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Get list of names of changed classes
+        id: get-change-list
+        run: |
+          echo "::set-output name=obj_list::$(python -c 'from sktime.tests.test_switch import _get_all_changed_classes; import json; print(json.dumps(_get_all_changed_classes()))')"
+
+      - name: Print changed classes
+        run: |
+          echo "Changed classes: ${{ steps.get-change-list.outputs.obj_list }}"
 
   test-est:
     runs-on: ubuntu-latest
