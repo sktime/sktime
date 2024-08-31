@@ -73,6 +73,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       obj_list: ${{ steps.get-change-list.outputs.obj_list }}
+      obj_list_length: ${{ steps.get-change-list.outputs.obj_list_length }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -93,13 +95,17 @@ jobs:
       - name: Get list of names of changed classes
         id: get-change-list
         run: |
-          OBJ_LIST=$(python -c 'from sktime.tests.test_switch import _get_all_changed_classes; import json; print(json.dumps(_get_all_changed_classes()))')
+          OBJ_LIST=$(python -c 'from sktime.tests.test_switch import _get_all_changed_classes; import json; obj_list = _get_all_changed_classes(); print(json.dumps(obj_list))')
+          OBJ_LIST_LENGTH=$(python -c 'from sktime.tests.test_switch import _get_all_changed_classes; obj_list = _get_all_changed_classes(); print(len(obj_list))')
           echo "OBJ_LIST=$OBJ_LIST" >> $GITHUB_ENV
+          echo "OBJ_LIST_LENGTH=$OBJ_LIST_LENGTH" >> $GITHUB_ENV
           echo "::set-output name=obj_list::$OBJ_LIST"
+          echo "::set-output name=obj_list_length::$OBJ_LIST_LENGTH"
 
       - name: Print changed classes
         run: |
-          echo $OBJ_LIST
+          echo "Number of changed classes: $OBJ_LIST_LENGTH"
+          echo "Changed classes: $OBJ_LIST"
 
   test-est:
     needs: detect-changed-classes
