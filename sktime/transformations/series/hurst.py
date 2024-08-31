@@ -1,7 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Hurst Exponent Transformer for time series analysis."""
 
-# __author__ = ["phoeenniixx"]
 
 import numpy as np
 import pandas as pd
@@ -45,7 +44,7 @@ class HurstExponentTransformer(BaseTransformer):
 
     _tags = {
         "scitype:transform-input": "Series",
-        "scitype:transform-output": "Series",
+        "scitype:transform-output": "Primitives",
         "scitype:instancewise": True,
         "scitype:transform-labels": "None",
         "X_inner_mtype": "pd.Series",
@@ -57,7 +56,6 @@ class HurstExponentTransformer(BaseTransformer):
         "capability:unequal_length": True,
         "handles-missing-data": False,
         "authors": ["phoeenniixx"],
-        "maintainers": ["fkiraly"],
     }
 
     def __init__(
@@ -97,7 +95,7 @@ class HurstExponentTransformer(BaseTransformer):
         return self
 
     def _transform(self, X: pd.Series, y=None):
-        """Transform X and return a transformed version.
+        """Transform X and return a single-row DataFrame with Hurst exponent and confidence interval.
 
         Parameters
         ----------
@@ -108,13 +106,14 @@ class HurstExponentTransformer(BaseTransformer):
 
         Returns
         -------
-        X_transformed : pd.Series
-            The input series with its Hurst exponent appended as metadata.
+        X_transformed : pd.DataFrame
+            A single-row DataFrame containing the Hurst exponent and confidence interval.
         """
-        X_transformed = X.copy()
-        X_transformed.attrs['hurst_exponent'] = self.hurst_estimate_
-        X_transformed.attrs['hurst_confidence_interval'] = self.confidence_interval_
-        return X_transformed
+        return pd.DataFrame({
+            'hurst_exponent': [self.hurst_estimate_],
+            'confidence_interval_lower': [self.confidence_interval_[0]],
+            'confidence_interval_upper': [self.confidence_interval_[1]]
+        })
 
     def _hurst_exponent(self, ts: pd.Series) -> float:
         """Calculate Hurst exponent for a single time series."""
