@@ -127,6 +127,9 @@ jobs:
           # Run the Python script to get the list of requirements for the flag
           pip install -r <(python -c "from sktime.registry import deps; print('\n'.join(deps('${{ matrix.flag }}')))")
 
+      - name: Show dependencies
+        run: python -m pip list
+
       - name: Run tests with ${{ matrix.flag }}
         env:
           FLAG: ${{ matrix.flag }}
