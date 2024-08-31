@@ -6,7 +6,6 @@ Module does not contain tests, only test utilities.
 
 __author__ = ["fkiraly"]
 
-from functools import lru_cache
 from inspect import isclass
 
 
