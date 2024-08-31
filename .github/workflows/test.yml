@@ -88,7 +88,7 @@ jobs:
       - name: Get list of names of changed classes
         id: get-change-list
         run: |
-          OBJ_LIST=$(python -c 'from sktime.tests.test_switch import _get_all_changed_classes; import json; print(json.dumps(_get_all_changed_classes()))'
+          OBJ_LIST=$(python -c 'from sktime.tests.test_switch import _get_all_changed_classes; import json; print(json.dumps(_get_all_changed_classes()))')
           echo "OBJ_LIST=$OBJ_LIST" >> $GITHUB_ENV
           echo "::set-output name=obj_list::$OBJ_LIST"
 
@@ -145,7 +145,7 @@ jobs:
               - pyproject.toml
 
   test-nodevdeps:
-    needs: [detect-package-change, detect-changed-classes]
+    needs: detect-package-change
     if: ${{ needs.detect-package-change.outputs.sktime == 'true' }}
     runs-on: ubuntu-latest
     steps:
@@ -166,7 +166,7 @@ jobs:
           python sktime/_nopytest_tests.py
 
   test-nosoftdeps:
-    needs: [detect-package-change, detect-changed-classes]
+    needs: detect-package-change
     if: ${{ needs.detect-package-change.outputs.sktime == 'true' }}
     runs-on: ubuntu-latest
     steps:
