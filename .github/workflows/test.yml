@@ -154,7 +154,7 @@ jobs:
               - pyproject.toml
 
   test-nodevdeps:
-    needs: detect-changed-classes
+    needs: detect-package-change
     if: ${{ needs.detect-package-change.outputs.sktime == 'true' }}
     runs-on: ubuntu-latest
     steps:
