@@ -127,7 +127,7 @@ jobs:
         run: python -c "from sktime.utils import check_estimator; from sktime.registry import craft; check_estimator(craft('${{ matrix.flag }}'), raise_exceptions=True)"
 
   detect-package-change:
-    needs: code-quality, detect-changed-classes
+    needs: [code-quality, detect-changed-classes]
     name: detect package changes
     runs-on: ubuntu-latest
     permissions:
@@ -145,7 +145,7 @@ jobs:
               - pyproject.toml
 
   test-nodevdeps:
-    needs: detect-package-change, detect-changed-classes
+    needs: [detect-package-change, detect-changed-classes]
     if: ${{ needs.detect-package-change.outputs.sktime == 'true' }}
     runs-on: ubuntu-latest
     steps:
@@ -166,7 +166,7 @@ jobs:
           python sktime/_nopytest_tests.py
 
   test-nosoftdeps:
-    needs: detect-package-change, detect-changed-classes
+    needs: [detect-package-change, detect-changed-classes]
     if: ${{ needs.detect-package-change.outputs.sktime == 'true' }}
     runs-on: ubuntu-latest
     steps:
