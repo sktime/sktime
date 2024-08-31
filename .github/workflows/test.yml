@@ -69,6 +69,7 @@ jobs:
         shell: bash
 
   detect-changed-classes:
+    needs: code-quality
     runs-on: ubuntu-latest
     outputs:
       obj_list: ${{ steps.get-change-list.outputs.obj_list }}
