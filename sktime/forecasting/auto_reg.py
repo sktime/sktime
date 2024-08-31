@@ -14,7 +14,8 @@ from sktime.forecasting.base.adapters import _StatsModelsAdapter
 class AutoREG(_StatsModelsAdapter):
     """Autoregressive AR-X(p) model.
 
-    Estimate an AR-X model using Conditional Maximum Likelihood (OLS).
+    Estimate an AR-X model using Conditional Maximum Likelihood with
+    Gaussian noise terms (same as OLS).
 
     Parameters
     ----------
