@@ -82,7 +82,7 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
     # global default tags for dependency management
     _tags = {
         "python_version": None,  # PEP 440 version specifier, e.g., ">=3.7"
-        "python_dependencies": None,  # PEP 440 dependency strs, e.g., "pandas>=1.0"
+        "python_dependencies": None,  # PEP 440 dependency strs, e.g., "pandas>=1.1"
         "env_marker": None,  # PEP 508 environment marker, e.g., "os_name=='posix'"
     }
 
