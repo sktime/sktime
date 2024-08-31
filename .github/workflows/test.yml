@@ -88,11 +88,13 @@ jobs:
       - name: Get list of names of changed classes
         id: get-change-list
         run: |
-          echo "::set-output name=obj_list::$(python -c 'from sktime.tests.test_switch import _get_all_changed_classes; import json; print(json.dumps(_get_all_changed_classes()))')"
+          OBJ_LIST=$(python -c 'from sktime.tests.test_switch import _get_all_changed_classes; import json; print(json.dumps(_get_all_changed_classes())))'
+          echo "OBJ_LIST=$OBJ_LIST" >> $GITHUB_ENV
+          echo "::set-output name=obj_list::$OBJ_LIST"
 
       - name: Print changed classes
         run: |
-          echo "Changed classes: ${{ steps.get-change-list.outputs.obj_list }}"
+          echo $OBJ_LIST
 
   test-est:
     runs-on: ubuntu-latest
