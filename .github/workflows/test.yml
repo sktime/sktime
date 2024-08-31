@@ -102,6 +102,7 @@ jobs:
           echo $OBJ_LIST
 
   test-est:
+    needs: detect-changed-classes
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -150,7 +151,7 @@ jobs:
               - pyproject.toml
 
   test-nodevdeps:
-    needs: detect-package-change
+    needs: detect-changed-classes
     if: ${{ needs.detect-package-change.outputs.sktime == 'true' }}
     runs-on: ubuntu-latest
     steps:
