@@ -68,6 +68,51 @@ jobs:
         run: build_tools/run_blogposts.sh
         shell: bash
 
+  detect-changed-classes:
+    runs-on: ubuntu-latest
+    outputs:
+      obj_list: ${{ steps.get-change-list.outputs.obj_list }}
+    steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Get list of class names
+      id: get-change-list
+      run: |
+        echo "::set-output name=obj_list::$(python -c 'from sktime.tests.test_switch import _get_all_changed_classes; import json; print(json.dumps(_get_all_changed_classes()))')"
+
+  test-est:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        flag: ${{ fromJson(needs.detect-changed-classes.outputs.obj_list) }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install sktime with dev dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .[dev]
+
+      - name: Install dependencies for ${{ matrix.flag }}
+        run: |
+          # Run the Python script to get the list of requirements for the flag
+          pip install -r <(python -c "from sktime.registry import deps; print('\n'.join(deps('${{ matrix.flag }}')))")
+
+      - name: Run tests with ${{ matrix.flag }}
+        env:
+          FLAG: ${{ matrix.flag }}
+        run: python -c "from sktime.utils import check_estimator; from sktime.registry import craft; check_estimator(craft('${{ matrix.flag }}'), raise_exceptions=True)"
+
   detect-package-change:
     needs: code-quality
     name: detect package changes
