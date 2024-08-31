@@ -1112,7 +1112,7 @@ class TestAllGlobalForecasters(TestAllObjects):
         from sktime.utils._testing.hierarchical import _make_hierarchical
 
         data = _make_hierarchical(
-            (50, 1),
+            (70, 1),
             n_columns=2,
             max_timepoints=data_length,
             min_timepoints=data_length,
@@ -1137,7 +1137,7 @@ class TestAllGlobalForecasters(TestAllObjects):
         from sktime.utils._testing.hierarchical import _make_hierarchical
 
         data = _make_hierarchical(
-            (5, 10),
+            (7, 10),
             n_columns=2,
             max_timepoints=data_length,
             min_timepoints=data_length,
