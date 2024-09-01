@@ -1,10 +1,10 @@
-# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+# Copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Hurst Exponent Transformer for time series analysis."""
 
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
-from typing import Union, List, Optional
 from scipy import stats
 
 from sktime.transformations.base import BaseTransformer
@@ -20,7 +20,8 @@ class HurstExponentTransformer(BaseTransformer):
     Parameters
     ----------
     lags : Optional[Union[List[int], range]], default=None
-        The lags to use for calculation. If None, uses a range based on min_lag and max_lag.
+        The lags to use for calculation. If None, uses a range based on min_lag
+        and max_lag.
     method : str, default='rs'
         The method to use for Hurst exponent calculation. Either 'rs' (rescaled range)
         or 'dfa' (detrended fluctuation analysis).
@@ -58,13 +59,13 @@ class HurstExponentTransformer(BaseTransformer):
     }
 
     def __init__(
-            self,
-            lags: Optional[Union[List[int], range]] = None,
-            method: str = 'rs',
-            min_lag: int = 2,
-            max_lag: int = 100,
-            fit_trend: str = 'c',
-            confidence_level: float = 0.95
+        self,
+        lags: Optional[Union[list[int], range]] = None,
+        method: str = "rs",
+        min_lag: int = 2,
+        max_lag: int = 100,
+        fit_trend: str = "c",
+        confidence_level: float = 0.95,
     ):
         self.lags = lags
         self.method = method
@@ -94,7 +95,7 @@ class HurstExponentTransformer(BaseTransformer):
         return self
 
     def _transform(self, X: pd.Series, y=None):
-        """Transform X and return a single-row DataFrame with Hurst exponent and confidence interval.
+        """Transform X, return DataFrame with Hurst exponent and confidence interval.
 
         Parameters
         ----------
@@ -106,19 +107,22 @@ class HurstExponentTransformer(BaseTransformer):
         Returns
         -------
         X_transformed : pd.DataFrame
-            A single-row DataFrame containing the Hurst exponent and confidence interval.
+            A single-row DataFrame containing the Hurst exponent
+            and confidence interval.
         """
-        return pd.DataFrame({
-            'hurst_exponent': [self.hurst_estimate_],
-            'confidence_interval_lower': [self.confidence_interval_[0]],
-            'confidence_interval_upper': [self.confidence_interval_[1]]
-        })
+        return pd.DataFrame(
+            {
+                "hurst_exponent": [self.hurst_estimate_],
+                "confidence_interval_lower": [self.confidence_interval_[0]],
+                "confidence_interval_upper": [self.confidence_interval_[1]],
+            }
+        )
 
     def _hurst_exponent(self, ts: pd.Series) -> float:
         """Calculate Hurst exponent for a single time series."""
-        if self.method == 'rs':
+        if self.method == "rs":
             return self._rs_method(ts)
-        elif self.method == 'dfa':
+        elif self.method == "dfa":
             return self._dfa_method(ts)
         else:
             raise ValueError("Invalid method. Choose 'rs' or 'dfa'.")
@@ -130,7 +134,7 @@ class HurstExponentTransformer(BaseTransformer):
         return self._fit_hurst(lags, tau)
 
     def _dfa_method(self, ts: pd.Series) -> float:
-        """Detrended Fluctuation Analysis (DFA) method for Hurst exponent calculation."""
+        """Detrended Fluctuation Analysis method for Hurst exponent calculation."""
         lags = self.lags or range(self.min_lag, min(self.max_lag, len(ts) // 4))
         tau = [self._calculate_dfa(ts, lag) for lag in lags]
         return self._fit_hurst(lags, tau)
@@ -139,7 +143,10 @@ class HurstExponentTransformer(BaseTransformer):
         """Calculate rescaled range for a given lag."""
         rolling_mean = ts.rolling(window=lag).mean()
         dev_from_mean = ts - rolling_mean
-        range_ts = dev_from_mean.rolling(window=lag).max() - dev_from_mean.rolling(window=lag).min()
+        range_ts = (
+            dev_from_mean.rolling(window=lag).max()
+            - dev_from_mean.rolling(window=lag).min()
+        )
         std_ts = ts.rolling(window=lag).std()
         rs = range_ts / std_ts
         return np.nanmean(rs)
@@ -151,7 +158,7 @@ class HurstExponentTransformer(BaseTransformer):
         n_segments = y_len // lag
         fluctuations = []
         for i in range(n_segments):
-            segment = y[i * lag:(i + 1) * lag]
+            segment = y[i * lag : (i + 1) * lag]
             x = np.arange(lag)
             coef = np.polyfit(x, segment, 1)
             trend = np.polyval(coef, x)
@@ -159,12 +166,14 @@ class HurstExponentTransformer(BaseTransformer):
             fluctuations.append(fluctuation)
         return np.mean(fluctuations)
 
-    def _fit_hurst(self, lags: Union[List[int], range], tau: List[float]) -> float:
+    def _fit_hurst(self, lags: Union[list[int], range], tau: list[float]) -> float:
         """Fit Hurst exponent from log-log plot."""
         log_lags = np.log(lags)
         log_tau = np.log(tau)
 
-        slope, intercept, r_value, p_value, std_err = stats.linregress(log_lags, log_tau)
+        slope, intercept, r_value, p_value, std_err = stats.linregress(
+            log_lags, log_tau
+        )
 
         self._calculate_confidence_interval(slope, std_err, len(lags))
 
@@ -181,6 +190,7 @@ class HurstExponentTransformer(BaseTransformer):
     def plot_log_log(self, ts: pd.Series):
         """Plot the log-log graph used in Hurst exponent calculation."""
         from sktime.utils.dependencies._dependencies import _check_soft_dependencies
+
         try:
             _check_soft_dependencies("matplotlib", severity="warning")
             import matplotlib.pyplot as plt
@@ -189,23 +199,30 @@ class HurstExponentTransformer(BaseTransformer):
             return
 
         lags = self.lags or range(self.min_lag, min(self.max_lag, len(ts) // 2))
-        if self.method == 'rs':
+        if self.method == "rs":
             tau = [self._calculate_rs(ts, lag) for lag in lags]
-            y_label = 'log(R/S)'
+            y_label = "log(R/S)"
         else:  # DFA method
             tau = [self._calculate_dfa(ts, lag) for lag in lags]
-            y_label = 'log(F)'
+            y_label = "log(F)"
 
         log_lags = np.log(lags)
         log_tau = np.log(tau)
 
         plt.figure(figsize=(10, 6))
         plt.scatter(log_lags, log_tau, alpha=0.5)
-        plt.plot(log_lags, self.hurst_estimate_ * log_lags + np.mean(log_tau - self.hurst_estimate_ * log_lags),
-                 color='r', label=f'Hurst = {self.hurst_estimate_:.3f}')
-        plt.xlabel('log(lag)')
+        plt.plot(
+            log_lags,
+            self.hurst_estimate_ * log_lags
+            + np.mean(log_tau - self.hurst_estimate_ * log_lags),
+            color="r",
+            label=f"Hurst = {self.hurst_estimate_:.3f}",
+        )
+        plt.xlabel("log(lag)")
         plt.ylabel(y_label)
-        plt.title(f'Log-Log Plot for Hurst Exponent Estimation ({self.method.upper()} method)')
+        plt.title(
+            f"Log-Log Plot for Hurst Exponent Estimation ({self.method.upper()} method)"
+        )
         plt.legend()
         plt.grid(True, which="both", ls="-", alpha=0.2)
         plt.show()
