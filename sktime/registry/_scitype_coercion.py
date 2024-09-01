@@ -16,6 +16,16 @@ _coerce_register[("transformer_tabular", "transformer")] = (
 )
 
 
+def _coerce_clusterer_to_transformer(obj):
+    from sktime.clustering.compose import ClustererAsTransformer
+
+    return ClustererAsTransformer(obj)
+
+_coerce_register[("clusterer", "transformer")] = (
+    _coerce_clusterer_to_transformer
+)
+
+
 def coerce_scitype(
     obj,
     to_scitype,
