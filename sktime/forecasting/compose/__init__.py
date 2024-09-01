@@ -12,7 +12,7 @@ __all__ = [
     "TransformedTargetForecaster",
     "ForecastingPipeline",
     "ForecastX",
-    "GroupyCategoryForecaster",
+    "GroupbyCategoryForecaster",
     "DirectTabularRegressionForecaster",
     "DirectTimeSeriesRegressionForecaster",
     "MultioutputTabularRegressionForecaster",

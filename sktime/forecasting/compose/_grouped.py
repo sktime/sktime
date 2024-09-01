@@ -224,7 +224,7 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
         "enforce_index_type": None,
-        "authors": ["felipeangelimvieira"],
+        "authors": ["felipeangelimvieira", "shlok191"],
         "maintainers": ["felipeangelimvieira"],
         "python_version": None,
     }
