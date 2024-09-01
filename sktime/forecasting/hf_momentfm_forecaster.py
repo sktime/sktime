@@ -124,7 +124,11 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         "authors": ["julian-fong"],
         "maintainers": ["julian-fong"],
         "handles-missing-data": False,
-        "y_inner_mtype": "pd.DataFrame",
+        "y_inner_mtype": [
+            "pd.DataFrame",
+            "pd-multiindex",
+            "pd_multiindex_hier",
+        ],
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": True,
         "python_dependencies": ["torch", "tqdm", "huggingface-hub", "transformers"],
@@ -264,6 +268,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         self._model_fh = self._fh
         # revert self._fh back to fh to pass checks
         self._fh = fh
+
         self._model = MOMENTPipeline.from_pretrained(
             self._pretrained_model_name_or_path,
             model_kwargs={
@@ -280,7 +285,6 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             },
         )
         self._model.init()
-
         # preparing the datasets
         y_train, y_test = temporal_train_test_split(
             y, train_size=1 - self.train_val_split, test_size=self.train_val_split
@@ -291,9 +295,10 @@ class MomentFMForecaster(_BaseGlobalForecaster):
                 "is 512, having less could cause inaccuracy during training"
                 ". Using a larger dataset is recommended"
             )
-        if y_train.shape[0] < 512:
+
+        if y_train.shape[0] < 512 and not isinstance(y.index, pd.MultiIndex):
             y_train = _sample_observations(y_train)
-        if y_test.shape[0] < 512:
+        if y_test.shape[0] < 512 and not isinstance(y.index, pd.MultiIndex):
             y_test = _sample_observations(y_test)
 
         train_dataset = MomentPytorchDataset(
@@ -344,6 +349,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
                 self._model, optimizer, train_dataloader, val_dataloader, scheduler
             )
         )
+
         while cur_epoch < max_epoch:
             cur_epoch = _run_epoch(
                 cur_epoch,
@@ -357,7 +363,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             )
         return self
 
-    def _predict(self, y, fh, X):
+    def _predict(self, y, X, fh=[1, 2]):
         """Predict method to forecast timesteps into the future.
 
         fh should not be passed here and
@@ -376,9 +382,15 @@ class MomentFMForecaster(_BaseGlobalForecaster):
 
         self._model = self._model.to(self._device)
         self._model.eval()
-        # first convert it into numpy values
-        y_ = y.values
-        sequence_length, num_channels = y_.shape  # shape of our input to predict
+        y_index_names = list(y.index.names)
+        if isinstance(y.index, pd.MultiIndex):
+            y_ = _frame2numpy(y)
+        else:
+            y_ = np.expand_dims(y.values, axis=0)
+
+        num_instances, sequence_length, num_channels = (
+            y_.shape
+        )  # shape of our input to predict
         # raise warning if sequence length of y is greater than the sequence
         # length used to fit the model
         if sequence_length > self._seq_len:
@@ -388,17 +400,16 @@ class MomentFMForecaster(_BaseGlobalForecaster):
                 f" {self._seq_len} values will be used.",
                 stacklevel=2,
             )
+            # truncate code
             # only retain the most recent self._seq_len values if greater than
             # self._seq_len
-            y_ = y_[-self._seq_len :, :]
+            y_ = y_[:, -self._seq_len :, :]
             sequence_length = self._seq_len
-
-        # transpose it to change it into (C, S) size
-        y_ = y_.T
         if sequence_length < self._moment_seq_len:
             # if smaller, need to pad values
             y_ = _create_padding(
-                y_, (self._moment_seq_len - sequence_length, num_channels)
+                y_,
+                (num_instances, self._moment_seq_len - sequence_length, num_channels),
             )
             input_mask = _create_mask(
                 sequence_length, self._moment_seq_len - sequence_length
@@ -408,18 +419,49 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         if num_channels != self._y_shape[1]:
             # Todo raise error here
             pass
+        # transpose it to change it into (C, S) size
+        y_ = y_.transpose(0, 2, 1)
         # returns a timeseriesoutput object
-        y_torch_input = (
-            from_numpy(y_.reshape((1, self._y_shape[1], -1))).float().to(self._device)
-        )
+        y_torch_input = from_numpy(y_).float().to(self._device)
         input_mask = input_mask.to(self._device)
         output = self._model(y_torch_input, input_mask)
         forecast_output = output.forecast
-        forecast_output = forecast_output.squeeze(0)
+        # forecast_output = forecast_output.squeeze(0)
 
-        pred = forecast_output.detach().cpu().numpy().T
-        df_pred = pd.DataFrame(pred, columns=self._y_cols, index=fh_index)
-        df_pred = df_pred.loc[index]
+        pred = forecast_output.detach().cpu().numpy()
+        # revert back to (B, S, C)
+        pred = np.transpose(pred, (0, 2, 1))
+
+        # reshape into 2 dimensions
+        pred = pred.reshape(pred.shape[0] * pred.shape[1], -1)
+
+        if isinstance(y.index, pd.MultiIndex):
+            # get all the unique possible combinations of indices without timepoints
+            levels_minus_timepoints = y.index.droplevel(-1).unique()
+            # create a list of the new indices
+            if isinstance(levels_minus_timepoints, pd.MultiIndex):
+                # hierarchical scenario
+                new_indices = [
+                    levels_minus_timepoints.levels[i]
+                    for i in range(len(levels_minus_timepoints.levels))
+                ]
+            else:
+                # panel scenario
+                new_indices = [levels_minus_timepoints]
+
+            new_indices.append(list(fh_index))
+            new_index = pd.MultiIndex.from_product(new_indices, names=y_index_names)
+
+            df_pred = pd.DataFrame(pred, columns=self._y_cols, index=new_index)
+            absolute_horizons = fh.to_absolute_index(self.cutoff)
+            dateindex = df_pred.index.get_level_values(-1).map(
+                lambda x: x in absolute_horizons
+            )
+            df_pred = df_pred.loc[dateindex]
+        else:
+            new_index = fh_index
+            df_pred = pd.DataFrame(pred, columns=self._y_cols, index=new_index)
+            df_pred = df_pred.loc[index]
 
         return df_pred
 
@@ -463,8 +505,18 @@ def _create_padding(x, pad_shape):
         x_ = from_numpy(x)
     else:
         x_ = x
-    zero_pad = zeros(pad_shape).T  # transpose to make it size (C, 512)
-    out = cat((x_, zero_pad), axis=1)
+
+    pad_shape_dim = x_.dim()
+    # create a padding of size 2 for fit()
+    if pad_shape_dim == 2:
+        zero_pad = zeros(pad_shape)
+        axis = 0
+    else:
+        # if its 3 dimensions, we are in predict()
+        zero_pad = zeros(pad_shape)
+        axis = 1
+
+    out = cat((x_, zero_pad), axis=axis)
     if isinstance(x, np.ndarray):
         out = np.array(out)
     return out
@@ -605,6 +657,24 @@ def _sample_observations(y):
     return y_sampled
 
 
+def _same_index(data: pd.DataFrame):
+    data = data.groupby(level=list(range(len(data.index.levels) - 1))).apply(
+        lambda x: x.index.get_level_values(-1)
+    )
+    assert data.map(
+        lambda x: x.equals(data.iloc[0])
+    ).all(), "All series must has the same index"
+    return data.iloc[0], len(data.iloc[0])
+
+
+def _frame2numpy(data: pd.DataFrame):
+    idx, length = _same_index(data)
+    arr = np.array(data.values, dtype=np.float32).reshape(
+        (-1, length, len(data.columns))
+    )
+    return arr
+
+
 class MomentPytorchDataset(Dataset):
     """Customized Pytorch dataset for the momentfm model."""
 
@@ -616,10 +686,30 @@ class MomentPytorchDataset(Dataset):
         self.shape = y.shape
         self.device = device
 
+        # multi-index conversion
+        if isinstance(y.index, pd.MultiIndex):
+            self.y = _frame2numpy(y)
+        else:
+            self.y = np.expand_dims(y.values, axis=0)
+
+        # n_timestamps should be the seq length for a single series in both
+        # cases, multivariate dataframe
+        # or a panel/hierarchical dataset
+        # if hier/panel, self.n_sequences will be > 1, else will be = 1 if
+        # # a regular multivariate df
+        self.n_sequences, self.n_timestamps, self.n_columns = self.y.shape
+
+        # self.single_length is defined as the length of one series under
+        # one instance in the panel/hier case
+        # else it is just the seq_len of the multivariate data
+        self.single_length = self.n_timestamps - self.seq_len - self.fh + 1
+
         # code block to figure out masking sizes in case seq_len < 512
         if self.seq_len < self.moment_seq_len:
-            self._pad_shape = (self.moment_seq_len - self.seq_len, self.shape[1])
-            self.input_mask = _create_mask(self.seq_len, self._pad_shape[0]).float()
+            self._pad_shape = (self.moment_seq_len - self.seq_len, self.n_columns)
+            self.input_mask = _create_mask(
+                self.seq_len, self.moment_seq_len - self.seq_len
+            ).float()
             # Concatenate the tensors
         elif self.seq_len > self.moment_seq_len:
             # for now if seq_len > 512 than we reduce it back to 512
@@ -630,7 +720,12 @@ class MomentPytorchDataset(Dataset):
 
     def __len__(self):
         """Return length of dataset."""
-        return len(self.y) - self.seq_len - self.fh + 1
+        # in the case of a regular multivariate df, we just return the trivial case
+        # self.n_timestamps - self.seq_len - self.fh + 1
+        # but in case the data is panel/hier, we need to count the total
+        # #number of instances
+        # i.e self.n_sequences
+        return self.single_length * self.n_sequences
 
     def __getitem__(self, i):
         """Return dataset items from index i."""
@@ -638,22 +733,22 @@ class MomentPytorchDataset(Dataset):
         # where B = batch_size, C = channels, S = sequence_length
         from torch import from_numpy
 
-        hist_end = i + self.seq_len
-        pred_end = i + self.seq_len + self.fh
+        # select the correct instance
+        n = i // self.single_length
+        # select the correct timepoint starting index based on the selected instance
+        m = i % self.single_length
 
-        historical_y = (
-            from_numpy(self.y.iloc[i:hist_end].values)
-            .float()
-            .reshape(self.y.shape[1], -1)
-        )
+        hist_end = m + self.seq_len
+        pred_end = m + self.seq_len + self.fh
+
+        historical_y = from_numpy(self.y[n, m:hist_end, :]).float()
+        # historical_y = historical_y.reshape(historical_y.shape[1], -1)
+
         if self.seq_len < self.moment_seq_len:
             historical_y = _create_padding(historical_y, self._pad_shape)
-        historical_y = historical_y.float()
-        future_y = (
-            from_numpy(self.y.iloc[hist_end:pred_end].values)
-            .float()
-            .reshape(self.y.shape[1], -1)
-        ).float()
+        historical_y = historical_y.float().T
+        future_y = from_numpy(self.y[n, hist_end:pred_end, :]).float().T
+        # future_y = future_y.reshape(future_y.shape[1], -1).T
         return {
             "future_y": future_y,
             "historical_y": historical_y,
