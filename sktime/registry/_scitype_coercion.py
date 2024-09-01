@@ -21,6 +21,7 @@ def _coerce_clusterer_to_transformer(obj):
 
     return ClustererAsTransformer(obj)
 
+
 _coerce_register[("clusterer", "transformer")] = _coerce_clusterer_to_transformer
 
 

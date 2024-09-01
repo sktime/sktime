@@ -1,4 +1,5 @@
 """Using a clusterer as transformation."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 from sktime.registry import MTYPE_LIST_PANEL, MTYPE_LIST_SERIES
 from sktime.transformations.base import BaseTransformer
