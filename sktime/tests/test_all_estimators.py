@@ -927,7 +927,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         for est_scitype in est_scitypes:
             if est_scitype in class_lookup:
                 expected_parent = class_lookup[est_scitype]
-                msg = (	
+                msg = (
                     f"Estimator: {estimator_class} is tagged as having scitype "
                     f"{est_scitype} via tag object_type, but is not a sub-class of "
                     f"the corresponding base class {expected_parent.__name__}."
