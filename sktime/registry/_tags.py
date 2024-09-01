@@ -44,7 +44,7 @@ import sys
 import pandas as pd
 
 from sktime.base import BaseObject
-from sktime.registry._base_classes import BASE_CLASS_REGISTER
+from sktime.registry._base_classes import get_obj_scitype_list
 
 
 class _BaseTag(BaseObject):
@@ -103,7 +103,7 @@ class object_type(_BaseTag):
 
 
 # dynamically add a pretty printd list of scitypes to the docstring
-for name, _, desc in BASE_CLASS_REGISTER:
+for name, desc in get_obj_scitype_list(return_descriptions=True):
     object_type.__doc__ += f'\n    - ``"{name}"``: {desc}'
 
 
