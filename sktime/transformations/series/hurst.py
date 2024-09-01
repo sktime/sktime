@@ -5,7 +5,6 @@
 import numpy as np
 import pandas as pd
 from typing import Union, List, Optional
-import matplotlib.pyplot as plt
 from scipy import stats
 
 from sktime.transformations.base import BaseTransformer
@@ -181,6 +180,14 @@ class HurstExponentTransformer(BaseTransformer):
 
     def plot_log_log(self, ts: pd.Series):
         """Plot the log-log graph used in Hurst exponent calculation."""
+        from sktime.utils.dependencies._dependencies import _check_soft_dependencies
+        try:
+            _check_soft_dependencies("matplotlib", severity="warning")
+            import matplotlib.pyplot as plt
+        except ImportError:
+            # If matplotlib is not installed, we'll just return without plotting
+            return
+
         lags = self.lags or range(self.min_lag, min(self.max_lag, len(ts) // 2))
         if self.method == 'rs':
             tau = [self._calculate_rs(ts, lag) for lag in lags]
