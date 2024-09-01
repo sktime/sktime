@@ -378,19 +378,19 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
 
                 # Adopt the fallback forecaster if possible
                 else:
-                    self.chosen_forecaster_ = self.fallback_forecaster.clone()
+                    chosen_forecaster_ = self.fallback_forecaster.clone()
 
             else:
-                self.chosen_forecaster_ = self.forecasters[category].clone()
+                chosen_forecaster_ = self.forecasters[category].clone()
 
             y_category = self._loc_group(y, group.index)
             X_category = None
             if X is not None:
                 X_category = self._loc_group(X, group.index)
             # fitting the forecaster!
-            self.chosen_forecaster_.fit(y=y_category, X=X_category, fh=fh)
+            chosen_forecaster_.fit(y=y_category, X=X_category, fh=fh)
 
-            self.forecasters_[category] = self.chosen_forecaster_
+            self.forecasters_[category] = chosen_forecaster_
 
         return self
 

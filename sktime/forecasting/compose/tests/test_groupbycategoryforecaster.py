@@ -76,15 +76,21 @@ def test_predefined_output(timeseries):
 
 
 def test_predefined_output_groupby(timeseries, categories):
+    """Test if the correct forecasters are fitted for each category"""
     categorizer = PredefinedCategory(transform_output=categories)
     forecaster = GroupbyCategoryForecaster(
         forecasters={
-            1: NaiveForecaster(strategy="mean"),
-            2: NaiveForecaster(strategy="drift"),
+            0: NaiveForecaster(strategy="mean"),
+            1: NaiveForecaster(strategy="drift"),
         },
         transformer=categorizer,
         fallback_forecaster=NaiveForecaster(strategy="last"),
     )
 
     forecaster.fit(timeseries)
-    forecaster.predict(fh=[1, 2, 3])
+    fitted_params = forecaster.get_fitted_params()
+    forecasters = fitted_params["forecasters"]
+    assert len(forecasters) == 3
+    assert forecasters[0].strategy == "mean"
+    assert forecasters[1].strategy == "drift"
+    assert forecasters[3].strategy == "last"
