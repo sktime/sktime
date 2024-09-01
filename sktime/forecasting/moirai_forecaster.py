@@ -337,13 +337,22 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             predictions = self._convert_panel_to_hierarchical(
                 predictions, _y.index.names
             )
+
         pred_out = fh.get_expected_pred_idx(_y, cutoff=self.cutoff)
+
         if self._is_range_index:
-            predictions.index = predictions.index.to_timestamp()
-            predictions.index = (predictions.index - pd.Timestamp("2010-01-01")).map(
+            timepoints = self.return_time_index(predictions)
+            timepoints = timepoints.to_timestamp()
+            timepoints = (timepoints - pd.Timestamp("2010-01-01")).map(
                 lambda x: x.days
-            ) + _y.index[0]
-        predictions = predictions.loc[pred_out]
+            ) + self.return_time_index(_y)[0]
+            if isinstance(predictions.index, pd.MultiIndex):
+                predictions.index = predictions.index.set_levels(
+                    levels=timepoints.unique(), level=-1
+                )
+            else:
+                predictions.index = timepoints
+                predictions = predictions.loc[pred_out]
 
         if _use_fit_data_as_context:
             predictions = predictions.loc[first_seen_index:]
@@ -450,9 +459,6 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             df_config["item_id"] = item_id
             timepoints = df.index.names[-1]
             df_config["timepoints"] = timepoints
-            time_idx = self.return_time_index(df)
-            if not self._is_range_index:
-                freq = self.infer_freq(time_idx)
 
             # Reset index to create a non-multiindex dataframe
             df = df.reset_index()
@@ -464,7 +470,6 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
                 feat_dynamic_real=dynamic_features,
                 item_id=item_id,
                 future_length=forecast_horizon,
-                freq=freq,
             )
         else:
             dataset = PandasDataset(
