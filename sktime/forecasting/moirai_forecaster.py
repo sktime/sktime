@@ -352,11 +352,12 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
                 )
             else:
                 predictions.index = timepoints
-                predictions = predictions.loc[pred_out]
 
         if _use_fit_data_as_context:
             predictions = predictions.loc[first_seen_index:]
 
+        predictions = predictions.loc[pred_out]
+        predictions.index = pred_out
         return predictions
 
     @classmethod
@@ -576,7 +577,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         timepoints = self.return_time_index(df)
         if isinstance(timepoints, pd.RangeIndex):
             return True
-        elif timepoints.is_integer():
+        elif pd.api.types.is_integer_dtype(timepoints):
             return True
         return False
 
