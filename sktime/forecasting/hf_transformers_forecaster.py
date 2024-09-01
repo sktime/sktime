@@ -1,10 +1,13 @@
 """Adapter for using huggingface transformers for forecasting."""
 
 from copy import deepcopy
+from warnings import warn
 
 import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
+
+from sktime.split import temporal_train_test_split
 
 if _check_soft_dependencies("torch", severity="none"):
     import torch
@@ -19,12 +22,12 @@ if _check_soft_dependencies("transformers", severity="none"):
     import transformers
     from transformers import AutoConfig, Trainer, TrainingArguments
 
-from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 
-__author__ = ["benheid", "geetu040"]
+__author__ = ["benheid", "geetu040", "XinyuWu"]
 
 
-class HFTransformersForecaster(BaseForecaster):
+class HFTransformersForecaster(_BaseGlobalForecaster):
     """
     Forecaster that uses a huggingface model for forecasting.
 
@@ -49,6 +52,13 @@ class HFTransformersForecaster(BaseForecaster):
           Note: If the 'peft' package is not available, a `ModuleNotFoundError` will
           be raised, indicating that the 'peft' package is required. Please install
           it using `pip install peft` to use this fit strategy.
+    broadcasting: bool (default=True)
+        DeprecationWarning: default value will be changed to False in v0.34.0
+        multiindex data input will be broadcasted to single series.
+        For each single series, one copy of this forecaster will try to
+        fit and predict on it. The broadcasting is happening inside automatically,
+        from the outerside api perspective, the input and output are the same,
+        only one multiindex output from `predict`.
     validation_split : float, default=0.2
         Fraction of the data to use for validation
     config : dict, default={}
@@ -70,6 +80,25 @@ class HFTransformersForecaster(BaseForecaster):
         When `fit_strategy` is set to "peft",
         this will be used to set up PEFT parameters for the model.
         See the `peft` documentation for details.
+    no_size1_batch: bool, default=True
+        drop the last batch if batch size is one.
+        It's not `drop_last` of pytorch dataloader [1]_,
+        it will only drop if last batch size is exactly one.
+        The batch size is from training_args["per_device_train_batch_size"].
+        If no training_args["per_device_train_batch_size"] passed, it's default 8 [2]_.
+    try_local_files_only: bool, default=False
+        Try to load config and model in `local_files_only` mode first,
+        if any error raises, load again in normal mode.
+        See HuggingFace offline mode for details [3]_.
+
+
+    References
+    ----------
+    .. [1] https://pytorch.org/docs/stable/data.html
+    .. [2] https://huggingface.co/docs/transformers/v4.42.0/en/main_classes/trainer#transformers.TrainingArguments.per_device_train_batch_size
+    .. [3] https://huggingface.co/docs/transformers/main/en/installation#offline-mode
+    # noqa: E501
+
 
     Examples
     --------
@@ -138,10 +167,19 @@ class HFTransformersForecaster(BaseForecaster):
         "handles-missing-data": False,
         "capability:pred_int": False,
         "python_dependencies": ["transformers", "torch"],
-        "X_inner_mtype": "pd.DataFrame",
-        "y_inner_mtype": "pd.Series",
+        "X_inner_mtype": [
+            "pd.DataFrame",
+            "pd-multiindex",
+            "pd_multiindex_hier",
+        ],
+        "y_inner_mtype": [
+            "pd.Series",
+            "pd-multiindex",
+            "pd_multiindex_hier",
+        ],
         "capability:insample": False,
         "capability:pred_int:insample": False,
+        "capability:global_forecasting": True,
     }
 
     def __init__(
@@ -155,15 +193,22 @@ class HFTransformersForecaster(BaseForecaster):
         deterministic=False,
         callbacks=None,
         peft_config=None,
+        no_size1_batch=True,
+        try_local_files_only=False,
+        # TODO change the default value to False in v0.34.0
+        broadcasting=True,
     ):
         super().__init__()
         self.model_path = model_path
         self.fit_strategy = fit_strategy
+        self.broadcasting = broadcasting
         self.validation_split = validation_split
         self.config = config
         self._config = config if config is not None else {}
         self.training_args = training_args
         self._training_args = training_args if training_args is not None else {}
+        if "per_device_train_batch_size" not in self._training_args.keys():
+            self._training_args["per_device_train_batch_size"] = 8
         self.compute_metrics = compute_metrics
         self._compute_metrics = compute_metrics
         self._compute_metrics = compute_metrics
@@ -171,15 +216,46 @@ class HFTransformersForecaster(BaseForecaster):
         self.callbacks = callbacks
         self._callbacks = callbacks
         self.peft_config = peft_config
+        self.no_size1_batch = no_size1_batch
+        self.try_local_files_only = try_local_files_only
+
+        if self.broadcasting:
+            self.set_tags(
+                **{
+                    "y_inner_mtype": "pd.Series",
+                    "X_inner_mtype": "pd.DataFrame",
+                    "capability:global_forecasting": False,
+                }
+            )
+
+        warn(
+            "DeprecationWarning: The default value of the parameter "
+            "broadcasting will be set to False in v0.34.0.",
+            DeprecationWarning,
+        )
 
     def _fit(self, y, X, fh):
+        def try_local_files_only(f: callable):
+            try:
+                return f(True)
+            except Exception:
+                return f(False)
+
+        def load_config(local_files_only=False):
+            return AutoConfig.from_pretrained(
+                self.model_path,
+                local_files_only=local_files_only,
+            )
+
         # Load model and extract config
-        config = AutoConfig.from_pretrained(self.model_path)
+        if self.try_local_files_only:
+            config = try_local_files_only(load_config)
+        else:
+            config = load_config(False)
 
         # Update config with user provided config
         _config = config.to_dict()
         _config.update(self._config)
-        _config["num_dynamic_real_features"] = X.shape[-1] if X is not None else 0
         _config["num_static_real_features"] = 0
         _config["num_dynamic_real_features"] = 0
         _config["num_static_categorical_features"] = 0
@@ -190,7 +266,7 @@ class HFTransformersForecaster(BaseForecaster):
 
         if fh is not None:
             _config["prediction_length"] = max(
-                *(fh.to_relative(self._cutoff)._values + 1),
+                *(fh.to_relative(self._cutoff)._values),
                 _config["prediction_length"],
             )
 
@@ -210,15 +286,22 @@ class HFTransformersForecaster(BaseForecaster):
                 "The model type is not inferable from the config."
                 "Thus, the model cannot be loaded."
             )
+
+        def load_model(local_files_only=False):
+            model, info = getattr(transformers, prediction_model_class).from_pretrained(
+                self.model_path,
+                config=config,
+                output_loading_info=True,
+                ignore_mismatched_sizes=True,
+                local_files_only=local_files_only,
+            )
+            return model, info
+
         # Load model with the updated config
-        self.model, info = getattr(
-            transformers, prediction_model_class
-        ).from_pretrained(
-            self.model_path,
-            config=config,
-            output_loading_info=True,
-            ignore_mismatched_sizes=True,
-        )
+        if self.try_local_files_only:
+            self.model, info = try_local_files_only(load_model)
+        else:
+            self.model, info = load_model(False)
 
         # Freeze all loaded parameters
         for param in self.model.parameters():
@@ -239,20 +322,31 @@ class HFTransformersForecaster(BaseForecaster):
             )
 
         if self.validation_split is not None:
-            split = int(len(y) * (1 - self.validation_split))
+            if X is None:
+                y_train, y_test = temporal_train_test_split(
+                    y, test_size=self.validation_split
+                )
+            else:
+                y_train, y_test, X_train, X_test = temporal_train_test_split(
+                    y, X, test_size=self.validation_split
+                )
 
             train_dataset = PyTorchDataset(
-                y[:split],
+                y_train,
                 config.context_length + max(config.lags_sequence),
-                X=X[:split] if X is not None else None,
+                X=X_train if X is not None else None,
                 fh=config.prediction_length,
+                batch_size=self._training_args["per_device_train_batch_size"],
+                no_size1_batch=self.no_size1_batch,
             )
 
             eval_dataset = PyTorchDataset(
-                y[split:],
+                y_test,
                 config.context_length + max(config.lags_sequence),
-                X=X[split:] if X is not None else None,
+                X=X_test if X is not None else None,
                 fh=config.prediction_length,
+                batch_size=self._training_args["per_device_train_batch_size"],
+                no_size1_batch=self.no_size1_batch,
             )
         else:
             train_dataset = PyTorchDataset(
@@ -260,11 +354,13 @@ class HFTransformersForecaster(BaseForecaster):
                 config.context_length + max(config.lags_sequence),
                 X=X if X is not None else None,
                 fh=config.prediction_length,
+                batch_size=self._training_args["per_device_train_batch_size"],
+                no_size1_batch=self.no_size1_batch,
             )
 
             eval_dataset = None
 
-        training_args = deepcopy(self.training_args)
+        training_args = deepcopy(self._training_args)
         training_args["label_names"] = ["future_values"]
         training_args = TrainingArguments(**training_args)
 
@@ -275,10 +371,10 @@ class HFTransformersForecaster(BaseForecaster):
             for param in self.model.parameters():
                 param.requires_grad = True
         elif self.fit_strategy == "peft":
-            if _check_soft_dependencies(
-                "peft",
-                severity="error",
-                msg=(
+            if _check_soft_dependencies("peft", severity="none"):
+                from peft import get_peft_model
+            else:
+                raise ModuleNotFoundError(
                     f"Error in {self.__class__.__name__}: 'peft' module not found. "
                     "'peft' is a soft dependency and not included "
                     "in the base sktime installation. "
@@ -286,9 +382,7 @@ class HFTransformersForecaster(BaseForecaster):
                     "`pip install peft` or `pip install sktime[dl]`. "
                     "To install all soft dependencies, "
                     "run: `pip install sktime[all_extras]`"
-                ),
-            ):
-                from peft import get_peft_model
+                )
             peft_config = deepcopy(self.peft_config)
             self.model = get_peft_model(self.model, peft_config)
         else:
@@ -304,7 +398,7 @@ class HFTransformersForecaster(BaseForecaster):
         )
         trainer.train()
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X=None, y=None):
         if self.deterministic:
             transformers.set_seed(42)
 
@@ -313,16 +407,55 @@ class HFTransformersForecaster(BaseForecaster):
         fh = fh.to_relative(self.cutoff)
 
         self.model.eval()
-        from torch import from_numpy
+        hist_y = y if self._global_forecasting else self._y
 
-        hist = self._y.values.reshape((1, -1))
+        if not isinstance(hist_y.index, pd.MultiIndex):
+            hist_y = _to_multiindex(hist_y)
+            converted_to_multiindex = True
+        else:
+            converted_to_multiindex = False
+
         if X is not None:
-            hist_x = self._X.values.reshape((1, -1, self._X.shape[-1]))
-            x_ = X.values.reshape((1, -1, self._X.shape[-1]))
+            if not isinstance(X.index, pd.MultiIndex):
+                X = _to_multiindex(X)
+            if not self._global_forecasting:
+                if not isinstance(self._X.index, pd.MultiIndex):
+                    _X = _to_multiindex(self._X)
+                else:
+                    _X = self._X
+
+        hist = _frame2numpy(hist_y).squeeze(2)
+
+        if X is not None:
+            if not self._global_forecasting:
+                hist_x = _frame2numpy(_X)
+                x_ = _frame2numpy(X)
+            else:
+                len_levels = len(X.index.names)
+                ins_levels = list(range(len_levels - 1))
+                # groupby instances levels, get the history exogenous data
+                # of each instances by slicing the time index
+                hist_x = _frame2numpy(
+                    X.groupby(level=ins_levels).apply(
+                        lambda x: x.droplevel(ins_levels).iloc[
+                            : -self.model.config.prediction_length
+                        ]
+                    )
+                )
+                # groupby instances levels, get the last prediction_length
+                # of the time index as the future exogenous data
+                x_ = _frame2numpy(
+                    X.groupby(level=ins_levels).apply(
+                        lambda x: x.droplevel(ins_levels).iloc[
+                            -self.model.config.prediction_length :
+                        ]
+                    )
+                )
+
             if x_.shape[1] < self.model.config.prediction_length:
                 # TODO raise exception here?
                 x_ = np.resize(
-                    x_, (1, self.model.config.prediction_length, x_.shape[-1])
+                    x_, (x_.shape[0], self.model.config.prediction_length, x_.shape[-1])
                 )
         else:
             hist_x = np.array(
@@ -333,8 +466,11 @@ class HFTransformersForecaster(BaseForecaster):
                         + max(self.model.config.lags_sequence)
                     )
                 ]
+                * hist.shape[0]
             )
-            x_ = np.array([[[]] * self.model.config.prediction_length])
+            x_ = np.array([[[]] * self.model.config.prediction_length] * hist.shape[0])
+
+        from torch import from_numpy
 
         pred = self.model.generate(
             past_values=from_numpy(hist).to(self.model.dtype).to(self.model.device),
@@ -355,17 +491,45 @@ class HFTransformersForecaster(BaseForecaster):
             ),
         )
 
-        pred = pred.sequences.mean(dim=1).detach().cpu().numpy().T
+        pred = pred.sequences.mean(dim=1).detach().cpu().numpy()
 
-        pred = pd.Series(
-            pred.reshape((-1,)),
-            index=ForecastingHorizon(range(len(pred)))
-            .to_absolute(self._cutoff)
-            ._values,
-            # columns=self._y.columns
-            name=self._y.name,
+        ins = np.array(
+            list(np.unique(hist_y.index.droplevel(-1)).repeat(pred.shape[1]))
         )
-        return pred.loc[fh.to_absolute(self.cutoff)._values]
+        ins = [ins[..., i] for i in range(ins.shape[-1])] if ins.ndim > 1 else [ins]
+
+        idx = (
+            ForecastingHorizon(range(1, pred.shape[1] + 1), freq=self.fh.freq)
+            .to_absolute(self._cutoff)
+            ._values.tolist()
+            * pred.shape[0]
+        )
+
+        index = pd.MultiIndex.from_arrays(
+            ins + [idx],
+            names=hist_y.index.names,
+        )
+
+        pred = pd.DataFrame(
+            pred.flatten(),
+            index=index,
+            columns=hist_y.columns,
+        )
+
+        absolute_horizons = fh.to_absolute_index(self.cutoff)
+        dateindex = pred.index.get_level_values(-1).map(
+            lambda x: x in absolute_horizons
+        )
+        pred = pred.loc[dateindex]
+
+        if converted_to_multiindex:
+            pred = pd.Series(
+                pred.values.squeeze(),
+                index=pred.index.get_level_values(-1),
+                name=pred.columns[0],
+            )
+
+        return pred
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -389,6 +553,7 @@ class HFTransformersForecaster(BaseForecaster):
             {
                 "model_path": "huggingface/informer-tourism-monthly",
                 "fit_strategy": "minimal",
+                "validation_split": None,  # some series in CI are too short
                 "training_args": {
                     "num_train_epochs": 1,
                     "output_dir": "test_output",
@@ -400,10 +565,12 @@ class HFTransformersForecaster(BaseForecaster):
                     "prediction_length": 4,
                 },
                 "deterministic": True,
+                "try_local_files_only": True,
             },
             {
                 "model_path": "huggingface/autoformer-tourism-monthly",
                 "fit_strategy": "minimal",
+                "validation_split": None,  # some series in CI are too short
                 "training_args": {
                     "num_train_epochs": 1,
                     "output_dir": "test_output",
@@ -416,6 +583,7 @@ class HFTransformersForecaster(BaseForecaster):
                     "label_length": 2,
                 },
                 "deterministic": True,
+                "try_local_files_only": True,
             },
         ]
 
@@ -444,44 +612,110 @@ class HFTransformersForecaster(BaseForecaster):
                         lora_dropout=0.01,
                     ),
                     "deterministic": True,
+                    "try_local_files_only": True,
                 }
             )
-
-        return test_params
+        params_broadcasting = [dict(p, **{"broadcasting": True}) for p in test_params]
+        params_no_broadcasting = [
+            dict(p, **{"broadcasting": False}) for p in test_params
+        ]
+        return params_broadcasting + params_no_broadcasting
 
 
 class PyTorchDataset(Dataset):
     """Dataset for use in sktime deep learning forecasters."""
 
-    def __init__(self, y, seq_len, fh=None, X=None):
-        self.y = y.values
-        self.X = X.values if X is not None else X
-        self.seq_len = seq_len
+    def __init__(
+        self,
+        y: pd.DataFrame,
+        seq_len: int,
+        fh=None,
+        X: pd.DataFrame = None,
+        batch_size=8,
+        no_size1_batch=True,
+    ):
+        if not isinstance(y.index, pd.MultiIndex):
+            self.y = np.array(y.values, dtype=np.float32).reshape(1, len(y), 1)
+            self.X = (
+                np.array(X.values, dtype=np.float32).reshape(
+                    (1, len(X), len(X.columns))
+                )
+                if X is not None
+                else X
+            )
+        else:
+            self.y = _frame2numpy(y)
+            self.X = _frame2numpy(X) if X is not None else X
+
+        self._num, self._len, _ = self.y.shape
         self.fh = fh
+        self.seq_len = seq_len
+        self._len_single = self._len - self.seq_len - self.fh + 1
+        self.batch_size = batch_size
+        self.no_size1_batch = no_size1_batch
 
     def __len__(self):
         """Return length of dataset."""
-        return max(len(self.y) - self.seq_len - self.fh + 1, 0)
+        true_length = self._num * max(self._len_single, 0)
+        if self.no_size1_batch and true_length % self.batch_size == 1:
+            return true_length - 1
+        else:
+            return true_length
 
     def __getitem__(self, i):
         """Return data point."""
-        from torch import from_numpy, tensor
+        from torch import tensor
 
-        hist_y = tensor(self.y[i : i + self.seq_len]).float()
+        m = i % self._len_single
+        n = i // self._len_single
+        hist_y = tensor(self.y[n, m : m + self.seq_len, :]).float().flatten()
+        futu_y = (
+            tensor(self.y[n, m + self.seq_len : m + self.seq_len + self.fh, :])
+            .float()
+            .flatten()
+        )
         if self.X is not None:
             exog_data = tensor(
-                self.X[i + self.seq_len : i + self.seq_len + self.fh]
+                self.X[n, m + self.seq_len : m + self.seq_len + self.fh, :]
             ).float()
-            hist_exog = tensor(self.X[i : i + self.seq_len]).float()
+            hist_exog = tensor(self.X[n, m : m + self.seq_len, :]).float()
         else:
             exog_data = tensor([[]] * self.fh)
             hist_exog = tensor([[]] * self.seq_len)
+
         return {
             "past_values": hist_y,
             "past_time_features": hist_exog,
             "future_time_features": exog_data,
             "past_observed_mask": (~hist_y.isnan()).to(int),
-            "future_values": from_numpy(
-                self.y[i + self.seq_len : i + self.seq_len + self.fh]
-            ).float(),
+            "future_values": futu_y,
         }
+
+
+def _same_index(data):
+    data = data.groupby(level=list(range(len(data.index.levels) - 1))).apply(
+        lambda x: x.index.get_level_values(-1)
+    )
+    assert data.map(
+        lambda x: x.equals(data.iloc[0])
+    ).all(), "All series must has the same index"
+    return data.iloc[0], len(data.iloc[0])
+
+
+def _frame2numpy(data):
+    idx, length = _same_index(data)
+    arr = np.array(data.values, dtype=np.float32).reshape(
+        (-1, length, len(data.columns))
+    )
+    return arr
+
+
+def _to_multiindex(data, index_name="h0", instance_name="h0_0"):
+    res = pd.DataFrame(
+        data.values,
+        index=pd.MultiIndex.from_product(
+            [[instance_name], data.index], names=[index_name, data.index.name]
+        ),
+        columns=[data.name] if isinstance(data, pd.Series) else data.columns,
+    )
+    return res
