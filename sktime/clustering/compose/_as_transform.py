@@ -1,11 +1,7 @@
 """Using a clusterer as transformation."""
-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-import numpy as np
-
 from sktime.registry import MTYPE_LIST_PANEL, MTYPE_LIST_SERIES
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.compose import TransformerPipeline
 
 __author__ = ["fkiraly"]
 __all__ = ["ClustererAsTransformer"]
