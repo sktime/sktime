@@ -158,7 +158,7 @@ class ClustererAsTransformer(BaseTransformer):
         """
         # imports
         from sktime.clustering.dbscan import TimeSeriesDBSCAN
-        from sktime.clustering.k_means import TimeSeriesKMeans
+        from sktime.clustering.k_means import TimeSeriesKMeansTslearn
         from sktime.utils.dependencies import _check_estimator_deps
 
         params = []
@@ -169,8 +169,8 @@ class ClustererAsTransformer(BaseTransformer):
         params1 = {"clusterer": c}
         params = params + [params1]
 
-        if _check_estimator_deps(TimeSeriesKMeans, severity="none"):
-            c = TimeSeriesKMeans(random_state=42)
+        if _check_estimator_deps(TimeSeriesKMeansTslearn, severity="none"):
+            c = TimeSeriesKMeansTslearn.create_test_instance()
 
             params2 = {"clusterer": c}
 
