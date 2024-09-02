@@ -368,7 +368,7 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         # use with clusterer
         param3 = {
             "forecasters": {},
-            "transformer": TimeSeriesDBSCAN(),
+            "transformer": TimeSeriesDBSCAN.create_test_instance(),
             "fallback_forecaster": Croston(),
         }
 

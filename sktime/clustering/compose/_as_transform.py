@@ -1,13 +1,11 @@
 """Using a clusterer as transformation."""
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-from sktime.datatypes import MTYPE_LIST_PANEL, MTYPE_LIST_SERIES
+from sktime.datatypes import MTYPE_LIST_PANEL
 from sktime.transformations.base import BaseTransformer
 
 __author__ = ["fkiraly"]
 __all__ = ["ClustererAsTransformer"]
-
-ALL_PANEL_AND_SERIES_MTYPES = MTYPE_LIST_PANEL + MTYPE_LIST_SERIES
 
 
 class ClustererAsTransformer(BaseTransformer):
@@ -56,7 +54,7 @@ class ClustererAsTransformer(BaseTransformer):
         "scitype:instancewise": False,  # is this an instance-wise transform?
         "capability:inverse_transform": False,  # can the transformer inverse transform?
         "univariate-only": False,  # can the transformer handle multivariate X?
-        "X_inner_mtype": ALL_PANEL_AND_SERIES_MTYPES,
+        "X_inner_mtype": MTYPE_LIST_PANEL,
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "requires_y": False,  # does y need to be passed in fit?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
