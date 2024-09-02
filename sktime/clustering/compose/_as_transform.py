@@ -173,7 +173,10 @@ class ClustererAsTransformer(BaseTransformer):
             c = TimeSeriesKMeansTslearn.create_test_instance()
 
             params2 = {"clusterer": c}
+        else:
+            tsd_params2 = TimeSeriesDBSCAN.get_test_params()[1]
+            params2 = {"clusterer": TimeSeriesDBSCAN(**tsd_params2)}
 
-            params = params + [params2]
+        params = params + [params2]
 
         return params
