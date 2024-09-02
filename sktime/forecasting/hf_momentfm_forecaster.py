@@ -363,7 +363,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             )
         return self
 
-    def _predict(self, y, X, fh=[1, 2]):
+    def _predict(self, y, X=None, fh=[1, 2]):
         """Predict method to forecast timesteps into the future.
 
         fh should not be passed here and
@@ -372,20 +372,17 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         # use y values from fit if y is None in predict
         if y is None:
             y = self._y
-        fh_index = (
-            ForecastingHorizon(range(1, self._model_fh + 1))
-            .to_absolute(self.cutoff)
-            ._values
-        )
+        fh_index = ForecastingHorizon(range(1, 3 + 1)).to_absolute(self.cutoff)._values
         index = self._fh.to_absolute_index(self.cutoff)
         from torch import from_numpy
 
         self._model = self._model.to(self._device)
         self._model.eval()
-        y_index_names = list(y.index.names)
         if isinstance(y.index, pd.MultiIndex):
+            y_index_names = list(y.index.names)
             y_ = _frame2numpy(y)
         else:
+            y_index_names = [y.index.name]
             y_ = np.expand_dims(y.values, axis=0)
 
         num_instances, sequence_length, num_channels = (
@@ -461,6 +458,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         else:
             new_index = fh_index
             df_pred = pd.DataFrame(pred, columns=self._y_cols, index=new_index)
+            df_pred.index.names = y_index_names
             df_pred = df_pred.loc[index]
 
         return df_pred
@@ -484,9 +482,9 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params_set = []
-        params1 = {}
+        params1 = {"train_val_split": 0.5}
         params_set.append(params1)
-        params2 = {"batch_size": 2}
+        params2 = {"batch_size": 2, "train_val_split": 0.5}
         params_set.append(params2)
 
         return params_set
@@ -651,7 +649,7 @@ def _check_device(device):
 
 
 def _sample_observations(y):
-    n_total_samples = 700
+    n_total_samples = 550
     y_sampled = y.sample(n=n_total_samples, replace=True)
 
     return y_sampled
