@@ -103,24 +103,26 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         transformer=None,
         fallback_forecaster=None,
     ):
-        # saving arguments to object storage
-        if transformer is not None:
-            self.transformer = transformer
-
-        else:
-            from sktime.transformations.series.adi_cv import ADICVTransformer
-
-            self.transformer = ADICVTransformer(features=["class"])
-
+        self.transformer = transformer
         self.forecasters = forecasters
         self.fallback_forecaster = fallback_forecaster
 
-        self.transformer_ = coerce_scitype(transformer, "transformer")
-
         super().__init__()
+
+        # saving arguments to object storage
+        if transformer is not None:
+            transformer_ = transformer
+        else:
+            from sktime.transformations.series.adi_cv import ADICVTransformer
+
+            transformer_ = ADICVTransformer(features=["class"])
+
+        self.transformer_ = coerce_scitype(transformer_, "transformer")
 
         for forecaster in forecasters.values():
             assert isinstance(forecaster, BaseForecaster)
+
+        self.forecasters_ = {k: f.clone() for k, f in forecasters.items()}
 
         # All checks OK!
 
@@ -243,7 +245,7 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
                 self.chosen_forecaster_ = self.fallback_forecaster.clone()
 
         else:
-            self.chosen_forecaster_ = self.forecasters[self.category_].clone()
+            self.chosen_forecaster_ = self.forecasters_[self.category_].clone()
 
         # fitting the forecaster!
         self.chosen_forecaster_.fit(y=y, X=X, fh=fh)
