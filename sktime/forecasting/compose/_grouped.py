@@ -209,14 +209,10 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
 
     _tags = {
         "y_inner_mtype": [
-            "pd.DataFrame",
-            "pd.Series",
             "pd-multiindex",
             "pd_multiindex_hier",
         ],
         "X_inner_mtype": [
-            "pd.DataFrame",
-            "pd.Series",
             "pd-multiindex",
             "pd_multiindex_hier",
         ],
