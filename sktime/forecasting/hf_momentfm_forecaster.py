@@ -296,10 +296,10 @@ class MomentFMForecaster(_BaseGlobalForecaster):
                 ". Using a larger dataset is recommended"
             )
 
-        if y_train.shape[0] < 512 and not isinstance(y.index, pd.MultiIndex):
-            y_train = _sample_observations(y_train)
-        if y_test.shape[0] < 512 and not isinstance(y.index, pd.MultiIndex):
-            y_test = _sample_observations(y_test)
+        # if y_train.shape[0] < 512 and not isinstance(y.index, pd.MultiIndex):
+        #     y_train = _sample_observations(y_train)
+        # if y_test.shape[0] < 512 and not isinstance(y.index, pd.MultiIndex):
+        #     y_test = _sample_observations(y_test)
 
         train_dataset = MomentPytorchDataset(
             y=y_train,
@@ -372,17 +372,20 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         # use y values from fit if y is None in predict
         if y is None:
             y = self._y
-        fh_index = ForecastingHorizon(range(1, 3 + 1)).to_absolute(self.cutoff)._values
+        fh_index = (
+            ForecastingHorizon(range(1, self._model_fh + 1))
+            .to_absolute(self.cutoff)
+            ._values
+        )
         index = self._fh.to_absolute_index(self.cutoff)
         from torch import from_numpy
 
         self._model = self._model.to(self._device)
         self._model.eval()
+        y_index_names = list(y.index.names)
         if isinstance(y.index, pd.MultiIndex):
-            y_index_names = list(y.index.names)
             y_ = _frame2numpy(y)
         else:
-            y_index_names = [y.index.name]
             y_ = np.expand_dims(y.values, axis=0)
 
         num_instances, sequence_length, num_channels = (
@@ -482,9 +485,9 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params_set = []
-        params1 = {"train_val_split": 0.5}
+        params1 = {"seq_len": 3}
         params_set.append(params1)
-        params2 = {"batch_size": 2, "train_val_split": 0.5}
+        params2 = {"batch_size": 2, "seq_len": 3}
         params_set.append(params2)
 
         return params_set
@@ -701,7 +704,6 @@ class MomentPytorchDataset(Dataset):
         # one instance in the panel/hier case
         # else it is just the seq_len of the multivariate data
         self.single_length = self.n_timestamps - self.seq_len - self.fh + 1
-
         # code block to figure out masking sizes in case seq_len < 512
         if self.seq_len < self.moment_seq_len:
             self._pad_shape = (self.moment_seq_len - self.seq_len, self.n_columns)
