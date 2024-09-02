@@ -119,7 +119,7 @@ def coerce_scitype(
         else:
             return obj
 
-    if from_scitype is None:
+    if from_scitype is None or len(from_scitype) >= 2:
         from_scitype = detected_scitype
 
     if clone_obj:
