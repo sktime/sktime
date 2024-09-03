@@ -71,15 +71,22 @@ class BaseSeriesAnnotator(BaseEstimator):
     }  # for unit test cases
 
     def __init__(self):
-        self.task = self.get_tag("task")
-        self.learning_type = self.get_tag("learning_type")
-
         self._is_fitted = False
 
         self._X = None
         self._Y = None
 
+        task = self.get_tag("task")
+        learning_type = self.get_tag("learning_type")
+
         super().__init__()
+
+        # hacky workaround to ensure task and learning_type are set
+        # TODO 0.34.0: remove the self.task and self.learning_type attributes
+        # if possible, check downwards compatibility
+        self.set_tags(**{"task": task, "learning_type": learning_type})
+        self.task = task
+        self.learning_type = learning_type
 
     def fit(self, X, Y=None):
         """Fit to training data.
