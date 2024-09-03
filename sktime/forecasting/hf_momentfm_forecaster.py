@@ -296,11 +296,6 @@ class MomentFMForecaster(_BaseGlobalForecaster):
                 ". Using a larger dataset is recommended"
             )
 
-        # if y_train.shape[0] < 512 and not isinstance(y.index, pd.MultiIndex):
-        #     y_train = _sample_observations(y_train)
-        # if y_test.shape[0] < 512 and not isinstance(y.index, pd.MultiIndex):
-        #     y_test = _sample_observations(y_test)
-
         train_dataset = MomentPytorchDataset(
             y=y_train,
             fh=self._model_fh,
@@ -363,7 +358,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             )
         return self
 
-    def _predict(self, y, X=None, fh=[1, 2]):
+    def _predict(self, fh=None, X=None, y=None):
         """Predict method to forecast timesteps into the future.
 
         fh should not be passed here and
@@ -372,11 +367,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         # use y values from fit if y is None in predict
         if y is None:
             y = self._y
-        fh_index = (
-            ForecastingHorizon(range(1, self._model_fh + 1))
-            .to_absolute(self.cutoff)
-            ._values
-        )
+
         index = self._fh.to_absolute_index(self.cutoff)
         from torch import from_numpy
 
@@ -432,37 +423,40 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         # revert back to (B, S, C)
         pred = np.transpose(pred, (0, 2, 1))
 
-        # reshape into 2 dimensions
-        pred = pred.reshape(pred.shape[0] * pred.shape[1], -1)
-
         if isinstance(y.index, pd.MultiIndex):
-            # get all the unique possible combinations of indices without timepoints
-            levels_minus_timepoints = y.index.droplevel(-1).unique()
-            # create a list of the new indices
-            if isinstance(levels_minus_timepoints, pd.MultiIndex):
-                # hierarchical scenario
-                new_indices = [
-                    levels_minus_timepoints.levels[i]
-                    for i in range(len(levels_minus_timepoints.levels))
-                ]
-            else:
-                # panel scenario
-                new_indices = [levels_minus_timepoints]
+            ins = np.array(list(np.unique(y.index.droplevel(-1)).repeat(pred.shape[1])))
+            ins = [ins[..., i] for i in range(ins.shape[-1])] if ins.ndim > 1 else [ins]
 
-            new_indices.append(list(fh_index))
-            new_index = pd.MultiIndex.from_product(new_indices, names=y_index_names)
-
-            df_pred = pd.DataFrame(pred, columns=self._y_cols, index=new_index)
-            absolute_horizons = fh.to_absolute_index(self.cutoff)
-            dateindex = df_pred.index.get_level_values(-1).map(
-                lambda x: x in absolute_horizons
+            idx = (
+                ForecastingHorizon(range(1, pred.shape[1] + 1), freq=self.fh.freq)
+                .to_absolute(self._cutoff)
+                ._values.tolist()
+                * pred.shape[0]
             )
-            df_pred = df_pred.loc[dateindex]
+            index = pd.MultiIndex.from_arrays(
+                ins + [idx],
+                names=y.index.names,
+            )
         else:
-            new_index = fh_index
-            df_pred = pd.DataFrame(pred, columns=self._y_cols, index=new_index)
-            df_pred.index.names = y_index_names
-            df_pred = df_pred.loc[index]
+            index = (
+                ForecastingHorizon(range(1, pred.shape[1] + 1))
+                .to_absolute(self._cutoff)
+                ._values
+            )
+
+        df_pred = pd.DataFrame(
+            # batch_size * num_timestams, n_cols
+            pred.reshape(-1, pred.shape[-1]),
+            index=index,
+            columns=self._y_cols,
+        )
+
+        absolute_horizons = fh.to_absolute_index(self.cutoff)
+        dateindex = df_pred.index.get_level_values(-1).map(
+            lambda x: x in absolute_horizons
+        )
+        df_pred = df_pred.loc[dateindex]
+        df_pred.index.names = y_index_names
 
         return df_pred
 
@@ -651,13 +645,6 @@ def _check_device(device):
     return _device
 
 
-def _sample_observations(y):
-    n_total_samples = 550
-    y_sampled = y.sample(n=n_total_samples, replace=True)
-
-    return y_sampled
-
-
 def _same_index(data: pd.DataFrame):
     data = data.groupby(level=list(range(len(data.index.levels) - 1))).apply(
         lambda x: x.index.get_level_values(-1)
@@ -704,6 +691,7 @@ class MomentPytorchDataset(Dataset):
         # one instance in the panel/hier case
         # else it is just the seq_len of the multivariate data
         self.single_length = self.n_timestamps - self.seq_len - self.fh + 1
+
         # code block to figure out masking sizes in case seq_len < 512
         if self.seq_len < self.moment_seq_len:
             self._pad_shape = (self.moment_seq_len - self.seq_len, self.n_columns)
