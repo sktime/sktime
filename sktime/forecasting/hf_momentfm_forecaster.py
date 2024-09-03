@@ -148,8 +148,8 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         dropout=0.1,
         head_dropout=0.1,
         seq_len=512,
-        batch_size=8,
-        eval_batch_size=8,
+        batch_size=32,
+        eval_batch_size=32,
         epochs=1,
         max_lr=1e-4,
         device="gpu",
@@ -384,10 +384,12 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         )  # shape of our input to predict
         # raise warning if sequence length of y is greater than the sequence
         # length used to fit the model
+        print(sequence_length)
         if sequence_length > self._seq_len:
             warnings.warn(
-                f"length of {y.shape[0]} was found which is greater than sequence "
-                "length {self._seq_len} used to fit the model. The most recent"
+                f"Sequence length of {sequence_length} was found which is greater "
+                "than sequence "
+                f"length {self._seq_len} used to fit the model. The most recent"
                 f" {self._seq_len} values will be used.",
                 stacklevel=2,
             )
@@ -481,7 +483,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         params_set = []
         params1 = {"seq_len": 3}
         params_set.append(params1)
-        params2 = {"batch_size": 2, "seq_len": 3}
+        params2 = {"batch_size": 16, "seq_len": 3}
         params_set.append(params2)
 
         return params_set
