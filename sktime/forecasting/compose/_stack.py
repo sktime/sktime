@@ -5,14 +5,13 @@
 __author__ = ["mloning", "fkiraly", "indinewton"]
 __all__ = ["StackingForecaster"]
 
-from warnings import warn
-
 import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
-from sktime.forecasting.model_selection import SingleWindowSplitter
+from sktime.split import SingleWindowSplitter
 from sktime.utils.validation.forecasting import check_regressor
+from sktime.utils.warnings import warn
 
 
 class StackingForecaster(_HeterogenousEnsembleForecaster):
@@ -61,6 +60,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
     """
 
     _tags = {
+        "authors": ["mloning", "fkiraly", "indinewton"],
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": True,
         "handles-missing-data": True,
@@ -77,7 +77,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         self._anytagis_then_set("handles-missing-data", False, True, forecasters)
         self._anytagis_then_set("fit_is_empty", False, True, forecasters)
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -141,7 +141,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         self : an instance of self
         """
         if update_params:
-            warn("Updating `final regressor is not implemented")
+            warn("Updating `final regressor is not implemented", obj=self)
         for forecaster in self.forecasters_:
             forecaster.update(y, X, update_params=update_params)
         return self
@@ -175,7 +175,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns

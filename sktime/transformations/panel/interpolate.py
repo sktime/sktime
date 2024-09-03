@@ -1,8 +1,10 @@
 """Time series interpolator/re-sampler."""
+
 import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.pandas import df_map
 
 __author__ = ["mloning"]
 
@@ -24,6 +26,7 @@ class TSInterpolator(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["mloning"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -84,7 +87,7 @@ class TSInterpolator(BaseTransformer):
         pandas DataFrame : Transformed pandas DataFrame of shape [n_samples, n_features]
             follows nested_univ format
         """
-        return X.applymap(self._resize_cell)
+        return df_map(X)(self._resize_cell)
 
     @classmethod
     def get_test_params(cls):
@@ -95,8 +98,10 @@ class TSInterpolator(BaseTransformer):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        params = {"length": 10}
-        return params
+        params1 = {"length": 10}
+        params2 = {"length": 5}
+        return [params1, params2]

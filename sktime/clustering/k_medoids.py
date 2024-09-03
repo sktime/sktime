@@ -1,17 +1,18 @@
 """Time series kmedoids."""
-__author__ = ["chrisholder", "TonyBagnall"]
 
-from typing import Callable, Union
+__author__ = ["chrisholder", "TonyBagnall"]
+from collections.abc import Callable
+from typing import Union
 
 import numpy as np
 from numpy.random import RandomState
 
 from sktime.clustering.metrics.medoids import medoids
-from sktime.clustering.partitioning import TimeSeriesLloyds
+from sktime.clustering.partitioning import BaseTimeSeriesLloyds
 from sktime.distances import pairwise_distance
 
 
-class TimeSeriesKMedoids(TimeSeriesLloyds):
+class TimeSeriesKMedoids(BaseTimeSeriesLloyds):
     """Time series K-medoids implementation.
 
     Parameters
@@ -19,9 +20,15 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
     n_clusters: int, defaults = 8
         The number of clusters to form as well as the number of
         centroids to generate.
-    init_algorithm: str, defaults = 'forgy'
-        Method for initializing cluster centers. Any of the following are valid:
-        ['kmeans++', 'random', 'forgy']
+    init_algorithm: str, np.ndarray (3d array of shape (n_clusters, n_dimensions,
+        series_length)), defaults = 'forgy'
+        Method for initializing cluster centers or an array of initial cluster centers.
+        If string, any of the following strings are valid:
+            ['kmeans++', 'random', 'forgy'].
+        If 3D np.ndarray, initializes cluster centers with the provided array. The array
+            must have shape (n_clusters, n_dimensions, series_length) and the number of
+            clusters in the array must be the same as what is provided to the n_clusters
+            argument.
     metric: str or Callable, defaults = 'dtw'
         Distance metric to compute similarity between time series. Any of the following
         are valid: ['dtw', 'euclidean', 'erp', 'edr', 'lcss', 'squared', 'ddtw', 'wdtw',
@@ -42,7 +49,7 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
     random_state: int or np.random.RandomState instance or None, defaults = None
         Determines random number generation for centroid initialization.
     distance_params: dict, defaults = None
-        Dictonary containing kwargs for the distance metric being used.
+        Dictionary containing kwargs for the distance metric being used.
 
     Attributes
     ----------
@@ -70,7 +77,17 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
     >>> y_pred = clusterer.predict(X_test)  # doctest: +SKIP
     """
 
-    _tags = {"python_dependencies": "numba"}
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["chrisholder", "TonyBagnall"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
+        "capability:out_of_sample": True,
+        "capability:predict": True,
+        "capability:predict_proba": False,
+    }
 
     def __init__(
         self,
@@ -161,7 +178,7 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -169,8 +186,9 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         return {
             "n_clusters": 2,

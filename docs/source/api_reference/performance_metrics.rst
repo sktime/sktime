@@ -6,6 +6,16 @@ Performance metrics
 
 The :mod:`sktime.performance_metrics` module contains metrics for evaluating and tuning time series models.
 
+All parameter estimators in ``sktime`` can be listed using the
+``sktime.registry.all_estimators`` utility,
+using ``estimator_types="metric"``, optionally filtered by tags.
+Valid tags can be listed using ``sktime.registry.all_tags``.
+
+A full table with tag based search is also available on the
+:doc:`Estimator Search Page </estimator_overview>`
+(select "metric" in the "Estimator type" dropdown).
+
+
 .. automodule:: sktime.performance_metrics
     :no-members:
     :no-inherited-members:
@@ -13,10 +23,10 @@ The :mod:`sktime.performance_metrics` module contains metrics for evaluating and
 Forecasting
 -----------
 
-.. currentmodule:: sktime.performance_metrics.forecasting
+Point forecasts - classes
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Classes
-~~~~~~~
+.. currentmodule:: sktime.performance_metrics.forecasting
 
 .. autosummary::
     :toctree: auto_generated/
@@ -44,8 +54,10 @@ Classes
     MeanLinexError
     RelativeLoss
 
-Functions
-~~~~~~~~~
+Point forecasts - functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.performance_metrics.forecasting
 
 .. autosummary::
     :toctree: auto_generated/
@@ -74,9 +86,38 @@ Functions
     mean_linex_error
     relative_loss
 
+Quantile and interval forecasts
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Segmentation
-~~~~~~~~~~~~
+.. currentmodule:: sktime.performance_metrics.forecasting.probabilistic
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class_with_call.rst
+
+    PinballLoss
+    EmpiricalCoverage
+    ConstraintViolation
+
+Distribution forecasts
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.performance_metrics.forecasting.probabilistic
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class_with_call.rst
+
+    AUCalibration
+    CRPS
+    LogLoss
+    SquaredDistrLoss
+
+
+Time series segmentation
+------------------------
+
+.. currentmodule:: sktime.performance_metrics.annotation
 
 .. autosummary::
     :toctree: auto_generated/

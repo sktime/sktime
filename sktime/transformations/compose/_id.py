@@ -3,6 +3,7 @@
 Note to developers: this is used as a component in many other transformers, therefore
 one should avoid importing other transformers from here.
 """
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly"]
@@ -16,6 +17,7 @@ class Id(BaseTransformer):
     """Identity transformer, returns data unchanged in transform/inverse_transform."""
 
     _tags = {
+        "authors": "fkiraly",
         "capability:inverse_transform": True,  # can the transformer inverse transform?
         "univariate-only": False,  # can the transformer handle multivariate X?
         "X_inner_mtype": CORE_MTYPES,  # which mtypes do _fit/_predict support for X?

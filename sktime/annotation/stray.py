@@ -1,7 +1,6 @@
 """Tests for STRAY (Search TRace AnomalY) outlier estimator."""
 
 import warnings
-from typing import Dict
 
 import numpy as np
 import numpy.typing as npt
@@ -22,7 +21,7 @@ class STRAY(BaseTransformer):
     ability to detect clusters of outliers in multi-dimensional data without
     requiring a model of the typical behavior of the system. However, it suffers
     from some limitations that affect its accuracy. STRAY is an extension of
-    HDoutliers that uses extreme value theory for the anomolous threshold
+    HDoutliers that uses extreme value theory for the anomalous threshold
     calculation, to deal with data streams that exhibit non-stationary behavior.
 
     Parameters
@@ -41,7 +40,7 @@ class STRAY(BaseTransformer):
         Proportion of possible candidates for outliers. This defines the starting point
         for the bottom up searching algorithm.
     size_threshold : int, optional (default=50)
-        Sample size to calculate an emperical threshold.
+        Sample size to calculate an empirical threshold.
     outlier_tail : str {"min", "max"}, optional (default="max")
         Direction of the outlier tail.
 
@@ -130,7 +129,7 @@ class STRAY(BaseTransformer):
         ]
 
         log_alpha = np.log(1 / self.alpha)
-        bound = np.Inf
+        bound = np.inf
 
         for i in range(start, n):
             if gaps[i] > log_alpha * ghat[i]:
@@ -139,7 +138,7 @@ class STRAY(BaseTransformer):
 
         return np.where(outlier_score > bound)[0]
 
-    def _find_outliers_kNN(self, X: npt.ArrayLike, n: int) -> Dict:
+    def _find_outliers_kNN(self, X: npt.ArrayLike, n: int) -> dict:
         """Find outliers using kNN distance with maximum gap.
 
         Parameters

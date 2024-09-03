@@ -1,4 +1,5 @@
 """Piecewise Aggregate Approximation Transformer (PAA)."""
+
 import pandas as pd
 
 from sktime.datatypes._panel._convert import from_nested_to_2d_array
@@ -7,7 +8,7 @@ from sktime.transformations.base import BaseTransformer
 __author__ = ["MatthewMiddlehurst"]
 
 
-class PAA(BaseTransformer):
+class PAAlegacy(BaseTransformer):
     """Piecewise Aggregate Approximation Transformer (PAA).
 
     (PAA) Piecewise Aggregate Approximation Transformer, as described in
@@ -29,6 +30,7 @@ class PAA(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["MatthewMiddlehurst"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",

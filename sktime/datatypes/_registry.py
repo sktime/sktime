@@ -127,7 +127,7 @@ def mtype_to_scitype(mtype: str, return_unique=False, coerce_to_list=False):
         if None, returns None
     return_unique : bool, default=False
         if True, makes return unique
-    coerce_to_list : bool, default=Fakse
+    coerce_to_list : bool, default=False
         if True, coerces rerturn to list, even if one-element
 
     Raises
@@ -230,7 +230,7 @@ def scitype_to_mtype(scitype: str, softdeps: str = "exclude"):
         return mtypes
 
     if softdeps == "present":
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         def present(x):
             """Return True if x has satisfied soft dependency or has no soft dep."""

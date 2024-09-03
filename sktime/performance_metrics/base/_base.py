@@ -1,4 +1,5 @@
 """Implements base class for defining performance metric in sktime."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["rnkuhns", "fkiraly"]
@@ -12,6 +13,12 @@ class BaseMetric(BaseObject):
 
     Extends sktime BaseObject.
     """
+
+    _tags = {
+        "object_type": "metric",
+        "authors": "sktime developers",  # author(s) of the object
+        "maintainers": "sktime developers",  # current maintainer(s) of the object
+    }
 
     def __init__(self):
         super().__init__()

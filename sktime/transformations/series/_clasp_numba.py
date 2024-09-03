@@ -1,6 +1,5 @@
 """Isolated numba imports for clasp."""
 
-
 __author__ = ["ermshaua", "patrickzib"]
 
 import numpy as np
@@ -111,7 +110,8 @@ def _compute_distances_iterative(X, m, k):
         )
         dist[trivialMatchRange[0] : trivialMatchRange[1]] = np.inf
 
-        idx = np.argpartition(dist, k)
+        _k = min(k, len(dist) - 1)
+        idx = np.argpartition(dist, _k)
 
         knns[order, :] = idx[:k]
         dot_prev = dot_rolled
@@ -161,7 +161,13 @@ def _calc_knn_labels(knn_mask, split_idx, m):
 
     # apply exclusion zone at split point
     exclusion_zone = np.arange(split_idx - m, split_idx)
-    y_pred[exclusion_zone] = np.ones(m, dtype=np.int64)
+
+    # Remove indexes outside the range of y_pred
+    exclusion_zone = exclusion_zone[
+        (exclusion_zone >= -len(y_pred)) & (exclusion_zone < len(y_pred))
+    ]
+
+    y_pred[exclusion_zone] = np.ones(len(exclusion_zone), dtype=np.int64)
 
     return y_true, y_pred
 

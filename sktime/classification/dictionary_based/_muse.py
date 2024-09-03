@@ -8,7 +8,6 @@ __author__ = ["patrickzib", "BINAYKUMAR943"]
 __all__ = ["MUSE"]
 
 import math
-import warnings
 
 import numpy as np
 from joblib import Parallel, delayed
@@ -18,6 +17,7 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SFAFast
+from sktime.utils.warnings import warn
 
 
 class MUSE(BaseClassifier):
@@ -76,7 +76,7 @@ class MUSE(BaseClassifier):
         the number significantly. None applies not feature selectiona and yields large
         bag of words, e.g. much memory may be needed.
     n_jobs : int, default=1
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``-1`` means using all processors.
     random_state: int or None, default=None
         Seed for random, integer
@@ -119,12 +119,18 @@ class MUSE(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["patrickzib", "BINAYKUMAR943"],
+        "maintainers": "BINAYKUMAR943",
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:multithreading": True,
         "capability:predict_proba": True,
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "classifier_type": "dictionary",
-        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -198,9 +204,10 @@ class MUSE(BaseClassifier):
         self.highest_dim_bit = (math.ceil(math.log2(self.n_dims))) + 1
 
         if self.n_dims == 1:
-            warnings.warn(
+            warn(
                 "MUSE Warning: Input series is univariate; MUSE is designed for"
                 + " multivariate series. It is recommended WEASEL is used instead.",
+                obj=self,
                 stacklevel=2,
             )
 
@@ -341,7 +348,7 @@ class MUSE(BaseClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -352,8 +359,9 @@ class MUSE(BaseClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         return {
             "window_inc": 4,

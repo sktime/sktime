@@ -58,17 +58,17 @@ class DOBIN(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.dobin import DOBIN
-    >>> from sklearn.preprocessing import MinMaxScaler
-    >>> import numpy as np
-    >>> import pandas as pd
-    >>> from sktime.datasets import load_uschange
-    >>> _, X = load_uschange()
-    >>> scaler = MinMaxScaler()
-    >>> X = scaler.fit_transform(X)
-    >>> model = DOBIN()
-    >>> X_outlier = model.fit_transform(pd.DataFrame(X))
-    >>> X_outlier.head()
+    >>> from sktime.transformations.series.dobin import DOBIN  # doctest: +SKIP
+    >>> from sklearn.preprocessing import MinMaxScaler  # doctest: +SKIP
+    >>> import numpy as np  # doctest: +SKIP
+    >>> import pandas as pd  # doctest: +SKIP
+    >>> from sktime.datasets import load_uschange  # doctest: +SKIP
+    >>> _, X = load_uschange()  # doctest: +SKIP
+    >>> scaler = MinMaxScaler()  # doctest: +SKIP
+    >>> X = scaler.fit_transform(X)  # doctest: +SKIP
+    >>> model = DOBIN()  # doctest: +SKIP
+    >>> X_outlier = model.fit_transform(pd.DataFrame(X))  # doctest: +SKIP
+    >>> X_outlier.head()  # doctest: +SKIP
             DB0       DB1       DB2       DB3
     0  1.151965  0.116488  0.286064  0.288140
     1  1.191976  0.100772  0.050835  0.225985
@@ -78,10 +78,15 @@ class DOBIN(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "KatieBuc",
+        "python_dependencies": "scipy",
+        # estimator type
+        # --------------
         "X_inner_mtype": "pd.DataFrame",
         "fit_is_empty": False,
         "skip-inverse-transform": True,
-        "python_dependencies": "scipy",
     }
 
     def __init__(

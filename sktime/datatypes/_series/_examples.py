@@ -31,7 +31,8 @@ overall, conversions from non-lossy representations to any other ones
 import numpy as np
 import pandas as pd
 
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.datatypes._dtypekind import DtypeKind
+from sktime.utils.dependencies import _check_soft_dependencies
 
 example_dict = dict()
 example_dict_lossy = dict()
@@ -74,12 +75,30 @@ if _check_soft_dependencies("dask", severity="none"):
     example_dict[("dask_series", "Series", 0)] = df_dask
     example_dict_lossy[("dask_series", "Series", 0)] = False
 
+if _check_soft_dependencies("polars>=0.20", severity="none"):
+    from polars import DataFrame
+
+    pl_df = DataFrame({"__index__0": [0, 1, 2, 3], "a": [1, 4, 0.5, -3]}, strict=False)
+
+    example_dict[("pl.DataFrame", "Series", 0)] = pl_df
+    example_dict_lossy[("pl.DataFrame", "Series", 0)] = False
+
+if _check_soft_dependencies("gluonts", severity="none"):
+    from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
+
+    list_dataset = convert_pandas_to_listDataset(df)
+
+    example_dict[("gluonts_ListDataset_series", "Series", 0)] = list_dataset
+    example_dict_lossy[("gluonts_ListDataset_series", "Series", 0)] = True
 
 example_dict_metadata[("Series", 0)] = {
     "is_univariate": True,
     "is_equally_spaced": True,
     "is_empty": False,
     "has_nans": False,
+    "n_features": 1,
+    "feature_names": ["a"],
+    "feature_kind": [DtypeKind.FLOAT],
 }
 
 ###
@@ -116,13 +135,36 @@ if _check_soft_dependencies("dask", severity="none"):
     example_dict[("dask_series", "Series", 1)] = df_dask
     example_dict_lossy[("dask_series", "Series", 1)] = False
 
+
+if _check_soft_dependencies("polars>=0.20", severity="none"):
+    from polars import DataFrame
+
+    pl_df = DataFrame(
+        {"__index__0": [0, 1, 2, 3], "a": [1, 4, 0.5, -3], "b": [3, 7, 2, -3 / 7]},
+        strict=False,
+    )
+
+    example_dict[("pl.DataFrame", "Series", 1)] = pl_df
+    example_dict_lossy[("pl.DataFrame", "Series", 1)] = False
+
+
+if _check_soft_dependencies("gluonts", severity="none"):
+    from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
+
+    list_dataset = convert_pandas_to_listDataset(df)
+
+    example_dict[("gluonts_ListDataset_series", "Series", 1)] = list_dataset
+    example_dict_lossy[("gluonts_ListDataset_series", "Series", 1)] = True
+
 example_dict_metadata[("Series", 1)] = {
     "is_univariate": False,
     "is_equally_spaced": True,
     "is_empty": False,
     "has_nans": False,
+    "n_features": 2,
+    "feature_names": ["a", "b"],
+    "feature_kind": [DtypeKind.FLOAT, DtypeKind.FLOAT],
 }
-
 
 ###
 # example 2: multivariate, positive
@@ -160,11 +202,34 @@ if _check_soft_dependencies("dask", severity="none"):
     example_dict_lossy[("dask_series", "Series", 2)] = False
 
 
+if _check_soft_dependencies("polars>=0.20", severity="none"):
+    from polars import DataFrame
+
+    pl_df = DataFrame(
+        {"__index__0": [0, 1, 2, 3], "a": [1, 4, 0.5, 3], "b": [3, 7, 2, 3 / 7]},
+        strict=False,
+    )
+
+    example_dict[("pl.DataFrame", "Series", 2)] = pl_df
+    example_dict_lossy[("pl.DataFrame", "Series", 2)] = False
+
+
+if _check_soft_dependencies("gluonts", severity="none"):
+    from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
+
+    list_dataset = convert_pandas_to_listDataset(df)
+
+    example_dict[("gluonts_ListDataset_series", "Series", 2)] = list_dataset
+    example_dict_lossy[("gluonts_ListDataset_series", "Series", 2)] = True
+
 example_dict_metadata[("Series", 2)] = {
     "is_univariate": False,
     "is_equally_spaced": True,
     "is_empty": False,
     "has_nans": False,
+    "n_features": 2,
+    "feature_names": ["a", "b"],
+    "feature_kind": [DtypeKind.FLOAT, DtypeKind.FLOAT],
 }
 
 ###
@@ -196,9 +261,31 @@ if _check_soft_dependencies("xarray", severity="none"):
     example_dict[("xr.DataArray", "Series", 3)] = da
     example_dict_lossy[("xr.DataArray", "Series", 3)] = False
 
+
+if _check_soft_dependencies("polars>=0.20", severity="none"):
+    from polars import DataFrame
+
+    pl_df = DataFrame({"__index__0": [0, 1, 2, 3], "a": [1, 4, 0.5, 3]}, strict=False)
+
+    example_dict[("pl.DataFrame", "Series", 3)] = pl_df
+    example_dict_lossy[("pl.DataFrame", "Series", 3)] = False
+
+
+if _check_soft_dependencies("gluonts", severity="none"):
+    from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
+
+    list_dataset = convert_pandas_to_listDataset(df)
+
+    example_dict[("gluonts_ListDataset_series", "Series", 3)] = list_dataset
+    example_dict_lossy[("gluonts_ListDataset_series", "Series", 3)] = True
+
+
 example_dict_metadata[("Series", 3)] = {
     "is_univariate": True,
     "is_equally_spaced": True,
     "is_empty": False,
     "has_nans": False,
+    "n_features": 1,
+    "feature_names": ["a"],
+    "feature_kind": [DtypeKind.FLOAT],
 }

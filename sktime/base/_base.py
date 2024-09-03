@@ -64,14 +64,171 @@ from sklearn import clone
 from sklearn.base import BaseEstimator as _BaseEstimator
 
 from sktime.exceptions import NotFittedError
+from sktime.utils._estimator_html_repr import _HTMLDocumentationLinkMixin
 from sktime.utils.random_state import set_random_state
 
+SERIALIZATION_FORMATS = {
+    "pickle",
+    "cloudpickle",
+}
 
-class BaseObject(_BaseObject):
+
+class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
     """Base class for parametric objects with tags in sktime.
 
     Extends skbase BaseObject with additional features.
     """
+
+    # global default tags for dependency management
+    _tags = {
+        "python_version": None,  # PEP 440 version specifier, e.g., ">=3.7"
+        "python_dependencies": None,  # PEP 440 dependency strs, e.g., "pandas>=1.0"
+        "env_marker": None,  # PEP 508 environment marker, e.g., "os_name=='posix'"
+    }
+
+    _config = {
+        "warnings": "on",
+        "backend:parallel": None,  # parallelization backend for broadcasting
+        #  {None, "dask", "loky", "multiprocessing", "threading"}
+        #  None: no parallelization
+        #  "loky", "multiprocessing" and "threading": uses `joblib` Parallel loops
+        #  "dask": uses `dask`, requires `dask` package in environment
+        "backend:parallel:params": None,  # params for parallelization backend,
+    }
+
+    _config_doc = {
+        "display": """
+        display : str, "diagram" (default), or "text"
+            how jupyter kernels display instances of self
+
+            * "diagram" = html box diagram representation
+            * "text" = string printout
+        """,
+        "print_changed_only": """
+        print_changed_only : bool, default=True
+            whether printing of self lists only self-parameters that differ
+            from defaults (False), or all parameter names and values (False).
+            Does not nest, i.e., only affects self and not component estimators.
+        """,
+        "warnings": """
+        warnings : str, "on" (default), or "off"
+            whether to raise warnings, affects warnings from sktime only
+
+            * "on" = will raise warnings from sktime
+            * "off" = will not raise warnings from sktime
+        """,
+        "backend:parallel": """
+        backend:parallel : str, optional, default="None"
+            backend to use for parallelization when broadcasting/vectorizing, one of
+
+            - "None": executes loop sequentally, simple list comprehension
+            - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel``
+            - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
+            - "dask": uses ``dask``, requires ``dask`` package in environment
+        """,
+        "backend:parallel:params": """
+        backend:parallel:params : dict, optional, default={} (no parameters passed)
+            additional parameters passed to the parallelization backend as config.
+            Valid keys depend on the value of ``backend:parallel``:
+
+            - "None": no additional parameters, ``backend_params`` is ignored
+            - "loky", "multiprocessing" and "threading": default ``joblib`` backends
+              any valid keys for ``joblib.Parallel`` can be passed here, e.g.,
+              ``n_jobs``, with the exception of ``backend`` which is directly
+              controlled by ``backend``.
+              If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+              will default to ``joblib`` defaults.
+            - "joblib": custom and 3rd party ``joblib`` backends,
+              e.g., ``spark``. Any valid keys for ``joblib.Parallel``
+              can be passed here, e.g., ``n_jobs``,
+              ``backend`` must be passed as a key of ``backend_params`` in this case.
+              If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+              will default to ``joblib`` defaults.
+            - "dask": any valid keys for ``dask.compute`` can be passed,
+              e.g., ``scheduler``
+        """,
+    }
+
+    # TODO 0.33.0: check whether python 3.8 has reached EoL.
+    # If so, remove warning altogether
+    def __init__(self):
+        super().__init__()
+
+        import sys
+
+        from packaging.specifiers import SpecifierSet
+
+        from sktime.utils.warnings import warn
+
+        py39_or_higher = SpecifierSet(">=3.9")
+        sys_version = sys.version.split(" ")[0]
+
+        # todo 0.33.0 - check whether python 3.8 eol is reached.
+        # If yes, remove this msg.
+        if sys_version not in py39_or_higher:
+            warn(
+                f"From sktime 0.30.0, sktime requires Python version >=3.9, "
+                f"but found {sys_version}. "
+                "The package can still be installed, until 3.8 end of life "
+                "is reached, "
+                "but some functionality may not work as test coverage is dropped."
+                "Kindly note for context: python 3.8 will reach end of life "
+                "in October 2024, and multiple sktime core dependencies, "
+                "including scikit-learn, have already dropped support for 3.8. ",
+                category=DeprecationWarning,
+                obj=self,
+                stacklevel=2,
+            )
+
+        # handle numpy 2 incompatible soft dependencies
+        # for rationale, see _handle_numpy2_softdeps
+        self._handle_numpy2_softdeps()
+
+    # TODO 0.33.0: check list of numpy 2 incompatible soft deps
+    # remove any from NOT_NP2_COMPATIBLE that become compatible
+    def _handle_numpy2_softdeps(self):
+        """Handle tags for soft deps that are not numpy 2 compatible.
+
+        A number of soft dependencies are not numpy 2 compatible yet,
+        but do not set the bound in their setup.py. This method is a patch over
+        those packages' missing bound setting to provide informative
+        errors to users.
+
+        This method does the following:
+
+        * checks if any soft dependencies in the python_dependencies tag
+          are in NOT_NP2_COMPATIBLE, this is a hard-coded
+          list of soft dependencies that are not numpy 2 compatible
+        * if any are found, adds a numpy<2.0 soft dependency to the list,
+          and sets it as a dynamic override of the python_dependencies tag
+        """
+        from packaging.requirements import Requirement
+
+        # pypi package names of soft dependencies that are not numpy 2 compatibleS
+        NOT_NP2_COMPATIBLE = ["prophet", "pmdarima"]
+
+        softdeps = self.get_class_tag("python_dependencies", [])
+        if softdeps is None:
+            return None
+        if not isinstance(softdeps, list):
+            softdeps = [softdeps]
+        # make copy of list to avoid side effects
+        softdeps = softdeps.copy()
+
+        def _pkg_name(req):
+            """Get package name from requirement string."""
+            return Requirement(req).name
+
+        noncomp = False
+        for softdep in softdeps:
+            # variable: does any softdep string start with one of the non-compatibles
+            noncomp_sd = any([_pkg_name(softdep) == pkg for pkg in NOT_NP2_COMPATIBLE])
+            noncomp = noncomp or noncomp_sd
+
+        if noncomp:
+            softdeps = softdeps + ["numpy<2.0"]
+            self.set_tags(python_dependencies=softdeps)
+        return None
 
     def __eq__(self, other):
         """Equality dunder. Checks equal class and parameters.
@@ -81,7 +238,7 @@ class BaseObject(_BaseObject):
 
         Nested BaseObject descendants from get_params are compared via __eq__ as well.
         """
-        from sktime.utils._testing.deep_equals import deep_equals
+        from sktime.utils.deep_equals import deep_equals
 
         if not isinstance(other, BaseObject):
             return False
@@ -91,12 +248,58 @@ class BaseObject(_BaseObject):
 
         return deep_equals(self_params, other_params)
 
-    def save(self, path=None):
+    @classmethod
+    def _get_set_config_doc(cls):
+        """Create docstring for set_config from self._config_doc.
+
+        Returns
+        -------
+        collected_config_docs : dict
+            Dictionary of doc name: docstring part.
+            Collected from _config_doc class attribute via nested inheritance.
+        """
+        cfgs_dict = cls._get_class_flags(flag_attr_name="_config_doc")
+
+        doc_start = """Set config flags to given values.
+
+        Parameters
+        ----------
+        config_dict : dict
+            Dictionary of config name : config value pairs.
+            Valid configs, values, and their meaning is listed below:
+        """
+
+        doc_end = """
+        Returns
+        -------
+        self : reference to self.
+
+        Notes
+        -----
+        Changes object state, copies configs in config_dict to self._config_dynamic.
+        """
+
+        doc = doc_start
+        for _, cfg_doc in cfgs_dict.items():
+            doc += cfg_doc
+        doc += doc_end
+        return doc
+
+    @classmethod
+    def _init_dynamic_doc(cls):
+        """Set docstring for set_config from self._config_doc."""
+        try:  # try/except to avoid unexpected failures
+            cls.set_config = deepcopy_func(cls.set_config)
+            cls.set_config.__doc__ = cls._get_set_config_doc()
+        except Exception:  # noqa: S110
+            pass
+
+    def save(self, path=None, serialization_format="pickle"):
         """Save serialized self to bytes-like object or to (.zip) file.
 
         Behaviour:
-        if `path` is None, returns an in-memory serialized self
-        if `path` is a file location, stores self at that location as a zip file
+        if ``path`` is None, returns an in-memory serialized self
+        if ``path`` is a file location, stores self at that location as a zip file
 
         saved files are zip files with following contents:
         _metadata - contains class of self, i.e., type(self)
@@ -107,33 +310,64 @@ class BaseObject(_BaseObject):
         path : None or file location (str or Path)
             if None, self is saved to an in-memory object
             if file location, self is saved to that file location. If:
-                path="estimator" then a zip file `estimator.zip` will be made at cwd.
-                path="/home/stored/estimator" then a zip file `estimator.zip` will be
-                stored in `/home/stored/`.
+                path="estimator" then a zip file ``estimator.zip`` will be made at cwd.
+                path="/home/stored/estimator" then a zip file ``estimator.zip`` will be
+                stored in ``/home/stored/``.
+
+        serialization_format: str, default = "pickle"
+            Module to use for serialization.
+            The available options are "pickle" and "cloudpickle".
+            Note that non-default formats might require
+            installation of other soft dependencies.
 
         Returns
         -------
-        if `path` is None - in-memory serialized self
-        if `path` is file location - ZipFile with reference to the file
+        if ``path`` is None - in-memory serialized self
+        if ``path`` is file location - ZipFile with reference to the file
         """
         import pickle
         import shutil
         from pathlib import Path
         from zipfile import ZipFile
 
-        if path is None:
-            return (type(self), pickle.dumps(self))
-        if not isinstance(path, (str, Path)):
+        from sktime.utils.dependencies import _check_soft_dependencies
+
+        if serialization_format not in SERIALIZATION_FORMATS:
+            raise ValueError(
+                f"The provided `serialization_format`='{serialization_format}' "
+                "is not yet supported. The possible formats are: "
+                f"{SERIALIZATION_FORMATS}."
+            )
+
+        if path is not None and not isinstance(path, (str, Path)):
             raise TypeError(
                 "`path` is expected to either be a string or a Path object "
                 f"but found of type:{type(path)}."
             )
+        if path is not None:
+            path = Path(path) if isinstance(path, str) else path
+            path.mkdir()
 
-        path = Path(path) if isinstance(path, str) else path
-        path.mkdir()
+        if serialization_format == "cloudpickle":
+            _check_soft_dependencies("cloudpickle", severity="error")
+            import cloudpickle
 
-        pickle.dump(type(self), open(path / "_metadata", "wb"))
-        pickle.dump(self, open(path / "_obj", "wb"))
+            if path is None:
+                return (type(self), cloudpickle.dumps(self))
+
+            with open(path / "_metadata", "wb") as file:
+                cloudpickle.dump(type(self), file)
+            with open(path / "_obj", "wb") as file:
+                cloudpickle.dump(self, file)
+
+        elif serialization_format == "pickle":
+            if path is None:
+                return (type(self), pickle.dumps(self))
+
+            with open(path / "_metadata", "wb") as file:
+                pickle.dump(type(self), file)
+            with open(path / "_obj", "wb") as file:
+                pickle.dump(self, file)
 
         shutil.make_archive(base_name=path, format="zip", root_dir=path)
         shutil.rmtree(path)
@@ -145,11 +379,11 @@ class BaseObject(_BaseObject):
 
         Parameters
         ----------
-        serial : 1st element of output of `cls.save(None)`
+        serial : 1st element of output of ``cls.save(None)``
 
         Returns
         -------
-        deserialized self resulting in output `serial`, of `cls.save(None)`
+        deserialized self resulting in output ``serial``, of ``cls.save(None)``
         """
         import pickle
 
@@ -165,7 +399,7 @@ class BaseObject(_BaseObject):
 
         Returns
         -------
-        deserialized self resulting in output at `path`, of `cls.save(path)`
+        deserialized self resulting in output at ``path``, of ``cls.save(path)``
         """
         import pickle
         from zipfile import ZipFile
@@ -226,8 +460,8 @@ class TagAliaserMixin:
         Returns
         -------
         tag_value :
-            Value of the `tag_name` tag in self. If not found, returns
-            `tag_value_default`.
+            Value of the ``tag_name`` tag in self. If not found, returns
+            ``tag_value_default``.
         """
         cls._deprecate_tag_warn([tag_name])
         return super().get_class_tag(
@@ -263,8 +497,8 @@ class TagAliaserMixin:
         Returns
         -------
         tag_value :
-            Value of the `tag_name` tag in self. If not found, returns an error if
-            raise_error is True, otherwise it returns `tag_value_default`.
+            Value of the ``tag_name`` tag in self. If not found, returns an error if
+            raise_error is True, otherwise it returns ``tag_value_default``.
 
         Raises
         ------
@@ -293,7 +527,7 @@ class TagAliaserMixin:
 
         Notes
         -----
-        Changes object state by settting tag values in tag_dict as dynamic tags
+        Changes object state by setting tag values in tag_dict as dynamic tags
         in self.
         """
         self._deprecate_tag_warn(tag_dict.keys())
@@ -363,7 +597,7 @@ class BaseEstimator(BaseObject):
 
     @property
     def is_fitted(self):
-        """Whether `fit` has been called."""
+        """Whether ``fit`` has been called."""
         return self._is_fitted
 
     def check_is_fitted(self):
@@ -403,13 +637,13 @@ class BaseEstimator(BaseObject):
             Dictionary of fitted parameters, paramname : paramvalue
             keys-value pairs include:
 
-            * always: all fitted parameters of this object, as via `get_param_names`
+            * always: all fitted parameters of this object, as via ``get_param_names``
               values are fitted parameter value for that key, of this object
-            * if `deep=True`, also contains keys/value pairs of component parameters
-              parameters of components are indexed as `[componentname]__[paramname]`
-              all parameters of `componentname` appear as `paramname` with its value
-            * if `deep=True`, also contains arbitrary levels of component recursion,
-              e.g., `[componentname]__[componentcomponentname]__[paramname]`, etc
+            * if ``deep=True``, also contains keys/value pairs of component parameters
+              parameters of components are indexed as ``[componentname]__[paramname]``
+              all parameters of ``componentname`` appear as ``paramname`` with its value
+            * if ``deep=True``, also contains arbitrary levels of component recursion,
+              e.g., ``[componentname]__[componentcomponentname]__[paramname]``, etc
         """
         if not self.is_fitted:
             raise NotFittedError(
@@ -479,12 +713,12 @@ class BaseEstimator(BaseObject):
 
         # default retrieves all self attributes ending in "_"
         # and returns them with keys that have the "_" removed
-        fitted_params = [attr for attr in dir(obj) if attr.endswith("_")]
-        fitted_params = [x for x in fitted_params if not x.startswith("_")]
-        fitted_params = [x for x in fitted_params if hasattr(obj, x)]
-        fitted_param_dict = {p[:-1]: getattr(obj, p) for p in fitted_params}
-
-        return fitted_param_dict
+        fitted_params = {
+            attr[:-1]: getattr(obj, attr)
+            for attr in dir(obj)
+            if attr.endswith("_") and not attr.startswith("_") and hasattr(obj, attr)
+        }
+        return fitted_params
 
     def _get_fitted_params(self):
         """Get fitted parameters.
@@ -509,3 +743,20 @@ def _clone_estimator(base_estimator, random_state=None):
         set_random_state(estimator, random_state)
 
     return estimator
+
+
+def deepcopy_func(f, name=None):
+    """Deepcopy of a function."""
+    import types
+
+    return types.FunctionType(
+        f.__code__,
+        f.__globals__,
+        name or f.__name__,
+        f.__defaults__,
+        f.__closure__,
+    )
+
+
+# initialize dynamic docstrings
+BaseObject._init_dynamic_doc()

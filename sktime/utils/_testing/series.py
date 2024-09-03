@@ -41,7 +41,7 @@ def _make_series(
         "range" - `pd.RangeIndex`, starting at 3 (incl)
         "int" - `pd.Index` of `int` dtype, starting at 3 (incl)
     random_state : None (default), `int` or `np.random.RandomState`
-        random seed for sampling, if `None`, will use defalut `np.random` generation
+        random seed for sampling, if `None`, will use default `np.random` generation
     add_nan : bool, default=False
         whether to include nans in the series.
         If `True`, data will contain three `np.nan` entries, at start, end and middle
@@ -79,7 +79,7 @@ def _make_series(
     index = _make_index(n_timepoints, index_type)
     if n_columns == 1 and return_mtype is None or return_mtype == "pd.Series":
         return pd.Series(data.ravel(), index)
-    elif return_mtype is None or return_mtype == "pd.DataFrane":
+    elif return_mtype is None or return_mtype == "pd.DataFrame":
         return pd.DataFrame(data, index)
 
     # all other mtypes, convert from pd.DataFrame

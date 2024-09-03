@@ -22,9 +22,10 @@ class ForecastKnownValues(BaseForecaster):
     * to pass forecast data values in a composite used for postprocessing,
       e.g., in combination with ReconcilerForecaster for an isolated reconciliation step
 
-    When forecasting, uses `pandas.DataFrame.reindex` under the hood to obtain predicted
-    values from `y_known`. Paramters other than `y_known` are directly passed
-    on to `pandas.DataFrame.reindex`.
+    When forecasting, uses ``pandas.DataFrame.reindex`` under the hood to obtain
+    predicted
+    values from ``y_known``. Parameters other than ``y_known`` are directly passed
+    on to ``pandas.DataFrame.reindex``.
 
     Parameters
     ----------
@@ -35,9 +36,10 @@ class ForecastKnownValues(BaseForecaster):
         one of {None, 'backfill'/'bfill', 'pad'/'ffill', 'nearest'}
         method to use for imputing indices at which forecasts are unavailable in y_known
     fill_value : scalar, optional, default=np.NaN
-        value to use for any missing values (e.g., if `method` is None)
+        value to use for any missing values (e.g., if ``method`` is None)
     limit : int, optional, default=None=infinite
-        maximum number of consecutive elements to bfill/ffill if `method=bfill`/`ffill`
+        maximum number of consecutive elements to bfill/ffill if
+        ``method=bfill``/``ffill``
 
     Examples
     --------
@@ -51,10 +53,16 @@ class ForecastKnownValues(BaseForecaster):
     ForecastKnownValues(...)
 
     The forecast "plays back" the known/prescribed values from y_known
+
     >>> y_pred = fcst.predict()
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["fkiraly"],
+        # estimator type
+        # --------------
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "scitype:y": "both",
@@ -78,12 +86,12 @@ class ForecastKnownValues(BaseForecaster):
         if isinstance(idx, pd.MultiIndex):
             if idx.nlevels >= 3:
                 mtypes = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
-            elif idx.levels == 2:
+            elif idx.nlevels == 2:
                 mtypes = ["pd.DataFrame", "pd-multiindex"]
             self.set_tags(**{"y_inner_mtype": mtypes})
             self.set_tags(**{"X_inner_mtype": mtypes})
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -115,7 +123,7 @@ class ForecastKnownValues(BaseForecaster):
         # no fitting, we already know the forecast values
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -167,7 +175,7 @@ class ForecastKnownValues(BaseForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for forecasters.
 
         Returns
@@ -175,8 +183,9 @@ class ForecastKnownValues(BaseForecaster):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.utils._testing.series import _make_series
 

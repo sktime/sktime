@@ -1,7 +1,7 @@
 __author__ = ["chrisholder", "TonyBagnall"]
 
-
-from typing import Any, Callable, List, Tuple
+from collections.abc import Callable
+from typing import Any
 
 import numpy as np
 
@@ -26,7 +26,7 @@ def average_of_slope_transform(X: np.ndarray) -> np.ndarray:
     -------
     np.ndarray (2d array of shape nxm where n is len(q.shape[0]-2) and m is
                 len(q.shape[1]))
-        The derviative of the time series X.
+        The derivative of the time series X.
     """
     from sktime.distances._ddtw_numba import average_of_slope
 
@@ -127,7 +127,7 @@ class _DdtwDistance(NumbaDistance):
             def numba_ddtw_distance_alignment_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
-            ) -> Tuple[List, float, np.ndarray]:
+            ) -> tuple[list, float, np.ndarray]:
                 _x = compute_derivative(_x)
                 _y = compute_derivative(_y)
                 cost_matrix = _cost_matrix(_x, _y, _bounding_matrix)
@@ -140,7 +140,7 @@ class _DdtwDistance(NumbaDistance):
             def numba_ddtw_distance_alignment_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
-            ) -> Tuple[List, float]:
+            ) -> tuple[list, float]:
                 _x = compute_derivative(_x)
                 _y = compute_derivative(_y)
                 cost_matrix = _cost_matrix(_x, _y, _bounding_matrix)

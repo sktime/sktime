@@ -16,13 +16,15 @@ class _ProphetAdapter(BaseForecaster):
     """Base class for interfacing prophet and neuralprophet."""
 
     _tags = {
+        "authors": ["bletham", "tcuongd", "mloning", "aiwalter", "fkiraly"],
+        # bletham and tcuongd for prophet/fbprophet
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "y_inner_mtype": "pd.DataFrame",
-        "python_dependencies": "prophet",
+        "python_dependencies": ["prophet", "numpy<2.0"],
     }
 
     def _convert_int_to_date(self, y):
@@ -51,7 +53,7 @@ class _ProphetAdapter(BaseForecaster):
         self.y_index_was_period_ = type(y.index) is pd.PeriodIndex
         self.y_index_was_int_ = pd.api.types.is_integer_dtype(y.index)
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -86,13 +88,22 @@ class _ProphetAdapter(BaseForecaster):
         df.index.name = "ds"
         df = df.reset_index()
 
-        # Add seasonality/seasonalities
+        # Add seasonality/seasonalities and collect condition names
+        condition_names = []
         if self.add_seasonality:
-            if type(self.add_seasonality) == dict:
+            if isinstance(self.add_seasonality, dict):
                 self._forecaster.add_seasonality(**self.add_seasonality)
-            elif type(self.add_seasonality) == list:
+                if (
+                    condition_name := self.add_seasonality.get("condition_name", None)
+                ) is not None:
+                    condition_names.append(condition_name)
+            elif isinstance(self.add_seasonality, list):
                 for seasonality in self.add_seasonality:
                     self._forecaster.add_seasonality(**seasonality)
+                    if (
+                        condition_name := seasonality.get("condition_name", None)
+                    ) is not None:
+                        condition_names.append(condition_name)
 
         # Add country holidays
         if self.add_country_holidays:
@@ -102,7 +113,8 @@ class _ProphetAdapter(BaseForecaster):
         if X is not None:
             X = X.copy()
             df, X = _merge_X(df, X)
-            for col in X.columns:
+            regressor_names = (col for col in X.columns if col not in condition_names)
+            for col in regressor_names:
                 self._forecaster.add_regressor(col)
 
         # Add floor and bottom when growth is logistic
@@ -116,11 +128,15 @@ class _ProphetAdapter(BaseForecaster):
             df["cap"] = self.growth_cap
             df["floor"] = self.growth_floor
 
+        if hasattr(self, "fit_kwargs") and isinstance(self.fit_kwargs, dict):
+            fit_kwargs = self.fit_kwargs
+        else:
+            fit_kwargs = {}
         if self.verbose:
-            self._forecaster.fit(df=df)
+            self._forecaster.fit(df=df, **fit_kwargs)
         else:
             with _suppress_stdout_stderr():
-                self._forecaster.fit(df=df)
+                self._forecaster.fit(df=df, **fit_kwargs)
 
         return self
 
@@ -205,7 +221,7 @@ class _ProphetAdapter(BaseForecaster):
 
         return y_pred
 
-    def _predict_interval(self, fh, X=None, coverage=0.90):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -245,7 +261,9 @@ class _ProphetAdapter(BaseForecaster):
         X = self._convert_X_for_exog(X, fh)
 
         # prepare the return DataFrame - empty with correct cols
-        var_names = ["Coverage"]
+        var_names = self._get_varnames()
+        var_name = var_names[0]
+
         int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
         pred_int = pd.DataFrame(columns=int_idx)
 
@@ -269,10 +287,10 @@ class _ProphetAdapter(BaseForecaster):
             # retrieve lower/upper and write in pred_int return frame
             # instead of writing lower to lower, upper to upper
             #  we take the min/max for lower and upper
-            #  because prophet (erroneously?) uses MC indenendent for upper/lower
+            #  because prophet (erroneously?) uses MC independent for upper/lower
             #  so if coverage is small, it can happen that upper < lower in prophet
-            pred_int[("Coverage", c, "lower")] = out_prophet.min(axis=1)
-            pred_int[("Coverage", c, "upper")] = out_prophet.max(axis=1)
+            pred_int[(var_name, c, "lower")] = out_prophet.min(axis=1)
+            pred_int[(var_name, c, "upper")] = out_prophet.max(axis=1)
 
         if self.y_index_was_int_ or self.y_index_was_period_:
             pred_int.index = self.fh.to_absolute_index(cutoff=self.cutoff)
@@ -292,7 +310,7 @@ class _ProphetAdapter(BaseForecaster):
         """
         fitted_params = {}
         for name in ["k", "m", "sigma_obs"]:
-            fitted_params[name] = self._forecaster.params[name][0][0]
+            fitted_params[name] = self._forecaster.params[name].flatten()[0]
         for name in ["delta", "beta"]:
             fitted_params[name] = self._forecaster.params[name][0]
         return fitted_params

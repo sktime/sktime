@@ -10,7 +10,6 @@ __all__ = ["ProbabilityThresholdEarlyClassifier"]
 import copy
 
 import numpy as np
-from deprecated.sphinx import deprecated
 from joblib import Parallel, delayed
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.utils import check_random_state
@@ -21,12 +20,8 @@ from sktime.classification.interval_based import CanonicalIntervalForest
 from sktime.utils.validation.panel import check_X
 
 
-# TODO: remove message in v0.16.0 and change base class
-@deprecated(
-    version="0.13.0",
-    reason="The base class of ProbabilityThresholdEarlyClassifier will be changed to BaseEarlyClassifier in v0.16.0. This will change how classification safety decisions are made and returned, see BaseEarlyClassifier or TEASER for the new interface.",  # noqa: E501
-    category=FutureWarning,
-)
+# TODO: fix this in 0.33.0
+# base class should have been changed to BaseEarlyClassifier
 class ProbabilityThresholdEarlyClassifier(BaseClassifier):
     """Probability Threshold Early Classifier.
 
@@ -53,10 +48,10 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         List of integer time series time stamps to build classifiers and allow
         predictions at. Early predictions must have a series length that matches a value
         in the _classification_points List. Duplicate values will be removed, and the
-        full series length will be appeneded if not present.
+        full series length will be appended if not present.
         If None, will use 20 thresholds linearly spaces from 0 to the series length.
     n_jobs : int, default=1
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``-1`` means using all processors.
     random_state : int or None, default=None
         Seed for random number generation.
@@ -247,10 +242,15 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
                 # next classification point index
                 idx + 1,
                 # consecutive predictions, add one if positive decision and same class
-                state_info[i][1] + 1 if decisions[i] and preds[i] == state_info[i][2]
-                # set to 0 if the decision is negative, 1 if its positive but different
-                # class
-                else 1 if decisions[i] else 0,
+                (
+                    state_info[i][1] + 1
+                    if decisions[i] and preds[i] == state_info[i][2]
+                    # set to 0 if the decision is negative
+                    # 1 if its positive but different class
+                    else 1
+                    if decisions[i]
+                    else 0
+                ),
                 # predicted class index
                 preds[i],
             )
@@ -292,7 +292,7 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -302,12 +302,13 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         """
         from sktime.classification.dummy import DummyClassifier
         from sktime.classification.feature_based import Catch22Classifier
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         if _check_soft_dependencies("numba", severity="none"):
             est = Catch22Classifier(estimator=RandomForestClassifier(n_estimators=2))
         else:
             est = DummyClassifier()
 
-        params = {"classification_points": [3], "estimator": est}
-        return params
+        params1 = {"classification_points": [3], "estimator": est}
+        params2 = {"probability_threshold": 0.9, "estimator": est}
+        return [params1, params2]

@@ -1,4 +1,5 @@
 """Tests for KNeighborsTimeSeriesClassifier."""
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -8,7 +9,8 @@ from sktime.classification.distance_based._time_series_neighbors import (
     KNeighborsTimeSeriesClassifier,
 )
 from sktime.datasets import load_unit_test
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.dists_kernels import AggrDist, ScipyDist
+from sktime.tests.test_switch import run_test_for_class
 
 distance_functions = [
     "euclidean",
@@ -43,6 +45,10 @@ expected_correct_window = {
 }
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(KNeighborsTimeSeriesClassifier),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("distance_key", distance_functions)
 def test_knn_on_unit_test(distance_key):
     """Test function for elastic knn, to be reinstated soon."""
@@ -61,6 +67,10 @@ def test_knn_on_unit_test(distance_key):
     assert correct == expected_correct[distance_key]
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(KNeighborsTimeSeriesClassifier),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("distance_key", distance_functions)
 def test_knn_bounding_matrix(distance_key):
     """Test knn with custom bounding parameters."""
@@ -79,11 +89,11 @@ def test_knn_bounding_matrix(distance_key):
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(AlignerDTW, severity="none"),
-    reason="skip test if required soft dependencies not available",
+    not run_test_for_class([KNeighborsTimeSeriesClassifier, AlignerDTW]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_knn_with_aligner():
-    """Tests KNN classifer with alignment distance on unequal length data."""
+    """Tests KNN classifier with alignment distance on unequal length data."""
     from sktime.dists_kernels.compose_from_align import DistFromAligner
     from sktime.utils._testing.hierarchical import _make_hierarchical
 
@@ -96,9 +106,12 @@ def test_knn_with_aligner():
     clf.fit(X, y)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([KNeighborsTimeSeriesClassifier, AggrDist, ScipyDist]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_knn_with_aggrdistance():
-    """Tests KNN classifer with alignment distance on unequal length data."""
-    from sktime.dists_kernels import AggrDist, ScipyDist
+    """Tests KNN classifier with alignment distance on unequal length data."""
     from sktime.utils._testing.hierarchical import _make_hierarchical
 
     X = _make_hierarchical((3,), min_timepoints=5, max_timepoints=10, random_state=0)
@@ -111,6 +124,10 @@ def test_knn_with_aggrdistance():
     clf.fit(X, y)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(KNeighborsTimeSeriesClassifier),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_knn_kneighbors():
     """Tests kneighbors method and absence of bug #3798."""
     from sktime.utils._testing.hierarchical import _make_hierarchical

@@ -1,24 +1,27 @@
 """Regression tests for bugfixes related to base class related functionality."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 import pytest
 
 from sktime.forecasting.compose import ForecastByLevel, TransformedTargetForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
-from sktime.forecasting.model_selection import (
-    ExpandingWindowSplitter,
-    ForecastingGridSearchCV,
-)
+from sktime.forecasting.model_selection import ForecastingGridSearchCV
+from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.reconcile import ReconcilerForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
+from sktime.split import ExpandingWindowSplitter
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.transformations.hierarchical.aggregate import Aggregator
+from sktime.transformations.series.difference import Differencer
 from sktime.utils._testing.hierarchical import _make_hierarchical
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.utils.dependencies import _check_estimator_deps
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(ExponentialSmoothing, severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_module_changed("sktime.forecasting.base")
+    or not _check_estimator_deps(ExponentialSmoothing, severity="none"),
+    reason="run only if base module has changed",
 )
 def test_heterogeneous_get_fitted_params():
     """Regression test for bugfix #4574, related to get_fitted_params."""
@@ -58,3 +61,21 @@ def test_heterogeneous_get_fitted_params():
 
     reconciler.fit(y_agg)
     reconciler.get_fitted_params()  # triggers an error pre-fix
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.forecasting.base"),
+    reason="run only if base module has changed",
+)
+def test_predict_residuals_conversion():
+    """Regression test for bugfix #4766, related to predict_residuals internal type."""
+    from sktime.datasets import load_longley
+    from sktime.split import temporal_train_test_split
+
+    y, X = load_longley()
+    y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
+    pipe = Differencer() * NaiveForecaster()
+    pipe.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4])
+    result = pipe.predict_residuals()
+
+    assert type(result) is type(y_train)

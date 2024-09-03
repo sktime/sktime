@@ -4,6 +4,7 @@ __author__ = ["mloning", "TonyBagnall", "fkiraly"]
 
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from sktime.classification.tests._expected_outputs import (
@@ -18,7 +19,7 @@ from sktime.utils._testing.panel import make_classification_problem
 from sktime.utils._testing.scenarios_classification import (
     ClassifierFitPredictMultivariate,
 )
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 class ClassifierFixtureGenerator(BaseFixtureGenerator):
@@ -104,9 +105,14 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
 
             X_train = scenario.args["fit"]["X"]
             _, _, X_train_metadata = check_is_scitype(
-                X_train, "Panel", return_metadata=True
+                X_train, "Panel", return_metadata=["n_instances"]
             )
             X_train_len = X_train_metadata["n_instances"]
+
+            # temp hack until _get_train_probs is implemented for all mtypes
+            if hasattr(X_train_len, "index"):
+                if isinstance(X_train_len.index, pd.MultiIndex):
+                    return None
 
             train_proba = estimator_instance._get_train_probs(X_train, y_train)
 
@@ -119,20 +125,17 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         # we only use the first estimator instance for testing
         classname = estimator_class.__name__
 
-        # retrieve expected predict_proba output, and skip test if not available
-        if classname in unit_test_proba.keys():
-            expected_probas = unit_test_proba[classname]
-        else:
-            # skip test if no expected probas are registered
-            return None
-
         # if numba is not installed, some estimators may still try to construct
         # numba dependenct estimators in results_comparison
         # if that is the case, we skip the test
+        if classname in unit_test_proba.keys():
+            parameter_set = "results_comparison"
+        else:
+            parameter_set = "default"
         try:
             # we only use the first estimator instance for testing
             estimator_instance = estimator_class.create_test_instance(
-                parameter_set="results_comparison"
+                parameter_set=parameter_set
             )
         except ModuleNotFoundError as e:
             if not _check_soft_dependencies("numba", severity="none"):
@@ -151,10 +154,18 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
 
         # train classifier and predict probas
         estimator_instance.fit(X_train, y_train)
+
+        y_pred = estimator_instance.predict(X_test.iloc[indices])
+        assert y_pred.dtype == y_train.dtype
+        assert set(y_train).issuperset(set(y_pred))
+
         y_proba = estimator_instance.predict_proba(X_test.iloc[indices])
 
-        # assert probabilities are the same
-        _assert_array_almost_equal(y_proba, expected_probas, decimal=2)
+        # retrieve expected predict_proba output, and skip test if not available
+        if classname in unit_test_proba.keys():
+            expected_probas = unit_test_proba[classname]
+            # assert probabilities are the same
+            _assert_array_almost_equal(y_proba, expected_probas, decimal=2)
 
     def test_classifier_on_basic_motions(self, estimator_class):
         """Test classifier on basic motions data."""
@@ -207,7 +218,30 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         X, y = make_classification_problem()
         y[:] = 42
 
-        error_msg = "single class label"
+        error_msg = "single label"
 
         with pytest.warns(UserWarning, match=error_msg):
             estimator_instance.fit(X, y)
+
+    def test_multioutput(self, estimator_instance):
+        """Test multioutput classification for all classifiers.
+
+        All classifiers should follow the same interface,
+        those that do not genuinely should vectorize/broadcast over y.
+        """
+        n_instances = 20
+        X, y = make_classification_problem(n_instances=n_instances)
+        y_mult = pd.DataFrame({"a": y, "b": y})
+
+        estimator_instance.fit(X, y_mult)
+        y_pred = estimator_instance.predict(X)
+
+        assert isinstance(y_pred, pd.DataFrame)
+        assert y_pred.shape == y_mult.shape
+
+        # the estimator vectorizes iff it does not have the multioutput capability
+        vectorized = not estimator_instance.get_tag("capability:multioutput")
+        if vectorized:
+            assert hasattr(estimator_instance, "classifiers_")
+            assert isinstance(estimator_instance.classifiers_, pd.DataFrame)
+            assert estimator_instance.classifiers_.shape == (1, 2)

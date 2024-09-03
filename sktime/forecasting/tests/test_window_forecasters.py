@@ -5,11 +5,14 @@
 __author__ = ["mloning"]
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
-from sktime.forecasting.model_selection import temporal_train_test_split
+from sktime.forecasting.naive import NaiveForecaster
 from sktime.registry import all_estimators
+from sktime.split import temporal_train_test_split
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils._testing.series import _make_series
 
@@ -26,6 +29,10 @@ y = make_forecasting_problem()
 y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(WINDOW_FORECASTERS),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("Forecaster", WINDOW_FORECASTERS)
 def test_last_window(Forecaster):
     """Test window forecaster common API points."""
@@ -42,3 +49,22 @@ def test_last_window(Forecaster):
 
     np.testing.assert_array_equal(actual, expected)
     assert len(actual) == f.window_length_
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(NaiveForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_insample_and_outofsample_forecasting():
+    n = 20
+    df = pd.DataFrame(
+        index=pd.period_range("2020-01-01", periods=n, freq="D"),
+        data={"value": np.arange(n)},
+    )
+
+    model = NaiveForecaster(strategy="mean", window_length=7)
+    model.fit(df)
+
+    assert (model.predict(fh=[1, 2, 3]).values.flatten() == [16, 16, 16]).all()
+    assert (model.predict(fh=[0]).values.flatten() == [15]).all()
+    assert (model.predict(fh=[0, 1, 2, 3]).values.flatten() == [15, 16, 16, 16]).all()

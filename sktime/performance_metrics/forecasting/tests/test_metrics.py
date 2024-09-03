@@ -4,8 +4,16 @@
 # since the numpy output print changes between versions
 
 import numpy as np
+import pandas as pd
+import pytest
+
+from sktime.tests.test_switch import run_test_module_changed
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 def test_gmse_class():
     """Doctest from GeometricMeanSquaredError."""
     from sktime.performance_metrics.forecasting import GeometricMeanSquaredError
@@ -34,6 +42,10 @@ def test_gmse_class():
     assert np.allclose(rgmse(y_true, y_pred), 0.7000014418652152)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 def test_gmse_function():
     """Doctest from geometric_mean_squared_error."""
     from sktime.performance_metrics.forecasting import geometric_mean_squared_error
@@ -61,7 +73,18 @@ def test_gmse_function():
         0.7000014418652152,
     )
 
+    assert np.allclose(
+        gmse(
+            np.array([1, 2, 3]), np.array([6, 5, 4]), horizon_weight=np.array([7, 8, 9])
+        ),
+        6.185891035775025,
+    )
 
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 def test_linex_class():
     """Doctest from MeanLinexError."""
     from sktime.performance_metrics.forecasting import MeanLinexError
@@ -86,6 +109,10 @@ def test_linex_class():
     assert np.allclose(linex_error(y_true, y_pred), 0.30917568000716666)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 def test_linex_function():
     """Doctest from mean_linex_error."""
     from sktime.performance_metrics.forecasting import mean_linex_error
@@ -106,3 +133,61 @@ def test_linex_function():
     assert np.allclose(
         mean_linex_error(y_true, y_pred, multioutput=[0.3, 0.7]), 0.30917568000716666
     )
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+def test_make_scorer():
+    """Test make_forecasting_scorer and the failure case in #4827."""
+    import functools
+
+    from sklearn.metrics import mean_tweedie_deviance
+
+    from sktime.performance_metrics.forecasting import make_forecasting_scorer
+
+    rmsle = functools.partial(mean_tweedie_deviance, power=1.5)
+
+    scorer = make_forecasting_scorer(rmsle, name="MTD")
+
+    scorer.evaluate(pd.Series([1, 2, 3]), pd.Series([1, 2, 4]))
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+def test_make_scorer_sklearn():
+    """Test make_forecasting_scorer and the failure case in #5715.
+
+    Naive adaptation fails on newer sklearn versions due to
+    decoration with sklearn's custom input constraint wrapper.
+    """
+    from sklearn.metrics import mean_absolute_error
+
+    from sktime.performance_metrics.forecasting import make_forecasting_scorer
+
+    scorer = make_forecasting_scorer(mean_absolute_error, name="MAE")
+
+    scorer.evaluate(pd.Series([1, 2, 3]), pd.Series([1, 2, 4]))
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+def test_metric_coercion_bug():
+    """Tests for sensible output when using hierarchical arg with non-hierarchical data.
+
+    Failure case in bug #6413.
+    """
+    from sktime.performance_metrics.forecasting import MeanAbsoluteError
+
+    y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+    mae = MeanAbsoluteError(multilevel="raw_values", multioutput=[0.4, 0.6])
+    metric = mae(y_true, y_pred)
+
+    assert isinstance(metric, pd.DataFrame)
+    assert metric.shape == (1, 1)

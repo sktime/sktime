@@ -30,8 +30,6 @@ class MrSQM(_DelegatedClassifier):
         number of representations produced by sax transformation.
     nsfa                : int, default=0
         number of representations produced by sfa transformation.
-        WARNING: setting this to 1 or larger will break estimator persistence (save),
-        known bug, see https://github.com/mlgig/mrsqm/issues/7
     custom_config       : dict, default=None
         customized parameters for the symbolic transformation.
     random_state        : int, default=None.
@@ -50,9 +48,15 @@ class MrSQM(_DelegatedClassifier):
     """
 
     _tags = {
-        "X_inner_mtype": "nested_univ",
+        # packaging info
+        # --------------
+        "authors": ["lnthach", "heerme", "fkiraly"],
+        "maintainers": ["lnthach", "heerme", "fkiraly"],
         "python_dependencies": "mrsqm",
         "requires_cython": True,
+        # estimator type
+        # --------------
+        "X_inner_mtype": "nested_univ",
     }
 
     def __init__(
@@ -108,7 +112,7 @@ class MrSQM(_DelegatedClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -119,20 +123,18 @@ class MrSQM(_DelegatedClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         params1 = {}
 
-        # known problem: nsfa > 0 causes estimator to be non-pickleable
-        # see https://github.com/mlgig/mrsqm/issues/7
-        # fix this problem once the pickling issue is resolved
         params2 = {
             "strat": "SR",
             "features_per_rep": 200,
             "selection_per_rep": 1000,
             "nsax": 2,
-            "nsfa": 0,
+            "nsfa": 1,
             "sfa_norm": False,
         }
 

@@ -2,16 +2,16 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for statsmodels forecasters to be used in sktime framework."""
 
-__author__ = ["mloning"]
+__author__ = ["mloning", "ciaran-g"]
 __all__ = ["_StatsModelsAdapter"]
 
 import inspect
-from warnings import warn
 
 import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.utils.warnings import warn
 
 
 class _StatsModelsAdapter(BaseForecaster):
@@ -19,10 +19,16 @@ class _StatsModelsAdapter(BaseForecaster):
 
     _fitted_param_names = ()
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["mloning", "ciaran-g"],
+        "maintainers": ["ciaran-g"],
+        "python_dependencies": "statsmodels",
+        # estimator type
+        # --------------
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
-        "python_dependencies": "statsmodels",
     }
 
     def __init__(self, random_state=None):
@@ -31,7 +37,7 @@ class _StatsModelsAdapter(BaseForecaster):
         self._fitted_forecaster = None
         super().__init__()
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -67,7 +73,8 @@ class _StatsModelsAdapter(BaseForecaster):
                 warn(
                     f"NotImplementedWarning: {self.__class__.__name__} "
                     f"can not accept new data when update_params=False. "
-                    f"Call with update_params=True to refit with new data."
+                    f"Call with update_params=True to refit with new data.",
+                    obj=self,
                 )
             else:
                 # only append unseen data to fitted forecaster
@@ -78,7 +85,7 @@ class _StatsModelsAdapter(BaseForecaster):
                     y = y.loc[index_diff]
                 self._fitted_forecaster = self._fitted_forecaster.append(y)
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Make forecasts.
 
         Parameters
@@ -98,25 +105,29 @@ class _StatsModelsAdapter(BaseForecaster):
         # statsmodels requires zero-based indexing starting at the
         # beginning of the training series when passing integers
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
-        fh_abs = fh.to_absolute_index(self.cutoff)
+        fh_int = fh.to_absolute_int(self._y.index[0], self.cutoff) - len(self._y)
 
         # bug fix for evaluate function as test_plus_train indices are passed
         # statsmodels exog must contain test indices only.
         # For discussion see https://github.com/sktime/sktime/issues/3830
-        if X is not None:
+        if X is not None and self._X is not None:
             ind_drop = self._X.index
             X = X.loc[~X.index.isin(ind_drop)]
             # Entire range of the forecast horizon is required
-            X = X[: fh_abs[-1]]
+            X = X.iloc[: (fh_int[-1] + 1)]  # include end point
 
         if "exog" in inspect.signature(self._forecaster.__init__).parameters.keys():
+            if self._X is None:
+                X = None  # change X passed in predict to None if X wasn't passed to fit
             y_pred = self._fitted_forecaster.predict(start=start, end=end, exog=X)
         else:
             y_pred = self._fitted_forecaster.predict(start=start, end=end)
 
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
-        y_pred = y_pred.loc[fh_abs]
+        # if fh[0] > 1 steps ahead of cutoff then make relative to `start`
+        fh_int = fh_int - fh_int[0]
+        y_pred = y_pred.iloc[fh_int]
         # ensure that name is not added nor removed
         # otherwise this may upset conversion to pd.DataFrame
         y_pred.name = self._y.name
@@ -147,7 +158,7 @@ class _StatsModelsAdapter(BaseForecaster):
 
         raise NotImplementedError("abstract method")
 
-    def _predict_interval(self, fh, X=None, coverage=0.95):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction interval forecasts.
 
         private _predict_interval containing the core logic,
@@ -185,7 +196,9 @@ class _StatsModelsAdapter(BaseForecaster):
             return BaseForecaster._predict_interval(self, fh, X=X, coverage=coverage)
 
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
-        valid_indices = fh.to_absolute(self.cutoff).to_pandas()
+        fh_int = fh.to_absolute_int(self._y.index[0], self.cutoff) - len(self._y)
+        # if fh > 1 steps ahead of cutoff
+        fh_int = fh_int - fh_int[0]
 
         get_prediction_arguments = {"start": start, "end": end}
 
@@ -201,20 +214,18 @@ class _StatsModelsAdapter(BaseForecaster):
             **get_prediction_arguments
         )
 
-        columns = pd.MultiIndex.from_product(
-            [["Coverage"], coverage, ["lower", "upper"]]
-        )
-        pred_int = pd.DataFrame(index=valid_indices, columns=columns)
+        var_names = self._get_varnames()
+        var_name = var_names[0]
+        columns = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
+        preds_index = self._extract_conf_int(prediction_results, (1 - coverage[0]))
+        preds_index = preds_index.iloc[fh_int].index
+        pred_int = pd.DataFrame(index=preds_index, columns=columns)
 
         for c in coverage:
             pred_statsmodels = self._extract_conf_int(prediction_results, (1 - c))
 
-            pred_int[("Coverage", c, "lower")] = pred_statsmodels.loc[
-                valid_indices, "lower"
-            ]
-            pred_int[("Coverage", c, "upper")] = pred_statsmodels.loc[
-                valid_indices, "upper"
-            ]
+            pred_int[(var_name, c, "lower")] = pred_statsmodels.iloc[fh_int]["lower"]
+            pred_int[(var_name, c, "upper")] = pred_statsmodels.iloc[fh_int]["upper"]
 
         return pred_int
 

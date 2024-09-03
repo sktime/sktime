@@ -1,6 +1,5 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements DynamicFactor Model as interface to statsmodels."""
-from typing import List, Union
 
 import numpy as np
 import pandas as pd
@@ -14,7 +13,7 @@ __author__ = ["Ris-Bali", "lbventura"]
 class DynamicFactor(_StatsModelsAdapter):
     """Dynamic Factor Forecaster.
 
-    Direct interface for `statsmodels.tsa.statespace.dynamic_factor`
+    Direct interface for ``statsmodels.tsa.statespace.dynamic_factor``
 
     Parameters
     ----------
@@ -123,6 +122,14 @@ class DynamicFactor(_StatsModelsAdapter):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["ChadFulton", "bashtage", "Ris-Bali", "lbventura"],
+        # ChadFulton and bashtage for statemodels DynamicFactor
+        "maintainers": ["Ris-Bali", "lbventura"],
+        # python_dependencies: "statsmodels" - inherited from _StatsModelsAdapter
+        # estimator type
+        # --------------
         "scitype:y": "multivariate",
         "ignores-exogeneous-X": False,
         "handles-missing-data": True,
@@ -189,7 +196,7 @@ class DynamicFactor(_StatsModelsAdapter):
 
         super().__init__()
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Make forecasts.
 
         Parameters
@@ -221,7 +228,7 @@ class DynamicFactor(_StatsModelsAdapter):
             )
         return y_pred.loc[fh.to_absolute_index(self.cutoff)]
 
-    def _predict_interval(self, fh, X=None, coverage: Union[float, List[float]] = None):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -249,7 +256,7 @@ class DynamicFactor(_StatsModelsAdapter):
         pred_int : pd.DataFrame
             Column has multi-index: first level is variable name from y in fit,
                 second level coverage fractions for which intervals were computed.
-                    in the same order as in input `coverage`.
+                    in the same order as in input ``coverage``.
                 Third level is string "lower" or "upper", for lower/upper interval end.
             Row index is fh, with additional (upper) levels equal to instance levels,
                 from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
@@ -259,7 +266,7 @@ class DynamicFactor(_StatsModelsAdapter):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        if type(coverage) is not list:
+        if not isinstance(coverage, list):
             coverage_list = [coverage]
         else:
             coverage_list = coverage
@@ -532,7 +539,7 @@ class DynamicFactor(_StatsModelsAdapter):
         ----------
         parameter_set : str , default = "default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for forecasters.
 
         Returns
@@ -540,8 +547,9 @@ class DynamicFactor(_StatsModelsAdapter):
         params :dict or list of dict , default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {"k_factors": 1, "factor_order": 1}
         params2 = {"maxiter": 25, "low_memory": True}

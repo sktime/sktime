@@ -9,15 +9,15 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import load_solar
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.clear_sky import ClearSky
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 output_chk = [0.0, 0.0, 0.901, 0.739, 0.618, 0.0]
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency for statsmodels not available",
+    not run_test_for_class(ClearSky),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_clearsky_trafo_vals():
     """Tests clear sky trafo with and without missing values and period index."""
@@ -49,8 +49,8 @@ def test_clearsky_trafo_vals():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency for statsmodels not available",
+    not run_test_for_class(ClearSky),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_clearsky_trafo_range_exception():
     """Tests clear sky trafo exception with range index."""
@@ -64,14 +64,14 @@ def test_clearsky_trafo_range_exception():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency for statsmodels not available",
+    not run_test_for_class(ClearSky),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_clearsky_trafo_nofreq_exception():
-    """Tests clear sky trafo exception with no set/inferrable freq in index."""
+    """Tests clear sky trafo exception with no set/inferable freq in index."""
     y = load_solar(api_version=None)
 
-    # no set or inferrable frequency should not work
+    # no set or inferable frequency should not work
     y = y.drop(pd.to_datetime("2021-05-01 00:30:00", utc=True))
     cs_model = ClearSky()
     with pytest.raises(ValueError):
@@ -79,8 +79,8 @@ def test_clearsky_trafo_nofreq_exception():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency for statsmodels not available",
+    not run_test_for_class(ClearSky),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_clearsky_trafo_grdaily_exception():
     """Tests clear sky trafo exception with greater than daily freq in index."""
