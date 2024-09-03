@@ -300,6 +300,23 @@ class AnnotatorPipeline(_HeterogenousMetaEstimator, BaseSeriesAnnotator):
         return X
 
     def _predict_segments(self, X):
+        """Predict on test/deployment data.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Data to annotate, time series.
+
+        Returns
+        -------
+        Y : pd.Series
+            A series with an index of intervals. Each interval is the range of a
+            segment and the corresponding value is the label of the segment.
+        """
+        X = self._transform(X=X)
+        return self.estimator_.predict(X)
+
+    def _predict_segments(self, X):
         """Predict segments on test/deployment data.
 
         Parameters
