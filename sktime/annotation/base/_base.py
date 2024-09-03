@@ -71,8 +71,8 @@ class BaseSeriesAnnotator(BaseEstimator):
     }  # for unit test cases
 
     def __init__(self):
-        self.task = self.get_class_tag("task")
-        self.learning_type = self.get_class_tag("learning_type")
+        self.task = self.get_tag("task")
+        self.learning_type = self.get_tag("learning_type")
 
         self._is_fitted = False
 
@@ -187,9 +187,10 @@ class BaseSeriesAnnotator(BaseEstimator):
             Annotations for sequence X. The returned annotations will be in the dense
             format.
         """
-        if self.task == "anomaly_detection" or self.task == "change_point_detection":
+        task = self.get_tag("task")
+        if task in ["anomaly_detection", "change_point_detection"]:
             Y = self.predict_points(X)
-        elif self.task == "segmentation":
+        elif task == "segmentation":
             Y = self.predict_segments(X)
 
         return self.sparse_to_dense(Y, X.index)
@@ -410,18 +411,15 @@ class BaseSeriesAnnotator(BaseEstimator):
             A series with an index of intervals. Each interval is the range of a
             segment and the corresponding value is the label of the segment.
         """
-        if self.task == "anomaly_detection":
-            raise RuntimeError(
-                "Anomaly detection annotators should not be used for segmentation."
-            )
         self.check_is_fitted()
         X = check_series(X)
 
-        if self.task == "change_point_detection":
+        task = self.get_tag("task")
+        if task in ["anomaly_detection", "change_point_detection"]:
             return self.change_points_to_segments(
                 self.predict_points(X), start=X.index.min(), end=X.index.max()
             )
-        elif self.task == "segmentation":
+        elif task == "segmentation":
             return self._predict_segments(X)
 
     def predict_points(self, X):
@@ -440,9 +438,10 @@ class BaseSeriesAnnotator(BaseEstimator):
         self.check_is_fitted()
         X = check_series(X)
 
-        if self.task == "anomaly_detection" or self.task == "change_point_detection":
+        task = self.get_tag("task")
+        if task in ["anomaly_detection", "change_point_detection"]:
             return self._predict_points(X)
-        elif self.task == "segmentation":
+        elif task == "segmentation":
             return self.segments_to_change_points(self.predict_segments(X))
 
     def _predict_segments(self, X):
@@ -459,7 +458,7 @@ class BaseSeriesAnnotator(BaseEstimator):
             A series with an index of intervals. Each interval is the range of a
             segment and the corresponding value is the label of the segment.
         """
-        raise NotImplementedError("abstract method")
+        return self._predict(X)
 
     def _predict_points(self, X):
         """Predict changepoints/anomalies on test/deployment data.
@@ -474,7 +473,7 @@ class BaseSeriesAnnotator(BaseEstimator):
         Y : pd.Series
             A series whose values are the changepoints/anomalies in X.
         """
-        raise NotImplementedError("abstract method")
+        return self._predict(X)
 
     @staticmethod
     def sparse_to_dense(y_sparse, index):
