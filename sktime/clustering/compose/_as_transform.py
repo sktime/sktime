@@ -67,8 +67,6 @@ class ClustererAsTransformer(BaseTransformer):
         "capability:missing_values:removes": True,
     }
 
-    # no default tag values - these are set dynamically below
-
     def __init__(self, clusterer):
         self.clusterer = clusterer
         self.clusterer_ = clusterer.clone()
@@ -94,7 +92,6 @@ class ClustererAsTransformer(BaseTransformer):
         }
         self.set_tags(**tags_to_set)
 
-    # todo: implement this, mandatory (except in special case below)
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
 
