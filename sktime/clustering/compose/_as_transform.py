@@ -16,14 +16,14 @@ class ClustererAsTransformer(BaseTransformer):
     The transformation is series-to-primitives, transforming a time series
     into its cluster assignment.
 
-    The adapter dispatches `BaseTransformer.transform` to `BaseClusterer.predict`,
-    and requires a clusterer that is able to make cluster assignments via `predict`,
-    see the `capability:predict` tag for clusterers.
+    The adapter dispatches ``BaseTransformer.transform`` to ``BaseClusterer.predict``,
+    and requires a clusterer that is able to make cluster assignments via ``predict``,
+    see the ``capability:predict`` tag for clusterers.
 
     Parameters
     ----------
     clusterer : sktime clusterer, i.e., estimator inheriting from BaseClusterer
-        this is a "blueprint" clusterer, state does not change when `fit` is called
+        this is a "blueprint" clusterer, state does not change when ``fit`` is called
 
     Attributes
     ----------
