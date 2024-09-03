@@ -29,14 +29,14 @@ class AnnotatorPipeline(_HeterogenousMetaEstimator, BaseSeriesAnnotator):
     --------
     >>> import numpy as np
     >>> import pandas as pd
-    >>> from sktime.annotation.stray import STRAY
+    >>> from sktime.annotation.lof import SubLOF
     >>> from sktime.transformations.series.detrend import Detrender
     >>>
     >>> n = 100
     >>> x = pd.Series(np.linspace(0, 5, n) + np.random.normal(0, 0.1, size=n))
     >>> x.at[50] = 100
     >>>
-    >>> pipeline = Detrender() * STRAY()
+    >>> pipeline = Detrender() * SubLOF(n_neighbors=5, window_size=5)
     >>> pipeline.fit(x)
     >>> y_hat = pipeline.transform(x)
     >>>
@@ -61,11 +61,14 @@ class AnnotatorPipeline(_HeterogenousMetaEstimator, BaseSeriesAnnotator):
     def __init__(self, steps):
         self.steps = steps
         self.steps_ = self._check_steps(steps, allow_postproc=False)
-        super().__init__()
+
         tags_to_clone = ["learning_type", "task"]
         # we do not clone X-y-must-have-same-index, since transformers can
         #   create indices, and that behaviour is not tag-inspectable
         self.clone_tags(self.estimator_, tags_to_clone)
+
+        # init must be called at the end so task is properly set
+        super().__init__()
 
     def __rmul__(self, other):
         """Magic * method, return (left) concatenated AnnotatorPipeline.
