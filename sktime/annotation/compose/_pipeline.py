@@ -30,7 +30,6 @@ class AnnotatorPipeline(_HeterogenousMetaEstimator, BaseSeriesAnnotator):
     >>> import numpy as np
     >>> import pandas as pd
     >>> from sktime.annotation.stray import STRAY
-    >>> from sktime.datatasets import load_airline
     >>> from sktime.transformations.series.detrend import Detrender
     >>>
     >>> n = 100
@@ -69,7 +68,7 @@ class AnnotatorPipeline(_HeterogenousMetaEstimator, BaseSeriesAnnotator):
         self.clone_tags(self.estimator_, tags_to_clone)
 
     def __rmul__(self, other):
-        """Magic * method, return (left) concatenated TransformerPipeline.
+        """Magic * method, return (left) concatenated AnnotatorPipeline.
 
         Implemented for ``other`` being a transformer, otherwise returns
         ``NotImplemented``.
@@ -83,7 +82,7 @@ class AnnotatorPipeline(_HeterogenousMetaEstimator, BaseSeriesAnnotator):
         -------
         TransformedTargetForecaster object,
             concatenation of ``other`` (first) with ``self`` (last).
-            not nested, contains only non-TransformerPipeline ``sktime`` steps
+            not nested, contains only non-AnnotatorPipeline ``sktime`` steps
         """
         from sktime.transformations.base import BaseTransformer
         from sktime.transformations.compose import TransformerPipeline
