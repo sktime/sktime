@@ -155,7 +155,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         device="gpu",
         pct_start=0.3,
         max_norm=5.0,
-        train_val_split=0.25,
+        train_val_split=0.4,
         transformer_backbone="google/flan-t5-large",
         config=None,
     ):
