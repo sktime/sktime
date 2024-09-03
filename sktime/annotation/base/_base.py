@@ -426,7 +426,7 @@ class BaseSeriesAnnotator(BaseEstimator):
             A series with an index of intervals. Each interval is the range of a
             segment and the corresponding value is the label of the segment.
         """
-        raise NotImplementedError("abstract method")
+        return self._predict(X)
 
     def _predict_points(self, X):
         """Predict changepoints/anomalies on test/deployment data.
@@ -441,7 +441,7 @@ class BaseSeriesAnnotator(BaseEstimator):
         Y : pd.Series
             A series whose values are the changepoints/anomalies in X.
         """
-        raise NotImplementedError("abstract method")
+        return self._predict(X)
 
     @staticmethod
     def sparse_to_dense(y_sparse, index):
