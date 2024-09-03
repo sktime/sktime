@@ -71,8 +71,8 @@ class BaseSeriesAnnotator(BaseEstimator):
     }  # for unit test cases
 
     def __init__(self):
-        self.task = self.get_class_tag("task")
-        self.learning_type = self.get_class_tag("learning_type")
+        self.task = self.get_tag("task")
+        self.learning_type = self.get_tag("learning_type")
 
         self._is_fitted = False
 
