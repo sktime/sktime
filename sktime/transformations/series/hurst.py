@@ -14,7 +14,7 @@ class HurstExponentTransformer(BaseTransformer):
     """Transformer for calculating the Hurst exponent of a time series.
 
     This transformer calculates the Hurst exponent, which is used to evaluate
-    the autocorrelation properties of time series, particularly the degree of
+    the auto correlation properties of time series, particularly the degree of
     long-range dependence.
 
     Parameters
@@ -91,8 +91,32 @@ class HurstExponentTransformer(BaseTransformer):
         self : object
             Returns self.
         """
-        self.hurst_estimate_ = self._hurst_exponent(X)
+        if len(X) < 4:  # Minimum length to calculate meaningful statistics
+            raise ValueError(
+                f"Time series too short. Length: {len(X)}, minimum required: 4"
+            )
+
+        self._effective_lags = self._get_effective_lags(len(X))
+
+        try:
+            self.hurst_estimate_ = self._hurst_exponent(X)
+        except ValueError as e:
+            raise ValueError(f"Failed to calculate Hurst exponent: {str(e)}") from e
         return self
+
+    def _get_effective_lags(self, series_length: int) -> Union[list[int], range]:
+        """Get effective lag range based on series length and initial parameters."""
+        if self.lags is not None:
+            return [lag for lag in self.lags if 2 <= lag <= series_length // 2]
+
+        min_lag = max(2, self.min_lag)
+        max_lag = min(series_length // 2, self.max_lag)
+
+        if min_lag >= max_lag:
+            min_lag = 2
+            max_lag = max(4, series_length // 2)
+
+        return range(min_lag, max_lag + 1)
 
     def _transform(self, X: pd.Series, y=None):
         """Transform X, return DataFrame with Hurst exponent and confidence interval.
@@ -129,15 +153,19 @@ class HurstExponentTransformer(BaseTransformer):
 
     def _rs_method(self, ts: pd.Series) -> float:
         """Rescaled range (R/S) method for Hurst exponent calculation."""
-        lags = self.lags or range(self.min_lag, min(self.max_lag, len(ts) // 2))
-        tau = [self._calculate_rs(ts, lag) for lag in lags]
-        return self._fit_hurst(lags, tau)
+        tau = [self._calculate_rs(ts, lag) for lag in self._effective_lags]
+        tau = [t for t in tau if np.isfinite(t)]  # Remove any NaN or infinite values
+        if not tau:
+            raise ValueError("Unable to calculate valid R/S values")
+        return self._fit_hurst(self._effective_lags[: len(tau)], tau)
 
     def _dfa_method(self, ts: pd.Series) -> float:
         """Detrended Fluctuation Analysis method for Hurst exponent calculation."""
-        lags = self.lags or range(self.min_lag, min(self.max_lag, len(ts) // 4))
-        tau = [self._calculate_dfa(ts, lag) for lag in lags]
-        return self._fit_hurst(lags, tau)
+        tau = [self._calculate_dfa(ts, lag) for lag in self._effective_lags]
+        tau = [t for t in tau if np.isfinite(t)]  # Remove any NaN or infinite values
+        if not tau:
+            raise ValueError("Unable to calculate valid DFA values")
+        return self._fit_hurst(self._effective_lags[: len(tau)], tau)
 
     def _calculate_rs(self, ts: pd.Series, lag: int) -> float:
         """Calculate rescaled range for a given lag."""
@@ -243,5 +271,5 @@ class HurstExponentTransformer(BaseTransformer):
             Parameters to create testing instances of the class
         """
         params1 = {"method": "rs", "min_lag": 2, "max_lag": 20}
-        params2 = {"method": "dfa", "min_lag": 5, "max_lag": 50}
+        params2 = {"method": "dfa", "min_lag": 2, "max_lag": 20}
         return [params1, params2]
