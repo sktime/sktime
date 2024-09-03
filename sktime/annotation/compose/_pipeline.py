@@ -24,6 +24,25 @@ class AnnotatorPipeline(_HeterogenousMetaEstimator, BaseSeriesAnnotator):
         strings not passed in ``steps`` are replaced by unique generated strings
         i-th transformer in ``steps_`` is clone of i-th in ``steps``
     estimator_ : estimator, reference to the first non-transformer in ``steps_``
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> from sktime.annotation.stray import STRAY
+    >>> from sktime.datatasets import load_airline
+    >>> from sktime.transformations.series.detrend import Detrender
+    >>>
+    >>> n = 100
+    >>> x = pd.Series(np.linspace(0, 5, n) + np.random.normal(0, 0.1, size=n))
+    >>> x.at[50] = 100
+    >>>
+    >>> pipeline = Detrender() * STRAY()
+    >>> pipeline.fit(x)
+    >>> y_hat = pipeline.transform(x)
+    >>>
+    >>> print(y_hat.sum())
+    3
     """
 
     # Change the `task` and `learning_type` as needed
