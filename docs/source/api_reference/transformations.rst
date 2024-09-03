@@ -244,6 +244,16 @@ These transformers extract larger collections of features.
 
     Catch22Wrapper
 
+Auto Correlation
+~~~~~~~~~~~~~~~~~
+.. currentmodule:: sktime.transformations.series.hurst
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HurstExponentTransformer
+
 Series-to-series transformers
 -----------------------------
 
