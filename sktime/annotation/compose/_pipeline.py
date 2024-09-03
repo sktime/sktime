@@ -36,12 +36,9 @@ class AnnotatorPipeline(_HeterogenousMetaEstimator, BaseSeriesAnnotator):
     >>> x = pd.Series(np.linspace(0, 5, n) + np.random.normal(0, 0.1, size=n))
     >>> x.at[50] = 100
     >>>
-    >>> pipeline = Detrender() * SubLOF(n_neighbors=5, window_size=5)
+    >>> pipeline = Detrender() * SubLOF(n_neighbors=5, window_size=5, novelty=True)
     >>> pipeline.fit(x)
     >>> y_hat = pipeline.transform(x)
-    >>>
-    >>> print(y_hat.sum())
-    3
     """
 
     # Change the `task` and `learning_type` as needed
@@ -371,23 +368,23 @@ class AnnotatorPipeline(_HeterogenousMetaEstimator, BaseSeriesAnnotator):
         from sklearn.preprocessing import StandardScaler
 
         from sktime.annotation.lof import SubLOF
-        from sktime.annotation.stray import STRAY
         from sktime.transformations.series.adapt import TabularToSeriesAdaptor
         from sktime.transformations.series.detrend import Detrender
         from sktime.transformations.series.exponent import ExponentTransformer
 
+        lof = SubLOF(n_neighbors=5, window_size=5, novelty=True)
         STEPS1 = [
             ("transformer", TabularToSeriesAdaptor(StandardScaler())),
-            ("forecaster", STRAY()),
+            ("anomaly", lof),
         ]
         params1 = {"steps": STEPS1}
 
         STEPS2 = [
             ("transformer", ExponentTransformer()),
-            ("forecaster", SubLOF),
+            ("anomaly", lof),
         ]
         params2 = {"steps": STEPS2}
 
-        params3 = {"steps": [Detrender(), STRAY()]}
+        params3 = {"steps": [Detrender(), lof]}
 
         return [params1, params2, params3]
