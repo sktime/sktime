@@ -148,6 +148,6 @@ class AnnotatorAsTransformer(BaseTransformer):
         from sktime.annotation.stray import STRAY
 
         params1 = {"estimator": STRAY()}
-        params2 = {"estimator": SubLOF()}
+        params2 = {"estimator": SubLOF.create_test_instance()}
 
         return [params1, params2]
