@@ -299,7 +299,7 @@ class AnnotatorPipeline(_HeterogenousMetaEstimator, BaseSeriesAnnotator):
                 X = transformer.transform(X=X, y=y)
         return X
 
-    def _predict_segments(self, X):
+    def _predict(self, X):
         """Predict on test/deployment data.
 
         Parameters
