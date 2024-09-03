@@ -350,6 +350,8 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
                 predictions.index = predictions.index.set_levels(
                     levels=timepoints.unique(), level=-1
                 )
+                # Convert str type to int
+                predictions.index = predictions.index.map(lambda x: (int(x[0]), x[1]))
             else:
                 predictions.index = timepoints
 
