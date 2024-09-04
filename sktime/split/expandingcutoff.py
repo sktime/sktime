@@ -56,14 +56,17 @@ class ExpandingCutoffSplitter(BaseSplitter):
     functions as an iloc indexer.
 
     For example for ``cutoff = 10``, ``step_length = 1`` and ``fh = [1, 2, 3, 4, 5, 6]``
-    here is a representation of the folds::
+    here is a representation of the folds:
 
+    ```
                           c
     |---------------------|----fh----|------|
     | * * * * * * * * * * x x x x x x - - - |
     | * * * * * * * * * * * x x x x x x - - |
     | * * * * * * * * * * * * x x x x x x - |
     | * * * * * * * * * * * * * x x x x x x |
+
+    ```
 
     ``c`` = cutoff date or index.
 
