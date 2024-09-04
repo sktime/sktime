@@ -77,6 +77,12 @@ class Logger(BaseTransformer):
         else:
             self._level = self.level
 
+    @property
+    def _logger(self):
+        import logging
+
+        return logging.getLogger(self.logger)
+
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
 
@@ -95,7 +101,7 @@ class Logger(BaseTransformer):
         self: reference to self
         """
         if "fit" in self._log_methods:
-            self.logger.log(self._level, "fit", extra={"X": X, "y": y})
+            self._logger.log(self._level, "fit", extra={"X": X, "y": y})
         if self.log_fitted_params:
             self.X_ = X
             self.y_ = y
@@ -117,7 +123,7 @@ class Logger(BaseTransformer):
         X, identical to input
         """
         if "transform" in self._log_methods:
-            self.logger.log(self._level, "transform", extra={"X": X, "y": y})
+            self._logger.log(self._level, "transform", extra={"X": X, "y": y})
         return X
 
     def _inverse_transform(self, X, y=None):
@@ -136,7 +142,7 @@ class Logger(BaseTransformer):
         X, identical to input
         """
         if "inverse_transform" in self._log_methods:
-            self.logger.log(self._level, "inverse_transform", extra={"X": X, "y": y})
+            self._logger.log(self._level, "inverse_transform", extra={"X": X, "y": y})
         return X
 
     def _get_fitted_params(self):
