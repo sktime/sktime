@@ -194,12 +194,7 @@ class BaseSeriesAnnotator(BaseEstimator):
             Annotations for sequence X. The returned annotations will be in the dense
             format.
         """
-        task = self.get_tag("task")
-        if task in ["anomaly_detection", "change_point_detection"]:
-            Y = self.predict_points(X)
-        elif task == "segmentation":
-            Y = self.predict_segments(X)
-
+        Y = self.predict(X)
         return self.sparse_to_dense(Y, X.index)
 
     def predict_scores(self, X):

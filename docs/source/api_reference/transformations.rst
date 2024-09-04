@@ -203,6 +203,17 @@ Dictionary-based features
 
     SFA
 
+Auto-correlation-based features
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.hurst
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HurstExponentTransformer
+
 Moment-based features
 ~~~~~~~~~~~~~~~~~~~~~
 
