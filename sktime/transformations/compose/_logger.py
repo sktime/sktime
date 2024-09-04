@@ -19,10 +19,11 @@ class Logger(BaseTransformer):
     ----------
     logger : str, optional, default="sktime"
         logger name, logs to ``logging.getLogger(logger)``
-    log_methods : str or list of str, default=None
-        if None, will log ``fit``, ``transform``, ``inverse_transform``;
+    log_methods : str or list of str, default=``"all"``
+        if ``"all"``, will log ``fit``, ``transform``, ``inverse_transform``;
         if str or list of str, all strings must be from among the above,
-        and will log exactly the methods that are passed as str
+        and will log exactly the methods that are passed as str;
+        can also be ``"off""`` to disable logging entirely.
     level : logging level, optional, default=logging.INFO
         logging level, one of
         ``logging.INFO``, ``logging.DEBUG``, ``logging.WARNING``,
@@ -50,7 +51,7 @@ class Logger(BaseTransformer):
     def __init__(
         self,
         logger="sktime",
-        log_methods=None,
+        log_methods="all",
         level=None,
         log_fitted_params=False,
     ):
@@ -60,8 +61,10 @@ class Logger(BaseTransformer):
         self.log_fitted_params = log_fitted_params
         super().__init__()
 
-        if self.log_methods is None:
+        if self.log_methods == "all":
             self._log_methods = ["fit", "transform", "inverse_transform"]
+        elif self.log_methods == "off":
+            self._log_methods = []
         elif isinstance(self.log_methods, str):
             self._log_methods = [self.log_methods]
         else:
@@ -148,4 +151,14 @@ class Logger(BaseTransformer):
         -------
         fitted_params : dict
         """
-        return {}
+        import logging
+
+        params0 = {}
+        params1 = {"logger": "bar", "log_methods": "off"}
+        params2 = {
+            "log_methods": ["transform", "inverse_transform"],
+            "log_fitted_params": True,
+            "level": logging.ERROR,
+        }
+        params3 = {"logger": "foo", "level": logging.DEBUG}
+        return [params0, params1, params2, params3]
