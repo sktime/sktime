@@ -55,7 +55,7 @@ class ExpandingCutoffSplitter(BaseSplitter):
     cutoff, the cutoff serves as a loc indexer. If the int cutoff is negative, it
     functions as an iloc indexer.
 
-    For example for `cutoff = 10`, `step_length = 1` and `fh = [1, 2, 3, 4, 5, 6]`
+    For example for ``cutoff = 10``, ``step_length = 1`` and ``fh = [1, 2, 3, 4, 5, 6]``
     here is a representation of the folds::
 
                           c
