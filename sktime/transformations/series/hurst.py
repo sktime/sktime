@@ -14,7 +14,7 @@ class HurstExponentTransformer(BaseTransformer):
     """Transformer for calculating the Hurst exponent of a time series.
 
     This transformer calculates the Hurst exponent, which is used to evaluate
-    the auto correlation properties of time series, particularly the degree of
+    the auto-correlation properties of time series, particularly the degree of
     long-range dependence.
 
     Parameters
