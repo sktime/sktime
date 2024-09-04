@@ -63,7 +63,7 @@ class ExpandingCutoffSplitter(BaseSplitter):
     | * * * * * * * * * * * * x x x x x x - |
     | * * * * * * * * * * * * * x x x x x x |
     ```
-    
+
     ``c`` = cutoff date or index.
 
     ``*`` = training fold.
