@@ -19,15 +19,18 @@ class Logger(BaseTransformer):
     ----------
     logger : str, optional, default="sktime"
         logger name, logs to ``logging.getLogger(logger)``
-    log_methods : str or list of str, default=``"all"``
+
+    log_methods : str or list of str, default=``"transform"``
         if ``"all"``, will log ``fit``, ``transform``, ``inverse_transform``;
         if str or list of str, all strings must be from among the above,
         and will log exactly the methods that are passed as str;
         can also be ``"off""`` to disable logging entirely.
+
     level : logging level, optional, default=logging.INFO
         logging level, one of
         ``logging.INFO``, ``logging.DEBUG``, ``logging.WARNING``,
         ``logging.ERROR``
+
     log_fitted_params : bool, optional, default=False
         if True, will also write ``X`` and ``y`` seen in ``fit``
         to ``self`` as ``X_`` and ``y_``, these can be retrieved
@@ -145,17 +148,19 @@ class Logger(BaseTransformer):
             self._logger.log(self._level, "inverse_transform", extra={"X": X, "y": y})
         return X
 
-    def _get_fitted_params(self):
-        """Get fitted parameters.
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
 
-        private _get_fitted_params, called from get_fitted_params
-
-        State required:
-            Requires state to be "fitted".
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
-        fitted_params : dict
+        params : dict or list of dict
         """
         import logging
 
@@ -166,5 +171,5 @@ class Logger(BaseTransformer):
             "log_fitted_params": True,
             "level": logging.ERROR,
         }
-        params3 = {"logger": "foo", "level": logging.DEBUG}
+        params3 = {"logger": "foo", "level": logging.DEBUG, "log_methods": "all"}
         return [params0, params1, params2, params3]
