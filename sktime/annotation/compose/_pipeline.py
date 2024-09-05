@@ -365,6 +365,8 @@ class AnnotatorPipeline(_HeterogenousMetaEstimator, BaseSeriesAnnotator):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        import datetime
+
         from sklearn.preprocessing import StandardScaler
 
         from sktime.annotation.lof import SubLOF
@@ -372,7 +374,9 @@ class AnnotatorPipeline(_HeterogenousMetaEstimator, BaseSeriesAnnotator):
         from sktime.transformations.series.detrend import Detrender
         from sktime.transformations.series.exponent import ExponentTransformer
 
-        lof = SubLOF(n_neighbors=5, window_size=5, novelty=True)
+        lof = SubLOF(
+            n_neighbors=5, window_size=datetime.timedelta(days=25), novelty=True
+        )
         STEPS1 = [
             ("transformer", TabularToSeriesAdaptor(StandardScaler())),
             ("anomaly", lof),
