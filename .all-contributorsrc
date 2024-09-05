@@ -2646,10 +2646,10 @@
       ]
     },
     {
-      "login": "Xinyu-Wu-0000",
+      "login": "XinyuWuu",
       "name": "Xinyu Wu",
       "avatar_url": "https://avatars.githubusercontent.com/u/57612792?v=4",
-      "profile": "https://github.com/Xinyu-Wu-0000",
+      "profile": "https://github.com/XinyuWuu",
       "contributions": [
         "bug",
         "code",
@@ -2984,7 +2984,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/148647848?v=4?s=100",
       "profile": "https://github.com/wirrywoo",
       "contributions": [
-        "code"
+        "code",
+        "doc"
       ]
     },
     {
@@ -3021,6 +3022,16 @@
         "ideas",
         "mentoring",
         "projectManagement"
+      ]
+    },
+    {
+      "login": "wpdonders",
+      "name": "Wouter Donders",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1868824?v=4?s=100",
+      "profile": "https://github.com/wpdonders",
+      "contributions": [
+        "code",
+        "test"
       ]
     }
   ]

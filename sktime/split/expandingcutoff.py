@@ -54,6 +54,7 @@ class ExpandingCutoffSplitter(BaseSplitter):
     functions as an iloc indexer. When an int index is paired with a positive int
     cutoff, the cutoff serves as a loc indexer. If the int cutoff is negative, it
     functions as an iloc indexer.
+    ```
                           c
                           |
     |---------------------|----fh----|------|
@@ -61,6 +62,7 @@ class ExpandingCutoffSplitter(BaseSplitter):
     | * * * * * * * * * * * x x x x x x - - |
     | * * * * * * * * * * * * x x x x x x - |
     | * * * * * * * * * * * * * x x x x x x |
+    ```
 
     ``c`` = cutoff date or index.
 

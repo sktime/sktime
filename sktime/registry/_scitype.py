@@ -4,7 +4,7 @@ __author__ = ["fkiraly"]
 
 from inspect import isclass
 
-from sktime.registry._base_classes import BASE_CLASS_REGISTER
+from sktime.registry._base_classes import get_base_class_register
 
 
 def scitype(
@@ -54,6 +54,8 @@ def scitype(
                 return tag_type
             else:
                 return tag_type[0]
+
+    BASE_CLASS_REGISTER = get_base_class_register()
 
     # if the tag is not present, determine scitype from legacy base class logic
     if isclass(obj):

@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.32.1"
+version = "0.32.3"
 description = "A unified framework for machine learning with time series"
 readme = "README.md"
 keywords = [
@@ -81,7 +81,7 @@ all_extras = [
   'autots<0.7,>=0.6.1',
   "cloudpickle",
   "dash!=2.9.0",
-  "dask<2024.8.1; extra == 'dataframe'",
+  "dask<2024.8.2; extra == 'dataframe'",
   "dtaidistance<2.4",
   "dtw-python",
   'esig==0.9.7; python_version < "3.10"',
@@ -96,7 +96,7 @@ all_extras = [
   'numba<0.61,>=0.53',
   'optuna<3.7',
   'pmdarima!=1.8.1,<3.0.0,>=1.8; python_version < "3.12"',
-  "polars[pandas]",
+  "polars[pandas]>=0.20,<2.0",
   'prophet>=1.1; python_version < "3.12"',
   "pycatch22<0.4.6",
   'pyod>=0.8; python_version < "3.11"',
@@ -125,7 +125,7 @@ all_extras_pandas2 = [
   'autots<0.7,>=0.6.1',
   "cloudpickle",
   "dash!=2.9.0",
-  "dask<2024.8.1; extra == 'dataframe'",
+  "dask<2024.8.2; extra == 'dataframe'",
   "dtaidistance<2.4",
   "dtw-python",
   'esig==0.9.7; python_version < "3.10"',
@@ -140,7 +140,7 @@ all_extras_pandas2 = [
   'numba<0.61,>=0.53',
   'optuna<3.7',
   'pmdarima!=1.8.1,<3.0.0,>=1.8; python_version < "3.12"',
-  "polars[pandas]",
+  "polars[pandas]>=0.20,<2.0",
   'prophet>=1.1; python_version < "3.12"',
   "pycatch22<0.4.6",
   'pyod>=0.8; python_version < "3.11"',
@@ -217,7 +217,7 @@ regression = [
 transformations = [
   'esig<0.10,>=0.9.7; python_version < "3.11"',
   "filterpy<1.5,>=1.4.5",
-  "holidays>=0.29,<0.55",
+  "holidays>=0.29,<0.56",
   "mne>=1.5,<1.8",
   'numba<0.61,>=0.53',
   "pycatch22>=0.4,<0.4.6",

@@ -419,6 +419,7 @@ Structural time series models
     :template: class.rst
 
     Prophetverse
+    HierarchicalProphet
 
 .. currentmodule:: sktime.forecasting.structural
 
@@ -457,6 +458,14 @@ Deep learning based forecasters
     :template: class.rst
 
     HFTransformersForecaster
+
+.. currentmodule:: sktime.forecasting.timesfm_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimesFMForecaster
 
 .. currentmodule:: sktime.forecasting.ttm
 
