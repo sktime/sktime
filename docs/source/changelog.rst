@@ -70,7 +70,6 @@ Transformations
 
 * [ENH] Hurst exponent feature extraction transformer (:pr:`7065`) :user:`phoeenniixx`
 
-
 Documentation
 ~~~~~~~~~~~~~
 
