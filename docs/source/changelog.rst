@@ -29,6 +29,14 @@ Small feature and fix release for:
 * improvements to the anomalies, changepoints, segmentation framework
 * documentation update related to upcoming ``sktime`` elections
 
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+* Anomaly and changepoint detectors can now be pipelined with transformations, resulting in a detector.
+  Dunder concatenation ``transformer * detector`` will default to this.
+* Anomaly and changepoint detectors can be coerced to transformations, enabling their use in any
+  other pipeline.
+
 Enhancements
 ~~~~~~~~~~~~
 
@@ -40,6 +48,7 @@ BaseObject and base framework
 
 Time series anomalies, changepoints, segmentation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 * [ENH] Add padded f1 score for evaluating change point detection algorithms (:pr:`7034`) :user:`Alex-JG3`
 * [ENH] improvements to ``BaseSeriesAnnotator`` base class for anomaly, changepoint, segments (:pr:`7073`) :user:`fkiraly`
 * [ENH] pipeline for anomaly, changepoint detectors and segmenters (:pr:`7071`) :user:`fkiraly`
@@ -53,7 +62,7 @@ Time series clustering
 Transformations
 ^^^^^^^^^^^^^^^
 
-* [ENH] Add ``transformations.series.hurst`` (:pr:`7065`) :user:`phoeenniixx`
+* [ENH] Hurst exponent feature extraction transformer (:pr:`7065`) :user:`phoeenniixx`
 
 
 Documentation
