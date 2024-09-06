@@ -22,9 +22,66 @@ For our long-term plan, see our :ref:`roadmap`.
 Version 0.32.4 - 2024-09-06
 ---------------------------
 
-Small feature release including fix for colab compatibility.
+Small feature and fix release for:
+
+* colab compatibility, hotfix for ``polars`` dependency incompatibility
+* compatibility with ``skchange`` 2nd party integration
+* improvements to the anomalies, changepoints, segmentation framework
+* documentation update related to upcoming ``sktime`` elections
+
+Enhancements
+~~~~~~~~~~~~
+
+BaseObject and base framework
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] decouple registry from base modules, scitype specific data records for documentation of estimator types  (:pr:`6998`) :user:`fkiraly`
+* [ENH] scitype coercion and checking utility (:pr:`6969`) :user:`fkiraly`
+
+Time series anomalies, changepoints, segmentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* [ENH] Add padded f1 score for evaluating change point detection algorithms (:pr:`7034`) :user:`Alex-JG3`
+* [ENH] improvements to ``BaseSeriesAnnotator`` base class for anomaly, changepoint, segments (:pr:`7073`) :user:`fkiraly`
+* [ENH] pipeline for anomaly, changepoint detectors and segmenters (:pr:`7071`) :user:`fkiraly`
+* [ENH] coercion to use time series anomaly, changepoint detectors as transformers (:pr:`7072`) :user:`fkiraly`
+
+Time series clustering
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] enable use of clusterers as transformations, enable ``TransformSelectForecaster`` use of clusterers for group selection (:pr:`7068`) :user:`fkiraly`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [ENH] Add ``transformations.series.hurst`` (:pr:`7065`) :user:`phoeenniixx`
 
 
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] Add SVG version of the sktime logo with no text  (:pr:`7024`) :user:`wirrywoo`
+* [DOC] Improve documentation for ``TinyTimeMixer`` (:pr:`7009`) :user:`geetu040`
+* [DOC] fix broken links in continous integration docs (:pr:`7059`) :user:`Saptarshi-Bandopadhyay`
+* [DOC] split list of transformation pipeline components into subcategories (:pr:`7075`) :user:`fkiraly`
+
+Fixes
+~~~~~
+
+* [BUG] fix ``sktime`` crash with older ``polars`` versions (:pr:`7057`) :user:`fkiraly`
+* [BUG] Fix ``ForecastX.update`` when the ``forecaster_X_exogeneous`` is set to ``"complement"`` (:pr:`7041`) :user:`fnhirwa`
+* [BUG] fix ``ExpandingCutoffSplitter`` for case where ``fh`` is not continuous (:pr:`7053`) :user:`ninedigits`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`Alex-JG3`,
+:user:`fkiraly`,
+:user:`fnhirwa`,
+:user:`geetu040`,
+:user:`ninedigits`,
+:user:`phoeenniixx`,
+:user:`Saptarshi-Bandopadhyay`,
+:user:`wirrywoo`
 
 Version 0.32.3 - 2024-08-27
 ---------------------------
