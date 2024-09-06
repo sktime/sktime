@@ -5,8 +5,11 @@
 __author__ = ["tensorflow-as-tf", "mloning", "aiwalter", "fkiraly"]
 __all__ = ["PolynomialTrendForecaster"]
 
+import numpy as np
 import pandas as pd
+from scipy.stats import norm
 from sklearn.base import clone
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures
@@ -85,15 +88,18 @@ class PolynomialTrendForecaster(BaseForecaster):
         "capability:pred_int": True,
     }
 
-    def __init__(self, regressor=None, degree=1, with_intercept=True, prediction_intervals=False):
+    def __init__(
+        self, regressor=None, degree=1, with_intercept=True, prediction_intervals=False
+    ):
         self.regressor = regressor
         self.degree = degree
         self.with_intercept = with_intercept
         self.regressor_ = self.regressor
-        self.prediction_intervals = prediction_intervals   
-            # prediction_intervals : bool, default=False
-            # By default, the extra information needed to later generate the prediction intervals is not
-            # calculated. If set to True, the extra information is calculated and stored in the forecaster.
+        self.prediction_intervals = prediction_intervals
+        # prediction_intervals : bool, default=False
+        # By default, the extra information needed to later generate the prediction
+        # intervals is not calculated. If set to True, the extra information is
+        # calculated and stored in the forecaster.
         super().__init__()
 
     def _fit(self, y, X, fh):
@@ -112,8 +118,6 @@ class PolynomialTrendForecaster(BaseForecaster):
         -------
         self : returns an instance of self.
         """
-        import numpy as np
-        
         # for default regressor, set fit_intercept=False as we generate a
         # dummy variable in polynomial features
         if self.regressor is None:
@@ -139,10 +143,10 @@ class PolynomialTrendForecaster(BaseForecaster):
             # calculate and save values needed for the prediction interval method
             fitted_values = self.regressor_.predict(X_sklearn)
             residuals = y - fitted_values
-            p = self.degree + int(self.get_params()['with_intercept'])
+            p = self.degree + int(self.get_params()["with_intercept"])
             self.s_squared_ = np.sum(residuals**2) / (len(y) - p)
             self.train_index_ = y.index
-            
+
         return self
 
     def _predict(self, fh=None, X=None):
@@ -169,49 +173,44 @@ class PolynomialTrendForecaster(BaseForecaster):
         return y_pred
 
     def _predict_var(self, fh=None, X=None, cov=False):
-        """Computes the variance at each forecast horizon"""
-        import numpy as np
-        from scipy.stats import norm
-        
+        """Compute the variance at each forecast horizon."""
         if self.prediction_intervals is False:
-            raise ValueError("Prediction intervals were not calculated during fit. Set prediction_intervals=True at initialization.")
-        
-        # 1. get forecasts
-        pred_values = self.predict(fh)
-        
-        # 2. get X (design matrix) and M = (X^t X)^-1
+            raise ValueError(
+                "Prediction intervals were not calculated during fit. \
+                Set prediction_intervals=True at initialization."
+            )
+
+        # 1. get X (design matrix) and M = (X^t X)^-1
         t_train = _get_X_numpy_int_from_pandas(self.train_index_).flatten()
         X = np.polynomial.polynomial.polyvander(t_train, self.degree)
-        if not self.get_params()['with_intercept']:
-            X = X[:, 1:] # remove the column of 1's that handles the intercept
-        
+        if not self.get_params()["with_intercept"]:
+            X = X[:, 1:]  # remove the column of 1's that handles the intercept
+
         M = np.linalg.inv(X.T @ X)
 
-        # 3. get time vector t for the forecast horizons
+        # 2. get time vector t for the forecast horizons
         if fh.is_relative:
-            fh = fh.to_absolute(cutoff = self.train_index_[-1])
-            
+            fh = fh.to_absolute(cutoff=self.train_index_[-1])
+
         t_fh = fh.to_pandas()
         fh_periods = _get_X_numpy_int_from_pandas(t_fh)
         t = np.array(fh_periods)
-      
-        # 4. calculate (half-) range of prediction interval (1 + sqrt(x_0^t M x_0)) (up to scaling)
-        start = 0 if self.get_params()['with_intercept'] else 1
+
+        # 3. calculate (half-) range of PI (1 + sqrt(x_0^t M x_0)) (up to scaling)
+        start = 0 if self.get_params()["with_intercept"] else 1
         v = []
-        for i in range(len(t)):
-            z = t[i]
+
+        for _, z in enumerate(t):
             w = np.array([z**j for j in range(start, self.degree + 1)])
             v.append(w.T @ M @ w)
 
-        v = np.sqrt(1 + np.array(v)).flatten() # see Hyndman FPP3 Section 7.9
-        
-        s = np.sqrt(self.s_squared_).item()
-        
+        v = np.sqrt(1 + np.array(v)).flatten()  # see Hyndman FPP3 Section 7.9
+
         l_var = (1 + np.array(v)) * self.s_squared_  # see Hyndman FPP3 Section 7.9
         pred_var = pd.DataFrame(l_var, columns=[self._y.name])
-        return pred_var        
+        return pred_var
 
-    def _predict_quantiles(self, fh, X=None, alpha=[0.5]):
+    def _predict_quantiles(self, fh, X=None, alpha=None):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -224,8 +223,9 @@ class PolynomialTrendForecaster(BaseForecaster):
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series to predict from.
-        alpha : list of float, optional (default=[0.5])
+        alpha : list of float, optional
             A list of probabilities at which quantile forecasts are computed.
+            If passed as None then defaults to [0.5]
 
         Returns
         -------
@@ -237,30 +237,31 @@ class PolynomialTrendForecaster(BaseForecaster):
             Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
-        
-        import numpy as np
-        from scipy.stats import norm
-        
-        #get forecasts
+        if alpha is None:
+            alpha = [0.5]
+
+        # get forecasts
         pred_values = self.predict(fh).values.flatten()
-        
+
         l_var = self._predict_var(fh=fh, X=X, cov=False)
-        
+
         all_quantiles = []
-        
+
         for a in alpha:
             z_alpha = norm.ppf(a)
             l_quant = np.sqrt(l_var.values) * z_alpha
             all_quantiles.append(l_quant.flatten() + pred_values)
-            
+
         df = pd.DataFrame(all_quantiles).transpose()
         df.index = fh.to_absolute(self.cutoff).to_pandas()
-        
-        multi_index = pd.MultiIndex.from_product([["y"], alpha], names=['variable', 'alpha'])
+
+        multi_index = pd.MultiIndex.from_product(
+            [["y"], alpha], names=["variable", "alpha"]
+        )
         df.columns = multi_index
 
         return df
-    
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -280,8 +281,6 @@ class PolynomialTrendForecaster(BaseForecaster):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        from sklearn.ensemble import RandomForestRegressor
-
         params_list = [
             {},
             {
