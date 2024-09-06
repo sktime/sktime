@@ -2739,6 +2739,33 @@ class _BaseGlobalForecaster(BaseForecaster):
         """
         raise NotImplementedError("abstract method")
 
+    def set_dl_model(self, model):
+        """Set the deep learning module to enable Peft methods.
+
+        Parameters
+        ----------
+        model : guaranteed to be a nn.Module or PretrainedModel
+            For a model to be PeFT method eligible, we require
+            a huggingface PreTrained model or a torch Custom Model.
+            More information can be found via:
+            https://huggingface.co/docs/peft/v0.12.0/en/index
+
+        Returns
+        -------
+        self : Reference to self.
+        """
+        self.dl_model = model
+        return self
+
+    def get_dl_model(self):
+        """Return the underlying torch/pretrained model in the global forecaster.
+
+        Returns
+        -------
+        dl_model : underlying torch or huggingface pretrained model
+        """
+        return self.dl_model
+
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):
     """Format moving-cutoff predictions.
