@@ -32,8 +32,8 @@ Small feature and fix release for:
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
 
-* A scitype coercion framework is introduced, allowing use of an estimator of one type in
-  a slot for another, via coercion. The coercion framework covers ``sklearn``, ``skpro``, and ``sktime`` estimators
+* A scitype adaptation framework is introduced, allowing use of an estimator of one type in
+  a slot for another, via type coercion. The coercion framework covers ``sklearn``, ``skpro``, and ``sktime`` estimators
   currently and is extensible. A user and developer shorthand for such coercion is provided
   as the ``registry.coerce_scitype`` function, which dispatches to individual coercion mechanisms.
 * Time series clusterers that produce a cluster assignment can be coerced to transformations,
