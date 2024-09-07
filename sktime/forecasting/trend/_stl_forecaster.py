@@ -139,7 +139,7 @@ class STLForecaster(BaseForecaster):
     """
 
     _tags = {
-        "authors": ["tensorflow-as-tf", "mloning", "aiwalter", "fkiraly","ericjb"],
+        "authors": ["tensorflow-as-tf", "mloning", "aiwalter", "fkiraly", "ericjb"],
         "maintainers": ["tensorflow-as-tf"],
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
@@ -330,7 +330,8 @@ class STLForecaster(BaseForecaster):
 
     def plot_components(self, title=None):
         """Plot the observed, trend, seasonal, and residual components.
-            Requires state to be "fitted", i.e., ``self.is_fitted=True``.
+        
+        Requires state to be "fitted", i.e., ``self.is_fitted=True``.
         """
         _check_soft_dependencies("matplotlib")
         import matplotlib.pyplot as plt
@@ -347,12 +348,20 @@ class STLForecaster(BaseForecaster):
         # Get the lines from the 4th plot and remove them (or at least make them
         # invisible, while keeping the markers)
         for line in ax[3].lines:
-            line.set_linestyle('None')
-        ax[3].axhline(0, color='black', linestyle='-')
-        ax[0].text(1.02, 0.5, "Obs", transform=ax[0].transAxes, va='center', rotation=-90)
-        ax[1].text(1.02, 0.5, "Trend", transform=ax[1].transAxes, va='center', rotation=-90)
-        ax[2].text(1.02, 0.5, "Season", transform=ax[2].transAxes, va='center', rotation=-90)
-        ax[3].text(1.02, 0.5, "Resid", transform=ax[3].transAxes, va='center', rotation=-90)
+            line.set_linestyle("None")
+        ax[3].axhline(0, color="black", linestyle="-")
+        ax[0].text(
+            1.02, 0.5, "Obs", transform=ax[0].transAxes, va="center", rotation=-90
+        )
+        ax[1].text(
+            1.02, 0.5, "Trend", transform=ax[1].transAxes, va="center", rotation=-90
+        )
+        ax[2].text(
+            1.02, 0.5, "Season", transform=ax[2].transAxes, va="center", rotation=-90
+        )
+        ax[3].text(
+            1.02, 0.5, "Resid", transform=ax[3].transAxes, va="center", rotation=-90
+        )
 
         if title is not None:
             fig.suptitle(title)
