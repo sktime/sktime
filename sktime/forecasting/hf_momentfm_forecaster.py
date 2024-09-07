@@ -137,6 +137,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:pred_int": False,
+        "test_vm": True,
     }
 
     def __init__(
