@@ -28,8 +28,3 @@ def test_all_classes():
     names = [name for name, _ in res]
 
     assert "MockForecaster" in names
-
-
-
-
-
