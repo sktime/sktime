@@ -135,8 +135,11 @@ jobs:
 
       - name: Install dependencies for ${{ matrix.flag }}
         run: |
-          # Run the Python script to get the list of requirements for the flag
-          pip install -r <(python -c "from sktime.registry import deps; print('\n'.join(deps('${{ matrix.flag }}')))")
+          # Run the Python script to get the list of dependencies for the object and save it to a file deps.txt
+          python -c "from sktime.registry import deps; print('\n'.join(deps('${{ matrix.flag }}')))" > deps.txt
+
+          # Install dependencies from the generated file
+          pip install -r deps.txt
 
       - name: Show dependencies
         run: python -m pip list
