@@ -12,7 +12,7 @@ from sktime.utils.retrieval import _all_classes, _all_functions
 )
 def test_all_functions():
     """Test that _all_functions retrieves all functions."""
-    res =_all_functions("sktime.utils.adapters")
+    res = _all_functions("sktime.utils.adapters")
     names = [name for name, _ in res]
 
     assert {"_clone_fitted_params", "_get_fitted_params_safe"} == set(names)
