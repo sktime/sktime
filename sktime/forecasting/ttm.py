@@ -134,7 +134,6 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         # ajati, wgifford, vijaye12 for ibm-granite code
         "maintainers": ["geetu040"],
         "python_dependencies": ["transformers", "torch"],
-        "test_vm": True,
         # estimator type
         # --------------
         "X_inner_mtype": [

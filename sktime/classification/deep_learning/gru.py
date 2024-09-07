@@ -72,6 +72,7 @@ class GRUClassifier(BaseDeepClassifierPytorch):
         "maintainers": ["fnhirwa"],
         "python_version": ">=3.9",
         "python_dependencies": "torch",
+        "test_vm": True,
     }
 
     def __init__(
@@ -274,6 +275,7 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
         "maintainers": ["fnhirwa"],
         "python_version": ">=3.9",
         "python_dependencies": "torch",
+        "test_vm": True,
     }
 
     def __init__(
