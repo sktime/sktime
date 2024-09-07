@@ -62,13 +62,9 @@ class PolynomialTrendForecaster(BaseForecaster):
         Whether to compute prediction intervals.
         If True, additional calculations are done during fit to enable prediction
         intervals to be calculated during predict.
-        The prediction intervals are calculated according to
-        Hyndman, R.J., & Athanasopoulos, G. (2021)
-        'Forecasting: principles and practice, 3rd edition',
-        OTexts: Melbourne, Australia. OTexts.com/fpp3.
-        Section 7.9 'Prediction intervals for regression models'.
+        The prediction intervals are calculated according to Section 7.9 in [1].
         The formulas are standard and are based on an OLS regression model fitted to
-        the data. The formulas in the reference assume a regression with
+        the data. The formulas in [1] assume a regression with
         intercept and are modified appropriately if with_intercept is False.
 
     Attributes
@@ -78,6 +74,11 @@ class PolynomialTrendForecaster(BaseForecaster):
         This is a fitted ``sklearn`` pipeline with steps
         ``PolynomialFeatures(degree, with_intercept)``,
         followed by a clone of ``regressor``.
+    
+    References
+    ----------
+    .. [1] Hyndman, Rob J., and George Athanasopoulos. Forecasting: principles
+    and practice, 3rd edition. OTexts: Melbourne, Australia. OTexts.com/fpp3.
 
     Examples
     --------
