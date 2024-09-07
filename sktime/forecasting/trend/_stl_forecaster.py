@@ -333,7 +333,7 @@ class STLForecaster(BaseForecaster):
 
         Requires state to be "fitted", i.e., ``self.is_fitted=True``.
         """
-        _check_soft_dependencies("matplotlib")
+        _check_soft_dependencies("matplotlib", obj="STLForecaster.plot_components")
         import matplotlib.pyplot as plt
 
         from sktime.utils.plotting import plot_series
