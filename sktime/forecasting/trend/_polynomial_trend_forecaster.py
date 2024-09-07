@@ -58,6 +58,11 @@ class PolynomialTrendForecaster(BaseForecaster):
         If true, then include a feature in which all polynomial powers are
         zero. (i.e. a column of ones, acts as an intercept term in a linear
         model)
+    prediction_intervals : bool, default=False
+        Whether to compute prediction intervals.
+        If True, additional calculations are done during fit to enable
+        prediction intervals to be calculated during predict.
+        The prediction intervals are calculated according to PLEASE ADD
 
     Attributes
     ----------
@@ -79,12 +84,11 @@ class PolynomialTrendForecaster(BaseForecaster):
     """
 
     _tags = {
-        "authors": ["tensorflow-as-tf", "mloning", "aiwalter", "fkiraly"],
+        "authors": ["tensorflow-as-tf", "mloning", "aiwalter", "fkiraly", "ericjb"],
         "maintainers": ["tensorflow-as-tf"],
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
-        "capability:pred_var": True,
         "capability:pred_int": True,
     }
 
@@ -101,6 +105,8 @@ class PolynomialTrendForecaster(BaseForecaster):
         # intervals is not calculated. If set to True, the extra information is
         # calculated and stored in the forecaster.
         super().__init__()
+
+        self.set_tags(**{"capability:pred_int": prediction_intervals})
 
     def _fit(self, y, X, fh):
         """Fit to training data.
