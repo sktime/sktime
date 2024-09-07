@@ -8,7 +8,7 @@ __all__ = ["STLForecaster"]
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 class STLForecaster(BaseForecaster):
