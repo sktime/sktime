@@ -6,14 +6,16 @@ from skbase.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies(["torch", "peft", "transformers"], severity="none"):
     from torch.utils.data import Dataset
-    # from transformers import AutoConfig, Trainer, TrainingArguments
-    # from peft import get_peft_model
 else:
 
     class Dataset:
         """Dummy class if torch is unavailable."""
 
 
+if _check_soft_dependencies(["peft", "transformers"], severity="none"):
+    # from transformers import AutoConfig, Trainer, TrainingArguments
+    # from peft import get_peft_model
+    pass
 from sktime.forecasting.base import _BaseGlobalForecaster  # , ForecastingHorizon
 
 __author__ = ["julian-fong"]
@@ -22,7 +24,18 @@ __author__ = ["julian-fong"]
 class PeftForecaster(_BaseGlobalForecaster):
     """Peft Forecaster."""
 
-    def __init__():
+    def __init__(
+        self,
+        model,
+        peft_config,
+        validation_split=0.2,
+        config=None,
+        training_args=None,
+        compute_metrics=None,
+        callbacks=None,
+        datacollator=None,
+        broadcasting=False,
+    ):
         pass
 
     def _fit():
