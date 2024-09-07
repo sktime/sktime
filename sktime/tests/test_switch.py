@@ -290,10 +290,17 @@ def run_test_module_changed(module):
 
 
 @lru_cache
-def _get_all_changed_classes():
+def _get_all_changed_classes(vm=False):
     """Get all sktime object classes that have changed compared to the main branch.
 
     Returns a tuple of string class names of object classes that have changed.
+
+    Parameters
+    ----------
+    vm : bool, optional, default=False
+        whether to run estimator in its own virtual machine.
+        Queries the tag ``"test_vm"`` in the class tags.
+        If ``vm`` is True, only classes with tag ``"test_vm"=True`` are returned.
 
     Returns
     -------
@@ -304,6 +311,9 @@ def _get_all_changed_classes():
     def _changed_class(cls):
         """Check if a class has changed compared to the main branch."""
         changed, _ = _run_test_for_class(cls, ignore_deps=True)
+
+        if vm:
+            changed = changed and cls.get_class_tag("test_vm", False)
         return changed
 
     names = [name for name, est in all_estimators() if _changed_class(est)]
