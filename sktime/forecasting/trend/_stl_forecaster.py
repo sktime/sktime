@@ -330,11 +330,12 @@ class STLForecaster(BaseForecaster):
 
     def plot_components(self, title=None):
         """Plot the observed, trend, seasonal, and residual components.
-        
+
         Requires state to be "fitted", i.e., ``self.is_fitted=True``.
         """
         _check_soft_dependencies("matplotlib")
         import matplotlib.pyplot as plt
+
         from sktime.utils.plotting import plot_series
 
         self.check_is_fitted()
