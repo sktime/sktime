@@ -111,6 +111,7 @@ jobs:
     needs: detect-changed-classes
 
     strategy:
+      fail-fast: false
       matrix:
         flag: ${{ fromJson(needs.detect-changed-classes.outputs.obj_list) }}
         python-version: ['3.9', '3.10', '3.11', '3.12']
