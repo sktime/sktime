@@ -459,6 +459,14 @@ Deep learning based forecasters
 
     HFTransformersForecaster
 
+.. currentmodule:: sktime.forecasting.timesfm_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimesFMForecaster
+
 .. currentmodule:: sktime.forecasting.ttm
 
 .. autosummary::
