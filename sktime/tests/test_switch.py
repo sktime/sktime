@@ -85,6 +85,7 @@ def run_test_for_class(cls, return_reason=False):
         * otherwise, any reasons to run cause the entire list to be run
         * otherwise, the list is not run due to "no change"
     """
+    from sktime.tests.test_all_estimators import ONLY_CHANGED_MODULES
 
     def _return(run, reason):
         if return_reason:
@@ -135,12 +136,12 @@ def run_test_for_class(cls, return_reason=False):
 
     # now we know that cls is a class or function,
     # and not on the exclude list
-    run, reason = _run_test_for_class(cls)
+    run, reason = _run_test_for_class(cls, only_changed_modules=ONLY_CHANGED_MODULES)
     return _return(run, reason)
 
 
 @lru_cache
-def _run_test_for_class(cls):
+def _run_test_for_class(cls, ignore_deps=False, only_changed_modules=True):
     """Check if test should run - cached with hashable cls.
 
     Parameters
@@ -162,7 +163,6 @@ def _run_test_for_class(cls):
 
         If multiple reasons are present, the first one in the above list is returned.
     """
-    from sktime.tests.test_all_estimators import ONLY_CHANGED_MODULES
     from sktime.utils.dependencies import _check_estimator_deps
     from sktime.utils.git_diff import get_packages_with_changed_specs, is_class_changed
 
@@ -213,13 +213,13 @@ def _run_test_for_class(cls):
 
     # Condition 1:
     # if any of the required soft dependencies are not present, do not run the test
-    if not _required_deps_present(cls):
+    if not ignore_deps and not _required_deps_present(cls):
         return False, "False_required_deps_missing"
     # otherwise, continue
 
     # if ONLY_CHANGED_MODULES is off: always True
     # tests are always run if soft dependencies are present
-    if not ONLY_CHANGED_MODULES:
+    if not only_changed_modules:
         return True, "True_run_always"
 
     # run the test if and only if at least one of the conditions 2-4 are met
@@ -287,3 +287,34 @@ def run_test_module_changed(module):
         module = [module]
 
     return any(is_module_changed(mod) for mod in module)
+
+
+@lru_cache
+def _get_all_changed_classes(vm=False):
+    """Get all sktime object classes that have changed compared to the main branch.
+
+    Returns a tuple of string class names of object classes that have changed.
+
+    Parameters
+    ----------
+    vm : bool, optional, default=False
+        whether to run estimator in its own virtual machine.
+        Queries the tag ``"test_vm"`` in the class tags.
+        If ``vm`` is True, only classes with tag ``"test_vm"=True`` are returned.
+
+    Returns
+    -------
+    tuple of string sof class names : object classes that have changed
+    """
+    from sktime.registry import all_estimators
+
+    def _changed_class(cls):
+        """Check if a class has changed compared to the main branch."""
+        changed, _ = _run_test_for_class(cls, ignore_deps=True)
+
+        if vm:
+            changed = changed and cls.get_class_tag("test_vm", False)
+        return changed
+
+    names = [name for name, est in all_estimators() if _changed_class(est)]
+    return names

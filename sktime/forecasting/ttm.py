@@ -128,6 +128,14 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["ajati", "wgifford", "vijaye12", "geetu040"],
+        # ajati, wgifford, vijaye12 for ibm-granite code
+        "maintainers": ["geetu040"],
+        "python_dependencies": ["transformers", "torch"],
+        # estimator type
+        # --------------
         "X_inner_mtype": [
             "pd.DataFrame",
             "pd-multiindex",
@@ -147,10 +155,6 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         "capability:insample": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
-        "authors": ["ajati", "wgifford", "vijaye12", "geetu040"],
-        # ajati, wgifford, vijaye12 for ibm-granite code
-        "maintainers": ["geetu040"],
-        "python_dependencies": ["transformers", "torch"],
         "capability:global_forecasting": True,
     }
 
@@ -473,7 +477,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 "model_path": "ibm/TTM",
                 "revision": "main",
                 "config": {
-                    "context_length": 8,
+                    "context_length": 5,
                     "prediction_length": 2,
                 },
                 "validation_split": 0.2,

@@ -84,6 +84,7 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         "python_version": None,  # PEP 440 version specifier, e.g., ">=3.7"
         "python_dependencies": None,  # PEP 440 dependency strs, e.g., "pandas>=1.0"
         "env_marker": None,  # PEP 508 environment marker, e.g., "os_name=='posix'"
+        "test_vm": False,  # whether the object should be tested in its own VM
     }
 
     _config = {
