@@ -115,19 +115,11 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
     """  # noqa: E501
 
     _tags = {
-        # packaging info
-        # --------------
-        # "authors": ["XinyuWu"],
-        # "maintainers": ["XinyuWu"],
-        # "python_dependencies": "pytorch-forecasting"
-        # inherited from _PytorchForecastingAdapter
-        # estimator type
-        # --------------
-        "python_dependencies": ["pytorch-forecasting>=1.0.0", "torch", "lightning"],
         "capability:global_forecasting": True,
         "capability:insample": False,
         "X-y-must-have-same-index": True,
         "scitype:y": "univariate",
+        "capability:pred_int": True,
     }
 
     def __init__(
@@ -405,15 +397,6 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
     """  # noqa: E501
 
     _tags = {
-        # packaging info
-        # --------------
-        # "authors": ["XinyuWu"],
-        # "maintainers": ["XinyuWu"],
-        # "python_dependencies": "pytorch-forecasting"
-        # inherited from _PytorchForecastingAdapter
-        # estimator type
-        # --------------
-        "python_dependencies": ["pytorch-forecasting>=1.0.0", "torch", "lightning"],
         "capability:global_forecasting": True,
         "ignores-exogeneous-X": True,
         "capability:insample": False,
@@ -687,19 +670,11 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
     """  # noqa: E501
 
     _tags = {
-        # packaging info
-        # --------------
-        # "authors": ["XinyuWu"],
-        # "maintainers": ["XinyuWu"],
-        # "python_dependencies": "pytorch-forecasting"
-        # inherited from _PytorchForecastingAdapter
-        # estimator type
-        # --------------
-        "python_dependencies": ["pytorch-forecasting>=1.0.0", "torch", "lightning"],
         "capability:global_forecasting": True,
         "capability:insample": False,
         "X-y-must-have-same-index": True,
         "scitype:y": "univariate",
+        "capability:pred_int": True,
     }
 
     def __init__(
@@ -974,19 +949,11 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
     """  # noqa: E501
 
     _tags = {
-        # packaging info
-        # --------------
-        # "authors": ["XinyuWu"],
-        # "maintainers": ["XinyuWu"],
-        # "python_dependencies": "pytorch-forecasting"
-        # inherited from _PytorchForecastingAdapter
-        # estimator type
-        # --------------
-        "python_dependencies": ["pytorch-forecasting>=1.0.0", "torch", "lightning"],
         "capability:global_forecasting": True,
         "capability:insample": False,
         "X-y-must-have-same-index": True,
         "scitype:y": "univariate",
+        "capability:pred_int": True,
     }
 
     def __init__(
@@ -1027,6 +994,13 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
         dict
             keyword arguments for the underlying algorithm class
         """
+        # change default loss to QuantileLoss
+        # so that it can perform quantile forecast
+        from pytorch_forecasting import QuantileLoss
+
+        if "loss" not in self._model_params.keys():
+            self._model_params["loss"] = QuantileLoss()
+
         if "n_blocks" in self._model_params.keys():
             stacks = len(self._model_params["n_blocks"])
         else:
