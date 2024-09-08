@@ -136,7 +136,9 @@ jobs:
       - name: Install dependencies for ${{ matrix.flag }}
         run: |
           # Run the Python script to get the list of requirements for the flag
-          pip install -r <(python -c "from sktime.registry import deps; print('\n'.join(deps('${{ matrix.flag }}')))")
+          python -c "from sktime.registry import deps; print('\n'.join(deps('GRUClassifier')))" > temp_requirements.txt
+          python -m pip install -r temp_requirements.txt
+          rm temp_requirements.txt
         shell: bash
 
       - name: Show dependencies
