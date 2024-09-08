@@ -94,3 +94,25 @@ def test_predefined_output_groupby(timeseries, categories):
     assert forecasters[0].strategy == "mean"
     assert forecasters[1].strategy == "drift"
     assert forecasters[3].strategy == "last"
+
+
+def test_series_without_panel_level():
+    from sktime.datasets import load_airline
+    from sktime.transformations.series.adi_cv import ADICVTransformer
+
+    y = load_airline()
+    X = pd.DataFrame(0, index=pd.date_range("2020-01-01", periods=10), columns=["B"])
+
+    forecaster = GroupbyCategoryForecaster(
+        forecasters={
+            0: NaiveForecaster(strategy="mean"),
+            1: NaiveForecaster(strategy="drift"),
+        },
+        transformer=ADICVTransformer(features=["class"]),
+        fallback_forecaster=NaiveForecaster(strategy="last"),
+    )
+
+    forecaster.fit(y, X)
+    y_pred = forecaster.predict(X=X, fh=[1, 2, 3])
+
+    assert y_pred.index.nlevels == 1

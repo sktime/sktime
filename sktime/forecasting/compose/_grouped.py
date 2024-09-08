@@ -1,6 +1,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements compositors for performing forecasting by group."""
 
+from typing import Union
+
 import pandas as pd
 
 from sktime.base._meta import _HeterogenousMetaEstimator
@@ -209,10 +211,12 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
 
     _tags = {
         "y_inner_mtype": [
+            "pd.DataFrame",
             "pd-multiindex",
             "pd_multiindex_hier",
         ],
         "X_inner_mtype": [
+            "pd.DataFrame",
             "pd-multiindex",
             "pd_multiindex_hier",
         ],
@@ -360,7 +364,12 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
 
         self.category_ = self.transformer_.fit_transform(X=y, y=X).iloc[:, 0]
         self.forecasters_ = {}
-        self.grouped_by_category_ = self.category_.groupby(self.category_)
+
+        if y.index.nlevels == 1:
+            # Handle case where y is a DataFrame without panel
+            self.grouped_by_category_ = [(self.category_.values[0], None)]
+        else:
+            self.grouped_by_category_ = self.category_.groupby(self.category_)
 
         for category, group in self.grouped_by_category_:
             # check if we have an available forecaster
@@ -379,10 +388,12 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             else:
                 chosen_forecaster_ = self.forecasters[category].clone()
 
-            y_category = self._loc_group(y, group.index)
+            y_category = self._loc_group(y, group)
+
             X_category = None
             if X is not None:
-                X_category = self._loc_group(X, group.index)
+                X_category = self._loc_group(X, group)
+
             # fitting the forecaster!
             chosen_forecaster_.fit(y=y_category, X=X_category, fh=fh)
 
@@ -507,12 +518,34 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         params = [param1, param2]
         return params
 
-    def _iterate_predict_method_over_categories(self, methodname, X=None, **kwargs):
+    def _iterate_predict_method_over_categories(
+        self, methodname: str, X=None, **kwargs
+    ):
+        """
+        Iterate over the forecasters and call the given method on each one.
+
+        This method helps to avoid code duplication when implementing the
+        predict, predict_interval, predict_var, and predict_proba methods.
+
+        Parameters
+        ----------
+        methodname : str
+            The name of the method to call on each forecaster.
+        X : pd.DataFrame, optional (default=None)
+            The exogenous variables to use for the forecast.
+        **kwargs : dict
+            Additional keyword arguments to pass to the method.
+
+        Returns
+        -------
+        pd.DataFrame
+            The predicted values given methodname.
+        """
         y_preds = []
         for category, group in self.grouped_by_category_:
             X_category = X
             if X_category is not None:
-                X_category = self._loc_group(X, group.index)
+                X_category = self._loc_group(X, group)
             else:
                 X_category = None
 
@@ -559,8 +592,28 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             else:
                 self.fallback_forecaster = forecaster
 
-    def _loc_group(self, df, group_idx: pd.MultiIndex):
-        return df.loc[df.index.droplevel(-1).map(lambda x: x in group_idx),]
+    def _loc_group(self, df: pd.DataFrame, group: Union[pd.DataFrame, None]):
+        """
+        Return the indexes of the given dataframe that match the given group.
+
+        The case where the group is None is used to handle pd.DataFrame mtypes that
+        do not have a panel level.
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            The dataframe to locate the group in.
+        group : pd.DataFrame or None
+            The group to locate in the dataframe.
+
+        Returns
+        -------
+        pd.DataFrame
+            The indexes of the dataframe that match the given group.
+        """
+        if group is None:
+            return df
+        return df.loc[df.index.droplevel(-1).map(lambda x: x in group.index),]
 
 
 # Function implementations that will be added dynamically
