@@ -2903,8 +2903,8 @@ class _BaseGlobalForecaster(BaseForecaster):
         # _BaseGlobalForecaster is a child class of BaseForecaster,
         # therefor, overwriting the method once is not indicating
         # a concrete implementation which will cause infinite loop.
-        implements_interval = self._has_implementation_of("_predict_interval", n=2)
-        implements_proba = self._has_implementation_of("_predict_proba", n=2)
+        implements_interval = self._has_implementation_of("_predict_interval")
+        implements_proba = self._has_implementation_of("_predict_proba")
         can_do_proba = implements_interval or implements_proba
 
         if not can_do_proba:
@@ -3115,8 +3115,8 @@ class _BaseGlobalForecaster(BaseForecaster):
         # _BaseGlobalForecaster is a child class of BaseForecaster,
         # therefor, overwriting the method once is not indicating
         # a concrete implementation which will cause infinite loop.
-        implements_quantiles = self._has_implementation_of("_predict_quantiles", n=2)
-        implements_proba = self._has_implementation_of("_predict_proba", n=2)
+        implements_quantiles = self._has_implementation_of("_predict_quantiles")
+        implements_proba = self._has_implementation_of("_predict_proba")
         can_do_proba = implements_quantiles or implements_proba
 
         if not can_do_proba:
@@ -3311,9 +3311,9 @@ class _BaseGlobalForecaster(BaseForecaster):
         # _BaseGlobalForecaster is a child class of BaseForecaster,
         # therefor, overwriting the method once is not indicating
         # a concrete implementation which will cause infinite loop.
-        implements_interval = self._has_implementation_of("_predict_interval", n=2)
-        implements_quantiles = self._has_implementation_of("_predict_quantiles", n=2)
-        implements_proba = self._has_implementation_of("_predict_proba", n=2)
+        implements_interval = self._has_implementation_of("_predict_interval")
+        implements_quantiles = self._has_implementation_of("_predict_quantiles")
+        implements_proba = self._has_implementation_of("_predict_proba")
         can_do_proba = implements_interval or implements_quantiles or implements_proba
 
         if not can_do_proba:
@@ -3497,9 +3497,9 @@ class _BaseGlobalForecaster(BaseForecaster):
         # _BaseGlobalForecaster is a child class of BaseForecaster,
         # therefor, overwriting the method once is not indicating
         # a concrete implementation which will cause infinite loop.
-        implements_interval = self._has_implementation_of("_predict_interval", n=2)
-        implements_quantiles = self._has_implementation_of("_predict_quantiles", n=2)
-        implements_var = self._has_implementation_of("_predict_var", n=2)
+        implements_interval = self._has_implementation_of("_predict_interval")
+        implements_quantiles = self._has_implementation_of("_predict_quantiles")
+        implements_var = self._has_implementation_of("_predict_var")
         can_do_proba = implements_interval or implements_quantiles or implements_var
 
         if not can_do_proba:
@@ -3530,23 +3530,25 @@ class _BaseGlobalForecaster(BaseForecaster):
         return pred_dist
 
     @classmethod
-    def _has_implementation_of(cls, method, n=1):
+    def _has_implementation_of(cls, method):
         """Check if method has a concrete implementation in this class.
 
         This assumes that having an implementation is equivalent to
-            n overrides of `method` in the method resolution order.
+            at least n overrides of `method` in the method resolution order.
 
         Parameters
         ----------
-        method : str, name of method to check implementation of
-
-        n: int, if there are n overrides of `method`, then it's considered inplemented
+        method : str
+            name of method to check implementation of
 
         Returns
         -------
         bool, whether method has implementation in cls
-            True if cls.method has been overridden at least once in
-                the inheritance tree (according to method resolution order)
+            True if cls.method has been overridden at least n times in
+            the inheritance tree (according to method resolution order)
+            n is different for each function. If a function has been overridden
+            in _BaseGlobalForecaster and is going to be overridden in
+            specific forecaster again, n should be 2.
         """
         # walk through method resolution order and inspect methods
         #   of classes and direct parents, "adjacent" classes in mro
@@ -3554,6 +3556,16 @@ class _BaseGlobalForecaster(BaseForecaster):
         # collect all methods that are not none
         methods = [getattr(c, method, None) for c in mro]
         methods = [m for m in methods if m is not None]
+        n_2 = [
+            "_predict_proba",
+            "_predict_var",
+            "_predict_interval",
+            "_predict_quantiles",
+        ]
+        if method in n_2:
+            n = 2
+        else:
+            n = 1
         _n = 0
         for i in range(len(methods) - 1):
             # the method has been overridden once iff
