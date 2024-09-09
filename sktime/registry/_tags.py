@@ -44,7 +44,7 @@ import sys
 import pandas as pd
 
 from sktime.base import BaseObject
-from sktime.registry._base_classes import BASE_CLASS_REGISTER
+from sktime.registry._base_classes import get_obj_scitype_list
 
 
 class _BaseTag(BaseObject):
@@ -103,7 +103,7 @@ class object_type(_BaseTag):
 
 
 # dynamically add a pretty printd list of scitypes to the docstring
-for name, _, desc in BASE_CLASS_REGISTER:
+for name, desc in get_obj_scitype_list(return_descriptions=True):
     object_type.__doc__ += f'\n    - ``"{name}"``: {desc}'
 
 
@@ -895,8 +895,37 @@ class capability__multioutput(_BaseTag):
     }
 
 
+class capability__predict(_BaseTag):
+    """Capability: the clusterer can predict cluster assignments.
+
+    - String name: ``"capability:predict"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``False``
+    - Default: ``True``
+
+    This tag applies to clusterers only.
+
+    If the tag is ``True``, the clusterer implements a ``predict``
+    method, which can be used to obtain cluster assignments.
+
+    If the tag is ``False``, the clusterer will raise an exception on
+    ``predict`` call.
+    """
+
+    _tags = {
+        "tag_name": "capability:predict",
+        "parent_type": "clusterer",
+        "tag_type": "bool",
+        "short_descr": (
+            "can the clusterer predict cluster assignments for new data points?"
+        ),
+        "user_facing": True,
+    }
+
+
 class capability__predict_proba(_BaseTag):
-    """Capability: the classifier can predict class probabilities.
+    """Capability: the estimator can make probabilistic predictions.
 
     - String name: ``"capability:predict_proba"``
     - Public capability tag
@@ -904,22 +933,57 @@ class capability__predict_proba(_BaseTag):
     - Example: ``True``
     - Default: ``False``
 
-    This tag applies to classifiers only.
+    This tag applies to classifiers and clusterers.
 
-    If the tag is ``True``, the classifier implements a non-default ``predict_proba``
-    method, which can be used to predict class probabilities.
+    If the tag is ``True``, the estimator implements a non-default ``predict_proba``
+    method, which can be used to predict class probabilities (classifier),
+    or probabilistic cluster assignments (clusterer)
 
-    If the tag is ``False``, the classifier's ``predict_proba`` defaults to
-    predicting zero/one class probabilities, equivalent to the ``predict`` output.
+    If the tag is ``False``, the estimator's ``predict_proba`` defaults to
+    predicting zero/one probabilities, equivalent to the ``predict`` output.
     """
 
     _tags = {
         "tag_name": "capability:predict_proba",
-        "parent_type": "classifier",
+        "parent_type": ["classifier", "clusterer"],
         "tag_type": "bool",
         "short_descr": (
-            "does the classifier implement a non-default predict_proba method? "
+            "does the estimator implement a non-default predict_proba method? "
             "i.e., not just 0/1 probabilities obtained from predict?"
+        ),
+        "user_facing": True,
+    }
+
+
+class capability__out_of_sample(_BaseTag):
+    """Capability: the estimator can make out-of-sample predictions.
+
+    - String name: ``"capability:out_of_sample"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``False``
+    - Default: ``True``
+
+    This tag applies to clusterers only.
+
+    If the tag is ``True``, the estimator can make cluster assignments
+    out-of-sample, i.e., the indices in ``predict`` need not be equal to those
+    seen in ``fit``.
+
+    If the tag is ``False``, the estimator will refit a clone
+    when ``predict`` is called, on the pooled data seen in ``fit`` and ``predict``,
+    if there is ad least one index value in ``predict`` that has not been seen in
+    ``fit``. For index-less data mtypes, identity of the data object is used to check
+    whether indices are equal.
+    """
+
+    _tags = {
+        "tag_name": "capability:out_of_sample",
+        "parent_type": "clusterer",
+        "tag_type": "bool",
+        "short_descr": (
+            "can the clusterer make out-of-sample predictions, "
+            "i.e., compute cluster assignments on new data?"
         ),
         "user_facing": True,
     }
