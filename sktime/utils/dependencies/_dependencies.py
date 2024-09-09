@@ -16,7 +16,6 @@ from packaging.version import InvalidVersion, Version
 
 def _check_soft_dependencies(
     *packages,
-    package_import_alias="deprecated",
     severity="error",
     obj=None,
     msg=None,
@@ -36,8 +35,6 @@ def _check_soft_dependencies(
         ``_check_soft_dependencies("package1", "package2")``
         ``_check_soft_dependencies(("package1", "package2"))``
         ``_check_soft_dependencies(["package1", "package2"])``
-
-    package_import_alias : ignored, present only for backwards compatibility
 
     severity : str, "error" (default), "warning", "none"
         behaviour for raising errors or warnings
@@ -80,17 +77,6 @@ def _check_soft_dependencies(
     -------
     boolean - whether all packages are installed, only if no exception is raised
     """
-    # todo 0.33.0: remove this warning
-    if package_import_alias != "deprecated":
-        warnings.warn(
-            "In sktime _check_soft_dependencies, the package_import_alias argument "
-            "is deprecated and no longer has any effect. "
-            "The argument will be removed in version 0.33.0, so users of the "
-            "_check_soft_dependencies utility should not pass this argument anymore.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-
     if len(packages) == 1 and isinstance(packages[0], (tuple, list)):
         packages = packages[0]
     if not all(isinstance(x, str) for x in packages):

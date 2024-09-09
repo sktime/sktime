@@ -163,7 +163,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                         if len(levels) == 1:
                             levels = levels[0]
                         yt[ix] = y.xs(ix, level=levels, axis=1)
-                        # todo 0.33.0 - check why this cannot be easily removed
+                        # todo 0.34.0 - check why this cannot be easily removed
                         # in theory, we should get rid of the "Coverage" case treatment
                         # (the legacy naming convention was removed in 0.23.0)
                         # deal with the "Coverage" case, we need to get rid of this
@@ -1643,7 +1643,10 @@ class ForecastX(BaseForecaster):
         self : an instance of self
         """
         if self.behaviour == "update" and X is not None:
-            self.forecaster_X_.update(y=self._get_Xcols(X), update_params=update_params)
+            X_for_fcX = self._get_X_for_fcX(X)
+            self.forecaster_X_.update(
+                y=self._get_Xcols(X), X=X_for_fcX, update_params=update_params
+            )
         self.forecaster_y_.update(y=y, X=X, update_params=update_params)
 
         return self
@@ -1813,7 +1816,7 @@ class ForecastX(BaseForecaster):
         params1 = {"forecaster_X": fx, "forecaster_y": fy}
 
         # example with probabilistic capability
-        # todo 0.33.0: check if numpy<2 is still needed
+        # todo 0.34.0: check if numpy<2 is still needed
         if _check_soft_dependencies(["pmdarima", "numpy<2"], severity="none"):
             fy_proba = ARIMA()
         else:
