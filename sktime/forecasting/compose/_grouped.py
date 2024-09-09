@@ -471,8 +471,8 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         self : reference to self
         """
         for category, group in self.grouped_by_category_:
-            y_category = self._loc_group(y, group.index)
-            X_category = self._loc_group(X, group.index)
+            y_category = self._loc_group(y, group)
+            X_category = self._loc_group(X, group)
             self.forecasters_[category].update(
                 y=y_category, X=X_category, update_params=update_params
             )
