@@ -13,6 +13,7 @@ from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.registry import scitype
+from sktime.utils._estimator_html_repr import _VisualBlock
 from sktime.utils.validation.series import check_series
 from sktime.utils.warnings import warn
 
@@ -162,7 +163,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                         if len(levels) == 1:
                             levels = levels[0]
                         yt[ix] = y.xs(ix, level=levels, axis=1)
-                        # todo 0.33.0 - check why this cannot be easily removed
+                        # todo 0.34.0 - check why this cannot be easily removed
                         # in theory, we should get rid of the "Coverage" case treatment
                         # (the legacy naming convention was removed in 0.23.0)
                         # deal with the "Coverage" case, we need to get rid of this
@@ -277,6 +278,18 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         params3 = {"steps": [Detrender(), YfromX.create_test_instance()]}
 
         return [params1, params2, params3]
+
+    def _sk_visual_block_(self):
+        names, estimators = zip(*self._steps)
+
+        name_details = [str(est) for est in estimators]
+        return _VisualBlock(
+            "serial",
+            estimators,
+            names=names,
+            name_details=name_details,
+            dash_wrapped=False,
+        )
 
 
 # we ensure that internally we convert to pd.DataFrame for now
@@ -1630,7 +1643,10 @@ class ForecastX(BaseForecaster):
         self : an instance of self
         """
         if self.behaviour == "update" and X is not None:
-            self.forecaster_X_.update(y=self._get_Xcols(X), update_params=update_params)
+            X_for_fcX = self._get_X_for_fcX(X)
+            self.forecaster_X_.update(
+                y=self._get_Xcols(X), X=X_for_fcX, update_params=update_params
+            )
         self.forecaster_y_.update(y=y, X=X, update_params=update_params)
 
         return self
@@ -1800,7 +1816,7 @@ class ForecastX(BaseForecaster):
         params1 = {"forecaster_X": fx, "forecaster_y": fy}
 
         # example with probabilistic capability
-        # todo 0.33.0: check if numpy<2 is still needed
+        # todo 0.34.0: check if numpy<2 is still needed
         if _check_soft_dependencies(["pmdarima", "numpy<2"], severity="none"):
             fy_proba = ARIMA()
         else:
