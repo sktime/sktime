@@ -19,6 +19,33 @@ For upcoming changes and next releases, see our `milestones <https://github.com/
 For our long-term plan, see our :ref:`roadmap`.
 
 
+Version 0.33.0 - 2024-09-09
+---------------------------
+
+Maintenance release, with scheduled deprecations and change actions.
+
+For last non-maintenance content updates, see 0.32.4 and 0.32.2.
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``skpro`` (soft dependency) bounds have been updated to ``>=2,<2.7.0``
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* in ``DirectReductionForecaster`` the default for ``windows_identical`` has changed
+  to ``False``.
+
+
+Contents
+~~~~~~~~
+
+
 Version 0.32.4 - 2024-09-06
 ---------------------------
 
