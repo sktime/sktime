@@ -29,11 +29,14 @@ For last non-maintenance content updates, see 0.32.4 and 0.32.2.
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
 
+* ``numpy`` (core dependency) bounds have been updated to ``>=1.21,<2.2``
+* ``scikit-base`` (core dependency) bounds have been updated to ``>=0.6.1,<0.10.0``
 * ``skpro`` (soft dependency) bounds have been updated to ``>=2,<2.7.0``
-
-Core interface changes
-~~~~~~~~~~~~~~~~~~~~~~
-
+* ``holidays`` (transformations soft dependency) bounds have been updated to ``>=0.29,<0.57``
+* ``pykan`` (deep learning soft dependency) bounds have been updated to ``>=0.2,<0.2.7``
+* ``mne`` (transformations soft dependency) bounds have been updated to ``>=1.5,<1.9``
+* ``dask`` (data container and parallelization back-end soft dependency) bounds have been updated to ``<2024.8.3``
+* ``pytorch-forecasting`` (forecasting soft dependency) bounds have been updated to ``>=1.0.0,<1.2.0``
 
 Deprecations and removals
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -41,9 +44,39 @@ Deprecations and removals
 * in ``DirectReductionForecaster`` the default for ``windows_identical`` has changed
   to ``False``.
 
+Maintenance
+~~~~~~~~~~~
 
-Contents
-~~~~~~~~
+* [MNT] Try to reduce load for the runners (:pr:`7061`) :user:`benHeid`
+* [MNT] 0.33.0 deprecations and change actions (:pr:`7091`) :user:`fkiraly`
+* [MNT] ffp3 datasets URLs changed on CRAN; updated ``_fpp3_loaders.py`` accordingly (:pr:`7084`) :user:`ericjb`
+* [MNT] remove <3.11 restriction for ``pytorch-forecasting``, add upper bound (:pr:`7092`) :user:`fkiraly`
+* [MNT] [Dependabot](deps): Update ``dask`` requirement from ``<2024.8.2`` to ``<2024.8.3`` (:pr:`7062`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``numpy`` requirement from ``<2.1,>=1.21`` to ``>=1.21,<2.2`` (:pr:`7007`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``scikit-base`` requirement from ``<0.9.0,>=0.6.1`` to ``>=0.6.1,<0.10.0`` (:pr:`7035`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``holidays`` requirement from ``<0.56,>=0.29`` to ``>=0.29,<0.57`` (:pr:`7096`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``pykan`` requirement from ``<0.2.2,>=0.2`` to ``>=0.2,<0.2.7`` (:pr:`7010`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``mne`` requirement from ``<1.8,>=1.5`` to ``>=1.5,<1.9`` (:pr:`7004`) :user:`dependabot[bot]`
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] Adds :user:`SaiRevanth25`` contributions to all-contributors file (:pr:`7085`) :user:`SaiRevanth25`
+* [DOC] fix typo and formatting in installation docs (:pr:`7060`) :user:`Saptarshi-Bandopadhyay`
+
+Enhancements
+~~~~~~~~~~~~
+
+* [ENH] change ``test_inheritance`` to be more lenient to framework level extensions (:pr:`7067`) :user:`fkiraly`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`benHeid`,
+:user:`ericjb`,
+:user:`fkiraly`,
+:user:`SaiRevanth25`,
+:user:`Saptarshi-Bandopadhyay`
 
 
 Version 0.32.4 - 2024-09-06
