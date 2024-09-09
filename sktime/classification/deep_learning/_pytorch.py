@@ -219,7 +219,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         y_pred = cat(y_pred, dim=0)
         # (batch_size, num_outputs)
         y_pred = F.softmax(y_pred, dim=-1)
-        y_pred = y_pred.numpy()
+        y_pred = y_pred.detach().numpy()
         return y_pred
 
     def _encode_y(self, y):
