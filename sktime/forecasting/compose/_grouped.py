@@ -611,7 +611,7 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         pd.DataFrame
             The indexes of the dataframe that match the given group.
         """
-        if group is None:
+        if df is None or group is None:
             return df
         return df.loc[df.index.droplevel(-1).map(lambda x: x in group.index),]
 
