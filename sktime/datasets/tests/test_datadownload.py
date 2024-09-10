@@ -110,6 +110,22 @@ def test_load_forecasting_data_invalid_name(name):
 @pytest.mark.datadownload
 def test_load_fpp3():
     """Test loading downloaded dataset from ."""
+
+    import requests
+
+    from sktime.datasets._fpp3_loaders import _get_dataset_url
+
+    for dataset_name in ["aus_accommodation", "pedestrian", "ansett"]:
+        ret, url = _get_dataset_url(dataset_name)
+        assert ret is True
+        try:
+            response = requests.head(url)
+            if response.status_code != 200:
+                ret = False
+        except requests.RequestException:
+            ret = False
+        assert ret is True
+
     olympic_running = load_fpp3("olympic_running")
 
     assert isinstance(olympic_running, pd.DataFrame)

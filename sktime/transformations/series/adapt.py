@@ -174,6 +174,12 @@ class TabularToSeriesAdaptor(BaseTransformer):
 
         super().__init__()
 
+        if hasattr(transformer, "_get_tags"):
+            categorical_list = ["categorical", "1dlabels", "2dlabels"]
+            tag_values = transformer._get_tags()["X_types"]
+            if any(val in tag_values for val in categorical_list):
+                self.set_tags(**{"capability:categorical_in_X": True})
+
         if hasattr(transformer, "inverse_transform"):
             self.set_tags(**{"capability:inverse_transform": True})
 
@@ -200,7 +206,13 @@ class TabularToSeriesAdaptor(BaseTransformer):
         if pooling == "local":
             self.set_tags(**{"scitype:instancewise": True})
             if input_type == "numpy":
-                self.set_tags(**{"X_inner_mtype": "np.ndarray"})
+                self.set_tags(
+                    **{
+                        "X_inner_mtype": "np.ndarray",
+                        # categorical is not supported in numpy yet.
+                        "capability:categorical_in_X": False,
+                    }
+                )
             elif input_type == "pandas":
                 self.set_tags(**{"X_inner_mtype": "pd.DataFrame"})
             else:
@@ -342,6 +354,10 @@ class TabularToSeriesAdaptor(BaseTransformer):
         else:
             Xt = self.transformer_.transform(**trafo_args)
 
+        # converting to dense if the transformer output was in sparse format
+        # Example: sklearn OneHotEncoder's default output is sparse
+        if str(type(Xt)) == "<class 'scipy.sparse._csr.csr_matrix'>":
+            Xt = Xt.todense()
         # coerce sensibly to 2D np.ndarray
         if isinstance(Xt, (int, float, str)):
             Xt = np.array([[Xt]])
@@ -416,7 +432,6 @@ class TabularToSeriesAdaptor(BaseTransformer):
         params3 = {"transformer": VarianceThreshold(), "pass_y": "fit"}
         params4 = {"transformer": VarianceThreshold()}
         params5 = {"transformer": LabelEncoder(), "fit_in_transform": True}
-
         params6 = {
             "transformer": StandardScaler(),
             "pooling": "global",

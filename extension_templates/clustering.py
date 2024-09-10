@@ -103,6 +103,9 @@ class MyClusterer(BaseClusterer):
         "capability:unequal_length": False,
         "capability:missing_values": False,
         "capability:multithreading": False,
+        "capability:predict": True,  # implements _predict for cluster assignment?
+        "capability:predict_proba": False,  # implements non-default _predict_proba?
+        "capability:out_of_sample": True,  # implements _predict for new data?
     }
 
     # todo: add any hyper-parameters and components to constructor

@@ -90,8 +90,11 @@ def is_soft_dep_missing_message(msg):
     # special message for deep learning dependencies
     error_msg_dl = "required for deep learning"
     cond3 = error_msg_dl in msg
+    # message if environment marker not satisfied
+    error_msg_marker = "packaging marker"
+    cond4 = error_msg_marker in msg
 
-    return cond1 or cond2 or cond3
+    return cond1 or cond2 or cond3 or cond4
 
 
 @pytest.mark.parametrize("module", modules)
@@ -144,7 +147,7 @@ def _coerce_list_of_str(obj):
 
 
 def _get_soft_deps(est):
-    """Return soft dependencies of an estimator, as list of str and its alias."""
+    """Return soft dependencies of an estimator, as list of str."""
     softdeps = est.get_class_tag("python_dependencies", None)
     softdeps = _coerce_list_of_str(softdeps)
     if softdeps is None:
