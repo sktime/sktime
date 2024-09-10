@@ -3,7 +3,6 @@
 import multiprocessing
 from concurrent.futures import ProcessPoolExecutor
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
@@ -132,6 +131,14 @@ class MAPAForecaster(BaseForecaster):
         return {"out": y_out, "all": y_all, "idx": y_idx}
 
     def _plot_tsaggr(self, y, y_out, fout):
+        from sktime.utils.dependencies._dependencies import _check_soft_dependencies
+
+        try:
+            _check_soft_dependencies("matplotlib", severity="warning")
+            import matplotlib.pyplot as plt
+        except ImportError:
+            # If matplotlib is not installed, we'll just return without plotting
+            return
         plt.figure(figsize=(12, 6))
         plt.plot(y.index, y.values, color="black", linewidth=2, label="Original")
         colors = plt.cm.rainbow(np.linspace(0, 0.8, len(fout)))
@@ -762,6 +769,14 @@ class MAPAForecaster(BaseForecaster):
 
     def plot_mapa(self, mapafit):
         """Plot function for MAPA results."""
+        from sktime.utils.dependencies._dependencies import _check_soft_dependencies
+
+        try:
+            _check_soft_dependencies("matplotlib", severity="warning")
+            import matplotlib.pyplot as plt
+        except ImportError:
+            # If matplotlib is not installed, we'll just return without plotting
+            return
         als = mapafit.loc["AL"][mapafit.loc["use"]].astype(int)
         minimum_al = als.min()
         maximum_al = als.max()
@@ -811,6 +826,14 @@ class MAPAForecaster(BaseForecaster):
 
     def plot_mapafor(self, y, infor, outfor, PI, observations, fh):
         """Plot function for MAPA forecasts."""
+        from sktime.utils.dependencies._dependencies import _check_soft_dependencies
+
+        try:
+            _check_soft_dependencies("matplotlib", severity="warning")
+            import matplotlib.pyplot as plt
+        except ImportError:
+            # If matplotlib is not installed, we'll just return without plotting
+            return
         plt.figure(figsize=(12, 6))
         plt.plot(range(observations), y, label="Actual", color="black")
 
