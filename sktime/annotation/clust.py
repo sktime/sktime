@@ -75,7 +75,6 @@ class ClusterSegmenter(BaseSeriesAnnotator):
         if isinstance(X, pd.Series):
             X = X.to_frame()
         cloned_clusterer = clone(self._clusterer)
-        self.n_instances, self.n_timepoints = X.shape
         X_flat = X.values.reshape(-1, 1)
         cloned_clusterer.fit(X_flat)
 
@@ -96,6 +95,9 @@ class ClusterSegmenter(BaseSeriesAnnotator):
         Y : pd.Series - annotations for sequence X
             exact format depends on annotation type
         """
+        if isinstance(X, pd.Series):
+            X = X.to_frame()
+        self.n_instances, self.n_timepoints = X.shape
         X_flat = X.values.reshape(-1, 1)
         labels = self._clusterer_.predict(X_flat)
         labels = labels.reshape(self.n_instances, self.n_timepoints)
