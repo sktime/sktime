@@ -46,8 +46,8 @@ Transformations are categorized as follows:
 Composition
 -----------
 
-Pipeline building
-~~~~~~~~~~~~~~~~~
+Pipeline building - Structural
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.compose
 
@@ -58,24 +58,24 @@ Pipeline building
     TransformerPipeline
     FeatureUnion
     ColumnEnsembleTransformer
-    ColumnwiseTransformer
     FitInTransform
-    MultiplexTransformer
-    OptionalPassthrough
     InvertTransform
-    Id
     YtoX
     IxToX
-    TransformByLevel
-    TransformIf
 
-.. currentmodule:: sktime.transformations.panel.compose
+Pipeline building - Broadcasting and apply-map
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.compose
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    ColumnTransformer
+    ColumnwiseTransformer
+    TransformByLevel
+
+.. currentmodule:: sktime.transformations.panel.compose
 
 .. currentmodule:: sktime.transformations.series.func_transform
 
@@ -85,6 +85,19 @@ Pipeline building
 
     FunctionTransformer
 
+Pipeline building - AutoML, switches and multiplexing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MultiplexTransformer
+    OptionalPassthrough
+    TransformIf
+    Id
 
 Sklearn and pandas adapters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
