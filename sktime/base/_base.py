@@ -64,6 +64,7 @@ from sklearn import clone
 from sklearn.base import BaseEstimator as _BaseEstimator
 
 from sktime.exceptions import NotFittedError
+from sktime.utils._estimator_html_repr import _HTMLDocumentationLinkMixin
 from sktime.utils.random_state import set_random_state
 
 SERIALIZATION_FORMATS = {
@@ -72,7 +73,7 @@ SERIALIZATION_FORMATS = {
 }
 
 
-class BaseObject(_BaseObject):
+class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
     """Base class for parametric objects with tags in sktime.
 
     Extends skbase BaseObject with additional features.
@@ -82,7 +83,6 @@ class BaseObject(_BaseObject):
     _tags = {
         "python_version": None,  # PEP 440 version specifier, e.g., ">=3.7"
         "python_dependencies": None,  # PEP 440 dependency strs, e.g., "pandas>=1.0"
-        "python_dependencies_alias": {"scikit-learn": "sklearn"},
         "env_marker": None,  # PEP 508 environment marker, e.g., "os_name=='posix'"
     }
 
@@ -149,7 +149,7 @@ class BaseObject(_BaseObject):
         """,
     }
 
-    # TODO 0.32.0: check whether python 3.8 has reached EoL.
+    # TODO 0.34.0: check whether python 3.8 has reached EoL.
     # If so, remove warning altogether
     def __init__(self):
         super().__init__()
@@ -163,7 +163,7 @@ class BaseObject(_BaseObject):
         py39_or_higher = SpecifierSet(">=3.9")
         sys_version = sys.version.split(" ")[0]
 
-        # todo 0.32.0 - check whether python 3.8 eol is reached.
+        # todo 0.34.0 - check whether python 3.8 eol is reached.
         # If yes, remove this msg.
         if sys_version not in py39_or_higher:
             warn(
@@ -184,7 +184,7 @@ class BaseObject(_BaseObject):
         # for rationale, see _handle_numpy2_softdeps
         self._handle_numpy2_softdeps()
 
-    # TODO 0.32.0: check list of numpy 2 incompatible soft deps
+    # TODO 0.34.0: check list of numpy 2 incompatible soft deps
     # remove any from NOT_NP2_COMPATIBLE that become compatible
     def _handle_numpy2_softdeps(self):
         """Handle tags for soft deps that are not numpy 2 compatible.
@@ -200,12 +200,12 @@ class BaseObject(_BaseObject):
           are in NOT_NP2_COMPATIBLE, this is a hard-coded
           list of soft dependencies that are not numpy 2 compatible
         * if any are found, adds a numpy<2.0 soft dependency to the list,
-          and sets it as a dynamic overide of the python_dependencies tag
+          and sets it as a dynamic override of the python_dependencies tag
         """
         from packaging.requirements import Requirement
 
         # pypi package names of soft dependencies that are not numpy 2 compatibleS
-        NOT_NP2_COMPATIBLE = ["prophet", "numba"]
+        NOT_NP2_COMPATIBLE = ["prophet", "pmdarima"]
 
         softdeps = self.get_class_tag("python_dependencies", [])
         if softdeps is None:

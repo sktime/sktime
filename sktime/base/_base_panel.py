@@ -23,6 +23,7 @@ from sktime.datatypes import (
     check_is_scitype,
     convert,
 )
+from sktime.datatypes._dtypekind import DtypeKind
 from sktime.utils.warnings import warn
 
 
@@ -365,8 +366,9 @@ class BasePanelMixin(BaseEstimator):
         capa_multioutput = self.get_tag("capability:multioutput")
         y_inner_mtype = self.get_tag("y_inner_mtype")
 
+        y_metadata_required = ["is_univariate", "feature_names", "feature_kind"]
         y_valid, y_msg, y_metadata = check_is_scitype(
-            y, "Table", return_metadata=["is_univariate", "feature_names"]
+            y, "Table", return_metadata=y_metadata_required
         )
 
         if not y_valid:
@@ -378,6 +380,15 @@ class BasePanelMixin(BaseEstimator):
             )
             check_is_error_msg(
                 y_msg, var_name="y", allowed_msg=allowed_msg, raise_exception=True
+            )
+
+        est_type = self.get_tag("object_type")  # classifier or regressor
+        if (
+            est_type == "regressor"
+            and DtypeKind.CATEGORICAL in y_metadata["feature_kind"]
+        ):
+            raise TypeError(
+                "Regressors do not support categorical features in endogeneous y."
             )
 
         y_uni = y_metadata["is_univariate"]
@@ -496,6 +507,7 @@ class BasePanelMixin(BaseEstimator):
         X_valid, msg, X_metadata = check_is_scitype(
             X, scitype="Panel", return_metadata=return_metadata
         )
+
         # raise informative error message if X is in wrong format
         allowed_msg = (
             f"Allowed scitypes for {self.EST_TYPE_PLURAL} are Panel mtypes, "
@@ -506,6 +518,12 @@ class BasePanelMixin(BaseEstimator):
         if not X_valid:
             check_is_error_msg(
                 msg, var_name="X", allowed_msg=allowed_msg, raise_exception=True
+            )
+
+        est_type = self.get_tag("object_type")  # classifier or regressor
+        if DtypeKind.CATEGORICAL in X_metadata["feature_kind"]:
+            raise TypeError(
+                f"{est_type}s do not support categorical features in exogeneous X."
             )
 
         n_cases = X_metadata["n_instances"]

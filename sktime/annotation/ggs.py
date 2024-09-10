@@ -28,7 +28,7 @@ References
 ----------
 .. [1] Hallac, D., Nystrup, P. & Boyd, S.
    "Greedy Gaussian segmentation of multivariate time series.",
-    Adv Data Anal Classif 13, 727–751 (2019).
+    Adv Data Anal Classif 13, 727-751 (2019).
     https://doi.org/10.1007/s11634-018-0335-0
 """
 
@@ -105,7 +105,7 @@ class GGS:
     ----------
     .. [1] Hallac, D., Nystrup, P. & Boyd, S.,
     "Greedy Gaussian segmentation of multivariate time series.",
-    Adv Data Anal Classif 13, 727–751 (2019).
+    Adv Data Anal Classif 13, 727-751 (2019).
     https://doi.org/10.1007/s11634-018-0335-0
     """
 
@@ -420,7 +420,7 @@ class GreedyGaussianSegmentation(BaseSeriesAnnotator):
     ----------
     .. [1] Hallac, D., Nystrup, P. & Boyd, S.,
        "Greedy Gaussian segmentation of multivariate time series.",
-       Adv Data Anal Classif 13, 727–751 (2019).
+       Adv Data Anal Classif 13, 727-751 (2019).
        https://doi.org/10.1007/s11634-018-0335-0
     """
 
