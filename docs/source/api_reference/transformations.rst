@@ -203,6 +203,17 @@ Dictionary-based features
 
     SFA
 
+Auto-correlation-based features
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.hurst
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HurstExponentTransformer
+
 Moment-based features
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -597,6 +608,15 @@ These transformers create a series based on a sequence of sliding windows.
 
     HOG1DTransformer
 
+.. currentmodule:: sktime.transformations.series.subsequence_extraction
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SubsequenceExtractionTransformer
+
+
 Multivariate-to-univariate
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -701,7 +721,6 @@ These transformations ensure all series in a panel have equal length
     :template: class.rst
 
     TruncationTransformer
-
 
 Dimension reduction
 ~~~~~~~~~~~~~~~~~~~
