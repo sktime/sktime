@@ -25,18 +25,12 @@ class PyODAnnotator(BaseSeriesAnnotator):
     Examples
     --------
     >>> from sktime.annotation.datagen import piecewise_normal_multivariate
-    >>> X = pd.DataFrame(piecewise_normal_multivariate(means=[[1, 3], [4, 5]], lengths=[3, 4],
-    ... random_state = 10))
+    >>> X = pd.DataFrame(piecewise_normal_multivariate(
+    ...     means=[[1, 3], [4, 5]], lengths=[3, 4], random_state=10))
     >>> from sktime.annotation.adapters._pyod import PyODAnnotator
-    >>> model = PyODAnnotator(ECOD()) # doctest: +SKIP
-    >>> model.fit_transform(X) # doctest: +SKIP 
-    0    0
-    1    1
-    2    0
-    3    0
-    4    0
-    5    0
-    6    0
+    >>> from pyod.models.ecod import ECOD
+    >>> model = PyODAnnotator(ECOD())  # doctest: +SKIP
+    >>> model.fit_transform(X)  # doctest: +SKIP
     """
 
     _tags = {
