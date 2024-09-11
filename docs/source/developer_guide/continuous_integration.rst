@@ -10,7 +10,7 @@ This page gives a summary of:
 
 If you are a contributor or developer, ensure that you have set
 up your developer environment, and installed a
-`development version :doc:</installation>`
+:doc:`development version </installation>`
 of ``sktime``.
 
 ``sktime`` use continuous integration (CI) services on GitHub to automatically check
@@ -36,7 +36,7 @@ We recommend:
 Prerequisite: local python environment
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Local testing requires a `development version :doc:</installation>`
+Local testing requires a :doc:`development version </installation>`
 of ``sktime``, follow the link for detail instructions.
 
 In your environment, ensure you have an editable development version of sktime with developer dependencies.
@@ -53,7 +53,7 @@ To install, if not already installed:
 .. note::
 
    For trouble shooting on different operating systems, please see our detailed
-   `installation instructions :doc:</installation>`.
+   :doc:`installation instructions </installation>`.
 
 Code quality checks
 ~~~~~~~~~~~~~~~~~~~
@@ -81,7 +81,7 @@ For contributions that are localized to estimators or objects, the ``check_estim
 utility can be used.
 
 For this, follow the instructions in the
-`estimator development guide :doc:</developer_guide/add_estimators>`
+:doc:`estimator development guide </developer_guide/add_estimators>`
 
 Full test suite runs via ``pytest``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -87,9 +87,9 @@ Development versions
 --------------------
 To install the latest development version of ``sktime``, or earlier versions, the sequence of steps is as follows:
 
-Step 1 - ``git`` clone the ``sktime`` repository, the latest version or an earlier version.
-Step 2 - ensure build requirements are satisfied
-Step 3 - ``pip`` install the package from a ``git`` clone, with the ``editable`` parameter.
+| Step 1 - ``git`` clone the ``sktime`` repository, the latest version or an earlier version.
+| Step 2 - ensure build requirements are satisfied
+| Step 3 - ``pip`` install the package from a ``git`` clone, with the ``editable`` parameter.
 
 Detail instructions for all steps are given below.
 For brevity, we discuss steps 1 and 3 first; step 2 is discussed at the end, as it will depend on the operating system.
@@ -121,7 +121,7 @@ Valid version strings are the repository's ``git`` tags, which can be inspected 
 You can also `download <https://github.com/sktime/sktime/releases>`_ a zip archive of the version from GitHub.
 
 
-Step 2 - building sktime from source
+Step 3 - building sktime from source
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To build and install ``sktime`` from source, navigate to the local clone's root directory and type:
@@ -152,7 +152,7 @@ This allows editing and extending the code in-place. See also
     every time the source code of a compiled extension is changed (for
     instance when switching branches or pulling changes from upstream).
 
-Building binary packages and installers
+Step 2 - Building binary packages and installers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``.whl`` package and ``.exe`` installers can be built with:
