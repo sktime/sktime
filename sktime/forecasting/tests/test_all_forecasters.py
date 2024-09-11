@@ -153,6 +153,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         print("Collecting garbage")
         yield
         import gc
+
         gc.collect()
 
     def test_get_fitted_params(self, estimator_instance, scenario):
@@ -958,6 +959,7 @@ class TestAllGlobalForecasters(TestAllObjects):
         print("Collecting garbage")
         yield
         import gc
+
         gc.collect()
 
     def test_global_forecasting_tag(self, estimator_class):
