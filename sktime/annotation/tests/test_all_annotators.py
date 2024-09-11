@@ -101,7 +101,9 @@ class TestAllAnnotators(AnnotatorsFixtureGenerator, QuickTester):
                 fitted_estimator.predict_segments(arg)
 
         y_pred = fitted_estimator.predict_segments(arg)
-        assert isinstance(y_pred, (pd.Series, np.ndarray))
+        assert isinstance(y_pred, pd.Series)
+        assert isinstance(y_pred.index.dtype, pd.IntervalDtype)
+        assert pd.api.types.is_integer_dtype(y_pred)
 
     def test_annotator_tags(self, estimator_class):
         """Check the learning_type and task tags are valid."""
