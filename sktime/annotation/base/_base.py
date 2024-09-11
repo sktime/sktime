@@ -88,6 +88,38 @@ class BaseSeriesAnnotator(BaseEstimator):
         self.task = task
         self.learning_type = learning_type
 
+    def __rmul__(self, other):
+        """Magic * method, return (left) concatenated AnnotatorPipeline.
+
+        Implemented for ``other`` being a transformer, otherwise returns
+        ``NotImplemented``.
+
+        Parameters
+        ----------
+        other: ``sktime`` transformer, must inherit from BaseTransformer
+            otherwise, ``NotImplemented`` is returned
+
+        Returns
+        -------
+        AnnotatorPipeline object,
+            concatenation of ``other`` (first) with ``self`` (last).
+            not nested, contains only non-AnnotatorPipeline ``sktime`` steps
+        """
+        from sktime.annotation.compose import AnnotatorPipeline
+        from sktime.transformations.base import BaseTransformer
+        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+        from sktime.utils.sklearn import is_sklearn_transformer
+
+        # we wrap self in a pipeline, and concatenate with the other
+        #   the TransformedTargetForecaster does the rest, e.g., dispatch on other
+        if isinstance(other, BaseTransformer):
+            self_as_pipeline = AnnotatorPipeline(steps=[self])
+            return other * self_as_pipeline
+        elif is_sklearn_transformer(other):
+            return TabularToSeriesAdaptor(other) * self
+        else:
+            return NotImplemented
+
     def fit(self, X, Y=None):
         """Fit to training data.
 

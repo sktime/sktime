@@ -19,6 +19,144 @@ For upcoming changes and next releases, see our `milestones <https://github.com/
 For our long-term plan, see our :ref:`roadmap`.
 
 
+Version 0.33.0 - 2024-09-09
+---------------------------
+
+Maintenance release, with scheduled deprecations and change actions.
+
+For last non-maintenance content updates, see 0.32.4 and 0.32.2.
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``numpy`` (core dependency) bounds have been updated to ``>=1.21,<2.2``
+* ``scikit-base`` (core dependency) bounds have been updated to ``>=0.6.1,<0.10.0``
+* ``skpro`` (soft dependency) bounds have been updated to ``>=2,<2.7.0``
+* ``holidays`` (transformations soft dependency) bounds have been updated to ``>=0.29,<0.57``
+* ``pykan`` (deep learning soft dependency) bounds have been updated to ``>=0.2,<0.2.7``
+* ``mne`` (transformations soft dependency) bounds have been updated to ``>=1.5,<1.9``
+* ``dask`` (data container and parallelization back-end soft dependency) bounds have been updated to ``<2024.8.3``
+* ``pytorch-forecasting`` (forecasting soft dependency) bounds have been updated to ``>=1.0.0,<1.2.0``
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* in ``DirectReductionForecaster`` the default for ``windows_identical`` has changed
+  to ``False``.
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] Try to reduce load for the runners (:pr:`7061`) :user:`benHeid`
+* [MNT] 0.33.0 deprecations and change actions (:pr:`7091`) :user:`fkiraly`
+* [MNT] ffp3 datasets URLs changed on CRAN; updated ``_fpp3_loaders.py`` accordingly (:pr:`7084`) :user:`ericjb`
+* [MNT] remove <3.11 restriction for ``pytorch-forecasting``, add upper bound (:pr:`7092`) :user:`fkiraly`
+* [MNT] [Dependabot](deps): Update ``dask`` requirement from ``<2024.8.2`` to ``<2024.8.3`` (:pr:`7062`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``numpy`` requirement from ``<2.1,>=1.21`` to ``>=1.21,<2.2`` (:pr:`7007`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``scikit-base`` requirement from ``<0.9.0,>=0.6.1`` to ``>=0.6.1,<0.10.0`` (:pr:`7035`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``holidays`` requirement from ``<0.56,>=0.29`` to ``>=0.29,<0.57`` (:pr:`7096`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``pykan`` requirement from ``<0.2.2,>=0.2`` to ``>=0.2,<0.2.7`` (:pr:`7010`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``mne`` requirement from ``<1.8,>=1.5`` to ``>=1.5,<1.9`` (:pr:`7004`) :user:`dependabot[bot]`
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] Adds :user:`SaiRevanth25`` contributions to all-contributors file (:pr:`7085`) :user:`SaiRevanth25`
+* [DOC] fix typo and formatting in installation docs (:pr:`7060`) :user:`Saptarshi-Bandopadhyay`
+
+Enhancements
+~~~~~~~~~~~~
+
+* [ENH] change ``test_inheritance`` to be more lenient to framework level extensions (:pr:`7067`) :user:`fkiraly`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`benHeid`,
+:user:`ericjb`,
+:user:`fkiraly`,
+:user:`SaiRevanth25`,
+:user:`Saptarshi-Bandopadhyay`
+
+
+Version 0.32.4 - 2024-09-06
+---------------------------
+
+Small feature and fix release for:
+
+* colab compatibility, hotfix for ``polars`` dependency incompatibility
+* compatibility with ``skchange`` 2nd party integration
+* improvements to the anomalies, changepoints, segmentation framework
+* documentation update related to upcoming ``sktime`` elections
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+* A scitype adaptation framework is introduced, allowing use of an estimator of one type in
+  a slot for another, via type coercion. The coercion framework covers ``sklearn``, ``skpro``, and ``sktime`` estimators
+  currently, and is extensible. A user and developer shorthand for such coercion is provided
+  as the ``registry.coerce_scitype`` function, which dispatches to individual coercion mechanisms.
+* Time series clusterers that produce a cluster assignment can be coerced to transformations,
+  enabling their use in any pipeline slot for transformations.
+* Anomaly and changepoint detectors can now be pipelined with transformations, resulting in a detector.
+  Dunder concatenation ``transformer * detector`` will default to this.
+* Anomaly and changepoint detectors can be coerced to transformations, enabling their use in any
+  pipeline slot for transformations.
+
+Enhancements
+~~~~~~~~~~~~
+
+BaseObject and base framework
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] decouple registry from base modules, scitype specific data records for documentation of estimator types  (:pr:`6998`) :user:`fkiraly`
+* [ENH] scitype coercion and checking utility (:pr:`6969`) :user:`fkiraly`
+
+Time series anomalies, changepoints, segmentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Add padded f1 score for evaluating change point detection algorithms (:pr:`7034`) :user:`Alex-JG3`
+* [ENH] improvements to ``BaseSeriesAnnotator`` base class for anomaly, changepoint, segments (:pr:`7073`) :user:`fkiraly`
+* [ENH] pipeline for anomaly, changepoint detectors and segmenters (:pr:`7071`) :user:`fkiraly`
+* [ENH] coercion to use time series anomaly, changepoint detectors as transformers (:pr:`7072`) :user:`fkiraly`
+
+Time series clustering
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] enable use of clusterers as transformations, enable ``TransformSelectForecaster`` use of clusterers for group selection (:pr:`7068`) :user:`fkiraly`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [ENH] Hurst exponent feature extraction transformer (:pr:`7065`) :user:`phoeenniixx`
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] Add SVG version of the sktime logo with no text  (:pr:`7024`) :user:`wirrywoo`
+* [DOC] Improve documentation for ``TinyTimeMixer`` (:pr:`7009`) :user:`geetu040`
+* [DOC] fix broken links in continous integration docs (:pr:`7059`) :user:`Saptarshi-Bandopadhyay`
+* [DOC] split list of transformation pipeline components into subcategories (:pr:`7075`) :user:`fkiraly`
+
+Fixes
+~~~~~
+
+* [BUG] fix ``sktime`` crash with older ``polars`` versions (:pr:`7057`) :user:`fkiraly`
+* [BUG] Fix ``ForecastX.update`` when the ``forecaster_X_exogeneous`` is set to ``"complement"`` (:pr:`7041`) :user:`fnhirwa`
+* [BUG] fix ``ExpandingCutoffSplitter`` for case where ``fh`` is not continuous (:pr:`7053`) :user:`ninedigits`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`Alex-JG3`,
+:user:`fkiraly`,
+:user:`fnhirwa`,
+:user:`geetu040`,
+:user:`ninedigits`,
+:user:`phoeenniixx`,
+:user:`Saptarshi-Bandopadhyay`,
+:user:`wirrywoo`
+
 Version 0.32.3 - 2024-08-27
 ---------------------------
 
