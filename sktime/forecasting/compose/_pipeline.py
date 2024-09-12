@@ -13,6 +13,7 @@ from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.registry import scitype
+from sktime.utils._estimator_html_repr import _VisualBlock
 from sktime.utils.validation.series import check_series
 from sktime.utils.warnings import warn
 
@@ -277,6 +278,18 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         params3 = {"steps": [Detrender(), YfromX.create_test_instance()]}
 
         return [params1, params2, params3]
+
+    def _sk_visual_block_(self):
+        names, estimators = zip(*self._steps)
+
+        name_details = [str(est) for est in estimators]
+        return _VisualBlock(
+            "serial",
+            estimators,
+            names=names,
+            name_details=name_details,
+            dash_wrapped=False,
+        )
 
 
 # we ensure that internally we convert to pd.DataFrame for now
@@ -747,12 +760,13 @@ class TransformedTargetForecaster(_Pipeline):
         sequentially, with ``tp[i]`` receiving the output of ``tp[i-1]``,
 
     ``predict(X, fh)`` - result is of executing ``f.predict``, with ``X=X``, ``fh=fh``,
-        then running ``tp1.inverse_transform`` with ``X=`` the output of ``f``, ``y=X``,
+        then running ``tN.inverse_transform`` with ``X=`` the output of ``f``, ``y=X``,
         then ``t2.inverse_transform`` on ``X=`` the output of ``t1.inverse_transform``,
-        etc, sequentially, with ``t[i]`` receiving the output of ``t[i-1]`` as ``X``,
-        then running ``tp1.fit_transform`` with ``X=`` the output of ``t[N]s``, ``y=X``,
-        then ``tp2.fit_transform`` on ``X=`` the output of ``tp1.fit_transform``, etc,
-        sequentially, with ``tp[i]`` receiving the output of ``tp[i-1]``,
+        etc, sequentially, with ``t[i-1]`` receiving the output of ``t[i]`` as ``X``,
+        then running ``tp1.transform`` with ``X=`` the output of ``t1``, ``y=X``,
+        then ``tp2.transform`` on ``X=`` the output of ``tp1.transform``, etc,
+        sequentially, with ``tp[i]`` receiving the output of ``tp[i-1]``.
+        The output of ``tpM`` is returned, or of ``t1.inverse_transform`` if ``M=0``.
 
     ``predict_interval(X, fh)``, ``predict_quantiles(X, fh)`` - as ``predict(X, fh)``,
         with ``predict_interval`` or ``predict_quantiles`` substituted for ``predict``
@@ -795,7 +809,7 @@ class TransformedTargetForecaster(_Pipeline):
     forecaster_ : estimator, reference to the unique forecaster in ``steps_``
     transformers_pre_ : list of tuples (str, transformer) of sktime transformers
         reference to pairs in ``steps_`` that precede ``forecaster_``
-    transformers_ost_ : list of tuples (str, transformer) of sktime transformers
+    transformers_post_ : list of tuples (str, transformer) of sktime transformers
         reference to pairs in ``steps_`` that succeed ``forecaster_``
 
     Examples
@@ -1629,7 +1643,10 @@ class ForecastX(BaseForecaster):
         self : an instance of self
         """
         if self.behaviour == "update" and X is not None:
-            self.forecaster_X_.update(y=self._get_Xcols(X), update_params=update_params)
+            X_for_fcX = self._get_X_for_fcX(X)
+            self.forecaster_X_.update(
+                y=self._get_Xcols(X), X=X_for_fcX, update_params=update_params
+            )
         self.forecaster_y_.update(y=y, X=X, update_params=update_params)
 
         return self
