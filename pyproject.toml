@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.32.4"
+version = "0.33.0"
 description = "A unified framework for machine learning with time series"
 readme = "README.md"
 keywords = [
@@ -56,7 +56,7 @@ dependencies = [
   "numpy<2.1,>=1.21",  # required for framework layer and base class logic
   "packaging",  # for estimator specific dependency parsing
   "pandas<2.3.0,>=1.1",  # pandas is the main in-memory data container
-  "scikit-base>=0.6.1,<0.9.0",  # base module for sklearn compatible base API
+  "scikit-base>=0.6.1,<0.10.0",  # base module for sklearn compatible base API
   "scikit-learn>=0.24,<1.6.0",  # required for estimators and framework layer
   "scipy<2.0.0,>=1.2",  # required for estimators and framework layer
 ]
@@ -81,7 +81,7 @@ all_extras = [
   'autots<0.7,>=0.6.1',
   "cloudpickle",
   "dash!=2.9.0",
-  "dask<2024.8.2; extra == 'dataframe'",
+  "dask<2024.8.3; extra == 'dataframe'",
   "dtaidistance<2.4",
   "dtw-python",
   'esig==0.9.7; python_version < "3.10"',
@@ -126,7 +126,7 @@ all_extras_pandas2 = [
   'autots<0.7,>=0.6.1',
   "cloudpickle",
   "dash!=2.9.0",
-  "dask<2024.8.2; extra == 'dataframe'",
+  "dask<2024.8.3; extra == 'dataframe'",
   "dtaidistance<2.4",
   "dtw-python",
   'esig==0.9.7; python_version < "3.10"',
@@ -218,8 +218,8 @@ regression = [
 transformations = [
   'esig<0.10,>=0.9.7; python_version < "3.11"',
   "filterpy<1.5,>=1.4.5",
-  "holidays>=0.29,<0.56",
-  "mne>=1.5,<1.8",
+  "holidays>=0.29,<0.57",
+  "mne>=1.5,<1.9",
   'numba<0.61,>=0.53',
   "pycatch22>=0.4,<0.4.6",
   "statsmodels<0.15,>=0.12.1",
@@ -289,8 +289,8 @@ dl = [
   'tensorflow<2.17,>=2; python_version < "3.12"',
   'torch; python_version < "3.12"',
   'transformers[torch]<4.41.0; python_version < "3.12"',
-  'pykan<0.2.2,>=0.2; python_version > "3.9.7"',
-  'pytorch-forecasting>=1.0.0; python_version < "3.11"',
+  'pykan>=0.2,<0.2.7; python_version > "3.9.7"',
+  'pytorch-forecasting>=1.0.0,<1.2.0'
   'lightning>=2.0; python_version < "3.12"',
   'gluonts>=0.14.3; python_version < "3.12"',
   'einops>0.7.0; python_version < "3.12"',
@@ -307,7 +307,7 @@ mlflow_tests = [
   "moto",
 ]
 numpy1 = [
-  "numpy<2.0.0",
+  "numpy<3.0.0",
 ]
 pandas1 = [
   "pandas<2.0.0",
