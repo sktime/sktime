@@ -2,6 +2,8 @@
 
 import multiprocessing
 from concurrent.futures import ProcessPoolExecutor
+from copy import deepcopy
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -12,38 +14,56 @@ from sklearn.preprocessing import StandardScaler
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.utils.datetime import _get_freq
-from sktime.utils.seasonality import autocorrelation_seasonality_test
 from sktime.utils.validation.series import check_series
 
 
 class MAPAForecaster(BaseForecaster):
     """MAPA (Multiple Aggregation Prediction Algorithm) Forecaster."""
 
-    def __init__(self, comb="w.mean", hybrid=True, conf_lvl=None, sp=None):
+    def __init__(
+        self,
+        comb: str = "w.mean",
+        hybrid: bool = True,
+        conf_lvl: Optional[float] = None,
+        sp: Optional[int] = None,
+    ):
         super().__init__()
         self.comb = comb
         self.hybrid = hybrid
         self.conf_lvl = conf_lvl
         self.sp = sp
-        self.mapafit = None
-        self.y = None
+        self._y = None
+        self._mapafit = None
+        self._is_fitted = False
+
+    @property
+    def y_(self):
+        """Returns _y."""
+        return self._y
+
+    @property
+    def mapafit_(self):
+        """Returns _mapafit."""
+        return self._mapafit
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data."""
-        self.y = check_series(y)
-        self.mapafit = self._prepare_mapafit(self.y)
+        self._y = check_series(y).copy()
+        self._mapafit = self._prepare_mapafit(self._y)
+        self._is_fitted = True
         return self
 
     def _predict(self, fh, X=None):
         """Make forecasts for the given forecast horizon."""
-        if self.mapafit is None:
-            raise ValueError(
-                "Forecaster has not been fitted yet. Call 'fit' before 'predict'."
-            )
+        self._check_is_fitted()
+
+        # Create deep copies of internal state to prevent modifications
+        y_copy = self._y.copy()
+        mapafit_copy = deepcopy(self._mapafit)
 
         result = self.mapafor(
-            self.y,
-            self.mapafit,
+            y_copy,
+            mapafit_copy,
             fh=len(fh),
             comb=self.comb,
             hybrid=self.hybrid,
@@ -52,34 +72,50 @@ class MAPAForecaster(BaseForecaster):
         )
         return pd.Series(result["outfor"], index=fh)
 
-    def _prepare_mapafit(self, y):
-        if self.sp is None:
-            # Try to infer seasonal period from the data
-            if isinstance(y.index, pd.DatetimeIndex):
-                freq = y.index.freq
-                if freq is not None:
-                    if freq.name == "M":
-                        self.sp = 12
-                    elif freq.name == "D":
-                        self.sp = 7
-                    elif freq.name == "H":
-                        self.sp = 24
-                    else:
-                        self.sp = 1  # Default to 1 if we can't infer
-                else:
-                    self.sp = 1
-            else:
-                self.sp = 1
+    def _update(self, y, X=None, update_params=True):
+        """Update the forecaster with new data."""
+        if not self._is_fitted:
+            return self._fit(y, X)
 
-        ppy = autocorrelation_seasonality_test(y, sp=self.sp)
+        self._y = pd.concat([self._y, check_series(y)])
+
+        if update_params:
+            self._mapafit = self._prepare_mapafit(self._y)
+
+        return self
+
+    def _prepare_mapafit(self, y):
+        """Prepare MAPA fit data."""
+        sp = self.sp if self.sp is not None else self._infer_seasonal_period(y)
+
         return pd.DataFrame(
             {
                 "use": [True, True],
-                "AL": [1, ppy],
-                "original.ppy": [ppy, ppy],
-                "etstype": ["ets", "ets"],
+                "AL": [1, sp],
+                "original.ppy": [sp, sp],
+                "etstype": ["ANN", "ANN"],
             }
         )
+
+    def _infer_seasonal_period(self, y):
+        """Infer seasonal period from the data."""
+        if isinstance(y.index, pd.DatetimeIndex):
+            freq = y.index.freq
+            if freq is not None:
+                if freq.name == "M":
+                    return 12
+                elif freq.name == "D":
+                    return 7
+                elif freq.name == "H":
+                    return 24
+        return 1
+
+    def _check_is_fitted(self):
+        """Check if the forecaster is fitted."""
+        if not self._is_fitted:
+            raise ValueError(
+                "Forecaster is not fitted yet. Call 'fit' before prediction."
+            )
 
     def tsaggr(self, y, fout, fmean=True, outplot=True):
         """Perform temporal aggregation on time series data."""
@@ -307,35 +343,6 @@ class MAPAForecaster(BaseForecaster):
 
         return FCs_temp
 
-    def _prepare_mapafit(self, y):
-        if self.sp is None:
-            # Try to infer seasonal period from the data
-            if isinstance(y.index, pd.DatetimeIndex):
-                freq = y.index.freq
-                if freq is not None:
-                    if freq.name == "M":
-                        self.sp = 12
-                    elif freq.name == "D":
-                        self.sp = 7
-                    elif freq.name == "H":
-                        self.sp = 24
-                    else:
-                        self.sp = 1  # Default to 1 if we can't infer
-                else:
-                    self.sp = 1
-            else:
-                self.sp = 1
-
-        ppy = self.sp
-        return pd.DataFrame(
-            {
-                "use": [True, True],
-                "AL": [1, ppy],
-                "original.ppy": [ppy, ppy],
-                "etstype": ["ANN", "ANN"],  # Changed from 'ets' to 'ANN'
-            }
-        )
-
     def mapaprcomp(self, x, pr_comp):
         """Preprocess xreg with principal component analysis.
 
@@ -354,13 +361,16 @@ class MAPAForecaster(BaseForecaster):
         return x_out
 
     def mapacalc(
-        self, y, mapafit, fh=0, comb="w.mean", outplot=0, hybrid=True, xreg=None
-    ):
-        """Calculate MAPA forecasts.
-
-        This function computes forecasts using the Multiple Aggregation Prediction
-        Algorithm (MAPA) approach.
-        """
+        self,
+        y: pd.Series,
+        mapafit: pd.DataFrame,
+        fh: int = 0,
+        comb: str = "w.mean",
+        outplot: int = 0,
+        hybrid: bool = True,
+        xreg: Optional[pd.DataFrame] = None,
+    ) -> dict[str, np.ndarray]:
+        """Calculate MAPA forecasts."""
         ALs = mapafit[mapafit["use"]]["AL"].values
         minimumAL = min(ALs)
         maximumAL = max(ALs)
@@ -373,15 +383,7 @@ class MAPAForecaster(BaseForecaster):
         observations = len(y)
 
         if xreg is not None:
-            if ets_type != "es":
-                raise ValueError(
-                    'Only mapafit estimated with type=="es" accepts xreg inputs.'
-                )
-            xreg = np.array(xreg).reshape(-1, 1) if xreg.ndim == 1 else xreg
-            if xreg.shape[0] < (fh + observations):
-                raise ValueError(
-                    "Number of observations in xreg must be >= len(y + fh)."
-                )
+            self._validate_xreg(xreg, ets_type, fh, observations)
 
         FCs = np.zeros((maximumAL - minimumAL + 1, 5, fh))
 
@@ -392,72 +394,61 @@ class MAPAForecaster(BaseForecaster):
 
             yA = np.array(y[-q * AL :]).reshape(-1, AL).mean(axis=1)
 
-            xregA = None
-            if xreg is not None:
-                r = observations - q * AL
-                p = xreg.shape[1]
-                xn = xreg.shape[0]
-                xregA = np.zeros((q + fhA, p))
-                for k in range(p):
-                    temp = xreg[r : min((q + fhA) * AL, xn), k]
-                    m = int(np.ceil(len(temp) / AL) * AL - len(temp))
-                    temp = np.pad(temp, (0, m), mode="constant", constant_values=np.nan)
-                    xregA[:, k] = np.nanmean(temp.reshape(-1, AL), axis=1)
+            xregA = self._prepare_xreg(xreg, AL, q, fhA) if xreg is not None else None
 
-                idx_comp = mapafit.columns.get_loc("pr.comp")
-                idx_x = mapafit.columns.get_loc("initial")
-                if (
-                    mapafit.iloc[ALi, idx_comp]["pr.comp"] > 0
-                    and len(mapafit.iloc[ALi, idx_comp]["mean"]) != p
-                ) or (
-                    mapafit.iloc[ALi, idx_comp]["pr.comp"] == 0
-                    and len(mapafit.iloc[ALi, idx_x]["xreg"]) != p
-                ):
-                    raise ValueError(
-                        "No of xreg input vars doesn't match mapafit specification."
-                    )
-
-                xregA = self.mapaprcomp(xregA, mapafit.iloc[ALi, idx_comp])
-
-            if ets_type == "ets":
-                trend = (
-                    "add"
-                    if mapafit.iloc[ALi]["trend"] == "A"
-                    else ("mul" if mapafit.iloc[ALi]["trend"] == "M" else None)
-                )
-                seasonal = (
-                    "add"
-                    if mapafit.iloc[ALi]["seasonal"] == "A"
-                    else ("mul" if mapafit.iloc[ALi]["seasonal"] == "M" else None)
-                )
-
-                AL_fit = ExponentialSmoothing(
-                    trend=trend,
-                    seasonal=seasonal,
-                    sp=ppyA,
-                    damped_trend=mapafit.iloc[ALi]["damped"],
-                )
-                ats_fit = AL_fit.fit(pd.Series(yA))
-                xregF = None
-            elif ets_type == "es":
-                AL_fit = ExponentialSmoothing(trend="add", seasonal="add", sp=ppyA)
-                ats_fit = AL_fit.fit(pd.Series(yA))
-                xregF = xregA[-fhA:] if xregA is not None else None
+            AL_fit = self._fit_exponential_smoothing(yA, ppyA, ets_type)
+            xregF = xregA[-fhA:] if xregA is not None else None
 
             FCs_temp = self.statetranslate(
-                ats_fit, AL, fh, q, ppyA, 1, ets_type, xreg=xregF
+                AL_fit, AL, fh, q, ppyA, 1, ets_type, xreg=xregF
             )
             FCs[ALi, :, :] = FCs_temp
 
         combres = self.mapacomb(minimumAL, maximumAL, ppy, FCs, comb)
         forecasts = combres["forecasts"]
-        # perm_levels = combres["perm_levels"]
-        # perm_seas = combres["perm_seas"]
 
         if hybrid:
             forecasts = (FCs[0, 0, :] + forecasts) / 2
 
         return {"forecast": forecasts, "components": FCs}
+
+    def _validate_xreg(
+        self, xreg: pd.DataFrame, ets_type: str, fh: int, observations: int
+    ):
+        """Validate external regressor data."""
+        if ets_type != "es":
+            raise ValueError(
+                'Only mapafit estimated with type=="es" accepts xreg inputs.'
+            )
+        if xreg.shape[0] < (fh + observations):
+            raise ValueError("Number of observations in xreg must be >= len(y + fh).")
+
+    def _prepare_xreg(
+        self, xreg: pd.DataFrame, AL: int, q: int, fhA: int
+    ) -> np.ndarray:
+        """Prepare external regressor data for given aggregation level."""
+        r = len(xreg) - q * AL
+        p = xreg.shape[1]
+        xregA = np.zeros((q + fhA, p))
+        for k in range(p):
+            temp = xreg.iloc[r : min((q + fhA) * AL, len(xreg)), k].values
+            m = int(np.ceil(len(temp) / AL) * AL - len(temp))
+            temp = np.pad(temp, (0, m), mode="constant", constant_values=np.nan)
+            xregA[:, k] = np.nanmean(temp.reshape(-1, AL), axis=1)
+
+        return xregA
+
+    def _fit_exponential_smoothing(
+        self, yA: np.ndarray, ppyA: int, ets_type: str
+    ) -> ExponentialSmoothing:
+        """Fit Exponential Smoothing model."""
+        if ets_type == "ets":
+            AL_fit = ExponentialSmoothing(trend="add", seasonal="add", sp=ppyA)
+        elif ets_type == "es":
+            AL_fit = ExponentialSmoothing(trend="add", seasonal="add", sp=ppyA)
+        else:
+            raise ValueError(f"Unknown ets_type: {ets_type}")
+        return AL_fit.fit(pd.Series(yA))
 
     def _convert_ets_type(self, ets_char):
         if ets_char == "N":
