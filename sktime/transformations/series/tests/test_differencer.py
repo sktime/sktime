@@ -264,22 +264,19 @@ def test_dropna_pipeline():
     y, X = load_longley()
 
     # Create separate transformers for y and X
-    transformer = Differencer(na_handling='drop_na')
+    transformer = Differencer(na_handling="drop_na")
 
     # Define the TransformedTargetForecaster for y
     pipe_y = TransformedTargetForecaster(
         steps=[
             ("transform_y", transformer),
-            ("forecaster", YfromX(estimator=ElasticNetCV(max_iter=50000)))
+            ("forecaster", YfromX(estimator=ElasticNetCV(max_iter=50000))),
         ]
     )
 
     # Create the ForecastingPipeline for y and X
     pipe_yX = ForecastingPipeline(
-        steps=[
-            ("transform_X", transformer),
-            ("pipe_y", pipe_y)
-        ]
+        steps=[("transform_X", transformer), ("pipe_y", pipe_y)]
     )
 
     # Fit the pipeline to your data
