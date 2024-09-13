@@ -12,6 +12,7 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.ets import AutoETS
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.utils.datetime import _get_freq
 from sktime.utils.validation.series import check_series
@@ -26,12 +27,14 @@ class MAPAForecaster(BaseForecaster):
         hybrid: bool = True,
         conf_lvl: Optional[float] = None,
         sp: Optional[int] = None,
+        etstype: str = "ets",  # Add this line
     ):
         super().__init__()
         self.comb = comb
         self.hybrid = hybrid
         self.conf_lvl = conf_lvl
         self.sp = sp
+        self.etstype = etstype  # Add this line
         self._y = None
         self._mapafit = None
         self._is_fitted = False
@@ -50,6 +53,8 @@ class MAPAForecaster(BaseForecaster):
         """Fit forecaster to training data."""
         self._y = check_series(y).copy()
         self._mapafit = self._prepare_mapafit(self._y)
+        if X is not None:
+            self._validate_xreg(X, len(fh) if fh is not None else 0, len(self._y))
         self._is_fitted = True
         return self
 
@@ -70,7 +75,11 @@ class MAPAForecaster(BaseForecaster):
             conf_lvl=self.conf_lvl,
             xreg=X,
         )
-        return pd.Series(result["outfor"], index=fh)
+
+        if len(result["outfor"]) == 0:
+            return pd.Series(index=fh)  # Return an empty Series with the correct index
+        else:
+            return pd.Series(result["outfor"], index=fh)
 
     def _update(self, y, X=None, update_params=True):
         """Update the forecaster with new data."""
@@ -85,7 +94,7 @@ class MAPAForecaster(BaseForecaster):
         return self
 
     def _prepare_mapafit(self, y):
-        """Prepare MAPA fit data."""
+        """Prepare MAPA fit data using AutoETS."""
         sp = self.sp if self.sp is not None else self._infer_seasonal_period(y)
 
         return pd.DataFrame(
@@ -93,9 +102,14 @@ class MAPAForecaster(BaseForecaster):
                 "use": [True, True],
                 "AL": [1, sp],
                 "original.ppy": [sp, sp],
-                "etstype": ["ANN", "ANN"],
+                "etstype": [self.etstype, self.etstype],
             }
         )
+
+    def _fit_auto_ets(self, yA: pd.Series, ppyA: int) -> AutoETS:
+        """Fit AutoETS model."""
+        auto_ets = AutoETS(sp=ppyA, auto=True)
+        return auto_ets.fit(yA)
 
     def _infer_seasonal_period(self, y):
         """Infer seasonal period from the data."""
@@ -187,157 +201,39 @@ class MAPAForecaster(BaseForecaster):
         plt.tight_layout()
         plt.show()
 
-    def statetranslate(self, fit, AL, fh, q, ppyA, fittype, ets_type, xreg=None):
-        """Translate the state of a fitted model into forecast components."""
+    def statetranslate(self, fit, AL, fh, q, ppyA, fittype, xreg=None):
+        """Translate the state of a fitted AutoETS model into forecast components."""
         FCs_temp = np.zeros((5, fh))
         fhA = int(np.ceil(fh / AL))
 
-        if ets_type == "ets":
-            param = fit.par
-            phi = param.get("phi", None)
+        # Extract components from the fitted AutoETS model
+        level = fit._fitted_forecaster.level
+        trend = fit._fitted_forecaster.trend
+        season = fit._fitted_forecaster.seasonal
 
-            # Estimates for the Level Component
-            FCs_temp[1, :] = np.repeat(np.repeat(fit.states[q, 0], fhA), AL)[:fh]
+        # Estimates for the Level Component
+        FCs_temp[1, :] = np.repeat(np.repeat(level[-1], fhA), AL)[:fh]
 
-            # Estimates for the Trend Component
-            if fit.components[1] == "N":  # no trend
-                FCs_temp[2, :] = 0
-                b = 0
-            elif fit.components[1] == "A":  # additive trend
-                if fit.components[3] == "FALSE":
-                    FCs_temp[2, :] = np.repeat(
-                        fit.states[q, 1] * np.arange(1, fhA + 1), AL
-                    )[:fh]
-                else:  # additive damped trend
-                    FCs_temp[2, :] = np.repeat(
-                        np.cumsum(
-                            (fit.states[q, 1] / phi) * phi ** np.arange(1, fhA + 1)
-                        ),
-                        AL,
-                    )[:fh]
-                b = 1
-            else:  # multiplicative trend
-                if fit.components[3] == "FALSE":
-                    FCs_temp[2, :] = (
-                        np.repeat((fit.states[q, 1] ** np.arange(1, fhA + 1) - 1), AL)[
-                            :fh
-                        ]
-                        * FCs_temp[1, :]
-                    )
-                else:  # multiplicative damped trend
-                    FCs_temp[2, :] = (
-                        np.repeat(
-                            (
-                                (fit.states[q, 1] ** (1 / phi))
-                                ** np.cumsum(phi ** np.arange(1, fhA + 1))
-                                - 1
-                            ),
-                            AL,
-                        )[:fh]
-                        * FCs_temp[1, :]
-                    )
-                b = 1
+        # Estimates for the Trend Component
+        if trend is not None:
+            FCs_temp[2, :] = np.repeat(trend[-1] * np.arange(1, fhA + 1), AL)[:fh]
 
-            # Estimates for the Seasonal Component
-            if fit.components[2] == "N":  # no seasonality
-                FCs_temp[3, :] = 0
-            elif fit.components[2] == "A":  # additive seasonality
-                FCs_temp[3, :] = np.repeat(
-                    np.tile(fit.states[q, (1 + b) : (ppyA + b)][::-1], fhA), AL
-                )[:fh]
-            else:  # multiplicative seasonality
-                FCs_temp[3, :] = (
-                    np.repeat(
-                        np.tile(fit.states[q, (1 + b) : (ppyA + b)][::-1], fhA), AL
-                    )[:fh]
-                    - 1
-                ) * (FCs_temp[1, :] + FCs_temp[2, :])
+        # Estimates for the Seasonal Component
+        if season is not None:
+            FCs_temp[3, :] = np.repeat(np.tile(season[-ppyA:], fhA), AL)[:fh]
 
-        elif ets_type == "es":
-            init_obs = max(1, len(fit.initial["seasonal"]))
-            phi = fit.phi
-
-            components = fit.model_type()
-            if len(components) == 4:
-                components = [
-                    components[0],
-                    components[1] + components[2],
-                    components[3],
-                ]
-
-            # Estimates for the Level Component
-            FCs_temp[1, :] = np.repeat(
-                np.repeat(fit.states[q + init_obs - 1, 0], fhA), AL
-            )[:fh]
-
-            # Estimates for the Trend Component
-            if components[1] == "A":  # additive trend
-                FCs_temp[2, :] = np.repeat(
-                    fit.states[q + init_obs - 1, 1] * np.arange(1, fhA + 1), AL
-                )[:fh]
-            elif components[1] == "Ad":  # additive damped trend
-                FCs_temp[2, :] = np.repeat(
-                    np.cumsum(
-                        (fit.states[q + init_obs - 1, 1] / phi)
-                        * phi ** np.arange(1, fhA + 1)
-                    ),
-                    AL,
-                )[:fh]
-            elif components[1] == "M":  # multiplicative trend
-                FCs_temp[2, :] = (
-                    np.repeat(
-                        (fit.states[q + init_obs - 1, 1] ** np.arange(1, fhA + 1) - 1),
-                        AL,
-                    )[:fh]
-                    * FCs_temp[1, :]
-                )
-            elif components[1] == "Md":  # multiplicative damped trend
-                FCs_temp[2, :] = (
-                    np.repeat(
-                        (
-                            (fit.states[q + init_obs - 1, 1] ** (1 / phi))
-                            ** np.cumsum(phi ** np.arange(1, fhA + 1))
-                            - 1
-                        ),
-                        AL,
-                    )[:fh]
-                    * FCs_temp[1, :]
-                )
-            else:  # No trend
-                FCs_temp[2, :] = 0
-
-            # Estimates for the Seasonal Component
-            sc = fit.states.columns.get_loc("seasonal")
-            if components[2] == "N":  # no seasonality
-                FCs_temp[3, :] = 0
-            elif components[2] == "A":  # additive seasonality
-                FCs_temp[3, :] = np.repeat(
-                    np.tile(
-                        fit.states[(q + init_obs - ppyA) : (q + init_obs), sc], fhA
-                    ),
-                    AL,
-                )[:fh]
-            else:  # multiplicative seasonality
-                FCs_temp[3, :] = (
-                    np.repeat(
-                        np.tile(
-                            fit.states[(q + init_obs - ppyA) : (q + init_obs), sc], fhA
-                        ),
-                        AL,
-                    )[:fh]
-                    - 1
-                ) * (FCs_temp[1, :] + FCs_temp[2, :])
-
-        # Estimate for the xreg
+        # Estimate for the xreg (if provided)
         if xreg is not None:
             if xreg.ndim > 1:
                 FCs_temp[4, :] = np.repeat(
-                    np.sum(xreg * np.tile(fit.initial["xreg"], (fhA, 1)), axis=1), AL
+                    np.sum(xreg * fit._fitted_forecaster.params["beta"], axis=1), AL
                 )[:fh]
             else:
-                FCs_temp[4, :] = np.repeat(xreg * fit.initial["xreg"], AL)[:fh]
+                FCs_temp[4, :] = np.repeat(
+                    xreg * fit._fitted_forecaster.params["beta"], AL
+                )[:fh]
 
-        # Recreate ETS forecasts if fittype is 1
+        # Recreate forecasts if fittype is 1
         if fittype == 1:
             FCs_temp[0, :] = np.sum(FCs_temp[1:], axis=0)
 
@@ -370,12 +266,12 @@ class MAPAForecaster(BaseForecaster):
         hybrid: bool = True,
         xreg: Optional[pd.DataFrame] = None,
     ) -> dict[str, np.ndarray]:
-        """Calculate MAPA forecasts."""
+        """Calculate MAPA forecasts using AutoETS."""
         ALs = mapafit[mapafit["use"]]["AL"].values
-        minimumAL = min(ALs)
+        # minimumAL = min(ALs)
         maximumAL = max(ALs)
         ppy = mapafit["original.ppy"].iloc[0]
-        ets_type = mapafit["etstype"].iloc[0]
+        # ets_type = mapafit["etstype"].iloc[0]
 
         if fh == 0:
             fh = ppy
@@ -383,28 +279,26 @@ class MAPAForecaster(BaseForecaster):
         observations = len(y)
 
         if xreg is not None:
-            self._validate_xreg(xreg, ets_type, fh, observations)
+            self._validate_xreg(xreg, fh, observations)
 
-        FCs = np.zeros((maximumAL - minimumAL + 1, 5, fh))
+        FCs = np.zeros((maximumAL - min(ALs) + 1, 5, fh))
 
-        for ALi, AL in enumerate(range(minimumAL, maximumAL + 1)):
+        for ALi, AL in enumerate(range(min(ALs), maximumAL + 1)):
             fhA = int(np.ceil(fh / AL))
             q = observations // AL
             ppyA = ppy // AL if ppy % AL != 0 else 1
 
-            yA = np.array(y[-q * AL :]).reshape(-1, AL).mean(axis=1)
+            yA = pd.Series(y[-q * AL :].values.reshape(-1, AL).mean(axis=1))
 
             xregA = self._prepare_xreg(xreg, AL, q, fhA) if xreg is not None else None
 
-            AL_fit = self._fit_exponential_smoothing(yA, ppyA, ets_type)
+            AL_fit = self._fit_auto_ets(yA, ppyA)
             xregF = xregA[-fhA:] if xregA is not None else None
 
-            FCs_temp = self.statetranslate(
-                AL_fit, AL, fh, q, ppyA, 1, ets_type, xreg=xregF
-            )
+            FCs_temp = self.statetranslate(AL_fit, AL, fh, q, ppyA, 1, xreg=xregF)
             FCs[ALi, :, :] = FCs_temp
 
-        combres = self.mapacomb(minimumAL, maximumAL, ppy, FCs, comb)
+        combres = self.mapacomb(min(ALs), maximumAL, ppy, FCs, comb)
         forecasts = combres["forecasts"]
 
         if hybrid:
@@ -412,14 +306,8 @@ class MAPAForecaster(BaseForecaster):
 
         return {"forecast": forecasts, "components": FCs}
 
-    def _validate_xreg(
-        self, xreg: pd.DataFrame, ets_type: str, fh: int, observations: int
-    ):
+    def _validate_xreg(self, xreg: pd.DataFrame, fh: int, observations: int):
         """Validate external regressor data."""
-        if ets_type != "es":
-            raise ValueError(
-                'Only mapafit estimated with type=="es" accepts xreg inputs.'
-            )
         if xreg.shape[0] < (fh + observations):
             raise ValueError("Number of observations in xreg must be >= len(y + fh).")
 
@@ -551,7 +439,7 @@ class MAPAForecaster(BaseForecaster):
                 y, mapafit, fh=fh, comb=comb, outplot=0, hybrid=hybrid, xreg=xreg
             )["forecast"]
         else:
-            outfor = None
+            outfor = np.array([])
 
         if ifh_c == 1:
             resid = y - infor[0, :]
@@ -864,23 +752,19 @@ class MAPAForecaster(BaseForecaster):
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator.
-
-        Parameters
-        ----------
-        parameter_set : str, default="default"
-            Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
-
-        Returns
-        -------
-        params : list of dict or list of tuple
-            Parameters to create testing instances of the class.
-            Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            Each tuple are parameters to construct a test instance, i.e.,
-            `MyClass(*params)` or `MyClass(*params[i])` creates a valid test instance.
-        """
-        params1 = {"comb": "w.mean", "hybrid": True, "conf_lvl": None, "sp": 12}
-        params2 = {"comb": "median", "hybrid": False, "conf_lvl": 0.95, "sp": 7}
+        """Return testing parameter settings for the estimator."""
+        params1 = {
+            "comb": "w.mean",
+            "hybrid": True,
+            "conf_lvl": None,
+            "sp": 12,
+            "etstype": "ets",
+        }
+        params2 = {
+            "comb": "median",
+            "hybrid": False,
+            "conf_lvl": 0.95,
+            "sp": 7,
+            "etstype": "es",
+        }
         return [params1, params2]
