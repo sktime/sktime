@@ -11,7 +11,12 @@ from inspect import signature
 import numpy as np
 import pandas as pd
 import pytest
-import torch
+
+try:
+    import torch
+    torch.set_num_threads(1)
+except:
+    pass
 
 from sktime.datatypes import check_is_mtype
 from sktime.datatypes._utilities import get_cutoff
@@ -48,7 +53,6 @@ from sktime.utils._testing.forecasting import (
 from sktime.utils._testing.series import _make_series
 from sktime.utils.validation.forecasting import check_fh
 
-torch.set_num_threads(1)
 
 # get all forecasters
 FH0 = 1
