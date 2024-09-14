@@ -59,6 +59,7 @@ dependencies = [
   "scikit-base>=0.6.1,<0.10.0",  # base module for sklearn compatible base API
   "scikit-learn>=0.24,<1.6.0",  # required for estimators and framework layer
   "scipy<2.0.0,>=1.2",  # required for estimators and framework layer
+  "orjson",
 ]
 
 [project.optional-dependencies]
