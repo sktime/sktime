@@ -6,6 +6,7 @@ adapted from scikit-learn's estimator_checks
 
 __author__ = ["mloning", "fkiraly", "achieveordie"]
 import faulthandler
+
 faulthandler.enable()
 import numbers
 import os
