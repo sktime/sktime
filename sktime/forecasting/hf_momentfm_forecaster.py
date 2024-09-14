@@ -15,8 +15,6 @@ if _check_soft_dependencies(["torch", "accelerate"], severity="none"):
     from torch.nn import MSELoss
     from torch.utils.data import Dataset
 
-    accelerator = Accelerator(mixed_precision="fp16")
-
 else:
 
     class Dataset:
@@ -258,6 +256,13 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         )
         # check availability of user specified device
         self._device = _check_device(self._device)
+
+        # initialize accelerator
+        if self._device == "cpu":
+            accelerator = Accelerator(mixed_precision="fp16", cpu=True)
+        else:
+            accelerator = Accelerator(mixed_precision="fp16")
+
         assert self._device == str(accelerator.device)
         cur_epoch = 0
         max_epoch = self.epochs
@@ -289,12 +294,6 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         y_train, y_test = temporal_train_test_split(
             y, train_size=1 - self.train_val_split, test_size=self.train_val_split
         )
-        if y_train.shape[0] < 512:
-            warnings.warn(
-                "Warning: Minimum required samples for training "
-                "is 512, having less could cause inaccuracy during training"
-                ". Using a larger dataset is recommended"
-            )
 
         train_dataset = MomentPytorchDataset(
             y=y_train,
@@ -348,6 +347,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         while cur_epoch < max_epoch:
             cur_epoch = _run_epoch(
                 cur_epoch,
+                accelerator,
                 criterion,
                 optimizer,
                 scheduler,
@@ -356,6 +356,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
                 train_dataloader,
                 val_dataloader,
             )
+        self.model = self._model
         return self
 
     def _predict(self, fh=None, X=None, y=None):
@@ -384,7 +385,6 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         )  # shape of our input to predict
         # raise warning if sequence length of y is greater than the sequence
         # length used to fit the model
-        print(sequence_length)
         if sequence_length > self._seq_len:
             warnings.warn(
                 f"Sequence length of {sequence_length} was found which is greater "
@@ -531,6 +531,7 @@ def _create_mask(ones_length, zeros_length=0):
 
 def _run_epoch(
     cur_epoch,
+    accelerator,
     criterion,
     optimizer,
     scheduler,
