@@ -150,7 +150,6 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
     @pytest.fixture(autouse=True)
     def apply_collection(self):
-        print("Collecting garbage")
         yield
         import gc
 
