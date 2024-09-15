@@ -2609,6 +2609,10 @@ class _BaseGlobalForecaster(BaseForecaster):
 
     _tags = {"object_type": ["global_forecaster", "forecaster"]}
 
+    def __init__(self):
+        super().__init__()
+        self.dl_model = None
+
     def predict(self, fh=None, X=None, y=None):
         """Forecast time series at future horizon.
 
@@ -2747,8 +2751,6 @@ class _BaseGlobalForecaster(BaseForecaster):
         model : guaranteed to be a nn.Module or PretrainedModel
             For a model to be PeFT method eligible, we require
             a huggingface PreTrained model or a torch Custom Model.
-            More information can be found via:
-            https://huggingface.co/docs/peft/v0.12.0/en/index
 
         Returns
         -------

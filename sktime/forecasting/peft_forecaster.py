@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-if _check_soft_dependencies(["torch", "peft", "transformers"], severity="none"):
+if _check_soft_dependencies("torch", severity="none"):
     from torch.utils.data import Dataset
 else:
 
@@ -14,8 +14,22 @@ else:
 
 if _check_soft_dependencies(["peft", "transformers"], severity="none"):
     # from transformers import AutoConfig, Trainer, TrainingArguments
-    # from peft import get_peft_model
-    pass
+    from peft import PeftType, get_peft_model
+    from transformers import PretrainedModel
+
+    peft_configs = [config.value for config in list(PeftType)]
+    ACCEPTED_PEFT_CONFIGS = [
+        peft_type
+        for peft_type in peft_configs
+        if peft_type
+        not in [
+            "P_TUNING",
+            "PREFIX_TUNING",
+            "MULTITASK_PROMPT_TUNING",
+            "ADAPTION_PROMPT",
+        ]
+    ]
+
 from sktime.forecasting.base import _BaseGlobalForecaster  # , ForecastingHorizon
 
 __author__ = ["julian-fong"]
@@ -27,7 +41,7 @@ class PeftForecaster(_BaseGlobalForecaster):
     def __init__(
         self,
         model,
-        peft_config,
+        peft_config=None,
         validation_split=0.2,
         config=None,
         training_args=None,
@@ -38,10 +52,11 @@ class PeftForecaster(_BaseGlobalForecaster):
     ):
         pass
 
-    def _fit():
-        pass
+    def _fit(self):
+        peft_model = get_peft_model(self.model, self.config)
+        return peft_model
 
-    def _predict():
+    def _predict(self):
         pass
 
 
@@ -61,6 +76,24 @@ def _frame2numpy(data):
         (-1, length, len(data.columns))
     )
     return arr
+
+
+def _check_model(model):
+    """Check if the passed in model is valid for Peft Methods."""
+    import torch.nn as nn
+
+    valid_model = False
+    if isinstance(model, nn.Module) or isinstance(model, PretrainedModel):
+        valid_model = True
+    else:
+        if isinstance(model, _BaseGlobalForecaster) and model.get_dl_model():
+            valid_model = True
+
+    return valid_model
+
+
+def _check_peft_config(config):
+    """Check if the passed config is valid for the Peft Forecaster."""
 
 
 class PyTorchDataset(Dataset):
