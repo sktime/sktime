@@ -12,6 +12,13 @@ import numpy as np
 import pandas as pd
 import pytest
 
+try:
+    import torch
+
+    torch.set_num_threads(1)
+except ImportError:
+    print("No torch installed")
+
 from sktime.datatypes import check_is_mtype
 from sktime.datatypes._utilities import get_cutoff
 from sktime.exceptions import NotFittedError
