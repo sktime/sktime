@@ -101,7 +101,10 @@ class ClusterSegmenter(BaseSeriesAnnotator):
         X_flat = X.values.reshape(-1, 1)
         labels = self._clusterer_.predict(X_flat)
         labels = labels.reshape(self.n_instances, self.n_timepoints)
-        return pd.DataFrame(labels, index=X.index)
+        if self.n_instances == 1:
+            return pd.Series(labels.flatten(), index=X.index)
+
+        return pd.Series(labels.flatten(), index=X.index.repeat(self.n_timepoints))
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
