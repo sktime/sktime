@@ -412,7 +412,7 @@ class TagAliaserMixin:
     """Mixin class for tag aliasing and deprecation of old tags.
 
     To deprecate tags, add the TagAliaserMixin to BaseObject or BaseEstimator.
-    alias_dict contains the deprecated tags, and supports removal and renaming.     For
+    alias_dict contains the deprecated tags, and supports removal and renaming. For
     removal, add an entry "old_tag_name": ""     For renaming, add an entry
     "old_tag_name": "new_tag_name" deprecate_dict contains the version number of
     renaming or removal.     the keys in deprecate_dict should be the same as in
