@@ -17,8 +17,21 @@ class Logger(BaseTransformer):
 
     Parameters
     ----------
-    logger : str, optional, default="sktime"
-        logger name, logs to ``logging.getLogger(logger)``
+    logger : str optional, default="sktime"
+        logger name to use, passed to ``logger_backend`` to identify
+        the unique logger instance referenced by ``get_logger``.
+
+    logger_backend : str, one of "logging" (default), "datalog"
+        Backend to use for logging.
+
+        * "logging": uses the standard Python logging module,
+          logs to ``logging.getLogger(logger)``
+        * "datalog": uses a multiton logger class for easy retrieval of data,
+          logs to ``DataLog(logger)``, with ``DataLog`` from
+          the ``transformations.compose`` module.
+
+        In either case, the a reference to the logger can be retrieved
+        by calling ``obj.get_logger``, where ``obj`` is an instance of ``Logger``.
 
     log_methods : str or list of str, default=``"transform"``
         if ``"all"``, will log ``fit``, ``transform``, ``inverse_transform``;
@@ -54,11 +67,13 @@ class Logger(BaseTransformer):
     def __init__(
         self,
         logger="sktime",
+        logger_backend="logging",
         log_methods="all",
         level=None,
         log_fitted_params=False,
     ):
         self.logger = logger
+        self.logger_backend = logger_backend
         self.log_methods = log_methods
         self.level = level
         self.log_fitted_params = log_fitted_params
@@ -81,10 +96,28 @@ class Logger(BaseTransformer):
             self._level = self.level
 
     @property
-    def _logger(self):
-        import logging
+    def get_logger(self):
+        if self.logger_backend == "logging":
+            import logging
 
-        return logging.getLogger(self.logger)
+            return logging.getLogger(self.logger)
+        elif self.logger_backend == "datalog":
+            return DataLog(self.logger)
+
+    def _write_log(self, key, obj):
+        """Write log to logger.
+
+        Parameters
+        ----------
+        key : str
+            key to identify the object
+        obj : any
+            object to log
+        """
+        if self.logger_backend == "logging":
+            self._logger.log(self._level, key, extra=obj)
+        elif self.logger_backend == "datalog":
+            self._logger.log(key, obj)
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -104,7 +137,7 @@ class Logger(BaseTransformer):
         self: reference to self
         """
         if "fit" in self._log_methods:
-            self._logger.log(self._level, "fit", extra={"X": X, "y": y})
+            self._write_log("fit", {"X": X, "y": y})
         if self.log_fitted_params:
             self.X_ = X
             self.y_ = y
@@ -126,7 +159,7 @@ class Logger(BaseTransformer):
         X, identical to input
         """
         if "transform" in self._log_methods:
-            self._logger.log(self._level, "transform", extra={"X": X, "y": y})
+            self._write_log("transform", {"X": X, "y": y})
         return X
 
     def _inverse_transform(self, X, y=None):
@@ -145,7 +178,7 @@ class Logger(BaseTransformer):
         X, identical to input
         """
         if "inverse_transform" in self._log_methods:
-            self._logger.log(self._level, "inverse_transform", extra={"X": X, "y": y})
+            self._write_log("inverse_transform", {"X": X, "y": y})
         return X
 
     @classmethod
@@ -172,4 +205,71 @@ class Logger(BaseTransformer):
             "level": logging.ERROR,
         }
         params3 = {"logger": "foo", "level": logging.DEBUG, "log_methods": "all"}
-        return [params0, params1, params2, params3]
+        params4 = {"logger": "foo", "logger_backend": "datalog", "log_methods": "all"}
+        return [params0, params1, params2, params3, params4]
+
+
+def _multiton(cls):
+    """Turn a class into a multiton."""
+    instances = {}
+
+    def get_instance(key, *args, **kwargs):
+        if key not in instances:
+            instances[key] = cls(key, *args, **kwargs)
+        return instances[key]
+
+    return get_instance
+
+
+@_multiton
+class DataLog:
+    """Data logger.
+
+    Identified uniquely by a key, logs data in a list.
+    List contains tuples of (log_key : str, data : any).
+
+    * ``log`` appends a tuple to the list.
+    * ``reset`` empties the list.
+
+    Parameters
+    ----------
+    key : str
+        key to identify the logger
+    """
+
+    def __init__(self, key):
+        self.key = key
+        self._log = []
+
+    def log(self, log_key, data):
+        """Log data.
+
+        Appends the following tuple to the log list: ``(log_key, data)``.
+
+        The full log can be read by calling ``get_log``.
+
+        Parameters
+        ----------
+        log_key : str
+            key to identify the data
+        data : any
+            data to log
+        """
+        self._log.append((log_key, data))
+        return self
+
+    def reset(self):
+        """Reset the log to the empty list."""
+        self._log = []
+        return self
+
+    def get_log(self):
+        """Read the log.
+
+        Returns
+        -------
+        log : list of tuple
+            Reference to the list containing the logged data,
+            list of tuples of (log_key : str, data : any)
+        """
+        return self._log
