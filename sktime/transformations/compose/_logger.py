@@ -228,7 +228,7 @@ class DataLog:
     Identified uniquely by a key, logs data in a list.
     List contains tuples of (log_key : str, data : any).
 
-    Methods:
+    Methods as below:
 
     * ``log`` appends a tuple to the list.
     * ``get_log`` returns the list.
