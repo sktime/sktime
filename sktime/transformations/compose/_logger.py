@@ -115,9 +115,9 @@ class Logger(BaseTransformer):
             object to log
         """
         if self.logger_backend == "logging":
-            self._logger.log(self._level, key, extra=obj)
+            self.get_logger.log(self._level, key, extra=obj)
         elif self.logger_backend == "datalog":
-            self._logger.log(key, obj)
+            self.get_logger.log(key, obj)
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
