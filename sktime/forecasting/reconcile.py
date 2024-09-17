@@ -111,9 +111,10 @@ class ReconcilerForecaster(BaseForecaster):
     TRFORM_LIST = Reconciler().METHOD_LIST
     METHOD_LIST = ["mint_cov", "mint_shrink", "wls_var"] + TRFORM_LIST
 
-    def __init__(self, forecaster, method="mint_shrink"):
+    def __init__(self, forecaster, method="mint_shrink", total=True):
         self.forecaster = forecaster
         self.method = method
+        self.total = total
 
         super().__init__()
 
@@ -238,6 +239,10 @@ class ReconcilerForecaster(BaseForecaster):
 
         recon_fc = pd.concat(recon_fc, axis=0)
         recon_fc = recon_fc.sort_index()
+
+        if not self.total:
+            n = recon_fc.index.get_slice_bound(label="__total", side="left")
+            return recon_fc[:n]
 
         return recon_fc
 
