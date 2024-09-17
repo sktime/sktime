@@ -70,13 +70,19 @@ example_dict_lossy[("pd-multiindex", "Panel", 0)] = False
 
 cols = [f"var_{i}" for i in range(2)]
 X = pd.DataFrame(columns=cols, index=pd.RangeIndex(3))
-X["var_0"] = pd.Series(
-    [pd.Series([1, 2, 3]), pd.Series([1, 2, 3]), pd.Series([1, 2, 3])]
-)
-
-X["var_1"] = pd.Series(
-    [pd.Series([4, 5, 6]), pd.Series([4, 55, 6]), pd.Series([42, 5, 6])]
-)
+nestes_series = [
+    pd.Series([1, 2, 3], index=pd.Index([0, 1, 2], name="timepoints")),
+    pd.Series([1, 2, 3], index=pd.Index([0, 1, 2], name="timepoints")),
+    pd.Series([1, 2, 3], index=pd.Index([0, 1, 2], name="timepoints")),
+]
+X["var_0"] = pd.Series(nestes_series)
+nestes_series_2 = [
+    pd.Series([4, 5, 6], index=pd.Index([0, 1, 2], name="timepoints")),
+    pd.Series([4, 55, 6], index=pd.Index([0, 1, 2], name="timepoints")),
+    pd.Series([42, 5, 6], index=pd.Index([0, 1, 2], name="timepoints")),
+]
+X["var_1"] = pd.Series(nestes_series_2)
+X.index.name = "instances"
 
 example_dict[("nested_univ", "Panel", 0)] = X
 example_dict_lossy[("nested_univ", "Panel", 0)] = False
@@ -90,6 +96,14 @@ if _check_soft_dependencies("dask", severity="none"):
 
     example_dict[("dask_panel", "Panel", 0)] = df_dask
     example_dict_lossy[("dask_panel", "Panel", 0)] = False
+
+if _check_soft_dependencies("polars", severity="none"):
+    from sktime.datatypes._adapter.polars import convert_pandas_to_polars
+
+    pl_frame = convert_pandas_to_polars(example_dict[("pd-multiindex", "Panel", 0)])
+
+    example_dict[("polars_panel", "Panel", 0)] = pl_frame
+    example_dict_lossy[("polars_panel", "Panel", 0)] = False
 
 if _check_soft_dependencies("gluonts", severity="none"):
     from sktime.datatypes._adapter.gluonts import (
@@ -172,9 +186,13 @@ example_dict_lossy[("pd-multiindex", "Panel", 1)] = False
 
 cols = [f"var_{i}" for i in range(1)]
 X = pd.DataFrame(columns=cols, index=pd.RangeIndex(3))
-X["var_0"] = pd.Series(
-    [pd.Series([4, 5, 6]), pd.Series([4, 55, 6]), pd.Series([42, 5, 6])]
-)
+data = [
+    pd.Series([4, 5, 6], index=pd.Index([0, 1, 2], name="timepoints")),
+    pd.Series([4, 55, 6], index=pd.Index([0, 1, 2], name="timepoints")),
+    pd.Series([42, 5, 6], index=pd.Index([0, 1, 2], name="timepoints")),
+]
+X["var_0"] = pd.Series(data)
+X.index.name = "instances"
 
 example_dict[("nested_univ", "Panel", 1)] = X
 example_dict_lossy[("nested_univ", "Panel", 1)] = False
@@ -189,6 +207,13 @@ if _check_soft_dependencies("dask", severity="none"):
     example_dict[("dask_panel", "Panel", 1)] = df_dask
     example_dict_lossy[("dask_panel", "Panel", 1)] = False
 
+if _check_soft_dependencies("polars", severity="none"):
+    from sktime.datatypes._adapter.polars import convert_pandas_to_polars
+
+    pl_frame = convert_pandas_to_polars(example_dict[("pd-multiindex", "Panel", 1)])
+
+    example_dict[("polars_panel", "Panel", 1)] = pl_frame
+    example_dict_lossy[("polars_panel", "Panel", 1)] = False
 if _check_soft_dependencies("gluonts", severity="none"):
     from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
 
@@ -262,7 +287,10 @@ example_dict_lossy[("pd-multiindex", "Panel", 2)] = False
 
 cols = [f"var_{i}" for i in range(1)]
 X = pd.DataFrame(columns=cols, index=pd.RangeIndex(1))
-X["var_0"] = pd.Series([pd.Series([4, 5, 6])])
+X["var_0"] = pd.Series(
+    [pd.Series([4, 5, 6], index=pd.Index([0, 1, 2], name="timepoints"))]
+)
+X.index.name = "instances"
 
 example_dict[("nested_univ", "Panel", 2)] = X
 example_dict_lossy[("nested_univ", "Panel", 2)] = False
@@ -276,6 +304,14 @@ if _check_soft_dependencies("dask", severity="none"):
 
     example_dict[("dask_panel", "Panel", 2)] = df_dask
     example_dict_lossy[("dask_panel", "Panel", 2)] = False
+
+if _check_soft_dependencies("polars", severity="none"):
+    from sktime.datatypes._adapter.polars import convert_pandas_to_polars
+
+    pl_frame = convert_pandas_to_polars(example_dict[("pd-multiindex", "Panel", 2)])
+
+    example_dict[("polars_panel", "Panel", 2)] = pl_frame
+    example_dict_lossy[("polars_panel", "Panel", 2)] = False
 
 if _check_soft_dependencies("gluonts", severity="none"):
     from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
