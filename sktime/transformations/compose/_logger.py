@@ -49,6 +49,21 @@ class Logger(BaseTransformer):
         to ``self`` as ``X_`` and ``y_``, these can be retrieved
         by calling ``get_fitted_params``.
         If False, ``get_fitted_params`` will return an empty dict.
+
+    Examples
+    --------
+    >>> from sktime.transformations.compose import DataLog, Logger
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.transformations.series.detrend import Detrender
+    >>>
+    >>> # create a logger
+    >>> logger = Logger(logger="foo", log_methods="all", logger_backend="datalog")
+    >>> # create a pipeline that logs after detrending and before forecasting
+    >>> pipe = Detrender() * logger * NaiveForecaster(sp=12)
+    >>> pipe.fit(load_airline(), fh=[1, 2, 3])
+    >>> # get the log
+    >>> log = DataLog("foo").get_log()
     """
 
     _tags = {
