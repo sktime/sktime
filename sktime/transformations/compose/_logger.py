@@ -229,6 +229,7 @@ class DataLog:
     List contains tuples of (log_key : str, data : any).
 
     * ``log`` appends a tuple to the list.
+    * ``get_log`` returns the list.
     * ``reset`` empties the list.
 
     Parameters
