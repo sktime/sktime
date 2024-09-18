@@ -28,6 +28,7 @@ from sktime.datatypes._base import BaseExample
 
 ###
 
+
 class _AlignmentSimple(BaseExample):
     _tags = {
         "scitype": "Alignment",
@@ -55,4 +56,4 @@ class _AlignmentSimpleAlignmentLoc(_AlignmentSimple):
     }
 
     def build(self):
-          return pd.DataFrame({"ind0": [2, 2.5, 2.5, 100], "ind1": [-1, -1, 2, 2]})
+        return pd.DataFrame({"ind0": [2, 2.5, 2.5, 100], "ind1": [-1, -1, 2, 2]})
