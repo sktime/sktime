@@ -113,7 +113,7 @@ class _SeriesUnivDaskSeries(_SeriesUniv):
 class _SeriesUnivPlDataFrame(_SeriesUniv):
     _tags = {
         "mtype": "pl.DataFrame",
-        "python_dependencies": "polars>=1.0",
+        "python_dependencies": ["polars>=1.0", "pyarrow"],
         "lossy": False,
     }
 
@@ -224,7 +224,7 @@ class _SeriesMultiDaskSeries(_SeriesMulti):
 class _SeriesMultiPlDataFrame(_SeriesMulti):
     _tags = {
         "mtype": "pl.DataFrame",
-        "python_dependencies": "polars>=1.0",
+        "python_dependencies": ["polars>=1.0", "pyarrow"],
         "lossy": False,
     }
 
@@ -337,7 +337,7 @@ class _SeriesMultiPosDaskSeries(_SeriesMultiPos):
 class _SeriesMultiPosPlDataFrame(_SeriesMultiPos):
     _tags = {
         "mtype": "pl.DataFrame",
-        "python_dependencies": "polars>=1.0",
+        "python_dependencies": ["polars>=1.0", "pyarrow"],
         "lossy": False,
     }
 
@@ -436,7 +436,7 @@ class _SeriesUnivPosXrDataArray(_SeriesUnivPos):
 class _SeriesUnivPosPlDataFrame(_SeriesUnivPos):
     _tags = {
         "mtype": "pl.DataFrame",
-        "python_dependencies": "polars>=1.0",
+        "python_dependencies": ["polars>=1.0", "pyarrow"],
         "lossy": False,
     }
 

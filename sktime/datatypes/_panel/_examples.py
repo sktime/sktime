@@ -160,7 +160,7 @@ class _PanelMultivEqsplDaskPanel(_PanelMultivEqspl):
 class _PanelMultivEqsplPolarsPanel(_PanelMultivEqspl):
     _tags = {
         "mtype": "polars_panel",
-        "python_dependencies": ["polars"],
+        "python_dependencies": ["polars", "pyarrow"],
         "lossy": False,
     }
 
@@ -331,7 +331,7 @@ class _PanelUnivEqsplDaskPanel(_PanelUnivEqspl):
 class _PanelUnivEqsplPolarsPanel(_PanelUnivEqspl):
     _tags = {
         "mtype": "polars_panel",
-        "python_dependencies": ["polars"],
+        "python_dependencies": ["polars", "pyarrow"],
         "lossy": False,
     }
 
@@ -488,7 +488,7 @@ class _PanelUnivEqsplOneSeriesDaskPanel(_PanelUnivEqsplOneSeries):
 class _PanelUnivEqsplOneSeriesPolarsPanel(_PanelUnivEqsplOneSeries):
     _tags = {
         "mtype": "polars_panel",
-        "python_dependencies": ["polars"],
+        "python_dependencies": ["polars", "pyarrow"],
         "lossy": False,
     }
 
