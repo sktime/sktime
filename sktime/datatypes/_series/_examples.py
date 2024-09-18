@@ -166,7 +166,7 @@ class _SeriesMultiPdSeries(_SeriesMulti):
     }
 
     def build(self):
-        return pd.DataFrame({"a": [1, 4, 0.5, -3], "b": [3, 7, 2, -3 / 7]})
+        return None
 
 
 class _SeriesMultiPdDataFrame(_SeriesMulti):
@@ -279,7 +279,7 @@ class _SeriesMultiPosPdSeries(_SeriesMultiPos):
     }
 
     def build(self):
-        return pd.DataFrame({"a": [1, 4, 0.5, 3], "b": [3, 7, 2, 3 / 7]})
+        return None
 
 
 class _SeriesMultiPosPdDataFrame(_SeriesMultiPos):
