@@ -27,7 +27,6 @@ import pandas as pd
 from sktime.datatypes._base import BaseExample
 from sktime.datatypes._dtypekind import DtypeKind
 
-
 ###
 # example 0: multivariate, equally sampled
 
