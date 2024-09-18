@@ -2607,7 +2607,7 @@ class _BaseGlobalForecaster(BaseForecaster):
 
     """
 
-    _tags = {"object_type": ["global_forecaster", "forecaster"]}
+    _tags = {"object_type": ["forecaster", "global_forecaster"]}
 
     def predict(self, fh=None, X=None, y=None):
         """Forecast time series at future horizon.
