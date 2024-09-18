@@ -38,7 +38,17 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
 
     def _get_forecaster_index(self, estimators):
         """Get the index of the first forecaster in the list."""
-        return self._get_pipeline_scitypes(estimators).index("forecaster")
+        pipe_scitypes = [
+            scitype(
+                x[1],
+                raise_on_unknown=False,
+                force_single_scitype=False,
+                coerce_to_list=True,
+            )
+            for x in estimators
+        ]
+        is_fcst = ["forecaster" in s for s in pipe_scitypes]
+        return is_fcst.index(True)
 
     def _check_steps(self, estimators, allow_postproc=False):
         """Check Steps.
