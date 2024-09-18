@@ -172,7 +172,8 @@ class HFTransformersForecaster(BaseForecaster):
         self._callbacks = callbacks
         self.peft_config = peft_config
 
-    def _fit(self, y, X, fh):
+    def _load_model_from_path(self, model_path, fh, X):
+        """Load model and info from path."""
         # Load model and extract config
         config = AutoConfig.from_pretrained(self.model_path)
 
@@ -211,14 +212,33 @@ class HFTransformersForecaster(BaseForecaster):
                 "Thus, the model cannot be loaded."
             )
         # Load model with the updated config
-        self.model, info = getattr(
+        model, info = getattr(
             transformers, prediction_model_class
         ).from_pretrained(
-            self.model_path,
+            model_path,
             config=config,
             output_loading_info=True,
             ignore_mismatched_sizes=True,
         )
+        return model, info, config
+
+    def _load_model_from_obj(self, model_obj):
+        """Load model and info from model object."""
+        # Get info from model object
+        info = {"mismatched_keys": []}
+        config = self.config
+        return model_obj, info, config
+
+    def _fit(self, y, X, fh):
+        model_path = self.model_path
+
+        if isinstance(model_path, str):
+            model, info, config = self._load_model_from_path(model_path, fh, X)
+        else:
+            model, info, config = self._load_model_from_obj(model_path)
+
+        self.model = model
+        self.model_ = model
 
         # Freeze all loaded parameters
         for param in self.model.parameters():
@@ -291,6 +311,7 @@ class HFTransformersForecaster(BaseForecaster):
                 from peft import get_peft_model
             peft_config = deepcopy(self.peft_config)
             self.model = get_peft_model(self.model, peft_config)
+            self.model_ = self.model
         else:
             raise ValueError("Unknown fit strategy")
 
