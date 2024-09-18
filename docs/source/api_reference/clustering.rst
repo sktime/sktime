@@ -51,6 +51,14 @@ Clustering models
 
     TimeSeriesKernelKMeans
 
+.. currentmodule:: sktime.clustering.spatio-temporal 
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ST_DBSCAN
+
 Base
 ----
 
