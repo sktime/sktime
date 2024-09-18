@@ -548,7 +548,7 @@ class _PanelUnivEqsplLossy(BaseExample):
             "is_one_series": False,
             "n_panels": 1,
             "is_one_panel": True,
-            "is_equally_spaced": False,
+            "is_equally_spaced": True,
             "is_equal_length": True,
             "is_equal_index": False,
             "is_empty": False,
