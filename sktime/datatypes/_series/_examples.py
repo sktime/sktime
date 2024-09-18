@@ -37,6 +37,7 @@ from sktime.datatypes._dtypekind import DtypeKind
 ###
 # example 0: univariate
 
+
 class _SeriesUniv(BaseExample):
     _tags = {
         "scitype": "Series",
@@ -54,7 +55,6 @@ class _SeriesUniv(BaseExample):
 
 
 class _SeriesUnivPdSeries(_SeriesUniv):
-
     _tags = {
         "mtype": "pd.Series",
         "python_dependencies": None,
@@ -66,7 +66,6 @@ class _SeriesUnivPdSeries(_SeriesUniv):
 
 
 class _SeriesUnivPdDataFrame(_SeriesUniv):
-
     _tags = {
         "mtype": "pd.DataFrame",
         "python_dependencies": None,
@@ -78,7 +77,6 @@ class _SeriesUnivPdDataFrame(_SeriesUniv):
 
 
 class _SeriesUnivNpArray(_SeriesUniv):
-
     _tags = {
         "mtype": "np.ndarray",
         "python_dependencies": None,
@@ -90,7 +88,6 @@ class _SeriesUnivNpArray(_SeriesUniv):
 
 
 class _SeriesUnivXrDataArray(_SeriesUniv):
-
     _tags = {
         "mtype": "xr.DataArray",
         "python_dependencies": "xarray",
@@ -107,7 +104,6 @@ class _SeriesUnivXrDataArray(_SeriesUniv):
 
 
 class _SeriesUnivDaskSeries(_SeriesUniv):
-
     _tags = {
         "mtype": "dask_series",
         "python_dependencies": "dask",
@@ -121,7 +117,6 @@ class _SeriesUnivDaskSeries(_SeriesUniv):
 
 
 class _SeriesUnivPlDataFrame(_SeriesUniv):
-
     _tags = {
         "mtype": "pl.DataFrame",
         "python_dependencies": "polars>=1.0",
@@ -137,7 +132,6 @@ class _SeriesUnivPlDataFrame(_SeriesUniv):
 
 
 class _SeriesUnivGluontsListDataset(_SeriesUniv):
-
     _tags = {
         "mtype": "gluonts_ListDataset_series",
         "python_dependencies": "gluonts",
@@ -171,7 +165,6 @@ class _SeriesMulti(BaseExample):
 
 
 class _SeriesMultiPdSeries(_SeriesMulti):
-
     _tags = {
         "mtype": "pd.Series",
         "python_dependencies": None,
@@ -183,7 +176,6 @@ class _SeriesMultiPdSeries(_SeriesMulti):
 
 
 class _SeriesMultiPdDataFrame(_SeriesMulti):
-
     _tags = {
         "mtype": "pd.DataFrame",
         "python_dependencies": None,
@@ -195,7 +187,6 @@ class _SeriesMultiPdDataFrame(_SeriesMulti):
 
 
 class _SeriesMultiNpArray(_SeriesMulti):
-
     _tags = {
         "mtype": "np.ndarray",
         "python_dependencies": None,
@@ -207,7 +198,6 @@ class _SeriesMultiNpArray(_SeriesMulti):
 
 
 class _SeriesMultiXrDataArray(_SeriesMulti):
-
     _tags = {
         "mtype": "xr.DataArray",
         "python_dependencies": "xarray",
@@ -224,7 +214,6 @@ class _SeriesMultiXrDataArray(_SeriesMulti):
 
 
 class _SeriesMultiDaskSeries(_SeriesMulti):
-
     _tags = {
         "mtype": "dask_series",
         "python_dependencies": "dask",
@@ -239,7 +228,6 @@ class _SeriesMultiDaskSeries(_SeriesMulti):
 
 
 class _SeriesMultiPlDataFrame(_SeriesMulti):
-
     _tags = {
         "mtype": "pl.DataFrame",
         "python_dependencies": "polars>=1.0",
@@ -256,7 +244,6 @@ class _SeriesMultiPlDataFrame(_SeriesMulti):
 
 
 class _SeriesMultiGluontsListDataset(_SeriesMulti):
-
     _tags = {
         "mtype": "gluonts_ListDataset_series",
         "python_dependencies": "gluonts",
@@ -275,7 +262,6 @@ class _SeriesMultiGluontsListDataset(_SeriesMulti):
 
 
 class _SeriesMultiPos(BaseExample):
-
     _tags = {
         "scitype": "Series",
         "index": 2,
@@ -292,7 +278,6 @@ class _SeriesMultiPos(BaseExample):
 
 
 class _SeriesMultiPosPdSeries(_SeriesMultiPos):
-
     _tags = {
         "mtype": "pd.Series",
         "python_dependencies": None,
@@ -304,7 +289,6 @@ class _SeriesMultiPosPdSeries(_SeriesMultiPos):
 
 
 class _SeriesMultiPosPdDataFrame(_SeriesMultiPos):
-
     _tags = {
         "mtype": "pd.DataFrame",
         "python_dependencies": None,
@@ -316,7 +300,6 @@ class _SeriesMultiPosPdDataFrame(_SeriesMultiPos):
 
 
 class _SeriesMultiPosNpArray(_SeriesMultiPos):
-
     _tags = {
         "mtype": "np.ndarray",
         "python_dependencies": None,
@@ -328,7 +311,6 @@ class _SeriesMultiPosNpArray(_SeriesMultiPos):
 
 
 class _SeriesMultiPosXrDataArray(_SeriesMultiPos):
-
     _tags = {
         "mtype": "xr.DataArray",
         "python_dependencies": "xarray",
@@ -345,7 +327,6 @@ class _SeriesMultiPosXrDataArray(_SeriesMultiPos):
 
 
 class _SeriesMultiPosDaskSeries(_SeriesMultiPos):
-
     _tags = {
         "mtype": "dask_series",
         "python_dependencies": "dask",
@@ -360,7 +341,6 @@ class _SeriesMultiPosDaskSeries(_SeriesMultiPos):
 
 
 class _SeriesMultiPosPlDataFrame(_SeriesMultiPos):
-
     _tags = {
         "mtype": "pl.DataFrame",
         "python_dependencies": "polars>=1.0",
@@ -377,7 +357,6 @@ class _SeriesMultiPosPlDataFrame(_SeriesMultiPos):
 
 
 class _SeriesMultiPosGluontsListDataset(_SeriesMultiPos):
-
     _tags = {
         "mtype": "gluonts_ListDataset_series",
         "python_dependencies": "gluonts",
@@ -396,7 +375,6 @@ class _SeriesMultiPosGluontsListDataset(_SeriesMultiPos):
 
 
 class _SeriesUnivPos(BaseExample):
-
     _tags = {
         "scitype": "Series",
         "index": 3,
@@ -413,7 +391,6 @@ class _SeriesUnivPos(BaseExample):
 
 
 class _SeriesUnivPosPdSeries(_SeriesUnivPos):
-
     _tags = {
         "mtype": "pd.Series",
         "python_dependencies": None,
@@ -425,7 +402,6 @@ class _SeriesUnivPosPdSeries(_SeriesUnivPos):
 
 
 class _SeriesUnivPosPdDataFrame(_SeriesUnivPos):
-
     _tags = {
         "mtype": "pd.DataFrame",
         "python_dependencies": None,
@@ -437,7 +413,6 @@ class _SeriesUnivPosPdDataFrame(_SeriesUnivPos):
 
 
 class _SeriesUnivPosNpArray(_SeriesUnivPos):
-
     _tags = {
         "mtype": "np.ndarray",
         "python_dependencies": None,
@@ -449,7 +424,6 @@ class _SeriesUnivPosNpArray(_SeriesUnivPos):
 
 
 class _SeriesUnivPosXrDataArray(_SeriesUnivPos):
-
     _tags = {
         "mtype": "xr.DataArray",
         "python_dependencies": "xarray",
@@ -466,7 +440,6 @@ class _SeriesUnivPosXrDataArray(_SeriesUnivPos):
 
 
 class _SeriesUnivPosPlDataFrame(_SeriesUnivPos):
-
     _tags = {
         "mtype": "pl.DataFrame",
         "python_dependencies": "polars>=1.0",
@@ -482,7 +455,6 @@ class _SeriesUnivPosPlDataFrame(_SeriesUnivPos):
 
 
 class _SeriesUnivPosGluontsListDataset(_SeriesUnivPos):
-
     _tags = {
         "mtype": "gluonts_ListDataset_series",
         "python_dependencies": "gluonts",
