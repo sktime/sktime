@@ -150,7 +150,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         ],
         "env_marker": "sys_platform=='linux'",
         "capability:global_forecasting": True,
-        "object_type" : "forecaster"
+        "object_type": "forecaster",
     }
 
     def __init__(

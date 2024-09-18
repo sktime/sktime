@@ -118,7 +118,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             "huggingface-hub": "huggingface_hub",
             "hydra-core": "hydra",
         },
-        "object_type" : "forecaster"
+        "object_type": "forecaster",
     }
 
     def __init__(

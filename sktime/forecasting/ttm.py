@@ -152,7 +152,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         "maintainers": ["geetu040"],
         "python_dependencies": ["transformers", "torch"],
         "capability:global_forecasting": True,
-        "object_type" : "forecaster"
+        "object_type": "forecaster",
     }
 
     def __init__(
