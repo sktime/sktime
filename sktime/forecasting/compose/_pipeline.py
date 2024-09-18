@@ -44,7 +44,8 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                 raise_on_unknown=False,
                 force_single_scitype=False,
                 coerce_to_list=True,
-            ) for x in estimators
+            )
+            for x in estimators
         ]
         is_fcst = ["forecaster" in s for s in pipe_scitypes]
         return is_fcst.index(True)
