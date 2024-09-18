@@ -31,261 +31,466 @@ overall, conversions from non-lossy representations to any other ones
 import numpy as np
 import pandas as pd
 
+from sktime.datatypes._base import BaseExample
 from sktime.datatypes._dtypekind import DtypeKind
-from sktime.utils.dependencies import _check_soft_dependencies
-
-example_dict = dict()
-example_dict_lossy = dict()
-example_dict_metadata = dict()
 
 ###
 # example 0: univariate
 
-s = pd.Series([1, 4, 0.5, -3], dtype=np.float64, name="a")
+class _SeriesUniv(BaseExample):
+    _tags = {
+        "scitype": "Series",
+        "index": 0,
+        "metadata": {
+            "is_univariate": True,
+            "is_equally_spaced": True,
+            "is_empty": False,
+            "has_nans": False,
+            "n_features": 1,
+            "feature_names": ["a"],
+            "feature_kind": [DtypeKind.FLOAT],
+        },
+    }
 
-example_dict[("pd.Series", "Series", 0)] = s
-example_dict_lossy[("pd.Series", "Series", 0)] = False
 
-df = pd.DataFrame({"a": [1, 4, 0.5, -3]})
+class _SeriesUnivPdSeries(_SeriesUniv):
 
-example_dict[("pd.DataFrame", "Series", 0)] = df
-example_dict_lossy[("pd.DataFrame", "Series", 0)] = False
+    _tags = {
+        "mtype": "pd.Series",
+        "python_dependencies": None,
+        "lossy": False,
+    }
 
-arr = np.array([[1], [4], [0.5], [-3]])
+    def build(self):
+        return pd.Series([1, 4, 0.5, -3], dtype=np.float64, name="a")
 
-example_dict[("np.ndarray", "Series", 0)] = arr
-example_dict_lossy[("np.ndarray", "Series", 0)] = True
 
-if _check_soft_dependencies("xarray", severity="none"):
-    import xarray as xr
+class _SeriesUnivPdDataFrame(_SeriesUniv):
 
-    da = xr.DataArray(
-        [[1], [4], [0.5], [-3]],
-        coords=[[0, 1, 2, 3], ["a"]],
-    )
+    _tags = {
+        "mtype": "pd.DataFrame",
+        "python_dependencies": None,
+        "lossy": False,
+    }
 
-    example_dict[("xr.DataArray", "Series", 0)] = da
-    example_dict_lossy[("xr.DataArray", "Series", 0)] = False
+    def build(self):
+        return pd.DataFrame({"a": [1, 4, 0.5, -3]})
 
-if _check_soft_dependencies("dask", severity="none"):
-    from dask.dataframe import from_pandas
 
-    df_dask = from_pandas(example_dict[("pd.DataFrame", "Series", 0)], npartitions=1)
+class _SeriesUnivNpArray(_SeriesUniv):
 
-    example_dict[("dask_series", "Series", 0)] = df_dask
-    example_dict_lossy[("dask_series", "Series", 0)] = False
+    _tags = {
+        "mtype": "np.ndarray",
+        "python_dependencies": None,
+        "lossy": True,
+    }
 
-if _check_soft_dependencies("polars>=0.20", severity="none"):
-    from polars import DataFrame
+    def build(self):
+        return np.array([[1], [4], [0.5], [-3]])
 
-    pl_df = DataFrame({"__index__0": [0, 1, 2, 3], "a": [1, 4, 0.5, -3]}, strict=False)
 
-    example_dict[("pl.DataFrame", "Series", 0)] = pl_df
-    example_dict_lossy[("pl.DataFrame", "Series", 0)] = False
+class _SeriesUnivXrDataArray(_SeriesUniv):
 
-if _check_soft_dependencies("gluonts", severity="none"):
-    from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
+    _tags = {
+        "mtype": "xr.DataArray",
+        "python_dependencies": "xarray",
+        "lossy": False,
+    }
 
-    list_dataset = convert_pandas_to_listDataset(df)
+    def build(self):
+        import xarray as xr
 
-    example_dict[("gluonts_ListDataset_series", "Series", 0)] = list_dataset
-    example_dict_lossy[("gluonts_ListDataset_series", "Series", 0)] = True
+        return xr.DataArray(
+            [[1], [4], [0.5], [-3]],
+            coords=[[0, 1, 2, 3], ["a"]],
+        )
 
-example_dict_metadata[("Series", 0)] = {
-    "is_univariate": True,
-    "is_equally_spaced": True,
-    "is_empty": False,
-    "has_nans": False,
-    "n_features": 1,
-    "feature_names": ["a"],
-    "feature_kind": [DtypeKind.FLOAT],
-}
+
+class _SeriesUnivDaskSeries(_SeriesUniv):
+
+    _tags = {
+        "mtype": "dask_series",
+        "python_dependencies": "dask",
+        "lossy": False,
+    }
+
+    def build(self):
+        from dask.dataframe import from_pandas
+
+        return from_pandas(self._get_example("pd.DataFrame", 0), npartitions=1)
+
+
+class _SeriesUnivPlDataFrame(_SeriesUniv):
+
+    _tags = {
+        "mtype": "pl.DataFrame",
+        "python_dependencies": "polars>=1.0",
+        "lossy": False,
+    }
+
+    def build(self):
+        from polars import DataFrame
+
+        return DataFrame(
+            {"__index__0": [0, 1, 2, 3], "a": [1, 4, 0.5, -3]}, strict=False
+        )
+
+
+class _SeriesUnivGluontsListDataset(_SeriesUniv):
+
+    _tags = {
+        "mtype": "gluonts_ListDataset_series",
+        "python_dependencies": "gluonts",
+        "lossy": True,
+    }
+
+    def build(self):
+        from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
+
+        return convert_pandas_to_listDataset(self._get_example("pd.DataFrame", 0))
+
 
 ###
 # example 1: multivariate
 
-example_dict[("pd.Series", "Series", 1)] = None
-example_dict_lossy[("pd.Series", "Series", 1)] = None
 
-df = pd.DataFrame({"a": [1, 4, 0.5, -3], "b": [3, 7, 2, -3 / 7]})
-
-example_dict[("pd.DataFrame", "Series", 1)] = df
-example_dict_lossy[("pd.DataFrame", "Series", 1)] = False
-
-arr = np.array([[1, 3], [4, 7], [0.5, 2], [-3, -3 / 7]])
-
-example_dict[("np.ndarray", "Series", 1)] = arr
-example_dict_lossy[("np.ndarray", "Series", 1)] = True
-if _check_soft_dependencies("xarray", severity="none"):
-    import xarray as xr
-
-    da = xr.DataArray(
-        [[1, 3], [4, 7], [0.5, 2], [-3, -3 / 7]],
-        coords=[[0, 1, 2, 3], ["a", "b"]],
-    )
-
-    example_dict[("xr.DataArray", "Series", 1)] = da
-    example_dict_lossy[("xr.DataArray", "Series", 1)] = False
-
-if _check_soft_dependencies("dask", severity="none"):
-    from dask.dataframe import from_pandas
-
-    df_dask = from_pandas(example_dict[("pd.DataFrame", "Series", 1)], npartitions=1)
-
-    example_dict[("dask_series", "Series", 1)] = df_dask
-    example_dict_lossy[("dask_series", "Series", 1)] = False
+class _SeriesMulti(BaseExample):
+    _tags = {
+        "scitype": "Series",
+        "index": 1,
+        "metadata": {
+            "is_univariate": False,
+            "is_equally_spaced": True,
+            "is_empty": False,
+            "has_nans": False,
+            "n_features": 2,
+            "feature_names": ["a", "b"],
+            "feature_kind": [DtypeKind.FLOAT, DtypeKind.FLOAT],
+        },
+    }
 
 
-if _check_soft_dependencies("polars>=0.20", severity="none"):
-    from polars import DataFrame
+class _SeriesMultiPdSeries(_SeriesMulti):
 
-    pl_df = DataFrame(
-        {"__index__0": [0, 1, 2, 3], "a": [1, 4, 0.5, -3], "b": [3, 7, 2, -3 / 7]},
-        strict=False,
-    )
+    _tags = {
+        "mtype": "pd.Series",
+        "python_dependencies": None,
+        "lossy": False,
+    }
 
-    example_dict[("pl.DataFrame", "Series", 1)] = pl_df
-    example_dict_lossy[("pl.DataFrame", "Series", 1)] = False
+    def build(self):
+        return pd.DataFrame({"a": [1, 4, 0.5, -3], "b": [3, 7, 2, -3 / 7]})
 
 
-if _check_soft_dependencies("gluonts", severity="none"):
-    from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
+class _SeriesMultiPdDataFrame(_SeriesMulti):
 
-    list_dataset = convert_pandas_to_listDataset(df)
+    _tags = {
+        "mtype": "pd.DataFrame",
+        "python_dependencies": None,
+        "lossy": False,
+    }
 
-    example_dict[("gluonts_ListDataset_series", "Series", 1)] = list_dataset
-    example_dict_lossy[("gluonts_ListDataset_series", "Series", 1)] = True
+    def build(self):
+        return pd.DataFrame({"a": [1, 4, 0.5, -3], "b": [3, 7, 2, -3 / 7]})
 
-example_dict_metadata[("Series", 1)] = {
-    "is_univariate": False,
-    "is_equally_spaced": True,
-    "is_empty": False,
-    "has_nans": False,
-    "n_features": 2,
-    "feature_names": ["a", "b"],
-    "feature_kind": [DtypeKind.FLOAT, DtypeKind.FLOAT],
-}
+
+class _SeriesMultiNpArray(_SeriesMulti):
+
+    _tags = {
+        "mtype": "np.ndarray",
+        "python_dependencies": None,
+        "lossy": True,
+    }
+
+    def build(self):
+        return np.array([[1, 3], [4, 7], [0.5, 2], [-3, -3 / 7]])
+
+
+class _SeriesMultiXrDataArray(_SeriesMulti):
+
+    _tags = {
+        "mtype": "xr.DataArray",
+        "python_dependencies": "xarray",
+        "lossy": False,
+    }
+
+    def build(self):
+        import xarray as xr
+
+        return xr.DataArray(
+            [[1, 3], [4, 7], [0.5, 2], [-3, -3 / 7]],
+            coords=[[0, 1, 2, 3], ["a", "b"]],
+        )
+
+
+class _SeriesMultiDaskSeries(_SeriesMulti):
+
+    _tags = {
+        "mtype": "dask_series",
+        "python_dependencies": "dask",
+        "lossy": False,
+    }
+
+    def build(self):
+        from dask.dataframe import from_pandas
+
+        pd_df = _SeriesMultiPdDataFrame().build()
+        return from_pandas(pd_df, npartitions=1)
+
+
+class _SeriesMultiPlDataFrame(_SeriesMulti):
+
+    _tags = {
+        "mtype": "pl.DataFrame",
+        "python_dependencies": "polars>=1.0",
+        "lossy": False,
+    }
+
+    def build(self):
+        from polars import DataFrame
+
+        return DataFrame(
+            {"__index__0": [0, 1, 2, 3], "a": [1, 4, 0.5, -3], "b": [3, 7, 2, -3 / 7]},
+            strict=False,
+        )
+
+
+class _SeriesMultiGluontsListDataset(_SeriesMulti):
+
+    _tags = {
+        "mtype": "gluonts_ListDataset_series",
+        "python_dependencies": "gluonts",
+        "lossy": True,
+    }
+
+    def build(self):
+        from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
+
+        pd_df = _SeriesMultiPdDataFrame().build()
+        return convert_pandas_to_listDataset(pd_df)
+
 
 ###
 # example 2: multivariate, positive
 
-example_dict[("pd.Series", "Series", 2)] = None
-example_dict_lossy[("pd.Series", "Series", 2)] = None
 
-df = pd.DataFrame({"a": [1, 4, 0.5, 3], "b": [3, 7, 2, 3 / 7]})
+class _SeriesMultiPos(BaseExample):
 
-example_dict[("pd.DataFrame", "Series", 2)] = df
-example_dict_lossy[("pd.DataFrame", "Series", 2)] = False
-
-arr = np.array([[1, 3], [4, 7], [0.5, 2], [3, 3 / 7]])
-
-example_dict[("np.ndarray", "Series", 2)] = arr
-example_dict_lossy[("np.ndarray", "Series", 2)] = True
-
-if _check_soft_dependencies("xarray", severity="none"):
-    import xarray as xr
-
-    da = xr.DataArray(
-        [[1, 3], [4, 7], [0.5, 2], [3, 3 / 7]],
-        coords=[[0, 1, 2, 3], ["a", "b"]],
-    )
-
-    example_dict[("xr.DataArray", "Series", 2)] = da
-    example_dict_lossy[("xr.DataArray", "Series", 2)] = False
-
-if _check_soft_dependencies("dask", severity="none"):
-    from dask.dataframe import from_pandas
-
-    df_dask = from_pandas(example_dict[("pd.DataFrame", "Series", 2)], npartitions=1)
-
-    example_dict[("dask_series", "Series", 2)] = df_dask
-    example_dict_lossy[("dask_series", "Series", 2)] = False
+    _tags = {
+        "scitype": "Series",
+        "index": 2,
+        "metadata": {
+            "is_univariate": False,
+            "is_equally_spaced": True,
+            "is_empty": False,
+            "has_nans": False,
+            "n_features": 2,
+            "feature_names": ["a", "b"],
+            "feature_kind": [DtypeKind.FLOAT, DtypeKind.FLOAT],
+        },
+    }
 
 
-if _check_soft_dependencies("polars>=0.20", severity="none"):
-    from polars import DataFrame
+class _SeriesMultiPosPdSeries(_SeriesMultiPos):
 
-    pl_df = DataFrame(
-        {"__index__0": [0, 1, 2, 3], "a": [1, 4, 0.5, 3], "b": [3, 7, 2, 3 / 7]},
-        strict=False,
-    )
+    _tags = {
+        "mtype": "pd.Series",
+        "python_dependencies": None,
+        "lossy": False,
+    }
 
-    example_dict[("pl.DataFrame", "Series", 2)] = pl_df
-    example_dict_lossy[("pl.DataFrame", "Series", 2)] = False
+    def build(self):
+        return pd.DataFrame({"a": [1, 4, 0.5, 3], "b": [3, 7, 2, 3 / 7]})
 
 
-if _check_soft_dependencies("gluonts", severity="none"):
-    from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
+class _SeriesMultiPosPdDataFrame(_SeriesMultiPos):
 
-    list_dataset = convert_pandas_to_listDataset(df)
+    _tags = {
+        "mtype": "pd.DataFrame",
+        "python_dependencies": None,
+        "lossy": False,
+    }
 
-    example_dict[("gluonts_ListDataset_series", "Series", 2)] = list_dataset
-    example_dict_lossy[("gluonts_ListDataset_series", "Series", 2)] = True
+    def build(self):
+        return pd.DataFrame({"a": [1, 4, 0.5, 3], "b": [3, 7, 2, 3 / 7]})
 
-example_dict_metadata[("Series", 2)] = {
-    "is_univariate": False,
-    "is_equally_spaced": True,
-    "is_empty": False,
-    "has_nans": False,
-    "n_features": 2,
-    "feature_names": ["a", "b"],
-    "feature_kind": [DtypeKind.FLOAT, DtypeKind.FLOAT],
-}
+
+class _SeriesMultiPosNpArray(_SeriesMultiPos):
+
+    _tags = {
+        "mtype": "np.ndarray",
+        "python_dependencies": None,
+        "lossy": True,
+    }
+
+    def build(self):
+        return np.array([[1, 3], [4, 7], [0.5, 2], [3, 3 / 7]])
+
+
+class _SeriesMultiPosXrDataArray(_SeriesMultiPos):
+
+    _tags = {
+        "mtype": "xr.DataArray",
+        "python_dependencies": "xarray",
+        "lossy": False,
+    }
+
+    def build(self):
+        import xarray as xr
+
+        return xr.DataArray(
+            [[1, 3], [4, 7], [0.5, 2], [3, 3 / 7]],
+            coords=[[0, 1, 2, 3], ["a", "b"]],
+        )
+
+
+class _SeriesMultiPosDaskSeries(_SeriesMultiPos):
+
+    _tags = {
+        "mtype": "dask_series",
+        "python_dependencies": "dask",
+        "lossy": False,
+    }
+
+    def build(self):
+        from dask.dataframe import from_pandas
+
+        pd_df = _SeriesMultiPosPdDataFrame().build()
+        return from_pandas(pd_df, npartitions=1)
+
+
+class _SeriesMultiPosPlDataFrame(_SeriesMultiPos):
+
+    _tags = {
+        "mtype": "pl.DataFrame",
+        "python_dependencies": "polars>=1.0",
+        "lossy": False,
+    }
+
+    def build(self):
+        from polars import DataFrame
+
+        return DataFrame(
+            {"__index__0": [0, 1, 2, 3], "a": [1, 4, 0.5, 3], "b": [3, 7, 2, 3 / 7]},
+            strict=False,
+        )
+
+
+class _SeriesMultiPosGluontsListDataset(_SeriesMultiPos):
+
+    _tags = {
+        "mtype": "gluonts_ListDataset_series",
+        "python_dependencies": "gluonts",
+        "lossy": True,
+    }
+
+    def build(self):
+        from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
+
+        pd_df = _SeriesMultiPosPdDataFrame().build()
+        return convert_pandas_to_listDataset(pd_df)
+
 
 ###
 # example 3: univariate, positive
 
-s = pd.Series([1, 4, 0.5, 3], dtype=np.float64, name="a")
 
-example_dict[("pd.Series", "Series", 3)] = s
-example_dict_lossy[("pd.Series", "Series", 3)] = False
+class _SeriesUnivPos(BaseExample):
 
-df = pd.DataFrame({"a": [1, 4, 0.5, 3]})
-
-example_dict[("pd.DataFrame", "Series", 3)] = df
-example_dict_lossy[("pd.DataFrame", "Series", 3)] = False
-
-arr = np.array([[1], [4], [0.5], [3]])
-
-example_dict[("np.ndarray", "Series", 3)] = arr
-example_dict_lossy[("np.ndarray", "Series", 3)] = True
-
-if _check_soft_dependencies("xarray", severity="none"):
-    import xarray as xr
-
-    da = xr.DataArray(
-        [[1], [4], [0.5], [3]],
-        coords=[[0, 1, 2, 3], ["a"]],
-    )
-
-    example_dict[("xr.DataArray", "Series", 3)] = da
-    example_dict_lossy[("xr.DataArray", "Series", 3)] = False
+    _tags = {
+        "scitype": "Series",
+        "index": 3,
+        "metadata": {
+            "is_univariate": True,
+            "is_equally_spaced": True,
+            "is_empty": False,
+            "has_nans": False,
+            "n_features": 1,
+            "feature_names": ["a"],
+            "feature_kind": [DtypeKind.FLOAT],
+        },
+    }
 
 
-if _check_soft_dependencies("polars>=0.20", severity="none"):
-    from polars import DataFrame
+class _SeriesUnivPosPdSeries(_SeriesUnivPos):
 
-    pl_df = DataFrame({"__index__0": [0, 1, 2, 3], "a": [1, 4, 0.5, 3]}, strict=False)
+    _tags = {
+        "mtype": "pd.Series",
+        "python_dependencies": None,
+        "lossy": False,
+    }
 
-    example_dict[("pl.DataFrame", "Series", 3)] = pl_df
-    example_dict_lossy[("pl.DataFrame", "Series", 3)] = False
-
-
-if _check_soft_dependencies("gluonts", severity="none"):
-    from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
-
-    list_dataset = convert_pandas_to_listDataset(df)
-
-    example_dict[("gluonts_ListDataset_series", "Series", 3)] = list_dataset
-    example_dict_lossy[("gluonts_ListDataset_series", "Series", 3)] = True
+    def build(self):
+        return pd.Series([1, 4, 0.5, 3], dtype=np.float64, name="a")
 
 
-example_dict_metadata[("Series", 3)] = {
-    "is_univariate": True,
-    "is_equally_spaced": True,
-    "is_empty": False,
-    "has_nans": False,
-    "n_features": 1,
-    "feature_names": ["a"],
-    "feature_kind": [DtypeKind.FLOAT],
-}
+class _SeriesUnivPosPdDataFrame(_SeriesUnivPos):
+
+    _tags = {
+        "mtype": "pd.DataFrame",
+        "python_dependencies": None,
+        "lossy": False,
+    }
+
+    def build(self):
+        return pd.DataFrame({"a": [1, 4, 0.5, 3]})
+
+
+class _SeriesUnivPosNpArray(_SeriesUnivPos):
+
+    _tags = {
+        "mtype": "np.ndarray",
+        "python_dependencies": None,
+        "lossy": True,
+    }
+
+    def build(self):
+        return np.array([[1], [4], [0.5], [3]])
+
+
+class _SeriesUnivPosXrDataArray(_SeriesUnivPos):
+
+    _tags = {
+        "mtype": "xr.DataArray",
+        "python_dependencies": "xarray",
+        "lossy": False,
+    }
+
+    def build(self):
+        import xarray as xr
+
+        return xr.DataArray(
+            [[1], [4], [0.5], [3]],
+            coords=[[0, 1, 2, 3], ["a"]],
+        )
+
+
+class _SeriesUnivPosPlDataFrame(_SeriesUnivPos):
+
+    _tags = {
+        "mtype": "pl.DataFrame",
+        "python_dependencies": "polars>=1.0",
+        "lossy": False,
+    }
+
+    def build(self):
+        from polars import DataFrame
+
+        return DataFrame(
+            {"__index__0": [0, 1, 2, 3], "a": [1, 4, 0.5, 3]}, strict=False
+        )
+
+
+class _SeriesUnivPosGluontsListDataset(_SeriesUnivPos):
+
+    _tags = {
+        "mtype": "gluonts_ListDataset_series",
+        "python_dependencies": "gluonts",
+        "lossy": True,
+    }
+
+    def build(self):
+        from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
+
+        pd_df = _SeriesUnivPosPdDataFrame().build()
+        return convert_pandas_to_listDataset(pd_df)
