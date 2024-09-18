@@ -107,7 +107,8 @@ class _SeriesUnivDaskSeries(_SeriesUniv):
     def build(self):
         from dask.dataframe import from_pandas
 
-        return from_pandas(self._get_example("pd.DataFrame", 0), npartitions=1)
+        df = _SeriesUnivPdDataFrame().build()
+        return from_pandas(df, npartitions=1)
 
 
 class _SeriesUnivPlDataFrame(_SeriesUniv):
@@ -135,7 +136,8 @@ class _SeriesUnivGluontsListDataset(_SeriesUniv):
     def build(self):
         from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
 
-        return convert_pandas_to_listDataset(self._get_example("pd.DataFrame", 0))
+        df = _SeriesUnivPdDataFrame().build()
+        return convert_pandas_to_listDataset(df)
 
 
 ###
