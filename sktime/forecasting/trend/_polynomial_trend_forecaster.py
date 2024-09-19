@@ -74,7 +74,7 @@ class PolynomialTrendForecaster(BaseForecaster):
         This is a fitted ``sklearn`` pipeline with steps
         ``PolynomialFeatures(degree, with_intercept)``,
         followed by a clone of ``regressor``.
-    
+
     References
     ----------
     .. [1] Hyndman, Rob J., and George Athanasopoulos. Forecasting: principles
