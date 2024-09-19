@@ -9,7 +9,6 @@ import numpy as np
 import pandas as pd
 from scipy.stats import norm
 from sklearn.base import clone
-from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures
@@ -295,6 +294,8 @@ class PolynomialTrendForecaster(BaseForecaster):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        from sklearn.ensemble import RandomForestRegressor
+
         params_list = [
             {},
             {
@@ -302,6 +303,12 @@ class PolynomialTrendForecaster(BaseForecaster):
                 "degree": 2,
                 "with_intercept": False,
                 "prediction_intervals": False,
+            },
+            {
+                "regressor": RandomForestRegressor(),
+                "degree": 2,
+                "with_intercept": True,
+                "prediction_intervals": True,
             },
         ]
 
