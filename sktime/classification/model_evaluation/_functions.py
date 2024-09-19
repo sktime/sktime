@@ -23,6 +23,25 @@ from sktime.utils.validation.forecasting import check_scoring
 PANDAS_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hier"]
 
 
+def _apply_split(y, iloc_ix):
+    """Generate indices to split data.
+
+    Parameters
+    ----------
+    y : sktime compatible tabular data container, Panel, Table scitype
+         numpy1D iterable, of shape [n_instances]
+    iloc_ix: generator object containing iloc splitter ouput.
+
+    Yields
+    ------
+    y_train_iloc : ndarray
+        The training set indices for that split.
+    y_test_iloc: ndarray
+    The testing set indices for that split.
+    """
+    yield
+
+
 def _check_scores(metrics) -> dict:
     """Validate and coerce to BaseMetric and segregate them based on predict type.
 
