@@ -7,7 +7,8 @@ __all__ = ["PolynomialTrendForecaster"]
 
 import numpy as np
 import pandas as pd
-from scipy.stats import norm
+
+# from scipy.stats import norm
 from sklearn.base import clone
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
@@ -223,57 +224,57 @@ class PolynomialTrendForecaster(BaseForecaster):
         pred_var = pd.DataFrame(l_var, columns=[self._y.name])
         return pred_var
 
-    def _predict_quantiles(self, fh, X=None, alpha=None):
-        """Compute/return prediction quantiles for a forecast.
+    # def _predict_quantiles(self, fh, X=None, alpha=None):
+    #     """Compute/return prediction quantiles for a forecast.
 
-        private _predict_quantiles containing the core logic,
-            called from predict_quantiles and default _predict_interval
+    #     private _predict_quantiles containing the core logic,
+    #         called from predict_quantiles and default _predict_interval
 
-        Parameters
-        ----------
-        fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
-        X : optional (default=None)
-            guaranteed to be of a type in self.get_tag("X_inner_mtype")
-            Exogeneous time series to predict from.
-        alpha : list of float, optional
-            A list of probabilities at which quantile forecasts are computed.
-            If passed as None then defaults to [0.5]
+    #     Parameters
+    #     ----------
+    #     fh : guaranteed to be ForecastingHorizon
+    #         The forecasting horizon with the steps ahead to to predict.
+    #     X : optional (default=None)
+    #         guaranteed to be of a type in self.get_tag("X_inner_mtype")
+    #         Exogeneous time series to predict from.
+    #     alpha : list of float, optional
+    #         A list of probabilities at which quantile forecasts are computed.
+    #         If passed as None then defaults to [0.5]
 
-        Returns
-        -------
-        quantiles : pd.DataFrame
-            Column has multi-index: first level is variable name from y in fit,
-                second level being the values of alpha passed to the function.
-            Row index is fh, with additional (upper) levels equal to instance levels,
-                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
-            Entries are quantile forecasts, for var in col index,
-                at quantile probability in second col index, for the row index.
-        """
-        if alpha is None:
-            alpha = [0.5]
+    #     Returns
+    #     -------
+    #     quantiles : pd.DataFrame
+    #         Column has multi-index: first level is variable name from y in fit,
+    #             second level being the values of alpha passed to the function.
+    #         Row index is fh, with additional (upper) levels equal to instance levels,
+    #                 from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+    #         Entries are quantile forecasts, for var in col index,
+    #             at quantile probability in second col index, for the row index.
+    #     """
+    #     if alpha is None:
+    #         alpha = [0.5]
 
-        # get forecasts
-        pred_values = self.predict(fh).values.flatten()
+    #     # get forecasts
+    #     pred_values = self.predict(fh).values.flatten()
 
-        l_var = self._predict_var(fh=fh, X=X, cov=False)
+    #     l_var = self._predict_var(fh=fh, X=X, cov=False)
 
-        all_quantiles = []
+    #     all_quantiles = []
 
-        for a in alpha:
-            z_alpha = norm.ppf(a)
-            l_quant = np.sqrt(l_var.values) * z_alpha
-            all_quantiles.append(l_quant.flatten() + pred_values)
+    #     for a in alpha:
+    #         z_alpha = norm.ppf(a)
+    #         l_quant = np.sqrt(l_var.values) * z_alpha
+    #         all_quantiles.append(l_quant.flatten() + pred_values)
 
-        df = pd.DataFrame(all_quantiles).transpose()
-        df.index = fh.to_absolute(self.cutoff).to_pandas()
+    #     df = pd.DataFrame(all_quantiles).transpose()
+    #     df.index = fh.to_absolute(self.cutoff).to_pandas()
 
-        multi_index = pd.MultiIndex.from_product(
-            [["y"], alpha], names=["variable", "alpha"]
-        )
-        df.columns = multi_index
+    #     multi_index = pd.MultiIndex.from_product(
+    #         [["y"], alpha], names=["variable", "alpha"]
+    #     )
+    #     df.columns = multi_index
 
-        return df
+    #     return df
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
