@@ -244,10 +244,6 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
     ],
     "TSRGridSearchCV": ["test_multioutput"],  # see 6708
-    # skip PytorchForecastingNBeats,
-    # since the pytorch forecasting adapter class inplements _predict_quantiles
-    # but PytorchForecastingNBeats can not perform quantile forecast
-    "PytorchForecastingNBeats": ["test_pred_int_tag"],
 }
 
 # exclude tests but keyed by test name

@@ -445,6 +445,28 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         return {}
 
     @classmethod
+    def _implementation_counts(cls) -> dict:
+        """Functions need at least n overrides to be counted as implemented.
+
+        A function needs to be specified only if n!=1.
+
+        Returns
+        -------
+        dict
+            key is function name, and the value is n.
+        """
+        implementation_counts = _PytorchForecastingAdapter._implementation_counts()
+        implementation_counts.update(
+            {
+                "_predict_proba": 3,
+                "_predict_var": 3,
+                "_predict_interval": 3,
+                "_predict_quantiles": 3,
+            }
+        )
+        return implementation_counts
+
+    @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
 

@@ -3530,6 +3530,24 @@ class _BaseGlobalForecaster(BaseForecaster):
         return pred_dist
 
     @classmethod
+    def _implementation_counts(cls) -> dict:
+        """Functions need at least n overrides to be counted as implemented.
+
+        A function needs to be specified only if n!=1.
+
+        Returns
+        -------
+        dict
+            key is function name, and the value is n.
+        """
+        return {
+            "_predict_proba": 2,
+            "_predict_var": 2,
+            "_predict_interval": 2,
+            "_predict_quantiles": 2,
+        }
+
+    @classmethod
     def _has_implementation_of(cls, method):
         """Check if method has a concrete implementation in this class.
 
@@ -3549,6 +3567,7 @@ class _BaseGlobalForecaster(BaseForecaster):
             n is different for each function. If a function has been overridden
             in _BaseGlobalForecaster and is going to be overridden in
             specific forecaster again, n should be 2.
+            n should be specified in the return of self._implementation_counts if n!=1.
         """
         # walk through method resolution order and inspect methods
         #   of classes and direct parents, "adjacent" classes in mro
@@ -3556,14 +3575,9 @@ class _BaseGlobalForecaster(BaseForecaster):
         # collect all methods that are not none
         methods = [getattr(c, method, None) for c in mro]
         methods = [m for m in methods if m is not None]
-        n_2 = [
-            "_predict_proba",
-            "_predict_var",
-            "_predict_interval",
-            "_predict_quantiles",
-        ]
-        if method in n_2:
-            n = 2
+        implementation_counts = cls._implementation_counts()
+        if method in implementation_counts.keys():
+            n = implementation_counts[method]
         else:
             n = 1
         _n = 0
