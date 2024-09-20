@@ -455,7 +455,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         dict
             key is function name, and the value is n.
         """
-        implementation_counts = _PytorchForecastingAdapter._implementation_counts()
+        implementation_counts = super()._implementation_counts()
         implementation_counts.update(
             {
                 "_predict_proba": 3,
