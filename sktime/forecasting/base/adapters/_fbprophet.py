@@ -16,14 +16,15 @@ class _ProphetAdapter(BaseForecaster):
     """Base class for interfacing prophet and neuralprophet."""
 
     _tags = {
-        "authors": ["mloning", "aiwalter", "fkiraly"],
+        "authors": ["bletham", "tcuongd", "mloning", "aiwalter", "fkiraly"],
+        # bletham and tcuongd for prophet/fbprophet
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "y_inner_mtype": "pd.DataFrame",
-        "python_dependencies": "prophet",
+        "python_dependencies": ["prophet", "numpy<2.0"],
     }
 
     def _convert_int_to_date(self, y):
@@ -87,13 +88,22 @@ class _ProphetAdapter(BaseForecaster):
         df.index.name = "ds"
         df = df.reset_index()
 
-        # Add seasonality/seasonalities
+        # Add seasonality/seasonalities and collect condition names
+        condition_names = []
         if self.add_seasonality:
             if isinstance(self.add_seasonality, dict):
                 self._forecaster.add_seasonality(**self.add_seasonality)
+                if (
+                    condition_name := self.add_seasonality.get("condition_name", None)
+                ) is not None:
+                    condition_names.append(condition_name)
             elif isinstance(self.add_seasonality, list):
                 for seasonality in self.add_seasonality:
                     self._forecaster.add_seasonality(**seasonality)
+                    if (
+                        condition_name := seasonality.get("condition_name", None)
+                    ) is not None:
+                        condition_names.append(condition_name)
 
         # Add country holidays
         if self.add_country_holidays:
@@ -103,7 +113,8 @@ class _ProphetAdapter(BaseForecaster):
         if X is not None:
             X = X.copy()
             df, X = _merge_X(df, X)
-            for col in X.columns:
+            regressor_names = (col for col in X.columns if col not in condition_names)
+            for col in regressor_names:
                 self._forecaster.add_regressor(col)
 
         # Add floor and bottom when growth is logistic
@@ -299,7 +310,7 @@ class _ProphetAdapter(BaseForecaster):
         """
         fitted_params = {}
         for name in ["k", "m", "sigma_obs"]:
-            fitted_params[name] = self._forecaster.params[name][0][0]
+            fitted_params[name] = self._forecaster.params[name].flatten()[0]
         for name in ["delta", "beta"]:
             fitted_params[name] = self._forecaster.params[name][0]
         return fitted_params

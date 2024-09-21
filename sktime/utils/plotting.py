@@ -8,14 +8,6 @@ __author__ = ["mloning", "RNKuhns", "Dbhasin1", "chillerobscuro", "benheid"]
 import math
 from warnings import simplefilter, warn
 
-import numpy as np
-import pandas as pd
-
-from sktime.datatypes import convert_to
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-from sktime.utils.validation.forecasting import check_interval_df, check_y
-from sktime.utils.validation.series import check_consistent_index_type
-
 
 def plot_series(
     *series,
@@ -79,22 +71,32 @@ def plot_series(
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> fig, ax = plot_series(y)  # doctest: +SKIP
-
     """
+    from sktime.utils.dependencies import _check_soft_dependencies
+
     _check_soft_dependencies("matplotlib", "seaborn")
     import matplotlib.pyplot as plt
+    import pandas as pd
     import seaborn as sns
-    from matplotlib.cbook import flatten
-    from matplotlib.ticker import FuncFormatter, MaxNLocator
+
+    from sktime.datatypes import convert_to
+    from sktime.utils.validation.forecasting import check_interval_df, check_y
+    from sktime.utils.validation.series import check_consistent_index_type
 
     for y in series:
         check_y(y)
 
-    series = list(series)
-    series = [convert_to(y, "pd.Series", "Series") for y in series]
+    l_series = list(series)
+    l_series = [convert_to(y, "pd.Series", "Series") for y in l_series]
+    for i in range(len(l_series)):
+        if isinstance(list(series)[i], pd.DataFrame):
+            l_series[i].name = list(series)[i].columns[0]
+        elif isinstance(list(series)[i], pd.Series):
+            l_series[i].name = list(series)[i].name
 
-    n_series = len(series)
+    n_series = len(l_series)
     _ax_kwarg_is_none = True if ax is None else False
+
     # labels
     if labels is not None:
         if n_series != len(labels):
@@ -119,15 +121,19 @@ def plot_series(
     else:
         markers = ["o" for _ in range(n_series)]
 
-    # create combined index
-    index = series[0].index
-    for y in series[1:]:
-        # check index types
-        check_consistent_index_type(index, y.index)
-        index = index.union(y.index)
+    for y in l_series[1:]:
+        check_consistent_index_type(l_series[0].index, y.index)
 
-    # generate integer x-values
-    xs = [np.argwhere(index.isin(y.index)).ravel() for y in series]
+    if isinstance(l_series[0].index, pd.core.indexes.period.PeriodIndex):
+        from copy import deepcopy
+
+        tmp = deepcopy(l_series)  # local copy
+        l_series = tmp
+
+    for y in l_series:
+        # check index types
+        if isinstance(y.index, pd.core.indexes.period.PeriodIndex):
+            y.index = y.index.to_timestamp()
 
     # create figure if no ax provided for plotting
     if _ax_kwarg_is_none:
@@ -138,65 +144,60 @@ def plot_series(
         colors = sns.color_palette("colorblind", n_colors=n_series)
 
     # plot series
-    for x, y, color, label, marker in zip(xs, series, colors, labels, markers):
+    for y, color, label, marker in zip(l_series, colors, labels, markers):
         # scatter if little data is available or index is not complete
-        if len(x) <= 3 or not np.array_equal(np.arange(x[0], x[-1] + 1), x):
-            plot_func = sns.scatterplot
+        if len(y) <= 3:  # or not np.array_equal(np.arange(x[0], x[-1] + 1), x):
+            ax.scatter(y.index, y.values, marker=marker, label=label, color=color, s=4)
         else:
-            plot_func = sns.lineplot
+            ax.plot(
+                y.index, y.values, marker=marker, label=label, color=color, markersize=4
+            )
 
-        plot_func(x=x, y=y, ax=ax, marker=marker, label=label, color=color)
-
-    # combine data points for all series
-    xs_flat = list(flatten(xs))
-
-    # set x label of data point to the matching index
-    def format_fn(tick_val, tick_pos):
-        if int(tick_val) in xs_flat:
-            return index[int(tick_val)]
-        else:
-            return ""
-
-    # dynamically set x label ticks and spacing from index labels
-    ax.xaxis.set_major_formatter(FuncFormatter(format_fn))
-    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-
-    # Set the figure's title
+    # Set the axes title
     if title is not None:
-        fig.suptitle(title, size="xx-large")
+        ax.set_title(title, size="xx-large")
 
     # Label the x and y axes
     if x_label is not None:
         ax.set_xlabel(x_label)
 
-    _y_label = y_label if y_label is not None else series[0].name
+    _y_label = y_label if y_label is not None else l_series[0].name
     ax.set_ylabel(_y_label)
 
     if legend:
         ax.legend()
     if pred_interval is not None:
-        check_interval_df(pred_interval, series[-1].index)
-        ax = plot_interval(ax, pred_interval, index)
+        if isinstance(pred_interval.index, pd.core.indexes.period.PeriodIndex):
+            pred_interval.index = pred_interval.index.to_timestamp()
+        check_interval_df(pred_interval, l_series[-1].index)
+
+        ax = plot_interval(ax, pred_interval)
     if _ax_kwarg_is_none:
         return fig, ax
     else:
         return ax
 
 
-def plot_interval(ax, interval_df, ix=None):
-    cov = interval_df.columns.levels[1][0]
-    var_name = interval_df.columns.levels[0][0]
-    x_ix = np.argwhere(ix.isin(interval_df.index)).ravel()
-    x_ix = np.array(x_ix)
+def plot_interval(ax, interval_df):
+    import seaborn as sns
 
-    ax.fill_between(
-        x_ix,
-        interval_df[var_name][cov]["lower"].astype("float64").to_numpy(),
-        interval_df[var_name][cov]["upper"].astype("float64").to_numpy(),
-        alpha=0.2,
-        color=ax.get_lines()[-1].get_c(),
-        label=f"{int(cov * 100)}% prediction interval",
-    )
+    var_name = interval_df.columns.levels[0][0]
+
+    n = len(interval_df.columns.levels[1])
+    if n == 1:
+        colors = [ax.get_lines()[-1].get_c()]
+    else:
+        colors = sns.color_palette("colorblind", n_colors=n)
+
+    for i, cov in enumerate(interval_df.columns.levels[1]):
+        ax.fill_between(
+            interval_df.index,
+            interval_df[var_name][cov]["lower"].astype("float64").to_numpy(),
+            interval_df[var_name][cov]["upper"].astype("float64").to_numpy(),
+            alpha=0.2,
+            color=colors[i],
+            label=f"{int(cov * 100)}% prediction interval",
+        )
     ax.legend()
     return ax
 
@@ -233,8 +234,14 @@ def plot_lags(series, lags=1, suptitle=None):
     >>> fig, ax = plot_lags(y, lags=2) # plot of y(t) with y(t-2)  # doctest: +SKIP
     >>> fig, ax = plot_lags(y, lags=[1,2,3]) # y(t) & y(t-1), y(t-2).. # doctest: +SKIP
     """
+    from sktime.utils.dependencies import _check_soft_dependencies
+
     _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
+    import numpy as np
+    import pandas as pd
+
+    from sktime.utils.validation.forecasting import check_y
 
     check_y(series)
 
@@ -343,9 +350,15 @@ def plot_correlations(
     >>> y = load_airline()
     >>> fig, ax = plot_correlations(y)  # doctest: +SKIP
     """
+    from sktime.utils.dependencies import _check_soft_dependencies
+
     _check_soft_dependencies("matplotlib", "statsmodels")
     import matplotlib.pyplot as plt
+    import numpy as np
     from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+
+    from sktime.datatypes import convert_to
+    from sktime.utils.validation.forecasting import check_y
 
     series = check_y(series)
     series = convert_to(series, "pd.Series", "Series")
@@ -438,8 +451,11 @@ def plot_windows(cv, y, title="", ax=None):
     ax : matplotlib.axes.Axes
         matplotlib axes object with the figure
     """
+    from sktime.utils.dependencies import _check_soft_dependencies
+
     _check_soft_dependencies("matplotlib", "seaborn")
     import matplotlib.pyplot as plt
+    import numpy as np
     import seaborn as sns
     from matplotlib.ticker import MaxNLocator
 
@@ -505,22 +521,46 @@ def plot_windows(cv, y, title="", ax=None):
 
 
 def plot_calibration(y_true, y_pred, ax=None):
-    """Plot the calibration of a probabilistic forecast.
+    r"""Plot the calibration curve for a sample of quantile predictions.
 
-    Calculates internally the calibration of the quantile forecast and
-    visualise it.
+    Visualizes calibration of the quantile predictions.
 
-    x-axis: interval from 0 to 1
-    y-axis: interval from 0 to 1
-    plot elements: the calibration fo the forecast (blue) and the ideal
-        calibration (orange)
+    Computes the following calibration plot:
+
+    Let :math:`p_1, \dots, p_k` be the quantile points at which
+    predictions in ``y_pred`` were queried,
+    e.g., via ``alpha`` in ``predict_quantiles``.
+
+    Let :math:`y_1, \dots, y_N` be the actual values in ``y_true``,
+    and let :math:`\widehat{y}_{i,j}`, for `i = 1 \dots N, j = 1 \dots k`
+    be quantile predictions at quantile point :math:`p_j`,
+    of the conditional distribution of :math:`y_i`, as contained in ``y_pred``.
+
+    We compute the calibration indicators :math:`c_{i, j},`
+    as :math:`c_{i, j} = 1, \{ if } y_i \le \widehat{y}_{i,j} \text{ and } 0, \text{otherwise},`
+    and calibration fractions as
+
+    .. math:: \widehat{p}_j = \frac{1}{N} \sum_{i = 1}^N c_{i, j}.
+
+    If the quantile predictions are well-calibrated, we expect :math:`\widehat{p}_j`
+    to be close to :math:`p_j`.
+
+    x-axis: interval from 0 to 1, quantile points
+    y-axis: interval from 0 to 1, calibration fractions
+    plot elements: calibration curve of the quantile predictions (blue) and the ideal
+        calibration curve (orange), the curve with equation y = x.
+        Calibration curve are points :math:`(p_i, \widehat{p}_i), i = 1 \dots, k`;
+        Ideal curve is the curve with equation y = x,
+        containing points :math:`(p_i, p_i)`.
 
     Parameters
     ----------
     y_true : pd.Series, single columned pd.DataFrame, or single columned np.array.
-        The actual values of the forecast
+        The actual values
     y_pred : pd.DataFrame
-        The quantile forecast.
+        The quantile predictions,
+        formatted as returned by ``BaseDistribution.quantile``,
+        or ``predict_quantiles``
     ax : matplotlib.axes.Axes, optional (default=None)
         Axes on which to plot. If None, axes will be created and returned.
 
@@ -530,8 +570,14 @@ def plot_calibration(y_true, y_pred, ax=None):
         matplotlib figure object
     ax : matplotlib.axes.Axes
         matplotlib axes object with the figure
-    """
+    """  # noqa: E501
+    from sktime.utils.dependencies import _check_soft_dependencies
+
+    _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
+    import pandas as pd
+
+    from sktime.datatypes import convert_to
 
     series = convert_to(y_true, "pd.Series", "Series")
 

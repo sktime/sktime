@@ -8,6 +8,7 @@ import pytest
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.split import ExpandingWindowSplitter, SlidingWindowSplitter
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils.datetime import _coerce_duration_to_int
 from sktime.utils.validation import (
     array_is_datetime64,
@@ -109,6 +110,12 @@ def _get_n_incomplete_windows(window_length, step_length) -> int:
     )
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(
+        [SlidingWindowSplitter, ExpandingWindowSplitter, ForecastingHorizon]
+    ),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("CV", [SlidingWindowSplitter, ExpandingWindowSplitter])
 def test_window_splitter_in_sample_fh_smaller_than_window_length(CV):
     """Test WindowSplitter."""
@@ -121,6 +128,12 @@ def test_window_splitter_in_sample_fh_smaller_than_window_length(CV):
     np.testing.assert_array_equal(train_windows[0], np.array([0, 1, 2]))
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(
+        [SlidingWindowSplitter, ExpandingWindowSplitter, ForecastingHorizon]
+    ),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("CV", [SlidingWindowSplitter, ExpandingWindowSplitter])
 def test_window_splitter_in_sample_fh_greater_than_window_length(CV):
     """Test WindowSplitter."""

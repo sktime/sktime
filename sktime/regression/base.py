@@ -69,6 +69,7 @@ class BaseRegressor(BasePanelMixin):
         "has_nans",
         "is_univariate",
         "is_equal_length",
+        "feature_kind",
     ]
 
     # attribute name where vectorized estimators are stored
@@ -166,15 +167,25 @@ class BaseRegressor(BasePanelMixin):
 
         Parameters
         ----------
-        X : sktime compatible time series panel data container, Panel scitype, e.g.,
-            pd-multiindex: pd.DataFrame with columns = variables,
-            index = pd.MultiIndex with first level = instance indices,
-            second level = time indices
-            numpy3D: 3D np.array (any number of dimensions, equal length series)
-            of shape [n_instances, n_dimensions, series_length]
-            or of any other supported Panel mtype
-            for list of mtypes, see datatypes.SCITYPE_REGISTER
-            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        X : sktime compatible time series panel data container of Panel scitype
+            time series to fit the estimator to.
+
+            Can be in any :term:`mtype` of ``Panel`` :term:`scitype`, for instance:
+
+            * pd-multiindex: pd.DataFrame with columns = variables,
+              index = pd.MultiIndex with first level = instance indices,
+              second level = time indices
+            * numpy3D: 3D np.array (any number of dimensions, equal length series)
+              of shape [n_instances, n_dimensions, series_length]
+            * or of any other supported ``Panel`` :term:`mtype`
+
+            for list of mtypes, see ``datatypes.SCITYPE_REGISTER``
+
+            for specifications, see ``examples/AA_datatypes_and_datasets.ipynb``
+
+            Not all estimators support panels with multivariate or unequal length
+            series, see the :ref:`tag reference <panel_tags>` for details.
+
         y : sktime compatible tabular data container, Table scitype
             1D iterable, of shape [n_instances]
             or 2D iterable, of shape [n_instances, n_dimensions]
@@ -254,25 +265,37 @@ class BaseRegressor(BasePanelMixin):
 
         Parameters
         ----------
-        X : sktime compatible time series panel data container, Panel scitype, e.g.,
-            pd-multiindex: pd.DataFrame with columns = variables,
-            index = pd.MultiIndex with first level = instance indices,
-            second level = time indices
-            numpy3D: 3D np.array (any number of dimensions, equal length series)
-            of shape [n_instances, n_dimensions, series_length]
-            or of any other supported Panel mtype
-            for list of mtypes, see datatypes.SCITYPE_REGISTER
-            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        X : sktime compatible time series panel data container of Panel scitype
+            time series to predict labels for.
+
+            Can be in any :term:`mtype` of ``Panel`` :term:`scitype`, for instance:
+
+            * pd-multiindex: pd.DataFrame with columns = variables,
+              index = pd.MultiIndex with first level = instance indices,
+              second level = time indices
+            * numpy3D: 3D np.array (any number of dimensions, equal length series)
+              of shape [n_instances, n_dimensions, series_length]
+            * or of any other supported ``Panel`` :term:`mtype`
+
+            for list of mtypes, see ``datatypes.SCITYPE_REGISTER``
+
+            for specifications, see ``examples/AA_datatypes_and_datasets.ipynb``
+
+            Not all estimators support panels with multivariate or unequal length
+            series, see the :ref:`tag reference <panel_tags>` for details.
 
         Returns
         -------
-        y_pred : sktime compatible tabular data container, Table scitype
-            1D iterable, of shape [n_instances]
-            or 2D iterable, of shape [n_instances, n_dimensions]
-            predicted class labels
-            0-th indices correspond to instance indices in X
-            1-st indices (if applicable) correspond to multioutput vector indices in X
-            1D np.npdarray, if y univariate (one dimension)
+        y_pred : sktime compatible tabular data container, of Table :term:`scitype`
+            predicted regression labels
+
+            1D iterable, of shape [n_instances],
+            or 2D iterable, of shape [n_instances, n_dimensions].
+
+            0-th indices correspond to instance indices in X,
+            1-st indices (if applicable) correspond to multioutput vector indices in X.
+
+            1D np.npdarray, if y univariate (one dimension);
             otherwise, same type as y passed in fit
         """
         self.check_is_fitted()
@@ -315,7 +338,11 @@ class BaseRegressor(BasePanelMixin):
 
         Returns
         -------
-        float, R-squared score of predict(X) vs y
+        float (default) or 1D np.array of float
+            R-squared score of predict(X) vs y
+            float if multioutput="uniform_average" or "variance_weighted,
+            or y is univariate;
+            1D np.array if multioutput="raw_values" and y is multivariate
         """
         from sklearn.metrics import r2_score
 

@@ -2,14 +2,12 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Unit tests of Imputer functionality."""
 
-__author__ = ["aiwalter"]
-__all__ = []
-
 import numpy as np
 import pytest
 
 from sktime.datatypes import get_examples
 from sktime.forecasting.naive import NaiveForecaster
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.compose import TransformByLevel
 from sktime.transformations.series.impute import Imputer
 from sktime.utils._testing.forecasting import make_forecasting_problem
@@ -33,6 +31,10 @@ z.iloc[0] = np.nan
 z.iloc[-1] = np.nan
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(Imputer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("forecaster", [None, NaiveForecaster()])
 @pytest.mark.parametrize("value", [None, 1])
 @pytest.mark.parametrize("Z", [y, X, z])
@@ -60,6 +62,10 @@ def test_imputer(method, Z, value, forecaster):
     assert not y_hat.isnull().to_numpy().any()
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(Imputer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "method",
     [
@@ -76,7 +82,6 @@ def test_impute_multiindex(method):
 
     Failure case in bug #6224
     """
-
     df = get_examples(mtype="pd-multiindex")[0].copy()
     df.iloc[:3, :] = np.nan  # instance 0 entirely missing
     df.iloc[3:4, :] = np.nan  # instance 1 first timepoint missing
@@ -98,6 +103,10 @@ def test_impute_multiindex(method):
     assert np.array_equal(df_imp, df_imp_tbl, equal_nan=True)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(Imputer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_imputer_forecaster_y():
     """Test that forecaster imputer works with y.
 

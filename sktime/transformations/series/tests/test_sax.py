@@ -1,13 +1,19 @@
 """SAX transformer test code."""
+
 import numpy as np
 import pytest
 
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.sax import SAX
 
 
 # Check that exception is raised for bad size values.
 # input types - string, float, negative float, empty dict.
 # correct input is an integer, see below for value restrictions.
+@pytest.mark.skipif(
+    not run_test_for_class(SAX),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("bad_size", ["str", 1.2, -1.2, {}])
 def test_bad_input_types(bad_size):
     """Test that exception is raised for bad sizes."""
@@ -16,6 +22,10 @@ def test_bad_input_types(bad_size):
             SAX(**{attribute: bad_size})
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(SAX),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "attribute,bad_size",
     [
@@ -30,6 +40,10 @@ def test_bad_input_values(attribute, bad_size):
         SAX(**{attribute: bad_size})
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(SAX),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "word_size,alphabet_size,frame_size,expected",
     [

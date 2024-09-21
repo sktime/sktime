@@ -24,7 +24,8 @@ overall, conversions from non-lossy representations to any other ones
 import numpy as np
 import pandas as pd
 
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.datatypes._dtypekind import DtypeKind
+from sktime.utils.dependencies import _check_soft_dependencies
 
 example_dict = dict()
 example_dict_lossy = dict()
@@ -74,6 +75,7 @@ example_dict_metadata[("Table", 0)] = {
     "n_instances": 4,
     "n_features": 1,
     "feature_names": ["a"],
+    "feature_kind": [DtypeKind.FLOAT],
 }
 
 ###
@@ -121,4 +123,5 @@ example_dict_metadata[("Table", 1)] = {
     "n_instances": 4,
     "n_features": 2,
     "feature_names": ["a", "b"],
+    "feature_kind": [DtypeKind.FLOAT, DtypeKind.FLOAT],
 }

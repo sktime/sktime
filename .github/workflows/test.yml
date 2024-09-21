@@ -27,7 +27,7 @@ jobs:
         run: python3 -m pip install pre-commit
       - id: changed-files
         name: identify modified files
-        uses: tj-actions/changed-files@v44
+        uses: tj-actions/changed-files@v45
       - name: run pre-commit hooks on modified files
         run: pre-commit run --color always --files ${{ steps.changed-files.outputs.all_changed_files }} --show-diff-on-failure
       - name: check missing __init__ files
@@ -128,7 +128,7 @@ jobs:
         run: python -m pip list
 
       - name: Run tests
-        run: make PYTESTOPTIONS="--cov --cov-report=xml --timeout=600" test_softdeps
+        run: make test_softdeps
 
   test-nosoftdeps-full:
     needs: test-nosoftdeps
@@ -156,7 +156,7 @@ jobs:
         run: python -m pip list
 
       - name: Run tests
-        run: make PYTESTOPTIONS="--cov --cov-report=xml --timeout=600" test_softdeps_full
+        run: make PYTESTOPTIONS="--cov --matrixdesign=False --timeout=600" test_softdeps_full
 
   test-mlflow:
     needs: test-nosoftdeps
@@ -178,7 +178,7 @@ jobs:
         run: python -m pip list
 
       - name: Run tests
-        run: make PYTESTOPTIONS="--cov --cov-report=xml --timeout=600" test_mlflow
+        run: make test_mlflow
 
   test-cython-estimators:
     needs: test-nosoftdeps
@@ -197,8 +197,9 @@ jobs:
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
-      - name: Install OS packages
-        run: brew install libomp
+      - name: Install OSX packages
+        shell: bash
+        run: ./.github/scripts/install_osx_dependencies.sh
 
       - name: Install sktime and dependencies
         run: |
@@ -208,7 +209,7 @@ jobs:
         run: python -m pip list
 
       - name: Run tests
-        run: make PYTESTOPTIONS="--cov --cov-report=xml --only_cython_estimators=True --matrixdesign=False --timeout=600" test_check_suite
+        run: make PYTESTOPTIONS="--only_cython_estimators=True --matrixdesign=False --timeout=600" test_check_suite
 
       - name: Publish code coverage
         uses: codecov/codecov-action@v4
@@ -266,7 +267,7 @@ jobs:
     strategy:
       fail-fast: false  # to not fail all combinations if just one fail
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        python-version: ['3.9', '3.10', '3.11', '3.12']
         os: [ubuntu-latest, macos-13, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
@@ -284,9 +285,12 @@ jobs:
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
+      - name: Install OSX packages
+        run: ./.github/scripts/install_osx_dependencies.sh
+
       - name: Install sktime and dependencies
-        run: |
-          python -m pip install .[all_extras_pandas2,dev,dl] --no-cache-dir
+        shell: bash
+        run: python -m pip install .[all_extras_pandas2,dev,dl,compatibility_tests] --no-cache-dir
 
       - name: Show dependencies
         run: python -m pip list
@@ -307,7 +311,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        python-version: ['3.9', '3.10', '3.11', '3.12']
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -326,7 +330,7 @@ jobs:
 
       - name: Install sktime and dependencies
         run: |
-          python -m pip install .[all_extras,dev,pandas1] --no-cache-dir
+          python -m pip install .[all_extras,dev,pandas1,numpy1] --no-cache-dir
 
       - name: Show dependencies
         run: python -m pip list

@@ -17,7 +17,7 @@ from sktime.utils._testing.panel import (
     _make_regression_y,
     make_regression_problem,
 )
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 class _DummyRegressor(BaseRegressor):

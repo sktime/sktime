@@ -11,7 +11,6 @@ import math
 import time
 
 import numpy as np
-from joblib import Parallel, delayed
 from sklearn.base import BaseEstimator
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import check_random_state
@@ -144,7 +143,7 @@ class DrCIF(BaseClassifier):
         # packaging info
         # --------------
         "authors": "MatthewMiddlehurst",
-        "python_dependencies": "numba",
+        "python_dependencies": ["numba", "joblib"],
         # estimator type
         # --------------
         "capability:multivariate": True,
@@ -213,6 +212,8 @@ class DrCIF(BaseClassifier):
             raise ValueError("DrCIF invalid base estimator given")
 
     def _fit(self, X, y):
+        from joblib import Parallel, delayed
+
         self.n_instances_, self.n_dims_, self.series_length_ = X.shape
 
         time_limit = self.time_limit_in_minutes * 60
@@ -368,6 +369,8 @@ class DrCIF(BaseClassifier):
         )
 
     def _predict_proba(self, X) -> np.ndarray:
+        from joblib import Parallel, delayed
+
         n_test_instances, _, series_length = X.shape
         if series_length != self.series_length_:
             raise ValueError(
@@ -409,7 +412,13 @@ class DrCIF(BaseClassifier):
         return output
 
     def _get_train_probs(self, X, y) -> np.ndarray:
+        from joblib import Parallel, delayed
+
+        from sktime.datatypes import convert_to
+
         self.check_is_fitted()
+        if not isinstance(X, np.ndarray):
+            X = convert_to(X, "numpy3D")
         X, y = check_X_y(X, y, coerce_to_numpy=True)
 
         # handle the single-class-label case

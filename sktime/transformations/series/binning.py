@@ -1,4 +1,5 @@
 """Time binning for turning series equally spaced."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly"]
@@ -117,7 +118,7 @@ class TimeBinAggregate(BaseTransformer):
         """
         bins = self.bins
         idx_cut = pd.cut(X.index, bins=self._bins, include_lowest=True)
-        Xt = X.groupby(idx_cut).apply(self._aggfunc)
+        Xt = X.groupby(idx_cut, observed=False).apply(self._aggfunc)
 
         if self.return_index == "range":
             Xt = Xt.reset_index(drop=True)

@@ -9,6 +9,11 @@ All classifiers in ``sktime`` can be listed using the ``sktime.registry.all_esti
 using ``estimator_types="classifier"``, optionally filtered by tags.
 Valid tags can be listed using ``sktime.registry.all_tags``.
 
+A full table with tag based search is also available on the
+:doc:`Estimator Search Page </estimator_overview>`
+(select "classifier" in the "Estimator type" dropdown).
+
+
 Composition
 -----------
 
@@ -64,6 +69,7 @@ Deep learning
     MACNNClassifier
     MLPClassifier
     MCDCNNClassifier
+    MVTSTransformerClassifier
     ResNetClassifier
     SimpleRNNClassifier
     TapNetClassifier

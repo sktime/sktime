@@ -12,7 +12,6 @@ import numpy as np
 import pytest
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.ensemble import VotingClassifier
-from sklearn.experimental import enable_halving_search_cv  # noqa
 from sklearn.model_selection import (
     GridSearchCV,
     GroupKFold,
@@ -36,9 +35,10 @@ from sklearn.model_selection import (
 from sklearn.pipeline import Pipeline
 
 from sktime.classification.interval_based import CanonicalIntervalForest
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.transformations.panel.pca import PCATransformer
 from sktime.utils._testing.panel import _make_panel_X, make_classification_problem
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 DATA_ARGS = [
     {"return_numpy": True, "n_columns": 2, "n_instances": 7, "n_timepoints": 12},
@@ -91,7 +91,8 @@ else:
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("numba", severity="none"),
+    not _check_soft_dependencies("numba", severity="none")
+    or not run_test_module_changed("sktime.classification"),
     reason="skip test if required soft dependency not available",
 )
 @pytest.mark.parametrize("data_args", DATA_ARGS)
@@ -104,6 +105,10 @@ def test_sklearn_cross_validation(data_args):
     assert isinstance(scores, np.ndarray)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.classification"),
+    reason="skip test if required soft dependency not available",
+)
 @pytest.mark.parametrize("data_args", DATA_ARGS)
 @pytest.mark.parametrize("cross_validation_method", CROSS_VALIDATION_METHODS)
 def test_sklearn_cross_validation_iterators(data_args, cross_validation_method):
@@ -116,7 +121,8 @@ def test_sklearn_cross_validation_iterators(data_args, cross_validation_method):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("numba", severity="none"),
+    not _check_soft_dependencies("numba", severity="none")
+    or not run_test_module_changed("sktime.classification"),
     reason="skip test if required soft dependency not available",
 )
 @pytest.mark.parametrize("data_args", DATA_ARGS)
@@ -135,7 +141,8 @@ def test_sklearn_parameter_tuning(data_args, parameter_tuning_method):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("numba", severity="none"),
+    not _check_soft_dependencies("numba", severity="none")
+    or not run_test_module_changed("sktime.classification"),
     reason="skip test if required soft dependency not available",
 )
 @pytest.mark.parametrize("data_args", DATA_ARGS)

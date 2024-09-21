@@ -1,17 +1,18 @@
 """Time series kmeans."""
-__author__ = ["chrisholder", "TonyBagnall"]
 
-from typing import Callable, Union
+__author__ = ["chrisholder", "TonyBagnall"]
+from collections.abc import Callable
+from typing import Union
 
 import numpy as np
 from numpy.random import RandomState
 
 from sktime.clustering.metrics.averaging import _resolve_average_callable
-from sktime.clustering.partitioning import TimeSeriesLloyds
+from sktime.clustering.partitioning import BaseTimeSeriesLloyds
 from sktime.distances import pairwise_distance
 
 
-class TimeSeriesKMeans(TimeSeriesLloyds):
+class TimeSeriesKMeans(BaseTimeSeriesLloyds):
     """Time series K-mean implementation.
 
     Parameters
@@ -36,7 +37,7 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
         Number of times the k-means algorithm will be run with different
         centroid seeds. The final result will be the best output of n_init
         consecutive runs in terms of inertia.
-    max_iter: int, defaults = 30
+    max_iter: int, defaults = 300
         Maximum number of iterations of the k-means algorithm for a single
         run.
     tol: float, defaults = 1e-6
@@ -87,6 +88,11 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
         # --------------
         "authors": ["chrisholder", "TonyBagnall"],
         "python_dependencies": "numba",
+        # estimator type
+        # --------------
+        "capability:out_of_sample": True,
+        "capability:predict": True,
+        "capability:predict_proba": False,
     }
 
     def __init__(
@@ -187,9 +193,9 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
                             curr_j, curr_indexes[k]
                         ]
 
-                self._average_params[
-                    "precomputed_medoids_pairwise_distance"
-                ] = distance_matrix
+                self._average_params["precomputed_medoids_pairwise_distance"] = (
+                    distance_matrix
+                )
 
             result = self._averaging_method(X[curr_indexes], **self._average_params)
             if result.shape[0] > 0:

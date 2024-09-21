@@ -1,4 +1,5 @@
 """Feature union."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly", "mloning"]
@@ -8,7 +9,6 @@ import pandas as pd
 
 from sktime.base._meta import _HeterogenousMetaEstimator
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.compose._common import _coerce_to_sktime
 from sktime.utils.multiindex import flatten_multiindex
 
 
@@ -113,6 +113,10 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
         self._anytagis_then_set("handles-missing-data", False, True, ests)
         self._anytagis_then_set("univariate-only", True, False, ests)
 
+        # if any of the components require_X or require_y, set it for the composite
+        self._anytagis_then_set("requires_X", True, False, ests)
+        self._anytagis_then_set("requires_y", True, False, ests)
+
     @property
     def _transformer_list(self):
         return self._get_estimator_tuples(self.transformer_list, clone_ests=False)
@@ -139,7 +143,9 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
         (last).
             not nested, contains only non-FeatureUnion ``sktime`` transformers
         """
-        other = _coerce_to_sktime(other)
+        from sktime.registry import coerce_scitype
+
+        other = coerce_scitype(other, "transformer")
         return self._dunder_concat(
             other=other,
             base_class=BaseTransformer,
@@ -165,7 +171,9 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
         (first).
             not nested, contains only non-FeatureUnion ``sktime`` transformers
         """
-        other = _coerce_to_sktime(other)
+        from sktime.registry import coerce_scitype
+
+        other = coerce_scitype(other, "transformer")
         return self._dunder_concat(
             other=other,
             base_class=BaseTransformer,

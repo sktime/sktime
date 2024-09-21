@@ -15,8 +15,8 @@ from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.transformations.series.detrend import Deseasonalizer
 from sktime.transformations.series.theta import ThetaLinesTransformer
+from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.slope_and_trend import _fit_trend
-from sktime.utils.validation._dependencies import _check_estimator_deps
 from sktime.utils.validation.forecasting import check_sp
 from sktime.utils.warnings import warn
 
@@ -320,8 +320,9 @@ class ThetaForecaster(ExponentialSmoothing):
         params0 = {}
         params1 = {"sp": 2, "deseasonalize": True}
         params2 = {"deseasonalize": False}
+        params3 = {"initial_level": 0.5}
 
-        return [params0, params1, params2]
+        return [params0, params1, params2, params3]
 
 
 def _zscore(level: float, two_tailed: bool = True) -> float:

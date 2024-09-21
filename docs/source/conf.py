@@ -58,6 +58,8 @@ extensions = [
 myst_enable_extensions = ["colon_fence"]
 
 # Notebook thumbnails
+
+# Populate thumbnails of notebooks?
 nbsphinx_thumbnails = {
     "examples/02_classification": "examples/img/tsc.png",
 }
@@ -169,10 +171,7 @@ def linkcode_resolve(domain, info):
         filename = "sktime/%s#L%d-L%d" % find_source()
     except Exception:
         filename = info["module"].replace(".", "/") + ".py"
-    return "https://github.com/sktime/sktime/blob/{}/{}".format(
-        CURRENT_VERSION,
-        filename,
-    )
+    return f"https://github.com/sktime/sktime/blob/{CURRENT_VERSION}/{filename}"
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -237,9 +236,6 @@ html_sidebars = {
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 html_css_files = ["css/custom.css"]
-html_js_files = [
-    "js/dynamic_table.js",
-]
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
@@ -328,17 +324,16 @@ def _make_estimator_overview(app):
         with the final name always preceded by "&".
         """
         if isinstance(author_info, str) and author_info.lower() == "sktime developers":
-            link = (
-                '<a href="https://www.sktime.net/en/stable/about/team.html">'
-                "sktime developers</a>"
-            )
+            link = '<a href="about/team">' "sktime developers</a>"
             return link
 
         if not isinstance(author_info, list):
             author_info = [author_info]
 
         def _add_link(github_id_str):
-            link = '<a href="https://www.github.com/{0}">{0}</a>'.format(github_id_str)
+            link = (
+                f'<a href="https://www.github.com/{github_id_str}">{github_id_str}</a>'
+            )
             return link
 
         author_info = [_add_link(author) for author in author_info]
@@ -348,41 +343,214 @@ def _make_estimator_overview(app):
         else:
             return author_info[0]
 
-    def _does_not_start_with_underscore(input_string):
-        return not input_string.startswith("_")
+    # hard-coded for better user experience
+    tags_by_object_type = {
+        "forecaster": [
+            "capability:categorical_in_X",
+            "capability:insample",
+            "capability:pred_int",
+            "capability:pred_int:insample",
+            "handles-missing-data",
+            "ignores-exogeneous-X",
+            "scitype:y",
+            "requires-fh-in-fit",
+            "X-y-must-have-same-index",
+            "python_dependencies",
+            "authors",
+            "maintainers",
+        ],
+        "transformer": [
+            "scitype:transform-input",
+            "scitype:transform-output",
+            "scitype:transform-labels",
+            "capability:inverse_transform",
+            "handles-missing-data",
+            "capability:missing_values:removes",
+            "capability:unequal_length",
+            "capability:unequal_length:removes",
+            "fit_is_empty",
+            "transform-returns-same-time-index",
+            "requires_X",
+            "requires_y",
+            "X-y-must-have-same-index",
+            "python_dependencies",
+            "authors",
+            "maintainers",
+        ],
+        "aligner": [
+            "alignment-type",
+            "capability:distance",
+            "capability:distance-matrix",
+            "capability:missing_values",
+            "capability:multiple_alignment",
+            "capability:unequal_length",
+            "python_dependencies",
+            "authors",
+            "maintainers",
+        ],
+        "clusterer": [
+            "capability:multivariate",
+            "capability:unequal_length",
+            "capability:missing_values",
+            "capability:contractable",
+            "capability:predict",
+            "capability:predict:proba",
+            "capability:out_of_sample",
+            "python_dependencies",
+            "authors",
+            "maintainers",
+        ],
+        "regressor": [
+            "capability:multivariate",
+            "capability:multioutput",
+            "capability:unequal_length",
+            "capability:missing_values",
+            "capability:feature_importance",
+            "capability:train_estimate",
+            "capability:contractable",
+            "python_dependencies",
+            "authors",
+            "maintainers",
+        ],
+        "classifier": [
+            "capability:multivariate",
+            "capability:multioutput",
+            "capability:unequal_length",
+            "capability:missing_values",
+            "capability:feature_importance",
+            "capability:train_estimate",
+            "capability:contractable",
+            "python_dependencies",
+            "authors",
+            "maintainers",
+        ],
+        "transformer-pairwise-panel": [
+            "capability:multivariate",
+            "capability:unequal_length",
+            "capability:missing_values",
+            "pwtrafo_type",
+            "symmetric",
+            "python_dependencies",
+            "authors",
+            "maintainers",
+        ],
+        "param_est": [
+            "capability:multivariate",
+            "capability:missing_values",
+            "python_dependencies",
+            "authors",
+            "maintainers",
+        ],
+        "splitter": [
+            "split_type",
+            "python_dependencies",
+            "authors",
+            "maintainers",
+        ],
+        "metric": [
+            "lower_is_better",
+            "requires-y-train",
+            "requires-y-pred-benchmark",
+            "univariate-only",
+            "scitype:y_pred",
+            "python_dependencies",
+            "authors",
+            "maintainers",
+        ],
+    }
 
-    # creates dataframe as df
-    COLNAMES = ["Class Name", "Estimator Type", "Authors", "Maintainers"]
+    # todo: replace later by code similar to below
+    # currently this retrieves too many tags
+    #
+    # for obj_type in tags_by_category:
+    #     tag_tpl = all_tags(obj_type)
+    #     tags = [tag[0] for tag in tag_tpl]
+    #     tags_by_category[obj_type] = tags
+
+    COLNAMES = [
+        "Class Name",
+        "Estimator Type",
+        "Authors",
+        "Maintainers",
+        "Dependencies",
+        "Import Path",
+        "Tags",
+    ]
 
     records = []
 
-    for modname, modclass in all_estimators():
-        algorithm_type = modclass.get_class_tag("object_type", "object")
-        author_tag = modclass.get_class_tag("authors", "sktime developers")
+    for obj_name, obj_class in all_estimators():
+        author_tag = obj_class.get_class_tag("authors", "sktime developers")
         author_info = _process_author_info(author_tag)
-        maintainer_tag = modclass.get_class_tag("maintainers", "sktime developers")
+        maintainer_tag = obj_class.get_class_tag("maintainers", "sktime developers")
         maintainer_info = _process_author_info(maintainer_tag)
 
+        python_dependencies = obj_class.get_class_tag("python_dependencies", [])
+        if isinstance(python_dependencies, list) and len(python_dependencies) == 1:
+            python_dependencies = python_dependencies[0]
+
+        object_types = obj_class.get_class_tag("object_type", "object")
+        # the tag can contain multiple object types
+        # it is a str or a lis of str - we normalize to a list
+        if not isinstance(object_types, list):
+            object_types = [object_types]
+
+        # set of object types that are also in the dropdown menu
+        obj_types_in_menu = list(set(object_types) & set(tags_by_object_type.keys()))
+
+        # we populate the tags for object types that are in the dropdown
+        # these will be selectable by checkboxes in the table
+        tags = {}
+        for object_type in obj_types_in_menu:
+            for tag in tags_by_object_type[object_type]:
+                tags[tag] = obj_class.get_class_tag(tag, None)
+
         # includes part of class string
-        modpath = str(modclass)[8:-2]
+        modpath = str(obj_class)[8:-2]
         path_parts = modpath.split(".")
-        # joins strings excluding starting with '_'
-        clean_path = ".".join(list(filter(_does_not_start_with_underscore, path_parts)))
+        del path_parts[-2]
+        clean_path = ".".join(path_parts)
+        import_path = ".".join(path_parts[:-1])
         # adds html link reference
-        modname = str(
-            '<a href="https://www.sktime.net/en/latest/api_reference'
-            + "/auto_generated/"
-            + clean_path
-            + '.html">'
-            + modname
-            + "</a>"
+        obj_name = (
+            """<a href='#'"""
+            f"""onclick="go2URL('api_reference/auto_generated/{clean_path}.html',"""
+            f"""'api_reference/auto_generated/{modpath}.html', event)">{obj_name}</a>"""
         )
 
-        records.append([modname, algorithm_type, author_info, maintainer_info])
+        # determine the "main" object type
+        # this is the first in the list that also appears in the dropdown menu
+        # if obj_types_in_register is an empty list,
+        # in which case the object will appear only in the "ALL" table
+        if obj_types_in_menu == []:
+            first_obj_type_in_register = object_types[0]
+        else:
+            first_obj_type_in_register = obj_types_in_menu[0]
+
+        records.append(
+            [
+                obj_name,
+                first_obj_type_in_register,
+                author_info,
+                maintainer_info,
+                str(python_dependencies),
+                import_path,
+                tags,
+            ]
+        )
 
     df = pd.DataFrame(records, columns=COLNAMES)
-    with open("estimator_overview_table.md", "w") as file:
-        df.to_markdown(file, index=False)
+    # with open("estimator_overview_table.md", "w") as file:
+    #     df.to_markdown(file, index=False)
+
+    with open("_static/table_all.html", "w") as file:
+        df[
+            ["Class Name", "Estimator Type", "Authors", "Maintainers", "Dependencies"]
+        ].to_html(file, classes="pre-rendered", index=False, border=0, escape=False)
+
+    with open("_static/estimator_overview_db.json", "w") as file:
+        df.to_json(file, orient="records")
+    # pass
 
 
 def setup(app):
@@ -413,7 +581,7 @@ nbsphinx_timeout = 600  # seconds, set to -1 to disable timeout
 current_file = "{{ env.doc2path( env.docname, base=None) }}"
 
 # make sure Binder points to latest stable release, not main
-binder_url = f"https://mybinder.org/v2/gh/sktime/sktime/{CURRENT_VERSION}?filepath={current_file}"  # noqa
+binder_url = f"https://mybinder.org/v2/gh/sktime/sktime/{CURRENT_VERSION}?filepath={current_file}"
 nbsphinx_prolog = f"""
 .. |binder| image:: https://mybinder.org/badge_logo.svg
 .. _Binder: {binder_url}
@@ -422,9 +590,7 @@ nbsphinx_prolog = f"""
 """
 
 # add link to original notebook at the bottom
-notebook_url = (
-    f"https://github.com/sktime/sktime/tree/{CURRENT_VERSION}/{current_file}"  # noqa
-)
+notebook_url = f"https://github.com/sktime/sktime/tree/{CURRENT_VERSION}/{current_file}"
 nbsphinx_epilog = f"""
 ----
 

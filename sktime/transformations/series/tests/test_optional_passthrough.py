@@ -4,11 +4,16 @@
 import pytest
 from pandas.testing import assert_series_equal
 
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.compose import OptionalPassthrough
 from sktime.transformations.series.boxcox import BoxCoxTransformer
 from sktime.utils._testing.series import _make_series
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(OptionalPassthrough),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("passthrough", [True, False])
 def test_passthrough(passthrough):
     """Test that passthrough works as expected."""
