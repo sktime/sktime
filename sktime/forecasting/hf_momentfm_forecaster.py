@@ -266,12 +266,8 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         self._device = _check_device(self._device)
 
         # initialize accelerator
-        if self._device == "cpu":
-            accelerator = Accelerator(mixed_precision="fp16", cpu=True)
-        else:
-            accelerator = Accelerator(mixed_precision="fp16")
+        accelerator = Accelerator(mixed_precision="fp16")
 
-        assert self._device == str(accelerator.device)
         cur_epoch = 0
         max_epoch = self.epochs
         if fh is not None:
