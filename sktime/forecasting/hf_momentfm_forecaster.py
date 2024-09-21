@@ -274,7 +274,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         # revert self._fh back to fh to pass checks
         self._fh = fh
 
-        self._model = MOMENTPipeline.from_pretrained(
+        self.model = MOMENTPipeline.from_pretrained(
             self._pretrained_model_name_or_path,
             model_kwargs={
                 "task_name": "forecasting",
@@ -289,7 +289,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
                 "forecast_horizon": self._model_fh,
             },
         )
-        self._model.init()
+        self.model.init()
         # preparing the datasets
         y_train, y_test = temporal_train_test_split(
             y, train_size=1 - self.train_val_split, test_size=self.train_val_split
@@ -323,7 +323,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         )
 
         criterion = self._criterion
-        optimizer = Adam(self._model.parameters(), lr=self.max_lr)
+        optimizer = Adam(self.model.parameters(), lr=self.max_lr)
         # Enable mixed precision training
 
         # Create a OneCycleLR scheduler
@@ -338,9 +338,9 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         # Gradient clipping value
         max_norm = self.max_norm
 
-        self._model, optimizer, train_dataloader, val_dataloader, scheduler = (
+        self.model, optimizer, train_dataloader, val_dataloader, scheduler = (
             accelerator.prepare(
-                self._model, optimizer, train_dataloader, val_dataloader, scheduler
+                self.model, optimizer, train_dataloader, val_dataloader, scheduler
             )
         )
 
@@ -351,12 +351,11 @@ class MomentFMForecaster(_BaseGlobalForecaster):
                 criterion,
                 optimizer,
                 scheduler,
-                self._model,
+                self.model,
                 max_norm,
                 train_dataloader,
                 val_dataloader,
             )
-        self.model = self._model
         return self
 
     def _predict(self, fh=None, X=None, y=None):
@@ -372,8 +371,8 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         index = self._fh.to_absolute_index(self.cutoff)
         from torch import from_numpy
 
-        self._model = self._model.to(self._device)
-        self._model.eval()
+        self.model = self.model.to(self._device)
+        self.model.eval()
         y_index_names = list(y.index.names)
         if isinstance(y.index, pd.MultiIndex):
             y_ = _frame2numpy(y)
@@ -417,7 +416,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         # returns a timeseriesoutput object
         y_torch_input = from_numpy(y_).float().to(self._device)
         input_mask = input_mask.to(self._device)
-        output = self._model(y_torch_input, input_mask)
+        output = self.model(y_torch_input, input_mask)
         forecast_output = output.forecast
         # forecast_output = forecast_output.squeeze(0)
 
