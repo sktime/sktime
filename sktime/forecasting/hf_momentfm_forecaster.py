@@ -16,6 +16,8 @@ if _check_soft_dependencies(["torch", "accelerate"], severity="none"):
     from torch.nn import MSELoss
     from torch.utils.data import Dataset
 
+    # initialize accelerator
+    accelerator = Accelerator(mixed_precision="fp16")
 else:
 
     class Dataset:
@@ -264,9 +266,6 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         )
         # check availability of user specified device
         self._device = _check_device(self._device)
-
-        # initialize accelerator
-        accelerator = Accelerator(mixed_precision="fp16")
 
         cur_epoch = 0
         max_epoch = self.epochs
