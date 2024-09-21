@@ -70,10 +70,14 @@ Core Developers
      - :user:`Alex-JG3`
    * - Anirban Ray
      - :user:`yarnabrina`
+   * - Armaghan Shakir
+     - :user:`geetu040`
    * - Benedikt Heidrich
      - :user:`benheid`
    * - Daniel Bartling
      - :user:`danbartl`
+   * - Felix Hirwa Nshuti
+     - :user:`fnhirwa`
    * - Franz Király
      - :user:`fkiraly`
    * - Freddy A Boulton
@@ -90,6 +94,8 @@ Core Developers
      - :user:`marrov`
    * - Mirae Parker
      - :user:`miraep8`
+   * - Pranav Prajapati
+     - :user:`pranavvp16`
    * - Sagar Mishra
      - :user:`achieveordie`
    * - Stanislav Khrapov
@@ -98,6 +104,8 @@ Core Developers
      - :user:`SveaMeyer13`
    * - Ugochukwu Onyeka
      - :user:`onyekaugochukwu`
+   * - Xinyu Wu
+     - :user:`XinyuWuu`
 
 Former Core Developers
 ----------------------
