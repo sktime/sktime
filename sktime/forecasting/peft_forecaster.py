@@ -18,7 +18,7 @@ if _check_soft_dependencies(["peft", "transformers"], severity="none"):
     from transformers import PretrainedModel
 
     peft_configs = [config.value for config in list(PeftType)]
-    ACCEPTED_PEFT_CONFIGS = [
+    SUPPORTED_ADAPTER_CONFIGS = [
         peft_type
         for peft_type in peft_configs
         if peft_type
