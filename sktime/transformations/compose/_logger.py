@@ -12,8 +12,10 @@ from sktime.transformations.compose._common import CORE_MTYPES
 class Logger(BaseTransformer):
     """Logging transformer, writes data to logging, and otherwise leaves it unchanged.
 
-    In methods, logs ``X`` and ``y`` to ``logger`` as ``extra`` log,
-    i.e., the full object.
+    In methods, logs ``X`` and ``y`` to ``logger``.
+    The ``logger`` can us as ``logger_backend`` a python ``logging`` instance,
+    primarily for printing, with ``data`` logged as ``extra``,
+    or a custom ``DataLog`` instance to retrieve full objects and not just printouts.
 
     Parameters
     ----------
@@ -30,7 +32,7 @@ class Logger(BaseTransformer):
           logs to ``DataLog(logger)``, with ``DataLog`` from
           the ``transformations.compose`` module.
 
-        In either case, the a reference to the logger can be retrieved
+        In either case, a reference to the logger can be retrieved
         by calling ``obj.get_logger``, where ``obj`` is an instance of ``Logger``.
 
     log_methods : str or list of str, default=``"transform"``
