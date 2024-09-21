@@ -8,7 +8,9 @@ from sktime.registry._base_classes import get_base_class_register
 
 
 def is_a_scitype(obj, desired_scitype):
-    scitypes = scitype(obj, force_single_scitype=False, coerce_to_list=True, raise_on_unknown=False)
+    scitypes = scitype(
+        obj, force_single_scitype=False, coerce_to_list=True, raise_on_unknown=False
+    )
     if isinstance(desired_scitype, str):
         desired_scitype = [desired_scitype]
     return any([scitype in desired_scitype for scitype in scitypes])
