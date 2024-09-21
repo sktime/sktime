@@ -15,9 +15,6 @@ if _check_soft_dependencies(["torch", "accelerate"], severity="none"):
     from torch.cuda import empty_cache
     from torch.nn import MSELoss
     from torch.utils.data import Dataset
-
-    # initialize accelerator
-    accelerator = Accelerator(mixed_precision="fp16")
 else:
 
     class Dataset:
@@ -195,6 +192,8 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         from torch.optim.lr_scheduler import OneCycleLR
         from torch.utils.data import DataLoader
 
+        # initialize accelerator
+        accelerator = Accelerator(mixed_precision="fp16")
         # keep a copy of y in case y is None in predict
         self._y = y
         self._y_index = self._y.index
