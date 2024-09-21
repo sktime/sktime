@@ -35,7 +35,7 @@ jobs:
       fail-fast: false  # to not fail all combinations if just one fail
       matrix:
         os: [ubuntu-latest, macos-13]
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        python-version: ['3.9', '3.10', '3.11', '3.12']
 
     steps:
       - uses: actions/checkout@v4
@@ -68,7 +68,7 @@ jobs:
       fail-fast: false  # to not fail all combinations if just one fail
       matrix:
         os: [windows-latest]
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        python-version: ['3.9', '3.10', '3.11', '3.12']
 
     steps:
       - uses: actions/checkout@v4
@@ -108,4 +108,4 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
-          packages_dir: wheelhouse/
+          packages-dir: wheelhouse/

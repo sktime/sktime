@@ -11,7 +11,7 @@ Tags are key-value pairs, where the key is a string with the name of the tag.
 The value of the tag can have arbitrary type, and describes a property, capability,
 or controls behaviour of the object, depending on the value.
 
-For instance, a forecaster may have the tag ``capability:pred_int: True`` if it can
+For instance, a forecaster may have the tag ``"capability:pred_int": True`` if it can
 make probabilistic predictions.
 Users can find all forecasters that can make probabilistic predictions by filtering
 for this tag.
@@ -19,13 +19,18 @@ for this tag.
 This API reference lists all tags available in ``sktime``, and key utilities
 for their usage.
 
+To search estimators by tags on the ``sktime`` webpage, use the
+:doc:`Estimator Search Page </estimator_overview>`
+
 
 Inspecting tags, retrieving by tags
 -----------------------------------
 
+Tags can be inspected at runtime using the following utilities:
+
 * to get the tags of an object, use the ``get_tags`` method.
   An object's tags can depend on its hyper-parameters.
-* to get the tags of a class, use the ``get_tags`` method of the class.
+* to get the tags of a class, use the ``get_class_tags`` method of the class.
   A class's tags are static and do not depend on its hyper-parameters.
   By default, class tags that may vary for instances take the most "capable" value,
   in the case of capabilities.
@@ -44,6 +49,8 @@ Inspecting tags, retrieving by tags
     all_tags
     all_estimators
 
+
+.. _packaging_tags:
 
 General tags, packaging
 -----------------------
@@ -73,11 +80,8 @@ These tags are typically used for typing, packaging and documentation purposes.
 Forecaster tags
 ---------------
 
-This section lists tags applying to forecasters.
+This section lists tags applying to forecasters (``"forecaster"`` type).
 These tags are used to describe capabilities, properties, and behavior of forecasters.
-
-The list also includes some developer facing tags that are used to
-control internal behavior of the forecaster.
 
 .. currentmodule:: sktime.registry._tags
 
@@ -91,12 +95,20 @@ control internal behavior of the forecaster.
     capability__pred_int
     capability__pred_int__insample
     capability__missing_values
+    capability__categorical_in_X
+    requires_fh_in_fit
+    fit_is_empty
 
 
 .. _panel_tags:
 
 Tags for classifiers, regressors, clustering
 --------------------------------------------
+
+This section lists tags applying to time series classifiers, regressors,
+and clusterers  (``"classifier"``, ``"regressor"``, ``"clusterer"`` types).
+These tags are used to describe capabilities, properties, and behavior of
+these types of objects.
 
 .. currentmodule:: sktime.registry._tags
 
@@ -106,8 +118,63 @@ Tags for classifiers, regressors, clustering
     :nosignatures:
 
     capability__multivariate
+    capability__multioutput
     capability__missing_values
     capability__unequal_length
+    capability__predict_proba
     capability__feature_importance
     capability__contractable
     capability__train_estimate
+
+
+.. _transformer_tags:
+
+Tags for ordinary transformers
+------------------------------
+
+This section lists tags applying to ordinary transformers, i.e., objects that
+transform a single time series object (``"transformer"`` type).
+
+.. currentmodule:: sktime.registry._tags
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+    :nosignatures:
+
+    scitype__transform_input
+    scitype__transform_output
+    scitype__transform_labels
+    requires_x
+    requires_y
+    capability__missing_values
+    capability__unequal_length
+    capability__inverse_transform
+    capability__inverse_transform__exact
+    capability__inverse_transform__range
+    fit_is_empty
+    transform_returns_same_time_index
+
+
+.. _dev_common_tags:
+
+Common developer tags
+---------------------
+
+This section lists tags that are used to control internal behaviour of objects,
+e.g., the boilerplate layer.
+
+These are primarily useful for power users using the extension
+templates to create ``sktime`` compatible objects.
+
+The tags below have limited use in retrieval or inspection of objects.
+
+.. currentmodule:: sktime.registry._tags
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+    :nosignatures:
+
+    x_inner_mtype
+    y_inner_mtype

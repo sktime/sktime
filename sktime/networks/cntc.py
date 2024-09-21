@@ -3,10 +3,7 @@
 __author__ = ["James-Large", "Withington", "TonyBagnall", "AurumnPegasus"]
 
 from sktime.networks.base import BaseDeepNetwork
-from sktime.utils.validation._dependencies import (
-    _check_dl_dependencies,
-    _check_soft_dependencies,
-)
+from sktime.utils.dependencies import _check_dl_dependencies, _check_soft_dependencies
 
 
 class CNTCNetwork(BaseDeepNetwork):
@@ -67,11 +64,7 @@ class CNTCNetwork(BaseDeepNetwork):
         lstm_size=8,
         dense_size=64,
     ):
-        _check_soft_dependencies(
-            "keras-self-attention",
-            package_import_alias={"keras-self-attention": "keras_self_attention"},
-            severity="error",
-        )
+        _check_soft_dependencies("keras-self-attention", severity="error")
         _check_dl_dependencies(severity="error")
 
         self.random_state = random_state

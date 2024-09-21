@@ -1,13 +1,19 @@
 """PAA transformer test code."""
+
 import numpy as np
 import pytest
 
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.paa import PAA
 
 
 # Check that exception is raised for bad frames values.
 # input types - string, float, negative int, negative float, empty dict.
 # correct input is an integer of 1 or more, but less than or equal to series length.
+@pytest.mark.skipif(
+    not run_test_for_class(PAA),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("bad_frames", ["str", 1.2, -1.2, -1, {}, 0, 11])
 def test_bad_input_args(bad_frames):
     """Test that exception is raised for bad num levels."""
@@ -22,6 +28,10 @@ def test_bad_input_args(bad_frames):
             PAA(bad_frames).fit(X).transform(X)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(PAA),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "frames,frame_size,expected",
     [

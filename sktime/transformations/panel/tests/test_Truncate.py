@@ -1,11 +1,18 @@
 """Test Truncator transformer."""
 
+import pytest
+
 from sktime.datasets import load_basic_motions
 from sktime.datatypes import get_examples
 from sktime.datatypes._panel._convert import from_nested_to_2d_array
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.panel.truncation import TruncationTransformer
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(TruncationTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_truncation_transformer():
     """Test truncation to the shortest series length."""
     # load data
@@ -20,6 +27,10 @@ def test_truncation_transformer():
     assert len(data.columns) == 5 * 6
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(TruncationTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_truncation_parameterised_transformer():
     """Test truncation to the a user defined length."""
     # load data
@@ -34,6 +45,10 @@ def test_truncation_parameterised_transformer():
     assert len(data.columns) == 8 * 6
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(TruncationTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_truncation_pd_multiindex():
     """Test that column and index names in a pd-multiindex container are preserved."""
     # get a multiindex dataframe, ensure instance levels are string, not int

@@ -9,7 +9,6 @@ __all__ = ["Arsenal"]
 import time
 
 import numpy as np
-from joblib import Parallel, delayed
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
@@ -115,7 +114,7 @@ class Arsenal(BaseClassifier):
         # --------------
         "authors": ["MatthewMiddlehurst", "kachayev"],
         "maintainers": ["kachayev"],
-        "python_dependencies": "numba",
+        "python_dependencies": ["numba", "joblib"],
         # estimator type
         # --------------
         "capability:multivariate": True,
@@ -183,6 +182,8 @@ class Arsenal(BaseClassifier):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
+        from joblib import Parallel, delayed
+
         self.n_instances_, self.n_dims_, self.series_length_ = X.shape
         time_limit = self.time_limit_in_minutes * 60
         start_time = time.time()
@@ -230,12 +231,16 @@ class Arsenal(BaseClassifier):
                     delayed(self._fit_estimator)(
                         _clone_estimator(
                             base_rocket,
-                            None
-                            if self.random_state is None
-                            else (255 if self.random_state == 0 else self.random_state)
-                            * 37
-                            * (i + 1)
-                            % 2**31,
+                            (
+                                None
+                                if self.random_state is None
+                                else (
+                                    255 if self.random_state == 0 else self.random_state
+                                )
+                                * 37
+                                * (i + 1)
+                                % 2**31
+                            ),
                         ),
                         X,
                         y,
@@ -255,12 +260,14 @@ class Arsenal(BaseClassifier):
                 delayed(self._fit_estimator)(
                     _clone_estimator(
                         base_rocket,
-                        None
-                        if self.random_state is None
-                        else (255 if self.random_state == 0 else self.random_state)
-                        * 37
-                        * (i + 1)
-                        % 2**31,
+                        (
+                            None
+                            if self.random_state is None
+                            else (255 if self.random_state == 0 else self.random_state)
+                            * 37
+                            * (i + 1)
+                            % 2**31
+                        ),
                     ),
                     X,
                     y,
@@ -313,6 +320,8 @@ class Arsenal(BaseClassifier):
         y : array-like, shape = [n_instances, n_classes_]
             Predicted probabilities using the ordering in classes_.
         """
+        from joblib import Parallel, delayed
+
         y_probas = Parallel(n_jobs=self._threads_to_use)(
             delayed(self._predict_proba_for_estimator)(
                 X,
@@ -327,7 +336,13 @@ class Arsenal(BaseClassifier):
         )
 
     def _get_train_probs(self, X, y) -> np.ndarray:
+        from joblib import Parallel, delayed
+
+        from sktime.datatypes import convert_to
+
         self.check_is_fitted()
+        if not isinstance(X, np.ndarray):
+            X = convert_to(X, "numpy3D")
         X, y = check_X_y(X, y, coerce_to_numpy=True)
 
         # handle the single-class-label case

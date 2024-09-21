@@ -55,10 +55,11 @@ from sktime.datasets._data_io import (
     _list_available_datasets,
     _load_dataset,
     _load_provided_dataset,
+    _reduce_memory_usage,
 )
 from sktime.datasets._readers_writers.tsf import load_tsf_to_dataframe
 from sktime.datasets.tsf_dataset_names import tsf_all, tsf_all_datasets
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 DIRNAME = "data"
 MODULE = os.path.dirname(__file__)
@@ -175,6 +176,7 @@ def load_tecator(split=None, return_X_y=True, return_type=None):
     The dataset contains 215 samples of meat, each with 100 spectral measurements.
     For more information see:
     https://www.openml.org/search?type=data&sort=runs&id=505&status=active
+
     References
     ----------
     [1] C.Borggaard and H.H.Thodberg, "Optimal Minimal Neural Interpretation of Spectra"
@@ -700,6 +702,7 @@ def load_basic_motions(split=None, return_X_y=True, return_type=None):
     Raises
     ------
     ValueError if argument "numpy2d"/"numpyflat" is passed as return_type
+
     Notes
     -----
     Dimensionality:     multivariate, 6
@@ -731,6 +734,21 @@ def load_basic_motions(split=None, return_X_y=True, return_type=None):
 
 
 # forecasting data sets
+def _coerce_to_monthly_period_index(ix):
+    """Coerce a date index to a monthly period index.
+
+    Parameters
+    ----------
+    ix : pd.Index
+
+    Returns
+    -------
+    pd.PeriodIndex, with frequency "M", and name "Period"
+        coerced index ix
+    """
+    return pd.PeriodIndex(ix, freq="M", name="Period")
+
+
 def load_shampoo_sales():
     """Load the shampoo sales univariate time series dataset for forecasting.
 
@@ -765,7 +783,7 @@ def load_shampoo_sales():
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
     y = pd.read_csv(path, index_col=0, dtype={1: float}).squeeze("columns")
-    y.index = pd.PeriodIndex(y.index, freq="M", name="Period")
+    y.index = _coerce_to_monthly_period_index(y.index)
     y.name = "Number of shampoo sales"
     return y
 
@@ -844,7 +862,7 @@ def load_lynx():
 
     Notes
     -----
-    The annual numbers of lynx trappings for 1821–1934 in Canada. This
+    The annual numbers of lynx trappings for 1821-1934 in Canada. This
     time-series records the number of skins of
     predators (lynx) that were collected over several years by the Hudson's
     Bay Company. The dataset was
@@ -866,9 +884,9 @@ def load_lynx():
 
     .. [2] Campbell, M. J. and Walker, A. M. (1977). A Survey of statistical
     work on the Mackenzie River series of
-    annual Canadian lynx trappings for the years 1821–1934 and a new
+    annual Canadian lynx trappings for the years 1821-1934 and a new
     analysis. Journal of the Royal Statistical Society
-    series A, 140, 411–431.
+    series A, 140, 411-431.
     """
     name = "Lynx"
     fname = name + ".csv"
@@ -917,7 +935,7 @@ def load_airline():
     y = pd.read_csv(path, index_col=0, dtype={1: float}).squeeze("columns")
 
     # make sure time index is properly formatted
-    y.index = pd.PeriodIndex(y.index, freq="M", name="Period")
+    y.index = _coerce_to_monthly_period_index(y.index)
     y.name = "Number of airline passengers"
     return y
 
@@ -1008,7 +1026,7 @@ def load_gun_point_segmentation():
     name = "GunPoint"
     fname = name + ".csv"
 
-    period_length = int(10)
+    period_length = 10
     change_points = np.int32([900])
 
     path = os.path.join(MODULE, DIRNAME, dir, fname)
@@ -1048,7 +1066,7 @@ def load_electric_devices_segmentation():
     name = "ElectricDevices"
     fname = name + ".csv"
 
-    period_length = int(10)
+    period_length = 10
     change_points = np.int32([1090, 4436, 5712, 7923])
 
     path = os.path.join(MODULE, DIRNAME, dir, fname)
@@ -1097,7 +1115,7 @@ def load_PBS_dataset():
     y = pd.read_csv(path, index_col=0, dtype={1: float}).squeeze("columns")
 
     # make sure time index is properly formatted
-    y.index = pd.PeriodIndex(y.index, freq="M", name="Period")
+    y.index = _coerce_to_monthly_period_index(y.index)
     y.name = "Number of scripts"
     return y
 
@@ -1436,3 +1454,290 @@ def load_forecastingdata(
     return load_tsf_to_dataframe(
         path_to_file, replace_missing_vals, value_column_name, return_type
     )
+
+
+def load_m5(
+    extract_path=None,
+    include_events=False,
+    merged=True,
+    test=False,
+):
+    r"""Fetch M5 dataset from https://zenodo.org/records/12636070 .
+
+    Downloads and extracts dataset if not already downloaded. Fetched dataset is
+    in the standard .csv format and loaded into an sktime-compatible in-memory
+    format (pd_multiindex_hier). For additional information on the dataset,
+    including its structure and contents, refer to `Notes` section.
+
+    Parameters
+    ----------
+    extract_path : str, optional (default=None)
+        If provided, the path should use the appropriate path separators for the
+        operating system.(e.g., forward slashes '/' for Unix-based systems,
+        backslashes '\\' for Windows).
+        If `extract_path` is provided:
+            - Check if the required files are present at the given `extract_path`.
+            - If files are not found, check if the directory "m5-forecasting-accuracy"
+              exists within the `extract_path`. Useful when the funciton has already
+              run previously with the same path.
+            - If the directory does not exist, download and extract the data into
+              "m5-forecasting-accuracy" folder in the `extract_path`.
+            - If the directory exists, takes the path to the existing directory.
+
+        if `extract_path` is None:
+            - Check if the directory "m5-forecasting-accuracy" exists within the module
+              level.
+            - If the directory exists, takes path to current directory.
+              Useful when the funciton has already run previously without any path.
+            - If the directory does not exist, download and extract the data into
+              "m5-forecasting-accuracy" folder at the module level.
+
+    include_events : bool, optional (default=False)
+        If `True`, the resulting dataset will include additional columns
+        related to events. Including these columns allows for a richer
+        dataset that can be used to analyze the impact of events on sales.
+        If `False`, the dataset will exclude these columns, providing a
+        more streamlined version of the data.
+
+    merged : bool, optional (default=True)
+        Determines the format of the output:
+        - If `True`, the function returns a single merged dataset.
+        - If `False`, the function returns three separate datasets
+           `sales_train_validation`, `sell_prices`, and `calendar`.
+
+    test : bool, optional (default=False)
+        Loads a smaller part of the dataset which doesn't include events
+        for testing purposes. This should not be used in standard usage
+        but might be useful for developers running tests.
+
+    Returns
+    -------
+    pd.DataFrame or tuple of pd.DataFrame
+        - If `merged_dataset` is `True`
+            data : pd.DataFrame of sktime type pd_multiindex_hier
+                The preprocessed dataframe containing the time series.
+
+        - If `merged_dataset` is `False`, returns a tuple of three dataframes:
+            sales_train_validation : pd.DataFrame of sktime type pd_multiindex_hier
+            sell_prices : pd.DataFrame
+            calander : pd.DataFrame
+
+    Dataset Description
+    --------------------
+    - **Number of Rows**: Approximately 58 million rows (for the full dataset).
+    - **Number of Columns**: Varies based on `include_events` parameter.
+      - Without events: 9 columns.
+      - With events: 13 columns.
+
+    Notes
+    -----
+    The dataset consists of three main files:
+    - sales_train_validation.csv: daily sales data for each product and store
+    - sell_prices.csv: price data for each product and store
+    - calendar.csv: calendar information including events
+
+    The dataframe will have a multi-index with the following levels:
+    - state_id
+    - store_id
+    - cat_id
+    - dept_id
+    - date
+
+    Example
+    -------
+    >>> data = load_m5()
+    >>> data.head()
+    """
+    required_files = ["calendar.csv", "sell_prices.csv", "sales_train_validation.csv"]
+
+    if extract_path is not None:
+        if all(
+            os.path.exists(os.path.join(extract_path, file)) for file in required_files
+        ):
+            # checks if the required files are present at given extract_path
+            path_to_data_dir = extract_path
+
+        else:
+            if not os.path.exists(
+                os.path.join(extract_path, "m5-forecasting-accuracy")
+            ):
+                path_to_data_dir = os.path.join(extract_path, "m5-forecasting-accuracy")
+
+                _download_and_extract(
+                    "https://zenodo.org/records/12636070/files/m5-forecasting-accuracy.zip",
+                    extract_path=extract_path,
+                )
+
+            else:
+                path_to_data_dir = os.path.join(extract_path, "m5-forecasting-accuracy")
+
+    else:
+        extract_path = MODULE
+        if not os.path.exists(os.path.join(extract_path, "m5-forecasting-accuracy")):
+            path_to_data_dir = os.path.join(extract_path, "m5-forecasting-accuracy")
+
+            _download_and_extract(
+                "https://zenodo.org/records/12636070/files/m5-forecasting-accuracy.zip",
+                extract_path=path_to_data_dir,
+            )
+        else:
+            path_to_data_dir = os.path.join(MODULE, "m5-forecasting-accuracy")
+
+    sales_train_validation = _reduce_memory_usage(
+        pd.read_csv(path_to_data_dir + "/sales_train_validation.csv")
+    )
+
+    sell_prices = _reduce_memory_usage(
+        pd.read_csv(path_to_data_dir + "/sell_prices.csv")
+    )
+
+    calendar = _reduce_memory_usage(pd.read_csv(path_to_data_dir + "/calendar.csv"))
+
+    def create_series_data(df, cal, sp, include_events=False, test=False):
+        """Create the series data.
+
+        Parameters
+        ----------
+        df : pd.Dataframe
+            takes the sales_train_validation dataframe by default.
+        cal : pd.Dataframe
+            takes the calendar dataframe by default.
+        sp : pd.Dataframe
+            takes the sell_prices dataframe by default.
+        include_events : bool, optional (default=False)
+            Includes the event names and types in the dataset if `True`.
+        test : bool, optional (default = False)
+            useful when running the tests
+
+        Returns
+        -------
+        df4 : pd.Dataframe
+            the merged dataframe
+        """
+        if test:
+            df = df[:1]
+        # melt
+        df1 = pd.melt(
+            df,
+            id_vars=[
+                "id",
+                "item_id",
+                "dept_id",
+                "cat_id",
+                "store_id",
+                "state_id",
+            ],
+            var_name="day",
+            value_name="sales",
+        ).dropna()
+
+        # add calender info
+        df2 = df1.merge(cal, left_on="day", right_on="d", how="left")
+
+        # select useful columns
+        if include_events:
+            df3 = df2[
+                [
+                    "id",
+                    "item_id",
+                    "dept_id",
+                    "cat_id",
+                    "store_id",
+                    "state_id",
+                    "day",
+                    "sales",
+                    "date",
+                    "wm_yr_wk",
+                    "wday",
+                    "month",
+                    "year",
+                    "event_name_1",
+                    "event_name_2",
+                    "event_type_1",
+                    "event_type_2",
+                ]
+            ]
+        else:
+            df3 = df2[
+                [
+                    "id",
+                    "item_id",
+                    "dept_id",
+                    "cat_id",
+                    "store_id",
+                    "state_id",
+                    "day",
+                    "sales",
+                    "date",
+                    "wm_yr_wk",
+                    "wday",
+                    "month",
+                    "year",
+                ]
+            ]
+
+        df4 = df3.merge(sp, on=["store_id", "item_id", "wm_yr_wk"], how="left")
+
+        df4["day"] = df4["day"].apply(lambda x: int(x.split("_")[1]))
+        df4["date"] = pd.DatetimeIndex(df4["date"])
+        df4["date"] = df4["date"].dt.to_period("D")
+        df4.drop(columns=["item_id"], inplace=True)
+
+        return df4
+
+    if merged:
+        if test:
+            data = create_series_data(
+                sales_train_validation,
+                calendar,
+                sell_prices,
+                include_events=False,
+                test=True,
+            )
+            data.set_index(
+                ["state_id", "store_id", "cat_id", "dept_id", "date"], inplace=True
+            )
+            return data
+
+        if include_events:
+            data = create_series_data(
+                sales_train_validation, calendar, sell_prices, include_events=True
+            )
+
+        else:
+            data = create_series_data(
+                sales_train_validation, calendar, sell_prices, include_events=False
+            )
+
+        data.set_index(
+            ["state_id", "store_id", "cat_id", "dept_id", "date"], inplace=True
+        )
+
+        data = data.sort_index()
+
+        return data
+
+    else:
+        start_date = pd.to_datetime("2011-01-29")
+        date_range = pd.date_range(start=start_date, periods=1941)
+        date_df = pd.DataFrame(date_range, columns=["date"])
+
+        sales_train_validation = sales_train_validation.melt(
+            id_vars=["id", "item_id", "dept_id", "cat_id", "store_id", "state_id"],
+            var_name="d",
+            value_name="sales",
+        )
+
+        sales_train_validation["d"] = (
+            sales_train_validation["d"].str.extract(r"(\d+)").astype(int)
+        )
+        date_df["d"] = range(1, 1942)
+        sales_train_validation = sales_train_validation.merge(date_df, on="d")
+
+        sales_train_validation = sales_train_validation.drop(columns=["d"])
+
+        sales_train_validation.set_index(
+            ["state_id", "store_id", "dept_id", "cat_id", "item_id", "date"],
+            inplace=True,
+        )
+        return sales_train_validation, sell_prices, calendar

@@ -448,7 +448,11 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         return possible_parameters
 
     def _get_train_probs(self, X, y, train_estimate_method="loocv") -> np.ndarray:
+        from sktime.datatypes import convert_to
+
         self.check_is_fitted()
+        if not isinstance(X, np.ndarray):
+            X = convert_to(X, "numpy3D")
         X, y = check_X_y(X, y, coerce_to_numpy=True)
 
         n_instances, n_dims, series_length = X.shape
@@ -482,9 +486,9 @@ class TemporalDictionaryEnsemble(BaseClassifier):
                 )
 
                 for n, pred in enumerate(preds):
-                    results[subsample[n]][
-                        self._class_dictionary[pred]
-                    ] += self.weights_[i]
+                    results[subsample[n]][self._class_dictionary[pred]] += (
+                        self.weights_[i]
+                    )
                     divisors[subsample[n]] += self.weights_[i]
         elif train_estimate_method.lower() == "oob":
             indices = range(n_instances)

@@ -29,6 +29,7 @@ __author__ = ["fkiraly"]
 from sktime.alignment.utils.utils_align import convert_align_to_align_loc, reindex_iloc
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_scitype, convert
+from sktime.datatypes._dtypekind import DtypeKind
 
 
 class BaseAligner(BaseEstimator):
@@ -39,6 +40,7 @@ class BaseAligner(BaseEstimator):
         "capability:multiple-alignment": False,  # can align more than two sequences?
         "capability:distance": False,  # does compute/return overall distance?
         "capability:distance-matrix": False,  # does compute/return distance matrix?
+        "capability:unequal_length": True,  # can align sequences of unequal length?
         "alignment_type": "full",  # does the aligner produce full or partial alignment
         "X_inner_mtype": "df-list",  # mtype of X expected by _fit
     }
@@ -71,12 +73,18 @@ class BaseAligner(BaseEstimator):
         # if fit is called, estimator is reset, including fitted state
         self.reset()
 
+        METADATA_TO_QUERY = ["is_equal_length", "n_instances", "feature_kind"]
         valid, msg, X_metadata = check_is_scitype(
-            X, scitype="Panel", return_metadata=[], var_name="X"
+            X, scitype="Panel", return_metadata=METADATA_TO_QUERY, var_name="X"
         )
 
         if not valid:
             raise TypeError(msg)
+
+        if DtypeKind.CATEGORICAL in X_metadata["feature_kind"]:
+            raise TypeError("Aligners do not support categorical features in X.")
+
+        self._check_capabilities(X_metadata)
 
         X_mtype = X_metadata["mtype"]
         X_inner_mtype = self.get_tag("X_inner_mtype")
@@ -351,3 +359,37 @@ class BaseAligner(BaseEstimator):
         distmat[1, 0] = dist
 
         return distmat
+
+    def _check_capabilities(self, X_metadata):
+        """Check if the aligner can align the input sequences.
+
+        Parameters
+        ----------
+        X_metadata : dict
+            metadata of the input sequences
+        """
+        # if aligner does not support unequal length sequences
+        # and X has unequal length, raise error
+        X_equal_length = X_metadata["is_equal_length"]
+        if not self.get_tag("capability:unequal_length", True) and not X_equal_length:
+            raise ValueError(
+                f"Aligner {self.__class__.__name__} instance does not support "
+                "alignment of unequal length sequences, but X passed "
+                "had unequal length. "
+                "Presence or lack of this capability may be depend on "
+                "hyper-parameters, especially for composites. Please consult the "
+                "documentation of the aligner for more information."
+            )
+
+        # if aligner does not support multiple alignment
+        # and X has more than two sequences, raise error
+        n_instances = X_metadata["n_instances"]
+        if not self.get_tag("capability:multiple-alignment", False) and n_instances > 2:
+            raise ValueError(
+                f"Aligner {self.__class__.__name__} instance does not support "
+                "alignment of multiple sequences, but X passed "
+                f"had {n_instances} sequences. "
+                "Presence or lack of this capability may be depend on "
+                "hyper-parameters, especially for composites. Please consult the "
+                "documentation of the aligner for more information."
+            )

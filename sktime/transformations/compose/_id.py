@@ -3,6 +3,7 @@
 Note to developers: this is used as a component in many other transformers, therefore
 one should avoid importing other transformers from here.
 """
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly"]

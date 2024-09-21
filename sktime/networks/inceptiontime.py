@@ -1,8 +1,9 @@
 """Inception Time."""
+
 __author__ = ["JamesLarge", "Withington"]
 
 from sktime.networks.base import BaseDeepNetwork
-from sktime.utils.validation._dependencies import _check_dl_dependencies
+from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class InceptionTimeNetwork(BaseDeepNetwork):
@@ -129,6 +130,7 @@ class InceptionTimeNetwork(BaseDeepNetwork):
         ----------
         input_shape : tuple
             The shape of the data fed into the input layer
+
         Returns
         -------
         input_layer : a keras layer

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Test functionality of summary transformer."""
+
 __author__ = ["RNKuhns"]
 import re
 
@@ -8,6 +9,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.summarize import (
     ALLOWED_SUM_FUNCS,
     SummaryTransformer,
@@ -29,20 +31,29 @@ incorrect_sum_funcs_to_test = [
 ]
 incorrect_quantiles_to_test = [25, "0.25", "median", [0.25, 1.25], [0.25, "median"]]
 
-# Test functionality on pd.Series and pd.DataFrame (uni- and multi-variate) input
-y1 = _make_series(n_timepoints=75)
-y2 = _make_series(n_timepoints=75)
-y1.name, y2.name = "y1", "y2"
-y_df_uni = pd.DataFrame(y1)
-y_df_multi = pd.concat([y1, y2], axis=1)
-data_to_test = [y1, y_df_uni, y_df_multi]
+
+def _make_test_data(i):
+    # Test functionality on pd.Series and pd.DataFrame (uni- and multi-variate) input
+    y1 = _make_series(n_timepoints=75)
+    y2 = _make_series(n_timepoints=75)
+    y1.name, y2.name = "y1", "y2"
+    y_df_uni = pd.DataFrame(y1)
+    y_df_multi = pd.concat([y1, y2], axis=1)
+    data_to_test = [y1, y_df_uni, y_df_multi]
+    return data_to_test[i]
 
 
-@pytest.mark.parametrize("y", data_to_test)
+@pytest.mark.skipif(
+    not run_test_for_class(SummaryTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("data_id", [0, 1, 2])
 @pytest.mark.parametrize("summary_arg", sum_funcs_to_test)
 @pytest.mark.parametrize("quantile_arg", quantiles_to_test)
-def test_summary_transformer_output_type(y, summary_arg, quantile_arg):
+def test_summary_transformer_output_type(data_id, summary_arg, quantile_arg):
     """Test whether output is DataFrame of correct dimensions."""
+    y = _make_test_data(data_id)
+
     transformer = SummaryTransformer(
         summary_function=summary_arg, quantiles=quantile_arg
     )
@@ -74,6 +85,10 @@ def test_summary_transformer_output_type(y, summary_arg, quantile_arg):
     assert yt.shape == (expected_instances, expected_features)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(SummaryTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("summary_arg", incorrect_sum_funcs_to_test)
 def test_summary_transformer_incorrect_summary_function_raises_error(summary_arg):
     """Test if correct errors are raised for invalid summary_function input."""
@@ -82,9 +97,13 @@ def test_summary_transformer_incorrect_summary_function_raises_error(summary_arg
           """
     with pytest.raises(ValueError, match=re.escape(msg)):
         transformer = SummaryTransformer(summary_function=summary_arg, quantiles=None)
-        transformer.fit_transform(data_to_test[0])
+        transformer.fit_transform(_make_test_data(0))
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(SummaryTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("quantile_arg", incorrect_quantiles_to_test)
 def test_summary_transformer_incorrect_quantile_raises_error(quantile_arg):
     """Test if correct errors are raised for invalid quantiles input."""
@@ -95,4 +114,4 @@ def test_summary_transformer_incorrect_quantile_raises_error(quantile_arg):
         transformer = SummaryTransformer(
             summary_function="mean", quantiles=quantile_arg
         )
-        transformer.fit_transform(data_to_test[0])
+        transformer.fit_transform(_make_test_data(0))

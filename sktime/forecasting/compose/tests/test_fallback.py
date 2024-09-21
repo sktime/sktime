@@ -17,6 +17,7 @@ from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.compose import EnsembleForecaster, FallbackForecaster
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.forecasting import make_forecasting_problem
 
 
@@ -31,7 +32,8 @@ class ForecastingError(Exception):
     Methods
     -------
     __init__(message)
-        Constructs the ForecastingError with the provided message."""
+    Constructs the ForecastingError with the provided message.
+    """
 
     def __init__(self, message):
         self.message = message
@@ -96,6 +98,10 @@ class DummyForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         return self
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(FallbackForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_raises_at_fit():
     """Test dummy forecaster raises at fit"""
     # Start with negative time series, Theta model will fail here
@@ -105,6 +111,10 @@ def test_raises_at_fit():
         forecaster.fit(y=y, fh=[1, 2, 3])
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(FallbackForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_raises_at_predict():
     """Test dummy forecaster raises at predict"""
     # Start with negative time series, Theta model will fail here
@@ -115,6 +125,10 @@ def test_raises_at_predict():
         forecaster.predict()
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(FallbackForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_raises_at_update():
     """Test dummy forecaster raises at update"""
     # Start with negative time series, Theta model will fail here
@@ -126,6 +140,10 @@ def test_raises_at_update():
         forecaster.update(y)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(FallbackForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_predicts_nans():
     """Test dummy forecaster predict nans"""
     y = make_forecasting_problem(random_state=42)
@@ -135,6 +153,10 @@ def test_predicts_nans():
     assert y_pred.isna().sum() > 0
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(FallbackForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_fallbackforecaster_fails_at_fit():
     """Test FallbackForecaster fails at first fit, second forecaster succeeds"""
     y = make_forecasting_problem(random_state=42)
@@ -181,6 +203,10 @@ def test_fallbackforecaster_fails_at_fit():
     assert len(exceptions_raised) == 1
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(FallbackForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_fallbackforecaster_fails_at_predict():
     """Test FallbackForecaster fails at predict, second forecaster succeeds"""
     y = make_forecasting_problem(random_state=42)
@@ -219,6 +245,10 @@ def test_fallbackforecaster_fails_at_predict():
     pd.testing.assert_series_equal(y_pred_expected, y_pred_actual)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(FallbackForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_fallbackforecaster_fails_twice():
     """First two FallbackForecasters fail, third succeeds"""
     y = make_forecasting_problem(random_state=42)
@@ -275,6 +305,10 @@ def test_fallbackforecaster_fails_twice():
     assert names_raised_actual == names_raised_expected
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(FallbackForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_fallbackforecaster_fails_fit_twice():
     """First two FallbackForecasters fail at fit step, third forecaster succeeds"""
     y = make_forecasting_problem(random_state=42)
@@ -333,6 +367,10 @@ def test_fallbackforecaster_fails_fit_twice():
     assert names_raised_actual == names_raised_expected
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(FallbackForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_all_forecasters_fail1():
     """All forecasters fail; predict and fit"""
     # Start with negative time series, Theta model will fail here
@@ -346,6 +384,10 @@ def test_all_forecasters_fail1():
         forecaster.predict()
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(FallbackForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_all_forecasters_fail2():
     """All forecasters fail at fit step"""
     # Start with negative time series, Theta model will fail here
@@ -358,6 +400,10 @@ def test_all_forecasters_fail2():
         forecaster.fit(y=y, fh=[1, 2, 3])
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(FallbackForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_all_forecasters_fail3():
     """All forecasters fail at predict"""
     # Start with negative time series, Theta model will fail here
@@ -371,6 +417,10 @@ def test_all_forecasters_fail3():
         forecaster.predict()
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(FallbackForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_many_forecasters_fail1():
     """All forecasters fail at predict"""
     # Start with negative time series, Theta model will fail here
@@ -417,6 +467,10 @@ def test_many_forecasters_fail1():
     assert names_raised_actual == names_raised_expected
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(FallbackForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_fallbackforecaster_fails_twice_simple():
     """First two FallbackForecasters fail, third succeeds"""
     y = make_forecasting_problem(random_state=42)
@@ -458,6 +512,10 @@ def test_fallbackforecaster_fails_twice_simple():
     assert names_raised_actual == names_raised_expected
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(FallbackForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_fallbackforecaster_fails_many_simple():
     """First two FallbackForecasters fail, third succeeds"""
     y = make_forecasting_problem(random_state=42)
@@ -511,6 +569,10 @@ def test_fallbackforecaster_fails_many_simple():
     assert names_raised_actual == names_raised_expected
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(FallbackForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_fallbackforecaster_pred_int():
     """Predict interval works bc all forecasters have them enabled, first forecaster
     expected
@@ -530,6 +592,10 @@ def test_fallbackforecaster_pred_int():
     pd.testing.assert_frame_equal(pred_int_expected, pred_int_actual)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(FallbackForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_fallbackforecaster_pred_int_raises():
     """Predict int raises because EnsembleForecaster does not have this capability"""
     y = make_forecasting_problem(random_state=42)
@@ -546,6 +612,10 @@ def test_fallbackforecaster_pred_int_raises():
         forecaster.predict_interval()
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(FallbackForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_fallbackforecaster_predict_nan_allow():
     """Test FallbackForecaster allow nans in predict"""
     y = make_forecasting_problem(random_state=42)
@@ -569,6 +639,10 @@ def test_fallbackforecaster_predict_nan_allow():
     pd.testing.assert_series_equal(y_pred_expected, y_pred_actual)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(FallbackForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_fallbackforecaster_predict_nan():
     """Test FallbackForecaster raise if nans in predict"""
     y = make_forecasting_problem(random_state=42)
@@ -611,6 +685,10 @@ def test_fallbackforecaster_predict_nan():
     assert names_raised_actual == names_raised_expected
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(FallbackForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_fallbackforecaster_warns():
     y = make_forecasting_problem(random_state=42)
     forecaster1 = DummyForecaster(raise_at="fit")
@@ -627,6 +705,10 @@ def test_fallbackforecaster_warns():
         forecaster.predict()
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(FallbackForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_fallbackforecaster_raises():
     """All forecasters fail when last forecaster predicts nan, raises RuntimeError."""
     y = make_forecasting_problem(random_state=42)
@@ -644,6 +726,10 @@ def test_fallbackforecaster_raises():
         forecaster.predict()
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(FallbackForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_forecastbylevel_nan_predict():
     from sktime.forecasting.compose import ForecastByLevel
     from sktime.utils._testing.hierarchical import _make_hierarchical

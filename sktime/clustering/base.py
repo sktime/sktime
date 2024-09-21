@@ -1,21 +1,18 @@
 """Base class for clustering."""
+
 __author__ = ["chrisholder", "TonyBagnall", "achieveordie"]
 __all__ = ["BaseClusterer"]
 
 import time
-from typing import Any, Union
 
 import numpy as np
-import pandas as pd
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_scitype, convert_to, scitype_to_mtype
+from sktime.datatypes._dtypekind import DtypeKind
+from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.validation import check_n_jobs
-from sktime.utils.validation._dependencies import _check_estimator_deps
-
-# Valid input types for clustering
-TimeSeriesInstances = Union[pd.DataFrame, np.ndarray]
 
 
 class BaseClusterer(BaseEstimator):
@@ -28,6 +25,8 @@ class BaseClusterer(BaseEstimator):
     """
 
     _tags = {
+        "authors": "sktime developers",  # author(s) of the object
+        "maintainers": "sktime developers",  # current maintainer(s) of the object
         "object_type": "clusterer",  # type of object
         "X_inner_mtype": "numpy3D",  # which type do _fit/_predict accept, usually
         # this is either "numpy3D" or "nested_univ" (nested pd.DataFrame). Other
@@ -36,8 +35,9 @@ class BaseClusterer(BaseEstimator):
         "capability:unequal_length": False,
         "capability:missing_values": False,
         "capability:multithreading": False,
-        "authors": "sktime developers",  # author(s) of the object
-        "maintainers": "sktime developers",  # current maintainer(s) of the object
+        "capability:out_of_sample": True,
+        "capability:predict": True,
+        "capability:predict_proba": True,
     }
 
     def __init__(self, n_clusters: int = None):
@@ -87,22 +87,42 @@ class BaseClusterer(BaseEstimator):
         else:
             return NotImplemented
 
-    def fit(self, X: TimeSeriesInstances, y=None) -> BaseEstimator:
+    def fit(self, X, y=None):
         """Fit time series clusterer to training data.
+
+        State change:
+            Changes state to "fitted".
+
+        Writes to self:
+            Sets self.is_fitted to True.
+            Sets fitted model attributes ending in "_".
 
         Parameters
         ----------
-        X : Training time series instances to cluster. np.ndarray (2d or 3d array of
-        shape (n_instances, series_length) or shape (n_instances, n_dimensions,
-        series_length)) or pd.DataFrame (where each column is a dimension, each cell
-        is a pd.Series (any number of dimensions, equal or unequal length series)).
-        Converted to type _tags["X_inner_mtype"]
-        y: ignored, exists for API consistency reasons.
+        X : sktime compatible time series panel data container of Panel scitype
+            time series to fit estimator to.
+
+            Can be in any :term:`mtype` of ``Panel`` :term:`scitype`, for instance:
+
+            * pd-multiindex: pd.DataFrame with columns = variables,
+              index = pd.MultiIndex with first level = instance indices,
+              second level = time indices
+            * numpy3D: 3D np.array (any number of dimensions, equal length series)
+              of shape [n_instances, n_dimensions, series_length]
+            * or of any other supported ``Panel`` :term:`mtype`
+
+            for list of mtypes, see ``datatypes.SCITYPE_REGISTER``
+
+            for specifications, see ``examples/AA_datatypes_and_datasets.ipynb``
+
+            Not all estimators support panels with multivariate or unequal length
+            series, see the :ref:`tag reference <panel_tags>` for details.
+
+        y : ignored, exists for API consistency reasons.
 
         Returns
         -------
-        self:
-            Fitted estimator.
+        self : Reference to self.
         """
         # reset estimator at the start of fit
         self.reset()
@@ -124,16 +144,30 @@ class BaseClusterer(BaseEstimator):
         self._is_fitted = True
         return self
 
-    def predict(self, X: TimeSeriesInstances, y=None) -> np.ndarray:
+    def predict(self, X, y=None) -> np.ndarray:
         """Predict the closest cluster each sample in X belongs to.
 
         Parameters
         ----------
-        X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
-            (n_instances, n_dimensions, series_length)) or pd.DataFrame (where each
-            column is a dimension, each cell is a pd.Series (any number of dimensions,
-            equal or unequal length series)).
-            Time series instances to predict their cluster indexes.
+        X : sktime compatible time series panel data container of Panel scitype
+            time series to cluster.
+
+            Can be in any :term:`mtype` of ``Panel`` :term:`scitype`, for instance:
+
+            * pd-multiindex: pd.DataFrame with columns = variables,
+              index = pd.MultiIndex with first level = instance indices,
+              second level = time indices
+            * numpy3D: 3D np.array (any number of dimensions, equal length series)
+              of shape [n_instances, n_dimensions, series_length]
+            * or of any other supported ``Panel`` :term:`mtype`
+
+            for list of mtypes, see ``datatypes.SCITYPE_REGISTER``
+
+            for specifications, see ``examples/AA_datatypes_and_datasets.ipynb``
+
+            Not all estimators support panels with multivariate or unequal length
+            series, see the :ref:`tag reference <panel_tags>` for details.
+
         y: ignored, exists for API consistency reasons.
 
         Returns
@@ -145,19 +179,32 @@ class BaseClusterer(BaseEstimator):
         X = self._check_clusterer_input(X)
         return self._predict(X)
 
-    def fit_predict(self, X: TimeSeriesInstances, y=None) -> np.ndarray:
+    def fit_predict(self, X, y=None) -> np.ndarray:
         """Compute cluster centers and predict cluster index for each time series.
 
         Convenience method; equivalent of calling fit(X) followed by predict(X)
 
         Parameters
         ----------
-        X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
-            (n_instances, n_dimensions, series_length)) or pd.DataFrame (where each
-            column is a dimension, each cell is a pd.Series (any number of dimensions,
-            equal or unequal length series)).
-            Time series instances to train clusterer and then have indexes each belong
-            to return.
+        X : sktime compatible time series panel data container of Panel scitype
+            time series to cluster.
+
+            Can be in any :term:`mtype` of ``Panel`` :term:`scitype`, for instance:
+
+            * pd-multiindex: pd.DataFrame with columns = variables,
+              index = pd.MultiIndex with first level = instance indices,
+              second level = time indices
+            * numpy3D: 3D np.array (any number of dimensions, equal length series)
+              of shape [n_instances, n_dimensions, series_length]
+            * or of any other supported ``Panel`` :term:`mtype`
+
+            for list of mtypes, see ``datatypes.SCITYPE_REGISTER``
+
+            for specifications, see ``examples/AA_datatypes_and_datasets.ipynb``
+
+            Not all estimators support panels with multivariate or unequal length
+            series, see the :ref:`tag reference <panel_tags>` for details.
+
         y: ignored, exists for API consistency reasons.
 
         Returns
@@ -177,14 +224,24 @@ class BaseClusterer(BaseEstimator):
 
         Parameters
         ----------
-        X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
-            if self.get_tag("X_inner_mtype") = "numpy3D":
-                3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
-            if self.get_tag("X_inner_mtype") = "nested_univ":
-                pd.DataFrame with each column a dimension, each cell a pd.Series
-            for list of other mtypes, see datatypes.SCITYPE_REGISTER
-            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        X : sktime compatible time series panel data container of Panel scitype
+            time series to cluster.
 
+            Can be in any :term:`mtype` of ``Panel`` :term:`scitype`, for instance:
+
+            * pd-multiindex: pd.DataFrame with columns = variables,
+              index = pd.MultiIndex with first level = instance indices,
+              second level = time indices
+            * numpy3D: 3D np.array (any number of dimensions, equal length series)
+              of shape [n_instances, n_dimensions, series_length]
+            * or of any other supported ``Panel`` :term:`mtype`
+
+            for list of mtypes, see ``datatypes.SCITYPE_REGISTER``
+
+            for specifications, see ``examples/AA_datatypes_and_datasets.ipynb``
+
+            Not all estimators support panels with multivariate or unequal length
+            series, see the :ref:`tag reference <panel_tags>` for details.
 
         Returns
         -------
@@ -257,7 +314,7 @@ class BaseClusterer(BaseEstimator):
     def _score(self, X, y=None):
         raise NotImplementedError
 
-    def _predict(self, X: TimeSeriesInstances, y=None) -> np.ndarray:
+    def _predict(self, X, y=None) -> np.ndarray:
         """Predict the closest cluster each sample in X belongs to.
 
         Parameters
@@ -276,7 +333,7 @@ class BaseClusterer(BaseEstimator):
         """
         raise NotImplementedError
 
-    def _fit(self, X: TimeSeriesInstances, y=None) -> np.ndarray:
+    def _fit(self, X, y=None) -> np.ndarray:
         """Fit time series clusterer to training data.
 
         Parameters
@@ -333,7 +390,7 @@ class BaseClusterer(BaseEstimator):
             )
 
     @staticmethod
-    def _initial_conversion(X: Any) -> TimeSeriesInstances:
+    def _initial_conversion(X):
         """Format data as valid panel mtype of the data.
 
         Parameters
@@ -350,9 +407,7 @@ class BaseClusterer(BaseEstimator):
             X = X.reshape(X.shape[0], 1, X.shape[1])
         return X
 
-    def _check_clusterer_input(
-        self, X: TimeSeriesInstances, enforce_min_instances: int = 1
-    ) -> TimeSeriesInstances:
+    def _check_clusterer_input(self, X, enforce_min_instances: int = 1):
         """Validate the input and prepare for _fit.
 
         Parameters
@@ -391,6 +446,7 @@ class BaseClusterer(BaseEstimator):
             "has_nans",
             "is_univariate",
             "is_equal_length",
+            "feature_kind",
         ]
         X_valid, _, X_metadata = check_is_scitype(
             X, scitype=ALLOWED_SCITYPES, return_metadata=X_metadata_required
@@ -407,6 +463,11 @@ class BaseClusterer(BaseEstimator):
                 "where MTYPE is the string of the type specification you want for X. "
                 "Possible mtype specification strings are as follows: "
                 f"{', '.join(mtypes_messages)}"
+            )
+
+        if DtypeKind.CATEGORICAL in X_metadata["feature_kind"]:
+            raise TypeError(
+                "Clustering does not support categorical features in endogeneous y."
             )
 
         n_cases = X_metadata["n_instances"]

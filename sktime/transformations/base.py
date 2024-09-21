@@ -64,14 +64,15 @@ from sktime.datatypes import (
     mtype_to_scitype,
     update_data,
 )
+from sktime.datatypes._dtypekind import DtypeKind
 from sktime.datatypes._series_as_panel import convert_to_scitype
+from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.sklearn import (
     is_sklearn_classifier,
     is_sklearn_clusterer,
     is_sklearn_regressor,
     is_sklearn_transformer,
 )
-from sktime.utils.validation._dependencies import _check_estimator_deps
 
 # single/multiple primitives
 Primitive = Union[np.integer, int, float, str]
@@ -134,6 +135,8 @@ class BaseTransformer(BaseEstimator):
         # todo: rename to capability:missing_values
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
+        "capability:categorical_in_X": False,
+        # does the transformer natively support categorical in exogeneous X?
         "remember_data": False,  # whether all data seen is remembered as self._X
         "python_version": None,  # PEP 440 python version specifier to limit versions
         "authors": "sktime developers",  # author(s) of the object
@@ -431,31 +434,41 @@ class BaseTransformer(BaseEstimator):
             Changes state to "fitted".
 
         Writes to self:
-        _is_fitted : flag is set to True.
-        _X : X, coerced copy of X, if remember_data tag is True
-            possibly coerced to inner type or update_data compatible type
-            by reference, when possible
-        model attributes (ending in "_") : dependent on estimator
+
+            * Sets fitted model attributes ending in "_", fitted attributes are
+              inspectable via ``get_fitted_params``.
+            * Sets ``self.is_fitted`` flag to ``True``.
+            * if ``self.get_tag("remember_data")`` is ``True``, memorizes X as
+              ``self._X``, coerced to ``self.get_tag("X_inner_mtype")``.
 
         Parameters
         ----------
-        X : time series in sktime compatible data container format
-            Data to fit transform to, of sktime type as follows:
-            Series: interpreted as single time series
-                pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-                if np.ndarray, of shape (n_timepoints) or (n_variables, n_timepoints)
-            Panel: pd.DataFrame with 2-level MultiIndex, list of pd.DataFrame,
-                pd.DataFrame in long/wide format, or 3D np.ndarray
-                if pd.DataFrame with 2-level MultiIndex, index is (instance, time)
-                if 3D np.ndarray, of shape (n_instances, n_variables, n_timepoints)
-            Hierarchical: pd.DataFrame with 3- or more-level MultiIndex
-                highest (rightmost) level  of MultiIndex is time
-            for more details on sktime mtype format specifications,
-            and additional valid type specifications, refer to
-                examples/AA_datatypes_and_datasets.ipynb
-        y : optional, time series in sktime compatible data format, default=None
+        X : time series in ``sktime`` compatible data container format
+            Data to fit transform to.
+
+            Individual data formats in ``sktime`` are so-called :term:`mtype`
+            specifications, each mtype implements an abstract :term:`scitype`.
+
+            * ``Series`` scitype = individual time series.
+              ``pd.DataFrame``, ``pd.Series``, or ``np.ndarray`` (1D or 2D)
+
+            * ``Panel`` scitype = collection of time series.
+              ``pd.DataFrame`` with 2-level row ``MultiIndex`` ``(instance, time)``,
+              ``3D np.ndarray`` ``(instance, variable, time)``,
+              ``list`` of ``Series`` typed ``pd.DataFrame``
+
+            * ``Hierarchical`` scitype = hierarchical collection of time series.
+              ``pd.DataFrame`` with 3 or more level row
+              ``MultiIndex`` ``(hierarchy_1, ..., hierarchy_n, time)``
+
+            For further details on data format, see glossary on :term:`mtype`.
+            For usage, see transformer tutorial ``examples/03_transformers.ipynb``
+
+        y : optional, data in sktime compatible data format, default=None
             Additional data, e.g., labels for transformation
-            some transformers require this, see class docstring for details
+            If ``self.get_tag("requires_y")`` is ``True``,
+            must be passed in ``fit``, not optional.
+            For required format, see class docstring for details.
 
         Returns
         -------
@@ -467,9 +480,10 @@ class BaseTransformer(BaseEstimator):
         # skip everything if fit_is_empty is True and we do not need to remember data
         if self.get_tag("fit_is_empty") and not self.get_tag("remember_data", False):
             self._is_fitted = True
+            self._is_vectorized = "unknown"
             return self
 
-        # if requires_y is set, y is required in fit and update
+        # if requires_X is set, X is required in fit and update
         if self.get_tag("requires_X") and X is None:
             raise ValueError(f"{self.__class__.__name__} requires `X` in `fit`.")
 
@@ -512,29 +526,36 @@ class BaseTransformer(BaseEstimator):
             Requires state to be "fitted".
 
         Accesses in self:
-        _is_fitted : must be True
-        _X : optionally accessed, only available if remember_data tag is True
-        fitted model attributes (ending in "_") : must be set, accessed by _transform
+
+            * Fitted model attributes ending in "_".
+            * ``self.is_fitted``, must be True
 
         Parameters
         ----------
-        X : time series in sktime compatible data container format
-            Data to fit transform to, of sktime type as follows:
-            Series: interpreted as single time series
-                pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-                if np.ndarray, of shape (n_timepoints) or (n_variables, n_timepoints)
-            Panel: pd.DataFrame with 2-level MultiIndex, list of pd.DataFrame,
-                pd.DataFrame in long/wide format, or 3D np.ndarray
-                if pd.DataFrame with 2-level MultiIndex, index is (instance, time)
-                if 3D np.ndarray, of shape (n_instances, n_variables, n_timepoints)
-            Hierarchical: pd.DataFrame with 3- or more-level MultiIndex
-                highest (rightmost) level  of MultiIndex is time
-            for more details on sktime mtype format specifications,
-            and additional valid type specifications, refer to
-                examples/AA_datatypes_and_datasets.ipynb
-        y : optional, time series in sktime compatible data format, default=None
-            Additional data, e.g., labels for transformation
-            some transformers require this, see class docstring for details
+        X : time series in ``sktime`` compatible data container format
+            Data to transform.
+
+            Individual data formats in ``sktime`` are so-called :term:`mtype`
+            specifications, each mtype implements an abstract :term:`scitype`.
+
+            * ``Series`` scitype = individual time series.
+              ``pd.DataFrame``, ``pd.Series``, or ``np.ndarray`` (1D or 2D)
+
+            * ``Panel`` scitype = collection of time series.
+              ``pd.DataFrame`` with 2-level row ``MultiIndex`` ``(instance, time)``,
+              ``3D np.ndarray`` ``(instance, variable, time)``,
+              ``list`` of ``Series`` typed ``pd.DataFrame``
+
+            * ``Hierarchical`` scitype = hierarchical collection of time series.
+              ``pd.DataFrame`` with 3 or more level row
+              ``MultiIndex`` ``(hierarchy_1, ..., hierarchy_n, time)``
+
+            For further details on data format, see glossary on :term:`mtype`.
+            For usage, see transformer tutorial ``examples/03_transformers.ipynb``
+
+        y : optional, data in sktime compatible data format, default=None
+            Additional data, e.g., labels for transformation.
+            Some transformers require this, see class docstring for details.
 
         Returns
         -------
@@ -591,7 +612,14 @@ class BaseTransformer(BaseEstimator):
         # input check and conversion for X/y
         X_inner, y_inner, metadata = self._check_X_y(X=X, y=y, return_metadata=True)
 
-        if not isinstance(X_inner, VectorizedDF):
+        # check if we need to vectorize
+        if getattr(self, "_is_vectorized", "unknown") == "unknown":
+            vectorization_needed = isinstance(X_inner, VectorizedDF)
+        else:
+            vectorization_needed = self._is_vectorized
+
+        # if no vectorization needed, we call _transform directly
+        if not vectorization_needed:
             Xt = self._transform(X=X_inner, y=y_inner)
         else:
             # otherwise we call the vectorized version of predict
@@ -629,23 +657,32 @@ class BaseTransformer(BaseEstimator):
 
         Parameters
         ----------
-        X : time series in sktime compatible data container format
-            Data to transform, of sktime type as follows:
-            Series: interpreted as single time series
-                pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-                if np.ndarray, of shape (n_timepoints) or (n_variables, n_timepoints)
-            Panel: pd.DataFrame with 2-level MultiIndex, list of pd.DataFrame,
-                pd.DataFrame in long/wide format, or 3D np.ndarray
-                if pd.DataFrame with 2-level MultiIndex, index is (instance, time)
-                if 3D np.ndarray, of shape (n_instances, n_variables, n_timepoints)
-            Hierarchical: pd.DataFrame with 3- or more-level MultiIndex
-                highest (rightmost) level  of MultiIndex is time
-            for more details on sktime mtype format specifications,
-            and additional valid type specifications, refer to
-                examples/AA_datatypes_and_datasets.ipynb
-        y : optional, time series in sktime compatible data format, default=None
+        X : time series in ``sktime`` compatible data container format
+            Data to fit transform to, and data to transform.
+
+            Individual data formats in ``sktime`` are so-called :term:`mtype`
+            specifications, each mtype implements an abstract :term:`scitype`.
+
+            * ``Series`` scitype = individual time series.
+              ``pd.DataFrame``, ``pd.Series``, or ``np.ndarray`` (1D or 2D)
+
+            * ``Panel`` scitype = collection of time series.
+              ``pd.DataFrame`` with 2-level row ``MultiIndex`` ``(instance, time)``,
+              ``3D np.ndarray`` ``(instance, variable, time)``,
+              ``list`` of ``Series`` typed ``pd.DataFrame``
+
+            * ``Hierarchical`` scitype = hierarchical collection of time series.
+              ``pd.DataFrame`` with 3 or more level row
+              ``MultiIndex`` ``(hierarchy_1, ..., hierarchy_n, time)``
+
+            For further details on data format, see glossary on :term:`mtype`.
+            For usage, see transformer tutorial ``examples/03_transformers.ipynb``
+
+        y : optional, data in sktime compatible data format, default=None
             Additional data, e.g., labels for transformation
-            some transformers require this, see class docstring for details
+            If ``self.get_tag("requires_y")`` is ``True``,
+            must be passed in ``fit``, not optional.
+            For required format, see class docstring for details.
 
         Returns
         -------
@@ -691,29 +728,36 @@ class BaseTransformer(BaseEstimator):
             Requires state to be "fitted".
 
         Accesses in self:
-        _is_fitted : must be True
-        _X : optionally accessed, only available if remember_data tag is True
-        fitted model attributes (ending in "_") : accessed by _inverse_transform
+
+            * Fitted model attributes ending in "_".
+            * ``self.is_fitted``, must be True
 
         Parameters
         ----------
-        X : time series in sktime compatible data container format
-            Data to inverse transform, of sktime type as follows:
-            Series: interpreted as single time series
-                pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-                if np.ndarray, of shape (n_timepoints) or (n_variables, n_timepoints)
-            Panel: pd.DataFrame with 2-level MultiIndex, list of pd.DataFrame,
-                pd.DataFrame in long/wide format, or 3D np.ndarray
-                if pd.DataFrame with 2-level MultiIndex, index is (instance, time)
-                if 3D np.ndarray, of shape (n_instances, n_variables, n_timepoints)
-            Hierarchical: pd.DataFrame with 3- or more-level MultiIndex
-                highest (rightmost) level  of MultiIndex is time
-            for more details on sktime mtype format specifications,
-            and additional valid type specifications, refer to
-                examples/AA_datatypes_and_datasets.ipynb
-        y : optional, time series in sktime compatible data format, default=None
-            Additional data, e.g., labels for transformation
-            some transformers require this, see class docstring for details
+        X : time series in ``sktime`` compatible data container format
+            Data to fit transform to.
+
+            Individual data formats in ``sktime`` are so-called :term:`mtype`
+            specifications, each mtype implements an abstract :term:`scitype`.
+
+            * ``Series`` scitype = individual time series.
+              ``pd.DataFrame``, ``pd.Series``, or ``np.ndarray`` (1D or 2D)
+
+            * ``Panel`` scitype = collection of time series.
+              ``pd.DataFrame`` with 2-level row ``MultiIndex`` ``(instance, time)``,
+              ``3D np.ndarray`` ``(instance, variable, time)``,
+              ``list`` of ``Series`` typed ``pd.DataFrame``
+
+            * ``Hierarchical`` scitype = hierarchical collection of time series.
+              ``pd.DataFrame`` with 3 or more level row
+              ``MultiIndex`` ``(hierarchy_1, ..., hierarchy_n, time)``
+
+            For further details on data format, see glossary on :term:`mtype`.
+            For usage, see transformer tutorial ``examples/03_transformers.ipynb``
+
+        y : optional, data in sktime compatible data format, default=None
+            Additional data, e.g., labels for transformation.
+            Some transformers require this, see class docstring for details.
 
         Returns
         -------
@@ -734,7 +778,21 @@ class BaseTransformer(BaseEstimator):
         # input check and conversion for X/y
         X_inner, y_inner, metadata = self._check_X_y(X=X, y=y, return_metadata=True)
 
-        if not isinstance(X_inner, VectorizedDF):
+        # check if we need to vectorize
+        if getattr(self, "_is_vectorized", "unknown") == "unknown":
+            vectorization_needed = isinstance(X_inner, VectorizedDF)
+        else:
+            vectorization_needed = self._is_vectorized
+
+        # if no vectorization needed, we call _inverse_transform directly
+        if not vectorization_needed:
+            # capture edge condition where:
+            # transformer is univariate, transform produces multivariate
+            # in this case the check_X_y will convert to VectorizedDF,
+            # but inverse_transform expects a DataFrame
+            # example: time series decomposition algorithms
+            if isinstance(X_inner, VectorizedDF):
+                X_inner = X_inner.X_multiindex
             Xt = self._inverse_transform(X=X_inner, y=y_inner)
         else:
             # otherwise we call the vectorized version of predict
@@ -758,34 +816,42 @@ class BaseTransformer(BaseEstimator):
             Requires state to be "fitted".
 
         Accesses in self:
-        _is_fitted : must be True
-        _X : accessed by _update and by update_data, if remember_data tag is True
-        fitted model attributes (ending in "_") : must be set, accessed by _update
+
+            * Fitted model attributes ending in "_".
+            * ``self.is_fitted``, must be True
 
         Writes to self:
-        _X : updated by values in X, via update_data, if remember_data tag is True
-        fitted model attributes (ending in "_") : only if update_params=True
-            type and nature of update are dependent on estimator
+
+            * Fitted model attributes ending in "_".
+            * if ``remember_data`` tag is True, writes to ``self._X``,
+              updated by values in ``X``, via ``update_data``.
 
         Parameters
         ----------
-        X : time series in sktime compatible data container format
-            Data to update transform with, of sktime type as follows:
-            Series: interpreted as single time series
-                pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-                if np.ndarray, of shape (n_timepoints) or (n_variables, n_timepoints)
-            Panel: pd.DataFrame with 2-level MultiIndex, list of pd.DataFrame,
-                pd.DataFrame in long/wide format, or 3D np.ndarray
-                if pd.DataFrame with 2-level MultiIndex, index is (instance, time)
-                if 3D np.ndarray, of shape (n_instances, n_variables, n_timepoints)
-            Hierarchical: pd.DataFrame with 3- or more-level MultiIndex
-                highest (rightmost) level  of MultiIndex is time
-            for more details on sktime mtype format specifications,
-            and additional valid type specifications, refer to
-                examples/AA_datatypes_and_datasets.ipynb
-        y : optional, time series in sktime compatible data format, default=None
-            Additional data, e.g., labels for transformation
-            some transformers require this, see class docstring for details
+        X : time series in ``sktime`` compatible data container format
+            Data to update transformation with
+
+            Individual data formats in ``sktime`` are so-called :term:`mtype`
+            specifications, each mtype implements an abstract :term:`scitype`.
+
+            * ``Series`` scitype = individual time series.
+              ``pd.DataFrame``, ``pd.Series``, or ``np.ndarray`` (1D or 2D)
+
+            * ``Panel`` scitype = collection of time series.
+              ``pd.DataFrame`` with 2-level row ``MultiIndex`` ``(instance, time)``,
+              ``3D np.ndarray`` ``(instance, variable, time)``,
+              ``list`` of ``Series`` typed ``pd.DataFrame``
+
+            * ``Hierarchical`` scitype = hierarchical collection of time series.
+              ``pd.DataFrame`` with 3 or more level row
+              ``MultiIndex`` ``(hierarchy_1, ..., hierarchy_n, time)``
+
+            For further details on data format, see glossary on :term:`mtype`.
+            For usage, see transformer tutorial ``examples/03_transformers.ipynb``
+
+        y : optional, data in sktime compatible data format, default=None
+            Additional data, e.g., labels for transformation.
+            Some transformers require this, see class docstring for details.
 
         Returns
         -------
@@ -854,7 +920,12 @@ class BaseTransformer(BaseEstimator):
               e.g., `[componentname]__[componentcomponentname]__[paramname]`, etc
         """
         # if self is not vectorized, run the default get_fitted_params
-        if not getattr(self, "_is_vectorized", False):
+        # the condition is: _is_vectorized is boolean, False, or "unknown"
+        is_vectorized = getattr(self, "_is_vectorized", False)
+        is_not_vectorized = isinstance(is_vectorized, bool) and not is_vectorized
+        is_not_vectorized = is_not_vectorized or is_vectorized == "unknown"
+
+        if is_not_vectorized:
             return super().get_fitted_params(deep=deep)
 
         # otherwise, we delegate to the instances' get_fitted_params
@@ -989,7 +1060,7 @@ class BaseTransformer(BaseEstimator):
         ALLOWED_MTYPES = self.ALLOWED_INPUT_MTYPES
 
         # checking X
-        X_metadata_required = ["is_univariate"]
+        X_metadata_required = ["is_univariate", "feature_kind"]
 
         X_valid, msg, X_metadata = check_is_mtype(
             X,
@@ -1012,6 +1083,13 @@ class BaseTransformer(BaseEstimator):
             msg = {k: v for k, v in msg.items() if k in ALLOWED_MTYPES}
             check_is_error_msg(
                 msg, var_name=msg_X, allowed_msg=allowed_msg, raise_exception=True
+            )
+
+        if DtypeKind.CATEGORICAL in X_metadata["feature_kind"] and not self.get_tag(
+            "capability:categorical_in_X"
+        ):
+            raise TypeError(
+                f"Transformer {self} does not support categorical features in X."
             )
 
         X_scitype = X_metadata["scitype"]
@@ -1050,7 +1128,10 @@ class BaseTransformer(BaseEstimator):
                 y_possible_scitypes = ["Panel", "Hierarchical"]
 
             y_valid, msg, y_metadata = check_is_scitype(
-                y, scitype=y_possible_scitypes, return_metadata=[], var_name="y"
+                y,
+                scitype=y_possible_scitypes,
+                return_metadata=["feature_kind"],
+                var_name="y",
             )
 
             # raise informative error message if y is is in wrong format
@@ -1063,6 +1144,11 @@ class BaseTransformer(BaseEstimator):
                 msg_y = msg_start + "y"
                 check_is_error_msg(
                     msg, var_name=msg_y, allowed_msg=allowed_msg, raise_exception=True
+                )
+
+            if DtypeKind.CATEGORICAL in y_metadata["feature_kind"]:
+                raise TypeError(
+                    "Transformers do not support categorical features in y."
                 )
 
             y_scitype = y_metadata["scitype"]
@@ -1236,7 +1322,7 @@ class BaseTransformer(BaseEstimator):
                 Xt_valid, Xt_msg, metadata = check_is_mtype(
                     Xt,
                     ALLOWED_OUT_MTYPES,
-                    msg_return_dict="list",
+                    msg_return_dict="dict",
                     return_metadata=Xt_metadata_required,
                 )
 

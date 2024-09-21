@@ -36,8 +36,8 @@ __all__ = [
 from sktime.datatypes._convert_utils._coerce import _coerce_df_dtypes
 from sktime.datatypes._convert_utils._convert import _extend_conversions
 from sktime.datatypes._panel._registry import MTYPE_LIST_PANEL
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.pandas import df_map
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 # dictionary indexed by triples of types
 #  1st element = convert from - type
@@ -739,7 +739,7 @@ def from_multi_index_to_nested(
     x_nested = pd.DataFrame()
 
     # Loop the dimensions (columns) of multi-index DataFrame
-    for _label, _series in multi_ind_dataframe.items():  # noqa
+    for _label, _series in multi_ind_dataframe.items():
         # for _label in multi_ind_dataframe.columns:
         #    _series = multi_ind_dataframe.loc[:, _label]
         # Slice along the instance dimension to return list of series for each case
@@ -845,7 +845,11 @@ def from_nested_to_multi_index_adp(obj, store=None):
         time_index = store["index_names"][1]
     else:
         instance_index = obj.index.names[0]
-        time_index = "timepoints"
+        ser = obj.iloc[0, 0]
+        if hasattr(ser, "index"):
+            time_index = ser.index.names[0]
+        else:
+            time_index = None
 
     res = from_nested_to_multi_index(
         X=obj, instance_index=instance_index, time_index=time_index
@@ -1121,4 +1125,81 @@ if _check_soft_dependencies("dask", severity="none"):
 
     _extend_conversions(
         "dask_panel", "pd-multiindex", convert_dict, mtype_universe=MTYPE_LIST_PANEL
+    )
+
+if _check_soft_dependencies("polars", severity="none"):
+    from sktime.datatypes._adapter.polars import (
+        convert_pandas_to_polars,
+        convert_polars_to_pandas,
+    )
+
+    def convert_polars_to_pd_as_panel(obj, store=None):
+        return convert_polars_to_pandas(obj)
+
+    convert_dict[("polars_panel", "pd-multiindex", "Panel")] = (
+        convert_polars_to_pd_as_panel
+    )
+
+    def convert_pd_to_polars_as_panel(obj, store=None):
+        return convert_pandas_to_polars(obj)
+
+    convert_dict[("pd-multiindex", "polars_panel", "Panel")] = (
+        convert_pd_to_polars_as_panel
+    )
+
+    _extend_conversions(
+        "polars_panel", "pd-multiindex", convert_dict, mtype_universe=MTYPE_LIST_PANEL
+    )
+
+if _check_soft_dependencies("gluonts", severity="none"):
+    from sktime.datatypes._adapter.gluonts import (
+        convert_listDataset_to_pandas,
+        convert_pandas_multiindex_to_pandasDataset,
+        convert_pandas_to_listDataset,
+        convert_pandasDataset_to_pandas,
+    )
+
+    # Utilizing functions defined in _adapter/gluonts.py
+    def convert_gluonts_listDataset_to_pandas(obj, store=None):
+        return convert_listDataset_to_pandas(obj)
+
+    def convert_pandas_to_gluonts_listDataset(obj, store=None):
+        return convert_pandas_to_listDataset(obj)
+
+    def convert_pandas_multiindex_to_gluonts_pandasDataset(obj, store=None):
+        return convert_pandas_multiindex_to_pandasDataset(obj)
+
+    def convert_gluonts_pandasDataset_to_pandas_multiindex(obj, store=None):
+        return convert_pandasDataset_to_pandas(obj)
+
+    # Storing functions in convert_dict
+    convert_dict[("pd-multiindex", "gluonts_ListDataset_panel", "Panel")] = (
+        convert_pandas_to_gluonts_listDataset
+    )
+
+    convert_dict[("gluonts_ListDataset_panel", "pd-multiindex", "Panel")] = (
+        convert_gluonts_listDataset_to_pandas
+    )
+
+    convert_dict[("pd-multiindex", "gluonts_PandasDataset_panel", "Panel")] = (
+        convert_pandas_multiindex_to_gluonts_pandasDataset
+    )
+
+    convert_dict[("gluonts_PandasDataset_panel", "pd-multiindex", "Panel")] = (
+        convert_gluonts_pandasDataset_to_pandas_multiindex
+    )
+
+    # Extending conversions
+    _extend_conversions(
+        "gluonts_ListDataset_panel",
+        "pd-multiindex",
+        convert_dict,
+        mtype_universe=MTYPE_LIST_PANEL,
+    )
+
+    _extend_conversions(
+        "gluonts_PandasDataset_panel",
+        "pd-multiindex",
+        convert_dict,
+        mtype_universe=MTYPE_LIST_PANEL,
     )

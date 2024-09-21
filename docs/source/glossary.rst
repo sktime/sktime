@@ -27,7 +27,7 @@ sktime.
         a given mtype using the :func:`sktime.datatypes.check_is_mtype` function;
         all mtypes can be listed in ``sktime.datatypes.MTYPE_REGISTER``.
         For more details on the general concept, see
-        `the datatypes and datasets user guide <https://www.sktime.net/en/stable/examples/AA_datatypes_and_datasets.html>`_.
+        `the datatypes and datasets user guide :doc:</examples/AA_datatypes_and_datasets>`.
 
     scitype
         Short for scientific type, denotes the abstract type of an ``sktime`` object,

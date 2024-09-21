@@ -25,13 +25,12 @@ __author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst", "ksharm
 import time
 
 import numpy as np
-import pandas as pd
 
 from sktime.base import BasePanelMixin
-from sktime.datatypes import VectorizedDF, check_is_scitype, convert
+from sktime.datatypes import VectorizedDF, check_is_scitype
+from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.validation import check_n_jobs
-from sktime.utils.validation._dependencies import _check_estimator_deps
 
 
 class BaseClassifier(BasePanelMixin):
@@ -77,6 +76,7 @@ class BaseClassifier(BasePanelMixin):
         "has_nans",
         "is_univariate",
         "is_equal_length",
+        "feature_kind",
     ]
 
     # attribute name where vectorized estimators are stored
@@ -178,15 +178,25 @@ class BaseClassifier(BasePanelMixin):
 
         Parameters
         ----------
-        X : sktime compatible time series panel data container, Panel scitype, e.g.,
-            pd-multiindex: pd.DataFrame with columns = variables,
-            index = pd.MultiIndex with first level = instance indices,
-            second level = time indices
-            numpy3D: 3D np.array (any number of dimensions, equal length series)
-            of shape [n_instances, n_dimensions, series_length]
-            or of any other supported Panel mtype
-            for list of mtypes, see datatypes.SCITYPE_REGISTER
-            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        X : sktime compatible time series panel data container of Panel scitype
+            time series to fit the estimator to.
+
+            Can be in any :term:`mtype` of ``Panel`` :term:`scitype`, for instance:
+
+            * pd-multiindex: pd.DataFrame with columns = variables,
+              index = pd.MultiIndex with first level = instance indices,
+              second level = time indices
+            * numpy3D: 3D np.array (any number of dimensions, equal length series)
+              of shape [n_instances, n_dimensions, series_length]
+            * or of any other supported ``Panel`` :term:`mtype`
+
+            for list of mtypes, see ``datatypes.SCITYPE_REGISTER``
+
+            for specifications, see ``examples/AA_datatypes_and_datasets.ipynb``
+
+            Not all estimators support panels with multivariate or unequal length
+            series, see the :ref:`tag reference <panel_tags>` for details.
+
         y : sktime compatible tabular data container, Table scitype
             1D iterable, of shape [n_instances]
             or 2D iterable, of shape [n_instances, n_dimensions]
@@ -271,25 +281,37 @@ class BaseClassifier(BasePanelMixin):
 
         Parameters
         ----------
-        X : sktime compatible time series panel data container, Panel scitype, e.g.,
-            pd-multiindex: pd.DataFrame with columns = variables,
-            index = pd.MultiIndex with first level = instance indices,
-            second level = time indices
-            numpy3D: 3D np.array (any number of dimensions, equal length series)
-            of shape [n_instances, n_dimensions, series_length]
-            or of any other supported Panel mtype
-            for list of mtypes, see datatypes.SCITYPE_REGISTER
-            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        X : sktime compatible time series panel data container of Panel scitype
+            time series to predict labels for.
+
+            Can be in any :term:`mtype` of ``Panel`` :term:`scitype`, for instance:
+
+            * pd-multiindex: pd.DataFrame with columns = variables,
+              index = pd.MultiIndex with first level = instance indices,
+              second level = time indices
+            * numpy3D: 3D np.array (any number of dimensions, equal length series)
+              of shape [n_instances, n_dimensions, series_length]
+            * or of any other supported ``Panel`` :term:`mtype`
+
+            for list of mtypes, see ``datatypes.SCITYPE_REGISTER``
+
+            for specifications, see ``examples/AA_datatypes_and_datasets.ipynb``
+
+            Not all estimators support panels with multivariate or unequal length
+            series, see the :ref:`tag reference <panel_tags>` for details.
 
         Returns
         -------
-        y_pred : sktime compatible tabular data container, Table scitype
-            1D iterable, of shape [n_instances]
-            or 2D iterable, of shape [n_instances, n_dimensions]
+        y_pred : sktime compatible tabular data container, of Table :term:`scitype`
             predicted class labels
-            0-th indices correspond to instance indices in X
-            1-st indices (if applicable) correspond to multioutput vector indices in X
-            1D np.npdarray, if y univariate (one dimension)
+
+            1D iterable, of shape [n_instances],
+            or 2D iterable, of shape [n_instances, n_dimensions].
+
+            0-th indices correspond to instance indices in X,
+            1-st indices (if applicable) correspond to multioutput vector indices in X.
+
+            1D np.npdarray, if y univariate (one dimension);
             otherwise, same type as y passed in fit
         """
         self.check_is_fitted()
@@ -315,15 +337,24 @@ class BaseClassifier(BasePanelMixin):
 
         Parameters
         ----------
-        X : sktime compatible time series panel data container, Panel scitype, e.g.,
-            pd-multiindex: pd.DataFrame with columns = variables,
-            index = pd.MultiIndex with first level = instance indices,
-            second level = time indices
-            numpy3D: 3D np.array (any number of dimensions, equal length series)
-            of shape [n_instances, n_dimensions, series_length]
-            or of any other supported Panel mtype
-            for list of mtypes, see datatypes.SCITYPE_REGISTER
-            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        X : sktime compatible time series panel data container of Panel scitype
+            time series to predict labels for.
+
+            Can be in any :term:`mtype` of ``Panel`` :term:`scitype`, for instance:
+
+            * pd-multiindex: pd.DataFrame with columns = variables,
+              index = pd.MultiIndex with first level = instance indices,
+              second level = time indices
+            * numpy3D: 3D np.array (any number of dimensions, equal length series)
+              of shape [n_instances, n_dimensions, series_length]
+            * or of any other supported ``Panel`` :term:`mtype`
+
+            for list of mtypes, see ``datatypes.SCITYPE_REGISTER``
+
+            for specifications, see ``examples/AA_datatypes_and_datasets.ipynb``
+
+            Not all estimators support panels with multivariate or unequal length
+            series, see the :ref:`tag reference <panel_tags>` for details.
 
         Returns
         -------
@@ -365,15 +396,25 @@ class BaseClassifier(BasePanelMixin):
 
         Parameters
         ----------
-        X : sktime compatible time series panel data container, Panel scitype, e.g.,
-            pd-multiindex: pd.DataFrame with columns = variables,
-            index = pd.MultiIndex with first level = instance indices,
-            second level = time indices
-            numpy3D: 3D np.array (any number of dimensions, equal length series)
-            of shape [n_instances, n_dimensions, series_length]
-            or of any other supported Panel mtype
-            for list of mtypes, see datatypes.SCITYPE_REGISTER
-            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        X : sktime compatible time series panel data container of Panel scitype
+            time series to fit to and predict labels for.
+
+            Can be in any :term:`mtype` of ``Panel`` :term:`scitype`, for instance:
+
+            * pd-multiindex: pd.DataFrame with columns = variables,
+              index = pd.MultiIndex with first level = instance indices,
+              second level = time indices
+            * numpy3D: 3D np.array (any number of dimensions, equal length series)
+              of shape [n_instances, n_dimensions, series_length]
+            * or of any other supported ``Panel`` :term:`mtype`
+
+            for list of mtypes, see ``datatypes.SCITYPE_REGISTER``
+
+            for specifications, see ``examples/AA_datatypes_and_datasets.ipynb``
+
+            Not all estimators support panels with multivariate or unequal length
+            series, see the :ref:`tag reference <panel_tags>` for details.
+
         y : sktime compatible tabular data container, Table scitype
             1D iterable, of shape [n_instances]
             or 2D iterable, of shape [n_instances, n_dimensions]
@@ -381,165 +422,44 @@ class BaseClassifier(BasePanelMixin):
             0-th indices correspond to instance indices in X
             1-st indices (if applicable) correspond to multioutput vector indices in X
             supported sktime types: np.ndarray (1D, 2D), pd.Series, pd.DataFrame
+
         cv : None, int, or sklearn cross-validation object, optional, default=None
-            None : predictions are in-sample, equivalent to fit(X, y).predict(X)
-            cv : predictions are equivalent to fit(X_train, y_train).predict(X_test)
-                where multiple X_train, y_train, X_test are obtained from cv folds
-                returned y is union over all test fold predictions
-                cv test folds must be non-intersecting
-            int : equivalent to cv=KFold(cv, shuffle=True, random_state=x),
-                i.e., k-fold cross-validation predictions out-of-sample
-                random_state x is taken from self if exists, otherwise x=None
+
+            * None : predictions are in-sample, equivalent to ``fit(X, y).predict(X)``
+            * cv : predictions are equivalent to
+              ``fit(X_train, y_train).predict(X_test)``, where multiple
+              ``X_train``, ``y_train``, ``X_test`` are obtained from ``cv`` folds.
+              returned ``y`` is union over all test fold predictions,
+              ``cv`` test folds must be non-intersecting
+            * int : equivalent to ``cv=KFold(cv, shuffle=True, random_state=x)``,
+              i.e., k-fold cross-validation predictions out-of-sample, and where
+              ``random_state`` ``x`` is taken from ``self`` if exists,
+              otherwise ``x=None``
+
         change_state : bool, optional (default=True)
-            if False, will not change the state of the classifier,
-                i.e., fit/predict sequence is run with a copy, self does not change
-            if True, will fit self to the full X and y,
-                end state will be equivalent to running fit(X, y)
+
+            * if False, will not change the state of the classifier,
+              i.e., fit/predict sequence is run with a copy, self does not change
+            * if True, will fit self to the full X and y,
+              end state will be equivalent to running fit(X, y)
 
         Returns
         -------
-        y_pred : sktime compatible tabular data container, Table scitype
-            1D iterable, of shape [n_instances]
-            or 2D iterable, of shape [n_instances, n_dimensions]
+        y_pred : sktime compatible tabular data container, of Table :term:`scitype`
             predicted class labels
-            0-th indices correspond to instance indices in X
-            1-st indices (if applicable) correspond to multioutput vector indices in X
-            1D np.npdarray, if y univariate (one dimension)
+
+            1D iterable, of shape [n_instances],
+            or 2D iterable, of shape [n_instances, n_dimensions].
+
+            0-th indices correspond to instance indices in X,
+            1-st indices (if applicable) correspond to multioutput vector indices in X.
+
+            1D np.npdarray, if y univariate (one dimension);
             otherwise, same type as y passed in fit
         """
         return self._fit_predict_boilerplate(
             X=X, y=y, cv=cv, change_state=change_state, method="predict"
         )
-
-    def _fit_predict_boilerplate(
-        self,
-        X,
-        y,
-        cv,
-        change_state,
-        method,
-        return_type="single_y_pred",
-    ):
-        """Boilerplate logic for fit_predict and fit_predict_proba."""
-        from sklearn.model_selection import KFold
-
-        if isinstance(cv, int):
-            random_state = getattr(self, "random_state", None)
-            cv = KFold(cv, random_state=random_state, shuffle=True)
-
-        if change_state:
-            self.reset()
-            est = self
-        else:
-            est = self.clone()
-
-        if cv is None:
-            return getattr(est.fit(X, y), method)(X)
-        elif change_state:
-            self.fit(X, y)
-
-        # we now know that cv is an sklearn splitter
-        X, y = self._internal_convert(X, y)
-        X_metadata = self._check_input(
-            X, y, return_metadata=self.METADATA_REQ_IN_CHECKS
-        )
-        X_mtype = X_metadata["mtype"]
-        # Check this classifier can handle characteristics
-        self._check_capabilities(X_metadata)
-
-        # handle single class case
-        if len(self._class_dictionary) == 1:
-            return self._single_class_y_pred(X)
-
-        # Convert data to format easily usable for applying cv
-        if isinstance(X, np.ndarray):
-            X = convert(
-                X,
-                from_type=X_mtype,
-                to_type="numpy3D",
-                as_scitype="Panel",
-                store_behaviour="freeze",
-            )
-        else:
-            X = convert(
-                X,
-                from_type=X_mtype,
-                to_type=["pd-multiindex", "nested_univ"],
-                as_scitype="Panel",
-                store_behaviour="freeze",
-            )
-
-        y_preds = []
-        tt_ixx = []
-
-        for tr_idx, tt_idx in cv.split(X):
-            X_train = self._subset(X, tr_idx)
-            X_test = self._subset(X, tt_idx)
-            y_train = self._subset(y, tr_idx)
-            fitted_est = self.clone().fit(X_train, y_train)
-            y_preds.append(getattr(fitted_est, method)(X_test))
-            tt_ixx.append(tt_idx)
-
-        if return_type == "single_y_pred":
-            return self._pool(y_preds, tt_ixx, y)
-        else:
-            return y_preds
-
-    def _subset(self, obj, ix):
-        """Subset input data by ix, for use in fit_predict_boilerplate.
-
-        Parameters
-        ----------
-        obj : pd.DataFrame or np.ndarray
-            if pd.DataFrame, instance index = first level of pd.MultiIndex
-            if np.ndarray, instance index = 0-th axis
-        ix : sklearn splitter index, e.g., ix, _ from KFold.split(X)
-
-        Returns
-        -------
-        obj_ix : obj subset by ix
-        """
-        if isinstance(obj, np.ndarray):
-            return obj[ix]
-        if not isinstance(obj, (pd.DataFrame, pd.Series)):
-            raise ValueError("obj must be a pd.DataFrame, pd.Series, or np.ndarray")
-        if not isinstance(obj.index, pd.MultiIndex):
-            return obj.iloc[ix]
-        else:
-            ix_loc = obj.index.get_level_values(0).unique()[ix]
-            return obj.loc[ix_loc]
-
-    def _pool(self, y_preds, tt_ixx, y):
-        """Pool predictions from cv splits, for use in fit_predict_boilerplate.
-
-        Parameters
-        ----------
-        y_preds : list of np.ndarray or pd.DataFrame
-            list of predictions from cv splits
-        tt_ixx : list of np.ndarray or pd.DataFrame
-            list of test indices from cv splits
-
-        Returns
-        -------
-        y_pred : np.ndarray, pooled predictions
-        """
-        y_pred = y_preds[0]
-        if isinstance(y_pred, (pd.DataFrame, pd.Series)):
-            for i in range(1, len(y_preds)):
-                y_pred = y_pred.combine_first(y_preds[i])
-            y_pred = y_pred.reindex(y.index).fillna(-1)
-        else:
-            if y_pred.ndim == 1:
-                sh = y.shape
-            else:
-                sh = (y.shape[0], y_pred.shape[1])
-            y_pred = -np.ones(sh, dtype=y.dtype)
-            for i, ix in enumerate(tt_ixx):
-                y_preds_i = y_preds[i]
-                if y_pred.ndim == 1:
-                    y_preds_i = y_preds_i.reshape(-1)
-                y_pred[ix] = y_preds_i
-        return y_pred
 
     def fit_predict_proba(self, X, y, cv=None, change_state=True):
         """Fit and predict labels probabilities for sequences in X.
@@ -555,15 +475,25 @@ class BaseClassifier(BasePanelMixin):
 
         Parameters
         ----------
-        X : sktime compatible time series panel data container, Panel scitype, e.g.,
-            pd-multiindex: pd.DataFrame with columns = variables,
-            index = pd.MultiIndex with first level = instance indices,
-            second level = time indices
-            numpy3D: 3D np.array (any number of dimensions, equal length series)
-            of shape [n_instances, n_dimensions, series_length]
-            or of any other supported Panel mtype
-            for list of mtypes, see datatypes.SCITYPE_REGISTER
-            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        X : sktime compatible time series panel data container of Panel scitype
+            time series to fit to and predict labels for.
+
+            Can be in any :term:`mtype` of ``Panel`` :term:`scitype`, for instance:
+
+            * pd-multiindex: pd.DataFrame with columns = variables,
+              index = pd.MultiIndex with first level = instance indices,
+              second level = time indices
+            * numpy3D: 3D np.array (any number of dimensions, equal length series)
+              of shape [n_instances, n_dimensions, series_length]
+            * or of any other supported ``Panel`` :term:`mtype`
+
+            for list of mtypes, see ``datatypes.SCITYPE_REGISTER``
+
+            for specifications, see ``examples/AA_datatypes_and_datasets.ipynb``
+
+            Not all estimators support panels with multivariate or unequal length
+            series, see the :ref:`tag reference <panel_tags>` for details.
+
         y : sktime compatible tabular data container, Table scitype
             1D iterable, of shape [n_instances]
             or 2D iterable, of shape [n_instances, n_dimensions]
@@ -571,18 +501,26 @@ class BaseClassifier(BasePanelMixin):
             0-th indices correspond to instance indices in X
             1-st indices (if applicable) correspond to multioutput vector indices in X
             supported sktime types: np.ndarray (1D, 2D), pd.Series, pd.DataFrame
+
         cv : None, int, or sklearn cross-validation object, optional, default=None
-            None : predictions are in-sample, equivalent to fit(X, y).predict(X)
-            cv : predictions are equivalent to fit(X_train, y_train).predict(X_test)
-                where multiple X_train, y_train, X_test are obtained from cv folds
-                returned y is union over all test fold predictions
-                cv test folds must be non-intersecting
-            int : equivalent to cv=Kfold(int), i.e., k-fold cross-validation predictions
+
+            * None : predictions are in-sample, equivalent to ``fit(X, y).predict(X)``
+            * cv : predictions are equivalent to
+              ``fit(X_train, y_train).predict(X_test)``, where multiple
+              ``X_train``, ``y_train``, ``X_test`` are obtained from ``cv`` folds.
+              returned ``y`` is union over all test fold predictions,
+              ``cv`` test folds must be non-intersecting
+            * int : equivalent to ``cv=KFold(cv, shuffle=True, random_state=x)``,
+              i.e., k-fold cross-validation predictions out-of-sample, and where
+              ``random_state`` ``x`` is taken from ``self`` if exists,
+              otherwise ``x=None``
+
         change_state : bool, optional (default=True)
-            if False, will not change the state of the classifier,
-                i.e., fit/predict sequence is run with a copy, self does not change
-            if True, will fit self to the full X and y,
-                end state will be equivalent to running fit(X, y)
+
+            * if False, will not change the state of the classifier,
+              i.e., fit/predict sequence is run with a copy, self does not change
+            * if True, will fit self to the full X and y,
+              end state will be equivalent to running fit(X, y)
 
         Returns
         -------
@@ -613,15 +551,25 @@ class BaseClassifier(BasePanelMixin):
 
         Parameters
         ----------
-        X : sktime compatible time series panel data container, e.g.,
-            pd-multiindex: pd.DataFrame with columns = variables,
-            index = pd.MultiIndex with first level = instance indices,
-            second level = time indices
-            numpy3D: 3D np.array (any number of dimensions, equal length series)
-            of shape [n_instances, n_dimensions, series_length]
-            or of any other supported Panel mtype
-            for list of mtypes, see datatypes.SCITYPE_REGISTER
-            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        X : sktime compatible time series panel data container of Panel scitype
+            time series to score predicted labels for.
+
+            Can be in any :term:`mtype` of ``Panel`` :term:`scitype`, for instance:
+
+            * pd-multiindex: pd.DataFrame with columns = variables,
+              index = pd.MultiIndex with first level = instance indices,
+              second level = time indices
+            * numpy3D: 3D np.array (any number of dimensions, equal length series)
+              of shape [n_instances, n_dimensions, series_length]
+            * or of any other supported ``Panel`` :term:`mtype`
+
+            for list of mtypes, see ``datatypes.SCITYPE_REGISTER``
+
+            for specifications, see ``examples/AA_datatypes_and_datasets.ipynb``
+
+            Not all estimators support panels with multivariate or unequal length
+            series, see the :ref:`tag reference <panel_tags>` for details.
+
         y : sktime compatible tabular data container, Table scitype
             1D iterable, of shape [n_instances]
             or 2D iterable, of shape [n_instances, n_dimensions]
@@ -726,6 +674,9 @@ class BaseClassifier(BasePanelMixin):
         """
         y_proba = self._predict_proba(X)
         y_pred = y_proba.argmax(axis=1)
+
+        # restore class labels if they were not originally integer
+        y_pred = self.classes_[y_pred]
 
         return y_pred
 

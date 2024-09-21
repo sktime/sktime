@@ -1,4 +1,5 @@
 """Optional passthrough transformer."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["aiwalter", "fkiraly"]
@@ -110,7 +111,9 @@ class OptionalPassthrough(_DelegatedTransformer):
         if passthrough:
             self.transformer_ = Id()
         else:
-            self.transformer_ = transformer.clone()
+            from sktime.registry import coerce_scitype
+
+            self.transformer_ = coerce_scitype(transformer, "transformer")
 
     # attribute for _DelegatedTransformer, which then delegates
     #     all non-overridden methods are same as of getattr(self, _delegate_name)

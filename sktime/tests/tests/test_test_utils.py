@@ -2,7 +2,7 @@
 
 from sktime.tests._config import EXCLUDE_ESTIMATORS
 from sktime.tests.test_switch import run_test_for_class
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.utils.dependencies import _check_estimator_deps
 
 
 def test_exclude_estimators():
@@ -75,12 +75,12 @@ def test_run_test_for_class():
         assert reason_nodep == "False_no_change"
 
     # now check estimator with soft deps
-    run_nodep = run_test_for_class(f_with_deps)
+    run_wdep = run_test_for_class(f_with_deps)
     assert isinstance(run, bool)
 
     dep_present = _check_estimator_deps(f_with_deps, severity="none")
     if not dep_present:
-        assert not run_nodep
+        assert not run_wdep
 
     res = run_test_for_class(f_with_deps, return_reason=True)
     assert isinstance(res, tuple)

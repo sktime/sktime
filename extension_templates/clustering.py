@@ -31,6 +31,7 @@ Testing - required for sktime test framework and check_estimator usage:
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
+
 # todo: write an informative docstring for the file or module, remove the above
 # todo: add an appropriate copyright notice for your estimator
 #       estimators contributed to sktime should have the copyright notice at the top
@@ -38,7 +39,6 @@ copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 # todo: uncomment the following line, enter authors' GitHub IDs
 # __author__ = [authorGitHubID, anotherAuthorGitHubID]
-
 
 from sktime.clustering import BaseClusterer
 
@@ -103,6 +103,9 @@ class MyClusterer(BaseClusterer):
         "capability:unequal_length": False,
         "capability:missing_values": False,
         "capability:multithreading": False,
+        "capability:predict": True,  # implements _predict for cluster assignment?
+        "capability:predict_proba": False,  # implements non-default _predict_proba?
+        "capability:out_of_sample": True,  # implements _predict for new data?
     }
 
     # todo: add any hyper-parameters and components to constructor

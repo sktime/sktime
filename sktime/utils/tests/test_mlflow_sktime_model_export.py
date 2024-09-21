@@ -16,8 +16,8 @@ from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.split import temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.multiindex import flatten_multiindex
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("mlflow", "boto3", "moto", "botocore", severity="none"):
     import boto3
@@ -358,9 +358,11 @@ def test_auto_arima_model_pyfunc_without_conf_output(auto_arima_model, model_pat
     """Test auto arima prediction of loaded pyfunc model without config."""
     from sktime.utils import mlflow_sktime
 
-    delattr(auto_arima_model, "pyfunc_predict_conf") if hasattr(
-        auto_arima_model, "pyfunc_predict_conf"
-    ) else None
+    (
+        delattr(auto_arima_model, "pyfunc_predict_conf")
+        if hasattr(auto_arima_model, "pyfunc_predict_conf")
+        else None
+    )
     mlflow_sktime.save_model(
         sktime_model=auto_arima_model,
         path=model_path,

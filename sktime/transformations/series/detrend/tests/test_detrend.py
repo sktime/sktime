@@ -1,4 +1,5 @@
 """Test detrenders."""
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -6,6 +7,7 @@ import pytest
 from sktime.datasets import load_airline
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.forecasting.trend.tests.test_trend import get_expected_polynomial_coefs
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.detrend import Detrender
 
 __author__ = ["mloning", "KishManani"]
@@ -22,6 +24,10 @@ def y_dataframe():
     return load_airline().to_frame()
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([Detrender, PolynomialTrendForecaster]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_polynomial_detrending():
     """Test that transformer results agree with manual detrending."""
     y = pd.Series(np.arange(20) * 0.5) + np.random.normal(0, 1, size=20)
@@ -49,6 +55,10 @@ def test_polynomial_detrending():
     np.testing.assert_array_almost_equal(actual, expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([Detrender, PolynomialTrendForecaster]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_multiplicative_detrending_series(y_series):
     """Tests we get the expected result when setting `model=multiplicative`."""
     # Load test dataset
@@ -68,6 +78,10 @@ def test_multiplicative_detrending_series(y_series):
     pd.testing.assert_series_equal(y_transformed, expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([Detrender, PolynomialTrendForecaster]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_multiplicative_detrending_dataframe(y_dataframe):
     """Tests we get the expected result when setting `model=multiplicative`."""
     # Load test dataset
@@ -87,6 +101,10 @@ def test_multiplicative_detrending_dataframe(y_dataframe):
     pd.testing.assert_frame_equal(y_transformed, expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([Detrender, PolynomialTrendForecaster]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_additive_detrending_series(y_series):
     """Tests we get the expected result when setting `model=additive`."""
     # Load test dataset
@@ -106,6 +124,10 @@ def test_additive_detrending_series(y_series):
     pd.testing.assert_series_equal(y_transformed, expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([Detrender, PolynomialTrendForecaster]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_additive_detrending_dataframe(y_dataframe):
     """Tests we get the expected result when setting `model=additive`."""
     # Load test dataset

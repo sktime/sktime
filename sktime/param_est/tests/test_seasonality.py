@@ -8,7 +8,7 @@ import pytest
 
 from sktime.datasets import load_airline
 from sktime.param_est.seasonality import SeasonalityACF, SeasonalityACFqstat
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.utils.dependencies import _check_estimator_deps
 
 
 @pytest.mark.skipif(
