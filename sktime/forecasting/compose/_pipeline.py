@@ -12,7 +12,7 @@ from sktime.datatypes import ALL_TIME_SERIES_MTYPES
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.base._fh import ForecastingHorizon
-from sktime.registry import is_a_scitype
+from sktime.registry import is_scitype
 from sktime.utils._estimator_html_repr import _VisualBlock
 from sktime.utils.validation.series import check_series
 from sktime.utils.warnings import warn
@@ -35,7 +35,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
     def _get_forecaster_index(self, estimators):
         """Get the index of the first forecaster in the list."""
         for i, est in enumerate(estimators):
-            if is_a_scitype(est[1], "forecaster"):
+            if is_scitype(est[1], "forecaster"):
                 return i
 
     def _check_steps(self, estimators, allow_postproc=False):
@@ -83,14 +83,12 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
 
         # validate names
         self._check_names(names)
-        if not all(
-            [is_a_scitype(x, ["forecaster", "transformer"]) for x in estimators]
-        ):
+        if not all([is_scitype(x, ["forecaster", "transformer"]) for x in estimators]):
             raise TypeError(
                 f"estimators passed to {self_name} "
                 f"must be either transformer or forecaster"
             )
-        scitypes = [is_a_scitype(x, ["forecaster"]) for x in estimators]
+        scitypes = [is_scitype(x, ["forecaster"]) for x in estimators]
         if sum(scitypes) != 1:
             raise TypeError(
                 f"exactly one forecaster must be contained in the chain, "

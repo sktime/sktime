@@ -7,13 +7,25 @@ from inspect import isclass
 from sktime.registry._base_classes import get_base_class_register
 
 
-def is_a_scitype(obj, desired_scitype):
+def is_scitype(obj, desired_scitype):
+    """Check if obj is of desired scitype.
+
+    Parameters
+    ----------
+    obj : class or object
+    desired_scitype : str or list of str
+
+    Returns
+    -------
+    is_scitype : bool
+        True if obj is of desired scitype, False otherwise
+    """
     scitypes = scitype(
         obj, force_single_scitype=False, coerce_to_list=True, raise_on_unknown=False
     )
     if isinstance(desired_scitype, str):
         desired_scitype = [desired_scitype]
-    return any([scitype in desired_scitype for scitype in scitypes])
+    return len(desired_scitype.intersection(scitypes)) > 0
 
 
 def scitype(
