@@ -7,25 +7,28 @@ from inspect import isclass
 from sktime.registry._base_classes import get_base_class_register
 
 
-def is_scitype(obj, desired_scitype):
+def is_scitype(obj, scitypes):
     """Check if obj is of desired scitype.
 
     Parameters
     ----------
-    obj : class or object
-    desired_scitype : str or list of str
+    obj : class or object, must be an skbase BaseObject descendant
+    scitypes : str or iterable of str
+        scitype(s) to check, each str must be a valid scitype string
 
     Returns
     -------
     is_scitype : bool
-        True if obj is of desired scitype, False otherwise
+        True if obj tag ``object_type``, or inferred scitype via ``registry.scitype``,
+        contains at least one of the scitype strings in ``scitypes``.
     """
-    scitypes = scitype(
+    obj_scitypes = scitype(
         obj, force_single_scitype=False, coerce_to_list=True, raise_on_unknown=False
     )
-    if isinstance(desired_scitype, str):
-        desired_scitype = [desired_scitype]
-    return len(desired_scitype.intersection(scitypes)) > 0
+    if isinstance(scitypes, str):
+        scitypes = [scitypes]
+    scitypes = set(scitypes)
+    return len(scitypes.intersection(obj_scitypes)) > 0
 
 
 def scitype(
