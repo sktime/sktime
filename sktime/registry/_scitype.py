@@ -7,6 +7,13 @@ from inspect import isclass
 from sktime.registry._base_classes import get_base_class_register
 
 
+def is_a_scitype(obj, desired_scitype):
+    scitypes = scitype(obj, force_single_scitype=False, coerce_to_list=True)
+    if isinstance(desired_scitype, str):
+        desired_scitype = [desired_scitype]
+    return any([scitype in desired_scitype for scitype in scitypes])
+
+
 def scitype(
     obj, force_single_scitype=True, coerce_to_list=False, raise_on_unknown=True
 ):
