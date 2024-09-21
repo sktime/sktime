@@ -12,6 +12,7 @@ from sktime.split import temporal_train_test_split
 
 if _check_soft_dependencies(["torch", "accelerate"], severity="none"):
     from accelerate import Accelerator
+    from torch.cuda import empty_cache
     from torch.nn import MSELoss
     from torch.utils.data import Dataset
 
@@ -115,6 +116,11 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         that they wish to set in dictionary form, so that parameters do not need
         to be individually set. If a parameter inside a config is a
         duplicate of one already passed in individually, it will be overwritten.
+
+    return_model_to_cpu : bool
+        During fit, after training via cuda, will return the model to cpu. This
+        should only be enabled during the sktime CI workflows, as many models
+        need to be implemented in order to pass tests.
     """
 
     _tags = {
@@ -156,6 +162,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         train_val_split=0.4,
         transformer_backbone="google/flan-t5-large",
         config=None,
+        return_model_to_cpu=False,
     ):
         super().__init__()
         self.pretrained_model_name_or_path = pretrained_model_name_or_path
@@ -178,6 +185,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         self._config = config if config is not None else {}
         self.criterion = MSELoss()
         self._moment_seq_len = 512
+        self.return_model_to_cpu = return_model_to_cpu
 
     def _fit(self, fh, y, X=None):
         """Assumes y is a single or multivariate time series."""
@@ -356,6 +364,11 @@ class MomentFMForecaster(_BaseGlobalForecaster):
                 train_dataloader,
                 val_dataloader,
             )
+
+        if self.return_model_to_cpu:
+            self.model.to("cpu")
+            empty_cache()
+
         return self
 
     def _predict(self, fh=None, X=None, y=None):
@@ -459,6 +472,10 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         df_pred = df_pred.loc[dateindex]
         df_pred.index.names = y_index_names
 
+        if self.return_model_to_cpu:
+            self.model.to("cpu")
+            empty_cache()
+
         return df_pred
 
     @classmethod
@@ -480,9 +497,9 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params_set = []
-        params1 = {"seq_len": 3}
+        params1 = {"seq_len": 3, "return_model_to_cpu": True}
         params_set.append(params1)
-        params2 = {"batch_size": 16, "seq_len": 3}
+        params2 = {"batch_size": 16, "seq_len": 3, "return_model_to_cpu": True}
         params_set.append(params2)
 
         return params_set
