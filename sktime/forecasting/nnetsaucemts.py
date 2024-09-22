@@ -5,7 +5,7 @@ import nnetsauce as ns
 from sktime.forecasting.base import BaseForecaster
 
 
-class MTS(BaseForecaster):
+class MTS(BaseForecaster, ns.MTS):
     """Univariate and multivariate time series (MTS) forecasting with Quasi-Randomized networks.
 
     See https://www.researchgate.net/publication/382589729_Probabilistic_Forecasting_with_nnetsauce_using_Density_Estimation_Bayesian_inference_Conformal_prediction_and_Vine_copulas
@@ -156,7 +156,28 @@ class MTS(BaseForecaster):
                  backend="cpu",
                  verbose=0,
                  show_progress=True):
-        # todo: write any hyper-parameters to self
+        super().__init__(obj=obj,
+                        n_hidden_features=n_hidden_features,
+                        activation_name=activation_name,
+                        a=a,
+                        nodes_sim=nodes_sim,
+                        bias=bias,
+                        dropout=dropout,
+                        direct_link=direct_link,
+                        n_clusters=n_clusters,
+                        cluster_encode=cluster_encode,
+                        type_clust=type_clust,
+                        type_scaling=type_scaling,
+                        lags=lags,
+                        type_pi=type_pi,
+                        block_size=block_size,
+                        replications=replications,
+                        kernel=kernel,
+                        agg=agg,
+                        seed=seed,
+                        backend=backend,
+                        verbose=verbose,
+                        show_progress=show_progress)
         self.fitter = ns.MTS(obj=obj,
                             n_hidden_features=n_hidden_features,
                             activation_name=activation_name,
