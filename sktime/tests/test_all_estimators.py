@@ -1061,7 +1061,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         estimator = estimator_instance
         repr(estimator)
 
-    def test_repr_html(self, object_instance):
+    def test_repr_html(self, estimator_instance):
         """Check that _repr_html_ call to instance does not raise exceptions."""
         object_instance._repr_html_()
 
