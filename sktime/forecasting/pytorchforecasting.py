@@ -128,6 +128,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         "capability:insample": False,
         "X-y-must-have-same-index": True,
         "scitype:y": "univariate",
+        "capability:pred_int": True,
     }
 
     def __init__(
@@ -700,6 +701,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
         "capability:insample": False,
         "X-y-must-have-same-index": True,
         "scitype:y": "univariate",
+        "capability:pred_int": True,
     }
 
     def __init__(
@@ -987,6 +989,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
         "capability:insample": False,
         "X-y-must-have-same-index": True,
         "scitype:y": "univariate",
+        "capability:pred_int": True,
     }
 
     def __init__(
@@ -1027,6 +1030,13 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
         dict
             keyword arguments for the underlying algorithm class
         """
+        # change default loss to QuantileLoss
+        # so that it can perform quantile forecast
+        from pytorch_forecasting import QuantileLoss
+
+        if "loss" not in self._model_params.keys():
+            self._model_params["loss"] = QuantileLoss()
+
         if "n_blocks" in self._model_params.keys():
             stacks = len(self._model_params["n_blocks"])
         else:
