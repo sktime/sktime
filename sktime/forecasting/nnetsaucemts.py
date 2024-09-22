@@ -1,11 +1,11 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Interface to estimators from nnetsauce by Techtonique."""
 
-import nnetsauce as ns 
+from nnetsauce import MTS as MTS0
 from sktime.forecasting.base import BaseForecaster
 
 
-class MTS(BaseForecaster, ns.MTS):
+class MTS(BaseForecaster):
     """Univariate and multivariate time series (MTS) forecasting with Quasi-Randomized networks.
 
     See https://www.researchgate.net/publication/382589729_Probabilistic_Forecasting_with_nnetsauce_using_Density_Estimation_Bayesian_inference_Conformal_prediction_and_Vine_copulas
@@ -156,29 +156,8 @@ class MTS(BaseForecaster, ns.MTS):
                  backend="cpu",
                  verbose=0,
                  show_progress=True):
-        super().__init__(obj=obj,
-                        n_hidden_features=n_hidden_features,
-                        activation_name=activation_name,
-                        a=a,
-                        nodes_sim=nodes_sim,
-                        bias=bias,
-                        dropout=dropout,
-                        direct_link=direct_link,
-                        n_clusters=n_clusters,
-                        cluster_encode=cluster_encode,
-                        type_clust=type_clust,
-                        type_scaling=type_scaling,
-                        lags=lags,
-                        type_pi=type_pi,
-                        block_size=block_size,
-                        replications=replications,
-                        kernel=kernel,
-                        agg=agg,
-                        seed=seed,
-                        backend=backend,
-                        verbose=verbose,
-                        show_progress=show_progress)
-        self.fitter = ns.MTS(obj=obj,
+        
+        self.fitter = MTS0(obj=obj,
                             n_hidden_features=n_hidden_features,
                             activation_name=activation_name,
                             a=a,
