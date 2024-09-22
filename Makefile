@@ -8,7 +8,7 @@ DOC_DIR=./docs
 BUILD_TOOLS=./build_tools
 TEST_DIR=testdir
 
-.PHONY: help release install test lint clean dist doc docs
+.PHONY: help release install test lint clean dist doc docs full_test test_without_datasets test_check_suite test_softdeps test_softdeps_full test_mlflow tests nb dockertest
 
 .DEFAULT_GOAL := help
 
@@ -21,7 +21,7 @@ release: ## Make a release
 	python3 $(BUILD_TOOLS)/make_release.py
 
 install: ## Install for the current user using the default python command
-	python3 setup.py build_ext --inplace && python setup.py install --user
+	pip install . 
 
 test: ## Run unit tests
 	-rm -rf ${TEST_DIR}
@@ -35,7 +35,7 @@ full_test: ## Run all tests
 	mkdir -p ${TEST_DIR}
 	cp .coveragerc ${TEST_DIR}
 	cp setup.cfg ${TEST_DIR}
-	python -m pytest --only_changed_modules False
+	python -m pytest --only_changed_modules True
 
 test_without_datasets: ## Run unit tests skipping sktime/datasets
 	-rm -rf ${TEST_DIR}

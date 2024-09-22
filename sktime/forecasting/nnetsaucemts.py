@@ -6,19 +6,104 @@ from sktime.forecasting.base import BaseForecaster
 
 
 class MTS(BaseForecaster):
-    """Custom forecaster. todo: write docstring.
+    """Univariate and multivariate time series (MTS) forecasting with Quasi-Randomized networks.
 
-    todo: describe your custom forecaster here
+    See https://www.researchgate.net/publication/382589729_Probabilistic_Forecasting_with_nnetsauce_using_Density_Estimation_Bayesian_inference_Conformal_prediction_and_Vine_copulas
 
     Parameters
     ----------
-    parama : int
-        descriptive explanation of parama
-    paramb : string, optional (default='default')
-        descriptive explanation of paramb
-    paramc : boolean, optional (default= whether paramb is not the default)
-        descriptive explanation of paramc
-    and so on
+
+    obj: object.
+        any object containing a method fit (obj.fit()) and a method predict
+        (obj.predict()).
+
+    n_hidden_features: int.
+        number of nodes in the hidden layer.
+
+    activation_name: str.
+        activation function: 'relu', 'tanh', 'sigmoid', 'prelu' or 'elu'.
+
+    a: float.
+        hyperparameter for 'prelu' or 'elu' activation function.
+
+    nodes_sim: str.
+        type of simulation for the nodes: 'sobol', 'hammersley', 'halton',
+        'uniform'.
+
+    bias: boolean.
+        indicates if the hidden layer contains a bias term (True) or not
+        (False).
+
+    dropout: float.
+        regularization parameter; (random) percentage of nodes dropped out
+        of the training.
+
+    direct_link: boolean.
+        indicates if the original predictors are included (True) in model's fitting or not (False).
+
+    n_clusters: int.
+        number of clusters for 'kmeans' or 'gmm' clustering (could be 0: no clustering).
+
+    cluster_encode: bool.
+        defines how the variable containing clusters is treated (default is one-hot)
+        if `False`, then labels are used, without one-hot encoding.
+
+    type_clust: str.
+        type of clustering method: currently k-means ('kmeans') or Gaussian
+        Mixture Model ('gmm').
+
+    type_scaling: a tuple of 3 strings.
+        scaling methods for inputs, hidden layer, and clustering respectively
+        (and when relevant).
+        Currently available: standardization ('std') or MinMax scaling ('minmax').
+
+    lags: int.
+        number of lags used for each time series.
+
+    type_pi: str.
+        type of prediction interval; currently:
+        - "gaussian": simple, fast, but: assumes stationarity of Gaussian in-sample residuals and independence in the multivariate case
+        - "kde": based on Kernel Density Estimation of in-sample residuals
+        - "bootstrap": based on independent bootstrap of in-sample residuals
+        - "block-bootstrap": based on basic block bootstrap of in-sample residuals
+        - "scp-kde": Sequential split conformal prediction with Kernel Density Estimation of calibrated residuals
+        - "scp-bootstrap": Sequential split conformal prediction with independent bootstrap of calibrated residuals
+        - "scp-block-bootstrap": Sequential split conformal prediction with basic block bootstrap of calibrated residuals
+        - "scp2-kde": Sequential split conformal prediction with Kernel Density Estimation of standardized calibrated residuals
+        - "scp2-bootstrap": Sequential split conformal prediction with independent bootstrap of standardized calibrated residuals
+        - "scp2-block-bootstrap": Sequential split conformal prediction with basic block bootstrap of standardized calibrated residuals
+        - based on copulas of in-sample residuals: 'vine-tll', 'vine-bb1', 'vine-bb6', 'vine-bb7', 'vine-bb8', 'vine-clayton',
+        'vine-frank', 'vine-gaussian', 'vine-gumbel', 'vine-indep', 'vine-joe', 'vine-student'
+        - 'scp-vine-tll', 'scp-vine-bb1', 'scp-vine-bb6', 'scp-vine-bb7', 'scp-vine-bb8', 'scp-vine-clayton',
+        'scp-vine-frank', 'scp-vine-gaussian', 'scp-vine-gumbel', 'scp-vine-indep', 'scp-vine-joe', 'scp-vine-student'
+        - 'scp2-vine-tll', 'scp2-vine-bb1', 'scp2-vine-bb6', 'scp2-vine-bb7', 'scp2-vine-bb8', 'scp2-vine-clayton',
+        'scp2-vine-frank', 'scp2-vine-gaussian', 'scp2-vine-gumbel', 'scp2-vine-indep', 'scp2-vine-joe', 'scp2-vine-student'
+
+    block_size: int.
+        size of block for 'type_pi' in ("block-bootstrap", "scp-block-bootstrap", "scp2-block-bootstrap").
+        Default is round(3.15*(n_residuals^1/3))
+
+    replications: int.
+        number of replications (if needed, for predictive simulation). Default is 'None'.
+
+    kernel: str.
+        the kernel to use for residuals density estimation (used for predictive simulation). Currently, either 'gaussian' or 'tophat'.
+
+    agg: str.
+        either "mean" or "median" for simulation of bootstrap aggregating
+
+    seed: int.
+        reproducibility seed for nodes_sim=='uniform' or predictive simulation.
+
+    backend: str.
+        "cpu" or "gpu" or "tpu".
+
+    verbose: int.
+        0: not printing; 1: printing
+
+    show_progress: bool.
+        True: progress bar when fitting each series; False: no progress bar when fitting each series
+    
     """
 
     # todo: fill in the scitype:y tag for univariate/multivariate
@@ -49,11 +134,51 @@ class MTS(BaseForecaster):
     }
 
     # todo: add any hyper-parameters and components to constructor
-    def __init__(self, parama, paramb="default", paramc=None):
+    def __init__(self, obj,
+                 n_hidden_features=5,
+                 activation_name="relu",
+                 a=0.01,
+                 nodes_sim="sobol",
+                 bias=True,
+                 dropout=0,
+                 direct_link=True,
+                 n_clusters=2,
+                 cluster_encode=True,
+                 type_clust="kmeans",
+                 type_scaling=("std", "std", "std"),
+                 lags=1,
+                 type_pi="kde",
+                 block_size=None,
+                 replications=None,
+                 kernel="gaussian",
+                 agg="mean",
+                 seed=123,
+                 backend="cpu",
+                 verbose=0,
+                 show_progress=True):
         # todo: write any hyper-parameters to self
-        self.parama = parama
-        self.paramb = paramb
-        self.paramc = paramc
+        self.fitter = ns.MTS(obj=obj,
+                            n_hidden_features=n_hidden_features,
+                            activation_name=activation_name,
+                            a=a,
+                            nodes_sim=nodes_sim,
+                            bias=bias,
+                            dropout=dropout,
+                            direct_link=direct_link,
+                            n_clusters=n_clusters,
+                            cluster_encode=cluster_encode,
+                            type_clust=type_clust,
+                            type_scaling=type_scaling,
+                            lags=lags,
+                            type_pi=type_pi,
+                            block_size=block_size,
+                            replications=replications,
+                            kernel=kernel,
+                            agg=agg,
+                            seed=seed,
+                            backend=backend,
+                            verbose=verbose,
+                            show_progress=show_progress)
         # IMPORTANT: the self.params should never be overwritten or mutated from now on
         # for handling defaults etc, write to other attributes, e.g., self._parama
 
@@ -89,13 +214,7 @@ class MTS(BaseForecaster):
         -------
         self : reference to self
         """
-        # any model parameters should be written to attributes ending in "_"
-        #  attributes set by the constructor must not be overwritten
-        #
-        # todo:
-        # insert logic here
-        # self.fitted_model_param_ = sthsth
-        #
+        self.fitter.fit(y)        
         return self
 
         # IMPORTANT: avoid side effects to y, X, fh
@@ -131,22 +250,7 @@ class MTS(BaseForecaster):
         y_pred : pd.DataFrame
             Point predictions
         """
-        # todo
-        # to get fitted model params set in fit, do this:
-        #
-        # fitted_model_param = self.fitted_model_param_
-
-        # todo: add logic to compute values
-        # values = sthsthsth
-
-        # then return as pd.DataFrame
-        # below code guarantees the right row and column index
-        #
-        # row_idx = fh.to_absolute_index(self.cutoff)
-        # col_idx = self._y.index
-        #
-        # y_pred = pd.DataFrame(values, index=row_ind, columns=col_idx)
-        return [1, 2, 3]
+        self.fitter.predict(h=fh)
 
         # IMPORTANT: avoid side effects to X, fh
 

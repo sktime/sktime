@@ -53,6 +53,7 @@ classifiers = [
 # this set should be kept minimal!
 dependencies = [
   "joblib<1.5,>=1.2.0",  # required for parallel processing
+  "nnetsauce>=0.23.2", 
   "numpy<2.1,>=1.21",  # required for framework layer and base class logic
   "packaging",  # for estimator specific dependency parsing
   "pandas<2.3.0,>=1.1",  # pandas is the main in-memory data container
@@ -93,7 +94,6 @@ all_extras = [
   'keras-self-attention; python_version < "3.11"',
   "matplotlib!=3.9.1,>=3.3.2",
   "mne",
-  "nnetsauce>=0.23.2",
   'numba<0.61,>=0.53',
   'optuna<3.7',
   'pmdarima!=1.8.1,<3.0.0,>=1.8; python_version < "3.12"',
