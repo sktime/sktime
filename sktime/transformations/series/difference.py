@@ -338,6 +338,7 @@ class Differencer(BaseTransformer):
         X_orig_index = X.index
 
         X = update_data(X=self._X, X_new=X)
+        X = X.sort_index()
 
         X = self._check_freq(X)
 
