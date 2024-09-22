@@ -272,7 +272,7 @@ class MTS(BaseForecaster):
         """
         h = fh[-1]
         res = self.fitter.predict(h=h)
-        return res # for now
+        return res.mean # for now
 
         # IMPORTANT: avoid side effects to X, fh
 
