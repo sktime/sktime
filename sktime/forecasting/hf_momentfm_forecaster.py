@@ -265,7 +265,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         )
         # check availability of user specified device
         self._device = _check_device(self._device)
-
+        # test
         cur_epoch = 0
         max_epoch = self.epochs
         if fh is not None:
