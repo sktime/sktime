@@ -50,7 +50,14 @@ def test_differencer_produces_expected_results(na_handling):
 )
 @pytest.mark.parametrize("na_handling", Differencer.VALID_NA_HANDLING_STR)
 def test_differencer_transform_memory(na_handling, lags=[1, 12, (1, 2)]):
-    """Test that Differencer remembers data seen in fit."""
+    """Test that Differencer remembers data seen in fit.
+
+    We will create three transformed data, with the same lags, and different
+    na_handling. All should be the same, because:
+
+    * the Differencer should remember data seen in fit
+    * the values affected by na_handling are cut off at the start of the series
+    """
     y_airline = load_airline()
     y_airline_start = y_airline[:120]
     y_airline_end = y_airline[120:]
