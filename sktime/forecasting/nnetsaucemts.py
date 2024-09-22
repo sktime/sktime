@@ -130,7 +130,7 @@ class MTS(BaseForecaster):
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "ignores-exogeneous-X": False,
-        "requires-fh-in-fit": True,
+        "requires-fh-in-fit": False,
     }
 
     # todo: add any hyper-parameters and components to constructor
