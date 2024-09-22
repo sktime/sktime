@@ -1,6 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Interface to estimators from nnetsauce by Techtonique."""
 
+import pandas as pd
 from nnetsauce import MTS as MTS0
 from sktime.forecasting.base import BaseForecaster
 
@@ -273,8 +274,8 @@ class MTS(BaseForecaster):
         """
         h = fh[-1]
         res = self.fitter.predict(h=h)
-        print(f"res: {res}")
-        return res # for now
+        res.index = pd.to_datetime(res.index)
+        return res.iloc[fh,:] # for now
 
         # IMPORTANT: avoid side effects to X, fh
 
