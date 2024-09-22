@@ -60,14 +60,14 @@ def test_differencer_transform_memory(na_handling, lags):
     * the values affected by na_handling are cut off at the start of the series
     """
     y_airline = load_airline()
-    y_airline_start = y_airline[:120]
-    y_airline_end = y_airline[120:]
+    y_airline_start = y_airline[:-24]
+    y_airline_end = y_airline[-24:]
 
     transformer = Differencer(na_handling=na_handling, lags=lags)
     transformer.fit(y_airline_start)
     yt_separate = transformer.transform(y_airline_end)
-    yt_together_trafo = transformer.transform(y_airline)[120:]
-    yt_together_fit = transformer.fit_transform(y_airline)[120:]
+    yt_together_trafo = transformer.transform(y_airline)[-24:]
+    yt_together_fit = transformer.fit_transform(y_airline)[-24:]
 
     _assert_array_almost_equal(yt_separate, yt_together_trafo)
     _assert_array_almost_equal(yt_separate, yt_together_fit)
