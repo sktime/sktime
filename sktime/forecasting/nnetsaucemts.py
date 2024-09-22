@@ -156,29 +156,52 @@ class MTS(BaseForecaster):
                  backend="cpu",
                  verbose=0,
                  show_progress=True):
-        
-        self.fitter = MTS0(obj=obj,
-                            n_hidden_features=n_hidden_features,
-                            activation_name=activation_name,
-                            a=a,
-                            nodes_sim=nodes_sim,
-                            bias=bias,
-                            dropout=dropout,
-                            direct_link=direct_link,
-                            n_clusters=n_clusters,
-                            cluster_encode=cluster_encode,
-                            type_clust=type_clust,
-                            type_scaling=type_scaling,
-                            lags=lags,
-                            type_pi=type_pi,
-                            block_size=block_size,
-                            replications=replications,
-                            kernel=kernel,
-                            agg=agg,
-                            seed=seed,
-                            backend=backend,
-                            verbose=verbose,
-                            show_progress=show_progress)
+
+        self.obj = obj
+        self.n_hidden_features = n_hidden_features
+        self.activation_name = activation_name
+        self.a = a
+        self.nodes_sim = nodes_sim
+        self.bias = bias
+        self.dropout = dropout
+        self.direct_link = direct_link
+        self.n_clusters = n_clusters
+        self.cluster_encode = cluster_encode
+        self.type_clust = type_clust
+        self.type_scaling = type_scaling
+        self.lags = lags
+        self.type_pi = type_pi
+        self.block_size = block_size
+        self.replications = replications
+        self.kernel = kernel
+        self.agg = agg
+        self.seed = seed
+        self.backend = backend
+        self.verbose = verbose
+        self.show_progress = show_progress
+                                 
+        self.fitter = MTS0(obj=self.obj,
+                            n_hidden_features=self.n_hidden_features,
+                            activation_name=self.activation_name,
+                            a=self.a,
+                            nodes_sim=self.nodes_sim,
+                            bias=self.bias,
+                            dropout=self.dropout,
+                            direct_link=self.direct_link,
+                            n_clusters=self.n_clusters,
+                            cluster_encode=self.cluster_encode,
+                            type_clust=self.type_clust,
+                            type_scaling=self.type_scaling,
+                            lags=self.lags,
+                            type_pi=self.type_pi,
+                            block_size=self.block_size,
+                            replications=self.replications,
+                            kernel=self.kernel,
+                            agg=self.agg,
+                            seed=self.seed,
+                            backend=self.backend,
+                            verbose=self.verbose,
+                            show_progress=self.show_progress)
         # IMPORTANT: the self.params should never be overwritten or mutated from now on
         # for handling defaults etc, write to other attributes, e.g., self._parama
 
