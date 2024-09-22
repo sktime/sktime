@@ -271,8 +271,9 @@ class MTS(BaseForecaster):
             Point predictions
         """
         h = fh[-1]
+        assert self.replications is None, "for probabilistic forecasts, use predict_interval"
         res = self.fitter.predict(h=h)
-        return res.mean # for now
+        return res # for now
 
         # IMPORTANT: avoid side effects to X, fh
 
@@ -328,4 +329,49 @@ class MTS(BaseForecaster):
         # params = [{"est": value1, "parama": value2},
         #           {"est": value3, "parama": value4}]        
         # return params
-        return        
+        return   
+
+    def _predict_interval(self, fh, X, coverage):
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_interval containing the core logic,
+            called from predict_interval and possibly predict_quantiles
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X :  sktime time series object, optional (default=None)
+            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
+        coverage : list of float (guaranteed not None and floats in [0,1] interval)
+           nominal coverage(s) of predictive interval(s)
+
+        Returns
+        -------
+        pred_int : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level coverage fractions for which intervals were computed.
+                    in the same order as in input `coverage`.
+                Third level is string "lower" or "upper", for lower/upper interval end.
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+            Entries are forecasts of lower/upper interval end,
+                for var in col index, at nominal coverage in second col index,
+                lower/upper depending on third col index, for the row index.
+                Upper/lower interval end forecasts are equivalent to
+                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
+        """
+        # implement here
+        # IMPORTANT: avoid side effects to y, X, fh, coverage
+        #
+        # Note: unlike in predict_interval where coverage can be float or list of float
+        #   coverage in _predict_interval is guaranteed to be a list of float
+     
