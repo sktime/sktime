@@ -7,7 +7,6 @@ __all__ = ["PolynomialTrendForecaster"]
 
 import numpy as np
 import pandas as pd
-from scipy.stats import norm
 from sklearn.base import clone
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
