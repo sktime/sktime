@@ -653,14 +653,15 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         #    probabilistic forecasting, this is the condition "pred_int_works" below
 
         # check which methods are implemented
+        implements_var = f._has_implementation_of("_predict_var")
         implements_interval = f._has_implementation_of("_predict_interval")
         implements_quantiles = f._has_implementation_of("_predict_quantiles")
         implements_proba = f._has_implementation_of("_predict_proba")
 
         pred_int_impl = implements_interval or implements_quantiles or implements_proba
+        pred_int_impl = pred_int_impl or implements_var
 
         cls_tag = f.get_class_tag("capability:pred_int", False)
-        obj_tag = f.get_tag("capability:pred_int", False)
 
         if not pred_int_impl and cls_tag:
             raise ValueError(
