@@ -264,6 +264,8 @@ jobs:
 
   test-full:
     needs: test-nosoftdeps
+    env:
+      OMP_NUM_THREADS: 1
     strategy:
       fail-fast: false  # to not fail all combinations if just one fail
       matrix:
