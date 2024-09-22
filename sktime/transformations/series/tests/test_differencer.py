@@ -49,7 +49,8 @@ def test_differencer_produces_expected_results(na_handling):
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("na_handling", Differencer.VALID_NA_HANDLING_STR)
-def test_differencer_transform_memory(na_handling, lags=[1, 12, (1, 2)]):
+@pytest.mark.parametrize("lags", lags_to_test)
+def test_differencer_transform_memory(na_handling, lags):
     """Test that Differencer remembers data seen in fit.
 
     We will create three transformed data, with the same lags, and different

@@ -19,7 +19,7 @@ from sktime.utils.validation import is_int
 def _check_lags(lags):
     msg = " ".join(
         [
-            "`lags` should be provided as a positive integer scaler, or",
+            "`lags` should be provided as a positive integer scaler, or ",
             "a list, tuple or np.ndarray of positive integers,"
             f"but found {type(lags)}.",
         ]
