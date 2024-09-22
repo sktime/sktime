@@ -213,7 +213,7 @@ class MTS(BaseForecaster):
         # instead, write to self._parama, self._newparam (starting with _)
 
     # todo: implement this, mandatory
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X=None):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -227,9 +227,6 @@ class MTS(BaseForecaster):
             if self.get_tag("scitype:y")=="univariate":
                 guaranteed to have a single column
             if self.get_tag("scitype:y")=="both": no restrictions apply
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
-            Required (non-optional) here.
         X : pd.DataFrame, optional (default=None)
             Exogeneous time series to fit to.
 
@@ -273,7 +270,9 @@ class MTS(BaseForecaster):
         y_pred : pd.DataFrame
             Point predictions
         """
-        self.fitter.predict(h=fh)
+        h = fh[-1]
+        res = self.fitter.predict(h=h)
+        return res # for now
 
         # IMPORTANT: avoid side effects to X, fh
 
