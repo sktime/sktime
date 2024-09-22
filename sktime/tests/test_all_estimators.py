@@ -1063,7 +1063,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
 
     def test_repr_html(self, estimator_instance):
         """Check that _repr_html_ call to instance does not raise exceptions."""
-        object_instance._repr_html_()
+        estimator_instance._repr_html_()
 
     def test_constructor(self, estimator_class):
         """Check that the constructor has sklearn compatible signature and behaviour.
