@@ -213,7 +213,7 @@ class MTS(BaseForecaster):
         # instead, write to self._parama, self._newparam (starting with _)
 
     # todo: implement this, mandatory
-    def _fit(self, y, X=None):
+    def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
