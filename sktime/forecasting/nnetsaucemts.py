@@ -234,7 +234,8 @@ class MTS(BaseForecaster):
         -------
         self : reference to self
         """
-        self.fitter.fit(y)        
+        self.fitter.fit(y)     
+        self.obj = self.fitter.obj    
         return self
 
         # IMPORTANT: avoid side effects to y, X, fh
@@ -271,8 +272,8 @@ class MTS(BaseForecaster):
             Point predictions
         """
         h = fh[-1]
-        assert self.replications is None, "for probabilistic forecasts, use predict_interval"
         res = self.fitter.predict(h=h)
+        print(f"res: {res}")
         return res # for now
 
         # IMPORTANT: avoid side effects to X, fh
