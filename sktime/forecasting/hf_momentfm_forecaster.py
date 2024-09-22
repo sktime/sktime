@@ -193,7 +193,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         from torch.utils.data import DataLoader
 
         # initialize accelerator
-        accelerator = Accelerator(mixed_precision="fp16")
+        accelerator = Accelerator()
         # keep a copy of y in case y is None in predict
         self._y = y
         self._y_index = self._y.index
