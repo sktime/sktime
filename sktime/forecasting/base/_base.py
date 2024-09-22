@@ -2275,9 +2275,6 @@ class BaseForecaster(BaseEstimator):
                 "This is likely a bug, please report, and/or set the flag to False."
             )
 
-        if not can_do_proba:
-            raise NotImplementedError
-
         # defaulting logic is as follows:
         # var direct deputies are proba, then interval
         # proba direct deputy is var (via Normal dist)
