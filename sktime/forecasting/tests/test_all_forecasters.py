@@ -648,13 +648,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             return None
 
         # below, we check the following things:
-        # 1. for forecasters with fixed/non-dynamic tag capability:pred_int,
-        #    its value should be True iff the forecaster implements
-        #    probabilistic forecasting, the condition "pred_int_works"
-        # 2. If the forecaster has a dynamic tag capability:pred_int tag,
-        #    it should be set to True in the class tag, and there must be some
-        #    implementation of probabilistic forecasting methods.
-        #    The reverse implication as in 1 does not need to be true.
+        #    the class value of the tag capability:pred_int,
+        #    should be True iff the forecaster implements
+        #    probabilistic forecasting, this is the condition "pred_int_works" below
 
         # check which methods are implemented
         implements_interval = f._has_implementation_of("_predict_interval")
@@ -665,7 +661,6 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         cls_tag = f.get_class_tag("capability:pred_int", False)
         obj_tag = f.get_tag("capability:pred_int", False)
-        tag_is_dynamic = cls_tag and not obj_tag
 
         if not pred_int_impl and cls_tag:
             raise ValueError(
@@ -674,12 +669,13 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 'The flag "capability:pred_int" should instead be set to False.'
             )
 
-        if pred_int_impl and not tag_is_dynamic and not cls_tag:
+        if pred_int_impl and not cls_tag:
             raise ValueError(
                 f"{type(f).__name__} does implement probabilistic forecasting, "
                 'but "capability:pred_int" flag has been set to False incorrectly. '
                 'The flag "capability:pred_int" should instead be set to True.'
             )
+
 
     @pytest.mark.parametrize(
         "fh_int_oos", TEST_OOS_FHS, ids=[f"fh={fh}" for fh in TEST_OOS_FHS]
