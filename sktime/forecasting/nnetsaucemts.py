@@ -352,7 +352,7 @@ class MTS(BaseForecaster):
             columns=res.mean.columns, 
             index=res.lower.index[fh_indices])
             for var_name in var_names:                                                
-                pred_quantiles[(var_name, a)] = res_lower_df.loc[fh_indices, var_name]
-                pred_quantiles[(var_name, 1 - a)] = res_upper_df.loc[fh_indices, var_name]
+                pred_quantiles[(var_name, a)] = res_lower_df.loc[:, var_name]
+                pred_quantiles[(var_name, 1 - a)] = res_upper_df.loc[:, var_name]
 
         return pred_quantiles
