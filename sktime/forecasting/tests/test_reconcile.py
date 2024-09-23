@@ -124,14 +124,15 @@ def test_reconcilerforecaster_exog(n_columns):
     estimator_instance.update(y=y_test, X=X_test)
 
 
-def test_reconcilerforecaster_return_totals(return_totals=False):
+@pytest.mark.parametrize("return_totals", [True, False])
+def test_reconcilerforecaster_return_totals(return_totals):
     """Test that ReconcilerForecaster returns the dataframe without the dunder levels"""
     from sktime.datatypes._utilities import get_window
     from sktime.forecasting.reconcile import ReconcilerForecaster
     from sktime.forecasting.sarimax import SARIMAX
 
     y = _make_hierarchical(
-        hierarchy_levels=(4, 3),
+        hierarchy_levels=(4, 3),  # (m, n) = (4, 3)
         n_columns=1,
         min_timepoints=12,
         max_timepoints=12,
@@ -158,4 +159,9 @@ def test_reconcilerforecaster_return_totals(return_totals=False):
     fh = [1, 2]
     estimator_instance.fit(y=y_train, X=X_train, fh=fh)
     y_pred = estimator_instance.predict(X=X_test)
-    assert len(y_test) == len(y_pred)
+    if return_totals:
+        # for hierarchy_levels=(m, n), len(y_pred) = len(y_test) + (1 + m) * 2
+        assert len(y_pred) == (len(y_test) + (1 + 4) * 2)
+    else:
+        assert len(y_test) == len(y_pred)
+        assert y_test.index.equals(y_pred.index)
