@@ -121,20 +121,8 @@ class TimesFMForecaster(_BaseGlobalForecaster):
     """
 
     _tags = {
-        "y_inner_mtype": [
-            "pd.Series",
-            "pd-multiindex",
-            "pd_multiindex_hier",
-        ],
-        "scitype:y": "univariate",
-        "ignores-exogeneous-X": True,
-        "requires-fh-in-fit": False,
-        "X-y-must-have-same-index": True,
-        "enforce_index_type": None,
-        "handles-missing-data": False,
-        "capability:insample": False,
-        "capability:pred_int": False,
-        "capability:pred_int:insample": False,
+        # packaging info
+        # --------------
         "authors": ["rajatsen91", "geetu040"],
         # rajatsen91 for google-research/timesfm
         "maintainers": ["geetu040"],
@@ -149,6 +137,23 @@ class TimesFMForecaster(_BaseGlobalForecaster):
             "utilsforecast",
         ],
         "env_marker": "sys_platform=='linux'",
+        "test_vm": True,
+        # estimator type
+        # --------------
+        "y_inner_mtype": [
+            "pd.Series",
+            "pd-multiindex",
+            "pd_multiindex_hier",
+        ],
+        "scitype:y": "univariate",
+        "ignores-exogeneous-X": True,
+        "requires-fh-in-fit": False,
+        "X-y-must-have-same-index": True,
+        "enforce_index_type": None,
+        "handles-missing-data": False,
+        "capability:insample": False,
+        "capability:pred_int": False,
+        "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
     }
 
