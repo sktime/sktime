@@ -124,8 +124,7 @@ def test_reconcilerforecaster_exog(n_columns):
     estimator_instance.update(y=y_test, X=X_test)
 
 
-@pytest.mark.parametrize("return_totals", False)
-def test_reconcilerforecaster_return_totals(return_totals):
+def test_reconcilerforecaster_return_totals(return_totals=False):
     """Test that ReconcilerForecaster returns the dataframe without the dunder levels"""
     from sktime.datatypes._utilities import get_window
     from sktime.forecasting.reconcile import ReconcilerForecaster
