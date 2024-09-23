@@ -281,7 +281,7 @@ class MTS(BaseForecaster):
         res.index = pd.to_datetime(res.index)        
         res_array = res.to_numpy()  # Convert to NumPy array for slicing
         fh_indices = fh.to_numpy() if isinstance(fh, pd.Index) else np.asarray(fh)
-        filtered_res_array = res_array[fh_indices, :]
+        filtered_res_array = res_array[fh_indices - 1, :]
         filtered_res_df = pd.DataFrame(
             filtered_res_array, 
             index=res.index[fh_indices],  # Corresponding indices based on `fh`
@@ -331,12 +331,13 @@ class MTS(BaseForecaster):
         var_names = self.fitter.series_names
         index = pd.MultiIndex.from_product([var_names, alpha])
         pred_quantiles = pd.DataFrame(columns=index)        
-
+        h = fh[-1]
         fh_indices = fh.to_numpy() if isinstance(fh, pd.Index) else np.asarray(fh)
+        fh_indices -= 1
 
         for a in alpha: 
             level = 100*(1 - a)
-            res = self.fitter.predict(h=fh[-1], level=level)            
+            res = self.fitter.predict(h=h, level=level)            
             res.lower.index = pd.to_datetime(res.lower.index)
             res.upper.index = pd.to_datetime(res.upper.index)
             res_lower_array = res.lower.to_numpy()
