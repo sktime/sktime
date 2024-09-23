@@ -70,14 +70,16 @@ Core Developers
      - :user:`Alex-JG3`
    * - Anirban Ray
      - :user:`yarnabrina`
+   * - Armaghan Shakir
+     - :user:`geetu040`
    * - Benedikt Heidrich
      - :user:`benheid`
    * - Daniel Bartling
      - :user:`danbartl`
+   * - Felix Hirwa Nshuti
+     - :user:`fnhirwa`
    * - Franz Király
      - :user:`fkiraly`
-   * - Freddy A Boulton
-     - :user:`freddyaboulton`
    * - Hazrul Akmal
      - :user:`hazrulakmal`
    * - Jonathan Bechtel
@@ -90,14 +92,16 @@ Core Developers
      - :user:`marrov`
    * - Mirae Parker
      - :user:`miraep8`
+   * - Pranav Prajapati
+     - :user:`pranavvp16`
    * - Sagar Mishra
      - :user:`achieveordie`
-   * - Stanislav Khrapov
-     - :user:`khrapovs`
    * - Svea Marie Meyer
      - :user:`SveaMeyer13`
    * - Ugochukwu Onyeka
      - :user:`onyekaugochukwu`
+   * - Xinyu Wu
+     - :user:`XinyuWuu`
 
 Former Core Developers
 ----------------------
@@ -113,6 +117,10 @@ Former Core Developers
      - :user:`TonyBagnall`
    * - Ayushmaan Seth
      - :user:`ayushmaanseth`
+   * - Christopher Holder
+     - :user:`chrisholder`
+   * - Freddy A Boulton
+     - :user:`freddyaboulton`
    * - George Oastler
      - :user:`goastler`
    * - Guzal Bulatova
@@ -143,7 +151,7 @@ Former Core Developers
      - :user:`patrickzib`
    * - Sajaysurya Ganesh
      - :user:`sajaysurya`
-   * - Christopher Holder
-     - :user:`chrisholder`
+   * - Stanislav Khrapov
+     - :user:`khrapovs`
    * - Anonymous upon contributor's request
      - :user:`big-o`
