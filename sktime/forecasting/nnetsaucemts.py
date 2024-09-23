@@ -279,11 +279,11 @@ class MTS(BaseForecaster):
 
         # IMPORTANT: avoid side effects to X, fh
 
-    def _predict_interval(self, fh, X, coverage):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
-        private _predict_interval containing the core logic,
-            called from predict_interval and possibly predict_quantiles
+        private _predict_quantiles containing the core logic,
+            called from predict_quantiles and possibly predict_interval
 
         State required:
             Requires state to be "fitted".
@@ -299,27 +299,31 @@ class MTS(BaseForecaster):
         X :  sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
-        coverage : list of float (guaranteed not None and floats in [0,1] interval)
-           nominal coverage(s) of predictive interval(s)
+        alpha : list of float (guaranteed not None and floats in [0,1] interval)
+            A list of probabilities at which quantile forecasts are computed.
 
         Returns
         -------
-        pred_int : pd.DataFrame
+        quantiles : pd.DataFrame
             Column has multi-index: first level is variable name from y in fit,
-                second level coverage fractions for which intervals were computed.
-                    in the same order as in input `coverage`.
-                Third level is string "lower" or "upper", for lower/upper interval end.
+                second level being the values of alpha passed to the function.
             Row index is fh, with additional (upper) levels equal to instance levels,
-                from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
-            Entries are forecasts of lower/upper interval end,
-                for var in col index, at nominal coverage in second col index,
-                lower/upper depending on third col index, for the row index.
-                Upper/lower interval end forecasts are equivalent to
-                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
+                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+            Entries are quantile forecasts, for var in col index,
+                at quantile probability in second col index, for the row index.
         """
-        # implement here
-        # IMPORTANT: avoid side effects to y, X, fh, coverage
-        #
-        # Note: unlike in predict_interval where coverage can be float or list of float
-        #   coverage in _predict_interval is guaranteed to be a list of float
-     
+        # prepare return data frame
+        var_names = self.fitter.series_names
+        index = pd.MultiIndex.from_product([var_names, alpha])
+        pred_quantiles = pd.DataFrame(columns=index)        
+
+        # we assume normal additive noise with sem variance
+        for var_name, a in zip(var_names, alpha):
+            level = 100*(1 - a)
+            res = self.fitter.predict(h=fh[-1], level=level)            
+            res.lower.index = pd.to_datetime(res.lower.index)
+            res.upper.index = pd.to_datetime(res.upper.index)
+            pred_quantiles[(var_name, a)] = res.lower.loc[fh, var_name]
+            pred_quantiles[(var_name, 1 - a)] = res.upper.loc[fh, var_name]
+
+        return pred_quantiles
