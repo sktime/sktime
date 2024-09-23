@@ -281,7 +281,8 @@ class MTS(BaseForecaster):
         res.index = pd.to_datetime(res.index)        
         res_array = res.to_numpy()  # Convert to NumPy array for slicing
         fh_indices = fh.to_numpy() if isinstance(fh, pd.Index) else np.asarray(fh)
-        filtered_res_array = res_array[fh_indices - 1, :]
+        fh_indices -= 1
+        filtered_res_array = res_array[fh_indices, :]
         filtered_res_df = pd.DataFrame(
             filtered_res_array, 
             index=res.index[fh_indices],  # Corresponding indices based on `fh`
