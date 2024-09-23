@@ -122,3 +122,41 @@ def test_reconcilerforecaster_exog(n_columns):
     estimator_instance.fit(y=y_train, X=X_train, fh=fh)
     estimator_instance.predict(X=X_test)
     estimator_instance.update(y=y_test, X=X_test)
+
+
+@pytest.mark.parametrize("return_totals", False)
+def test_reconcilerforecaster_return_totals(return_totals):
+    """Test that ReconcilerForecaster returns the dataframe without the dunder levels"""
+    from sktime.datatypes._utilities import get_window
+    from sktime.forecasting.reconcile import ReconcilerForecaster
+    from sktime.forecasting.sarimax import SARIMAX
+
+    y = _make_hierarchical(
+        hierarchy_levels=(4, 3),
+        n_columns=1,
+        min_timepoints=12,
+        max_timepoints=12,
+        index_type="period",
+    )
+    y_train = get_window(y, lag=2)
+    y_test = get_window(y, window_length=2)
+
+    X = _make_hierarchical(
+        hierarchy_levels=(4, 3),
+        n_columns=2,
+        min_timepoints=12,
+        max_timepoints=12,
+        index_type="period",
+    )
+    X.columns = ["foo", "bar"]
+    X_train = get_window(X, lag=2)
+    X_test = get_window(X, window_length=2)
+
+    forecaster = SARIMAX()
+    estimator_instance = ReconcilerForecaster(
+        forecaster, method="mint_shrink", return_totals=return_totals
+    )
+    fh = [1, 2]
+    estimator_instance.fit(y=y_train, X=X_train, fh=fh)
+    y_pred = estimator_instance.predict(X=X_test)
+    assert len(y_test) == len(y_pred)
