@@ -274,9 +274,20 @@ class MTS(BaseForecaster):
             Point predictions
         """
         h = fh[-1]
-        res = self.fitter.predict(h=h)
-        res.index = pd.to_datetime(res.index)
-        return res.loc[fh,:] # for now
+        if self.replications is not None or self.type_pi == "gaussian":
+            res = self.fitter.predict(h=h).mean
+        else:
+            res = self.fitter.predict(h=h)
+        res.index = pd.to_datetime(res.index)        
+        res_array = res.to_numpy()  # Convert to NumPy array for slicing
+        fh_indices = fh.to_numpy() if isinstance(fh, pd.Index) else np.asarray(fh)
+        filtered_res_array = res_array[fh_indices, :]
+        filtered_res_df = pd.DataFrame(
+            filtered_res_array, 
+            index=res.index[fh_indices],  # Corresponding indices based on `fh`
+            columns=res.columns  # Original columns
+        )
+        return filtered_res_df
 
         # IMPORTANT: avoid side effects to X, fh
 
@@ -313,18 +324,31 @@ class MTS(BaseForecaster):
             Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
+        assert self.replications is not None or self.type_pi == "gaussian",\
+             "must have self.replications is not None or self.type_pi == 'gaussian'"
+
         # prepare return data frame
         var_names = self.fitter.series_names
         index = pd.MultiIndex.from_product([var_names, alpha])
         pred_quantiles = pd.DataFrame(columns=index)        
 
-        # we assume normal additive noise with sem variance
-        for var_name, a in zip(var_names, alpha):
+        fh_indices = fh.to_numpy() if isinstance(fh, pd.Index) else np.asarray(fh)
+
+        for a in alpha: 
             level = 100*(1 - a)
             res = self.fitter.predict(h=fh[-1], level=level)            
             res.lower.index = pd.to_datetime(res.lower.index)
             res.upper.index = pd.to_datetime(res.upper.index)
-            pred_quantiles[(var_name, a)] = res.lower.loc[fh, var_name]
-            pred_quantiles[(var_name, 1 - a)] = res.upper.loc[fh, var_name]
+            res_lower_array = res.lower.to_numpy()
+            res_upper_array = res.upper.to_numpy()
+            res_lower_df = pd.DataFrame(res_lower_array[fh_indices, :], 
+            columns=res.mean.columns, 
+            index=res.lower.index[fh_indices])           
+            res_upper_df = pd.DataFrame(res_upper_array[fh_indices, :], 
+            columns=res.mean.columns, 
+            index=res.lower.index[fh_indices])
+            for var_name in var_names:                                                
+                pred_quantiles[(var_name, a)] = res_lower_df.loc[fh_indices, var_name]
+                pred_quantiles[(var_name, 1 - a)] = res_upper_df.loc[fh_indices, var_name]
 
         return pred_quantiles
