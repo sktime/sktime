@@ -1,14 +1,12 @@
-__author__ = ["mloning"]
+"""Main configuration file for test excludes.
+
+Also contains some other configs, these should be gradually refactored
+to registry or to individual tags, where applicable.
+"""
+
 __all__ = ["EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
 
-from sktime.base import BaseEstimator, BaseObject
-from sktime.registry import (
-    BASE_CLASS_LIST,
-    BASE_CLASS_LOOKUP,
-    ESTIMATOR_TAG_LIST,
-    TRANSFORMER_MIXIN_LIST,
-)
-from sktime.transformations.base import BaseTransformer
+from sktime.registry import ESTIMATOR_TAG_LIST
 
 EXCLUDE_ESTIMATORS = [
     # SFA is non-compliant with any transformer interfaces, #2064
@@ -29,7 +27,6 @@ EXCLUDE_ESTIMATORS = [
     "TapNetClassifier",
     "ResNetClassifier",  # known ResNetClassifier sporafic failures, see #3954
     "LSTMFCNClassifier",  # unknown cause, see bug report #4033
-    "TimeSeriesLloyds",  # an abstract class, but does not follow naming convention
     # DL classifier suspected to cause hangs and memouts, see #4610
     "FCNClassifier",
     "MACNNClassifier",
@@ -215,7 +212,7 @@ EXCLUDED_TESTS = {
     ],
     # SAX returns strange output format
     # this needs to be fixed, was not tested previously due to legacy exception
-    "SAXlegacy": "test_fit_transform_output",
+    "SAXlegacy": ["test_fit_transform_output"],
     "DynamicFactor": [
         "test_predict_time_index_in_sample_full",  # refer to #4765
     ],
@@ -227,9 +224,6 @@ EXCLUDED_TESTS = {
     ],
     "Pipeline": ["test_inheritance"],  # does not inherit from intermediate base classes
     # networks do not support negative fh
-    "LTSFLinearForecaster": ["test_predict_time_index_in_sample_full"],
-    "LTSFDLinearForecaster": ["test_predict_time_index_in_sample_full"],
-    "LTSFNLinearForecaster": ["test_predict_time_index_in_sample_full"],
     "HFTransformersForecaster": ["test_predict_time_index_in_sample_full"],
     "PyKANForecaster": ["test_predict_time_index_in_sample_full"],
     "WEASEL": ["test_multiprocessing_idempotent"],  # see 5658
@@ -251,6 +245,150 @@ EXCLUDED_TESTS = {
     ],
     "TSRGridSearchCV": ["test_multioutput"],  # see 6708
 }
+
+# exclude tests but keyed by test name
+EXCLUDED_TESTS_BY_TEST = {
+    "test_get_test_params_coverage": [
+        "Arsenal",
+        "BaggingForecaster",
+        "BOSSEnsemble",
+        "BinarySegmentation",
+        "CNTCClassifier",
+        "CNTCNetwork",
+        "CNTCRegressor",
+        "CanonicalIntervalForest",
+        "ClaSPSegmentation",
+        "ClaSPTransformer",
+        "ClearSky",
+        "ClustererPipeline",
+        "ColumnConcatenator",
+        "ColumnEnsembleClassifier",
+        "ColumnTransformer",
+        "ColumnwiseTransformer",
+        "ComposableTimeSeriesForestRegressor",
+        "ContractableBOSS",
+        "DOBIN",
+        "DWTTransformer",
+        "DerivativeSlopeTransformer",
+        "DilationMappingTransformer",
+        "DirectTabularRegressionForecaster",
+        "DirRecTabularRegressionForecaster",
+        "DirRecTimeSeriesRegressionForecaster",
+        "DirectTimeSeriesRegressionForecaster",
+        "DistFromAligner",
+        "DistanceFeatures",
+        "DontUpdate",
+        "DummyRegressor",
+        "ElasticEnsemble",
+        "ElbowClassPairwise",
+        "EnbPIForecaster",
+        "FeatureSelection",
+        "Filter",
+        "FittedParamExtractor",
+        "ForecastingOptunaSearchCV",
+        "FreshPRINCE",
+        "GaussianHMM",
+        "GreedyGaussianSegmentation",
+        "HCrystalBallAdapter",
+        "HIVECOTEV1",
+        "HIVECOTEV2",
+        "HOG1DTransformer",
+        "Hidalgo",
+        "HolidayFeatures",
+        "InceptionTimeNetwork",
+        "IndividualBOSS",
+        "IndividualTDE",
+        "InformationGainSegmentation",
+        "LTSFDLinearForecaster",
+        "LTSFLinearForecaster",
+        "LTSFNLinearForecaster",
+        "LogTransformer",
+        "MACNNNetwork",
+        "MCDCNNClassifier",
+        "MCDCNNNetwork",
+        "MCDCNNRegressor",
+        "MLPNetwork",
+        "MUSE",
+        "MatrixProfile",
+        "MatrixProfileTransformer",
+        "MiniRocket",
+        "MiniRocketMultivariate",
+        "MiniRocketMultivariateVariable",
+        "MultiRocket",
+        "MultiRocketMultivariate",
+        "MultioutputTabularRegressionForecaster",
+        "MultioutputTimeSeriesRegressionForecaster",
+        "OnlineEnsembleForecaster",
+        "OptionalPassthrough",
+        "PAA",
+        "PAAlegacy",
+        "PCATransformer",
+        "PaddingTransformer",
+        "ParamFitterPipeline",
+        "PlateauFinder",
+        "PluginParamsForecaster",
+        "PluginParamsTransformer",
+        "PoissonHMM",
+        "Prophet",
+        "ProphetPiecewiseLinearTrendForecaster",
+        "Prophetverse",
+        "HierarchicalProphet",
+        "PyODAnnotator",
+        "RandomIntervalClassifier",
+        "RandomIntervalFeatureExtractor",
+        "RandomIntervalSegmenter",
+        "RandomIntervalSpectralEnsemble",
+        "RandomIntervals",
+        "RandomSamplesAugmenter",
+        "RandomShapeletTransform",
+        "RecursiveTabularRegressionForecaster",
+        "RecursiveTimeSeriesRegressionForecaster",
+        "ReducerTransform",
+        "RegressorPipeline",
+        "Rocket",
+        "SAX",
+        "SAXlegacy",
+        "SFA",
+        "SFAFast",
+        "STRAY",
+        "ShapeletTransform",
+        "ShapeletTransformClassifier",
+        "SignatureClassifier",
+        "SignatureTransformer",
+        "SlidingWindowSegmenter",
+        "SlopeTransformer",
+        "StackingForecaster",
+        "SubLOF",
+        "SummaryClassifier",
+        "SupervisedIntervals",
+        "SupervisedTimeSeriesForest",
+        "TEASER",
+        "TSBootstrapAdapter",
+        "TSFreshClassifier",
+        "Tabularizer",
+        "TapNetNetwork",
+        "TemporalDictionaryEnsemble",
+        "ThetaLinesTransformer",
+        "TimeBinner",
+        "TimeSeriesForestClassifier",
+        "TimeSeriesForestRegressor",
+        "TimeSeriesKMedoids",
+        "TimeSeriesKernelKMeans",
+        "ThetaModularForecaster",
+        "TruncationTransformer",
+        "UnobservedComponents",
+        "WEASEL",
+        "WeightedEnsembleClassifier",
+        "WhiteNoiseAugmenter",
+        "YtoX",
+    ]
+}
+
+# add EXCLUDED_TESTS_BY_TEST to EXCLUDED_TESTS
+# the latter is the single source of truth
+for k, v in EXCLUDED_TESTS_BY_TEST.items():
+    for est in v:
+        EXCLUDED_TESTS.setdefault(est, []).extend([k])
 
 # We use estimator tags in addition to class hierarchies to further distinguish
 # estimators into different categories. This is useful for defining and running
@@ -279,17 +417,3 @@ NON_STATE_CHANGING_METHODS_ARRAYLIKE = (
 NON_STATE_CHANGING_METHODS = NON_STATE_CHANGING_METHODS_ARRAYLIKE + (
     "get_fitted_params",
 )
-
-# The following gives a list of valid estimator base classes.
-VALID_TRANSFORMER_TYPES = tuple(TRANSFORMER_MIXIN_LIST) + (BaseTransformer,)
-
-BASE_BASE_TYPES = (BaseEstimator, BaseObject)
-VALID_ESTIMATOR_BASE_TYPES = tuple(set(BASE_CLASS_LIST).difference(BASE_BASE_TYPES))
-
-VALID_ESTIMATOR_TYPES = (
-    BaseEstimator,
-    *VALID_ESTIMATOR_BASE_TYPES,
-    *VALID_TRANSFORMER_TYPES,
-)
-
-VALID_ESTIMATOR_BASE_TYPE_LOOKUP = BASE_CLASS_LOOKUP
