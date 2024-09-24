@@ -86,8 +86,6 @@ def _all_cond(module_name, cond):
 
         # Import the module
         module = importlib.import_module(modname)
-        print(modname)
-        print(inspect.getmembers(module, cond))
 
         # Get all objects from the module
         for name, obj in inspect.getmembers(module, cond):
