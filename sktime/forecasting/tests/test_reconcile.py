@@ -128,8 +128,8 @@ def test_reconcilerforecaster_exog(n_columns):
 def test_reconcilerforecaster_return_totals(return_totals):
     """Test that ReconcilerForecaster returns the dataframe without the dunder levels"""
     from sktime.datatypes._utilities import get_window
+    from sktime.forecasting.naive import NaiveForecaster
     from sktime.forecasting.reconcile import ReconcilerForecaster
-    from sktime.forecasting.sarimax import SARIMAX
 
     y = _make_hierarchical(
         hierarchy_levels=(4, 3),  # (m, n) = (4, 3)
@@ -152,7 +152,7 @@ def test_reconcilerforecaster_return_totals(return_totals):
     X_train = get_window(X, lag=2)
     X_test = get_window(X, window_length=2)
 
-    forecaster = SARIMAX()
+    forecaster = NaiveForecaster()
     estimator_instance = ReconcilerForecaster(
         forecaster, method="mint_shrink", return_totals=return_totals
     )
