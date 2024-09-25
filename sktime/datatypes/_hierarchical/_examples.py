@@ -102,6 +102,21 @@ class _HierMultivEqsplDaskHier(_HierMultivEqspl):
         return convert_pandas_to_dask(X, npartitions=1)
 
 
+class _HierMultivEqsplPolarsHier(_HierMultivEqsplPdMiHier):
+    _tags = {
+        "mtype": "polars_hierarchical",
+        "python_dependencies": ["polars", "pyarrow"],
+        "lossy": False,
+    }
+
+    def build(self):
+        from sktime.datatypes._adapter.polars import convert_pandas_to_polars
+
+        X_mi = _HierMultivEqsplPdMiHier().build()
+        pl_frame = convert_pandas_to_polars(X_mi)
+        return pl_frame
+
+
 ###
 # example 1: univariate, equally sampled
 
@@ -162,3 +177,18 @@ class _HierUnivEqsplDaskHier(_HierUnivEqspl):
 
         X = _HierUnivEqsplPdMiHier().build()
         return convert_pandas_to_dask(X, npartitions=1)
+
+
+class _HierUnivEqsplPolarsHier(_HierUnivEqsplPdMiHier):
+    _tags = {
+        "mtype": "polars_hierarchical",
+        "python_dependencies": ["polars", "pyarrow"],
+        "lossy": False,
+    }
+
+    def build(self):
+        from sktime.datatypes._adapter.polars import convert_pandas_to_polars
+
+        X_mi = _HierUnivEqsplPdMiHier().build()
+        pl_frame = convert_pandas_to_polars(X_mi)
+        return pl_frame
