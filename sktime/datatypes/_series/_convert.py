@@ -214,9 +214,9 @@ if _check_soft_dependencies("xarray", severity="none"):
             df.index = df.index.astype("int64")
         return df
 
-    convert_dict[("xr.DataArray", "pd.DataFrame", "Series")] = (
-        convert_xrdataarray_to_Mvs_as_Series
-    )
+    convert_dict[
+        ("xr.DataArray", "pd.DataFrame", "Series")
+    ] = convert_xrdataarray_to_Mvs_as_Series
 
     def convert_Mvs_to_xrdatarray_as_Series(
         obj: pd.DataFrame, store=None
@@ -233,9 +233,9 @@ if _check_soft_dependencies("xarray", severity="none"):
             )
         return result
 
-    convert_dict[("pd.DataFrame", "xr.DataArray", "Series")] = (
-        convert_Mvs_to_xrdatarray_as_Series
-    )
+    convert_dict[
+        ("pd.DataFrame", "xr.DataArray", "Series")
+    ] = convert_Mvs_to_xrdatarray_as_Series
 
     _extend_conversions(
         "xr.DataArray", "pd.DataFrame", convert_dict, mtype_universe=MTYPE_LIST_SERIES
@@ -251,16 +251,16 @@ if _check_soft_dependencies("dask", severity="none"):
     def convert_dask_to_mvs_as_series(obj, store=None):
         return convert_dask_to_pandas(obj)
 
-    convert_dict[("dask_series", "pd.DataFrame", "Series")] = (
-        convert_dask_to_mvs_as_series
-    )
+    convert_dict[
+        ("dask_series", "pd.DataFrame", "Series")
+    ] = convert_dask_to_mvs_as_series
 
     def convert_mvs_to_dask_as_series(obj, store=None):
         return convert_pandas_to_dask(obj)
 
-    convert_dict[("pd.DataFrame", "dask_series", "Series")] = (
-        convert_mvs_to_dask_as_series
-    )
+    convert_dict[
+        ("pd.DataFrame", "dask_series", "Series")
+    ] = convert_mvs_to_dask_as_series
 
     _extend_conversions(
         "dask_series", "pd.DataFrame", convert_dict, mtype_universe=MTYPE_LIST_SERIES
@@ -277,44 +277,44 @@ if _check_soft_dependencies("polars", severity="none"):
         pd_df = convert_polars_to_pandas(obj)
         return convert_MvS_to_UvS_as_Series(pd_df, store=store)
 
-    convert_dict[("pl.DataFrame", "pd.Series", "Series")] = (
-        convert_polars_to_uvs_as_series
-    )
+    convert_dict[
+        ("pl.DataFrame", "pd.Series", "Series")
+    ] = convert_polars_to_uvs_as_series
 
     def convert_polars_to_mvs_as_series(obj, store=None):
         return convert_polars_to_pandas(obj)
 
-    convert_dict[("pl.DataFrame", "pd.DataFrame", "Series")] = (
-        convert_polars_to_mvs_as_series
-    )
+    convert_dict[
+        ("pl.DataFrame", "pd.DataFrame", "Series")
+    ] = convert_polars_to_mvs_as_series
 
     def convert_mvs_to_polars_as_series(obj, store=None):
         return convert_pandas_to_polars(obj)
 
-    convert_dict[("pd.DataFrame", "pl.DataFrame", "Series")] = (
-        convert_mvs_to_polars_as_series
-    )
+    convert_dict[
+        ("pd.DataFrame", "pl.DataFrame", "Series")
+    ] = convert_mvs_to_polars_as_series
 
     def convert_uvs_to_polars_as_series(obj, store=None):
         return convert_pandas_to_polars(obj)
 
-    convert_dict[("pd.Series", "pl.DataFrame", "Series")] = (
-        convert_uvs_to_polars_as_series
-    )
+    convert_dict[
+        ("pd.Series", "pl.DataFrame", "Series")
+    ] = convert_uvs_to_polars_as_series
 
     def convert_polars_lazy_to_mvs_as_series(obj, store=None):
         return convert_polars_to_pandas(obj)
 
-    convert_dict[("pl.LazyFrame", "pd.DataFrame", "Series")] = (
-        convert_polars_lazy_to_mvs_as_series
-    )
+    convert_dict[
+        ("pl.LazyFrame", "pd.DataFrame", "Series")
+    ] = convert_polars_lazy_to_mvs_as_series
 
     def convert_mvs_to_polars_lazy_as_series(obj, store=None):
         return convert_pandas_to_polars(obj, lazy=True)
 
-    convert_dict[("pd.DataFrame", "pl.LazyFrame", "Series")] = (
-        convert_mvs_to_polars_lazy_as_series
-    )
+    convert_dict[
+        ("pd.DataFrame", "pl.LazyFrame", "Series")
+    ] = convert_mvs_to_polars_lazy_as_series
 
 
 if _check_soft_dependencies("gluonts", severity="none"):
@@ -339,21 +339,21 @@ if _check_soft_dependencies("gluonts", severity="none"):
         return convert_pandas_dataframe_to_pandasDataset(obj)
 
     # Storing functions in convert_dict
-    convert_dict[("pd.DataFrame", "gluonts_ListDataset_series", "Series")] = (
-        convert_pandas_to_gluonts_listDataset
-    )
+    convert_dict[
+        ("pd.DataFrame", "gluonts_ListDataset_series", "Series")
+    ] = convert_pandas_to_gluonts_listDataset
 
-    convert_dict[("gluonts_ListDataset_series", "pd.DataFrame", "Series")] = (
-        convert_gluonts_listDataset_to_pandas
-    )
+    convert_dict[
+        ("gluonts_ListDataset_series", "pd.DataFrame", "Series")
+    ] = convert_gluonts_listDataset_to_pandas
 
-    convert_dict[("pd.DataFrame", "gluonts_PandasDataset_series", "Series")] = (
-        convert_pandas_to_gluonts_PandasDataset
-    )
+    convert_dict[
+        ("pd.DataFrame", "gluonts_PandasDataset_series", "Series")
+    ] = convert_pandas_to_gluonts_PandasDataset
 
-    convert_dict[("gluonts_PandasDataset_series", "pd.DataFrame", "Series")] = (
-        convert_gluonts_PandasDataset_to_pandas
-    )
+    convert_dict[
+        ("gluonts_PandasDataset_series", "pd.DataFrame", "Series")
+    ] = convert_gluonts_PandasDataset_to_pandas
 
     # Extending conversions
     _extend_conversions(

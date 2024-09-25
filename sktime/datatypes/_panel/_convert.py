@@ -1145,21 +1145,21 @@ if _check_soft_dependencies("gluonts", severity="none"):
         return convert_pandasDataset_to_pandas(obj)
 
     # Storing functions in convert_dict
-    convert_dict[("pd-multiindex", "gluonts_ListDataset_panel", "Panel")] = (
-        convert_pandas_to_gluonts_listDataset
-    )
+    convert_dict[
+        ("pd-multiindex", "gluonts_ListDataset_panel", "Panel")
+    ] = convert_pandas_to_gluonts_listDataset
 
-    convert_dict[("gluonts_ListDataset_panel", "pd-multiindex", "Panel")] = (
-        convert_gluonts_listDataset_to_pandas
-    )
+    convert_dict[
+        ("gluonts_ListDataset_panel", "pd-multiindex", "Panel")
+    ] = convert_gluonts_listDataset_to_pandas
 
-    convert_dict[("pd-multiindex", "gluonts_PandasDataset_panel", "Panel")] = (
-        convert_pandas_multiindex_to_gluonts_pandasDataset
-    )
+    convert_dict[
+        ("pd-multiindex", "gluonts_PandasDataset_panel", "Panel")
+    ] = convert_pandas_multiindex_to_gluonts_pandasDataset
 
-    convert_dict[("gluonts_PandasDataset_panel", "pd-multiindex", "Panel")] = (
-        convert_gluonts_pandasDataset_to_pandas_multiindex
-    )
+    convert_dict[
+        ("gluonts_PandasDataset_panel", "pd-multiindex", "Panel")
+    ] = convert_gluonts_pandasDataset_to_pandas_multiindex
 
     # Extending conversions
     _extend_conversions(

@@ -105,7 +105,7 @@ class NnetsauceMTS(BaseForecaster):
 
     show_progress: bool.
         True: progress bar when fitting each series; False: no progress bar when fitting each series
-    
+
     """
 
     # todo: fill in the scitype:y tag for univariate/multivariate
@@ -138,29 +138,31 @@ class NnetsauceMTS(BaseForecaster):
     }
 
     # todo: add any hyper-parameters and components to constructor
-    def __init__(self, obj,
-                 n_hidden_features=5,
-                 activation_name="relu",
-                 a=0.01,
-                 nodes_sim="sobol",
-                 bias=True,
-                 dropout=0,
-                 direct_link=True,
-                 n_clusters=2,
-                 cluster_encode=True,
-                 type_clust="kmeans",
-                 type_scaling=("std", "std", "std"),
-                 lags=1,
-                 type_pi="kde",
-                 block_size=None,
-                 replications=None,
-                 kernel="gaussian",
-                 agg="mean",
-                 seed=123,
-                 backend="cpu",
-                 verbose=0,
-                 show_progress=True):
-
+    def __init__(
+        self,
+        obj,
+        n_hidden_features=5,
+        activation_name="relu",
+        a=0.01,
+        nodes_sim="sobol",
+        bias=True,
+        dropout=0,
+        direct_link=True,
+        n_clusters=2,
+        cluster_encode=True,
+        type_clust="kmeans",
+        type_scaling=("std", "std", "std"),
+        lags=1,
+        type_pi="kde",
+        block_size=None,
+        replications=None,
+        kernel="gaussian",
+        agg="mean",
+        seed=123,
+        backend="cpu",
+        verbose=0,
+        show_progress=True,
+    ):
         self.obj = obj
         self.n_hidden_features = n_hidden_features
         self.activation_name = activation_name
@@ -183,29 +185,31 @@ class NnetsauceMTS(BaseForecaster):
         self.backend = backend
         self.verbose = verbose
         self.show_progress = show_progress
-                                 
-        self.fitter = MTS0(obj=self.obj,
-                            n_hidden_features=self.n_hidden_features,
-                            activation_name=self.activation_name,
-                            a=self.a,
-                            nodes_sim=self.nodes_sim,
-                            bias=self.bias,
-                            dropout=self.dropout,
-                            direct_link=self.direct_link,
-                            n_clusters=self.n_clusters,
-                            cluster_encode=self.cluster_encode,
-                            type_clust=self.type_clust,
-                            type_scaling=self.type_scaling,
-                            lags=self.lags,
-                            type_pi=self.type_pi,
-                            block_size=self.block_size,
-                            replications=self.replications,
-                            kernel=self.kernel,
-                            agg=self.agg,
-                            seed=self.seed,
-                            backend=self.backend,
-                            verbose=self.verbose,
-                            show_progress=self.show_progress)
+
+        self.fitter = MTS0(
+            obj=self.obj,
+            n_hidden_features=self.n_hidden_features,
+            activation_name=self.activation_name,
+            a=self.a,
+            nodes_sim=self.nodes_sim,
+            bias=self.bias,
+            dropout=self.dropout,
+            direct_link=self.direct_link,
+            n_clusters=self.n_clusters,
+            cluster_encode=self.cluster_encode,
+            type_clust=self.type_clust,
+            type_scaling=self.type_scaling,
+            lags=self.lags,
+            type_pi=self.type_pi,
+            block_size=self.block_size,
+            replications=self.replications,
+            kernel=self.kernel,
+            agg=self.agg,
+            seed=self.seed,
+            backend=self.backend,
+            verbose=self.verbose,
+            show_progress=self.show_progress,
+        )
         # IMPORTANT: the self.params should never be overwritten or mutated from now on
         # for handling defaults etc, write to other attributes, e.g., self._parama
 
@@ -238,8 +242,8 @@ class NnetsauceMTS(BaseForecaster):
         -------
         self : reference to self
         """
-        self.fitter.fit(y)     
-        self.obj = self.fitter.obj    
+        self.fitter.fit(y)
+        self.obj = self.fitter.obj
         return self
 
         # IMPORTANT: avoid side effects to y, X, fh
@@ -280,15 +284,15 @@ class NnetsauceMTS(BaseForecaster):
             res = self.fitter.predict(h=h).mean
         else:
             res = self.fitter.predict(h=h)
-        res.index = pd.to_datetime(res.index)        
+        res.index = pd.to_datetime(res.index)
         res_array = res.to_numpy()  # Convert to NumPy array for slicing
         fh_indices = fh.to_numpy() if isinstance(fh, pd.Index) else np.asarray(fh)
         fh_indices -= 1
         filtered_res_array = res_array[fh_indices, :]
         filtered_res_df = pd.DataFrame(
-            filtered_res_array, 
+            filtered_res_array,
             index=res.index[fh_indices],  # Corresponding indices based on `fh`
-            columns=res.columns  # Original columns
+            columns=res.columns,  # Original columns
         )
         return filtered_res_df
 
@@ -327,31 +331,36 @@ class NnetsauceMTS(BaseForecaster):
             Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
-        assert self.replications is not None or self.type_pi == "gaussian",\
-             "must have self.replications is not None or self.type_pi == 'gaussian'"
+        assert (
+            self.replications is not None or self.type_pi == "gaussian"
+        ), "must have self.replications is not None or self.type_pi == 'gaussian'"
 
         # prepare return data frame
         var_names = self.fitter.series_names
         index = pd.MultiIndex.from_product([var_names, alpha])
-        pred_quantiles = pd.DataFrame(columns=index)        
+        pred_quantiles = pd.DataFrame(columns=index)
         h = fh[-1]
         fh_indices = fh.to_numpy() if isinstance(fh, pd.Index) else np.asarray(fh)
         fh_indices -= 1
 
-        for a in alpha: 
-            level = 100*(1 - a)
-            res = self.fitter.predict(h=h, level=level)            
+        for a in alpha:
+            level = 100 * (1 - a)
+            res = self.fitter.predict(h=h, level=level)
             res.lower.index = pd.to_datetime(res.lower.index)
             res.upper.index = pd.to_datetime(res.upper.index)
             res_lower_array = res.lower.to_numpy()
             res_upper_array = res.upper.to_numpy()
-            res_lower_df = pd.DataFrame(res_lower_array[fh_indices, :], 
-            columns=res.mean.columns, 
-            index=res.lower.index[fh_indices])           
-            res_upper_df = pd.DataFrame(res_upper_array[fh_indices, :], 
-            columns=res.mean.columns, 
-            index=res.lower.index[fh_indices])
-            for var_name in var_names:                                                
+            res_lower_df = pd.DataFrame(
+                res_lower_array[fh_indices, :],
+                columns=res.mean.columns,
+                index=res.lower.index[fh_indices],
+            )
+            res_upper_df = pd.DataFrame(
+                res_upper_array[fh_indices, :],
+                columns=res.mean.columns,
+                index=res.lower.index[fh_indices],
+            )
+            for var_name in var_names:
                 pred_quantiles[(var_name, a)] = res_lower_df.loc[:, var_name]
                 pred_quantiles[(var_name, 1 - a)] = res_upper_df.loc[:, var_name]
 

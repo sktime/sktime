@@ -534,10 +534,10 @@ class ARDL(_StatsModelsAdapter):
                 fitted_params["hessian"] = self._fitted_forecaster.model.hessian(
                     self._fitted_forecaster.params
                 )
-                fitted_params["information"] = (
-                    self._fitted_forecaster.model.information(
-                        self._fitted_forecaster.params
-                    )
+                fitted_params[
+                    "information"
+                ] = self._fitted_forecaster.model.information(
+                    self._fitted_forecaster.params
                 )
                 fitted_params["loglike"] = self._fitted_forecaster.model.loglike(
                     self._fitted_forecaster.params

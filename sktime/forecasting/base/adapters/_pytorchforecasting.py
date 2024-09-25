@@ -477,9 +477,9 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         for i in range(output.shape[0]):
             start_idx = i * max_prediction_length
             start_time = data.loc[start_idx, time_idx]
-            data.loc[start_idx : start_idx + max_prediction_length - 1, time_idx] = (
-                list(range(start_time, start_time + max_prediction_length))
-            )
+            data.loc[
+                start_idx : start_idx + max_prediction_length - 1, time_idx
+            ] = list(range(start_time, start_time + max_prediction_length))
 
         # set the instance columns to multi index
         data.set_index(index_names, inplace=True)

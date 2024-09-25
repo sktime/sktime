@@ -424,9 +424,9 @@ def _prep_dummies(DUMMIES):
     DUMMIES["fourier"] = DUMMIES["child"] + "_in_" + DUMMIES["parent"]
     DUMMIES["dummy"] = DUMMIES["child"] + "_of_" + DUMMIES["parent"]
     DUMMIES.loc[DUMMIES["dummy"] == "year_of_year", "dummy"] = "year"
-    DUMMIES.loc[DUMMIES["dummy_func"] == "is_weekend", ["dummy", "fourier"]] = (
-        "is_weekend"
-    )
+    DUMMIES.loc[
+        DUMMIES["dummy_func"] == "is_weekend", ["dummy", "fourier"]
+    ] = "is_weekend"
 
     DUMMIES["child"] = (
         DUMMIES["child"].astype("category").cat.reorder_categories(date_order)

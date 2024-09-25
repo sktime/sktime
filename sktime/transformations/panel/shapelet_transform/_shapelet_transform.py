@@ -309,9 +309,9 @@ class ShapeletTransform(BaseTransformer):
                     )
                     if start + length <= this_series_len
                 ]
-                possible_candidates_per_series_length[this_series_len] = (
-                    candidate_starts_and_lens
-                )
+                possible_candidates_per_series_length[
+                    this_series_len
+                ] = candidate_starts_and_lens
 
             # default for full transform
             candidates_to_visit = candidate_starts_and_lens
