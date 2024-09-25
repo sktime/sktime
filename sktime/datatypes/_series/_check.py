@@ -47,7 +47,7 @@ from sktime.datatypes._dtypekind import (
     _get_series_dtypekind,
     _pandas_dtype_to_kind,
 )
-from sktime.datatypes._series._base import Series
+from sktime.datatypes._series._base import ScitypeSeries
 from sktime.utils.validation.series import is_in_valid_index_types
 
 VALID_INDEX_TYPES = (pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
@@ -56,7 +56,7 @@ VALID_INDEX_TYPES = (pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
 FREQ_SET_CHECK = False
 
 
-class SeriesPdDataFrame(Series):
+class SeriesPdDataFrame(ScitypeSeries):
     """Data type: pandas.DataFrame based specification of single time series.
 
     Parameters are inferred by check.
@@ -181,7 +181,7 @@ def check_pddataframe_series(obj, return_metadata=False, var_name="obj"):
     return ret(True, None, metadata, return_metadata)
 
 
-class SeriesPdSeries(Series):
+class SeriesPdSeries(ScitypeSeries):
     """Data type: pandas.Series based specification of single time series.
 
     Parameters
@@ -289,7 +289,7 @@ class SeriesPdSeries(Series):
         return ret(True, None, metadata, return_metadata)
 
 
-class SeriesNumpy(Series):
+class SeriesNumpy(ScitypeSeries):
     """Data type: np.ndarray based specification of single time series.
 
     Parameters
@@ -441,7 +441,7 @@ def _index_equally_spaced(index):
     return all_equal
 
 
-class SeriesXarray(Series):
+class SeriesXarray(ScitypeSeries):
     """Data type: xarray based specification of single time series.
 
     Parameters
@@ -567,7 +567,7 @@ class SeriesXarray(Series):
         return ret(True, None, metadata, return_metadata)
 
 
-class SeriesDask(Series):
+class SeriesDask(ScitypeSeries):
     """Data type: dask.DataFrame based specification of single time series.
 
     Parameters
@@ -630,7 +630,7 @@ class SeriesDask(Series):
         )
 
 
-class SeriesPolarsEager(Series):
+class SeriesPolarsEager(ScitypeSeries):
     """Data type: polars.DataFrame based specification of single time series.
 
     Parameters
@@ -699,7 +699,7 @@ class SeriesPolarsEager(Series):
         return metadict
 
 
-class SeriesGluontsList(Series):
+class SeriesGluontsList(ScitypeSeries):
     """Data type: gluonts ListDataset based specification of single time series.
 
     Parameters
@@ -827,7 +827,7 @@ class SeriesGluontsList(Series):
 
         if _req("has_nans", return_metadata):
             for series in obj:
-                metadata["has_nans"] = pd.isnull(series["target"]).any()
+                metadata["has_nans"] = pd.isnull(ScitypeSeries["target"]).any()
 
                 # Break out if at least 1 time series has NaN values
                 if metadata["has_nans"]:
@@ -836,7 +836,7 @@ class SeriesGluontsList(Series):
         return ret(True, None, metadata, return_metadata)
 
 
-class SeriesGluontsPandas(Series):
+class SeriesGluontsPandas(ScitypeSeries):
     """Data type: gluonts PandasDataset based specification of single time series.
 
     Parameters
