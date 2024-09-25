@@ -8,8 +8,7 @@ from sktime.forecasting.base import BaseForecaster
 
 
 class NnetsauceMTS(BaseForecaster):
-    """Univariate and multivariate time series (MTS) forecasting with Quasi-Randomized
-      networks (from Python package nnetsauce).
+    """Univariate and multivariate time series (MTS) forecasting with Quasi-Randomized networks (from Python package nnetsauce).
 
     See https://www.researchgate.net/publication/382589729_Probabilistic_Forecasting_with_nnetsauce_using_Density_Estimation_Bayesian_inference_Conformal_prediction_and_Vine_copulas
 
@@ -66,7 +65,9 @@ class NnetsauceMTS(BaseForecaster):
         number of lags used for each time series.
 
     type_pi: str.
+    
         type of prediction interval; currently:
+        
         - "gaussian": simple, fast, but: assumes stationarity of Gaussian in-sample 
         residuals and independence in the multivariate case
         - "kde": based on Kernel Density Estimation of in-sample residuals
@@ -125,8 +126,6 @@ class NnetsauceMTS(BaseForecaster):
         fitting each series
 
     """
-
-    # todo: fill in the scitype:y tag for univariate/multivariate
     _tags = {
         # scitype:y controls whether internal y can be univariate/multivariate
         # if multivariate is not valid, applies vectorization over variables
