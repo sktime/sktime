@@ -60,7 +60,7 @@ def generate_check_dict(soft_deps="present"):
 
     from sktime.utils.retrieval import _all_classes
 
-    classes = _all_classes("skpro.datatypes")
+    classes = _all_classes("sktime.datatypes")
     classes = [x[1] for x in classes]
     classes = [x for x in classes if issubclass(x, BaseDatatype)]
     classes = [x for x in classes if not x.__name__.startswith("Base")]
