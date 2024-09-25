@@ -24,6 +24,7 @@ class Series(BaseDatatype):
     feature_names: list of int or object
         names of variables in table
     """
+
     _tags = {
         "scitype": "Series",
         "name": None,  # any string
