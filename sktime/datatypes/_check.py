@@ -28,7 +28,7 @@ from functools import lru_cache
 import numpy as np
 
 from sktime.datatypes._base import BaseDatatype
-from sktime.datatypes._common import _metadata_requested, _ret
+from sktime.datatypes._base._common import _metadata_requested, _ret
 from sktime.datatypes._registry import AMBIGUOUS_MTYPES, SCITYPE_LIST, mtype_to_scitype
 
 
@@ -64,6 +64,7 @@ def generate_check_dict(soft_deps="present"):
     classes = [x[1] for x in classes]
     classes = [x for x in classes if issubclass(x, BaseDatatype)]
     classes = [x for x in classes if not x.__name__.startswith("Base")]
+    classes = [x for x in classes if not x.__name__.startswith("Scitype")]
 
     # subset only to data types with soft dependencies present
     if soft_deps == "present":

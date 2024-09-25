@@ -6,7 +6,7 @@ __author__ = ["fkiraly"]
 from sktime.datatypes._base import BaseDatatype
 
 
-class Series(BaseDatatype):
+class ScitypeSeries(BaseDatatype):
     """Series data type. Represents a single time series.
 
     Parameters
