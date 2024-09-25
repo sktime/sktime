@@ -168,11 +168,11 @@ class MovingAverageZscoreOutlier(BaseTransformer):
             Parameters to create testing instances of the class
         """
         param1 = {}
-        param2 = {"window_length": 10}
-        param3 = {"window_length": 10, "threshold": 3, "return_bool": True}
-        param4 = {"window_length": 30, "use_modified_z": False}
+        param2 = {"window_length": 5}
+        param3 = {"window_length": 5, "threshold": 3, "return_bool": True}
+        param4 = {"window_length": 10, "use_modified_z": False}
         param5 = {
-            "window_length": 30,
+            "window_length": 10,
             "use_modified_z": False,
             "threshold": 2,
             "return_bool": True,
