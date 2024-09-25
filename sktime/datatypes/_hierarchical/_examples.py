@@ -102,7 +102,7 @@ class _HierMultivEqsplDaskHier(_HierMultivEqspl):
         return convert_pandas_to_dask(X, npartitions=1)
 
 
-class _HierMultivEqsplPolarsHierLossy(_HierMultivEqsplPdMiHier):
+class _HierMultivEqsplPolarsHier(_HierMultivEqsplPdMiHier):
     _tags = {
         "mtype": "polars_hierarchical",
         "python_dependencies": ["polars", "pyarrow"],
@@ -179,7 +179,7 @@ class _HierUnivEqsplDaskHier(_HierUnivEqspl):
         return convert_pandas_to_dask(X, npartitions=1)
 
 
-class _HierUnivEqsplPolarsHierLossy(_HierUnivEqsplPdMiHier):
+class _HierUnivEqsplPolarsHier(_HierUnivEqsplPdMiHier):
     _tags = {
         "mtype": "polars_hierarchical",
         "python_dependencies": ["polars", "pyarrow"],
