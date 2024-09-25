@@ -68,7 +68,9 @@ class NnetsauceDeepMTS(BaseForecaster):
         number of lags used for each time series.
 
     type_pi: str.
+    
         type of prediction interval; currently:
+        
         - "gaussian": simple, fast, but: assumes stationarity of Gaussian in-sample 
         residuals and independence in the multivariate case
         - "kde": based on Kernel Density Estimation of in-sample residuals
