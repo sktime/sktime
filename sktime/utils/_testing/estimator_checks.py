@@ -16,7 +16,7 @@ from sktime.classification.base import BaseClassifier
 from sktime.classification.early_classification import BaseEarlyClassifier
 from sktime.clustering.base import BaseClusterer
 from sktime.datatypes._panel._check import is_nested_dataframe
-from sktime.registry import scitype
+from sktime.registry import is_scitype
 
 
 def _list_required_methods(est_scitype, is_est=True):
@@ -203,11 +203,8 @@ def _has_capability(est, method: str) -> bool:
             return True
         return get_tag(est, "capability:pred_int", False)
     # skip transform for forecasters that have it - pipelines
-    if method == "transform" and scitype(est) in (
-        "classifier",
-        "forecaster",
-    ):
+    if method == "transform" and is_scitype(est, ["classifier", "forecaster"]):
         return False
-    if method == "predict" and scitype(est) == "transformer":
+    if method == "predict" and is_scitype(est, "transformer"):
         return False
     return True

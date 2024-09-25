@@ -12,7 +12,7 @@ from sktime.datatypes import ALL_TIME_SERIES_MTYPES
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.base._fh import ForecastingHorizon
-from sktime.registry import scitype
+from sktime.registry import is_scitype
 from sktime.utils._estimator_html_repr import _VisualBlock
 from sktime.utils.validation.series import check_series
 from sktime.utils.warnings import warn
@@ -32,13 +32,11 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
     # this must be an iterable of (name: str, estimator, ...) tuples for the default
     _steps_fitted_attr = "steps_"
 
-    def _get_pipeline_scitypes(self, estimators):
-        """Get list of scityes (str) from names/estimator list."""
-        return [scitype(x[1], raise_on_unknown=False) for x in estimators]
-
     def _get_forecaster_index(self, estimators):
         """Get the index of the first forecaster in the list."""
-        return self._get_pipeline_scitypes(estimators).index("forecaster")
+        for i, est in enumerate(estimators):
+            if is_scitype(est[1], "forecaster"):
+                return i
 
     def _check_steps(self, estimators, allow_postproc=False):
         """Check Steps.
@@ -85,14 +83,13 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
 
         # validate names
         self._check_names(names)
-
-        scitypes = self._get_pipeline_scitypes(estimator_tuples)
-        if not set(scitypes).issubset(["forecaster", "transformer"]):
+        if not all([is_scitype(x, ["forecaster", "transformer"]) for x in estimators]):
             raise TypeError(
                 f"estimators passed to {self_name} "
                 f"must be either transformer or forecaster"
             )
-        if scitypes.count("forecaster") != 1:
+        scitypes = [is_scitype(x, ["forecaster"]) for x in estimators]
+        if sum(scitypes) != 1:
             raise TypeError(
                 f"exactly one forecaster must be contained in the chain, "
                 f"but found {scitypes.count('forecaster')}"

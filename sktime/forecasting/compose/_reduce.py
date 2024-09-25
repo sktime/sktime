@@ -36,7 +36,7 @@ from sktime.datatypes._utilities import get_time_index
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.forecasting.base._fh import _index_range
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
-from sktime.registry import scitype
+from sktime.registry import is_scitype, scitype
 from sktime.transformations.compose import FeatureUnion
 from sktime.transformations.series.summarize import WindowSummarizer
 from sktime.utils.datetime import _shift
@@ -1631,13 +1631,12 @@ def _infer_scitype(estimator):
     if is_sklearn_estimator(estimator):
         return f"tabular-{sklearn_scitype(estimator)}"
     else:
-        inferred_skt_scitype = scitype(estimator, raise_on_unknown=False)
-        if inferred_skt_scitype in ["object", "estimator"]:
+        if is_scitype(estimator, ["object", "estimator"]):
             return "tabular-regressor"
-        if inferred_skt_scitype == "regressor":
+        if is_scitype(estimator, "regressor"):
             return "time-series-regressor"
         else:
-            return inferred_skt_scitype
+            return scitype(estimator, raise_on_unknown=False)
 
 
 def _check_strategy(strategy):
