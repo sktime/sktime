@@ -46,7 +46,6 @@ __all__ = ["check_dict"]
 
 import numpy as np
 
-from sktime.datatypes._panel._check import check_pdmultiindex_panel
 from sktime.utils.dependencies import _check_soft_dependencies
 
 
@@ -71,6 +70,8 @@ check_dict = dict()
 
 
 def check_pdmultiindex_hierarchical(obj, return_metadata=False, var_name="obj"):
+    from sktime.datatypes._panel._check import check_pdmultiindex_panel
+
     ret = check_pdmultiindex_panel(
         obj, return_metadata=return_metadata, var_name=var_name, panel=False
     )

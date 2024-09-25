@@ -41,7 +41,7 @@ __all__ = ["check_dict"]
 import numpy as np
 import pandas as pd
 
-from sktime.datatypes._common import _req, _ret
+from sktime.datatypes._base._common import _req, _ret
 from sktime.datatypes._dtypekind import _get_feature_kind, _get_table_dtypekind
 from sktime.utils.dependencies import _check_soft_dependencies
 
