@@ -108,7 +108,7 @@ def generate_temporal_features(index, temporal_encoding_type, freq):
     mapping_functions = get_mapping_functions(temporal_encoding_type, freq)
 
     if isinstance(index, pd.DatetimeIndex):
-        index = index.to_period()
+        index = index.to_period(freq=freq)
 
     index = index.map(lambda row: [fn(row) for fn in mapping_functions])
     index = np.vstack(index)

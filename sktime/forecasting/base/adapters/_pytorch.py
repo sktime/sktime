@@ -3,7 +3,7 @@ import abc
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 from sktime.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("torch", severity="none"):
@@ -15,16 +15,26 @@ else:
         """Dummy class if torch is unavailable."""
 
 
-class BaseDeepNetworkPyTorch(BaseForecaster):
+class BaseDeepNetworkPyTorch(_BaseGlobalForecaster):
     """Abstract base class for deep learning networks using torch.nn."""
 
     _tags = {
         "python_dependencies": ["torch"],
-        "y_inner_mtype": "pd.DataFrame",
+        "y_inner_mtype": [
+            "pd.DataFrame",
+            "pd-multiindex",
+            "pd_multiindex_hier",
+        ],
+        "X_inner_mtype": [
+            "pd.DataFrame",
+            "pd-multiindex",
+            "pd_multiindex_hier",
+        ],
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "scitype:y": "both",
         "ignores-exogeneous-X": True,
+        "capability:global_forecasting": True,  # (for_global)
     }
 
     def __init__(
@@ -36,6 +46,8 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         criterion_kwargs=None,
         optimizer=None,
         optimizer_kwargs=None,
+        custom_dataset_train=None,
+        custom_dataset_pred=None,
         lr=0.001,
     ):
         self.num_epochs = num_epochs
@@ -45,9 +57,21 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         self.criterion_kwargs = criterion_kwargs
         self.optimizer = optimizer
         self.optimizer_kwargs = optimizer_kwargs
+        self.custom_dataset_train = custom_dataset_train
+        self.custom_dataset_pred = custom_dataset_pred
         self.lr = lr
 
         super().__init__()
+
+        # TODO: pytorch device
+        # TODO: training verbose
+        # TODO: broadcasting
+        # TODO: shuffle dataset
+        # TODO: interpret in_channels/individual
+        # TODO: Deprecations
+        #       - broadcasting
+        #       - in_channels
+        #       - custom dataset?
 
     def _fit(self, y, fh, X=None):
         """Fit the network.
@@ -60,14 +84,12 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         X : iterable-style or map-style dataset
             see (https://pytorch.org/docs/stable/data.html) for more information
         """
-        fh = fh.to_relative(self.cutoff)
-
-        self.network = self._build_network(list(fh)[-1])
+        self.network = self._build_network()
 
         self._criterion = self._instantiate_criterion()
         self._optimizer = self._instantiate_optimizer()
 
-        dataloader = self.build_pytorch_train_dataloader(y)
+        dataloader = self.build_dataloader(y)
         self.network.train()
 
         for epoch in range(self.num_epochs):
@@ -115,48 +137,115 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
             # default criterion
             return torch.nn.MSELoss()
 
-    def _predict(self, X=None, fh=None):
+    def _predict(self, X=None, fh=None, y=None):
         """Predict with fitted model."""
         from torch import cat
 
-        if fh is None:
-            fh = self.fh
         fh = fh.to_relative(self.cutoff)
+        _y = y if self._global_forecasting else self._y
 
-        if max(fh._values) > self.network.pred_len or min(fh._values) < 0:
-            raise ValueError(
-                f"fh of {fh} passed to {self.__class__.__name__} is not "
-                "within `pred_len`. Please use a fh that aligns with the `pred_len` of "
-                "the forecaster."
-            )
-
-        if X is None:
-            dataloader = self.build_pytorch_pred_dataloader(self._y, fh)
-        else:
-            dataloader = self.build_pytorch_pred_dataloader(X, fh)
+        dataloader = self.build_dataloader(_y, split="test")
 
         self.network.eval()
-        y_pred = []
+        pred = []
         for x, _ in dataloader:
-            y_pred.append(self.network(x).detach())
-        y_pred = cat(y_pred, dim=0).view(-1, y_pred[0].shape[-1]).numpy()
-        y_pred = y_pred[fh._values.values - 1]
-        y_pred = pd.DataFrame(
-            y_pred, columns=self._y.columns, index=fh.to_absolute_index(self.cutoff)
+            pred.append(self.network(x).detach())
+        pred = cat(pred, dim=0)
+
+        # converting pred datatype
+
+        if isinstance(_y.index, pd.MultiIndex):
+            ins = np.array(
+                list(np.unique(_y.index.droplevel(-1)).repeat(pred.shape[1]))
+            )
+            ins = [ins[..., i] for i in range(ins.shape[-1])] if ins.ndim > 1 else [ins]
+
+            idx = (
+                ForecastingHorizon(range(1, pred.shape[1] + 1), freq=self.fh.freq)
+                .to_absolute(self._cutoff)
+                ._values.tolist()
+                * pred.shape[0]
+            )
+            index = pd.MultiIndex.from_arrays(
+                ins + [idx],
+                names=_y.index.names,
+            )
+        else:
+            index = (
+                ForecastingHorizon(range(1, pred.shape[1] + 1))
+                .to_absolute(self._cutoff)
+                ._values
+            )
+
+        pred = pd.DataFrame(
+            # batch_size * num_timestams, n_cols
+            pred.reshape(-1, pred.shape[-1]),
+            index=index,
+            columns=_y.columns,
         )
 
-        return y_pred
+        absolute_horizons = fh.to_absolute_index(self.cutoff)
+        dateindex = pred.index.get_level_values(-1).map(
+            lambda x: x in absolute_horizons
+        )
+        pred = pred.loc[dateindex]
+        pred.index.names = _y.index.names
 
-    def build_pytorch_train_dataloader(self, y):
+        return pred
+
+    def _build_train_dataset(self, y):
+        y = self._get_arrays(y)
+        return PyTorchDataset(
+            y,
+            seq_len=self.seq_len,  # from child classes
+            pred_len=self.pred_len,  # from child classes
+        )
+
+    def _build_pred_dataset(self, y):
+        y = self._get_arrays(y)
+        seq_len = self.seq_len  # from child classes
+        pred_len = 0
+        y = y[:, -seq_len:, :]
+        return PyTorchDataset(
+            y,
+            seq_len=seq_len,
+            pred_len=pred_len,
+        )
+
+    def _get_index(self, y):
+        # utility function
+        if not isinstance(y.index, pd.MultiIndex):
+            return y.index
+
+        return y.index.levels[-1]
+
+    def _get_arrays(self, y):
+        # utility function
+        if not isinstance(y.index, pd.MultiIndex):
+            # shape: (n_timestamps, n_cols)
+            y = np.expand_dims(y.values, axis=0)
+            # shape: (1, n_timestamps, n_cols)
+        else:
+            # Multi-index Dataframe
+            y = _frame2numpy(y)
+            # shape: (n_series, n_timestamps, n_cols)
+
+        return y
+
+    def build_dataloader(self, y, split="train"):
         """Build PyTorch DataLoader for training."""
         from torch.utils.data import DataLoader
 
-        if self.custom_dataset_train:
-            if hasattr(self.custom_dataset_train, "build_dataset") and callable(
-                self.custom_dataset_train.build_dataset
+        custom_dataset = (
+            self.custom_dataset_train if split == "train" else self.custom_dataset_train
+        )
+
+        if custom_dataset is not None:
+            if hasattr(custom_dataset, "build_dataset") and callable(
+                custom_dataset.build_dataset
             ):
-                self.custom_dataset_train.build_dataset(y)
-                dataset = self.custom_dataset_train
+                custom_dataset.build_dataset(y)
+                dataset = custom_dataset
             else:
                 raise NotImplementedError(
                     "Custom Dataset `build_dataset` method is not available. Please "
@@ -164,50 +253,58 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
                     "documentation."
                 )
         else:
-            dataset = PyTorchTrainDataset(
-                y=y,
-                seq_len=self.network.seq_len,
-                fh=self._fh.to_relative(self.cutoff)._values[-1],
+            dataset = (
+                self._build_train_dataset(y)
+                if split == "train"
+                else self._build_pred_dataset(y)
             )
 
         return DataLoader(dataset, self.batch_size, shuffle=True)
 
-    def build_pytorch_pred_dataloader(self, y, fh):
-        """Build PyTorch DataLoader for prediction."""
-        from torch.utils.data import DataLoader
-
-        if self.custom_dataset_pred:
-            if hasattr(self.custom_dataset_pred, "build_dataset") and callable(
-                self.custom_dataset_pred.build_dataset
-            ):
-                self.custom_dataset_train.build_dataset(y)
-                dataset = self.custom_dataset_train
-            else:
-                raise NotImplementedError(
-                    "Custom Dataset `build_dataset` method is not available. Please"
-                    f"refer to the {self.__class__.__name__}.build_dataset"
-                    "documentation."
-                )
-        else:
-            dataset = PyTorchPredDataset(
-                y=y[-self.network.seq_len :],
-                seq_len=self.network.seq_len,
-            )
-
-        return DataLoader(
-            dataset,
-            self.batch_size,
-        )
-
-    def get_y_true(self, y):
-        """Get y_true values for validation."""
-        dataloader = self.build_pytorch_pred_dataloader(y)
-        y_true = [y.flatten().numpy() for _, y in dataloader]
-        return np.concatenate(y_true, axis=0)
-
     @abc.abstractmethod
-    def _build_network(self, fh):
+    def _build_network(self):
         pass
+
+
+class PyTorchDataset(Dataset):
+    """Dataset for use in sktime deep learning forecasters."""
+
+    def __init__(
+        self,
+        y: pd.DataFrame,
+        seq_len: int,
+        pred_len: int,
+    ):
+        self.y = y
+        self.seq_len = seq_len
+        self.pred_len = pred_len
+
+        self._num, self._len, _ = self.y.shape
+        self._len_single = self._len - self.seq_len - self.pred_len + 1
+
+    def __len__(self):
+        """Return length of dataset."""
+        return self._num * max(self._len_single, 0)
+
+    def __getitem__(self, i):
+        """Return data point."""
+        from torch import tensor
+
+        n = i // self._len_single
+        m = i % self._len_single
+
+        hist_y_start = m  # m
+        hist_y_end = hist_y_start + self.seq_len  # m+seq
+        futu_y_start = hist_y_end  # m+seq
+        futu_y_end = hist_y_end + self.pred_len  # m+seq+pred
+
+        hist_y = self.y[n, hist_y_start:hist_y_end]
+        futu_y = self.y[n, futu_y_start:futu_y_end]
+
+        hist_y = tensor(hist_y).float()
+        futu_y = tensor(futu_y).float()
+
+        return hist_y, futu_y
 
 
 class PyTorchTrainDataset(Dataset):
@@ -267,3 +364,21 @@ class PyTorchPredDataset(Dataset):
             torch.cat([hist_y, exog_data]),
             from_numpy(self.y[i + self.seq_len : i + self.seq_len]).float(),
         )
+
+
+def _same_index(data):
+    data = data.groupby(level=list(range(len(data.index.levels) - 1))).apply(
+        lambda x: x.index.get_level_values(-1)
+    )
+    assert data.map(
+        lambda x: x.equals(data.iloc[0])
+    ).all(), "All series must has the same index"
+    return data.iloc[0], len(data.iloc[0])
+
+
+def _frame2numpy(data):
+    idx, length = _same_index(data)
+    arr = np.array(data.values, dtype=np.float32).reshape(
+        (-1, length, len(data.columns))
+    )
+    return arr
