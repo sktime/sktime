@@ -48,6 +48,9 @@ class ReconcilerForecaster(BaseForecaster):
             * "wls_str" - weighted least squares (structural)
             * "bu" - bottom-up
             * "td_fcst" - top down based on forecast proportions
+    return_totals : bool
+        If True, returns the dataframe with __total values
+        If False, returns the dataframe without __total values
 
     See Also
     --------
@@ -110,10 +113,12 @@ class ReconcilerForecaster(BaseForecaster):
 
     TRFORM_LIST = Reconciler().METHOD_LIST
     METHOD_LIST = ["mint_cov", "mint_shrink", "wls_var"] + TRFORM_LIST
+    RETURN_TOTALS_LIST = [True, False]
 
-    def __init__(self, forecaster, method="mint_shrink"):
+    def __init__(self, forecaster, method="mint_shrink", return_totals=True):
         self.forecaster = forecaster
         self.method = method
+        self.return_totals = return_totals
 
         super().__init__()
 
@@ -238,6 +243,16 @@ class ReconcilerForecaster(BaseForecaster):
 
         recon_fc = pd.concat(recon_fc, axis=0)
         recon_fc = recon_fc.sort_index()
+
+        if not self.return_totals:
+            n = recon_fc.index.get_slice_bound(label="__total", side="left")
+            if len(recon_fc[:n]) == 0:
+                recon_fc = recon_fc[n:]
+            else:
+                recon_fc = recon_fc[:n]
+            level_values = recon_fc.index.get_level_values(-2)
+            recon_fc = recon_fc[~(level_values == "__total")]
+            return recon_fc
 
         return recon_fc
 
@@ -410,7 +425,9 @@ class ReconcilerForecaster(BaseForecaster):
             {
                 "forecaster": FORECASTER,
                 "method": x,
+                "return_totals": totals,
             }
             for x in cls.METHOD_LIST
+            for totals in cls.RETURN_TOTALS_LIST
         ]
         return params_list
