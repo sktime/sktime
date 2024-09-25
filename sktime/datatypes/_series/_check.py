@@ -40,8 +40,8 @@ __author__ = ["fkiraly"]
 import numpy as np
 import pandas as pd
 
-from sktime.datatypes._common import _req
-from sktime.datatypes._common import _ret as ret
+from sktime.datatypes._base._common import _req
+from sktime.datatypes._base._common import _ret as ret
 from sktime.datatypes._dtypekind import (
     _get_feature_kind,
     _get_series_dtypekind,

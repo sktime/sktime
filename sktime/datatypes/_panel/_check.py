@@ -46,7 +46,7 @@ import numpy as np
 import pandas as pd
 from pandas.core.dtypes.cast import is_nested_object
 
-from sktime.datatypes._common import _req, _ret
+from sktime.datatypes._base._common import _req, _ret
 from sktime.datatypes._dtypekind import (
     _get_feature_kind,
     _get_panel_dtypekind,
