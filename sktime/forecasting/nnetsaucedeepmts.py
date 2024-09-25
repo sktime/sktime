@@ -8,8 +8,7 @@ from sktime.forecasting.base import BaseForecaster
 
 
 class NnetsauceDeepMTS(BaseForecaster):
-    """Univariate and multivariate time series (MTS) forecasting with Deep
-    Quasi-Randomized networks (from Python package nnetsauce).
+    """Univariate and multivariate time series (MTS) forecasting with Deep Quasi-Randomized networks (from Python package nnetsauce).
 
     See https://www.researchgate.net/publication/382589729_Probabilistic_Forecasting_with_nnetsauce_using_Density_Estimation_Bayesian_inference_Conformal_prediction_and_Vine_copulas
 
@@ -128,8 +127,6 @@ class NnetsauceDeepMTS(BaseForecaster):
         fitting each series
 
     """
-
-    # todo: fill in the scitype:y tag for univariate/multivariate
     _tags = {
         # scitype:y controls whether internal y can be univariate/multivariate
         # if multivariate is not valid, applies vectorization over variables
