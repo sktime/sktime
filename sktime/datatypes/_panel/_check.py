@@ -545,9 +545,7 @@ if _check_soft_dependencies("polars", severity="none"):
 
     from sktime.datatypes._adapter.polars import check_polars_frame, get_mi_cols
 
-    def check_polars_panel(
-        obj, return_metadata=False, var_name="obj", panel=True, scitype="Panel"
-    ):
+    def check_polars_panel(obj, return_metadata=False, var_name="obj", scitype="Panel"):
         metadict = check_polars_frame(
             obj=obj,
             return_metadata=return_metadata,
@@ -599,7 +597,7 @@ if _check_soft_dependencies("polars", severity="none"):
                     for key in requires_panel_grps:
                         metadict[1][key] = "NA"
                 else:
-                    if panel:
+                    if scitype == "Panel":
                         n_panels = 1
                     else:
                         mi_cols = get_mi_cols(obj)

@@ -102,7 +102,6 @@ if _check_soft_dependencies("polars", severity="none"):
             obj=obj,
             return_metadata=return_metadata,
             var_name=var_name,
-            panel=False,
             scitype="Hierarchical",
         )
 
