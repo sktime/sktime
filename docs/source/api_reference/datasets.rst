@@ -83,6 +83,7 @@ Panels of time series
     load_japanese_vowels
     load_macroeconomic
     load_osuleaf
+    load_tecator
 
 
 Toy data generators
