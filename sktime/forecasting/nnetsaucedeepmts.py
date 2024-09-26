@@ -8,7 +8,7 @@ from sktime.forecasting.base import BaseForecaster
 
 
 class NnetsauceDeepMTS(BaseForecaster):
-    """Univariate and multivariate time series (MTS) forecasting with Deep Quasi-Randomized networks (from Python package nnetsauce).
+    """Forecasting with Deep Quasi-Randomized networks (from nnetsauce).
 
     See https://www.researchgate.net/publication/382589729_Probabilistic_Forecasting_with_nnetsauce_using_Density_Estimation_Bayesian_inference_Conformal_prediction_and_Vine_copulas
 
