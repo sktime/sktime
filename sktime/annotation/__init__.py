@@ -1,1 +1,1 @@
-"""Implements time series annotation."""
+"""Time series anomaly, changepoint detection, segmentation."""

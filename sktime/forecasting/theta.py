@@ -320,8 +320,9 @@ class ThetaForecaster(ExponentialSmoothing):
         params0 = {}
         params1 = {"sp": 2, "deseasonalize": True}
         params2 = {"deseasonalize": False}
+        params3 = {"initial_level": 0.5}
 
-        return [params0, params1, params2]
+        return [params0, params1, params2, params3]
 
 
 def _zscore(level: float, two_tailed: bool = True) -> float:
