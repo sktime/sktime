@@ -28,7 +28,9 @@ Highlights
 ~~~~~~~~~~
 
 * interface for MOIRAI foundation model (:pr:`6746`) :user:`pranavvp16`, :user:`benHeid`
+* ``GroupbyCategoryForecaster`` for applying panel forecasting by category or segment (:pr:`7066`) :user:`felipeangelimvieira`
 * In ``ReconcilerForecaster``, users can now choose to return a dataframe without ``__total``s (:pr:`7127`) :user:`SaiRevanth25`
+* time series segmentation via clustering (:pr:`6782`) :user:`ankit-1204`
 * logger transformer for logging pipeline inputs and outputs (:pr:`7074`) :user:`fkiraly`
 
 Dependency changes
@@ -54,8 +56,9 @@ Data types, checks, conversions
 Forecasting
 ^^^^^^^^^^^
 
-* [ENH] ``ThetaForecaster`` - add one more parameter set (:pr:`7055`) :user:`fkiraly`
 * [ENH] Add interface for MOIRAI foundation model (:pr:`6746`) :user:`pranavvp16`, :user:`benHeid`
+* [ENH] ``ThetaForecaster`` - add one more parameter set (:pr:`7055`) :user:`fkiraly`
+* [ENH] ``GroupbyCategoryForecaster`` for applying panel forecasting by category or segment (:pr:`7066`) :user:`felipeangelimvieira`
 * [ENH] Adding a parameter to ``ReconcilerForecaster`` to return a dataframe without the dunder levels (:pr:`7127`) :user:`SaiRevanth25`
 * [ENH] add ``_predict_var`` in ``test_pred_int_tag`` (:pr:`7154`) :user:`fkiraly`
 
@@ -63,6 +66,11 @@ Registry and search
 ^^^^^^^^^^^^^^^^^^^
 
 * [ENH] retrieval utilities for all functions or classes in a module (:pr:`7089`) :user:`fkiraly`
+
+Time series anomalies, changepoints, segmentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] time series segmentation via clustering (:pr:`6782`) :user:`ankit-1204`
 
 Transformations
 ^^^^^^^^^^^^^^^
@@ -89,6 +97,7 @@ Maintenance
 * [MNT] temporarily skip ``temporian`` related failure of ``test_complex_function`` until #7040 is resolved (:pr:`7147`) :user:`fkiraly`
 * [MNT] fix FPP3 download link (:pr:`7164`) :user:`fkiraly`, :user:`ericjb`
 * [MNT] bound ``SignatureTransformer`` to ``numpy<2`` (:pr:`7163`) :user:`fkiraly`
+* [MNT] remove ptf install from example notebooks (:pr:`7165`) :user:`XinyuWuu`
 * [MNT] remove python version bound from ``pytorch-forecasting`` based estimators (:pr:`7102`) :user:`fkiraly`
 
 Fixes
@@ -110,12 +119,14 @@ Test framework
 Contributors
 ~~~~~~~~~~~~
 
+:user:`ankit-1204`,
 :user:`benHeid`,
 :user:`ericjb`,
 :user:`fkiraly`,
 :user:`pranavvp16`,
 :user:`SaiRevanth25`,
 :user:`Saptarshi-Bandopadhyay`,
+:user:`XinyuWuu`,
 :user:`yarnabrina`
 
 
