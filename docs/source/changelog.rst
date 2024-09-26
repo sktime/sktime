@@ -29,7 +29,7 @@ Highlights
 
 * interface for MOIRAI foundation model (:pr:`6746`) :user:`pranavvp16`, :user:`benHeid`
 * ``GroupbyCategoryForecaster`` for applying panel forecasting by category or segment (:pr:`7066`) :user:`felipeangelimvieira`
-* In ``ReconcilerForecaster``, users can now choose to return a dataframe without ``__total``s (:pr:`7127`) :user:`SaiRevanth25`
+* In ``ReconcilerForecaster``, users can now choose to return a dataframe without ``__total`` (:pr:`7127`) :user:`SaiRevanth25`
 * time series segmentation via clustering (:pr:`6782`) :user:`ankit-1204`
 * logger transformer for logging pipeline inputs and outputs (:pr:`7074`) :user:`fkiraly`
 
