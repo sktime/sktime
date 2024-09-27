@@ -1,4 +1,4 @@
-"""Time Convolutional Neural Network (CNN) for classification."""
+"""Time Convolutional Neural Network (CNN) for regression."""
 
 __author__ = ["jnrusson1"]
 __all__ = ["TapNetRegressor"]
