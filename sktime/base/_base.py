@@ -61,7 +61,6 @@ from copy import deepcopy
 
 from skbase.base import BaseObject as _BaseObject
 from sklearn import clone
-from sklearn.base import BaseEstimator as _BaseEstimator
 
 from sktime.exceptions import NotFittedError
 from sktime.utils._estimator_html_repr import _HTMLDocumentationLinkMixin
@@ -645,53 +644,36 @@ class BaseEstimator(BaseObject):
             * if ``deep=True``, also contains arbitrary levels of component recursion,
               e.g., ``[componentname]__[componentcomponentname]__[paramname]``, etc
         """
+        from sktime.base._base_gfp_plugins import (
+            _gfp_nested_skbase_plugin,
+            _gfp_nested_sklearn_plugin,
+            _gfp_non_nested_plugin,
+            _gfp_sklearn_pipeline_plugin,
+        )
+
         if not self.is_fitted:
             raise NotFittedError(
                 f"estimator of type {type(self).__name__} has not been "
                 "fitted yet, please call fit on data before get_fitted_params"
             )
 
-        # collect non-nested fitted params of self
-        fitted_params = self._get_fitted_params()
-
-        # the rest is only for nested parameters
-        # so, if deep=False, we simply return here
         if not deep:
-            return fitted_params
+            return _gfp_non_nested_plugin(obj=self)
 
-        def sh(x):
-            """Shorthand to remove all underscores at end of a string."""
-            if x.endswith("_"):
-                return sh(x[:-1])
-            else:
-                return x
+        fitted_params = {}
+        get_fitted_params_from_plugins = [
+            _gfp_non_nested_plugin,
+            _gfp_nested_skbase_plugin,
+            _gfp_nested_sklearn_plugin,
+            _gfp_sklearn_pipeline_plugin,
+        ]
 
-        # add all nested parameters from components that are sktime BaseObject
-        c_dict = self._components()
-        for c, comp in c_dict.items():
-            if isinstance(comp, BaseEstimator) and comp._is_fitted:
-                c_f_params = comp.get_fitted_params()
-                c_f_params = {f"{sh(c)}__{k}": v for k, v in c_f_params.items()}
-                fitted_params.update(c_f_params)
-
-        # add all nested parameters from components that are sklearn estimators
-        # we do this recursively as we have to reach into nested sklearn estimators
-        n_new_params = 42
-        old_new_params = fitted_params
-        while n_new_params > 0:
-            new_params = dict()
-            for c, comp in old_new_params.items():
-                if isinstance(comp, _BaseEstimator):
-                    c_f_params = self._get_fitted_params_default(comp)
-                    c_f_params = {f"{sh(c)}__{k}": v for k, v in c_f_params.items()}
-                    new_params.update(c_f_params)
-            fitted_params.update(new_params)
-            old_new_params = new_params.copy()
-            n_new_params = len(new_params)
+        for plugin in get_fitted_params_from_plugins:
+            fitted_params.update(plugin(obj=self))
 
         return fitted_params
 
-    def _get_fitted_params_default(self, obj=None):
+    def _get_fitted_params_default(self, obj=None, pname=""):
         """Obtain fitted params of object, per sklearn convention.
 
         Extracts a dict with {paramstr : paramvalue} contents,
@@ -703,22 +685,20 @@ class BaseEstimator(BaseObject):
         Parameters
         ----------
         obj : any object, optional, default=self
+        pname: str, default=''
+            The name of the parent component of `obj`, used to append as
+            "name__{component_name}". If parent name is not required then
+            key will only be "{component_name}".
 
         Returns
         -------
         fitted_params : dict with str keys
             fitted parameters, keyed by names of fitted parameter
         """
-        obj = obj if obj else self
+        from sktime.base._base_gfp_plugins import _gfp_default
 
-        # default retrieves all self attributes ending in "_"
-        # and returns them with keys that have the "_" removed
-        fitted_params = {
-            attr[:-1]: getattr(obj, attr)
-            for attr in dir(obj)
-            if attr.endswith("_") and not attr.startswith("_") and hasattr(obj, attr)
-        }
-        return fitted_params
+        obj = obj if obj else self
+        return _gfp_default(obj, pname)
 
     def _get_fitted_params(self):
         """Get fitted parameters.
