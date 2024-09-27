@@ -4,7 +4,6 @@ import pytest
 
 from sktime.datasets import load_airline
 from sktime.transformations.compose import YtoX
-from sktime.transformations.series.exponent import ExponentTransformer
 
 
 @pytest.fixture
@@ -13,27 +12,33 @@ def y_data():
     y = load_airline()
     return y
 
+
 def ensure_dataframe(output):
     """Ensure the output is a DataFrame."""
     if isinstance(output, pd.Series):
         return output.to_frame()
     return output
 
-def test_ytox_with_transformer(y_data):
+
+@pytest.mark.parametrize("params", YtoX.get_test_params())
+def test_ytox_with_transformer(y_data, params):
     """
-    Test YtoX with a transformer applied, ensuring the result is the same
+    Test YtoX with different transformers applied, ensuring the result is the same
     as applying transformer directly to `y`.
     """
     X = pd.DataFrame(np.random.randn(len(y_data), 2), index=y_data.index)
 
-    # Use an example transformer, e.g., an exponent transformer
-    transformer = ExponentTransformer(power=2)
+    # Extract transformer from params if available, otherwise set to None
+    transformer = params.get("transformer", None)
 
-    # Apply the transformer directly to y
-    transformed_y_direct = ensure_dataframe(transformer.fit_transform(y_data))
+    # Apply the transformer directly to y if it exists
+    if transformer:
+        transformed_y_direct = ensure_dataframe(transformer.fit_transform(y_data))
+    else:
+        transformed_y_direct = ensure_dataframe(y_data)  # No transformation
 
-    # Create a YtoX transformer with the provided transformer
-    ytox = YtoX(transformer=transformer)
+    # Create a YtoX transformer with the provided parameters
+    ytox = YtoX(**params)
 
     # Fit YtoX first
     ytox.fit(X, y_data)

@@ -186,13 +186,12 @@ class YtoX(BaseTransformer):
         else:
             return y
 
-@classmethod
-def get_test_params():
-    """Provide test parameters for the YtoX class."""
-    # Return instances with different parameters
-    return [
-        {"ytox": YtoX(subset_index=False),},
-        {"ytox": YtoX(subset_index=True),},
-        {"ytox": YtoX(subset_index=False, transformer=ExponentTransformer(power=2)), },
-        {"ytox": YtoX(subset_index=False, transformer=BoxCoxTransformer()),},
-    ]
+    @classmethod
+    def get_test_params(cls):
+        """Provide test parameters for the YtoX class."""
+        return [
+            {"subset_index": False},
+            {"subset_index": True},
+            {"subset_index": False, "transformer": ExponentTransformer(power=2)},
+            {"subset_index": False, "transformer": BoxCoxTransformer()},
+        ]
