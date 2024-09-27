@@ -103,7 +103,7 @@ def test_load_forecasting_data_invalid_name(name):
 
 
 @pytest.mark.skipif(
-    _check_soft_dependencies("rdata", severity="none"),
+    not _check_soft_dependencies("rdata", severity="none"),
     reason="run test only if the soft dependency rdata is installed",
 )
 @pytest.mark.datadownload
