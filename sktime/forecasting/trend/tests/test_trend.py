@@ -156,11 +156,18 @@ def test_predict_var():
     N = 500
     data = np.random.normal(0, 1, N)
     date_index = pd.date_range(start="1970-01-01", periods=N, freq="D")
-
     df = pd.DataFrame(data, index=date_index, columns=["x"])
+    df.at[date_index[42], "x"] = 1
+    df.at[date_index[43], "x"] = -1
+
+    forecaster = PolynomialTrendForecaster(degree=2, prediction_intervals=False)
+    forecaster.fit(df)
+    residuals = forecaster.predict_residuals(y=df)
+    s = np.std(residuals)
+    y = df / s
 
     forecaster = PolynomialTrendForecaster(degree=2, prediction_intervals=True)
-    forecaster.fit(df)
+    forecaster.fit(y)
     fh = ForecastingHorizon([1, 2, 3, 4, 5, 6], is_relative=True)
     a = forecaster.predict_var(fh=fh)
-    np.testing.assert_allclose(a.iloc[0, 0], 1.0, rtol=0.5)
+    np.testing.assert_allclose(a.iloc[0, 0], 1.0, rtol=0.05)

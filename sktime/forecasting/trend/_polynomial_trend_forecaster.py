@@ -186,7 +186,7 @@ class PolynomialTrendForecaster(BaseForecaster):
 
     def _predict_var(self, fh=None, X=None, cov=False):
         """Compute the variance at each forecast horizon."""
-        if self.prediction_intervals is False:
+        if not self.prediction_intervals:
             raise ValueError(
                 "Prediction intervals were not calculated during fit. \
                 Set prediction_intervals=True at initialization."
@@ -195,7 +195,7 @@ class PolynomialTrendForecaster(BaseForecaster):
         # 1. get X (design matrix) and M = (X^t X)^-1
         t_train = _get_X_numpy_int_from_pandas(self.train_index_).flatten()
         X = np.polynomial.polynomial.polyvander(t_train, self.degree)
-        if not self.get_params()["with_intercept"]:
+        if not self.with_intercept:
             X = X[:, 1:]  # remove the column of 1's that handles the intercept
 
         M = np.linalg.inv(X.T @ X)
@@ -209,7 +209,7 @@ class PolynomialTrendForecaster(BaseForecaster):
         t = np.array(fh_periods)
 
         # 3. calculate (half-) range of PI (1 + sqrt(x_0^t M x_0)) (up to scaling)
-        start = 0 if self.get_params()["with_intercept"] else 1
+        start = 0 if self.with_intercept else 1
         v = []
 
         for _, z in enumerate(t):
@@ -255,6 +255,12 @@ class PolynomialTrendForecaster(BaseForecaster):
                 "regressor": RandomForestRegressor(),
                 "degree": 2,
                 "with_intercept": True,
+                "prediction_intervals": True,
+            },
+            {
+                "regressor": RandomForestRegressor(),
+                "degree": 2,
+                "with_intercept": False,
                 "prediction_intervals": True,
             },
         ]
