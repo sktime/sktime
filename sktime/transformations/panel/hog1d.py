@@ -260,7 +260,7 @@ class HOG1DTransformer(BaseTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        param1 = {"num_intervals": 2, "num_bins": 8, "scaling_factor": 0.1}
+        param1 = {}
         param2 = {"num_intervals": 10, "num_bins": 16, "scaling_factor": 0.1}
         param3 = {"num_intervals": 5, "num_bins": 8, "scaling_factor": 1.0}
         return [param1, param2, param3]
