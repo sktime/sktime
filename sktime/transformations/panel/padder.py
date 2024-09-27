@@ -36,7 +36,7 @@ class PaddingTransformer(BaseTransformer):
     ...     'feature2': [
     ...         pd.Series([10, 11]), pd.Series([12, 13, 14]), pd.Series([15])
     ...     ]
-    >>> }
+    ... }
     >>> X = pd.DataFrame(data)
     >>>
     >>> # Initialize the PaddingTransformer
