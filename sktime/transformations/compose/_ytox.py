@@ -6,6 +6,8 @@ __author__ = ["fkiraly"]
 __all__ = ["YtoX"]
 
 from sktime.transformations.base import BaseTransformer
+from sktime.transformations.series.boxcox import BoxCoxTransformer
+from sktime.transformations.series.exponent import ExponentTransformer
 
 
 class YtoX(BaseTransformer):
@@ -183,3 +185,14 @@ class YtoX(BaseTransformer):
             return y.loc[X.index.intersection(y.index)]
         else:
             return y
+
+@classmethod
+def get_test_params():
+    """Provide test parameters for the YtoX class."""
+    # Return instances with different parameters
+    return [
+        {"ytox": YtoX(subset_index=False),},
+        {"ytox": YtoX(subset_index=True),},
+        {"ytox": YtoX(subset_index=False, transformer=ExponentTransformer(power=2)), },
+        {"ytox": YtoX(subset_index=False, transformer=BoxCoxTransformer()),},
+    ]
