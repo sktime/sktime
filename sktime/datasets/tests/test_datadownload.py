@@ -1,12 +1,10 @@
 """Test data loaders that download from external sources."""
 
-import sys
 from urllib.request import Request, urlopen
 
 import numpy as np
 import pandas as pd
 import pytest
-from packaging.specifiers import SpecifierSet
 
 from sktime.datasets import (
     load_forecastingdata,
@@ -105,9 +103,8 @@ def test_load_forecasting_data_invalid_name(name):
 
 
 @pytest.mark.skipif(
-    sys.version.split(" ")[0] in SpecifierSet("<3.9")
-    or not _check_soft_dependencies("rdata", severity="none"),
-    reason="rdata loader does not work on python 3.8; run test only if it is installed",
+    _check_soft_dependencies("rdata", severity="none"),
+    reason="run test only if the soft dependency rdata is installed",
 )
 @pytest.mark.datadownload
 def test_load_fpp3():
