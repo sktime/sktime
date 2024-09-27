@@ -3043,6 +3043,24 @@
         "code",
         "test"
       ]
+    },
+    {
+      "login": "Saptarshi-Bandopadhyay",
+      "name": "Saptarshi Bandopadhyay",
+      "avatar_url": "https://avatars.githubusercontent.com/u/88289395?v=4",
+      "profile": "https://github.com/Saptarshi-Bandopadhyay",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login":"vedantag17",
+      "name": "Vedant Agrawal",
+      "avatar_url": "https://avatars.githubusercontent.com/u/118207011?v=4",
+      "profile": "https://github.com/vedantag17",
+      "contributions": [
+        "doc"
+      ]
     }
   ]
 }

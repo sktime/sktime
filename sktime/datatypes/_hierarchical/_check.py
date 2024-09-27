@@ -93,3 +93,16 @@ if _check_soft_dependencies("dask", severity="none"):
         )
 
     check_dict[("dask_hierarchical", "Hierarchical")] = check_dask_hierarchical
+
+if _check_soft_dependencies("polars", severity="none"):
+    from sktime.datatypes._panel._check import check_polars_panel
+
+    def check_polars_hierarchical(obj, return_metadata=False, var_name="obj"):
+        return check_polars_panel(
+            obj=obj,
+            return_metadata=return_metadata,
+            var_name=var_name,
+            scitype="Hierarchical",
+        )
+
+    check_dict[("polars_hierarchical", "Hierarchical")] = check_polars_hierarchical

@@ -70,7 +70,7 @@ DATASET_NAMES_FPP3 = fpp3 + tsibble + tsibbledata
 
 
 def _get_dataset_url(dataset_name):
-    url_fpp3 = "https://cran.r-project.org/src/contrib/fpp3_1.0.0.tar.gz"
+    url_fpp3 = "https://cran.r-project.org/src/contrib/fpp3_1.0.1.tar.gz"
     url_tsibble = "https://cran.r-project.org/src/contrib/tsibble_1.1.5.tar.gz"
     url_tsibbledata = "https://cran.r-project.org/src/contrib/tsibbledata_0.4.1.tar.gz"
 
