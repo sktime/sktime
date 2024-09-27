@@ -257,3 +257,27 @@ class HOG1DTransformer(BaseTransformer):
                 + type(self.scaling_factor).__name__
                 + "' instead."
             )
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        param1 = {}
+        param2 = {"num_intervals": 10, "num_bins": 16, "scaling_factor": 0.1}
+        param3 = {"num_intervals": 5, "num_bins": 8, "scaling_factor": 1.0}
+        return [param1, param2, param3]
