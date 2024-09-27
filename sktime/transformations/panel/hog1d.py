@@ -48,7 +48,9 @@ class HOG1DTransformer(BaseTransformer):
     >>> X, y = load_arrow_head(return_X_y=True)
     >>>
     >>> # Initialize the transformer
-    >>> hog1d_transformer = HOG1DTransformer(num_intervals=5, num_bins=8, scaling_factor=0.1)
+    >>> hog1d_transformer = HOG1DTransformer(
+    >>>     num_intervals=5, num_bins=8, scaling_factor=0.1
+    >>> )
     >>>
     >>> # Transform the data
     >>> Xt = hog1d_transformer.fit_transform(X)
