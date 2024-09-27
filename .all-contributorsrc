@@ -3061,6 +3061,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login":"jan-mue",
+      "name": "Jan Müller",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6440416?v=4",
+      "profile": "https://github.com/jan-mue",
+      "contributions": [
+        "doc"
+      ]
     }
   ]
 }
