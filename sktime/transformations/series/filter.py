@@ -36,7 +36,7 @@ class Filter(BaseTransformer):
     -------
     >>> from sktime.transformations.series.filter import Filter
     >>> from sktime.datasets import load_arrow_head
-    >>> X, y = load_arrow_head(return_X_y=True)
+    >>> X, y = load_arrow_head(return_X_y=True, return_type="pd-multiindex")
     >>> transformer = Filter(sfreq=128, l_freq=0.5, h_freq=40)
     >>> X_filtered = transformer.fit_transform(X)
     """
