@@ -35,10 +35,27 @@ class HOG1DTransformer(BaseTransformer):
 
     Parameters
     ----------
-        num_intervals   : int, length of interval.
-        num_bins        : int, num bins in the histogram.
-        scaling_factor  : float, a constant that is multiplied
-                          to modify the distribution.
+    num_intervals : int, default=2
+        length of interval.
+    num_bins : int, default=8
+        num bins in the histogram.
+    scaling_factor : float, default=0.1
+        a constant that is multiplied to modify the distribution.
+
+    Example
+    ----------
+    >>> from sktime.transformations.panel.hog1d import HOG1DTransformer
+    >>> from sktime.datasets import load_arrow_head
+    >>>
+    >>> X, y = load_arrow_head(return_X_y=True)
+    >>>
+    >>> # Initialize the transformer
+    >>> hog1d_transformer = HOG1DTransformer(
+    ...     num_intervals=5, num_bins=8, scaling_factor=0.1
+    ... )
+    >>>
+    >>> # Transform the data
+    >>> Xt = hog1d_transformer.fit_transform(X)
     """
 
     _tags = {
