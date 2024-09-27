@@ -49,14 +49,11 @@ class HOG1DTransformer(BaseTransformer):
     >>>
     >>> # Initialize the transformer
     >>> hog1d_transformer = HOG1DTransformer(
-    >>>     num_intervals=5, num_bins=8, scaling_factor=0.1
-    >>> )
+    ...     num_intervals=5, num_bins=8, scaling_factor=0.1
+    ... )
     >>>
     >>> # Transform the data
     >>> Xt = hog1d_transformer.fit_transform(X)
-    >>>
-    >>> # Display the transformed data
-    >>> print(Xt)
     """
 
     _tags = {
