@@ -647,21 +647,30 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         if contains_interval_adapter and not implements_interval_adapter:
             return None
 
+        # below, we check the following things:
+        #    the class value of the tag capability:pred_int,
+        #    should be True iff the forecaster implements
+        #    probabilistic forecasting, this is the condition "pred_int_works" below
+
         # check which methods are implemented
+        implements_var = f._has_implementation_of("_predict_var")
         implements_interval = f._has_implementation_of("_predict_interval")
         implements_quantiles = f._has_implementation_of("_predict_quantiles")
         implements_proba = f._has_implementation_of("_predict_proba")
 
-        pred_int_works = implements_interval or implements_quantiles or implements_proba
+        pred_int_impl = implements_interval or implements_quantiles or implements_proba
+        pred_int_impl = pred_int_impl or implements_var
 
-        if not pred_int_works and f.get_class_tag("capability:pred_int", False):
+        cls_tag = f.get_class_tag("capability:pred_int", False)
+
+        if not pred_int_impl and cls_tag:
             raise ValueError(
                 f"{type(f).__name__} does not implement probabilistic forecasting, "
                 'but "capability:pred_int" flag has been set to True incorrectly. '
                 'The flag "capability:pred_int" should instead be set to False.'
             )
 
-        if pred_int_works and not f.get_class_tag("capability:pred_int", False):
+        if pred_int_impl and not cls_tag:
             raise ValueError(
                 f"{type(f).__name__} does implement probabilistic forecasting, "
                 'but "capability:pred_int" flag has been set to False incorrectly. '

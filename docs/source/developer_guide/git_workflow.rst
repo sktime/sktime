@@ -111,7 +111,7 @@ Contributing a feature - for every new feature
     We recommend to open a pull request early, so that other contributors become aware of
     your work and can give you feedback early on.
 
-6. To add more changes, simply repeat steps 3 - 4. Pull requests are
+6.  To add more changes, simply repeat steps 3 - 4. Pull requests are
     updated automatically if you push new changes to the same branch.
 
 .. _Discord: https://discord.com/invite/54ACzaFsn7
@@ -121,7 +121,7 @@ Contributing a feature - for every new feature
    If any of the above seems like magic to you, look up the `Git documentation <https://git scm.com/documentation>`_.
    If you get stuck, chat with us on `Discord`_, or join one of the community sessions on `Discord`_.
 
-7. Between the time you created a pull request and when it is ready to merge into the
+7.  Between the time you created a pull request and when it is ready to merge into the
     ``main`` branch, the ``main`` branch of the sktime repo may have been updated with
     new changes by other contributors, and may cause merge conflicts. To keep your
     feature branch up-to-date with the ``main`` branch of the sktime repo, you can do

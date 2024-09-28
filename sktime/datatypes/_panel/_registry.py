@@ -45,6 +45,11 @@ MTYPE_REGISTER_PANEL = [
         "Panel",
         "gluonTS representation of a pandas DataFrame",
     ),
+    (
+        "polars_panel",
+        "Panel",
+        "Polars frame representing a Panel, with one instance and one time index",
+    ),
 ]
 
 MTYPE_SOFT_DEPS_PANEL = {
@@ -52,6 +57,7 @@ MTYPE_SOFT_DEPS_PANEL = {
     "dask_panel": "dask",
     "gluonts_ListDataset_panel": "gluonts",
     "gluonts_PandasDataset_panel": "gluonts",
+    "polars_panel": "polars",
 }
 
 MTYPE_LIST_PANEL = [x[0] for x in MTYPE_REGISTER_PANEL]
