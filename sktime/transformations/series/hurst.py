@@ -40,7 +40,7 @@ class HurstExponentTransformer(BaseTransformer):
         The estimated Hurst exponent.
     confidence_interval_ : tuple
         The confidence interval for the Hurst exponent estimate.
-    
+
     Examples
     --------
     >>> from sktime.transformations.series.hurst import HurstExponentTransformer
