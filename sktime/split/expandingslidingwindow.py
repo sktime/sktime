@@ -96,61 +96,11 @@ class ExpandingSlidingWindowSplitter(BaseWindowSplitter):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the splitter."""
-        params1 = {"fg": [1, 2], "step_length": 3, "initial_window": 2, "max_expanding_window_length": 5}
+        params1 = {
+            "fg": [1, 2],
+            "step_length": 3,
+            "initial_window": 2,
+            "max_expanding_window_length": 5,
+        }
 
         return [params1]
-
-
-# Test cases
-def test_combined_window_splitter():
-    import numpy as np
-
-    # Test case 1: Basic functionality
-    ts = np.arange(1, 20 + 1)
-    splitter = CombinedWindowSplitter(
-        fh=[1, 2], step_length=1, initial_window=2, max_expanding_window_length=5
-    )
-    splits = list(splitter.split(ts))
-    for i, split in enumerate(splits):
-        print(f"Split {i}: {split}")
-
-    assert len(splits) == 7, f"Expected 7 splits, got {len(splits)}"
-    assert np.array_equal(
-        splits[0][0], np.array([0, 1, 2, 3, 4])
-    ), "First split train window incorrect"
-    assert np.array_equal(
-        splits[0][1], np.array([5, 6])
-    ), "First split test window incorrect"
-    assert np.array_equal(
-        splits[3][0], np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
-    ), "Transition split incorrect"
-    assert np.array_equal(
-        splits[-1][0], np.array([6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
-    ), "Last split train window incorrect"
-
-    # Test case 2: Without max_window_length
-    splitter = CombinedWindowSplitter(fh=[1], initial_window=3, step_length=1)
-    splits = list(splitter.split(ts))
-
-    assert len(splits) == 16, f"Expected 16 splits, got {len(splits)}"
-    assert np.array_equal(
-        splits[-1][0], np.array(range(18))
-    ), "Last split should include all but last point"
-
-    # Test case 3: Edge case with short time series
-    ts_short = np.arange(5)
-    splitter = CombinedWindowSplitter(
-        fh=[1], initial_window=3, step_length=1, max_expanding_window_length=4
-    )
-    splits = list(splitter.split(ts_short))
-
-    assert len(splits) == 1, f"Expected 1 split for short series, got {len(splits)}"
-    assert np.array_equal(
-        splits[0][0], np.array([0, 1, 2])
-    ), "Short series split incorrect"
-
-    print("All tests passed!")
-
-
-# Run the tests
-test_combined_window_splitter()
