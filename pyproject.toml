@@ -233,10 +233,6 @@ dev = [
   "httpx",
   "pre-commit",
   "pytest",
-  "pytest-cov",
-  "pytest-randomly",
-  "pytest-timeout",
-  "pytest-xdist",
   "wheel",
 ]
 
