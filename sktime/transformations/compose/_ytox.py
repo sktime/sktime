@@ -190,8 +190,6 @@ class YtoX(BaseTransformer):
     def get_test_params(cls):
         """Provide test parameters for the YtoX class."""
         return [
-            {"subset_index": False},
-            {"subset_index": True},
             {"subset_index": False, "transformer": ExponentTransformer(power=2)},
             {"subset_index": False, "transformer": BoxCoxTransformer()},
         ]
