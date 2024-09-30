@@ -10,7 +10,6 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
-from sktime.utils.warnings import warn
 
 
 class TimesFMForecaster(_BaseGlobalForecaster):
@@ -73,6 +72,14 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         fit and predict on it. The broadcasting is happening inside automatically,
         from the outerside api perspective, the input and output are the same,
         only one multiindex output from ``predict``.
+    use_source_package : bool, default=False
+        If True, the model will be loaded directly from the source package ``timesfm``.
+        This is useful if you want to bypass the local version of the package
+        or when working in an environment where the latest updates
+        from the source package are needed.
+        If False, the model will be loaded from the local version of package maintained
+        in sktime.
+        To install the source package, follow the instructions here [1]_.
 
     References
     ----------
@@ -132,7 +139,15 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         # rajatsen91 for google-research/timesfm
         "maintainers": ["geetu040"],
         "python_version": ">=3.10,<3.11",
-        "python_dependencies": ["timesfm"],
+        "python_dependencies": [
+            "tensorflow",
+            "einshape",
+            "jax",
+            "praxis",
+            "huggingface-hub",
+            "paxml",
+            "utilsforecast",
+        ],
         "env_marker": "sys_platform=='linux'",
         "capability:global_forecasting": True,
     }
@@ -151,8 +166,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         backend="cpu",
         verbose=False,
         broadcasting=False,
-        # TODO 0.33.2: remove this parameter
-        use_source_package=None,
+        use_source_package=False,
     ):
         self.context_len = context_len
         self.horizon_len = horizon_len
@@ -167,20 +181,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         self.backend = backend
         self.verbose = verbose
         self.broadcasting = broadcasting
-
-        # TODO 0.33.2: remove this condition and the warning altogether
-        if use_source_package is not None:
-            warn(
-                "The 'use_source_package' parameter is deprecated "
-                "and will be removed in version 0.33.2. "
-                "The 'sktime' fork no longer exists, "
-                "and the model now consistently uses the source package, "
-                "as the earlier integration issues have been resolved. "
-                "To prepare for this change, avoid using "
-                "the 'use_source_package' parameter in your code.",
-                DeprecationWarning,
-                obj=self,
-            )
+        self.use_source_package = use_source_package
 
         if self.broadcasting:
             self.set_tags(
@@ -199,7 +200,10 @@ class TimesFMForecaster(_BaseGlobalForecaster):
 
     def _fit(self, y, X, fh):
         # import after backend env has been set
-        from timesfm import TimesFm
+        if self.use_source_package:
+            from timesfm import TimesFm
+        else:
+            from sktime.libs.timesfm import TimesFm
 
         if fh is not None:
             fh = fh.to_relative(self.cutoff)
