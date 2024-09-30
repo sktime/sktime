@@ -3053,7 +3053,7 @@
         "doc"
       ]
     },
-    
+    {
       "login":"vedantag17",
       "name": "Vedant Agrawal",
       "avatar_url": "https://avatars.githubusercontent.com/u/118207011?v=4",
@@ -3069,6 +3069,8 @@
       "profile": "https://github.com/jan-mue",
       "contributions": [
         "doc"
+      ]
+    },
     {
       "login": "avishkarsonni",
       "name": "Avishkar Sonni",
