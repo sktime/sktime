@@ -199,6 +199,15 @@ class TimesFMForecaster(_BaseGlobalForecaster):
 
         super().__init__()
 
+    def __del__(self):
+        """Destructor to deregister client from TimesFM cache.
+
+        This ensures that the TimesFM model does not occupy memory
+        after the forecaster object is deleted.
+        """
+        self._tfm_cache.deregister_client(self)
+        super().__del__()
+
     def _fit(self, y, X, fh):
         if fh is not None:
             fh = fh.to_relative(self.cutoff)
@@ -206,12 +215,13 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         else:
             self._horizon_len = self.horizon_len
 
-        self.tfm = _CachedTimesFM(
+        self._tfm_cache = _CachedTimesFM(
             key=self._get_unique_timesfm_key(),
             timesfm_kwargs=self._get_timesfm_kwargs(),
             use_source_package=self.use_source_package,
             repo_id=self.repo_id,
-        ).load_from_checkpoint()
+        )
+        self.tfm = self._tfm_cache.load_from_checkpoint(client=self)
 
     def _get_timesfm_kwargs(self):
         """Get the kwargs for TimesFM model."""
@@ -375,7 +385,13 @@ class _CachedTimesFM:
         self.use_source_package = use_source_package
         self.tfm = None
 
-    def load_from_checkpoint(self):
+        self.clients = {}
+
+    def load_from_checkpoint(self, client=None):
+
+        if client is not None:
+            self.clients += {client}
+
         if self.tfm is None:
             if self.use_source_package:
                 from timesfm import TimesFm
@@ -386,3 +402,9 @@ class _CachedTimesFM:
             self.tfm.load_from_checkpoint(repo_id=self.repo_id)
 
         return self.tfm
+
+    def deregister_client(self, client):
+        self.clients -= {client}
+
+        if len(self.clients) == 0:
+            self.tfm = None
