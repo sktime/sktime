@@ -122,6 +122,26 @@ class TimesFMForecaster(_BaseGlobalForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["rajatsen91", "geetu040"],
+        # rajatsen91 for google-research/timesfm
+        "maintainers": ["geetu040"],
+        # when relaxing deps, check whether the extra test in
+        # test_timesfm.py are still needed
+        "python_version": ">=3.10,<3.11",
+        "python_dependencies": [
+            "tensorflow",
+            "einshape",
+            "jax",
+            "praxis",
+            "huggingface-hub",
+            "paxml",
+            "utilsforecast",
+        ],
+        "env_marker": "sys_platform=='linux'",
+        # estimator type
+        # --------------
         "y_inner_mtype": [
             "pd.Series",
             "pd-multiindex",
@@ -136,21 +156,6 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         "capability:insample": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
-        "authors": ["rajatsen91", "geetu040"],
-        # rajatsen91 for google-research/timesfm
-        "maintainers": ["geetu040"],
-        "python_version": ">=3.10,<3.11",
-        "python_dependencies": [
-            "tensorflow",
-            "einshape",
-            "jax",
-            "praxis",
-            "huggingface-hub",
-            "paxml",
-            "utilsforecast",
-        ],  # when relaxing this, check whether the extra test in
-        # test_timesfm.py are still needed
-        "env_marker": "sys_platform=='linux'",
         "capability:global_forecasting": True,
     }
 
