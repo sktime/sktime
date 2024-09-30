@@ -31,19 +31,24 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         The input time series can have any context length,
         and padding or truncation will
         be handled by the model's inference code if necessary.
+
     horizon_len : int
         The length of the forecast horizon. This can be set to any value, although it
         is generally recommended to keep it less than or equal to ``context_len`` for
         optimal performance. The model will still function
         if ``horizon_len`` exceeds ``context_len``.
+
     freq : int, optional (default=0)
         The frequency category of the input time series.
+
         - 0: High frequency, long horizon time series (e.g., daily data and above).
         - 1: Medium frequency time series (e.g., weekly, monthly data).
         - 2: Low frequency, short horizon time series (e.g., quarterly, yearly data).
+
         You can treat this parameter as a free parameter depending
         on your specific use case,
         although it is recommended to follow these guidelines for optimal results.
+
     repo_id : str, optional (default="google/timesfm-1.0-200m")
         The identifier for the model repository.
         The default model is the 200M parameter version.
