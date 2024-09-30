@@ -230,8 +230,11 @@ class TimesFMForecaster(_BaseGlobalForecaster):
     def _get_unique_timesfm_key(self):
         """Get unique key for TimesFM model to use in multiton."""
         repo_id = self.repo_id
+        use_source_package = self.use_source_package
         kwargs = self._get_timesfm_kwargs()
-        kwargs_plus_repo_id = {**kwargs, "repo_id": repo_id}
+        kwargs_plus_repo_id = {
+            **kwargs, "repo_id": repo_id, "use_source_package": use_source_package
+        }
         return str(kwargs_plus_repo_id)
 
     def _predict(self, fh, X, y=None):
