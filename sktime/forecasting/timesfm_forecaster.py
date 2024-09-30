@@ -388,7 +388,6 @@ class _CachedTimesFM:
         self.clients = {}
 
     def load_from_checkpoint(self, client=None):
-
         if client is not None:
             self.clients += {client}
 
