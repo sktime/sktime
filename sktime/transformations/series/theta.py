@@ -133,7 +133,9 @@ class ThetaLinesTransformer(BaseTransformer):
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance.
         """
-        return [{"theta": (0, 2)}, {"theta": (0.5, 1.5)}]
+        return [{}, 
+                {"theta": (0, 2)}, 
+                {"theta": (0.5, 1.5)}]
 
 
 def _theta_transform(Z, trend, theta):
