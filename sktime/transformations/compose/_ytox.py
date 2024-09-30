@@ -6,8 +6,6 @@ __author__ = ["fkiraly", "avishkarsonni"]
 __all__ = ["YtoX"]
 
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.series.boxcox import BoxCoxTransformer
-from sktime.transformations.series.exponent import ExponentTransformer
 
 
 class YtoX(BaseTransformer):
@@ -189,6 +187,9 @@ class YtoX(BaseTransformer):
     @classmethod
     def get_test_params(cls):
         """Provide test parameters for the YtoX class."""
+        from sktime.transformations.series.boxcox import BoxCoxTransformer
+        from sktime.transformations.series.exponent import ExponentTransformer
+
         return [
             {"subset_index": False, "transformer": ExponentTransformer(power=2)},
             {"subset_index": False, "transformer": BoxCoxTransformer()},

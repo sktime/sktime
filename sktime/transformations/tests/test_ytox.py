@@ -46,16 +46,8 @@ def test_ytox_with_transformer(y_data, params):
     # Apply the YtoX transformation
     transformed_y_via_ytox = ensure_dataframe(ytox.transform(X, y_data))
 
-    try:
-        # Check if the results are the same as applying the transformer directly to y
-        pd.testing.assert_frame_equal(transformed_y_direct, transformed_y_via_ytox)
-    except AssertionError as e:
-        print("\nTransformed y via YtoX:\n", transformed_y_via_ytox.head())
-        print("\nDirectly Transformed y:\n", transformed_y_direct.head())
-        print("\nError:\n", e)
+    # Check if the results are the same as applying the transformer directly to y
+    pd.testing.assert_frame_equal(transformed_y_direct, transformed_y_via_ytox)
 
-        # Perform a detailed comparison to find exact differences
-        diff = transformed_y_via_ytox.compare(transformed_y_direct)
-        print("\nDiff between transformed via YtoX and directly transformed:\n", diff)
-
-        raise
+    diff = transformed_y_via_ytox.compare(transformed_y_direct)
+    print("\nDiff between transformed via YtoX and directly transformed:\n", diff)
