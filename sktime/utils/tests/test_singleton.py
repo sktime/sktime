@@ -8,7 +8,7 @@ from sktime.utils.singleton import _multiton, _singleton
 
 
 @_singleton
-class TestSingleton:
+class _TestSingleton:
     def __init__(self, a=0):
         self.a = a
 
@@ -17,7 +17,7 @@ class TestSingleton:
 
 
 @_multiton
-class TestMultiton:
+class _TestMultiton:
     def __init__(self, key, a=0):
         self.key = key
         self.a = a
@@ -32,9 +32,9 @@ class TestMultiton:
 )
 def test_singleton():
     """Test singleton behaviour."""
-    instance1 = TestSingleton(42)
+    instance1 = _TestSingleton(42)
     instance1.set_b(43)
-    instance2 = TestSingleton()
+    instance2 = _TestSingleton()
 
     assert instance1 is instance2
     assert instance1.a == 42
@@ -53,13 +53,13 @@ def test_singleton():
 )
 def test_multiton():
     """Test multiton behaviour."""
-    instance1 = TestMultiton("key1", 42)
+    instance1 = _TestMultiton("key1", 42)
     instance1.set_b(43)
-    instance2 = TestMultiton("key2")
+    instance2 = _TestMultiton("key2")
     instance2.set_b(44)
 
-    instance1b = TestMultiton("key1", 77)
-    instance2b = TestMultiton("key2")
+    instance1b = _TestMultiton("key1", 77)
+    instance2b = _TestMultiton("key2")
 
     assert instance1 is not instance2
     assert instance1 is instance1b
