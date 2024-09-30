@@ -77,6 +77,8 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
     """Base class for parametric objects with tags in sktime.
 
     Extends skbase BaseObject with additional features.
+
+    Test this!
     """
 
     # global default tags for dependency management
