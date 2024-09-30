@@ -2,7 +2,7 @@
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["fkiraly"]
+__author__ = ["fkiraly", "avishkarsonni"]
 __all__ = ["YtoX"]
 
 from sktime.transformations.base import BaseTransformer
@@ -120,7 +120,7 @@ class YtoX(BaseTransformer):
     """
 
     _tags = {
-        "authors": ["fkiraly"],
+        "authors": ["fkiraly", "avishkarsonni"],
         "transform-returns-same-time-index": True,
         "skip-inverse-transform": False,
         "univariate-only": False,

@@ -3052,6 +3052,16 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "avishkarsonni",
+      "name": "Avishkar Sonni",
+      "avatar_url": "https://avatars.githubusercontent.com/u/154905237?v=4",
+      "profile": "https://github.com/avishkarsonni",
+      "contributions": [
+        "code",
+        "test"
+      ]
     }
   ]
 }
