@@ -124,6 +124,7 @@ def test_reconcilerforecaster_exog(n_columns):
     estimator_instance.update(y=y_test, X=X_test)
 
 
+@pytest.mark.parametrize("method", METHOD_LIST)
 @pytest.mark.parametrize("return_totals", [True, False])
 def test_reconcilerforecaster_return_totals(method, return_totals):
     """Test that ReconcilerForecaster returns the dataframe without the dunder levels"""
