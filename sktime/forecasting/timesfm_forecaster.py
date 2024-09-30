@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
+from sktime.utils.singleton import _multiton
 
 
 class TimesFMForecaster(_BaseGlobalForecaster):
@@ -199,30 +200,39 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         super().__init__()
 
     def _fit(self, y, X, fh):
-        # import after backend env has been set
-        if self.use_source_package:
-            from timesfm import TimesFm
-        else:
-            from sktime.libs.timesfm import TimesFm
-
         if fh is not None:
             fh = fh.to_relative(self.cutoff)
             self._horizon_len = max(self.horizon_len, *fh._values.values)
         else:
             self._horizon_len = self.horizon_len
 
-        self.tfm = TimesFm(
-            context_len=self.context_len,
-            horizon_len=self._horizon_len,
-            input_patch_len=self.input_patch_len,
-            output_patch_len=self.output_patch_len,
-            num_layers=self.num_layers,
-            model_dims=self.model_dims,
-            per_core_batch_size=self.per_core_batch_size,
-            backend=self.backend,
-            verbose=self.verbose,
-        )
-        self.tfm.load_from_checkpoint(repo_id=self.repo_id)
+        self.tfm = _CachedTimesFM(
+            key=self._get_unique_timesfm_key(),
+            timesfm_kwargs=self._get_timesfm_kwargs(),
+            use_source_package=self.use_source_package,
+            repo_id=self.repo_id,
+        ).load_from_checkpoint()
+
+    def _get_timesfm_kwargs(self):
+        """Get the kwargs for TimesFM model."""
+        return {
+            "context_len": self.context_len,
+            "horizon_len": self._horizon_len,
+            "input_patch_len": self.input_patch_len,
+            "output_patch_len": self.output_patch_len,
+            "num_layers": self.num_layers,
+            "model_dims": self.model_dims,
+            "per_core_batch_size": self.per_core_batch_size,
+            "backend": self.backend,
+            "verbose": self.verbose,
+        }
+
+    def _get_unique_timesfm_key(self):
+        """Get unique key for TimesFM model to use in multiton."""
+        repo_id = self.repo_id
+        kwargs = self._get_timesfm_kwargs()
+        kwargs_plus_repo_id = {**kwargs, "repo_id": repo_id}
+        return str(kwargs_plus_repo_id)
 
     def _predict(self, fh, X, y=None):
         if fh is None:
@@ -343,3 +353,31 @@ def _frame2numpy(data):
         (-1, length, len(data.columns))
     )
     return arr
+
+
+@_multiton
+class _CachedTimesFM:
+    """Cached TimesFM model, to ensure only one instance exists in memory.
+
+    TimesFM is a zero shot model and immutable, hence there will not be
+    any side effects of sharing the same instance across multiple uses.
+    """
+
+    def __init__(self, key, timesfm_kwargs, use_source_package, repo_id):
+        self.key = key
+        self.timesfm_kwargs = timesfm_kwargs
+        self.repo_id = repo_id
+        self.use_source_package = use_source_package
+        self.tfm = None
+
+    def load_from_checkpoint(self):
+        if self.tfm is None:
+            if self.use_source_package:
+                from timesfm import TimesFm
+            else:
+                from sktime.libs.timesfm import TimesFm
+
+            self.tfm = TimesFm(**self.timesfm_kwargs)
+            self.tfm.load_from_checkpoint(repo_id=self.repo_id)
+
+        return self.tfm
