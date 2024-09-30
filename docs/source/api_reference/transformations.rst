@@ -99,6 +99,17 @@ Pipeline building - AutoML, switches and multiplexing
     TransformIf
     Id
 
+Pipeline building - Logging
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Logger
+
 Sklearn and pandas adapters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
