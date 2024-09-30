@@ -233,7 +233,9 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         use_source_package = self.use_source_package
         kwargs = self._get_timesfm_kwargs()
         kwargs_plus_repo_id = {
-            **kwargs, "repo_id": repo_id, "use_source_package": use_source_package
+            **kwargs,
+            "repo_id": repo_id,
+            "use_source_package": use_source_package,
         }
         return str(kwargs_plus_repo_id)
 
