@@ -237,7 +237,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
             "repo_id": repo_id,
             "use_source_package": use_source_package,
         }
-        return str(kwargs_plus_repo_id)
+        return str(sorted(kwargs_plus_repo_id.items()))
 
     def _predict(self, fh, X, y=None):
         if fh is None:
