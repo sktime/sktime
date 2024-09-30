@@ -148,7 +148,8 @@ class TimesFMForecaster(_BaseGlobalForecaster):
             "huggingface-hub",
             "paxml",
             "utilsforecast",
-        ],
+        ],  # when relaxing this, check whether the extra test in
+        # test_timesfm.py are still needed
         "env_marker": "sys_platform=='linux'",
         "capability:global_forecasting": True,
     }
