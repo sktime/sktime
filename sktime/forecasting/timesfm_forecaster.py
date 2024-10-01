@@ -192,6 +192,24 @@ class TimesFMForecaster(_BaseGlobalForecaster):
                 }
             )
 
+        # Handle dependencies based on use_source_package flag
+        if self.use_source_package:
+            self.set_tags(
+                python_dependencies=[]
+            )  # User will handle source package installation
+        else:
+            self.set_tags(
+                python_dependencies=[
+                    "tensorflow",
+                    "einshape",
+                    "jax",
+                    "praxis",
+                    "huggingface-hub",
+                    "paxml",
+                    "utilsforecast",
+                ]
+            )
+
         # to avoid RuntimeError when backed=="cpu"
         os.environ["JAX_PLATFORM_NAME"] = backend
         os.environ["JAX_PLATFORMS"] = backend
