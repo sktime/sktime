@@ -135,4 +135,8 @@ class Filter(BaseTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        return {"sfreq": 3}
+        param1 = {"sfreq": 3}
+        param2 = {"sfreq": 5000, "l_freq": 10, "h_freq": 1000}
+        params = [param1, param2]
+
+        return params

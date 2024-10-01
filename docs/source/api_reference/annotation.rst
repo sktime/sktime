@@ -82,6 +82,14 @@ Time Series Segmentation
 
     STRAY
 
+.. currentmodule:: sktime.annotation.clust
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ClusterSegmenter
+
 Time Series Anomaly Detection
 -----------------------------
 
