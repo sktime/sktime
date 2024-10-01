@@ -4,6 +4,7 @@
 import numpy as np
 import pandas as pd
 from nnetsauce import MTS as MTS0
+
 from sktime.forecasting.base import BaseForecaster
 
 
@@ -14,7 +15,6 @@ class NnetsauceMTS(BaseForecaster):
 
     Parameters
     ----------
-
     obj: object.
         any object containing a method fit (obj.fit()) and a method predict
         (obj.predict()).
@@ -45,7 +45,7 @@ class NnetsauceMTS(BaseForecaster):
           fitting or not (False).
 
     n_clusters: int.
-        number of clusters for 'kmeans' or 'gmm' clustering (could be 0: 
+        number of clusters for 'kmeans' or 'gmm' clustering (could be 0:
         no clustering).
 
     cluster_encode: bool.
@@ -65,39 +65,39 @@ class NnetsauceMTS(BaseForecaster):
         number of lags used for each time series.
 
     type_pi: str.
-    
+
         type of prediction interval; currently:
-        
-        - "gaussian": simple, fast, but: assumes stationarity of Gaussian in-sample 
+
+        - "gaussian": simple, fast, but: assumes stationarity of Gaussian in-sample
         residuals and independence in the multivariate case
         - "kde": based on Kernel Density Estimation of in-sample residuals
         - "bootstrap": based on independent bootstrap of in-sample residuals
         - "block-bootstrap": based on basic block bootstrap of in-sample residuals
-        - "scp-kde": Sequential split conformal prediction with Kernel Density 
+        - "scp-kde": Sequential split conformal prediction with Kernel Density
         Estimation of calibrated residuals
-        - "scp-bootstrap": Sequential split conformal prediction with independent 
+        - "scp-bootstrap": Sequential split conformal prediction with independent
         bootstrap of calibrated residuals
-        - "scp-block-bootstrap": Sequential split conformal prediction with basic 
+        - "scp-block-bootstrap": Sequential split conformal prediction with basic
         block bootstrap of calibrated residuals
-        - "scp2-kde": Sequential split conformal prediction with Kernel Density 
+        - "scp2-kde": Sequential split conformal prediction with Kernel Density
         Estimation of standardized calibrated residuals
-        - "scp2-bootstrap": Sequential split conformal prediction with independent 
+        - "scp2-bootstrap": Sequential split conformal prediction with independent
         bootstrap of standardized calibrated residuals
-        - "scp2-block-bootstrap": Sequential split conformal prediction with basic 
+        - "scp2-block-bootstrap": Sequential split conformal prediction with basic
         block bootstrap of standardized calibrated residuals
-        - based on copulas of in-sample residuals: 'vine-tll', 'vine-bb1', 
+        - based on copulas of in-sample residuals: 'vine-tll', 'vine-bb1',
         'vine-bb6', 'vine-bb7', 'vine-bb8', 'vine-clayton',
-        'vine-frank', 'vine-gaussian', 'vine-gumbel', 'vine-indep', 'vine-joe', 
+        'vine-frank', 'vine-gaussian', 'vine-gumbel', 'vine-indep', 'vine-joe',
         'vine-student'
-        - 'scp-vine-tll', 'scp-vine-bb1', 'scp-vine-bb6', 'scp-vine-bb7', 
-        'scp-vine-bb8', 'scp-vine-clayton', 'scp-vine-frank', 'scp-vine-gaussian', 
+        - 'scp-vine-tll', 'scp-vine-bb1', 'scp-vine-bb6', 'scp-vine-bb7',
+        'scp-vine-bb8', 'scp-vine-clayton', 'scp-vine-frank', 'scp-vine-gaussian',
         'scp-vine-gumbel', 'scp-vine-indep', 'scp-vine-joe', 'scp-vine-student'
-        - 'scp2-vine-tll', 'scp2-vine-bb1', 'scp2-vine-bb6', 'scp2-vine-bb7', 
+        - 'scp2-vine-tll', 'scp2-vine-bb1', 'scp2-vine-bb6', 'scp2-vine-bb7',
         'scp2-vine-bb8', 'scp2-vine-clayton', 'scp2-vine-frank', 'scp2-vine-gaussian',
           'scp2-vine-gumbel', 'scp2-vine-indep', 'scp2-vine-joe', 'scp2-vine-student'
 
     block_size: int.
-        size of block for 'type_pi' in ("block-bootstrap", "scp-block-bootstrap", 
+        size of block for 'type_pi' in ("block-bootstrap", "scp-block-bootstrap",
         "scp2-block-bootstrap").
         Default is round(3.15*(n_residuals^1/3))
 
@@ -106,7 +106,7 @@ class NnetsauceMTS(BaseForecaster):
           is 'None'.
 
     kernel: str.
-        the kernel to use for residuals density estimation (used for predictive 
+        the kernel to use for residuals density estimation (used for predictive
         simulation). Currently, either 'gaussian' or 'tophat'.
 
     agg: str.
@@ -122,10 +122,11 @@ class NnetsauceMTS(BaseForecaster):
         0: not printing; 1: printing
 
     show_progress: bool.
-        True: progress bar when fitting each series; False: no progress bar when 
+        True: progress bar when fitting each series; False: no progress bar when
         fitting each series
 
     """
+
     _tags = {
         # scitype:y controls whether internal y can be univariate/multivariate
         # if multivariate is not valid, applies vectorization over variables
