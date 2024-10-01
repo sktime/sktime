@@ -734,7 +734,7 @@ class PatchedTimeSeriesDecoder(nn_module):
         paddings,
         freq,
         horizon_len: int,
-        output_patch_len: int | None = None,
+        output_patch_len: int = None,
         max_len: int = 512,
         return_forecast_on_context: bool = False,
     ):
