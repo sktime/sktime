@@ -2,7 +2,6 @@
 
 import numpy as np
 import pandas as pd
-from statsmodels.tsa.seasonal import seasonal_decompose
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
@@ -96,6 +95,14 @@ class MAPAForecaster(BaseForecaster):
         return y.resample(f"{level}D").agg(self.agg_method).asfreq(y.index.freq)
 
     def _decompose(self, y):
+        from sktime.utils.dependencies._dependencies import _check_soft_dependencies
+
+        try:
+            _check_soft_dependencies("statsmodels", severity="warning")
+            from statsmodels.tsa.seasonal import seasonal_decompose
+        except ImportError:
+            return
+
         y = self._ensure_positive_values(y)
         if y.isna().any():
             y = y.ffill().bfill()
