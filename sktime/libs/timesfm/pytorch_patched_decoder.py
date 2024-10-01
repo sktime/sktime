@@ -21,12 +21,22 @@
 import dataclasses
 import math
 from typing import List, Tuple
-import torch
-from torch import nn
-import torch.nn.functional as F
+
+from sktime.utils.dependencies import _check_soft_dependencies
+
+if _check_soft_dependencies("torch", severity="none"):
+    import torch
+    from torch import nn
+    import torch.nn.functional as F
+
+    nn_module = nn.Module
+else:
+
+    class nn_module:
+        """Dummy class if torch is unavailable."""
 
 
-def _create_quantiles() -> list[float]:
+def _create_quantiles():
     return [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
 
 
@@ -64,9 +74,7 @@ class TimesFMConfig:
     use_positional_embedding: bool = True
 
 
-def _masked_mean_std(
-    inputs: torch.Tensor, padding: torch.Tensor
-) -> tuple[torch.Tensor, torch.Tensor]:
+def _masked_mean_std(inputs, padding):
     """Calculates mean and standard deviation of `inputs` across axis 1.
 
     It excludes values where `padding` is 1.
@@ -83,7 +91,7 @@ def _masked_mean_std(
     # Selecting the first patch with more than 3 unpadded values.
     pad_sum = torch.sum(1 - padding, dim=2)
 
-    def _get_patch_index(arr: torch.Tensor):
+    def _get_patch_index(arr):
         indices = torch.argmax((arr >= 3).to(torch.int32), dim=1)
         row_sum = (arr >= 3).to(torch.int32).sum(dim=1)
         return torch.where(row_sum == 0, arr.shape[1] - 1, indices)
@@ -124,7 +132,7 @@ def _masked_mean_std(
     return masked_mean, masked_std
 
 
-def _shift_padded_seq(mask: torch.Tensor, seq: torch.Tensor) -> torch.Tensor:
+def _shift_padded_seq(mask, seq):
     """Shifts rows of seq based on the first 0 in each row of the mask.
 
     Args:
@@ -136,7 +144,7 @@ def _shift_padded_seq(mask: torch.Tensor, seq: torch.Tensor) -> torch.Tensor:
     """
     batch_size, num_seq, feature_dim = seq.shape
 
-    new_mask: torch.BoolTensor = mask == 0
+    new_mask = mask == 0
 
     # Use argmax to find the first True value in each row
     indices = new_mask.to(torch.int32).argmax(dim=1)
@@ -162,7 +170,7 @@ def _shift_padded_seq(mask: torch.Tensor, seq: torch.Tensor) -> torch.Tensor:
     return shifted_seq
 
 
-def get_large_negative_number(dtype: torch.dtype) -> torch.Tensor:
+def get_large_negative_number(dtype):
     """Returns a large negative value for the given dtype."""
     if dtype.is_floating_point:
         dtype_max = torch.finfo(dtype).max
@@ -171,7 +179,7 @@ def get_large_negative_number(dtype: torch.dtype) -> torch.Tensor:
     return torch.tensor(-0.7 * dtype_max, dtype=dtype)
 
 
-def apply_mask_to_logits(logits: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
+def apply_mask_to_logits(logits, mask):
     """Applies a floating-point mask to a set of logits.
 
     Args:
@@ -188,9 +196,7 @@ def apply_mask_to_logits(logits: torch.Tensor, mask: torch.Tensor) -> torch.Tens
     return torch.where((mask >= min_value * 0.5), logits, min_value)
 
 
-def convert_paddings_to_mask(
-    paddings: torch.Tensor, dtype: torch.dtype = torch.float32
-) -> torch.Tensor:
+def convert_paddings_to_mask(paddings, dtype):
     """Converts binary paddings to a logit mask ready to add to attention matrix.
 
     Args:
@@ -207,7 +213,7 @@ def convert_paddings_to_mask(
     return attention_mask
 
 
-def causal_mask(input_t: torch.Tensor) -> torch.Tensor:
+def causal_mask(input_t):
     """Computes and returns causal mask.
 
     Args:
@@ -228,14 +234,14 @@ def causal_mask(input_t: torch.Tensor) -> torch.Tensor:
     )  # Equivalent to jnp.newaxis
 
 
-def merge_masks(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
+def merge_masks(a, b):
     """Merges 2 masks.
 
     logscale mask is expected but 0/1 mask is also fine.
 
     Args:
-        a: torch.Tensor of shape [1|B, 1, 1|T, S].
-        b: torch.Tensor of shape [1|B, 1, 1|T, S].
+        a of shape [1|B, 1, 1|T, S].
+        b of shape [1|B, 1, 1|T, S].
 
     Returns:
         torch.Tensor of shape [1|B, 1, 1|T, S].
@@ -256,7 +262,7 @@ def merge_masks(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
     return torch.minimum(a, b)  # Element-wise minimum, similar to jnp.minimum
 
 
-class ResidualBlock(nn.Module):
+class ResidualBlock(nn_module):
     """TimesFM residual block."""
 
     def __init__(
@@ -288,7 +294,7 @@ class ResidualBlock(nn.Module):
         return output + residual
 
 
-class RMSNorm(torch.nn.Module):
+class RMSNorm(nn_module):
     """Pax rms norm in pytorch."""
 
     def __init__(
@@ -314,7 +320,7 @@ class RMSNorm(torch.nn.Module):
         return output.type_as(x)
 
 
-class TransformerMLP(nn.Module):
+class TransformerMLP(nn_module):
     """Pax transformer MLP in pytorch."""
 
     def __init__(
@@ -337,7 +343,7 @@ class TransformerMLP(nn.Module):
         return outputs + x
 
 
-class TimesFMAttention(nn.Module):
+class TimesFMAttention(nn_module):
     """Implements the attention used in TimesFM."""
 
     def __init__(
@@ -370,7 +376,7 @@ class TimesFMAttention(nn.Module):
         )
         self.o_proj = nn.Linear(self.num_heads * self.head_dim, self.hidden_size)
 
-    def _per_dim_scaling(self, query: torch.Tensor) -> torch.Tensor:
+    def _per_dim_scaling(self, query):
         # [batch_size, n_local_heads, input_len, head_dim]
         r_softplus_0 = 1.442695041
         softplus_func = torch.nn.Softplus()
@@ -380,11 +386,11 @@ class TimesFMAttention(nn.Module):
 
     def forward(
         self,
-        hidden_states: torch.Tensor,
-        mask: torch.Tensor,
-        kv_write_indices: torch.Tensor | None = None,
-        kv_cache: Tuple[torch.Tensor, torch.Tensor] | None = None,
-    ) -> torch.Tensor:
+        hidden_states,
+        mask,
+        kv_write_indices=None,
+        kv_cache=None,
+    ):
         hidden_states_shape = hidden_states.shape
         assert len(hidden_states_shape) == 3
 
@@ -436,7 +442,7 @@ class TimesFMAttention(nn.Module):
         return scores, output
 
 
-class TimesFMDecoderLayer(nn.Module):
+class TimesFMDecoderLayer(nn_module):
     """Transformer layer."""
 
     def __init__(
@@ -463,12 +469,12 @@ class TimesFMDecoderLayer(nn.Module):
 
     def forward(
         self,
-        hidden_states: torch.Tensor,
-        mask: torch.Tensor,
-        paddings: torch.Tensor,
-        kv_write_indices: torch.Tensor | None = None,
-        kv_cache: Tuple[torch.Tensor, torch.Tensor] | None = None,
-    ) -> torch.Tensor:
+        hidden_states,
+        mask,
+        paddings,
+        kv_write_indices=None,
+        kv_cache=None,
+    ):
         # Self Attention
         residual = hidden_states
         hidden_states = self.input_layernorm(hidden_states)
@@ -486,7 +492,7 @@ class TimesFMDecoderLayer(nn.Module):
         return scores, hidden_states
 
 
-class StackedDecoder(nn.Module):
+class StackedDecoder(nn_module):
     """Stacked transformer layer."""
 
     def __init__(
@@ -516,11 +522,11 @@ class StackedDecoder(nn.Module):
 
     def forward(
         self,
-        hidden_states: torch.Tensor,
-        paddings: torch.Tensor,
-        kv_write_indices: torch.Tensor | None = None,
-        kv_caches: List[Tuple[torch.Tensor, torch.Tensor]] | None = None,
-    ) -> torch.Tensor:
+        hidden_states,
+        paddings,
+        kv_write_indices=None,
+        kv_caches=None,
+    ):
         padding_mask = convert_paddings_to_mask(paddings, hidden_states.dtype)
         atten_mask = causal_mask(hidden_states)
         mask = merge_masks(padding_mask, atten_mask)
@@ -537,7 +543,7 @@ class StackedDecoder(nn.Module):
         return hidden_states
 
 
-class PositionalEmbedding(torch.nn.Module):
+class PositionalEmbedding(nn_module):
     """Generates position embedding for a given 1-d sequence.
 
     Attributes:
@@ -553,7 +559,7 @@ class PositionalEmbedding(torch.nn.Module):
         embedding_dims: int,
         min_timescale: int = 1,
         max_timescale: int = 10_000,
-    ) -> None:
+    ):
         super().__init__()
         self.min_timescale = min_timescale
         self.max_timescale = max_timescale
@@ -592,7 +598,7 @@ class PositionalEmbedding(torch.nn.Module):
         return signal
 
 
-class PatchedTimeSeriesDecoder(nn.Module):
+class PatchedTimeSeriesDecoder(nn_module):
     """Patched time-series decoder."""
 
     def __init__(self, config: TimesFMConfig):
@@ -621,9 +627,7 @@ class PatchedTimeSeriesDecoder(nn.Module):
         if self.config.use_positional_embedding:
             self.position_emb = PositionalEmbedding(self.config.hidden_size)
 
-    def _forward_transform(
-        self, inputs: torch.Tensor, patched_pads: torch.Tensor
-    ) -> tuple[torch.Tensor, tuple[torch.Tensor, torch.Tensor]]:
+    def _forward_transform(self, inputs, patched_pads):
         """Input is of shape [B, N, P]."""
         mu, sigma = _masked_mean_std(inputs, patched_pads)
         sigma = torch.where(
@@ -643,23 +647,16 @@ class PatchedTimeSeriesDecoder(nn.Module):
         )
         return outputs, (mu, sigma)
 
-    def _reverse_transform(
-        self, outputs: torch.Tensor, stats: tuple[torch.Tensor, torch.Tensor]
-    ) -> torch.Tensor:
+    def _reverse_transform(self, outputs, stats):
         """Output is of shape [B, N, P, Q]."""
         mu, sigma = stats
         return outputs * sigma[:, None, None, None] + mu[:, None, None, None]
 
     def _preprocess_input(
         self,
-        input_ts: torch.Tensor,
-        input_padding: torch.Tensor,
-    ) -> tuple[
-        torch.Tensor,
-        torch.Tensor,
-        tuple[torch.Tensor, torch.Tensor] | None,
-        torch.Tensor,
-    ]:
+        input_ts,
+        input_padding,
+    ):
         """Preprocess input for stacked transformer."""
 
         # Reshape into patches (using view for efficiency)
@@ -698,10 +695,10 @@ class PatchedTimeSeriesDecoder(nn.Module):
 
     def _postprocess_output(
         self,
-        model_output: torch.Tensor,
+        model_output,
         num_outputs: int,
-        stats: tuple[torch.Tensor, torch.Tensor],
-    ) -> torch.Tensor:
+        stats,
+    ):
         """Postprocess output of stacked transformer."""
 
         # B x N x (H.Q)
@@ -715,10 +712,10 @@ class PatchedTimeSeriesDecoder(nn.Module):
 
     def forward(
         self,
-        input_ts: torch.Tensor,
-        input_padding: torch.LongTensor,
-        freq: torch.Tensor,
-    ) -> torch.Tensor:
+        input_ts,
+        input_padding,
+        freq,
+    ):
         num_outputs = len(self.config.quantiles) + 1
         model_input, patched_padding, stats, _ = self._preprocess_input(
             input_ts=input_ts,
@@ -733,14 +730,14 @@ class PatchedTimeSeriesDecoder(nn.Module):
 
     def decode(
         self,
-        input_ts: torch.Tensor,
-        paddings: torch.Tensor,
-        freq: torch.LongTensor,
+        input_ts,
+        paddings,
+        freq,
         horizon_len: int,
         output_patch_len: int | None = None,
         max_len: int = 512,
         return_forecast_on_context: bool = False,
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    ):
         """Auto-regressive decoding without caching.
 
         Args:
