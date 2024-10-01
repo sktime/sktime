@@ -64,7 +64,6 @@ from skbase.base import BaseObject as _BaseObject
 from sklearn import clone
 from sklearn.base import BaseEstimator as _SklearnBaseEstimator
 
-from sktime.exceptions import NotFittedError
 from sktime.utils._estimator_html_repr import _HTMLDocumentationLinkMixin
 from sktime.utils.random_state import set_random_state
 
@@ -596,7 +595,7 @@ class BaseEstimator(_BaseEstimator, BaseObject):
     # get_fitted_params will retrieve parameters from these, too
     # override in descendant class
     # _SklearnBaseEstimator = sklearn.base.BaseEstimator
-    GET_FITTED_PARAMS_NESTING = (_SklearnBaseEstimator)
+    GET_FITTED_PARAMS_NESTING = (_SklearnBaseEstimator,)
 
 
 def _clone_estimator(base_estimator, random_state=None):
