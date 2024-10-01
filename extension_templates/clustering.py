@@ -97,8 +97,9 @@ class MyClusterer(BaseClusterer):
         # estimator tags
         # --------------
         "X_inner_mtype": "numpy3D",  # which type do _fit/_predict accept, usually
-        # this is either "numpy3D" or "nested_univ" (nested pd.DataFrame). Other
-        # types are allowable, see datatypes/panel/_registry.py for options.
+        # this is one of "numpy3D" (instance, variable, time point),
+        # "pd-multiindex" (row index: instance, time; column index: variable) or other
+        # machine types, see datatypes/panel/_registry.py for options.
         "capability:multivariate": False,
         "capability:unequal_length": False,
         "capability:missing_values": False,
