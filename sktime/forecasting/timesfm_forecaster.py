@@ -122,7 +122,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
 
     _tags = {
         "y_inner_mtype": [
-            "pd.Series",
+            "pd.DataFrame",
             "pd-multiindex",
             "pd_multiindex_hier",
         ],
@@ -138,17 +138,10 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         "authors": ["rajatsen91", "geetu040"],
         # rajatsen91 for google-research/timesfm
         "maintainers": ["geetu040"],
-        "python_version": ">=3.10,<3.11",
         "python_dependencies": [
-            "tensorflow",
-            "einshape",
-            "jax",
-            "praxis",
+            "torch",
             "huggingface-hub",
-            "paxml",
-            "utilsforecast",
         ],
-        "env_marker": "sys_platform=='linux'",
         "capability:global_forecasting": True,
     }
 
@@ -157,7 +150,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         context_len,
         horizon_len,
         freq=0,
-        repo_id="google/timesfm-1.0-200m",
+        repo_id="google/timesfm-1.0-200m-pytorch",
         input_patch_len=32,
         output_patch_len=128,
         num_layers=20,
@@ -186,30 +179,16 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         if self.broadcasting:
             self.set_tags(
                 **{
-                    "y_inner_mtype": "pd.Series",
+                    "y_inner_mtype": "pd.DataFrame",
                     "X_inner_mtype": "pd.DataFrame",
                     "capability:global_forecasting": False,
                 }
             )
 
-        # to avoid RuntimeError when backed=="cpu"
-        os.environ["JAX_PLATFORM_NAME"] = backend
-        os.environ["JAX_PLATFORMS"] = backend
-
         super().__init__()
 
-    def _fit(self, y, X, fh):
-        # import after backend env has been set
-        if self.use_source_package:
-            from timesfm import TimesFm
-        else:
-            from sktime.libs.timesfm import TimesFm
-
-        if fh is not None:
-            fh = fh.to_relative(self.cutoff)
-            self._horizon_len = max(self.horizon_len, *fh._values.values)
-        else:
-            self._horizon_len = self.horizon_len
+    def _fit_source_package(self):
+        from timesfm import TimesFm
 
         self.tfm = TimesFm(
             context_len=self.context_len,
@@ -223,6 +202,87 @@ class TimesFMForecaster(_BaseGlobalForecaster):
             verbose=self.verbose,
         )
         self.tfm.load_from_checkpoint(repo_id=self.repo_id)
+
+    def _fit_pytorch(self):
+        import torch
+        from huggingface_hub import snapshot_download
+
+        from sktime.libs.timesfm.pytorch_patched_decoder import (
+            PatchedTimeSeriesDecoder,
+            TimesFMConfig,
+        )
+
+        path = snapshot_download(self.repo_id)
+        weights_path = os.path.join(path, "torch_model.ckpt")
+        weights = torch.load(weights_path, weights_only=True)
+
+        config = TimesFMConfig()
+        self.model = PatchedTimeSeriesDecoder(config)
+        self.model.load_state_dict(weights)
+        self.model = self.model.to(self.backend)
+
+    def _fit(self, y, X, fh):
+        if fh is not None:
+            fh = fh.to_relative(self.cutoff)
+            self._horizon_len = max(self.horizon_len, *fh._values.values)
+        else:
+            self._horizon_len = self.horizon_len
+
+        if self.use_source_package:
+            self._fit_source_package()
+        else:
+            self._fit_pytorch()
+
+    def _predict_source_package(self, hist):
+        pred, _ = self.tfm.forecast(hist)
+        return pred
+
+    def _predict_pytorch(self, hist):
+        import torch
+
+        n_samples, n_timestamps = hist.shape
+
+        forecast_input = hist[:, -self.context_len :]
+        forecast_pads = np.zeros((n_samples, self.context_len + self.horizon_len))
+        frequency_input = np.full((n_samples, 1), self.freq)
+
+        # pad zeros at front, if n_timestamps is less than context_len
+        if n_timestamps < self.context_len:
+            padding_len = self.context_len - n_timestamps
+            forecast_input = np.hstack(
+                [np.zeros((n_samples, padding_len)), forecast_input]
+            )
+            forecast_pads[:, :padding_len] = 1
+
+        forecast_input = torch.tensor(
+            forecast_input,
+            dtype=torch.float,
+            device=self.backend,
+        )
+        forecast_pads = torch.tensor(
+            forecast_pads,
+            dtype=torch.float,
+            device=self.backend,
+        )
+        frequency_input = torch.tensor(
+            frequency_input,
+            dtype=torch.long,
+            device=self.backend,
+        )
+
+        self.model.eval()
+        with torch.no_grad():
+            forecasts, quantiles = self.model.decode(
+                forecast_input,
+                forecast_pads,
+                frequency_input,
+                self._horizon_len,
+            )
+
+        forecasts = forecasts.numpy()
+        quantiles = quantiles.numpy()
+
+        return forecasts
 
     def _predict(self, fh, X, y=None):
         if fh is None:
@@ -242,11 +302,16 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         if isinstance(_y.index, pd.MultiIndex):
             hist = _frame2numpy(_y).squeeze(2)
         else:
-            hist = np.expand_dims(_y.values, axis=0)
+            # _y is dataframe for univariate series
+            # converting that to (1, n_timestamps)
+            hist = _y.values.T
 
         # hist.shape: (batch_size, n_timestamps)
 
-        pred, _ = self.tfm.forecast(hist)
+        if self.use_source_package:
+            pred = self._predict_source_package(hist)
+        else:
+            pred = self._predict_pytorch(hist)
 
         # converting pred datatype
 
@@ -262,28 +327,21 @@ class TimesFMForecaster(_BaseGlobalForecaster):
                 ._values.tolist()
                 * pred.shape[0]
             )
-            index = pd.MultiIndex.from_arrays(
-                ins + [idx],
-                names=_y.index.names,
-            )
-            pred = pd.DataFrame(
-                # batch_size * num_timestams
-                pred.ravel(),
-                index=index,
-                columns=_y.columns,
-            )
+            index = pd.MultiIndex.from_arrays(ins + [idx])
         else:
             index = (
                 ForecastingHorizon(range(1, n_timestamps + 1))
                 .to_absolute(self._cutoff)
                 ._values
             )
-            pred = pd.Series(
-                # batch_size * num_timestams
-                pred.ravel(),
-                index=index,
-                name=_y.name,
-            )
+
+        index.names = _y.index.names
+        pred = pd.DataFrame(
+            # batch_size * num_timestams
+            pred.ravel(),
+            index=index,
+            columns=_y.columns,
+        )
 
         absolute_horizons = fh.to_absolute_index(self.cutoff)
         dateindex = pred.index.get_level_values(-1).map(
@@ -314,8 +372,8 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         """
         test_params = [
             {
-                "context_len": 64,
-                "horizon_len": 32,
+                "context_len": 32,
+                "horizon_len": 4,
                 "freq": 0,
                 "verbose": False,
             },
