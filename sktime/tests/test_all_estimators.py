@@ -17,6 +17,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from _pytest.outcomes import Skipped
+from skbase._exceptions import NotFittedError
 
 from sktime.base import BaseEstimator, BaseObject, load
 from sktime.classification.deep_learning.base import BaseDeepClassifier
@@ -24,7 +25,6 @@ from sktime.dists_kernels.base import (
     BasePairwiseTransformer,
     BasePairwiseTransformerPanel,
 )
-from sktime.exceptions import NotFittedError
 from sktime.forecasting.base import BaseForecaster
 from sktime.registry import all_estimators, get_base_class_lookup, scitype
 from sktime.regression.deep_learning.base import BaseDeepRegressor
