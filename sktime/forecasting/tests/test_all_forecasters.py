@@ -11,10 +11,10 @@ from inspect import signature
 import numpy as np
 import pandas as pd
 import pytest
+from skbase._exceptions import NotFittedError
 
 from sktime.datatypes import check_is_mtype
 from sktime.datatypes._utilities import get_cutoff
-from sktime.exceptions import NotFittedError
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.forecasting.tests._config import (
