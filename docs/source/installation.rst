@@ -211,8 +211,8 @@ Virtual environments
 
 Two good options for virtual environment managers are:
 
-* `conda <https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/>`_ (beginner friendly, but may incur license fees for commercial use if using a commercial distribution).
-* `venv <https://realpython.com/python-virtual-environments-a-primer/>`_ (also quite good!).
+* `conda <https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html>`_ (beginner friendly, but may incur license fees for commercial use if using a commercial distribution).
+* `venv <https://docs.python.org/3/library/venv.html>`_ (also quite good!).
 
 Be sure to link your new virtual environment as the python kernel in whatever IDE you are using.  You can find the instructions for doing so
 in VScode `here <https://code.visualstudio.com/docs/python/environments>`_.
