@@ -105,31 +105,31 @@ class PeftForecaster(_BaseGlobalForecaster):
     ):
         self.input_model = input_model
         self.peft_config = peft_config
-        self.model_copy = deepcopy(self.input_model)
+        self.input_model_copy = deepcopy(self.input_model)
         self.base_model = _check_model_input(self.input_model)
-        config = _check_peft_config(peft_config)
+        self._peft_config = _check_peft_config(self.peft_config)
 
-        self.peft_model = get_peft_model(self.base_model, config)
-        # self.model = self.peft_model
-        self.model_copy.peft_model = self.peft_model
+        # self.model is the peft model
+        self.model = get_peft_model(self.base_model, self._peft_config)
+        self.input_model_copy.peft_model = self.model
 
-        self.newforecaster = type(self.input_model)(
-            **self.input_model.get_params(), peft_model=self.peft_model
-        )
-        self.newforecaster.peft_model = self.peft_model
+        # self.newforecaster = type(self.input_model)(
+        #     **self.input_model.get_params(), peft_model=self.model
+        # )
         super().__init__()
 
     def _fit(self, fh, X, y):
-        print(self.model_copy.peft_model)
         # New object initialized with type()
-        self.newforecaster = type(self.input_model)(**self.input_model.get_params())
-        self.newforecaster.peft_model = self.peft_model
-        self.newforecaster.fit(fh=fh, X=X, y=y)
+        input_model_arguments = self.input_model.get_params()
+        input_model_arguments.pop("peft_model", "None")
+        self.input_model_peft = type(self.input_model)(
+            **input_model_arguments, peft_model=self.model
+        )
+        self.input_model_peft.fit(fh=fh, X=X, y=y)
         return self
 
     def _predict(self, fh, X, y):
-        y_pred = self.model_copy.predict(fh=fh, X=X, y=y)
-
+        y_pred = self.input_model_peft.predict(y=y, X=X, fh=fh)
         return y_pred
 
 
@@ -175,11 +175,3 @@ def _check_peft_config(config):
             )
         else:
             return config
-
-
-class PeftSktimeClass:
-    """Peft sktime class."""
-
-    def __init__(self, peft_model):
-        self.peft_model = peft_model if peft_model else None
-        super().__init__()
