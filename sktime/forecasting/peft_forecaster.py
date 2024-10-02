@@ -42,7 +42,7 @@ class PeftForecaster(_BaseGlobalForecaster):
 
     Parameters
     ----------
-    model : sktime._BaseGlobalForecaster or transformers.PreTrainedModel
+    input_model : sktime._BaseGlobalForecaster or transformers.PreTrainedModel
         or nn.Module, required
         The base model used for Peft. If a user is passing in a sktime
         global forecaster,  the underlying torch module must be an
@@ -103,27 +103,40 @@ class PeftForecaster(_BaseGlobalForecaster):
         input_model,
         peft_config,
     ):
+        # self.input_model is a sktime global forecasting object
         self.input_model = input_model
+        # user passed in peft_config
         self.peft_config = peft_config
+        # make a deep copy of the input model as we do not want to change
+        # anything from the original model
         self.model_copy = deepcopy(self.input_model)
+
+        # locate and grab the underlying torch model
         self.base_model = _check_model_input(self.input_model)
+        # check to make sure that the peft config is valid
         config = _check_peft_config(peft_config)
 
+        # create the `PeftModel` from the base_model
         self.peft_model = get_peft_model(self.base_model, config)
         # self.model = self.peft_model
-        self.model_copy.peft_model = self.peft_model
+        # no major use for the model_copy right now, can be omitted
+        self.model_copy._peft_model = self.peft_model
 
-        self.newforecaster = type(self.input_model)(
-            **self.input_model.get_params(), peft_model=self.peft_model
-        )
-        self.newforecaster.peft_model = self.peft_model
+        # this portion of the code is commented out because it
+        # should only exist in the fit instance..
+        # uncomment this code if you want to inspect the newforecaster
+        # parameters etc..
+        # self.newforecaster = type(self.input_model)(
+        #     **self.input_model.get_params()
+        # )
+        # self.newforecaster._peft_model = self.peft_model
         super().__init__()
 
     def _fit(self, fh, X, y):
         print(self.model_copy.peft_model)
         # New object initialized with type()
         self.newforecaster = type(self.input_model)(**self.input_model.get_params())
-        self.newforecaster.peft_model = self.peft_model
+        self.newforecaster._peft_model = self.peft_model
         self.newforecaster.fit(fh=fh, X=X, y=y)
         return self
 
@@ -177,9 +190,10 @@ def _check_peft_config(config):
             return config
 
 
-class PeftSktimeClass:
-    """Peft sktime class."""
-
-    def __init__(self, peft_model):
-        self.peft_model = peft_model if peft_model else None
-        super().__init__()
+def add_adapter(self, peft_config):
+    """Add adapter function."""
+    # ensure that self.peft_model exists
+    if not hasattr(self, "peft_model"):
+        raise Exception
+    else:
+        self.peft_model.add_adapter(peft_config)

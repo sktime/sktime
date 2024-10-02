@@ -9,7 +9,6 @@ import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
-from sktime.forecasting.peft_forecaster import PeftSktimeClass
 from sktime.split import temporal_train_test_split
 from sktime.utils.warnings import warn
 
@@ -25,7 +24,7 @@ if _check_soft_dependencies("transformers", severity="none"):
     from transformers import Trainer, TrainingArguments
 
 
-class TinyTimeMixerForecaster(_BaseGlobalForecaster, PeftSktimeClass):
+class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     """
     TinyTimeMixer Forecaster for Zero-Shot Forecasting of Multivariate Time Series.
 
@@ -80,6 +79,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster, PeftSktimeClass):
         version of package maintained in sktime because of model's unavailability
         on pypi.
         To install the source package, follow the instructions here [4]_.
+
 
     References
     ----------
@@ -179,6 +179,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster, PeftSktimeClass):
         self.callbacks = callbacks
         self.broadcasting = broadcasting
         self.use_source_package = use_source_package
+        self._peft_model = None
 
         if self.broadcasting:
             self.set_tags(
@@ -284,10 +285,8 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster, PeftSktimeClass):
         # Get the Model
         # self.model, info = PatchTSTForPrediction.from_pretrained(
         # "ibm-granite/granite-timeseries-patchtst",
-        print("a", self.peft_model)
-        print(self.peft_model)
-        if not self.peft_model:
-            print(self.peft_model)
+        if self._peft_model is None:
+            print("no peft_model found, using original model load")
             self.model, info = TinyTimeMixerForPrediction.from_pretrained(
                 self.model_path,
                 revision=self.revision,
@@ -310,8 +309,8 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster, PeftSktimeClass):
                     _model = getattr(_model, attr_name)
                 _model.weight.requires_grad = True
         else:
-            print("peft")
-            self.model = self.peft_model
+            print("peft_model found, using peft_model")
+            self.model = self._peft_model
 
         y_train, y_test = temporal_train_test_split(y, test_size=self.validation_split)
 
