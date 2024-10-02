@@ -123,17 +123,18 @@ class ThetaLinesTransformer(BaseTransformer):
         Parameters
         ----------
         parameter_set : str, default="default"
-            Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will
-            return `"de_types.pyfault"` set.
+            Name of the set of test parameters to return, for use in tests.
+            If no special parameters are defined for a value,
+            will return `"default"` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
-            Parameters to create testing instances of the clpass
-            Each dict are parameters to construct an "interesting" test instance.
+            Parameters to create testing instances of the class.
+            Each dict is used to construct an "interesting" test instance.
         """
         # Added empty dict for testing default case
+
         return [{}, {"theta": (0, 2)}, {"theta": (0.5, 1.5)}]
 
 
