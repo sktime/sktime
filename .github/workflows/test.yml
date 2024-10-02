@@ -42,7 +42,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.13.0-rc.2"
+          python-version: "3.13.0-rc.3"
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -59,7 +59,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.13.0-rc.2"
+          python-version: "3.13.0-rc.3"
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -95,7 +95,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.13.0-rc.2"
+          python-version: "3.13.0-rc.3"
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
@@ -116,7 +116,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.13.0-rc.2"
+          python-version: "3.13.0-rc.3"
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
@@ -143,7 +143,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.13.0-rc.2"
+          python-version: "3.13.0-rc.3"
 
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
@@ -166,7 +166,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.13.0-rc.2"
+          python-version: "3.13.0-rc.3"
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
@@ -267,7 +267,7 @@ jobs:
     strategy:
       fail-fast: false  # to not fail all combinations if just one fail
       matrix:
-        python-version: ["3.13.0-rc.2"]
+        python-version: ["3.13.0-rc.3"]
         os: [ubuntu-latest, macos-13, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
