@@ -182,7 +182,17 @@ class TimesFMForecaster(_BaseGlobalForecaster):
                 self.set_tags(python_dependencies=["timesfm<=1.1.0"])
             else:
                 # Default behavior, enforce required dependencies for the fork
-                self.set_tags(python_dependencies=self._default_dependencies)
+                self.set_tags(
+                    python_dependencies=[
+                        "tensorflow",
+                        "einshape",
+                        "jax",
+                        "praxis",
+                        "huggingface-hub",
+                        "paxml",
+                        "utilsforecast",
+                    ]
+                )
         else:
             # Ignore dependencies, leave the dependency set empty
             self.set_tags(python_dependencies=[])
@@ -195,7 +205,8 @@ class TimesFMForecaster(_BaseGlobalForecaster):
                     "capability:global_forecasting": False,
                 }
             )
-        # to avoid RuntimeError when backend=="cpu"
+
+        # Set environment variables for JAX backend based on CPU, GPU, or TPU
         os.environ["JAX_PLATFORM_NAME"] = backend
         os.environ["JAX_PLATFORMS"] = backend
 
