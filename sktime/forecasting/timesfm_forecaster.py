@@ -243,7 +243,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         n_samples, n_timestamps = hist.shape
 
         forecast_input = hist[:, -self.context_len :]
-        forecast_pads = np.zeros((n_samples, self.context_len + self.horizon_len))
+        forecast_pads = np.zeros((n_samples, self.context_len + self._horizon_len))
         frequency_input = np.full((n_samples, 1), self.freq)
 
         # pad zeros at front, if n_timestamps is less than context_len
@@ -289,10 +289,10 @@ class TimesFMForecaster(_BaseGlobalForecaster):
             fh = self.fh
         fh = fh.to_relative(self.cutoff)
 
-        if max(fh._values.values) > self.horizon_len:
+        if max(fh._values.values) > self._horizon_len:
             raise ValueError(
                 f"Error in {self.__class__.__name__}, the forecast horizon exceeds the"
-                f" specified horizon_len of {self.horizon_len}. Change the horizon_len"
+                f" specified horizon_len of {self._horizon_len}. Change the horizon_len"
                 " when initializing the model or try another forecasting horizon."
             )
 
@@ -373,7 +373,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         test_params = [
             {
                 "context_len": 32,
-                "horizon_len": 4,
+                "horizon_len": 16,
                 "freq": 0,
                 "verbose": False,
             },
