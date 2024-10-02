@@ -167,6 +167,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         verbose=False,
         broadcasting=False,
         use_source_package=False,
+        dependency_mode="timesfm",
     ):
         self.context_len = context_len
         self.horizon_len = horizon_len
@@ -182,6 +183,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         self.verbose = verbose
         self.broadcasting = broadcasting
         self.use_source_package = use_source_package
+        self.dependency_mode = dependency_mode  # New parameter for dependency mode
 
         if self.broadcasting:
             self.set_tags(
@@ -192,12 +194,9 @@ class TimesFMForecaster(_BaseGlobalForecaster):
                 }
             )
 
-        # Handle dependencies based on use_source_package flag
-        if self.use_source_package:
-            self.set_tags(
-                python_dependencies=[]
-            )  # User will handle source package installation
-        else:
+        # Handle dependencies based on dependency_mode flag
+        if self.dependency_mode == "timesfm":
+            # Retain the default dependencies as is
             self.set_tags(
                 python_dependencies=[
                     "tensorflow",
@@ -209,8 +208,27 @@ class TimesFMForecaster(_BaseGlobalForecaster):
                     "utilsforecast",
                 ]
             )
+        elif self.dependency_mode == "sktime_fork":
+            # Specific dependencies for the sktime fork
+            self.set_tags(
+                python_dependencies=[
+                    "sktime",  # Or other dependencies specific to this fork
+                ]
+            )
+        elif self.dependency_mode == "user_managed":
+            # No dependencies, user handles installation
+            self.set_tags(python_dependencies=[])
+            print(
+                """Warning: No dependencies are installed. You must
+                ensure the required packages are available in your environment."""
+            )
+        else:
+            raise ValueError(
+                """Invalid dependency_mode selected. Choose
+                from 'timesfm', 'sktime_fork', or 'user_managed'."""
+            )
 
-        # to avoid RuntimeError when backed=="cpu"
+        # to avoid RuntimeError when backend=="cpu"
         os.environ["JAX_PLATFORM_NAME"] = backend
         os.environ["JAX_PLATFORMS"] = backend
 
@@ -285,7 +303,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
                 names=_y.index.names,
             )
             pred = pd.DataFrame(
-                # batch_size * num_timestams
+                # batch_size * num_timestamps
                 pred.ravel(),
                 index=index,
                 columns=_y.columns,
@@ -297,7 +315,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
                 ._values
             )
             pred = pd.Series(
-                # batch_size * num_timestams
+                # batch_size * num_timestamps
                 pred.ravel(),
                 index=index,
                 name=_y.name,
