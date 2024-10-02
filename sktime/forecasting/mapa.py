@@ -12,6 +12,16 @@ from sktime.utils.validation.series import check_series
 class MAPAForecaster(BaseForecaster):
     """MAPA Forecaster class."""
 
+    _tags = {
+        "scitype:y": "univariate",
+        "y_inner_mtype": "pd.DataFrame",
+        "X_inner_mtype": "pd.DataFrame",
+        "ignores-exogeneous-X": False,
+        "requires-fh-in-fit": True,
+        "python_dependencies": "statsmodels",
+        "authors": ["trnnick", "phoeenniixx"],
+    }
+
     def __init__(
         self,
         aggregation_levels=None,
