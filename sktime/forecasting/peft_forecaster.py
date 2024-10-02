@@ -126,18 +126,17 @@ class PeftForecaster(_BaseGlobalForecaster):
         # should only exist in the fit instance..
         # uncomment this code if you want to inspect the newforecaster
         # parameters etc..
-        # self.newforecaster = type(self.input_model)(
-        #     **self.input_model.get_params()
-        # )
-        # self.newforecaster._peft_model = self.peft_model
+        self.newforecaster = type(self.input_model)(**self.input_model.get_params())
+        self.newforecaster._peft_model = self.peft_model
         super().__init__()
 
     def _fit(self, fh, X, y):
-        print(self.model_copy.peft_model)
         # New object initialized with type()
         self.newforecaster = type(self.input_model)(**self.input_model.get_params())
-        self.newforecaster._peft_model = self.peft_model
+        self.newforecaster.peft_model = self.peft_model
+        # print(self.newforecaster.peft_model)
         self.newforecaster.fit(fh=fh, X=X, y=y)
+        # print(self.newforecaster.peft_model)
         return self
 
     def _predict(self, fh, X, y):

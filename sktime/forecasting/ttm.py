@@ -166,6 +166,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         callbacks=None,
         broadcasting=False,
         use_source_package=False,
+        peft_model=None,
     ):
         super().__init__()
         self.model_path = model_path
@@ -179,7 +180,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         self.callbacks = callbacks
         self.broadcasting = broadcasting
         self.use_source_package = use_source_package
-        self._peft_model = None
+        self.peft_model = peft_model
 
         if self.broadcasting:
             self.set_tags(
@@ -285,7 +286,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         # Get the Model
         # self.model, info = PatchTSTForPrediction.from_pretrained(
         # "ibm-granite/granite-timeseries-patchtst",
-        if self._peft_model is None:
+        if self.peft_model is None:
             print("no peft_model found, using original model load")
             self.model, info = TinyTimeMixerForPrediction.from_pretrained(
                 self.model_path,
@@ -310,7 +311,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 _model.weight.requires_grad = True
         else:
             print("peft_model found, using peft_model")
-            self.model = self._peft_model
+            self.model = self.peft_model
 
         y_train, y_test = temporal_train_test_split(y, test_size=self.validation_split)
 
