@@ -139,15 +139,6 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         # rajatsen91 for google-research/timesfm
         "maintainers": ["geetu040"],
         "python_version": ">=3.10,<3.11",
-        "python_dependencies": [
-            "tensorflow",
-            "einshape",
-            "jax",
-            "praxis",
-            "huggingface-hub",
-            "paxml",
-            "utilsforecast",
-        ],
         "env_marker": "sys_platform=='linux'",
         "capability:global_forecasting": True,
     }
@@ -167,7 +158,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         verbose=False,
         broadcasting=False,
         use_source_package=False,
-        dependency_mode="timesfm",
+        ignore_deps=False,
     ):
         self.context_len = context_len
         self.horizon_len = horizon_len
@@ -183,7 +174,18 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         self.verbose = verbose
         self.broadcasting = broadcasting
         self.use_source_package = use_source_package
-        self.dependency_mode = dependency_mode  # New parameter for dependency mode
+        self.ignore_deps = ignore_deps
+
+        if not self.ignore_deps:
+            if self.use_source_package:
+                # Use timesfm with a version bound if use_source_package is True
+                self.set_tags(python_dependencies=["timesfm<=1.1.0"])
+            else:
+                # Default behavior, enforce required dependencies for the fork
+                self.set_tags(python_dependencies=self._default_dependencies)
+        else:
+            # Ignore dependencies, leave the dependency set empty
+            self.set_tags(python_dependencies=[])
 
         if self.broadcasting:
             self.set_tags(
@@ -193,41 +195,6 @@ class TimesFMForecaster(_BaseGlobalForecaster):
                     "capability:global_forecasting": False,
                 }
             )
-
-        # Handle dependencies based on dependency_mode flag
-        if self.dependency_mode == "timesfm":
-            # Retain the default dependencies as is
-            self.set_tags(
-                python_dependencies=[
-                    "tensorflow",
-                    "einshape",
-                    "jax",
-                    "praxis",
-                    "huggingface-hub",
-                    "paxml",
-                    "utilsforecast",
-                ]
-            )
-        elif self.dependency_mode == "sktime_fork":
-            # Specific dependencies for the sktime fork
-            self.set_tags(
-                python_dependencies=[
-                    "sktime",  # Or other dependencies specific to this fork
-                ]
-            )
-        elif self.dependency_mode == "user_managed":
-            # No dependencies, user handles installation
-            self.set_tags(python_dependencies=[])
-            print(
-                """Warning: No dependencies are installed. You must
-                ensure the required packages are available in your environment."""
-            )
-        else:
-            raise ValueError(
-                """Invalid dependency_mode selected. Choose
-                from 'timesfm', 'sktime_fork', or 'user_managed'."""
-            )
-
         # to avoid RuntimeError when backend=="cpu"
         os.environ["JAX_PLATFORM_NAME"] = backend
         os.environ["JAX_PLATFORMS"] = backend
