@@ -9,6 +9,7 @@ import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
+from sktime.forecasting.peft_forecaster import PeftSktimeClass
 from sktime.split import temporal_train_test_split
 from sktime.utils.warnings import warn
 
@@ -24,7 +25,7 @@ if _check_soft_dependencies("transformers", severity="none"):
     from transformers import Trainer, TrainingArguments
 
 
-class TinyTimeMixerForecaster(_BaseGlobalForecaster):
+class TinyTimeMixerForecaster(_BaseGlobalForecaster, PeftSktimeClass):
     """
     TinyTimeMixer Forecaster for Zero-Shot Forecasting of Multivariate Time Series.
 
@@ -228,7 +229,6 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 TinyTimeMixerConfig,
                 TinyTimeMixerForPrediction,
             )
-
         # Get the Configuration
         config = TinyTimeMixerConfig.from_pretrained(
             self.model_path,
@@ -284,27 +284,34 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         # Get the Model
         # self.model, info = PatchTSTForPrediction.from_pretrained(
         # "ibm-granite/granite-timeseries-patchtst",
-        self.model, info = TinyTimeMixerForPrediction.from_pretrained(
-            self.model_path,
-            revision=self.revision,
-            config=config,
-            output_loading_info=True,
-            ignore_mismatched_sizes=True,
-        )
+        print("a", self.peft_model)
+        print(self.peft_model)
+        if not self.peft_model:
+            print(self.peft_model)
+            self.model, info = TinyTimeMixerForPrediction.from_pretrained(
+                self.model_path,
+                revision=self.revision,
+                config=config,
+                output_loading_info=True,
+                ignore_mismatched_sizes=True,
+            )
 
-        if len(info["mismatched_keys"]) == 0:
-            return  # No need to fit
+            if len(info["mismatched_keys"]) == 0:
+                return  # No need to fit
 
-        # Freeze all loaded parameters
-        for param in self.model.parameters():
-            param.requires_grad = False
+            # Freeze all loaded parameters
+            for param in self.model.parameters():
+                param.requires_grad = False
 
-        # Reininit the weights of all layers that have mismatched sizes
-        for key, _, _ in info["mismatched_keys"]:
-            _model = self.model
-            for attr_name in key.split(".")[:-1]:
-                _model = getattr(_model, attr_name)
-            _model.weight.requires_grad = True
+            # Reininit the weights of all layers that have mismatched sizes
+            for key, _, _ in info["mismatched_keys"]:
+                _model = self.model
+                for attr_name in key.split(".")[:-1]:
+                    _model = getattr(_model, attr_name)
+                _model.weight.requires_grad = True
+        else:
+            print("peft")
+            self.model = self.peft_model
 
         y_train, y_test = temporal_train_test_split(y, test_size=self.validation_split)
 
@@ -473,7 +480,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 "model_path": "ibm/TTM",
                 "revision": "main",
                 "config": {
-                    "context_length": 8,
+                    "context_length": 5,
                     "prediction_length": 2,
                 },
                 "validation_split": 0.2,

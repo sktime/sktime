@@ -1,7 +1,7 @@
 """PeFT Forecaster module for applying PeFT Methods on sktime global forecasters."""
 
-import numpy as np
-import pandas as pd
+from copy import deepcopy
+
 from skbase.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("torch", severity="none"):
@@ -86,13 +86,13 @@ class PeftForecaster(_BaseGlobalForecaster):
             "pd.Series",
             "pd.DataFrame",
             "pd-multiindex",
-            "pd-multiindex_hier",
+            "pd_multiindex_hier",
         ],
         "X_inner_mtype": [
             "pd.Series",
             "pd.DataFrame",
             "pd-multiindex",
-            "pd-multiindex_hier",
+            "pd_multiindex_hier",
         ],
         "requires-fh-in-fit": True,
         "X-y-must-have-same-index": True,
@@ -100,56 +100,37 @@ class PeftForecaster(_BaseGlobalForecaster):
 
     def __init__(
         self,
-        model,
+        input_model,
         peft_config,
-        sequence_length=3,
-        training_args=None,
-        compute_metrics=None,
-        callbacks=None,
-        datacollator=None,
-        broadcasting=None,
-        validation_split=None,
     ):
-        self.sequence_length = sequence_length
-        self.training_args = training_args
-        self._training_args = training_args if training_args else {}
-        self.compute_metrics = compute_metrics
-        self.datacollator = datacollator
-        self.callbacks = callbacks
-        self.broadcasting = broadcasting
-        self.validation_split = validation_split
-
-        model = _check_model_input(model)
-        self.base_model = model
+        self.input_model = input_model
+        self.peft_config = peft_config
+        self.model_copy = deepcopy(self.input_model)
+        self.base_model = _check_model_input(self.input_model)
         config = _check_peft_config(peft_config)
-        self.model = get_peft_model(model, config)
 
+        self.peft_model = get_peft_model(self.base_model, config)
+        # self.model = self.peft_model
+        self.model_copy.peft_model = self.peft_model
+
+        self.newforecaster = type(self.input_model)(
+            **self.input_model.get_params(), peft_model=self.peft_model
+        )
+        self.newforecaster.peft_model = self.peft_model
         super().__init__()
 
     def _fit(self, fh, X, y):
-        peft_model = get_peft_model(self.model, self.config)
-        return peft_model
+        print(self.model_copy.peft_model)
+        # New object initialized with type()
+        self.newforecaster = type(self.input_model)(**self.input_model.get_params())
+        self.newforecaster.peft_model = self.peft_model
+        self.newforecaster.fit(fh=fh, X=X, y=y)
+        return self
 
     def _predict(self, fh, X, y):
-        pass
+        y_pred = self.model_copy.predict(fh=fh, X=X, y=y)
 
-
-def _same_index(data):
-    data = data.groupby(level=list(range(len(data.index.levels) - 1))).apply(
-        lambda x: x.index.get_level_values(-1)
-    )
-    assert data.map(
-        lambda x: x.equals(data.iloc[0])
-    ).all(), "All series must has the same index"
-    return data.iloc[0], len(data.iloc[0])
-
-
-def _frame2numpy(data):
-    idx, length = _same_index(data)
-    arr = np.array(data.values, dtype=np.float32).reshape(
-        (-1, length, len(data.columns))
-    )
-    return arr
+        return y_pred
 
 
 def _check_model_input(model):
@@ -196,58 +177,9 @@ def _check_peft_config(config):
             return config
 
 
-class PyTorchDataset(Dataset):
-    """Dataset for use in sktime deep learning forecasters."""
+class PeftSktimeClass:
+    """Peft sktime class."""
 
-    def __init__(self, y, context_length, prediction_length):
-        """
-        Initialize the dataset.
-
-        Parameters
-        ----------
-        y : ndarray
-            The time series data, shape (n_sequences, n_timestamps, n_dims)
-        context_length : int
-            The length of the past values
-        prediction_length : int
-            The length of the future values
-        """
-        self.context_length = context_length
-        self.prediction_length = prediction_length
-
-        # multi-index conversion
-        if isinstance(y.index, pd.MultiIndex):
-            self.y = _frame2numpy(y)
-        else:
-            self.y = np.expand_dims(y.values, axis=0)
-
-        self.n_sequences, self.n_timestamps, _ = self.y.shape
-        self.single_length = (
-            self.n_timestamps - self.context_length - self.prediction_length + 1
-        )
-
-    def __len__(self):
-        """Return the length of the dataset."""
-        # Calculate the number of samples that can be created from each sequence
-        return self.single_length * self.n_sequences
-
-    def __getitem__(self, i):
-        """Return data point."""
-        from torch import tensor
-
-        m = i % self.single_length
-        n = i // self.single_length
-
-        past_values = self.y[n, m : m + self.context_length, :]
-        future_values = self.y[
-            n,
-            m + self.context_length : m + self.context_length + self.prediction_length,
-            :,
-        ]
-        observed_mask = np.ones_like(past_values)
-
-        return {
-            "past_values": tensor(past_values).float(),
-            "observed_mask": tensor(observed_mask).float(),
-            "future_values": tensor(future_values).float(),
-        }
+    def __init__(self, peft_model):
+        self.peft_model = peft_model if peft_model else None
+        super().__init__()

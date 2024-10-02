@@ -2611,7 +2611,6 @@ class _BaseGlobalForecaster(BaseForecaster):
 
     def __init__(self):
         super().__init__()
-        self.dl_model = None
 
     def predict(self, fh=None, X=None, y=None):
         """Forecast time series at future horizon.
@@ -2742,31 +2741,6 @@ class _BaseGlobalForecaster(BaseForecaster):
             Point predictions
         """
         raise NotImplementedError("abstract method")
-
-    def set_dl_model(self, model):
-        """Set the deep learning module to enable Peft methods.
-
-        Parameters
-        ----------
-        model : guaranteed to be a nn.Module or PretrainedModel
-            For a model to be PeFT method eligible, we require
-            a huggingface PreTrained model or a torch Custom Model.
-
-        Returns
-        -------
-        self : Reference to self.
-        """
-        self.dl_model = model
-        return self
-
-    def get_dl_model(self):
-        """Return the underlying torch/pretrained model in the global forecaster.
-
-        Returns
-        -------
-        dl_model : underlying torch or huggingface pretrained model
-        """
-        return self.dl_model
 
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):
