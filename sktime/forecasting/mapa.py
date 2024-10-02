@@ -77,15 +77,30 @@ class MAPAForecaster(BaseForecaster):
         return y
 
     def _ensure_positive_values(self, y):
+        # Ensure y is a pandas Series
+        if not isinstance(y, pd.Series):
+            y = pd.Series(y)
+
+        y = self._handle_missing_data(y)
+
         if self.decompose_type == "multiplicative" and (y <= 0).any():
             min_positive_value = y[y > 0].min()
+
+            if pd.isna(min_positive_value) or min_positive_value <= 0:
+                raise ValueError(
+                    "Series must contain some strictly positive values\
+                     for multiplicative decomposition."
+                )
+
             offset = min_positive_value / 2
             y += offset
             self._transformation_offset = offset
+
             print(
-                f"Applied an offset of {offset} to ensure positive values\
+                f"Applied an offset of {offset} to ensure strictly positive values\
                  for multiplicative decomposition."
             )
+
         return y
 
     def _ensure_datetime_index(self, y):
@@ -110,15 +125,27 @@ class MAPAForecaster(BaseForecaster):
             _check_soft_dependencies("statsmodels", severity="warning")
             from statsmodels.tsa.seasonal import seasonal_decompose
         except ImportError:
-            return
+            return (
+                pd.Series(y),
+                pd.Series(np.zeros_like(y)),
+                pd.Series(np.zeros_like(y)),
+            )
 
+        # Ensure y is a pandas Series
         y = self._ensure_positive_values(y)
+
+        # Handle missing data
         if y.isna().any():
             y = y.ffill().bfill()
 
         if len(y) < 2 * self.sp:
-            return y, np.zeros_like(y), np.zeros_like(y)
+            return (
+                pd.Series(y),
+                pd.Series(np.zeros_like(y)),
+                pd.Series(np.zeros_like(y)),
+            )
 
+        # Perform seasonal decomposition
         decomposition = seasonal_decompose(y, model=self.decompose_type, period=self.sp)
         return decomposition.trend, decomposition.seasonal, decomposition.resid
 
@@ -141,6 +168,14 @@ class MAPAForecaster(BaseForecaster):
         """Fit forecaster to training data."""
         y = check_series(y)
 
+        # Ensure y is 1-dimensional
+        if len(y.shape) > 1 and y.shape[1] == 1:
+            y = y.squeeze()  # Convert (n, 1) to (n,)
+
+        # Ensure positive values if using multiplicative decomposition
+        y = self._ensure_positive_values(y)
+
+        # Handle missing data and set frequency
         y = self._handle_missing_data(y)
         y = self._ensure_datetime_index(y)
         self.frequency = y.index.freq
