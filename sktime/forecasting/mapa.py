@@ -5,6 +5,7 @@ import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_fh
 from sktime.utils.validation.series import check_series
 
@@ -105,8 +106,6 @@ class MAPAForecaster(BaseForecaster):
         return y.resample(f"{level}D").agg(self.agg_method).asfreq(y.index.freq)
 
     def _decompose(self, y):
-        from sktime.utils.dependencies._dependencies import _check_soft_dependencies
-
         try:
             _check_soft_dependencies("statsmodels", severity="warning")
             from statsmodels.tsa.seasonal import seasonal_decompose
@@ -214,6 +213,8 @@ class MAPAForecaster(BaseForecaster):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
+        if not _check_soft_dependencies("statsmodels", severity="none"):
+            return [{}]
         params1 = {
             "aggregation_levels": [1, 2, 3],
             "base_forecaster": ExponentialSmoothing(trend="add", seasonal="add", sp=6),
