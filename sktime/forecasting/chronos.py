@@ -159,6 +159,7 @@ class ChronosForecaster(_BaseGlobalForecaster):
             _y = y.copy()
         _y_df = _y
 
+        index_names = _y.index.names
         if isinstance(_y.index, pd.MultiIndex):
             _y = _frame2numpy(_y)
         else:
@@ -189,10 +190,10 @@ class ChronosForecaster(_BaseGlobalForecaster):
             ins = [ins[..., i] for i in range(ins.shape[-1])] if ins.ndim > 1 else [ins]
 
             idx = (
-                ForecastingHorizon(range(1, pred.shape[1] + 1), freq=self.fh.freq)
+                ForecastingHorizon(range(1, pred.shape[0] + 1), freq=self.fh.freq)
                 .to_absolute(self._cutoff)
                 ._values.tolist()
-                * pred.shape[0]
+                * pred.shape[1]
             )
             index = pd.MultiIndex.from_arrays(
                 ins + [idx],
@@ -206,11 +207,15 @@ class ChronosForecaster(_BaseGlobalForecaster):
             )
         pred_out = fh.get_expected_pred_idx(_y, cutoff=self.cutoff)
 
-        return pd.DataFrame(
+        pred = pd.DataFrame(
             pred.reshape(-1, 1),
             index=index,
             columns=_y_df.columns,
-        ).loc[pred_out]
+        )
+        dateindex = pred.index.get_level_values(-1).map(lambda x: x in pred_out)
+        pred.index.names = index_names
+
+        return pred.loc[dateindex]
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
