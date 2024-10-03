@@ -140,13 +140,7 @@ For last non-maintenance content updates, see 0.32.4 and 0.32.2.
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
 
-<<<<<<< HEAD
-* ``numpy`` (core dependency) bounds have been updated to ``>=1.21,<2.2``
 * ``scikit-base`` (core dependency) bounds have been updated to ``>=0.6.1,<0.10.0``
-* ``skpro`` (soft dependency) bounds have been updated to ``>=2,<2.7.0``
-=======
-* ``scikit-base`` (core dependency) bounds have been updated to ``>=0.6.1,<0.10.0``
->>>>>>> main
 * ``holidays`` (transformations soft dependency) bounds have been updated to ``>=0.29,<0.57``
 * ``pykan`` (deep learning soft dependency) bounds have been updated to ``>=0.2,<0.2.7``
 * ``mne`` (transformations soft dependency) bounds have been updated to ``>=1.5,<1.9``
@@ -311,11 +305,7 @@ to assign cluster centers. The following boolean tags have been added:
 
 * ``capability:predict``, whether the clusterer can assign cluster labels via ``predict``
 * ``capability:predict_proba``, for probabilistic cluster assignment
-<<<<<<< HEAD
-* ``capability: out_of_sample``, for out-of-sample cluster assignment.
-=======
 * ``capability:out_of_sample``, for out-of-sample cluster assignment.
->>>>>>> main
   If False, the clusterer can only assign clusters to data points seen during fitting.
 
 Enhancements
