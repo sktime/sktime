@@ -613,6 +613,17 @@ Model Evaluation (Backtesting)
 
     evaluate
 
+MOIRAI Forecasters
+------------------
+
+.. currentmodule:: sktime.forecasting.moirai_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MOIRAIForecaster
+
 Time index splitters
 --------------------
 
