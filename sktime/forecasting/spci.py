@@ -190,7 +190,7 @@ class SPCI(BaseForecaster):
             forecaster.clone() if forecaster is not None else NaiveForecaster()
         )
         self.regressor_proba = regressor_proba
-        self.regressor_proba = (
+        self.regressor_proba_ = (
             regressor_proba.clone()
             if regressor_proba is not None
             else BaseProbaRegressor()
@@ -221,7 +221,7 @@ class SPCI(BaseForecaster):
 
     # todo: implement this, mandatory
     def _fit(self, y, X):
-        """Fit to training data with fh=1.
+        """Calculate point predictions and fit regressor to point predictions.
 
         Parameters
         ----------
@@ -237,12 +237,11 @@ class SPCI(BaseForecaster):
              for list of mtypes, see datatypes.SCITYPE_REGISTER
              for specifications, see examples/AA_datatypes_and_datasets.ipynb
 
-
         Returns
         -------
         self : reference to self
         """
-        self.fh = 1
+
         # implement here
         # IMPORTANT: avoid side effects to y, X, fh
         #
@@ -258,8 +257,9 @@ class SPCI(BaseForecaster):
         #   3. read from self in _fit,  4. pass to interfaced_model.fit in _fit
 
     # todo: implement this, mandatory
+
     def _predict(self, X):
-        """Calculate quantile intervals using forecast predictions.
+        """Calculate upper and lower bounds of prediction intervals.
 
         Parameters
         ----------
@@ -278,11 +278,6 @@ class SPCI(BaseForecaster):
         y : sktime compatible tabular data container, Table scitype
             numpy1D iterable, of shape [n_instances]
         """
-
-        # forecast_preds = forecaster.predict(X)
-        # proba_regressor = proba_regressor.fit(forecast_preds)
-        # quantile_preds = proba_regressor.predict(forecast_preds)
-        # return quantile_preds
         # implement here
         # IMPORTANT: avoid side effects to X, fh
 
