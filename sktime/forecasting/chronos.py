@@ -1,6 +1,6 @@
 """Implements Chronos forecaster."""
 
-__author__ = ["Z-Fran"]
+__author__ = ["Z-Fran", "benheid"]
 # __all__ = ["ChronosForecaster"]
 
 from typing import Optional
@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 from sktime.libs.chronos import ChronosPipeline
 
 if _check_soft_dependencies("torch", severity="none"):
@@ -26,7 +26,7 @@ if _check_soft_dependencies("transformers", severity="none"):
     import transformers
 
 
-class ChronosForecaster(BaseForecaster):
+class ChronosForecaster(_BaseGlobalForecaster):
     """Chronos forecaster.
 
     Parameters
@@ -56,9 +56,21 @@ class ChronosForecaster(BaseForecaster):
     _tags = {
         "python_dependencies": ["torch", "transformers"],
         "requires-fh-in-fit": False,
-        "y_inner_mtype": "pd.Series",
+        "X-y-must-have-same-index": True,
+        "enforce_index_type": None,
+        "handles-missing-data": False,
+        "capability:pred_int": False,
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "y_inner_mtype": [
+            "pd.DataFrame",
+            "pd-multiindex",
+            "pd_multiindex_hier",
+        ],
         "scitype:y": "univariate",
-        "authors": ["Z-Fran"],
+        "capability:insample": False,
+        "capability:pred_int:insample": False,
+        "capability:global_forecasting": True,
+        "authors": ["Z-Fran", "benheid"],  # TODO original authors!,
     }
 
     _default_config = {
@@ -117,9 +129,8 @@ class ChronosForecaster(BaseForecaster):
                 torch_dtype=self._config["torch_dtype"],
                 device_map=self._config["device_map"],
             )
-        self.context = y.values
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, y=None, X=None):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -137,30 +148,69 @@ class ChronosForecaster(BaseForecaster):
             Predicted forecasts.
         """
         transformers.set_seed(self._seed)
-        prediction_length = len(fh)
+        if fh is not None:
+            # needs to be integer not np.int64
+            prediction_length = int(max(fh.to_relative(self.cutoff)))
+        else:
+            prediction_length = 1
 
-        if self.model_pipeline is None:
-            self.model_pipeline = ChronosPipeline.from_pretrained(
-                self.model_path,
-                torch_dtype=self._config["torch_dtype"],
-                device_map=self._config["device_map"],
+        _y = self._y.copy()
+        if y is not None:
+            _y = y.copy()
+        _y_df = _y
+
+        if isinstance(_y.index, pd.MultiIndex):
+            _y = _frame2numpy(_y)
+        else:
+            _y = _y.values.reshape(1, -1, 1)
+
+        results = []
+        for i in range(_y.shape[0]):
+            _y_i = _y[i, :, 0]
+            _y_i = _y_i[-self.model_pipeline.model.config.context_length :]
+            prediction_results = self.model_pipeline.predict(
+                torch.Tensor(_y_i),
+                prediction_length,
+                num_samples=self._config["num_samples"],
+                temperature=self._config["temperature"],
+                top_k=self._config["top_k"],
+                top_p=self._config["top_p"],
+                limit_prediction_length=False,
             )
 
-        prediction_results = self.model_pipeline.predict(
-            torch.Tensor(self.context),
-            prediction_length,
-            num_samples=self._config["num_samples"],
-            temperature=self._config["temperature"],
-            top_k=self._config["top_k"],
-            top_p=self._config["top_p"],
-        )
+            values = np.median(prediction_results[0].numpy(), axis=0)
+            results.append(values)
 
-        values = np.median(prediction_results[0].numpy(), axis=0)
-        row_idx = self.fh.to_absolute_index(self.cutoff)
-        y_pred = pd.Series(
-            values, index=row_idx, name=self._y.name if self._y is not None else None
-        )
-        return y_pred
+        pred = np.stack(results, axis=1)
+        if isinstance(_y_df.index, pd.MultiIndex):
+            ins = np.array(
+                list(np.unique(_y_df.index.droplevel(-1)).repeat(pred.shape[0]))
+            )
+            ins = [ins[..., i] for i in range(ins.shape[-1])] if ins.ndim > 1 else [ins]
+
+            idx = (
+                ForecastingHorizon(range(1, pred.shape[1] + 1), freq=self.fh.freq)
+                .to_absolute(self._cutoff)
+                ._values.tolist()
+                * pred.shape[0]
+            )
+            index = pd.MultiIndex.from_arrays(
+                ins + [idx],
+                names=_y_df.index.names,
+            )
+        else:
+            index = (
+                ForecastingHorizon(range(1, pred.shape[0] + 1))
+                .to_absolute(self._cutoff)
+                ._values
+            )
+        pred_out = fh.get_expected_pred_idx(_y, cutoff=self.cutoff)
+
+        return pd.DataFrame(
+            pred.reshape(-1, 1),
+            index=index,
+            columns=_y_df.columns,
+        ).loc[pred_out]
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -184,7 +234,7 @@ class ChronosForecaster(BaseForecaster):
         )
         test_params.append(
             {
-                "model_path": "amazon/chronos-t5-small",
+                "model_path": "amazon/chronos-t5-tiny",
                 "config": {
                     "num_samples": 20,
                 },
@@ -193,3 +243,21 @@ class ChronosForecaster(BaseForecaster):
         )
 
         return test_params
+
+
+def _same_index(data):
+    data = data.groupby(level=list(range(len(data.index.levels) - 1))).apply(
+        lambda x: x.index.get_level_values(-1)
+    )
+    assert data.map(
+        lambda x: x.equals(data.iloc[0])
+    ).all(), "All series must has the same index"
+    return data.iloc[0], len(data.iloc[0])
+
+
+def _frame2numpy(data):
+    idx, length = _same_index(data)
+    arr = np.array(data.values, dtype=np.float32).reshape(
+        (-1, length, len(data.columns))
+    )
+    return arr
