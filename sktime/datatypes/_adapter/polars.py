@@ -231,7 +231,7 @@ def check_polars_frame(
     if _req("is_univariate", return_metadata):
         metadata["is_univariate"] = obj.width - len(index_cols) == 1
     if _req("n_features", return_metadata):
-        metadata["n_features"] = obj.width - len(index_cols)
+        metadata["n_features"] = len(obj.collect_schema()) - len(index_cols)
     if _req("feature_names", return_metadata):
         feature_columns = [x for x in obj.columns if x not in index_cols]
         metadata["feature_names"] = feature_columns
