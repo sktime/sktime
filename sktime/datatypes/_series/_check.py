@@ -59,8 +59,6 @@ FREQ_SET_CHECK = False
 class SeriesPdDataFrame(ScitypeSeries):
     """Data type: pandas.DataFrame based specification of single time series.
 
-    Parameters are inferred by check.
-
     Parameters
     ----------
     is_univariate: bool

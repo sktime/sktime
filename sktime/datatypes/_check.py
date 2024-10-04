@@ -78,14 +78,12 @@ def generate_check_dict(soft_deps="present"):
 
     # temporary while refactoring
     from sktime.datatypes._alignment import check_dict_Alignment
-    from sktime.datatypes._hierarchical import check_dict_Hierarchical
     from sktime.datatypes._panel import check_dict_Panel
     from sktime.datatypes._proba import check_dict_Proba
     from sktime.datatypes._table import check_dict_Table
 
     # pool convert_dict-s
     check_dict.update(check_dict_Panel)
-    check_dict.update(check_dict_Hierarchical)
     check_dict.update(check_dict_Alignment)
     check_dict.update(check_dict_Table)
     check_dict.update(check_dict_Proba)

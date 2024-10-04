@@ -42,11 +42,9 @@ metadata: dict - metadata about obj if valid, otherwise None
 
 __author__ = ["fkiraly"]
 
-__all__ = ["check_dict"]
-
 import numpy as np
 
-from sktime.utils.dependencies import _check_soft_dependencies
+from sktime.datatypes._hierarchical._base import ScitypeHierarchical
 
 
 def _list_all_equal(obj):
@@ -66,26 +64,145 @@ def _list_all_equal(obj):
     return np.all([s == obj[0] for s in obj])
 
 
-check_dict = dict()
+class HierarchicalPdMultiIndex(ScitypeHierarchical):
+    """Data type: pandas.DataFrame based specification of hierarchical series.
+
+    Parameters
+    ----------
+    is_univariate: bool
+        True iff table has one variable
+    is_equally_spaced : bool
+        True iff series index is equally spaced
+    is_equal_length: bool
+        True iff all series in panel are of equal length
+    is_empty: bool
+        True iff table has no variables or no instances
+    is_one_series: bool
+        True iff there is only one series in the hierarchical collection.
+    is_one_panel: bool
+        True iff there is only one flat panel in the hierarchical collection,
+        i.e., the collection has a flat hierarchy, plus additional hierarchy levels
+        that have only a single value.
+    has_nans: bool
+        True iff the table contains NaN values
+    n_instances: int
+        number of instances in the hierarchical collection
+    n_panels: int
+        number of flat panels in the hierarchical collection
+    n_features: int
+        number of variables in table
+    feature_names: list of int or object
+        names of variables in table
+    """
+
+    _tags = {
+        "scitype": "Hierarchical",
+        "name": "pd_multiindex_hier",  # any string
+        "name_python": "hier_pd_df",  # lower_snake_case
+        "name_aliases": [],
+        "python_version": None,
+        "python_dependencies": "pandas",
+        "capability:multivariate": True,
+        "capability:unequally_spaced": True,
+        "capability:missing_values": True,
+    }
+
+    def _check(self, obj, return_metadata=False, var_name="obj"):
+        """Check if obj is of this data type.
+
+        Parameters
+        ----------
+        obj : any
+            Object to check.
+        return_metadata : bool, optional (default=False)
+            Whether to return metadata.
+        var_name : str, optional (default="obj")
+            Name of the variable to check, for use in error messages.
+
+        Returns
+        -------
+        valid : bool
+            Whether obj is of this data type.
+        msg : str, only returned if return_metadata is True.
+            Error message if obj is not of this data type.
+        metadata : dict, only returned if return_metadata is True.
+            Metadata dictionary.
+        """
+        from sktime.datatypes._panel._check import check_pdmultiindex_panel
+
+        ret = check_pdmultiindex_panel(
+            obj, return_metadata=return_metadata, var_name=var_name, panel=False
+        )
+
+        return ret
 
 
-def check_pdmultiindex_hierarchical(obj, return_metadata=False, var_name="obj"):
-    from sktime.datatypes._panel._check import check_pdmultiindex_panel
+class HierarchicalDask(ScitypeHierarchical):
+    """Data type: dask frame based specification of hierarchical series.
 
-    ret = check_pdmultiindex_panel(
-        obj, return_metadata=return_metadata, var_name=var_name, panel=False
-    )
+    Parameters
+    ----------
+    is_univariate: bool
+        True iff table has one variable
+    is_equally_spaced : bool
+        True iff series index is equally spaced
+    is_equal_length: bool
+        True iff all series in panel are of equal length
+    is_empty: bool
+        True iff table has no variables or no instances
+    is_one_series: bool
+        True iff there is only one series in the hierarchical collection.
+    is_one_panel: bool
+        True iff there is only one flat panel in the hierarchical collection,
+        i.e., the collection has a flat hierarchy, plus additional hierarchy levels
+        that have only a single value.
+    has_nans: bool
+        True iff the table contains NaN values
+    n_instances: int
+        number of instances in the hierarchical collection
+    n_panels: int
+        number of flat panels in the hierarchical collection
+    n_features: int
+        number of variables in table
+    feature_names: list of int or object
+        names of variables in table
+    """
 
-    return ret
+    _tags = {
+        "scitype": "Hierarchical",
+        "name": "dask_hierarchical",  # any string
+        "name_python": "hier_dask",  # lower_snake_case
+        "name_aliases": [],
+        "python_version": None,
+        "python_dependencies": "dask",
+        "capability:multivariate": True,
+        "capability:unequally_spaced": True,
+        "capability:missing_values": True,
+    }
 
+    def _check(self, obj, return_metadata=False, var_name="obj"):
+        """Check if obj is of this data type.
 
-check_dict[("pd_multiindex_hier", "Hierarchical")] = check_pdmultiindex_hierarchical
+        Parameters
+        ----------
+        obj : any
+            Object to check.
+        return_metadata : bool, optional (default=False)
+            Whether to return metadata.
+        var_name : str, optional (default="obj")
+            Name of the variable to check, for use in error messages.
 
+        Returns
+        -------
+        valid : bool
+            Whether obj is of this data type.
+        msg : str, only returned if return_metadata is True.
+            Error message if obj is not of this data type.
+        metadata : dict, only returned if return_metadata is True.
+            Metadata dictionary.
+        """
+        from sktime.datatypes._adapter.dask_to_pd import check_dask_frame
 
-if _check_soft_dependencies("dask", severity="none"):
-    from sktime.datatypes._adapter.dask_to_pd import check_dask_frame
-
-    def check_dask_hierarchical(obj, return_metadata=False, var_name="obj"):
         return check_dask_frame(
             obj=obj,
             return_metadata=return_metadata,
@@ -93,17 +210,76 @@ if _check_soft_dependencies("dask", severity="none"):
             scitype="Hierarchical",
         )
 
-    check_dict[("dask_hierarchical", "Hierarchical")] = check_dask_hierarchical
 
-if _check_soft_dependencies("polars", severity="none"):
-    from sktime.datatypes._panel._check import check_polars_panel
+class HierarchicalPolars(ScitypeHierarchical):
+    """Data type: polars DataFrame frame based specification of hierarchical series.
 
-    def check_polars_hierarchical(obj, return_metadata=False, var_name="obj"):
+    Parameters
+    ----------
+    is_univariate: bool
+        True iff table has one variable
+    is_equally_spaced : bool
+        True iff series index is equally spaced
+    is_equal_length: bool
+        True iff all series in panel are of equal length
+    is_empty: bool
+        True iff table has no variables or no instances
+    is_one_series: bool
+        True iff there is only one series in the hierarchical collection.
+    is_one_panel: bool
+        True iff there is only one flat panel in the hierarchical collection,
+        i.e., the collection has a flat hierarchy, plus additional hierarchy levels
+        that have only a single value.
+    has_nans: bool
+        True iff the table contains NaN values
+    n_instances: int
+        number of instances in the hierarchical collection
+    n_panels: int
+        number of flat panels in the hierarchical collection
+    n_features: int
+        number of variables in table
+    feature_names: list of int or object
+        names of variables in table
+    """
+
+    _tags = {
+        "scitype": "Hierarchical",
+        "name": "polars_hierarchical",  # any string
+        "name_python": "hier_polars_eager",  # lower_snake_case
+        "name_aliases": [],
+        "python_version": None,
+        "python_dependencies": "polars",
+        "capability:multivariate": True,
+        "capability:unequally_spaced": True,
+        "capability:missing_values": True,
+    }
+
+    def _check(self, obj, return_metadata=False, var_name="obj"):
+        """Check if obj is of this data type.
+
+        Parameters
+        ----------
+        obj : any
+            Object to check.
+        return_metadata : bool, optional (default=False)
+            Whether to return metadata.
+        var_name : str, optional (default="obj")
+            Name of the variable to check, for use in error messages.
+
+        Returns
+        -------
+        valid : bool
+            Whether obj is of this data type.
+        msg : str, only returned if return_metadata is True.
+            Error message if obj is not of this data type.
+        metadata : dict, only returned if return_metadata is True.
+            Metadata dictionary.
+        """
+        from sktime.datatypes._panel._check import check_polars_panel
+
         return check_polars_panel(
             obj=obj,
             return_metadata=return_metadata,
             var_name=var_name,
             scitype="Hierarchical",
         )
-
-    check_dict[("polars_hierarchical", "Hierarchical")] = check_polars_hierarchical
