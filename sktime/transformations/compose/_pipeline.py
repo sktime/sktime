@@ -228,7 +228,12 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
         from sktime.registry import coerce_scitype
         from sktime.regression.compose import SklearnRegressorPipeline
 
-        other = coerce_scitype(other, "transformer")
+        # we only coerce transformations on the right, otherwise we would end up
+        # coercing forecasters, clusterers, etc into transformer pipeline
+        # in a case where a forecaster or clusterer pipeline is intended
+        other = coerce_scitype(
+            other, "transformer", from_scitype=["transformer", "transformer_tabular"]
+        )
 
         # if sklearn classifier, use sklearn classifier pipeline
         if is_sklearn_classifier(other):
