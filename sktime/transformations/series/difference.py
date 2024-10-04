@@ -19,7 +19,7 @@ from sktime.utils.validation import is_int
 def _check_lags(lags):
     msg = " ".join(
         [
-            "`lags` should be provided as a positive integer scaler, or",
+            "`lags` should be provided as a positive integer scaler, or ",
             "a list, tuple or np.ndarray of positive integers,"
             f"but found {type(lags)}.",
         ]
@@ -338,12 +338,11 @@ class Differencer(BaseTransformer):
         X_orig_index = X.index
 
         X = update_data(X=self._X, X_new=X)
+        X = X.sort_index()
 
         X = self._check_freq(X)
 
         Xt = _diff_transform(X, self._lags)
-
-        Xt = Xt.loc[X_orig_index]
 
         na_handling = self.na_handling
         if na_handling == "drop_na":
@@ -357,6 +356,12 @@ class Differencer(BaseTransformer):
                 "unreachable condition, invalid na_handling value encountered: "
                 f"{na_handling}"
             )
+
+        if na_handling != "drop_na":
+            Xt = Xt.loc[X_orig_index]
+        else:
+            new_index = Xt.index.intersection(X_orig_index)
+            Xt = Xt.loc[new_index]
 
         return Xt
 

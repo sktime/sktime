@@ -19,6 +19,175 @@ For upcoming changes and next releases, see our `milestones <https://github.com/
 For our long-term plan, see our :ref:`roadmap`.
 
 
+Version 0.33.1 - 2024-09-26
+---------------------------
+
+Small feature release for showcase at pydata Paris.
+
+Highlights
+~~~~~~~~~~
+
+* interface for MOIRAI foundation model (:pr:`6746`) :user:`pranavvp16`, :user:`benHeid`
+* ``GroupbyCategoryForecaster`` for applying panel forecasting by category or segment (:pr:`7066`) :user:`felipeangelimvieira`
+* In ``ReconcilerForecaster``, users can now choose to return a dataframe without ``__total`` (:pr:`7127`) :user:`SaiRevanth25`
+* time series segmentation via clustering (:pr:`6782`) :user:`ankit-1204`
+* logger transformer for logging pipeline inputs and outputs (:pr:`7074`) :user:`fkiraly`
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``optuna`` (hyperparameter optimization soft dependency) bounds have been updated to ``<4.1``
+* ``mne`` (transformations soft dependency) bounds have been updated to ``>=1.5,<1.9``
+
+Enhancements
+~~~~~~~~~~~~
+
+BaseObject and base framework
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] ``is_scitype`` utility for scitype checking, improve support of estimators with multiple object types (:pr:`7143`) :user:`benHeid`
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Hierarchical scitype support for ``polars`` (:pr:`6697`) :user:`pranavvp16`
+* [ENH] refactor ``datatypes`` example fixtures to ``BaseObject`` classes (:pr:`7133`) :user:`fkiraly`
+
+Forecasting
+^^^^^^^^^^^
+
+* [ENH] Add interface for MOIRAI foundation model (:pr:`6746`) :user:`pranavvp16`, :user:`benHeid`
+* [ENH] ``ThetaForecaster`` - add one more parameter set (:pr:`7055`) :user:`fkiraly`
+* [ENH] ``GroupbyCategoryForecaster`` for applying panel forecasting by category or segment (:pr:`7066`) :user:`felipeangelimvieira`
+* [ENH] Adding a parameter to ``ReconcilerForecaster`` to return a dataframe without the dunder levels (:pr:`7127`) :user:`SaiRevanth25`
+* [ENH] add ``_predict_var`` in ``test_pred_int_tag`` (:pr:`7154`) :user:`fkiraly`
+
+Registry and search
+^^^^^^^^^^^^^^^^^^^
+
+* [ENH] retrieval utilities for all functions or classes in a module (:pr:`7089`) :user:`fkiraly`
+
+Time series anomalies, changepoints, segmentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] time series segmentation via clustering (:pr:`6782`) :user:`ankit-1204`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [ENH] logger transformer for logging pipeline inputs and outputs (:pr:`7074`) :user:`fkiraly`
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] correct incorrect bounds mentioned in 0.33.0 changelog (:pr:`7114`) :user:`fkiraly`
+* [DOC] Added a docstring example to TimeSeriesKernelKMeans (:pr:`7124`) :user:`Saptarshi-Bandopadhyay`
+* [DOC] update core developers on team page, formatting (:pr:`7140`) :user:`fkiraly`
+* [DOC] minor documentation fixes (:pr:`7141`) :user:`fkiraly`
+* [DOC] add quicklinks at top of README box (:pr:`7159`) :user:`fkiraly`
+* [DOC] remove 2024 elections registration news item (:pr:`7158`) :user:`fkiraly`
+* [DOC] remove references to ``nested_univ`` from extension templates (:pr:`7058`) :user:`fkiraly`
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] Updating pre-commit hooks and corresponding changes (:pr:`7109`) :user:`yarnabrina`
+* [MNT] [Dependabot](deps): Update ``optuna`` requirement from ``<3.7`` to ``<4.1`` (:pr:`7104`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``mne`` requirement from ``<1.8,>=1.5`` to ``>=1.5,<1.9`` (:pr:`7129`) :user:`dependabot[bot]`
+* [MNT] temporarily skip ``temporian`` related failure of ``test_complex_function`` until #7040 is resolved (:pr:`7147`) :user:`fkiraly`
+* [MNT] fix FPP3 download link (:pr:`7164`) :user:`fkiraly`, :user:`ericjb`
+* [MNT] bound ``SignatureTransformer`` to ``numpy<2`` (:pr:`7163`) :user:`fkiraly`
+* [MNT] remove ptf install from example notebooks (:pr:`7165`) :user:`XinyuWuu`
+* [MNT] remove python version bound from ``pytorch-forecasting`` based estimators (:pr:`7102`) :user:`fkiraly`
+
+Fixes
+~~~~~
+
+Forecasting
+^^^^^^^^^^^
+
+* [BUG] Fix pykan forecaster (:pr:`7150`) :user:`benHeid`
+* [BUG] fix probabilistic forecasts if only ``_predict_var`` is implemented (:pr:`7153`) :user:`fkiraly`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [BUG] fix ``drop_na`` and update mode of ``Differencer`` transformation (:pr:`7115`) :user:`fkiraly`
+Test framework
+
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`ankit-1204`,
+:user:`benHeid`,
+:user:`ericjb`,
+:user:`fkiraly`,
+:user:`pranavvp16`,
+:user:`SaiRevanth25`,
+:user:`Saptarshi-Bandopadhyay`,
+:user:`XinyuWuu`,
+:user:`yarnabrina`
+
+
+Version 0.33.0 - 2024-09-09
+---------------------------
+
+Maintenance release, with scheduled deprecations and change actions.
+
+For last non-maintenance content updates, see 0.32.4 and 0.32.2.
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``scikit-base`` (core dependency) bounds have been updated to ``>=0.6.1,<0.10.0``
+* ``holidays`` (transformations soft dependency) bounds have been updated to ``>=0.29,<0.57``
+* ``pykan`` (deep learning soft dependency) bounds have been updated to ``>=0.2,<0.2.7``
+* ``mne`` (transformations soft dependency) bounds have been updated to ``>=1.5,<1.9``
+* ``dask`` (data container and parallelization back-end soft dependency) bounds have been updated to ``<2024.8.3``
+* ``pytorch-forecasting`` (forecasting soft dependency) bounds have been updated to ``>=1.0.0,<1.2.0``
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* in ``DirectReductionForecaster`` the default for ``windows_identical`` has changed
+  to ``False``.
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] Try to reduce load for the runners (:pr:`7061`) :user:`benHeid`
+* [MNT] 0.33.0 deprecations and change actions (:pr:`7091`) :user:`fkiraly`
+* [MNT] ffp3 datasets URLs changed on CRAN; updated ``_fpp3_loaders.py`` accordingly (:pr:`7084`) :user:`ericjb`
+* [MNT] remove <3.11 restriction for ``pytorch-forecasting``, add upper bound (:pr:`7092`) :user:`fkiraly`
+* [MNT] [Dependabot](deps): Update ``dask`` requirement from ``<2024.8.2`` to ``<2024.8.3`` (:pr:`7062`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``numpy`` requirement from ``<2.1,>=1.21`` to ``>=1.21,<2.2`` (:pr:`7007`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``scikit-base`` requirement from ``<0.9.0,>=0.6.1`` to ``>=0.6.1,<0.10.0`` (:pr:`7035`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``holidays`` requirement from ``<0.56,>=0.29`` to ``>=0.29,<0.57`` (:pr:`7096`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``pykan`` requirement from ``<0.2.2,>=0.2`` to ``>=0.2,<0.2.7`` (:pr:`7010`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update ``mne`` requirement from ``<1.8,>=1.5`` to ``>=1.5,<1.9`` (:pr:`7004`) :user:`dependabot[bot]`
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] Adds :user:`SaiRevanth25`` contributions to all-contributors file (:pr:`7085`) :user:`SaiRevanth25`
+* [DOC] fix typo and formatting in installation docs (:pr:`7060`) :user:`Saptarshi-Bandopadhyay`
+
+Enhancements
+~~~~~~~~~~~~
+
+* [ENH] change ``test_inheritance`` to be more lenient to framework level extensions (:pr:`7067`) :user:`fkiraly`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`benHeid`,
+:user:`ericjb`,
+:user:`fkiraly`,
+:user:`SaiRevanth25`,
+:user:`Saptarshi-Bandopadhyay`
+
+
 Version 0.32.4 - 2024-09-06
 ---------------------------
 
@@ -136,7 +305,7 @@ to assign cluster centers. The following boolean tags have been added:
 
 * ``capability:predict``, whether the clusterer can assign cluster labels via ``predict``
 * ``capability:predict_proba``, for probabilistic cluster assignment
-* ``capability: out_of_sample``, for out-of-sample cluster assignment.
+* ``capability:out_of_sample``, for out-of-sample cluster assignment.
   If False, the clusterer can only assign clusters to data points seen during fitting.
 
 Enhancements

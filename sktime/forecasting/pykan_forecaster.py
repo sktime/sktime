@@ -181,7 +181,7 @@ class PyKANForecaster(BaseForecaster):
                     device=self.device,
                     **self._model_params,
                 ).initialize_from_another_model(model, ds_new["train_input"])
-            results = model.fit(ds_new, device=self.device, **self._fit_params)
+            results = model.fit(ds_new, **self._fit_params)
             if len(self.test_losses) == 0 or results["test_loss"][-1] < min(
                 self.test_losses
             ):
