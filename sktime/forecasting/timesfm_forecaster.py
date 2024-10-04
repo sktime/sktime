@@ -179,7 +179,8 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         if not self.ignore_deps:
             if self.use_source_package:
                 # Use timesfm with a version bound if use_source_package is True
-                self.set_tags(python_dependencies=["timesfm<=1.1.0"])
+                # todo: Regularly check whether the timesfm version can be updated
+                self.set_tags(python_dependencies=["timesfm<1.2.0"])
             else:
                 # Default behavior, enforce required dependencies for the fork
                 self.set_tags(
