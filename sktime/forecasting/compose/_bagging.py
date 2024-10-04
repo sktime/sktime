@@ -395,7 +395,7 @@ class BaggingForecaster(BaseForecaster):
         """
         from sktime.forecasting.compose import YfromX
         from sktime.transformations.bootstrap import MovingBlockBootstrapTransformer
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_estimator_deps
 
         mbb = MovingBlockBootstrapTransformer(block_length=6)
         fcst = YfromX.create_test_instance()
@@ -403,7 +403,7 @@ class BaggingForecaster(BaseForecaster):
 
         # the default param set causes a statsmodels based estimator
         # to be created as bootstrap_transformer
-        if _check_soft_dependencies("statsmodels", severity="none"):
+        if _check_estimator_deps("statsmodels", severity="none"):
             params += [{}]
 
         return params
