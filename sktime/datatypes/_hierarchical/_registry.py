@@ -21,8 +21,17 @@ MTYPE_REGISTER_HIERARCHICAL = [
         "Hierarchical",
         "dask frame with multiple hierarchical indices, as per dask_to_pd convention",
     ),
+    (
+        "polars_hierarchical",
+        "Hierarchical",
+        "polars frame with multiple hierarchical indices, "
+        "as per polars_to_pd convention",
+    ),
 ]
 
-MTYPE_SOFT_DEPS_HIERARCHICAL = {"dask_hierarchical": "dask"}
+MTYPE_SOFT_DEPS_HIERARCHICAL = {
+    "dask_hierarchical": "dask",
+    "polars_hierarchical": "polars",
+}
 
 MTYPE_LIST_HIERARCHICAL = [x[0] for x in MTYPE_REGISTER_HIERARCHICAL]

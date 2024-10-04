@@ -2195,7 +2195,8 @@ class BaseForecaster(BaseEstimator):
         """
         implements_quantiles = self._has_implementation_of("_predict_quantiles")
         implements_proba = self._has_implementation_of("_predict_proba")
-        can_do_proba = implements_quantiles or implements_proba
+        implements_var = self._has_implementation_of("_predict_var")
+        can_do_proba = implements_quantiles or implements_proba or implements_var
 
         if not can_do_proba:
             raise RuntimeError(
@@ -2204,6 +2205,15 @@ class BaseForecaster(BaseEstimator):
                 'but "capability:pred_int" flag has been set to True incorrectly. '
                 "This is likely a bug, please report, and/or set the flag to False."
             )
+
+        # defaulting logic is as follows:
+        # var direct deputies are proba, then interval
+        # proba direct deputy is var (via Normal dist)
+        # quantiles direct deputies are interval, then proba
+        # interval direct deputy is quantiles
+        #
+        # so, conditions for defaulting for interval are:
+        # default to quantiles if any of the other three methods are implemented
 
         # we default to _predict_quantiles if that is implemented or _predict_proba
         # since _predict_quantiles will default to _predict_proba if it is not
@@ -2254,7 +2264,8 @@ class BaseForecaster(BaseEstimator):
         """
         implements_interval = self._has_implementation_of("_predict_interval")
         implements_proba = self._has_implementation_of("_predict_proba")
-        can_do_proba = implements_interval or implements_proba
+        implements_var = self._has_implementation_of("_predict_var")
+        can_do_proba = implements_interval or implements_proba or implements_var
 
         if not can_do_proba:
             raise RuntimeError(
@@ -2263,6 +2274,16 @@ class BaseForecaster(BaseEstimator):
                 'but "capability:pred_int" flag has been set to True incorrectly. '
                 "This is likely a bug, please report, and/or set the flag to False."
             )
+
+        # defaulting logic is as follows:
+        # var direct deputies are proba, then interval
+        # proba direct deputy is var (via Normal dist)
+        # quantiles direct deputies are interval, then proba
+        # interval direct deputy is quantiles
+        #
+        # so, conditions for defaulting for quantiles are:
+        # 1. default to interval if interval implemented
+        # 2. default to proba if proba or var are implemented
 
         if implements_interval:
             pred_int = pd.DataFrame()
@@ -2292,7 +2313,7 @@ class BaseForecaster(BaseEstimator):
             int_idx = self._get_columns(method="predict_quantiles", alpha=alpha)
             pred_int.columns = int_idx
 
-        elif implements_proba:
+        elif implements_proba or implements_var:
             pred_proba = self.predict_proba(fh=fh, X=X)
             pred_int = pred_proba.quantile(alpha=alpha)
 
@@ -2349,6 +2370,16 @@ class BaseForecaster(BaseEstimator):
                 'but "capability:pred_int" flag has been set to True incorrectly. '
                 "This is likely a bug, please report, and/or set the flag to False."
             )
+
+        # defaulting logic is as follows:
+        # var direct deputies are proba, then interval
+        # proba direct deputy is var (via Normal dist)
+        # quantiles direct deputies are interval, then proba
+        # interval direct deputy is quantiles
+        #
+        # so, conditions for defaulting for var are:
+        # 1. default to proba if proba implemented
+        # 2. default to interval if interval or quantiles are implemented
 
         if implements_proba:
             # todo: this works only univariate now, need to implement multivariate
@@ -2417,6 +2448,15 @@ class BaseForecaster(BaseEstimator):
                 'but "capability:pred_int" flag has been set to True incorrectly. '
                 "This is likely a bug, please report, and/or set the flag to False."
             )
+
+        # defaulting logic is as follows:
+        # var direct deputies are proba, then interval
+        # proba direct deputy is var (via Normal dist)
+        # quantiles direct deputies are interval, then proba
+        # interval direct deputy is quantiles
+        #
+        # so, conditions for defaulting for interval are:
+        # default to quantiles if any of the other three methods are implemented
 
         # if any of the above are implemented, predict_var will have a default
         #   we use predict_var to get scale, and predict to get location

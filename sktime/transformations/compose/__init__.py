@@ -12,6 +12,7 @@ from sktime.transformations.compose._grouped import TransformByLevel
 from sktime.transformations.compose._id import Id
 from sktime.transformations.compose._invert import InvertTransform
 from sktime.transformations.compose._ixtox import IxToX
+from sktime.transformations.compose._logger import DataLog, Logger
 from sktime.transformations.compose._multiplex import MultiplexTransformer
 from sktime.transformations.compose._optional import OptionalPassthrough
 from sktime.transformations.compose._pipeline import TransformerPipeline
@@ -22,11 +23,13 @@ __author__ = ["fkiraly", "mloning", "miraep8", "aiwalter", "SveaMeyer13"]
 __all__ = [
     "ColumnwiseTransformer",
     "ColumnEnsembleTransformer",
+    "DataLog",
     "FeatureUnion",
     "FitInTransform",
     "Id",
     "InvertTransform",
     "IxToX",
+    "Logger",
     "MultiplexTransformer",
     "OptionalPassthrough",
     "TransformerPipeline",
