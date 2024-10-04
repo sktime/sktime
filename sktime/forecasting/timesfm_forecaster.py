@@ -20,6 +20,45 @@ class TimesFMForecaster(_BaseGlobalForecaster):
     developed by Google Research for time-series forecasting. This method has been
     proposed in [2]_ and official code is given at [1]_.
 
+    TimesFM can be used either as a locally maintained package in sktime or directly
+    from the source package, allowing users to leverage either their own
+    environment or the latest updates from the source package `timesfm`.
+
+    The class offers two key flag for handling dependencies and source package behavior:
+    - `use_source_package`: Determines whether to use the source package `timesfm`.
+    - `ignore_deps`: Controls whether dependencies are enforced or ignored,
+    enabling users to bypass dependency checks and manage their environment manually.
+
+    Changes in Dependency Management:
+    ------------------------------
+    **New Dependency Flags:**
+    1. `use_source_package`:
+       - When `True`, the model will be loaded directly from the `timesfm` source
+       package, enforcing a version bound (`timesfm<=1.1.0`) to ensure compatibility.
+       - When `False`, the dependencies required for the local version are enforced
+         (e.g., TensorFlow, einshape, jax, etc.).
+
+    2. `ignore_deps`:
+       - When `True`, the class will ignore all dependency checks, allowing users to
+         manage the environment manually without enforcing any specific dependencies.
+       - When `False`, the necessary dependencies (either for the local version or the
+         source package) are automatically enforced.
+
+    **Default Dependencies Removed:**
+    The static list of `python_dependencies` previously defined in the `_tags` section
+    has been removed. Instead, dependencies are now managed dynamically based on the
+    aforementioned flags (`use_source_package` and `ignore_deps`), ensuring more
+    flexible and user-controlled behavior.
+
+    **Dynamic Dependency Behavior:**
+    - If `use_source_package=True`: Only the `timesfm` package is required, with
+    a version bound of `<1.2.0`.
+    - If `use_source_package=False`: A set of default dependencies is enforced,
+    including TensorFlow, einshape, jax, praxis, huggingface-hub, paxml,
+    and utilsforecast.
+    - If `ignore_deps=True`: No dependencies are enforced, leaving the dependency set
+      empty, allowing for manual handling.
+
     Parameters
     ----------
     context_len : int
@@ -74,12 +113,13 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         only one multiindex output from ``predict``.
     use_source_package : bool, default=False
         If True, the model will be loaded directly from the source package ``timesfm``.
-        This is useful if you want to bypass the local version of the package
-        or when working in an environment where the latest updates
-        from the source package are needed.
-        If False, the model will be loaded from the local version of package maintained
-        in sktime.
-        To install the source package, follow the instructions here [1]_.
+        This also enforces a version bound for ``timesfm`` to be <1.2.0.
+        This setting is useful if the latest updates from the source package are needed,
+        bypassing the local version of the package.
+    ignore_deps : bool, default=False
+        If True, dependency checks will be ignored, and the user is expected to handle
+        the installation of required packages manually. If False, the class will enforce
+        the default dependencies required for TimesFM.
 
     References
     ----------
