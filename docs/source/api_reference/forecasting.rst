@@ -588,6 +588,17 @@ Generic framework adapters that expose other frameworks in the ``sktime`` interf
 
     HCrystalBallAdapter
 
+MOIRAI Forecasters
+------------------
+
+.. currentmodule:: sktime.forecasting.moirai_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MOIRAIForecaster
+
 Model selection and tuning
 --------------------------
 
