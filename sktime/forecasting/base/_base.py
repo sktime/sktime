@@ -23,7 +23,7 @@ Optional, special capability methods (check capability tags if available):
 Inspection methods:
     hyper-parameter inspection  - get_params()
     fitted parameter inspection - get_fitted_params()
-    current ForecastingHorizon  - fh
+    current ForecastngHorizon  - fh
     current cutoff              - cutoff
 
 State:
@@ -1827,7 +1827,8 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        fh : None, int, list, np.ndarray or ForecastingHorizon
+        fh : None, int, list, np.ndarray, pd.index or ForecastingHorizon
+             If fh is a pd.index then set fh = ForecastingHorizon(fh, is_relative=False)
         pred_int: Check pred_int:insample tag instead of insample tag.
 
         Returns
@@ -1884,6 +1885,9 @@ class BaseForecaster(BaseEstimator):
         # B. fh is passed
         else:
             # If fh is passed, coerce to ForecastingHorizon and validate (all cases)
+
+            if isinstance(fh, pd.Index):
+                fh = ForecastingHorizon(fh, is_relative=False)
 
             # if vectorized only check freq against the inner loop cutoff (check each
             # fcstr) since cutoff/frequency can be different for each compared to the
