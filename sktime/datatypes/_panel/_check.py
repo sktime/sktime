@@ -627,8 +627,8 @@ class PanelNestedDf(ScitypePanel):
 
     _tags = {
         "scitype": "Panel",
-        "name": "pd-multiindex",  # any string
-        "name_python": "panel_pd_df",  # lower_snake_case
+        "name": "nested_univ",  # any string
+        "name_python": "panel_pd_nested",  # lower_snake_case
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "pandas",
