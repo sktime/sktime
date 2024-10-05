@@ -309,7 +309,7 @@ class _Reducer(_BaseWindowForecaster):
         from sklearn.pipeline import make_pipeline
 
         from sktime.transformations.panel.reduce import Tabularizer
-        from sktime.utils.dependencies import _check_estimator_deps
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         # naming convention is as follows:
         #   reducers with Tabular take an sklearn estimator, e.g., LinearRegressor
@@ -325,7 +325,7 @@ class _Reducer(_BaseWindowForecaster):
         PROBA_IMPLEMENTED = ["DirectTabularRegressionForecaster"]
         self_supports_proba = cls.__name__ in PROBA_IMPLEMENTED
 
-        if _check_estimator_deps("skpro", severity="none") and self_supports_proba:
+        if _check_soft_dependencies("skpro", severity="none") and self_supports_proba:
             from skpro.regression.residual import ResidualDouble
 
             params_proba_local = {
@@ -2980,7 +2980,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
         from sklearn.ensemble import RandomForestRegressor
         from sklearn.linear_model import LinearRegression
 
-        from sktime.utils.dependencies import _check_estimator_deps
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         params1 = {
             "estimator": LinearRegression(),
@@ -2994,7 +2994,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
 
         params = [params1, params2]
 
-        if _check_estimator_deps("skpro", severity="none"):
+        if _check_soft_dependencies("skpro", severity="none"):
             from skpro.regression.residual import ResidualDouble
 
             params3 = {

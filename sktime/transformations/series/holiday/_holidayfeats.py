@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.dependencies import _check_estimator_deps
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.warnings import warn
 
 
@@ -192,7 +192,7 @@ class HolidayFeatures(BaseTransformer):
         """
         from datetime import date
 
-        if _check_estimator_deps("holidays", severity="none"):
+        if _check_soft_dependencies("holidays", severity="none"):
             from holidays import country_holidays, financial_holidays
 
             params = [

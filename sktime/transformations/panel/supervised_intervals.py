@@ -515,11 +515,11 @@ class SupervisedIntervals(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.utils.dependencies import _check_estimator_deps
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         params0 = {}
 
-        if _check_estimator_deps("numba", severity="none"):
+        if _check_soft_dependencies("numba", severity="none"):
             from sktime.utils.numba.stats import (
                 row_mean,
                 row_median,

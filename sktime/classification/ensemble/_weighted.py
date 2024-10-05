@@ -258,11 +258,11 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         from sktime.classification.dummy import DummyClassifier
-        from sktime.utils.dependencies import _check_estimator_deps
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         params0 = {"classifiers": [DummyClassifier()]}
 
-        if _check_estimator_deps("numba", severity="none"):
+        if _check_soft_dependencies("numba", severity="none"):
             from sktime.classification.distance_based import (
                 KNeighborsTimeSeriesClassifier,
             )

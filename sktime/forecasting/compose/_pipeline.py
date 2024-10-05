@@ -1804,7 +1804,7 @@ class ForecastX(BaseForecaster):
         from sktime.forecasting.arima import ARIMA
         from sktime.forecasting.compose import YfromX
         from sktime.forecasting.naive import NaiveForecaster
-        from sktime.utils.dependencies import _check_estimator_deps
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         fs, _ = YfromX.create_test_instances_and_names()
         fx = fs[0]
@@ -1814,7 +1814,7 @@ class ForecastX(BaseForecaster):
 
         # example with probabilistic capability
         # todo 0.34.0: check if numpy<2 is still needed
-        if _check_estimator_deps(["pmdarima", "numpy<2"], severity="none"):
+        if _check_soft_dependencies(["pmdarima", "numpy<2"], severity="none"):
             fy_proba = ARIMA()
         else:
             fy_proba = NaiveForecaster()
