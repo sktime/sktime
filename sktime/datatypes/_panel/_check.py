@@ -48,12 +48,11 @@ from sktime.datatypes._dtypekind import (
     _get_panel_dtypekind,
     _pandas_dtype_to_kind,
 )
-from sktime.datatypes._pamel._base import ScitypePanel
+from sktime.datatypes._panel._base import ScitypePanel
 from sktime.datatypes._series._check import (
     _index_equally_spaced,
     check_pddataframe_series,
 )
-from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.validation.series import is_in_valid_index_types, is_integer_index
 
 VALID_MULTIINDEX_TYPES = (pd.RangeIndex, pd.Index)
@@ -1060,9 +1059,7 @@ def check_polars_panel(obj, return_metadata=False, var_name="obj", scitype="Pane
                     n_panels = 1
                 else:
                     mi_cols = get_mi_cols(obj)
-                    panel_groups = obj.group_by(mi_cols[:-2]).agg(
-                        [pl.col(mi_cols[-2])]
-                    )
+                    panel_groups = obj.group_by(mi_cols[:-2]).agg([pl.col(mi_cols[-2])])
                     n_panels = panel_groups.shape[0]
 
                 if _req("n_panels", return_metadata):
