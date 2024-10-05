@@ -40,8 +40,6 @@ metadata: dict - metadata about obj if valid, otherwise None
         "feature_names": list of int or object, names of variables in series
 """
 
-__author__ = ["fkiraly"]
-
 import numpy as np
 
 from sktime.datatypes._hierarchical._base import ScitypeHierarchical
@@ -93,6 +91,12 @@ class HierarchicalPdMultiIndex(ScitypeHierarchical):
         number of variables in table
     feature_names: list of int or object
         names of variables in table
+    dtypekind_dfip: list of DtypeKind enum
+        list of DtypeKind enum values for each feature in the panel,
+        following the data frame interface protocol
+    feature_kind: list of str
+        list of feature kind strings for each feature in the panel,
+        coerced to FLOAT or CATEGORICAL type
     """
 
     _tags = {
@@ -166,6 +170,12 @@ class HierarchicalDask(ScitypeHierarchical):
         number of variables in table
     feature_names: list of int or object
         names of variables in table
+    dtypekind_dfip: list of DtypeKind enum
+        list of DtypeKind enum values for each feature in the panel,
+        following the data frame interface protocol
+    feature_kind: list of str
+        list of feature kind strings for each feature in the panel,
+        coerced to FLOAT or CATEGORICAL type
     """
 
     _tags = {
@@ -240,6 +250,12 @@ class HierarchicalPolars(ScitypeHierarchical):
         number of variables in table
     feature_names: list of int or object
         names of variables in table
+    dtypekind_dfip: list of DtypeKind enum
+        list of DtypeKind enum values for each feature in the panel,
+        following the data frame interface protocol
+    feature_kind: list of str
+        list of feature kind strings for each feature in the panel,
+        coerced to FLOAT or CATEGORICAL type
     """
 
     _tags = {

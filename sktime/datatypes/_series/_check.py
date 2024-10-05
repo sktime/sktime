@@ -35,8 +35,6 @@ metadata: dict - metadata about obj if valid, otherwise None
         "feature_names": list of int or object, names of variables in series
 """
 
-__author__ = ["fkiraly"]
-
 import numpy as np
 import pandas as pd
 
@@ -73,6 +71,12 @@ class SeriesPdDataFrame(ScitypeSeries):
         number of variables in series
     feature_names: list of int or object
         names of variables in series
+    dtypekind_dfip: list of DtypeKind enum
+        list of DtypeKind enum values for each feature in the panel,
+        following the data frame interface protocol
+    feature_kind: list of str
+        list of feature kind strings for each feature in the panel,
+        coerced to FLOAT or CATEGORICAL type
     """
 
     _tags = {
@@ -196,6 +200,12 @@ class SeriesPdSeries(ScitypeSeries):
         number of variables in series
     feature_names: list of int or object
         names of variables in series
+    dtypekind_dfip: list of DtypeKind enum
+        list of DtypeKind enum values for each feature in the panel,
+        following the data frame interface protocol
+    feature_kind: list of str
+        list of feature kind strings for each feature in the panel,
+        coerced to FLOAT or CATEGORICAL type
     """
 
     _tags = {
@@ -304,6 +314,12 @@ class SeriesNumpy(ScitypeSeries):
         number of variables in series
     feature_names: list of int or object
         names of variables in series
+    dtypekind_dfip: list of DtypeKind enum
+        list of DtypeKind enum values for each feature in the panel,
+        following the data frame interface protocol
+    feature_kind: list of str
+        list of feature kind strings for each feature in the panel,
+        coerced to FLOAT or CATEGORICAL type
     """
 
     _tags = {
@@ -456,6 +472,12 @@ class SeriesXarray(ScitypeSeries):
         number of variables in series
     feature_names: list of int or object
         names of variables in series
+    dtypekind_dfip: list of DtypeKind enum
+        list of DtypeKind enum values for each feature in the panel,
+        following the data frame interface protocol
+    feature_kind: list of str
+        list of feature kind strings for each feature in the panel,
+        coerced to FLOAT or CATEGORICAL type
     """
 
     _tags = {
@@ -582,6 +604,12 @@ class SeriesDask(ScitypeSeries):
         number of variables in series
     feature_names: list of int or object
         names of variables in series
+    dtypekind_dfip: list of DtypeKind enum
+        list of DtypeKind enum values for each feature in the panel,
+        following the data frame interface protocol
+    feature_kind: list of str
+        list of feature kind strings for each feature in the panel,
+        coerced to FLOAT or CATEGORICAL type
     """
 
     _tags = {
@@ -645,6 +673,12 @@ class SeriesPolarsEager(ScitypeSeries):
         number of variables in series
     feature_names: list of int or object
         names of variables in series
+    dtypekind_dfip: list of DtypeKind enum
+        list of DtypeKind enum values for each feature in the panel,
+        following the data frame interface protocol
+    feature_kind: list of str
+        list of feature kind strings for each feature in the panel,
+        coerced to FLOAT or CATEGORICAL type
     """
 
     _tags = {
@@ -714,6 +748,12 @@ class SeriesGluontsList(ScitypeSeries):
         number of variables in series
     feature_names: list of int or object
         names of variables in series
+    dtypekind_dfip: list of DtypeKind enum
+        list of DtypeKind enum values for each feature in the panel,
+        following the data frame interface protocol
+    feature_kind: list of str
+        list of feature kind strings for each feature in the panel,
+        coerced to FLOAT or CATEGORICAL type
     """
 
     _tags = {
@@ -851,6 +891,12 @@ class SeriesGluontsPandas(ScitypeSeries):
         number of variables in series
     feature_names: list of int or object
         names of variables in series
+    dtypekind_dfip: list of DtypeKind enum
+        list of DtypeKind enum values for each feature in the panel,
+        following the data frame interface protocol
+    feature_kind: list of str
+        list of feature kind strings for each feature in the panel,
+        coerced to FLOAT or CATEGORICAL type
     """
 
     _tags = {
