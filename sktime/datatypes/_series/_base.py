@@ -48,6 +48,8 @@ class ScitypeSeries(BaseDatatype):
         has_nans=None,
         n_features=None,
         feature_names=None,
+        dtypekind_dfip=None,
+        feature_kind=None,
     ):
         self.is_univariate = is_univariate
         self.is_equally_spaced = is_equally_spaced
@@ -55,5 +57,7 @@ class ScitypeSeries(BaseDatatype):
         self.has_nans = has_nans
         self.n_features = n_features
         self.feature_names = feature_names
+        self.dtypekind_dfip = dtypekind_dfip
+        self.feature_kind = feature_kind
 
         super().__init__()

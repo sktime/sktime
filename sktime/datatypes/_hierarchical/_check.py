@@ -132,9 +132,9 @@ class HierarchicalPdMultiIndex(ScitypeHierarchical):
         metadata : dict, only returned if return_metadata is True.
             Metadata dictionary.
         """
-        from sktime.datatypes._panel._check import check_pdmultiindex_panel
+        from sktime.datatypes._panel._check import _check_pdmultiindex_panel
 
-        ret = check_pdmultiindex_panel(
+        ret = _check_pdmultiindex_panel(
             obj, return_metadata=return_metadata, var_name=var_name, panel=False
         )
 
@@ -291,9 +291,9 @@ class HierarchicalPolars(ScitypeHierarchical):
         metadata : dict, only returned if return_metadata is True.
             Metadata dictionary.
         """
-        from sktime.datatypes._panel._check import check_polars_panel
+        from sktime.datatypes._panel._check import _check_polars_panel
 
-        return check_polars_panel(
+        return _check_polars_panel(
             obj=obj,
             return_metadata=return_metadata,
             var_name=var_name,

@@ -65,6 +65,8 @@ class ScitypeHierarchical(BaseDatatype):
         n_panels=None,
         n_features=None,
         feature_names=None,
+        dtypekind_dfip=None,
+        feature_kind=None,
     ):
         self.is_univariate = is_univariate
         self.is_equally_spaced = is_equally_spaced
@@ -77,5 +79,7 @@ class ScitypeHierarchical(BaseDatatype):
         self.n_panels = n_panels
         self.n_features = n_features
         self.feature_names = feature_names
+        self.dtypekind_dfip = dtypekind_dfip
+        self.feature_kind = feature_kind
 
         super().__init__()

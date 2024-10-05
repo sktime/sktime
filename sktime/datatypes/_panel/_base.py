@@ -57,6 +57,8 @@ class ScitypePanel(BaseDatatype):
         n_instances=None,
         n_features=None,
         feature_names=None,
+        dtypekind_dfip=None,
+        feature_kind=None,
     ):
         self.is_univariate = is_univariate
         self.is_equally_spaced = is_equally_spaced
@@ -67,5 +69,7 @@ class ScitypePanel(BaseDatatype):
         self.n_instances = n_instances
         self.n_features = n_features
         self.feature_names = feature_names
+        self.dtypekind_dfip = dtypekind_dfip
+        self.feature_kind = feature_kind
 
         super().__init__()

@@ -145,12 +145,12 @@ class PanelDfList(ScitypePanel):
         metadata : dict, only returned if return_metadata is True.
             Metadata dictionary.
         """
-        return check_dflist_panel(
+        return _check_dflist_panel(
             obj, return_metadata=return_metadata, var_name=var_name
         )
 
 
-def check_dflist_panel(obj, return_metadata=False, var_name="obj"):
+def _check_dflist_panel(obj, return_metadata=False, var_name="obj"):
     """Check if obj is a list of pandas.DataFrame according to df-list specification."""
     if not isinstance(obj, list):
         msg = f"{var_name} must be list of pd.DataFrame, found {type(obj)}"
@@ -271,12 +271,12 @@ class PanelNumpy3D(ScitypePanel):
         metadata : dict, only returned if return_metadata is True.
             Metadata dictionary.
         """
-        return check_numpy3d_panel(
+        return _check_numpy3d_panel(
             obj, return_metadata=return_metadata, var_name=var_name
         )
 
 
-def check_numpy3d_panel(obj, return_metadata=False, var_name="obj"):
+def _check_numpy3d_panel(obj, return_metadata=False, var_name="obj"):
     """Check if obj is a numpy.ndarray according to numpy3D specification."""
     if not isinstance(obj, np.ndarray):
         msg = f"{var_name} must be a numpy.ndarray, found {type(obj)}"
@@ -387,12 +387,12 @@ class PanelDfMultiIndex(ScitypePanel):
         metadata : dict, only returned if return_metadata is True.
             Metadata dictionary.
         """
-        return check_pdmultiindex_panel(
+        return _check_pdmultiindex_panel(
             obj, return_metadata=return_metadata, var_name=var_name
         )
 
 
-def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=True):
+def _check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=True):
     """Check if obj is a pandas.DataFrame according to pd-multiindex specification."""
     if not isinstance(obj, pd.DataFrame):
         msg = f"{var_name} must be a pd.DataFrame, found {type(obj)}"
@@ -658,12 +658,12 @@ class PanelNestedDf(ScitypePanel):
         metadata : dict, only returned if return_metadata is True.
             Metadata dictionary.
         """
-        return is_nested_dataframe(
+        return _is_nested_dataframe(
             obj, return_metadata=return_metadata, var_name=var_name
         )
 
 
-def is_nested_dataframe(obj, return_metadata=False, var_name="obj"):
+def _is_nested_dataframe(obj, return_metadata=False, var_name="obj"):
     """Check whether the input is a nested DataFrame.
 
     To allow for a mixture of nested and primitive columns types the
@@ -806,12 +806,12 @@ class PanelNumpyFlat(ScitypePanel):
         metadata : dict, only returned if return_metadata is True.
             Metadata dictionary.
         """
-        return check_numpyflat_Panel(
+        return _check_numpyflat_Panel(
             obj, return_metadata=return_metadata, var_name=var_name
         )
 
 
-def check_numpyflat_Panel(obj, return_metadata=False, var_name="obj"):
+def _check_numpyflat_Panel(obj, return_metadata=False, var_name="obj"):
     """Check if obj is a numpy.ndarray according to numpyflat specification."""
     if not isinstance(obj, np.ndarray):
         msg = f"{var_name} must be a numpy.ndarray, found {type(obj)}"
@@ -993,12 +993,12 @@ class PanelPolars(ScitypePanel):
         metadata : dict, only returned if return_metadata is True.
             Metadata dictionary.
         """
-        check_polars_panel(
+        _check_polars_panel(
             obj=obj, return_metadata=return_metadata, var_name=var_name, scitype="Panel"
         )
 
 
-def check_polars_panel(obj, return_metadata=False, var_name="obj", scitype="Panel"):
+def _check_polars_panel(obj, return_metadata=False, var_name="obj", scitype="Panel"):
     """Check if obj is a polars.DataFrame according to polars specification."""
     import polars as pl
 

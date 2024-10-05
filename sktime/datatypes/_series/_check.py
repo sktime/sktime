@@ -112,10 +112,10 @@ class SeriesPdDataFrame(ScitypeSeries):
         metadata : dict, only returned if return_metadata is True.
             Metadata dictionary.
         """
-        return check_pddataframe_series(obj, return_metadata, var_name)
+        return _check_pddataframe_series(obj, return_metadata, var_name)
 
 
-def check_pddataframe_series(obj, return_metadata=False, var_name="obj"):
+def _check_pddataframe_series(obj, return_metadata=False, var_name="obj"):
     """Check if obj is a pandas.DataFrame based specification of single time series."""
     metadata = dict()
 
