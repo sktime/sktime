@@ -554,6 +554,7 @@ def _check_list_of_dict_table(obj, return_metadata=False, var_name="obj"):
 
     return _ret(True, None, metadata, return_metadata)
 
+
 class TablePolarsEager(BaseTable):
     """Data type: eager polars DataFrame based specification of data frame table.
 
