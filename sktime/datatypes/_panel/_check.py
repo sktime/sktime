@@ -50,8 +50,8 @@ from sktime.datatypes._dtypekind import (
 )
 from sktime.datatypes._panel._base import ScitypePanel
 from sktime.datatypes._series._check import (
+    _check_pddataframe_series,
     _index_equally_spaced,
-    check_pddataframe_series,
 )
 from sktime.utils.validation.series import is_in_valid_index_types, is_integer_index
 
@@ -164,7 +164,7 @@ def _check_dflist_panel(obj, return_metadata=False, var_name="obj"):
         msg = f"{var_name}[i] must pd.DataFrame, but found other types at i={bad_inds}"
         return _ret(False, msg, None, return_metadata)
 
-    check_res = [check_pddataframe_series(s, return_metadata=True) for s in obj]
+    check_res = [_check_pddataframe_series(s, return_metadata=True) for s in obj]
     bad_inds = [i for i in range(n) if not check_res[i][0]]
 
     if len(bad_inds) > 0:
