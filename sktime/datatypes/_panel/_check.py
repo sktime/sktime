@@ -993,7 +993,7 @@ class PanelPolars(ScitypePanel):
         metadata : dict, only returned if return_metadata is True.
             Metadata dictionary.
         """
-        _check_polars_panel(
+        return _check_polars_panel(
             obj=obj, return_metadata=return_metadata, var_name=var_name, scitype="Panel"
         )
 
