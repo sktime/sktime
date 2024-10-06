@@ -511,6 +511,13 @@ Deep learning based forecasters
 
     PyKANForecaster
 
+.. currentmodule:: sktime.forecasting.moirai_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MOIRAIForecaster
 
 Intermittent time series forecasters
 ------------------------------------
@@ -587,17 +594,6 @@ Generic framework adapters that expose other frameworks in the ``sktime`` interf
     :template: class.rst
 
     HCrystalBallAdapter
-
-MOIRAI Forecasters
-------------------
-
-.. currentmodule:: sktime.forecasting.moirai_forecaster
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    MOIRAIForecaster
 
 Model selection and tuning
 --------------------------
