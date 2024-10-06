@@ -43,6 +43,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.base import BaseEstimator
+from sktime.base._proba import _PredictProbaMixin
 from sktime.datatypes import (
     VectorizedDF,
     check_is_error_msg,
