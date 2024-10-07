@@ -385,11 +385,11 @@ class _CachedTimesFM:
         self.use_source_package = use_source_package
         self.tfm = None
 
-        self.clients = {}
+        self.clients = set()
 
     def load_from_checkpoint(self, client=None):
         if client is not None:
-            self.clients += {client}
+            self.clients = self.clients.union({client})
 
         if self.tfm is None:
             if self.use_source_package:
