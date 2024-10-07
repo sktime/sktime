@@ -164,6 +164,16 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
     def _transformers(self, value):
         self.transformers_._steps = value
 
+    @property
+    def _steps(self):
+        return self._check_estimators(self.transformers) + [
+            self._coerce_estimator_tuple(self.clusterer)
+        ]
+
+    @property
+    def steps_(self):
+        return self._transformers + [self._coerce_estimator_tuple(self.clusterer_)]
+
     def __rmul__(self, other):
         """Magic * method, return concatenated ClustererPipeline, transformers on left.
 
@@ -472,6 +482,24 @@ class SklearnClustererPipeline(ClustererPipeline):
             "capability:multithreading": False,
         }
         self.set_tags(**tags_to_set)
+
+    @property
+    def _transformers(self):
+        return self.transformers_._steps
+
+    @_transformers.setter
+    def _transformers(self, value):
+        self.transformers_._steps = value
+
+    @property
+    def _steps(self):
+        return self._check_estimators(self.transformers) + [
+            self._coerce_estimator_tuple(self.clusterer)
+        ]
+
+    @property
+    def steps_(self):
+        return self._transformers + [self._coerce_estimator_tuple(self.clusterer_)]
 
     def __rmul__(self, other):
         """Magic * method, return concatenated ClustererPipeline, transformers on left.
