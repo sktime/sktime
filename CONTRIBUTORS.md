@@ -383,7 +383,6 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     </tr>
     <tr>
       <td align="center" valign="top" width="11.11%"><a href="https://github.com/xiaobenbenecho"><img src="https://avatars.githubusercontent.com/u/17461849?v=4?s=100" width="100px;" alt="xiaobenbenecho"/><br /><sub><b>xiaobenbenecho</b></sub></a><br /><a href="https://github.com/sktime/sktime/commits?author=xiaobenbenecho" title="Code">💻</a></td>
-      <td align="center" valign="top" width="11.11%"><a href="https://github.com/markussagen"><img src="https://avatars.githubusercontent.com/u/20767068?v=4?s=100" width="100px;" alt="markussagen"/><br /><sub><b>markussagen</b></sub></a><br /><a href="https://github.com/sktime/sktime/commits?author=markussagen" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

@@ -1,4 +1,13 @@
-import pandas as pd
+#!/usr/bin/env python3 -u
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Splitter that combines expanding and sliding window strategies."""
+
+__author__ = ["markussagen"]
+
+__all__ = [
+    "ExpandingSlidingWindowSplitter",
+]
+
 from sktime.split.base import BaseWindowSplitter
 from sktime.split.base._common import (
     DEFAULT_FH,
@@ -19,7 +28,7 @@ class ExpandingSlidingWindowSplitter(BaseWindowSplitter):
     This splitter starts as an expanding window splitter until a specified
     maximum window length is reached, then transitions to a sliding window splitter.
 
-    For example, with ``initial_window = 1``, ``window_length = 2``, ``step_length = 1``,
+    For example, with ``initial_window = 1``, ``step_length = 1``,
     ``fh = [1, 2]``,, and ``max_expanding_window_length = 8``
 
     |--------------------|
@@ -49,16 +58,29 @@ class ExpandingSlidingWindowSplitter(BaseWindowSplitter):
     step_length : int or timedelta or pd.DateOffset, optional (default=1)
         Step length between windows
     max_expanding_window_length : int, optional (default=float('inf'))
-        Maximum window length. If none is passed in, it will keep expanding indefinitely.
+        Maximum window length. If none is passed in, it will expanding indefinitely.
 
     Examples
     --------
     >>> import numpy as np
-    >>> from sktime.split import SlidingWindowSplitter
+    >>> from sktime.split import ExpandingSlidingWindowSplitter
     >>> ts = np.arange(10)
-    >>> splitter = ExpandingSlidingWindowSplitter(fh=[1, 2], step_length=3, initial_window=2, max_expanding_window_length=5)
+    >>> splitter = ExpandingSlidingWindowSplitter(fh=[1, 2], step_length=1,
+        initial_window=1, max_expanding_window_length=5)
     >>> list(splitter.split(ts)) # doctest: +SKIP
-    [(array([0, 1]), array([2, 3])), (array([0, 1, 2, 3, 4]), array([5, 6])), (array([3, 4, 5, 6, 7]), array([8, 9]))]
+    [(array([0]), array([1, 2])), (array([0, 1]), array([2, 3])),
+      (array([0, 1, 2]), array([3, 4])), (array([0, 1, 2, 3]), array([4, 5])),
+      (array([0, 1, 2, 3, 4]), array([5, 6])), (array([1, 2, 3, 4, 5]), array([6, 7])),
+      (array([2, 3, 4, 5, 6]), array([7, 8])), (array([3, 4, 5, 6, 7]), array([8, 9]))]
+
+    >>> import numpy as np
+    >>> from sktime.split import ExpandingSlidingWindowSplitter
+    >>> ts = np.arange(10)
+    >>> splitter = ExpandingSlidingWindowSplitter(fh=[1, 2], step_length=3,
+        initial_window=2, max_expanding_window_length=5)
+    >>> list(splitter.split(ts)) # doctest: +SKIP
+    [(array([0, 1]), array([2, 3])), (array([0, 1, 2, 3, 4]), array([5, 6])),
+      (array([3, 4, 5, 6, 7]), array([8, 9]))]
     """
 
     def __init__(
@@ -83,7 +105,8 @@ class ExpandingSlidingWindowSplitter(BaseWindowSplitter):
         # this class still acts as if it were overwritten with None,
         # via the _initial_window property that is read everywhere
 
-        # Defines the maximum length of the expanding window before switching to the sliding window
+        # Defines the maximum length of the expanding window
+        #  before switching to a sliding window splitter strategy
         self.max_expanding_window_length = max_expanding_window_length
 
     @property
@@ -97,10 +120,16 @@ class ExpandingSlidingWindowSplitter(BaseWindowSplitter):
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the splitter."""
         params1 = {
-            "fg": [1, 2],
+            "fh": [1, 2],
+            "step_length": 1,
+            "initial_window": 1,
+            "max_expanding_window_length": 5,
+        }
+        params2 = {
+            "fh": [1, 2],
             "step_length": 3,
             "initial_window": 2,
             "max_expanding_window_length": 5,
         }
 
-        return [params1]
+        return [params1, params2]

@@ -3070,6 +3070,16 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login":"markussagen",
+      "name": "Markus Sagen",
+      "avatar_url": "https://avatars.githubusercontent.com/u/20767068?v=4",
+      "profile": "https://github.com/markussagen",
+      "contributions": [
+        "code",
+        "example"
+      ]
     }
   ]
 }
