@@ -36,7 +36,6 @@ __author__ = ["mloning", "big-o", "fkiraly", "sveameyer13", "miraep8", "ciaran-g
 
 __all__ = ["BaseForecaster", "_BaseGlobalForecaster"]
 
-import inspect
 from copy import deepcopy
 from itertools import product
 
@@ -2970,7 +2969,7 @@ class _BaseGlobalForecaster(BaseForecaster):
     #         n is different for each function. If a function has been overridden
     #         in _BaseGlobalForecaster and is going to be overridden in
     #         specific forecaster again, n should be 2.
-    #         n should be specified in the return of self._implementation_counts if n!=1.
+    #         n should be specified in return of self._implementation_counts if n!=1.
     #     """
     #     # walk through method resolution order and inspect methods
     #     #   of classes and direct parents, "adjacent" classes in mro
