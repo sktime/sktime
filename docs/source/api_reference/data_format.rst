@@ -8,6 +8,8 @@ This section provides specifications for:
 * python in-memory data containers used in ``sktime`` (e.g., time series, panel data, etc.)
 * serialized file formats used by ``sktime`` (e.g., ts)
 
+For utilities to check and convert data formats, see the API reference on :ref:`utils_ref`.
+
 
 In-memory Data Specifications
 -----------------------------
