@@ -69,7 +69,7 @@ class PwTrafoPanelPipeline(_HeterogenousMetaEstimator, BasePairwiseTransformerPa
 
     def __init__(self, pw_trafo, transformers):
         self.pw_trafo = pw_trafo
-        self.pw_trafo = pw_trafo.clone()
+        self.pw_trafo_ = pw_trafo.clone()
         self.transformers = transformers
         self.transformers_ = TransformerPipeline(transformers)
 
@@ -114,7 +114,7 @@ class PwTrafoPanelPipeline(_HeterogenousMetaEstimator, BasePairwiseTransformerPa
     @property
     def steps_(self):
         """Concatenated list of sktime transformers and pairwise panel transformer."""
-        return self._transformers + [self._coerce_estimator_tuple(self.param_est_)]
+        return self._transformers + [self._coerce_estimator_tuple(self.pw_trafo_)]
 
     def __rmul__(self, other):
         """Magic * method, return concatenated PwTrafoPanelPipeline, trafos on left.
