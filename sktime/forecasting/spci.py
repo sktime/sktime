@@ -220,13 +220,17 @@ class SPCI(BaseForecaster):
         #   self.clone_tags(est2, ["enforce_index_type", "handles-missing-data"])
 
     # todo: implement this, mandatory
-    def _fit(self, y, X):
+    def _fit(self, y, X, fh):
         """Calculate point predictions and fit regressor to point predictions.
 
         Parameters
         ----------
         y : sktime compatible tabular data container, Table scitype
             numpy1D iterable, of shape [n_instances]
+        fh : guaranteed to be ForecastingHorizon equal to 1.
+            The forecasting horizon with the steps ahead to to predict.
+            Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
+            Otherwise, if not passed in _fit, guaranteed to be passed in _predict
         X : sktime compatible time series panel data container, Panel scitype, e.g.,
              pd-multiindex: pd.DataFrame with columns = variables,
              index = pd.MultiIndex with first level = instance indices,
@@ -236,6 +240,11 @@ class SPCI(BaseForecaster):
              or of any other supported Panel mtype
              for list of mtypes, see datatypes.SCITYPE_REGISTER
              for specifications, see examples/AA_datatypes_and_datasets.ipynb
+
+        Raises
+        ------
+        ValueError
+            If fh is not equal to 1.
 
         Returns
         -------
@@ -307,7 +316,7 @@ class SPCI(BaseForecaster):
         pass
 
     def _predict_interval(self, X, coverage):
-        """Compute/return prediction quantiles from forecast prediction residuals.
+        """Compute/return prediction interval forecasts.
 
         Parameters
         ----------
@@ -320,6 +329,8 @@ class SPCI(BaseForecaster):
              or of any other supported Panel mtype
              for list of mtypes, see datatypes.SCITYPE_REGISTER
              for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        coverage : float or list, optional (default=0.95)
+           nominal coverage(s) of predictive interval(s)
 
         Returns
         -------
