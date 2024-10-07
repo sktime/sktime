@@ -297,8 +297,8 @@ class SeriesPdSeries(ScitypeSeries):
         return ret(True, None, metadata, return_metadata)
 
 
-class SeriesNumpy(ScitypeSeries):
-    """Data type: np.ndarray based specification of single time series.
+class SeriesNp2D(ScitypeSeries):
+    """Data type: 2D np.ndarray based specification of single time series.
 
     Parameters
     ----------

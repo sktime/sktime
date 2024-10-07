@@ -207,7 +207,7 @@ def _check_dflist_panel(obj, return_metadata=False, var_name="obj"):
     return _ret(True, None, metadata, return_metadata)
 
 
-class PanelNumpy3D(ScitypePanel):
+class PanelNp3D(ScitypePanel):
     """Data type: 3D np.ndarray based specification of panel of time series.
 
     Parameters
@@ -323,7 +323,7 @@ def _check_numpy3d_panel(obj, return_metadata=False, var_name="obj"):
     return _ret(True, None, metadata, return_metadata)
 
 
-class PanelDfMultiIndex(ScitypePanel):
+class PanelPdMultiIndex(ScitypePanel):
     """Data type: MultiIndex-ed pd.DataFrame specification of panel of time series.
 
     Parameters
@@ -929,7 +929,7 @@ class PanelDask(ScitypePanel):
         )
 
 
-class PanelPolars(ScitypePanel):
+class PanelPolarsEager(ScitypePanel):
     """Data type: polars.DataFrame based specification of panel of time series.
 
     Parameters

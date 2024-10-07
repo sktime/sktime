@@ -221,7 +221,7 @@ class HierarchicalDask(ScitypeHierarchical):
         )
 
 
-class HierarchicalPolars(ScitypeHierarchical):
+class HierarchicalPolarsEager(ScitypeHierarchical):
     """Data type: polars DataFrame frame based specification of hierarchical series.
 
     Parameters
