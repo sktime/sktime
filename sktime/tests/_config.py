@@ -66,6 +66,8 @@ EXCLUDE_ESTIMATORS = [
     "HMM",
     "BinarySegmentation",
     "SubLOF",
+    "GaussianHMM",
+    "PoissonHMM",
 ]
 
 
