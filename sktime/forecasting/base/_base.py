@@ -418,10 +418,16 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        fh : int, list, np.array or ``ForecastingHorizon``, optional (default=None)
+        fh : int, list, np.array, pd.Index or ``ForecastingHorizon``,
+             optional (default=None)
             The forecasting horizon encoding the time stamps to forecast at.
             Should not be passed if has already been passed in ``fit``.
             If has not been passed in fit, must be passed, not optional
+
+            If fh is not None and not of type ForecastingHorizon it is coerced to
+            ForecastingHorizon via a call to _check_fh. In particular,
+            if fh is of type pd.Index it is coerced via
+            ForecastingHorizon(fh, is_relative=False)
 
         X : time series in ``sktime`` compatible format, optional (default=None)
             Exogeneous time series to use in prediction.
@@ -504,8 +510,12 @@ class BaseForecaster(BaseEstimator):
             For further details on data format, see glossary on :term:`mtype`.
             For usage, see forecasting tutorial ``examples/01_forecasting.ipynb``
 
-        fh : int, list, np.array or ``ForecastingHorizon`` (not optional)
+        fh : int, list, np.array, pd.Index or ``ForecastingHorizon`` (not optional)
             The forecasting horizon encoding the time stamps to forecast at.
+
+            If fh is not None and not of type ForecastingHorizon it is coerced to
+            ForecastingHorizon via a call to _check_fh. In particular, if fh is
+            of type pd.Index it is coerced via ForecastingHorizon(fh, is_relative=False)
 
         X : time series in ``sktime`` compatible format, optional (default=None).
             Exogeneous time series to fit the model to.
@@ -582,10 +592,15 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        fh : int, list, np.array or ``ForecastingHorizon``, optional (default=None)
+        fh : int, list, np.array, pd.Index or ``ForecastingHorizon``,
+             optional (default=None)
             The forecasting horizon encoding the time stamps to forecast at.
             Should not be passed if has already been passed in ``fit``.
             If has not been passed in fit, must be passed, not optional
+
+            If fh is not None and not of type ForecastingHorizon it is coerced to
+            ForecastingHorizon via a call to _check_fh. In particular, if fh is of type
+            pd.Index it is coerced via ForecastingHorizon(fh, is_relative=False)
 
         X : time series in ``sktime`` compatible format, optional (default=None)
             Exogeneous time series to use in prediction.
@@ -663,10 +678,15 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        fh : int, list, np.array or ``ForecastingHorizon``, optional (default=None)
+        fh : int, list, np.array, pd.Index or ``ForecastingHorizon``,
+             optional (default=None)
             The forecasting horizon encoding the time stamps to forecast at.
             Should not be passed if has already been passed in ``fit``.
             If has not been passed in fit, must be passed, not optional
+
+            If fh is not None and not of type ForecastingHorizon it is coerced to
+            ForecastingHorizon via a call to _check_fh. In particular, if fh is of type
+            pd.Index it is coerced via ForecastingHorizon(fh, is_relative=False)
 
         X : time series in ``sktime`` compatible format, optional (default=None)
             Exogeneous time series to use in prediction.
@@ -744,10 +764,15 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        fh : int, list, np.array or ``ForecastingHorizon``, optional (default=None)
+        fh : int, list, np.array, pd.Index or ``ForecastingHorizon``,
+             optional (default=None)
             The forecasting horizon encoding the time stamps to forecast at.
             Should not be passed if has already been passed in ``fit``.
             If has not been passed in fit, must be passed, not optional
+
+            If fh is not None and not of type ForecastingHorizon it is coerced to
+            ForecastingHorizon via a call to _check_fh. In particular, if fh is of type
+            pd.Index it is coerced via ForecastingHorizon(fh, is_relative=False)
 
         X : time series in ``sktime`` compatible format, optional (default=None)
             Exogeneous time series to use in prediction.
@@ -825,10 +850,15 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        fh : int, list, np.array or ``ForecastingHorizon``, optional (default=None)
+        fh : int, list, np.array, pd.Index or ``ForecastingHorizon``,
+             optional (default=None)
             The forecasting horizon encoding the time stamps to forecast at.
             Should not be passed if has already been passed in ``fit``.
             If has not been passed in fit, must be passed, not optional
+
+            If fh is not None and not of type ForecastingHorizon it is coerced to
+            ForecastingHorizon via a call to _check_fh. In particular, if fh is of type
+            pd.Index it is coerced via ForecastingHorizon(fh, is_relative=False)
 
         X : time series in ``sktime`` compatible format, optional (default=None)
             Exogeneous time series to use in prediction.
@@ -1828,7 +1858,10 @@ class BaseForecaster(BaseEstimator):
         Parameters
         ----------
         fh : None, int, list, np.ndarray, pd.index or ForecastingHorizon
-             If fh is a pd.index then set fh = ForecastingHorizon(fh, is_relative=False)
+             If fh is not None and not of type ForecastingHorizon it is coerced to
+             ForecastingHorizon (e.g. in sktime.utils.validation.forecasting.check_fh)
+             In particular, if fh is of type pd.Index it is coerced via
+             ForecastingHorizon(fh, is_relative=False)
         pred_int: Check pred_int:insample tag instead of insample tag.
 
         Returns
