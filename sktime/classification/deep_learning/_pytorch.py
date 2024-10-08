@@ -16,6 +16,14 @@ from sktime.utils.dependencies import _check_soft_dependencies
 if _check_soft_dependencies("torch", severity="none"):
     import torch
     from torch.utils.data import DataLoader, Dataset
+
+    OPTIMIZERS = {
+        "Adadelta": torch.optim.Adadelta,
+        "Adam": torch.optim.Adam,
+        "AdamW": torch.optim.AdamW,
+        "SGD": torch.optim.SGD,
+        "Adagrad": torch.optim.Adagrad,
+    }
 else:
 
     class Dataset:
@@ -63,8 +71,10 @@ class BaseDeepClassifierPytorch(BaseClassifier):
 
         # use this when y has str
         self.label_encoder = None
-
         super().__init__()
+
+        # instantiate optimizers
+        self.optimizers = OPTIMIZERS
 
     def _fit(self, X, y):
         y = self._encode_y(y)
@@ -209,7 +219,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         y_pred = cat(y_pred, dim=0)
         # (batch_size, num_outputs)
         y_pred = F.softmax(y_pred, dim=-1)
-        y_pred = y_pred.numpy()
+        y_pred = y_pred.detach().numpy()
         return y_pred
 
     def _encode_y(self, y):
@@ -269,12 +279,12 @@ class PytorchDataset(Dataset):
         """Get item at index."""
         x = self.X[i]
         x = torch.tensor(x, dtype=torch.float)
-
+        inputs = {"X": x}
         # to make it reusable for predict
         if self.y is None:
-            return x
+            return inputs
 
         # return y during fit
         y = self.y[i]
         y = torch.tensor(y, dtype=torch.long)
-        return x, y
+        return inputs, y
