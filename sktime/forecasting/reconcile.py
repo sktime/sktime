@@ -233,11 +233,13 @@ class ReconcilerForecaster(BaseForecaster):
                 n = base_fc.index.get_slice_bound(label="__total", side="left")
                 if len(base_fc[:n]) == 0:
                     base_fc = base_fc[n:]
-            else:
-                n = base_fc.index.get_slice_bound(label="__total", side="left")
-                base_fc = base_fc[:n]
-            level_values = base_fc.index.get_level_values(-2)
-            base_fc = base_fc[~(level_values == "__total")]
+                else:
+                    n = base_fc.index.get_slice_bound(label="__total", side="left")
+                    base_fc = base_fc[:n]
+                level_values = base_fc.index.get_level_values(-2)
+                base_fc = base_fc[~(level_values == "__total")]
+                return base_fc
+
             return base_fc
 
         base_fc = base_fc.groupby(level=-1)
