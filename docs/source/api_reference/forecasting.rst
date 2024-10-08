@@ -122,7 +122,7 @@ Direct and recursive - ``sktime`` native 2nd generation
     :template: class.rst
 
     DirectReductionForecaster
-
+    RecursiveReductionForecaster
 
 Direct and recursive - 3rd party
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
