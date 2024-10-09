@@ -165,6 +165,8 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         callbacks=None,
         broadcasting=False,
         use_source_package=False,
+        sktime_model=None,
+        tuner=None,
     ):
         super().__init__()
         self.model_path = model_path
@@ -178,6 +180,8 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         self.callbacks = callbacks
         self.broadcasting = broadcasting
         self.use_source_package = use_source_package
+        self.sktime_model = sktime_model
+        self.tuner = tuner
 
         if self.broadcasting:
             self.set_tags(
@@ -187,6 +191,10 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                     "capability:global_forecasting": False,
                 }
             )
+
+        if self.sktime_model:
+            # underlying torch model
+            self._model = sktime_model.get_fitted_params()["model"]
 
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
@@ -284,6 +292,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         # Get the Model
         # self.model, info = PatchTSTForPrediction.from_pretrained(
         # "ibm-granite/granite-timeseries-patchtst",
+
         self.model, info = TinyTimeMixerForPrediction.from_pretrained(
             self.model_path,
             revision=self.revision,
@@ -321,22 +330,35 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
 
         # Get Training Configuration
         training_args = TrainingArguments(**self._training_args)
+        if not hasattr(self, "_model"):
+            # Get the Trainer
+            trainer = Trainer(
+                model=self.model,
+                args=training_args,
+                train_dataset=train,
+                eval_dataset=test,
+                compute_metrics=self.compute_metrics,
+                callbacks=self.callbacks,
+            )
 
-        # Get the Trainer
-        trainer = Trainer(
-            model=self.model,
-            args=training_args,
-            train_dataset=train,
-            eval_dataset=test,
-            compute_metrics=self.compute_metrics,
-            callbacks=self.callbacks,
-        )
+            # Train the model
+            trainer.train()
 
-        # Train the model
-        trainer.train()
+            # Get the model
+            self.model = trainer.model
+        else:
+            fitted_peft_model = self.tuner.train(
+                self._model,
+                train,
+                test,
+                training_args,
+                self.compute_metrics,
+                self.callbacks,
+            )
 
-        # Get the model
-        self.model = trainer.model
+            self.model = fitted_peft_model
+
+        self.model_ = self.model
 
     def _predict(self, fh, X, y=None):
         """Forecast time series at future horizon.
