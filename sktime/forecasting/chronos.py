@@ -39,10 +39,39 @@ class ChronosForecaster(_BaseGlobalForecaster):
     ----------
     model_path : str
         Path to the Chronos' huggingface model.
-    config : dict, default={}
-        Configuration to use for the model.
+
+    config : dict, optional, default={}
+        A dictionary specifying the configuration settings for the model.
+        The available configuration options include hyperparameters that control
+        the prediction behavior, sampling, and hardware preferences. The dictionary
+        can include the following keys:
+
+        - "num_samples" : int, optional
+            The number of samples to generate during prediction. Median of these samples
+            is taken to get prediction for each timestamp.
+        - "temperature" : float, optional
+            Sampling temperature for prediction. A higher value increases the randomness
+            of predictions, while a lower value makes them more deterministic.
+        - "top_k" : int, optional
+            Limits the sampling pool to the top k predictions during sampling.
+        - "top_p" : float, optional
+            Cumulative probability threshold for nucleus sampling.
+            Controls the diversity of the predictions.
+        - "limit_prediction_length" : bool, default=False
+            If True, limits the length of the predictions to the model's context length.
+        - "torch_dtype" : torch.dtype, default=torch.bfloat16
+            Data type to use for model weights and operations (e.g., `torch.float32`,
+            `torch.float16`, or `torch.bfloat16`).
+        - "device_map" : str, default="cpu"
+            Specifies the device on which to run the model, e.g.,
+            "cpu" for CPU inference, "cuda" for GPU, or "mps" for Apple Silicon.
+
+        If not provided, the default values from the pretrained model or system
+        configuration are used.
+
     seed: int, optional, default=None
         Random seed for transformers.
+
     use_source_package: bool, optional, default=False
         If True, the model will be loaded directly from the source package ``chronos``.
         This is useful if you want to bypass the local version of the package
@@ -51,6 +80,7 @@ class ChronosForecaster(_BaseGlobalForecaster):
         If False, the model will be loaded from the local version of package maintained
         in sktime.
         To install the source package, follow the instructions here [1]_.
+
     ignore_deps: bool, optional, default=False
         If True, dependency checks will be ignored, and the user is expected to handle
         the installation of required packages manually. If False, the class will enforce
