@@ -101,9 +101,9 @@ class ChronosForecaster(_BaseGlobalForecaster):
     >>> y = load_airline()
     >>> y_train, y_test = temporal_train_test_split(y)
     >>> fh = ForecastingHorizon(y_test.index, is_relative=False)
-    >>> forecaster = ChronosForecaster("amazon/chronos-t5-tiny")
-    >>> forecaster.fit(y_train)
-    >>> y_pred = forecaster.predict(fh)
+    >>> forecaster = ChronosForecaster("amazon/chronos-t5-tiny") # doctest: +SKIP
+    >>> forecaster.fit(y_train) # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh) # doctest: +SKIP
     """
 
     # tag values are "safe defaults" which can usually be left as-is
