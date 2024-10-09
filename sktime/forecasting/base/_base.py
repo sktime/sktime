@@ -23,7 +23,7 @@ Optional, special capability methods (check capability tags if available):
 Inspection methods:
     hyper-parameter inspection  - get_params()
     fitted parameter inspection - get_fitted_params()
-    current ForecastngHorizon  - fh
+    current ForecastingHorizon  - fh
     current cutoff              - cutoff
 
 State:
@@ -1918,9 +1918,6 @@ class BaseForecaster(BaseEstimator):
         # B. fh is passed
         else:
             # If fh is passed, coerce to ForecastingHorizon and validate (all cases)
-
-            if isinstance(fh, pd.Index):
-                fh = ForecastingHorizon(fh, is_relative=False)
 
             # if vectorized only check freq against the inner loop cutoff (check each
             # fcstr) since cutoff/frequency can be different for each compared to the
