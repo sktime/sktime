@@ -241,11 +241,6 @@ class SPCI(BaseForecaster):
              for list of mtypes, see datatypes.SCITYPE_REGISTER
              for specifications, see examples/AA_datatypes_and_datasets.ipynb
 
-        Raises
-        ------
-        ValueError
-            If fh is not equal to 1.
-
         Returns
         -------
         self : reference to self
