@@ -1,6 +1,8 @@
 """Implements Chronos forecaster."""
 
-__author__ = ["Z-Fran", "benheid"]
+__author__ = ["abdulfatir", "lostella", "Z-Fran", "benheid"]
+# abdulfatir and lostella for google-research/timesfm
+
 # __all__ = ["ChronosForecaster"]
 
 from typing import Optional
@@ -70,7 +72,7 @@ class ChronosForecaster(_BaseGlobalForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
-        "authors": ["Z-Fran", "benheid"],  # TODO original authors!,
+        "authors": ["abdulfatir", "lostella", "Z-Fran", "benheid"],
     }
 
     _default_config = {
