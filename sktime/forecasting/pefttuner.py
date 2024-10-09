@@ -39,3 +39,9 @@ class PeftTuner(BaseTuner):
 
         trainer.train()
         return peft_model
+
+
+# keep in mind to investigate: help the user figure out how target_modules
+# fix html representation for peft
+# global forecaster can be recursively called on the previous one
+# drawback - investigations of how to integrate peft library methods to this design

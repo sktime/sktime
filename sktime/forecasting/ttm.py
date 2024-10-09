@@ -182,7 +182,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         self.use_source_package = use_source_package
         self.sktime_model = sktime_model
         self.tuner = tuner
-
+        # self._tuner = self.tuner if self.tuner else DefaultTuner()
         if self.broadcasting:
             self.set_tags(
                 **{
@@ -292,7 +292,8 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         # Get the Model
         # self.model, info = PatchTSTForPrediction.from_pretrained(
         # "ibm-granite/granite-timeseries-patchtst",
-
+        # if not self._model:
+        # self._model instead of self.model
         self.model, info = TinyTimeMixerForPrediction.from_pretrained(
             self.model_path,
             revision=self.revision,
