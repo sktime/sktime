@@ -4,7 +4,7 @@
 _all_ = ["SPCIForecaster"]
 __author__ = ["ksharma6"]
 
-
+from sklearn.utils import check_random_state
 from skpro.regression.base import BaseProbaRegressor
 
 from sktime.forecasting.base import BaseForecaster
@@ -227,7 +227,7 @@ class SPCI(BaseForecaster):
         ----------
         y : sktime compatible tabular data container, Table scitype
             numpy1D iterable, of shape [n_instances]
-        fh : guaranteed to be ForecastingHorizon equal to 1.
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
             The forecasting horizon with the steps ahead to to predict.
             Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
             Otherwise, if not passed in _fit, guaranteed to be passed in _predict
@@ -250,22 +250,29 @@ class SPCI(BaseForecaster):
         -------
         self : reference to self
         """
+        self._fh = fh
 
-        # implement here
-        # IMPORTANT: avoid side effects to y, X, fh
-        #
-        # any model parameters should be written to attributes ending in "_"
-        #  attributes set by the constructor must not be overwritten
-        #  if used, estimators should be cloned to attributes ending in "_"
-        #  the clones, not the originals should be used or fitted if needed
-        #
-        # Note: when interfacing a model that has fit, with parameters
-        #   that are not data (y, X) or forecasting-horizon-like,
-        #   but model parameters, *don't* add as arguments to fit, but treat as follows:
-        #   1. pass to constructor,  2. write to self in constructor,
-        #   3. read from self in _fit,  4. pass to interfaced_model.fit in _fit
+        # random state handling passed into input estimators
+        self.random_state_ = check_random_state(self.random_state)
 
-    # todo: implement this, mandatory
+        # calculate + store point predictions from forecaster_
+        f_hats = []
+
+        for i in range(len(y) - fh):
+            self.forecaster_.fit(y=y[: i + fh], X=X[: i + fh], fh=fh)
+            f_hat = self.forecaster_.predict(fh=fh, X=X)
+            f_hats.append(f_hat)
+
+        # calculate + store residuals from regressor_proba_
+        residuals = []
+        for i in range(len(f_hats)):
+            residual = f_hats[i] - y[i]
+            residuals.append(residual)
+
+        # fit regressor to point prediction residuals
+        self.regressor_proba_.fit(X=residuals, y=y)
+
+        return self
 
     def _predict(self, X):
         """Calculate upper and lower bounds of prediction intervals.
@@ -313,7 +320,8 @@ class SPCI(BaseForecaster):
         -------
         self : reference to self
         """
-        pass
+        self.fit(y=self._y, X=self._X, fh=self._fh)
+        return self
 
     def _predict_interval(self, X, coverage):
         """Compute/return prediction interval forecasts.
