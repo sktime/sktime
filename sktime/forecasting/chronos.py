@@ -3,7 +3,7 @@
 __author__ = ["abdulfatir", "lostella", "Z-Fran", "benheid"]
 # abdulfatir and lostella for google-research/timesfm
 
-# __all__ = ["ChronosForecaster"]
+__all__ = ["ChronosForecaster"]
 
 from typing import Optional
 
