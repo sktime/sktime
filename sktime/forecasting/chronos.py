@@ -12,7 +12,6 @@ import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
-from sktime.libs.chronos import ChronosPipeline
 
 if _check_soft_dependencies("torch", severity="none"):
     import torch
@@ -29,7 +28,12 @@ if _check_soft_dependencies("transformers", severity="none"):
 
 
 class ChronosForecaster(_BaseGlobalForecaster):
-    """Chronos forecaster.
+    """
+    Implementation of Chronos for Zero-Shot Forecasting.
+
+    Chronos is a pretrained time-series foundation model
+    developed by Amazon for time-series forecasting. This method has been
+    proposed in [2]_ and official code is given at [1]_.
 
     Parameters
     ----------
@@ -39,6 +43,24 @@ class ChronosForecaster(_BaseGlobalForecaster):
         Configuration to use for the model.
     seed: int, optional, default=None
         Random seed for transformers.
+    use_source_package: bool, optional, default=False
+        If True, the model will be loaded directly from the source package ``chronos``.
+        This is useful if you want to bypass the local version of the package
+        or when working in an environment where the latest updates
+        from the source package are needed.
+        If False, the model will be loaded from the local version of package maintained
+        in sktime.
+        To install the source package, follow the instructions here [1]_.
+    ignore_deps: bool, optional, default=False
+        If True, dependency checks will be ignored, and the user is expected to handle
+        the installation of required packages manually. If False, the class will enforce
+        the default dependencies required for TimesFM.
+
+    References
+    ----------
+    .. [1] https://github.com/amazon-science/chronos-forecasting
+    .. [2] Abdul Fatir Ansari, Lorenzo Stella, Caner Turkmen, and others (2024).
+    Chronos: Learning the Language of Time Series
 
     Examples
     --------
@@ -90,9 +112,9 @@ class ChronosForecaster(_BaseGlobalForecaster):
         model_path: str,
         config: dict = None,
         seed: Optional[int] = None,
+        use_source_package: bool = False,
+        ignore_deps: bool = False,
     ):
-        super().__init__()
-
         # set random seed
         self.seed = seed
         self._seed = np.random.randint(0, 2**31) if seed is None else seed
@@ -106,6 +128,17 @@ class ChronosForecaster(_BaseGlobalForecaster):
         self.model_path = model_path
         self.model_pipeline = None
         self.context = None
+        self.use_source_package = use_source_package
+        self.ignore_deps = ignore_deps
+
+        if self.ignore_deps:
+            self.set_tags(python_dependencies=[])
+        elif self.use_source_package:
+            self.set_tags(python_dependencies=["chronos"])
+        else:
+            self.set_tags(python_dependencies=["torch", "transformers", "accelerate"])
+
+        super().__init__()
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -125,12 +158,19 @@ class ChronosForecaster(_BaseGlobalForecaster):
         -------
         self : reference to self
         """
-        if self.model_pipeline is None:
-            self.model_pipeline = ChronosPipeline.from_pretrained(
-                self.model_path,
-                torch_dtype=self._config["torch_dtype"],
-                device_map=self._config["device_map"],
-            )
+        if self.model_pipeline is not None:
+            return
+
+        if self.use_source_package:
+            from chronos import ChronosPipeline
+        else:
+            from sktime.libs.chronos import ChronosPipeline
+
+        self.model_pipeline = ChronosPipeline.from_pretrained(
+            self.model_path,
+            torch_dtype=self._config["torch_dtype"],
+            device_map=self._config["device_map"],
+        )
 
     def _predict(self, fh, y=None, X=None):
         """Forecast time series at future horizon.
