@@ -108,7 +108,7 @@ class ChronosForecaster(_BaseGlobalForecaster):
 
     # tag values are "safe defaults" which can usually be left as-is
     _tags = {
-        "python_dependencies": ["torch", "transformers"],
+        "python_dependencies": ["torch", "transformers", "accelerate"],
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
