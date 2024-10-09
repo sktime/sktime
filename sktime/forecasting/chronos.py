@@ -1,7 +1,7 @@
 """Implements Chronos forecaster."""
 
 __author__ = ["abdulfatir", "lostella", "Z-Fran", "benheid", "geetu040"]
-# abdulfatir and lostella for google-research/timesfm
+# abdulfatir and lostella for amazon-science/chronos-forecasting
 
 __all__ = ["ChronosForecaster"]
 
@@ -12,6 +12,7 @@ import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
+from sktime.utils.singleton import _multiton
 
 if _check_soft_dependencies("torch", severity="none"):
     import torch
@@ -84,7 +85,7 @@ class ChronosForecaster(_BaseGlobalForecaster):
     ignore_deps: bool, optional, default=False
         If True, dependency checks will be ignored, and the user is expected to handle
         the installation of required packages manually. If False, the class will enforce
-        the default dependencies required for TimesFM.
+        the default dependencies required for Chronos.
 
     References
     ----------
@@ -125,7 +126,7 @@ class ChronosForecaster(_BaseGlobalForecaster):
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
         "authors": ["abdulfatir", "lostella", "Z-Fran", "benheid", "geetu040"],
-        # abdulfatir and lostella for google-research/timesfm
+        # abdulfatir and lostella for amazon-science/chronos-forecasting
     }
 
     _default_config = {
@@ -157,7 +158,6 @@ class ChronosForecaster(_BaseGlobalForecaster):
         self._config = _config
 
         self.model_path = model_path
-        self.model_pipeline = None
         self.context = None
         self.use_source_package = use_source_package
         self.ignore_deps = ignore_deps
@@ -189,19 +189,31 @@ class ChronosForecaster(_BaseGlobalForecaster):
         -------
         self : reference to self
         """
-        if self.model_pipeline is not None:
-            return
+        self.model_pipeline = _CachedChronos(
+            key=self._get_unique_chronos_key(),
+            chronos_kwargs=self._get_chronos_kwargs(),
+            use_source_package=self.use_source_package,
+        ).load_from_checkpoint()
 
-        if self.use_source_package:
-            from chronos import ChronosPipeline
-        else:
-            from sktime.libs.chronos import ChronosPipeline
+    def _get_chronos_kwargs(self):
+        """Get the kwargs for Chronos model."""
+        return {
+            "pretrained_model_name_or_path": self.model_path,
+            "torch_dtype": self._config["torch_dtype"],
+            "device_map": self._config["device_map"],
+        }
 
-        self.model_pipeline = ChronosPipeline.from_pretrained(
-            self.model_path,
-            torch_dtype=self._config["torch_dtype"],
-            device_map=self._config["device_map"],
-        )
+    def _get_unique_chronos_key(self):
+        """Get unique key for Chronos model to use in multiton."""
+        model_path = self.model_path
+        use_source_package = self.use_source_package
+        kwargs = self._get_chronos_kwargs()
+        kwargs_plus_model_path = {
+            **kwargs,
+            "model_path": model_path,
+            "use_source_package": use_source_package,
+        }
+        return str(sorted(kwargs_plus_model_path.items()))
 
     def _predict(self, fh, y=None, X=None):
         """Forecast time series at future horizon.
@@ -339,3 +351,33 @@ def _frame2numpy(data):
         (-1, length, len(data.columns))
     )
     return arr
+
+
+@_multiton
+class _CachedChronos:
+    """Cached Chronos model, to ensure only one instance exists in memory.
+
+    Chronos is a zero shot model and immutable, hence there will not be
+    any side effects of sharing the same instance across multiple uses.
+    """
+
+    def __init__(self, key, chronos_kwargs, use_source_package):
+        self.key = key
+        self.chronos_kwargs = chronos_kwargs
+        self.use_source_package = use_source_package
+        self.model_pipeline = None
+
+    def load_from_checkpoint(self):
+        if self.model_pipeline is not None:
+            return self.model_pipeline
+
+        if self.use_source_package:
+            from chronos import ChronosPipeline
+        else:
+            from sktime.libs.chronos import ChronosPipeline
+
+        self.model_pipeline = ChronosPipeline.from_pretrained(
+            **self.chronos_kwargs,
+        )
+
+        return self.model_pipeline
