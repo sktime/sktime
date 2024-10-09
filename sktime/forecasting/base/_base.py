@@ -54,7 +54,6 @@ from sktime.datatypes import (
     update_data,
 )
 from sktime.datatypes._dtypekind import DtypeKind
-from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.utils.datetime import _shift
 from sktime.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
@@ -1288,7 +1287,7 @@ class BaseForecaster(BaseEstimator):
         # if data frame: take directly from y
         # to avoid issues with _set_fh, we convert to relative if self.fh is
         if isinstance(y, (pd.DataFrame, pd.Series)):
-            fh = ForecastingHorizon(y.index, is_relative=False, freq=self._cutoff)
+            fh = check_fh(fh=y.index, freq=self._cutoff)
             if self._fh is not None and self.fh.is_relative:
                 fh = fh.to_relative(self._cutoff)
             fh = self._check_fh(fh)
