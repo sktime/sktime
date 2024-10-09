@@ -54,10 +54,10 @@ classifiers = [
 # this set should be kept minimal!
 dependencies = [
   "joblib<1.5,>=1.2.0",  # required for parallel processing
-  "numpy<2.1,>=1.21",  # required for framework layer and base class logic
+  "numpy<2.2,>=1.21",  # required for framework layer and base class logic
   "packaging",  # for estimator specific dependency parsing
   "pandas<2.3.0,>=1.1",  # pandas is the main in-memory data container
-  "scikit-base>=0.6.1,<0.11.0",  # base module for sklearn compatible base API
+  "scikit-base>=0.6.1,<0.12.0",  # base module for sklearn compatible base API
   "scikit-learn>=0.24,<1.6.0",  # required for estimators and framework layer
   "scipy<2.0.0,>=1.2",  # required for estimators and framework layer
 ]
@@ -156,7 +156,7 @@ all_extras_pandas2 = [
   'tbats>=1.1; python_version < "3.12"',
   'temporian<0.9.0,>=0.7.0,!=0.8.0; python_version < "3.12" and sys_platform != "win32"',
   'tensorflow<2.17,>=2; python_version < "3.12"',
-  'tsbootstrap<0.2,>=0.1.0',
+  'tsbootstrap<0.2,>=0.1.0; python_version < "3.13"',
   'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   'xarray; python_version < "3.13"',
