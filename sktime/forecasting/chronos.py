@@ -3,7 +3,7 @@
 __author__ = ["abdulfatir", "lostella", "Z-Fran", "benheid"]
 # abdulfatir and lostella for google-research/timesfm
 
-__all__ = ["ChronosForecaster"]
+# __all__ = ["ChronosForecaster"]
 
 from typing import Optional
 
@@ -108,7 +108,7 @@ class ChronosForecaster(_BaseGlobalForecaster):
 
     # tag values are "safe defaults" which can usually be left as-is
     _tags = {
-        "python_dependencies": ["torch", "transformers", "accelerate"],
+        "python_dependencies": ["torch", "transformers"],
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
@@ -303,15 +303,21 @@ class ChronosForecaster(_BaseGlobalForecaster):
         -------
         params : dict or list of dict
         """
-        test_params = [
+        test_params = []
+        test_params.append(
+            {
+                "model_path": "amazon/chronos-t5-tiny",
+            }
+        )
+        test_params.append(
             {
                 "model_path": "amazon/chronos-t5-tiny",
                 "config": {
                     "num_samples": 20,
                 },
                 "seed": 42,
-            },
-        ]
+            }
+        )
 
         return test_params
 
