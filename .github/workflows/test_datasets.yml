@@ -11,7 +11,7 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
-          - "3.13.0-rc.3"
+          - "3.13"
         operating-system:
           - macos-13
           - ubuntu-latest
