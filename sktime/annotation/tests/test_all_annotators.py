@@ -5,6 +5,7 @@ __all__ = []
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 from sktime.utils._testing.annotation import make_annotation_problem
@@ -31,6 +32,15 @@ class AnnotatorsFixtureGenerator(BaseFixtureGenerator):
 
     estimator_type_filter = "series-annotator"
 
+    fixture_sequence = [
+        "estimator_class",
+        "estimator_instance",
+        "fitted_estimator",
+        "scenario",
+        "method_nsc",
+        "method_nsc_arraylike",
+    ]
+
 
 class TestAllAnnotators(AnnotatorsFixtureGenerator, QuickTester):
     """Module level tests for all sktime annotators."""
@@ -39,15 +49,64 @@ class TestAllAnnotators(AnnotatorsFixtureGenerator, QuickTester):
         """Test annotator output type."""
         estimator = estimator_instance
 
-        arg = make_annotation_problem(
+        X_train = make_annotation_problem(
             n_timepoints=50, estimator_type=estimator.get_tag("distribution_type")
         )
-        estimator.fit(arg)
-        arg = make_annotation_problem(
+        estimator.fit(X_train)
+        X_test = make_annotation_problem(
             n_timepoints=10, estimator_type=estimator.get_tag("distribution_type")
         )
-        y_pred = estimator.predict(arg)
+        y_test = estimator.predict(X_test)
+        assert isinstance(y_test, (pd.Series, np.ndarray))
+
+    def test_transform_output_type(self, estimator_instance):
+        """Test output type for the transform method."""
+        X_train = make_annotation_problem(
+            n_timepoints=50,
+            estimator_type=estimator_instance.get_tag("distribution_type"),
+        )
+        estimator_instance.fit(X_train)
+        X_test = make_annotation_problem(
+            n_timepoints=10,
+            estimator_type=estimator_instance.get_tag("distribution_type"),
+        )
+        y_test = estimator_instance.transform(X_test)
+        assert isinstance(y_test, (pd.Series, np.ndarray))
+        assert len(y_test) == len(X_test)
+
+    def test_predict_points(self, estimator_instance):
+        X_train = make_annotation_problem(
+            n_timepoints=50,
+            estimator_type=estimator_instance.get_tag("distribution_type"),
+        )
+        estimator_instance.fit(X_train)
+        X_test = make_annotation_problem(
+            n_timepoints=10,
+            estimator_type=estimator_instance.get_tag("distribution_type"),
+        )
+        y_pred = estimator_instance.predict_points(X_test)
         assert isinstance(y_pred, (pd.Series, np.ndarray))
+
+    def test_predict_segments(self, estimator_instance):
+        X_train = make_annotation_problem(
+            n_timepoints=50,
+            estimator_type=estimator_instance.get_tag("distribution_type"),
+        )
+        estimator_instance.fit(X_train)
+
+        X_test = make_annotation_problem(
+            n_timepoints=10,
+            estimator_type=estimator_instance.get_tag("distribution_type"),
+        )
+        task = estimator_instance.get_class_tag("task")
+        if task == "anomaly_detection":
+            with pytest.raises(RuntimeError):
+                estimator_instance.predict_segments(X_test)
+
+        y_test = estimator_instance.predict_segments(X_test)
+        assert isinstance(y_test, pd.Series)
+        assert isinstance(y_test.index.dtype, pd.IntervalDtype)
+        assert pd.api.types.is_integer_dtype(y_test)
 
     def test_annotator_tags(self, estimator_class):
         """Check the learning_type and task tags are valid."""
