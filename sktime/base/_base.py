@@ -590,7 +590,7 @@ class TagAliaserMixin:
 class BaseEstimator(BaseObject):
     """Base class for defining estimators in sktime.
 
-    Extends sktime's BaseObject to include basic functionality for fittable estimators.
+    Extends sktime BaseObject to include basic functionality for fittable estimators.
     """
 
     def __init__(self):
