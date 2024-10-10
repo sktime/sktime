@@ -509,6 +509,14 @@ Pre-trained and foundation models
 
     ChronosForecaster
 
+.. currentmodule:: sktime.forecasting.moirai_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MOIRAIForecaster
+
 .. currentmodule:: sktime.forecasting.timesfm_forecaster
 
 .. autosummary::
@@ -524,14 +532,6 @@ Pre-trained and foundation models
     :template: class.rst
 
     TinyTimeMixerForecaster
-
-.. currentmodule:: sktime.forecasting.moirai_forecaster
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    MOIRAIForecaster
 
 Intermittent time series forecasters
 ------------------------------------
