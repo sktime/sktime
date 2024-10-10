@@ -112,7 +112,12 @@ class ChronosForecaster(_BaseGlobalForecaster):
         # packaging info
         # --------------
         "authors": [
-            "abdulfatir", "lostella", "Z-Fran", "benheid", "geetu040", "rigvedmanoj"
+            "abdulfatir",
+            "lostella",
+            "Z-Fran",
+            "benheid",
+            "geetu040",
+            "rigvedmanoj",
         ],
         # abdulfatir and lostella for amazon-science/chronos-forecasting
         "maintainers": ["geetu040"],
