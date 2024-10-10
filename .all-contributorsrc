@@ -3072,12 +3072,30 @@
       ]
     },
     {
-      "login":"jan-mue",
+      "login": "jan-mue",
       "name": "Jan Müller",
       "avatar_url": "https://avatars.githubusercontent.com/u/6440416?v=4",
       "profile": "https://github.com/jan-mue",
       "contributions": [
         "doc"
+      ]
+    },
+    {
+      "login": "Z-Fran",
+      "name": "Jindong Zhang",
+      "avatar_url": "https://avatars.githubusercontent.com/u/49083766?v=4",
+      "profile": "https://github.com/Z-Fran",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "RigvedManoj",
+      "name": "Rigved Manoj",
+      "avatar_url": "https://avatars.githubusercontent.com/u/28307990?v=4",
+      "profile": "https://github.com/RigvedManoj",
+      "contributions": [
+        "code"
       ]
     }
   ]
