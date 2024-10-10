@@ -4,6 +4,8 @@
 __author__ = ["shlok191"]
 
 
+from skbase.utils.dependencies import _check_soft_dependencies
+
 from sktime.forecasting.base import _BaseGlobalForecaster
 
 
@@ -81,7 +83,7 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         "authors": ["shlok191"],
         "maintainers": ["shlok191"],
         "python_version": None,
-        "python_dependencies": ["gluonts", "huggingface-hub", "lag-llama"],
+        "python_dependencies": ["gluonts", "huggingface-hub"],
     }
 
     def __init__(
@@ -95,6 +97,7 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         lr=None,
         trainer_kwargs=None,
         shuffle_buffer_length=None,
+        use_source_package=False,
     ):
         # Initializing parent class
         super().__init__()
@@ -148,6 +151,8 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         estimator_args = ckpt["hyper_parameters"]["model_kwargs"]
         self.estimator_args = estimator_args
 
+        self.use_source_package = use_source_package
+
     def _reform_y(self, y):
         from gluonts.dataset.common import ListDataset
 
@@ -197,7 +202,11 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         -------
         self : reference to self
         """
-        from lag_llama.gluon.estimator import LagLlamaEstimator
+        if self.use_source_package:
+            if _check_soft_dependencies("lag-llama"):
+                from lag_llama.gluon.estimator import LagLlamaEstimator
+        else:
+            from sktime.libs.lag_llama.gluon.estimator import LagLlamaEstimator
 
         # Creating a new LagLlama estimator with the appropriate
         # forecasting horizon
