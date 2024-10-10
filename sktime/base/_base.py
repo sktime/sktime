@@ -77,6 +77,8 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
     """Base class for parametric objects with tags in sktime.
 
     Extends skbase BaseObject with additional features.
+
+    Test this!
     """
 
     # global default tags for dependency management
@@ -588,7 +590,7 @@ class TagAliaserMixin:
 class BaseEstimator(BaseObject):
     """Base class for defining estimators in sktime.
 
-    Extends sktime's BaseObject to include basic functionality for fittable estimators.
+    Extends sktime BaseObject to include basic functionality for fittable estimators.
     """
 
     def __init__(self):

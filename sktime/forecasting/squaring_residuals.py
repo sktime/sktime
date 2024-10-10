@@ -308,14 +308,17 @@ class SquaringResiduals(BaseForecaster):
             Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
-        eval(f"exec('from scipy.stats import {self.distr}')")
+        from scipy import stats
+
+        dist_fun = getattr(stats, self.distr)
+
         fh_abs = fh.to_absolute(self.cutoff)
         y_pred = self._forecaster_.predict(fh=fh_abs, X=X)
         pred_var = self._predict_var(fh=fh, X=X)
         if self.distr_kwargs is not None:
-            z_scores = eval(self.distr).ppf(alpha, **self.distr_kwargs)
+            z_scores = dist_fun.ppf(alpha, **self.distr_kwargs)
         else:
-            z_scores = eval(self.distr).ppf(alpha)
+            z_scores = dist_fun.ppf(alpha)
 
         errors = [pred_var * z for z in z_scores]
 
