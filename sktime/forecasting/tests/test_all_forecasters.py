@@ -647,21 +647,30 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         if contains_interval_adapter and not implements_interval_adapter:
             return None
 
+        # below, we check the following things:
+        #    the class value of the tag capability:pred_int,
+        #    should be True iff the forecaster implements
+        #    probabilistic forecasting, this is the condition "pred_int_works" below
+
         # check which methods are implemented
+        implements_var = f._has_implementation_of("_predict_var")
         implements_interval = f._has_implementation_of("_predict_interval")
         implements_quantiles = f._has_implementation_of("_predict_quantiles")
         implements_proba = f._has_implementation_of("_predict_proba")
 
-        pred_int_works = implements_interval or implements_quantiles or implements_proba
+        pred_int_impl = implements_interval or implements_quantiles or implements_proba
+        pred_int_impl = pred_int_impl or implements_var
 
-        if not pred_int_works and f.get_class_tag("capability:pred_int", False):
+        cls_tag = f.get_class_tag("capability:pred_int", False)
+
+        if not pred_int_impl and cls_tag:
             raise ValueError(
                 f"{type(f).__name__} does not implement probabilistic forecasting, "
                 'but "capability:pred_int" flag has been set to True incorrectly. '
                 'The flag "capability:pred_int" should instead be set to False.'
             )
 
-        if pred_int_works and not f.get_class_tag("capability:pred_int", False):
+        if pred_int_impl and not cls_tag:
             raise ValueError(
                 f"{type(f).__name__} does implement probabilistic forecasting, "
                 'but "capability:pred_int" flag has been set to False incorrectly. '
@@ -1108,11 +1117,11 @@ class TestAllGlobalForecasters(TestAllObjects):
             data = data.iloc[:-n]
         return data
 
-    def _multiindex_data(self, max_prediction_length, data_length=100):
+    def _multiindex_data(self, max_prediction_length, data_length=20):
         from sktime.utils._testing.hierarchical import _make_hierarchical
 
         data = _make_hierarchical(
-            (500, 1),
+            (70, 1),
             n_columns=2,
             max_timepoints=data_length,
             min_timepoints=data_length,
@@ -1133,11 +1142,11 @@ class TestAllGlobalForecasters(TestAllObjects):
         y_test = self._remove_last_n(y_test, max_prediction_length)
         return X_train, y_train, X_test, y_test
 
-    def _multiindex_hier_data(self, max_prediction_length, data_length=100):
+    def _multiindex_hier_data(self, max_prediction_length, data_length=20):
         from sktime.utils._testing.hierarchical import _make_hierarchical
 
         data = _make_hierarchical(
-            (5, 100),
+            (7, 10),
             n_columns=2,
             max_timepoints=data_length,
             min_timepoints=data_length,
