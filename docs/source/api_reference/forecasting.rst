@@ -488,13 +488,6 @@ Deep learning based forecasters
 
     PyKANForecaster
 
-.. currentmodule:: sktime.forecasting.chronos
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    ChronosForecaster
 
 
 Pre-trained and foundation models
@@ -507,6 +500,14 @@ Pre-trained and foundation models
     :template: class.rst
 
     HFTransformersForecaster
+
+.. currentmodule:: sktime.forecasting.chronos
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ChronosForecaster
 
 .. currentmodule:: sktime.forecasting.timesfm_forecaster
 
