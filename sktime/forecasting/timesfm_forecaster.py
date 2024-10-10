@@ -14,7 +14,7 @@ from sktime.utils.singleton import _multiton
 from sktime.utils.warnings import warn
 
 
-# TODO: remove this class with the
+# TODO 0.33.3: remove this class with the
 # pytorch based class in https://github.com/sktime/sktime/pull/7155
 class TimesFMForecaster(_BaseGlobalForecaster):
     """
