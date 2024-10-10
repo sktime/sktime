@@ -89,7 +89,7 @@ def build_obj():
         # copy/update needed to ensure compliance with python 3.13 and python <3.13
         locals_copy = locals()
         exec(spec_fun, globals=globals(), locals=locals_copy)
-        locals.update(locals_copy)
+        locals().update(locals_copy)
 
         obj = eval("build_obj()")
 
