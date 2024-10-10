@@ -439,7 +439,7 @@ Structural time series models
     DynamicFactor
 
 Deep learning based forecasters
----------------------------------------------
+-------------------------------
 
 .. currentmodule:: sktime.forecasting.ltsf
 
@@ -451,30 +451,6 @@ Deep learning based forecasters
     LTSFDLinearForecaster
     LTSFNLinearForecaster
     LTSFTransformerForecaster
-
-.. currentmodule:: sktime.forecasting.hf_transformers_forecaster
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    HFTransformersForecaster
-
-.. currentmodule:: sktime.forecasting.timesfm_forecaster
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    TimesFMForecaster
-
-.. currentmodule:: sktime.forecasting.ttm
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    TinyTimeMixerForecaster
 
 .. currentmodule:: sktime.forecasting.conditional_invertible_neural_network
 
@@ -512,6 +488,41 @@ Deep learning based forecasters
 
     PyKANForecaster
 
+
+Pre-trained and foundation models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.forecasting.hf_transformers_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HFTransformersForecaster
+
+.. currentmodule:: sktime.forecasting.timesfm_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimesFMForecaster
+
+.. currentmodule:: sktime.forecasting.ttm
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TinyTimeMixerForecaster
+
+.. currentmodule:: sktime.forecasting.moirai_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MOIRAIForecaster
 
 Intermittent time series forecasters
 ------------------------------------
