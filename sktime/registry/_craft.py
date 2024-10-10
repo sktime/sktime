@@ -85,7 +85,7 @@ def build_obj():
         """
             + spec_fun
         )
-        exec(spec_fun, locals())
+        exec(spec_fun, globals=locals())
         obj = eval("build_obj()")
 
     return obj
