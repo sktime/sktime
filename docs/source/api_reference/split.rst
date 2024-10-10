@@ -53,6 +53,7 @@ They have tag ``"split_type"="temporal"``.
     ExpandingWindowSplitter
     ExpandingCutoffSplitter
     ExpandingGreedySplitter
+    ExpandingSlidingWindowSplitter
     TemporalTrainTestSplitter
 
 
