@@ -30,7 +30,7 @@ if _check_soft_dependencies("transformers", severity="none"):
 
 class ChronosForecaster(_BaseGlobalForecaster):
     """
-    Implementation of Chronos for Zero-Shot Forecasting.
+    Interface to the Chronos Zero-Shot Forecaster by Amazon Research.
 
     Chronos is a pretrained time-series foundation model
     developed by Amazon for time-series forecasting. This method has been
@@ -39,7 +39,7 @@ class ChronosForecaster(_BaseGlobalForecaster):
     Parameters
     ----------
     model_path : str
-        Path to the Chronos' huggingface model.
+        Path to the Chronos huggingface model.
 
     config : dict, optional, default={}
         A dictionary specifying the configuration settings for the model.
@@ -109,7 +109,16 @@ class ChronosForecaster(_BaseGlobalForecaster):
 
     # tag values are "safe defaults" which can usually be left as-is
     _tags = {
+        # packaging info
+        # --------------
+        "authors": [
+            "abdulfatir", "lostella", "Z-Fran", "benheid", "geetu040", "rigvedmanoj"
+        ],
+        # abdulfatir and lostella for amazon-science/chronos-forecasting
+        "maintainers": ["geetu040"],
         "python_dependencies": ["torch", "transformers", "accelerate"],
+        # estimator type
+        # --------------
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
@@ -125,8 +134,6 @@ class ChronosForecaster(_BaseGlobalForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
-        "authors": ["abdulfatir", "lostella", "Z-Fran", "benheid", "geetu040"],
-        # abdulfatir and lostella for amazon-science/chronos-forecasting
     }
 
     _default_config = {
