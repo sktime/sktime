@@ -3,6 +3,7 @@
 
 import abc
 import functools
+import inspect
 import os
 import time
 import typing
@@ -56,7 +57,11 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         # --------------
         "authors": ["XinyuWu"],
         "maintainers": ["XinyuWu"],
-        "python_dependencies": ["pytorch-forecasting>=1.0.0"],
+        "python_dependencies": [
+            "pytorch-forecasting>=1.0.0",
+            "torch",
+            "lightning",
+        ],
         # estimator type
         # --------------
         "y_inner_mtype": [
@@ -294,12 +299,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         while ``y`` should only contain historical values
         not the time points to be predicted.
         """
-        if y is None:
-            y = deepcopy(self._y)
-        if X is None:
-            X = deepcopy(self._X)
-        if X is not None and not self._global_forecasting:
-            X = pd.concat([self._X, X])
+        X, y = self._Xy_precheck(X, y)
         # convert series to frame
         _y, self._convert_to_series = _series_to_frame(y)
         _X, _ = _series_to_frame(X)
@@ -346,6 +346,112 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
             lambda x: x in absolute_horizons
         )
         return output.loc[dateindex]
+
+    def _predict_quantiles(self, fh, X, alpha, y=None):
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_quantiles containing the core logic,
+            called from predict_quantiles and default _predict_interval
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+            If ``y`` is passed (performing global forecasting), ``X`` must contain
+            all historical values and the time points to be predicted.
+        alpha : list of float, optional (default=[0.5])
+            A list of probabilities at which quantile forecasts are computed.
+        y : time series in ``sktime`` compatible format, optional (default=None)
+            Historical values of the time series that should be predicted.
+            If not None, global forecasting will be performed.
+            Only pass the historical values not the time points to be predicted.
+
+        Returns
+        -------
+        quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level being the values of alpha passed to the function.
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+            Entries are quantile forecasts, for var in col index,
+                at quantile probability in second col index, for the row index.
+        """
+        methods_list = [
+            method[0]
+            for method in inspect.getmembers(
+                self.best_model.loss, predicate=inspect.ismethod
+            )
+        ]
+        if "to_quantiles" not in methods_list:
+            raise NotImplementedError(
+                "To perform probabilistic forcast, QuantileLoss or other loss"
+                "metrics that support to_quantiles function has to be used in fit."
+                f"With {self.best_model.loss}, it doesn't support probabilistic"
+                "forcast. Details can be found:"
+                "https://pytorch-forecasting.readthedocs.io/en/stable/metrics.html"
+            )
+
+        X, y = self._Xy_precheck(X, y)
+        # convert series to frame
+        _y, self._convert_to_series = _series_to_frame(y)
+        _X, _ = _series_to_frame(X)
+        # extend index of y
+        _y = self._extend_y(_y, fh)
+        # check if dummy X is needed
+        _X = self._dummy_X(_X, _y)
+        # convert data to pytorch-forecasting datasets
+        training, validation = self._Xy_to_dataset(
+            _X, _y, self._dataset_params, self._max_prediction_length
+        )
+        try:
+            if self.deterministic:
+                import torch
+
+                torch_state = torch.get_rng_state()
+                torch.manual_seed(0)
+        except AttributeError:
+            pass
+
+        predictions = self.best_model.predict(
+            validation.to_dataloader(**self._validation_to_dataloader_params),
+            mode="quantiles",
+            mode_kwargs={"use_metric": False, "quantiles": alpha},
+            return_x=True,
+            return_index=True,
+            return_decoder_lengths=True,
+            trainer_kwargs=(
+                {"default_root_dir": self._random_log_dir}
+                if "_random_log_dir" in self.__dict__.keys()
+                else None
+            ),
+        )
+        try:
+            if self.deterministic:
+                torch.set_rng_state(torch_state)
+        except AttributeError:
+            pass
+        # convert pytorch-forecasting predictions to dataframe
+        output = self._predictions_to_dataframe(
+            predictions, self._max_prediction_length, alpha=alpha
+        )
+
+        absolute_horizons = self.fh.to_absolute_index(self.cutoff)
+        dateindex = output.index.get_level_values(-1).map(
+            lambda x: x in absolute_horizons
+        )
+        return output.loc[dateindex]
+
+    def _Xy_precheck(self, X, y):
+        if y is None:
+            y = deepcopy(self._y)
+        if X is None:
+            X = deepcopy(self._X)
+        if X is not None and not self._global_forecasting:
+            X = pd.concat([self._X, X])
+        return X, y
 
     def _Xy_to_dataset(
         self,
@@ -450,7 +556,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         )
         return training, validation
 
-    def _predictions_to_dataframe(self, predictions, max_prediction_length):
+    def _predictions_to_dataframe(self, predictions, max_prediction_length, alpha=None):
         # output is the actual predictions points but without index
         output = predictions.output.cpu().numpy()
         # index will be combined with output
@@ -467,8 +573,6 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         )
         # make time_idx the last index
         data = data.reindex(columns=index_names)
-        # add the target column at the end
-        data[self._target_name] = output.flatten()
         # correct the time_idx after repeating
         # assume the time_idx column is continuous integers
         # it's always true as a new time_idx column is added
@@ -505,10 +609,25 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         else:
             rename_input = self._index_names
         data.index.rename(rename_input, inplace=True)
-        # set target name back to original input in fit
-        data.columns = [self._target_name]
+        # add the target column at the end
+        if alpha is not None:
+            quantiles = output.reshape((-1, len(alpha)))
+            quantiles = pd.DataFrame(
+                data=quantiles,
+                index=data.index,
+            )
+            data = pd.concat([data, quantiles], axis=1)
+            data.columns = [
+                [self._target_name if self._target_name is not None else 0]
+                * len(alpha),
+                alpha,
+            ]
+        else:
+            data[self._target_name] = output.flatten()
+        # # set target name back to original input in fit
+        # data.columns = [self._target_name]
         # convert back to pd.series if needed
-        if self._convert_to_series:
+        if self._convert_to_series and alpha is None:
             data = pd.Series(
                 data=data[self._target_name], index=data.index, name=self._target_name
             )
