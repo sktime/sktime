@@ -512,6 +512,14 @@ Deep learning based forecasters
 
     PyKANForecaster
 
+.. currentmodule:: sktime.forecasting.chronos
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ChronosForecaster
+
 
 Intermittent time series forecasters
 ------------------------------------
