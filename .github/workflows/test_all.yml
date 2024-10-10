@@ -44,11 +44,6 @@ jobs:
           python-version-identifier: ${{ matrix.python-version }}
           sub-sample-estimators: "False"
           test-affected-estimators: "False"
-      - name: upload coverage
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          flags: ${{ matrix.operating-system }},${{ matrix.python-version }},base,complete
 
   test_module:
     needs: code_quality
@@ -86,11 +81,6 @@ jobs:
           python-version-identifier: ${{ matrix.python-version }}
           sub-sample-estimators: "False"
           test-affected-estimators: "False"
-      - name: upload coverage
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          flags: ${{ matrix.operating-system }},${{ matrix.python-version }},${{ matrix.sktime-component }},complete
 
   test_other:
     needs: code_quality
@@ -142,8 +132,3 @@ jobs:
           --ignore sktime/transformations
           --matrixdesign False
           --only_changed_modules False
-      - name: upload coverage
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          flags: ${{ matrix.operating-system }},${{ matrix.python-version }},components_without_extras,complete
