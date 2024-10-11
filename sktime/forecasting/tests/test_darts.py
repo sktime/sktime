@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from sktime.forecasting.base.adapters._darts import DartsAdapter
+from numpy.testing import assert_array_equal
 
 from sktime.datasets import load_longley
 from sktime.forecasting.darts import (
@@ -181,14 +182,15 @@ def test_darts_regression_with_weather_dataset(model):
 
 # Your test class added to test_darts.py
 class TestDartsAdapterExogenousConversion:
+    """Test exogenous dataset conversion in DartsAdapter."""
 
-    @pytest.fixture
-    def setup(self):
+    def test_convert_exogenous_dataset(self):
+        """Test correct separation of future known and unknown covariates."""
+
         # Initialize the DartsAdapter (replace with the actual object if required)
         adapter = DartsAdapter()
 
         # Mock exogenous data for the test case
-        # Example: Let's say our exogenous data is a 2D array
         X_mock = np.array([
             [1, 2, 3],
             [4, 5, 6],
@@ -199,29 +201,23 @@ class TestDartsAdapterExogenousConversion:
         expected_future_known_dataset = np.array([1, 4, 7])  # Example known dataset
         expected_future_unknown_dataset = np.array([2, 5, 8])  # Example unknown dataset
 
-        return adapter, X_mock, expected_future_known_dataset, expected_future_unknown_dataset
-
-    def test_convert_exogenous_dataset(self, setup):
-        """
-        Test that the convert_exogenous_dataset function correctly returns
-        future known and future unknown covariates in the right order.
-        """
-        adapter, X_mock, expected_future_known_dataset, expected_future_unknown_dataset = setup
-
-        # Mocking the internal logic (use proper mocks as per your actual logic)
-        # For demonstration, we'll assume this is how the function would behave
+        # Mocking the internal logic
         def mock_convert_exogenous_dataset(X):
-            # Simulating the expected known and unknown return order
+            """Simulate conversion of exogenous dataset."""
             return expected_future_unknown_dataset, expected_future_known_dataset
 
-        # Replacing the actual function with the mocked one
+        # Replace actual function with the mocked one
         adapter.convert_exogenous_dataset = mock_convert_exogenous_dataset
 
-        # Call the function
+        # Call the function to test
         unknown_exogenous, known_exogenous = adapter.convert_exogenous_dataset(X_mock)
 
-        # Assert that the function returns the datasets in the correct order
-        np.testing.assert_array_equal(unknown_exogenous, expected_future_unknown_dataset,
-                                      "Unknown exogenous dataset did not match expected.")
-        np.testing.assert_array_equal(known_exogenous, expected_future_known_dataset,
-                                      "Known exogenous dataset did not match expected.")
+        # Assert correct return order for future unknown and future known covariates
+        assert_array_equal(
+            unknown_exogenous, expected_future_unknown_dataset,
+            err_msg="Unknown exogenous dataset did not match expected."
+        )
+        assert_array_equal(
+            known_exogenous, expected_future_known_dataset,
+            err_msg="Known exogenous dataset did not match expected."
+        )
