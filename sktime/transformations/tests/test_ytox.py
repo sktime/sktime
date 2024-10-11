@@ -4,6 +4,7 @@ import pytest
 
 from sktime.datasets import load_airline
 from sktime.transformations.compose import YtoX
+from sktime.utils.deep_equals import deep_equals
 
 
 @pytest.fixture
@@ -33,9 +34,9 @@ def test_ytox_with_transformer(y_data, params):
 
     # Apply the transformer directly to y if it exists
     if transformer:
-        transformed_y_direct = ensure_dataframe(transformer.fit_transform(y_data))
+        transformed_y_direct = transformer.fit_transform(y_data)
     else:
-        transformed_y_direct = ensure_dataframe(y_data)  # No transformation
+        transformed_y_direct = y_data  # No transformation
 
     # Create a YtoX transformer with the provided parameters
     ytox = YtoX(**params)
@@ -44,10 +45,8 @@ def test_ytox_with_transformer(y_data, params):
     ytox.fit(X, y_data)
 
     # Apply the YtoX transformation
-    transformed_y_via_ytox = ensure_dataframe(ytox.transform(X, y_data))
+    transformed_y_via_ytox = ytox.transform(X, y_data)
 
     # Check if the results are the same as applying the transformer directly to y
-    pd.testing.assert_frame_equal(transformed_y_direct, transformed_y_via_ytox)
-
-    diff = transformed_y_via_ytox.compare(transformed_y_direct)
-    print("\nDiff between transformed via YtoX and directly transformed:\n", diff)
+    transformed_y_direct = ensure_dataframe(transformed_y_direct)
+    assert deep_equals(transformed_y_direct, transformed_y_via_ytox)
