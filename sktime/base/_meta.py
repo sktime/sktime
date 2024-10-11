@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.base import BaseEstimator
+from sktime.utils._estimator_html_repr import _VisualBlock
 
 
 class _HeterogenousMetaEstimator:
@@ -712,6 +713,20 @@ class _HeterogenousMetaEstimator:
             self.set_tags(**{mid_tag_name: mid_tag_val})
         else:
             self.set_tags(**{mid_tag_name: mid_tag_val_not})
+
+    def _sk_visual_block_(self):
+        steps = getattr(self, self._steps_attr)
+
+        names, estimators = zip(*steps)
+
+        name_details = [str(est) for est in estimators]
+        return _VisualBlock(
+            "serial",
+            estimators,
+            names=names,
+            name_details=name_details,
+            dash_wrapped=False,
+        )
 
 
 def flatten(obj):
