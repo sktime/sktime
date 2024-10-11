@@ -60,6 +60,7 @@ EXCLUDE_ESTIMATORS = [
     "SARIMAX",
     "StatsModelsARIMA",
     "ShapeletLearningClassifierTslearn",
+    "DartsXGBModel",
 ]
 
 
