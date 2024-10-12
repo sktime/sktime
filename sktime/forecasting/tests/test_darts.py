@@ -8,10 +8,10 @@ import re
 import numpy as np
 import pandas as pd
 import pytest
-from sktime.forecasting.base.adapters._darts import DartsAdapter
 from numpy.testing import assert_array_equal
 
 from sktime.datasets import load_longley
+from sktime.forecasting.base.adapters._darts import DartsAdapter
 from sktime.forecasting.darts import (
     DartsLinearRegressionModel,
     DartsRegressionModel,
@@ -179,7 +179,6 @@ def test_darts_regression_with_weather_dataset(model):
     np.testing.assert_allclose(pred_sktime.to_numpy(), darts_pred.to_numpy(), rtol=1e-4)
 
 
-
 # Your test class added to test_darts.py
 class TestDartsAdapterExogenousConversion:
     """Test exogenous dataset conversion in DartsAdapter."""
@@ -191,11 +190,7 @@ class TestDartsAdapterExogenousConversion:
         adapter = DartsAdapter()
 
         # Mock exogenous data for the test case
-        X_mock = np.array([
-            [1, 2, 3],
-            [4, 5, 6],
-            [7, 8, 9]
-        ])
+        X_mock = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
 
         # Mock expected future known and unknown datasets (dummy data)
         expected_future_known_dataset = np.array([1, 4, 7])  # Example known dataset
@@ -214,10 +209,12 @@ class TestDartsAdapterExogenousConversion:
 
         # Assert correct return order for future unknown and future known covariates
         assert_array_equal(
-            unknown_exogenous, expected_future_unknown_dataset,
-            err_msg="Unknown exogenous dataset did not match expected."
+            unknown_exogenous,
+            expected_future_unknown_dataset,
+            err_msg="Unknown exogenous dataset did not match expected.",
         )
         assert_array_equal(
-            known_exogenous, expected_future_known_dataset,
-            err_msg="Known exogenous dataset did not match expected."
+            known_exogenous,
+            expected_future_known_dataset,
+            err_msg="Known exogenous dataset did not match expected.",
         )
