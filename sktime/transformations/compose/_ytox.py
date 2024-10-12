@@ -186,11 +186,29 @@ class YtoX(BaseTransformer):
 
     @classmethod
     def get_test_params(cls):
-        """Provide test parameters for the YtoX class."""
+        """Return testing parameter settings for the YtoX transformer.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : list of dict
+            Parameters to create testing instances of YtoX
+            Each dict can be used to construct a test instance, i.e.,
+            ``YtoX(**params[i])`` creates a valid test instance.
+            ``create_test_instance`` uses the first dictionary in ``params``
+
+        """
         from sktime.transformations.series.boxcox import BoxCoxTransformer
         from sktime.transformations.series.exponent import ExponentTransformer
 
         return [
             {"subset_index": False, "transformer": ExponentTransformer(power=2)},
             {"subset_index": False, "transformer": BoxCoxTransformer()},
+            {"subset_index": True, "transformer": None},
+            {"subset_index": False, "transformer": None},
         ]
