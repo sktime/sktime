@@ -1,5 +1,5 @@
-# Welcome to sktime
-<a href="https://www.sktime.net"><img src="https://github.com/sktime/sktime/blob/main/docs/source/images/sktime-logo.svg" width="250" height="200" align="centre" /></a>
+# About
+<a href="https://www.sktime.net"><img src="https://github.com/sktime/sktime/blob/main/docs/source/images/sktime-logo.svg" width="250" height="150" align="centre" /></a>
 
 > A unified interface for machine learning with time series
 
