@@ -6,7 +6,7 @@
 
 :rocket: **Version 0.33.1 out now!** [Check out the release notes here](https://www.sktime.net/en/latest/changelog.html).
 
-sktime is a library for time series analysis in Python. It provides a unified interface for multiple time series learning tasks. Currently, this includes time series classification, regression, clustering, annotation, and forecasting. It comes with [time series algorithms](https://www.sktime.net/en/stable/estimator_overview.html) and [scikit-learn] compatible tools to build, tune and validate time series models.
+sktime is a library for time series analysis in Python. It provides a unified interface for multiple time series learning tasks. Currently, this includes time series classification, regression, clustering, annotation, and forecasting. It comes with [time series algorithms](https://www.sktime.net/en/stable/estimator_overview.html) and [scikit-learn] compatible tools to build, tune, and validate time series models.
 
 [scikit-learn]: https://scikit-learn.org/stable/
 
@@ -45,7 +45,7 @@ sktime is a library for time series analysis in Python. It provides a unified in
 
 ## :speech_balloon: Where to ask questions
 
-Questions and feedback are extremely welcome! We strongly believe in the value of sharing help publicly, as it allows a wider audience to benefit from it.
+Questions and feedback are extremely welcome! We strongly believe in the value of sharing helps publicly, as it allows a wider audience to benefit from it.
 
 | Type                            | Platforms                               |
 | ------------------------------- | --------------------------------------- |
@@ -62,7 +62,7 @@ Questions and feedback are extremely welcome! We strongly believe in the value o
 [discord]: https://discord.com/invite/54ACzaFsn7
 
 ## :dizzy: Features
-Our objective is to enhance the interoperability and usability of the time series analysis ecosystem in its entirety. sktime provides a __unified interface for distinct but related time series learning tasks__. It features [__dedicated time series algorithms__](https://www.sktime.net/en/stable/estimator_overview.html) and __tools for composite model building__  such as pipelining, ensembling, tuning, and reduction, empowering users to apply an algorithm designed for one task to another.
+Our objective is to enhance the interoperability and usability of the time series analysis ecosystem in its entirety. sktime provides a __unified interface for distinct but related time series learning tasks__. It features [__dedicated time series algorithms__](https://www.sktime.net/en/stable/estimator_overview.html) and __tools for composite model building__,  such as pipelining, ensembling, tuning, and reduction, empowering users to apply algorithms designed for one task to another.
 
 sktime also provides **interfaces to related libraries**, for example [scikit-learn], [statsmodels], [tsfresh], [PyOD], and [fbprophet], among others.
 
