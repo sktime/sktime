@@ -33,17 +33,16 @@ PANDAS_FIXTURES = [pd_fixture_simple, pd_fixture_multiindex]
     reason="skip test if required soft dependency for dask not available",
 )
 def test_check_dask_frame():
-    """Tests that check_dask_frame recognizes dask dataframe correctly."""
+    """Tests that check_dask_frame does not fail when given a pandas DataFrame.
+
+    Failure case in bug #7250.
+    """
 
     # Create a regular pandas DataFrame
     invalid_df = pd.DataFrame({"A": [1, 2, 3]})
 
     # Call the function and expect it to run successfully
-    valid = -1
-    try:
-        valid = check_dask_frame(invalid_df)
-    except AttributeError:
-        assert valid != -1, "check_dask_frame is not importing dask.dataframe correctly"
+    check_dask_frame(invalid_df)
 
 
 @pytest.mark.skipif(
