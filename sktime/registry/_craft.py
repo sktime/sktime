@@ -70,9 +70,6 @@ def craft(spec):
     """
     register = dict(all_estimators())  # noqa: F841
 
-    for x in _extract_class_names(spec):
-        exec(f"{x} = register['{x}']")
-
     try:
         obj = eval(spec)
     except Exception:
@@ -86,7 +83,7 @@ def build_obj():
             + spec_fun
         )
 
-        exec(spec_fun, globals(), locals())
+        exec(spec_fun, globals(), register)
         obj = eval("build_obj()")
 
     return obj
