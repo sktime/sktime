@@ -17,6 +17,10 @@ class RBFTransformer(BaseTransformer):
     time points and specified center points, offering a flexible and non-linear feature
     representation for machine learning models.
 
+    This implementation is inspired by the `RepeatingBasisFunction` transformer
+    from the `scikit-lego` package:
+    https://github.com/koaning/scikit-lego/blob/main/sklego/preprocessing/repeatingbasis.py
+
     Mathematical Background:
     Consider a time series represented as:
     - t_1, t_2, ..., t_N
