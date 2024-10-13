@@ -71,7 +71,7 @@ def craft(spec):
     register = dict(all_estimators())  # noqa: F841
 
     try:
-        obj = eval(spec)
+        obj = eval(spec, globals(), register)
     except Exception:
         from textwrap import indent
 
