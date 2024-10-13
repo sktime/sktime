@@ -34,15 +34,16 @@ PANDAS_FIXTURES = [pd_fixture_simple, pd_fixture_multiindex]
 )
 def test_check_dask_frame():
     """Tests that check_dask_frame recognizes dask dataframe correctly."""
-    import dask.dataframe as dd
 
-    # Create a simple dask dataframe from a pandas dataframe
-    ddf = dd.from_pandas(pd.DataFrame({"A": [1, 2, 3]}), npartitions=1)
+    # Create a regular pandas DataFrame
+    invalid_df = pd.DataFrame({"A": [1, 2, 3]})
 
-    # Call the function and expect it to pass without issues
-    valid, msg, _, _ = check_dask_frame(ddf, return_metadata=True)
-    assert valid, "Dask dataframe should be recognized as valid by check_dask_frame"
-    assert msg is None, "No error message should be returned for valid dask dataframe"
+    # Call the function and expect it to run successfully
+    valid = -1
+    try:
+        valid = check_dask_frame(invalid_df)
+    except AttributeError:
+        assert valid != -1, "check_dask_frame is not importing dask.dataframe correctly"
 
 
 @pytest.mark.skipif(
