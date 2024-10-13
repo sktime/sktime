@@ -7,6 +7,7 @@ import pandas as pd
 import pytest
 
 from sktime.datatypes._adapter.dask_to_pd import (
+    check_dask_frame,
     convert_dask_to_pandas,
     convert_pandas_to_dask,
 )
@@ -25,6 +26,23 @@ pd_fixture_multiindex.columns = ["a", "foo"]
 
 
 PANDAS_FIXTURES = [pd_fixture_simple, pd_fixture_multiindex]
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("dask", severity="none"),
+    reason="skip test if required soft dependency for dask not available",
+)
+def test_check_dask_frame():
+    """Tests that check_dask_frame recognizes dask dataframe correctly."""
+    import dask.dataframe as dd
+
+    # Create a simple dask dataframe from a pandas dataframe
+    ddf = dd.from_pandas(pd.DataFrame({"A": [1, 2, 3]}), npartitions=1)
+
+    # Call the function and expect it to pass without issues
+    valid, msg, _, _ = check_dask_frame(ddf, return_metadata=True)
+    assert valid, "Dask dataframe should be recognized as valid by check_dask_frame"
+    assert msg is None, "No error message should be returned for valid dask dataframe"
 
 
 @pytest.mark.skipif(
