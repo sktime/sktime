@@ -84,7 +84,7 @@ def build_obj():
         )
 
         exec(spec_fun, globals(), register)
-        obj = eval("build_obj()")
+        obj = eval("build_obj()", globals(), register)
 
     return obj
 
