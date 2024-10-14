@@ -1117,11 +1117,11 @@ class TestAllGlobalForecasters(TestAllObjects):
             data = data.iloc[:-n]
         return data
 
-    def _multiindex_data(self, max_prediction_length, data_length=20):
+    def _multiindex_data(self, max_prediction_length, data_length=100):
         from sktime.utils._testing.hierarchical import _make_hierarchical
 
         data = _make_hierarchical(
-            (70, 1),
+            (500, 1),
             n_columns=2,
             max_timepoints=data_length,
             min_timepoints=data_length,
@@ -1142,11 +1142,11 @@ class TestAllGlobalForecasters(TestAllObjects):
         y_test = self._remove_last_n(y_test, max_prediction_length)
         return X_train, y_train, X_test, y_test
 
-    def _multiindex_hier_data(self, max_prediction_length, data_length=20):
+    def _multiindex_hier_data(self, max_prediction_length, data_length=100):
         from sktime.utils._testing.hierarchical import _make_hierarchical
 
         data = _make_hierarchical(
-            (7, 10),
+            (5, 100),
             n_columns=2,
             max_timepoints=data_length,
             min_timepoints=data_length,
