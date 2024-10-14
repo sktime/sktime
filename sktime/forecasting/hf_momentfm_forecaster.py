@@ -6,14 +6,15 @@ import numpy as np
 import pandas as pd
 
 # from sktime.libs.momentfm import MOMENTPipeline
-from momentfm import MOMENTPipeline
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 from sktime.split import temporal_train_test_split
 
-if _check_soft_dependencies(["torch", "accelerate"], severity="none"):
+if _check_soft_dependencies(["torch", "accelerate", "momentfm"], severity="none"):
     from accelerate import Accelerator
+    from momentfm import MOMENTPipeline
+    from momentfm.utils.forecasting_metrics import get_forecasting_metrics
     from torch.cuda import empty_cache
     from torch.nn import MSELoss
     from torch.utils.data import Dataset
@@ -557,9 +558,6 @@ def _run_epoch(
     val_dataloader,
 ):
     import torch.cuda.amp
-
-    # from sktime.libs.momentfm.utils.forecasting_metrics import get_forecasting_metrics
-    from momentfm.utils.forecasting_metrics import get_forecasting_metrics
     from tqdm import tqdm
 
     losses = []
