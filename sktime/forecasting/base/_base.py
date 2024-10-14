@@ -353,7 +353,7 @@ class BaseForecaster(BaseEstimator):
             For further details on data format, see glossary on :term:`mtype`.
             For usage, see forecasting tutorial ``examples/01_forecasting.ipynb``
 
-        fh : int, list, np.array or ForecastingHorizon, optional (default=None)
+        fh : int, list, pd.Index coercible, or ``ForecastingHorizon``, default=None
             The forecasting horizon encoding the time stamps to forecast at.
             If ``self.get_tag("requires-fh-in-fit")`` is ``True``,
             must be passed in ``fit``, not optional
@@ -418,8 +418,7 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        fh : int, list, np.array, pd.Index or ``ForecastingHorizon``,
-             optional (default=None)
+        fh : int, list, pd.Index coercible, or ``ForecastingHorizon``, default=None
             The forecasting horizon encoding the time stamps to forecast at.
             Should not be passed if has already been passed in ``fit``.
             If has not been passed in fit, must be passed, not optional
@@ -510,7 +509,7 @@ class BaseForecaster(BaseEstimator):
             For further details on data format, see glossary on :term:`mtype`.
             For usage, see forecasting tutorial ``examples/01_forecasting.ipynb``
 
-        fh : int, list, np.array, pd.Index or ``ForecastingHorizon`` (not optional)
+        fh : int, list, pd.Index coercible, or ``ForecastingHorizon`` (not optional)
             The forecasting horizon encoding the time stamps to forecast at.
 
             If fh is not None and not of type ForecastingHorizon it is coerced to
@@ -592,8 +591,7 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        fh : int, list, np.array, pd.Index or ``ForecastingHorizon``,
-             optional (default=None)
+        fh : int, list, pd.Index coercible, or ``ForecastingHorizon``, default=None
             The forecasting horizon encoding the time stamps to forecast at.
             Should not be passed if has already been passed in ``fit``.
             If has not been passed in fit, must be passed, not optional
@@ -678,8 +676,7 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        fh : int, list, np.array, pd.Index or ``ForecastingHorizon``,
-             optional (default=None)
+        fh : int, list, pd.Index coercible, or ``ForecastingHorizon``, default=None
             The forecasting horizon encoding the time stamps to forecast at.
             Should not be passed if has already been passed in ``fit``.
             If has not been passed in fit, must be passed, not optional
@@ -764,8 +761,7 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        fh : int, list, np.array, pd.Index or ``ForecastingHorizon``,
-             optional (default=None)
+        fh : int, list, pd.Index coercible, or ``ForecastingHorizon``, default=None
             The forecasting horizon encoding the time stamps to forecast at.
             Should not be passed if has already been passed in ``fit``.
             If has not been passed in fit, must be passed, not optional
@@ -850,8 +846,7 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        fh : int, list, np.array, pd.Index or ``ForecastingHorizon``,
-             optional (default=None)
+        fh : int, list, pd.Index coercible, or ``ForecastingHorizon``, default=None
             The forecasting horizon encoding the time stamps to forecast at.
             Should not be passed if has already been passed in ``fit``.
             If has not been passed in fit, must be passed, not optional
@@ -1188,7 +1183,7 @@ class BaseForecaster(BaseEstimator):
             For further details on data format, see glossary on :term:`mtype`.
             For usage, see forecasting tutorial ``examples/01_forecasting.ipynb``
 
-        fh : int, list, np.array or ``ForecastingHorizon``, optional (default=None)
+        fh : int, list, pd.Index coercible, or ``ForecastingHorizon``, default=None
             The forecasting horizon encoding the time stamps to forecast at.
             Should not be passed if has already been passed in ``fit``.
             If has not been passed in fit, must be passed, not optional
@@ -1353,8 +1348,8 @@ class BaseForecaster(BaseEstimator):
         y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
             Time series to score
 
-        fh : int, list, array-like or ForecastingHorizon, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+        fh : int, list, pd.Index coercible, or ``ForecastingHorizon``, default=None
+            The forecasting horizon encoding the time stamps to forecast at.
         X : pd.DataFrame, or 2D np.array, optional (default=None)
             Exogeneous time series to score
             if self.get_tag("X-y-must-have-same-index"), X.index must contain y.index
@@ -1857,7 +1852,7 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        fh : None, int, list, np.ndarray, pd.index or ForecastingHorizon
+        fh : int, list, pd.Index coercible, or ``ForecastingHorizon``, default=None
              If fh is not None and not of type ForecastingHorizon it is coerced to
              ForecastingHorizon (e.g. in sktime.utils.validation.forecasting.check_fh)
              In particular, if fh is of type pd.Index it is coerced via
@@ -2700,7 +2695,7 @@ class _BaseGlobalForecaster(BaseForecaster):
 
         Parameters
         ----------
-        fh : int, list, np.array or ``ForecastingHorizon``, optional (default=None)
+        fh : int, list, pd.Index coercible, or ``ForecastingHorizon``, default=None
             The forecasting horizon encoding the time stamps to forecast at.
             Should not be passed if has already been passed in ``fit``.
             If has not been passed in fit, must be passed, not optional
