@@ -70,11 +70,8 @@ def craft(spec):
     """
     register = dict(all_estimators())  # noqa: F841
 
-    for x in _extract_class_names(spec):
-        exec(f"{x} = register['{x}']")
-
     try:
-        obj = eval(spec)
+        obj = eval(spec, globals(), register)
     except Exception:
         from textwrap import indent
 
@@ -85,8 +82,9 @@ def build_obj():
         """
             + spec_fun
         )
-        exec(spec_fun, locals())
-        obj = eval("build_obj()")
+
+        exec(spec_fun, register, register)
+        obj = eval("build_obj()", register, register)
 
     return obj
 
