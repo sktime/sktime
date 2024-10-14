@@ -80,6 +80,11 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         on pypi.
         To install the source package, follow the instructions here [4]_.
 
+    peft_model : peft.PeftModel, default = None
+        If a `PeftModel` is passed through, the underlying base_model must be a
+        `TinyTimeMixerForPrediction` model. The model will then be trained on the
+        `PeftConfig`s that were used to create this `PeftModel`.
+
     References
     ----------
     .. [1] https://github.com/ibm-granite/granite-tsfm/tree/main/tsfm_public/models/tinytimemixer
@@ -165,6 +170,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         callbacks=None,
         broadcasting=False,
         use_source_package=False,
+        peft_model=None,
     ):
         super().__init__()
         self.model_path = model_path
@@ -178,6 +184,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         self.callbacks = callbacks
         self.broadcasting = broadcasting
         self.use_source_package = use_source_package
+        self.peft_model = peft_model
 
         if self.broadcasting:
             self.set_tags(
@@ -228,7 +235,6 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 TinyTimeMixerConfig,
                 TinyTimeMixerForPrediction,
             )
-
         # Get the Configuration
         config = TinyTimeMixerConfig.from_pretrained(
             self.model_path,
@@ -284,27 +290,36 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         # Get the Model
         # self.model, info = PatchTSTForPrediction.from_pretrained(
         # "ibm-granite/granite-timeseries-patchtst",
-        self.model, info = TinyTimeMixerForPrediction.from_pretrained(
-            self.model_path,
-            revision=self.revision,
-            config=config,
-            output_loading_info=True,
-            ignore_mismatched_sizes=True,
-        )
+        if not self.peft_model:
+            self.model, info = TinyTimeMixerForPrediction.from_pretrained(
+                self.model_path,
+                revision=self.revision,
+                config=config,
+                output_loading_info=True,
+                ignore_mismatched_sizes=True,
+            )
 
-        if len(info["mismatched_keys"]) == 0:
-            return  # No need to fit
+            if len(info["mismatched_keys"]) == 0:
+                return  # No need to fit
 
-        # Freeze all loaded parameters
-        for param in self.model.parameters():
-            param.requires_grad = False
+            # Freeze all loaded parameters
+            for param in self.model.parameters():
+                param.requires_grad = False
 
-        # Reininit the weights of all layers that have mismatched sizes
-        for key, _, _ in info["mismatched_keys"]:
-            _model = self.model
-            for attr_name in key.split(".")[:-1]:
-                _model = getattr(_model, attr_name)
-            _model.weight.requires_grad = True
+            # Reininit the weights of all layers that have mismatched sizes
+            for key, _, _ in info["mismatched_keys"]:
+                _model = self.model
+                for attr_name in key.split(".")[:-1]:
+                    _model = getattr(_model, attr_name)
+                _model.weight.requires_grad = True
+        else:
+            print("peft_model found, using peft_model")
+            if not isinstance(
+                self.peft_model.base_model.model, TinyTimeMixerForPrediction
+            ):
+                raise ValueError("Wrong base model found")
+            else:
+                self.model = self.peft_model
 
         y_train, y_test = temporal_train_test_split(y, test_size=self.validation_split)
 
@@ -473,7 +488,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 "model_path": "ibm/TTM",
                 "revision": "main",
                 "config": {
-                    "context_length": 8,
+                    "context_length": 5,
                     "prediction_length": 2,
                 },
                 "validation_split": 0.2,
