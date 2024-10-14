@@ -30,15 +30,14 @@ def apply_split(y, iloc_ix):
     ----------
     y : sktime compatible tabular data container, Panel, Table scitype
          numpy1D iterable, of shape [n_instances]
-    iloc_ix: generator object containing iloc splitter ouput?
-             generator object containing indices of iloc splitter applied to X?
+    iloc_ix: generator object containing indices for splitting
 
     Yields
     ------
     y_train_iloc : ndarray
-        The training set indices for that split.
-    y_test_iloc: ndarray
-        The testing set indices for that split.
+        The training set indices for splitting.
+    y_test_iloc ndarray
+        The testing set indices for splitting.
     """
     # convery y into multiindex dataframe
     if not isinstance(y, pd.MultiIndex):
