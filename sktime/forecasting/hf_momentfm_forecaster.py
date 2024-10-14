@@ -116,10 +116,8 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         to be individually set. If a parameter inside a config is a
         duplicate of one already passed in individually, it will be overwritten.
 
-    return_model_to_cpu : bool
-        During fit, after training via cuda, will return the model to cpu. This
-        should only be enabled during the sktime CI workflows, as many models
-        need to be implemented in order to pass tests.
+    return_model_to_cpu : bool, default = False
+        After fitting and training, will return the `momentfm` model to the cpu.
     """
 
     _tags = {
@@ -365,7 +363,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
 
         return self
 
-    def _predict(self, fh=None, X=None, y=None):
+    def _predict(self, y, X=None, fh=None):
         """Predict method to forecast timesteps into the future.
 
         fh should not be passed here and
