@@ -4,10 +4,12 @@ import warnings
 
 import numpy as np
 import pandas as pd
+
+# from sktime.libs.momentfm import MOMENTPipeline
+from momentfm import MOMENTPipeline
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
-from sktime.libs.momentfm import MOMENTPipeline
 from sktime.split import temporal_train_test_split
 
 if _check_soft_dependencies(["torch", "accelerate"], severity="none"):
@@ -132,7 +134,13 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         ],
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": True,
-        "python_dependencies": ["torch", "tqdm", "huggingface-hub", "transformers"],
+        "python_dependencies": [
+            "torch",
+            "tqdm",
+            "huggingface-hub",
+            "transformers",
+            "momentfm",
+        ],
         "capability:global_forecasting": True,
         "python_version": ">= 3.10",
         "capability:insample": False,
@@ -421,7 +429,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         # returns a timeseriesoutput object
         y_torch_input = from_numpy(y_).float().to(self._device)
         input_mask = input_mask.to(self._device)
-        output = self.model(y_torch_input, input_mask)
+        output = self.model(x_enc=y_torch_input, mask=input_mask)
         forecast_output = output.forecast
         # forecast_output = forecast_output.squeeze(0)
 
@@ -549,9 +557,10 @@ def _run_epoch(
     val_dataloader,
 ):
     import torch.cuda.amp
-    from tqdm import tqdm
 
-    from sktime.libs.momentfm.utils.forecasting_metrics import get_forecasting_metrics
+    # from sktime.libs.momentfm.utils.forecasting_metrics import get_forecasting_metrics
+    from momentfm.utils.forecasting_metrics import get_forecasting_metrics
+    from tqdm import tqdm
 
     losses = []
     for data in tqdm(train_dataloader, total=len(train_dataloader)):
@@ -560,7 +569,7 @@ def _run_epoch(
         input_mask = data["input_mask"]
         forecast = data["future_y"]
         with torch.cuda.amp.autocast():
-            output = model(timeseries, input_mask)
+            output = model(x_enc=timeseries, mask=input_mask)
         loss = criterion(output.forecast, forecast)
 
         accelerator.backward(loss)
@@ -591,7 +600,7 @@ def _run_epoch(
             forecast = data["future_y"]
 
             with torch.cuda.amp.autocast():
-                output = model(timeseries, input_mask)
+                output = model(x_enc=timeseries, mask=input_mask)
 
             loss = criterion(output.forecast, forecast)
             losses.append(loss.item())
