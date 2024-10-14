@@ -596,9 +596,17 @@ class BaseForecaster(BaseEstimator):
             Should not be passed if has already been passed in ``fit``.
             If has not been passed in fit, must be passed, not optional
 
-            If fh is not None and not of type ForecastingHorizon it is coerced to
-            ForecastingHorizon via a call to _check_fh. In particular, if fh is of type
-            pd.Index it is coerced via ForecastingHorizon(fh, is_relative=False)
+
+            If ``fh`` is not None and not of type ``ForecastingHorizon``,
+            it is coerced to ``ForecastingHorizon`` internally (via ``_check_fh``).
+
+            * if ``fh`` is ``int`` or array-like of ``int``, it is interpreted as
+              relative horizon, and coerced to a
+              relative ``ForecastingHorizon(fh, is_relative=True)``.
+            * if ``fh`` is of type ``pd.Index``, it is interpreted
+              as an absolute horizon, and coerced
+              to an absolute ``ForecastingHorizon(fh, is_relative=False)``.
+
 
         X : time series in ``sktime`` compatible format, optional (default=None)
             Exogeneous time series to use in prediction.
@@ -681,9 +689,15 @@ class BaseForecaster(BaseEstimator):
             Should not be passed if has already been passed in ``fit``.
             If has not been passed in fit, must be passed, not optional
 
-            If fh is not None and not of type ForecastingHorizon it is coerced to
-            ForecastingHorizon via a call to _check_fh. In particular, if fh is of type
-            pd.Index it is coerced via ForecastingHorizon(fh, is_relative=False)
+            If ``fh`` is not None and not of type ``ForecastingHorizon``,
+            it is coerced to ``ForecastingHorizon`` internally (via ``_check_fh``).
+
+            * if ``fh`` is ``int`` or array-like of ``int``, it is interpreted as
+              relative horizon, and coerced to a
+              relative ``ForecastingHorizon(fh, is_relative=True)``.
+            * if ``fh`` is of type ``pd.Index``, it is interpreted
+              as an absolute horizon, and coerced
+              to an absolute ``ForecastingHorizon(fh, is_relative=False)``.
 
         X : time series in ``sktime`` compatible format, optional (default=None)
             Exogeneous time series to use in prediction.
@@ -766,9 +780,17 @@ class BaseForecaster(BaseEstimator):
             Should not be passed if has already been passed in ``fit``.
             If has not been passed in fit, must be passed, not optional
 
-            If fh is not None and not of type ForecastingHorizon it is coerced to
-            ForecastingHorizon via a call to _check_fh. In particular, if fh is of type
-            pd.Index it is coerced via ForecastingHorizon(fh, is_relative=False)
+
+            If ``fh`` is not None and not of type ``ForecastingHorizon``,
+            it is coerced to ``ForecastingHorizon`` internally (via ``_check_fh``).
+
+            * if ``fh`` is ``int`` or array-like of ``int``, it is interpreted as
+              relative horizon, and coerced to a
+              relative ``ForecastingHorizon(fh, is_relative=True)``.
+            * if ``fh`` is of type ``pd.Index``, it is interpreted
+              as an absolute horizon, and coerced
+              to an absolute ``ForecastingHorizon(fh, is_relative=False)``.
+
 
         X : time series in ``sktime`` compatible format, optional (default=None)
             Exogeneous time series to use in prediction.
@@ -851,9 +873,17 @@ class BaseForecaster(BaseEstimator):
             Should not be passed if has already been passed in ``fit``.
             If has not been passed in fit, must be passed, not optional
 
-            If fh is not None and not of type ForecastingHorizon it is coerced to
-            ForecastingHorizon via a call to _check_fh. In particular, if fh is of type
-            pd.Index it is coerced via ForecastingHorizon(fh, is_relative=False)
+
+            If ``fh`` is not None and not of type ``ForecastingHorizon``,
+            it is coerced to ``ForecastingHorizon`` internally (via ``_check_fh``).
+
+            * if ``fh`` is ``int`` or array-like of ``int``, it is interpreted as
+              relative horizon, and coerced to a
+              relative ``ForecastingHorizon(fh, is_relative=True)``.
+            * if ``fh`` is of type ``pd.Index``, it is interpreted
+              as an absolute horizon, and coerced
+              to an absolute ``ForecastingHorizon(fh, is_relative=False)``.
+
 
         X : time series in ``sktime`` compatible format, optional (default=None)
             Exogeneous time series to use in prediction.
