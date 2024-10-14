@@ -4,7 +4,7 @@
 __author__ = ["fkiraly"]
 
 from sktime.base import BaseObject
-from sktime.datatypes._common import _ret
+from sktime.datatypes._base._common import _ret
 from sktime.utils.deep_equals import deep_equals
 
 
