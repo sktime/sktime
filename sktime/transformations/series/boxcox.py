@@ -1,4 +1,4 @@
-"""Implemenents Box-Cox and Log Transformations."""
+"""Implements Box-Cox and Log Transformations."""
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 
@@ -123,12 +123,17 @@ class BoxCoxTransformer(BaseTransformer):
         is applied to the absolute value while the sign is kept.
         If ``False``, any negative values will be passed unchanged to the
         underlying functions (possibly causing error).
+    adjust_bias : bool, optional, default = False
+        If True, apply bias adjustment to the transformed data
 
     Attributes
     ----------
     lambda_ : float
         The Box-Cox lambda parameter that was fitted, based on the supplied
         ``method`` and data provided in ``fit``.
+    bias_adjustment_ : float
+        The bias adjustment factor (only if adjust_bias=True).
+
 
     See Also
     --------
@@ -223,6 +228,8 @@ class BoxCoxTransformer(BaseTransformer):
         -------
         self: a fitted instance of the estimator
         """
+        from scipy.special import boxcox
+
         bounds = self.bounds
         method = self.method
         sp = self.sp
@@ -245,6 +252,10 @@ class BoxCoxTransformer(BaseTransformer):
                 " this is likely due to method attribute being changed after init"
             )
 
+        if self.adjust_bias:
+            transformed_X = boxcox(X, self.lambda_)
+            self.bias_adjustment_ = np.mean(np.exp(transformed_X))
+
         return self
 
     def _transform(self, X, y=None):
@@ -266,22 +277,21 @@ class BoxCoxTransformer(BaseTransformer):
         """
         from scipy.special import boxcox
 
-        enforce_positive = self.enforce_positive
-        lambda_ = self.lambda_
-
         X_shape = X.shape
         X = X.flatten()
 
-        if enforce_positive:
+        if self.enforce_positive:
             X_sign = np.sign(X)
 
-        Xt = boxcox(np.abs(X), lambda_)
+        Xt = boxcox(np.abs(X), self.lambda_)
 
-        if enforce_positive:
+        if self.adjust_bias:
+            Xt = Xt - np.log(self.bias_adjustment_)
+
+        if self.enforce_positive:
             Xt = Xt * X_sign
 
-        Xt = Xt.reshape(X_shape)
-        return Xt
+        return Xt.reshape(X_shape)
 
     def _inverse_transform(self, X, y=None):
         """Inverse transform X and return an inverse transformed version.
@@ -303,9 +313,14 @@ class BoxCoxTransformer(BaseTransformer):
         from scipy.special import inv_boxcox
 
         X_shape = X.shape
-        Xt = inv_boxcox(X.flatten(), self.lambda_)
-        Xt = Xt.reshape(X_shape)
-        return Xt
+        X = X.flatten()
+
+        if self.adjust_bias:
+            X = X + np.log(self.bias_adjustment_)
+
+        Xt = inv_boxcox(X, self.lambda_)
+
+        return Xt.reshape(X_shape)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
