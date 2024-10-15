@@ -190,12 +190,14 @@ class BoxCoxTransformer(BaseTransformer):
         sp=None,
         lambda_fixed=0.0,
         enforce_positive=True,
+        adjust_bias=False,
     ):
         self.bounds = bounds
         self.method = method
         self.sp = sp
         self.lambda_fixed = lambda_fixed
         self.enforce_positive = enforce_positive
+        self.adjust_bias = adjust_bias
         super().__init__()
 
         VALID_METHODS = ["pearsonr", "mle", "all", "guerrero", "fixed"]
