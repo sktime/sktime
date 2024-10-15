@@ -73,6 +73,8 @@ Deep learning
     ResNetClassifier
     SimpleRNNClassifier
     TapNetClassifier
+    GRUClassifier
+    GRUFCNNClassifier
 
 Dictionary-based
 ----------------
