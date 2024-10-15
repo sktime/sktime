@@ -604,3 +604,21 @@ def test_pipeline_featurizer_noexog():
     # if the pipeline skips the FourierFeatures step,
     # then the predictions would be all constant, we test that this is not the case
     assert not np.allclose(y_pred.diff()[1:], np.zeros_like(y_pred[1:]))
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(
+        [ForecastingPipeline, TransformedTargetForecaster, YfromX, Detrender],
+    ),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_pipeline_display():
+    """Test that pipeline displays correctly."""
+    from sktime.forecasting.compose import TransformedTargetForecaster, YfromX
+    from sktime.transformations.series.detrend import Detrender
+
+    f = TransformedTargetForecaster([Detrender(), YfromX.create_test_instance()])
+    f._sk_visual_block_()
+
+    f = ForecastingPipeline([Detrender(), YfromX.create_test_instance()])
+    f._sk_visual_block_()

@@ -22,12 +22,12 @@ def test_html_documentation_link_mixin_sktime(mock_version):
         # other branches than `main` (that is "dev").
         assert (
             mixin._doc_link_template == f"https://www.sktime.net/en/v{sktime_version}"
-            "/api_reference/auto_generated/{modpath}.html"
+            "/api_reference/auto_generated/{reduced_path}.html"
         )
         assert (
             mixin._get_doc_link() == f"https://www.sktime.net/en/v{sktime_version}"
             "/api_reference/auto_generated/"
-            "sktime.utils._estimator_html_repr._HTMLDocumentationLinkMixin.html"
+            "sktime.utils._HTMLDocumentationLinkMixin.html"
         )
 
 
@@ -37,10 +37,10 @@ def test_html_documentation_link_mixin_get_doc_link():
 
     # if we set `_doc_link`, then we expect to infer a module and name for the estimator
     mixin._doc_link_module = "sktime"
-    mixin._doc_link_template = "https://website.com/{modpath}.html"
+    mixin._doc_link_template = "https://website.com/{reduced_path}.html"
     assert (
         mixin._get_doc_link() == "https://website.com/"
-        "sktime.utils._estimator_html_repr._HTMLDocumentationLinkMixin.html"
+        "sktime.utils._HTMLDocumentationLinkMixin.html"
     )
 
 

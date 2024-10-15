@@ -8,11 +8,11 @@ import numpy as np
 from numpy.random import RandomState
 
 from sktime.clustering.metrics.averaging import _resolve_average_callable
-from sktime.clustering.partitioning import TimeSeriesLloyds
+from sktime.clustering.partitioning import BaseTimeSeriesLloyds
 from sktime.distances import pairwise_distance
 
 
-class TimeSeriesKMeans(TimeSeriesLloyds):
+class TimeSeriesKMeans(BaseTimeSeriesLloyds):
     """Time series K-mean implementation.
 
     Parameters
@@ -88,6 +88,11 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
         # --------------
         "authors": ["chrisholder", "TonyBagnall"],
         "python_dependencies": "numba",
+        # estimator type
+        # --------------
+        "capability:out_of_sample": True,
+        "capability:predict": True,
+        "capability:predict_proba": False,
     }
 
     def __init__(

@@ -12,28 +12,14 @@ import pandas as pd
 from pandas.testing import assert_frame_equal
 from sklearn.utils.validation import check_random_state
 
-from sktime.alignment.base import BaseAligner
-from sktime.base import BaseEstimator, BaseObject
 from sktime.classification.base import BaseClassifier
 from sktime.classification.early_classification import BaseEarlyClassifier
 from sktime.clustering.base import BaseClusterer
-from sktime.datatypes._panel._check import is_nested_dataframe
-from sktime.dists_kernels import BasePairwiseTransformer, BasePairwiseTransformerPanel
-from sktime.forecasting.base import BaseForecaster
-from sktime.registry import scitype
-from sktime.regression.base import BaseRegressor
-from sktime.tests._config import VALID_ESTIMATOR_TYPES
-from sktime.transformations.base import BaseTransformer
+from sktime.datatypes._panel._check import _is_nested_dataframe
+from sktime.registry import is_scitype
 
 
-def _get_err_msg(estimator):
-    return (
-        f"Invalid estimator type: {type(estimator)}. Valid estimator types are: "
-        f"{VALID_ESTIMATOR_TYPES}"
-    )
-
-
-def _list_required_methods(estimator):
+def _list_required_methods(est_scitype, is_est=True):
     """Return list of required method names (beyond BaseEstimator ones)."""
     # all BaseObject children must implement these
     MUST_HAVE_FOR_OBJECTS = ["set_params", "get_params"]
@@ -46,32 +32,32 @@ def _list_required_methods(estimator):
     ]
     # prediction/forecasting base classes that must have predict
     BASE_CLASSES_THAT_MUST_HAVE_PREDICT = (
-        BaseClusterer,
-        BaseRegressor,
-        BaseForecaster,
+        "clusterer",
+        "regressor",
+        "forecaster",
     )
     # transformation base classes that must have transform
     BASE_CLASSES_THAT_MUST_HAVE_TRANSFORM = (
-        BaseTransformer,
-        BasePairwiseTransformer,
-        BasePairwiseTransformerPanel,
+        "transformer",
+        "transformer-pairwise",
+        "transformer-pairwise-panel",
     )
 
     required_methods = []
 
-    if isinstance(estimator, BaseObject):
-        required_methods += MUST_HAVE_FOR_OBJECTS
+    # if is an object - always true in the call chain
+    required_methods += MUST_HAVE_FOR_OBJECTS
 
-    if isinstance(estimator, BaseEstimator):
+    if is_est:
         required_methods += MUST_HAVE_FOR_ESTIMATORS
 
-    if isinstance(estimator, BASE_CLASSES_THAT_MUST_HAVE_PREDICT):
+    if est_scitype in BASE_CLASSES_THAT_MUST_HAVE_PREDICT:
         required_methods += ["predict"]
 
-    if isinstance(estimator, BASE_CLASSES_THAT_MUST_HAVE_TRANSFORM):
+    if est_scitype in BASE_CLASSES_THAT_MUST_HAVE_TRANSFORM:
         required_methods += ["transform"]
 
-    if isinstance(estimator, BaseAligner):
+    if est_scitype == "aligner":
         required_methods += [
             "get_alignment",
             "get_alignment_loc",
@@ -129,7 +115,7 @@ def _compare_nested_frame(func, x, y, **kwargs):
     if x.empty:
         assert_frame_equal(x, y)
 
-    elif is_nested_dataframe(x):
+    elif _is_nested_dataframe(x):
         # Check if both inputs have the same shape
         if not x.shape == y.shape:
             raise ValueError("Found inputs with different shapes")
@@ -217,11 +203,8 @@ def _has_capability(est, method: str) -> bool:
             return True
         return get_tag(est, "capability:pred_int", False)
     # skip transform for forecasters that have it - pipelines
-    if method == "transform" and scitype(est) in (
-        "classifier",
-        "forecaster",
-    ):
+    if method == "transform" and is_scitype(est, ["classifier", "forecaster"]):
         return False
-    if method == "predict" and scitype(est) == "transformer":
+    if method == "predict" and is_scitype(est, "transformer"):
         return False
     return True
