@@ -2524,6 +2524,536 @@ class _BaseGlobalForecaster(BaseForecaster):
         """
         raise NotImplementedError("abstract method")
 
+    def predict_quantiles(self, fh=None, X=None, alpha=None, y=None):
+        """Compute/return quantile forecasts.
+
+        If ``alpha`` is iterable, multiple quantiles will be calculated.
+
+        State required:
+            Requires state to be "fitted", i.e., ``self.is_fitted=True``.
+
+        Accesses in self:
+
+            * Fitted model attributes ending in "_".
+            * ``self.cutoff``, ``self.is_fitted``
+
+        Writes to self:
+            Stores ``fh`` to ``self.fh`` if ``fh`` is passed and has not been passed
+            previously.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ``ForecastingHorizon``, optional (default=None)
+            The forecasting horizon encoding the time stamps to forecast at.
+            Should not be passed if has already been passed in ``fit``.
+            If has not been passed in fit, must be passed, not optional
+
+        X : time series in ``sktime`` compatible format, optional (default=None)
+            Exogeneous time series to use in prediction.
+            Should be of same scitype (``Series``, ``Panel``, or ``Hierarchical``)
+            as ``y`` in ``fit``.
+            If ``self.get_tag("X-y-must-have-same-index")``,
+            ``X.index`` must contain ``fh`` index reference.
+            If ``y`` is passed (performing global forecasting), ``X`` must contain
+            all historical values and the time points to be predicted.
+
+        alpha : float or list of float of unique values, optional (default=[0.05, 0.95])
+            A probability or list of, at which quantile forecasts are computed.
+
+        y : time series in ``sktime`` compatible format, optional (default=None)
+            Historical values of the time series that should be predicted.
+            If not None, global forecasting will be performed.
+            Only pass the historical values not the time points to be predicted.
+
+        Returns
+        -------
+        quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level being the values of alpha passed to the function.
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                    from y seen in fit, if y seen in fit was Panel or Hierarchical.
+            Entries are quantile forecasts, for var in col index,
+                at quantile probability in second col index, for the row index.
+
+        Notes
+        -----
+        If ``y`` is not None, global forecast will be performed.
+        In global forecast mode,
+        ``X`` should contain all historical values and the time points to be predicted,
+        while ``y`` should only contain historical values
+        not the time points to be predicted.
+
+        If ``y`` is None, non global forecast will be performed.
+        In non global forecast mode,
+        ``X`` should only contain the time points to be predicted,
+        while ``y`` should only contain historical values
+        not the time points to be predicted.
+        """
+        if not self.get_tag("capability:pred_int"):
+            raise NotImplementedError(
+                f"{self.__class__.__name__} does not have the capability to return "
+                "quantile predictions. If you "
+                "think this estimator should have the capability, please open "
+                "an issue on sktime."
+            )
+        # check global forecasting tag
+        gf = self.get_tag(
+            "capability:global_forecasting", tag_value_default=False, raise_error=False
+        )
+        if not gf and y is not None:
+            ValueError("no global forecasting support!")
+
+        self.check_is_fitted()
+        if y is None:
+            self._global_forecasting = False
+        else:
+            self._global_forecasting = True
+
+        # input checks and conversions
+
+        # check fh and coerce to ForecastingHorizon, if not already passed in fit
+        fh = self._check_fh(fh)
+        if y is None:
+            self._global_forecasting = False
+        else:
+            self._global_forecasting = True
+        # default alpha
+        if alpha is None:
+            alpha = [0.05, 0.95]
+        # check alpha and coerce to list
+        alpha = check_alpha(alpha, name="alpha")
+
+        # check and convert X/y
+        X_inner, y_inner = self._check_X_y(X=X, y=y)
+
+        # this also updates cutoff from y
+        # be cautious, in fit self._X and self._y is also updated but not here!
+        if y_inner is not None:
+            self._set_cutoff_from_y(y_inner)
+
+        # check fh and coerce to ForecastingHorizon, if not already passed in fit
+        fh = self._check_fh(fh)
+
+        # we call the ordinary _predict_quantiles if no looping/vectorization needed
+        if not self._is_vectorized:
+            quantiles = self._predict_quantiles(fh=fh, X=X_inner, alpha=alpha, y=y)
+        else:
+            # otherwise we call the vectorized version of predict_quantiles
+            quantiles = self._vectorize(
+                "predict_quantiles",
+                fh=fh,
+                X=X_inner,
+                alpha=alpha,
+                y=y,
+            )
+
+        return quantiles
+
+    def predict_interval(self, fh=None, X=None, coverage=0.90, y=None):
+        """Compute/return prediction interval forecasts.
+
+        If ``coverage`` is iterable, multiple intervals will be calculated.
+
+        State required:
+            Requires state to be "fitted", i.e., ``self.is_fitted=True``.
+
+        Accesses in self:
+
+            * Fitted model attributes ending in "_".
+            * ``self.cutoff``, ``self.is_fitted``
+
+        Writes to self:
+            Stores ``fh`` to ``self.fh`` if ``fh`` is passed and has not been passed
+            previously.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ``ForecastingHorizon``, optional (default=None)
+            The forecasting horizon encoding the time stamps to forecast at.
+            Should not be passed if has already been passed in ``fit``.
+            If has not been passed in fit, must be passed, not optional
+
+        X : time series in ``sktime`` compatible format, optional (default=None)
+            Exogeneous time series to use in prediction.
+            Should be of same scitype (``Series``, ``Panel``, or ``Hierarchical``)
+            as ``y`` in ``fit``.
+            If ``self.get_tag("X-y-must-have-same-index")``,
+            ``X.index`` must contain ``fh`` index reference.
+            If ``y`` is passed (performing global forecasting), ``X`` must contain
+            all historical values and the time points to be predicted.
+
+        coverage : float or list of float of unique values, optional (default=0.90)
+           nominal coverage(s) of predictive interval(s)
+
+        y : time series in ``sktime`` compatible format, optional (default=None)
+            Historical values of the time series that should be predicted.
+            If not None, global forecasting will be performed.
+            Only pass the historical values not the time points to be predicted.
+
+        Returns
+        -------
+        pred_int : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level coverage fractions for which intervals were computed.
+                    in the same order as in input ``coverage``.
+                Third level is string "lower" or "upper", for lower/upper interval end.
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                from y seen in fit, if y seen in fit was Panel or Hierarchical.
+            Entries are forecasts of lower/upper interval end,
+                for var in col index, at nominal coverage in second col index,
+                lower/upper depending on third col index, for the row index.
+                Upper/lower interval end forecasts are equivalent to
+                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
+
+        Notes
+        -----
+        If ``y`` is not None, global forecast will be performed.
+        In global forecast mode,
+        ``X`` should contain all historical values and the time points to be predicted,
+        while ``y`` should only contain historical values
+        not the time points to be predicted.
+
+        If ``y`` is None, non global forecast will be performed.
+        In non global forecast mode,
+        ``X`` should only contain the time points to be predicted,
+        while ``y`` should only contain historical values
+        not the time points to be predicted.
+        """
+        if not self.get_tag("capability:pred_int"):
+            raise NotImplementedError(
+                f"{self.__class__.__name__} does not have the capability to return "
+                "prediction intervals. If you "
+                "think this estimator should have the capability, please open "
+                "an issue on sktime."
+            )
+        # check global forecasting tag
+        gf = self.get_tag(
+            "capability:global_forecasting", tag_value_default=False, raise_error=False
+        )
+        if not gf and y is not None:
+            ValueError("no global forecasting support!")
+
+        self.check_is_fitted()
+        if y is None:
+            self._global_forecasting = False
+        else:
+            self._global_forecasting = True
+
+        # input checks and conversions
+
+        # check fh and coerce to ForecastingHorizon, if not already passed in fit
+        fh = self._check_fh(fh)
+
+        # check alpha and coerce to list
+        coverage = check_alpha(coverage, name="coverage")
+
+        # check and convert X/y
+        X_inner, y_inner = self._check_X_y(X=X, y=y)
+
+        # this also updates cutoff from y
+        # be cautious, in fit self._X and self._y is also updated but not here!
+        if y_inner is not None:
+            self._set_cutoff_from_y(y_inner)
+
+        # we call the ordinary _predict_interval if no looping/vectorization needed
+        if not self._is_vectorized:
+            pred_int = self._predict_interval(
+                fh=fh, X=X_inner, coverage=coverage, y=y_inner
+            )
+        else:
+            # otherwise we call the vectorized version of predict_interval
+            pred_int = self._vectorize(
+                "predict_interval",
+                fh=fh,
+                X=X_inner,
+                coverage=coverage,
+                y=y_inner,
+            )
+
+        return pred_int
+
+    def predict_var(self, fh=None, X=None, cov=False, y=None):
+        """Compute/return variance forecasts.
+
+        State required:
+            Requires state to be "fitted", i.e., ``self.is_fitted=True``.
+
+        Accesses in self:
+
+            * Fitted model attributes ending in "_".
+            * ``self.cutoff``, ``self.is_fitted``
+
+        Writes to self:
+            Stores ``fh`` to ``self.fh`` if ``fh`` is passed and has not been passed
+            previously.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ``ForecastingHorizon``, optional (default=None)
+            The forecasting horizon encoding the time stamps to forecast at.
+            Should not be passed if has already been passed in ``fit``.
+            If has not been passed in fit, must be passed, not optional
+
+        X : time series in ``sktime`` compatible format, optional (default=None)
+            Exogeneous time series to use in prediction.
+            Should be of same scitype (``Series``, ``Panel``, or ``Hierarchical``)
+            as ``y`` in ``fit``.
+            If ``self.get_tag("X-y-must-have-same-index")``,
+            ``X.index`` must contain ``fh`` index reference.
+
+        cov : bool, optional (default=False)
+            if True, computes covariance matrix forecast.
+            if False, computes marginal variance forecasts.
+
+        y : time series in ``sktime`` compatible format, optional (default=None)
+            Historical values of the time series that should be predicted.
+            If not None, global forecasting will be performed.
+            Only pass the historical values not the time points to be predicted.
+
+        Returns
+        -------
+        pred_var : pd.DataFrame, format dependent on ``cov`` variable
+            If cov=False:
+                Column names are exactly those of ``y`` passed in ``fit``/``update``.
+                    For nameless formats, column index will be a RangeIndex.
+                Row index is fh, with additional levels equal to instance levels,
+                    from y seen in fit, if y seen in fit was Panel or Hierarchical.
+                Entries are variance forecasts, for var in col index.
+                A variance forecast for given variable and fh index is a predicted
+                    variance for that variable and index, given observed data.
+            If cov=True:
+                Column index is a multiindex: 1st level is variable names (as above)
+                    2nd level is fh.
+                Row index is fh, with additional levels equal to instance levels,
+                    from y seen in fit, if y seen in fit was Panel or Hierarchical.
+                Entries are (co-)variance forecasts, for var in col index, and
+                    covariance between time index in row and col.
+                Note: no covariance forecasts are returned between different variables.
+
+        Notes
+        -----
+        If ``y`` is not None, global forecast will be performed.
+        In global forecast mode,
+        ``X`` should contain all historical values and the time points to be predicted,
+        while ``y`` should only contain historical values
+        not the time points to be predicted.
+
+        If ``y`` is None, non global forecast will be performed.
+        In non global forecast mode,
+        ``X`` should only contain the time points to be predicted,
+        while ``y`` should only contain historical values
+        not the time points to be predicted.
+        """
+        if not self.get_tag("capability:pred_int"):
+            raise NotImplementedError(
+                f"{self.__class__.__name__} does not have the capability to return "
+                "variance predictions. If you "
+                "think this estimator should have the capability, please open "
+                "an issue on sktime."
+            )
+        gf = self.get_tag(
+            "capability:global_forecasting", tag_value_default=False, raise_error=False
+        )
+        if not gf and y is not None:
+            ValueError("no global forecasting support!")
+        self.check_is_fitted()
+        if y is None:
+            self._global_forecasting = False
+        else:
+            self._global_forecasting = True
+
+        # input checks and conversions
+
+        # check fh and coerce to ForecastingHorizon, if not already passed in fit
+        fh = self._check_fh(fh)
+
+        # check and convert X/y
+        X_inner, y_inner = self._check_X_y(X=X, y=y)
+
+        # this also updates cutoff from y
+        # be cautious, in fit self._X and self._y is also updated but not here!
+        if y_inner is not None:
+            self._set_cutoff_from_y(y_inner)
+
+        # we call the ordinary _predict_interval if no looping/vectorization needed
+        if not self._is_vectorized:
+            pred_var = self._predict_var(fh=fh, X=X_inner, cov=cov, y=y)
+        else:
+            # otherwise we call the vectorized version of predict_interval
+            pred_var = self._vectorize("predict_var", fh=fh, X=X_inner, cov=cov, y=y)
+
+        return pred_var
+
+    def predict_proba(self, fh=None, X=None, marginal=True, y=None):
+        """Compute/return fully probabilistic forecasts.
+
+        Note: currently only implemented for Series (non-panel, non-hierarchical) y.
+
+        State required:
+            Requires state to be "fitted", i.e., ``self.is_fitted=True``.
+
+        Accesses in self:
+
+            * Fitted model attributes ending in "_".
+            * ``self.cutoff``, ``self.is_fitted``
+
+        Writes to self:
+            Stores ``fh`` to ``self.fh`` if ``fh`` is passed and has not been passed
+            previously.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ``ForecastingHorizon``, optional (default=None)
+            The forecasting horizon encoding the time stamps to forecast at.
+            Should not be passed if has already been passed in ``fit``.
+            If has not been passed in fit, must be passed, not optional
+
+        X : time series in ``sktime`` compatible format, optional (default=None)
+            Exogeneous time series to use in prediction.
+            Should be of same scitype (``Series``, ``Panel``, or ``Hierarchical``)
+            as ``y`` in ``fit``.
+            If ``self.get_tag("X-y-must-have-same-index")``,
+            ``X.index`` must contain ``fh`` index reference.
+            If ``y`` is passed (performing global forecasting), ``X`` must contain
+            all historical values and the time points to be predicted.
+
+        marginal : bool, optional (default=True)
+            whether returned distribution is marginal by time index
+
+        y : time series in ``sktime`` compatible format, optional (default=None)
+            Historical values of the time series that should be predicted.
+            If not None, global forecasting will be performed.
+            Only pass the historical values not the time points to be predicted.
+
+        Returns
+        -------
+        pred_dist : sktime BaseDistribution
+            predictive distribution
+            if marginal=True, will be marginal distribution by time point
+            if marginal=False and implemented by method, will be joint
+
+        Notes
+        -----
+        If ``y`` is not None, global forecast will be performed.
+        In global forecast mode,
+        ``X`` should contain all historical values and the time points to be predicted,
+        while ``y`` should only contain historical values
+        not the time points to be predicted.
+
+        If ``y`` is None, non global forecast will be performed.
+        In non global forecast mode,
+        ``X`` should only contain the time points to be predicted,
+        while ``y`` should only contain historical values
+        not the time points to be predicted.
+        """
+        if not self.get_tag("capability:pred_int"):
+            raise NotImplementedError(
+                f"{self.__class__.__name__} does not have the capability to return "
+                "fully probabilistic predictions. If you "
+                "think this estimator should have the capability, please open "
+                "an issue on sktime."
+            )
+
+        if hasattr(self, "_is_vectorized") and self._is_vectorized:
+            raise NotImplementedError(
+                "automated vectorization for predict_proba is not implemented"
+            )
+
+        # check global forecasting tag
+        gf = self.get_tag(
+            "capability:global_forecasting", tag_value_default=False, raise_error=False
+        )
+        if not gf and y is not None:
+            ValueError("no global forecasting support!")
+
+        self.check_is_fitted()
+        if y is None:
+            self._global_forecasting = False
+        else:
+            self._global_forecasting = True
+
+        # input checks and conversions
+
+        # check fh and coerce to ForecastingHorizon, if not already passed in fit
+        fh = self._check_fh(fh)
+
+        # check and convert X/y
+        X_inner, y_inner = self._check_X_y(X=X, y=y)
+
+        # this also updates cutoff from y
+        # be cautious, in fit self._X and self._y is also updated but not here!
+        if y_inner is not None:
+            self._set_cutoff_from_y(y_inner)
+
+        # pass to inner _predict_proba
+        pred_dist = self._predict_proba(fh=fh, X=X_inner, marginal=marginal, y=y)
+
+        return pred_dist
+
+    # @classmethod
+    # def _implementation_counts(cls) -> dict:
+    #     """Functions need at least n overrides to be counted as implemented.
+
+    #     A function needs to be specified only if n!=1.
+
+    #     Returns
+    #     -------
+    #     dict
+    #         key is function name, and the value is n.
+    #     """
+    #     return {
+    #         "_predict_proba": 2,
+    #         "_predict_var": 2,
+    #         "_predict_interval": 2,
+    #         "_predict_quantiles": 2,
+    #     }
+
+    # @classmethod
+    # def _has_implementation_of(cls, method):
+    #     """Check if method has a concrete implementation in this class.
+
+    #     This assumes that having an implementation is equivalent to
+    #         at least n overrides of `method` in the method resolution order.
+
+    #     Parameters
+    #     ----------
+    #     method : str
+    #         name of method to check implementation of
+
+    #     Returns
+    #     -------
+    #     bool, whether method has implementation in cls
+    #         True if cls.method has been overridden at least n times in
+    #         the inheritance tree (according to method resolution order)
+    #         n is different for each function. If a function has been overridden
+    #         in _BaseGlobalForecaster and is going to be overridden in
+    #         specific forecaster again, n should be 2.
+    #         n should be specified in return of self._implementation_counts if n!=1.
+    #     """
+    #     # walk through method resolution order and inspect methods
+    #     #   of classes and direct parents, "adjacent" classes in mro
+    #     mro = inspect.getmro(cls)
+    #     # collect all methods that are not none
+    #     methods = [getattr(c, method, None) for c in mro]
+    #     methods = [m for m in methods if m is not None]
+    #     implementation_counts = cls._implementation_counts()
+    #     if method in implementation_counts.keys():
+    #         n = implementation_counts[method]
+    #     else:
+    #         n = 1
+    #     _n = 0
+    #     for i in range(len(methods) - 1):
+    #         # the method has been overridden once iff
+    #         #  at least two of the methods collected are not equal
+    #         #  equivalently: some two adjacent methods are not equal
+    #         overridden = methods[i] != methods[i + 1]
+    #         if overridden:
+    #             _n += 1
+    #         if _n >= n:
+    #             return True
+
+    #     return False
+
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):
     """Format moving-cutoff predictions.
