@@ -4,14 +4,13 @@ import warnings
 
 import numpy as np
 import pandas as pd
-
-# from sktime.libs.momentfm import MOMENTPipeline
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
+from sktime.libs.momentfm import MOMENTPipeline
+from sktime.libs.momentfm.forecasting_metrics import get_forecasting_metrics
 from sktime.split import temporal_train_test_split
 
-# from sktime.libs.momentfm.forecasting_metrics import get_forecasting_metrics
 if _check_soft_dependencies(["torch"], severity="none"):
     from torch.cuda import empty_cache
     from torch.nn import MSELoss
@@ -30,6 +29,9 @@ if _check_soft_dependencies(["accelerate", "momentfm"], severity="none"):
     from momentfm.utils.forecasting_metrics import get_forecasting_metrics
 
 
+# if _check_soft_dependencies(["momentfm"], severity="none"):
+#     from momentfm import MOMENTPipeline
+#     from momentfm.utils.forecasting_metrics import get_forecasting_metrics
 class MomentFMForecaster(_BaseGlobalForecaster):
     """
     Interface for forecasting with the deep learning time series model momentfm.
@@ -144,7 +146,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             "tqdm",
             "huggingface-hub",
             "transformers",
-            "momentfm",
+            # "momentfm",
         ],
         "capability:global_forecasting": True,
         "python_version": ">= 3.10",
