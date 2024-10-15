@@ -2,7 +2,7 @@
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["fkiraly"]
+__author__ = ["fkiraly", "avishkarsonni"]
 __all__ = ["YtoX"]
 
 from sktime.transformations.base import BaseTransformer
@@ -118,7 +118,7 @@ class YtoX(BaseTransformer):
     """
 
     _tags = {
-        "authors": ["fkiraly"],
+        "authors": ["fkiraly", "avishkarsonni"],
         "transform-returns-same-time-index": True,
         "skip-inverse-transform": False,
         "univariate-only": False,
@@ -130,9 +130,9 @@ class YtoX(BaseTransformer):
         "requires_y": True,
     }
 
-    def __init__(self, subset_index=False):
+    def __init__(self, subset_index=False, transformer=None):
         self.subset_index = subset_index
-
+        self.transformer = transformer
         super().__init__()
 
     def _transform(self, X, y=None):
@@ -152,9 +152,15 @@ class YtoX(BaseTransformer):
         y, as a transformed version of X
         """
         if self.subset_index:
-            return y.loc[X.index.intersection(y.index)]
+            y_transformed = y.loc[X.index.intersection(y.index)]
         else:
-            return y
+            y_transformed = y
+
+        # Apply the transformer if provided
+        if self.transformer is not None:
+            y_transformed = self.transformer.fit_transform(y_transformed)
+
+        return y_transformed
 
     def _inverse_transform(self, X, y=None):
         """Inverse transform, inverse operation to transform.
@@ -177,3 +183,32 @@ class YtoX(BaseTransformer):
             return y.loc[X.index.intersection(y.index)]
         else:
             return y
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the YtoX transformer.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : list of dict
+            Parameters to create testing instances of YtoX
+            Each dict can be used to construct a test instance, i.e.,
+            ``YtoX(**params[i])`` creates a valid test instance.
+            ``create_test_instance`` uses the first dictionary in ``params``
+
+        """
+        from sktime.transformations.series.boxcox import BoxCoxTransformer
+        from sktime.transformations.series.exponent import ExponentTransformer
+
+        return [
+            {"subset_index": False, "transformer": ExponentTransformer(power=2)},
+            {"subset_index": False, "transformer": BoxCoxTransformer()},
+            {"subset_index": True, "transformer": None},
+            {"subset_index": False, "transformer": None},
+        ]

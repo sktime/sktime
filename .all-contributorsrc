@@ -3072,12 +3072,22 @@
       ]
     },
     {
-      "login": "jan-mue",
+      "login":"jan-mue",
       "name": "Jan Müller",
       "avatar_url": "https://avatars.githubusercontent.com/u/6440416?v=4",
       "profile": "https://github.com/jan-mue",
       "contributions": [
         "doc"
+      ]
+    },
+    {
+      "login": "avishkarsonni",
+      "name": "Avishkar Sonni",
+      "avatar_url": "https://avatars.githubusercontent.com/u/154905237?v=4",
+      "profile": "https://github.com/avishkarsonni",
+      "contributions": [
+        "code",
+        "test"
       ]
     },
     {
