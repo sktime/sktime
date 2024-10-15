@@ -23,10 +23,8 @@ else:
         pass
 
 
-if _check_soft_dependencies(["accelerate", "momentfm"], severity="none"):
+if _check_soft_dependencies(["accelerate"], severity="none"):
     from accelerate import Accelerator
-    from momentfm import MOMENTPipeline
-    from momentfm.utils.forecasting_metrics import get_forecasting_metrics
 
 
 # if _check_soft_dependencies(["momentfm"], severity="none"):
@@ -147,6 +145,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             "huggingface-hub",
             "transformers",
             # "momentfm",
+            "accelerate",
         ],
         "capability:global_forecasting": True,
         "python_version": ">= 3.10",
