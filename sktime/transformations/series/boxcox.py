@@ -124,16 +124,16 @@ class BoxCoxTransformer(BaseTransformer):
         If ``False``, any negative values will be passed unchanged to the
         underlying functions (possibly causing error).
     adjust_bias : bool, optional, default = False
-        If True, apply bias adjustment to the transformed data
+        If True, use the back-transformed mean method instead of simple back-transform.
 
     Attributes
     ----------
     lambda_ : float
         The Box-Cox lambda parameter that was fitted, based on the supplied
         ``method`` and data provided in ``fit``.
-    bias_adjustment_ : float
-        The bias adjustment factor (only if adjust_bias=True).
-
+    self.transformed_var_ : float
+        The variance of the transformed data at step h (assuming constant
+        forecast variance).
 
     See Also
     --------
@@ -153,6 +153,8 @@ class BoxCoxTransformer(BaseTransformer):
        Journal of the Royal Statistical Society, Series B, 26, 211-252.
     .. [2] V.M. Guerrero, "Time-series analysis supported by Power
        Transformations ", Journal of Forecasting, vol. 12, pp. 37-48, 1993.
+    .. [3] Rob J Hyndman and George Athanasopoulos, "Forecasting: Principles
+        and Practice(second edition)"
 
     Examples
     --------
@@ -254,9 +256,7 @@ class BoxCoxTransformer(BaseTransformer):
                 " this is likely due to method attribute being changed after init"
             )
 
-        if self.adjust_bias:
-            transformed_X = boxcox(X, self.lambda_)
-            self.bias_adjustment_ = np.mean(np.exp(transformed_X))
+        self.transformed_var_ = np.var(boxcox(X, self.lambda_))
 
         return self
 
@@ -287,9 +287,6 @@ class BoxCoxTransformer(BaseTransformer):
 
         Xt = boxcox(np.abs(X), self.lambda_)
 
-        if self.adjust_bias:
-            Xt = Xt - np.log(self.bias_adjustment_)
-
         if self.enforce_positive:
             Xt = Xt * X_sign
 
@@ -318,9 +315,17 @@ class BoxCoxTransformer(BaseTransformer):
         X = X.flatten()
 
         if self.adjust_bias:
-            X = X + np.log(self.bias_adjustment_)
-
-        Xt = inv_boxcox(X, self.lambda_)
+            if self.lambda_ == 0:
+                Xt = np.exp(X) * (1 + self.transformed_var_ / 2)
+            else:
+                Xt = (self.lambda_ * X + 1) ** (1 / self.lambda_) * (
+                    1
+                    + self.transformed_var_
+                    * (1 - self.lambda_)
+                    / (2 * (self.lambda_ * X + 1) ** 2)
+                )
+        else:
+            Xt = inv_boxcox(X, self.lambda_)
 
         return Xt.reshape(X_shape)
 
