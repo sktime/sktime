@@ -14,7 +14,7 @@ from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 from sktime.utils.warnings import warn
 
 __all__ = ["_NeuralForecastAdapter"]
-__author__ = ["yarnabrina", "geetu040", "pranavvp16", "XinyuWu"]
+__author__ = ["yarnabrina", "geetu040", "pranavvp16", "XinyuWuu"]
 
 _SUPPORTED_LOCAL_SCALAR_TYPES = Literal[
     "standard", "robust", "robust-iqr", "minmax", "boxcox"
@@ -66,7 +66,7 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["yarnabrina", "geetu040", "pranavvp16", "XinyuWu"],
+        "authors": ["yarnabrina", "geetu040", "pranavvp16", "XinyuWuu"],
         "maintainers": ["yarnabrina"],
         "python_version": ">=3.8",
         "python_dependencies": ["neuralforecast"],
