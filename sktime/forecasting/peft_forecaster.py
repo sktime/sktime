@@ -42,7 +42,7 @@ class PeftForecaster(_BaseGlobalForecaster):
 
     Parameters
     ----------
-    forecaster : sktime._BaseGlobalForecaster or transformers.PreTrainedModel
+    sktime_forecaster : sktime._BaseGlobalForecaster or transformers.PreTrainedModel
         or nn.Module, required
         The base model used for Peft. If a user is passing in a sktime
         global forecaster,  the underlying torch module must be an
@@ -80,16 +80,16 @@ class PeftForecaster(_BaseGlobalForecaster):
 
     def __init__(
         self,
-        forecaster,
+        sktime_forecaster,
         peft_config,
     ):
         # self.input_model is a sktime global forecasting object
-        self.forecaster = forecaster
+        self.sktime_forecaster = sktime_forecaster
         # user passed in peft_config
         self.peft_config = peft_config
         # make a deep copy of the input model as we do not want to change
         # anything from the original model
-        self.forecaster_copy = deepcopy(self.forecaster)
+        self.forecaster_copy = deepcopy(self.sktime_forecaster)
 
         # locate and grab the underlying torch model
         self.base_model = _check_model_input(self.forecaster_copy)
@@ -105,14 +105,14 @@ class PeftForecaster(_BaseGlobalForecaster):
         original_params = self.forecaster_copy.get_params()
         del original_params["peft_model"]
 
-        self.new_forecaster = type(self.forecaster_copy)(
+        self.forecaster_ = type(self.forecaster_copy)(
             **original_params, peft_model=self.peft_model
         )
-        self.new_forecaster.fit(fh=fh, X=X, y=y)
+        self.forecaster_.fit(fh=fh, X=X, y=y)
         return self
 
     def _predict(self, fh, X, y):
-        y_pred = self.new_forecaster.predict(fh=fh, X=X, y=y)
+        y_pred = self.forecaster_.predict(fh=fh, X=X, y=y)
 
         return y_pred
 
