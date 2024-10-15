@@ -42,7 +42,7 @@ class PeftForecaster(_BaseGlobalForecaster):
 
     Parameters
     ----------
-    input_model : sktime._BaseGlobalForecaster or transformers.PreTrainedModel
+    forecaster : sktime._BaseGlobalForecaster or transformers.PreTrainedModel
         or nn.Module, required
         The base model used for Peft. If a user is passing in a sktime
         global forecaster,  the underlying torch module must be an
@@ -52,26 +52,6 @@ class PeftForecaster(_BaseGlobalForecaster):
 
     sequence_length : int, optional
         default = 3
-
-    training_args : dict, optional
-
-    compute_metrics : callable, optional
-        default = None
-
-    callbacks : callable, optional
-
-    datacollator : callable, optional
-
-    broadcasting : bool,
-        default=False
-        if True, multiindex data input will be broadcasted to single series.
-        For each single series, one copy of this forecaster will try to
-        fit and predict on it. The broadcasting is happening inside automatically,
-        from the outerside api perspective, the input and output are the same,
-        only one multiindex output from ``predict``.
-
-    validation_split : float in (0,1)
-        default = None,
 
     """
 
@@ -100,77 +80,69 @@ class PeftForecaster(_BaseGlobalForecaster):
 
     def __init__(
         self,
-        input_model,
+        forecaster,
         peft_config,
     ):
         # self.input_model is a sktime global forecasting object
-        self.input_model = input_model
+        self.forecaster = forecaster
         # user passed in peft_config
         self.peft_config = peft_config
         # make a deep copy of the input model as we do not want to change
         # anything from the original model
-        self.model_copy = deepcopy(self.input_model)
+        self.forecaster_copy = deepcopy(self.forecaster)
 
         # locate and grab the underlying torch model
-        self.base_model = _check_model_input(self.input_model)
+        self.base_model = _check_model_input(self.forecaster_copy)
         # check to make sure that the peft config is valid
-        config = _check_peft_config(peft_config)
+        self.config = _check_peft_config(peft_config)
 
         # create the `PeftModel` from the base_model
-        self.peft_model = get_peft_model(self.base_model, config)
+        self.peft_model = get_peft_model(self.base_model, self.config)
         # self.model = self.peft_model
-        # no major use for the model_copy right now, can be omitted
-        self.model_copy._peft_model = self.peft_model
-
-        # this portion of the code is commented out because it
-        # should only exist in the fit instance..
-        # uncomment this code if you want to inspect the newforecaster
-        # parameters etc..
-        self.newforecaster = type(self.model_copy)(**self.model_copy.get_params())
-        self.newforecaster._peft_model = self.peft_model
         super().__init__()
 
     def _fit(self, fh, X, y):
-        # New object initialized with type()
-        self.newforecaster = type(self.input_model)(**self.input_model.get_params())
-        self.newforecaster.peft_model = self.peft_model
-        # print(self.newforecaster.peft_model)
-        self.newforecaster.fit(fh=fh, X=X, y=y)
-        # print(self.newforecaster.peft_model)
+        original_params = self.forecaster_copy.get_params()
+        del original_params["peft_model"]
+
+        self.new_forecaster = type(self.forecaster_copy)(
+            **original_params, peft_model=self.peft_model
+        )
+        self.new_forecaster.fit(fh=fh, X=X, y=y)
         return self
 
     def _predict(self, fh, X, y):
-        y_pred = self.model_copy.predict(fh=fh, X=X, y=y)
+        y_pred = self.new_forecaster.predict(fh=fh, X=X, y=y)
 
         return y_pred
 
 
-def _check_model_input(model):
+def _check_model_input(forecaster):
     """Check if the passed model is valid for the PeftForecaster."""
-    if isinstance(model, _BaseGlobalForecaster):
-        if not hasattr(model, "model"):
+    if isinstance(forecaster, _BaseGlobalForecaster):
+        if not hasattr(forecaster, "model"):
             raise AttributeError(
                 "For sktime deep learning forecasters,"
                 " an attribute named 'model' containing "
                 "the underlying torch model is required."
             )
         else:
-            base_model = model.model
+            base_model = forecaster.model
             if isinstance(base_model, (Module, PreTrainedModel)):
                 return base_model
             else:
                 raise TypeError(
                     "Expected a nn.Module or a PreTrainedModel "
                     "but found"
-                    f" {type(model).__name__}"
+                    f" {type(forecaster).__name__}"
                 )
     else:
-        if isinstance(model, (Module, PreTrainedModel)):
-            return model
+        if isinstance(forecaster, (Module, PreTrainedModel)):
+            return forecaster
         else:
             raise TypeError(
                 "Expected a nn.Module or a PreTrainedModel"
-                f" but found {type(model).__name__}"
+                f" but found {type(forecaster).__name__}"
             )
 
 

@@ -290,36 +290,38 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         # Get the Model
         # self.model, info = PatchTSTForPrediction.from_pretrained(
         # "ibm-granite/granite-timeseries-patchtst",
-        if not self.peft_model:
-            self.model, info = TinyTimeMixerForPrediction.from_pretrained(
-                self.model_path,
-                revision=self.revision,
-                config=config,
-                output_loading_info=True,
-                ignore_mismatched_sizes=True,
-            )
+        # if not self.peft_model:
+        #     self.model, info = TinyTimeMixerForPrediction.from_pretrained(
+        #         self.model_path,
+        #         revision=self.revision,
+        #         config=config,
+        #         output_loading_info=True,
+        #         ignore_mismatched_sizes=True,
+        #     )
 
-            if len(info["mismatched_keys"]) == 0:
-                return  # No need to fit
+        #     if len(info["mismatched_keys"]) == 0:
+        #         return  # No need to fit
 
-            # Freeze all loaded parameters
-            for param in self.model.parameters():
-                param.requires_grad = False
+        #     # Freeze all loaded parameters
+        #     for param in self.model.parameters():
+        #         param.requires_grad = False
 
-            # Reininit the weights of all layers that have mismatched sizes
-            for key, _, _ in info["mismatched_keys"]:
-                _model = self.model
-                for attr_name in key.split(".")[:-1]:
-                    _model = getattr(_model, attr_name)
-                _model.weight.requires_grad = True
-        else:
-            print("peft_model found, using peft_model")
-            if not isinstance(
-                self.peft_model.base_model.model, TinyTimeMixerForPrediction
-            ):
-                raise ValueError("Wrong base model found")
-            else:
-                self.model = self.peft_model
+        #     # Reininit the weights of all layers that have mismatched sizes
+        #     for key, _, _ in info["mismatched_keys"]:
+        #         _model = self.model
+        #         for attr_name in key.split(".")[:-1]:
+        #             _model = getattr(_model, attr_name)
+        #         _model.weight.requires_grad = True
+        # else:
+        #     print("peft_model found, using peft_model")
+        #     if not isinstance(
+        #         self.peft_model.base_model.model, TinyTimeMixerForPrediction
+        #     ):
+        #         raise ValueError("Wrong base model found")
+        #     else:
+        #         self.model = self.peft_model
+
+        self.model = _load_model(self, config, TinyTimeMixerForPrediction)
 
         y_train, y_test = temporal_train_test_split(y, test_size=self.validation_split)
 
@@ -556,6 +558,40 @@ def _frame2numpy(data):
         (-1, length, len(data.columns))
     )
     return arr
+
+
+def _load_model(self, config, TinyTimeMixerForPrediction):
+    if not self.peft_model:
+        print("loading model")
+        model, info = TinyTimeMixerForPrediction.from_pretrained(
+            self.model_path,
+            revision=self.revision,
+            config=config,
+            output_loading_info=True,
+            ignore_mismatched_sizes=True,
+        )
+
+        if len(info["mismatched_keys"]) == 0:
+            return  # No need to fit
+
+        # Freeze all loaded parameters
+        for param in model.parameters():
+            param.requires_grad = False
+
+        # Reininit the weights of all layers that have mismatched sizes
+        for key, _, _ in info["mismatched_keys"]:
+            _model = model
+            for attr_name in key.split(".")[:-1]:
+                _model = getattr(_model, attr_name)
+            _model.weight.requires_grad = True
+    else:
+        print("using peft_model input")
+        if not isinstance(self.peft_model.base_model.model, TinyTimeMixerForPrediction):
+            raise ValueError("Wrong base model found")
+        else:
+            model = self.peft_model
+
+    return model
 
 
 class PyTorchDataset(Dataset):
