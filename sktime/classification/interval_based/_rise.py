@@ -7,7 +7,6 @@ __all__ = [
 ]
 
 import numpy as np
-from joblib import Parallel, delayed
 from sklearn.base import clone
 from sklearn.ensemble._base import _partition_estimators
 from sklearn.tree import DecisionTreeClassifier
@@ -180,7 +179,7 @@ class RandomIntervalSpectralEnsemble(BaseClassifier):
         # packaging info
         # --------------
         "authors": "TonyBagnall",
-        "python_dependencies": "numba",
+        "python_dependencies": ["numba", "joblib"],
         # estimator type
         # --------------
         "capability:multithreading": True,
@@ -239,6 +238,8 @@ class RandomIntervalSpectralEnsemble(BaseClassifier):
         -------
         self : object
         """
+        from joblib import Parallel, delayed
+
         X = X.squeeze(1)
         n_instances, self.series_length = X.shape
         self.min_interval_, self.max_interval_ = self.min_interval, self.max_interval
@@ -343,6 +344,8 @@ class RandomIntervalSpectralEnsemble(BaseClassifier):
         output : array of shape = [n_instances, n_classes]
             The class probabilities of all cases.
         """
+        from joblib import Parallel, delayed
+
         X = X.squeeze(1)
 
         n_instances, n_columns = X.shape

@@ -7,6 +7,7 @@ import pandas as pd
 import pytest
 
 from sktime.datatypes._adapter.dask_to_pd import (
+    check_dask_frame,
     convert_dask_to_pandas,
     convert_pandas_to_dask,
 )
@@ -25,6 +26,23 @@ pd_fixture_multiindex.columns = ["a", "foo"]
 
 
 PANDAS_FIXTURES = [pd_fixture_simple, pd_fixture_multiindex]
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("dask", severity="none"),
+    reason="skip test if required soft dependency for dask not available",
+)
+def test_check_dask_frame():
+    """Tests that check_dask_frame does not fail when given a pandas DataFrame.
+
+    Failure case in bug #7250.
+    """
+
+    # Create a regular pandas DataFrame
+    invalid_df = pd.DataFrame({"A": [1, 2, 3]})
+
+    # Call the function and expect it to run successfully
+    check_dask_frame(invalid_df)
 
 
 @pytest.mark.skipif(
