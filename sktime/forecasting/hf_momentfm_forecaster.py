@@ -8,7 +8,7 @@ from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 from sktime.libs.momentfm import MOMENTPipeline
-from sktime.libs.momentfm.forecasting_metrics import get_forecasting_metrics
+from sktime.libs.momentfm.utils.forecasting_metrics import get_forecasting_metrics
 from sktime.split import temporal_train_test_split
 
 if _check_soft_dependencies(["torch"], severity="none"):
