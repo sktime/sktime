@@ -352,7 +352,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
 
         # Get the model
         self.model = trainer.model
-        self.model__ = self.model
+        self.model_ = self.model
 
     def _predict(self, fh, X, y=None):
         """Forecast time series at future horizon.
