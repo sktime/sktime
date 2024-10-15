@@ -3097,6 +3097,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "Garve",
+      "name": "Robert Kübler",
+      "avatar_url": "https://avatars.githubusercontent.com/u/932327?v=4",
+      "profile": "https://linkedin.com/in/robert-kuebler",
+      "contributions": [
+        "bug"
+      ]
     }
   ]
 }
