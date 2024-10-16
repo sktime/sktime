@@ -90,6 +90,14 @@ Time Series Segmentation
 
     ClusterSegmenter
 
+.. currentmodule:: sktime.annotation.wclust
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    WindowSegmenter
+
 Time Series Anomaly Detection
 -----------------------------
 
