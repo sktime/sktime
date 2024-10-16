@@ -1,7 +1,6 @@
 """Radial Basis Function (RBF) Transformer for Time Series Data."""
 
 __author__ = ["phoeenniixx"]
-
 import numpy as np
 import pandas as pd
 
@@ -9,7 +8,7 @@ from sktime.transformations.base import BaseTransformer
 
 
 class RBFTransformer(BaseTransformer):
-    """A custom transformer to apply Radial Basis Functions (RBFs) to time series data.
+    r"""A custom transformer to apply Radial Basis Functions (RBFs) to time series data.
 
     This transformer allows the user to apply various RBF kernels such as Gaussian,
     multiquadric, and inverse multiquadric to time series data. The transformation
@@ -23,23 +22,26 @@ class RBFTransformer(BaseTransformer):
 
     Mathematical Background:
     Consider a time series represented as:
-    - t_1, t_2, ..., t_N
+    - :math:`t_1, t_2, \\dots, t_N`
 
-    Each time point `t_i` can be transformed into a new feature space via RBFs. The
-    transformation computes the distance between the time points and a set of predefined
-    "center points" `c_1, ..., c_K`. For each time point `t_i`, the RBF is computed
-    between `t_i` and every center point `c_k`, producing a matrix of transformed value.
-    Each kernel function depends on the distance between a time point & a center point.
+    Each time point :math:`t_i` can be transformed into a new feature space via RBFs.
+    The transformation computes the distance between the time points and a set of
+    predefined "center points" :math:`c_1, \\dots, c_K`. For each time point
+    :math:`t_i`, the RBF is computed between :math:`t_i` and every center point
+    :math:`c_k`, producing a matrix of transformed values. Each kernel function
+    depends on the distance between a time point and a center point.
 
     Mathematically, the transformation for the Gaussian RBF is defined as:
 
-        φ(t_i, c_k) = exp(-y * (t_i - c_k)^2)
+        :math:`\\phi(t_i, c_k) = \\exp(-\\gamma (t_i - c_k)^2)`
 
-    where `y` is a scaling factor controlling the spread of the RBF.
+    where :math:`\\gamma` is a scaling factor controlling the spread of the RBF.
 
     Similarly, other types of RBFs are available:
-    - Multiquadric: φ(t_i, c_k) = sqrt(1 + y * (t_i - c_k)^2)
-    - Inverse Multiquadric: φ(t_i, c_k) = 1 / sqrt(1 + y * (t_i - c_k)^2)
+    - Multiquadric:
+        :math:`\\phi(t_i, c_k) = \\sqrt{1 + \\gamma (t_i - c_k)^2}`
+    - Inverse Multiquadric:
+        :math:`\\phi(t_i, c_k) = \frac{1}{\\sqrt{1 + \\gamma (t_i - c_k)^2}}`
 
     These transformations produce new features for each time point, enhancing the
     representational power of the data by adding non-linear transformations that
@@ -48,32 +50,34 @@ class RBFTransformer(BaseTransformer):
     Parameters
     ----------
     centers : array-like, shape (n_centers,), optional (default=None)
-        The centers `c_k` of the RBFs. These define the points against which
+        The centers :math:`c_k` of the RBFs. These define the points against which
         the distances from the input data are measured. If `None`, the centers
         will be evenly spaced over the range of the input data.
 
     gamma : float, optional (default=1.0)
-        The spread or scaling factor that controls the influence range of each
-        RBF center. Larger values of `gamma` make the RBF sharper (smaller spread),
-        while smaller values make the RBF smoother (larger spread).
+        The spread or scaling factor :math:`\\gamma` that controls the influence
+        range of each RBF center. Larger values of :math:`\\gamma` make the RBF
+        sharper (smaller spread), while smaller values make the RBF smoother.
 
     rbf_type : {"gaussian", "multiquadric", "inverse_multiquadric"},
                 optional (default="gaussian")
         The type of radial basis function to apply:
-        - "gaussian": exp(-gamma * (t - c)^2)
-        - "multiquadric": sqrt(1 + gamma * (t - c)^2)
-        - "inverse_multiquadric": 1 / sqrt(1 + gamma * (t - c)^2).
+        - "gaussian": :math:`\\exp(-\\gamma (t - c)^2)`
+        - "multiquadric": :math:`\\sqrt{1 + \\gamma (t - c)^2}`
+        - "inverse_multiquadric": :math:`\frac{1}{\\sqrt{1 + \\gamma (t - c)^2}}`
 
     Features Added
-    ----------------
+    --------------
     This transformer adds new features to the input time series. For each time point
-    `t_i` and each center point `c_k`, a transformed value `φ(t_i, c_k)` is computed
-    based on the chosen RBF. This produces a transformed dataset where each original
-    time point is replaced with multiple transformed features, one for each center pt.
+    :math:`t_i` and each center point :math:`c_k`, a transformed value
+    :math:`\\phi(t_i, c_k)` is computed based on the chosen RBF.
 
-    The number of new features generated for each time point equals the no of centers.
-    For example, if the original data has N time points and K centers, the transformed
-    data will have N rows and K new features (columns).
+    This produces a transformed dataset where each original time point is replaced with
+    multiple transformed features, one for each center point.
+    The number of new features generated for each time point equals the no. of centers.
+
+    For example, if the original data has :math:`N` time points and :math:`K` centers,
+    the transformed data will have :math:`N` rows and :math:`K` new features (columns).
 
     Attributes
     ----------
@@ -98,35 +102,40 @@ class RBFTransformer(BaseTransformer):
         "authors": ["phoeenniixx"],
     }
 
-    def __init__(self, centers=None, gamma=1.0, rbf_type="gaussian"):
+    def __init__(self, centers=None, gamma=1.0, rbf_type="gaussian", apply_to="index"):
         self.centers = centers
         self.gamma = gamma
         self.rbf_type = rbf_type
+        self.apply_to = apply_to
         self._fitted_centers = None
         super().__init__()
 
     def _rbf(self, x, c):
-        """Compute the selected RBF for input x and center c.
+        """
+        Compute the selected RBF for input x and center c.
 
         Parameters
         ----------
-        x : scalar, array-like, shape (n_samples,)
-            The input data (time series or single value).
-        c : array-like, shape (n_centers,)
-            The centers of the RBF.
+        x : np.ndarray
+            The input time series data, where rows correspond to time points and
+            columns correspond to features.
+
+        c : np.ndarray
+            The centers for the RBFs.
 
         Returns
         -------
-        array-like
+        np.ndarray
             The transformed data using the selected RBF kernel.
         """
-        x = np.atleast_1d(np.asarray(x, dtype=np.float64))
-        c = np.asarray(c, dtype=np.float64)
+        x = np.atleast_2d(x)
+        c = np.atleast_1d(c)
 
-        x = x.reshape(-1, 1)
-        c = c.reshape(1, -1)
+        # Reshape x and c for broadcasting
+        x_reshaped = x[:, :, np.newaxis]
+        c_reshaped = c[np.newaxis, np.newaxis, :]
 
-        squared_diff = (x - c) ** 2
+        squared_diff = (x_reshaped - c_reshaped) ** 2
 
         if self.rbf_type == "gaussian":
             return np.exp(-self.gamma * squared_diff)
@@ -138,29 +147,26 @@ class RBFTransformer(BaseTransformer):
             raise ValueError(f"Unsupported RBF type: {self.rbf_type}")
 
     def _fit(self, X, y=None):
-        """Fit the RBF transformer.
+        """
+        Fit the RBF transformer by determining the centers for the RBFs.
 
         Parameters
         ----------
-        X : pd.DataFrame, np.ndarray, or pd.Series
-            Input time series data.
+        X : pd.DataFrame, pd.Series, or np.ndarray
+            The input time series data.
+
+        y : None
+            Not used, present for API compatibility.
 
         Returns
         -------
         self
         """
         if self.centers is None:
-            if isinstance(X, pd.DataFrame):
-                X_numeric = X.select_dtypes(include=[np.number]).values.flatten()
-            elif isinstance(X, np.ndarray):
-                X_numeric = X.flatten()
-            elif isinstance(X, pd.Series):
-                X_numeric = X.values
+            if self.apply_to == "index":
+                X_numeric = self._get_time_index(X)
             else:
-                raise ValueError(
-                    f"Unsupported input type: {type(X)}.\
-                     Input X must be a pandas DataFrame, Series, or numpy array."
-                )
+                X_numeric = self._get_values(X)
 
             self._fitted_centers = np.linspace(X_numeric.min(), X_numeric.max(), num=10)
         else:
@@ -169,49 +175,96 @@ class RBFTransformer(BaseTransformer):
         return self
 
     def _transform(self, X, y=None):
-        """Transform the input time series data using the RBF transformation.
-
-        Apply the selected RBF to each time series or value in the input data.
+        """
+        Transform the input time series data using the RBF transformation.
 
         Parameters
         ----------
-        X : pd.DataFrame, np.ndarray, or pd.Series
-            Input time series data to be transformed.
+        X : pd.DataFrame, pd.Series, or np.ndarray
+            The input time series data.
+
+        y : None
+            Not used, present for API compatibility.
 
         Returns
         -------
-        X_transform : pd.DataFrame or np.ndarray
-            The transformed time series data.
+        X_transform : pd.DataFrame
+            The transformed data, where each column corresponds to an RBF feature.
         """
         if self._fitted_centers is None:
             raise ValueError("Transformer has not been fitted yet. Call 'fit' first.")
 
-        if isinstance(X, pd.DataFrame):
-            X_transform = X.apply(
-                lambda col: self._rbf(col.values, self._fitted_centers).flatten()
-            )
-        elif isinstance(X, np.ndarray):
-            if X.ndim == 1:
-                X_transform = self._rbf(X, self._fitted_centers)
-            else:
-                X_transform = np.apply_along_axis(
-                    lambda x: self._rbf(x, self._fitted_centers).flatten(),
-                    axis=1,
-                    arr=X,
-                )
-        elif isinstance(X, pd.Series):
-            X_transform = self._rbf(X.values, self._fitted_centers)
+        if self.apply_to == "index":
+            input_data = self._get_time_index(X)
         else:
-            raise ValueError(
-                f"Unsupported input type: {type(X)}.\
-                 Input X must be a pandas DataFrame, Series, or numpy array."
-            )
+            input_data = self._get_values(X)
 
-        columns = [f"RBF_{i}" for i in range(X_transform.shape[1])]
+        X_transform = self._rbf(input_data, self._fitted_centers)
+
+        n_samples, n_features, n_centers = X_transform.shape
+        X_transform = X_transform.reshape(n_samples, n_features * n_centers)
+
+        columns = [f"RBF_{i}_{j}" for i in range(n_features) for j in range(n_centers)]
+
         if isinstance(X, (pd.DataFrame, pd.Series)):
             return pd.DataFrame(X_transform, index=X.index, columns=columns)
-        else:
+        elif isinstance(X, np.ndarray):
             return pd.DataFrame(X_transform, columns=columns)
+        else:
+            raise ValueError(
+                f"Unsupported input type: {type(X)}. "
+                "Input X must be a pandas DataFrame, Series, or numpy array."
+            )
+
+    def _get_time_index(self, X):
+        """
+        Extract the time index from X and convert it to numeric values.
+
+        Parameters
+        ----------
+        X : pd.DataFrame, pd.Series, or np.ndarray
+            The input time series data.
+
+        Returns
+        -------
+        np.ndarray
+            The time index values as a 2D array.
+        """
+        if isinstance(X, (pd.DataFrame, pd.Series)):
+            return pd.to_numeric(X.index).values.reshape(-1, 1)
+        elif isinstance(X, np.ndarray):
+            return np.arange(X.shape[0]).reshape(-1, 1)
+        else:
+            raise ValueError(
+                f"Unsupported input type: {type(X)}. "
+                "Input X must be a pandas DataFrame, Series, or numpy array."
+            )
+
+    def _get_values(self, X):
+        """
+        Extract the values from X.
+
+        Parameters
+        ----------
+        X : pd.DataFrame, pd.Series, or np.ndarray
+            The input time series data.
+
+        Returns
+        -------
+        np.ndarray
+            The values of the time series as a 2D array.
+        """
+        if isinstance(X, pd.DataFrame):
+            return X.select_dtypes(include=[np.number]).values
+        elif isinstance(X, np.ndarray):
+            return X
+        elif isinstance(X, pd.Series):
+            return X.values.reshape(-1, 1)
+        else:
+            raise ValueError(
+                f"Unsupported input type: {type(X)}. "
+                "Input X must be a pandas DataFrame, Series, or numpy array."
+            )
 
     @classmethod
     def get_test_params(cls):
@@ -229,11 +282,18 @@ class RBFTransformer(BaseTransformer):
                 "centers": np.linspace(0, 10, num=5),
                 "gamma": 0.5,
                 "rbf_type": "gaussian",
+                "apply_to": "index",
             },
             {
                 "centers": np.linspace(-5, 5, num=3),
                 "gamma": 1.0,
                 "rbf_type": "multiquadric",
+                "apply_to": "values",
             },
-            {"centers": None, "gamma": 0.1, "rbf_type": "inverse_multiquadric"},
+            {
+                "centers": None,
+                "gamma": 0.1,
+                "rbf_type": "inverse_multiquadric",
+                "apply_to": "index",
+            },
         ]
