@@ -84,12 +84,12 @@ class MomentFMForecaster(_BaseGlobalForecaster):
 
     batch_size : int
         size of batches to train the model on
-        default = 8
+        default = 32
 
     eval_batch_size : int or "all"
         size of batches to evaluate the model on. If the string "all" is
         specified, then we process the entire validation set as a single batch
-        default = 8
+        default = 32
 
     epochs : int
         Number of epochs to fit tune the model on
@@ -97,20 +97,25 @@ class MomentFMForecaster(_BaseGlobalForecaster):
 
     max_lr : float
         Maximum learning rate that the learning rate scheduler will use
+        default = 1e-4
 
     device : str
-        torch device to use gpu else cpu
+        torch device to use
+        default = gpu
 
     pct_start : float
         percentage of total iterations where the learning rate rises during
         one epoch
+        default = 0.3
 
     max_norm : float
-        gradient clipping value
+        Float value used to clip gradients during training
+        default = 5.0
 
     train_val_split : float
         float value between 0 and 1 to determine portions of training
         and validation splits
+        default = 0.4
 
     transformer_backbone : str
         d_model of a pre-trained transformer model to use. See
