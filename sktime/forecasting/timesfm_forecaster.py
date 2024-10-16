@@ -14,7 +14,7 @@ from sktime.utils.singleton import _multiton
 from sktime.utils.warnings import warn
 
 
-# TODO 0.33.3: remove this class with the
+# TODO 0.35.0: remove this class with the
 # pytorch based class in https://github.com/sktime/sktime/pull/7155
 class TimesFMForecaster(_BaseGlobalForecaster):
     """
@@ -215,7 +215,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         warn(
             f"{self.__class__.__name__}: "
             f"The 'timesfm' implementation in sktime fork will "
-            "switch to a pytorch-based from jax-based in release 0.33.3. "
+            "switch to a pytorch-based from jax-based in release 0.35.0. "
             "As a result, the default value for the 'repo_id' "
             f"parameter will change from '{repo_id}' "
             "to 'google/timesfm-1.0-200m-pytorch'.",
@@ -225,10 +225,10 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         # Deprecation warning for the changing dependencies
         warn(
             f"{self.__class__.__name__}: "
-            "The dependencies for 'timesfm' will change in sktime 0.33.3. "
+            "The dependencies for 'timesfm' will change in sktime 0.35.0. "
             "Currently required dependencies: "
             f"{', '.join(self.get_class_tag('python_dependencies'))}. "
-            "From release 0.33.3, these will be replaced with: "
+            "From release 0.35.0, these will be replaced with: "
             "'huggingface-hub' and 'torch'. ",
             DeprecationWarning,
         )
