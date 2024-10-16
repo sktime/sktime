@@ -120,11 +120,11 @@ class TSBootstrapAdapter(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.utils.dependencies import _check_estimator_deps
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         deps = cls.get_class_tag("python_dependencies")
 
-        if _check_estimator_deps(deps, severity="none"):
+        if _check_soft_dependencies(deps, severity="none"):
             from tsbootstrap import BlockBootstrap, MovingBlockBootstrap
 
             params = [
