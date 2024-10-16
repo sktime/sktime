@@ -25,19 +25,13 @@ class TimesFMForecaster(_BaseGlobalForecaster):
     from the source package, allowing users to leverage either their own
     environment or the latest updates from the source package `timesfm`.
 
-    The class offers two key flag for handling dependencies and source package behavior:
-    - `use_source_package`: Determines whether to use the source package `timesfm`.
-    - `ignore_deps`: Controls whether dependencies are enforced or ignored,
-    enabling users to bypass dependency checks and manage their environment manually.
+    The class offers two flags for handling dependencies and source package behavior:
 
-    **Dynamic Dependency Behavior:**
-    - If `use_source_package=True`: Only the `timesfm` package is required, with
-    a version bound of `<1.2.0`.
-    - If `use_source_package=False`: A set of default dependencies is enforced,
-    including TensorFlow, einshape, jax, praxis, huggingface-hub, paxml,
-    and utilsforecast.
-    - If `ignore_deps=True`: No dependencies are enforced, leaving the dependency set
-      empty, allowing for manual handling.
+    - ``use_source_package``: Determines the source of the package code:
+      False for the vendor fork in ``sktime`` with its default dependencies.
+      True for the source package ``timesfm``.
+    - ``ignore_deps``: If set, bypasses dependency checks entirely.
+      This is for users who want to manage their environment manually.
 
     Parameters
     ----------
