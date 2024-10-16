@@ -8,7 +8,6 @@ import pandas as pd
 from sklearn.base import clone
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.utils.dependencies import _check_estimator_deps
 
 
 def _check_fh(fh, cutoff):
@@ -177,7 +176,9 @@ class HCrystalBallAdapter(BaseForecaster):
         -------
         params : dict or list of dict
         """
-        if _check_estimator_deps("hcrystalball", severity="none"):
+        from sktime.utils.dependencies import _check_soft_dependencies
+
+        if _check_soft_dependencies("hcrystalball", severity="none"):
             from hcrystalball.wrappers import HoltSmoothingWrapper
 
             params = {"model": HoltSmoothingWrapper()}
