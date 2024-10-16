@@ -53,6 +53,7 @@ Pipelines can also be constructed using ``*``, ``**``, ``+``, and ``|`` dunders.
     MultiplexForecaster
     ForecastX
     ForecastByLevel
+    GroupbyCategoryForecaster
     Permute
     HierarchyEnsembleForecaster
     TransformSelectForecaster
@@ -320,6 +321,14 @@ All "ARIMA" and "Auto-ARIMA" models below include SARIMAX capability.
 
     VAR
 
+.. currentmodule:: sktime.forecasting.var_reduce
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    VARReduce
+
 .. currentmodule:: sktime.forecasting.varmax
 
 .. autosummary::
@@ -411,6 +420,7 @@ Structural time series models
     :template: class.rst
 
     Prophetverse
+    HierarchicalProphet
 
 .. currentmodule:: sktime.forecasting.structural
 
@@ -429,7 +439,7 @@ Structural time series models
     DynamicFactor
 
 Deep learning based forecasters
----------------------------------------------
+-------------------------------
 
 .. currentmodule:: sktime.forecasting.ltsf
 
@@ -441,22 +451,6 @@ Deep learning based forecasters
     LTSFDLinearForecaster
     LTSFNLinearForecaster
     LTSFTransformerForecaster
-
-.. currentmodule:: sktime.forecasting.hf_transformers_forecaster
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    HFTransformersForecaster
-
-.. currentmodule:: sktime.forecasting.ttm
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    TinyTimeMixerForecaster
 
 .. currentmodule:: sktime.forecasting.conditional_invertible_neural_network
 
@@ -494,6 +488,50 @@ Deep learning based forecasters
 
     PyKANForecaster
 
+
+
+Pre-trained and foundation models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.forecasting.hf_transformers_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HFTransformersForecaster
+
+.. currentmodule:: sktime.forecasting.chronos
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ChronosForecaster
+
+.. currentmodule:: sktime.forecasting.moirai_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MOIRAIForecaster
+
+.. currentmodule:: sktime.forecasting.timesfm_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimesFMForecaster
+
+.. currentmodule:: sktime.forecasting.ttm
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TinyTimeMixerForecaster
 
 Intermittent time series forecasters
 ------------------------------------
