@@ -489,6 +489,7 @@ Deep learning based forecasters
     PyKANForecaster
 
 
+
 Pre-trained and foundation models
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -499,6 +500,22 @@ Pre-trained and foundation models
     :template: class.rst
 
     HFTransformersForecaster
+
+.. currentmodule:: sktime.forecasting.chronos
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ChronosForecaster
+
+.. currentmodule:: sktime.forecasting.moirai_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MOIRAIForecaster
 
 .. currentmodule:: sktime.forecasting.timesfm_forecaster
 
@@ -515,14 +532,6 @@ Pre-trained and foundation models
     :template: class.rst
 
     TinyTimeMixerForecaster
-
-.. currentmodule:: sktime.forecasting.moirai_forecaster
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    MOIRAIForecaster
 
 Intermittent time series forecasters
 ------------------------------------
