@@ -358,6 +358,22 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
 
         return alpha
 
+    def _check_coverage(self, coverage):
+        """Check coverage input and coerce to np.ndarray."""
+        if coverage is None:
+            return None
+
+        if isinstance(coverage, float):
+            coverage = [coverage]
+
+        if not isinstance(coverage, np.ndarray):
+            coverage = np.asarray(coverage)
+
+        if not all((coverage > 0) & (coverage < 1)):
+            raise ValueError("Coverage must be between 0 and 1.")
+
+        return coverage
+
     def _handle_multioutput(self, loss, multioutput):
         """Handle output according to multioutput parameter.
 
@@ -551,9 +567,14 @@ class EmpiricalCoverage(_BaseProbaForecastingErrorMetric):
         "lower_is_better": False,
     }
 
-    def __init__(self, multioutput="uniform_average", score_average=True):
+    def __init__(
+        self, multioutput="uniform_average", score_average=True, coverage=None
+    ):
         self.score_average = score_average
         self.multioutput = multioutput
+        self.coverage = coverage
+        self._coverage = self._check_coverage(coverage)
+        self.metric_args = {"coverage": self._coverage}
         super().__init__(score_average=score_average, multioutput=multioutput)
 
     def _evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
@@ -618,9 +639,14 @@ class IntervalWidth(_BaseProbaForecastingErrorMetric):
         "lower_is_better": True,
     }
 
-    def __init__(self, multioutput="uniform_average", score_average=True):
+    def __init__(
+        self, multioutput="uniform_average", score_average=True, coverage=None
+    ):
         self.score_average = score_average
         self.multioutput = multioutput
+        self.coverage = coverage
+        self._coverage = self._check_coverage(coverage)
+        self.metric_args = {"coverage": self._coverage}
         super().__init__(score_average=score_average, multioutput=multioutput)
 
     def _evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
@@ -682,9 +708,14 @@ class ConstraintViolation(_BaseProbaForecastingErrorMetric):
         "lower_is_better": True,
     }
 
-    def __init__(self, multioutput="uniform_average", score_average=True):
+    def __init__(
+        self, multioutput="uniform_average", score_average=True, coverage=None
+    ):
         self.score_average = score_average
         self.multioutput = multioutput
+        self.coverage = coverage
+        self._coverage = self._check_coverage(coverage)
+        self.metric_args = {"coverage": self._coverage}
         super().__init__(score_average=score_average, multioutput=multioutput)
 
     def _evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
