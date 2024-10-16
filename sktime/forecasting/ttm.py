@@ -111,6 +111,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> forecaster = TinyTimeMixerForecaster() # doctest: +SKIP
+    >>> # performs zero-shot forecasting, as default config (unchanged) is used
     >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
 
@@ -137,7 +138,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     ...     },
     ... ) # doctest: +SKIP
     >>>
-    >>> # train and predict
+    >>> # model is fine-tuned, as a config different from default is provided.
     >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
     """
