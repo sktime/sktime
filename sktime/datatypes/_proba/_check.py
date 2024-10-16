@@ -40,8 +40,8 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
 
-from sktime.datatypes._common import _req
-from sktime.datatypes._common import _ret as ret
+from sktime.datatypes._base._common import _req
+from sktime.datatypes._base._common import _ret as ret
 
 check_dict = dict()
 
