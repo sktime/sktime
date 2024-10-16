@@ -295,6 +295,8 @@ dl = [
   'einops>0.7.0; python_version < "3.12"',
   'huggingface-hub>=0.23.0; python_version < "3.12"',
   'hydra-core',
+  'accelerate',
+  'tqdm',
 ]
 mlflow = [
   "mlflow",
