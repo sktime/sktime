@@ -97,12 +97,16 @@ class MyClusterer(BaseClusterer):
         # estimator tags
         # --------------
         "X_inner_mtype": "numpy3D",  # which type do _fit/_predict accept, usually
-        # this is either "numpy3D" or "nested_univ" (nested pd.DataFrame). Other
-        # types are allowable, see datatypes/panel/_registry.py for options.
+        # this is one of "numpy3D" (instance, variable, time point),
+        # "pd-multiindex" (row index: instance, time; column index: variable) or other
+        # machine types, see datatypes/panel/_registry.py for options.
         "capability:multivariate": False,
         "capability:unequal_length": False,
         "capability:missing_values": False,
         "capability:multithreading": False,
+        "capability:predict": True,  # implements _predict for cluster assignment?
+        "capability:predict_proba": False,  # implements non-default _predict_proba?
+        "capability:out_of_sample": True,  # implements _predict for new data?
     }
 
     # todo: add any hyper-parameters and components to constructor
