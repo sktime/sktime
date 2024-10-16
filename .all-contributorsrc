@@ -3107,6 +3107,17 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "RobotPsychologist",
+      "name": "Christopher Risi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/110344005?&v=4",
+      "profile": "https://github.com/RobotPsychologist",
+      "contributions": [
+        "bug",
+        "example",
+        "tutorial"
+      ]
     }
   ]
 }
