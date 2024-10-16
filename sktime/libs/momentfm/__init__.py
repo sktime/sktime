@@ -33,6 +33,16 @@ FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
 COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+Citation:
+
+@inproceedings{goswami2024moment,
+  title={MOMENT: A Family of Open Time-series Foundation Models},
+  author={Mononito Goswami and Konrad Szafer and Arjun Choudhry and Yifu Cai
+  and Shuo Li and Artur Dubrawski},
+  booktitle={International Conference on Machine Learning},
+  year={2024}
+}
 """
 
 from sktime.libs.momentfm.models.moment import MOMENT, MOMENTPipeline
