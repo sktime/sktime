@@ -206,7 +206,7 @@ class ResNetRegressor(BaseDeepRegressor):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_estimator_deps
 
         param1 = {
             "n_epochs": 6,
@@ -221,7 +221,7 @@ class ResNetRegressor(BaseDeepRegressor):
         }
         test_params = [param1, param2]
 
-        if _check_soft_dependencies("keras", severity="none"):
+        if _check_estimator_deps("keras", severity="none"):
             from keras.callbacks import LambdaCallback
 
             test_params.append(

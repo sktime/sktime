@@ -1858,9 +1858,9 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         -------
         params : dict or list of dict
         """
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_estimator_deps
 
-        if not _check_soft_dependencies("optuna", severity="none"):
+        if not _check_estimator_deps("optuna", severity="none"):
             return {
                 "forecaster": "foo",
                 "cv": "bar",

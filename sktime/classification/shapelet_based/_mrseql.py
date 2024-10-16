@@ -118,11 +118,11 @@ class MrSEQL(_DelegatedClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_estimator_deps
 
         params1 = {}
 
-        if not _check_soft_dependencies("numba", severity="none"):
+        if not _check_estimator_deps("numba", severity="none"):
             symrep = ["sax"]
         else:
             symrep = ["sax", "sfa"]
