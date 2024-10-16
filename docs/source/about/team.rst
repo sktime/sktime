@@ -24,6 +24,9 @@ Community Council
    * - Ugochukwu Onyeka
      - :user:`onyekaugochukwu`
 
+For further information on past and future council elections,
+refer to the `elections repository <www.github.com/sktime/elections>`_.
+
 Community Council Observers
 ---------------------------
 
@@ -36,6 +39,8 @@ Community Council Observers
      - :user:`benheid`
    * - Jana Schmidberger
      - :user:`janasberger`
+   * - Kiril Ralinovski
+     - :user:`kirilral`
 
 Code of Conduct Committee
 -------------------------
