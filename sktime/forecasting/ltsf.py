@@ -1,5 +1,6 @@
 """Deep Learning Forecasters using LTSF-Linear Models."""
 
+import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import ForecastingHorizon
@@ -97,6 +98,8 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
     ):
         self.seq_len = seq_len
         self.pred_len = pred_len
+        self._pred_len = None
+
         self.individual = individual
         self.in_channels = in_channels
         self.criterion = criterion
@@ -117,6 +120,8 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
             criterion_kwargs=criterion_kwargs,
             optimizer=optimizer,
             optimizer_kwargs=optimizer_kwargs,
+            custom_dataset_train=custom_dataset_train,
+            custom_dataset_pred=custom_dataset_pred,
             lr=lr,
         )
 
@@ -140,12 +145,15 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
                 "SGD": torch.optim.SGD,
             }
 
-    def _build_network(self, fh):
+    def _build_network(self):
         from sktime.networks.ltsf.models.linear import LTSFLinearNetwork
+
+        fh = self.fh.to_relative(self.cutoff)
+        self._pred_len = list(fh)[-1]
 
         return LTSFLinearNetwork(
             self.seq_len,
-            fh,
+            self._pred_len,
             self.in_channels,
             self.individual,
         )._build()
@@ -171,7 +179,7 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
                 "pred_len": 1,
                 "lr": 0.005,
                 "optimizer": "Adam",
-                "batch_size": 1,
+                "batch_size": 512,
                 "num_epochs": 1,
                 "individual": True,
             }
@@ -270,6 +278,8 @@ class LTSFDLinearForecaster(BaseDeepNetworkPyTorch):
     ):
         self.seq_len = seq_len
         self.pred_len = pred_len
+        self._pred_len = None
+
         self.individual = individual
         self.in_channels = in_channels
         self.criterion = criterion
@@ -290,6 +300,8 @@ class LTSFDLinearForecaster(BaseDeepNetworkPyTorch):
             criterion_kwargs=criterion_kwargs,
             optimizer=optimizer,
             optimizer_kwargs=optimizer_kwargs,
+            custom_dataset_train=custom_dataset_train,
+            custom_dataset_pred=custom_dataset_pred,
             lr=lr,
         )
 
@@ -313,12 +325,15 @@ class LTSFDLinearForecaster(BaseDeepNetworkPyTorch):
                 "SGD": torch.optim.SGD,
             }
 
-    def _build_network(self, fh):
+    def _build_network(self):
         from sktime.networks.ltsf.models.linear import LTSFDLinearNetwork
+
+        fh = self.fh.to_relative(self.cutoff)
+        self._pred_len = list(fh)[-1]
 
         return LTSFDLinearNetwork(
             self.seq_len,
-            fh,
+            self._pred_len,
             self.in_channels,
             self.individual,
         )._build()
@@ -344,7 +359,7 @@ class LTSFDLinearForecaster(BaseDeepNetworkPyTorch):
                 "pred_len": 1,
                 "lr": 0.005,
                 "optimizer": "Adam",
-                "batch_size": 1,
+                "batch_size": 512,
                 "num_epochs": 1,
                 "individual": True,
             }
@@ -443,6 +458,8 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
     ):
         self.seq_len = seq_len
         self.pred_len = pred_len
+        self._pred_len = None
+
         self.individual = individual
         self.in_channels = in_channels
         self.criterion = criterion
@@ -463,6 +480,8 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
             criterion_kwargs=criterion_kwargs,
             optimizer=optimizer,
             optimizer_kwargs=optimizer_kwargs,
+            custom_dataset_train=custom_dataset_train,
+            custom_dataset_pred=custom_dataset_pred,
             lr=lr,
         )
 
@@ -486,12 +505,15 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
                 "SGD": torch.optim.SGD,
             }
 
-    def _build_network(self, fh):
+    def _build_network(self):
         from sktime.networks.ltsf.models.linear import LTSFNLinearNetwork
+
+        fh = self.fh.to_relative(self.cutoff)
+        self._pred_len = list(fh)[-1]
 
         return LTSFNLinearNetwork(
             self.seq_len,
-            fh,
+            self._pred_len,
             self.in_channels,
             self.individual,
         )._build()
@@ -517,7 +539,7 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
                 "pred_len": 1,
                 "lr": 0.005,
                 "optimizer": "Adam",
-                "batch_size": 1,
+                "batch_size": 512,
                 "num_epochs": 1,
                 "individual": True,
             }
@@ -681,6 +703,7 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
         self.dropout = dropout
         self.activation = activation
         self.freq = freq
+        self._freq = None
 
         super().__init__(
             num_epochs=num_epochs,
@@ -690,6 +713,8 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
             criterion_kwargs=criterion_kwargs,
             optimizer=optimizer,
             optimizer_kwargs=optimizer_kwargs,
+            custom_dataset_train=custom_dataset_train,
+            custom_dataset_pred=custom_dataset_pred,
             lr=lr,
         )
 
@@ -713,91 +738,24 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
                 "SGD": torch.optim.SGD,
             }
 
-    def build_pytorch_train_dataloader(self, y):
-        """Build PyTorch DataLoader for training."""
-        from torch.utils.data import DataLoader
-
-        if self.custom_dataset_train:
-            if hasattr(self.custom_dataset_train, "build_dataset") and callable(
-                self.custom_dataset_train.build_dataset
-            ):
-                self.custom_dataset_train.build_dataset(y)
-                dataset = self.custom_dataset_train
-            else:
-                raise NotImplementedError(
-                    "Custom Dataset `build_dataset` method is not available. Please "
-                    f"refer to the {self.__class__.__name__}.build_dataset "
-                    "documentation."
-                )
-        else:
-            from sktime.networks.ltsf.data.dataset import PytorchFormerDataset
-
-            dataset = PytorchFormerDataset(
-                y=y,
-                seq_len=self.seq_len,
-                context_len=self.context_len,
-                pred_len=self._pred_len,
-                freq=self.freq,
-                temporal_encoding=self._temporal_encoding,
-                temporal_encoding_type=self.temporal_encoding_type,
-            )
-
-        return DataLoader(dataset, self.batch_size, shuffle=True)
-
-    def build_pytorch_pred_dataloader(self, y, fh):
-        """Build PyTorch DataLoader for prediction."""
-        from torch.utils.data import DataLoader
-
-        if self.custom_dataset_pred:
-            if hasattr(self.custom_dataset_pred, "build_dataset") and callable(
-                self.custom_dataset_pred.build_dataset
-            ):
-                self.custom_dataset_train.build_dataset(y)
-                dataset = self.custom_dataset_train
-            else:
-                raise NotImplementedError(
-                    "Custom Dataset `build_dataset` method is not available. Please"
-                    f"refer to the {self.__class__.__name__}.build_dataset"
-                    "documentation."
-                )
-        else:
-            _fh = ForecastingHorizon(range(1, self._pred_len + 1), is_relative=True)
-            mask_y = pd.DataFrame(
-                data=0, columns=y.columns, index=_fh.to_absolute_index(self.cutoff)
-            )
-            _y = y.iloc[-self.seq_len :]
-            _y = pd.concat([_y, mask_y], axis=0)
-
-            from sktime.networks.ltsf.data.dataset import PytorchFormerDataset
-
-            dataset = PytorchFormerDataset(
-                y=_y,
-                seq_len=self.seq_len,
-                context_len=self.context_len,
-                pred_len=self._pred_len,
-                freq=self.freq,
-                temporal_encoding=self._temporal_encoding,
-                temporal_encoding_type=self.temporal_encoding_type,
-            )
-        return DataLoader(
-            dataset,
-            self.batch_size,
-        )
-
-    def _build_network(self, fh):
+    def _build_network(self):
         from sktime.networks.ltsf.models.transformers import LTSFTransformerNetwork
 
-        num_features = self._y.shape[-1]
+        num_features = len(self._y.columns)
+        index = self._get_index(self._y)
+
         self.enc_in = num_features
         self.dec_in = num_features
         self.c_out = num_features
 
         self.output_attention = False  # attention in output is not needed by the user
 
-        self._pred_len = fh
+        fh = self.fh.to_relative(self.cutoff)
+        self._pred_len = list(fh)[-1]
+        self._freq = fh.freq if fh.freq else self.freq
 
         if self.temporal_encoding:
-            if isinstance(self._y.index, (pd.DatetimeIndex, pd.PeriodIndex)):
+            if isinstance(index, (pd.DatetimeIndex, pd.PeriodIndex)):
                 self._temporal_encoding = self.temporal_encoding
             else:
                 self._temporal_encoding = False
@@ -812,7 +770,7 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
 
             self.mark_vocab_sizes = get_mark_vocab_sizes(
                 temporal_encoding_type=self.temporal_encoding_type,
-                freq=self.freq,
+                freq=self._freq,
             )
         else:
             self._temporal_encoding = self.temporal_encoding
@@ -839,6 +797,57 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
             activation=self.activation,
             c_out=self.c_out,
         )._build()
+
+    def _build_train_dataset(self, y):
+        from sktime.networks.ltsf.data.dataset import PytorchFormerDataset
+
+        index = self._get_index(y)
+        y = self._get_arrays(y)
+
+        return PytorchFormerDataset(
+            data=y,
+            index=index,
+            seq_len=self.seq_len,
+            context_len=self.context_len,
+            pred_len=self._pred_len,
+            freq=self._freq,
+            temporal_encoding=self._temporal_encoding,
+            temporal_encoding_type=self.temporal_encoding_type,
+        )
+
+    def _build_pred_dataset(self, y):
+        from sktime.networks.ltsf.data.dataset import PytorchFormerDataset
+
+        index = self._get_index(y)
+        y = self._get_arrays(y)
+
+        # truncate to keep only the last sequence
+        y = y[:, -self.seq_len :, :]
+        index = index[-self.seq_len :]
+
+        # future_index needed for temporal_encoding
+        future_index = ForecastingHorizon(
+            range(1, self._pred_len + 1), is_relative=True, freq=self._freq
+        ).to_absolute_index(self.cutoff)
+
+        # dummy future_y needed by decoder
+        # although this later gets replaced by historical y till context_length
+        future_y = np.zeros((y.shape[0], len(future_index), y.shape[2]))
+
+        # concatenate future values
+        y = np.concatenate([y, future_y], axis=1)
+        index = index.append(future_index)
+
+        return PytorchFormerDataset(
+            data=y,
+            index=index,
+            seq_len=self.seq_len,
+            context_len=self.context_len,
+            pred_len=self._pred_len,
+            freq=self._freq,
+            temporal_encoding=self._temporal_encoding,
+            temporal_encoding_type=self.temporal_encoding_type,
+        )
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -873,7 +882,7 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
                 "temporal_encoding": True,
                 "temporal_encoding_type": "linear",
                 "num_epochs": 1,
-                "batch_size": 1,
+                "batch_size": 512,
                 "lr": 0.008,
             },
             {
@@ -893,7 +902,7 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
                 "temporal_encoding": True,
                 "temporal_encoding_type": "embed",
                 "num_epochs": 1,
-                "batch_size": 1,
+                "batch_size": 512,
                 "lr": 0.008,
             },
         ]

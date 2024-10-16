@@ -16,7 +16,8 @@ class PytorchFormerDataset(Dataset):
 
     def __init__(
         self,
-        y,
+        data,
+        index,
         seq_len,
         context_len,
         pred_len,
@@ -24,7 +25,8 @@ class PytorchFormerDataset(Dataset):
         temporal_encoding,
         temporal_encoding_type,
     ):
-        self.y = y
+        self.data = data
+        self.index = index
         self.seq_len = seq_len
         self.context_len = context_len
         self.pred_len = pred_len
@@ -32,41 +34,45 @@ class PytorchFormerDataset(Dataset):
         self.temporal_encoding = temporal_encoding
         self.temporal_encoding_type = temporal_encoding_type
 
-        self._prepare_data()
+        self._num, self._len, _ = self.data.shape
+        self._len_single = self._len - self.seq_len - self.pred_len + 1
 
-    def _prepare_data(self):
-        index = self.y.index
-        values = self.y.values
+        self.time_stamps = self._get_time_stamps()
 
-        if self.temporal_encoding:
-            from sktime.networks.ltsf.utils.timefeatures import (
-                generate_temporal_features,
-            )
+    def _get_time_stamps(self):
+        from sktime.networks.ltsf.utils.timefeatures import (
+            generate_temporal_features,
+        )
 
-            time_stamps = generate_temporal_features(
-                index=index,
+        return (
+            generate_temporal_features(
+                index=self.index,
                 temporal_encoding_type=self.temporal_encoding_type,
                 freq=self.freq,
             )
-        else:
-            time_stamps = None
-
-        self.time_stamps = time_stamps
-        self.data = values
+            if self.temporal_encoding
+            else None
+        )
 
     def __len__(self):
-        """Get length of the dataset."""
-        return len(self.data) - self.seq_len - self.pred_len + 1
+        """Return length of dataset."""
+        return self._num * max(self._len_single, 0)
 
     def __getitem__(self, index):
         """Get data pairs at this index."""
-        s_begin = index
-        s_end = s_begin + self.seq_len
-        r_begin = s_end - self.context_len
-        r_end = r_begin + self.context_len + self.pred_len
+        n = index // self._len_single
+        m = index % self._len_single
 
-        seq_x = torch.tensor(self.data[s_begin:s_end]).float()
-        seq_y = torch.tensor(self.data[r_begin:r_end]).float()
+        s_begin = m  # m
+        s_end = s_begin + self.seq_len  # m+seq
+        r_begin = s_end - self.context_len  # m+seq-context
+        r_end = r_begin + self.context_len + self.pred_len  # m+seq+pred
+
+        seq_x = self.data[n, s_begin:s_end]
+        seq_y = self.data[n, r_begin:r_end]
+
+        seq_x = torch.tensor(seq_x).float()
+        seq_y = torch.tensor(seq_y).float()
 
         if self.temporal_encoding:
             seq_x_mark = torch.tensor(self.time_stamps[s_begin:s_end]).float()
