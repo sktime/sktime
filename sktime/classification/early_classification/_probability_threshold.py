@@ -304,7 +304,7 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         from sktime.classification.feature_based import Catch22Classifier
         from sktime.utils.dependencies import _check_estimator_deps
 
-        if _check_estimator_deps("numba", severity="none"):
+        if _check_estimator_deps(Catch22Classifier, severity="none"):
             est = Catch22Classifier(estimator=RandomForestClassifier(n_estimators=2))
         else:
             est = DummyClassifier()
