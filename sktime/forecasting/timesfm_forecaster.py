@@ -29,27 +29,6 @@ class TimesFMForecaster(_BaseGlobalForecaster):
     - `ignore_deps`: Controls whether dependencies are enforced or ignored,
     enabling users to bypass dependency checks and manage their environment manually.
 
-    Changes in Dependency Management:
-    ------------------------------
-    **New Dependency Flags:**
-    1. `use_source_package`:
-       - When `True`, the model will be loaded directly from the `timesfm` source
-       package, enforcing a version bound (`timesfm<=1.1.0`) to ensure compatibility.
-       - When `False`, the dependencies required for the local version are enforced
-         (e.g., TensorFlow, einshape, jax, etc.).
-
-    2. `ignore_deps`:
-       - When `True`, the class will ignore all dependency checks, allowing users to
-         manage the environment manually without enforcing any specific dependencies.
-       - When `False`, the necessary dependencies (either for the local version or the
-         source package) are automatically enforced.
-
-    **Default Dependencies Removed:**
-    The static list of `python_dependencies` previously defined in the `_tags` section
-    has been removed. Instead, dependencies are now managed dynamically based on the
-    aforementioned flags (`use_source_package` and `ignore_deps`), ensuring more
-    flexible and user-controlled behavior.
-
     **Dynamic Dependency Behavior:**
     - If `use_source_package=True`: Only the `timesfm` package is required, with
     a version bound of `<1.2.0`.
@@ -119,7 +98,8 @@ class TimesFMForecaster(_BaseGlobalForecaster):
     ignore_deps : bool, default=False
         If True, dependency checks will be ignored, and the user is expected to handle
         the installation of required packages manually. If False, the class will enforce
-        the default dependencies required for TimesFM.
+        the default dependencies required for the vendor library or the pypi
+        package, as described above, via ``use_source_package``.
 
     References
     ----------
@@ -161,6 +141,24 @@ class TimesFMForecaster(_BaseGlobalForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["rajatsen91", "geetu040"],
+        # rajatsen91 for google-research/timesfm
+        "maintainers": ["geetu040"],
+        "python_version": ">=3.10,<3.11",
+        "env_marker": "sys_platform=='linux'",
+        "python_dependencies": [
+            "tensorflow",
+            "einshape",
+            "jax",
+            "praxis",
+            "huggingface-hub",
+            "paxml",
+            "utilsforecast",
+        ],
+        # estimator type
+        # --------------
         "y_inner_mtype": [
             "pd.Series",
             "pd-multiindex",
@@ -175,11 +173,6 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         "capability:insample": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
-        "authors": ["rajatsen91", "geetu040"],
-        # rajatsen91 for google-research/timesfm
-        "maintainers": ["geetu040"],
-        "python_version": ">=3.10,<3.11",
-        "env_marker": "sys_platform=='linux'",
         "capability:global_forecasting": True,
     }
 
@@ -221,22 +214,14 @@ class TimesFMForecaster(_BaseGlobalForecaster):
                 # Use timesfm with a version bound if use_source_package is True
                 # todo: Regularly check whether the timesfm version can be updated
                 self.set_tags(python_dependencies=["timesfm<1.2.0"])
-            else:
-                # Default behavior, enforce required dependencies for the fork
-                self.set_tags(
-                    python_dependencies=[
-                        "tensorflow",
-                        "einshape",
-                        "jax",
-                        "praxis",
-                        "huggingface-hub",
-                        "paxml",
-                        "utilsforecast",
-                    ]
-                )
         else:
             # Ignore dependencies, leave the dependency set empty
-            self.set_tags(python_dependencies=[])
+            clear_deps = {
+                "python_dependencies": None,
+                "python_version": None,
+                "env_marker": None,
+            }
+            self.set_tags(**clear_deps)
 
         if self.broadcasting:
             self.set_tags(
