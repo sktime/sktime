@@ -2646,6 +2646,16 @@
       ]
     },
     {
+      "login": "SaiRevanth25",
+      "name": "Sai Revanth Gowravajhala",
+      "avatar_url": "https://avatars.githubusercontent.com/SaiRevanth25",
+      "profile": "https://github.com/SaiRevanth25",
+      "contributions": [
+        "code",
+        "bug"
+      ]
+    },
+    {
       "login": "XinyuWuu",
       "name": "Xinyu Wu",
       "avatar_url": "https://avatars.githubusercontent.com/u/57612792?v=4",
@@ -3032,6 +3042,70 @@
       "contributions": [
         "code",
         "test"
+      ]
+    },
+    {
+      "login": "Saptarshi-Bandopadhyay",
+      "name": "Saptarshi Bandopadhyay",
+      "avatar_url": "https://avatars.githubusercontent.com/u/88289395?v=4",
+      "profile": "https://github.com/Saptarshi-Bandopadhyay",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "Dehelaan",
+      "name": "Nihal Chaudhary",
+      "avatar_url": "https://avatars.githubusercontent.com/u/120308161?s=400&v=4",
+      "profile": "https://github.com/Dehelaan",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login":"vedantag17",
+      "name": "Vedant Agrawal",
+      "avatar_url": "https://avatars.githubusercontent.com/u/118207011?v=4",
+      "profile": "https://github.com/vedantag17",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "jan-mue",
+      "name": "Jan Müller",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6440416?v=4",
+      "profile": "https://github.com/jan-mue",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login":"markussagen",
+      "name": "Markus Sagen",
+      "avatar_url": "https://avatars.githubusercontent.com/u/20767068?v=4",
+      "profile": "https://github.com/markussagen",
+      "contributions": [
+        "code",
+        "example"
+      ]
+    },
+    {
+      "login": "Z-Fran",
+      "name": "Jindong Zhang",
+      "avatar_url": "https://avatars.githubusercontent.com/u/49083766?v=4",
+      "profile": "https://github.com/Z-Fran",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "RigvedManoj",
+      "name": "Rigved Manoj",
+      "avatar_url": "https://avatars.githubusercontent.com/u/28307990?v=4",
+      "profile": "https://github.com/RigvedManoj",
+      "contributions": [
+        "code"
       ]
     }
   ]

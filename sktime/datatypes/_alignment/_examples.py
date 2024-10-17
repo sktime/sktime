@@ -1,27 +1,59 @@
 """Example generation for testing.
 
-Exports dict of examples, useful for testing as fixtures.
+Exports examples of in-memory data containers, useful for testing as fixtures.
 
-example_dict: dict indexed by triple
-  1st element = mtype - str
-  2nd element = considered as this scitype - str
-  3rd element = int - index of example
-elements are data objects, considered examples for the mtype
-    all examples with same index are considered "same" on scitype content
-    if None, indicates that representation is not possible
+Examples come in clusters, tagged by scitype: str, index: int, and metadata: dict.
+
+All examples with the same index are considered "content-wise the same", i.e.,
+representing the same abstract data object. They differ by mtype, i.e.,
+machine type, which is the specific in-memory representation.
+
+If an example returns None, it indicates that representation
+with that specific mtype is not possible.
+
+If the tag "lossy" is True, the representation is considered incomplete,
+e.g., metadata such as column names are missing.
+
+Types of tests that can be performed with these examples:
+
+* the mtype and scitype of the example should be correctly inferred by checkers.
+* the metadata of hte example should be correctly inferred by checkers.
+* conversions from non-lossy representations to any other ones
+  should yield the element exactly, identically, for examples of the same index.
 """
 
 import pandas as pd
 
-example_dict = dict()
+from sktime.datatypes._base import BaseExample
 
 ###
 
-align = pd.DataFrame({"ind0": [1, 2, 2, 3], "ind1": [0, 0, 1, 1]})
 
-example_dict[("alignment", "Alignment", 0)] = align
+class _AlignmentSimple(BaseExample):
+    _tags = {
+        "scitype": "Alignment",
+        "index": 0,
+        "metadata": {},
+    }
 
 
-align = pd.DataFrame({"ind0": [2, 2.5, 2.5, 100], "ind1": [-1, -1, 2, 2]})
+class _AlignmentSimpleAlignment(_AlignmentSimple):
+    _tags = {
+        "mtype": "alignment",
+        "python_dependencies": None,
+        "lossy": False,
+    }
 
-example_dict[("alignment_loc", "Alignment", 0)] = align
+    def build(self):
+        return pd.DataFrame({"ind0": [1, 2, 2, 3], "ind1": [0, 0, 1, 1]})
+
+
+class _AlignmentSimpleAlignmentLoc(_AlignmentSimple):
+    _tags = {
+        "mtype": "alignment_loc",
+        "python_dependencies": None,
+        "lossy": False,
+    }
+
+    def build(self):
+        return pd.DataFrame({"ind0": [2, 2.5, 2.5, 100], "ind1": [-1, -1, 2, 2]})
