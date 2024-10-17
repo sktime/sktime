@@ -377,24 +377,20 @@ def test_evaluate_probabilistic_with_params(n_columns, scoring):
 
     forecaster = NaiveForecaster()
     cv = SlidingWindowSplitter()
-    try:
-        out = evaluate(
-            forecaster,
-            cv,
-            y,
-            X=None,
-            scoring=scoring,
-            error_score="raise",
-            return_data=True,
-        )
-        scoring_coverage = scoring._coverage
-        assert "y_pred_interval" in out.columns
-        df_intervals = pd.concat(out["y_pred_interval"].to_list())
-        columns = {col[1] for col in df_intervals.columns if len(col) == 3}
-        assert all(coverage in columns for coverage in scoring_coverage)
-
-    except NotImplementedError:
-        pass
+    out = evaluate(
+        forecaster,
+        cv,
+        y,
+        X=None,
+        scoring=scoring,
+        error_score="raise",
+        return_data=True,
+    )
+    scoring_coverage = scoring._coverage
+    assert "y_pred_interval" in out.columns
+    df_intervals = pd.concat(out["y_pred_interval"].to_list())
+    columns = {col[1] for col in df_intervals.columns if len(col) == 3}
+    assert all(coverage in columns for coverage in scoring_coverage)
 
 
 @pytest.mark.skipif(
