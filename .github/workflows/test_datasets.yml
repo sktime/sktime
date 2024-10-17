@@ -16,7 +16,7 @@ jobs:
           - "3.11"
           - "3.12"
         operating-system:
-          - macos-13
+          - macos-latest
           - ubuntu-latest
           - windows-latest
     runs-on: ${{ matrix.operating-system }}
@@ -55,7 +55,7 @@ jobs:
           - "3.11"
           - "3.12"
         operating-system:
-          - macos-13
+          - macos-latest
           - ubuntu-latest
           - windows-latest
     runs-on: ${{ matrix.operating-system }}
