@@ -188,7 +188,7 @@ class ExpandingCutoffSplitter(BaseSplitter):
         cutoff_index = self._get_first_cutoff_index(y)
         cutoffs = np.array([cutoff_index])
         offset = fh.to_numpy().max()
-        while cutoff_index + offset < len(y) - 1:
+        while cutoff_index + offset + step_length < len(y):
             cutoff_index += step_length
             cutoffs = np.append(cutoffs, cutoff_index)
         return cutoffs

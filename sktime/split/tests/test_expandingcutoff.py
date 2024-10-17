@@ -284,3 +284,20 @@ def test_expandingcutoff_fh():
         ):
             np.testing.assert_array_equal(split_train_a, split_train_b)
             np.testing.assert_array_equal(split_test_a, split_test_b)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(ExpandingCutoffSplitter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_expandingcutoff_step_length():
+    """Test step_length as list with _check_cv"""
+
+    y = _make_series(n_timepoints=20, random_state=42, index_type="period")
+    cutoff = y.index[10]
+    fhs = [[1], [2], [1, 2], [3, 5]]
+    step_lengths = [1, 2, 3]
+    for fh in fhs:
+        for step_length in step_lengths:
+            cv = ExpandingCutoffSplitter(cutoff=cutoff, fh=fh, step_length=step_length)
+            list(cv.split_series(y))
