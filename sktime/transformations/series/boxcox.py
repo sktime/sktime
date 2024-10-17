@@ -1,4 +1,4 @@
-"""Implemenents Box-Cox and Log Transformations."""
+"""Implements Box-Cox and Log Transformations."""
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 
@@ -123,12 +123,17 @@ class BoxCoxTransformer(BaseTransformer):
         is applied to the absolute value while the sign is kept.
         If ``False``, any negative values will be passed unchanged to the
         underlying functions (possibly causing error).
+    adjust_bias : bool, optional, default = False
+        If True, use the back-transformed mean method instead of simple back-transform.
 
     Attributes
     ----------
     lambda_ : float
         The Box-Cox lambda parameter that was fitted, based on the supplied
         ``method`` and data provided in ``fit``.
+    self.transformed_var_ : float
+        The variance of the transformed data at step h (assuming constant
+        forecast variance).
 
     See Also
     --------
@@ -148,6 +153,8 @@ class BoxCoxTransformer(BaseTransformer):
        Journal of the Royal Statistical Society, Series B, 26, 211-252.
     .. [2] V.M. Guerrero, "Time-series analysis supported by Power
        Transformations ", Journal of Forecasting, vol. 12, pp. 37-48, 1993.
+    .. [3] Rob J Hyndman and George Athanasopoulos, "Forecasting: Principles
+        and Practice(second edition)"
 
     Examples
     --------
@@ -185,12 +192,14 @@ class BoxCoxTransformer(BaseTransformer):
         sp=None,
         lambda_fixed=0.0,
         enforce_positive=True,
+        adjust_bias=False,
     ):
         self.bounds = bounds
         self.method = method
         self.sp = sp
         self.lambda_fixed = lambda_fixed
         self.enforce_positive = enforce_positive
+        self.adjust_bias = adjust_bias
         super().__init__()
 
         VALID_METHODS = ["pearsonr", "mle", "all", "guerrero", "fixed"]
@@ -223,6 +232,8 @@ class BoxCoxTransformer(BaseTransformer):
         -------
         self: a fitted instance of the estimator
         """
+        from scipy.special import boxcox
+
         bounds = self.bounds
         method = self.method
         sp = self.sp
@@ -245,6 +256,8 @@ class BoxCoxTransformer(BaseTransformer):
                 " this is likely due to method attribute being changed after init"
             )
 
+        self.transformed_var_ = np.var(boxcox(X, self.lambda_))
+
         return self
 
     def _transform(self, X, y=None):
@@ -266,22 +279,18 @@ class BoxCoxTransformer(BaseTransformer):
         """
         from scipy.special import boxcox
 
-        enforce_positive = self.enforce_positive
-        lambda_ = self.lambda_
-
         X_shape = X.shape
         X = X.flatten()
 
-        if enforce_positive:
+        if self.enforce_positive:
             X_sign = np.sign(X)
 
-        Xt = boxcox(np.abs(X), lambda_)
+        Xt = boxcox(np.abs(X), self.lambda_)
 
-        if enforce_positive:
+        if self.enforce_positive:
             Xt = Xt * X_sign
 
-        Xt = Xt.reshape(X_shape)
-        return Xt
+        return Xt.reshape(X_shape)
 
     def _inverse_transform(self, X, y=None):
         """Inverse transform X and return an inverse transformed version.
@@ -303,9 +312,22 @@ class BoxCoxTransformer(BaseTransformer):
         from scipy.special import inv_boxcox
 
         X_shape = X.shape
-        Xt = inv_boxcox(X.flatten(), self.lambda_)
-        Xt = Xt.reshape(X_shape)
-        return Xt
+        X = X.flatten()
+
+        if self.adjust_bias:
+            if self.lambda_ == 0:
+                Xt = np.exp(X) * (1 + self.transformed_var_ / 2)
+            else:
+                Xt = (self.lambda_ * X + 1) ** (1 / self.lambda_) * (
+                    1
+                    + self.transformed_var_
+                    * (1 - self.lambda_)
+                    / (2 * (self.lambda_ * X + 1) ** 2)
+                )
+        else:
+            Xt = inv_boxcox(X, self.lambda_)
+
+        return Xt.reshape(X_shape)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
