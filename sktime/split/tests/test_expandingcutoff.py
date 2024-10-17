@@ -301,4 +301,3 @@ def test_expandingcutoff_step_length():
         for step_length in step_lengths:
             cv = ExpandingCutoffSplitter(cutoff=cutoff, fh=fh, step_length=step_length)
             list(cv.split_series(y))
-
