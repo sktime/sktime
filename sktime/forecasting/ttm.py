@@ -35,6 +35,28 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     open-sourced by IBM Research. With less than 1 Million parameters, TTM introduces
     the notion of the first-ever "tiny" pre-trained models for Time-Series Forecasting.
 
+    **Zero-shot and Fine-tuning**:
+    The Model serves as a foundation model capable of both zero-shot forecasting and
+    fine-tuning on custom datasets. The decision to fine-tune is handled internally and
+    is determined by the configuration specified during model loading.
+
+    - **Zero-Shot Forecasting**: When the default configuration remains unchanged,
+      i.e ``config=None`` during model initialization,
+      the model weights are loaded as is, enabling zero-shot forecasting.
+
+    - **Fine-Tuning**: When the user provides a config different from default,
+      for example: ``config={"prediction_length": 2}`` during model initialization,
+      certain model weights are re-initialized to align with the new settings.
+      These re-initialized weights are then fine-tuned using the provided data.
+
+      It is essential to note that the configuration can change in two scenarios:
+
+      - The user explicitly passes a different configuration via the ``config``
+        argument during model initialization.
+
+      - The model encounters a forecasting horizon longer than the default
+        ``prediction_length=96``, which triggers an automatic configuration update.
+
     Parameters
     ----------
     model_path : str, default="ibm/TTM"
@@ -96,6 +118,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> forecaster = TinyTimeMixerForecaster() # doctest: +SKIP
+    >>> # performs zero-shot forecasting, as default config (unchanged) is used
     >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
 
@@ -122,7 +145,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     ...     },
     ... ) # doctest: +SKIP
     >>>
-    >>> # train and predict
+    >>> # model is fine-tuned, as a config different from default is provided.
     >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
     """
