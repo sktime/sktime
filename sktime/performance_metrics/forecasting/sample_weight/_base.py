@@ -1,12 +1,12 @@
 """Implements base class for customer sample weights of performance metric in sktime."""
 
+__author__ = ["markussagen"]
+__all__ = ["BaseSampleWeightGenerator", "check_sample_weight_generator"]
+
 from sktime.base import BaseObject
 from sktime.performance_metrics.forecasting.sample_weight._types import (
     check_sample_weight_generator,
 )
-
-__author__ = ["markussagen"]
-__all__ = ["BaseSampleWeightGenerator", "check_sample_weight_generator"]
 
 
 class BaseSampleWeightGenerator(BaseObject):

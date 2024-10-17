@@ -59,7 +59,10 @@ class DateRangeWeightGenerator(BaseSampleWeightGenerator):
         if not (
             isinstance(self.date_ranges, list)
             and (
-                all(isinstance(range_config, dict) for range_config in self.date_ranges)
+                all(
+                    isinstance(range_config, dict)
+                    for range_config in self.date_ranges
+                )
             )
         ):
             raise ValueError("'date_ranges' must be a list of dictionaries")
@@ -99,6 +102,7 @@ class DateRangeWeightGenerator(BaseSampleWeightGenerator):
 )
 def test_base_sample_weight_generator():
     """Test BaseSampleWeightGenerator."""
+
     class TestGenerator(BaseSampleWeightGenerator):
         def __call__(self, y_true, y_pred=None, **kwargs):
             return np.ones_like(y_true)
@@ -117,6 +121,7 @@ def test_base_sample_weight_generator():
 )
 def test_check_sample_weight_generator():
     """Test check_sample_weight_generator function."""
+
     def valid_generator(y_true, y_pred=None, **kwargs):
         return np.ones_like(y_true)
 
@@ -129,6 +134,7 @@ def test_check_sample_weight_generator():
     assert check_sample_weight_generator(valid_generator)
     assert check_sample_weight_generator(valid_generator_no_params)
     assert check_sample_weight_generator(valid_generator_no_y_pred)
+
 
 @pytest.mark.skipif(
     not run_test_module_changed(["sktime.performance_metrics"]),
@@ -162,7 +168,6 @@ def test_check_sample_weight_generator_are_invalid():
     reason="Run if performance_metrics module has changed.",
 )
 def test_dummy_weight_generator():
-    """Test DummyWeightGenerator."""
     generator = DummyWeightGenerator()
     y_true = np.array([1, 2, 3])
     weights = generator(y_true)
@@ -175,7 +180,6 @@ def test_dummy_weight_generator():
     reason="Run if performance_metrics module has changed.",
 )
 def test_uniform_weight_generator():
-    """Test UniformWeightGenerator."""
     generator = UniformWeightGenerator()
     y_true = np.array([1, 2, 3])
     weights = generator(y_true)
@@ -189,7 +193,6 @@ def test_uniform_weight_generator():
     reason="Run if performance_metrics module has changed.",
 )
 def test_recency_weight_generator():
-    """Test RecencyWeightGenerator."""
     generator = RecencyWeightGenerator(decay_rate=0.1)
     y_true = np.array([1, 2, 3])
     weights = generator(y_true)
@@ -204,7 +207,6 @@ def test_recency_weight_generator():
     reason="Run if performance_metrics module has changed.",
 )
 def test_date_range_weight_generator():
-    """Test DateRangeWeightGenerator."""
     date_ranges = [
         {"start": "01-01", "end": "03-31", "weight": 2},
         {"start": "06-01", "end": "08-31", "weight": 3},
@@ -224,7 +226,7 @@ def test_date_range_weight_generator():
     reason="Run if performance_metrics module has changed.",
 )
 def test_sample_weight_generator_with_y_pred():
-    """Test SampleWeightGenerator with y_pred argument."""
+
     class TestGenerator(BaseSampleWeightGenerator):
         def __call__(self, y_true, y_pred=None, **kwargs):
             if y_pred is None:
@@ -245,10 +247,10 @@ def test_sample_weight_generator_with_y_pred():
     reason="Run if performance_metrics module has changed.",
 )
 def test_sample_weight_generator_with_kwargs():
-    """Test SampleWeightGenerator with additional kwargs."""
+
     class TestGenerator(BaseSampleWeightGenerator):
         def __call__(self, y_true, y_pred=None, **kwargs):
-            factor = kwargs.get('factor', 1)
+            factor = kwargs.get("factor", 1)
             return np.ones_like(y_true) * factor
 
     generator = TestGenerator()

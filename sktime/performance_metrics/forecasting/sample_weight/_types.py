@@ -1,12 +1,10 @@
 """Implements base class for customer sample weights of performance metric in sktime."""
 
-from __future__ import annotations
+__author__ = ["markussagen"]
+__all__ = ["SampleWeightGenerator", "check_sample_weight_generator"]
 
 from inspect import signature
 from typing import Protocol, runtime_checkable
-
-__author__ = ["markussagen"]
-__all__ = ["SampleWeightGenerator", "check_sample_weight_generator"]
 
 
 @runtime_checkable
