@@ -39,11 +39,7 @@ jobs:
       - name: unit test step
         run: python3 -m pytest -m "not datadownload" sktime/datasets
         shell: bash
-      - name: upload coverage step
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          flags: ${{ matrix.operating-system }},${{ matrix.python-version }},datasets
+
   test_external_data:
     name: downloads
     strategy:
@@ -78,8 +74,3 @@ jobs:
       - name: unit test step
         run: python3 -m pytest -m "datadownload" sktime/datasets
         shell: bash
-      - name: upload coverage step
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          flags: ${{ matrix.operating-system }},${{ matrix.python-version }},datasets
