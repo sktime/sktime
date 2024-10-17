@@ -619,7 +619,8 @@ class EmpiricalCoverage(_BaseProbaForecastingErrorMetric):
     def get_test_params(self):
         """Retrieve test parameters."""
         params1 = {}
-        return [params1]
+        params2 = {"coverage": 0.5}
+        return [params1, params2]
 
 
 class IntervalWidth(_BaseProbaForecastingErrorMetric):
@@ -688,7 +689,8 @@ class IntervalWidth(_BaseProbaForecastingErrorMetric):
     def get_test_params(self):
         """Retrieve test parameters."""
         params1 = {}
-        return [params1]
+        params2 = {"coverage": 0.5}
+        return [params1, params2]
 
 
 class ConstraintViolation(_BaseProbaForecastingErrorMetric):
@@ -763,7 +765,8 @@ class ConstraintViolation(_BaseProbaForecastingErrorMetric):
     def get_test_params(self):
         """Retrieve test parameters."""
         params1 = {}
-        return [params1]
+        params2 = {"coverage": 0.5}
+        return [params1, params2]
 
 
 PANDAS_DF_MTYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
