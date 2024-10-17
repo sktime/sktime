@@ -8,10 +8,10 @@ from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 from sktime.libs.momentfm import MOMENTPipeline
-from sktime.libs.momentfm.utils.forecasting_metrics import get_forecasting_metrics
 from sktime.split import temporal_train_test_split
 
-if _check_soft_dependencies(["torch"], severity="none"):
+if _check_soft_dependencies(["torch", "accelerate"], severity="none"):
+    from accelerate import Accelerator
     from torch.cuda import empty_cache
     from torch.nn import MSELoss
     from torch.utils.data import Dataset
@@ -21,10 +21,6 @@ else:
         """Dummy class if torch is unavailable."""
 
         pass
-
-
-if _check_soft_dependencies(["accelerate"], severity="none"):
-    from accelerate import Accelerator
 
 
 # if _check_soft_dependencies(["momentfm"], severity="none"):
@@ -569,6 +565,8 @@ def _run_epoch(
 ):
     import torch.cuda.amp
     from tqdm import tqdm
+
+    from sktime.libs.momentfm.utils.forecasting_metrics import get_forecasting_metrics
 
     losses = []
     for data in tqdm(train_dataloader, total=len(train_dataloader)):
