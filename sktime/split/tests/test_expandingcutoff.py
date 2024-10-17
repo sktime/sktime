@@ -290,21 +290,15 @@ def test_expandingcutoff_fh():
     not run_test_for_class(ExpandingCutoffSplitter),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-def test_expandingcutoff_step_length_and_evaluate():
-    """Test fh as list with _check_cv"""
-    from sktime.forecasting.model_evaluation import evaluate
-    from sktime.forecasting.naive import NaiveForecaster
+def test_expandingcutoff_step_length():
+    """Test step_length as list with _check_cv"""
 
-    y = _make_series(n_timepoints=15, random_state=42, index_type="period")
+    y = _make_series(n_timepoints=20, random_state=42, index_type="period")
     cutoff = y.index[10]
-    fh = [1]
-    cv = ExpandingCutoffSplitter(cutoff=cutoff, fh=fh, step_length=3)
+    fhs = [[1], [2], [1, 2], [3, 5]]
+    step_lengths = [1, 2, 3]
+    for fh in fhs:
+        for step_length in step_lengths:
+            cv = ExpandingCutoffSplitter(cutoff=cutoff, fh=fh, step_length=step_length)
+            list(cv.split_series(y))
 
-    forecaster = NaiveForecaster()
-    evaluate(
-        forecaster,
-        cv,
-        strategy="refit",
-        y=y,
-        return_data=True,
-    )
