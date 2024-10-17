@@ -125,7 +125,7 @@ all_extras_pandas2 = [
   'autots<0.7,>=0.6.1',
   "cloudpickle",
   "dash!=2.9.0",
-  "dask<2024.8.3; extra == 'dataframe'",
+  "dask<2024.10.1; extra == 'dataframe'",
   "dtaidistance<2.4",
   "dtw-python",
   'esig==0.9.7; python_version < "3.10"',
