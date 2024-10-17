@@ -284,3 +284,25 @@ def test_expandingcutoff_fh():
         ):
             np.testing.assert_array_equal(split_train_a, split_train_b)
             np.testing.assert_array_equal(split_test_a, split_test_b)
+
+@pytest.mark.skipif(
+    not run_test_for_class(ExpandingCutoffSplitter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_expandingcutoff_step_length_and_evaluate():
+    """Test fh as list with _check_cv"""
+    from sktime.forecasting.model_evaluation import evaluate
+    from sktime.forecasting.naive import NaiveForecaster
+    y = _make_series(n_timepoints=15, random_state=42, index_type="period")
+    cutoff = y.index[10]
+    fh = [1]
+    cv = ExpandingCutoffSplitter(cutoff=cutoff, fh=fh, step_length=3)
+
+    forecaster = NaiveForecaster()
+    evaluate(
+        forecaster,
+        cv,
+        strategy="refit",
+        y=y,
+        return_data=True,
+    )
