@@ -59,10 +59,7 @@ class DateRangeWeightGenerator(BaseSampleWeightGenerator):
         if not (
             isinstance(self.date_ranges, list)
             and (
-                all(
-                    isinstance(range_config, dict)
-                    for range_config in self.date_ranges
-                )
+                all(isinstance(range_config, dict) for range_config in self.date_ranges)
             )
         ):
             raise ValueError("'date_ranges' must be a list of dictionaries")
@@ -226,7 +223,6 @@ def test_date_range_weight_generator():
     reason="Run if performance_metrics module has changed.",
 )
 def test_sample_weight_generator_with_y_pred():
-
     class TestGenerator(BaseSampleWeightGenerator):
         def __call__(self, y_true, y_pred=None, **kwargs):
             if y_pred is None:
@@ -247,7 +243,6 @@ def test_sample_weight_generator_with_y_pred():
     reason="Run if performance_metrics module has changed.",
 )
 def test_sample_weight_generator_with_kwargs():
-
     class TestGenerator(BaseSampleWeightGenerator):
         def __call__(self, y_true, y_pred=None, **kwargs):
             factor = kwargs.get("factor", 1)

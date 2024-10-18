@@ -9,8 +9,7 @@ from typing import Protocol, runtime_checkable
 
 @runtime_checkable
 class SampleWeightGenerator(Protocol):
-    def __call__(self, y_true, y_pred=None, **kwargs):
-        ...
+    def __call__(self, y_true, y_pred=None, **kwargs): ...
 
 
 def check_sample_weight_generator(obj):
@@ -23,7 +22,8 @@ def check_sample_weight_generator(obj):
 
     # Check if the function has at least one parameter (y_true)
     if len(params) < 1:
-        raise ValueError("Sample weight generator must have at least one parameter (y_true)")
+        msg = "Sample weight generator must have at least one parameter (y_true)"
+        raise ValueError(msg)
 
     param_names = list(params.keys())
 
