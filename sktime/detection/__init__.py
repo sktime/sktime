@@ -14,7 +14,6 @@ from sktime.annotation import (
     hmm_learn,
     igts,
     lof,
-    outlier_detection,
     plotting,
     stray,
 )
@@ -33,7 +32,6 @@ __all__ = [
     "hmm_learn",
     "igts",
     "lof",
-    "outlier_detection",
     "plotting",
     "stray",
 ]
