@@ -344,11 +344,13 @@ class BaseForecastingErrorMetric(BaseMetric):
         multioutput = self.multioutput
         multilevel = self.multilevel
 
-        kwargs = self._apply_sample_weight_to_kwargs(y_true, y_pred, **kwargs)
-
         # Input checks and conversions
         y_true_inner, y_pred_inner, multioutput, multilevel, kwargs = self._check_ys(
             y_true, y_pred, multioutput, multilevel, **kwargs
+        )
+
+        kwargs = self._apply_sample_weight_to_kwargs(
+            y_true=y_true_inner, y_pred=y_pred_inner, **kwargs
         )
 
         requires_vectorization = isinstance(y_true_inner, VectorizedDF)
@@ -551,12 +553,15 @@ class BaseForecastingErrorMetric(BaseMetric):
         multioutput = self.multioutput
         multilevel = self.multilevel
 
-        kwargs = self._apply_sample_weight_to_kwargs(y_true, y_pred, **kwargs)
-
         # Input checks and conversions
         y_true_inner, y_pred_inner, multioutput, multilevel, kwargs = self._check_ys(
             y_true, y_pred, multioutput, multilevel, **kwargs
         )
+
+        kwargs = self._apply_sample_weight_to_kwargs(
+            y_true=y_true_inner, y_pred=y_pred_inner, **kwargs
+        )
+
         requires_vectorization = isinstance(y_true_inner, VectorizedDF)
         if not requires_vectorization:
             # pass to inner function
