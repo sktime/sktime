@@ -25,9 +25,9 @@ Version 0.33.2 - 2024-10-17
 Highlights
 ~~~~~~~~~~
 
-* interface to Chronos (zero-shot) foundation model forecaster (:pr:`7001`) :user:`Z-Fran`, :user:`geetu040`, :user:`benHeid`, :user:`rigvedmanoj`
+* new forecatser: interface to Chronos (zero-shot) foundation model forecaster (:pr:`7001`) :user:`Z-Fran`, :user:`geetu040`, :user:`benHeid`, :user:`rigvedmanoj`
 * new classifiers: GRU-based time series classifiers (:pr:`6952`) :user:`fnhirwa`
-* temporal radial basis function feature transformer (:pr:`7261`) :user:`phoeenniixx`
+* new transformer: temporal radial basis function features (:pr:`7261`) :user:`phoeenniixx`
 * ``ExpandingSlidingWindowSplitter``, switching from expanding window to sliding window at cutoff point (:pr:`7193`) :user:`MarkusSagen`
 * ``pytorch-forecasting`` and ``neuralforecast`` models now provide probabilistic forecasts for global forecasting (:pr:`6628`, :pr:`6666`) :user:`XinyuWuu`
 * ``PolynomialTrendForecaster`` now can make probabilistic forecasts (:pr:`6424`) :user:`ericjb`
