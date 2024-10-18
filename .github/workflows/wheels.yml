@@ -27,10 +27,76 @@ jobs:
           name: wheels
           path: wheelhouse/*
 
+  test_unix_wheels:
+    needs: build_wheels
+    name: Test wheels on ${{ matrix.os }} with ${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false  # to not fail all combinations if just one fail
+      matrix:
+        os: [ubuntu-latest, macos-13]
+        python-version: ['3.9', '3.10', '3.11', '3.12']
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: wheels
+          path: wheelhouse
+
+      - name: Display downloaded artifacts
+        run: ls -l wheelhouse
+
+      - name: Get wheel filename
+        run: echo "WHEELNAME=$(ls ./wheelhouse/sktime-*none-any.whl)" >> $GITHUB_ENV
+
+      - name: Install wheel and extras
+        run: python -m pip install "${{ env.WHEELNAME }}[all_extras_pandas2,dev]"
+
+      - name: Run tests
+        run: make test_without_datasets
+
+  test_windows_wheels:
+    needs: build_wheels
+    name: Test wheels on ${{ matrix.os }} with ${{ matrix.python-version }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false  # to not fail all combinations if just one fail
+      matrix:
+        os: [windows-latest]
+        python-version: ['3.9', '3.10', '3.11', '3.12']
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: wheels
+          path: wheelhouse
+
+      - name: Display downloaded artifacts
+        run: ls -l wheelhouse
+
+      - name: Get wheel filename
+        run: echo "WHEELNAME=$(ls ./wheelhouse/sktime-*none-any.whl)" >> $env:GITHUB_ENV
+
+      - name: Install wheel and extras
+        run: python -m pip install "${env:WHEELNAME}[all_extras_pandas2,dev]"
+
+      - name: Run tests  # explicit commands as windows does not support make
+        run: python -m pytest  --ignore sktime/datasets
+
   upload_wheels:
     name: Upload wheels to PyPI
     runs-on: ubuntu-latest
-    needs: [build_wheels]
+    needs: [build_wheels,test_unix_wheels,test_windows_wheels]
 
     steps:
       - uses: actions/download-artifact@v4
