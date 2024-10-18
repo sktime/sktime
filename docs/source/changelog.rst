@@ -34,8 +34,8 @@ Highlights
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
 
-* ``skpro`` (forecasting soft dependency) bounds have been updated to ``>=2,<2.8.0``	
-* ``u8darts`` (forecasting soft dependency) bounds have been updated to ``>=0.29.0,<0.32.0``	
+* ``skpro`` (forecasting soft dependency) bounds have been updated to ``>=2,<2.8.0``
+* ``u8darts`` (forecasting soft dependency) bounds have been updated to ``>=0.29.0,<0.32.0``
 * ``dask`` (data container and parallelization back-end soft dependency) bounds have been updated to ``<2024.10.1``
 
 Core interface changes
