@@ -29,7 +29,7 @@ from sktime.utils.warnings import warn
 
 class BaseGridSearch(_DelegatedForecaster):
     _tags = {
-        "authors": ["mloning", "fkiraly", "aiwalter"],
+        "authors": ["mloning", "fkiraly", "aiwalter", "sukjingitsit","ksharma6"],
         "scitype:y": "both",
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
@@ -54,6 +54,7 @@ class BaseGridSearch(_DelegatedForecaster):
         tune_by_variable=False,
         backend_params=None,
         n_jobs="deprecated",
+        ranking_metric=None,
     ):
         self.forecaster = forecaster
         self.cv = cv
@@ -69,6 +70,7 @@ class BaseGridSearch(_DelegatedForecaster):
         self.tune_by_variable = tune_by_variable
         self.backend_params = backend_params
         self.n_jobs = n_jobs
+        self.ranking_metric = ranking_metric
 
         super().__init__()
 
@@ -183,8 +185,7 @@ class BaseGridSearch(_DelegatedForecaster):
         """
         cv = check_cv(self.cv)
 
-        scoring = check_scoring(self.scoring, obj=self)
-        scoring_name = f"test_{scoring.name}"
+        scoring, scoring_names = self._check_scoring()
 
         backend = self.backend
         backend_params = self.backend_params if self.backend_params else {}
@@ -209,7 +210,7 @@ class BaseGridSearch(_DelegatedForecaster):
             meta["strategy"] = self.strategy
             meta["scoring"] = scoring
             meta["error_score"] = self.error_score
-            meta["scoring_name"] = scoring_name
+            meta["scoring_names"] = scoring_names
 
             out = parallelize(
                 fun=_fit_and_score,
@@ -233,15 +234,18 @@ class BaseGridSearch(_DelegatedForecaster):
 
         results = pd.DataFrame(results)
 
+        ranking_metric = scoring[0]
+        ranking_metric_name = scoring_names[0]
+
         # Rank results, according to whether greater is better for the given scoring.
-        results[f"rank_{scoring_name}"] = results.loc[:, f"mean_{scoring_name}"].rank(
-            ascending=scoring.get_tag("lower_is_better")
-        )
+        results[f"rank_{ranking_metric_name}"] = results.loc[
+            :, f"mean_{ranking_metric_name}"
+        ].rank(ascending=ranking_metric.get_tag("lower_is_better"))
 
         self.cv_results_ = results
 
         # Select best parameters.
-        self.best_index_ = results.loc[:, f"rank_{scoring_name}"].argmin()
+        self.best_index_ = results.loc[:, f"rank_{ranking_metric_name}"].argmin()
         # Raise error if all fits in evaluate failed because all score values are NaN.
         if self.best_index_ == -1:
             raise NotFittedError(
@@ -249,7 +253,7 @@ class BaseGridSearch(_DelegatedForecaster):
                 set error_score='raise' to see the exceptions.
                 Failed forecaster: {self.forecaster}"""
             )
-        self.best_score_ = results.loc[self.best_index_, f"mean_{scoring_name}"]
+        self.best_score_ = results.loc[self.best_index_, f"mean_{ranking_metric_name}"]
         self.best_params_ = results.loc[self.best_index_, "params"]
         self.best_forecaster_ = self.forecaster.clone().set_params(**self.best_params_)
 
@@ -259,7 +263,7 @@ class BaseGridSearch(_DelegatedForecaster):
 
         # Sort values according to rank
         results = results.sort_values(
-            by=f"rank_{scoring_name}",
+            by=f"rank_{ranking_metric_name}",
             ascending=True,
         )
         # Select n best forecaster
@@ -270,7 +274,7 @@ class BaseGridSearch(_DelegatedForecaster):
             _forecasters_to_return = len(results.index)
         for i in range(_forecasters_to_return):
             params = results["params"].iloc[i]
-            rank = results[f"rank_{scoring_name}"].iloc[i]
+            rank = results[f"rank_{ranking_metric_name}"].iloc[i]
             rank = str(int(rank))
             forecaster = self.forecaster.clone().set_params(**params)
             # Refit model with best parameters.
@@ -278,7 +282,7 @@ class BaseGridSearch(_DelegatedForecaster):
                 forecaster.fit(y=y, X=X, fh=fh)
             self.n_best_forecasters_.append((rank, forecaster))
             # Save score
-            score = results[f"mean_{scoring_name}"].iloc[i]
+            score = results[f"mean_{ranking_metric_name}"].iloc[i]
             self.n_best_scores_.append(score)
 
         return self
@@ -353,6 +357,107 @@ class BaseGridSearch(_DelegatedForecaster):
             )
         return self
 
+    def _check_scoring(self):
+        if isinstance(self.scoring, dict):
+            scoring = []
+            scoring_names = []
+            scoringtemp = {item for item in self.scoring.items()}
+            if (
+                self.ranking_metric is not None
+                and isinstance(self.ranking_metric, str)
+                and self.ranking_metric in scoringtemp.keys()
+            ):
+                metric = scoringtemp.pop(self.ranking_metric)
+                metric = check_scoring(metric, obj=self)
+                metric.name = self.ranking_metric
+                metric_name = f"test_{self.ranking_metric}"
+                scoring.append(metric)
+                scoring_names.append(metric_name)
+            elif len(scoringtemp) > 1:
+                warn(
+                    f"The parameter ranking_metric of {self.__class__.__name__} "
+                    "must be specified correctly. By default, it has selected"
+                    "the first argument of the dict. Either the parameter has "
+                    "not been specified, it is not a string or it is not present in "
+                    "the dict passed to the scoring parameter.",
+                    obj=self,
+                    stacklevel=2,
+                )
+            for name, metric in scoringtemp.items():
+                metric = check_scoring(metric, obj=self)
+                metric.name = name
+                if not isinstance(name, str):
+                    raise TypeError(
+                        "The keys of the dict passed to the scoring parameter are "
+                        "not strings. Please specify them properly."
+                    )
+                metric_name = f"test_{name}"
+                scoring.append(metric)
+                scoring_names.append(metric_name)
+        elif isinstance(self.scoring, list):
+            scoring = []
+            scoring_names = []
+            scoringtemp = [metric for metric in self.scoring]
+            if self.ranking_metric is not None and isinstance(self.ranking_metric, int):
+                if self.ranking_metric not in range(len(scoringtemp)):
+                    self.ranking_metric = 0
+                    warn(
+                        f"The parameter ranking_metric of {self.__class__.__name__} "
+                        "must be specified correctly. By default, it has selected the "
+                        "first argument of the list. The parameter has not been not "
+                        "specified as a valid integer value from 0 to len(scoring)-1, "
+                        "both inclusive.",
+                        obj=self,
+                        stacklevel=2,
+                    )
+                metric = scoringtemp.pop(self.ranking_metric)
+                temp_metric = metric
+                metric = check_scoring(metric, obj=self)
+                metric_name = metric.name
+                if metric_name == "_DynamicForecastingErrorMetric" and hasattr(
+                    temp_metric, "__name__"
+                ):
+                    metric_name = temp_metric.__name__
+                metric.name = metric_name
+                metric_name = f"test_{metric_name}"
+                scoring.append(metric)
+                scoring_names.append(metric_name)
+            elif len(scoringtemp) > 1:
+                warn(
+                    f"The parameter ranking_metric of {self.__class__.__name__} must "
+                    "be specified correctly. By default, it has selected the first "
+                    "argument of the list. Either the parameter has not been not "
+                    "specified or is not an integer value.",
+                    obj=self,
+                    stacklevel=2,
+                )
+            for metric in scoringtemp:
+                temp_metric = metric
+                metric = check_scoring(metric, obj=self)
+                metric_name = metric.name
+                if metric_name == "_DynamicForecastingErrorMetric" and hasattr(
+                    temp_metric, "__name__"
+                ):
+                    metric_name = temp_metric.__name__
+                metric.name = metric_name
+                metric_name = f"test_{metric_name}"
+                scoring.append(metric)
+                scoring_names.append(metric_name)
+        else:
+            # Declaring it as a list of size one
+            scoring = [check_scoring(self.scoring, obj=self)]
+            scoring_names = [f"test_{scoring[0].name}"]
+            if self.ranking_metric is not None:
+                warn(
+                    f"The parameter ranking_metric of {self.__class__.__name__} must "
+                    "be specified correctly. When scoring is not a list or dict, it "
+                    "should be specified as None, or not passed. It has currently "
+                    "ignored.",
+                    obj=self,
+                    stacklevel=2,
+                )
+        return scoring, scoring_names
+
 
 def _fit_and_score(params, meta):
     """Fit and score forecaster with given parameters.
@@ -361,7 +466,7 @@ def _fit_and_score(params, meta):
     BaseGridSearchCV._fit, evaluate_candidates, within parallelize.
     """
     meta = meta.copy()
-    scoring_name = meta.pop("scoring_name")
+    scoring_names = meta.pop("scoring_names")
 
     # Set parameters.
     forecaster = meta.pop("forecaster").clone()
@@ -371,7 +476,7 @@ def _fit_and_score(params, meta):
     out = evaluate(forecaster, **meta)
 
     # Filter columns.
-    out = out.filter(items=[scoring_name, "fit_time", "pred_time"], axis=1)
+    out = out.filter(items=[*scoring_names, "fit_time", "pred_time"], axis=1)
 
     # Aggregate results.
     out = out.mean()
@@ -419,7 +524,9 @@ class ForecastingGridSearchCV(BaseGridSearch):
     param_grid : dict or list of dictionaries
         Model tuning parameters of the forecaster to evaluate
 
-    scoring : sktime metric (BaseMetric), str, or callable, optional (default=None)
+    scoring : sktime metric (BaseMetric), str, callable, optional (default=None),
+        list of sktime metrics (BaseMetric), strs, callables
+        dict of str keys and sktime metric (BaseMetric), str, callable values
         scoring metric to use in tuning the forecaster
 
         * sktime metric objects (BaseMetric) descendants can be searched
@@ -427,7 +534,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         for instance via ``all_estimators("metric", as_dataframe=True)``
 
         * If callable, must have signature
-        ``(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float``,
+        `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
         assuming np.ndarrays being of the same length, and lower being better.
         Metrics in sktime.performance_metrics.forecasting are all of this form.
 
@@ -437,6 +544,17 @@ class ForecastingGridSearchCV(BaseGridSearch):
           and keys of registry.ALIAS_DICT referring to metrics.
 
         * If None, defaults to MeanAbsolutePercentageError()
+
+        * if list, ranking_metric should be specified as an index,
+           else will give a warning
+
+        * if dict, ranking_metric should be specified as a key string,
+           else will give a warning
+
+    ranking_metric: int (if scoring is list) or str (if scoring is dict)
+        Determines which element of dict or list will be used for
+        ranking the results in a certain order.
+        Will raise a warning if specified wrongly
 
     refit : bool, optional (default=True)
         True = refit the forecaster with the best parameters on the entire data in fit
@@ -612,6 +730,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         tune_by_variable=False,
         backend_params=None,
         n_jobs="deprecated",
+        ranking_metric=None,
     ):
         super().__init__(
             forecaster=forecaster,
@@ -628,6 +747,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
             tune_by_variable=tune_by_variable,
             backend_params=backend_params,
             n_jobs=n_jobs,
+            ranking_metric=ranking_metric,
         )
         self.param_grid = param_grid
 
@@ -678,6 +798,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         from sktime.forecasting.trend import PolynomialTrendForecaster
         from sktime.performance_metrics.forecasting import (
             MeanAbsolutePercentageError,
+            MedianAbsolutePercentageError,
             mean_absolute_percentage_error,
         )
         from sktime.split import SingleWindowSplitter
@@ -702,7 +823,30 @@ class ForecastingGridSearchCV(BaseGridSearch):
             "scoring": "MeanAbsolutePercentageError(symmetric=True)",
             "update_behaviour": "no_update",
         }
-        return [params, params2, params3]
+        params4 = {
+            "forecaster": NaiveForecaster(strategy="mean"),
+            "cv": SingleWindowSplitter(fh=1),
+            "param_grid": {"window_length": [3, 4]},
+            "scoring": {
+                "symmetric_mape": MeanAbsolutePercentageError(symmetric=True),
+                "asymmetric_mape": MeanAbsolutePercentageError(),
+            },
+            "ranking_metric": "symmetric_mape",
+            "update_behaviour": "no_update",
+        }
+        params5 = {
+            "forecaster": NaiveForecaster(strategy="mean"),
+            "cv": SingleWindowSplitter(fh=1),
+            "param_grid": {"window_length": [3, 4]},
+            "scoring": [
+                MeanAbsolutePercentageError(symmetric=True),
+                MedianAbsolutePercentageError(symmetric=True),
+            ],
+            "ranking_metric": 0,
+            "update_behaviour": "no_update",
+        }
+
+        return [params, params2, params3, params4, params5]
 
 
 class ForecastingRandomizedSearchCV(BaseGridSearch):
@@ -880,6 +1024,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         tune_by_variable=False,
         backend_params=None,
         n_jobs="deprecated",
+        ranking_metric=None,
     ):
         super().__init__(
             forecaster=forecaster,
@@ -896,6 +1041,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             tune_by_variable=tune_by_variable,
             backend_params=backend_params,
             n_jobs=n_jobs,
+            ranking_metric=ranking_metric,
         )
         self.param_distributions = param_distributions
         self.n_iter = n_iter
@@ -925,7 +1071,10 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         """
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.forecasting.trend import PolynomialTrendForecaster
-        from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
+        from sktime.performance_metrics.forecasting import (
+            MeanAbsolutePercentageError,
+            MedianAbsolutePercentageError,
+        )
         from sktime.split import SingleWindowSplitter
 
         params = {
@@ -934,7 +1083,6 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             "param_distributions": {"window_length": [2, 5]},
             "scoring": MeanAbsolutePercentageError(symmetric=True),
         }
-
         params2 = {
             "forecaster": PolynomialTrendForecaster(),
             "cv": SingleWindowSplitter(fh=1),
@@ -949,8 +1097,30 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             "scoring": "MeanAbsolutePercentageError(symmetric=True)",
             "update_behaviour": "no_update",
         }
+        params4 = {
+            "forecaster": PolynomialTrendForecaster(),
+            "cv": SingleWindowSplitter(fh=1),
+            "param_distributions": {"degree": [1, 2]},
+            "scoring": {
+                "symmetric_mape": MeanAbsolutePercentageError(symmetric=True),
+                "asymmetric_mape": MeanAbsolutePercentageError(),
+            },
+            "ranking_metric": "symmetric_mape",
+            "update_behaviour": "no_update",
+        }
+        params5 = {
+            "forecaster": PolynomialTrendForecaster(),
+            "cv": SingleWindowSplitter(fh=1),
+            "param_distributions": {"degree": [1, 2]},
+            "scoring": [
+                MeanAbsolutePercentageError(symmetric=True),
+                MedianAbsolutePercentageError(symmetric=True),
+            ],
+            "ranking_metric": 0,
+            "update_behaviour": "no_update",
+        }
 
-        return [params, params2, params3]
+        return [params, params2, params3, params4, params5]
 
 
 class ForecastingSkoptSearchCV(BaseGridSearch):
