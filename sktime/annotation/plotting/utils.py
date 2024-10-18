@@ -171,3 +171,49 @@ def plot_time_series_with_profiles(
     ax[0].legend(prop={"size": font_size})
 
     return fig, ax
+
+
+def plot_time_series_with_subsequent_outliers(
+    ts, 
+    ax=None,
+    intervals=None,
+):
+    """Plot the time series with the known outliers.
+
+    Parameters
+    ----------
+    ts: pd.Series
+        the univariate time series of length n to be annotated
+    ax: matplotlib.axes.Axes
+        the axes to plot on
+    intervals: list of Interval objects
+        the intervals of the outliers
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+
+    axes : np.ndarray
+        Array of the figure's Axe objects
+    """
+    # Checks availability of plotting libraries
+    _check_soft_dependencies("matplotlib", "seaborn")
+    import matplotlib.pyplot as plt
+
+    if ax is None:
+        fig, ax = plt.subplots(1, 1, figsize=(10, 4))
+    else:
+        fig = ax.figure
+
+    ax.plot(ts["data"], label="Not Anomalous")
+    ax.plot(ts.loc[ts["label"] == 1.0, "data"], label="Anomalous")
+
+    if intervals is not None:
+        for interval in intervals:
+            left = interval.left
+            right = interval.right
+            ax.axvspan(left, right, color="tab:green", alpha=0.3, label="Predicted Anomalies")
+
+    ax.legend()
+
+    return fig, ax
