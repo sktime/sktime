@@ -81,12 +81,7 @@ class BaseSeriesAnnotator(BaseEstimator):
 
         super().__init__()
 
-        # hacky workaround to ensure task and learning_type are set
-        # TODO 0.34.0: remove the self.task and self.learning_type attributes
-        # if possible, check downwards compatibility
         self.set_tags(**{"task": task, "learning_type": learning_type})
-        self.task = task
-        self.learning_type = learning_type
 
     def __rmul__(self, other):
         """Magic * method, return (left) concatenated AnnotatorPipeline.
