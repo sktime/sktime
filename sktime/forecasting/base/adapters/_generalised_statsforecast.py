@@ -594,7 +594,6 @@ class StatsForecastBackAdapter:
 
         stm_ests = [ThetaForecaster, VAR]
         if _check_estimator_deps(stm_ests, severity="none"):
-
             params = [
                 {
                     "estimator": ThetaForecaster(),
