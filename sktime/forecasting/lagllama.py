@@ -3,7 +3,7 @@
 
 __author__ = ["shlok191"]
 
-
+import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import _BaseGlobalForecaster
@@ -68,7 +68,7 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
     """
 
     _tags = {
-        "y_inner_mtype": ["gluonts_ListDataset_panel", "gluonts_ListDataset_series"],
+        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "X_inner_mtype": ["gluonts_ListDataset_panel", "gluonts_ListDataset_series"],
         "scitype:y": "both",
         "ignores-exogeneous-X": True,
@@ -88,6 +88,7 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
 
     def __init__(
         self,
+        train=False,
         model_path=None,
         device=None,
         context_length=None,
@@ -132,6 +133,7 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
             1000 if not shuffle_buffer_length else shuffle_buffer_length
         )
 
+        self.train = train
         self.trainer_kwargs = trainer_kwargs
         self.trainer_kwargs_ = (
             {"max_epochs": 10} if not trainer_kwargs else trainer_kwargs
@@ -153,31 +155,34 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
 
         self.use_source_package = use_source_package
 
-    def _reform_y(self, y):
-        from gluonts.dataset.common import ListDataset
+    def _get_gluonts_dataset(self, y):
+        from gluonts.dataset.pandas import PandasDataset
 
-        if y is None:
-            return None
+        target_col = str(y.columns[0])
+        if isinstance(y.index, pd.MultiIndex):
+            item_id = y.index.names[0]
+            timepoint = y.index.names[-1]
 
-        shape = y[0]["target"].shape
+            # Reset the index to make it compatible with GluonTS
+            y = y.reset_index()
+            y.set_index(timepoint, inplace=True)
 
-        if len(shape) == 2 and shape[1] == 1:
-            new_values = []
+            dataset = PandasDataset.from_long_dataframe(
+                y, target=target_col, item_id=item_id, future_length=0
+            )
 
-            # Updating the ListDataset to flatten univariate target values
-            for data_entry in y:
-                target = data_entry["target"]
+        else:
+            dataset = PandasDataset(y, future_length=0, target=target_col)
 
-                if len(target.shape) == 2 and target.shape[1] == 1:
-                    data_entry["target"] = target.flatten()
+        return dataset
 
-                new_values.append(data_entry)
+    def _convert_to_float(self, df):
+        for col in df.columns:
+            # Check if column is not of string type
+            if df[col].dtype != "object" and not pd.api.types.is_string_dtype(df[col]):
+                df[col] = df[col].astype("float32")
 
-            new_y = ListDataset(new_values, one_dim_target=True, freq="D")
-
-            return new_y
-
-        return y
+        return df
 
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
@@ -212,7 +217,7 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         # forecasting horizon
         self.estimator_ = LagLlamaEstimator(
             ckpt_path=self.ckpt_url_,
-            prediction_length=len(fh),
+            prediction_length=max(fh.to_relative(self.cutoff)),
             context_length=self.context_length_,
             input_size=self.estimator_args["input_size"],
             n_layer=self.estimator_args["n_layer"],
@@ -230,56 +235,25 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         transformation = self.estimator_.create_transformation()
 
         # Creating a new predictor
-        self.predictor_ = self.estimator_.create_predictor(
-            transformation, lightning_module
-        )
+        self.model = self.estimator_.create_predictor(transformation, lightning_module)
 
-        # Updating y value to make it compatible with LagLlama
-        y = self._reform_y(y)
+        if self.train:
+            # Updating y value to make it compatible with LagLlama
+            y = self._convert_to_float(y)
+            y = self._get_gluonts_dataset(y)
+            # Lastly, training the model
+            self.model = self.estimator_.train(
+                y, cache_data=True, shuffle_buffer_length=self.shuffle_buffer_length_
+            )
 
-        # Lastly, training the model
-        self.predictor_ = self.estimator_.train(
-            y, cache_data=True, shuffle_buffer_length=self.shuffle_buffer_length_
-        )
+    def _extend_df(self, df, fh):
+        prediction_length = max(fh.to_relative(self.cutoff))
+        freq = df.index.freq
+        extend_df = pd.period_range(
+            start=df.index[-1], periods=prediction_length + 1, freq=freq
+        )[1:]
 
-    def convert_sampleforecast_to_listdataset(forecasts):
-        """Convert a GluonTS SampleForecast to a ListDataset.
-
-        Parameters
-        ----------
-        forecast : GluonTS SampleForecast
-            The SampleForecast generated by LagLlama
-
-        Returns
-        -------
-        GluonTS ListDataset
-            Returns a ListDatset containing len(time_series) * num_samples entries
-        """
-        from gluonts.dataset.common import ListDataset
-        from gluonts.model.forecast import SampleForecast
-
-        data_entries = []
-
-        for index, forecast in enumerate(forecasts):
-            # Assert that each entry is a valid SampleForecast
-            assert isinstance(
-                forecast, SampleForecast
-            ), f"forecast_{index} is not a valid SampleForecast."
-
-            # Obtaining individual elements that build a ListDataset
-            item_id = forecast.item_id
-            start_date = forecast.start_date.to_timestamp()
-            samples = forecast.samples
-
-            # Formulating our data
-            data = [
-                {"item_id": item_id, "start": start_date, "target": sample}
-                for sample in samples
-            ]
-
-            data_entries.extend(data)
-
-        return ListDataset(data_entries, freq=forecasts[0].start_date.freq)
+        return pd.concat([df, pd.DataFrame(index=extend_df)], axis=0)
 
     def _predict(self, fh, X=None, y=None):
         """Forecast time series at future horizon.
@@ -314,16 +288,20 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         """
         from gluonts.evaluation import make_evaluation_predictions
 
-        # Creating a forecaster object
-        forecasts, _ = make_evaluation_predictions(
-            dataset=y, predictor=self.predictor_, num_samples=self.num_samples_
-        )
+        if y is not None:
+            y = pd.concat([self._y, y], axis=0)
+        else:
+            y = self._extend_df(self._y, fh)
+
+        y = self._convert_to_float(y)
+        dataset = self._get_gluonts_dataset(y)
 
         # Forming a list of the forecasting iterations
-        forecasts = list(forecasts)
-        list_dataset = self.convert_sampleforecast_to_listdataset(forecasts)
-
-        return list_dataset
+        forecast_it, _ = make_evaluation_predictions(
+            dataset=dataset, predictor=self.model, num_samples=100
+        )
+        forecasts = list(forecast_it)
+        return forecasts[0].mean_ts
 
     def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
