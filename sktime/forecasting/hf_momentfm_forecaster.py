@@ -306,6 +306,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         )
         self.model.init()
         # preparing the datasets
+
         y_train, y_test = temporal_train_test_split(
             y, train_size=1 - self.train_val_split, test_size=self.train_val_split
         )
@@ -321,21 +322,24 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             train_dataset, batch_size=self.batch_size, shuffle=True
         )
 
-        val_dataset = MomentPytorchDataset(
-            y=y_test,
-            fh=self._model_fh,
-            seq_len=self._seq_len,
-            device=self._device,
-        )
+        if not y_test.empty:
+            val_dataset = MomentPytorchDataset(
+                y=y_test,
+                fh=self._model_fh,
+                seq_len=self._seq_len,
+                device=self._device,
+            )
 
-        if self.eval_batch_size == "all":
-            self._eval_batch_size = len(val_dataset)
+            if self.eval_batch_size == "all":
+                self._eval_batch_size = len(val_dataset)
+            else:
+                self._eval_batch_size = self.eval_batch_size
+
+            val_dataloader = DataLoader(
+                val_dataset, batch_size=self._eval_batch_size, shuffle=True
+            )
         else:
-            self._eval_batch_size = self.eval_batch_size
-
-        val_dataloader = DataLoader(
-            val_dataset, batch_size=self._eval_batch_size, shuffle=True
-        )
+            val_dataloader = None
 
         criterion = self._criterion
         optimizer = Adam(self.model.parameters(), lr=self.max_lr)
@@ -504,9 +508,14 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params_set = []
-        params1 = {"seq_len": 3, "return_model_to_cpu": True}
+        params1 = {"seq_len": 2, "return_model_to_cpu": True, "train_val_split": 0.0}
         params_set.append(params1)
-        params2 = {"batch_size": 16, "seq_len": 3, "return_model_to_cpu": True}
+        params2 = {
+            "batch_size": 16,
+            "seq_len": 2,
+            "return_model_to_cpu": True,
+            "train_val_split": 0.0,
+        }
         params_set.append(params2)
 
         return params_set
@@ -596,37 +605,39 @@ def _run_epoch(
     scheduler.step()
 
     # Evaluate the model on the test split
-    trues, preds, histories, losses = [], [], [], []
-    model.eval()
-    with torch.no_grad():
-        for data in tqdm(val_dataloader, total=len(val_dataloader)):
-            # Move the data to the specified device
-            timeseries = data["historical_y"]
-            input_mask = data["input_mask"]
-            forecast = data["future_y"]
+    if val_dataloader:
+        trues, preds, histories, losses = [], [], [], []
+        model.eval()
+        with torch.no_grad():
+            for data in tqdm(val_dataloader, total=len(val_dataloader)):
+                # Move the data to the specified device
+                timeseries = data["historical_y"]
+                input_mask = data["input_mask"]
+                forecast = data["future_y"]
 
-            with torch.cuda.amp.autocast():
-                output = model(x_enc=timeseries, mask=input_mask)
+                with torch.cuda.amp.autocast():
+                    output = model(x_enc=timeseries, mask=input_mask)
 
-            loss = criterion(output.forecast, forecast)
-            losses.append(loss.item())
+                loss = criterion(output.forecast, forecast)
+                losses.append(loss.item())
 
-            trues.append(forecast.detach().cpu().numpy())
-            preds.append(output.forecast.detach().cpu().numpy())
-            histories.append(timeseries.detach().cpu().numpy())
+                trues.append(forecast.detach().cpu().numpy())
+                preds.append(output.forecast.detach().cpu().numpy())
+                histories.append(timeseries.detach().cpu().numpy())
 
-    losses = np.array(losses)
-    average_loss = np.average(losses)
-    model.train()
+        losses = np.array(losses)
+        average_loss = np.average(losses)
+        model.train()
 
-    trues = np.concatenate(trues, axis=0)
-    preds = np.concatenate(preds, axis=0)
-    histories = np.concatenate(histories, axis=0)
+        trues = np.concatenate(trues, axis=0)
+        preds = np.concatenate(preds, axis=0)
+        histories = np.concatenate(histories, axis=0)
 
-    metrics = get_forecasting_metrics(y=trues, y_hat=preds, reduction="mean")
-    tqdm.write(
-        f"Epoch {cur_epoch}: Test MSE: {metrics.mse:.3f}" f"Test MAE: {metrics.mae:.3f}"
-    )
+        metrics = get_forecasting_metrics(y=trues, y_hat=preds, reduction="mean")
+        tqdm.write(
+            f"Epoch {cur_epoch}: Test MSE: {metrics.mse:.3f}"
+            f"Test MAE: {metrics.mae:.3f}"
+        )
     cur_epoch += 1
     return cur_epoch
 
