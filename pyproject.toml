@@ -235,6 +235,9 @@ dev = [
   "httpx",
   "pre-commit",
   "pytest",
+  "pytest-randomly",
+  "pytest-timeout",
+  "pytest-xdist",
   "wheel",
 ]
 
