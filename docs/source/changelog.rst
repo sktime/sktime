@@ -3,10 +3,9 @@
 Changelog
 =========
 
-All notable changes to this project will be documented in this file.
-We keep track of changes in this file since v0.4.0.
-The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`_ and
+The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`_, and
 we adhere to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_.
+
 The source code for all `releases <https://github.com/sktime/sktime/releases>`_ is
 available on GitHub.
 
