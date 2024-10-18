@@ -15,7 +15,6 @@ available on GitHub.
     To stay up-to-date with sktime releases, subscribe to sktime `here
     <https://libraries.io/pypi/sktime>`_ or follow us on `LinkedIn <https://www.linkedin.com/company/scikit-time/>`_.
 
-For upcoming changes and next releases, see our `milestones <https://github.com/sktime/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
 For our long-term plan, see our :ref:`roadmap`.
 
 
