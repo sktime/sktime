@@ -124,6 +124,10 @@ def test_reconcilerforecaster_exog(n_columns):
     estimator_instance.update(y=y_test, X=X_test)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ReconcilerForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("method", METHOD_LIST)
 @pytest.mark.parametrize("return_totals", [True, False])
 def test_reconcilerforecaster_return_totals(method, return_totals):
@@ -132,8 +136,11 @@ def test_reconcilerforecaster_return_totals(method, return_totals):
     from sktime.forecasting.compose import YfromX
     from sktime.forecasting.reconcile import ReconcilerForecaster
 
+    m = 2
+    n = 2
+
     y = _make_hierarchical(
-        hierarchy_levels=(4, 3),  # (m, n) = (4, 3)
+        hierarchy_levels=(m, n),
         n_columns=1,
         min_timepoints=12,
         max_timepoints=12,
@@ -143,7 +150,7 @@ def test_reconcilerforecaster_return_totals(method, return_totals):
     y_test = get_window(y, window_length=2)
 
     X = _make_hierarchical(
-        hierarchy_levels=(4, 3),
+        hierarchy_levels=(m, n),
         n_columns=2,
         min_timepoints=12,
         max_timepoints=12,
@@ -162,7 +169,7 @@ def test_reconcilerforecaster_return_totals(method, return_totals):
     y_pred = estimator_instance.predict(X=X_test)
     if return_totals:
         # for hierarchy_levels=(m, n), len(y_pred) = len(y_test) + (1 + m) * 2
-        assert len(y_pred) == (len(y_test) + (1 + 4) * 2)
+        assert len(y_pred) == (len(y_test) + (1 + m) * 2)
     else:
         assert len(y_test) == len(y_pred)
         assert y_test.index.equals(y_pred.index)
