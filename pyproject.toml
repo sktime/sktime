@@ -270,6 +270,7 @@ tests = [
 binder = [
   "jupyter",
   "pandas<2.0.0",
+  "skchange<0.9.0",
 ]
 cython_extras = [
   "mrseql < 0.0.3",
