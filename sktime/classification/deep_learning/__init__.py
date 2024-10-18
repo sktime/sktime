@@ -13,6 +13,7 @@ __all__ = [
     "ResNetClassifier",
     "SimpleRNNClassifier",
     "TapNetClassifier",
+    "TleNetClassifier",
     "GRUClassifier",
     "GRUFCNNClassifier",
 ]
@@ -35,3 +36,4 @@ from sktime.classification.deep_learning.mvts_transformer import (
 from sktime.classification.deep_learning.resnet import ResNetClassifier
 from sktime.classification.deep_learning.rnn import SimpleRNNClassifier
 from sktime.classification.deep_learning.tapnet import TapNetClassifier
+from sktime.classification.deep_learning.tlenet import TleNetClassifier
