@@ -111,6 +111,8 @@ class ReverseAugmenter(_AugmenterTags, BaseTransformer):
 
     Examples
     --------
+    >>> import pandas as pd
+    >>> from sktime.transformations.series.augmenter import ReverseAugmenter
     >>> X = pd.Series([1,2,3,4,5])
     >>> augmenter = ReverseAugmenter()
     >>> Xt = augmenter.fit_transform(X)

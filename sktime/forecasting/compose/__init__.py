@@ -12,6 +12,7 @@ __all__ = [
     "TransformedTargetForecaster",
     "ForecastingPipeline",
     "ForecastX",
+    "GroupbyCategoryForecaster",
     "DirectTabularRegressionForecaster",
     "DirectTimeSeriesRegressionForecaster",
     "MultioutputTabularRegressionForecaster",
@@ -41,7 +42,10 @@ from sktime.forecasting.compose._ensemble import (
 )
 from sktime.forecasting.compose._fallback import FallbackForecaster
 from sktime.forecasting.compose._fhplex import FhPlexForecaster
-from sktime.forecasting.compose._grouped import ForecastByLevel
+from sktime.forecasting.compose._grouped import (
+    ForecastByLevel,
+    GroupbyCategoryForecaster,
+)
 from sktime.forecasting.compose._hierarchy_ensemble import HierarchyEnsembleForecaster
 from sktime.forecasting.compose._ignore_x import IgnoreX
 from sktime.forecasting.compose._multiplexer import MultiplexForecaster

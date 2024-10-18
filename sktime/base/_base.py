@@ -63,6 +63,7 @@ from skbase.base import BaseObject as _BaseObject
 from sklearn import clone
 from sklearn.base import BaseEstimator as _BaseEstimator
 
+from sktime import __version__ as SKTIME_VERSION
 from sktime.exceptions import NotFittedError
 from sktime.utils._estimator_html_repr import _HTMLDocumentationLinkMixin
 from sktime.utils.random_state import set_random_state
@@ -84,6 +85,7 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         "python_version": None,  # PEP 440 version specifier, e.g., ">=3.7"
         "python_dependencies": None,  # PEP 440 dependency strs, e.g., "pandas>=1.0"
         "env_marker": None,  # PEP 508 environment marker, e.g., "os_name=='posix'"
+        "sktime_version": SKTIME_VERSION,  # current sktime version
     }
 
     _config = {
@@ -149,7 +151,7 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         """,
     }
 
-    # TODO 0.32.0: check whether python 3.8 has reached EoL.
+    # TODO 0.34.0: check whether python 3.8 has reached EoL.
     # If so, remove warning altogether
     def __init__(self):
         super().__init__()
@@ -163,7 +165,7 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         py39_or_higher = SpecifierSet(">=3.9")
         sys_version = sys.version.split(" ")[0]
 
-        # todo 0.32.0 - check whether python 3.8 eol is reached.
+        # todo 0.34.0 - check whether python 3.8 eol is reached.
         # If yes, remove this msg.
         if sys_version not in py39_or_higher:
             warn(
@@ -184,7 +186,7 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         # for rationale, see _handle_numpy2_softdeps
         self._handle_numpy2_softdeps()
 
-    # TODO 0.32.0: check list of numpy 2 incompatible soft deps
+    # TODO 0.34.0: check list of numpy 2 incompatible soft deps
     # remove any from NOT_NP2_COMPATIBLE that become compatible
     def _handle_numpy2_softdeps(self):
         """Handle tags for soft deps that are not numpy 2 compatible.
@@ -205,7 +207,7 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         from packaging.requirements import Requirement
 
         # pypi package names of soft dependencies that are not numpy 2 compatibleS
-        NOT_NP2_COMPATIBLE = ["numba"]
+        NOT_NP2_COMPATIBLE = ["pmdarima"]
 
         softdeps = self.get_class_tag("python_dependencies", [])
         if softdeps is None:

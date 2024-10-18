@@ -145,7 +145,7 @@ class BaggingForecaster(BaseForecaster):
         -------
         fresh clone of the transformer to set to self.bootstrap_transformer_
         """
-        from sktime.registry import scitype
+        from sktime.registry import is_scitype
 
         if transformer is None:
             from sktime.transformations.bootstrap import STLBootstrapTransformer
@@ -163,7 +163,7 @@ class BaggingForecaster(BaseForecaster):
 
         if t_inp != "Series" or t_out != "Panel":
             raise TypeError(msg)
-        if scitype(transformer) != "transformer":
+        if not is_scitype(transformer, "transformer"):
             raise TypeError(msg)
 
         if hasattr(transformer, "clone"):
@@ -187,14 +187,14 @@ class BaggingForecaster(BaseForecaster):
         -------
         fresh clone of the forecaster to set to self.forecaster_
         """
-        from sktime.registry import scitype
+        from sktime.registry import is_scitype
 
         if forecaster is None:
             from sktime.forecasting.ets import AutoETS
 
             return AutoETS(sp=self.sp, random_state=self.random_state)
 
-        if not scitype(forecaster) == "forecaster":
+        if not is_scitype(forecaster, "forecaster"):
             raise TypeError(
                 "Error in BaggingForecaster: "
                 "forecaster in BaggingForecaster should be an sktime forecaster"
