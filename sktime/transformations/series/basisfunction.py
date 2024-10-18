@@ -1,12 +1,12 @@
 """Radial Basis Function (RBF) Transformer for Time Series Data."""
 
 __author__ = ["phoeenniixx"]
-import warnings
 
 import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.warnings import warn
 
 
 class RBFTransformer(BaseTransformer):
@@ -23,11 +23,9 @@ class RBFTransformer(BaseTransformer):
     https://github.com/koaning/scikit-lego/blob/main/sklego/preprocessing/repeatingbasis.py
 
     Mathematical Background:
-    Consider a time series represented as:
-    - :math:`t_1, t_2, \dots, t_N`
+    Consider a time series with time stamps :math:`t_1, t_2, \dots, t_N`-
 
-    Each time point :math:`t_i` can be transformed into a new feature space via RBFs.
-    The transformation computes the distance between the time points and a set of
+    The transformation computes the kernel distance between the time points and a set of
     predefined "center points" :math:`c_1, \dots, c_K`. For each time point
     :math:`t_i`, the RBF is computed between :math:`t_i` and every center point
     :math:`c_k`, producing a matrix of transformed values. Each kernel function
@@ -39,7 +37,8 @@ class RBFTransformer(BaseTransformer):
 
     where :math:`\gamma` is a scaling factor controlling the spread of the RBF.
 
-    Similarly, other types of RBFs are available:
+    Additional types of RBFs are available:
+
     - Multiquadric:
         :math:`\phi(t_i, c_k) = \sqrt{1 + \gamma (t_i - c_k)^2}`
     - Inverse Multiquadric:
@@ -64,6 +63,7 @@ class RBFTransformer(BaseTransformer):
     rbf_type : {"gaussian", "multiquadric", "inverse_multiquadric"},
                 optional (default="gaussian")
         The type of radial basis function to apply:
+
         - "gaussian": :math:`\exp(-\gamma (t - c)^2)`
         - "multiquadric": :math:`\sqrt{1 + \gamma (t - c)^2}`
         - "inverse_multiquadric": :math:`\frac{1}{\sqrt{1 + \gamma (t - c)^2}}`
@@ -71,37 +71,34 @@ class RBFTransformer(BaseTransformer):
     apply_to : {"index", "values"}, optional (default="index")
         Determines whether the RBFs are applied to the time index or to the values
         of the time series.
+
         - "index": Apply the RBFs to the time index.
         - "values": Apply the RBFs to the values of the time series.
 
     use_torch : bool, optional (default=False)
-    If True, the transformer will use PyTorch for the RBF calculations. If False,
-    it will use NumPy. PyTorch needs to be installed if `use_torch=True`.
-
-    Features Added
-    --------------
-    This transformer adds new features to the input time series. For each time point
-    :math:`t_i` and each center point :math:`c_k`, a transformed value
-    :math:`\phi(t_i, c_k)` is computed based on the chosen RBF.
-
-    This produces a transformed dataset where each original time point is replaced with
-    multiple transformed features, one for each center point.
-    The number of new features generated for each time point equals the no. of centers.
-
-    For example, if the original data has :math:`N` time points and :math:`K` centers,
-    the transformed data will have :math:`N` rows and :math:`K` new features (columns).
+        Whether to use torch for the RBF calculations.
+        If True, the transformer will use PyTorch for the RBF calculations,
+        if present. If not, will fall back to NumPy.
+        If False, it will use NumPy.
 
     Attributes
     ----------
-    _fitted_centers : array-like, shape (n_centers_,)
+    fitted_centers_ : array-like, shape (n_centers_,)
         The centers that are used for the RBF transformation. These are either provided
         by the user or computed from the data during fitting.
 
-    _torch_available : bool
+    torch_available_ : bool
         Indicates if PyTorch is available. This is checked during fit.
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["phoeenniixx"],
+        "maintainers": ["phoeenniixx"],
+        "python_dependencies": None,  # if torch is not available, falls back to numpy
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:transform-labels": "None",
@@ -114,8 +111,6 @@ class RBFTransformer(BaseTransformer):
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
         "handles-missing-data": False,
-        "python_dependencies": "torch",
-        "authors": ["phoeenniixx"],
     }
 
     def __init__(
@@ -131,8 +126,8 @@ class RBFTransformer(BaseTransformer):
         self.rbf_type = rbf_type
         self.apply_to = apply_to
         self.use_torch = use_torch
-        self._fitted_centers = None
-        self._torch_available = None
+        self.fitted_centers_ = None
+        self.torch_available_ = None
 
         super().__init__()
 
@@ -143,18 +138,20 @@ class RBFTransformer(BaseTransformer):
         Must be called only in fit to maintain non-state-changing transform.
         """
         if not self.use_torch:
-            self._torch_available = False
+            self.torch_available_ = False
             return
 
         from importlib.util import find_spec
 
-        self._torch_available = find_spec("torch") is not None
+        self.torch_available_ = find_spec("torch") is not None
 
-        if not self._torch_available:
-            warnings.warn(
+        if not self.torch_available_:
+            warn(
+                "Warning from RBFTransformer: "
                 "PyTorch is not available. Falling back to NumPy implementation. "
                 "Install PyTorch to use the torch backend.",
                 UserWarning,
+                obj=self,
             )
 
     def _get_torch(self):
@@ -171,7 +168,7 @@ class RBFTransformer(BaseTransformer):
         ImportError
             If torch is requested but not available.
         """
-        if not self._torch_available:
+        if not self.torch_available_:
             raise ImportError(
                 "PyTorch operations requested but PyTorch is not available"
             )
@@ -239,7 +236,7 @@ class RBFTransformer(BaseTransformer):
         np.ndarray
             The transformed data using the selected RBF kernel.
         """
-        if self._torch_available:
+        if self.torch_available_:
             return self._rbf_torch(x, c)
         return self._rbf_numpy(x, c)
 
@@ -270,15 +267,15 @@ class RBFTransformer(BaseTransformer):
             min_val = float(X_numeric.min())
             max_val = float(X_numeric.max())
 
-            if self._torch_available:
+            if self.torch_available_:
                 torch = self._get_torch()
-                self._fitted_centers = torch.linspace(
+                self.fitted_centers_ = torch.linspace(
                     min_val, max_val, steps=10
                 ).numpy()
             else:
-                self._fitted_centers = np.linspace(min_val, max_val, num=10)
+                self.fitted_centers_ = np.linspace(min_val, max_val, num=10)
         else:
-            self._fitted_centers = np.array(self.centers)
+            self.fitted_centers_ = np.array(self.centers)
 
         return self
 
@@ -298,7 +295,7 @@ class RBFTransformer(BaseTransformer):
         X_transform : pd.DataFrame
             The transformed data, where each column corresponds to an RBF feature.
         """
-        if self._fitted_centers is None:
+        if self.fitted_centers_ is None:
             raise ValueError("Transformer has not been fitted yet. Call 'fit' first.")
 
         if self.apply_to == "index":
@@ -306,7 +303,7 @@ class RBFTransformer(BaseTransformer):
         else:
             input_data = self._get_values(X)
 
-        X_transform = self._rbf(input_data, self._fitted_centers)
+        X_transform = self._rbf(input_data, self.fitted_centers_)
 
         n_samples, n_features, n_centers = X_transform.shape
         X_transform = X_transform.reshape(n_samples, n_features * n_centers)
