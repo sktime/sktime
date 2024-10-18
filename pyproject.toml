@@ -117,6 +117,7 @@ all_extras = [
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   "xarray",
   "u8darts<0.31,>=0.29.0",
+  'huggingface-hub>=0.23.0',
 ]
 
 # all soft dependencies compatible with pandas 2
@@ -295,6 +296,8 @@ dl = [
   'einops>0.7.0; python_version < "3.12"',
   'huggingface-hub>=0.23.0; python_version < "3.12"',
   'hydra-core',
+  'accelerate',
+  'tqdm',
 ]
 mlflow = [
   "mlflow",
