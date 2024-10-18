@@ -63,6 +63,7 @@ from skbase.base import BaseObject as _BaseObject
 from sklearn import clone
 from sklearn.base import BaseEstimator as _BaseEstimator
 
+from sktime import __version__ as SKTIME_VERSION
 from sktime.exceptions import NotFittedError
 from sktime.utils._estimator_html_repr import _HTMLDocumentationLinkMixin
 from sktime.utils.random_state import set_random_state
@@ -84,6 +85,7 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         "python_version": None,  # PEP 440 version specifier, e.g., ">=3.7"
         "python_dependencies": None,  # PEP 440 dependency strs, e.g., "pandas>=1.0"
         "env_marker": None,  # PEP 508 environment marker, e.g., "os_name=='posix'"
+        "sktime_version": SKTIME_VERSION,  # current sktime version
     }
 
     _config = {
