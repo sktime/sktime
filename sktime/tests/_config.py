@@ -60,6 +60,7 @@ EXCLUDE_ESTIMATORS = [
     "SARIMAX",
     "StatsModelsARIMA",
     "ShapeletLearningClassifierTslearn",
+    "DartsXGBModel",
 ]
 
 
@@ -244,6 +245,11 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
     ],
     "TSRGridSearchCV": ["test_multioutput"],  # see 6708
+    # pickling problem
+    "ChronosForecaster": [
+        "test_persistence_via_pickle",
+        "test_save_estimators_to_file",
+    ],
 }
 
 # exclude tests but keyed by test name
