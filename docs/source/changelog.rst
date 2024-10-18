@@ -27,8 +27,9 @@ Highlights
 
 * interface to Chronos (zero-shot) foundation model forecaster (:pr:`7001`) :user:`Z-Fran`, :user:`geetu040`, :user:`benHeid`, :user:`rigvedmanoj`
 * new classifiers: GRU-based time series classifiers (:pr:`6952`) :user:`fnhirwa`
-* ``pytorch-forecasting`` and ``neuralforecast`` models now provide probabilistic forecasts for global forecasting (:pr:`6628`, :pr:`6666`) :user:`XinyuWuu`
+* temporal radial basis function feature transformer (:pr:`7261`) :user:`phoeenniixx`
 * ``ExpandingSlidingWindowSplitter``, switching from expanding window to sliding window at cutoff point (:pr:`7193`) :user:`MarkusSagen`
+* ``pytorch-forecasting`` and ``neuralforecast`` models now provide probabilistic forecasts for global forecasting (:pr:`6628`, :pr:`6666`) :user:`XinyuWuu`
 * ``PolynomialTrendForecaster`` now can make probabilistic forecasts (:pr:`6424`) :user:`ericjb`
 * ``TimesFMForecaster`` now allows to select the source package, and zero-shot usage has been memory optimized (:pr:`7204`, :pr:`7212`) :user:`Prtm2110`, :user:`fkiraly`
 
@@ -102,6 +103,7 @@ Transformations
 
 * [ENH] ``HOG1D`` Transformer add new test parameter set to ``get_test_params`` (:pr:`7183`) :user:`Humorloos`
 * [ENH] Added second parameters example to ``get_test_params ``of Filter (:pr:`7178`) :user:`KarlKolibri`
+* [ENH] temporal radial basis function feature transformer (:pr:`7261`) :user:`phoeenniixx`
 
 Test framework
 ^^^^^^^^^^^^^^
@@ -180,6 +182,7 @@ Contributors
 :user:`KarlKolibri`,
 :user:`MarkusSagen`,
 :user:`ninedigits`,
+:user:`phoeenniixx`,
 :user:`Prtm2110`,
 :user:`RobotPsychologist`,
 :user:`rigvedmanoj`,
