@@ -591,6 +591,14 @@ Seasonality and Date-Time Features
 
     FourierTransform
 
+.. currentmodule:: sktime.transformations.series.basisfunction
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    RBFTramsformer
+
 .. currentmodule:: sktime.transformations.series.peak
 
 .. autosummary::
