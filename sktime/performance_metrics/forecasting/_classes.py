@@ -124,6 +124,13 @@ class BaseForecastingErrorMetric(BaseMetric):
         * If 'uniform_average_time', metric is applied to all data,
           ignoring level index.
         * If 'raw_values', does not average errors across levels, hierarchy is retained.
+
+    sample_weight_generator : optional, SampleWeightGenerator, or callable, default=None
+        Callable that takes ``y_true`` (and ``y_pred``) and returns a 1D array-like of
+        sample weights. The length of the array-like must be the same as the length
+        of the time series. The callable is expected to be a function that takes a
+        ``y_true`` (and or ``y_pred``) and returns a 1D array-like of sample weights
+        or follows the ``SampleWeightGenerator`` interface.
     """
 
     _tags = {
@@ -143,11 +150,20 @@ class BaseForecastingErrorMetric(BaseMetric):
     ):
         self.multioutput = multioutput
         self.multilevel = multilevel
+        self._sample_weight_generator = None
 
         if not hasattr(self, "name") or self.name is None:
             self.name = type(self).__name__
 
         super().__init__()
+
+    @property
+    def sample_weight_generator(self):
+        return self._sample_weight_generator
+
+    @sample_weight_generator.setter
+    def sample_weight_generator(self, value):
+        self._sample_weight_generator = value
 
     def __call__(self, y_true, y_pred, **kwargs):
         """Calculate metric value using underlying metric function.
@@ -238,7 +254,7 @@ class BaseForecastingErrorMetric(BaseMetric):
         Sample weight is updated to kwargs if it is a callable and follows the
         SampleWeightGenerator interface.
         """
-        sample_weight = kwargs.get("sample_weight", None)
+        sample_weight = kwargs.get("sample_weight", self.sample_weight_generator)
         if callable(sample_weight) and check_sample_weight_generator(sample_weight):
             kwargs["sample_weight"] = sample_weight(y_true, y_pred, **kwargs)
 
@@ -963,6 +979,7 @@ def make_forecasting_scorer(
     greater_is_better=False,
     multioutput="uniform_average",
     multilevel="uniform_average",
+    sample_weight_generator=None,
 ):
     """Create a metric class from a metric function.
 
@@ -987,6 +1004,9 @@ def make_forecasting_scorer(
         If 'uniform_average' (default), errors are mean-averaged across levels.
         If 'uniform_average_time', metric is applied to all data, ignoring level index.
         If 'raw_values', does not average errors across levels, hierarchy is retained.
+    sample_weight_generator : callable, default=None
+        Callable to generate sample weights based on the true (and or predicted) values.
+        Callable with signature ``sample_weight_generator(y_true, y_pred, **kwargs)``.
 
     Returns
     -------
@@ -1485,6 +1505,9 @@ class MeanAbsoluteError(BaseForecastingErrorMetric):
         If 'uniform_average' (default), errors are mean-averaged across levels.
         If 'uniform_average_time', metric is applied to all data, ignoring level index.
         If 'raw_values', does not average errors across levels, hierarchy is retained.
+    sample_weight_generator : callable, default=None
+        Callable to generate sample weights based on the true (and or predicted) values.
+        Callable with signature ``sample_weight_generator(y_true, y_pred, **kwargs)``.
 
     See Also
     --------
@@ -1517,6 +1540,15 @@ class MeanAbsoluteError(BaseForecastingErrorMetric):
     >>> mae(y_true, y_pred)
     0.85
     """
+
+    def __init__(
+        self,
+        multioutput="uniform_average",
+        multilevel="uniform_average",
+        sample_weight_generator=None,
+    ):
+        super().__init__(multioutput=multioutput, multilevel=multilevel)
+        self.sample_weight_generator = sample_weight_generator
 
     def _evaluate_by_index(self, y_true, y_pred, **kwargs):
         """Return the metric evaluated at each time point.
@@ -1593,6 +1625,9 @@ class MedianAbsoluteError(BaseForecastingErrorMetricFunc):
         If 'uniform_average' (default), errors are mean-averaged across levels.
         If 'uniform_average_time', metric is applied to all data, ignoring level index.
         If 'raw_values', does not average errors across levels, hierarchy is retained.
+    sample_weight_generator : callable, default=None
+        Callable to generate sample weights based on the true (and or predicted) values.
+        Callable with signature ``sample_weight_generator(y_true, y_pred, **kwargs)``.
 
     See Also
     --------
@@ -1627,6 +1662,15 @@ class MedianAbsoluteError(BaseForecastingErrorMetricFunc):
     """
 
     func = median_absolute_error
+
+    def __init__(
+        self,
+        multioutput="uniform_average",
+        multilevel="uniform_average",
+        sample_weight_generator=None,
+    ):
+        super().__init__(multioutput=multioutput, multilevel=multilevel)
+        self.sample_weight_generator = sample_weight_generator
 
     def _evaluate_by_index(self, y_true, y_pred, **kwargs):
         """Return the metric evaluated at each time point.
@@ -1724,6 +1768,9 @@ class MeanSquaredError(BaseForecastingErrorMetric):
         If 'uniform_average' (default), errors are mean-averaged across levels.
         If 'uniform_average_time', metric is applied to all data, ignoring level index.
         If 'raw_values', does not average errors across levels, hierarchy is retained.
+    sample_weight_generator : callable, default=None
+        Callable to generate sample weights based on the true (and or predicted) values.
+        Callable with signature ``sample_weight_generator(y_true, y_pred, **kwargs)``.
 
     See Also
     --------
@@ -1770,10 +1817,13 @@ class MeanSquaredError(BaseForecastingErrorMetric):
         self,
         multioutput="uniform_average",
         multilevel="uniform_average",
+        sample_weight_generator=None,
         square_root=False,
     ):
         self.square_root = square_root
         super().__init__(multioutput=multioutput, multilevel=multilevel)
+
+        self.sample_weight_generator = sample_weight_generator
 
     def _evaluate(self, y_true, y_pred, **kwargs):
         """Evaluate the desired metric on given inputs.
@@ -1926,6 +1976,9 @@ class MedianSquaredError(BaseForecastingErrorMetricFunc):
         If 'uniform_average' (default), errors are mean-averaged across levels.
         If 'uniform_average_time', metric is applied to all data, ignoring level index.
         If 'raw_values', does not average errors across levels, hierarchy is retained.
+    sample_weight_generator : callable, default=None
+        Callable to generate sample weights based on the true (and or predicted) values.
+        Callable with signature ``sample_weight_generator(y_true, y_pred, **kwargs)``.
 
     See Also
     --------
@@ -1976,10 +2029,13 @@ class MedianSquaredError(BaseForecastingErrorMetricFunc):
         self,
         multioutput="uniform_average",
         multilevel="uniform_average",
+        sample_weight_generator=None,
         square_root=False,
     ):
         self.square_root = square_root
         super().__init__(multioutput=multioutput, multilevel=multilevel)
+
+        self.sample_weight_generator = sample_weight_generator
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -2029,6 +2085,9 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
         If 'uniform_average' (default), errors are mean-averaged across levels.
         If 'uniform_average_time', metric is applied to all data, ignoring level index.
         If 'raw_values', does not average errors across levels, hierarchy is retained.
+    sample_weight_generator : callable, default=None
+        Callable to generate sample weights based on the true (and or predicted) values.
+        Callable with signature ``sample_weight_generator(y_true, y_pred, **kwargs)``.
 
     See Also
     --------
@@ -2076,6 +2135,16 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
 
     func = geometric_mean_absolute_error
 
+    def __init__(
+        self,
+        multioutput="uniform_average",
+        multilevel="uniform_average",
+        sample_weight_generator=None,
+    ):
+        super().__init__(multioutput=multioutput, multilevel=multilevel)
+
+        self.sample_weight_generator = sample_weight_generator
+
 
 class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):
     """Geometric mean squared error (GMSE) or Root geometric mean squared error (RGMSE).
@@ -2106,6 +2175,9 @@ class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):
         If 'uniform_average' (default), errors are mean-averaged across levels.
         If 'uniform_average_time', metric is applied to all data, ignoring level index.
         If 'raw_values', does not average errors across levels, hierarchy is retained.
+    sample_weight_generator : callable, default=None
+        Callable to generate sample weights based on the true (and or predicted) values.
+        Callable with signature ``sample_weight_generator(y_true, y_pred, **kwargs)``.
 
     See Also
     --------
@@ -2170,10 +2242,13 @@ class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):
         self,
         multioutput="uniform_average",
         multilevel="uniform_average",
+        sample_weight_generator=None,
         square_root=False,
     ):
         self.square_root = square_root
         super().__init__(multioutput=multioutput, multilevel=multilevel)
+
+        self.sample_weight_generator = sample_weight_generator
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -2251,6 +2326,9 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         If 'uniform_average' (default), errors are mean-averaged across levels.
         If 'uniform_average_time', metric is applied to all data, ignoring level index.
         If 'raw_values', does not average errors across levels, hierarchy is retained.
+    sample_weight_generator : callable, default=None
+        Callable to generate sample weights based on the true (and or predicted) values.
+        Callable with signature ``sample_weight_generator(y_true, y_pred, **kwargs)``.
 
     See Also
     --------
@@ -2301,10 +2379,13 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         self,
         multioutput="uniform_average",
         multilevel="uniform_average",
+        sample_weight_generator=None,
         symmetric=False,
     ):
         self.symmetric = symmetric
         super().__init__(multioutput=multioutput, multilevel=multilevel)
+
+        self.sample_weight_generator = sample_weight_generator
 
     def _evaluate_by_index(self, y_true, y_pred, **kwargs):
         """Return the metric evaluated at each time point.
@@ -2427,6 +2508,9 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         If 'uniform_average' (default), errors are mean-averaged across levels.
         If 'uniform_average_time', metric is applied to all data, ignoring level index.
         If 'raw_values', does not average errors across levels, hierarchy is retained.
+    sample_weight_generator : callable, default=None
+        Callable to generate sample weights based on the true (and or predicted) values.
+        Callable with signature ``sample_weight_generator(y_true, y_pred, **kwargs)``.
 
     See Also
     --------
@@ -2477,10 +2561,13 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         self,
         multioutput="uniform_average",
         multilevel="uniform_average",
+        sample_weight_generator=None,
         symmetric=False,
     ):
         self.symmetric = symmetric
         super().__init__(multioutput=multioutput, multilevel=multilevel)
+
+        self.sample_weight_generator = sample_weight_generator
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -2541,6 +2628,9 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
         If 'uniform_average' (default), errors are mean-averaged across levels.
         If 'uniform_average_time', metric is applied to all data, ignoring level index.
         If 'raw_values', does not average errors across levels, hierarchy is retained.
+    sample_weight_generator : callable, default=None
+        Callable to generate sample weights based on the true (and or predicted) values.
+        Callable with signature ``sample_weight_generator(y_true, y_pred, **kwargs)``.
 
     See Also
     --------
@@ -2594,12 +2684,15 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
         self,
         multioutput="uniform_average",
         multilevel="uniform_average",
+        sample_weight_generator=None,
         symmetric=False,
         square_root=False,
     ):
         self.symmetric = symmetric
         self.square_root = square_root
         super().__init__(multioutput=multioutput, multilevel=multilevel)
+
+        self.sample_weight_generator = sample_weight_generator
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -2664,6 +2757,9 @@ class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
         If 'uniform_average' (default), errors are mean-averaged across levels.
         If 'uniform_average_time', metric is applied to all data, ignoring level index.
         If 'raw_values', does not average errors across levels, hierarchy is retained.
+    sample_weight_generator : callable, default=None
+        Callable to generate sample weights based on the true (and or predicted) values.
+        Callable with signature ``sample_weight_generator(y_true, y_pred, **kwargs)``.
 
     See Also
     --------
@@ -2717,12 +2813,15 @@ class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
         self,
         multioutput="uniform_average",
         multilevel="uniform_average",
+        sample_weight_generator=None,
         symmetric=False,
         square_root=False,
     ):
         self.symmetric = symmetric
         self.square_root = square_root
         super().__init__(multioutput=multioutput, multilevel=multilevel)
+
+        self.sample_weight_generator = sample_weight_generator
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -2771,6 +2870,9 @@ class MeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
         If 'uniform_average' (default), errors are mean-averaged across levels.
         If 'uniform_average_time', metric is applied to all data, ignoring level index.
         If 'raw_values', does not average errors across levels, hierarchy is retained.
+    sample_weight_generator : callable, default=None
+        Callable to generate sample weights based on the true (and or predicted) values.
+        Callable with signature ``sample_weight_generator(y_true, y_pred, **kwargs)``.
 
     See Also
     --------
@@ -2814,6 +2916,16 @@ class MeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
 
     func = mean_relative_absolute_error
 
+    def __init__(
+        self,
+        multioutput="uniform_average",
+        multilevel="uniform_average",
+        sample_weight_generator=None,
+    ):
+        super().__init__(multioutput=multioutput, multilevel=multilevel)
+
+        self.sample_weight_generator = sample_weight_generator
+
 
 class MedianRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
     """Median relative absolute error (MdRAE).
@@ -2838,6 +2950,9 @@ class MedianRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
         If 'uniform_average' (default), errors are mean-averaged across levels.
         If 'uniform_average_time', metric is applied to all data, ignoring level index.
         If 'raw_values', does not average errors across levels, hierarchy is retained.
+    sample_weight_generator : callable, default=None
+        Callable to generate sample weights based on the true (and or predicted) values.
+        Callable with signature ``sample_weight_generator(y_true, y_pred, **kwargs)``.
 
     See Also
     --------
@@ -2880,6 +2995,16 @@ class MedianRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
     }
 
     func = median_relative_absolute_error
+
+    def __init__(
+        self,
+        multioutput="uniform_average",
+        multilevel="uniform_average",
+        sample_weight_generator=None,
+    ):
+        super().__init__(multioutput=multioutput, multilevel=multilevel)
+
+        self.sample_weight_generator = sample_weight_generator
 
 
 class GeometricMeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
@@ -2950,6 +3075,16 @@ class GeometricMeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
 
     func = geometric_mean_relative_absolute_error
 
+    def __init__(
+        self,
+        multioutput="uniform_average",
+        multilevel="uniform_average",
+        sample_weight_generator=None,
+    ):
+        super().__init__(multioutput=multioutput, multilevel=multilevel)
+
+        self.sample_weight_generator = sample_weight_generator
+
 
 class GeometricMeanRelativeSquaredError(BaseForecastingErrorMetricFunc):
     """Geometric mean relative squared error (GMRSE).
@@ -2981,6 +3116,9 @@ class GeometricMeanRelativeSquaredError(BaseForecastingErrorMetricFunc):
         If 'uniform_average' (default), errors are mean-averaged across levels.
         If 'uniform_average_time', metric is applied to all data, ignoring level index.
         If 'raw_values', does not average errors across levels, hierarchy is retained.
+    sample_weight_generator : callable, default=None
+        Callable to generate sample weights based on the true (and or predicted) values.
+        Callable with signature ``sample_weight_generator(y_true, y_pred, **kwargs)``.
 
     See Also
     --------
@@ -3029,10 +3167,13 @@ class GeometricMeanRelativeSquaredError(BaseForecastingErrorMetricFunc):
         self,
         multioutput="uniform_average",
         multilevel="uniform_average",
+        sample_weight_generator=None,
         square_root=False,
     ):
         self.square_root = square_root
         super().__init__(multioutput=multioutput, multilevel=multilevel)
+
+        self.sample_weight_generator = sample_weight_generator
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -3111,6 +3252,9 @@ class MeanAsymmetricError(BaseForecastingErrorMetricFunc):
         If 'uniform_average' (default), errors are mean-averaged across levels.
         If 'uniform_average_time', metric is applied to all data, ignoring level index.
         If 'raw_values', does not average errors across levels, hierarchy is retained.
+    sample_weight_generator : callable, default=None
+        Callable to generate sample weights based on the true (and or predicted) values.
+        Callable with signature ``sample_weight_generator(y_true, y_pred, **kwargs)``.
 
     See Also
     --------
@@ -3166,6 +3310,7 @@ class MeanAsymmetricError(BaseForecastingErrorMetricFunc):
         self,
         multioutput="uniform_average",
         multilevel="uniform_average",
+        sample_weight_generator=None,
         asymmetric_threshold=0,
         left_error_function="squared",
         right_error_function="absolute",
@@ -3179,6 +3324,8 @@ class MeanAsymmetricError(BaseForecastingErrorMetricFunc):
         self.right_error_penalty = right_error_penalty
 
         super().__init__(multioutput=multioutput, multilevel=multilevel)
+
+        self.sample_weight_generator = sample_weight_generator
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -3249,6 +3396,9 @@ class MeanLinexError(BaseForecastingErrorMetricFunc):
         If 'uniform_average' (default), errors are mean-averaged across levels.
         If 'uniform_average_time', metric is applied to all data, ignoring level index.
         If 'raw_values', does not average errors across levels, hierarchy is retained.
+    sample_weight_generator : callable, default=None
+        Callable to generate sample weights based on the true (and or predicted) values.
+        Callable with signature ``sample_weight_generator(y_true, y_pred, **kwargs)``.
 
     See Also
     --------
@@ -3306,10 +3456,13 @@ class MeanLinexError(BaseForecastingErrorMetricFunc):
         b=1.0,
         multioutput="uniform_average",
         multilevel="uniform_average",
+        sample_weight_generator=None,
     ):
         self.a = a
         self.b = b
         super().__init__(multioutput=multioutput, multilevel=multilevel)
+
+        self.sample_weight_generator = sample_weight_generator
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -3375,6 +3528,9 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
         If 'uniform_average' (default), errors are mean-averaged across levels.
         If 'uniform_average_time', metric is applied to all data, ignoring level index.
         If 'raw_values', does not average errors across levels, hierarchy is retained.
+    sample_weight_generator : callable, default=None
+        Callable to generate sample weights based on the true (and or predicted) values.
+        Callable with signature ``sample_weight_generator(y_true, y_pred, **kwargs)``.
 
     References
     ----------
@@ -3422,9 +3578,12 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
         multioutput="uniform_average",
         multilevel="uniform_average",
         relative_loss_function=mean_absolute_error,
+        sample_weight_generator=None,
     ):
         self.relative_loss_function = relative_loss_function
         super().__init__(multioutput=multioutput, multilevel=multilevel)
+
+        self.sample_weight_generator = sample_weight_generator
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
