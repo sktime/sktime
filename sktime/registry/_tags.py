@@ -1679,6 +1679,12 @@ class y_inner_mtype(_BaseTag):
 
 ESTIMATOR_TAG_REGISTER = [
     (
+        "sktime_version",
+        "object",
+        "str",
+        "sktime version from which this estimator class originates",
+    ),
+    (
         "skip-inverse-transform",
         "transformer",
         "bool",
