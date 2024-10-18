@@ -225,9 +225,9 @@ class BaseTransformer(BaseEstimator):
         other : object
             object to check
         """
-        from sktime.registry import scitype
+        from sktime.registry import is_scitype
 
-        is_sktime_transformr = scitype(other, raise_on_unknown=False) == "transformer"
+        is_sktime_transformr = is_scitype(other, "transformer")
         return is_sklearn_transformer(other) or is_sktime_transformr
 
     def __mul__(self, other):
