@@ -133,7 +133,7 @@ def test_reconcilerforecaster_return_totals(method, return_totals):
     from sktime.forecasting.reconcile import ReconcilerForecaster
 
     y = _make_hierarchical(
-        hierarchy_levels=(2, 2),  # (m, n) = (4, 3)
+        hierarchy_levels=(2, 2),  # (m, n) = (2, 2)
         n_columns=1,
         min_timepoints=12,
         max_timepoints=12,
