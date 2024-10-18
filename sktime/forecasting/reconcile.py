@@ -229,6 +229,16 @@ class ReconcilerForecaster(BaseForecaster):
 
         # if Forecaster() * Reconciler() then base_fc is already reconciled
         if np.isin(self.method, self.TRFORM_LIST):
+            if not self.return_totals:
+                n = base_fc.index.get_slice_bound(label="__total", side="left")
+                if len(base_fc[:n]) == 0:
+                    base_fc = base_fc[n:]
+                else:
+                    base_fc = base_fc[:n]
+                level_values = base_fc.index.get_level_values(-2)
+                base_fc = base_fc[~(level_values == "__total")]
+                return base_fc
+
             return base_fc
 
         base_fc = base_fc.groupby(level=-1)
