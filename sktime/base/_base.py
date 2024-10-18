@@ -151,42 +151,14 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         """,
     }
 
-    # TODO 0.34.0: check whether python 3.8 has reached EoL.
-    # If so, remove warning altogether
     def __init__(self):
         super().__init__()
-
-        import sys
-
-        from packaging.specifiers import SpecifierSet
-
-        from sktime.utils.warnings import warn
-
-        py39_or_higher = SpecifierSet(">=3.9")
-        sys_version = sys.version.split(" ")[0]
-
-        # todo 0.34.0 - check whether python 3.8 eol is reached.
-        # If yes, remove this msg.
-        if sys_version not in py39_or_higher:
-            warn(
-                f"From sktime 0.30.0, sktime requires Python version >=3.9, "
-                f"but found {sys_version}. "
-                "The package can still be installed, until 3.8 end of life "
-                "is reached, "
-                "but some functionality may not work as test coverage is dropped."
-                "Kindly note for context: python 3.8 will reach end of life "
-                "in October 2024, and multiple sktime core dependencies, "
-                "including scikit-learn, have already dropped support for 3.8. ",
-                category=DeprecationWarning,
-                obj=self,
-                stacklevel=2,
-            )
 
         # handle numpy 2 incompatible soft dependencies
         # for rationale, see _handle_numpy2_softdeps
         self._handle_numpy2_softdeps()
 
-    # TODO 0.34.0: check list of numpy 2 incompatible soft deps
+    # TODO 0.35.0: check list of numpy 2 incompatible soft deps
     # remove any from NOT_NP2_COMPATIBLE that become compatible
     def _handle_numpy2_softdeps(self):
         """Handle tags for soft deps that are not numpy 2 compatible.
