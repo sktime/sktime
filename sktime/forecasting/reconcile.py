@@ -41,16 +41,22 @@ class ReconcilerForecaster(BaseForecaster):
     method : {"mint_cov", "mint_shrink", "ols", "wls_var", "wls_str", \
             "bu", "td_fcst"}, default="mint_shrink"
         The reconciliation approach applied to the forecasts based on:
-            * "mint_cov" - sample covariance
-            * "mint_shrink" - covariance with shrinkage
-            * "ols" - ordinary least squares
-            * "wls_var" - weighted least squares (variance)
-            * "wls_str" - weighted least squares (structural)
-            * "bu" - bottom-up
-            * "td_fcst" - top down based on forecast proportions
+
+            * ``"mint_cov"`` - sample covariance
+            * ``"mint_shrink"`` - covariance with shrinkage
+            * ``"ols"`` - ordinary least squares
+            * ``"wls_var"`` - weighted least squares (variance)
+            * ``"wls_str"`` - weighted least squares (structural)
+            * ``"bu"`` - bottom-up
+            * ``"td_fcst"`` - top down based on forecast proportions
+
     return_totals : bool
-        If True, returns the dataframe with __total values
-        If False, returns the dataframe without __total values
+        Whether the predictions returned by ``predict`` and predict-like methods
+        should include the total values in the hierarchy, stored at the ``__total``
+        index levels.
+
+        * If True, prediction data frames include total values at ``__total`` levels
+        * If False, prediction data frames are returned without ``__total`` levels
 
     See Also
     --------
@@ -229,6 +235,16 @@ class ReconcilerForecaster(BaseForecaster):
 
         # if Forecaster() * Reconciler() then base_fc is already reconciled
         if np.isin(self.method, self.TRFORM_LIST):
+            if not self.return_totals:
+                n = base_fc.index.get_slice_bound(label="__total", side="left")
+                if len(base_fc[:n]) == 0:
+                    base_fc = base_fc[n:]
+                else:
+                    base_fc = base_fc[:n]
+                level_values = base_fc.index.get_level_values(-2)
+                base_fc = base_fc[~(level_values == "__total")]
+                return base_fc
+
             return base_fc
 
         base_fc = base_fc.groupby(level=-1)
