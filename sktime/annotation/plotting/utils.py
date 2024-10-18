@@ -10,6 +10,7 @@ from sktime.utils.validation.forecasting import check_X
 __all__ = [
     "plot_time_series_with_change_points",
     "plot_time_series_with_profiles",
+    "plot_time_series_with_subsequent_outliers",
 ]
 
 __author__ = ["patrickzib"]
@@ -174,19 +175,19 @@ def plot_time_series_with_profiles(
 
 
 def plot_time_series_with_subsequent_outliers(
-    ts, 
+    ts,
     ax=None,
     intervals=None,
 ):
-    """Plot the time series with the known outliers.
+    """Plot the time series with subsequent outliers.
 
     Parameters
     ----------
-    ts: pd.Series
-        the univariate time series of length n to be annotated
-    ax: matplotlib.axes.Axes
-        the axes to plot on
-    intervals: list of Interval objects
+    ts: array-like, shape=[n]
+        the univariate time series of length n to be annotated.
+    ax: np.ndarray
+        Array of the figure's Axe objects to plot on
+    intervals: array-like, shape=[n_intervals]
         the intervals of the outliers
 
     Returns
@@ -212,7 +213,9 @@ def plot_time_series_with_subsequent_outliers(
         for interval in intervals:
             left = interval.left
             right = interval.right
-            ax.axvspan(left, right, color="tab:green", alpha=0.3, label="Predicted Anomalies")
+            ax.axvspan(
+                left, right, color="tab:green", alpha=0.3, label="Predicted Anomalies"
+            )
 
     ax.legend()
 
