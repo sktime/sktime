@@ -213,6 +213,14 @@ class CNTCRegressor(BaseDeepRegressor):
         -------
         self : object
         """
+        # input shape validation
+        if len(X.shape) != 3:
+            raise ValueError(
+                f"Invalid input shape. Expected 3 dimensional input \
+                (n_instances (n), n_dimensions (d), series_length (m)) \
+                but recieved shape : {X.shape}"
+            )
+
         if self.callbacks is None:
             self._callbacks = []
         # Transpose to conform to Keras input style.
