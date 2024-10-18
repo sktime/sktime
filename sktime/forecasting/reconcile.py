@@ -41,13 +41,14 @@ class ReconcilerForecaster(BaseForecaster):
     method : {"mint_cov", "mint_shrink", "ols", "wls_var", "wls_str", \
             "bu", "td_fcst"}, default="mint_shrink"
         The reconciliation approach applied to the forecasts based on:
-            * "mint_cov" - sample covariance
-            * "mint_shrink" - covariance with shrinkage
-            * "ols" - ordinary least squares
-            * "wls_var" - weighted least squares (variance)
-            * "wls_str" - weighted least squares (structural)
-            * "bu" - bottom-up
-            * "td_fcst" - top down based on forecast proportions
+
+            * ``"mint_cov"`` - sample covariance
+            * ``"mint_shrink"`` - covariance with shrinkage
+            * ``"ols"`` - ordinary least squares
+            * ``"wls_var"`` - weighted least squares (variance)
+            * ``"wls_str"`` - weighted least squares (structural)
+            * ``"bu"`` - bottom-up
+            * ``"td_fcst"`` - top down based on forecast proportions
 
     return_totals : bool
         Whether the predictions returned by ``predict`` and predict-like methods
