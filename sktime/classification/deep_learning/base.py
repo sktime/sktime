@@ -3,10 +3,12 @@
 The reason for this class between BaseClassifier and deep_learning classifiers is
 because we can generalise tags, _predict and _predict_proba
 """
+
 __author__ = ["James-Large", "ABostrom", "TonyBagnall", "aurunmpegasus", "achieveordie"]
 __all__ = ["BaseDeepClassifier"]
 
-from abc import ABC, abstractmethod
+import os
+from abc import abstractmethod
 
 import numpy as np
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
@@ -14,10 +16,10 @@ from sklearn.utils import check_random_state
 
 from sktime.base._base import SERIALIZATION_FORMATS
 from sktime.classification.base import BaseClassifier
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
-class BaseDeepClassifier(BaseClassifier, ABC):
+class BaseDeepClassifier(BaseClassifier):
     """Abstract base class for deep learning time series classifiers.
 
     The base classifier provides a deep learning default method for
@@ -39,13 +41,6 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         "capability:multivariate": True,
         "python_dependencies": "tensorflow",
     }
-
-    def __init__(self, batch_size=40, random_state=None):
-        super().__init__()
-
-        self.batch_size = batch_size
-        self.random_state = random_state
-        self.model_ = None
 
     @abstractmethod
     def build_model(self, input_shape, n_classes, **kwargs):
@@ -109,7 +104,7 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         probs = probs / probs.sum(axis=1, keepdims=1)
         return probs
 
-    def convert_y_to_keras(self, y):
+    def _convert_y_to_keras(self, y):
         """Convert y to required Keras format."""
         self.label_encoder = LabelEncoder()
         y = self.label_encoder.fit_transform(y)
@@ -118,7 +113,7 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         y = y.reshape(len(y), 1)
 
         # in sklearn 1.2, sparse was renamed to sparse_output
-        if _check_soft_dependencies("sklearn>=1.2", severity="none"):
+        if _check_soft_dependencies("scikit-learn>=1.2", severity="none"):
             sparse_kw = {"sparse_output": False}
         else:
             sparse_kw = {"sparse": False}
@@ -215,8 +210,8 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         """Save serialized self to bytes-like object or to (.zip) file.
 
         Behaviour:
-        if `path` is None, returns an in-memory serialized self
-        if `path` is a file, stores the zip with that name at the location.
+        if ``path`` is None, returns an in-memory serialized self
+        if ``path`` is a file, stores the zip with that name at the location.
         The contents of the zip file are:
         _metadata - contains class of self, i.e., type(self).
         _obj - serialized self. This class uses the default serialization (pickle).
@@ -229,20 +224,20 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         path : None or file location (str or Path)
             if None, self is saved to an in-memory object
             if file location, self is saved to that file location. For eg:
-                path="estimator" then a zip file `estimator.zip` will be made at cwd.
-                path="/home/stored/estimator" then a zip file `estimator.zip` will be
-                stored in `/home/stored/`.
+                path="estimator" then a zip file ``estimator.zip`` will be made at cwd.
+                path="/home/stored/estimator" then a zip file ``estimator.zip`` will be
+                stored in ``/home/stored/``.
 
-        serialization_format: str, default = "pickle"
+        serialization_format : str, default = "pickle"
             Module to use for serialization.
             The available options are present under
-            `sktime.base._base.SERIALIZATION_FORMATS`. Note that non-default formats
+            ``sktime.base._base.SERIALIZATION_FORMATS``. Note that non-default formats
             might require installation of other soft dependencies.
 
         Returns
         -------
-        if `path` is None - in-memory serialized self
-        if `path` is file location - ZipFile with reference to the file
+        if ``path`` is None - in-memory serialized self
+        if ``path`` is file location - ZipFile with reference to the file
         """
         import pickle
         from pathlib import Path
@@ -268,21 +263,18 @@ class BaseDeepClassifier(BaseClassifier, ABC):
             _check_soft_dependencies("cloudpickle", severity="error")
             import cloudpickle
 
-            return self._serialize_using_dump_func(
-                path=path,
-                dump=cloudpickle.dump,
-                dumps=cloudpickle.dumps,
-            )
-
+            serializer = cloudpickle
         elif serialization_format == "pickle":
-            return self._serialize_using_dump_func(
-                path=path,
-                dump=pickle.dump,
-                dumps=pickle.dumps,
-            )
+            serializer = pickle
+
+        return self._serialize_using_dump_func(
+            path=path,
+            dump=serializer.dump,
+            dumps=serializer.dumps,
+        )
 
     def _serialize_using_dump_func(self, path, dump, dumps):
-        """Serialize & return DL Estimator using `dump` and `dumps` functions."""
+        """Serialize & return DL Estimator using ``dump`` and ``dumps`` functions."""
         import shutil
         from zipfile import ZipFile
 
@@ -293,11 +285,8 @@ class BaseDeepClassifier(BaseClassifier, ABC):
 
             in_memory_model = None
             if self.model_ is not None:
-                with h5py.File(
-                    "disk_less", "w", driver="core", backing_store=False
-                ) as h5file:
-                    self.model_.save(h5file)
-                    h5file.flush()
+                self.model_.save("disk_less.h5")
+                with h5py.File("disk_less.h5", "r") as h5file:
                     in_memory_model = h5file.id.get_file_image()
 
             in_memory_history = dumps(history)
@@ -311,7 +300,9 @@ class BaseDeepClassifier(BaseClassifier, ABC):
             )
 
         if self.model_ is not None:
-            self.model_.save(path / "keras/")
+            keras_path = path / "keras" / "model.keras"
+            os.makedirs(keras_path.parent, exist_ok=True)
+            self.model_.save(keras_path)
 
         with open(path / "history", "wb") as history_writer:
             dump(history, history_writer)
@@ -330,21 +321,19 @@ class BaseDeepClassifier(BaseClassifier, ABC):
 
         Parameters
         ----------
-        serial: 1st element of output of `cls.save(None)`
+        serial: 1st element of output of ``cls.save(None)``
                 This is a tuple of size 3.
                 The first element represents pickle-serialized instance.
-                The second element represents h5py-serialized `keras` model.
-                The third element represent pickle-serialized history of `.fit()`.
+                The second element represents h5py-serialized ``keras`` model.
+                The third element represent pickle-serialized history of ``.fit()``.
 
         Returns
         -------
-        Deserialized self resulting in output `serial`, of `cls.save(None)`
+        Deserialized self resulting in output ``serial``, of ``cls.save(None)``
         """
         _check_soft_dependencies("h5py")
         import pickle
-        from tempfile import TemporaryFile
 
-        import h5py
         from tensorflow.keras.models import load_model
 
         if not isinstance(serial, tuple):
@@ -364,11 +353,9 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         if in_memory_model is None:
             cls.model_ = None
         else:
-            with TemporaryFile() as store_:
+            with open("diskless.h5", "wb") as store_:
                 store_.write(in_memory_model)
-                h5file = h5py.File(store_, "r")
-                cls.model_ = load_model(h5file)
-                h5file.close()
+                cls.model_ = load_model("diskless.h5")
 
         cls.history = pickle.loads(in_memory_history)
         return pickle.loads(serial)
@@ -383,7 +370,7 @@ class BaseDeepClassifier(BaseClassifier, ABC):
 
         Returns
         -------
-        deserialized self resulting in output at `path`, of `cls.save(path)`
+        deserialized self resulting in output at ``path``, of ``cls.save(path)``
         """
         import pickle
         from shutil import rmtree
@@ -400,9 +387,12 @@ class BaseDeepClassifier(BaseClassifier, ABC):
                     continue
                 zip_file.extract(file, temp_unzip_loc)
 
-        keras_location = temp_unzip_loc / "keras"
+        keras_location_legacy = temp_unzip_loc / "keras"
+        keras_location = temp_unzip_loc / "keras" / "model.keras"
         if keras_location.exists():
             cls.model_ = keras.models.load_model(keras_location)
+        elif keras_location_legacy.exists():
+            cls.model_ = keras.models.load_model(keras_location_legacy)
         else:
             cls.model_ = None
 

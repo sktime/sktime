@@ -8,7 +8,7 @@ from sklearn.utils import check_random_state
 
 from sktime.networks.macnn import MACNNNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
-from sktime.utils.validation._dependencies import _check_dl_dependencies
+from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class MACNNRegressor(BaseDeepRegressor):
@@ -94,7 +94,6 @@ class MACNNRegressor(BaseDeepRegressor):
         verbose=False,
     ):
         _check_dl_dependencies(severity="error")
-        super().__init__()
 
         self.n_epochs = n_epochs
         self.batch_size = batch_size
@@ -113,6 +112,9 @@ class MACNNRegressor(BaseDeepRegressor):
         self.callbacks = callbacks
         self.random_state = random_state
         self.verbose = verbose
+
+        super().__init__()
+
         self.history = None
         self._network = MACNNNetwork(
             padding=self.padding,

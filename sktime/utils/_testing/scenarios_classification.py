@@ -14,9 +14,13 @@ __all__ = [
 from inspect import isclass
 
 from sktime.base import BaseObject
-from sktime.registry import scitype
+from sktime.registry import is_scitype
 from sktime.utils._testing.hierarchical import _make_hierarchical
-from sktime.utils._testing.panel import _make_classification_y, _make_panel_X
+from sktime.utils._testing.panel import (
+    _make_classification_y,
+    _make_panel,
+    _make_panel_X,
+)
 from sktime.utils._testing.scenarios import TestScenario
 
 # random seed for generating data to keep scenarios exactly reproducible
@@ -72,11 +76,7 @@ class ClassifierTestScenario(TestScenario, BaseObject):
         # applicable only if obj inherits from BaseClassifier, BaseEarlyClassifier or
         #   BaseRegressor. currently we test both classifiers and regressors using these
         #   scenarios
-        if scitype(obj) not in (
-            "classifier",
-            "early_classifier",
-            "regressor",
-        ):
+        if is_scitype(obj, ["classifier", "early_classifier", "regressor"]):
             return False
 
         # if X is multivariate, applicable only if can handle multivariate
@@ -92,18 +92,6 @@ class ClassifierTestScenario(TestScenario, BaseObject):
         return True
 
 
-y = _make_classification_y(n_instances=10, random_state=RAND_SEED)
-X = _make_panel_X(n_instances=10, n_timepoints=20, random_state=RAND_SEED, y=y)
-X_test = _make_panel_X(n_instances=5, n_timepoints=20, random_state=RAND_SEED)
-
-X_multivariate = _make_panel_X(
-    n_instances=10, n_columns=2, n_timepoints=20, random_state=RAND_SEED, y=y
-)
-X_test_multivariate = _make_panel_X(
-    n_instances=5, n_columns=2, n_timepoints=20, random_state=RAND_SEED
-)
-
-
 class ClassifierFitPredict(ClassifierTestScenario):
     """Fit/predict with univariate panel X, nested_univ mtype, and labels y."""
 
@@ -114,21 +102,44 @@ class ClassifierFitPredict(ClassifierTestScenario):
         "n_classes": 2,
     }
 
-    args = {
-        "fit": {"y": y, "X": X},
-        "predict": {"X": X_test},
-    }
+    @property
+    def args(self):
+        y = _make_classification_y(n_instances=10, random_state=RAND_SEED)
+        X = _make_panel_X(n_instances=10, n_timepoints=20, random_state=RAND_SEED, y=y)
+        X_test = _make_panel_X(n_instances=5, n_timepoints=20, random_state=RAND_SEED)
+
+        return {
+            "fit": {"y": y, "X": X},
+            "predict": {"X": X_test},
+        }
+
     default_method_sequence = ["fit", "predict", "predict_proba", "decision_function"]
     default_arg_sequence = ["fit", "predict", "predict", "predict"]
 
 
-y3 = _make_classification_y(n_instances=11, n_classes=3, random_state=RAND_SEED)
-X_np = _make_panel_X(
-    n_instances=11, n_timepoints=17, random_state=RAND_SEED, y=y3, return_numpy=True
-)
-X_test_np = _make_panel_X(
-    n_instances=6, n_timepoints=17, random_state=RAND_SEED, return_numpy=True
-)
+class ClassifierFitPredictThreeClasses(ClassifierTestScenario):
+    """Fit/predict with univariate panel X, pd-multiindex mtype, and three classes."""
+
+    _tags = {
+        "X_univariate": True,
+        "X_unequal_length": False,
+        "is_enabled": True,
+        "n_classes": 3,
+    }
+
+    @property
+    def args(self):
+        y = _make_classification_y(n_instances=18, n_classes=3, random_state=RAND_SEED)
+        X = _make_panel(n_instances=18, n_timepoints=20, random_state=RAND_SEED, y=y)
+        X_test = _make_panel_X(n_instances=5, n_timepoints=20, random_state=RAND_SEED)
+
+        return {
+            "fit": {"y": y, "X": X},
+            "predict": {"X": X_test},
+        }
+
+    default_method_sequence = ["fit", "predict", "predict_proba", "decision_function"]
+    default_arg_sequence = ["fit", "predict", "predict", "predict"]
 
 
 class ClassifierFitPredictNumpy(ClassifierTestScenario):
@@ -141,10 +152,27 @@ class ClassifierFitPredictNumpy(ClassifierTestScenario):
         "n_classes": 3,
     }
 
-    args = {
-        "fit": {"y": y3, "X": X_np},
-        "predict": {"X": X_test_np},
-    }
+    @property
+    def args(self):
+        y3 = _make_classification_y(n_instances=11, n_classes=3, random_state=RAND_SEED)
+        X_np = _make_panel_X(
+            n_instances=11,
+            n_timepoints=17,
+            random_state=RAND_SEED,
+            y=y3,
+            return_numpy=True,
+        )
+        X_test_np = _make_panel_X(
+            n_instances=6,
+            n_timepoints=17,
+            random_state=RAND_SEED,
+            return_numpy=True,
+        )
+        return {
+            "fit": {"y": y3, "X": X_np},
+            "predict": {"X": X_test_np},
+        }
+
     default_method_sequence = ["fit", "predict", "predict_proba", "decision_function"]
     default_arg_sequence = ["fit", "predict", "predict", "predict"]
 
@@ -159,20 +187,22 @@ class ClassifierFitPredictMultivariate(ClassifierTestScenario):
         "n_classes": 2,
     }
 
-    args = {
-        "fit": {"y": y, "X": X_multivariate},
-        "predict": {"X": X_test_multivariate},
-    }
+    @property
+    def args(self):
+        y = _make_classification_y(n_instances=10, random_state=RAND_SEED)
+        X_multivariate = _make_panel_X(
+            n_instances=10, n_columns=2, n_timepoints=20, random_state=RAND_SEED, y=y
+        )
+        X_test_multivariate = _make_panel_X(
+            n_instances=5, n_columns=2, n_timepoints=20, random_state=RAND_SEED
+        )
+        return {
+            "fit": {"y": y, "X": X_multivariate},
+            "predict": {"X": X_test_multivariate},
+        }
+
     default_method_sequence = ["fit", "predict", "predict_proba", "decision_function"]
     default_arg_sequence = ["fit", "predict", "predict", "predict"]
-
-
-X_unequal_length = _make_hierarchical(
-    hierarchy_levels=(10,), min_timepoints=10, max_timepoints=15, random_state=RAND_SEED
-)
-X_unequal_length_test = _make_hierarchical(
-    hierarchy_levels=(5,), min_timepoints=10, max_timepoints=15, random_state=RAND_SEED
-)
 
 
 class ClassifierFitPredictUnequalLength(ClassifierTestScenario):
@@ -185,16 +215,33 @@ class ClassifierFitPredictUnequalLength(ClassifierTestScenario):
         "n_classes": 2,
     }
 
-    args = {
-        "fit": {"y": y, "X": X_unequal_length},
-        "predict": {"X": X_unequal_length_test},
-    }
+    @property
+    def args(self):
+        y = _make_classification_y(n_instances=10, random_state=RAND_SEED)
+        X_unequal_length = _make_hierarchical(
+            hierarchy_levels=(10,),
+            min_timepoints=10,
+            max_timepoints=15,
+            random_state=RAND_SEED,
+        )
+        X_unequal_length_test = _make_hierarchical(
+            hierarchy_levels=(5,),
+            min_timepoints=10,
+            max_timepoints=15,
+            random_state=RAND_SEED,
+        )
+        return {
+            "fit": {"y": y, "X": X_unequal_length},
+            "predict": {"X": X_unequal_length_test},
+        }
+
     default_method_sequence = ["fit", "predict", "predict_proba", "decision_function"]
     default_arg_sequence = ["fit", "predict", "predict", "predict"]
 
 
 scenarios_classification = [
     ClassifierFitPredict,
+    ClassifierFitPredictThreeClasses,
     ClassifierFitPredictNumpy,
     ClassifierFitPredictMultivariate,
     ClassifierFitPredictUnequalLength,
@@ -203,6 +250,7 @@ scenarios_classification = [
 # same scenarios used for early classification
 scenarios_early_classification = [
     ClassifierFitPredict,
+    ClassifierFitPredictThreeClasses,
     ClassifierFitPredictNumpy,
     ClassifierFitPredictMultivariate,
     ClassifierFitPredictUnequalLength,

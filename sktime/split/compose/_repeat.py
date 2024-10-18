@@ -1,4 +1,5 @@
 """Splitter obtained from repeating another splitter."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly"]
@@ -61,7 +62,7 @@ class Repeat(BaseSplitter):
         self.clone_tags(splitter, tags_to_clone)
 
     def _split(self, y):
-        """Get iloc references to train/test splits of `y`.
+        """Get iloc references to train/test splits of ``y``.
 
         private _split containing the core logic, called from split
 
@@ -80,7 +81,7 @@ class Repeat(BaseSplitter):
         yield from self._repeat(y, method="split")
 
     def _split_loc(self, y):
-        """Get loc references to train/test splits of `y`.
+        """Get loc references to train/test splits of ``y``.
 
         private _split containing the core logic, called from split_loc
 
@@ -130,7 +131,7 @@ class Repeat(BaseSplitter):
                 for _ in range(self.times):
                     yield train, test
         elif self.mode == "entry" and random_repeat:
-            for _ in range(self.times):
+            for _ in range(self.splitter.get_n_splits(y)):
                 for spl_gen in spl_gens:
                     yield next(spl_gen)
         elif self.mode == "sequence" and not random_repeat:
@@ -155,7 +156,7 @@ class Repeat(BaseSplitter):
         n_splits : int
             The number of splits.
         """
-        return self._splitter.get_n_splits(y) * self.times
+        return self.splitter.get_n_splits(y) * self.times
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -165,15 +166,16 @@ class Repeat(BaseSplitter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.split import ExpandingWindowSplitter
 

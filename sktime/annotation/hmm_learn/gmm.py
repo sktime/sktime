@@ -19,7 +19,7 @@ class GMMHMM(BaseHMMLearn):
         Number of states in the model.
     n_mix : int
         Number of states in the GMM.
-    covariance_type : {"sperical", "diag", "full", "tied"}, optional
+    covariance_type : {"spherical", "diag", "full", "tied"}, optional
         The type of covariance parameters to use:
         * "spherical" --- each state uses a single variance value that
             applies to all features.
@@ -29,7 +29,7 @@ class GMMHMM(BaseHMMLearn):
             covariance matrix.
         * "tied" --- all mixture components of each state use **the same**
             full covariance matrix (note that this is not the same as for
-            `GaussianHMM`).
+            ``GaussianHMM``).
     min_covar : float, optional
         Floor on the diagonal of the covariance matrix to prevent
         overfitting. Defaults to 1e-3.
@@ -185,7 +185,7 @@ class GMMHMM(BaseHMMLearn):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------

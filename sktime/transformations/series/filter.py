@@ -31,6 +31,14 @@ class Filter(BaseTransformer):
         Additional parameters passed on to ``mne.filter.filter_data``.
         See ``mne.filter.filter_data``
         documentation for a detailed description of all options.
+
+    Example
+    -------
+    >>> from sktime.transformations.series.filter import Filter
+    >>> from sktime.datasets import load_arrow_head
+    >>> X, y = load_arrow_head(return_X_y=True, return_type="pd-multiindex")
+    >>> transformer = Filter(sfreq=128, l_freq=0.5, h_freq=40)
+    >>> X_filtered = transformer.fit_transform(X)
     """
 
     # default tag values for "Series-to-Series"
@@ -124,14 +132,19 @@ class Filter(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        return {"sfreq": 3}
+        param1 = {"sfreq": 3}
+        param2 = {"sfreq": 5000, "l_freq": 10, "h_freq": 1000}
+        params = [param1, param2]
+
+        return params

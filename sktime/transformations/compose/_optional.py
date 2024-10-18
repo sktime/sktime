@@ -1,4 +1,5 @@
 """Optional passthrough transformer."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["aiwalter", "fkiraly"]
@@ -14,14 +15,14 @@ class OptionalPassthrough(_DelegatedTransformer):
 
     Allows tuning the implicit hyperparameter whether or not to use a
     particular transformer inside a pipeline (e.g. TransformedTargetForecaster)
-    or not. This is achieved by the hyperparameter `passthrough`
+    or not. This is achieved by the hyperparameter ``passthrough``
     which can be added to a tuning grid then (see example).
 
     Parameters
     ----------
     transformer : Estimator
         scikit-learn-like or sktime-like transformer to fit and apply to series.
-        this is a "blueprint" transformer, state does not change when `fit` is called
+        this is a "blueprint" transformer, state does not change when ``fit`` is called
     passthrough : bool, default=False
        Whether to apply the given transformer or to just
         passthrough the data (identity transformation). If, True the transformer
@@ -31,9 +32,10 @@ class OptionalPassthrough(_DelegatedTransformer):
     Attributes
     ----------
     transformer_: transformer,
-        this clone is fitted when `fit` is called and provides `transform` and inverse
-        if passthrough = False, a clone of `transformer`passed
-        if passthrough = True, the identity transformer `Id`
+        this clone is fitted when ``fit`` is called and provides ``transform`` and
+        inverse
+        if passthrough = False, a clone of ``transformer``passed
+        if passthrough = True, the identity transformer ``Id``
 
     Examples
     --------
@@ -109,7 +111,9 @@ class OptionalPassthrough(_DelegatedTransformer):
         if passthrough:
             self.transformer_ = Id()
         else:
-            self.transformer_ = transformer.clone()
+            from sktime.registry import coerce_scitype
+
+            self.transformer_ = coerce_scitype(transformer, "transformer")
 
     # attribute for _DelegatedTransformer, which then delegates
     #     all non-overridden methods are same as of getattr(self, _delegate_name)
@@ -124,7 +128,7 @@ class OptionalPassthrough(_DelegatedTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -132,8 +136,9 @@ class OptionalPassthrough(_DelegatedTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.transformations.series.boxcox import BoxCoxTransformer
 

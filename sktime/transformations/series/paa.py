@@ -5,7 +5,6 @@ __author__ = ["steenrotsman"]
 import numpy as np
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.warnings import warn
 
 
 class PAA(BaseTransformer):
@@ -23,28 +22,28 @@ class PAA(BaseTransformer):
     Parameters
     ----------
     frames : int, optional (default=8, greater equal 1 if frame_size=0)
-        length of transformed time series. Ignored if `frame_size` is set.
+        length of transformed time series. Ignored if ``frame_size`` is set.
     frame_size : int, optional (default=0, greater equal 0)
-        length of the frames over which the mean is taken. Overrides `frames` if > 0.
+        length of the frames over which the mean is taken. Overrides ``frames`` if > 0.
 
     References
     ----------
     .. [1] Keogh, E., Chakrabarti, K., Pazzani, M., and Mehrotra, S.
         Dimensionality Reduction for Fast Similarity Search
         in Large Time Series Databases.
-        Knowledge and Information Systems 3, 263–286 (2001).
+        Knowledge and Information Systems 3, 263-286 (2001).
         https://doi.org/10.1007/PL00011669
 
     Examples
     --------
     >>> from numpy import arange
-    >>> from sktime.transformations.series.paa import PAA2
+    >>> from sktime.transformations.series.paa import PAA
 
     >>> X = arange(10)
-    >>> paa = PAA2(frames=3)
+    >>> paa = PAA(frames=3)
     >>> paa.fit_transform(X)  # doctest: +SKIP
     array([1.2, 4.5, 7.8])
-    >>> paa = PAA2(frame_size=3)  # doctest: +SKIP
+    >>> paa = PAA(frame_size=3)  # doctest: +SKIP
     array([1, 4, 7, 9])
     """
 
@@ -69,20 +68,6 @@ class PAA(BaseTransformer):
         self.frame_size = frame_size
 
         super().__init__()
-
-        # TODO 0.28.0: remove the deprecation warning
-        warn(
-            "Since sktime 0.27.0, PAA2 is the primary PAA implementation in "
-            "sktime, and has been renamed to PAA. "
-            "PAA2 is available under both its current and future name at its "
-            "current location, imports under the deprecated name PAA2 will be possible"
-            "until 0.28.0. "
-            "To prepare for the name change, replace imports of PAA2 from "
-            "sktime.transformations.series.paa by imports of PAA from the same "
-            "module.",
-            DeprecationWarning,
-            obj=self,
-        )
 
         self._check_params()
 
@@ -144,7 +129,7 @@ class PAA(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -152,8 +137,9 @@ class PAA(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params = {"frames": 4}
         return params
@@ -166,7 +152,3 @@ class PAA(BaseTransformer):
 
         if self.frames < 1 and not self.frame_size:
             raise ValueError("frames must be at least 1.")
-
-
-# TODO 0.28.0: remove the alias line altogether
-PAA2 = PAA

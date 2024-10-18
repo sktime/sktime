@@ -12,7 +12,6 @@ import warnings
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
 from sklearn.feature_selection import f_classif
 from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.tree import DecisionTreeClassifier
@@ -83,7 +82,7 @@ class SFA(BaseTransformer):
         automatic test.
 
     n_jobs:              int, optional, default = 1
-        The number of jobs to run in parallel for both `transform`.
+        The number of jobs to run in parallel for both ``transform``.
         ``-1`` means using all processors.
 
     Attributes
@@ -111,7 +110,7 @@ class SFA(BaseTransformer):
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "pd_Series_Table",  # which mtypes does y require?
         "requires_y": True,  # does y need to be passed in fit?
-        "python_dependencies": "numba",
+        "python_dependencies": ["numba", "joblib"],
     }
 
     def __init__(
@@ -252,6 +251,7 @@ class SFA(BaseTransformer):
         self.breakpoints = self._binning(X, y)
 
         self._is_fitted = True
+        self._is_vectorized = False
         return self
 
     def _transform(self, X, y=None):
@@ -266,6 +266,7 @@ class SFA(BaseTransformer):
         -------
         List of dictionaries containing SFA words
         """
+        from joblib import Parallel, delayed
         from numba import NumbaTypeSafetyWarning, types
         from numba.typed import Dict
 
@@ -641,6 +642,7 @@ class SFA(BaseTransformer):
         )
 
     def _shorten_bags(self, word_len):
+        from joblib import Parallel, delayed
         from numba import NumbaTypeSafetyWarning, types
         from numba.typed import Dict
 
@@ -863,10 +865,7 @@ class SFA(BaseTransformer):
         """Convert a bag of SFA words into a string."""
         s = "{"
         for word, value in bag.items():
-            s += "{}: {}, ".format(
-                self.word_list_typed(word) if self.typed_dict else self.word_list(word),
-                value,
-            )
+            s += f"{self.word_list_typed(word) if self.typed_dict else self.word_list(word)}: {value}, "  # noqa: E501
         s = s[:-2]
         return s + "}"
 
@@ -930,7 +929,7 @@ class SFA(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -938,8 +937,9 @@ class SFA(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         # small window size for testing
         params = {"window_size": 4, "return_pandas_data_series": True}

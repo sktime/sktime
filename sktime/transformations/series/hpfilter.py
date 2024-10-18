@@ -1,9 +1,11 @@
-"""Interface to Hodrick-Prescott filter from `statsmodels`.
+"""Interface to Hodrick-Prescott filter from ``statsmodels``.
 
 Please see the original library
+
 (https://github.com/statsmodels/statsmodels/blob/main/statsmodels/tsa/filters/hp_filter.py)
-Interfaces `hp_filter` from `statsmodels.tsa.filters`.
+Interfaces ``hp_filter`` from ``statsmodels.tsa.filters``.
 """
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["ken_maeda"]
@@ -18,8 +20,8 @@ from sktime.transformations.base import BaseTransformer
 class HPFilter(BaseTransformer):
     """Filter a times series using the Hodrick-Prescott filter.
 
-    This is a wrapper around the `hpfilter` function from `statsmodels`.
-    (see `statsmodels.tsa.filters.hp_filter.hpfilter`).
+    This is a wrapper around the ``hpfilter`` function from ``statsmodels``.
+    (see ``statsmodels.tsa.filters.hp_filter.hpfilter``).
 
     Parameters
     ----------
@@ -111,7 +113,7 @@ class HPFilter(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -119,8 +121,9 @@ class HPFilter(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {"lamb": 1600}
         params2 = {}

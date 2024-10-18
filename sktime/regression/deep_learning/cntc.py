@@ -6,7 +6,7 @@ from sklearn.utils import check_random_state
 
 from sktime.networks.cntc import CNTCNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
-from sktime.utils.validation._dependencies import _check_dl_dependencies
+from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class CNTCRegressor(BaseDeepRegressor):
@@ -97,9 +97,10 @@ class CNTCRegressor(BaseDeepRegressor):
         self.loss = loss
         self.metrics = metrics
         self.random_state = random_state
-        self._network = CNTCNetwork()
 
-        super().__init__(batch_size=batch_size, random_state=random_state)
+        super().__init__()
+
+        self._network = CNTCNetwork()
 
     def build_model(self, input_shape, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.

@@ -17,11 +17,9 @@ import pytest
 
 from sktime.registry import all_estimators
 from sktime.tests._config import EXCLUDE_ESTIMATORS
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
-from sktime.utils.validation._dependencies import (
-    _check_python_version,
-    _check_soft_dependencies,
-)
+from sktime.utils.dependencies import _check_python_version, _check_soft_dependencies
 
 # list of soft dependencies used
 # excludes estimators, only for soft dependencies used in non-estimator modules
@@ -45,15 +43,6 @@ MODULES_TO_IGNORE = ("sktime._contrib", "sktime.utils._testing")
 # todo: long-term all example parameter settings should be soft dependency free
 # strings of class names to avoid the imports
 EXCEPTED_FROM_NO_DEP_CHECK = []
-
-
-# estimators excepted from checking that get_test_params does not import soft deps
-# this is ok, in general, for adapters to soft dependency frameworks
-# since such adapters will import estimators from the adapted framework
-EXCEPTED_FROM_GET_PARAMS_CHECK = [
-    "PyODAnnotator",  # adapters always require soft dep. Here: pyod
-    "HCrystalBallAdapter",  # adapters always require soft dep. Here: hcrystalball
-]
 
 
 def _is_test(module):
@@ -101,8 +90,11 @@ def is_soft_dep_missing_message(msg):
     # special message for deep learning dependencies
     error_msg_dl = "required for deep learning"
     cond3 = error_msg_dl in msg
+    # message if environment marker not satisfied
+    error_msg_marker = "packaging marker"
+    cond4 = error_msg_marker in msg
 
-    return cond1 or cond2 or cond3
+    return cond1 or cond2 or cond3 or cond4
 
 
 @pytest.mark.parametrize("module", modules)
@@ -155,9 +147,8 @@ def _coerce_list_of_str(obj):
 
 
 def _get_soft_deps(est):
-    """Return soft dependencies of an estimator, as list of str and its alias."""
+    """Return soft dependencies of an estimator, as list of str."""
     softdeps = est.get_class_tag("python_dependencies", None)
-    softdeps_aliases = est.get_class_tag("python_dependencies_aliases", None)
     softdeps = _coerce_list_of_str(softdeps)
     if softdeps is None:
         raise RuntimeError(
@@ -165,14 +156,14 @@ def _get_soft_deps(est):
             f" but {est.__name__} has {softdeps}"
         )
     else:
-        return softdeps, softdeps_aliases
+        return softdeps
 
 
-def _is_in_env(modules, module_aliases):
+def _is_in_env(modules):
     """Return whether all modules in list of str modules are installed in env."""
     modules = _coerce_list_of_str(modules)
     try:
-        _check_soft_dependencies(modules, package_import_alias=module_aliases)
+        _check_soft_dependencies(modules)
         return True
     except ModuleNotFoundError:
         return False
@@ -230,8 +221,8 @@ def test_python_error(estimator):
 @pytest.mark.parametrize("estimator", est_pyok_with_soft_dep)
 def test_softdep_error(estimator):
     """Test that estimators raise error if required soft dependencies are missing."""
-    softdeps, softdeps_alias = _get_soft_deps(estimator)
-    if not _is_in_env(softdeps, softdeps_alias):
+    softdeps = _get_soft_deps(estimator)
+    if not _is_in_env(softdeps):
         try:
             estimator.create_test_instance()
         except ModuleNotFoundError as e:
@@ -250,8 +241,8 @@ def test_softdep_error(estimator):
 @pytest.mark.parametrize("estimator", est_pyok_with_soft_dep)
 def test_est_construct_if_softdep_available(estimator):
     """Test that estimators construct if required soft dependencies are there."""
-    softdeps, softdeps_alias = _get_soft_deps(estimator)
-    if _is_in_env(softdeps, softdeps_alias):
+    softdeps = _get_soft_deps(estimator)
+    if _is_in_env(softdeps):
         try:
             estimator.create_test_instance()
         except ModuleNotFoundError as e:
@@ -269,9 +260,6 @@ def test_est_construct_if_softdep_available(estimator):
 @pytest.mark.parametrize("estimator", all_ests)
 def test_est_get_params_without_modulenotfound(estimator):
     """Test that estimator test parameters do not rely on soft dependencies."""
-    if estimator.__name__ in EXCEPTED_FROM_GET_PARAMS_CHECK:
-        return None
-
     try:
         estimator.get_test_params()
     except ModuleNotFoundError as e:
@@ -280,6 +268,10 @@ def test_est_get_params_without_modulenotfound(estimator):
             f"Estimator {estimator.__name__} requires soft dependencies for parameters "
             f"returned by get_test_params. Test parameters should not require "
             f"soft dependencies and use only sktime internal objects. "
+            f"In a case where soft dependencies are required, return a shorter list, "
+            f"or an empty dict, with parameter sets that do not require soft "
+            f"dependencies, gated by a dependency check, for instance using "
+            f"skbase.utils.dependencies_check_soft_dependencies with severity='none'. "
             f"Exception text: {error_msg}"
         ) from e
 
@@ -311,6 +303,9 @@ def test_est_fit_without_modulenotfound(estimator):
     # skip composite estimators that have no soft dependencies
     #   but which have soft dependencies in example components
     if estimator.__name__ in EXCEPTED_FROM_NO_DEP_CHECK:
+        return None
+
+    if not run_test_for_class(estimator):
         return None
 
     try:

@@ -20,12 +20,12 @@ from sktime.exceptions import NotFittedError
 class ContinuousIntervalTree(BaseEstimator):
     """Continuous interval tree (CIT) vector classifier (aka Time Series Tree).
 
-    The `Time Series Tree` described in the Time Series Forest (TSF) paper Deng et al
+    The ``Time Series Tree`` described in the Time Series Forest (TSF) paper Deng et al
     (2013) [1]. A simple information gain based tree for continuous attributes using a
     bespoke margin gain metric for tie breaking.
 
     Implemented as a bade classifier for interval based time series classifiers such as
-    `CanonicalIntervalForest` and `DrCIF`.
+    ``CanonicalIntervalForest`` and ``DrCIF``.
 
     Parameters
     ----------
@@ -34,10 +34,10 @@ class ContinuousIntervalTree(BaseEstimator):
     thresholds : int, default=20
         Number of thresholds to split continuous attributes on at tree nodes.
     random_state : int, RandomState instance or None, default=None
-        If `int`, random_state is the seed used by the random number generator;
-        If `RandomState` instance, random_state is the random number generator;
-        If `None`, the random number generator is the `RandomState` instance used
-        by `np.random`.
+        If ``int``, random_state is the seed used by the random number generator;
+        If ``RandomState`` instance, random_state is the random number generator;
+        If ``None``, the random number generator is the ``RandomState`` instance used
+        by ``np.random``.
 
     Attributes
     ----------

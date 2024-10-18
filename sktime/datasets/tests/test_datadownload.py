@@ -1,12 +1,21 @@
 """Test data loaders that download from external sources."""
+
 from urllib.request import Request, urlopen
 
 import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.datasets import load_forecastingdata, load_solar, load_UCR_UEA_dataset
+from sktime.datasets import (
+    load_forecastingdata,
+    load_fpp3,
+    load_m5,
+    load_solar,
+    load_UCR_UEA_dataset,
+)
 from sktime.datasets.tsf_dataset_names import tsf_all, tsf_all_datasets
+from sktime.datatypes import check_is_mtype, check_raise
+from sktime.utils.dependencies import _check_soft_dependencies
 
 # test tsf download only on a random uniform subsample of datasets
 N_TSF_SUBSAMPLE = 3
@@ -80,3 +89,55 @@ def test_check_link_downloadable(name):
 
     assert "application/octet-stream" in content_type, "URL is not downloadable."
     assert "attachment" in content_disposition, "URL is not downloadable."
+
+
+@pytest.mark.datadownload
+@pytest.mark.parametrize("name", ["invalid_name"])
+def test_load_forecasting_data_invalid_name(name):
+    """Test load_forecastingdata with invalid name."""
+    with pytest.raises(
+        ValueError,
+        match=f"Error in load_forecastingdata, Invalid dataset name = {name}.",
+    ):
+        load_forecastingdata(name=name)
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("rdata", severity="none"),
+    reason="run test only if the soft dependency rdata is installed",
+)
+@pytest.mark.datadownload
+def test_load_fpp3():
+    """Test loading downloaded dataset from ."""
+
+    import requests
+
+    from sktime.datasets._fpp3_loaders import _get_dataset_url
+
+    for dataset_name in ["aus_accommodation", "pedestrian", "ansett"]:
+        ret, url = _get_dataset_url(dataset_name)
+        assert ret is True
+        try:
+            response = requests.head(url)
+            if response.status_code != 200:
+                ret = False
+        except requests.RequestException:
+            ret = False
+        assert ret is True
+
+    olympic_running = load_fpp3("olympic_running")
+
+    assert isinstance(olympic_running, pd.DataFrame)
+    ret = check_is_mtype(olympic_running, mtype="pd_multiindex_hier")
+    assert ret is True
+
+
+@pytest.mark.datadownload
+def test_load_m5():
+    """Test loading downloaded dataset from Zenodo.org."""
+    file = "UnitTest"
+    loaded_dataset = load_m5(extract_path=file, test=True)
+    assert len(loaded_dataset) == 1913
+
+    index = check_raise(loaded_dataset, mtype="pd_multiindex_hier")
+    assert index is True

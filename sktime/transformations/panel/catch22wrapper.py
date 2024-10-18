@@ -11,13 +11,13 @@ import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel import catch22
-from sktime.utils.warnings import warn
 
 
 class Catch22Wrapper(BaseTransformer):
-    """Canonical Time-series Characteristics (Catch22) C Wrapper.
+    """Canonical Time-series Characteristics (Catch22 and 24), using pycatch22 package.
 
-    Wraps the pycatch22 implementation for sktime
+    Direct interface to the ``pycatch22`` implementation of Catch-22 and Catch-24
+    feature sets
     (https://github.com/DynamicsAndNeuralSystems/pycatch22).
 
     Overview: Input n series with d dimensions of length m
@@ -60,7 +60,8 @@ class Catch22Wrapper(BaseTransformer):
 
     See Also
     --------
-    Catch22 Catch22Classifier
+    Catch22
+    Catch22Classifier
 
     References
     ----------
@@ -75,8 +76,8 @@ class Catch22Wrapper(BaseTransformer):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["MatthewMiddlehurst", "fkiraly"],
-        "maintainers": "benfulcher",
+        "authors": ["benfulcher", "jmoo2880", "MatthewMiddlehurst", "fkiraly"],
+        "maintainers": ["benfulcher", "jmoo2880"],
         "python_dependencies": "pycatch22",
         # estimator type
         # --------------
@@ -89,21 +90,18 @@ class Catch22Wrapper(BaseTransformer):
         "fit_is_empty": True,
     }
 
-    # todo 0.28.0: remove n_jobs parameter
     def __init__(
         self,
         features="all",
         catch24=False,
         outlier_norm=False,
         replace_nans=False,
-        n_jobs="deprecated",
         col_names="range",
     ):
         self.features = features
         self.catch24 = catch24
         self.outlier_norm = outlier_norm
         self.replace_nans = replace_nans
-        self.n_jobs = n_jobs
         self.col_names = col_names
 
         self.features_arguments = (
@@ -129,19 +127,6 @@ class Catch22Wrapper(BaseTransformer):
         self._transform_features = None
 
         super().__init__()
-
-        # todo 0.28.0: remove this warning and logic
-        if n_jobs != "deprecated":
-            warn(
-                "In Catch22Wrapper, the parameter "
-                "n_jobs is deprecated and will be removed in v0.28.0. "
-                "Instead, use set_config with the backend and backend:params "
-                "config fields, and set backend to 'joblib' and pass n_jobs "
-                "as a parameter of backend_params. ",
-                FutureWarning,
-                obj=self,
-            )
-            self.set_config(backend="joblib", backend_params={"n_jobs": n_jobs})
 
     def _transform(self, X, y=None):
         """Transform data into the Catch22 features.
@@ -298,7 +283,7 @@ class Catch22Wrapper(BaseTransformer):
         return [param1, param2, param3, param4]
 
 
-feature_names = catch22.feature_names
+feature_names = catch22.FEATURE_NAMES
 
 
 def _normalise_series(X):

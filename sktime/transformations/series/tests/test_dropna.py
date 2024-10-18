@@ -9,6 +9,7 @@ import numpy as np
 import pytest
 
 from sktime.datasets import load_longley
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.dropna import DropNA
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 
@@ -91,6 +92,10 @@ def X_many_na_expected(X_many_na):
     }
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(DropNA),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("axis", DropNA.VALID_AXIS_VALUES)
 @pytest.mark.parametrize("how", DropNA.VALID_HOW_VALUES)
 def test_dropna_few_na(axis, how, X_few_na, X_few_na_expected):
@@ -102,6 +107,10 @@ def test_dropna_few_na(axis, how, X_few_na, X_few_na_expected):
     _assert_array_almost_equal(X_transformed, X_expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(DropNA),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("axis", DropNA.VALID_AXIS_VALUES)
 @pytest.mark.parametrize("how", DropNA.VALID_HOW_VALUES)
 def test_dropna_many_na(axis, how, X_many_na, X_many_na_expected):
@@ -113,6 +122,10 @@ def test_dropna_many_na(axis, how, X_many_na, X_many_na_expected):
     _assert_array_almost_equal(X_transformed, X_expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(DropNA),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("axis", DropNA.VALID_AXIS_VALUES)
 @pytest.mark.parametrize("how", ["any", "all"])
 @pytest.mark.parametrize("thresh", [10, 0.5])
@@ -123,6 +136,10 @@ def test_dropna_conflicting_arguments(axis, how, thresh, remember):
         DropNA(axis=axis, how=str(how), thresh=thresh, remember=remember)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(DropNA),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("axis", DropNA.VALID_AXIS_VALUES)
 @pytest.mark.parametrize("how", [True, False, "invalid_value", [1, 2, 3]])
 @pytest.mark.parametrize("remember", [None, True, False])
@@ -132,6 +149,10 @@ def test_dropna_invalid_arguments_how(axis, how, remember):
         DropNA(axis=axis, how=how, thresh=None, remember=remember)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(DropNA),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("axis", DropNA.VALID_AXIS_VALUES)
 @pytest.mark.parametrize("thresh", [True, False, "invalid_value", [1, 2, 3]])
 @pytest.mark.parametrize("remember", [None, True, False])
@@ -141,6 +162,10 @@ def test_dropna_invalid_arguments_thresh_type(axis, thresh, remember):
         DropNA(axis=axis, how=None, thresh=thresh, remember=remember)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(DropNA),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("axis", DropNA.VALID_AXIS_VALUES)
 @pytest.mark.parametrize("thresh", [-5, -3.5, 1.5])
 @pytest.mark.parametrize("remember", [None, True, False])

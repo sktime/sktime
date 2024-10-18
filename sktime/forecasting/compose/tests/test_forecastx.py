@@ -2,8 +2,10 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests for ForecastX compositor."""
 
-__author__ = ["fkiraly"]
+__author__ = ["fkiraly", "yarnabrina"]
 __all__ = []
+
+from unittest import mock
 
 import numpy as np
 import pandas as pd
@@ -12,25 +14,21 @@ from sklearn.svm import SVR
 
 from sktime.datasets import load_longley
 from sktime.forecasting.arima import ARIMA
-from sktime.forecasting.compose import make_reduction
+from sktime.forecasting.compose import ForecastX, make_reduction
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.sarimax import SARIMAX
+from sktime.forecasting.var import VAR
 from sktime.split import temporal_train_test_split
-from sktime.utils.validation._dependencies import (
-    _check_estimator_deps,
-    _check_soft_dependencies,
-)
+from sktime.tests.test_switch import run_test_for_class
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency is not available",
+    not run_test_for_class([ForecastX, VAR, SARIMAX]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_forecastx_logic():
     """Test that ForecastX logic is as expected, compared to manual execution."""
     from sktime.forecasting.base import ForecastingHorizon
-    from sktime.forecasting.compose import ForecastX
-    from sktime.forecasting.var import VAR
     from sktime.split import temporal_train_test_split
 
     # test case: using pipeline execution
@@ -67,8 +65,8 @@ def test_forecastx_logic():
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(ARIMA, severity="none"),
-    reason="skip test if required soft dependency is not available",
+    not run_test_for_class([ForecastX, ARIMA]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_forecastx_fit_behavior():
     from sktime.forecasting.compose import ForecastX
@@ -109,6 +107,10 @@ def test_forecastx_fit_behavior():
     pd.testing.assert_series_equal(y_pred_forecast_X_use_forecast, y_pred)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ForecastX),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_forecastx_attrib_broadcast():
     """Test ForecastX broadcasting and forecaster attributes."""
     from sktime.forecasting.compose import ForecastX
@@ -146,6 +148,10 @@ def test_forecastx_attrib_broadcast():
     assert model_2.forecaster_y_.is_fitted
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ForecastX),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_forecastx_skip_forecaster_X_fitting_logic():
     """Test that ForecastX does not fit forecaster_X, if forecaster_y ignores X"""
     from sklearn.linear_model import LinearRegression
@@ -216,6 +222,10 @@ def test_forecastx_skip_forecaster_X_fitting_logic():
     assert model_2.forecaster_X_.is_fitted
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ForecastX),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "forecasting_algorithm", [make_reduction(SVR(), window_length=2), NaiveForecaster()]
 )
@@ -272,6 +282,10 @@ def test_forecastx_flow_known_unknown_columns(
     np.testing.assert_array_equal(y_test.index, y_test_pred.index)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ForecastX),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_forecastx_exog_for_forecaster_x():
     """Test that ForecastX forecaster_X uses exogenous data as told by parameter."""
     from sklearn.linear_model import LinearRegression
@@ -315,3 +329,121 @@ def test_forecastx_exog_for_forecaster_x():
 
     model_3.fit(y, X=X, fh=fh)
     assert model_3.forecaster_X_._X.columns.tolist() == ["UNEMP", "ARMED"]
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([ForecastX, ARIMA]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("predict_behaviour_option", ["use_forecasts", "use_actuals"])
+def test_use_of_passed_unknown_X(predict_behaviour_option: str) -> None:
+    from sktime.forecasting.compose import ForecastX
+
+    y, X = load_longley()
+    fh = [1, 2, 3, 4]
+    cols_to_forecast = ["GNPDEFL", "GNP"]
+
+    y_train, _, X_train, X_test = temporal_train_test_split(y, X, test_size=4)
+
+    model_with_explicit_columns = ForecastX(
+        ARIMA(),
+        forecaster_X=NaiveForecaster(),
+        columns=cols_to_forecast,
+        predict_behaviour=predict_behaviour_option,
+    )
+
+    model_with_explicit_columns.fit(y_train, X=X_train, fh=fh)
+
+    with mock.patch.object(
+        model_with_explicit_columns.forecaster_X_, "predict"
+    ) as mock_predict:
+        mock_predict.return_value = X_test
+
+        _ = model_with_explicit_columns.predict(X=X_test.drop(columns=cols_to_forecast))
+
+        mock_predict.assert_called_once()
+
+    with mock.patch.object(
+        model_with_explicit_columns.forecaster_X_, "predict"
+    ) as mock_predict:
+        mock_predict.return_value = X_test
+
+        _ = model_with_explicit_columns.predict(X=X_test)
+
+        if predict_behaviour_option == "use_forecasts":
+            mock_predict.assert_called_once()
+        elif predict_behaviour_option == "use_actuals":
+            mock_predict.assert_not_called()
+
+    model_with_implicit_columns = ForecastX(
+        ARIMA(),
+        forecaster_X=NaiveForecaster(),
+        predict_behaviour=predict_behaviour_option,
+    )
+
+    model_with_implicit_columns.fit(y_train, X=X_train, fh=fh)
+
+    with mock.patch.object(
+        model_with_implicit_columns.forecaster_X_, "predict"
+    ) as mock_predict:
+        mock_predict.return_value = X_test
+
+        _ = model_with_implicit_columns.predict()
+
+        mock_predict.assert_called_once()
+
+    with mock.patch.object(
+        model_with_implicit_columns.forecaster_X_, "predict"
+    ) as mock_predict:
+        mock_predict.return_value = X_test
+
+        _ = model_with_implicit_columns.predict(X=X_test)
+
+        if predict_behaviour_option == "use_forecasts":
+            mock_predict.assert_called_once()
+        elif predict_behaviour_option == "use_actuals":
+            mock_predict.assert_not_called()
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([ForecastX, ARIMA]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("cols_to_forecast", [["GNPDEFL", "GNP"], ["ARMED", "POP"]])
+def test_forecaster_X_exogeneous(cols_to_forecast):
+    """Test that ForecastX uses exogenous data as told by parameter."""
+    from sktime.forecasting.compose import ForecastX
+    from sktime.split import temporal_train_test_split
+
+    y, X = load_longley()
+
+    fh = [1, 2, 3, 4]
+    y_train, y_test, X_train, X_test = temporal_train_test_split(
+        y, X, test_size=max(fh)
+    )
+
+    forecaster = ARIMA()
+    pipeline1 = ForecastX(
+        forecaster.clone(),
+        forecaster_X=forecaster.clone(),
+        columns=cols_to_forecast,
+        forecaster_X_exogeneous="complement",
+    )
+
+    pipeline1.fit(y_train, X=X_train, fh=fh)
+    y_pred1 = pipeline1.predict(X=X_test.drop(columns=cols_to_forecast))
+
+    pipeline2 = ForecastX(
+        forecaster.clone(),
+        forecaster_X=forecaster.clone(),
+        columns=cols_to_forecast,
+        forecaster_X_exogeneous="None",
+    )
+
+    pipeline2.fit(y_train, X=X_train, fh=fh)
+    y_pred2 = pipeline2.predict(X=X_test.drop(columns=cols_to_forecast))
+    np.testing.assert_array_equal(y_pred1.index, y_pred2.index)
+
+    # check that the update method doesn't break on
+    # forecaster_X_exogeneous = "complement"
+    pipeline1.update(y_test, X=X_test, update_params=True)

@@ -6,12 +6,36 @@ __author__ = ["fkiraly"]
 import pytest
 
 from sktime.registry._craft import craft, deps, imports
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 simple_spec = "NaiveForecaster()"
 simple_spec_with_dep = "VAR(trend='ct')"
 
-pipe_spec = """
+pipe_spec_no_deps = """
+pipe = TransformedTargetForecaster(steps=[
+    ("imputer", Imputer()),
+    ("forecaster", NaiveForecaster())])
+cv = ExpandingWindowSplitter(
+    initial_window=24,
+    step_length=12,
+    fh=[1, 2, 3])
+
+return ForecastingGridSearchCV(
+    forecaster=pipe,
+    param_grid=[{
+        "forecaster": [NaiveForecaster(sp=12)],
+        "forecaster__strategy": ["drift", "last", "mean"],
+    },
+    {
+        "imputer__method": ["mean", "drift"],
+        "forecaster": [NaiveForecaster(sp=12)],
+    },
+    ],
+    cv=cv,
+    )
+"""
+
+pipe_spec_with_deps = """
 pipe = TransformedTargetForecaster(steps=[
     ("imputer", Imputer()),
     ("forecaster", NaiveForecaster())])
@@ -40,15 +64,16 @@ return ForecastingGridSearchCV(
     )
 """
 
-dunder_spec = "Detrender(ExponentialSmoothing(sp=12)) * ARIMA()"
+dunder_spec_no_deps = "Imputer() * NaiveForecaster()"
+dunder_spec_with_deps = "Detrender(ExponentialSmoothing(sp=12)) * ARIMA()"
 
-specs = [simple_spec, simple_spec_with_dep, pipe_spec, dunder_spec]
+specs = [simple_spec, pipe_spec_no_deps, dunder_spec_no_deps]
 
 
-@pytest.mark.skipif(
-    not _check_soft_dependencies(["statsmodels", "pmdarima"], severity="none"),
-    reason="skip test if required soft dependencies not available",
-)
+if _check_soft_dependencies(["statsmodels", "pmdarima"], severity="none"):
+    specs += [simple_spec_with_dep, pipe_spec_with_deps, dunder_spec_with_deps]
+
+
 @pytest.mark.parametrize("spec", specs)
 def test_craft(spec):
     """Check that crafting works and is inverse to str coercion."""
@@ -66,16 +91,18 @@ def test_deps(spec):
     """Check that deps retrieves the correct requirement sets."""
     # should return length 0 list since has no deps
     assert deps(simple_spec) == []
+    assert deps(pipe_spec_no_deps) == []
+    assert deps(dunder_spec_no_deps) == []
 
     # should correctly find the single dependency
     assert deps(simple_spec_with_dep) == ["statsmodels"]
 
     # has multiple estimators with "statsmodels",
     # this should be returned like this and not as ["statsmodels", "statsmodels"]
-    assert deps(pipe_spec) == ["statsmodels"]
+    assert deps(pipe_spec_with_deps) == ["statsmodels"]
 
     # example with two dependencies, should be identified, order does not matter
-    assert set(deps(dunder_spec)) == {"statsmodels", "pmdarima"}
+    assert set(deps(dunder_spec_with_deps)) == {"statsmodels", "pmdarima"}
 
 
 def test_imports():
@@ -93,4 +120,4 @@ def test_imports():
         "ExpandingWindowSplitter\nfrom sktime.transformations.series.impute import "
         "Imputer"
     )
-    assert imports(pipe_spec) == pipe_imports
+    assert imports(pipe_spec_with_deps) == pipe_imports

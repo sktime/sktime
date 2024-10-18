@@ -9,7 +9,7 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.cnn import CNNNetwork
-from sktime.utils.validation._dependencies import _check_dl_dependencies
+from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class CNNClassifier(BaseDeepClassifier):
@@ -27,14 +27,14 @@ class CNNClassifier(BaseDeepClassifier):
         size of the average pooling windows
     n_conv_layers   : int, default = 2
         the number of convolutional plus average pooling layers
-    filter_sizes    : array of shape (n_conv_layers) default = [6, 12]
-    random_state    : int or None, default=None
-        Seed for random number generation.
+    callbacks       : list of keras.callbacks, default = None
     verbose         : boolean, default = False
         whether to output extra information
     loss            : string, default="categorical_crossentropy"
         fit parameter for the keras model
     metrics         : list of strings, default=["accuracy"],
+    random_state    : int or None, default=None
+        Seed for random number generation.
     activation      : string or a tf callable, default="softmax"
         Activation function used in the output linear layer.
         List of available activation functions:
@@ -43,6 +43,13 @@ class CNNClassifier(BaseDeepClassifier):
         whether the layer uses a bias vector.
     optimizer       : keras.optimizers object, default = Adam(lr=0.01)
         specify the optimizer and the learning rate to be used.
+    filter_sizes    : array of shape (n_conv_layers) default = [6, 12]
+    padding : string, default = "auto"
+        Controls padding logic for the convolutional layers,
+        i.e. whether ``'valid'`` and ``'same'`` are passed to the ``Conv1D`` layer.
+        - "auto": as per original implementation, ``"same"`` is passed if
+          ``input_shape[0] < 60`` in the input layer, and ``"valid"`` otherwise.
+        - "valid", "same", and other values are passed directly to ``Conv1D``
 
     Notes
     -----
@@ -89,9 +96,12 @@ class CNNClassifier(BaseDeepClassifier):
         activation="softmax",
         use_bias=True,
         optimizer=None,
+        filter_sizes=None,
+        padding="auto",
     ):
         _check_dl_dependencies(severity="error")
-        super().__init__()
+
+        self.batch_size = batch_size
         self.n_conv_layers = n_conv_layers
         self.avg_pool_size = avg_pool_size
         self.kernel_size = kernel_size
@@ -106,11 +116,18 @@ class CNNClassifier(BaseDeepClassifier):
         self.use_bias = use_bias
         self.optimizer = optimizer
         self.history = None
+        self.filter_sizes = filter_sizes
+        self.padding = padding
+
+        super().__init__()
+
         self._network = CNNNetwork(
             kernel_size=self.kernel_size,
             avg_pool_size=self.avg_pool_size,
             n_conv_layers=self.n_conv_layers,
+            filter_sizes=self.filter_sizes,
             activation=self.activation,
+            padding=self.padding,
             random_state=self.random_state,
         )
 
@@ -176,7 +193,7 @@ class CNNClassifier(BaseDeepClassifier):
         -------
         self : object
         """
-        y_onehot = self.convert_y_to_keras(y)
+        y_onehot = self._convert_y_to_keras(y)
         # Transpose to conform to Keras input style.
         X = X.transpose(0, 2, 1)
 
@@ -203,7 +220,7 @@ class CNNClassifier(BaseDeepClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -214,10 +231,11 @@ class CNNClassifier(BaseDeepClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         param1 = {
             "n_epochs": 10,

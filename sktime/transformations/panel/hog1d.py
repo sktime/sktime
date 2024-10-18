@@ -1,4 +1,5 @@
 """HOG1D transform."""
+
 import math
 import numbers
 
@@ -34,10 +35,27 @@ class HOG1DTransformer(BaseTransformer):
 
     Parameters
     ----------
-        num_intervals   : int, length of interval.
-        num_bins        : int, num bins in the histogram.
-        scaling_factor  : float, a constant that is multiplied
-                          to modify the distribution.
+    num_intervals : int, default=2
+        length of interval.
+    num_bins : int, default=8
+        num bins in the histogram.
+    scaling_factor : float, default=0.1
+        a constant that is multiplied to modify the distribution.
+
+    Example
+    ----------
+    >>> from sktime.transformations.panel.hog1d import HOG1DTransformer
+    >>> from sktime.datasets import load_arrow_head
+    >>>
+    >>> X, y = load_arrow_head(return_X_y=True)
+    >>>
+    >>> # Initialize the transformer
+    >>> hog1d_transformer = HOG1DTransformer(
+    ...     num_intervals=5, num_bins=8, scaling_factor=0.1
+    ... )
+    >>>
+    >>> # Transform the data
+    >>> Xt = hog1d_transformer.fit_transform(X)
     """
 
     _tags = {
@@ -239,3 +257,27 @@ class HOG1DTransformer(BaseTransformer):
                 + type(self.scaling_factor).__name__
                 + "' instead."
             )
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        param1 = {}
+        param2 = {"num_intervals": 10, "num_bins": 16, "scaling_factor": 0.1}
+        param3 = {"num_intervals": 5, "num_bins": 8, "scaling_factor": 1.0}
+        return [param1, param2, param3]

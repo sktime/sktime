@@ -1,4 +1,5 @@
 """K-nearest neighbors time series classifier, from pyts."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly"]
@@ -71,12 +72,32 @@ class KNeighborsTimeSeriesClassifierPyts(_PytsAdapter, BaseClassifier):
     ----------
     classes_ : array, shape = (n_classes,)
         An array of class labels known to the classifier.
+
+    Examples
+    --------
+    >>> import sktime.classification.distance_based as clf_db  # doctest: +SKIP
+    >>> from clf_db import KNeighborsTimeSeriesClassifierPyts  # doctest: +SKIP
+    >>> from sktime.datasets import load_unit_test  # doctest: +SKIP
+    >>> X_train, y_train = load_unit_test(split="train")  # doctest: +SKIP
+    >>> X_test, y_test = load_unit_test(split="test")  # doctest: +SKIP
+    >>> clf = KNeighborsTimeSeriesClassifierPyts(n_neighbors=1,
+    ...     weights="uniform",
+    ...     algorithm="auto",
+    ...     leaf_size=30,
+    ...     p=2,
+    ...     metric="minkowski",
+    ...     metric_params=None,
+    ...     n_jobs=1,
+    ... )  # doctest: +SKIP
+    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
+    KNeighborsTimeSeriesClassifierPyts(...)
+    >>> y_pred = clf.predict(X_test)  # doctest: +SKIP
     """
 
     _tags = {
         # packaging info
         # --------------
-        "authors": "fkiraly",
+        "authors": ["johannfaouzi", "fkiraly"],  # johannfaouzi is author of upstream
         "python_dependencies": "pyts",
         # estimator type
         # --------------
@@ -129,7 +150,7 @@ class KNeighborsTimeSeriesClassifierPyts(_PytsAdapter, BaseClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -137,8 +158,9 @@ class KNeighborsTimeSeriesClassifierPyts(_PytsAdapter, BaseClassifier):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
         params2 = {

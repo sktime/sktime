@@ -6,10 +6,12 @@ import datetime
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from sktime.datasets import load_airline
 from sktime.datatypes import VectorizedDF
 from sktime.datatypes._utilities import get_time_index
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.hierarchical import _bottom_hier_datagen
 from sktime.utils.datetime import (
     _coerce_duration_to_int,
@@ -17,9 +19,13 @@ from sktime.utils.datetime import (
     infer_freq,
     set_hier_freq,
 )
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils", "sktime.datatypes"]),
+    reason="Run if utils or datatypes module has changed.",
+)
 def test_get_freq():
     """Test whether get_freq runs without error."""
     x = pd.Series(
@@ -45,6 +51,10 @@ def test_get_freq():
     assert _get_freq(x4) is None
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils", "sktime.datatypes"]),
+    reason="Run if utils or datatypes module has changed.",
+)
 def test_coerce_duration_to_int() -> None:
     """Test _coerce_duration_to_int."""
     assert _coerce_duration_to_int(duration=0) == 0
@@ -69,6 +79,10 @@ def test_coerce_duration_to_int() -> None:
     )
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils", "sktime.datatypes"]),
+    reason="Run if utils or datatypes module has changed.",
+)
 def test_infer_freq() -> None:
     """Test frequency inference."""
     assert infer_freq(None) is None
@@ -80,51 +94,33 @@ def test_infer_freq() -> None:
     y = pd.Series(index=index, dtype=int)
     assert infer_freq(y) == "D"
 
-    index = pd.date_range(start="2021-01-01", periods=1, freq="M")
+    pandas2 = _check_soft_dependencies("pandas>=2.0.0", severity="none")
+    if pandas2:
+        m_freq = "ME"
+    else:
+        m_freq = "M"
+
+    index = pd.date_range(start="2021-01-01", periods=1, freq=m_freq)
     y = pd.Series(index=index, dtype=int)
-    assert infer_freq(y) == "M"
+    assert infer_freq(y) in ["M", "ME"]
 
     y = pd.DataFrame({"a": 1}, index=pd.date_range(start="2021-01-01", periods=1))
     assert infer_freq(y) == "D"
 
     y = pd.DataFrame(
-        {"a": 1}, index=pd.date_range(start="2021-01-01", periods=1, freq="M")
+        {"a": 1}, index=pd.date_range(start="2021-01-01", periods=1, freq=m_freq)
     )
-    assert infer_freq(y) == "M"
+    assert infer_freq(y) in ["M", "ME"]
 
     y = _bottom_hier_datagen(no_levels=2)
     y = VectorizedDF(X=y, iterate_as="Series", is_scitype="Hierarchical")
-    assert infer_freq(y) == "M"
+    assert infer_freq(y) in ["M", "ME"]
 
 
-def test_set_freq() -> None:
-    """Test frequency inference."""
-    assert infer_freq(None) is None
-
-    y = pd.Series(dtype=int)
-    assert infer_freq(y) is None
-
-    index = pd.date_range(start="2021-01-01", periods=1)
-    y = pd.Series(index=index, dtype=int)
-    assert infer_freq(y) == "D"
-
-    index = pd.date_range(start="2021-01-01", periods=1, freq="M")
-    y = pd.Series(index=index, dtype=int)
-    assert infer_freq(y) == "M"
-
-    y = pd.DataFrame({"a": 1}, index=pd.date_range(start="2021-01-01", periods=1))
-    assert infer_freq(y) == "D"
-
-    y = pd.DataFrame(
-        {"a": 1}, index=pd.date_range(start="2021-01-01", periods=1, freq="M")
-    )
-    assert infer_freq(y) == "M"
-
-    y = _bottom_hier_datagen(no_levels=2)
-    y = VectorizedDF(X=y, iterate_as="Series", is_scitype="Hierarchical")
-    assert infer_freq(y) == "M"
-
-
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils", "sktime.datatypes"]),
+    reason="Run if utils or datatypes module has changed.",
+)
 def test_set_freq_hier():
     """Test that setting frequency on a DatetimeIndex MultiIndex works."""
     # from pandas 2.1.0 on, freq is preserved correctly,

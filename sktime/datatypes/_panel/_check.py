@@ -38,20 +38,21 @@ metadata: dict - metadata about obj if valid, otherwise None
         "feature_names": list of int or object, names of variables in series
 """
 
-__author__ = ["fkiraly", "TonyBagnall"]
-
-__all__ = ["check_dict"]
-
 import numpy as np
 import pandas as pd
 from pandas.core.dtypes.cast import is_nested_object
 
-from sktime.datatypes._common import _req, _ret
-from sktime.datatypes._series._check import (
-    _index_equally_spaced,
-    check_pddataframe_series,
+from sktime.datatypes._base._common import _req, _ret
+from sktime.datatypes._dtypekind import (
+    _get_feature_kind,
+    _get_panel_dtypekind,
+    _pandas_dtype_to_kind,
 )
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.datatypes._panel._base import ScitypePanel
+from sktime.datatypes._series._check import (
+    _check_pddataframe_series,
+    _index_equally_spaced,
+)
 from sktime.utils.validation.series import is_in_valid_index_types, is_integer_index
 
 VALID_MULTIINDEX_TYPES = (pd.RangeIndex, pd.Index)
@@ -80,10 +81,77 @@ def _list_all_equal(obj):
     return np.all([s == obj[0] for s in obj])
 
 
-check_dict = dict()
+class PanelDfList(ScitypePanel):
+    """Data type: list-of-pandas.DataFrame based specification of panel of time series.
+
+    Parameters
+    ----------
+    is_univariate: bool
+        True iff table has one variable
+    is_equally_spaced : bool
+        True iff series index is equally spaced
+    is_equal_length: bool
+        True iff all series in panel are of equal length
+    is_empty: bool
+        True iff table has no variables or no instances
+    is_one_series: bool
+        True iff there is only one series in the panel of time series
+    has_nans: bool
+        True iff the table contains NaN values
+    n_instances: int
+        number of instances in the panel of time series
+    n_features: int
+        number of variables in table
+    feature_names: list of int or object
+        names of variables in table
+    dtypekind_dfip: list of DtypeKind enum
+        list of DtypeKind enum values for each feature in the panel,
+        following the data frame interface protocol
+    feature_kind: list of str
+        list of feature kind strings for each feature in the panel,
+        coerced to FLOAT or CATEGORICAL type
+    """
+
+    _tags = {
+        "scitype": "Panel",
+        "name": "df-list",  # any string
+        "name_python": "panel_df_list",  # lower_snake_case
+        "name_aliases": [],
+        "python_version": None,
+        "python_dependencies": "pandas",
+        "capability:multivariate": True,
+        "capability:unequally_spaced": True,
+        "capability:missing_values": True,
+    }
+
+    def _check(self, obj, return_metadata=False, var_name="obj"):
+        """Check if obj is of this data type.
+
+        Parameters
+        ----------
+        obj : any
+            Object to check.
+        return_metadata : bool, optional (default=False)
+            Whether to return metadata.
+        var_name : str, optional (default="obj")
+            Name of the variable to check, for use in error messages.
+
+        Returns
+        -------
+        valid : bool
+            Whether obj is of this data type.
+        msg : str, only returned if return_metadata is True.
+            Error message if obj is not of this data type.
+        metadata : dict, only returned if return_metadata is True.
+            Metadata dictionary.
+        """
+        return _check_dflist_panel(
+            obj, return_metadata=return_metadata, var_name=var_name
+        )
 
 
-def check_dflist_panel(obj, return_metadata=False, var_name="obj"):
+def _check_dflist_panel(obj, return_metadata=False, var_name="obj"):
+    """Check if obj is a list of pandas.DataFrame according to df-list specification."""
     if not isinstance(obj, list):
         msg = f"{var_name} must be list of pd.DataFrame, found {type(obj)}"
         return _ret(False, msg, None, return_metadata)
@@ -96,7 +164,7 @@ def check_dflist_panel(obj, return_metadata=False, var_name="obj"):
         msg = f"{var_name}[i] must pd.DataFrame, but found other types at i={bad_inds}"
         return _ret(False, msg, None, return_metadata)
 
-    check_res = [check_pddataframe_series(s, return_metadata=True) for s in obj]
+    check_res = [_check_pddataframe_series(s, return_metadata=True) for s in obj]
     bad_inds = [i for i in range(n) if not check_res[i][0]]
 
     if len(bad_inds) > 0:
@@ -130,14 +198,86 @@ def check_dflist_panel(obj, return_metadata=False, var_name="obj"):
         metadata["n_features"] = len(obj[0].columns)
     if _req("feature_names", return_metadata):
         metadata["feature_names"] = obj[0].columns.to_list()
+    if _req("dtypekind_dfip", return_metadata):
+        metadata["dtypekind_dfip"] = _get_panel_dtypekind(obj, "df-list")
+    if _req("feature_kind", return_metadata):
+        dtype_kind = _get_panel_dtypekind(obj, "df-list")
+        metadata["feature_kind"] = _get_feature_kind(dtype_kind)
 
     return _ret(True, None, metadata, return_metadata)
 
 
-check_dict[("df-list", "Panel")] = check_dflist_panel
+class PanelNp3D(ScitypePanel):
+    """Data type: 3D np.ndarray based specification of panel of time series.
+
+    Parameters
+    ----------
+    is_univariate: bool
+        True iff table has one variable
+    is_equally_spaced : bool
+        True iff series index is equally spaced
+    is_equal_length: bool
+        True iff all series in panel are of equal length
+    is_empty: bool
+        True iff table has no variables or no instances
+    is_one_series: bool
+        True iff there is only one series in the panel of time series
+    has_nans: bool
+        True iff the table contains NaN values
+    n_instances: int
+        number of instances in the panel of time series
+    n_features: int
+        number of variables in table
+    feature_names: list of int or object
+        names of variables in table
+    dtypekind_dfip: list of DtypeKind enum
+        list of DtypeKind enum values for each feature in the panel,
+        following the data frame interface protocol
+    feature_kind: list of str
+        list of feature kind strings for each feature in the panel,
+        coerced to FLOAT or CATEGORICAL type
+    """
+
+    _tags = {
+        "scitype": "Panel",
+        "name": "numpy3D",  # any string
+        "name_python": "panel_np_3d",  # lower_snake_case
+        "name_aliases": [],
+        "python_version": None,
+        "python_dependencies": "numpy",
+        "capability:multivariate": True,
+        "capability:unequally_spaced": False,
+        "capability:missing_values": True,
+    }
+
+    def _check(self, obj, return_metadata=False, var_name="obj"):
+        """Check if obj is of this data type.
+
+        Parameters
+        ----------
+        obj : any
+            Object to check.
+        return_metadata : bool, optional (default=False)
+            Whether to return metadata.
+        var_name : str, optional (default="obj")
+            Name of the variable to check, for use in error messages.
+
+        Returns
+        -------
+        valid : bool
+            Whether obj is of this data type.
+        msg : str, only returned if return_metadata is True.
+            Error message if obj is not of this data type.
+        metadata : dict, only returned if return_metadata is True.
+            Metadata dictionary.
+        """
+        return _check_numpy3d_panel(
+            obj, return_metadata=return_metadata, var_name=var_name
+        )
 
 
-def check_numpy3d_panel(obj, return_metadata=False, var_name="obj"):
+def _check_numpy3d_panel(obj, return_metadata=False, var_name="obj"):
+    """Check if obj is a numpy.ndarray according to numpy3D specification."""
     if not isinstance(obj, np.ndarray):
         msg = f"{var_name} must be a numpy.ndarray, found {type(obj)}"
         return _ret(False, msg, None, return_metadata)
@@ -170,6 +310,11 @@ def check_numpy3d_panel(obj, return_metadata=False, var_name="obj"):
         metadata["n_features"] = obj.shape[1]
     if _req("feature_names", return_metadata):
         metadata["feature_names"] = list(range(obj.shape[1]))
+    if _req("dtypekind_dfip", return_metadata):
+        metadata["dtypekind_dfip"] = _get_panel_dtypekind(obj, "numpy3D")
+    if _req("feature_kind", return_metadata):
+        dtype_kind = _get_panel_dtypekind(obj, "numpy3D")
+        metadata["feature_kind"] = _get_feature_kind(dtype_kind)
 
     # check whether there any nans; only if requested
     if _req("has_nans", return_metadata):
@@ -178,10 +323,77 @@ def check_numpy3d_panel(obj, return_metadata=False, var_name="obj"):
     return _ret(True, None, metadata, return_metadata)
 
 
-check_dict[("numpy3D", "Panel")] = check_numpy3d_panel
+class PanelPdMultiIndex(ScitypePanel):
+    """Data type: MultiIndex-ed pd.DataFrame specification of panel of time series.
+
+    Parameters
+    ----------
+    is_univariate: bool
+        True iff table has one variable
+    is_equally_spaced : bool
+        True iff series index is equally spaced
+    is_equal_length: bool
+        True iff all series in panel are of equal length
+    is_empty: bool
+        True iff table has no variables or no instances
+    is_one_series: bool
+        True iff there is only one series in the panel of time series
+    has_nans: bool
+        True iff the table contains NaN values
+    n_instances: int
+        number of instances in the panel of time series
+    n_features: int
+        number of variables in table
+    feature_names: list of int or object
+        names of variables in table
+    dtypekind_dfip: list of DtypeKind enum
+        list of DtypeKind enum values for each feature in the panel,
+        following the data frame interface protocol
+    feature_kind: list of str
+        list of feature kind strings for each feature in the panel,
+        coerced to FLOAT or CATEGORICAL type
+    """
+
+    _tags = {
+        "scitype": "Panel",
+        "name": "pd-multiindex",  # any string
+        "name_python": "panel_pd_df",  # lower_snake_case
+        "name_aliases": [],
+        "python_version": None,
+        "python_dependencies": "numpy",
+        "capability:multivariate": True,
+        "capability:unequally_spaced": True,
+        "capability:missing_values": True,
+    }
+
+    def _check(self, obj, return_metadata=False, var_name="obj"):
+        """Check if obj is of this data type.
+
+        Parameters
+        ----------
+        obj : any
+            Object to check.
+        return_metadata : bool, optional (default=False)
+            Whether to return metadata.
+        var_name : str, optional (default="obj")
+            Name of the variable to check, for use in error messages.
+
+        Returns
+        -------
+        valid : bool
+            Whether obj is of this data type.
+        msg : str, only returned if return_metadata is True.
+            Error message if obj is not of this data type.
+        metadata : dict, only returned if return_metadata is True.
+            Metadata dictionary.
+        """
+        return _check_pdmultiindex_panel(
+            obj, return_metadata=return_metadata, var_name=var_name
+        )
 
 
-def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=True):
+def _check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=True):
+    """Check if obj is a pandas.DataFrame according to pd-multiindex specification."""
     if not isinstance(obj, pd.DataFrame):
         msg = f"{var_name} must be a pd.DataFrame, found {type(obj)}"
         return _ret(False, msg, None, return_metadata)
@@ -190,17 +402,20 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=T
         msg = f"{var_name} must have a MultiIndex, found {type(obj.index)}"
         return _ret(False, msg, None, return_metadata)
 
+    # check to delineate from nested_univ mtype (Hierarchical)
+    # pd.DataFrame mtype allows object dtype,
+    # but if we allow object dtype with Panel entries,
+    # the mtype becomes ambiguous, i.e., non-delineable from nested_univ
+    if np.prod(obj.shape) > 0 and isinstance(obj.iloc[0, 0], (pd.Series, pd.DataFrame)):
+        msg = f"{var_name} cannot contain nested pd.Series or pd.DataFrame"
+        return _ret(False, msg, None, return_metadata)
+
     index = obj.index
 
     # check that columns are unique
     col_names = obj.columns
     if not col_names.is_unique:
         msg = f"{var_name} must have unique column indices, but found {col_names}"
-        return _ret(False, msg, None, return_metadata)
-
-    # check that no dtype is object
-    if "object" in obj.dtypes.values:
-        msg = f"{var_name} should not have column of 'object' dtype"
         return _ret(False, msg, None, return_metadata)
 
     # check that there are precisely two index levels
@@ -260,6 +475,11 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=T
         metadata["n_features"] = len(obj.columns)
     if _req("feature_names", return_metadata):
         metadata["feature_names"] = obj.columns.to_list()
+    if _req("dtypekind_dfip", return_metadata):
+        metadata["dtypekind_dfip"] = _get_panel_dtypekind(obj, "pd-multiindex")
+    if _req("feature_kind", return_metadata):
+        dtype_kind = _get_panel_dtypekind(obj, "pd-multiindex")
+        metadata["feature_kind"] = _get_feature_kind(dtype_kind)
 
     # check whether index is equally spaced or if there are any nans
     #   compute only if needed
@@ -270,7 +490,10 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=T
         "is_equally_spaced",
     ]
     if _req(requires_series_grps, return_metadata):
-        series_groups = obj.groupby(level=list(range(index.nlevels - 1)), sort=False)
+        levels = list(range(index.nlevels - 1))
+        if len(levels) == 1:
+            levels = levels[0]
+        series_groups = obj.groupby(level=levels, sort=False)
         n_series = series_groups.ngroups
 
         if _req("n_instances", return_metadata):
@@ -301,9 +524,6 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=T
             metadata["is_one_panel"] = n_panels == 1
 
     return _ret(True, None, metadata, return_metadata)
-
-
-check_dict[("pd-multiindex", "Panel")] = check_pdmultiindex_panel
 
 
 def are_columns_nested(X):
@@ -374,7 +594,76 @@ def _nested_dataframe_has_nans(X: pd.DataFrame) -> bool:
     return False
 
 
-def is_nested_dataframe(obj, return_metadata=False, var_name="obj"):
+class PanelNestedDf(ScitypePanel):
+    """Data type: nested pandas.DataFrame based specification of panel of time series.
+
+    Parameters
+    ----------
+    is_univariate: bool
+        True iff table has one variable
+    is_equally_spaced : bool
+        True iff series index is equally spaced
+    is_equal_length: bool
+        True iff all series in panel are of equal length
+    is_empty: bool
+        True iff table has no variables or no instances
+    is_one_series: bool
+        True iff there is only one series in the panel of time series
+    has_nans: bool
+        True iff the table contains NaN values
+    n_instances: int
+        number of instances in the panel of time series
+    n_features: int
+        number of variables in table
+    feature_names: list of int or object
+        names of variables in table
+    dtypekind_dfip: list of DtypeKind enum
+        list of DtypeKind enum values for each feature in the panel,
+        following the data frame interface protocol
+    feature_kind: list of str
+        list of feature kind strings for each feature in the panel,
+        coerced to FLOAT or CATEGORICAL type
+    """
+
+    _tags = {
+        "scitype": "Panel",
+        "name": "nested_univ",  # any string
+        "name_python": "panel_pd_nested",  # lower_snake_case
+        "name_aliases": [],
+        "python_version": None,
+        "python_dependencies": "pandas",
+        "capability:multivariate": True,
+        "capability:unequally_spaced": True,
+        "capability:missing_values": True,
+    }
+
+    def _check(self, obj, return_metadata=False, var_name="obj"):
+        """Check if obj is of this data type.
+
+        Parameters
+        ----------
+        obj : any
+            Object to check.
+        return_metadata : bool, optional (default=False)
+            Whether to return metadata.
+        var_name : str, optional (default="obj")
+            Name of the variable to check, for use in error messages.
+
+        Returns
+        -------
+        valid : bool
+            Whether obj is of this data type.
+        msg : str, only returned if return_metadata is True.
+            Error message if obj is not of this data type.
+        metadata : dict, only returned if return_metadata is True.
+            Metadata dictionary.
+        """
+        return _is_nested_dataframe(
+            obj, return_metadata=return_metadata, var_name=var_name
+        )
+
+
+def _is_nested_dataframe(obj, return_metadata=False, var_name="obj"):
     """Check whether the input is a nested DataFrame.
 
     To allow for a mixture of nested and primitive columns types the
@@ -437,6 +726,11 @@ def is_nested_dataframe(obj, return_metadata=False, var_name="obj"):
         metadata["n_features"] = len(obj.columns)
     if _req("feature_names", return_metadata):
         metadata["feature_names"] = obj.columns.to_list()
+    if _req("dtypekind_dfip", return_metadata):
+        metadata["dtypekind_dfip"] = _get_panel_dtypekind(obj, "nested_univ")
+    if _req("feature_kind", return_metadata):
+        dtype_kind = _get_panel_dtypekind(obj, "nested_univ")
+        metadata["feature_kind"] = _get_feature_kind(dtype_kind)
 
     # todo: this is temporary override, proper is_empty logic needs to be added
     if _req("is_empty", return_metadata):
@@ -448,10 +742,77 @@ def is_nested_dataframe(obj, return_metadata=False, var_name="obj"):
     return _ret(True, None, metadata, return_metadata)
 
 
-check_dict[("nested_univ", "Panel")] = is_nested_dataframe
+class PanelNumpyFlat(ScitypePanel):
+    """Data type: flat 2D np.ndarray based specification of panel of time series.
+
+    Parameters
+    ----------
+    is_univariate: bool
+        True iff table has one variable
+    is_equally_spaced : bool
+        True iff series index is equally spaced
+    is_equal_length: bool
+        True iff all series in panel are of equal length
+    is_empty: bool
+        True iff table has no variables or no instances
+    is_one_series: bool
+        True iff there is only one series in the panel of time series
+    has_nans: bool
+        True iff the table contains NaN values
+    n_instances: int
+        number of instances in the panel of time series
+    n_features: int
+        number of variables in table
+    feature_names: list of int or object
+        names of variables in table
+    dtypekind_dfip: list of DtypeKind enum
+        list of DtypeKind enum values for each feature in the panel,
+        following the data frame interface protocol
+    feature_kind: list of str
+        list of feature kind strings for each feature in the panel,
+        coerced to FLOAT or CATEGORICAL type
+    """
+
+    _tags = {
+        "scitype": "Panel",
+        "name": "numpyflat",  # any string
+        "name_python": "panel_np_flat",  # lower_snake_case
+        "name_aliases": [],
+        "python_version": None,
+        "python_dependencies": "numpy",
+        "capability:multivariate": False,
+        "capability:unequally_spaced": False,
+        "capability:missing_values": True,
+    }
+
+    def _check(self, obj, return_metadata=False, var_name="obj"):
+        """Check if obj is of this data type.
+
+        Parameters
+        ----------
+        obj : any
+            Object to check.
+        return_metadata : bool, optional (default=False)
+            Whether to return metadata.
+        var_name : str, optional (default="obj")
+            Name of the variable to check, for use in error messages.
+
+        Returns
+        -------
+        valid : bool
+            Whether obj is of this data type.
+        msg : str, only returned if return_metadata is True.
+            Error message if obj is not of this data type.
+        metadata : dict, only returned if return_metadata is True.
+            Metadata dictionary.
+        """
+        return _check_numpyflat_Panel(
+            obj, return_metadata=return_metadata, var_name=var_name
+        )
 
 
-def check_numpyflat_Panel(obj, return_metadata=False, var_name="obj"):
+def _check_numpyflat_Panel(obj, return_metadata=False, var_name="obj"):
+    """Check if obj is a numpy.ndarray according to numpyflat specification."""
     if not isinstance(obj, np.ndarray):
         msg = f"{var_name} must be a numpy.ndarray, found {type(obj)}"
         return _ret(False, msg, None, return_metadata)
@@ -460,7 +821,7 @@ def check_numpyflat_Panel(obj, return_metadata=False, var_name="obj"):
         msg = f"{var_name} must be a 2D numpy.ndarray, but found {len(obj.shape)}D"
         return _ret(False, msg, None, return_metadata)
 
-    # we now know obj is a 3D np.ndarray
+    # we now know obj is a 2D np.ndarray
     metadata = dict()
     if _req("is_empty", return_metadata):
         metadata["is_empty"] = len(obj) < 1 or obj.shape[1] < 1
@@ -470,6 +831,11 @@ def check_numpyflat_Panel(obj, return_metadata=False, var_name="obj"):
         metadata["n_features"] = 1
     if _req("feature_names", return_metadata):
         metadata["feature_names"] = [0]
+    if _req("dtypekind_dfip", return_metadata):
+        metadata["dtypekind_dfip"] = _get_panel_dtypekind(obj, "numpyflat")
+    if _req("feature_kind", return_metadata):
+        dtype_kind = _get_panel_dtypekind(obj, "numpyflat")
+        metadata["feature_kind"] = _get_feature_kind(dtype_kind)
     # np.arrays are considered equally spaced, equal length, by assumption
     if _req("is_equally_spaced", return_metadata):
         metadata["is_equally_spaced"] = True
@@ -489,12 +855,72 @@ def check_numpyflat_Panel(obj, return_metadata=False, var_name="obj"):
     return _ret(True, None, metadata, return_metadata)
 
 
-check_dict[("numpyflat", "Panel")] = check_numpyflat_Panel
+class PanelDask(ScitypePanel):
+    """Data type: dask data frame based specification of panel of time series.
 
-if _check_soft_dependencies("dask", severity="none"):
-    from sktime.datatypes._adapter.dask_to_pd import check_dask_frame
+    Parameters
+    ----------
+    is_univariate: bool
+        True iff table has one variable
+    is_equally_spaced : bool
+        True iff series index is equally spaced
+    is_equal_length: bool
+        True iff all series in panel are of equal length
+    is_empty: bool
+        True iff table has no variables or no instances
+    is_one_series: bool
+        True iff there is only one series in the panel of time series
+    has_nans: bool
+        True iff the table contains NaN values
+    n_instances: int
+        number of instances in the panel of time series
+    n_features: int
+        number of variables in table
+    feature_names: list of int or object
+        names of variables in table
+    dtypekind_dfip: list of DtypeKind enum
+        list of DtypeKind enum values for each feature in the panel,
+        following the data frame interface protocol
+    feature_kind: list of str
+        list of feature kind strings for each feature in the panel,
+        coerced to FLOAT or CATEGORICAL type
+    """
 
-    def check_dask_panel(obj, return_metadata=False, var_name="obj"):
+    _tags = {
+        "scitype": "Panel",
+        "name": "dask_panel",  # any string
+        "name_python": "panel_dask",  # lower_snake_case
+        "name_aliases": [],
+        "python_version": None,
+        "python_dependencies": "dask",
+        "capability:multivariate": True,
+        "capability:unequally_spaced": True,
+        "capability:missing_values": True,
+    }
+
+    def _check(self, obj, return_metadata=False, var_name="obj"):
+        """Check if obj is of this data type.
+
+        Parameters
+        ----------
+        obj : any
+            Object to check.
+        return_metadata : bool, optional (default=False)
+            Whether to return metadata.
+        var_name : str, optional (default="obj")
+            Name of the variable to check, for use in error messages.
+
+        Returns
+        -------
+        valid : bool
+            Whether obj is of this data type.
+        msg : str, only returned if return_metadata is True.
+            Error message if obj is not of this data type.
+        metadata : dict, only returned if return_metadata is True.
+            Metadata dictionary.
+        """
+        from sktime.datatypes._adapter.dask_to_pd import check_dask_frame
+
         return check_dask_frame(
             obj=obj,
             return_metadata=return_metadata,
@@ -502,4 +928,421 @@ if _check_soft_dependencies("dask", severity="none"):
             scitype="Panel",
         )
 
-    check_dict[("dask_panel", "Panel")] = check_dask_panel
+
+class PanelPolarsEager(ScitypePanel):
+    """Data type: polars.DataFrame based specification of panel of time series.
+
+    Parameters
+    ----------
+    is_univariate: bool
+        True iff table has one variable
+    is_equally_spaced : bool
+        True iff series index is equally spaced
+    is_equal_length: bool
+        True iff all series in panel are of equal length
+    is_empty: bool
+        True iff table has no variables or no instances
+    is_one_series: bool
+        True iff there is only one series in the panel of time series
+    has_nans: bool
+        True iff the table contains NaN values
+    n_instances: int
+        number of instances in the panel of time series
+    n_features: int
+        number of variables in table
+    feature_names: list of int or object
+        names of variables in table
+    dtypekind_dfip: list of DtypeKind enum
+        list of DtypeKind enum values for each feature in the panel,
+        following the data frame interface protocol
+    feature_kind: list of str
+        list of feature kind strings for each feature in the panel,
+        coerced to FLOAT or CATEGORICAL type
+    """
+
+    _tags = {
+        "scitype": "Panel",
+        "name": "polars_panel",  # any string
+        "name_python": "panel_polars",  # lower_snake_case
+        "name_aliases": [],
+        "python_version": None,
+        "python_dependencies": "polars",
+        "capability:multivariate": True,
+        "capability:unequally_spaced": True,
+        "capability:missing_values": True,
+    }
+
+    def _check(self, obj, return_metadata=False, var_name="obj"):
+        """Check if obj is of this data type.
+
+        Parameters
+        ----------
+        obj : any
+            Object to check.
+        return_metadata : bool, optional (default=False)
+            Whether to return metadata.
+        var_name : str, optional (default="obj")
+            Name of the variable to check, for use in error messages.
+
+        Returns
+        -------
+        valid : bool
+            Whether obj is of this data type.
+        msg : str, only returned if return_metadata is True.
+            Error message if obj is not of this data type.
+        metadata : dict, only returned if return_metadata is True.
+            Metadata dictionary.
+        """
+        return _check_polars_panel(
+            obj=obj, return_metadata=return_metadata, var_name=var_name, scitype="Panel"
+        )
+
+
+def _check_polars_panel(obj, return_metadata=False, var_name="obj", scitype="Panel"):
+    """Check if obj is a polars.DataFrame according to polars specification."""
+    import polars as pl
+
+    from sktime.datatypes._adapter.polars import check_polars_frame, get_mi_cols
+
+    metadict = check_polars_frame(
+        obj=obj,
+        return_metadata=return_metadata,
+        var_name=var_name,
+        scitype=scitype,
+    )
+
+    if isinstance(metadict, tuple) and metadict[0]:
+        requires_series_grps = [
+            "n_instances",
+            "is_one_series",
+            "is_equal_length",
+            "is_equally_spaced",
+        ]
+
+        if _req(requires_series_grps, return_metadata):
+            if isinstance(obj, pl.LazyFrame):
+                for key in requires_series_grps:
+                    metadict[1][key] = "NA"
+            else:
+                mi_cols = get_mi_cols(obj)
+                levels = mi_cols[:-1]
+                if len(mi_cols) == 1:
+                    levels = levels[0]
+                series_groups = obj.group_by(levels).agg(
+                    [
+                        pl.col(mi_cols[-1]).alias(
+                            "level_values"
+                        ),  # index values in each level
+                        pl.len().alias("size"),  # Calculate the size of each group
+                    ]
+                )
+                n_series = series_groups.shape[0]
+
+                if _req("n_instances", return_metadata):
+                    metadict[2]["n_instances"] = n_series
+                if _req("is_one_series", return_metadata):
+                    metadict[2]["is_one_series"] = n_series == 1
+                if _req("is_equal_length", return_metadata):
+                    metadict[2]["is_equal_length"] = _list_all_equal(
+                        series_groups["size"].to_numpy()
+                    )
+                if _req("is_equally_spaced", return_metadata):
+                    metadict[2]["is_equally_spaced"] = "NA"
+
+        requires_panel_grps = ["n_panels", "is_one_panel"]
+        if _req(requires_panel_grps, return_metadata):
+            if isinstance(obj, pl.LazyFrame):
+                for key in requires_panel_grps:
+                    metadict[1][key] = "NA"
+            else:
+                if scitype == "Panel":
+                    n_panels = 1
+                else:
+                    mi_cols = get_mi_cols(obj)
+                    panel_groups = obj.group_by(mi_cols[:-2]).agg([pl.col(mi_cols[-2])])
+                    n_panels = panel_groups.shape[0]
+
+                if _req("n_panels", return_metadata):
+                    metadict[2]["n_panels"] = n_panels
+                if _req("is_one_panel", return_metadata):
+                    metadict[2]["is_one_panel"] = n_panels == 1
+
+    return metadict
+
+
+class PanelGluontsList(ScitypePanel):
+    """Data type: polars.DataFrame based specification of panel of time series.
+
+    Parameters
+    ----------
+    is_univariate: bool
+        True iff table has one variable
+    is_equally_spaced : bool
+        True iff series index is equally spaced
+    is_equal_length: bool
+        True iff all series in panel are of equal length
+    is_empty: bool
+        True iff table has no variables or no instances
+    is_one_series: bool
+        True iff there is only one series in the panel of time series
+    has_nans: bool
+        True iff the table contains NaN values
+    n_instances: int
+        number of instances in the panel of time series
+    n_features: int
+        number of variables in table
+    feature_names: list of int or object
+        names of variables in table
+    dtypekind_dfip: list of DtypeKind enum
+        list of DtypeKind enum values for each feature in the panel,
+        following the data frame interface protocol
+    feature_kind: list of str
+        list of feature kind strings for each feature in the panel,
+        coerced to FLOAT or CATEGORICAL type
+    """
+
+    _tags = {
+        "scitype": "Panel",
+        "name": "gluonts_ListDataset_panel",  # any string
+        "name_python": "panel_gluonts_list",  # lower_snake_case
+        "name_aliases": [],
+        "python_version": None,
+        "python_dependencies": "gluonts",
+        "capability:multivariate": True,
+        "capability:unequally_spaced": True,
+        "capability:missing_values": True,
+    }
+
+    def _check(self, obj, return_metadata=False, var_name="obj"):
+        """Check if obj is of this data type.
+
+        Parameters
+        ----------
+        obj : any
+            Object to check.
+        return_metadata : bool, optional (default=False)
+            Whether to return metadata.
+        var_name : str, optional (default="obj")
+            Name of the variable to check, for use in error messages.
+
+        Returns
+        -------
+        valid : bool
+            Whether obj is of this data type.
+        msg : str, only returned if return_metadata is True.
+            Error message if obj is not of this data type.
+        metadata : dict, only returned if return_metadata is True.
+            Metadata dictionary.
+        """
+        from sktime.datatypes._dtypekind import DtypeKind
+
+        metadata = dict()
+
+        if (
+            not isinstance(obj, list)
+            or not isinstance(obj[0], dict)
+            or "target" not in obj[0]
+            or len(obj[0]["target"]) <= 1
+        ):
+            msg = f"{var_name} must be a gluonts.ListDataset, found {type(obj)}"
+            return _ret(False, msg, None, return_metadata)
+
+        # Check if there are no time series in the ListDataset
+        if _req("is_empty", return_metadata):
+            metadata["is_empty"] = len(obj) < 1
+
+        if _req("is_univariate", return_metadata):
+            # Check first if the ListDataset is empty
+            if len(obj) < 1:
+                metadata["is_univariate"] = True
+
+            # Check the first time-series for total features
+            else:
+                metadata["is_univariate"] = obj[0]["target"].shape[1] == 1
+
+        req_n_feat = ["n_features", "feature_names", "feature_kind", "dtypekind_dfip"]
+        if _req(req_n_feat, return_metadata):
+            # Check first if the ListDataset is empty
+            if len(obj) < 1:
+                n_features = 0
+            else:
+                n_features = obj[0]["target"].shape[1]
+
+        if _req("n_features", return_metadata):
+            metadata["n_features"] = n_features
+
+        if _req(["dtypekind_dfip", "feature_kind"], return_metadata):
+            dtypes = []
+
+            # Each entry in a ListDataset is formed with an ndarray.
+            # Basing off definitions in _dtypekind, assigning values of FLOAT
+
+            dtypes.extend([DtypeKind.FLOAT] * len(obj))
+
+            if _req("dtypekind_dfip", return_metadata):
+                metadata["dtypekind_dfip"] = dtypes
+
+            if _req("feature_kind", return_metadata):
+                metadata["feature_kind"] = _get_feature_kind(dtypes)
+
+        if _req("n_instances", return_metadata):
+            metadata["n_instances"] = len(obj)
+
+        if _req("n_panels", return_metadata):
+            metadata["n_panels"] = len(obj)
+
+        if _req("feature_names", return_metadata):
+            # Check first if the ListDataset is empty
+            if len(obj) < 1:
+                metadata["feature_names"] = []
+            else:
+                metadata["feature_names"] = [f"value_{i}" for i in range(n_features)]
+
+        for series in obj:
+            # check that no dtype is object
+            if series["target"].dtype == "object":
+                msg = f"{var_name} should not have column of 'object' dtype"
+                return _ret(False, msg, None, return_metadata)
+
+        # For a GluonTS ListDataset, only a start date and frequency is set
+        # so everything should thus be equally spaced
+        if _req("is_equally_spaced", return_metadata):
+            metadata["is_equally_spaced"] = True
+
+        if _req("has_nans", return_metadata):
+            for series in obj:
+                metadata["has_nans"] = pd.isnull(series["target"]).any()
+
+                # Break out if at least 1 time series has NaN values
+                if metadata["has_nans"]:
+                    break
+
+        return _ret(True, None, metadata, return_metadata)
+
+
+class PanelGluontsPandas(ScitypePanel):
+    """Data type: polars.DataFrame based specification of panel of time series.
+
+    Parameters
+    ----------
+    is_univariate: bool
+        True iff table has one variable
+    is_equally_spaced : bool
+        True iff series index is equally spaced
+    is_equal_length: bool
+        True iff all series in panel are of equal length
+    is_empty: bool
+        True iff table has no variables or no instances
+    is_one_series: bool
+        True iff there is only one series in the panel of time series
+    has_nans: bool
+        True iff the table contains NaN values
+    n_instances: int
+        number of instances in the panel of time series
+    n_features: int
+        number of variables in table
+    feature_names: list of int or object
+        names of variables in table
+    dtypekind_dfip: list of DtypeKind enum
+        list of DtypeKind enum values for each feature in the panel,
+        following the data frame interface protocol
+    feature_kind: list of str
+        list of feature kind strings for each feature in the panel,
+        coerced to FLOAT or CATEGORICAL type
+    """
+
+    _tags = {
+        "scitype": "Panel",
+        "name": "gluonts_PandasDataset_panel",  # any string
+        "name_python": "panel_gluonts_pandas",  # lower_snake_case
+        "name_aliases": [],
+        "python_version": None,
+        "python_dependencies": "gluonts",
+        "capability:multivariate": True,
+        "capability:unequally_spaced": True,
+        "capability:missing_values": True,
+    }
+
+    def _check(self, obj, return_metadata=False, var_name="obj"):
+        """Check if obj is of this data type.
+
+        Parameters
+        ----------
+        obj : any
+            Object to check.
+        return_metadata : bool, optional (default=False)
+            Whether to return metadata.
+        var_name : str, optional (default="obj")
+            Name of the variable to check, for use in error messages.
+
+        Returns
+        -------
+        valid : bool
+            Whether obj is of this data type.
+        msg : str, only returned if return_metadata is True.
+            Error message if obj is not of this data type.
+        metadata : dict, only returned if return_metadata is True.
+            Metadata dictionary.
+        """
+        # Importing required libraries
+        from gluonts.dataset.pandas import PandasDataset
+
+        metadata = dict()
+
+        # Check for type correctness
+        if not isinstance(obj, PandasDataset):
+            msg = f"{var_name} must be a gluonts.PandasDataset, found {type(obj)}"
+            return _ret(False, msg, None, return_metadata)
+
+        if not hasattr(obj._data_entries.iterable, "iterable"):
+            msg = f"{var_name} must be formed with a multiindex DataFrame to "
+            +"be a valid `pandasDataset_panel`"
+            return _ret(False, msg, None, return_metadata)
+
+        # Convert to a pandas DF for easier checks
+        df = obj._data_entries.iterable.iterable
+
+        # Check if there are no values
+        if _req("is_empty", return_metadata):
+            metadata["is_empty"] = len(obj._data_entries) == 0
+
+        if _req("is_univariate", return_metadata):
+            metadata["is_univariate"] = len(df[0][1].columns) == 1
+
+        req_n_feat = ["n_features", "feature_kind", "dtypekind_dfip"]
+
+        if _req(req_n_feat, return_metadata):
+            n_features = len(df[0][1].columns)
+
+        if _req("n_features", return_metadata):
+            metadata["n_features"] = n_features
+
+        if _req("dtypekind_dfip", return_metadata):
+            index_cols_count = len(df[0][1].columns)
+
+            # slicing off additional index columns
+            dtype_list = df[0][1].dtypes.to_list()[index_cols_count:]
+
+            metadata["dtypekind_dfip"] = _pandas_dtype_to_kind(dtype_list)
+
+        if _req("feature_kind", return_metadata):
+            dtype_list = df[0][1].dtypes.to_list()[index_cols_count:]
+            dtype_kind = _pandas_dtype_to_kind(dtype_list)
+            metadata["feature_kind"] = _get_feature_kind(dtype_kind)
+
+        if _req("n_instances", return_metadata):
+            metadata["n_instances"] = len(df)
+
+        if _req("n_panels", return_metadata):
+            metadata["n_panels"] = len(df)
+
+        if _req("feature_names", return_metadata):
+            metadata["feature_names"] = df[0][1].columns
+
+        if _req("is_equally_spaced", return_metadata):
+            metadata["is_equally_spaced"] = True
+
+        if _req("has_nans", return_metadata):
+            metadata["has_nans"] = False
+
+        return _ret(True, None, metadata, return_metadata)

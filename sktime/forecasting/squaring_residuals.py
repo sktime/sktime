@@ -16,14 +16,14 @@ from sktime.utils.warnings import warn
 class SquaringResiduals(BaseForecaster):
     r"""Compute the prediction variance based on a separate forecaster.
 
-    Wraps a `forecaster` with another `residual_forecaster` object that
+    Wraps a ``forecaster`` with another ``residual_forecaster`` object that
     allows for quantile and interval estimation by fitting the
-    `residual_forecaster` to the rolling residuals.
+    ``residual_forecaster`` to the rolling residuals.
 
     Fitting proceeds as follows:
     Let :math:`t_1, \dots, t_N` be the train set.
-    Let `steps_ahead` be a positive integer indicating the steps ahead
-    we want to forecast the residuals. Let `initial_window` be
+    Let ``steps_ahead`` be a positive integer indicating the steps ahead
+    we want to forecast the residuals. Let ``initial_window`` be
     the minimal number of observations to which the forecaster is fitted.
 
     1. For :math:`i = initial\_window, \dots, N - steps\_ahead`
@@ -35,13 +35,13 @@ class SquaringResiduals(BaseForecaster):
            - \hat{y}(t_{i+steps\_ahead})`
         d. Compute :math:`e(t_{i+steps\_ahead}) := h(r(t_{i+steps\_ahead}))`
            where :math:`h(x)` is given by :math:`strategy`
-    2. Train `residual_forecaster` on
+    2. Train ``residual_forecaster`` on
        :math:`e(t_{initial\_window+steps\_ahead}), \dots, e(t_{N})`
 
     Prediction for :math:`t_{N+steps\_ahead}` is done as follows:
 
-    1. Use `forecaster` to predict location param :math:`\hat{y}(t_{N+steps\_ahead})`
-    2. Use `residual_forecaster` to predict scale param :math:`e(t_{N+steps\_ahead})`
+    1. Use ``forecaster`` to predict location param :math:`\hat{y}(t_{N+steps\_ahead})`
+    2. Use ``residual_forecaster`` to predict scale param :math:`e(t_{N+steps\_ahead})`
     3. Calculate prediction intervals based on e.g. normal assumption
        :math:`N(\hat{y}(t_{N+steps\_ahead}),  e(t_{N+steps\_ahead}))`
 
@@ -49,8 +49,10 @@ class SquaringResiduals(BaseForecaster):
     ----------
     forecaster : sktime forecaster, BaseForecaster descendant, optional
         Estimator to which probabilistic forecasts are being added
+        Default = NaiveForecaster()
     residual_forecaster : sktime forecaster, BaseForecaster descendant, optional
         Estimator which is fitted to the residuals of forecaster
+        Default = NaiveForecaster()
     initial_window : int, optional, default=2
         Size of initial_window to which forecaster is fitted
     steps_ahead : int, optional, default=1
@@ -306,14 +308,17 @@ class SquaringResiduals(BaseForecaster):
             Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
-        eval(f"exec('from scipy.stats import {self.distr}')")
+        from scipy import stats
+
+        dist_fun = getattr(stats, self.distr)
+
         fh_abs = fh.to_absolute(self.cutoff)
         y_pred = self._forecaster_.predict(fh=fh_abs, X=X)
         pred_var = self._predict_var(fh=fh, X=X)
         if self.distr_kwargs is not None:
-            z_scores = eval(self.distr).ppf(alpha, **self.distr_kwargs)
+            z_scores = dist_fun.ppf(alpha, **self.distr_kwargs)
         else:
-            z_scores = eval(self.distr).ppf(alpha)
+            z_scores = dist_fun.ppf(alpha)
 
         errors = [pred_var * z for z in z_scores]
 
@@ -377,7 +382,7 @@ class SquaringResiduals(BaseForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for forecasters.
 
         Returns
@@ -385,8 +390,9 @@ class SquaringResiduals(BaseForecaster):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.forecasting.croston import Croston
         from sktime.forecasting.naive import NaiveForecaster

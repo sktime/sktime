@@ -20,8 +20,8 @@ class PluginParamsTransformer(_DelegatedTransformer):
       if ``param_est.fit`` has a second arg
 
     Then, does ``transformer.set_params`` with desired/selected parameters.
-    Parameters of the fitted `param_est` are passed on to ``transformer``,
-    from/to pairs are as specified by the `params` parameter of ``self``, see below.
+    Parameters of the fitted ``param_est`` are passed on to ``transformer``,
+    from/to pairs are as specified by the ``params`` parameter of ``self``, see below.
 
     Then, fits ``transformer`` to the data passed in ``fit``.
 
@@ -34,10 +34,10 @@ class PluginParamsTransformer(_DelegatedTransformer):
     ----------
     param_est : sktime estimator object with a fit method, inheriting from BaseEstimator
         e.g., estimator inheriting from BaseParamFitter or transformer
-        this is a "blueprint" estimator, state does not change when `fit` is called
+        this is a "blueprint" estimator, state does not change when ``fit`` is called
 
     transformer : sktime transformer, i.e., estimator inheriting from BaseTransformer
-        this is a "blueprint" estimator, state does not change when `fit` is called
+        this is a "blueprint" estimator, state does not change when ``fit`` is called
 
     params : None, str, list of str, dict with str values/keys, optional, default=None
         determines which parameters from ``param_est`` are plugged into trafo and where
@@ -56,7 +56,7 @@ class PluginParamsTransformer(_DelegatedTransformer):
     transformer_ : sktime transformer, clone of ``transformer``
         this clone is fitted in the pipeline when ``fit`` is called
     param_map_ : dict
-        mapping of parameters from `param_est_` to `transformer_` used in `fit`,
+        mapping of parameters from ``param_est_`` to ``transformer_`` used in ``fit``,
         after filtering for parameters present in both
 
     Examples
@@ -203,7 +203,7 @@ class PluginParamsTransformer(_DelegatedTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -211,14 +211,15 @@ class PluginParamsTransformer(_DelegatedTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.param_est.fixed import FixedParams
         from sktime.param_est.seasonality import SeasonalityACF
         from sktime.transformations.series.detrend import Deseasonalizer
         from sktime.transformations.series.exponent import ExponentTransformer
-        from sktime.utils.validation._dependencies import _check_estimator_deps
+        from sktime.utils.dependencies import _check_estimator_deps
 
         # use of dictionary to plug "foo" parameter into "power", uses mock param_est
         params1 = {

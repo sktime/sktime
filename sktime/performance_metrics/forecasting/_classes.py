@@ -6,6 +6,7 @@ Classes named as ``*Score`` return a value to maximize: the higher the better.
 Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
+
 from inspect import getfullargspec, isfunction, signature
 
 import numpy as np
@@ -75,10 +76,10 @@ __all__ = [
 def _is_average(multilevel_or_multioutput):
     """Check if multilevel is one of the inputs that lead to averaging.
 
-    True if `multilevel_or_multioutput` is one of the strings `"uniform_average"`,
-    `"uniform_average_time"`.
+    True if ``multilevel_or_multioutput`` is one of the strings ``"uniform_average"``,
+    ``"uniform_average_time"``.
 
-    False if `multilevel_or_multioutput` is the string `"raw_values"`
+    False if ``multilevel_or_multioutput`` is the string ``"raw_values"``
 
     True otherwise
     """
@@ -97,23 +98,29 @@ class BaseForecastingErrorMetric(BaseMetric):
     Extends sktime's BaseMetric to the forecasting interface. Forecasting error
     metrics measure the error (loss) between forecasts and true values.
 
-    `multioutput` and `multilevel` parameters can be used to control averaging
-    across variables (`multioutput`) and (non-temporal) hierarchy levels (`multilevel`).
+    ``multioutput`` and ``multilevel`` parameters can be used to control averaging
+    across variables (``multioutput``) and (non-temporal) hierarchy levels
+    (``multilevel``).
 
     Parameters
     ----------
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines whether and how to aggregate metric for across variables.
-        If 'uniform_average' (default), errors are mean-averaged across variables.
-        If array-like, errors are weighted averaged across variables, values as weights.
-        If 'raw_values', does not average errors across variables, columns are retained.
+
+        * If 'uniform_average' (default), errors are mean-averaged across variables.
+        * If array-like, errors are weighted averaged across variables,
+          values as weights.
+        * If 'raw_values', does not average errors across variables,
+          columns are retained.
 
     multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
         Defines how to aggregate metric for hierarchical data (with levels).
-        If 'uniform_average' (default), errors are mean-averaged across levels.
-        If 'uniform_average_time', metric is applied to all data, ignoring level index.
-        If 'raw_values', does not average errors across levels, hierarchy is retained.
+
+        * If 'uniform_average' (default), errors are mean-averaged across levels.
+        * If 'uniform_average_time', metric is applied to all data,
+          ignoring level index.
+        * If 'raw_values', does not average errors across levels, hierarchy is retained.
     """
 
     _tags = {
@@ -140,32 +147,76 @@ class BaseForecastingErrorMetric(BaseMetric):
 
         Parameters
         ----------
-        y_true : time series in sktime compatible data container format
-            Ground truth (correct) target values
-            y can be in one of the following formats:
-            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
-                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
-            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
-        y_pred :time series in sktime compatible data container format
-            Forecasted values to evaluate
-            must be of same format as y_true, same indices and columns if indexed
+        y_true : time series in ``sktime`` compatible data container format.
+            Ground truth (correct) target values.
+
+            Individual data formats in ``sktime`` are so-called :term:`mtype`
+            specifications, each mtype implements an abstract :term:`scitype`.
+
+            * ``Series`` scitype = individual time series, vanilla forecasting.
+              ``pd.DataFrame``, ``pd.Series``, or ``np.ndarray`` (1D or 2D)
+
+            * ``Panel`` scitype = collection of time series, global/panel forecasting.
+              ``pd.DataFrame`` with 2-level row ``MultiIndex`` ``(instance, time)``,
+              ``3D np.ndarray`` ``(instance, variable, time)``,
+              ``list`` of ``Series`` typed ``pd.DataFrame``
+
+            * ``Hierarchical`` scitype = hierarchical collection, for
+              hierarchical forecasting. ``pd.DataFrame`` with 3 or more level row
+              ``MultiIndex`` ``(hierarchy_1, ..., hierarchy_n, time)``
+
+            For further details on data format, see glossary on :term:`mtype`.
+            For usage, see forecasting tutorial ``examples/01_forecasting.ipynb``
+
+        y_pred : time series in ``sktime`` compatible data container format
+            Predicted values to evaluate against ground truth.
+            Must be of same format as ``y_true``, same indices and columns if indexed.
+
+        y_pred_benchmark : optional, time series in ``sktime`` compatible data container format
+            Benchmark predictions to compare ``y_pred`` to, used for relative metrics.
+            Required only if metric requires benchmark predictions,
+            as indicated by tag ``requires-y-pred-benchmark``.
+            Otherwise, can be passed to ensure interface consistency, but is ignored.
+            Must be of same format as ``y_true``, same indices and columns if indexed.
+
+        y_train : optional, time series in ``sktime`` compatible data container format
+            Training data used to normalize the error metric.
+            Required only if metric requires training data,
+            as indicated by tag ``requires-y-train``.
+            Otherwise, can be passed to ensure interface consistency, but is ignored.
+            Must be of same format as ``y_true``, same columns if indexed,
+            but not necessarily same indices.
+
+        sample_weight : optional, 1D array-like, default=None
+            Sample weights for each time point.
+
+            * If ``None``, the time indices are considered equally weighted.
+            * If an array, must be 1D.
+              If ``y_true`` and ``y_pred``are a single time series,
+              ``sample_weight`` must be of the same length as ``y_true``.
+              If the time series are panel or hierarchical, the length of all
+              individual time
+              series must be the same, and equal to the length of ``sample_weight``,
+              for all instances of time series passed.
 
         Returns
         -------
         loss : float, np.ndarray, or pd.DataFrame
             Calculated metric, averaged or by variable.
-            float if self.multioutput="uniform_average" or array-like
-                and self.multilevel="uniform_average" or "uniform_average_time"
-                value is metric averaged over variables and levels (see class docstring)
-            np.ndarray of shape (y_true.columns,) if self.multioutput="raw_values"
-                and self.multilevel="uniform_average" or "uniform_average_time"
-                i-th entry is metric calculated for i-th variable
-            pd.DataFrame if self.multilevel=raw.values
-                of shape (n_levels, ) if self.multioutput = "uniform_average" or array
-                of shape (n_levels, y_true.columns) if self.multioutput="raw_values"
-                metric is applied per level, row averaging (yes/no) as in multioutput
-        """
+            Weighted by ``sample_weight`` if provided.
+
+            * float if ``multioutput="uniform_average" or array-like,
+              and ``multilevel="uniform_average"`` or "uniform_average_time"``.
+              Value is metric averaged over variables and levels (see class docstring)
+            * ``np.ndarray`` of shape ``(y_true.columns,)``
+              if `multioutput="raw_values"``
+              and ``multilevel="uniform_average"`` or ``"uniform_average_time"``.
+              i-th entry is the, metric calculated for i-th variable
+            * ``pd.DataFrame`` if ``multilevel="raw_values"``.
+              of shape ``(n_levels, )``, if ``multioutput="uniform_average"``;
+              of shape ``(n_levels, y_true.columns)`` if ``multioutput="raw_values"``.
+              metric is applied per level, row averaging (yes/no) as in ``multioutput``.
+        """  # noqa: E501
         return self.evaluate(y_true, y_pred, **kwargs)
 
     def evaluate(self, y_true, y_pred, **kwargs):
@@ -173,32 +224,76 @@ class BaseForecastingErrorMetric(BaseMetric):
 
         Parameters
         ----------
-        y_true : time series in sktime compatible data container format
-            Ground truth (correct) target values
-            y can be in one of the following formats:
-            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
-                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
-            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
-        y_pred :time series in sktime compatible data container format
-            Forecasted values to evaluate
-            must be of same format as y_true, same indices and columns if indexed
+        y_true : time series in ``sktime`` compatible data container format.
+            Ground truth (correct) target values.
+
+            Individual data formats in ``sktime`` are so-called :term:`mtype`
+            specifications, each mtype implements an abstract :term:`scitype`.
+
+            * ``Series`` scitype = individual time series, vanilla forecasting.
+              ``pd.DataFrame``, ``pd.Series``, or ``np.ndarray`` (1D or 2D)
+
+            * ``Panel`` scitype = collection of time series, global/panel forecasting.
+              ``pd.DataFrame`` with 2-level row ``MultiIndex`` ``(instance, time)``,
+              ``3D np.ndarray`` ``(instance, variable, time)``,
+              ``list`` of ``Series`` typed ``pd.DataFrame``
+
+            * ``Hierarchical`` scitype = hierarchical collection, for
+              hierarchical forecasting. ``pd.DataFrame`` with 3 or more level row
+              ``MultiIndex`` ``(hierarchy_1, ..., hierarchy_n, time)``
+
+            For further details on data format, see glossary on :term:`mtype`.
+            For usage, see forecasting tutorial ``examples/01_forecasting.ipynb``
+
+        y_pred : time series in ``sktime`` compatible data container format
+            Predicted values to evaluate against ground truth.
+            Must be of same format as ``y_true``, same indices and columns if indexed.
+
+        y_pred_benchmark : optional, time series in ``sktime`` compatible data container format
+            Benchmark predictions to compare ``y_pred`` to, used for relative metrics.
+            Required only if metric requires benchmark predictions,
+            as indicated by tag ``requires-y-pred-benchmark``.
+            Otherwise, can be passed to ensure interface consistency, but is ignored.
+            Must be of same format as ``y_true``, same indices and columns if indexed.
+
+        y_train : optional, time series in ``sktime`` compatible data container format
+            Training data used to normalize the error metric.
+            Required only if metric requires training data,
+            as indicated by tag ``requires-y-train``.
+            Otherwise, can be passed to ensure interface consistency, but is ignored.
+            Must be of same format as ``y_true``, same columns if indexed,
+            but not necessarily same indices.
+
+        sample_weight : optional, 1D array-like, default=None
+            Sample weights for each time point.
+
+            * If ``None``, the time indices are considered equally weighted.
+            * If an array, must be 1D.
+              If ``y_true`` and ``y_pred``are a single time series,
+              ``sample_weight`` must be of the same length as ``y_true``.
+              If the time series are panel or hierarchical, the length of all
+              individual time
+              series must be the same, and equal to the length of ``sample_weight``,
+              for all instances of time series passed.
 
         Returns
         -------
         loss : float, np.ndarray, or pd.DataFrame
             Calculated metric, averaged or by variable.
-            float if self.multioutput="uniform_average" or array-like
-                and self.multilevel="uniform_average" or "uniform_average_time"
-                value is metric averaged over variables and levels (see class docstring)
-            np.ndarray of shape (y_true.columns,) if self.multioutput="raw_values"
-                and self.multilevel="uniform_average" or "uniform_average_time"
-                i-th entry is metric calculated for i-th variable
-            pd.DataFrame if self.multilevel=raw.values
-                of shape (n_levels, ) if self.multioutput = "uniform_average" or array
-                of shape (n_levels, y_true.columns) if self.multioutput="raw_values"
-                metric is applied per level, row averaging (yes/no) as in multioutput
-        """
+            Weighted by ``sample_weight`` if provided.
+
+            * float if ``multioutput="uniform_average" or array-like,
+              and ``multilevel="uniform_average"`` or "uniform_average_time"``.
+              Value is metric averaged over variables and levels (see class docstring)
+            * ``np.ndarray`` of shape ``(y_true.columns,)``
+              if `multioutput="raw_values"``
+              and ``multilevel="uniform_average"`` or ``"uniform_average_time"``.
+              i-th entry is the, metric calculated for i-th variable
+            * ``pd.DataFrame`` if ``multilevel="raw_values"``.
+              of shape ``(n_levels, )``, if ``multioutput="uniform_average"``;
+              of shape ``(n_levels, y_true.columns)`` if ``multioutput="raw_values"``.
+              metric is applied per level, row averaging (yes/no) as in ``multioutput``.
+        """  # noqa: E501
         multioutput = self.multioutput
         multilevel = self.multilevel
         # Input checks and conversions
@@ -332,28 +427,71 @@ class BaseForecastingErrorMetric(BaseMetric):
 
         Parameters
         ----------
-        y_true : time series in sktime compatible data container format
-            Ground truth (correct) target values
-            y can be in one of the following formats:
-            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
-                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
-            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
-        y_pred :time series in sktime compatible data container format
-            Forecasted values to evaluate
-            must be of same format as y_true, same indices and columns if indexed
+        y_true : time series in ``sktime`` compatible data container format.
+            Ground truth (correct) target values.
+
+            Individual data formats in ``sktime`` are so-called :term:`mtype`
+            specifications, each mtype implements an abstract :term:`scitype`.
+
+            * ``Series`` scitype = individual time series, vanilla forecasting.
+              ``pd.DataFrame``, ``pd.Series``, or ``np.ndarray`` (1D or 2D)
+
+            * ``Panel`` scitype = collection of time series, global/panel forecasting.
+              ``pd.DataFrame`` with 2-level row ``MultiIndex`` ``(instance, time)``,
+              ``3D np.ndarray`` ``(instance, variable, time)``,
+              ``list`` of ``Series`` typed ``pd.DataFrame``
+
+            * ``Hierarchical`` scitype = hierarchical collection, for
+              hierarchical forecasting. ``pd.DataFrame`` with 3 or more level row
+              ``MultiIndex`` ``(hierarchy_1, ..., hierarchy_n, time)``
+
+            For further details on data format, see glossary on :term:`mtype`.
+            For usage, see forecasting tutorial ``examples/01_forecasting.ipynb``
+
+        y_pred : time series in ``sktime`` compatible data container format
+            Predicted values to evaluate against ground truth.
+            Must be of same format as ``y_true``, same indices and columns if indexed.
+
+        y_pred_benchmark : optional, time series in ``sktime`` compatible data container format
+            Benchmark predictions to compare ``y_pred`` to, used for relative metrics.
+            Required only if metric requires benchmark predictions,
+            as indicated by tag ``requires-y-pred-benchmark``.
+            Otherwise, can be passed to ensure interface consistency, but is ignored.
+            Must be of same format as ``y_true``, same indices and columns if indexed.
+
+        y_train : optional, time series in ``sktime`` compatible data container format
+            Training data used to normalize the error metric.
+            Required only if metric requires training data,
+            as indicated by tag ``requires-y-train``.
+            Otherwise, can be passed to ensure interface consistency, but is ignored.
+            Must be of same format as ``y_true``, same columns if indexed,
+            but not necessarily same indices.
+
+        sample_weight : optional, 1D array-like, default=None
+            Sample weights for each time point.
+
+            * If ``None``, the time indices are considered equally weighted.
+            * If an array, must be 1D.
+              If ``y_true`` and ``y_pred``are a single time series,
+              ``sample_weight`` must be of the same length as ``y_true``.
+              If the time series are panel or hierarchical, the length of all
+              individual time
+              series must be the same, and equal to the length of ``sample_weight``,
+              for all instances of time series passed.
 
         Returns
         -------
         loss : pd.Series or pd.DataFrame
             Calculated metric, by time point (default=jackknife pseudo-values).
-            pd.Series if self.multioutput="uniform_average" or array-like
-                index is equal to index of y_true
-                entry at index i is metric at time i, averaged over variables
-            pd.DataFrame if self.multioutput="raw_values"
-                index and columns equal to those of y_true
-                i,j-th entry is metric at time i, at variable j
-        """
+            Weighted by ``sample_weight`` if provided.
+
+            * ``pd.Series`` if ``multioutput="uniform_average"`` or array-like.
+              index is equal to index of ``y_true``;
+              entry at index i is metric at time i, averaged over variables
+            * ``pd.DataFrame`` if ``multioutput="raw_values"``.
+              index and columns equal to those of ``y_true``;
+              i,j-th entry is metric at time i, at variable j
+        """  # noqa: E501
         multioutput = self.multioutput
         multilevel = self.multilevel
         # Input checks and conversions
@@ -557,6 +695,80 @@ class BaseForecastingErrorMetric(BaseMetric):
 
         return y_true, y_pred, multioutput, multilevel, kwargs
 
+    def _get_sample_weight(self, **kwargs):
+        """Get sample weights from kwargs.
+
+        Assumes that either ``sample_weight`` is passed, or not.
+        If ``sample_weight`` is passed, it is coerced to 1D numpy array and returned.
+        Otherwise, returns None.
+
+        Parameters
+        ----------
+        kwargs : dict
+            Dictionary of keyword arguments passed to the metric.
+
+        Returns
+        -------
+        sample_weight : 1D np.ndarray or None
+            1D numpy array of sample weights, or None if not passed.
+        """
+        sample_weight = kwargs.get("sample_weight", None)
+        if sample_weight is not None:
+            sample_weight = check_array(
+                sample_weight, ensure_2d=False, input_name="sample_weight"
+            )
+        return sample_weight
+
+    def _get_weighted_df(self, df, **kwargs):
+        """Get weighted DataFrame.
+
+        For n x m df, and kwargs containing sample_weight of length n,
+        returns df * sample_weight.reshape(-1, 1), i.e., weights
+        multiplied to each row of the DataFrame.
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            DataFrame to be weighted.
+
+        Returns
+        -------
+        df : pd.DataFrame
+            Weighted DataFrame.
+        """
+        sample_weight = self._get_sample_weight(**kwargs)
+        if sample_weight is not None:
+            df = df.mul(sample_weight, axis=0)
+        return df
+
+    def _handle_multioutput(self, df, multioutput):
+        """Handle multioutput parameter.
+
+        If multioutput is "raw_values", returns df unchanged.
+        If multioutput is "uniform_average", returns df.mean(axis=1) for pd.DataFrame,
+        or df.mean() for pd.Series.
+        If multioutput is array-like, returns df.dot(multioutput).
+
+        Parameters
+        ----------
+        df : pd.DataFrame or pd.Series
+            DataFrame to be handled, assumed result of metric calculation.
+        multioutput : str or array-like
+            Multioutput parameter.
+        """
+        if isinstance(multioutput, str):
+            if multioutput == "raw_values":
+                return df
+
+            if multioutput == "uniform_average":
+                if isinstance(df, pd.Series):
+                    return df.mean()
+                else:
+                    return df.mean(axis=1)
+
+        # else, we expect multioutput to be array-like
+        return df.dot(multioutput)
+
 
 class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
     """Adapter for numpy metrics."""
@@ -575,6 +787,13 @@ class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
 
         # adding kwargs to the metric, should not overwrite params (but does if clashes)
         params.update(kwargs)
+
+        # aliasing of sample_weight and horizon_weight keys
+        # this is for downwards compatibility with earlier sktime versions
+        if "sample_weight" in params.keys() and "horizon_weight" not in params.keys():
+            params["horizon_weight"] = params["sample_weight"]
+        if "horizon_weight" in params.keys() and "sample_weight" not in params.keys():
+            params["sample_weight"] = params["horizon_weight"]
 
         # calls class variable func, if available, or dynamic (object) variable
         # we need to call type since we store func as a class attribute
@@ -650,15 +869,16 @@ class _DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
 
         def custom_mape(y_true, y_pred) -> float:
@@ -829,15 +1049,16 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc)
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
         params2 = {"sp": 2}
@@ -940,15 +1161,16 @@ class MedianAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFun
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
         params2 = {"sp": 2}
@@ -958,8 +1180,8 @@ class MedianAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFun
 class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
     """Mean squared scaled error (MSSE) or root mean squared scaled error (RMSSE).
 
-    If `square_root` is False then calculates MSSE, otherwise calculates RMSSE if
-    `square_root` is True. Both MSSE and RMSSE output is non-negative floating
+    If ``square_root`` is False then calculates MSSE, otherwise calculates RMSSE if
+    ``square_root`` is True. Both MSSE and RMSSE output is non-negative floating
     point. The best value is 0.0.
 
     This is a squared variant of the MASE loss metric.  Like MASE and other
@@ -1001,6 +1223,7 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
     References
     ----------
     M5 Competition Guidelines.
+
     https://mofc.unic.ac.cy/wp-content/uploads/2020/03/M5-Competitors-Guide-Final-10-March-2020.docx
 
     Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
@@ -1050,15 +1273,16 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
         params2 = {"sp": 2, "square_root": True}
@@ -1068,8 +1292,8 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
 class MedianSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
     """Median squared scaled error (MdSSE) or root median squared scaled error (RMdSSE).
 
-    If `square_root` is False then calculates MdSSE, otherwise calculates RMdSSE if
-    `square_root` is True. Both MdSSE and RMdSSE output is non-negative floating
+    If ``square_root`` is False then calculates MdSSE, otherwise calculates RMdSSE if
+    ``square_root`` is True. Both MdSSE and RMdSSE output is non-negative floating
     point. The best value is 0.0.
 
     This is a squared variant of the MdASE loss metric. Like MASE and other
@@ -1111,6 +1335,7 @@ class MedianSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc
     References
     ----------
     M5 Competition Guidelines.
+
     https://mofc.unic.ac.cy/wp-content/uploads/2020/03/M5-Competitors-Guide-Final-10-March-2020.docx
 
     Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
@@ -1160,15 +1385,16 @@ class MedianSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
         params2 = {"sp": 2, "square_root": True}
@@ -1182,14 +1408,14 @@ class MeanAbsoluteError(BaseForecastingErrorMetric):
     of true values :math:`y_1, \dots, y_n` and
     predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n` (in :math:`mathbb{R}`),
     at time indices :math:`t_1, \dots, t_n`,
-    `evaluate` or call returns the Mean Absolute Error,
+    ``evaluate`` or call returns the Mean Absolute Error,
     :math:`\frac{1}{n}\sum_{i=1}^n |y_i - \widehat{y}_i|`.
     (the time indices are not used)
 
-    `multioutput` and `multilevel` control averaging across variables and
+    ``multioutput`` and ``multilevel`` control averaging across variables and
     hierarchy indices, see below.
 
-    `evaluate_by_index` returns, at a time index :math:`t_i`,
+    ``evaluate_by_index`` returns, at a time index :math:`t_i`,
     the absolute error at that time index, :math:`|y_i - \widehat{y}_i|`,
     for all time indices :math:`t_1, \dots, t_n` in the input.
 
@@ -1276,20 +1502,13 @@ class MeanAbsoluteError(BaseForecastingErrorMetric):
         multioutput = self.multioutput
 
         raw_values = (y_true - y_pred).abs()
+        raw_values = self._get_weighted_df(raw_values, **kwargs)
 
-        if isinstance(multioutput, str):
-            if multioutput == "raw_values":
-                return raw_values
-
-            if multioutput == "uniform_average":
-                return raw_values.mean(axis=1)
-
-        # else, we expect multioutput to be array-like
-        return raw_values.dot(multioutput)
+        return self._handle_multioutput(raw_values, multioutput)
 
 
 class MedianAbsoluteError(BaseForecastingErrorMetricFunc):
-    """Median absolute error (MdAE).
+    r"""Median absolute error (MdAE).
 
     MdAE output is non-negative floating point. The best value is 0.0.
 
@@ -1300,6 +1519,19 @@ class MedianAbsoluteError(BaseForecastingErrorMetricFunc):
     Taking the median instead of the mean of the absolute errors also makes
     this metric more robust to error outliers since the median tends
     to be a more robust measure of central tendency in the presence of outliers.
+
+    For a univariate, non-hierarchical sample of true values :math:`y_1, \dots, y_n`
+    and predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n`,
+    at time indices :math:`t_1, \dots, t_n`,
+    ``evaluate`` or call returns the Median Absolute Error,
+    :math:`\text{median}\left(|y_i - \widehat{y}_i|\right)_{i=1}^{n}`.
+
+    ``multioutput`` and ``multilevel`` control averaging across variables and
+    hierarchy indices, see below.
+
+    ``evaluate_by_index`` returns, at a time index :math:`t_i`,
+    the absolute error at that time index, :math:`|y_i - \widehat{y}_i|`,
+    for all time indices :math:`t_1, \dots, t_n` in the input.
 
     Parameters
     ----------
@@ -1349,13 +1581,88 @@ class MedianAbsoluteError(BaseForecastingErrorMetricFunc):
 
     func = median_absolute_error
 
+    def __init__(
+        self,
+        multioutput="uniform_average",
+        multilevel="uniform_average",
+    ):
+        super().__init__(multioutput=multioutput, multilevel=multilevel)
 
-class MeanSquaredError(BaseForecastingErrorMetricFunc):
-    """Mean squared error (MSE) or root mean squared error (RMSE).
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point.
 
-    If `square_root` is False then calculates MSE and if `square_root` is True
-    then RMSE is calculated.  Both MSE and RMSE are both non-negative floating
-    point. The best value is 0.0.
+        private _evaluate_by_index containing core logic, called from evaluate_by_index
+
+        Parameters
+        ----------
+        y_true : time series in sktime compatible pandas based data container format
+            Ground truth (correct) target values
+            y can be in one of the following formats:
+            Series scitype: pd.DataFrame
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+        y_pred :time series in sktime compatible data container format
+            Forecasted values to evaluate
+            must be of same format as y_true, same indices and columns if indexed
+
+        Returns
+        -------
+        loss : pd.Series or pd.DataFrame
+            Calculated metric, by time point.
+            pd.Series if self.multioutput="uniform_average" or array-like
+                index is equal to index of y_true
+                entry at index i is metric at time i, averaged over variables
+            pd.DataFrame if self.multioutput="raw_values"
+                index and columns equal to those of y_true
+                i,j-th entry is metric at time i, at variable j
+        """
+        multioutput = self.multioutput
+
+        raw_values = (y_true - y_pred).abs()
+
+        if isinstance(multioutput, str):
+            if multioutput == "raw_values":
+                return raw_values
+
+            if multioutput == "uniform_average":
+                return raw_values.median(axis=1)
+
+        # else, we expect multioutput to be array-like
+        return raw_values.dot(multioutput)
+
+
+class MeanSquaredError(BaseForecastingErrorMetric):
+    r"""Mean squared error (MSE) or root mean squared error (RMSE).
+
+    For a univariate, non-hierarchical sample
+    of true values :math:`y_1, \dots, y_n` and
+    predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n` (in :math:`mathbb{R}`),
+    at time indices :math:`t_1, \dots, t_n`,
+    ``evaluate`` or call returns:
+
+    * if ``square_root`` is False, the Mean Squared Error,
+      :math:`\frac{1}{n}\sum_{i=1}^n \left(y_i - \widehat{y}_i\right)^2`
+    * if ``square_root`` is True, the Root Mean Squared Error,
+      :math:`\sqrt{\frac{1}{n}\sum_{i=1}^n \left(y_i - \widehat{y}_i\right)^2}`
+
+    MSE and RMSE are both non-negative floating point, lower values are better.
+    The lowest possible value is 0.0.
+
+    ``multioutput`` and ``multilevel`` control averaging across variables and
+    hierarchy indices, see below. If ``square_root`` is True, averages
+    are taken over square roots of squared errors.
+
+    ``evaluate_by_index`` returns, at a time index :math:`t_i`:
+
+    * if ``square_root`` is False, the squared error at that time index,
+      :math:`\left(y_i - \widehat{y}_i\right)^2`,
+      for all time indices :math:`t_1, \dots, t_n` in the input.
+    * if ``square_root`` is True, the jackknife pseudo-value of the RMSE
+      at that time index, :math:`n * \bar{\varepsilon} - (n-1) * \varepsilon_i`,
+      where :math:`\bar{\varepsilon}` is the RMSE over all time indices,
+      and :math:`\varepsilon_i` is the RMSE with the i-th time index removed,
+      i.e., using values :math:`y_1, \dots, y_{i-1}, y_{i+1}, \dots, y_n`,
+      and :math:`\widehat{y}_1, \dots, \widehat{y}_{i-1}, \widehat{y}_{i+1}, \dots, \widehat{y}_n`.
 
     MSE is measured in squared units of the input data, and RMSE is on the
     same scale as the data. Because MSE and RMSE square the forecast error
@@ -1417,9 +1724,7 @@ class MeanSquaredError(BaseForecastingErrorMetricFunc):
     >>> rmse = MeanSquaredError(multioutput=[0.3, 0.7], square_root=True)
     >>> rmse(y_true, y_pred)
     0.8936491673103708
-    """
-
-    func = mean_squared_error
+    """  # noqa: E501
 
     def __init__(
         self,
@@ -1430,6 +1735,101 @@ class MeanSquaredError(BaseForecastingErrorMetricFunc):
         self.square_root = square_root
         super().__init__(multioutput=multioutput, multilevel=multilevel)
 
+    def _evaluate(self, y_true, y_pred, **kwargs):
+        """Evaluate the desired metric on given inputs.
+
+        private _evaluate containing core logic, called from evaluate
+
+        By default this uses evaluate_by_index, taking arithmetic mean over time points.
+
+        Parameters
+        ----------
+        y_true : time series in sktime compatible data container format
+            Ground truth (correct) target values
+            y can be in one of the following formats:
+            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
+                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+        y_pred :time series in sktime compatible data container format
+            Forecasted values to evaluate
+            must be of same format as y_true, same indices and columns if indexed
+
+        Returns
+        -------
+        loss : float or np.ndarray
+            Calculated metric, averaged or by variable.
+            float if self.multioutput="uniform_average" or array-like
+                value is metric averaged over variables (see class docstring)
+            np.ndarray of shape (y_true.columns,) if self.multioutput="raw_values"
+                i-th entry is metric calculated for i-th variable
+        """
+        multioutput = self.multioutput
+
+        raw_values = (y_true - y_pred) ** 2
+        raw_values = self._get_weighted_df(raw_values, **kwargs)
+        msqe = raw_values.mean()
+
+        if self.square_root:
+            msqe = msqe.pow(0.5)
+
+        return self._handle_multioutput(msqe, multioutput)
+
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point.
+
+        private _evaluate_by_index containing core logic, called from evaluate_by_index
+
+        Parameters
+        ----------
+        y_true : time series in sktime compatible pandas based data container format
+            Ground truth (correct) target values
+            y can be in one of the following formats:
+            Series scitype: pd.DataFrame
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+        y_pred :time series in sktime compatible data container format
+            Forecasted values to evaluate
+            must be of same format as y_true, same indices and columns if indexed
+
+        Returns
+        -------
+        loss : pd.Series or pd.DataFrame
+            Calculated metric, by time point (default=jackknife pseudo-values).
+            pd.Series if self.multioutput="uniform_average" or array-like
+                index is equal to index of y_true
+                entry at index i is metric at time i, averaged over variables
+            pd.DataFrame if self.multioutput="raw_values"
+                index and columns equal to those of y_true
+                i,j-th entry is metric at time i, at variable j
+        """
+        multioutput = self.multioutput
+
+        raw_values = (y_true - y_pred) ** 2
+
+        if self.square_root:
+            n = raw_values.shape[0]
+            mse = raw_values.mean(axis=0)
+            rmse = mse.pow(0.5)
+            sqe_sum = raw_values.sum(axis=0)
+            mse_jackknife = (sqe_sum - raw_values) / (n - 1)
+            rmse_jackknife = mse_jackknife.pow(0.5)
+            pseudo_values = n * rmse - (n - 1) * rmse_jackknife
+        else:
+            pseudo_values = raw_values
+
+        pseudo_values = self._get_weighted_df(pseudo_values, **kwargs)
+
+        if isinstance(multioutput, str):
+            if multioutput == "raw_values":
+                return pseudo_values
+
+            if multioutput == "uniform_average":
+                return pseudo_values.mean(axis=1)
+
+        # else, we expect multioutput to be array-like
+        return pseudo_values.dot(multioutput)
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -1438,15 +1838,16 @@ class MeanSquaredError(BaseForecastingErrorMetricFunc):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
         params2 = {"square_root": True}
@@ -1456,7 +1857,7 @@ class MeanSquaredError(BaseForecastingErrorMetricFunc):
 class MedianSquaredError(BaseForecastingErrorMetricFunc):
     """Median squared error (MdSE) or root median squared error (RMdSE).
 
-    If `square_root` is False then calculates MdSE and if `square_root` is True
+    If ``square_root`` is False then calculates MdSE and if ``square_root`` is True
     then RMdSE is calculated. Both MdSE and RMdSE return non-negative floating
     point. The best value is 0.0.
 
@@ -1548,15 +1949,16 @@ class MedianSquaredError(BaseForecastingErrorMetricFunc):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
         params2 = {"square_root": True}
@@ -1601,9 +2003,9 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
     The geometric mean uses the product of values in its calculation. The presence
     of a zero value will result in the result being zero, even if all the other
     values of large. To partially account for this in the case where elements
-    of `y_true` and `y_pred` are equal (zero error), the resulting zero error
+    of ``y_true`` and ``y_pred`` are equal (zero error), the resulting zero error
     values are replaced in the calculation with a small value. This results in
-    the smallest value the metric can take (when `y_true` equals `y_pred`)
+    the smallest value the metric can take (when ``y_true`` equals ``y_pred``)
     being close to but not exactly zero.
 
     References
@@ -1638,7 +2040,7 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
 class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):
     """Geometric mean squared error (GMSE) or Root geometric mean squared error (RGMSE).
 
-    If `square_root` is False then calculates GMSE and if `square_root` is True
+    If ``square_root`` is False then calculates GMSE and if ``square_root`` is True
     then RGMSE is calculated. Both GMSE and RGMSE return non-negative floating
     point. The best value is approximately zero, rather than zero.
 
@@ -1678,9 +2080,9 @@ class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):
     The geometric mean uses the product of values in its calculation. The presence
     of a zero value will result in the result being zero, even if all the other
     values of large. To partially account for this in the case where elements
-    of `y_true` and `y_pred` are equal (zero error), the resulting zero error
+    of ``y_true`` and ``y_pred`` are equal (zero error), the resulting zero error
     values are replaced in the calculation with a small value. This results in
-    the smallest value the metric can take (when `y_true` equals `y_pred`)
+    the smallest value the metric can take (when ``y_true`` equals ``y_pred``)
     being close to but not exactly zero.
 
     References
@@ -1741,15 +2143,16 @@ class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
         params2 = {"square_root": True}
@@ -1763,11 +2166,11 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     of true values :math:`y_1, \dots, y_n` and
     predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n`,
     at time indices :math:`t_1, \dots, t_n`,
-    `evaluate` or call returns the Mean Absolute Percentage Error,
+    ``evaluate`` or call returns the Mean Absolute Percentage Error,
     :math:`\frac{1}{n} \sum_{i=1}^n \left|\frac{y_i-\widehat{y}_i}{y_i} \right|`.
     (the time indices are not used)
 
-    if `symmetric` is True then calculates
+    if ``symmetric`` is True then calculates
     symmetric mean absolute percentage error (sMAPE), defined as
     :math:`\frac{2}{n} \sum_{i=1}^n \frac{|y_i - \widehat{y}_i|}
     {|y_i| + |\widehat{y}_i|}`.
@@ -1779,18 +2182,18 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     takes the absolute value rather than square the percentage forecast
     error, it penalizes large errors less than MSPE, RMSPE, MdSPE or RMdSPE.
 
-    MAPE has no limit on how large the error can be, particulalrly when `y_true`
+    MAPE has no limit on how large the error can be, particulalrly when ``y_true``
     values are close to zero. In such cases the function returns a large value
-    instead of `inf`. While sMAPE is bounded at 2.
+    instead of ``inf``. While sMAPE is bounded at 2.
 
-    `multioutput` and `multilevel` control averaging across variables and
+    ``multioutput`` and ``multilevel`` control averaging across variables and
     hierarchy indices, see below.
 
-    `evaluate_by_index` returns, at a time index :math:`t_i`,
+    ``evaluate_by_index`` returns, at a time index :math:`t_i`,
     the absolute percentage error at that time index,
     :math:`\left| \frac{y_i - \widehat{y}_i}{y_i} \right|`,
     or :math:`\frac{2|y_i - \widehat{y}_i|}{|y_i| + |\widehat{y}_i|}`,
-    the symmetric version, if `symmetric` is True, for all time indices
+    the symmetric version, if ``symmetric`` is True, for all time indices
     :math:`t_1, \dots, t_n` in the input.
 
     Parameters
@@ -1921,15 +2324,16 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
         params2 = {"symmetric": True}
@@ -1942,11 +2346,11 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     For a univariate, non-hierarchical sample of true values :math:`y_1, \dots, y_n`
     and predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n`,
     at time indices :math:`t_1, \dots, t_n`,
-    `evaluate` or call returns the Median Absolute Percentage Error,
+    ``evaluate`` or call returns the Median Absolute Percentage Error,
     :math:`median(\left|\frac{y_i - \widehat{y}_i}{y_i} \right|)`.
     (the time indices are not used)
 
-    if `symmetric` is True then calculates
+    if ``symmetric`` is True then calculates
     symmetric Median Absolute Percentage Error (sMdAPE), defined as
     :math:`median(\frac{2|y_i-\widehat{y}_i|}{|y_i|+|\widehat{y}_i|})`.
 
@@ -1961,11 +2365,11 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     makes this metric more robust to error outliers since the median tends
     to be a more robust measure of central tendency in the presence of outliers.
 
-    MAPE has no limit on how large the error can be, particulalrly when `y_true`
+    MAPE has no limit on how large the error can be, particulalrly when ``y_true``
     values are close to zero. In such cases the function returns a large value
-    instead of `inf`. While sMAPE is bounded at 2.
+    instead of ``inf``. While sMAPE is bounded at 2.
 
-    `multioutput` and `multilevel` control averaging across variables and
+    ``multioutput`` and ``multilevel`` control averaging across variables and
     hierarchy indices, see below.
 
     Parameters
@@ -2046,15 +2450,16 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
         params2 = {"symmetric": True}
@@ -2064,8 +2469,8 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
 class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
     """Mean squared percentage error (MSPE)  or square root version.
 
-    If `square_root` is False then calculates MSPE and if `square_root` is True
-    then calculates root mean squared percentage error (RMSPE). If `symmetric`
+    If ``square_root`` is False then calculates MSPE and if ``square_root`` is True
+    then calculates root mean squared percentage error (RMSPE). If ``symmetric``
     is True then calculates sMSPE or sRMSPE. Output is non-negative floating
     point. The best value is 0.0.
 
@@ -2075,9 +2480,9 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
     the percentage forecast error, large errors are penalized more than
     MAPE, sMAPE, MdAPE or sMdAPE.
 
-    There is no limit on how large the error can be, particulalrly when `y_true`
+    There is no limit on how large the error can be, particulalrly when ``y_true``
     values are close to zero. In such cases the function returns a large value
-    instead of `inf`.
+    instead of ``inf``.
 
     Parameters
     ----------
@@ -2164,15 +2569,16 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
         params2 = {"symmetric": True, "square_root": True}
@@ -2182,8 +2588,8 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
 class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
     """Median squared percentage error (MdSPE)  or square root version.
 
-    If `square_root` is False then calculates MdSPE and if `square_root` is True
-    then calculates root median squared percentage error (RMdSPE). If `symmetric`
+    If ``square_root`` is False then calculates MdSPE and if ``square_root`` is True
+    then calculates root median squared percentage error (RMdSPE). If ``symmetric``
     is True then calculates sMdSPE or sRMdSPE. Output is non-negative floating
     point. The best value is 0.0.
 
@@ -2197,9 +2603,9 @@ class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
     makes this metric more robust to error outliers since the median tends
     to be a more robust measure of central tendency in the presence of outliers.
 
-    There is no limit on how large the error can be, particulalrly when `y_true`
+    There is no limit on how large the error can be, particulalrly when ``y_true``
     values are close to zero. In such cases the function returns a large value
-    instead of `inf`.
+    instead of ``inf``.
 
     Parameters
     ----------
@@ -2286,15 +2692,16 @@ class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
         params2 = {"symmetric": True, "square_root": True}
@@ -2507,7 +2914,7 @@ class GeometricMeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
 class GeometricMeanRelativeSquaredError(BaseForecastingErrorMetricFunc):
     """Geometric mean relative squared error (GMRSE).
 
-    If `square_root` is False then calculates GMRSE and if `square_root` is True
+    If ``square_root`` is False then calculates GMRSE and if ``square_root`` is True
     then calculates root geometric mean relative squared error (RGMRSE).
 
     In relative error metrics, relative errors are first calculated by
@@ -2595,15 +3002,16 @@ class GeometricMeanRelativeSquaredError(BaseForecastingErrorMetricFunc):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
         params2 = {"square_root": True}
@@ -2616,8 +3024,8 @@ class MeanAsymmetricError(BaseForecastingErrorMetricFunc):
     Output is non-negative floating point. The best value is 0.0.
 
     Error values that are less than the asymmetric threshold have
-    `left_error_function` applied. Error values greater than or equal to
-    asymmetric threshold  have `right_error_function` applied.
+    ``left_error_function`` applied. Error values greater than or equal to
+    asymmetric threshold  have ``right_error_function`` applied.
 
     Many forecasting loss functions (like those discussed in [1]_) assume that
     over- and under- predictions should receive an equal penalty. However, this
@@ -2625,10 +3033,10 @@ class MeanAsymmetricError(BaseForecastingErrorMetricFunc):
     Asymmetric loss functions are useful when the cost of under- and over-
     prediction are not the same.
 
-    Setting `asymmetric_threshold` to zero, `left_error_function` to 'squared'
-    and `right_error_function` to 'absolute` results in a greater penalty
+    Setting ``asymmetric_threshold`` to zero, ``left_error_function`` to 'squared'
+    and ``right_error_function`` to 'absolute` results in a greater penalty
     applied to over-predictions (y_true - y_pred < 0). The opposite is true
-    for `left_error_function` set to 'absolute' and `right_error_function`
+    for ``left_error_function`` set to 'absolute' and ``right_error_function``
     set to 'squared`.
 
     The left_error_penalty and right_error_penalty can be used to add differing
@@ -2638,9 +3046,9 @@ class MeanAsymmetricError(BaseForecastingErrorMetricFunc):
     ----------
     asymmetric_threshold : float, default = 0.0
         The value used to threshold the asymmetric loss function. Error values
-        that are less than the asymmetric threshold have `left_error_function`
+        that are less than the asymmetric threshold have ``left_error_function``
         applied. Error values greater than or equal to asymmetric threshold
-        have `right_error_function` applied.
+        have ``right_error_function`` applied.
     left_error_function : {'squared', 'absolute'}, default='squared'
         Loss penalty to apply to error values less than the asymmetric threshold.
     right_error_function : {'squared', 'absolute'}, default='absolute'
@@ -2670,8 +3078,8 @@ class MeanAsymmetricError(BaseForecastingErrorMetricFunc):
 
     Notes
     -----
-    Setting `left_error_function` and `right_error_function` to "absolute", but
-    choosing different values for `left_error_penalty` and `right_error_penalty`
+    Setting ``left_error_function`` and ``right_error_function`` to "absolute", but
+    choosing different values for ``left_error_penalty`` and ``right_error_penalty``
     results in the "lin-lin" error function discussed in [2]_.
 
     References
@@ -2740,15 +3148,16 @@ class MeanAsymmetricError(BaseForecastingErrorMetricFunc):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
         params2 = {
@@ -2774,18 +3183,18 @@ class MeanLinexError(BaseForecastingErrorMetricFunc):
 
     The linex error function accounts for this by penalizing errors on one side
     of a threshold approximately linearly, while penalizing errors on the other
-    side approximately exponentially. If `a` > 0 then negative errors
+    side approximately exponentially. If ``a`` > 0 then negative errors
     (over-predictions) are penalized approximately linearly and positive errors
-    (under-predictions) are penalized approximately exponentially. If `a` < 0
+    (under-predictions) are penalized approximately exponentially. If ``a`` < 0
     the reverse is true.
 
     Parameters
     ----------
     a : int or float
         Controls whether over- or under- predictions receive an approximately
-        linear or exponential penalty. If `a` > 0 then negative errors
+        linear or exponential penalty. If ``a`` > 0 then negative errors
         (over-predictions) are penalized approximately linearly and positive errors
-        (under-predictions) are penalized approximately exponentially. If `a` < 0
+        (under-predictions) are penalized approximately exponentially. If ``a`` < 0
         the reverse is true.
     b : int or float
         Multiplicative penalty to apply to calculated errors.
@@ -2870,15 +3279,16 @@ class MeanLinexError(BaseForecastingErrorMetricFunc):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
         params2 = {"a": 0.5, "b": 2}

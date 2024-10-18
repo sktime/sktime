@@ -1,4 +1,5 @@
 """Rocket transformer, from pyts."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly"]
@@ -87,7 +88,7 @@ class RocketPyts(_PytsAdapter, BaseTransformer):
     _tags = {
         # packaging info
         # --------------
-        "authors": "fkiraly",
+        "authors": ["johannfaouzi", "fkiraly"],  # johannfaouzi is author of upstream
         "python_dependencies": "pyts",
         # estimator type
         # --------------

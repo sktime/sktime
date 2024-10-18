@@ -1,5 +1,7 @@
 """ProbabilityThresholdEarlyClassifier test code."""
+
 import numpy as np
+import pytest
 from numpy import testing
 
 from sktime.classification.early_classification import (
@@ -8,8 +10,15 @@ from sktime.classification.early_classification import (
 from sktime.classification.interval_based import TimeSeriesForestClassifier
 from sktime.datasets import load_unit_test
 from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
+from sktime.tests.test_switch import run_test_for_class
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(
+        [ProbabilityThresholdEarlyClassifier, TimeSeriesForestClassifier]
+    ),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_prob_threshold_on_unit_test_data():
     """Test of ProbabilityThresholdEarlyClassifier on unit test data."""
     # load unit test data

@@ -226,7 +226,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -271,9 +271,9 @@ def _get_weights(regressor):
 class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     """Ensemble of forecasters.
 
-    Overview: Input one series of length `n` and EnsembleForecaster performs
-    fitting and prediction for each estimator passed in `forecasters`. It then
-    applies `aggfunc` aggregation function by row to the predictions dataframe
+    Overview: Input one series of length ``n`` and EnsembleForecaster performs
+    fitting and prediction for each estimator passed in ``forecasters``. It then
+    applies ``aggfunc`` aggregation function by row to the predictions dataframe
     and returns final prediction - one series.
 
     Parameters
@@ -385,7 +385,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns

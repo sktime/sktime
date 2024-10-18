@@ -1,4 +1,5 @@
 """Tests for ThetaForecaster."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["big-o", "kejsitake", "ciaran-g"]
@@ -11,13 +12,13 @@ from sktime.datasets import load_airline
 from sktime.forecasting.tests._config import TEST_OOS_FHS
 from sktime.forecasting.theta import ThetaForecaster, ThetaModularForecaster
 from sktime.split import temporal_train_test_split
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils.validation.forecasting import check_fh
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(ThetaForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_predictive_performance_on_airline():
     """Check prediction performance on airline dataset.
@@ -40,8 +41,8 @@ def test_predictive_performance_on_airline():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(ThetaForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 def test_pred_errors_against_y_test(fh):
@@ -74,8 +75,8 @@ def test_pred_errors_against_y_test(fh):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(ThetaForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_forecaster_with_initial_level():
     """Check prediction performance on airline dataset.
@@ -98,8 +99,8 @@ def test_forecaster_with_initial_level():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class([ThetaForecaster, ThetaModularForecaster]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_theta_and_thetamodular():
     """Check predictions ThetaForecaster and ThetaModularForecaster align.
@@ -125,8 +126,8 @@ def test_theta_and_thetamodular():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(ThetaForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def check_panel_theta_quantiles():
     """Test predict quantiles with theta on panel data with datetime index."""

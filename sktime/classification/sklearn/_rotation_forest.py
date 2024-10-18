@@ -11,7 +11,6 @@ import time
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
 from sklearn.base import BaseEstimator
 from sklearn.decomposition import PCA
 from sklearn.tree import DecisionTreeClassifier
@@ -45,10 +44,10 @@ class RotationForest(BaseEstimator):
         The proportion of cases to be removed per group.
     base_estimator : BaseEstimator or None, default="None"
         Base estimator for the ensemble. By default, uses the sklearn
-        `DecisionTreeClassifier` using entropy as a splitting measure.
+        ``DecisionTreeClassifier`` using entropy as a splitting measure.
     time_limit_in_minutes : int, default=0
         Time contract to limit build time in minutes, overriding ``n_estimators``.
-        Default of `0` means ``n_estimators`` is used.
+        Default of ``0`` means ``n_estimators`` is used.
     contract_max_n_estimators : int, default=500
         Max number of estimators to build when ``time_limit_in_minutes`` is set.
     save_transformed_data : bool, default=False
@@ -56,12 +55,12 @@ class RotationForest(BaseEstimator):
         ``_get_train_probs``.
     n_jobs : int, default=1
         The number of jobs to run in parallel for both ``fit`` and ``predict``.
-        `-1` means using all processors.
+        ``-1`` means using all processors.
     random_state : int, RandomState instance or None, default=None
-        If `int`, random_state is the seed used by the random number generator;
-        If `RandomState` instance, random_state is the random number generator;
-        If `None`, the random number generator is the `RandomState` instance used
-        by `np.random`.
+        If ``int``, random_state is the seed used by the random number generator;
+        If ``RandomState`` instance, random_state is the random number generator;
+        If ``None``, the random number generator is the ``RandomState`` instance used
+        by ``np.random``.
 
     Attributes
     ----------
@@ -75,7 +74,7 @@ class RotationForest(BaseEstimator):
         The number of attributes in the training set.
     transformed_data_ : list of shape (n_estimators) of ndarray
         The transformed training dataset for all classifiers. Only saved when
-        ``save_transformed_data`` is `True`.
+        ``save_transformed_data`` is ``True``.
     estimators_ : list of shape (n_estimators) of BaseEstimator
         The collections of estimators trained in fit.
 
@@ -159,6 +158,8 @@ class RotationForest(BaseEstimator):
         Changes state by creating a fitted model that updates attributes
         ending in "_".
         """
+        from joblib import Parallel, delayed
+
         if isinstance(X, np.ndarray) and len(X.shape) == 3 and X.shape[1] == 1:
             X = np.reshape(X, (X.shape[0], -1))
         elif isinstance(X, pd.DataFrame) and len(X.shape) == 2:
@@ -289,6 +290,8 @@ class RotationForest(BaseEstimator):
         y : array-like, shape = [n_instances, n_classes_]
             Predicted probabilities using the ordering in classes_.
         """
+        from joblib import Parallel, delayed
+
         if not self._is_fitted:
             raise NotFittedError(
                 f"This instance of {self.__class__.__name__} has not "
@@ -333,6 +336,8 @@ class RotationForest(BaseEstimator):
         return output
 
     def _get_train_probs(self, X, y):
+        from joblib import Parallel, delayed
+
         if not self._is_fitted:
             raise NotFittedError(
                 f"This instance of {self.__class__.__name__} has not "

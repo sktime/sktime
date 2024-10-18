@@ -2,6 +2,8 @@ name: Update Contributors
 
 on:
   push:
+    branches-ignore:
+      - main
     paths:
       - '.all-contributorsrc'
 

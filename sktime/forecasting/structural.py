@@ -11,9 +11,12 @@ from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
 class UnobservedComponents(_StatsModelsAdapter):
-    r"""Wrapper class of the UnobservedComponents model from statsmodels.
+    r"""UnobservedComponents forecasting model from statsmodels.
 
-    Input parameters and doc-stringsare taken from the original implementation.
+    Direct interface to ``UnobservedComponents`` from
+    ``statsmodels.tsa.statespace.structural``.
+
+    Input parameters and doc-strings are taken from the original implementation.
 
     Parameters
     ----------
@@ -22,7 +25,7 @@ class UnobservedComponents(_StatsModelsAdapter):
         be a string specification of the level / trend component.
     trend : bool, optional
         Whether or not to include a trend component. Default is False. If True,
-        `level` must also be True.
+        ``level`` must also be True.
     seasonal : {int, None}, optional
         The period of the seasonal component, if any. Default is None.
     freq_seasonal : {list[dict], None}, optional.
@@ -74,15 +77,15 @@ class UnobservedComponents(_StatsModelsAdapter):
     start_params : array_like, optional
         Initial guess of the solution for the loglikelihood maximization.
     transformed : bool, optional
-        Whether or not `start_params` is already transformed. Default is
+        Whether or not ``start_params`` is already transformed. Default is
         True.
     includes_fixed : bool, optional
-        If parameters were previously fixed with the `fix_params` method,
-        this argument describes whether or not `start_params` also includes
+        If parameters were previously fixed with the ``fix_params`` method,
+        this argument describes whether or not ``start_params`` also includes
         the fixed parameters, in addition to the free parameters. Default
         is False.
     cov_type : str, optional
-        The `cov_type` keyword governs the method for calculating the
+        The ``cov_type`` keyword governs the method for calculating the
         covariance matrix of parameter estimates. Can be one of:
         - 'opg' for the outer product of gradient estimator
         - 'oim' for the observed information matrix estimator, calculated
@@ -111,7 +114,7 @@ class UnobservedComponents(_StatsModelsAdapter):
             approximations computed using finite difference methods use a
             centered approximation. Default is False.
     method : str, optional
-        The `method` determines which solver from `scipy.optimize`
+        The ``method`` determines which solver from ``scipy.optimize``
         is used, and it can be chosen from among the following strings:
         - 'newton' for Newton-Raphson
         - 'nm' for Nelder-Mead
@@ -121,7 +124,7 @@ class UnobservedComponents(_StatsModelsAdapter):
         - 'cg' for conjugate gradient
         - 'ncg' for Newton-conjugate gradient
         - 'basinhopping' for global basin-hopping solver
-        The explicit arguments in `fit` are passed to the solver,
+        The explicit arguments in ``fit`` are passed to the solver,
         with the exception of the basin-hopping solver. Each
         solver has several optional arguments that are not the same across
         solvers. See the notes section below (or scipy.optimize) for the
@@ -145,14 +148,14 @@ class UnobservedComponents(_StatsModelsAdapter):
         The method by which the score vector is calculated. 'harvey' uses
         the method from Harvey (1989), 'approx' uses either finite
         difference or complex step differentiation depending upon the
-        value of `optim_complex_step`, and None uses the built-in gradient
+        value of ``optim_complex_step``, and None uses the built-in gradient
         approximation of the optimizer. Default is None. This keyword is
         only relevant if the optimization method uses the score.
     optim_complex_step : bool, optional
         Whether or not to use complex step differentiation when
         approximating the score; if False, finite difference approximation
         is used. Default is True. This keyword is only relevant if
-        `optim_score` is set to 'harvey' or 'approx'.
+        ``optim_score`` is set to 'harvey' or 'approx'.
     optim_hessian : {'opg','oim','approx'}, optional
         The method by which the Hessian is numerically approximated. 'opg'
         uses outer product of gradients, 'oim' uses the information
@@ -166,7 +169,7 @@ class UnobservedComponents(_StatsModelsAdapter):
         prediction), although out-of-sample forecasting is possible.
         Default is False.
     random_state : int, RandomState instance or None, optional ,
-        default=None – If int, random_state is the seed used by the random
+        default=None - If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
         number generator; If None, the random number generator is the
         RandomState instance used by np.random.
@@ -200,7 +203,8 @@ class UnobservedComponents(_StatsModelsAdapter):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["juanitorduz"],
+        "authors": ["ChadFulton", "bashtage", "juanitorduz"],
+        # ChadFulton and bashtage for UnobservedComponents in statsmodels
         "maintainers": ["juanitorduz"],
         # python_dependencies: "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type
@@ -341,7 +345,7 @@ class UnobservedComponents(_StatsModelsAdapter):
 
     @staticmethod
     def _extract_conf_int(prediction_results, alpha) -> pd.DataFrame:
-        """Construct confidence interval at specified `alpha` for each timestep.
+        """Construct confidence interval at specified ``alpha`` for each timestep.
 
         Parameters
         ----------
@@ -369,6 +373,7 @@ class UnobservedComponents(_StatsModelsAdapter):
         """Get a summary of the fitted forecaster.
 
         This is the same as the implementation in statsmodels:
+
         https://www.statsmodels.org/dev/examples/notebooks/generated/statespace_structural_harvey_jaeger.html
         """
         return self._fitted_forecaster.summary()
@@ -401,30 +406,30 @@ class UnobservedComponents(_StatsModelsAdapter):
             If specified, these are the shocks to the measurement equation,
             :math:`\varepsilon_t`. If unspecified, these are automatically
             generated using a pseudo-random number generator. If specified,
-            must be shaped `nsimulations` x `k_endog`, where `k_endog` is the
+            must be shaped ``nsimulations`` x ``k_endog``, where ``k_endog`` is the
             same as in the state space model.
         state_shocks : array_like, optional
             If specified, these are the shocks to the state equation,
             :math:`\eta_t`. If unspecified, these are automatically
             generated using a pseudo-random number generator. If specified,
-            must be shaped `nsimulations` x `k_posdef` where `k_posdef` is the
+            must be shaped ``nsimulations`` x ``k_posdef`` where ``k_posdef`` is the
             same as in the state space model.
         initial_state : array_like, optional
             If specified, this is the initial state vector to use in
-            simulation, which should be shaped (`k_states` x 1), where
-            `k_states` is the same as in the state space model. If unspecified,
+            simulation, which should be shaped (``k_states`` x 1), where
+            ``k_states`` is the same as in the state space model. If unspecified,
             but the model has been initialized, then that initialization is
-            used. This must be specified if `anchor` is anything other than
-            "start" or 0 (or else you can use the `simulate` method on a
+            used. This must be specified if ``anchor`` is anything other than
+            "start" or 0 (or else you can use the ``simulate`` method on a
             results object rather than on the model object).
         anchor : int, str, or datetime, optional
             First period for simulation. The simulation will be conditional on
-            all existing datapoints prior to the `anchor`.  Type depends on the
-            index of the given `endog` in the model. Two special cases are the
-            strings 'start' and 'end'. `start` refers to beginning the
-            simulation at the first period of the sample, and `end` refers to
+            all existing datapoints prior to the ``anchor``.  Type depends on the
+            index of the given ``endog`` in the model. Two special cases are the
+            strings 'start' and 'end'. ``start`` refers to beginning the
+            simulation at the first period of the sample, and ``end`` refers to
             beginning the simulation at the first period after the sample.
-            Integer values can run from 0 to `nobs`, or can be negative to
+            Integer values can run from 0 to ``nobs``, or can be negative to
             apply negative indexing. Finally, if a date/time index was provided
             to the model, then this argument can be a date string to parse or a
             datetime type. Default is 'start'.
@@ -438,14 +443,14 @@ class UnobservedComponents(_StatsModelsAdapter):
         Returns
         -------
         simulated_obs : ndarray
-            An array of simulated observations. If `repetitions=None`, then it
+            An array of simulated observations. If ``repetitions=None``, then it
             will be shaped (nsimulations x k_endog) or (nsimulations,) if
-            `k_endog=1`. Otherwise it will be shaped
+            ``k_endog=1``. Otherwise it will be shaped
             (nsimulations x k_endog x repetitions). If the model was given
             Pandas input then the output will be a Pandas object. If
-            `k_endog > 1` and `repetitions` is not None, then the output will
+            ``k_endog > 1`` and ``repetitions`` is not None, then the output will
             be a Pandas DataFrame that has a MultiIndex for the columns, with
-            the first level containing the names of the `endog` variables and
+            the first level containing the names of the ``endog`` variables and
             the second level containing the repetition number.
         """
         return self._fitted_forecaster.simulate(
@@ -481,7 +486,7 @@ class UnobservedComponents(_StatsModelsAdapter):
         fig : Figure, optional
             If given, subplots are created in this figure instead of in a new
             figure. Note that the 2x2 grid will be created in the provided
-            figure using `fig.add_subplot()`.
+            figure using ``fig.add_subplot()``.
         figsize : tuple, optional
             If a figure is created, this argument allows specifying a size.
             The tuple is (width, height).
@@ -511,14 +516,15 @@ class UnobservedComponents(_StatsModelsAdapter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         return {"level": "local level"}

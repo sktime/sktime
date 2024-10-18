@@ -73,6 +73,9 @@ class TimeSeriesDBSCAN(BaseClusterer):
         "X_inner_mtype": ["pd-multiindex", "numpy3D"],
         # required by the update_data utility
         # otherwise, we could pass through to the distance directly
+        "capability:out_of_sample": False,
+        "capability:predict": True,
+        "capability:predict_proba": False,
     }
 
     DELEGATED_PARAMS = ["eps", "min_samples", "algorithm", "leaf_size", "n_jobs"]
@@ -103,6 +106,15 @@ class TimeSeriesDBSCAN(BaseClusterer):
                 "capability:missing_values",
             ]
             self.clone_tags(distance, tags_to_clone)
+
+        # numba distance in sktime (indexed by string)
+        # cannot support unequal length data, and require numpy3D input
+        if isinstance(distance, str):
+            tags_to_set = {
+                "X_inner_mtype": "numpy3D",
+                "capability:unequal_length": False,
+            }
+            self.set_tags(**tags_to_set)
 
         self.dbscan_ = None
 

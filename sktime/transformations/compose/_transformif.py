@@ -1,4 +1,5 @@
 """Conditional transformation based on fitted parameters."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly"]
@@ -24,47 +25,49 @@ class TransformIf(_DelegatedTransformer):
 
     The specific algorithm implemented is as follows:
 
-    In `fit`, for inputs `X`, `y`:
-    1. fits `if_estimator` to `X`, `y`
-    2. checks the condition for `if_estimator` fitted parameter `param`:
-       whether `param` satisfies `condition` with `condition_value`
-    3. If yes, fits `then_est` to `X`, `y`, and behaves as `then_est` from then on
-       If no, fits `else_est` to `X`, `y`, and behaves as `else_est` from then on
+    In ``fit``, for inputs ``X``, ``y``:
+    1. fits ``if_estimator`` to ``X``, ``y``
+    2. checks the condition for ``if_estimator`` fitted parameter ``param``:
+       whether ``param`` satisfies ``condition`` with ``condition_value``
+    3. If yes, fits ``then_est`` to ``X``, ``y``, and behaves as ``then_est`` from then
+    on
+       If no, fits ``else_est`` to ``X``, ``y``, and behaves as ``else_est`` from then
+       on
 
-    In other methods, behaves as `then_est` or `else_est`, as above.
+    In other methods, behaves as ``then_est`` or ``else_est``, as above.
 
-    Note: `then_trafo` and `else_trafo` must hae the same input/output signature,
+    Note: ``then_trafo`` and ``else_trafo`` must have the same input/output signature,
     e.g., Series-to-Series, or Series-to-Primitives.
 
     Parameters
     ----------
-    if_estimator : sktime estimator, must have `fit`
+    if_estimator : sktime estimator, must have ``fit``
         sktime estimator to fit and apply to series.
-        this is a "blueprint" estimator, state does not change when `fit` is called
+        this is a "blueprint" estimator, state does not change when ``fit`` is called
     param : str, optional, default = first boolean parameter of fitted if_estimator
     condition : str, optional, default = "bool"
-        condition that defines whether self behaves like `then_est` or `else_est`
-        this estimator behaves like `then_est` iff:
-        "bool" = if `param` is True
-        ">", ">=", "==", "<", "<=", "!=" = if `param condition condition_value`
+        condition that defines whether self behaves like ``then_est`` or ``else_est``
+        this estimator behaves like ``then_est`` iff:
+        "bool" = if ``param`` is True
+        ">", ">=", "==", "<", "<=", "!=" = if ``param condition condition_value``
     condition_value : required for some conditions, see above; otherwise optional
-    then_trafo : sktime transformer, optional, default=`if_estimator`
+    then_trafo : sktime transformer, optional, default=``if_estimator``
         transformer that this behaves as if condition is satisfied
-        this is a "blueprint" transformer, state does not change when `fit` is called
-    else_trafo : sktime transformer, optional default=`Id` (identity/no transform)
+        this is a "blueprint" transformer, state does not change when ``fit`` is called
+    else_trafo : sktime transformer, optional default=``Id`` (identity/no transform)
         transformer that this behaves as if condition is not satisfied
-        this is a "blueprint" transformer, state does not change when `fit` is called
+        this is a "blueprint" transformer, state does not change when ``fit`` is called
 
     Attributes
     ----------
     transformer_ : transformer,
-        this clone is fitted when `fit` is called
-        if condition is satisfied, a clone of `then_est`
-        if condition is not satisfied, a clone of `else_est`
+        this clone is fitted when ``fit`` is called
+        if condition is satisfied, a clone of ``then_est``
+        if condition is not satisfied, a clone of ``else_est``
     condition_ : bool,
         True if condition was true, False if it was false
     if_estimator_ : estimator
-        this clone of `if_estimator` is fitted when `fit` is called
+        this clone of ``if_estimator`` is fitted when ``fit`` is called
 
     Examples
     --------
@@ -202,13 +205,13 @@ class TransformIf(_DelegatedTransformer):
         -------
         self : a fitted instance of the estimator
         """
-        from sktime.registry import scitype
+        from sktime.registry import is_scitype
 
         if_estimator_ = self.if_estimator.clone()
 
-        if scitype(if_estimator_) == "forecaster":
+        if is_scitype(if_estimator_, "forecaster"):
             self.if_estimator_ = if_estimator_.fit(y=X, X=y)
-        elif scitype(if_estimator_) == "transformer":
+        elif is_scitype(if_estimator_, "transformer"):
             self.if_estimator_ = if_estimator_.fit(X=X, y=y)
         else:
             try:
@@ -257,7 +260,7 @@ class TransformIf(_DelegatedTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -265,8 +268,9 @@ class TransformIf(_DelegatedTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.param_est.fixed import FixedParams
         from sktime.transformations.series.boxcox import BoxCoxTransformer

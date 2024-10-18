@@ -128,7 +128,7 @@ class ClaSPTransformer(BaseTransformer):
 
         Returns
         -------
-        scoring_metric_call : a callable, keyed by the `scoring_metric` input
+        scoring_metric_call : a callable, keyed by the ``scoring_metric`` input
             _roc_auc_score, if scoring_metric = "ROC_AUC"
             _binary_f1_score, if scoring_metric = "F1"
         """
@@ -155,7 +155,7 @@ class ClaSPTransformer(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -163,7 +163,8 @@ class ClaSPTransformer(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         return {"window_length": 5}

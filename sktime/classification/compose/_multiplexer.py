@@ -36,7 +36,7 @@ class MultiplexClassifier(_HeterogenousMetaEstimator, _DelegatedClassifier):
     classifiers : list of sktime classifiers, or
         list of tuples (str, estimator) of sktime classifiers
         MultiplexClassifier can switch ("multiplex") between these classifiers.
-        These are "blueprint" classifiers, states do not change when `fit` is called.
+        These are "blueprint" classifiers, states do not change when ``fit`` is called.
     selected_classifier: str or None, optional, Default=None.
         If str, must be one of the classifier names.
             If no names are provided, must coincide with auto-generated name strings.
@@ -51,7 +51,8 @@ class MultiplexClassifier(_HeterogenousMetaEstimator, _DelegatedClassifier):
     _classifiers : list of (str, classifier) tuples
         str are identical to those passed, if passed strings are unique
         otherwise unique strings are generated from class name; if not unique,
-        the string `_[i]` is appended where `[i]` is count of occurrence up until then
+        the string ``_[i]`` is appended where ``[i]`` is count of occurrence up until
+        then
     """
 
     _tags = {
@@ -127,17 +128,19 @@ class MultiplexClassifier(_HeterogenousMetaEstimator, _DelegatedClassifier):
     def __or__(self, other):
         """Magic | (or) method, return (right) concatenated MultiplexClassifier.
 
-        Implemented for `other` being a classifier, otherwise returns `NotImplemented`.
+        Implemented for ``other`` being a classifier, otherwise returns
+        ``NotImplemented``.
 
         Parameters
         ----------
-        other: `sktime` classifier, must inherit from BaseClassifier
-            otherwise, `NotImplemented` is returned
+        other: ``sktime`` classifier, must inherit from BaseClassifier
+            otherwise, ``NotImplemented`` is returned
 
         Returns
         -------
-        MultiplexClassifier object, concatenation of `self` (first) with `other` (last).
-            not nested, contains only non-MultiplexClassifier `sktime` classifiers
+        MultiplexClassifier object, concatenation of ``self`` (first) with ``other``
+        (last).
+            not nested, contains only non-MultiplexClassifier ``sktime`` classifiers
 
         Raises
         ------
@@ -154,17 +157,19 @@ class MultiplexClassifier(_HeterogenousMetaEstimator, _DelegatedClassifier):
     def __ror__(self, other):
         """Magic | (or) method, return (left) concatenated MultiplexClassifier.
 
-        Implemented for `other` being a classifier, otherwise returns `NotImplemented`.
+        Implemented for ``other`` being a classifier, otherwise returns
+        ``NotImplemented``.
 
         Parameters
         ----------
-        other: `sktime` classifier, must inherit from BaseClassifier
-            otherwise, `NotImplemented` is returned
+        other: ``sktime`` classifier, must inherit from BaseClassifier
+            otherwise, ``NotImplemented`` is returned
 
         Returns
         -------
-        MultiplexClassifier object, concatenation of `self` (last) with `other` (first).
-            not nested, contains only non-MultiplexClassifier `sktime` classifiers
+        MultiplexClassifier object, concatenation of ``self`` (last) with ``other``
+        (first).
+            not nested, contains only non-MultiplexClassifier ``sktime`` classifiers
         """
         return self._dunder_concat(
             other=other,
@@ -193,7 +198,7 @@ class MultiplexClassifier(_HeterogenousMetaEstimator, _DelegatedClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------

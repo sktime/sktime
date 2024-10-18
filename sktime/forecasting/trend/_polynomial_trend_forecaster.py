@@ -5,6 +5,7 @@
 __author__ = ["tensorflow-as-tf", "mloning", "aiwalter", "fkiraly"]
 __all__ = ["PolynomialTrendForecaster"]
 
+import numpy as np
 import pandas as pd
 from sklearn.base import clone
 from sklearn.linear_model import LinearRegression
@@ -27,9 +28,9 @@ class PolynomialTrendForecaster(BaseForecaster):
 
     In ``fit``, for input time series :math:`(v_i, p(t_i)), i = 1, \dots, T`,
     where :math:`v_i` are values, :math:`t_i` are time stamps,
-    and :math:`p` is the polynomial feature transform with degree `degree`,
-    and with/without intercept depending on `with_intercept`,
-    fits an `sklearn` model :math:`v_i = f(p(t_i)) + \epsilon_i`, where :math:`f` is
+    and :math:`p` is the polynomial feature transform with degree ``degree``,
+    and with/without intercept depending on ``with_intercept``,
+    fits an ``sklearn`` model :math:`v_i = f(p(t_i)) + \epsilon_i`, where :math:`f` is
     the model fitted when ``regressor.fit`` is passed ``X`` = vector of :math:`p(t_i)`,
     and ``y`` = vector of :math:`v_i`.
 
@@ -38,9 +39,9 @@ class PolynomialTrendForecaster(BaseForecaster):
     and :math:`p` is the same polynomial feature transform as above.
 
     Default for ``regressor`` is linear regression = ``sklearn`` ``LinearRegression``,
-    with default parameters. Default for `degree` is 1.
+    with default parameters. Default for ``degree`` is 1.
 
-    If time stamps are `pd.DatetimeIndex`, fitted coefficients are in units
+    If time stamps are ``pd.DatetimeIndex``, fitted coefficients are in units
     of days since start of 1970. If time stamps are ``pd.PeriodIndex``,
     coefficients are in units of (full) periods since start of 1970.
 
@@ -55,6 +56,14 @@ class PolynomialTrendForecaster(BaseForecaster):
         If true, then include a feature in which all polynomial powers are
         zero. (i.e. a column of ones, acts as an intercept term in a linear
         model)
+    prediction_intervals : bool, default=False
+        Whether to compute prediction intervals.
+        If True, additional calculations are done during fit to enable prediction
+        intervals to be calculated during predict.
+        The prediction intervals are calculated according to Section 7.9 in [1].
+        The formulas are standard and are based on an OLS regression model fitted to
+        the data. The formulas in [1] assume a regression with
+        intercept and are modified appropriately if with_intercept is False.
 
     Attributes
     ----------
@@ -63,6 +72,11 @@ class PolynomialTrendForecaster(BaseForecaster):
         This is a fitted ``sklearn`` pipeline with steps
         ``PolynomialFeatures(degree, with_intercept)``,
         followed by a clone of ``regressor``.
+
+    References
+    ----------
+    .. [1] Hyndman, Rob J., and George Athanasopoulos. Forecasting: principles
+    and practice, 3rd edition. OTexts: Melbourne, Australia. OTexts.com/fpp3.
 
     Examples
     --------
@@ -76,19 +90,29 @@ class PolynomialTrendForecaster(BaseForecaster):
     """
 
     _tags = {
-        "authors": ["tensorflow-as-tf", "mloning", "aiwalter", "fkiraly"],
+        "authors": ["tensorflow-as-tf", "mloning", "aiwalter", "fkiraly", "ericjb"],
         "maintainers": ["tensorflow-as-tf"],
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
+        "capability:pred_int": True,
     }
 
-    def __init__(self, regressor=None, degree=1, with_intercept=True):
+    def __init__(
+        self, regressor=None, degree=1, with_intercept=True, prediction_intervals=False
+    ):
         self.regressor = regressor
         self.degree = degree
         self.with_intercept = with_intercept
         self.regressor_ = self.regressor
+        self.prediction_intervals = prediction_intervals
+        # prediction_intervals : bool, default=False
+        # By default, the extra information needed to later generate the prediction
+        # intervals is not calculated. If set to True, the extra information is
+        # calculated and stored in the forecaster.
         super().__init__()
+
+        self.set_tags(**{"capability:pred_int": prediction_intervals})
 
     def _fit(self, y, X, fh):
         """Fit to training data.
@@ -126,6 +150,15 @@ class PolynomialTrendForecaster(BaseForecaster):
 
         # fit regressor
         self.regressor_.fit(X_sklearn, y)
+
+        if self.prediction_intervals:
+            # calculate and save values needed for the prediction interval method
+            fitted_values = self.regressor_.predict(X_sklearn)
+            residuals = y - fitted_values
+            p = self.degree + int(self.with_intercept)
+            self.s_squared_ = np.sum(residuals**2) / (len(y) - p)
+            self.train_index_ = y.index
+
         return self
 
     def _predict(self, fh=None, X=None):
@@ -151,6 +184,44 @@ class PolynomialTrendForecaster(BaseForecaster):
         y_pred.name = self._y.name
         return y_pred
 
+    def _predict_var(self, fh=None, X=None, cov=False):
+        """Compute the variance at each forecast horizon."""
+        if not self.prediction_intervals:
+            raise ValueError(
+                "Prediction intervals were not calculated during fit. \
+                Set prediction_intervals=True at initialization."
+            )
+
+        # 1. get X (design matrix) and M = (X^t X)^-1
+        t_train = _get_X_numpy_int_from_pandas(self.train_index_).flatten()
+        X = np.polynomial.polynomial.polyvander(t_train, self.degree)
+        if not self.with_intercept:
+            X = X[:, 1:]  # remove the column of 1's that handles the intercept
+
+        M = np.linalg.inv(X.T @ X)
+
+        # 2. get time vector t for the forecast horizons
+        if fh.is_relative:
+            fh = fh.to_absolute(cutoff=self.train_index_[-1])
+
+        t_fh = fh.to_pandas()
+        fh_periods = _get_X_numpy_int_from_pandas(t_fh)
+        t = np.array(fh_periods)
+
+        # 3. calculate (half-) range of PI (1 + sqrt(x_0^t M x_0)) (up to scaling)
+        start = 0 if self.with_intercept else 1
+        v = []
+
+        for _, z in enumerate(t):
+            w = np.array([z**j for j in range(start, self.degree + 1)])
+            v.append(w.T @ M @ w)
+
+        v = (1 + np.array(v)).flatten()  # see Hyndman FPP3 Section 7.9
+
+        l_var = v * self.s_squared_  # see Hyndman FPP3 Section 7.9
+        pred_var = pd.DataFrame(l_var, columns=[self._y.name])
+        return pred_var
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -159,15 +230,16 @@ class PolynomialTrendForecaster(BaseForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sklearn.ensemble import RandomForestRegressor
 
@@ -177,6 +249,19 @@ class PolynomialTrendForecaster(BaseForecaster):
                 "regressor": RandomForestRegressor(),
                 "degree": 2,
                 "with_intercept": False,
+                "prediction_intervals": False,
+            },
+            {
+                "regressor": RandomForestRegressor(),
+                "degree": 2,
+                "with_intercept": True,
+                "prediction_intervals": True,
+            },
+            {
+                "regressor": RandomForestRegressor(),
+                "degree": 2,
+                "with_intercept": False,
+                "prediction_intervals": True,
             },
         ]
 

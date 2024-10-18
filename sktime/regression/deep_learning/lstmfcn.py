@@ -1,4 +1,5 @@
 """LongShort Term Memory Fully Convolutional Network (LSTM-FCN)."""
+
 __author__ = ["jnrusson1", "solen0id", "nilesh05apr"]
 
 __all__ = ["LSTMFCNRegressor"]
@@ -52,6 +53,17 @@ class LSTMFCNRegressor(BaseDeepRegressor):
     ----------
     .. [1] Karim et al. Multivariate LSTM-FCNs for Time Series Classification, 2019
     https://arxiv.org/pdf/1801.04503.pdf
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_unit_test
+    >>> from sktime.regression.deep_learning.lstmfcn import LSTMFCNRegressor
+    >>> X_train, y_train = load_unit_test(return_X_y=True, split="train")
+    >>> X_test, y_test = load_unit_test(return_X_y=True, split="test")
+    >>> regressor = LSTMFCNRegressor() # doctest: +SKIP
+    >>> regressor.fit(X_train, y_train) # doctest: +SKIP
+    LSTMFCNRegressor(...)
+    >>> y_pred = regressor.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
@@ -76,12 +88,6 @@ class LSTMFCNRegressor(BaseDeepRegressor):
         random_state=None,
         verbose=0,
     ):
-        super().__init__()
-
-        self.input_shape = None
-        self.model_ = None
-        self.history = None
-
         # predefined
         self.n_epochs = n_epochs
         self.batch_size = batch_size
@@ -95,6 +101,12 @@ class LSTMFCNRegressor(BaseDeepRegressor):
         self.random_state = random_state
         self.verbose = verbose
 
+        super().__init__()
+
+        self.input_shape = None
+        self.model_ = None
+        self.history = None
+
         self._network = LSTMFCNNetwork(
             kernel_sizes=self.kernel_sizes,
             filter_sizes=self.filter_sizes,
@@ -103,7 +115,6 @@ class LSTMFCNRegressor(BaseDeepRegressor):
             dropout=self.dropout,
             attention=self.attention,
         )
-        self._is_fitted = False
 
     def build_model(self, input_shape, **kwargs):
         """
@@ -134,7 +145,7 @@ class LSTMFCNRegressor(BaseDeepRegressor):
             metrics=["accuracy"],
         )
 
-        self.callbacks = self.callbacks or []
+        self._callbacks = self.callbacks or None
 
         return model
 
@@ -175,10 +186,8 @@ class LSTMFCNRegressor(BaseDeepRegressor):
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
-            callbacks=deepcopy(self.callbacks) if self.callbacks else [],
+            callbacks=deepcopy(self._callbacks) if self._callbacks else None,
         )
-
-        self._is_fitted = True
 
         return self
 
@@ -204,7 +213,7 @@ class LSTMFCNRegressor(BaseDeepRegressor):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         param1 = {
             "n_epochs": 25,

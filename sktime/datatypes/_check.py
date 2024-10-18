@@ -23,31 +23,73 @@ __all__ = [
     "mtype",
 ]
 
-from typing import List, Union
+from functools import lru_cache
 
 import numpy as np
 
-from sktime.datatypes._alignment import check_dict_Alignment
-from sktime.datatypes._common import _metadata_requested, _ret
-from sktime.datatypes._hierarchical import check_dict_Hierarchical
-from sktime.datatypes._panel import check_dict_Panel
-from sktime.datatypes._proba import check_dict_Proba
+from sktime.datatypes._base import BaseDatatype
+from sktime.datatypes._base._common import _metadata_requested, _ret
 from sktime.datatypes._registry import AMBIGUOUS_MTYPES, SCITYPE_LIST, mtype_to_scitype
-from sktime.datatypes._series import check_dict_Series
-from sktime.datatypes._table import check_dict_Table
 
-# pool convert_dict-s
-check_dict = dict()
-check_dict.update(check_dict_Series)
-check_dict.update(check_dict_Panel)
-check_dict.update(check_dict_Hierarchical)
-check_dict.update(check_dict_Alignment)
-check_dict.update(check_dict_Table)
-check_dict.update(check_dict_Proba)
+
+def get_check_dict(soft_deps="present"):
+    """Retrieve check_dict, caches the first time it is requested.
+
+    This is to avoid repeated, time consuming crawling in generate_check_dict,
+    which would otherwise be called every time check_dict is requested.
+
+    Parameters
+    ----------
+    soft_deps : str, optional - one of "present", "all"
+        "present" - only checks with soft dependencies present are included
+        "all" - all checks are included
+    """
+    if soft_deps not in ["present", "all"]:
+        raise ValueError(
+            "Error in get_check_dict, soft_deps argument must be 'present' or 'all', "
+            f"found {soft_deps}"
+        )
+    check_dict = generate_check_dict(soft_deps=soft_deps)
+    return check_dict.copy()
+
+
+@lru_cache(maxsize=1)
+def generate_check_dict(soft_deps="present"):
+    """Generate check_dict using lookup."""
+    from skbase.utils.dependencies import _check_estimator_deps
+
+    from sktime.utils.retrieval import _all_classes
+
+    classes = _all_classes("sktime.datatypes")
+    classes = [x[1] for x in classes]
+    classes = [x for x in classes if issubclass(x, BaseDatatype)]
+    classes = [x for x in classes if not x.__name__.startswith("Base")]
+    classes = [x for x in classes if not x.__name__.startswith("Scitype")]
+
+    # subset only to data types with soft dependencies present
+    if soft_deps == "present":
+        classes = [x for x in classes if _check_estimator_deps(x, severity="none")]
+
+    check_dict = dict()
+    for cls in classes:
+        k = cls()
+        key = k._get_key()
+        check_dict[key] = k
+
+    # temporary while refactoring
+    from sktime.datatypes._alignment import check_dict_Alignment
+    from sktime.datatypes._proba import check_dict_Proba
+
+    # pool convert_dict-s
+    check_dict.update(check_dict_Alignment)
+    check_dict.update(check_dict_Proba)
+
+    return check_dict
 
 
 def _check_scitype_valid(scitype: str = None):
     """Check validity of scitype."""
+    check_dict = get_check_dict()
     valid_scitypes = list({x[1] for x in check_dict.keys()})
 
     if not isinstance(scitype, str):
@@ -88,7 +130,7 @@ def _coerce_list_of_str(obj, var_name="obj"):
 
 def check_is_mtype(
     obj,
-    mtype: Union[str, List[str]],
+    mtype,
     scitype: str = None,
     return_metadata=False,
     var_name="obj",
@@ -110,11 +152,18 @@ def check_is_mtype(
         if str, list of str, metadata return dict is subset to keys in return_metadata
     var_name: str, optional, default="obj"
         name of input in error messages
-    msg_return_dict: str, "list" or "dict", optional, default="dict"
-        whether returned msg, if returned is a str, dict or list
-        if "list", msg is str if mtype is str, list of str if mtype is list
-        if "dict", msg is str if mtype is str, dict of str if mtype is list,
-        if dict, has with mtype as key and error message for mtype as value
+    msg_return_dict: str, one of ``"list"`` or ``"dict"``, optional, default="dict"
+        whether returned msg, if returned, is a str, dict or list
+
+        * if ``msg_return_dict="list"``,
+          returned ``msg`` is ``str`` if ``mtype`` is ``str``,
+          returned ``msg`` is ``list`` of ``str`` if ``mtype`` is ``list``
+
+        * if ``msg_return_dict="dict"``,
+          returned ``msg`` is ``str`` if ``mtype`` is ``str``,
+          returned ``msg`` is ``dict`` of ``str`` if ``mtype`` is ``list``.
+          If ``dict``, has str in ``mtype`` as key,
+          and error message for mtype as value.
 
     Returns
     -------
@@ -159,6 +208,7 @@ def check_is_mtype(
     """
     mtype = _coerce_list_of_str(mtype, var_name="mtype")
 
+    check_dict = get_check_dict()
     valid_keys = check_dict.keys()
 
     # we loop through individual mtypes in mtype and see whether they pass the check
@@ -273,7 +323,7 @@ def check_raise(obj, mtype: str, scitype: str = None, var_name: str = "input"):
 
 def mtype(
     obj,
-    as_scitype: Union[str, List[str]] = None,
+    as_scitype=None,
     exclude_mtypes=AMBIGUOUS_MTYPES,
 ):
     """Infer the mtype of an object considered as a specific scitype.
@@ -308,6 +358,7 @@ def mtype(
         for scitype in as_scitype:
             _check_scitype_valid(scitype)
 
+    check_dict = get_check_dict()
     m_plus_scitypes = [
         (x[0], x[1]) for x in check_dict.keys() if x[0] not in exclude_mtypes
     ]
@@ -355,7 +406,7 @@ def mtype(
 
 def check_is_scitype(
     obj,
-    scitype: Union[str, List[str]],
+    scitype,
     return_metadata=False,
     var_name="obj",
     exclude_mtypes=AMBIGUOUS_MTYPES,
@@ -408,6 +459,7 @@ def check_is_scitype(
             "has_nans": bool, True iff the panel contains NaN values
         For scitype "Alignment":
             currently none
+
     Raises
     ------
     TypeError if scitype input argument is not of expected type
@@ -417,6 +469,7 @@ def check_is_scitype(
     for x in scitype:
         _check_scitype_valid(x)
 
+    check_dict = get_check_dict()
     valid_keys = check_dict.keys()
 
     # find all the mtype keys corresponding to the scitypes

@@ -2,7 +2,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Croston's Forecasting Method."""
 
-
 import numpy as np
 import pandas as pd
 
@@ -64,8 +63,9 @@ class Croston(BaseForecaster):
     References
     ----------
     .. [1] J. D. Croston. Forecasting and stock control for intermittent demands.
-       Operational Research Quarterly (1970-1977), 23(3):pp. 289–303, 1972.
+       Operational Research Quarterly (1970-1977), 23(3):pp. 289-303, 1972.
     .. [2] N. Vandeput. Forecasting Intermittent Demand with the Croston Model.
+
        https://towardsdatascience.com/croston-forecast-model-for-intermittent-demand-360287a17f5f
     """
 
@@ -167,7 +167,7 @@ class Croston(BaseForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------

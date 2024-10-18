@@ -15,13 +15,17 @@ import itertools
 import numpy as np
 import pandas as pd
 
-from sktime.datasets._readers_writers.utils import _alias_mtype_check, _write_header
+from sktime.datasets._readers_writers.utils import (
+    _alias_mtype_check,
+    _write_header,
+    get_path,
+)
 from sktime.datatypes import MTYPE_LIST_PANEL, check_is_scitype, convert, convert_to
 from sktime.utils.validation.panel import check_X, check_X_y
 
-# ==================================================================================================
+# ===================================================================================
 # Function to read  .ts file
-# ==================================================================================================
+# ===================================================================================
 
 
 # TODO: Highle deeply nested function, refactor
@@ -75,6 +79,9 @@ def load_from_tsfile_to_dataframe(
     instance_list = []
     class_val_list = []
     line_num = 0
+
+    full_file_path_and_name = get_path(full_file_path_and_name, ".ts")
+
     # Parse the file
     with open(full_file_path_and_name, encoding=encoding) as file:
         for line in file:
@@ -592,9 +599,11 @@ def load_from_tsfile_to_dataframe(
         elif metadata_started and data_started and len(instance_list) == 0:
             raise OSError("file contained metadata but no data")
         # Create a DataFrame from the data parsed above
-        data = pd.DataFrame(dtype=np.float32)
-        for dim in range(0, num_dimensions):
-            data["dim_" + str(dim)] = instance_list[dim]
+        data_dict = {
+            f"dim_{dim}": pd.Series(instance_list[dim]) for dim in range(num_dimensions)
+        }
+        data = pd.DataFrame(data_dict)
+
         # Check if we should return any associated class labels separately
         if class_labels:
             if return_separate_X_and_y:

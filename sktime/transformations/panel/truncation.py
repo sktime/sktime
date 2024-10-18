@@ -1,4 +1,5 @@
 """Truncation transformer - truncate unequal length panels to lower/upper bounds."""
+
 import numpy as np
 import pandas as pd
 
@@ -9,19 +10,26 @@ __author__ = ["abostrom"]
 
 
 class TruncationTransformer(BaseTransformer):
-    """Truncate unequal length panels to lower/upper bounds.
-
-    Truncates all series in panel between lower/upper range bounds.
+    """
+    Truncates unequal length panels between lower/upper length ranges.
 
     Parameters
     ----------
-    lower : int, optional (default=None) bottom range of the values to
-                truncate can also be used to truncate to a specific length
-                if None, will find the shortest sequence and use instead.
-    upper : int, optional (default=None) upper range, only required when
-                paired with lower.
-                This is used to calculate the range between. exclusive.
-                if None, will truncate from 0 to the lower bound.
+    lower : int, optional (default=None) minimum length, inclusive
+                Cannot be less than the length of the shortest series in the panel.
+                If None, will find the length of the shortest series and use instead.
+    upper : int, optional (default=None) maximum length, exclusive
+                This is used to calculate the range between.
+                If None, will truncate to the lower bound.
+
+    Examples
+    --------
+    >>> from sktime.transformations.panel.truncation import TruncationTransformer
+    >>> from sktime.utils._testing.hierarchical import _make_hierarchical
+    >>> X = _make_hierarchical(same_cutoff=False)
+    >>> tt = TruncationTransformer()
+    >>> tt.fit(X)
+    >>> X_transformed = tt.transform(X)
     """
 
     _tags = {
@@ -131,7 +139,7 @@ class TruncationTransformer(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -139,8 +147,9 @@ class TruncationTransformer(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params = {"lower": 5}
         return params

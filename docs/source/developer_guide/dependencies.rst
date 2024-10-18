@@ -30,7 +30,7 @@ Soft dependencies in ``sktime`` should usually be isolated to estimators.
 
 Informative warnings or error messages for missing soft dependencies should be raised, in a situation where a user would need them.
 This is handled through our ``_check_soft_dependencies`` utility
-`here <https://github.com/sktime/sktime/blob/main/sktime/utils/validation/_dependencies.py>`__.
+`here <https://github.com/sktime/sktime/blob/main/sktime/utils/dependencies/_dependencies.py>`__.
 There are specific conventions to add such warnings in estimators, as below.
 
 Estimators with a soft dependency need to ensure the following:
@@ -38,20 +38,12 @@ Estimators with a soft dependency need to ensure the following:
 *  imports of the soft dependency only happen inside the estimator,
    e.g., in ``_fit`` or ``__init__`` methods of the estimator.
    In ``__init__``, imports should happen only after calls to ``super(cls).__init__``.
-*  the ``python_dependencies`` tag of the estimator is populated with a ``str``,
-   or a ``list`` of ``str``, of dependency requirements, where ``str`` are PEP 440 compliant version specification ``str``
-   such as ``pandas>=2.0.1``. Exceptions will automatically be raised when constructing the estimator
+*  the packaging tags of the estimator are populated, i.e., ``python_dependencies``
+   with PEP 440 compliant dependency specifier strings such as ``pandas>=2.0.1``, and optionally
+   ``python_version`` and ``env_marker`` if specific markers are needed.
+   Exceptions will automatically be raised when constructing the estimator
    in an environment where the requirements are not met.
-*  In a case where the package import differs from the package name, i.e., ``import package_string`` is different from
-   ``pip install different-package-string`` (usually the case for packages containing a dash in the name), the ``python_dependencies_alias`` tag
-   should be populated to pass the information on package and import strings as ``dict`` such as ``{"scikit-learn": "sklearn"}``.
-*  If the soft dependencies require specific python versions, the ``python_version``
-   tag should also be populated, with a PEP 440 compliant version specification ``str`` such as ``"<3.10"`` or ``">3.6,~=3.8"``.
-*  If including docstring examples that use soft dependencies, ensure to skip the corresponding doctest,
-   in order to avoid that ``doctest`` attempts to import the soft dependency when it is not present.
-   To do this, add a ``# doctest: +SKIP`` to the end of each line in the doctest to skip it entirely.
-   See ``forecasting.arima.ARIMA`` as as an example. If concerned that skipping the test will reduce test coverage,
-   consider exposing the doctest example as a pytest test function instead, see below how to handle soft dependencies in pytest functions.
+   For further details, see the tag API reference, :ref:`packaging_tags`.
 *  Decorate all ``pytest`` tests that import soft dependencies with a ``@pytest.mark.skipif(...)`` conditional on a soft dependency check.
    If the test is specific to a single estimator or object, use ``run_test_for_class`` from ``sktime.tests.test_switch``
    to mediate the condition through the class tags.

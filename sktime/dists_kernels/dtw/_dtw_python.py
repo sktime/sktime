@@ -15,7 +15,7 @@ class DtwPythonDist(_DelegatedPairwiseTransformerPanel):
     ----------
     dist: str, or estimator following sktime BasePairwiseTransformer API
         distance to use, a distance on real n-space, default = "euclidean"
-        if str, must be name of one of the functions in `scipy.spatial.distance.cdist`
+        if str, must be name of one of the functions in ``scipy.spatial.distance.cdist``
         if estimator, must follow sktime BasePairwiseTransformer API
     step_pattern : str, optional, default = "symmetric2",
         or dtw_python stepPattern object, optional
@@ -40,9 +40,8 @@ class DtwPythonDist(_DelegatedPairwiseTransformerPanel):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["fkiraly"],
+        "authors": ["tonigi", "fkiraly"],  # tonigi for dtw-python
         "python_dependencies": "dtw-python",
-        "python_dependencies_alias": {"dtw-python": "dtw"},
         # estimator type
         # --------------
         "pwtrafo_type": "distance",  # type of pw. transformer, "kernel" or "distance"
@@ -95,7 +94,7 @@ class DtwPythonDist(_DelegatedPairwiseTransformerPanel):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for distance/kernel transformers.
 
         Returns
@@ -103,8 +102,9 @@ class DtwPythonDist(_DelegatedPairwiseTransformerPanel):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.dists_kernels import ScipyDist
 

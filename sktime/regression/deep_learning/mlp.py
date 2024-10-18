@@ -9,7 +9,7 @@ from sklearn.utils import check_random_state
 
 from sktime.networks.mlp import MLPNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
-from sktime.utils.validation._dependencies import _check_dl_dependencies
+from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class MLPRegressor(BaseDeepRegressor):
@@ -48,6 +48,17 @@ class MLPRegressor(BaseDeepRegressor):
     .. [1] Wang et. al, Time series classification from
     scratch with deep neural networks: A strong baseline,
     International joint conference on neural networks (IJCNN), 2017.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_unit_test
+    >>> from sktime.regression.deep_learning.mlp import MLPRegressor
+    >>> X_train, y_train = load_unit_test(return_X_y=True, split="train")
+    >>> X_test, y_test = load_unit_test(return_X_y=True, split="test")
+    >>> regressor = MLPRegressor() # doctest: +SKIP
+    >>> regressor.fit(X_train, y_train) # doctest: +SKIP
+    MLPRegressor(...)
+    >>> y_pred = regressor.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
@@ -72,7 +83,7 @@ class MLPRegressor(BaseDeepRegressor):
         optimizer=None,
     ):
         _check_dl_dependencies(severity="error")
-        super().__init__()
+
         self.callbacks = callbacks
         self.n_epochs = n_epochs
         self.batch_size = batch_size
@@ -83,6 +94,9 @@ class MLPRegressor(BaseDeepRegressor):
         self.activation = activation
         self.use_bias = use_bias
         self.optimizer = optimizer
+
+        super().__init__()
+
         self.history = None
         self._network = MLPNetwork(
             random_state=self.random_state,
@@ -174,7 +188,7 @@ class MLPRegressor(BaseDeepRegressor):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -185,10 +199,11 @@ class MLPRegressor(BaseDeepRegressor):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         param1 = {
             "n_epochs": 10,

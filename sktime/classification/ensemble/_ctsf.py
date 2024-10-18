@@ -33,7 +33,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
     classifiers on various sub-samples of a transformed dataset and uses
     averaging to improve the predictive accuracy and control over-fitting.
     The sub-sample size is always the same as the original input sample size
-    but the samples are drawn with replacement if `bootstrap=True` (default).
+    but the samples are drawn with replacement if ``bootstrap=True`` (default).
 
     Parameters
     ----------
@@ -48,9 +48,9 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         min_samples_split samples.
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
-        - If int, then consider `min_samples_split` as the minimum number.
-        - If float, then `min_samples_split` is a fraction and
-          `ceil(min_samples_split * n_samples)` are the minimum
+        - If int, then consider ``min_samples_split`` as the minimum number.
+        - If float, then ``min_samples_split`` is a fraction and
+          ``ceil(min_samples_split * n_samples)`` are the minimum
           number of samples for each split.
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node.
@@ -58,9 +58,9 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         least ``min_samples_leaf`` training samples in each of the left and
         right branches.  This may have the effect of smoothing the model,
         especially in regression.
-        - If int, then consider `min_samples_leaf` as the minimum number.
-        - If float, then `min_samples_leaf` is a fraction and
-          `ceil(min_samples_leaf * n_samples)` are the minimum
+        - If int, then consider ``min_samples_leaf`` as the minimum number.
+        - If float, then ``min_samples_leaf`` is a fraction and
+          ``ceil(min_samples_leaf * n_samples)`` are the minimum
           number of samples for each node.
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the sum total of weights (of all
@@ -68,14 +68,14 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         equal weight when sample_weight is not provided.
     max_features : int, float, string or None, optional (default=None)
         The number of features to consider when looking for the best split:
-        - If int, then consider `max_features` features at each split.
-        - If float, then `max_features` is a fraction and
-          `int(max_features * n_features)` features are considered at each
+        - If int, then consider ``max_features`` features at each split.
+        - If float, then ``max_features`` is a fraction and
+          ``int(max_features * n_features)`` features are considered at each
           split.
-        - If "auto", then `max_features=sqrt(n_features)`.
-        - If "sqrt", then `max_features=sqrt(n_features)` (same as "auto").
-        - If "log2", then `max_features=log2(n_features)`.
-        - If None, then `max_features=n_features`.
+        - If "auto", then ``max_features=sqrt(n_features)``.
+        - If "sqrt", then ``max_features=sqrt(n_features)`` (same as "auto").
+        - If "log2", then ``max_features=log2(n_features)``.
+        - If None, then ``max_features=n_features``.
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
         effectively inspect more than ``max_features`` features.
@@ -100,14 +100,14 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         Whether to use out-of-bag samples to estimate
         the generalization accuracy.
     n_jobs : int or None, optional (default=None)
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors.
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
     verbose : int, optional (default=0)
         Controls the verbosity when fitting and predicting.
     warm_start : bool, optional (default=False)
@@ -137,10 +137,10 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
     max_samples : int or float, default=None
         If bootstrap is True, the number of samples to draw from X
         to train each base estimator.
-        - If None (default), then draw `X.shape[0]` samples.
-        - If int, then draw `max_samples` samples.
-        - If float, then draw `max_samples * X.shape[0]` samples. Thus,
-          `max_samples` should be in the interval `(0, 1)`.
+        - If None (default), then draw ``X.shape[0]`` samples.
+        - If int, then draw ``max_samples`` samples.
+        - If float, then draw ``max_samples * X.shape[0]`` samples. Thus,
+          ``max_samples`` should be in the interval ``(0, 1)``.
 
     Attributes
     ----------
@@ -165,12 +165,27 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         Decision function computed with out-of-bag estimate on the training
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
-        `oob_decision_function_` might contain NaN.
+        ``oob_decision_function_`` might contain NaN.
 
     References
     ----------
     .. [1] Deng et. al, A time series forest for classification and feature extraction,
     Information Sciences, 239:2013.
+
+    Examples
+    --------
+    >>> from sktime.classification.ensemble import ComposableTimeSeriesForestClassifier
+    >>> from sktime.classification.kernel_based import RocketClassifier
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train") # doctest: +SKIP
+    >>> X_test, y_test = load_unit_test(split="test") # doctest: +SKIP
+    >>> clf = ComposableTimeSeriesForestClassifier(
+    ...     RocketClassifier(num_kernels=100),
+    ...     n_estimators=10,
+    ... )  # doctest: +SKIP
+    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
+    ComposableTimeSeriesForestClassifier(...)
+    >>> y_pred = clf.predict(X_test)  # doctest: +SKIP
     """
 
     _tags = {
@@ -178,6 +193,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         # --------------
         "authors": ["mloning", "AyushmaanSeth"],
         "maintainers": ["AyushmaanSeth"],
+        "python_dependencies": ["joblib"],
         # estimator type
         # --------------
         "X_inner_mtype": "nested_univ",  # nested pd.DataFrame
@@ -262,14 +278,12 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
     def _validate_estimator(self):
         if not isinstance(self.n_estimators, numbers.Integral):
             raise ValueError(
-                "n_estimators must be an integer, "
-                "got {}.".format(type(self.n_estimators))
+                f"n_estimators must be an integer, got {type(self.n_estimators)}."
             )
 
         if self.n_estimators <= 0:
             raise ValueError(
-                "n_estimators must be greater than zero, "
-                "got {}.".format(self.n_estimators)
+                f"n_estimators must be greater than zero, got {self.n_estimators}."
             )
 
         # Set base estimator
@@ -377,7 +391,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         p : array of shape (n_samples, n_classes), or a list of n_outputs
             such arrays if n_outputs > 1.
             The class probabilities of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
+            classes corresponds to that in the attribute ``classes_``.
         """
         proba = self.predict_proba(X)
 
@@ -410,7 +424,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         p : array of shape = [n_samples, n_classes], or a list of n_outputs
             such arrays if n_outputs > 1.
             The class probabilities of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
+            classes corresponds to that in the attribute ``classes_``.
         """
         # Check data
         self.check_is_fitted()
@@ -542,7 +556,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -553,8 +567,9 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         params1 = {"n_estimators": 2}
         params2 = {"n_estimators": 5, "min_samples_split": 3, "bootstrap": True}

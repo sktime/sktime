@@ -1,4 +1,5 @@
 """LongShort Term Memory Fully Convolutional Network (LSTM-FCN)."""
+
 __author__ = ["jnrusson1", "solen0id"]
 
 __all__ = ["LSTMFCNClassifier"]
@@ -41,7 +42,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
     verbose: 'auto', 0, 1, or 2. Verbosity mode.
         0 = silent, 1 = progress bar, 2 = one line per epoch.
         'auto' defaults to 1 for most cases, but 2 when used with
-        `ParameterServerStrategy`. Note that the progress bar is not
+        ``ParameterServerStrategy``. Note that the progress bar is not
         particularly useful when logged to a file, so verbose=2 is
         recommended when not running interactively (eg, in a production
         environment).
@@ -52,6 +53,17 @@ class LSTMFCNClassifier(BaseDeepClassifier):
     ----------
     .. [1] Karim et al. Multivariate LSTM-FCNs for Time Series Classification, 2019
     https://arxiv.org/pdf/1801.04503.pdf
+
+    Examples
+    --------
+    >>> import sktime.classification.deep_learning as dl_clf  # doctest: +SKIP
+    >>> from dl_clf.lstmfcn import LSTMFCNClassifier  # doctest: +SKIP
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> lstmfcn = FCNClassifier(n_epochs=20,batch_size=4)  # doctest: +SKIP
+    >>> lstmfcn.fit(X_train, y_train)  # doctest: +SKIP
+    FCNClassifier(...)
     """
 
     _tags = {
@@ -76,13 +88,6 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         random_state=None,
         verbose=0,
     ):
-        super().__init__()
-
-        self.classes_ = None
-        self.input_shape = None
-        self.model_ = None
-        self.history = None
-
         # predefined
         self.n_epochs = n_epochs
         self.batch_size = batch_size
@@ -96,6 +101,8 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         self.random_state = random_state
         self.verbose = verbose
 
+        super().__init__()
+
         self._network = LSTMFCNNetwork(
             kernel_sizes=self.kernel_sizes,
             filter_sizes=self.filter_sizes,
@@ -104,7 +111,6 @@ class LSTMFCNClassifier(BaseDeepClassifier):
             dropout=self.dropout,
             attention=self.attention,
         )
-        self._is_fitted = False
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """
@@ -116,6 +122,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         n_classes: int
             The number of classes, which shall become the size of the output
              layer
+
         Returns
         -------
         output : a compiled Keras Model
@@ -138,8 +145,9 @@ class LSTMFCNClassifier(BaseDeepClassifier):
             optimizer="adam",
             metrics=["accuracy"],
         )
-
-        self.callbacks = self.callbacks or []
+        # .get_params() returns an empty list for callback.
+        # inconsistent with function initial run where callbacks was set to None
+        self._callbacks = self.callbacks or None
 
         return model
 
@@ -173,7 +181,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         """
         check_random_state(self.random_state)
 
-        y_onehot = self.convert_y_to_keras(y)
+        y_onehot = self._convert_y_to_keras(y)
 
         # Remove?
         # Transpose to conform to Keras input style.
@@ -194,10 +202,8 @@ class LSTMFCNClassifier(BaseDeepClassifier):
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
-            callbacks=deepcopy(self.callbacks) if self.callbacks else [],
+            callbacks=deepcopy(self._callbacks) if self._callbacks else None,
         )
-
-        self._is_fitted = True
 
         return self
 
@@ -209,7 +215,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -220,10 +226,11 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         param1 = {
             "n_epochs": 25,

@@ -1,10 +1,11 @@
 """Time series k-neighbors, from tslearn."""
+
 from sktime.base.adapters._tslearn import _TslearnAdapter
 from sktime.classification.base import BaseClassifier
 
 
 class KNeighborsTimeSeriesClassifierTslearn(_TslearnAdapter, BaseClassifier):
-    """K-nearest neighbors Time Series Classifier.
+    """K-nearest neighbors Time Series Classifier, from tslearn.
 
     Direct interface to ``tslearn.neighbors.KNeighborsTimeSeriesClassifier``.
 
@@ -55,12 +56,31 @@ class KNeighborsTimeSeriesClassifierTslearn(_TslearnAdapter, BaseClassifier):
         Above 50, the output is sent to stdout.
         The frequency of the messages increases with the verbosity level.
         If it more than 10, all iterations are reported.
+
+    Examples
+    --------
+    >>> import sktime.classification.distance_based as db_clf  # doctest: +SKIP
+    >>> from db_clf import KNeighborsTimeSeriesClassifierTslearn  # doctest: +SKIP
+    >>> from sktime.datasets import load_unit_test  # doctest: +SKIP
+    >>> X_train, y_train = load_unit_test(split="train")  # doctest: +SKIP
+    >>> X_test, y_test = load_unit_test(split="test")  # doctest: +SKIP
+    >>> clf = KNeighborsTimeSeriesClassifierTslearn(
+    ...     n_neighbors=5,
+    ...     weights="uniform",
+    ...     metric="dtw",
+    ...     metric_params=None,
+    ...     n_jobs=None,
+    ...     verbose=0,
+    ... )  # doctest: +SKIP
+    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
+    KNeighborsTimeSeriesClassifierTslearn(...)
+    >>> y_pred = clf.predict(X_test)  # doctest: +SKIP
     """
 
     _tags = {
         # packaging info
         # --------------
-        "authors": "fkiraly",
+        "authors": ["rtavenar", "fkiraly"],  # rtavenar credit for interfaced code
         "python_dependencies": "tslearn",
         # estimator type
         # --------------
@@ -106,7 +126,7 @@ class KNeighborsTimeSeriesClassifierTslearn(_TslearnAdapter, BaseClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -114,8 +134,9 @@ class KNeighborsTimeSeriesClassifierTslearn(_TslearnAdapter, BaseClassifier):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
         params2 = {

@@ -4,7 +4,8 @@
 
 __author__ = ["fkiraly", "khrapovs", "mateuja", "mloning"]
 
-from typing import Iterator, Optional, Tuple
+from collections.abc import Iterator
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -72,7 +73,7 @@ class BaseSplitter(BaseObject):
     by the timedelta `window_length`,
     and then the integer position of the resulting datetime
     is considered to be the training window start.
-    For example, for `cutoff = 10`, and `window_length = pd.Timedelta(6, unit="D")`,
+    For example, for `cutoff = 10`, and `window_length = pd.Timedelta(6, freq="D")`,
     we have `y[cutoff] = pd.Timestamp("2021-01-10")`,
     and `y[cutoff] - window_length = pd.Timestamp("2021-01-04")`,
     which leads to `train_start = y.loc(y[cutoff] - window_length) = 4`.
@@ -95,6 +96,8 @@ class BaseSplitter(BaseObject):
         # split_series_uses: "iloc" or "loc", whether split_series under the hood
         # calls split ("iloc") or split_loc ("loc"). Setting this can give
         # performance advantages, e.g., if "loc" is faster to obtain.
+        "split_type": "temporal",
+        # whether the splitter splits by time, or by instance
         "authors": "sktime developers",  # author(s) of the object
         "maintainers": "sktime developers",  # current maintainer(s) of the object
     }
@@ -156,7 +159,11 @@ class BaseSplitter(BaseObject):
         test : 1D np.ndarray of dtype int
             Test window indices, iloc references to test indices in y
         """
-        raise NotImplementedError("abstract method")
+        for train_loc, test_loc in self.split_loc(y):
+            # default gets iloc index from loc index
+            train_iloc = y.get_indexer(train_loc)
+            test_iloc = y.get_indexer(test_loc)
+            yield train_iloc, test_iloc
 
     def _split_vectorized(self, y: pd.MultiIndex) -> SPLIT_GENERATOR_TYPE:
         """Get iloc references to train/test splits of `y`, for pd.MultiIndex.
@@ -193,7 +200,7 @@ class BaseSplitter(BaseObject):
 
         yield from zip(train, test)
 
-    def split_loc(self, y: ACCEPTED_Y_TYPES) -> Iterator[Tuple[pd.Index, pd.Index]]:
+    def split_loc(self, y: ACCEPTED_Y_TYPES) -> Iterator[tuple[pd.Index, pd.Index]]:
         """Get loc references to train/test splits of `y`.
 
         Parameters
@@ -215,7 +222,7 @@ class BaseSplitter(BaseObject):
 
         yield from self._split_loc(y_index)
 
-    def _split_loc(self, y: ACCEPTED_Y_TYPES) -> Iterator[Tuple[pd.Index, pd.Index]]:
+    def _split_loc(self, y: ACCEPTED_Y_TYPES) -> Iterator[tuple[pd.Index, pd.Index]]:
         """Get loc references to train/test splits of `y`.
 
         private _split containing the core logic, called from split_loc
@@ -302,6 +309,16 @@ class BaseSplitter(BaseObject):
             y_index = y.index
         else:
             y_index = y
+
+        if self.get_tag("split_type") == "instance":
+            if not isinstance(y_index, pd.MultiIndex):
+                cls_name = self.__class__.__name__
+                raise ValueError(
+                    f"Error in {cls_name}.split: "
+                    f"{cls_name} is a splitter of type 'instance', "
+                    f"and requires Panel or Hierarchical time series index."
+                )
+
         return y_index
 
     def _check_y(self, y, allow_index=False):

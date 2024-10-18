@@ -86,7 +86,7 @@ genetic information, sexual orientation, disability status, physical appearance,
 body size, citizenship, nationality, national origin, ethnic or social origin, pregnancy,
 familial status, family background, veteran status, trade union membership,
 religion or belief (or lack thereof), membership of a national minority, property, age,
-socio-economic status, neurotypicality or -atypicality, education, and experience level.
+socioeconomic status, neurotypicality or -atypicality, education, and experience level.
 
 Everyone who participates in the sktime project activities is required
 to conform to this Code of Conduct. This Code of Conduct applies to all
@@ -159,16 +159,23 @@ project event or platform include:
 -  causing someone to fear for their safety, such as through stalking,
    following, or intimidation
 -  violent threats or language directed against another person
+-  incitement to violence, suicide, or self-harm
 -  the display of sexual or violent images
 -  unwelcome sexual attention
--  nonconsensual or unwelcome physical contact
+-  nonconsensual or unwelcome physical contact, including simulated physical contact
+   (eg, textual descriptions like "hug" or "backrub") without consent
+   or after a request to stop
 -  sustained disruption of talks, events or communications
 -  insults or put downs
 -  sexist, racist, homophobic, transphobic, ableist, or exclusionary jokes
 -  excessive swearing
--  incitement to violence, suicide, or self-harm
 -  continuing to initiate interaction (including photography or
    recording) with someone after being asked to stop
+-  continued one-on-one communication after requests to cease
+-  pattern of inappropriate social contact, such as requesting/assuming
+   inappropriate levels of intimacy with others
+-  logging or taking screenshots of online activity for harassment purposes
+-  creating additional online accounts in order to harass another person or circumvent a ban
 -  publication of private communication without consent
 -  discrimination in resource allocation, decision making that excludes people
    on the basis of protected characteristics
@@ -367,7 +374,7 @@ must not be copied or otherwise proliferated.
 ------------------
 
 This Code of Conduct is a living document,
-maintanined and developed by the ``sktime`` project and its contributors.
+maintained and developed by the ``sktime`` project and its contributors.
 
 Its original form is adapted from the `The Turing
 Way <https://github.com/alan-turing-institute/the-turing-way>`__ project
@@ -415,6 +422,7 @@ so long as attribution is maintained to substantial sources of contribution:
 * The `Alan Turing Institute Data Study Groups <https://www.turing.ac.uk/collaborate-turing/data-study-groups>`__ organising team
 * `The Turing Way <https://github.com/alan-turing-institute/the-turing-way>`__ project
 * `The Carpentries <https://carpentries.org/>`__
+* `The Python Software Foundation Code of Conduct <https://policies.python.org/python.org/code-of-conduct/>`__
 * The ``sktime`` project
 * other sources and influences mentioned above
 

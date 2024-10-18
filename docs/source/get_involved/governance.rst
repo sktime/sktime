@@ -37,8 +37,7 @@ experience. Accordingly, everyone who participates in the sktime project
 is expected to show respect and courtesy to other community members at
 all times.
 
-We ask all members of the community to conform to our `Code of
-Conduct <https://github.com/sktime/sktime/blob/main/CODE_OF_CONDUCT.rst>`__.
+We ask all members of the community to conform to our :ref:`code_of_conduct`.
 
 .. _roles:
 
@@ -184,6 +183,7 @@ Algorithm maintainers that have been unresponsive for a 3 month period automatic
 give up their rights and responsibilities as algorithm maintainers.
 
 Unresponsiveness is defined as:
+
 * not engaging with decision making procedures within the reasonably time frames defined there
 * not reacting to issues or bug reports related to the algorithm, within ten working days
 
@@ -197,7 +197,7 @@ to the continued development of the project through ongoing engagement
 with the community.
 
 Current core developers are listed in the `core-developers
-team <https://www.sktime.net/en/stable/about/team.html>`__
+team <https://www.sktime.net/en/latest/about/team.html>`__
 within the sktime organisation on GitHub.
 
 .. _rights-and-responsibilities-1:
@@ -269,7 +269,7 @@ CoC committee members
 
 CoC members are contributors with special rights and responsibilities.
 The current members of the CoC committee are listed in the
-`CoC <https://www.sktime.net/en/stable/about/team.html>`__.
+`CoC <https://www.sktime.net/en/latest/about/team.html>`__.
 
 .. _rights-and-responsibilities-2:
 
@@ -317,7 +317,7 @@ responsibilities to avoid deadlocks and ensure a smooth progress of the
 project.
 
 Current CC members are listed in the `community-council
-team <https://www.sktime.net/en/stable/about/team.html>`__
+team <https://www.sktime.net/en/latest/about/team.html>`__
 within the sktime organisation on GitHub.
 
 .. _rights-and-responsibilities-3:
@@ -337,56 +337,25 @@ Rights and responsibilities
    * - Project management
      - Funding, collaborations with external organisations, community infrastructure (chat server, GitHub repositories, continuous integration accounts, social media accounts)
 
-Eligibility
-^^^^^^^^^^^
-
-Only core developers are eligible for appointment as CC members.
-Non-core-developers can be nominated, but this must be accompanied
-by a nomination for core developer, and a core developer appointment vote
-concurrent with the 5 day discussion period (see below).
-
 .. _appointment-3:
 
-Appointment
-^^^^^^^^^^^
+Eligibility and appointment
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Appointment to the CC is by nomination by a core developer and a vote by
-all core developers. A nomination will result in discussion which stays open
-for 5 days excluding weekends and then a vote by core developers which will
-stay open for 5 days excluding weekends. Approval of appointment requires:
+The community council is elected by contributors to sktime in regular elections.
 
-* a 2/3 majority of all cast votes, and
-* a simple majority approval of all the current CC members.
+The elections process is detailed in the `community council elections repository <https://github.com/sktime/elections/>`__.
 
-The core developer vote takes place in private communication channels,
-visible to, and only to, core developers, and is anonymous.
-The CC members' vote takes place in private communication channels,
-visible to, and only to, CC members, and is anonymous.
-
-In case the CC members' vote is tied,
-the CC member with the shortest continuous tenure has a tie breaking privilege.
-
-The tie breaking is by construction visible to CC members,
-does not require the tie breaking CC member to have voted in the anonymous vote,
-and need not follow their anonymous vote if they have voted.
-
-End of tenure
-^^^^^^^^^^^^^
-
-CC members can resign voluntarily at any point in time, by informing the CC in writing.
-
-CC members who do not actively engage with their CC member role responsibilities are
-expected to resign voluntarily.
-
-Tenure also ends automatically when a CC member's tenure as core developer ends,
-e.g., through resignation or inactivity.
+The repository linked contains information about the election process, including the election schedule, the election rules, and past election results.
 
 Communications
 ^^^^^^^^^^^^^^
 
 The CC has regular public meetings that the full community is welcome to attend.
+Meetings take place on the social channels of the project, currently on Discord.
 
-For more details about our meetings, please go to our `community-council repository <https://github.com/sktime/community-council/>`__.
+For more details about our meetings and minutes of previous meetings,
+please go to our `community-council repository <https://github.com/sktime/community-org/tree/main/community_council/previous_meetings/>`__.
 
 To contact the CC directly, please send an email to sktime.toolbox@gmail.com.
 
@@ -397,7 +366,7 @@ CC observers
 
 CC (community council) observers are core developers with additional rights and
 responsibilities. Current CC observers are listed in the `community-council
-observers <https://www.sktime.net/en/stable/about/team.html>`__ .
+observers <https://www.sktime.net/en/latest/about/team.html`__.
 
 .. _rights-and-responsibilities-4:
 
@@ -741,7 +710,7 @@ References
 Our governance model is inspired by various existing governance
 structures. In particular, we'd like to acknowledge:
 
-* scikit-learn's `governance model <https://www.sktime.net/en/latest/governance.html>`__
+* scikit-learn's `governance model <https://scikit-learn.org/stable/governance.html>`__
 * `The Turing Way <https://github.com/alan-turing-institute/the-turing-way>`__ project
 * `The Art of Community <https://www.jonobacon.com/books/artofcommunity/>`__ by Jono Bacon
 * The `astropy <https://www.astropy.org>`__ project

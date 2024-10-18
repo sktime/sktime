@@ -1,4 +1,5 @@
 """Sklearn related typing and inheritance checking utility."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 from inspect import isclass
@@ -7,8 +8,6 @@ from sklearn.base import BaseEstimator as SklearnBaseEstimator
 from sklearn.base import ClassifierMixin, ClusterMixin, RegressorMixin, TransformerMixin
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.pipeline import Pipeline
-
-from sktime.base import BaseObject
 
 __author__ = ["fkiraly"]
 
@@ -24,6 +23,8 @@ def is_sklearn_estimator(obj):
     -------
     is_sklearn_est : bool, whether obj is an sklearn estimator (class or instance)
     """
+    from sktime.base import BaseObject
+
     if not isclass(obj):
         obj = type(obj)
 

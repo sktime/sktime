@@ -1,4 +1,5 @@
 """Bootstrapping method based on any sktime splitter."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly"]
@@ -16,33 +17,36 @@ class SplitterBootstrapTransformer(BaseTransformer):
     A generalized form of bootstrap based on an sktime splitter.
 
     Any sktime splitter can be passed as a component to this transformer,
-    which will then produce for each series in the input of `transform`
+    which will then produce for each series in the input of ``transform``
     a panel of time series with the train and/or test sub-series.
 
-    The output of `transform` will have additional levels:
+    The output of ``transform`` will have additional levels:
 
-    * all levels of the `transform` input
+    * all levels of the ``transform`` input
     * an additional integer indexed top level, indicating the number of the sample
       note: this is in general the number of the *sample* and corresponds to the
       number of the *fold* only in the deterministic, exhaustive case
-    * if `split="train"` or `split="test"`, no further levels
-    * if `split="both"`, the second top level contains strings `"train"` and `"test"`
+    * if ``split="train"`` or ``split="test"``, no further levels
+    * if ``split="both"``, the second top level contains strings ``"train"`` and
+    ``"test"``
       to indicate train or test fold from the split
 
-    For instance, if `split="train"`, and there is a single original series `X`,
-    the output of `transform` will have a top level (level 0) with integer index
-    ranging from 0 to `splitter.get_n_splits(X)-1`.
+    For instance, if ``split="train"``, and there is a single original series ``X``,
+    the output of ``transform`` will have a top level (level 0) with integer index
+    ranging from 0 to ``splitter.get_n_splits(X)-1``.
 
     The splitter can be exhaustive and deterministic, or random.
     By default, exhaustive ordered samples are returned (deterministic).
     Randomness is controlled by the following parameters:
 
-    * `shuffle` (by default off) applies random uniform shuffling to the instances
-    * `subsample` (by default off) applies sub-sampling with or without replacement
-    * `replace` (by default `False`) selects sub-sampling with or without replacement
+    * ``shuffle`` (by default off) applies random uniform shuffling to the instances
+    * ``subsample`` (by default off) applies sub-sampling with or without replacement
+    * ``replace`` (by default ``False``) selects sub-sampling with or without
+    replacement
 
-    Caution: the instance index of the `transform` output will correspond to
-    the split index only if `shuffle=False` and `subsample=None` (unless by coincidence)
+    Caution: the instance index of the ``transform`` output will correspond to
+    the split index only if ``shuffle=False`` and ``subsample=None`` (unless by
+    coincidence)
 
     Parameters
     ----------
@@ -53,23 +57,24 @@ class SplitterBootstrapTransformer(BaseTransformer):
         Determines which fold is returned as new instances in the panel.
         "train" - the training folds; "test" - the test folds;
         "both" - both training and test folds, and an additional string level with
-        possible values `"train"` and `"test"` is present
+        possible values ``"train"`` and ``"test"`` is present
     shuffle : bool, default=False
         whether to shuffle the order of folds uniformly at random before returning
         if not, folds will be returned in the ordering defined by the splitter
     subsample : optional, int or float, default = None
         if provided, subsamples the folds returned uniformly at random
-        `int` = subsample of that size will be returned (or full sample if smaller)
-        `float`, must be between 0 and 1 = subsample of that fraction is returned
-        Note: integer 1 selects *one* series; float 1 selects number in `splitter` many
-    replace : bool, default=True; only used if `subsample=True`
-        whether sampling, if `subsample` is provided is with or without replacement
-        `True` = with replacement, `False` = without replacement
+        ``int`` = subsample of that size will be returned (or full sample if smaller)
+        ``float``, must be between 0 and 1 = subsample of that fraction is returned
+        Note: integer 1 selects *one* series; float 1 selects number in ``splitter``
+        many
+    replace : bool, default=True; only used if ``subsample=True``
+        whether sampling, if ``subsample`` is provided is with or without replacement
+        ``True`` = with replacement, ``False`` = without replacement
     random_state : int, np.random.RandomState or None (default)
         Random seed for the estimator
-        if `None`, `numpy` environment random seed is used
-        if `int`, passed to `numpy` `RandomState` as seed
-        if `RandomState`, will be used as random generator
+        if ``None``, ``numpy`` environment random seed is used
+        if ``int``, passed to ``numpy`` ``RandomState`` as seed
+        if ``RandomState``, will be used as random generator
 
     See Also
     --------
@@ -196,7 +201,7 @@ class SplitterBootstrapTransformer(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -204,8 +209,9 @@ class SplitterBootstrapTransformer(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.split import ExpandingWindowSplitter
 

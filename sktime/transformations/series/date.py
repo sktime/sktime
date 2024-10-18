@@ -1,6 +1,7 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Extract calendar features from datetimeindex."""
+
 __author__ = ["danbartl", "KishManani", "VyomkeshVyas"]
 __all__ = ["DateTimeFeatures"]
 
@@ -134,7 +135,7 @@ class DateTimeFeatures(BaseTransformer):
             1 indicates weekend, 0 indicates it is not a weekend
         * year (special case with no lower frequency).
     keep_original_columns :  boolean, optional, default=False
-        Keep original columns in X passed to `.transform()`.
+        Keep original columns in X passed to ``.transform()``.
 
     Examples
     --------
@@ -142,12 +143,12 @@ class DateTimeFeatures(BaseTransformer):
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
 
-    Returns columns `y`, `year`, `month_of_year`
+    Returns columns ``y``, ``year``, ``month_of_year``
 
     >>> transformer = DateTimeFeatures(ts_freq="M")
     >>> y_hat = transformer.fit_transform(y)
 
-    Returns columns `y`, `month_of_year`
+    Returns columns ``y``, ``month_of_year``
 
     >>> transformer = DateTimeFeatures(ts_freq="M", manual_selection=["month_of_year"])
     >>> y_hat = transformer.fit_transform(y)
@@ -299,8 +300,9 @@ class DateTimeFeatures(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {"feature_scope": "minimal"}
         params2 = {"feature_scope": "efficient", "keep_original_columns": True}
@@ -422,9 +424,9 @@ def _prep_dummies(DUMMIES):
     DUMMIES["fourier"] = DUMMIES["child"] + "_in_" + DUMMIES["parent"]
     DUMMIES["dummy"] = DUMMIES["child"] + "_of_" + DUMMIES["parent"]
     DUMMIES.loc[DUMMIES["dummy"] == "year_of_year", "dummy"] = "year"
-    DUMMIES.loc[
-        DUMMIES["dummy_func"] == "is_weekend", ["dummy", "fourier"]
-    ] = "is_weekend"
+    DUMMIES.loc[DUMMIES["dummy_func"] == "is_weekend", ["dummy", "fourier"]] = (
+        "is_weekend"
+    )
 
     DUMMIES["child"] = (
         DUMMIES["child"].astype("category").cat.reorder_categories(date_order)

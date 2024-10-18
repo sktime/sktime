@@ -26,13 +26,12 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
-          - "3.8"
           - "3.9"
           - "3.10"
           - "3.11"
           - "3.12"
         operating-system:
-          - macos-latest
+          - macos-13
           - ubuntu-latest
           - windows-latest
     runs-on: ${{ matrix.operating-system }}
@@ -45,11 +44,6 @@ jobs:
           python-version-identifier: ${{ matrix.python-version }}
           sub-sample-estimators: "False"
           test-affected-estimators: "False"
-      - name: upload coverage
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          flags: ${{ matrix.operating-system }},${{ matrix.python-version }},base,complete
 
   test_module:
     needs: code_quality
@@ -58,13 +52,12 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
-          - "3.8"
           - "3.9"
           - "3.10"
           - "3.11"
           - "3.12"
         operating-system:
-          - macos-latest
+          - macos-13
           - ubuntu-latest
           - windows-latest
         sktime-component:
@@ -88,11 +81,6 @@ jobs:
           python-version-identifier: ${{ matrix.python-version }}
           sub-sample-estimators: "False"
           test-affected-estimators: "False"
-      - name: upload coverage
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          flags: ${{ matrix.operating-system }},${{ matrix.python-version }},${{ matrix.sktime-component }},complete
 
   test_other:
     needs: code_quality
@@ -101,13 +89,12 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
-          - "3.8"
           - "3.9"
           - "3.10"
           - "3.11"
           - "3.12"
         operating-system:
-          - macos-latest
+          - macos-13
           - ubuntu-latest
           - windows-latest
     runs-on: ${{ matrix.operating-system }}
@@ -122,6 +109,9 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Install OSX packages
+        shell: bash
+        run: ./.github/scripts/install_osx_dependencies.sh
       - name: install core, test and all soft dependencies
         run: python3 -m pip install .[all_extras_pandas2,tests]
       - name: run unit tests
@@ -142,8 +132,3 @@ jobs:
           --ignore sktime/transformations
           --matrixdesign False
           --only_changed_modules False
-      - name: upload coverage
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          flags: ${{ matrix.operating-system }},${{ matrix.python-version }},components_without_extras,complete

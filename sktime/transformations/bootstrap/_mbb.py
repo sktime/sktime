@@ -4,7 +4,7 @@
 __author__ = ["ltsaprounis"]
 
 from copy import copy
-from typing import Tuple, Union
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -198,7 +198,7 @@ class STLBootstrapTransformer(BaseTransformer):
         block_length: int = None,
         sampling_replacement: bool = False,
         return_actual: bool = True,
-        lambda_bounds: Tuple = None,
+        lambda_bounds: tuple = None,
         lambda_method: str = "guerrero",
         seasonal: int = 7,
         trend: int = None,
@@ -388,7 +388,7 @@ class STLBootstrapTransformer(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -396,8 +396,9 @@ class STLBootstrapTransformer(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params = [
             {"sp": 3},
@@ -601,7 +602,7 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -609,8 +610,9 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params = [
             {"block_length": 5},

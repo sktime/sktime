@@ -2,7 +2,15 @@
 
 __author__ = ["fkiraly"]
 
+import pytest
 
+from sktime.tests.test_switch import run_test_module_changed
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
 def test_multiindex_to_df_list_large_level_values():
     """Tests for failure condition in bug #4668.
 

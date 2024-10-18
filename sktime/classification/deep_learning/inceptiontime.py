@@ -1,4 +1,5 @@
 """InceptionTime for classification."""
+
 __author__ = "james-large"
 __all__ = ["InceptionTimeClassifier"]
 
@@ -8,7 +9,7 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.inceptiontime import InceptionTimeNetwork
-from sktime.utils.validation._dependencies import _check_dl_dependencies
+from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class InceptionTimeClassifier(BaseDeepClassifier):
@@ -41,6 +42,16 @@ class InceptionTimeClassifier(BaseDeepClassifier):
 
     Adapted from the implementation from Fawaz et. al
     https://github.com/hfawaz/InceptionTime/blob/master/classifiers/inception.py
+
+    Examples
+    --------
+    >>> from sktime.classification.deep_learning import InceptionTimeClassifier
+    >>> from sktime.datasets import load_unit_test  # doctest: +SKIP
+    >>> X_train, y_train = load_unit_test(split="train")  # doctest: +SKIP
+    >>> X_test, y_test = load_unit_test(split="test")  # doctest: +SKIP
+    >>> clf = InceptionTimeClassifier()  # doctest: +SKIP
+    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
+    InceptionTimeClassifier(...)
     """
 
     _tags = {
@@ -68,9 +79,6 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         metrics=None,
     ):
         _check_dl_dependencies(severity="error")
-        super().__init__()
-
-        self.verbose = verbose
 
         # predefined
         self.batch_size = batch_size
@@ -86,7 +94,8 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         self.use_bottleneck = use_bottleneck
         self.use_residual = use_residual
         self.verbose = verbose
-        self._is_fitted = False
+
+        super().__init__()
 
         network_params = {
             "n_filters": n_filters,
@@ -151,7 +160,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         -------
         self : object
         """
-        y_onehot = self.convert_y_to_keras(y)
+        y_onehot = self._convert_y_to_keras(y)
         # Transpose to conform to Keras input style.
         X = X.transpose(0, 2, 1)
 
@@ -199,7 +208,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -210,10 +219,11 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         param1 = {
             "n_epochs": 10,

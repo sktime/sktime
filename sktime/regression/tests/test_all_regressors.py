@@ -13,6 +13,7 @@ from sktime.utils._testing.panel import make_regression_problem
 from sktime.utils._testing.scenarios_classification import (
     ClassifierFitPredictMultivariate,
 )
+from sktime.utils.validation import is_float
 
 
 class RegressorFixtureGenerator(BaseFixtureGenerator):
@@ -79,7 +80,7 @@ class TestAllRegressors(RegressorFixtureGenerator, QuickTester):
         y_pred = scenario.run(estimator_instance, method_sequence=["fit", "predict"])
         # check score
         score = estimator_instance.score(X_new, y_pred)
-        assert np.issubdtype(score.dtype, np.floating)
+        assert is_float(score)
 
         # check predict
         assert isinstance(y_pred, np.ndarray)
@@ -100,7 +101,7 @@ class TestAllRegressors(RegressorFixtureGenerator, QuickTester):
         y_pred = estimator_instance.predict(X)
         # check score
         score = estimator_instance.score(X, y_mult)
-        assert np.issubdtype(score.dtype, np.floating)
+        assert is_float(score)
 
         assert isinstance(y_pred, pd.DataFrame)
         assert y_pred.shape == y_mult.shape

@@ -1,5 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements ARDL Model as interface to statsmodels."""
+
 import warnings
 
 import pandas as pd
@@ -77,22 +78,22 @@ class ARDL(_StatsModelsAdapter):
         * 'nonrobust' - The class OLS covariance estimator that assumes
           homoskedasticity.
         * 'HC0', 'HC1', 'HC2', 'HC3' - Variants of White's
-          (or Eiker-Huber-White) covariance estimator. `HC0` is the
+          (or Eiker-Huber-White) covariance estimator. ``HC0`` is the
           standard implementation.  The other make corrections to improve
           the finite sample performance of the heteroskedasticity robust
           covariance estimator.
         * 'HAC' - Heteroskedasticity-autocorrelation robust covariance
           estimation. Supports cov_kwds.
 
-          - `maxlags` integer (required) : number of lags to use.
-          - `kernel` callable or str (optional) : kernel
+          - ``maxlags`` integer (required) : number of lags to use.
+          - ``kernel`` callable or str (optional) : kernel
               currently available kernels are ['bartlett', 'uniform'],
               default is Bartlett.
-          - `use_correction` bool (optional) : If true, use small sample
+          - ``use_correction`` bool (optional) : If true, use small sample
               correction.
     cov_kwds : dict, optional
         A dictionary of keyword arguments to pass to the covariance
-        estimator. `nonrobust` and `HC#` do not support cov_kwds.
+        estimator. ``nonrobust`` and ``HC#`` do not support cov_kwds.
     use_t : bool, optional
         A flag indicating that inference should use the Student's t
         distribution that accounts for model degree of freedom.  If False,
@@ -131,13 +132,13 @@ class ARDL(_StatsModelsAdapter):
         Must have the same number of columns as the fixed array
         and at least as many rows as the number of out-of-sample forecasts.
     dynamic : {bool, int, str, datetime, Timestamp}, optional
-        Integer offset relative to `start` at which to begin dynamic
+        Integer offset relative to ``start`` at which to begin dynamic
         prediction. Prior to this observation, true endogenous values
         will be used for prediction; starting with this observation and
         continuing through the end of prediction, forecasted endogenous
         values will be used instead. Datetime-like objects are not
         interpreted as offsets. They are instead used to find the index
-        location of `dynamic` which is then used to to compute the offset.
+        location of ``dynamic`` which is then used to to compute the offset.
 
     Notes
     -----
@@ -195,7 +196,8 @@ class ARDL(_StatsModelsAdapter):
     _tags = {
         # packaging info
         # --------------
-        "authors": "kcc-lion",
+        "authors": ["bashtage", "kcc-lion"],
+        # bashtage for statsmodels ARDL
         "maintainers": "kcc-lion",
         "python_dependencies": "statsmodels>=0.13.0",
         # estimator type
@@ -532,10 +534,10 @@ class ARDL(_StatsModelsAdapter):
                 fitted_params["hessian"] = self._fitted_forecaster.model.hessian(
                     self._fitted_forecaster.params
                 )
-                fitted_params[
-                    "information"
-                ] = self._fitted_forecaster.model.information(
-                    self._fitted_forecaster.params
+                fitted_params["information"] = (
+                    self._fitted_forecaster.model.information(
+                        self._fitted_forecaster.params
+                    )
                 )
                 fitted_params["loglike"] = self._fitted_forecaster.model.loglike(
                     self._fitted_forecaster.params
@@ -550,7 +552,7 @@ class ARDL(_StatsModelsAdapter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for forecasters.
 
         Returns
@@ -558,8 +560,9 @@ class ARDL(_StatsModelsAdapter):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params = [
             {"lags": 1, "trend": "c", "order": 2},

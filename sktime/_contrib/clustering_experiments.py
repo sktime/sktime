@@ -14,10 +14,7 @@ import numpy as np
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["NUMEXPR_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["OMP_NUM_THREADS"] = "1"  # must be done before numpy import!!
-import sklearn.metrics
 from sklearn.metrics import davies_bouldin_score
-from sklearn.model_selection import GridSearchCV
-from sklearn.preprocessing import normalize
 
 import sktime.datasets.tsc_dataset_names as dataset_lists
 from sktime.benchmarking.experiments import run_clustering_experiment

@@ -1,5 +1,6 @@
 """Time series kernel kmeans."""
-from typing import Dict, Union
+
+from typing import Union
 
 import numpy as np
 from numpy.random import RandomState
@@ -9,7 +10,9 @@ from sktime.clustering.base import BaseClusterer
 
 
 class TimeSeriesKernelKMeans(_TslearnAdapter, BaseClusterer):
-    """Kernel algorithm wrapper tslearns implementation.
+    """Kernel k-means clustering, from tslearn.
+
+    Direct interface to ``tslearn.clustering.KernelKMeans``.
 
     Parameters
     ----------
@@ -29,11 +32,11 @@ class TimeSeriesKernelKMeans(_TslearnAdapter, BaseClusterer):
     kernel_params : dict or None (default: None)
         Kernel parameters to be passed to the kernel function.
         None means no kernel parameter is set.
-        For Global Alignment Kernel, the only parameter of interest is `sigma`.
+        For Global Alignment Kernel, the only parameter of interest is ``sigma``.
         If set to 'auto', it is computed based on a sampling of the training
         set
         (cf :ref:`tslearn.metrics.sigma_gak <fun-tslearn.metrics.sigma_gak>`).
-        If no specific value is set for `sigma`, its defaults to 1.
+        If no specific value is set for ``sigma``, its defaults to 1.
     max_iter: int, defaults = 300
         Maximum number of iterations of the k-means algorithm for a single
         run.
@@ -62,16 +65,30 @@ class TimeSeriesKernelKMeans(_TslearnAdapter, BaseClusterer):
         the sample weights if provided.
     n_iter_: int
         Number of iterations run.
+
+    Examples
+    --------
+    >>> from sktime.clustering.kernel_k_means import TimeSeriesKernelKMeans
+    >>> from sktime.datasets import load_arrow_head
+    >>> X_train, y_train = load_arrow_head(split="train")
+    >>> X_test, y_test = load_arrow_head(split="test")
+    >>> clusterer = TimeSeriesKernelKMeans(n_clusters=3)  # doctest: +SKIP
+    >>> clusterer.fit(X_train)  # doctest: +SKIP
+    TimeSeriesKernelKMeans(n_clusters=3)
+    >>> y_pred = clusterer.predict(X_test)  # doctest: +SKIP
     """
 
     _tags = {
         # packaging info
         # --------------
-        "authors": "fkiraly",
+        "authors": ["rtavenar", "fkiraly"],  # rtavenar credit for interfaced code
         "python_dependencies": "tslearn",
         # estimator type
         # --------------
         "capability:multivariate": True,
+        "capability:out_of_sample": True,
+        "capability:predict": True,
+        "capability:predict_proba": False,
     }
 
     # defines the name of the attribute containing the tslearn estimator
@@ -115,14 +132,14 @@ class TimeSeriesKernelKMeans(_TslearnAdapter, BaseClusterer):
         super().__init__(n_clusters=n_clusters)
 
     @classmethod
-    def get_test_params(cls, parameter_set="default") -> Dict:
+    def get_test_params(cls, parameter_set="default") -> dict:
         """Return testing parameter settings for the estimator.
 
         Parameters
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -130,8 +147,9 @@ class TimeSeriesKernelKMeans(_TslearnAdapter, BaseClusterer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         return {
             "n_clusters": 2,

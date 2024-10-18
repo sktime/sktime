@@ -11,7 +11,6 @@ from copy import copy
 from itertools import compress
 
 import numpy as np
-from joblib import Parallel, effective_n_jobs
 from sklearn.metrics import pairwise
 from sklearn.utils import check_random_state, gen_even_slices
 from sklearn.utils.extmath import safe_sparse_dot
@@ -20,15 +19,11 @@ from sklearn.utils.validation import _num_samples
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SFAFast
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.validation.panel import check_X_y
 
 # delayed was moved from utils.fixes to utils.parallel in scikit-learn 1.3
-if _check_soft_dependencies(
-    "scikit-learn>=1.3",
-    package_import_alias={"scikit-learn": "sklearn"},
-    severity="none",
-):
+if _check_soft_dependencies("scikit-learn>=1.3", severity="none"):
     from sklearn.utils.parallel import delayed
 else:
     from sklearn.utils.fixes import delayed
@@ -62,10 +57,10 @@ class BOSSEnsemble(BaseClassifier):
     ----------
     threshold : float, default=0.92
         Threshold used to determine which classifiers to retain. All classifiers
-        within percentage `threshold` of the best one are retained.
+        within percentage ``threshold`` of the best one are retained.
     max_ensemble_size : int or None, default=500
         Maximum number of classifiers to retain. Will limit number of retained
-        classifiers even if more than `max_ensemble_size` are within threshold.
+        classifiers even if more than ``max_ensemble_size`` are within threshold.
     max_win_len_prop : int or float, default=1
         Maximum window length as a proportion of the series length.
     min_window : int, default=10
@@ -76,7 +71,7 @@ class BOSSEnsemble(BaseClassifier):
     alphabet_size : default = 2
         Number of possible letters (values) for each word.
     n_jobs : int, default=1
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``-1`` means using all processors.
     use_boss_distance : boolean, default=True
         The Boss-distance is an asymmetric distance measure. It provides higher
@@ -98,8 +93,8 @@ class BOSSEnsemble(BaseClassifier):
     n_instances_ : int
         Number of instances. Extracted from the data.
     n_estimators_ : int
-        The final number of classifiers used. Will be <= `max_ensemble_size` if
-        `max_ensemble_size` has been specified.
+        The final number of classifiers used. Will be <= ``max_ensemble_size`` if
+        ``max_ensemble_size`` has been specified.
     series_length_ : int
         Length of all series (assumed equal).
     estimators_ : list
@@ -115,7 +110,6 @@ class BOSSEnsemble(BaseClassifier):
     - `Original Publication <https://github.com/patrickzib/SFA>`_.
     - `TSML <https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/
     tsml/classifiers/dictionary_based/BOSS.java>`_.
-
 
     References
     ----------
@@ -139,7 +133,7 @@ class BOSSEnsemble(BaseClassifier):
         # packaging info
         # --------------
         "authors": ["MatthewMiddlehurst", "patrickzib"],
-        "python_dependencies": "numba",
+        "python_dependencies": ["numba", "joblib"],
         # estimator type
         # --------------
         "capability:train_estimate": True,
@@ -358,7 +352,11 @@ class BOSSEnsemble(BaseClassifier):
         return min_acc, min_acc_idx
 
     def _get_train_probs(self, X, y):
+        from sktime.datatypes import convert_to
+
         self.check_is_fitted()
+        if not isinstance(X, np.ndarray):
+            X = convert_to(X, "numpy3D")
         X, y = check_X_y(X, y, coerce_to_numpy=True, enforce_univariate=True)
 
         n_instances, _, series_length = X.shape
@@ -439,7 +437,7 @@ class BOSSEnsemble(BaseClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -450,8 +448,9 @@ class BOSSEnsemble(BaseClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         if parameter_set == "results_comparison":
             return {
@@ -501,9 +500,9 @@ class IndividualBOSS(BaseClassifier):
         Whether to keep NumPy array of words in SFA transformation even after
         the dictionary of words is returned. If True, the array is saved, which
         can shorten the time to calculate dictionaries using a shorter
-        `word_length` (since the last "n" letters can be removed).
+        ``word_length`` (since the last "n" letters can be removed).
     n_jobs : int, default=1
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``-1`` means using all processors.
     random_state : int or None, default=None
         Seed for random, integer.
@@ -547,7 +546,7 @@ class IndividualBOSS(BaseClassifier):
         # packaging info
         # --------------
         "authors": ["MatthewMiddlehurst", "patrickzib"],
-        "python_dependencies": "numba",
+        "python_dependencies": ["numba", "joblib"],
         # estimator type
         # --------------
         "capability:multithreading": True,
@@ -639,9 +638,7 @@ class IndividualBOSS(BaseClassifier):
             Predicted class labels.
         """
         test_bags = self._transformer.transform(X)
-        data_type = type(self._class_vals[0])
-        if data_type == np.str_ or data_type == str:
-            data_type = "object"
+        data_type = self._class_vals.dtype
 
         classes = np.zeros(test_bags.shape[0], dtype=data_type)
 
@@ -709,6 +706,8 @@ def _dist_wrapper(dist_matrix, X, Y, s, XX_all=None, XY_all=None):
 
 def pairwise_distances(X, Y=None, use_boss_distance=False, n_jobs=1):
     """Find the euclidean distance between all pairs of bop-models."""
+    from joblib import Parallel, effective_n_jobs
+
     if use_boss_distance:
         if Y is None:
             Y = X
@@ -754,7 +753,7 @@ def boss_distance(X, Y, i, XX_all=None, XY_all=None):
     X : sparse matrix
         Base dictionary used in distance measurement.
     Y : sparse matrix
-        Second dictionary that will be used to measure distance from `first`.
+        Second dictionary that will be used to measure distance from ``first``.
     i : int
         index of current element
 

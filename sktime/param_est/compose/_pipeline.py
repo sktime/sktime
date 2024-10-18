@@ -2,6 +2,7 @@
 
 A class to create a pipeline of transformers and a parameter estimator.
 """
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.param_est.base import BaseParamFitter
@@ -18,55 +19,57 @@ SUPPORTED_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex
 class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
     """Pipeline of transformers and a parameter estimator.
 
-    The `ParamFitterPipeline` compositor chains transformers and a single estimator.
+    The ``ParamFitterPipeline`` compositor chains transformers and a single estimator.
     The pipeline is constructed with a list of sktime transformers, plus an estimator,
         i.e., estimators following the BaseTransformer, ParamFitterPipeline interfaces.
     The transformer list can be unnamed - a simple list of transformers -
         or string named - a list of pairs of string, estimator.
 
-    For a list of transformers `trafo1`, `trafo2`, ..., `trafoN` and an estimator `est`,
+    For a list of transformers ``trafo1``, ``trafo2``, ..., ``trafoN`` and an estimator
+    ``est``,
         the pipeline behaves as follows:
-    `fit(X)` - changes state by running `trafo1.fit_transform` on `X`,
-        them `trafo2.fit_transform` on the output of `trafo1.fit_transform`, etc
-        sequentially, with `trafo[i]` receiving the output of `trafo[i-1]`,
-        and then running `est.fit` with `X` being the output of `trafo[N]`
-    `update(X)` - changes state by running `trafo1.update.transform` on `X`,
-        them `trafo2.update.transform` on the output of `trafo1.update.transform`, etc
-        sequentially, with `trafo[i]` receiving the output of `trafo[i-1]`,
-        and then running `est.update` with `X` being the output of `trafo[N]`
+    ``fit(X)`` - changes state by running ``trafo1.fit_transform`` on ``X``,
+        them ``trafo2.fit_transform`` on the output of ``trafo1.fit_transform``, etc
+        sequentially, with ``trafo[i]`` receiving the output of ``trafo[i-1]``,
+        and then running ``est.fit`` with ``X`` being the output of ``trafo[N]``
+    ``update(X)`` - changes state by running ``trafo1.update.transform`` on ``X``,
+        them ``trafo2.update.transform`` on the output of ``trafo1.update.transform``,
+        etc
+        sequentially, with ``trafo[i]`` receiving the output of ``trafo[i-1]``,
+        and then running ``est.update`` with ``X`` being the output of ``trafo[N]``
 
-    `get_params`, `set_params` uses `sklearn` compatible nesting interface
+    ``get_params``, ``set_params`` uses ``sklearn`` compatible nesting interface
         if list is unnamed, names are generated as names of classes
-        if names are non-unique, `f"_{str(i)}"` is appended to each name string
-            where `i` is the total count of occurrence of a non-unique string
+        if names are non-unique, ``f"_{str(i)}"`` is appended to each name string
+            where ``i`` is the total count of occurrence of a non-unique string
             inside the list of names leading up to it (inclusive)
 
-    `ParamFitterPipeline` can also be created by using the magic multiplication
-        on any parameter estimator, i.e., if `est` inherits from `BaseParamFitter`,
-            and `my_trafo1`, `my_trafo2` inherit from `BaseTransformer`, then,
-            for instance, `my_trafo1 * my_trafo2 * est`
+    ``ParamFitterPipeline`` can also be created by using the magic multiplication
+        on any parameter estimator, i.e., if ``est`` inherits from ``BaseParamFitter``,
+            and ``my_trafo1``, ``my_trafo2`` inherit from ``BaseTransformer``, then,
+            for instance, ``my_trafo1 * my_trafo2 * est``
             will result in the same object as  obtained from the constructor
-            `ParamFitterPipeline(param_est=est, transformers=[my_trafo1, my_trafo2])`
+            ``ParamFitterPipeline(param_est=est, transformers=[my_trafo1, my_trafo2])``
         magic multiplication can also be used with (str, transformer) pairs,
             as long as one element in the chain is a transformer
 
     Parameters
     ----------
     param_est : parameter estimator, i.e., estimator inheriting from BaseParamFitter
-        this is a "blueprint" estimator, state does not change when `fit` is called
+        this is a "blueprint" estimator, state does not change when ``fit`` is called
     transformers : list of sktime transformers, or
         list of tuples (str, transformer) of sktime transformers
-        these are "blueprint" transformers, states do not change when `fit` is called
+        these are "blueprint" transformers, states do not change when ``fit`` is called
 
     Attributes
     ----------
-    param_est_ : sktime estimator, clone of estimator in `param_est`
-        this clone is fitted in the pipeline when `fit` is called
+    param_est_ : sktime estimator, clone of estimator in ``param_est``
+        this clone is fitted in the pipeline when ``fit`` is called
     transformers_ : list of tuples (str, transformer) of sktime transformers
-        clones of transformers in `transformers` which are fitted in the pipeline
+        clones of transformers in ``transformers`` which are fitted in the pipeline
         is always in (str, transformer) format, even if transformers is just a list
         strings not passed in transformers are unique generated strings
-        i-th transformer in `transformers_` is clone of i-th in `transformers`
+        i-th transformer in ``transformers_`` is clone of i-th in ``transformers``
 
     Examples
     --------
@@ -138,16 +141,18 @@ class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
     def __rmul__(self, other):
         """Magic * method, return concatenated ParamFitterPipeline, trafos on left.
 
-        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+        Implemented for ``other`` being a transformer, otherwise returns
+        ``NotImplemented``.
 
         Parameters
         ----------
-        other: `sktime` transformer, must inherit from BaseTransformer
-            otherwise, `NotImplemented` is returned
+        other: ``sktime`` transformer, must inherit from BaseTransformer
+            otherwise, ``NotImplemented`` is returned
 
         Returns
         -------
-        ParamFitterPipeline object, concatenation of `other` (first) with `self` (last).
+        ParamFitterPipeline object, concatenation of ``other`` (first) with ``self``
+        (last).
         """
         if isinstance(other, BaseTransformer):
             # use the transformers dunder to get a TransformerPipeline
@@ -224,7 +229,7 @@ class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
         return self.param_est_.get_fitted_params()
 
     def get_params(self, deep=True):
-        """Get parameters of estimator in `transformers`.
+        """Get parameters of estimator in ``transformers``.
 
         Parameters
         ----------
@@ -244,7 +249,7 @@ class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
         return params
 
     def set_params(self, **kwargs):
-        """Set the parameters of estimator in `transformers`.
+        """Set the parameters of estimator in ``transformers``.
 
         Valid parameter keys can be listed with ``get_params()``.
 
@@ -273,21 +278,22 @@ class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         # imports
         from sktime.param_est.fixed import FixedParams
         from sktime.param_est.seasonality import SeasonalityACF
         from sktime.transformations.series.exponent import ExponentTransformer
-        from sktime.utils.validation._dependencies import _check_estimator_deps
+        from sktime.utils.dependencies import _check_estimator_deps
 
         t1 = ExponentTransformer(power=2)
         t2 = ExponentTransformer(power=0.5)

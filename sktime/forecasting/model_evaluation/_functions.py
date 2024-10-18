@@ -7,7 +7,7 @@ __all__ = ["evaluate"]
 
 import time
 import warnings
-from typing import Dict, List, Optional, Union
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -15,8 +15,8 @@ import pandas as pd
 from sktime.datatypes import check_is_scitype, convert_to
 from sktime.exceptions import FitFailedWarning
 from sktime.forecasting.base import ForecastingHorizon
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.parallel import parallelize
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_cv, check_scoring
 
 PANDAS_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hier"]
@@ -41,7 +41,7 @@ def _check_strategy(strategy):
         raise ValueError(f"`strategy` must be one of {valid_strategies}")
 
 
-def _check_scores(metrics) -> Dict:
+def _check_scores(metrics) -> dict:
     """Validate and coerce to BaseMetric and segregate them based on predict type.
 
     Parameters
@@ -53,7 +53,7 @@ def _check_scores(metrics) -> Dict:
     metrics_type : Dict
         The key is metric types and its value is a list of its corresponding metrics.
     """
-    if not isinstance(metrics, List):
+    if not isinstance(metrics, list):
         metrics = [metrics]
 
     metrics_type = {}
@@ -74,8 +74,8 @@ def _check_scores(metrics) -> Dict:
 
 
 def _get_column_order_and_datatype(
-    metric_types: Dict, return_data: bool = True, cutoff_dtype=None, old_naming=True
-) -> Dict:
+    metric_types: dict, return_data: bool = True, cutoff_dtype=None, old_naming=True
+) -> dict:
     """Get the ordered column name and input datatype of results."""
     others_metadata = {
         "len_train_window": "int",
@@ -244,15 +244,15 @@ def _evaluate_window(x, meta):
                     result_key = f"test_{metric.name}_{argval}"
                     y_pred_key = f"y_{scitype}_{argval}"
                     old_name_mapping[f"{scitype}_{argval}_time"] = f"{scitype}_time"
-                    old_name_mapping[
-                        f"test_{metric.name}_{argval}"
-                    ] = f"test_{metric.name}"
+                    old_name_mapping[f"test_{metric.name}_{argval}"] = (
+                        f"test_{metric.name}"
+                    )
                     old_name_mapping[f"y_{scitype}_{argval}"] = f"y_{scitype}"
 
                 # make prediction
                 if y_pred_key not in y_preds_cache.keys():
                     start_pred = time.perf_counter()
-                    y_pred = method(fh, X_test, **pred_args)
+                    y_pred = method(fh=fh, X=X_test, **pred_args)
                     pred_time = time.perf_counter() - start_pred
                     temp_result[time_key] = [pred_time]
                     y_preds_cache[y_pred_key] = [y_pred]
@@ -324,7 +324,7 @@ def evaluate(
     y,
     X=None,
     strategy: str = "refit",
-    scoring: Optional[Union[callable, List[callable]]] = None,
+    scoring: Optional[Union[callable, list[callable]]] = None,
     return_data: bool = False,
     error_score: Union[str, int, float] = np.nan,
     backend: Optional[str] = None,
@@ -348,28 +348,28 @@ def evaluate(
     2. Fit the ``forecaster`` to :math:`y_{train, 1}`, :math:`X_{train, 1}`,
        with ``fh`` set to the absolute indices of :math:`y_{test, 1}`.
     3. Use the ``forecaster`` to make a prediction ``y_pred`` with the exogeneous
-      data :math:`X_{test, i}`. Predictions are made using either ``predict``,
-      ``predict_proba`` or ``predict_quantiles``, depending on ``scoring``.
+        data :math:`X_{test, i}`. Predictions are made using either ``predict``,
+        ``predict_proba`` or ``predict_quantiles``, depending on ``scoring``.
     4. Compute the ``scoring`` function on ``y_pred`` versus :math:`y_{test, i}`
     5. If ``i == K``, terminate, otherwise
     6. Set ``i = i + 1``
     7. Ingest more data :math:`y_{train, i}`, :math:`X_{train, i}`,
        how depends on ``strategy``:
 
-        - if ``strategy == "refit"``, reset and fit ``forecaster`` via ``fit``,
-          on :math:`y_{train, i}`, :math:`X_{train, i}` to forecast :math:`y_{test, i}`
-        - if ``strategy == "update"``, update ``forecaster`` via ``update``,
-          on :math:`y_{train, i}`, :math:`X_{train, i}` to forecast :math:`y_{test, i}`
-        - if ``strategy == "no-update_params"``, forward ``forecaster`` via ``update``,
-          with argument ``update_params=False``, to the cutoff of :math:`y_{train, i}`
+      - if ``strategy == "refit"``, reset and fit ``forecaster`` via ``fit``,
+        on :math:`y_{train, i}`, :math:`X_{train, i}` to forecast :math:`y_{test, i}`
+      - if ``strategy == "update"``, update ``forecaster`` via ``update``,
+        on :math:`y_{train, i}`, :math:`X_{train, i}` to forecast :math:`y_{test, i}`
+      - if ``strategy == "no-update_params"``, forward ``forecaster`` via ``update``,
+        with argument ``update_params=False``, to the cutoff of :math:`y_{train, i}`
 
     8. Go to 3
 
     Results returned in this function's return are:
 
-    * results of ``scoring`` calculations, from 4,  in the `i`-th loop
-    * runtimes for fitting and/or predicting, from 2, 3, 7, in the `i`-th loop
-    * cutoff state of ``forecaster``, at 3, in the `i`-th loop
+    * results of ``scoring`` calculations, from 4,  in the ``i``-th loop
+    * runtimes for fitting and/or predicting, from 2, 3, 7, in the ``i``-th loop
+    * cutoff state of ``forecaster``, at 3, in the ``i``-th loop
     * :math:`y_{train, i}`, :math:`y_{test, i}`, ``y_pred`` (optional)
 
     A distributed and-or parallel back-end can be chosen via the ``backend`` parameter.
@@ -405,7 +405,7 @@ def evaluate(
         to "raise", the exception is raised. If a numeric value is given,
         FitFailedWarning is raised.
     backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
-        Runs parallel evaluate if specified and `strategy` is set as "refit".
+        Runs parallel evaluate if specified and ``strategy`` is set as "refit".
 
         - "None": executes loop sequentally, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
@@ -447,30 +447,31 @@ def evaluate(
     results : pd.DataFrame or dask.dataframe.DataFrame
         DataFrame that contains several columns with information regarding each
         refit/update and prediction of the forecaster.
-        Row index is splitter index of train/test fold in `cv`.
-        Entries in the i-th row are for the i-th train/test split in `cv`.
+        Row index is splitter index of train/test fold in ``cv``.
+        Entries in the i-th row are for the i-th train/test split in ``cv``.
         Columns are as follows:
 
-        - test_{scoring.name}: (float) Model performance score. If `scoring` is a list,
-        then there is a column withname `test_{scoring.name}` for each scorer.
+        - test_{scoring.name}: (float) Model performance score. If ``scoring`` is a
+        list,
+        then there is a column withname ``test_{scoring.name}`` for each scorer.
 
-        - fit_time: (float) Time in sec for `fit` or `update` on train fold.
-        - pred_time: (float) Time in sec to `predict` from fitted estimator.
+        - fit_time: (float) Time in sec for ``fit`` or ``update`` on train fold.
+        - pred_time: (float) Time in sec to ``predict`` from fitted estimator.
         - len_train_window: (int) Length of train window.
         - cutoff: (int, pd.Timestamp, pd.Period) cutoff = last time index in train fold.
-        - y_train: (pd.Series) only present if see `return_data=True`
-        train fold of the i-th split in `cv`, used to fit/update the forecaster.
+        - y_train: (pd.Series) only present if see ``return_data=True``
+        train fold of the i-th split in ``cv``, used to fit/update the forecaster.
 
-        - y_pred: (pd.Series) present if see `return_data=True`
-        forecasts from fitted forecaster for the i-th test fold indices of `cv`.
+        - y_pred: (pd.Series) present if see ``return_data=True``
+        forecasts from fitted forecaster for the i-th test fold indices of ``cv``.
 
-        - y_test: (pd.Series) present if see `return_data=True`
-        testing fold of the i-th split in `cv`, used to compute the metric.
+        - y_test: (pd.Series) present if see ``return_data=True``
+        testing fold of the i-th split in ``cv``, used to compute the metric.
 
     Examples
     --------
-    The type of evaluation that is done by `evaluate` depends on metrics in
-    param `scoring`. Default is `MeanAbsolutePercentageError`.
+    The type of evaluation that is done by ``evaluate`` depends on metrics in
+    param ``scoring``. Default is ``MeanAbsolutePercentageError``.
 
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.model_evaluation import evaluate
@@ -482,7 +483,8 @@ def evaluate(
     >>> results = evaluate(forecaster=forecaster, y=y, cv=cv)
 
     Optionally, users may select other metrics that can be supplied
-    by `scoring` argument. These can be forecast metrics of any kind as stated `here
+    by ``scoring`` argument. These can be forecast metrics of any kind as stated `here
+
     <https://www.sktime.net/en/stable/api_reference/performance_metrics.html?highlight=metrics>`_
     i.e., point forecast metrics, interval metrics, quantile forecast metrics.
     To evaluate estimators using a specific metric, provide them to the scoring arg.
@@ -491,7 +493,7 @@ def evaluate(
     >>> loss = MeanAbsoluteError()
     >>> results = evaluate(forecaster=forecaster, y=y, cv=cv, scoring=loss)
 
-    Optionally, users can provide a list of metrics to `scoring` argument.
+    Optionally, users can provide a list of metrics to ``scoring`` argument.
 
     >>> from sktime.performance_metrics.forecasting import MeanSquaredError
     >>> results = evaluate(
@@ -501,7 +503,7 @@ def evaluate(
     ...     scoring=[MeanSquaredError(square_root=True), MeanAbsoluteError()],
     ... )
 
-    An example of an interval metric is the `PinballLoss`.
+    An example of an interval metric is the ``PinballLoss``.
     It can be used with all probabilistic forecasters.
 
     >>> from sktime.forecasting.naive import NaiveVariance

@@ -82,8 +82,30 @@ Time Series Segmentation
 
     STRAY
 
-Adapters
---------
+.. currentmodule:: sktime.annotation.clust
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ClusterSegmenter
+
+Time Series Anomaly Detection
+-----------------------------
+
+Window-based Anomaly Detection
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. currentmodule:: sktime.annotation.lof
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SubLOF
+
+Reduction to Tabular Anomaly Detection
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. currentmodule:: sktime.annotation.adapters
 
@@ -92,6 +114,7 @@ Adapters
     :template: class.rst
 
     PyODAnnotator
+
 
 Data Generation
 ---------------

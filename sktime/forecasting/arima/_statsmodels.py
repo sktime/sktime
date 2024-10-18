@@ -5,7 +5,8 @@
 __all__ = ["StatsModelsARIMA"]
 __author__ = ["arnaujc91"]
 
-from typing import Iterable, Optional, Tuple, Union
+from collections.abc import Iterable
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -14,9 +15,19 @@ from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
 class StatsModelsARIMA(_StatsModelsAdapter):
-    """ARIMA forecaster, from statsmodels package.
+    """(S)ARIMA(X) forecaster, from statsmodels, tsa.arima module.
 
-    Direct interface for `statsmodels.tsa.arima.model.ARIMA`.
+    Direct interface for ``statsmodels.tsa.arima.model.ARIMA``.
+
+    Users should note that statsmodels contains two separate implementations of
+    (S)ARIMA(X), the ARIMA and the SARIMAX class, in different modules:
+    ``tsa.arima.model.ARIMA`` and ``tsa.statespace.SARIMAX``.
+
+    These are implementations of the same underlying model, (S)ARIMA(X),
+    but with different
+    fitting strategies, fitted parameters, and slightly differring behaviour.
+    Users should refer to the statsmodels documentation for further details:
+    https://www.statsmodels.org/dev/examples/notebooks/generated/statespace_sarimax_faq.html
 
     Parameters
     ----------
@@ -33,8 +44,8 @@ class StatsModelsARIMA(_StatsModelsAdapter):
         Parameter controlling the deterministic trend. Can be specified as a
         string where 'c' indicates a constant term, 't' indicates a
         linear trend in time, and 'ct' includes both. Can also be specified as
-        an iterable defining a polynomial, as in `numpy.poly1d`, where
-        `[1,1,0,1]` would denote :math:`a + bt + ct^3`. Default is 'c' for
+        an iterable defining a polynomial, as in ``numpy.poly1d``, where
+        ``[1,1,0,1]`` would denote :math:`a + bt + ct^3`. Default is 'c' for
         models without integration, and no trend for models with integration.
         Note that all trend terms are included in the model as exogenous
         regressors, which differs from how trends are included in ``SARIMAX``
@@ -53,13 +64,13 @@ class StatsModelsARIMA(_StatsModelsAdapter):
         maximum likelihood.
     trend_offset : int, optional
         The offset at which to start time trend values. Default is 1, so that
-        if `trend='t'` the trend is equal to 1, 2, ..., nobs. Typically is only
+        if ``trend='t'`` the trend is equal to 1, 2, ..., nobs. Typically is only
         set when the model created by extending a previous dataset.
     dates : array_like of datetime, optional
-        If no index is given by `endog` or `exog`, an array-like object of
+        If no index is given by ``endog`` or ``exog``, an array-like object of
         datetime objects can be provided.
     freq : str, optional
-        If no index is given by `endog` or `exog`, the frequency of the
+        If no index is given by ``endog`` or ``exog``, the frequency of the
         time-series may be specified here as a Pandas offset or offset string.
     missing : str
         Available options are 'none', 'drop', and 'raise'. If 'none', no nan
@@ -69,11 +80,11 @@ class StatsModelsARIMA(_StatsModelsAdapter):
         Initial guess of the solution for the loglikelihood maximization.
         If None, the default is given by Model.start_params.
     transformed : bool, optional
-        Whether or not `start_params` is already transformed. Default is
+        Whether or not ``start_params`` is already transformed. Default is
         True.
     includes_fixed : bool, optional
-        If parameters were previously fixed with the `fix_params` method,
-        this argument describes whether or not `start_params` also includes
+        If parameters were previously fixed with the ``fix_params`` method,
+        this argument describes whether or not ``start_params`` also includes
         the fixed parameters, in addition to the free parameters. Default
         is False.
     method : str, optional
@@ -84,16 +95,16 @@ class StatsModelsARIMA(_StatsModelsAdapter):
         only be used with AR(p) models).
     method_kwargs : dict, optional
         Arguments to pass to the fit function for the parameter estimator
-        described by the `method` argument.
+        described by the ``method`` argument.
     gls : bool, optional
         Whether or not to use generalized least squares (GLS) to estimate
-        regression effects. The default is False if `method='statespace'`
+        regression effects. The default is False if ``method='statespace'``
         and is True otherwise.
     gls_kwargs : dict, optional
         Arguments to pass to the GLS estimation fit method. Only applicable
-        if GLS estimation is used (see `gls` argument for details).
+        if GLS estimation is used (see ``gls`` argument for details).
     cov_type : str, optional
-        The `cov_type` keyword governs the method for calculating the
+        The ``cov_type`` keyword governs the method for calculating the
         covariance matrix of parameter estimates. Can be one of:
 
         - 'opg' for the outer product of gradient estimator
@@ -149,12 +160,13 @@ class StatsModelsARIMA(_StatsModelsAdapter):
     >>> forecaster = StatsModelsARIMA(order=(0, 0, 12))  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
     >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
-    """
+    """  # noqa: E501
 
     _tags = {
         # packaging info
         # --------------
-        "authors": ["arnaujc91"],
+        "authors": ["chadfulton", "bashtage", "jbrockmendel", "arnaujc91"],
+        # chadfulton, bashtage, jbrockmendel for statsmodels implementation
         "maintainers": ["arnaujc91"],
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
@@ -164,8 +176,8 @@ class StatsModelsARIMA(_StatsModelsAdapter):
 
     def __init__(
         self,
-        order: Tuple[int, int, int] = (0, 0, 0),
-        seasonal_order: Tuple[int, int, int, int] = (0, 0, 0, 0),
+        order: tuple[int, int, int] = (0, 0, 0),
+        seasonal_order: tuple[int, int, int, int] = (0, 0, 0, 0),
         trend: Optional[Union[str, Iterable]] = None,
         enforce_stationarity: bool = True,
         enforce_invertibility: bool = True,
@@ -250,13 +262,14 @@ class StatsModelsARIMA(_StatsModelsAdapter):
         """Get a summary of the fitted forecaster.
 
         This is the same as the implementation in statsmodels:
+
         https://www.statsmodels.org/dev/examples/notebooks/generated/statespace_structural_harvey_jaeger.html
         """
         return self._fitted_forecaster.summary()
 
     @staticmethod
     def _extract_conf_int(prediction_results, alpha) -> pd.DataFrame:
-        """Construct confidence interval at specified `alpha` for each timestep.
+        """Construct confidence interval at specified ``alpha`` for each timestep.
 
         Parameters
         ----------
@@ -288,7 +301,7 @@ class StatsModelsARIMA(_StatsModelsAdapter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for forecasters.
 
         Returns
@@ -296,8 +309,9 @@ class StatsModelsARIMA(_StatsModelsAdapter):
         params : list of dict, default = []
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         return [
             {

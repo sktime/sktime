@@ -6,16 +6,7 @@ Welcome to sktime
 
 A unified framework for machine learning with time series.
 
-.. topic:: Join the sktime summer programme 2024 with Google Summer of Code!
-
-    Apply for paid internships and/or mentoring (by April 2):
-    `GSoC and internships <https://github.com/sktime/mentoring>`_
-
-    Sponsor a project, or join coordinated workstreams (by April 15):
-    `Fill out the planning form <https://forms.gle/98XBxgxN6XfQYMBB6>`_
-
-
-.. topic:: Register as a user, or voter for sktime committees!
+.. topic:: Register as a user!
 
     Prioritized bugfixes, shape the tech roadmap and governance policy.
     `Register here <https://forms.gle/eVuzrCjKDRupxawL7>`_
@@ -52,6 +43,7 @@ Contents
    get_started
    users
    installation
+   estimator_overview
    api_reference
    get_involved
    developers
@@ -82,11 +74,11 @@ Contents
     .. grid-item-card::
         :text-align: center
 
-        User Guide
+        Documentation
 
         ^^^
 
-        Find user documentation.
+        User documentation.
 
         +++
 
@@ -95,7 +87,7 @@ Contents
             :click-parent:
             :expand:
 
-            User Guide
+            Documentation
 
     .. grid-item-card::
         :text-align: center
@@ -114,6 +106,24 @@ Contents
             :expand:
 
             Installation
+
+    .. grid-item-card::
+        :text-align: center
+
+        Estimator Overview
+
+        ^^^
+
+        Overview of all estimators in ``sktime``.
+
+        +++
+
+        .. button-ref:: estimator_overview
+            :color: primary
+            :click-parent:
+            :expand:
+
+            Estimator Overview
 
     .. grid-item-card::
         :text-align: center

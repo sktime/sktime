@@ -10,6 +10,10 @@ All (simple) transformers in ``sktime`` can be listed using the ``sktime.registr
 using ``estimator_types="transformer"``, optionally filtered by tags.
 Valid tags can be listed using ``sktime.registry.all_tags``.
 
+A full table with tag based search is also available on the
+:doc:`Estimator Search Page </estimator_overview>`
+(select "transformere" in the "Estimator type" dropdown).
+
 For pairwise transformers (time series distances, kernels), instead see :ref:`_transformations_pairwise_ref`.
 
 Transformations are categorized as follows:
@@ -42,8 +46,8 @@ Transformations are categorized as follows:
 Composition
 -----------
 
-Pipeline building
-~~~~~~~~~~~~~~~~~
+Pipeline building - Structural
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.compose
 
@@ -54,24 +58,24 @@ Pipeline building
     TransformerPipeline
     FeatureUnion
     ColumnEnsembleTransformer
-    ColumnwiseTransformer
     FitInTransform
-    MultiplexTransformer
-    OptionalPassthrough
     InvertTransform
-    Id
     YtoX
     IxToX
-    TransformByLevel
-    TransformIf
 
-.. currentmodule:: sktime.transformations.panel.compose
+Pipeline building - Broadcasting and apply-map
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.compose
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    ColumnTransformer
+    ColumnwiseTransformer
+    TransformByLevel
+
+.. currentmodule:: sktime.transformations.panel.compose
 
 .. currentmodule:: sktime.transformations.series.func_transform
 
@@ -81,6 +85,30 @@ Pipeline building
 
     FunctionTransformer
 
+Pipeline building - AutoML, switches and multiplexing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MultiplexTransformer
+    OptionalPassthrough
+    TransformIf
+    Id
+
+Pipeline building - Logging
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Logger
 
 Sklearn and pandas adapters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -137,6 +165,14 @@ These transformers extract simple summary features.
     RandomIntervalFeatureExtractor
     FittedParamExtractor
 
+.. currentmodule:: sktime.transformations.series.adi_cv
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ADICVTransformer
+
 Shapelets, wavelets, and convolution
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -148,6 +184,7 @@ Shapelets, wavelets, and convolution
 
     ShapeletTransform
     RandomShapeletTransform
+    ShapeletTransformPyts
 
 .. currentmodule:: sktime.transformations.panel.rocket
 
@@ -190,6 +227,17 @@ Dictionary-based features
 
     SFA
 
+Auto-correlation-based features
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.hurst
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HurstExponentTransformer
+
 Moment-based features
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -222,6 +270,14 @@ These transformers extract larger collections of features.
     :template: class.rst
 
     Catch22
+
+.. currentmodule:: sktime.transformations.panel.catch22wrapper
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Catch22Wrapper
 
 Series-to-series transformers
 -----------------------------
@@ -304,13 +360,6 @@ Detrending and Decomposition
     Deseasonalizer
     ConditionalDeseasonalizer
     STLTransformer
-
-.. currentmodule:: sktime.transformations.series.detrend.mstl
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
     MSTL
 
 .. currentmodule:: sktime.transformations.series.vmd
@@ -382,6 +431,14 @@ Filtering and denoising
 
     ThetaLinesTransformer
 
+.. currentmodule:: sktime.transformations.series.bollinger
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Bollinger
+
 Differencing, slope, kinematics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -451,7 +508,7 @@ Binning, sampling and segmentation
     :toctree: auto_generated/
     :template: class.rst
 
-    PAA2
+    PAA
 
 .. currentmodule:: sktime.transformations.series.sax
 
@@ -459,7 +516,7 @@ Binning, sampling and segmentation
     :toctree: auto_generated/
     :template: class.rst
 
-    SAX2
+    SAX
 
 .. currentmodule:: sktime.transformations.panel.dictionary_based
 
@@ -467,8 +524,8 @@ Binning, sampling and segmentation
     :toctree: auto_generated/
     :template: class.rst
 
-    PAA
-    SAX
+    PAAlegacy
+    SAXlegacy
 
 Missing value treatment
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -575,6 +632,15 @@ These transformers create a series based on a sequence of sliding windows.
 
     HOG1DTransformer
 
+.. currentmodule:: sktime.transformations.series.subsequence_extraction
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SubsequenceExtractionTransformer
+
+
 Multivariate-to-univariate
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -638,6 +704,20 @@ These transformers subset `X` by time points (`pandas` index or index level) or 
     ColumnSelect
     IndexSubset
 
+Adapters to other frameworks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Generic framework adapters that expose other frameworks in the ``sktime`` interface.
+
+.. currentmodule:: sktime.transformations.series.temporian
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TemporianTransformer
+
+
 Panel transformers
 ------------------
 
@@ -665,7 +745,6 @@ These transformations ensure all series in a panel have equal length
     :template: class.rst
 
     TruncationTransformer
-
 
 Dimension reduction
 ~~~~~~~~~~~~~~~~~~~
