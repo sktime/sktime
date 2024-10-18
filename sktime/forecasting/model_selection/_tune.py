@@ -29,7 +29,7 @@ from sktime.utils.warnings import warn
 
 class BaseGridSearch(_DelegatedForecaster):
     _tags = {
-        "authors": ["mloning", "fkiraly", "aiwalter"],
+        "authors": ["mloning", "fkiraly", "aiwalter", "sukjingitsit","ksharma6"],
         "scitype:y": "both",
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
