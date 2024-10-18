@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.33.1"
+version = "0.33.2"
 description = "A unified framework for machine learning with time series"
 readme = "README.md"
 keywords = [
@@ -53,10 +53,10 @@ classifiers = [
 # this set should be kept minimal!
 dependencies = [
   "joblib<1.5,>=1.2.0",  # required for parallel processing
-  "numpy<2.1,>=1.21",  # required for framework layer and base class logic
+  "numpy<2.2,>=1.21",  # required for framework layer and base class logic
   "packaging",  # for estimator specific dependency parsing
   "pandas<2.3.0,>=1.1",  # pandas is the main in-memory data container
-  "scikit-base>=0.6.1,<0.9.0",  # base module for sklearn compatible base API
+  "scikit-base>=0.6.1,<0.12.0",  # base module for sklearn compatible base API
   "scikit-learn>=0.24,<1.6.0",  # required for estimators and framework layer
   "scipy<2.0.0,>=1.2",  # required for estimators and framework layer
 ]
@@ -105,6 +105,7 @@ all_extras = [
   "scikit_posthocs>=0.6.5",
   "seaborn>=0.11",
   "seasonal",
+  "skchange<0.9.0",
   "skforecast<0.14,>=0.12.1",
   "skpro>=2,<2.8.0",
   'statsforecast<1.8.0,>=1.0.0; python_version < "3.12"',
@@ -118,6 +119,7 @@ all_extras = [
   "xarray",
   "u8darts<0.31,>=0.29.0",
   'huggingface-hub>=0.23.0',
+
 ]
 
 # all soft dependencies compatible with pandas 2
@@ -126,7 +128,7 @@ all_extras_pandas2 = [
   'autots<0.7,>=0.6.1',
   "cloudpickle",
   "dash!=2.9.0",
-  "dask<2024.8.3; extra == 'dataframe'",
+  "dask<2024.10.1; extra == 'dataframe'",
   "dtaidistance<2.4",
   "dtw-python",
   'esig==0.9.7; python_version < "3.10"',
@@ -148,6 +150,7 @@ all_extras_pandas2 = [
   "scikit_posthocs>=0.6.5",
   "seaborn>=0.11",
   "seasonal",
+  "skchange<0.9.0",
   "skforecast<0.14,>=0.12.1",
   "skpro>=2,<2.8.0",
   'statsforecast<1.8.0,>=1.0.0; python_version < "3.12"',
@@ -160,7 +163,7 @@ all_extras_pandas2 = [
   'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   "xarray",
-  "u8darts<0.31,>=0.29.0",
+  "u8darts>=0.29.0,<0.32",
 ]
 
 # single-task dependencies, e.g., forecasting, classification, etc.
@@ -181,6 +184,7 @@ annotation = [
   "hmmlearn<0.4,>=0.2.7",
   'numba<0.61,>=0.53',
   'pyod<1.2,>=0.8; python_version < "3.12"',
+  "skchange<0.9.0",
 ]
 classification = [
   'esig<0.10,>=0.9.7; python_version < "3.11"',
@@ -191,6 +195,12 @@ classification = [
 clustering = [
   'numba<0.61,>=0.53',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.12"',
+]
+detection = [
+  "hmmlearn<0.4,>=0.2.7",
+  'numba<0.61,>=0.53',
+  'pyod<1.2,>=0.8; python_version < "3.12"',
+  "skchange<0.9.0",
 ]
 forecasting = [
   "arch>=5.6,<7.1",
@@ -271,7 +281,6 @@ tests = [
 binder = [
   "jupyter",
   "pandas<2.0.0",
-  "skchange<0.9.0",
 ]
 cython_extras = [
   "mrseql < 0.0.3",
