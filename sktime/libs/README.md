@@ -17,6 +17,9 @@ This folder contains libraries directly distributed with, and maintained by, `sk
 * `vmdpy` - a package implementing Variational Mode Decomposition.
   Official fork, `vmdpy` is maintained in `sktime` since August 2023.
 
+* `momentfm` - a package implementing the `momentfm` library, unofficial fork
+  maintained since August 2024.
+
 
 # Snippets from other libraries:
 
