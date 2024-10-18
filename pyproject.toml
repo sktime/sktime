@@ -105,6 +105,7 @@ all_extras = [
   "scikit_posthocs>=0.6.5",
   "seaborn>=0.11",
   "seasonal",
+  "skchange<0.9.0",
   "skforecast<0.14,>=0.12.1",
   "skpro>=2,<2.8.0",
   'statsforecast<1.8.0,>=1.0.0; python_version < "3.12"',
@@ -147,6 +148,7 @@ all_extras_pandas2 = [
   "scikit_posthocs>=0.6.5",
   "seaborn>=0.11",
   "seasonal",
+  "skchange<0.9.0",
   "skforecast<0.14,>=0.12.1",
   "skpro>=2,<2.8.0",
   'statsforecast<1.8.0,>=1.0.0; python_version < "3.12"',
@@ -180,6 +182,7 @@ annotation = [
   "hmmlearn<0.4,>=0.2.7",
   'numba<0.61,>=0.53',
   'pyod<1.2,>=0.8; python_version < "3.12"',
+  "skchange<0.9.0",
 ]
 classification = [
   'esig<0.10,>=0.9.7; python_version < "3.11"',
@@ -190,6 +193,12 @@ classification = [
 clustering = [
   'numba<0.61,>=0.53',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.12"',
+]
+detection = [
+  "hmmlearn<0.4,>=0.2.7",
+  'numba<0.61,>=0.53',
+  'pyod<1.2,>=0.8; python_version < "3.12"',
+  "skchange<0.9.0",
 ]
 forecasting = [
   "arch>=5.6,<7.1",
@@ -270,7 +279,6 @@ tests = [
 binder = [
   "jupyter",
   "pandas<2.0.0",
-  "skchange<0.9.0",
 ]
 cython_extras = [
   "mrseql < 0.0.3",
