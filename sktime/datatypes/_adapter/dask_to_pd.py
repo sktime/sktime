@@ -16,8 +16,8 @@ index is replaced by a string index where tuples are replaced with str coerced e
 
 import pandas as pd
 
-from sktime.datatypes._common import _req
-from sktime.datatypes._common import _ret as ret
+from sktime.datatypes._base._common import _req
+from sktime.datatypes._base._common import _ret as ret
 from sktime.datatypes._dtypekind import _get_feature_kind, _pandas_dtype_to_kind
 
 
@@ -132,11 +132,11 @@ def check_dask_frame(
     obj, return_metadata=False, var_name="obj", freq_set_check=False, scitype="Series"
 ):
     """Check dask frame, generic for sktime check format."""
-    import dask
+    import dask.dataframe as dd
 
     metadata = {}
 
-    if not isinstance(obj, dask.dataframe.core.DataFrame):
+    if not isinstance(obj, dd.DataFrame):
         msg = f"{var_name} must be a dask DataFrame, found {type(obj)}"
         return ret(False, msg, None, return_metadata)
 
