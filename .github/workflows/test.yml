@@ -211,11 +211,6 @@ jobs:
       - name: Run tests
         run: make PYTESTOPTIONS="--only_cython_estimators=True --matrixdesign=False --timeout=600" test_check_suite
 
-      - name: Publish code coverage
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-
   detect:
     needs: test-nosoftdeps
     name: detect changes
@@ -304,11 +299,6 @@ jobs:
       - name: Run tests
         run: make test_without_datasets
 
-      - name: Publish code coverage
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-
   test-unix-pandas1:
     needs: test-nosoftdeps
     strategy:
@@ -343,8 +333,3 @@ jobs:
 
       - name: Run tests
         run: make test_without_datasets
-
-      - name: Publish code coverage
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
