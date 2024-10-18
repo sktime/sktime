@@ -163,6 +163,7 @@ Naive forecasters
     :toctree: auto_generated/
     :template: class.rst
 
+    DummyGlobalForecaster
     ForecastKnownValues
 
 Prediction intervals
@@ -555,6 +556,7 @@ Ensembles and stacking
 
     EnsembleForecaster
     AutoEnsembleForecaster
+    AutoRegressiveWrapper
     StackingForecaster
 
 
