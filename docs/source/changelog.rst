@@ -25,7 +25,7 @@ Version 0.33.2 - 2024-10-17
 Highlights
 ~~~~~~~~~~
 
-* new forecatser: interface to Chronos (zero-shot) foundation model forecaster (:pr:`7001`) :user:`Z-Fran`, :user:`geetu040`, :user:`benHeid`, :user:`rigvedmanoj`
+* new forecaster: interface to Chronos (zero-shot) foundation model forecaster (:pr:`7001`) :user:`Z-Fran`, :user:`geetu040`, :user:`benHeid`, :user:`rigvedmanoj`
 * new classifiers: GRU-based time series classifiers (:pr:`6952`) :user:`fnhirwa`
 * new transformer: temporal radial basis function features (:pr:`7261`) :user:`phoeenniixx`
 * ``ExpandingSlidingWindowSplitter``, switching from expanding window to sliding window at cutoff point (:pr:`7193`) :user:`MarkusSagen`
