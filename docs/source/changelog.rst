@@ -17,6 +17,27 @@ available on GitHub.
 For our long-term plan, see our :ref:`roadmap`.
 
 
+Version 0.34.0 - 2024-10-19
+---------------------------
+
+Maintenance release:
+
+* full support for ``python 3.13``
+* scheduled deprecations and change actions.
+
+For last non-maintenance content updates, see 0.33.2.
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Contents
+~~~~~~~~
+
+
+
 Version 0.33.2 - 2024-10-17
 ---------------------------
 
