@@ -40,9 +40,13 @@ class DateRangeWeightGenerator(BaseSampleWeightGenerator):
     def _get_dt(self, date_series):
         """Get the datetime object from the series."""
         dt = date_series
-        if isinstance(date_series, pd.Timestamp | pd.DatetimeIndex):
+        if isinstance(date_series, pd.Timestamp):
             dt = date_series
-        elif isinstance(date_series, pd.Series | pd.DataFrame):
+        elif isinstance(date_series, pd.DatetimeIndex):
+            dt = date_series
+        elif isinstance(date_series, pd.Series):
+            dt = date_series.dt
+        elif isinstance(date_series, pd.DataFrame):
             dt = date_series.dt
         elif isinstance(date_series, np.datetime64):
             dt = pd.to_datetime(date_series)
