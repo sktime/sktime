@@ -318,7 +318,7 @@ pandas1 = [
   "pandas<2.0.0",
 ]
 compatibility_tests = [
-  "catboost",
+  '"catboost; python_version < "3.13"',
 ]
 
 [project.urls]
