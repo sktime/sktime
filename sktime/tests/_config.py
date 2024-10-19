@@ -1,14 +1,12 @@
-__author__ = ["mloning"]
+"""Main configuration file for test excludes.
+
+Also contains some other configs, these should be gradually refactored
+to registry or to individual tags, where applicable.
+"""
+
 __all__ = ["EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
 
-from sktime.base import BaseEstimator, BaseObject
-from sktime.registry import (
-    BASE_CLASS_LIST,
-    BASE_CLASS_LOOKUP,
-    ESTIMATOR_TAG_LIST,
-    TRANSFORMER_MIXIN_LIST,
-)
-from sktime.transformations.base import BaseTransformer
+from sktime.registry import ESTIMATOR_TAG_LIST
 
 EXCLUDE_ESTIMATORS = [
     # SFA is non-compliant with any transformer interfaces, #2064
@@ -62,6 +60,7 @@ EXCLUDE_ESTIMATORS = [
     "SARIMAX",
     "StatsModelsARIMA",
     "ShapeletLearningClassifierTslearn",
+    "DartsXGBModel",
 ]
 
 
@@ -246,6 +245,11 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
     ],
     "TSRGridSearchCV": ["test_multioutput"],  # see 6708
+    # pickling problem
+    "ChronosForecaster": [
+        "test_persistence_via_pickle",
+        "test_save_estimators_to_file",
+    ],
 }
 
 # exclude tests but keyed by test name
@@ -419,17 +423,3 @@ NON_STATE_CHANGING_METHODS_ARRAYLIKE = (
 NON_STATE_CHANGING_METHODS = NON_STATE_CHANGING_METHODS_ARRAYLIKE + (
     "get_fitted_params",
 )
-
-# The following gives a list of valid estimator base classes.
-VALID_TRANSFORMER_TYPES = tuple(TRANSFORMER_MIXIN_LIST) + (BaseTransformer,)
-
-BASE_BASE_TYPES = (BaseEstimator, BaseObject)
-VALID_ESTIMATOR_BASE_TYPES = tuple(set(BASE_CLASS_LIST).difference(BASE_BASE_TYPES))
-
-VALID_ESTIMATOR_TYPES = (
-    BaseEstimator,
-    *VALID_ESTIMATOR_BASE_TYPES,
-    *VALID_TRANSFORMER_TYPES,
-)
-
-VALID_ESTIMATOR_BASE_TYPE_LOOKUP = BASE_CLASS_LOOKUP

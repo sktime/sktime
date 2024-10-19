@@ -4,12 +4,9 @@ __author__ = ["fkiraly"]
 
 __all__ = ["retrieve_scenarios"]
 
-
-from inspect import isclass
-
 from skbase.base import BaseObject
 
-from sktime.registry import BASE_CLASS_LIST, BASE_CLASS_SCITYPE_LIST, scitype
+from sktime.registry import get_obj_scitype_list, scitype
 from sktime.utils._testing.scenarios_aligners import scenarios_aligners
 from sktime.utils._testing.scenarios_classification import (
     scenarios_classification,
@@ -48,14 +45,15 @@ def retrieve_scenarios(obj, filter_tags=None):
     obj : class or object, or string, or list of str.
         Which kind of estimator/object to retrieve scenarios for.
         If object, must be a class or object inheriting from BaseObject.
-        If string(s), must be in registry.BASE_CLASS_REGISTER (first col)
-            for instance 'classifier', 'regressor', 'transformer', 'forecaster'
+        If string(s), must be in ``registry.get_obj_scitype_list()``
+        for instance 'classifier', 'regressor', 'transformer', 'forecaster'
     filter_tags: dict of (str or list of str), default=None
         subsets the returned objects as follows:
-            each key/value pair is statement in "and"/conjunction
-                key is tag name to sub-set on
-                value str or list of string are tag values
-                condition is "key must be equal to value, or in set(value)"
+        each key/value pair is statement in "and"/conjunction,
+
+        * key is tag name to sub-set on
+        * value str or list of string are tag values
+        * condition is "key must be equal to value, or in set(value)"
 
     Returns
     -------
@@ -63,10 +61,10 @@ def retrieve_scenarios(obj, filter_tags=None):
     """
     if not isinstance(obj, (str, BaseObject)) and not issubclass(obj, BaseObject):
         raise TypeError("obj must be a str or inherit from BaseObject")
-    if isinstance(obj, str) and obj not in BASE_CLASS_SCITYPE_LIST:
+    if isinstance(obj, str) and obj not in get_obj_scitype_list():
         raise ValueError(
             "if obj is a str, then obj must be a valid scitype string, "
-            "see registry.BASE_CLASS_SCITYPE_LIST for valid scitype strings"
+            "run registry.get_obj_scitype_list() for valid scitype strings"
         )
 
     # if class, get scitypes from inference; otherwise, str or list of str
@@ -99,20 +97,6 @@ def retrieve_scenarios(obj, filter_tags=None):
         ]
 
     return scenarios_for_type
-
-
-def _scitype_from_class(obj):
-    """Return scitype string given class or object."""
-    if obj is None:
-        raise ValueError("obj must not be None")
-    if not isclass(obj):
-        obj = type(obj)
-    if not isinstance(obj, tuple(BASE_CLASS_LIST)):
-        raise TypeError("obj must be instance of an sktime base class, or a base class")
-
-    for i in range(len(BASE_CLASS_SCITYPE_LIST)):
-        if isinstance(obj, BASE_CLASS_LIST[i]):
-            return BASE_CLASS_SCITYPE_LIST[i]
 
 
 def _check_tag_cond(obj, filter_tags=None):
