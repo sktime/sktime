@@ -17,6 +17,54 @@ available on GitHub.
 For our long-term plan, see our :ref:`roadmap`.
 
 
+Version 0.34.0 - 2024-10-19
+---------------------------
+
+Maintenance release:
+
+* full support for ``python 3.13``
+* scheduled deprecations and change actions.
+
+For last non-maintenance content updates, see 0.33.2.
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``numpy`` bounds have been updated to ``>=1.21,<2.2``
+* ``scikit-base`` bounds have been updated to ``>=0.6.1,<0.12.0``
+* ``holidays`` (transformations soft dependency) bounds have been updated to ``>=0.29,<0.59``
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* The ``annotation`` module will be renamed to ``detection``, starting with 0.34.0.
+  Until a future release not earlier than 0.37.0 or 1.0.0, the module will be available
+  under both names to ensure downwards compatibility of imports.
+* The ``annotation`` soft dependency set will be renamed to ``detection``.
+  The ``annotation`` soft dependency set will be available until a future release
+  not earlier than 0.37.0 or 1.0.0,
+  to ensure downwards compatibility of imports.
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] python 3.13 support in ``pyproject.toml`` and CI (:pr:`7198`) :user:`fkiraly`
+* [MNT] disable ``numpy<2`` bound for ``prophet`` (:pr:`6740`) :user:`fkiraly`
+* [MNT] 0.34.0 deprecations and change actions (:pr:`7302`) :user:`fkiraly`
+* [MNT] prepare rename ``annotation`` module to ``detection`` - mapped imports (:pr:`7294`) :user:`fkiraly`
+* [MNT] deduplicate ``sktime`` and ``skbase`` ``BaseEstimator`` (:pr:`7213`) :user:`fkiraly`
+* [MNT] [Dependabot](deps): Update numpy requirement from ``<2.1,>=1.21`` to ``>=1.21,<2.2`` (:pr:`7103`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update scikit-base requirement from ``<0.9.0,>=0.6.1`` to ``>=0.6.1,<0.12.0`` (:pr:`7238`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update holidays requirement from ``<0.55,>=0.29`` to ``>=0.29,<0.59`` (:pr:`7308`) :user:`dependabot[bot]`
+* [MNT] [Dependabot](deps): Update sphinx-issues requirement from ``<5.0.0`` to ``<6.0.0`` (:pr:`7307`) :user:`dependabot[bot]`
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] replace documentation references to "annotation" with "detection" (:pr:`7299`) :user:`fkiraly`
+* [DOC] change imports in detection tutorial to ``detection`` module (:pr:`7306`) :user:`fkiraly`
+
+
 Version 0.33.2 - 2024-10-17
 ---------------------------
 
