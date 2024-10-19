@@ -1,6 +1,6 @@
 """Time Le-Net (TLENET)."""
 
-__author__ = ["James Large, Withington"]
+__author__ = ["JamesLarge, Withington"]
 __all__ = ["TleNetClassifier"]
 
 from copy import deepcopy
@@ -9,7 +9,7 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.tlenet import TleNetNetwork
-from sktime.utils.validation._dependencies import _check_dl_dependencies
+from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class TleNetClassifier(BaseDeepClassifier):

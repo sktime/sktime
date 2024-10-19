@@ -1,8 +1,9 @@
 """Time Le-Net (TLENET)."""
+
 __author__ = ["JamesLarge", "Withington"]
 
 from sktime.networks.base import BaseDeepNetwork
-from sktime.utils.validation._dependencies import _check_dl_dependencies
+from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class TleNetNetwork(BaseDeepNetwork):
