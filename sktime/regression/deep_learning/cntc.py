@@ -215,8 +215,6 @@ class CNTCRegressor(BaseDeepRegressor):
         """
         if self.callbacks is None:
             self._callbacks = []
-        # Transpose to conform to Keras input style.
-        X = X.transpose(0, 2, 1)
 
         check_random_state(self.random_state)
         self.input_shape = X.shape[1:]
