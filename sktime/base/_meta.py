@@ -31,6 +31,8 @@ class _HeterogenousMetaEstimator:
     # this must be an iterable of (name: str, estimator, ...) tuples for the default
     _steps_fitted_attr = "steps_"
 
+    _tags = {"visual_block_kind": "serial"}
+
     def get_params(self, deep=True):
         """Get parameters of estimator.
 
@@ -721,7 +723,7 @@ class _HeterogenousMetaEstimator:
 
         name_details = [str(est) for est in estimators]
         return _VisualBlock(
-            "serial",
+            self.get_tag(tag_name="visual_block_kind", tag_value_default="serial"),
             estimators,
             names=names,
             name_details=name_details,
