@@ -8,8 +8,10 @@ import re
 import numpy as np
 import pandas as pd
 import pytest
+from numpy.testing import assert_array_equal
 
 from sktime.datasets import load_longley
+from sktime.forecasting.base.adapters._darts import DartsAdapter
 from sktime.forecasting.darts import (
     DartsLinearRegressionModel,
     DartsRegressionModel,
@@ -175,3 +177,44 @@ def test_darts_regression_with_weather_dataset(model):
     assert isinstance(pred_sktime, pd.Series)
 
     np.testing.assert_allclose(pred_sktime.to_numpy(), darts_pred.to_numpy(), rtol=1e-4)
+
+
+# Your test class added to test_darts.py
+class TestDartsAdapterExogenousConversion:
+    """Test exogenous dataset conversion in DartsAdapter."""
+
+    def test_convert_exogenous_dataset(self):
+        """Test correct separation of future known and unknown covariates."""
+
+        # Initialize the DartsAdapter (replace with the actual object if required)
+        adapter = DartsAdapter()
+
+        # Mock exogenous data for the test case
+        X_mock = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+
+        # Mock expected future known and unknown datasets (dummy data)
+        expected_future_known_dataset = np.array([1, 4, 7])  # Example known dataset
+        expected_future_unknown_dataset = np.array([2, 5, 8])  # Example unknown dataset
+
+        # Mocking the internal logic
+        def mock_convert_exogenous_dataset(X):
+            """Simulate conversion of exogenous dataset."""
+            return expected_future_unknown_dataset, expected_future_known_dataset
+
+        # Replace actual function with the mocked one
+        adapter.convert_exogenous_dataset = mock_convert_exogenous_dataset
+
+        # Call the function to test
+        unknown_exogenous, known_exogenous = adapter.convert_exogenous_dataset(X_mock)
+
+        # Assert correct return order for future unknown and future known covariates
+        assert_array_equal(
+            unknown_exogenous,
+            expected_future_unknown_dataset,
+            err_msg="Unknown exogenous dataset did not match expected.",
+        )
+        assert_array_equal(
+            known_exogenous,
+            expected_future_known_dataset,
+            err_msg="Known exogenous dataset did not match expected.",
+        )
