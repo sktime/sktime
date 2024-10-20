@@ -1,4 +1,4 @@
-<a href="https://www.sktime.net"><img src="https://github.com/sktime/sktime/blob/main/docs/source/images/sktime-logo.svg" width="175" align="right" /></a>
+<a href="https://www.sktime.net" id="top"><img src="https://github.com/sktime/sktime/blob/main/docs/source/images/sktime-logo.svg" width="175" align="right" /></a>
 
 # Welcome to sktime
 
@@ -245,3 +245,7 @@ Thanks to all our community for all your wonderful contributions, PRs, issues, i
 * **Clean, descriptive specification syntax** -- based on modern object-oriented design principles for data science.
 * **Fair model assessment and benchmarking** -- build your models, inspect your models, check your models, and avoid pitfalls.
 * **Easily extensible** -- easy extension templates to add your own algorithms compatible with sktime's API.
+
+<p align="right">
+  <a href="#top">⬆️ Back to Top</a>
+</p>
