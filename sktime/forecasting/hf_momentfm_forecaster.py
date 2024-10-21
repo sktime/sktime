@@ -144,7 +144,6 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             "torch",
             "tqdm",
             "huggingface-hub",
-            "transformers",
             # "momentfm",
             "accelerate",
         ],
