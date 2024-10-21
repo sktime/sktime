@@ -47,7 +47,7 @@ class BoxCoxBiasAdjustedForecaster(_DelegatedForecaster):
         self.forecaster = forecaster
         self.lmbda = lmbda
         self.boxcox_transformer_ = None
-        super().__init__(forecaster=forecaster)
+        super().__init__()
 
     def _fit(self, y, X=None, fh=None):
         """Fit the forecaster to the training data.
