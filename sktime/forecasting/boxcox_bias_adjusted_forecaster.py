@@ -22,7 +22,7 @@ __author__ = ["sanskarmodi8"]
 
 import pandas as pd
 
-from sktime.forecasting.base import _DelegatedForecaster
+from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.transformations.series.boxcox import BoxCoxTransformer
 
 
