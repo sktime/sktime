@@ -3155,6 +3155,15 @@
         "example",
         "tutorial"
       ]
+    },
+    {
+      "login": "VectorNd",
+      "name": "Rishabh Kamboj",
+      "avatar_url": "https://avatars.githubusercontent.com/u/111004091?v=4",
+      "profile": "https://github.com/VectorNd",
+      "contributions": [
+        "code"
+      ]
     }
   ]
 }

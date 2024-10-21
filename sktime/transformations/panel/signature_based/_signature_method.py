@@ -1,151 +1,99 @@
-"""Signature transformer."""
-
-from sklearn.pipeline import Pipeline
-
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.panel.signature_based._augmentations import (
-    _make_augmentation_pipeline,
-)
-from sktime.transformations.panel.signature_based._compute import (
-    _WindowSignatureTransform,
-)
-from sktime.utils.dependencies import _check_soft_dependencies
-from sktime.utils.warnings import warn
-
+import numpy as np
 
 class SignatureTransformer(BaseTransformer):
-    """Transformation class from the signature method.
+    """Signature Transformer for multivariate time series.
 
-    Follows the methodology laid out in the paper:
-        "A Generalised Signature Method for Multivariate Time Series"
+    Computes signature features for multivariate time series, which are 
+    time-ordered generalizations of moments.
 
     Parameters
     ----------
-    augmentation_list: list or tuple of strings, possible strings are
-        ['leadlag', 'ir', 'addtime', 'cumsum', 'basepoint']
-        Augmentations to apply to the data before computing the signature.
-        The order of the augmentations is the order in which they are applied.
-        default: ('basepoint', 'addtime')
-    window_name: str, one of ``['global', 'sliding', 'expanding', 'dyadic']``
-        default: 'dyadic'
-        Type of the window to use for the signature transform.
-    window_depth: int, default=3
-        The depth of the dyadic window.
-        Ignored unless ``window_name`` is ``'dyadic'``.
-    window_length: None (default) or int
-        The length of the sliding/expanding window. (Active
-        Ignored unless ``window_name`` is one of ``['sliding, 'expanding']``.
-    window_step: None (default) or int
-        The step of the sliding/expanding window.
-        Ignored unless ``window_name`` is one of ``['sliding, 'expanding']``.
-    rescaling: None (default) or str, "pre" or "post",
-        None: No rescaling is applied.
-        "pre": rescale the path last signature term should be roughly O(1)
-        "post": Rescales the output signature by multiplying the depth-d term by d!.
-            Aim is that every term becomes ~O(1).
-    sig_tfm: str, one of ``['signature', 'logsignature']``. default: ``'signature'``
-        The type of signature transform to use, plain or logarithmic.
-    depth: int, default=4
-        Signature truncation depth.
-    backend: str, one of: ``'esig'`` (default), or ``'iisignature'``.
-        The backend to use for signature computation.
+    degree: int, default=2
+        The maximum length of the string-based signature elements to include.
+    use_index: bool, default=True
+        Whether to include the time index as an additional dimension.
 
     Attributes
     ----------
-    signature_method: sklearn.Pipeline, A sklearn pipeline object that contains
-        all the steps to extract the signature features.
+    signature_features_: list of str
+        The list of signature feature names, based on combinations of dimensions.
     """
 
     _tags = {
-        # packaging info
-        # --------------
-        "authors": "jambo6",
-        "maintainers": "jambo6",
-        "python_dependencies": ["esig", "numpy<2.0"],
-        "python_version": "<3.10",
-        # estimator type
-        # --------------
+        "authors": "VectorNd",
+        "maintainers": "VectorNd",
         "scitype:transform-input": "Series",
-        # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Primitives",
-        # what is the scitype of y: None (not needed), Primitives, Series, Panel
-        "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
-        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?#
-        "fit_is_empty": False,
+        "scitype:instancewise": True,
+        "X_inner_mtype": "numpy3D",
+        "y_inner_mtype": "None",
+        "fit_is_empty": True,
     }
 
-    def __init__(
-        self,
-        augmentation_list=("basepoint", "addtime"),
-        window_name="dyadic",
-        window_depth=3,
-        window_length=None,
-        window_step=None,
-        rescaling=None,
-        sig_tfm="signature",
-        depth=4,
-        backend="esig",
-    ):
-        self.augmentation_list = augmentation_list
-        self.window_name = window_name
-        self.window_depth = window_depth
-        self.window_length = window_length
-        self.window_step = window_step
-        self.rescaling = rescaling
-        self.sig_tfm = sig_tfm
-        self.depth = depth
-        self.backend = backend
-
+    def __init__(self, degree=2, use_index=True):
+        self.degree = degree
+        self.use_index = use_index
+        self.signature_features_ = []
         super().__init__()
 
-        if backend == "esig":
-            _check_soft_dependencies("esig")
-        elif backend == "iisignature":
-            _check_soft_dependencies("iisignature")
-            warn(
-                "iisignature backend of SignatureTransformer is experimental "
-                "and not systematically tested, due to lack of stable installation "
-                "process for iisignature via pip. Kindly exercise caution, "
-                "and report any issues on the sktime issue tracker.",
-                stacklevel=2,
-            )
-        else:
-            raise ValueError(
-                "Error in SignatureTransformer, backend "
-                "must be one of 'esig' or 'iisignature'"
-            )
-
-        self.setup_feature_pipeline()
-
-    def setup_feature_pipeline(self):
-        """Set up the signature method as an sklearn pipeline."""
-        augmentation_step = _make_augmentation_pipeline(self.augmentation_list)
-        transform_step = _WindowSignatureTransform(
-            window_name=self.window_name,
-            window_depth=self.window_depth,
-            window_length=self.window_length,
-            window_step=self.window_step,
-            sig_tfm=self.sig_tfm,
-            sig_depth=self.depth,
-            rescaling=self.rescaling,
-            backend=self.backend,
-        )
-
-        # The so-called 'signature method' as defined in the reference paper
-        self.signature_method = Pipeline(
-            [
-                ("augmentations", augmentation_step),
-                ("window_and_transform", transform_step),
-            ]
-        )
-
     def _fit(self, X, y=None):
-        self.signature_method.fit(X)
+        """No fitting required for this transformer."""
         return self
 
     def _transform(self, X, y=None):
-        return self.signature_method.transform(X)
+        """Compute the signature features for the input time series."""
+        n_instances, n_channels, n_timepoints = X.shape
+
+        if self.use_index:
+            index = np.arange(n_timepoints).reshape(1, -1)
+            X = np.concatenate((X, index[np.newaxis, :, :]), axis=1)
+            n_channels += 1 
+
+        signature_matrix = []
+        for instance_idx in range(n_instances):
+            instance_data = X[instance_idx]
+            signature_row = self._compute_signature(instance_data)
+            signature_matrix.append(signature_row)
+
+        return np.array(signature_matrix)
+
+    def _compute_signature(self, data):
+        """Compute signature features for a single instance."""
+        n_channels, n_timepoints = data.shape
+
+        signature_row = []
+        for length in range(1, self.degree + 1):
+            for indices in np.ndindex((n_channels,) * length):
+                element_mean = self._compute_mean_product(data, indices)
+                signature_row.append(element_mean)
+
+                feature_name = "".join(str(i + 1) for i in indices)
+                self.signature_features_.append(feature_name)
+
+        return signature_row
+
+    def _compute_mean_product(self, data, indices):
+        """Compute mean product of the specified data dimensions."""
+        length = len(indices)
+        n_timepoints = data.shape[1]
+
+        if length == 1:
+            return np.mean(data[indices[0], :])
+        elif length == 2:
+            return np.mean([
+                data[indices[0], i] * data[indices[1], j]
+                for i in range(n_timepoints) for j in range(i + 1, n_timepoints)
+            ])
+        elif length == 3:
+            return np.mean([
+                data[indices[0], i] * data[indices[1], j] * data[indices[2], k]
+                for i in range(n_timepoints)
+                for j in range(i + 1, n_timepoints)
+                for k in range(j + 1, n_timepoints)
+            ])
+        else:
+            raise NotImplementedError("Degree higher than 3 is not implemented.")
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -168,8 +116,7 @@ class SignatureTransformer(BaseTransformer):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params = {
-            "augmentation_list": ("basepoint", "addtime"),
-            "depth": 3,
-            "window_name": "global",
+            "degree": 2,
+            "use_index": True,
         }
         return params
