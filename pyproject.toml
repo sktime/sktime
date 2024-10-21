@@ -271,7 +271,7 @@ tests = [
 # these are for specual uses and may be changed or removed at any time
 binder = [
   "jupyter",
-  "pandas<2.0.0",
+  "pandas<3.0.0",
   "skchange",
 ]
 cython_extras = [
@@ -311,7 +311,7 @@ numpy1 = [
   "numpy<2.0.0",
 ]
 pandas1 = [
-  "pandas<2.0.0",
+  "pandas<3.0.0",
 ]
 compatibility_tests = [
   'catboost; python_version < "3.13"',
