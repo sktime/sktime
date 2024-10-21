@@ -114,7 +114,9 @@ all_extras = [
   'tensorflow<2.17,>=2; python_version < "3.12"',
   'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
-  'u8darts>=0.29.0,<0.32.0; python_version < "3.13"',
+  "xarray",
+  "u8darts<0.31,>=0.29.0",
+  'huggingface-hub>=0.23.0',
   'xarray; python_version < "3.13"',
 ]
 
@@ -296,6 +298,8 @@ dl = [
   'gluonts>=0.14.3; python_version < "3.12"',
   'einops>0.7.0; python_version < "3.12"',
   'huggingface-hub>=0.23.0; python_version < "3.12"',
+  'accelerate',
+  'tqdm',
   'hydra-core; python_version < "3.13"',
 ]
 mlflow = [
