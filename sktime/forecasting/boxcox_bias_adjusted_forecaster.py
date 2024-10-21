@@ -177,9 +177,9 @@ class BoxCoxBiasAdjustedForecaster(_DelegatedForecaster):
             Parameters to create testing instances of the class.
         """
         from sktime.forecasting.naive import NaiveForecaster
-        from sktime.forecasting.theta import ThetaForecaster
+        from sktime.forecasting.trend import PolynomialTrendForecaster
 
-        params1 = {"forecaster": NaiveForecaster()}
-        params2 = {"forecaster": ThetaForecaster(), "lmbda": 0.5}
+        params1 = {"forecaster": NaiveForecaster(strategy="mean")}
+        params2 = {"forecaster": PolynomialTrendForecaster(degree=1), "lmbda": 0.5}
 
         return [params1, params2]
