@@ -14,6 +14,7 @@ __author__ = [
     "achieveordie",
     "ciaran-g",
     "jonathanbechtel",
+    "VectorNd"
 ]
 
 __all__ = [
@@ -40,6 +41,9 @@ __all__ = [
     "load_unit_test_tsf",
     "load_covid_3month",
     "load_tecator",
+    "load_mitdb",
+    "load_seatbelts",
+    "load_yahoo"
 ]
 
 import os
@@ -939,6 +943,88 @@ def load_airline():
     y.name = "Number of airline passengers"
     return y
 
+def load_mitdb():
+    """Load the mitdb univariate time series dataset [1].
+
+    Returns
+    -------
+    y : pd.DataFrame
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_mitdb
+    >>> y = load_mitdb()
+
+    References
+    ----------
+    .. [1] George B Moody and Roger G Mark. 1992. MIT-BIH Arrhythmia Database. https://doi.org/10.13026/C2F305.
+    """  
+    name = "mitdb"
+    fname = name + ".csv"
+    path = os.path.join(MODULE, DIRNAME, name, fname)
+    y = pd.read_csv(path)
+
+    return y 
+
+def load_yahoo():
+    """Load the yahoo univariate time series dataset [1].
+
+    Returns
+    -------
+    y : pd.DataFrame
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_yahoo
+    >>> y = load_yahoo()
+
+    References
+    ----------
+    ..[1] N. Laptev, S. Amizadeh, and Y. Billawala. 2015.
+          S5 - A Labeled Anomaly Detection Dataset, version 1.0(16M). https://webscope.sandbox.yahoo.com/catalog.php? datatype=s&did=70.
+    """
+    name = "yahoo"
+    fname = name + ".csv"
+    path = os.path.join(MODULE, DIRNAME, name, fname)
+    y = pd.read_csv(path)
+
+    return y 
+
+def load_seatbelts():
+    """Load the seabelts univariate time series dataset [1].
+
+    Returns
+    -------
+    y : pd.DataFrame
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_seatbelts
+    >>> y = load_seatbelts()
+
+    Notes
+    -----
+    Monthly time series data spanning from January 1969 to December 1984, with three columns:
+
+    Date: The date in the format "YYYY-MM-DD," representing the first day of each month.
+    KSI (Killed or Seriously Injured): The number of people killed or seriously injured in a particular month.
+    Label: A binary value indicating whether a particular month is considered anomalous (1) or normal (0).
+
+    This data records traffic-related incidents over 16 years, providing insights into trends and anomalies in the data,
+    which could be used for time series analysis, anomaly detection, or understanding the impact of policies or events on traffic safety.
+
+    References
+    ----------
+    .. [1] An Evaluation of Change Point Detection Algorithms, Van den Burg, G. J. J. and Williams, C. K. I.,
+           arXiv preprint arXiv:2003.06222, 2020.
+    """
+    name = "seatbelts" 
+
+    fname = name + ".csv"
+    path = os.path.join(MODULE, DIRNAME, name, fname)
+    y = pd.read_csv(path)
+
+    return y
 
 def load_uschange(y_name="Consumption"):
     """Load MTS dataset for forecasting Growth rates of personal consumption and income.

@@ -12,6 +12,9 @@ __all__ = [
     "load_longley",
     "load_lynx",
     "load_shampoo_sales",
+    "load_mitdb",
+    "load_yahoo",
+    "load_seatbelts",
     "load_UCR_UEA_dataset",
     "load_unit_test",
     "load_uschange",
@@ -92,4 +95,7 @@ from sktime.datasets._single_problem_loaders import (
     load_unit_test,
     load_unit_test_tsf,
     load_uschange,
+    load_mitdb,
+    load_seatbelts,
+    load_yahoo
 )
