@@ -179,7 +179,10 @@ class BoxCoxBiasAdjustedForecaster(_DelegatedForecaster):
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.forecasting.trend import PolynomialTrendForecaster
 
-        params1 = {"forecaster": NaiveForecaster(strategy="mean")}
-        params2 = {"forecaster": PolynomialTrendForecaster(degree=1), "lmbda": 0.5}
+        forecaster1 = NaiveForecaster(strategy="mean")
+        forecaster2 = PolynomialTrendForecaster(degree=1)
+
+        params1 = {"forecaster": forecaster1}
+        params2 = {"forecaster": forecaster2, "lmbda": 0.5}
 
         return [params1, params2]
