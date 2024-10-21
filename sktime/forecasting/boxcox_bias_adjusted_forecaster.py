@@ -1,0 +1,185 @@
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+
+"""BoxCoxBiasAdjustedForecaster implementation.
+
+This module implements a forecaster that applies Box-Cox transformation
+and bias adjustment to the predictions of a wrapped forecaster.
+
+The bias adjustment is implemented according to the method described in:
+Forecasting: Principles and Practice (2nd ed)
+Rob J Hyndman and George Athanasopoulos
+Monash University, Australia. OTexts.com/fpp2.
+
+For methods like `predict_proba`, the behavior of the wrapped forecaster
+is directly used without any additional adjustments. This means that
+probability estimates are provided as they are by the underlying forecaster.
+Users should ensure that the wrapped forecaster's `predict_proba` output
+is suitable for their needs, as no transformation or adjustment will be applied
+to these estimates by the `BoxCoxBiasAdjustedForecaster`.
+"""
+
+__author__ = ["sanskarmodi8"]
+
+import pandas as pd
+
+from sktime.forecasting.base import _DelegatedForecaster
+from sktime.transformations.series.boxcox import BoxCoxTransformer
+
+
+class BoxCoxBiasAdjustedForecaster(_DelegatedForecaster):
+    """Box-Cox Bias-Adjusted Forecaster.
+
+    This forecaster applies Box-Cox transformation with bias adjustment
+    using Hyndman's method to the wrapped forecaster's predictions.
+
+    Parameters
+    ----------
+    forecaster : BaseForecaster
+        The wrapped forecaster to which Box-Cox transformation and
+        bias adjustment will be applied.
+    lmbda : float, optional (default=None)
+        The Box-Cox transformation parameter. If None, it will be estimated.
+    """
+
+    _delegate_name = "forecaster"
+
+    def __init__(self, forecaster, lmbda=None):
+        self.forecaster = forecaster
+        self.lmbda = lmbda
+        self.boxcox_transformer_ = None
+        super().__init__(forecaster=forecaster)
+
+    def _fit(self, y, X=None, fh=None):
+        """Fit the forecaster to the training data.
+
+        Parameters
+        ----------
+        y : pd.DataFrame
+            Target time series to which to fit the forecaster.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables.
+        fh : ForecastingHorizon
+            The forecasting horizon with the steps ahead to predict.
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        self.boxcox_transformer_ = BoxCoxTransformer(lmbda=self.lmbda)
+        y_transformed = self.boxcox_transformer_.fit_transform(y)
+
+        self.forecaster_ = self.forecaster.clone()
+        self.forecaster_.fit(y_transformed, X, fh)
+
+        # Check if the wrapped forecaster supports variance prediction
+        if not hasattr(self.forecaster_, "predict_var"):
+            raise ValueError(
+                "The wrapped forecaster must implement a `predict_var` method "
+                "to enable bias adjustment."
+            )
+
+        return self
+
+    def _predict(self, fh, X=None):
+        """Forecast time series at future horizon.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+            The forecasting horizon with the steps ahead to predict.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables.
+
+        Returns
+        -------
+        y_pred : pd.DataFrame
+            Bias-adjusted point predictions.
+        """
+        y_pred_transformed = self.forecaster_.predict(fh, X)
+        variance = self.forecaster_.predict_var(fh, X)
+
+        y_pred = self.boxcox_transformer_.inverse_transform(y_pred_transformed)
+        y_adjusted = self._apply_bias_adjustment(y_pred, variance)
+
+        return y_adjusted
+
+    def _predict_interval(self, fh, X=None, coverage=None):
+        """Compute prediction intervals for the forecasts.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+            The forecasting horizon with the steps ahead to predict.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables.
+        coverage : list of float, optional (default=None)
+            Confidence levels for prediction intervals.
+
+        Returns
+        -------
+        pred_int : pd.DataFrame
+            Prediction intervals.
+        """
+        pred_int_transformed = self.forecaster_.predict_interval(fh, X, coverage)
+        pred_int = self.boxcox_transformer_.inverse_transform(pred_int_transformed)
+
+        variance = self.forecaster_.predict_var(fh, X)
+
+        lower_adjusted = self._apply_bias_adjustment(pred_int["lower"], variance)
+        upper_adjusted = self._apply_bias_adjustment(pred_int["upper"], variance)
+
+        return pd.concat([lower_adjusted, upper_adjusted], axis=1)
+
+    def _apply_bias_adjustment(self, y, variance):
+        """Apply bias adjustment using Hyndman's method.
+
+        Parameters
+        ----------
+        y : pd.DataFrame
+            Predictions in the original scale.
+        variance : pd.DataFrame
+            Variance of predictions in the transformed scale.
+
+        Returns
+        -------
+        y_adjusted : pd.DataFrame
+            Bias-adjusted predictions.
+        """
+        lmbda = self.boxcox_transformer_.lmbda_
+        epsilon = 1e-6
+
+        if abs(lmbda) < epsilon:
+            # Log transformation case
+            adjustment_factor = 1 + (0.5 * variance)
+            y_adjusted = y * adjustment_factor
+        else:
+            # General Box-Cox transformation case
+            w = (y**lmbda - 1) / lmbda
+            adjustment_factor = 1 + (variance * (1 - lmbda)) / (
+                2 * (lmbda * w + 1) ** 2
+            )
+            y_adjusted = y * adjustment_factor
+
+        return y_adjusted
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return.
+
+        Returns
+        -------
+        params : dict or list of dict
+            Parameters to create testing instances of the class.
+        """
+        from sktime.forecasting.naive import NaiveForecaster
+        from sktime.forecasting.theta import ThetaForecaster
+
+        params1 = {"forecaster": NaiveForecaster()}
+        params2 = {"forecaster": ThetaForecaster(), "lmbda": 0.5}
+
+        return [params1, params2]
