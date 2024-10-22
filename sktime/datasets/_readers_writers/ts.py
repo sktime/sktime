@@ -695,6 +695,13 @@ def load_from_tsfile(
     X = convert(X, from_type="nested_univ", to_type=return_data_type)
 
     if return_y:
+        if y is not None:
+            try:
+                # Convert y to float
+                y = y.astype(float)
+            except ValueError as e:
+                raise ValueError(f"Error converting target values to float: {e}")
+
         return X, y
     else:
         return X
