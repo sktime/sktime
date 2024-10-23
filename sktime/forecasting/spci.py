@@ -59,126 +59,24 @@ class SPCI(BaseForecaster):
 
     """
 
-    # todo: fill out estimator tags here
-    #  tags are inherited from parent class if they are not set
-    # todo: define the forecaster scitype by setting the tags
-    #  the "forecaster scitype" is determined by the tags
-    #   scitype:y - the expected input scitype of y - univariate or multivariate or both
-    #  when changing scitype:y to multivariate or both:
-    #   y_inner_mtype should be changed to pd.DataFrame
-    # other tags are "safe defaults" which can usually be left as-is
     _tags = {
-        # to list all valid tags with description, use sktime.registry.all_tags
-        #   all_tags(estimator_types="forecaster", as_dataframe=True)
-        #
-        # behavioural tags: internal type
-        # -------------------------------
-        #
-        # y_inner_mtype, X_inner_mtype control which format X/y appears in
-        # in the inner functions _fit, _predict, etc
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
-        # valid values: str and list of str
-        # if str, must be a valid mtype str, in sktime.datatypes.MTYPE_REGISTER
-        #   of scitype Series, Panel (panel data) or Hierarchical (hierarchical series)
-        #   in that case, all inputs are converted to that one type
-        # if list of str, must be a list of valid str specifiers
-        #   in that case, X/y are passed through without conversion if on the list
-        #   if not on the list, converted to the first entry of the same scitype
-        #
-        # scitype:y controls whether internal y can be univariate/multivariate
-        # if multivariate is not valid, applies vectorization over variables
         "scitype:y": "univariate",
-        # valid values: "univariate", "multivariate", "both"
-        #   "univariate": inner _fit, _predict, etc, receive only univariate series
-        #   "multivariate": inner methods receive only series with 2 or more variables
-        #   "both": inner methods can see series with any number of variables
-        #
-        # capability tags: properties of the estimator
-        # --------------------------------------------
-        #
-        # ignores-exogeneous-X = does estimator ignore the exogeneous X?
         "ignores-exogeneous-X": False,
-        # valid values: boolean True (ignores X), False (uses X in non-trivial manner)
-        # CAVEAT: if tag is set to True, inner methods always see X=None
-        #
-        # requires-fh-in-fit = is forecasting horizon always required in fit?
         "requires-fh-in-fit": True,
-        # valid values: boolean True (yes), False (no)
-        # if True, raises exception in fit if fh has not been passed
-        #
-        # X-y-must-have-same-index = can estimator handle different X/y index?
         "X-y-must-have-same-index": True,
-        # valid values: boolean True (yes), False (no)
-        # if True, raises exception if X.index is not contained in y.index
-        #
-        # enforce_index_type = index type that needs to be enforced in X/y
         "enforce_index_type": None,
-        # valid values: pd.Index subtype, or list of pd.Index subtype
-        # if not None, raises exception if X.index, y.index level -1 is not of that type
-        #
-        # handles-missing-data = can estimator handle missing data?
         "handles-missing-data": False,
-        # valid values: boolean True (yes), False (no)
-        # if False, raises exception if y or X passed contain missing data (nans)
-        #
-        # capability:insample = can forecaster make in-sample forecasts?
         "capability:insample": True,
-        # valid values: boolean True (yes), False (no)
-        # if False, exception raised if any forecast method called with in-sample fh
-        #
-        # capability:pred_int = does forecaster implement probabilistic forecasts?
         "capability:pred_int": False,
-        # valid values: boolean True (yes), False (no)
-        # if False, exception raised if proba methods are called (predict_interval etc)
-        #
-        # capability:pred_int:insample = can forecaster make in-sample proba forecasts?
         "capability:pred_int:insample": True,
-        # valid values: boolean True (yes), False (no)
-        # only needs to be set if capability:pred_int is True
-        # if False, exception raised if proba methods are called with in-sample fh
-        #
-        # ----------------------------------------------------------------------------
-        # packaging info - only required for sktime contribution or 3rd party packages
-        # ----------------------------------------------------------------------------
-        #
-        # ownership and contribution tags
-        # -------------------------------
-        #
-        # author = author(s) of th estimator
-        # an author is anyone with significant contribution to the code at some point
         "authors": ["ksharma6"],
-        # valid values: str or list of str, should be GitHub handles
-        # this should follow best scientific contribution practices
-        # scope is the code, not the methodology (method is per paper citation)
-        # if interfacing a 3rd party estimator, ensure to give credit to the
-        # authors of the interfaced estimator
-        #
-        # maintainer = current maintainer(s) of the estimator
-        # per algorithm maintainer role, see governance document
-        # this is an "owner" type role, with rights and maintenance duties
-        # for 3rd party interfaces, the scope is the sktime class only
         "maintainers": ["ksharma6"],
-        # valid values: str or list of str, should be GitHub handles
-        # remove tag if maintained by sktime core team
-        #
-        # dependency tags: python version and soft dependencies
-        # -----------------------------------------------------
-        #
-        # python version requirement
         "python_version": None,
-        # valid values: str, PEP 440 valid python version specifiers
-        # raises exception at construction if local python version is incompatible
-        #
-        # soft dependency requirement
         "python_dependencies": None,
-        # valid values: str or list of str, PEP 440 valid package version specifiers
-        # raises exception at construction if modules at strings cannot be imported
     }
-    #  in case of inheritance, concrete class should typically set tags
-    #  alternatively, descendants can set tags in __init__ (avoid this if possible)
 
-    # todo: add any hyper-parameters and components to constructor
     def __init__(
         self,
         forecaster=None,
@@ -199,27 +97,6 @@ class SPCI(BaseForecaster):
 
         super().__init__()
 
-        # todo: optional, parameter checking logic (if applicable) should happen here
-        # if writes derived values to self, should *not* overwrite self.parama etc
-        # instead, write to self._parama, self._newparam (starting with _)
-
-        # todo: default estimators should have None arg defaults
-        #  and be initialized here
-        #  do this only with default estimators, not with parameters
-        # if est2 is None:
-        #     self.estimator = MyDefaultEstimator()
-
-        # todo: if tags of estimator depend on component tags, set these here
-        #  only needed if estimator is a composite
-        #  tags set in the constructor apply to the object and override the class
-        #
-        # example 1: conditional setting of a tag
-        # if est.foo == 42:
-        #   self.set_tags(handles-missing-data=True)
-        # example 2: cloning tags from component
-        #   self.clone_tags(est2, ["enforce_index_type", "handles-missing-data"])
-
-    # todo: implement this, mandatory
     def _fit(self, y, X, fh):
         """Calculate point predictions and fit regressor to point predictions.
 
@@ -249,6 +126,9 @@ class SPCI(BaseForecaster):
 
         # random state handling passed into input estimators
         self.random_state_ = check_random_state(self.random_state)
+
+        # split data
+        # X_train, X_test, y_train, y_test
 
         # calculate + store point predictions from forecaster_
         f_hats = []
@@ -289,11 +169,7 @@ class SPCI(BaseForecaster):
         y : sktime compatible tabular data container, Table scitype
             numpy1D iterable, of shape [n_instances]
         """
-        # implement here
-        # IMPORTANT: avoid side effects to X, fh
 
-    # todo: consider implementing this, optional
-    # if not implementing, delete the _update method
     def _update(self, y, X, update_params=True):
         """Update time series to increment training data.
 
