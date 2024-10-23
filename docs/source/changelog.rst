@@ -90,13 +90,17 @@ Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
 
 Performance metrics for probabilistic forecasting, for interval and quantile returns,
-can now optionally be constructed with an ``alpha`` (quantile forecasts) or ``coverage`` parameter.
+can now optionally be constructed with an ``alpha`` (quantile forecasts) or ``coverage`` (interval forecasts) parameter,
+for example ``EmpiricalCoverage(coverage=0.7)`` for "empirical coverage at nominal interval coverage 70 percent".
 
 These are for use with benchmarking or tuning interfaces, where a metric is provided,
 but ``predict_interval`` or ``predict_quantiles`` are not explicitly called.
 
 In such a case, the parameter of the metric will be used by the tuner or benchmark utility to
 tune with the metric at that quantile ``alpha`` or interval ``coverage``.
+
+For example, ``ForecastingGridSearchCV(fcst, cv, scoring=PinballLoss(alpha=[0.3, 0.7]))``,
+to tune the forecaster ``fcst`` scored by the pinball loss at quantiles 0.3 and 0.7.
 
 Enhancements
 ~~~~~~~~~~~~
@@ -148,7 +152,7 @@ Transformations
 ^^^^^^^^^^^^^^^
 
 * [ENH] ``HOG1D`` Transformer add new test parameter set to ``get_test_params`` (:pr:`7183`) :user:`Humorloos`
-* [ENH] Added second parameters example to ``get_test_params ``of Filter (:pr:`7178`) :user:`KarlKolibri`
+* [ENH] Added second parameters example to ``get_test_params`` of ``Filter`` (:pr:`7178`) :user:`KarlKolibri`
 * [ENH] temporal radial basis function feature transformer (:pr:`7261`) :user:`phoeenniixx`
 
 Test framework
