@@ -18,8 +18,7 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
     This module implements a forecaster that applies Box-Cox transformation
     and bias adjustment to the predictions of a wrapped forecaster.
 
-    The bias adjustment is implemented using Taylor series expansion of the
-    method described in:
+    The bias adjustment is implemented using the method described in:
     Forecasting: Principles and Practice (2nd ed)
     Rob J Hyndman and George Athanasopoulos
     Monash University, Australia. OTexts.com/fpp2.
@@ -65,10 +64,10 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
         self : returns an instance of self.
         """
         self.boxcox_transformer_ = BoxCoxTransformer(lmbda=self.lmbda)
-        y_transformed = self.boxcox_transformer_.fit_transform(y)
+        self.y_transformed = self.boxcox_transformer_.fit_transform(y)
 
         self.forecaster_ = self.forecaster.clone()
-        self.forecaster_.fit(y=y_transformed, X=X, fh=fh)
+        self.forecaster_.fit(y=self.y_transformed, X=X, fh=fh)
 
         # Check if the wrapped forecaster supports variance prediction
         if not hasattr(self.forecaster_, "predict_var"):
@@ -97,8 +96,8 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
         y_pred_transformed = self.forecaster_.predict(fh, X)
         variance = self.forecaster_.predict_var(fh, X)
 
-        y_pred = self.boxcox_transformer_.inverse_transform(y_pred_transformed)
-        y_adjusted = self._apply_bias_adjustment(y_pred, variance)
+        y_pred_inv = self.boxcox_transformer_.inverse_transform(y_pred_transformed)
+        y_adjusted = self._apply_bias_adjustment(y_pred_inv, variance)
 
         return y_adjusted
 
@@ -120,51 +119,61 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
             Prediction intervals.
         """
         pred_int_transformed = self.forecaster_.predict_interval(fh, X, coverage)
-        pred_int = self.boxcox_transformer_.inverse_transform(pred_int_transformed)
+        pred_int_inv = self.boxcox_transformer_.inverse_transform(pred_int_transformed)
 
         variance = self.forecaster_.predict_var(fh, X)
 
-        lower_adjusted = self._apply_bias_adjustment(pred_int["lower"], variance)
-        upper_adjusted = self._apply_bias_adjustment(pred_int["upper"], variance)
+        lower_adjusted = self._apply_bias_adjustment(pred_int_inv["lower"], variance)
+        upper_adjusted = self._apply_bias_adjustment(pred_int_inv["upper"], variance)
 
         return pd.concat([lower_adjusted, upper_adjusted], axis=1)
 
     def _apply_bias_adjustment(self, y, variance):
-        """Apply bias adjustment using Taylor expansion around λ = 0.
-
-        The bias adjustment is calculated using a Taylor series expansion of the
-        Box-Cox transformation around λ = 0.
-
-        For the Box-Cox transformation:
-        g(x, λ) = (x^λ - 1)/λ  for λ ≠ 0
-        g(x, λ) = log(x)       for λ = 0
-
-        The Taylor expansion around λ = 0 gives:
-        g(x, λ) ≈ log(x) + λ/2 * (log(x))^2 + λ^2/6 * (log(x))^3 + O(λ^3)
+        """
+        Bias adjustment logic for BoxCox Transformations.
 
         Parameters
         ----------
-        y : pd.DataFrame
-            Predictions in the original scale.
-        variance : pd.DataFrame
-            Variance of predictions in the transformed scale.
+        y : pd.Series
+            Transformed predictions or prediction intervals.
+        variance : pd.Series
+            Variance of the predictions.
 
         Returns
         -------
-        y_adjusted : pd.DataFrame
-            Bias-adjusted predictions.
+        y_adjusted : pd.Series
+            Bias-adjusted predictions or prediction intervals.
+
+        Notes
+        -----
+        For λ ≈ 0, the adjustment is equivalent to the log transformation
+        with higher-order correction terms.
+        For λ ≠ 0, the adjustment is equivalent to the general Box-Cox
+        transformation case.
         """
         lmbda = self.boxcox_transformer_.lmbda_
-        log_y = np.log(y)
+        eps = 1e-8
 
-        first_order = 0.5 * variance
-        second_order = (lmbda * variance / 12) * (1 - 2 * log_y)
-        third_order = (lmbda**2 * variance / 24) * (log_y**2 - 2 * log_y + 1)
+        if abs(lmbda) < eps:
+            # Case 1: λ ≈ 0 (log transformation with higher-order correction)
+            log_y = np.log(np.maximum(y, eps))
 
-        adjustment_factor = 1 + first_order + second_order + third_order
-        y_adjusted = y * adjustment_factor
+            adjustment = (
+                1.0  # Base term
+                + variance / 2.0  # Log correction
+                - lmbda * (variance / 2.0) * log_y  # First-order correction in λ
+                + (lmbda**2 / 2.0)
+                * (variance / 2.0)
+                * log_y**2  # Second-order correction in λ
+            )
 
-        return y_adjusted
+        else:
+            # Case 2: λ ≠ 0 (General Box-Cox transformation case)
+            w = self.y_transformed
+            denominator = np.maximum(2 * (lmbda * w + 1) ** 2, eps)
+            adjustment = 1 + (variance * (1 - lmbda)) / denominator
+
+        return y * adjustment
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
