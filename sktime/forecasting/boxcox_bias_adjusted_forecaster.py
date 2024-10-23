@@ -4,13 +4,14 @@
 
 __author__ = ["sanskarmodi8"]
 
+import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base._delegate import _DelegatedForecaster
+from sktime.forecasting.base import BaseForecaster
 from sktime.transformations.series.boxcox import BoxCoxTransformer
 
 
-class BoxCoxBiasAdjustedForecaster(_DelegatedForecaster):
+class BoxCoxBiasAdjustedForecaster(BaseForecaster):
     """Box-Cox Bias-Adjusted Forecaster.
 
     This module implements a forecaster that applies Box-Cox transformation
@@ -38,12 +39,12 @@ class BoxCoxBiasAdjustedForecaster(_DelegatedForecaster):
         The Box-Cox transformation parameter. If None, it will be estimated.
     """
 
-    _delegate_name = "forecaster"
-
     def __init__(self, forecaster, lmbda=None):
         self.forecaster = forecaster
         self.lmbda = lmbda
         self.boxcox_transformer_ = None
+        # Clone tags from the wrapped forecaster to this forecaster
+        self._set_delegated_tags(self.forecaster)
         super().__init__()
 
     def _fit(self, y, X=None, fh=None):
@@ -152,8 +153,6 @@ class BoxCoxBiasAdjustedForecaster(_DelegatedForecaster):
         y_adjusted : pd.DataFrame
             Bias-adjusted predictions.
         """
-        import numpy as np
-
         lmbda = self.boxcox_transformer_.lmbda_
         log_y = np.log(y)
 
