@@ -146,6 +146,18 @@ Direct and recursive - 3rd party
     DartsXGBModel
 
 
+Bias Adjusted Forecasters
+------------------------------
+
+.. currentmodule:: sktime.forecasting.boxcox_bias_adjusted_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BoxCoxBiasAdjustedForecaster
+
+
 Naive forecasters
 -----------------
 

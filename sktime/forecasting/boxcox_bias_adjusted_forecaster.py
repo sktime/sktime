@@ -16,7 +16,8 @@ class BoxCoxBiasAdjustedForecaster(_DelegatedForecaster):
     This module implements a forecaster that applies Box-Cox transformation
     and bias adjustment to the predictions of a wrapped forecaster.
 
-    The bias adjustment is implemented according to the method described in:
+    The bias adjustment is implemented using Taylor series expansion of the
+    method described in:
     Forecasting: Principles and Practice (2nd ed)
     Rob J Hyndman and George Athanasopoulos
     Monash University, Australia. OTexts.com/fpp2.
@@ -65,7 +66,7 @@ class BoxCoxBiasAdjustedForecaster(_DelegatedForecaster):
         y_transformed = self.boxcox_transformer_.fit_transform(y)
 
         self.forecaster_ = self.forecaster.clone()
-        self.forecaster_.fit(y_transformed, X, fh)
+        self.forecaster_.fit(y=y_transformed, X=X, fh=fh)
 
         # Check if the wrapped forecaster supports variance prediction
         if not hasattr(self.forecaster_, "predict_var"):
@@ -127,7 +128,17 @@ class BoxCoxBiasAdjustedForecaster(_DelegatedForecaster):
         return pd.concat([lower_adjusted, upper_adjusted], axis=1)
 
     def _apply_bias_adjustment(self, y, variance):
-        """Apply bias adjustment using Hyndman's method.
+        """Apply bias adjustment using Taylor expansion around λ = 0.
+
+        The bias adjustment is calculated using a Taylor series expansion of the
+        Box-Cox transformation around λ = 0.
+
+        For the Box-Cox transformation:
+        g(x, λ) = (x^λ - 1)/λ  for λ ≠ 0
+        g(x, λ) = log(x)       for λ = 0
+
+        The Taylor expansion around λ = 0 gives:
+        g(x, λ) ≈ log(x) + λ/2 * (log(x))^2 + λ^2/6 * (log(x))^3 + O(λ^3)
 
         Parameters
         ----------
@@ -141,20 +152,17 @@ class BoxCoxBiasAdjustedForecaster(_DelegatedForecaster):
         y_adjusted : pd.DataFrame
             Bias-adjusted predictions.
         """
-        lmbda = self.boxcox_transformer_.lmbda_
-        epsilon = 1e-6
+        import numpy as np
 
-        if abs(lmbda) < epsilon:
-            # Log transformation case
-            adjustment_factor = 1 + (0.5 * variance)
-            y_adjusted = y * adjustment_factor
-        else:
-            # General Box-Cox transformation case
-            w = (y**lmbda - 1) / lmbda
-            adjustment_factor = 1 + (variance * (1 - lmbda)) / (
-                2 * (lmbda * w + 1) ** 2
-            )
-            y_adjusted = y * adjustment_factor
+        lmbda = self.boxcox_transformer_.lmbda_
+        log_y = np.log(y)
+
+        first_order = 0.5 * variance
+        second_order = (lmbda * variance / 12) * (1 - 2 * log_y)
+        third_order = (lmbda**2 * variance / 24) * (log_y**2 - 2 * log_y + 1)
+
+        adjustment_factor = 1 + first_order + second_order + third_order
+        y_adjusted = y * adjustment_factor
 
         return y_adjusted
 
