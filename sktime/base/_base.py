@@ -32,7 +32,7 @@ Config inspection and setter methods
 
 Blueprinting: resetting and cloning, post-init state with same hyper-parameters
     reset estimator to post-init  - reset()
-    cloneestimator (copy&reset)   - clone()
+    clone estimator (copy&reset)  - clone()
 
 Testing with default parameters methods
     getting default parameters (all sets)         - get_test_params()
