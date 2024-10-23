@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.transformations.series.boxcox import BoxCoxTransformer
 
 
@@ -44,7 +45,7 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
         self.lmbda = lmbda
         self.boxcox_transformer_ = None
         # Clone tags from the wrapped forecaster to this forecaster
-        self._set_delegated_tags(self.forecaster)
+        _DelegatedForecaster._set_delegated_tags(self, forecaster)
         super().__init__()
 
     def _fit(self, y, X=None, fh=None):
