@@ -1,22 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-"""BoxCoxBiasAdjustedForecaster implementation.
-
-This module implements a forecaster that applies Box-Cox transformation
-and bias adjustment to the predictions of a wrapped forecaster.
-
-The bias adjustment is implemented according to the method described in:
-Forecasting: Principles and Practice (2nd ed)
-Rob J Hyndman and George Athanasopoulos
-Monash University, Australia. OTexts.com/fpp2.
-
-For methods like `predict_proba`, the behavior of the wrapped forecaster
-is directly used without any additional adjustments. This means that
-probability estimates are provided as they are by the underlying forecaster.
-Users should ensure that the wrapped forecaster's `predict_proba` output
-is suitable for their needs, as no transformation or adjustment will be applied
-to these estimates by the `BoxCoxBiasAdjustedForecaster`.
-"""
+"""BoxCoxBiasAdjustedForecaster implementation."""
 
 __author__ = ["sanskarmodi8"]
 
@@ -29,8 +13,20 @@ from sktime.transformations.series.boxcox import BoxCoxTransformer
 class BoxCoxBiasAdjustedForecaster(_DelegatedForecaster):
     """Box-Cox Bias-Adjusted Forecaster.
 
-    This forecaster applies Box-Cox transformation with bias adjustment
-    using Hyndman's method to the wrapped forecaster's predictions.
+    This module implements a forecaster that applies Box-Cox transformation
+    and bias adjustment to the predictions of a wrapped forecaster.
+
+    The bias adjustment is implemented according to the method described in:
+    Forecasting: Principles and Practice (2nd ed)
+    Rob J Hyndman and George Athanasopoulos
+    Monash University, Australia. OTexts.com/fpp2.
+
+    For methods like `predict_proba`, the behavior of the wrapped forecaster
+    is directly used without any additional adjustments. This means that
+    probability estimates are provided as they are by the underlying forecaster.
+    Users should ensure that the wrapped forecaster's `predict_proba` output
+    is suitable for their needs, as no transformation or adjustment will be applied
+    to these estimates by the `BoxCoxBiasAdjustedForecaster`.
 
     Parameters
     ----------
