@@ -115,19 +115,11 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
     """  # noqa: E501
 
     _tags = {
-        # packaging info
-        # --------------
-        # "authors": ["XinyuWu"],
-        # "maintainers": ["XinyuWu"],
-        # "python_dependencies": "pytorch-forecasting"
-        # inherited from _PytorchForecastingAdapter
-        # estimator type
-        # --------------
-        "python_dependencies": ["pytorch-forecasting>=1.0.0", "torch", "lightning"],
         "capability:global_forecasting": True,
         "capability:insample": False,
         "X-y-must-have-same-index": True,
         "scitype:y": "univariate",
+        "capability:pred_int": True,
     }
 
     def __init__(
@@ -405,15 +397,6 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
     """  # noqa: E501
 
     _tags = {
-        # packaging info
-        # --------------
-        # "authors": ["XinyuWu"],
-        # "maintainers": ["XinyuWu"],
-        # "python_dependencies": "pytorch-forecasting"
-        # inherited from _PytorchForecastingAdapter
-        # estimator type
-        # --------------
-        "python_dependencies": ["pytorch-forecasting>=1.0.0", "torch", "lightning"],
         "capability:global_forecasting": True,
         "ignores-exogeneous-X": True,
         "capability:insample": False,
@@ -460,6 +443,28 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
             keyword arguments for the underlying algorithm class
         """
         return {}
+
+    @classmethod
+    def _implementation_counts(cls) -> dict:
+        """Functions need at least n overrides to be counted as implemented.
+
+        A function needs to be specified only if n!=1.
+
+        Returns
+        -------
+        dict
+            key is function name, and the value is n.
+        """
+        implementation_counts = super()._implementation_counts()
+        implementation_counts.update(
+            {
+                "_predict_proba": 3,
+                "_predict_var": 3,
+                "_predict_interval": 3,
+                "_predict_quantiles": 3,
+            }
+        )
+        return implementation_counts
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -687,19 +692,11 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
     """  # noqa: E501
 
     _tags = {
-        # packaging info
-        # --------------
-        # "authors": ["XinyuWu"],
-        # "maintainers": ["XinyuWu"],
-        # "python_dependencies": "pytorch-forecasting"
-        # inherited from _PytorchForecastingAdapter
-        # estimator type
-        # --------------
-        "python_dependencies": ["pytorch-forecasting>=1.0.0", "torch", "lightning"],
         "capability:global_forecasting": True,
         "capability:insample": False,
         "X-y-must-have-same-index": True,
         "scitype:y": "univariate",
+        "capability:pred_int": True,
     }
 
     def __init__(
@@ -974,19 +971,11 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
     """  # noqa: E501
 
     _tags = {
-        # packaging info
-        # --------------
-        # "authors": ["XinyuWu"],
-        # "maintainers": ["XinyuWu"],
-        # "python_dependencies": "pytorch-forecasting"
-        # inherited from _PytorchForecastingAdapter
-        # estimator type
-        # --------------
-        "python_dependencies": ["pytorch-forecasting>=1.0.0", "torch", "lightning"],
         "capability:global_forecasting": True,
         "capability:insample": False,
         "X-y-must-have-same-index": True,
         "scitype:y": "univariate",
+        "capability:pred_int": True,
     }
 
     def __init__(
@@ -1027,6 +1016,13 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
         dict
             keyword arguments for the underlying algorithm class
         """
+        # change default loss to QuantileLoss
+        # so that it can perform quantile forecast
+        from pytorch_forecasting import QuantileLoss
+
+        if "loss" not in self._model_params.keys():
+            self._model_params["loss"] = QuantileLoss()
+
         if "n_blocks" in self._model_params.keys():
             stacks = len(self._model_params["n_blocks"])
         else:

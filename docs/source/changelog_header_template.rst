@@ -17,8 +17,8 @@ Enhancements
 BaseObject and base framework
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Benchmarking and Metrics
-^^^^^^^^^^^^^^^^^^^^^^^^
+Benchmarking, Metrics, Splitters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Data sets and data loaders
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -65,8 +65,8 @@ Fixes
 BaseObject and base framework
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Benchmarking and Metrics
-^^^^^^^^^^^^^^^^^^^^^^^^
+Benchmarking, Metrics, Splitters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Data sets and data loaders
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
