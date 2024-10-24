@@ -212,7 +212,7 @@ Wrappers that add prediction intervals to any forecaster.
 
 
 Calibration and bias adjustment
-------------------------------
+-------------------------------
 
 .. currentmodule:: sktime.forecasting.boxcox_bias_adjusted_forecaster
 
