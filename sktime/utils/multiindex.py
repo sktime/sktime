@@ -19,10 +19,8 @@ def apply_split(y, iloc_ix):
 
     Yields
     ------
-    y_train_iloc : ndarray
-        The training set indices for splitting.
-    y_test_iloc ndarray
-        The testing set indices for splitting.
+    y_iloc : ndarray
+        The dataset indices for splitting.
     """
     if not isinstance(y, pd.MultiIndex):
         zeros = [0] * len(y)
