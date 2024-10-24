@@ -23,47 +23,6 @@ from sktime.utils.validation.forecasting import check_scoring
 PANDAS_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hier"]
 
 
-def apply_split(y, iloc_ix):
-    """Generate plain indices to split data.
-
-    Parameters
-    ----------
-    y : sktime compatible tabular data container, Panel, Table scitype
-         numpy1D iterable, of shape [n_instances]
-    iloc_ix: generator object containing iloc splitter ouput?
-             generator object containing indices of iloc splitter applied to X?
-
-    Yields
-    ------
-    y_train_iloc : ndarray
-        The training set indices for that split.
-    y_test_iloc: ndarray
-        The testing set indices for that split.
-    """
-    # convery y into multiindex dataframe
-    if not isinstance(y, pd.MultiIndex):
-        zeros = [0] * len(y)
-        y = pd.MultiIndex.from_arrays([zeros, y])
-
-    inst_ix = y.droplevel(-1).unique()
-    iloc_ixer = pd.DataFrame(pd.RangeIndex(len(y)), index=y)
-
-    for train_iloc, test_iloc in iloc_ix:
-        train_loc = inst_ix[np.array(train_iloc)]
-        test_loc = inst_ix[np.array(test_iloc)]
-        tr_np = [iloc_ixer.loc[x].to_numpy().flatten() for x in train_loc]
-        tt_np = [iloc_ixer.loc[x].to_numpy().flatten() for x in test_loc]
-        y_train_iloc = np.concatenate(tr_np)
-        y_test_iloc = np.concatenate(tt_np)
-
-        # for train_index, test_index in iloc_ix:
-        # yield train_index, test_index
-
-        # i just want to yield the indices to generate geny + genx
-        # in the gen_y_X_train_test()
-        yield y_train_iloc, y_test_iloc
-
-
 def _check_scores(metrics) -> dict:
     """Validate and coerce to BaseMetric and segregate them based on predict type.
 
