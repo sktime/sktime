@@ -6,6 +6,7 @@ __author__ = ["sanskarmodi8"]
 
 import numpy as np
 import pandas as pd
+from scipy.special import inv_boxcox
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
@@ -96,10 +97,9 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
         y_pred_transformed = self.forecaster_.predict(fh, X)
         variance = self.forecaster_.predict_var(fh, X)
 
-        y_pred_inv = self.boxcox_transformer_.inverse_transform(y_pred_transformed)
-        y_adjusted = self._apply_bias_adjustment(y_pred_inv, variance)
+        y_pred = self._apply_bias_adjustment(y_pred_transformed, variance)
 
-        return y_adjusted
+        return y_pred
 
     def _predict_interval(self, fh, X=None, coverage=None):
         """Compute prediction intervals for the forecasts.
@@ -119,18 +119,16 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
             Prediction intervals.
         """
         pred_int_transformed = self.forecaster_.predict_interval(fh, X, coverage)
-        pred_int_inv = self.boxcox_transformer_.inverse_transform(pred_int_transformed)
-
         variance = self.forecaster_.predict_var(fh, X)
 
-        lower_adjusted = self._apply_bias_adjustment(pred_int_inv["lower"], variance)
-        upper_adjusted = self._apply_bias_adjustment(pred_int_inv["upper"], variance)
+        lower_adjusted = self._apply_bias_adjustment(pred_int_transformed["lower"], variance)
+        upper_adjusted = self._apply_bias_adjustment(pred_int_transformed["upper"], variance)
 
         return pd.concat([lower_adjusted, upper_adjusted], axis=1)
 
     def _apply_bias_adjustment(self, y, variance):
         """
-        Bias adjustment logic for BoxCox Transformations.
+        Apply bias adjustment for BoxCox Transformations.
 
         Parameters
         ----------
@@ -143,37 +141,14 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
         -------
         y_adjusted : pd.Series
             Bias-adjusted predictions or prediction intervals.
-
-        Notes
-        -----
-        For λ ≈ 0, the adjustment is equivalent to the log transformation
-        with higher-order correction terms.
-        For λ ≠ 0, the adjustment is equivalent to the general Box-Cox
-        transformation case.
         """
         lmbda = self.boxcox_transformer_.lmbda_
-        eps = 1e-8
-
-        if abs(lmbda) < eps:
-            # Case 1: λ ≈ 0 (log transformation with higher-order correction)
-            log_y = np.log(np.maximum(y, eps))
-
-            adjustment = (
-                1.0  # Base term
-                + variance / 2.0  # Log correction
-                - lmbda * (variance / 2.0) * log_y  # First-order correction in λ
-                + (lmbda**2 / 2.0)
-                * (variance / 2.0)
-                * log_y**2  # Second-order correction in λ
-            )
-
-        else:
-            # Case 2: λ ≠ 0 (General Box-Cox transformation case)
-            w = self.y_transformed
-            denominator = np.maximum(2 * (lmbda * w + 1) ** 2, eps)
-            adjustment = 1 + (variance * (1 - lmbda)) / denominator
-
-        return y * adjustment
+        w = self.y_transformed
+        
+        denominator = 2 * (lmbda * w + 1) ** 2
+        adjustment = 1 + (variance * (1 - lmbda)) / denominator
+        
+        return inv_boxcox(y, lmbda) * adjustment
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
