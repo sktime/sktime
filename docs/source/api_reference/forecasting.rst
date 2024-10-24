@@ -211,6 +211,18 @@ Wrappers that add prediction intervals to any forecaster.
     EnbPIForecaster
 
 
+Calibration and bias adjustment
+-------------------------------
+
+.. currentmodule:: sktime.forecasting.boxcox_bias_adjusted_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BoxCoxBiasAdjustedForecaster
+
+
 Trend forecasters
 -----------------
 
