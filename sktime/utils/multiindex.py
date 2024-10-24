@@ -26,7 +26,7 @@ def apply_split(y, iloc_ix):
     """
     if not isinstance(y, pd.MultiIndex):
         zeros = [0] * len(y)
-    y = pd.MultiIndex.from_arrays([zeros, y])
+        y = pd.MultiIndex.from_arrays([zeros, y])
 
     inst_ix = y.droplevel(-1).unique()
     iloc_ixer = pd.DataFrame(pd.RangeIndex(len(y)), index=y)
