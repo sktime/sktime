@@ -25,19 +25,38 @@ from sktime.classification.base import BaseClassifier
 
 
 class KNeighborsTimeSeriesClassifier(_BaseKnnTimeSeriesEstimator, BaseClassifier):
-    """KNN Time Series Classifier.
+    """K-nearest neighbours Time Series Classifier.
 
-    An adapted version of the scikit-learn KNeighborsClassifier for time series data.
+    An adapted version of the ``scikit-learn`` ``KNeighborsClassifier``,
+    adapted for time series data.
 
     This class is a KNN classifier which supports time series distance measures.
-    It has hardcoded string references to numba based distances in sktime.distances,
-    and can also be used with callables, or sktime (pairwise transformer) estimators.
+
+    Time series distances are passed as the ``distance argument``, which can be:
+
+    * a string. This will substitute a hard-coded distance metric
+      from ``sktime.distances``. These default distances are intended to be
+      performant, but cannot deal with unequal length or multivariate series.
+    * a ``sktime`` pairwise transformer.
+      These are available in ``sktime.dists_kernels``, and can be discovered
+      via ``registry.all_estimators`` by searching for
+      ``pairwise-transformer`` type.and are composable
+      first class citizens in the ``sktime`` framework.
+      Distances dealing with unequal length or multivariate series are available,
+      these can be discovered via ``capability:unequal_length`` and
+      ``capability:multivariate`` tags.
+    * a callable. The exact signature for callables is described below.
 
     Parameters
     ----------
-    n_neighbors : int, set k for knn (default =1)
+    n_neighbors : int, optional, default = 1
+        k in "k nearest neighbours"
+
     weights : {'uniform', 'distance'} or callable, default='uniform'
-        Weight function used in prediction.  Possible values:
+        Weight function used in prediction.
+
+        Possible values:
+
         - 'uniform' : uniform weights.  All points in each neighborhood
           are weighted equally.
         - 'distance' : weight points by the inverse of their distance.
@@ -64,23 +83,27 @@ class KNeighborsTimeSeriesClassifier(_BaseKnnTimeSeriesEstimator, BaseClassifier
           May be more runtime and memory efficient on mid-to-large datasets,
           however, the distance computation may be slower.
 
-    distance : str or callable, optional. default ='dtw'
+    distance : str, sktime pairwise transformer, or callable, optional. default ='dtw'
         distance measure between time series
 
         * if str, must be one of the following strings:
           'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw',
           'lcss', 'edr', 'erp', 'msm', 'twe'
-          this will substitute a hard-coded distance metric from sktime.distances
-        * If non-class callable, parameters can be passed via distance_params
+          this will substitute a hard-coded distance metric from ``sktime.distances``
+        * if ``sktime`` pairwise transformer,
+          must implement the ``pairwise-transformer`` interface.
+          ``sktime`` transformers are available in ``sktime.dists_kernels``,
+          and discoverable via ``registry.all_estimators`` by searching for
+          ``pairwise-transformer`` type.
+        * if non-class callable, parameters can be passed via distance_params
           Example: knn_dtw = KNeighborsTimeSeriesClassifier(
           distance='dtw', distance_params={'epsilon':0.1})
-        * if any callable, must be of signature (X: Panel, X2: Panel) -> np.ndarray
-          output must be mxn array if X is Panel of m Series, X2 of n Series
-          if distance_mtype is not set, must be able to take
-          X, X2 which are pd_multiindex and numpy3D mtype
-          can be pairwise panel transformer inheriting from BasePairwiseTransformerPanel
+        * if any callable, must be of signature ``(X: Panel, X2: Panel) -> np.ndarray``.
+          The output must be mxn array if X is Panel of m Series, X2 of n Series;
+          if ``distance_mtype`` is not set, must be able to take
+          ``X``, ``X2`` which are of ``pd_multiindex`` and ``numpy3D`` mtype
 
-    distance_params : dict, optional. default = None.
+    distance_params : dict, optional, default = None.
         dictionary for distance parameters, in case that distance is a str or callable
     distance_mtype : str, or list of str optional. default = None.
         mtype that distance expects for X and X2, if a callable
@@ -88,17 +111,18 @@ class KNeighborsTimeSeriesClassifier(_BaseKnnTimeSeriesEstimator, BaseClassifier
     pass_train_distances : bool, optional, default = False.
         Whether distances between training points are computed and passed to sklearn.
         Passing is superfluous for algorithm='brute', but may have impact otherwise.
-    leaf_size : int, default=30
-        Leaf size passed to BallTree or KDTree.  This can affect the
+
+    leaf_size : int, optional, default=30
+        Leaf size passed to ``BallTree`` or ``KDTree``.  This can affect the
         speed of the construction and query, as well as the memory
         required to store the tree.  The optimal value depends on the
         nature of the problem.
-    n_jobs : int, default=None
+
+    n_jobs : int, optional,  default=None
         The number of parallel jobs to run for neighbors search.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
-        Doesn't affect :meth:`fit` method.
+        ``-1`` means using all processors.
+        Does not affect the ``fit`` method.
 
     Examples
     --------
