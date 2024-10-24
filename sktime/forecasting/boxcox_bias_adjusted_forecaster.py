@@ -4,7 +4,6 @@
 
 __author__ = ["sanskarmodi8"]
 
-import numpy as np
 import pandas as pd
 from scipy.special import inv_boxcox
 
@@ -121,8 +120,12 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
         pred_int_transformed = self.forecaster_.predict_interval(fh, X, coverage)
         variance = self.forecaster_.predict_var(fh, X)
 
-        lower_adjusted = self._apply_bias_adjustment(pred_int_transformed["lower"], variance)
-        upper_adjusted = self._apply_bias_adjustment(pred_int_transformed["upper"], variance)
+        lower_adjusted = self._apply_bias_adjustment(
+            pred_int_transformed["lower"], variance
+        )
+        upper_adjusted = self._apply_bias_adjustment(
+            pred_int_transformed["upper"], variance
+        )
 
         return pd.concat([lower_adjusted, upper_adjusted], axis=1)
 
@@ -144,10 +147,9 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
         """
         lmbda = self.boxcox_transformer_.lmbda_
         w = self.y_transformed
-        
         denominator = 2 * (lmbda * w + 1) ** 2
         adjustment = 1 + (variance * (1 - lmbda)) / denominator
-        
+
         return inv_boxcox(y, lmbda) * adjustment
 
     @classmethod
