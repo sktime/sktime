@@ -183,7 +183,7 @@ class RBFNetwork(nn.Module):
 
 class RBFForecaster(BaseForecaster):
     r"""
-    Forecasting model using RBF transformations and neural network layers for time series.
+    Forecasting model using RBF transformations and 'NN' layers for time series.
 
     This forecaster uses an RBF layer to transform input time series data into a
     higher-dimensional space, which is then used by neural network layers for
