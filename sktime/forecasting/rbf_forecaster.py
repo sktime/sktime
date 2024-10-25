@@ -1,4 +1,4 @@
-"RBF Neural Networks for Time Series Forecasting."
+"""RBF Neural Networks for Time Series Forecasting."""
 
 __author__ = ["phoeenniixx"]
 
@@ -182,10 +182,12 @@ class RBFNetwork(nn.Module):
 
 
 class RBFForecaster(BaseForecaster):
-    r"""Forecasting model using RBF transformations and neural network layers for time series.
+    r"""
+    Forecasting model using RBF transformations and neural network layers for time series.
 
     This forecaster uses an RBF layer to transform input time series data into a
-    higher-dimensional space, which is then used by neural network layers for forecasting.
+    higher-dimensional space, which is then used by neural network layers for
+    forecasting.
 
     Parameters
     ----------
@@ -352,7 +354,7 @@ class RBFForecaster(BaseForecaster):
         n_windows = (len(y) - self.window_length) // self.stride + 1
         if n_windows < 1:
             raise ValueError(
-                f"Not enough samples to create windows.\ "
+                rf"Not enough samples to create windows.\ "
                 f"Need at least {self.window_length + 1} samples."
             )
         X = np.zeros((n_windows, self.window_length))
