@@ -424,3 +424,53 @@ def convert_pandas_collection_to_pandasDataset(
 
     else:
         raise ValueError("Expected format of dict[pd.DataFrame] or list[pd.DataFrame]")
+
+
+def series_and_panels_gluonts_conversions(convert_dict):
+    from sktime.datatypes._convert_utils._convert import _extend_conversions
+    from sktime.datatypes._panel._registry import MTYPE_LIST_PANEL
+
+    def convert_gluonts_listDataset_to_pandas(obj, store=None):
+        return convert_listDataset_to_pandas(obj)
+
+    def convert_pandas_to_gluonts_listDataset(obj, store=None):
+        return convert_pandas_to_listDataset(obj)
+
+    def convert_pandas_multiindex_to_gluonts_pandasDataset(obj, store=None):
+        return convert_pandas_multiindex_to_pandasDataset(obj)
+
+    def convert_gluonts_pandasDataset_to_pandas_multiindex(obj, store=None):
+        return convert_pandasDataset_to_pandas(obj)
+
+    # Storing functions in convert_dict
+    convert_dict[("pd-multiindex", "gluonts_ListDataset_panel", "Panel")] = (
+        convert_pandas_to_gluonts_listDataset
+    )
+
+    convert_dict[("gluonts_ListDataset_panel", "pd-multiindex", "Panel")] = (
+        convert_gluonts_listDataset_to_pandas
+    )
+
+    convert_dict[("pd-multiindex", "gluonts_PandasDataset_panel", "Panel")] = (
+        convert_pandas_multiindex_to_gluonts_pandasDataset
+    )
+
+    convert_dict[("gluonts_PandasDataset_panel", "pd-multiindex", "Panel")] = (
+        convert_gluonts_pandasDataset_to_pandas_multiindex
+    )
+
+    # Extending conversions
+    _extend_conversions(
+        "gluonts_ListDataset_panel",
+        "pd-multiindex",
+        convert_dict,
+        mtype_universe=MTYPE_LIST_PANEL,
+    )
+
+    _extend_conversions(
+        "gluonts_PandasDataset_panel",
+        "pd-multiindex",
+        convert_dict,
+        mtype_universe=MTYPE_LIST_PANEL,
+    )
+    return convert_dict
