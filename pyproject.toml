@@ -262,7 +262,7 @@ docs = [
 ]
 tests = [
   "pytest>=7.4,<8.4",
-  "pytest-randomly<3.16,>=3.15",
+  "pytest-randomly>=3.15,<3.17",
   "pytest-timeout>=2.1,<2.4",
   "pytest-xdist>=3.3,<3.7",
 ]
