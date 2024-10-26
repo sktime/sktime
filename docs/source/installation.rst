@@ -83,17 +83,17 @@ Note: not all soft dependencies of ``sktime`` are also available on ``conda-forg
 The other soft dependencies can be installed via ``pip``, after ``conda install pip``.
 
 
-Development version install
----------------------------
+Latest ``sktime`` version install
+---------------------------------
 
-Development versions of ``sktime`` are installs from static snapshots of the ``sktime`` repository.
+This type of ``sktime`` installation obtains a latest static snapshot of the repository.
+It is intended for developers that wish to build or test code using a version of the library
+that contains the all of the latest and current updates.
 
-.. warning::
-    An sktime development version install is not recommended for development and contributions.
-    They are instead used for testing. For development and contribution, see the next section
-    on full developer setup.
+.. note::
+    For an full editible developer setup, please read the section below.
 
-To install the latest development version of ``sktime``,
+To install the latest version of ``sktime`` directly from the repository,
 you can use the ``pip`` package manager to install directly from the GitHub repository:
 
 .. code-block:: bash
@@ -107,7 +107,7 @@ To install from a specific branch, use the following command:
 
     pip install git+https://github.com/sktime/sktime.git@<branch_name>
 
-Alternatively, a developer install can be obtained from a local clone of the repository.
+Alternatively, a latest version install can be obtained from a local clone of the repository.
 
 For steps on how to obtain a local clone of the repository, please follow the steps described here
  `Creating a fork and cloning the repository <https://www.sktime.net/en/stable/developer_guide/git_workflow.html#creating-a-fork-and-cloning-the-repository-initial-one-time-setup>__`
