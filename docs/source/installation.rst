@@ -83,8 +83,8 @@ Note: not all soft dependencies of ``sktime`` are also available on ``conda-forg
 The other soft dependencies can be installed via ``pip``, after ``conda install pip``.
 
 
-Latest ``sktime`` version install
----------------------------------
+Latest sktime version install
+-----------------------------
 
 This type of ``sktime`` installation obtains a latest static snapshot of the repository.
 It is intended for developers that wish to build or test code using a version of the library
@@ -110,7 +110,7 @@ To install from a specific branch, use the following command:
 Alternatively, a latest version install can be obtained from a local clone of the repository.
 
 For steps on how to obtain a local clone of the repository, please follow the steps described here
- `Creating a fork and cloning the repository <https://www.sktime.net/en/stable/developer_guide/git_workflow.html#creating-a-fork-and-cloning-the-repository-initial-one-time-setup>__`
+ `Creating a fork and cloning the repository <https://www.sktime.net/en/stable/developer_guide/git_workflow.html#creating-a-fork-and-cloning-the-repository-initial-one-time-setup>`__
 
 
 .. code-block:: bash
@@ -130,7 +130,7 @@ To develop ``sktime`` locally, or to contribute to the project, you need to set 
 
 The following steps guide you through the process:
 
-1. Follow the Git workflow: `Creating a fork and cloning the repository <https://www.sktime.net/en/stable/developer_guide/git_workflow.html#creating-a-fork-and-cloning-the-repository-initial-one-time-setup>__`
+1. Follow the Git workflow: `Creating a fork and cloning the repository <https://www.sktime.net/en/stable/developer_guide/git_workflow.html#creating-a-fork-and-cloning-the-repository-initial-one-time-setup>`__
 
 2. Set up a new virtual environment. Our instructions will go through the commands to set up a ``conda`` environment which is recommended for sktime development.
 The process will be similar for ``venv`` or other virtual environment managers.
