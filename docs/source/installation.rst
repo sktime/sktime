@@ -91,7 +91,7 @@ It is intended for developers that wish to build or test code using a version of
 that contains the all of the latest and current updates.
 
 .. note::
-    For an full editible developer setup, please read the section below.
+    For an full editible developer setup, please read the section "Full developer setup for contributors and extension developers" below.
 
 To install the latest version of ``sktime`` directly from the repository,
 you can use the ``pip`` package manager to install directly from the GitHub repository:
