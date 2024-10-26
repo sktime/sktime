@@ -4,14 +4,31 @@ __author__ = ["phoeenniixx"]
 
 import numpy as np
 import pandas as pd
-import torch
-import torch.nn as nn
 from sklearn.preprocessing import StandardScaler
-from torch.optim import SGD, Adam, RMSprop
-from torch.utils.data import DataLoader, TensorDataset
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.transformations.series.basisfunction import RBFTransformer
+
+
+def _check_dependencies():
+    """Check if required dependencies are available."""
+    from importlib.util import find_spec
+
+    torch_available = find_spec("torch") is not None
+    if not torch_available:
+        raise ImportError(
+            "PyTorch is required for RBFForecaster. "
+            "Please install it with: pip install torch"
+        )
+
+    return torch_available
+
+
+if _check_dependencies():
+    import torch
+    import torch.nn as nn
+    from torch.optim import SGD, Adam, RMSprop
+    from torch.utils.data import DataLoader, TensorDataset
 
 
 class LazyLinear(nn.Module):
@@ -254,6 +271,9 @@ class RBFForecaster(BaseForecaster):
         loss_fn="mse",
         use_cuda=False,
     ):
+        # Check PyTorch availability during initialization
+        _check_dependencies()
+
         super().__init__()
         self.window_length = window_length
         self.hidden_size = hidden_size
@@ -358,7 +378,7 @@ class RBFForecaster(BaseForecaster):
         n_windows = (len(y) - self.window_length) // self.stride + 1
         if n_windows < 1:
             raise ValueError(
-                rf"Not enough samples to create windows.\ "
+                "Not enough samples to create windows. "
                 f"Need at least {self.window_length + 1} samples."
             )
         X = np.zeros((n_windows, self.window_length))
@@ -416,13 +436,13 @@ class RBFForecaster(BaseForecaster):
         y_pred : pd.Series
             Model predictions for testing data.
         """
-        from sktime.utils.dependencies._dependencies import _check_soft_dependencies
-
         try:
-            _check_soft_dependencies("matplotlib", severity="warning")
             import matplotlib.pyplot as plt
         except ImportError:
-            return ImportError
+            raise ImportError(
+                "Matplotlib is required for plotting predictions. "
+                "Please install it with: pip install matplotlib"
+            )
 
         y_train, y_test, y_pred = (
             s.to_timestamp()
