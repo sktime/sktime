@@ -223,11 +223,11 @@ class RBFForecaster(BaseForecaster):
     """
 
     _tags = {
-         # packaging info
+        # packaging info
         # --------------
         "authors": ["phoeenniixx"],
         "maintainers": ["phoeenniixx"],
-        "python_dependencies": "torch", 
+        "python_dependencies": "torch",
         # estimator type
         # --------------
         "scitype:y": "univariate",
