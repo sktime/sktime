@@ -305,7 +305,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         )
         self.model.init()
         # preparing the datasets
-
+        raise ValueError("test_error")
         y_train, y_test = temporal_train_test_split(
             y, train_size=1 - self.train_val_split, test_size=self.train_val_split
         )
