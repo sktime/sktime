@@ -463,20 +463,19 @@ class Arsenal(BaseClassifier):
         """
         if parameter_set == "results_comparison":
             return {"num_kernels": 20, "n_estimators": 5}
-        else:
-            params1 = {
-                "num_kernels": 23,
-                "n_estimators": 20,
-                "rocket_transform": "minirocket",
-                "max_dilations_per_kernel": 28,
-                "n_features_per_kernel": 2,
-                "contract_max_n_estimators": 113,
-                "save_transformed_data": True,
-            }
-            params2 = {
-                "max_dilations_per_kernel": 30,
-                "rocket_transform": "minirocket",
-                "n_jobs": -1,
-            }
 
-        return [params1, params2]
+        params0 = {
+            "num_kernels": 10,
+            "n_estimators": 2,
+            "save_transformed_data": True,
+        }
+        params1 = {
+            "num_kernels": 23,
+            "n_estimators": 20,
+            "rocket_transform": "minirocket",
+            "max_dilations_per_kernel": 28,
+            "n_features_per_kernel": 2,
+            "contract_max_n_estimators": 113,
+            "save_transformed_data": True,
+        }
+        return [params0, params1]
