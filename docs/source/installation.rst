@@ -95,7 +95,7 @@ Development versions of ``sktime`` are installs from static snapshots of the ``s
 
 To install the latest development version of ``sktime``,
 you can use the ``pip`` package manager to install directly from the GitHub repository:
-`1  c`
+
 .. code-block:: bash
 
     pip install git+https://github.com/sktime/sktime.git
@@ -109,8 +109,8 @@ To install from a specific branch, use the following command:
 
 Alternatively, a developer install can be obtained from a local clone of the repository.
 
-For steps on how to obtain a local clone of the repository, please follow the steps described
-in the section **Creating a fork and cloning the repository** inside `Git and GitHub workflow <https://www.sktime.net/en/stable/developer_guide/git_workflow.html>__
+For steps on how to obtain a local clone of the repository, please follow the steps described here
+ `Creating a fork and cloning the repository <https://www.sktime.net/en/stable/developer_guide/git_workflow.html#creating-a-fork-and-cloning-the-repository-initial-one-time-setup>__`
 
 
 .. code-block:: bash
@@ -130,7 +130,7 @@ To develop ``sktime`` locally, or to contribute to the project, you need to set 
 
 The following steps guide you through the process:
 
-1. Follow the Git workflow: **Creating a fork and cloning the repository** as described in `Git and GitHub workflow <https://www.sktime.net/en/stable/developer_guide/git_workflow.html>__
+1. Follow the Git workflow: `Creating a fork and cloning the repository <https://www.sktime.net/en/stable/developer_guide/git_workflow.html#creating-a-fork-and-cloning-the-repository-initial-one-time-setup>__`
 
 2. Set up a new virtual environment. Our instructions will go through the commands to set up a ``conda`` environment which is recommended for sktime development.
 The process will be similar for ``venv`` or other virtual environment managers.
