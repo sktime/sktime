@@ -223,15 +223,19 @@ class RBFForecaster(BaseForecaster):
     """
 
     _tags = {
+         # packaging info
+        # --------------
         "authors": ["phoeenniixx"],
         "maintainers": ["phoeenniixx"],
+        "python_dependencies": "torch", 
+        # estimator type
+        # --------------
         "scitype:y": "univariate",
         "y_inner_mtype": "pd.Series",
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "capability:pred_int": False,
-        "python_dependencies": "torch",
     }
 
     def __init__(
