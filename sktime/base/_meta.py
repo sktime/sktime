@@ -717,10 +717,7 @@ class _HeterogenousMetaEstimator:
             self.set_tags(**{mid_tag_name: mid_tag_val_not})
 
     def _sk_visual_block_(self):
-        if hasattr(self, "is_fitted") and self.is_fitted:
-            steps = getattr(self, self._steps_fitted_attr)
-        else:
-            steps = getattr(self, self._steps_attr)
+        steps = getattr(self, self._steps_attr)
 
         names, estimators = zip(*steps)
 
