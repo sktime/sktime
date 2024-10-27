@@ -102,10 +102,13 @@ class RBFForecaster(BaseForecaster):
         self.stride = stride
         self.loss_fn = loss_fn
 
-        import torch
+        self.use_cuda = use_cuda
 
-        self.use_cuda = use_cuda and torch.cuda.is_available()
-        self.device = torch.device("cuda" if self.use_cuda else "cpu")
+        import torch
+        
+        self._cuda_available = torch.cuda.is_available()
+        self._use_cuda_actual = self.use_cuda and self._cuda_available
+        self.device = torch.device("cuda" if self._use_cuda_actual else "cpu")
 
         self._is_fitted = False
         self.model = None
