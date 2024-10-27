@@ -166,6 +166,16 @@ class BaseDetector(BaseEstimator):
             self._fit(X=X, y=y)
         elif _method_has_arg(self._fit, "Y"):
             self._fit(X=X, Y=y)
+            warn(
+                "Warning: the Y parameter in detection/annotation algorithms "
+                "is deprecated and will be removed in the 0.37.0 release. "
+                "Users should use the y parameter instead. "
+                f"The class {self.__class__.__name__} uses the Y parameter "
+                "internally in _fit, this should be replaced with y by a maintainer. "
+                f"Until the 0.37.0 release, this will raise no exceptions, "
+                "ensuring backwards compatibility.",
+                stacklevel=2,
+            )
         else:
             self._fit(X=X)
 
