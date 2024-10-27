@@ -19,7 +19,15 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
     and bias adjustment to the predictions of a wrapped forecaster.
 
     The bias adjustment is applied to both point predictions and prediction
-    intervals to ensure consistent and accurate forecasts.
+    intervals using the bias correction formula for inverse Box-Cox transforms:
+
+    y = inv_boxcox(w, λ) * [1 + σ²(1-λ)/(2(λw + 1)²)]
+
+    where:
+    - y is the back-transformed forecast
+    - w is the transformed data
+    - λ is the Box-Cox parameter
+    - σ² is the forecast variance on the transformed scale
 
     Parameters
     ----------
@@ -32,8 +40,8 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
     References
     ----------
     .. [1] Hyndman, R.J., & Athanasopoulos, G. (2018) "Forecasting:
-           principles and practice", 2nd edition, OTexts: Melbourne, Australia.
-           OTexts.com/fpp2
+           principles and practice", 2nd edition, Section 2.7 - Box-Cox Transformations,
+           OTexts: Melbourne, Australia. OTexts.com/fpp2
     """
 
     def __init__(self, forecaster, lmbda=None):
@@ -66,11 +74,11 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
         self.forecaster_ = self.forecaster.clone()
         self.forecaster_.fit(y=self.y_transformed, X=X, fh=fh)
 
-        # Check if the wrapped forecaster supports variance prediction
-        if not hasattr(self.forecaster_, "predict_var"):
+        # Check if the wrapped forecaster supports prediction intervals
+        if not self.forecaster_.get_tag("capability:pred_int"):
             raise ValueError(
-                "The wrapped forecaster must implement a `predict_var` method "
-                "to enable bias adjustment."
+                "The wrapped forecaster must support prediction intervals "
+                "(capability:pred_int) to enable bias adjustment."
             )
 
         return self
