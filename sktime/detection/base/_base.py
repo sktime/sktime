@@ -20,7 +20,7 @@ State:
 """
 
 # todo 0.37.0: remove BaseSeriesAnnotator
-__author__ = ["fkiraly", "tveten", "alex-jg3", "satya-pattnaik "]
+__author__ = ["fkiraly", "tveten", "alex-jg3", "satya-pattnaik"]
 __all__ = ["BaseDetector", "BaseSeriesAnnotator"]
 
 import numpy as np
@@ -28,6 +28,7 @@ import pandas as pd
 
 from sktime.base import BaseEstimator
 from sktime.utils.validation.series import check_series
+from sktime.utils.warnings import warn
 
 
 class BaseDetector(BaseEstimator):
@@ -734,4 +735,16 @@ class BaseDetector(BaseEstimator):
         return change_points
 
 
-BaseSeriesAnnotator = BaseDetector
+class BaseSeriesAnnotator(BaseDetector):
+    """Base class for time series detectors - DEPRECATED< use BaseDetector instead."""
+
+    def __init__(self):
+        super().__init__()
+        warn(
+            "Warning: BaseSeriesAnnotator is deprecated. "
+            "Extension developers should use BaseDetector instead, "
+            "from sktime.detection.base, this is a replacement with "
+            "equivalent functionality. "
+            "The BaseSeriesAnnotator will be removed in the 0.37.0 release.",
+            stacklevel=2,
+        )
