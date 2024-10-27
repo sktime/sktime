@@ -18,7 +18,7 @@ For frequent issues with installation, consult the `Release versions - troublesh
 There are three different installation types:
 
 * Installing sktime releases
-* Installing the latest sktime development version
+* Installing the latest sktime version
 * For developers of sktime and 3rd party extensions: Developer setup
 
 Each of these three setups are explained below.
