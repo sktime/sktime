@@ -5,10 +5,10 @@
     class name: BaseDetector
 
 Scitype defining methods:
-    fitting              - fit(self, X, Y=None)
+    fitting              - fit(self, X, y=None)
     annotating           - predict(self, X)
-    updating (temporal)  - update(self, X, Y=None)
-    update&annotate      - update_predict(self, X)
+    updating (temporal)  - update(self, X, y=None)
+    update&annotate      - update_predict(self, X, y=None)
 
 Inspection methods:
     hyper-parameter inspection  - get_params()
