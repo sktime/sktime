@@ -118,6 +118,7 @@ class BaseDetector(BaseEstimator):
         else:
             return NotImplemented
 
+    # todo 0.37.0: remove the Y parameter and related handling
     def fit(self, X, y=None, Y=None):
         """Fit to training data.
 
@@ -141,14 +142,32 @@ class BaseDetector(BaseEstimator):
         X = check_series(X)
 
         if Y is not None:
-            Y = check_series(Y)
+            warn(
+                "Warning: the Y parameter in detection/annotation algorithms "
+                "is deprecated and will be removed in the 0.37.0 release. "
+                "Users should use the y parameter instead. "
+                "Until the 0.37.0 release, the Y parameter will be used if "
+                "no y parameter is provided, ensuring backwards compatibility.",
+                stacklevel=2,
+            )
+
+        if Y is not None and y is None:
+            y = Y
+
+        if y is not None:
+            y = check_series(y)
 
         self._X = X
-        self._Y = Y
+        self._y = y
 
         # fkiraly: insert checks/conversions here, after PR #1012 I suggest
 
-        self._fit(X=X, Y=Y)
+        if _method_has_arg(self._fit, "y"):
+            self._fit(X=X, y=y)
+        elif _method_has_arg(self._fit, "Y"):
+            self._fit(X=X, Y=y)
+        else:
+            self._fit(X=X)
 
         # this should happen last
         self._is_fitted = True
@@ -211,14 +230,14 @@ class BaseDetector(BaseEstimator):
         X = check_series(X)
         return self._predict_scores(X)
 
-    def update(self, X, Y=None):
+    def update(self, X, y=None, Y=None):
         """Update model with new data and optional ground truth labels.
 
         Parameters
         ----------
         X : pd.DataFrame
             Training data to update model with (time series).
-        Y : pd.Series, optional
+        y : pd.Series, optional
             Ground truth labels for training if detector is supervised.
 
         Returns
@@ -235,24 +254,44 @@ class BaseDetector(BaseEstimator):
         X = check_series(X)
 
         if Y is not None:
-            Y = check_series(Y)
+            warn(
+                "Warning: the Y parameter in detection/annotation algorithms "
+                "is deprecated and will be removed in the 0.37.0 release. "
+                "Users should use the y parameter instead. "
+                "Until the 0.37.0 release, the Y parameter will be used if "
+                "no y parameter is provided, ensuring backwards compatibility.",
+                stacklevel=2,
+            )
+
+        if y is None and Y is not None:
+            y = Y
+
+        if y is not None:
+            y = check_series(y)
 
         self._X = X.combine_first(self._X)
 
-        if Y is not None:
-            self._Y = Y.combine_first(self._Y)
+        if y is not None:
+            self._y = y.combine_first(self._y)
 
-        self._update(X=X, Y=Y)
+        if _method_has_arg(self._update, "y"):
+            self._update(X=X, y=y)
+        elif _method_has_arg(self._update, "Y"):
+            self._update(X=X, Y=y)
+        else:
+            self._update(X=X)
 
         return self
 
-    def update_predict(self, X):
+    def update_predict(self, X, y=None):
         """Update model with new data and create labels for it.
 
         Parameters
         ----------
         X : pd.DataFrame
             Training data to update model with, time series.
+        y : pd.Series, optional
+            Ground truth labels for training if detector is supervised.
 
         Returns
         -------
@@ -265,12 +304,13 @@ class BaseDetector(BaseEstimator):
         """
         X = check_series(X)
 
-        self.update(X=X)
+        self.update(X=X, y=y)
         Y = self.predict(X=X)
 
         return Y
 
-    def fit_predict(self, X, Y=None):
+    # todo 0.37.0: remove Y argument
+    def fit_predict(self, X, y=None, Y=None):
         """Fit to data, then predict it.
 
         Fits model to X and Y with given detection parameters
@@ -290,9 +330,10 @@ class BaseDetector(BaseEstimator):
         """
         # Non-optimized default implementation; override when a better
         # method is possible for a given algorithm.
-        return self.fit(X, Y).predict(X)
+        return self.fit(X, y=y, Y=Y).predict(X)
 
-    def fit_transform(self, X, Y=None):
+    # todo 0.37.0: remove Y argument
+    def fit_transform(self, X, y=None, Y=None):
         """Fit to data, then transform it.
 
         Fits model to X and Y with given detection parameters
@@ -310,10 +351,10 @@ class BaseDetector(BaseEstimator):
         self : pd.Series
             Labels for sequence X exact format depends on detection type.
         """
-        Y = self.fit_predict(X)
+        Y = self.fit_predict(X, y=y, Y=Y)
         return self.sparse_to_dense(Y, index=X.index)
 
-    def _fit(self, X, Y=None):
+    def _fit(self, X, y=None):
         """Fit to training data.
 
         core logic
@@ -370,7 +411,7 @@ class BaseDetector(BaseEstimator):
         """
         raise NotImplementedError("abstract method")
 
-    def _update(self, X, Y=None):
+    def _update(self, X, y=None):
         """Update model with new data and optional ground truth labels.
 
         core logic
@@ -379,7 +420,7 @@ class BaseDetector(BaseEstimator):
         ----------
         X : pd.DataFrame
             Training data to update model with time series
-        Y : pd.Series, optional
+        y : pd.Series, optional
             Ground truth labels for training if detector is supervised.
 
         Returns
@@ -392,7 +433,7 @@ class BaseDetector(BaseEstimator):
         Updates fitted model that updates attributes ending in "_".
         """
         # default/fallback: re-fit to all data
-        self._fit(self._X, self._Y)
+        self._fit(self._X, self._y)
 
         return self
 
@@ -748,3 +789,25 @@ class BaseSeriesAnnotator(BaseDetector):
             "The BaseSeriesAnnotator will be removed in the 0.37.0 release.",
             stacklevel=2,
         )
+
+
+# todo 0.37.0: remove this
+def _method_has_arg(method, arg="y"):
+    """Return if transformer.method has a parameter, and whether it has a default.
+
+    Parameters
+    ----------
+    method : callable
+        method to check
+    arg : str, optional, default="y"
+        parameter name to check
+
+    Returns
+    -------
+    has_param : bool
+        whether the method ``method`` has a parameter with name ``arg``
+    """
+    from inspect import signature
+
+    method_params = list(signature(method).parameters.keys())
+    return arg in method_params
