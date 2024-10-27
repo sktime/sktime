@@ -15,7 +15,7 @@ def convert_pandas_to_listDataset(pd_dataframe: pd.DataFrame):
         A gluonTS ListDataset formed from `pd_dataframe`
 
     Examples
-    ---------
+    --------
     >>> import pandas as pd
     >>> cols = ["instances", "timepoints"] + [f"var_{i}" for i in range(2)]
     >>> Xlist = [

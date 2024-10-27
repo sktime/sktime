@@ -48,7 +48,7 @@ class DilationMappingTransformer(BaseTransformer):
        arXiv preprint arXiv:2301.10194.
 
     Examples
-    -----------
+    --------
     >>> from sktime.transformations.series.dilation_mapping import \
     ...     DilationMappingTransformer
     >>> from sktime.datasets import load_airline

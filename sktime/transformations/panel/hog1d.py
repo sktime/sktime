@@ -43,7 +43,7 @@ class HOG1DTransformer(BaseTransformer):
         a constant that is multiplied to modify the distribution.
 
     Examples
-    -----------
+    --------
     >>> from sktime.transformations.panel.hog1d import HOG1DTransformer
     >>> from sktime.datasets import load_arrow_head
     >>>
