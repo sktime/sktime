@@ -13,7 +13,7 @@ from sktime.transformations.series.boxcox import BoxCoxTransformer
 
 
 class BoxCoxBiasAdjustedForecaster(BaseForecaster):
-    """Box-Cox Bias-Adjusted Forecaster.
+    r"""Box-Cox Bias-Adjusted Forecaster.
 
     This module implements a forecaster that applies Box-Cox transformation
     and bias adjustment to the predictions of a wrapped forecaster.
@@ -21,13 +21,16 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
     The bias adjustment is applied to both point predictions and prediction
     intervals using the bias correction formula for inverse Box-Cox transforms:
 
-    y = inv_boxcox(w, λ) * [1 + σ²(1-λ)/(2(λw + 1)²)]
+    .. math::
+
+        y_t = \text{inv\_boxcox}(w_t, \lambda) \cdot [1 + \sigma_t^2(1-\lambda)/
+        (2(\lambda w_t + 1)^2)]
 
     where:
-    - y is the back-transformed forecast
-    - w is the transformed data
-    - λ is the Box-Cox parameter
-    - σ² is the forecast variance on the transformed scale
+    - :math:`y_t` is the back-transformed forecast at time t
+    - :math:`w_t` is the transformed data at time t
+    - :math:`\lambda` is the Box-Cox parameter
+    - :math:`\sigma_t^2` is the forecast variance on the transformed scale at time t
 
     Parameters
     ----------
