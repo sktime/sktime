@@ -18,17 +18,8 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
     This module implements a forecaster that applies Box-Cox transformation
     and bias adjustment to the predictions of a wrapped forecaster.
 
-    The bias adjustment is implemented using the method described in:
-    Forecasting: Principles and Practice (2nd ed)
-    Rob J Hyndman and George Athanasopoulos
-    Monash University, Australia. OTexts.com/fpp2.
-
-    For methods like `predict_proba`, the behavior of the wrapped forecaster
-    is directly used without any additional adjustments. This means that
-    probability estimates are provided as they are by the underlying forecaster.
-    Users should ensure that the wrapped forecaster's `predict_proba` output
-    is suitable for their needs, as no transformation or adjustment will be applied
-    to these estimates by the `BoxCoxBiasAdjustedForecaster`.
+    The bias adjustment is applied to both point predictions and prediction
+    intervals to ensure consistent and accurate forecasts.
 
     Parameters
     ----------
@@ -37,6 +28,12 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
         bias adjustment will be applied.
     lmbda : float, optional (default=None)
         The Box-Cox transformation parameter. If None, it will be estimated.
+
+    References
+    ----------
+    .. [1] Hyndman, R.J., & Athanasopoulos, G. (2018) "Forecasting:
+           principles and practice", 2nd edition, OTexts: Melbourne, Australia.
+           OTexts.com/fpp2
     """
 
     def __init__(self, forecaster, lmbda=None):
@@ -130,8 +127,7 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
         return pd.concat([lower_adjusted, upper_adjusted], axis=1)
 
     def _apply_bias_adjustment(self, y, variance):
-        """
-        Apply bias adjustment for BoxCox Transformations.
+        """Apply bias adjustment for BoxCox Transformations.
 
         Parameters
         ----------
