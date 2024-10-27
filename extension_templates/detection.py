@@ -106,7 +106,7 @@ class MyDetector(BaseDetector):
         #   self.clone_tags(est2, ["enforce_index_type", "handles-missing-data"])
 
     # todo: implement this, mandatory
-    def _fit(self, X, Y=None):
+    def _fit(self, X, y=None):
         """Fit to training data.
 
         core logic
@@ -115,7 +115,7 @@ class MyDetector(BaseDetector):
         ----------
         X : pd.DataFrame
             training data to fit model to, time series
-        Y : pd.Series, optional
+        y : pd.Series, optional
             ground truth annotations for training if annotator is supervised
 
         Returns
@@ -151,7 +151,7 @@ class MyDetector(BaseDetector):
 
     # todo: consider implementing this, optional
     # if not implementing, delete the _update method
-    def _update(self, X, Y=None):
+    def _update(self, X, y=None):
         """Update model with new data and optional ground truth annotations.
 
         core logic
@@ -160,7 +160,7 @@ class MyDetector(BaseDetector):
         ----------
         X : pd.DataFrame
             training data to update model with, time series
-        Y : pd.Series, optional
+        y : pd.Series, optional
             ground truth annotations for training if annotator is supervised
 
         Returns
