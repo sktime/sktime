@@ -8,10 +8,10 @@ import math
 import pandas as pd
 from sklearn.neighbors import LocalOutlierFactor
 
-from sktime.annotation.base import BaseSeriesAnnotator
+from sktime.detection.base import BaseDetector
 
 
-class SubLOF(BaseSeriesAnnotator):
+class SubLOF(BaseDetector):
     """Timeseries version of local outlier factor.
 
     The LOF models are fit to windows timeseries data.

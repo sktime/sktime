@@ -5,7 +5,7 @@
 import numpy as np
 from sklearn.base import clone
 
-from sktime.annotation.base._base import BaseSeriesAnnotator
+from sktime.detection.base import BaseDetector
 from sktime.utils.dependencies import _check_soft_dependencies
 
 __author__ = ["mloning", "satya-pattnaik", "fkiraly"]
@@ -13,7 +13,7 @@ __author__ = ["mloning", "satya-pattnaik", "fkiraly"]
 import pandas as pd
 
 
-class PyODAnnotator(BaseSeriesAnnotator):
+class PyODAnnotator(BaseDetector):
     """Transformer that applies outlier detector from pyOD.
 
     Parameters

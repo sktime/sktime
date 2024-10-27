@@ -10,13 +10,13 @@ Please see the original library
 import numpy as np
 import pandas as pd
 
-from sktime.annotation.base import BaseSeriesAnnotator
+from sktime.detection.base import BaseDetector
 
 __author__ = ["miraep8"]
 __all__ = ["BaseHMMLearn"]
 
 
-class BaseHMMLearn(BaseSeriesAnnotator):
+class BaseHMMLearn(BaseDetector):
     """Base class for all HMM wrappers, handles required overlap between packages."""
 
     _tags = {

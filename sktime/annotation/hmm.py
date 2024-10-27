@@ -10,13 +10,13 @@ import warnings
 import numpy as np
 from scipy.stats import norm
 
-from sktime.annotation.base._base import BaseSeriesAnnotator
+from sktime.detection.base import BaseDetector
 
 __author__ = ["miraep8"]
 __all__ = ["HMM"]
 
 
-class HMM(BaseSeriesAnnotator):
+class HMM(BaseDetector):
     """Implements a simple HMM fitted with Viterbi algorithm.
 
     The HMM annotation estimator uses the

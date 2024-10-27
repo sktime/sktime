@@ -11,7 +11,7 @@ As described in
 }
 """
 
-from sktime.annotation.base import BaseSeriesAnnotator
+from sktime.detection.base import BaseDetector
 
 __author__ = ["ermshaua", "patrickzib"]
 __all__ = ["ClaSPSegmentation", "find_dominant_window_sizes"]
@@ -175,7 +175,7 @@ def _segmentation(X, clasp, n_change_points=None, exclusion_radius=0.05):
     return np.array(change_points), np.array(profiles, dtype=object), np.array(scores)
 
 
-class ClaSPSegmentation(BaseSeriesAnnotator):
+class ClaSPSegmentation(BaseDetector):
     """ClaSP (Classification Score Profile) Segmentation.
 
     Using ClaSP for the CPD problem is straightforward: We first compute the profile

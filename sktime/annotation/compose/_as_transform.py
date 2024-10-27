@@ -22,11 +22,11 @@ class AnnotatorAsTransformer(BaseTransformer):
     into its cluster assignment.
 
     The adapter dispatches ``BaseTransformer.transform`` to
-    ``BaseSeriesAnnotator.transform``.
+    ``BaseDetector.transform``.
 
     Parameters
     ----------
-    estimator : sktime annotator, i.e., estimator inheriting from BaseSeriesAnnotator
+    estimator : sktime annotator, i.e., estimator inheriting from BaseDetector
         this is a "blueprint" clusterer, state does not change when ``fit`` is called
 
     Attributes

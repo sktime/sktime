@@ -2,7 +2,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Base class template for detector base type for time series streams.
 
-    class name: BaseSeriesAnnotator
+    class name: BaseDetector
 
 Scitype defining methods:
     fitting              - fit(self, X, Y=None)
@@ -504,10 +504,10 @@ class BaseDetector(BaseEstimator):
         Examples
         --------
         >>> import pandas as pd
-        >>> from sktime.annotation.base._base import BaseSeriesAnnotator
+        >>> from sktime.detection.base import BaseDetector
         >>> y_sparse = pd.Series([2, 5, 7])  # Indices of changepoints/anomalies
         >>> index = range(0, 8)
-        >>> BaseSeriesAnnotator.sparse_to_dense(y_sparse, index=index)
+        >>> BaseDetector.sparse_to_dense(y_sparse, index=index)
         0    0
         1    0
         2    1
@@ -524,7 +524,7 @@ class BaseDetector(BaseEstimator):
         ...     )
         ... )
         >>> index = range(10)
-        >>> BaseSeriesAnnotator.sparse_to_dense(y_sparse, index=index)
+        >>> BaseDetector.sparse_to_dense(y_sparse, index=index)
         0    1
         1    1
         2    1
@@ -539,11 +539,11 @@ class BaseDetector(BaseEstimator):
         """
         if isinstance(y_sparse.index.dtype, pd.IntervalDtype):
             # Segmentation case
-            y_dense = BaseSeriesAnnotator._sparse_segments_to_dense(y_sparse, index)
+            y_dense = BaseDetector._sparse_segments_to_dense(y_sparse, index)
             return y_dense
         else:
             # Anomaly/changepoint detection case
-            y_dense = BaseSeriesAnnotator._sparse_points_to_dense(y_sparse, index)
+            y_dense = BaseDetector._sparse_points_to_dense(y_sparse, index)
             return y_dense
 
     @staticmethod
@@ -669,9 +669,9 @@ class BaseDetector(BaseEstimator):
         Examples
         --------
         >>> import pandas as pd
-        >>> from sktime.annotation.base._base import BaseSeriesAnnotator
+        >>> from sktime.detection.base import BaseDetector
         >>> change_points = pd.Series([1, 2, 5])
-        >>> BaseSeriesAnnotator.change_points_to_segments(change_points, 0, 7)
+        >>> BaseDetector.change_points_to_segments(change_points, 0, 7)
         [0, 1)   -1
         [1, 2)    1
         [2, 5)    2
@@ -720,12 +720,12 @@ class BaseDetector(BaseEstimator):
         Examples
         --------
         >>> import pandas as pd
-        >>> from sktime.annotation.base._base import BaseSeriesAnnotator
+        >>> from sktime.detection.base import BaseDetector
         >>> segments = pd.Series(
         ...     [3, -1, 2],
         ...     index=pd.IntervalIndex.from_breaks([2, 5, 7, 9], closed="left")
         ... )
-        >>> BaseSeriesAnnotator.segments_to_change_points(segments)
+        >>> BaseDetector.segments_to_change_points(segments)
         0    2
         1    5
         2    7

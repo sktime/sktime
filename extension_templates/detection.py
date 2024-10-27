@@ -30,12 +30,12 @@ Testing - required for sktime test framework and check_estimator usage:
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
-from sktime.annotation.base import BaseSeriesAnnotator
+from sktime.detection.base import BaseDetector
 
 # todo: add any necessary imports here
 
 
-class MySeriesAnnotator(BaseSeriesAnnotator):
+class MyDetector(BaseDetector):
     """Custom series annotator.
 
     todo: write docstring, describing your custom forecaster
