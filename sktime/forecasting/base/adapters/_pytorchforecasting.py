@@ -76,10 +76,9 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         # --------------
         "authors": ["XinyuWu"],
         "maintainers": ["XinyuWu"],
-        "python_version": ">3.8, <3.11",
         "python_dependencies": [
             "pytorch-forecasting>=1.0.0",
-            "torch<2.4.0",
+            "torch",
             "lightning",
         ],
         # estimator type

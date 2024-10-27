@@ -75,7 +75,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
     >>> model = PytorchForecastingTFT(
     ...     trainer_params={
     ...         "max_epochs": 5,  # for quick test
-    ...         "limit_train_batches": 10,  # for quick test
+    ...         "limit_train_batches": 2,  # for quick test
     ...     },
     ... )
     >>> # fit and predict
@@ -207,7 +207,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                 {
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
-                        "limit_train_batches": 10,  # for quick test
+                        "limit_train_batches": 2,  # for quick test
                         "enable_checkpointing": False,
                         "logger": False,
                     },
@@ -215,28 +215,30 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                         "max_encoder_length": 3,
                     },
                     "model_params": {
-                        "hidden_size": 8,
+                        "hidden_size": 4,
                         "lstm_layers": 1,
                         "log_interval": -1,
                     },
+                    "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
                     "verbose": False,
                 },
                 {
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
-                        "limit_train_batches": 10,  # for quick test
+                        "limit_train_batches": 2,  # for quick test
                         "enable_checkpointing": False,
                         "logger": False,
                     },
                     "model_params": {
-                        "hidden_size": 8,
+                        "hidden_size": 4,
                         "lstm_layers": 1,
                         "dropout": 0.1,
                         "optimizer": "Adam",
                         # avoid jdb78/pytorch-forecasting#1571 bug in the CI
                         "log_interval": -1,
                     },
+                    "train_to_dataloader_params": {"batch_size": 2},
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
@@ -260,18 +262,19 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                 {
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
-                        "limit_train_batches": 10,  # for quick test
+                        "limit_train_batches": 2,  # for quick test
                         "enable_checkpointing": False,
                         "logger": False,
                     },
                     "model_params": {
                         "log_interval": -1,
-                        "hidden_size": 8,
+                        "hidden_size": 4,
                         "lstm_layers": 1,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
+                    "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
                     "verbose": False,
                 },
@@ -279,12 +282,12 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                     "trainer_params": {
                         "callbacks": [early_stop_callback],
                         "max_epochs": 1,  # for quick test
-                        "limit_train_batches": 10,  # for quick test
+                        "limit_train_batches": 2,  # for quick test
                         "enable_checkpointing": False,
                         "logger": False,
                     },
                     "model_params": {
-                        "hidden_size": 8,
+                        "hidden_size": 4,
                         "lstm_layers": 1,
                         "dropout": 0.1,
                         # "loss": QuantileLoss(),
@@ -297,6 +300,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
+                    "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
                     "verbose": False,
                 },
@@ -467,6 +471,28 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         return {}
 
     @classmethod
+    def _implementation_counts(cls) -> dict:
+        """Functions need at least n overrides to be counted as implemented.
+
+        A function needs to be specified only if n!=1.
+
+        Returns
+        -------
+        dict
+            key is function name, and the value is n.
+        """
+        implementation_counts = super()._implementation_counts()
+        implementation_counts.update(
+            {
+                "_predict_proba": 3,
+                "_predict_var": 3,
+                "_predict_interval": 3,
+                "_predict_quantiles": 3,
+            }
+        )
+        return implementation_counts
+
+    @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
 
@@ -491,13 +517,14 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                 {
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
-                        "limit_train_batches": 10,  # for quick test
+                        "limit_train_batches": 2,  # for quick test
                         "enable_checkpointing": False,
                         "logger": False,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
+                    "train_to_dataloader_params": {"batch_size": 2},
                     "model_params": {
                         "num_blocks": [1, 1],
                         "num_block_layers": [1, 1],
@@ -510,7 +537,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                 {
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
-                        "limit_train_batches": 10,  # for quick test
+                        "limit_train_batches": 2,  # for quick test
                         "enable_checkpointing": False,
                         "logger": False,
                     },
@@ -524,6 +551,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
+                    "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
                     "verbose": False,
                 },
@@ -542,7 +570,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                 {
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
-                        "limit_train_batches": 10,  # for quick test
+                        "limit_train_batches": 2,  # for quick test
                         "enable_checkpointing": False,
                         "logger": False,
                     },
@@ -555,6 +583,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
+                    "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
                     "verbose": False,
                 },
@@ -562,7 +591,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                     "trainer_params": {
                         "callbacks": [early_stop_callback],
                         "max_epochs": 1,  # for quick test
-                        "limit_train_batches": 10,  # for quick test
+                        "limit_train_batches": 2,  # for quick test
                         "enable_checkpointing": False,
                         "logger": False,
                     },
@@ -577,6 +606,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
+                    "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
                     "verbose": False,
                 },
@@ -786,20 +816,19 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                 {
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
-                        "limit_train_batches": 10,  # for quick test
-                        "enable_checkpointing": False,
+                        "limit_train_batches": 2,  # for quick test
                         "logger": False,
                     },
                     "model_params": {
                         "cell_type": "GRU",
                         "rnn_layers": 1,
-                        "hidden_size": 3,
-                        "enable_checkpointing": False,
+                        "hidden_size": 2,
                         "log_interval": -1,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
+                    "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
                     "verbose": False,
                     "deterministic": True,  # to pass test_score
@@ -807,19 +836,19 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                 {
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
-                        "limit_train_batches": 10,  # for quick test
-                        "enable_checkpointing": False,
+                        "limit_train_batches": 2,  # for quick test
                         "logger": False,
                     },
                     "model_params": {
-                        "cell_type": "GRU",
-                        "rnn_layers": 2,
-                        "hidden_size": 3,
+                        "cell_type": "LSTM",
+                        "rnn_layers": 1,
+                        "hidden_size": 2,
                         "log_interval": -1,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
+                    "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
                     "verbose": False,
                     "deterministic": True,  # to pass test_score
@@ -839,16 +868,19 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                 {
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
-                        "limit_train_batches": 10,  # for quick test
-                        "enable_checkpointing": False,
+                        "limit_train_batches": 2,  # for quick test
                         "logger": False,
                     },
                     "model_params": {
+                        "cell_type": "GRU",
+                        "rnn_layers": 1,
+                        "hidden_size": 2,
                         "log_interval": -1,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
+                    "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
                     "verbose": False,
                     "deterministic": True,  # to pass test_score
@@ -857,18 +889,19 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                     "trainer_params": {
                         "callbacks": [early_stop_callback],
                         "max_epochs": 1,  # for quick test
-                        "limit_train_batches": 10,  # for quick test
-                        "enable_checkpointing": False,
+                        "limit_train_batches": 2,  # for quick test
                         "logger": False,
                     },
                     "model_params": {
-                        "cell_type": "GRU",
-                        "rnn_layers": 3,
+                        "cell_type": "LSTM",
+                        "rnn_layers": 1,
                         "log_interval": -1,
+                        "hidden_size": 2,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
+                    "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
                     "verbose": False,
                     "deterministic": True,  # to pass test_score
@@ -1083,15 +1116,16 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                 {
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
-                        "limit_train_batches": 10,  # for quick test
+                        "limit_train_batches": 2,  # for quick test
                         "enable_checkpointing": False,
                         "logger": False,
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
+                    "train_to_dataloader_params": {"batch_size": 2},
                     "model_params": {
-                        "hidden_size": 8,
+                        "hidden_size": 4,
                         "n_blocks": [1, 1],
                         "n_layers": 1,
                         "log_interval": -1,
@@ -1102,14 +1136,14 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                 {
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
-                        "limit_train_batches": 10,  # for quick test
+                        "limit_train_batches": 2,  # for quick test
                         "enable_checkpointing": False,
                         "logger": False,
                     },
                     "model_params": {
                         "interpolation_mode": "nearest",
                         "activation": "Tanh",
-                        "hidden_size": 8,
+                        "hidden_size": 4,
                         "n_blocks": [1, 1],
                         "n_layers": 1,
                         "log_interval": -1,
@@ -1117,6 +1151,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
+                    "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
                     "verbose": False,
                 },
@@ -1135,12 +1170,12 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                 {
                     "trainer_params": {
                         "max_epochs": 1,  # for quick test
-                        "limit_train_batches": 10,  # for quick test
+                        "limit_train_batches": 2,  # for quick test
                         "enable_checkpointing": False,
                         "logger": False,
                     },
                     "model_params": {
-                        "hidden_size": 8,
+                        "hidden_size": 4,
                         "n_blocks": [1, 1],
                         "n_layers": 1,
                         "log_interval": -1,
@@ -1148,6 +1183,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
+                    "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
                     "verbose": False,
                 },
@@ -1155,14 +1191,14 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     "trainer_params": {
                         "callbacks": [early_stop_callback],
                         "max_epochs": 1,  # for quick test
-                        "limit_train_batches": 10,  # for quick test
+                        "limit_train_batches": 2,  # for quick test
                         "enable_checkpointing": False,
                         "logger": False,
                     },
                     "model_params": {
                         "interpolation_mode": "nearest",
                         "activation": "Tanh",
-                        "hidden_size": 8,
+                        "hidden_size": 4,
                         "n_blocks": [1, 1],
                         "n_layers": 1,
                         "log_interval": -1,
@@ -1170,6 +1206,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     "dataset_params": {
                         "max_encoder_length": 3,
                     },
+                    "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
                     "verbose": False,
                 },
