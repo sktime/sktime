@@ -373,7 +373,7 @@ class BaseDetector(BaseEstimator):
         ----------
         X : pd.DataFrame
             Training data to fit model to time series.
-        Y : pd.Series, optional
+        y : pd.Series, optional
             Ground truth labels for training if detector is supervised.
 
         Returns

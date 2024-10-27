@@ -114,13 +114,14 @@ class MyDetector(BaseDetector):
         Parameters
         ----------
         X : pd.DataFrame
-            training data to fit model to, time series
+            Training data to fit model to time series.
         y : pd.Series, optional
-            ground truth annotations for training if annotator is supervised
+            Ground truth labels for training if detector is supervised.
 
         Returns
         -------
-        self : returns a reference to self
+        self :
+            Reference to self.
 
         State change
         ------------
