@@ -83,9 +83,7 @@ def test_dense_to_sparse(y_dense, y_sparse_expected):
 )
 def test_change_points_to_segments(change_points, expected_segments, start, end):
     """Test converting change points to segments."""
-    actual_segments = BaseDetector.change_points_to_segments(
-        change_points, start, end
-    )
+    actual_segments = BaseDetector.change_points_to_segments(change_points, start, end)
     testing.assert_series_equal(actual_segments, expected_segments)
 
 
