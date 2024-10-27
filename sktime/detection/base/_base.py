@@ -37,30 +37,31 @@ class BaseDetector(BaseEstimator):
     Developers should set the task and learning_type tags in the derived class.
 
     task : str {"segmentation", "change_point_detection", "anomaly_detection"}
-        The main annotation task:
-        * If ``segmentation``, the annotator divides timeseries into discrete chunks
+        The main detection task:
+
+        * If ``segmentation``, the detector divides timeseries into discrete chunks
         based on certain criteria. The same label can be applied at multiple
         disconnected regions of the timeseries.
-        * If ``change_point_detection``, the annotator finds points where the
+        * If ``change_point_detection``, the detector finds points where the
         statistical properties of the timeseries change significantly.
-        * If ``anomaly_detection``, the annotator finds points that differ significantly
+        * If ``anomaly_detection``, the detector finds points that differ significantly
         from the normal statistical properties of the timeseries.
 
     learning_type : str {"supervised", "unsupervised"}
-        Annotation learning type:
-        * If ``supervised``, the annotator learns from labelled data.
-        * If ``unsupervised``, the annotator learns from unlabelled data.
+        Detection learning type:
+
+        * If ``supervised``, the detector learns from labelled data.
+        * If ``unsupervised``, the detector learns from unlabelled data.
 
     Notes
     -----
     Assumes "predict" data is temporal future of "fit"
     Single time series in both, no meta-data.
 
-    The base series annotator specifies the methods and method
-    signatures that all annotators have to implement.
+    The base series detector specifies the methods and method
+    signatures that all detectors have to implement.
 
-    Specific implementations of these methods is deferred to concrete
-    annotators.
+    Specific implementations of these methods is deferred to concrete detectors.
     """
 
     _tags = {
@@ -117,15 +118,15 @@ class BaseDetector(BaseEstimator):
         else:
             return NotImplemented
 
-    def fit(self, X, Y=None):
+    def fit(self, X, y=None, Y=None):
         """Fit to training data.
 
         Parameters
         ----------
         X : pd.DataFrame
             Training data to fit model to (time series).
-        Y : pd.Series, optional
-            Ground truth annotations for training if annotator is supervised.
+        y : pd.Series, optional
+            Ground truth labels for training if detector is supervised.
 
         Returns
         -------
@@ -155,7 +156,7 @@ class BaseDetector(BaseEstimator):
         return self
 
     def predict(self, X):
-        """Create annotations on test/deployment data.
+        """Create labels on test/deployment data.
 
         Parameters
         ----------
@@ -165,7 +166,7 @@ class BaseDetector(BaseEstimator):
         Returns
         -------
         Y : pd.Series
-            Annotations for sequence X exact format depends on annotation type.
+            Labels for sequence X exact format depends on detection type.
         """
         self.check_is_fitted()
 
@@ -178,7 +179,7 @@ class BaseDetector(BaseEstimator):
         return Y
 
     def transform(self, X):
-        """Create annotations on test/deployment data.
+        """Create labels on test/deployment data.
 
         Parameters
         ----------
@@ -188,38 +189,37 @@ class BaseDetector(BaseEstimator):
         Returns
         -------
         Y : pd.Series
-            Annotations for sequence X. The returned annotations will be in the dense
-            format.
+            Labels for sequence X. The returned labels will be in the dense format.
         """
         Y = self.predict(X)
         return self.sparse_to_dense(Y, X.index)
 
     def predict_scores(self, X):
-        """Return scores for predicted annotations on test/deployment data.
+        """Return scores for predicted labels on test/deployment data.
 
         Parameters
         ----------
         X : pd.DataFrame
-            Data to annotate (time series).
+            Data to label (time series).
 
         Returns
         -------
         Y : pd.Series
-            Scores for sequence X exact format depends on annotation type.
+            Scores for sequence X exact format depends on detection type.
         """
         self.check_is_fitted()
         X = check_series(X)
         return self._predict_scores(X)
 
     def update(self, X, Y=None):
-        """Update model with new data and optional ground truth annotations.
+        """Update model with new data and optional ground truth labels.
 
         Parameters
         ----------
         X : pd.DataFrame
             Training data to update model with (time series).
         Y : pd.Series, optional
-            Ground truth annotations for training if annotator is supervised.
+            Ground truth labels for training if detector is supervised.
 
         Returns
         -------
@@ -247,7 +247,7 @@ class BaseDetector(BaseEstimator):
         return self
 
     def update_predict(self, X):
-        """Update model with new data and create annotations for it.
+        """Update model with new data and create labels for it.
 
         Parameters
         ----------
@@ -257,7 +257,7 @@ class BaseDetector(BaseEstimator):
         Returns
         -------
         Y : pd.Series
-            Annotations for sequence X exact format depends on annotation type.
+            Labels for sequence X exact format depends on detection type.
 
         Notes
         -----
@@ -273,8 +273,8 @@ class BaseDetector(BaseEstimator):
     def fit_predict(self, X, Y=None):
         """Fit to data, then predict it.
 
-        Fits model to X and Y with given annotation parameters
-        and returns the annotations made by the model.
+        Fits model to X and Y with given detection parameters
+        and returns the detection labels produced by the model.
 
         Parameters
         ----------
@@ -286,7 +286,7 @@ class BaseDetector(BaseEstimator):
         Returns
         -------
         self : pd.Series
-            Annotations for sequence X exact format depends on annotation type.
+            Labels for sequence X exact format depends on detection type.
         """
         # Non-optimized default implementation; override when a better
         # method is possible for a given algorithm.
@@ -295,8 +295,8 @@ class BaseDetector(BaseEstimator):
     def fit_transform(self, X, Y=None):
         """Fit to data, then transform it.
 
-        Fits model to X and Y with given annotation parameters
-        and returns the annotations made by the model.
+        Fits model to X and Y with given detection parameters
+        and returns the detection labels made by the model.
 
         Parameters
         ----------
@@ -308,7 +308,7 @@ class BaseDetector(BaseEstimator):
         Returns
         -------
         self : pd.Series
-            Annotations for sequence X exact format depends on annotation type.
+            Labels for sequence X exact format depends on detection type.
         """
         Y = self.fit_predict(X)
         return self.sparse_to_dense(Y, index=X.index)
@@ -323,7 +323,7 @@ class BaseDetector(BaseEstimator):
         X : pd.DataFrame
             Training data to fit model to time series.
         Y : pd.Series, optional
-            Ground truth annotations for training if annotator is supervised.
+            Ground truth labels for training if detector is supervised.
 
         Returns
         -------
@@ -337,7 +337,7 @@ class BaseDetector(BaseEstimator):
         raise NotImplementedError("abstract method")
 
     def _predict(self, X):
-        """Create annotations on test/deployment data.
+        """Create labels on test/deployment data.
 
         core logic
 
@@ -349,12 +349,12 @@ class BaseDetector(BaseEstimator):
         Returns
         -------
         Y : pd.Series
-            Annotations for sequence X exact format depends on annotation type.
+            Labels for sequence X exact format depends on detection type.
         """
         raise NotImplementedError("abstract method")
 
     def _predict_scores(self, X):
-        """Return scores for predicted annotations on test/deployment data.
+        """Return scores for predicted labels on test/deployment data.
 
         core logic
 
@@ -366,12 +366,12 @@ class BaseDetector(BaseEstimator):
         Returns
         -------
         Y : pd.Series
-            Annotations for sequence X exact format depends on annotation type.
+            Labels for sequence X exact format depends on detection type.
         """
         raise NotImplementedError("abstract method")
 
     def _update(self, X, Y=None):
-        """Update model with new data and optional ground truth annotations.
+        """Update model with new data and optional ground truth labels.
 
         core logic
 
@@ -380,7 +380,7 @@ class BaseDetector(BaseEstimator):
         X : pd.DataFrame
             Training data to update model with time series
         Y : pd.Series, optional
-            Ground truth annotations for training if annotator is supervised.
+            Ground truth labels for training if detector is supervised.
 
         Returns
         -------
@@ -476,7 +476,7 @@ class BaseDetector(BaseEstimator):
 
     @staticmethod
     def sparse_to_dense(y_sparse, index):
-        """Convert the sparse output from an annotator to a dense format.
+        """Convert the sparse output from an detector to a dense format.
 
         Parameters
         ----------
@@ -607,7 +607,7 @@ class BaseDetector(BaseEstimator):
 
     @staticmethod
     def dense_to_sparse(y_dense):
-        """Convert the dense output from an annotator to a sparse format.
+        """Convert the dense output from an detector to a sparse format.
 
         Parameters
         ----------
@@ -736,7 +736,7 @@ class BaseDetector(BaseEstimator):
 
 
 class BaseSeriesAnnotator(BaseDetector):
-    """Base class for time series detectors - DEPRECATED< use BaseDetector instead."""
+    """Base class for time series detectors - DEPRECATED - use BaseDetector instead."""
 
     def __init__(self):
         super().__init__()
