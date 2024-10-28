@@ -206,8 +206,8 @@ def plot_time_series_with_subsequent_outliers(
     else:
         fig = ax.figure
 
-    ax.plot(ts["data"], label="Not Anomalous")
-    ax.plot(ts.loc[ts["label"] == 1.0, "data"], label="Anomalous")
+    ax.plot(ts.iloc[:, 0], label="Not Anomalous")
+    ax.plot(ts.loc[ts.iloc[:, 1] == 1.0, ts.columns[0]], label="Anomalous")
 
     if intervals is not None:
         for interval in intervals:
