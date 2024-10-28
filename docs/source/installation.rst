@@ -13,7 +13,7 @@ See here for a `full list of precompiled wheels available on PyPI <https://pypi.
 .. contents::
    :local:
 
-For frequent issues with installation, consult the `Troubleshooting` section.
+For frequent issues with installation, consult the `Troubleshooting`_ section.
 
 There are three different installation types:
 
