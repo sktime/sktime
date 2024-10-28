@@ -1154,4 +1154,6 @@ if _check_soft_dependencies("polars", severity="none"):
 if _check_soft_dependencies("gluonts", severity="none"):
     from sktime.datatypes._adapter.gluonts import series_and_panels_gluonts_conversions
 
-    convert_dict = series_and_panels_gluonts_conversions(convert_dict)
+    def series_and_panels_gluonts_conversions_for_series(obj, convert_dict):
+        convert_dict = series_and_panels_gluonts_conversions(convert_dict, obj)
+        return convert_dict
