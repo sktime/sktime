@@ -89,7 +89,7 @@ def test_plot_time_series_with_subsequent_outliers(time_series_data):
     ts = time_series_data["ts"]
     intervals = time_series_data["intervals"]
 
-    fig, ax = plot_time_series_with_subsequent_outliers(ts, intervals)
+    fig, ax = plot_time_series_with_subsequent_outliers(ts, intervals=intervals)
 
     assert isinstance(fig, plt.Figure)
     assert isinstance(ax, plt.Axes)
