@@ -109,8 +109,8 @@ To install from a specific branch, use the following command:
 
 Alternatively, a latest version install can be obtained from a local clone of the repository.
 
-For steps on how to obtain a local clone of the repository, please follow the steps described here
- :ref:`developer_guide_git_workflow <Creating a fork and cloning the repository - initial one time setup>`__
+For steps on how to obtain a local clone of the repository, please follow the steps described here:
+:ref:`developer_guide_git_workflow <Creating a fork and cloning the repository - initial one time setup>`
 
 
 .. code-block:: bash
@@ -130,7 +130,7 @@ To develop ``sktime`` locally, or to contribute to the project, you need to set 
 
 The following steps guide you through the process:
 
-1. Follow the Git workflow: :ref:`developer_guide_git_workflow <Creating a fork and cloning the repository - initial one time setup>`__
+1. Follow the Git workflow: :ref:`developer_guide_git_workflow <Creating a fork and cloning the repository - initial one time setup>`
 
 2. Set up a new virtual environment. Our instructions will go through the commands to set up a ``conda`` environment which is recommended for sktime development.
 The process will be similar for ``venv`` or other virtual environment managers.
