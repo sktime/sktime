@@ -104,6 +104,12 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         optimizer to use for training, if passed with None defaults to Adam
     optimizer_kwargs : dict (default=None) [8]_
         dict of parameters to pass to the user defined optimizer
+    broadcasting : bool (default=True)
+        DeprecationWarning: default value will be changed to False in v0.35.0
+        multiindex data input will be broadcasted to single series, and for each single series,
+        one copy of this forecaster will try to fit and predict on it. The broadcasting is
+        happening inside automatically, from the outerside api perspective, the input and
+        output are the same, only one multiindex output from `predict`.
 
     Notes
     -----
@@ -169,6 +175,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         # estimator type
         # --------------
         "python_dependencies": ["neuralforecast>=1.6.4"],
+        "capability:global_forecasting": True,
     }
 
     def __init__(
@@ -204,6 +211,8 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         trainer_kwargs: Optional[dict] = None,
         optimizer=None,
         optimizer_kwargs: dict = None,
+        # TODO change the default value to False in v0.35.0
+        broadcasting: bool = True,
     ):
         self.input_size = input_size
         self.inference_input_size = inference_input_size
@@ -238,6 +247,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
             futr_exog_list=futr_exog_list,
             verbose_fit=verbose_fit,
             verbose_predict=verbose_predict,
+            broadcasting=broadcasting,
         )
 
         # initiate internal variables to avoid AttributeError in future
@@ -386,8 +396,9 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
                     "optimizer_kwargs": {"lr": 0.001},
                 },
             ]
-
-        return params
+        params_broadcasting = [dict(p, **{"broadcasting": True}) for p in params]
+        params_no_broadcasting = [dict(p, **{"broadcasting": False}) for p in params]
+        return params_broadcasting + params_no_broadcasting
 
 
 class NeuralForecastLSTM(_NeuralForecastAdapter):
@@ -478,6 +489,12 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         optimizer to use for training, if passed with None defaults to Adam
     optimizer_kwargs : dict (default=None) [8]_
         dict of parameters to pass to the user defined optimizer
+    broadcasting : bool (default=True)
+        DeprecationWarning: default value will be changed to False in v0.35.0
+        multiindex data input will be broadcasted to single series, and for each single series,
+        one copy of this forecaster will try to fit and predict on it. The broadcasting is
+        happening inside automatically, from the outerside api perspective, the input and
+        output are the same, only one multiindex output from `predict`.
 
     Notes
     -----
@@ -539,6 +556,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         # estimator type
         # --------------
         "python_dependencies": ["neuralforecast>=1.6.4"],
+        "capability:global_forecasting": True,
     }
 
     def __init__(
@@ -573,6 +591,8 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         trainer_kwargs: Optional[dict] = None,
         optimizer=None,
         optimizer_kwargs: dict = None,
+        # TODO change the default value to False in v0.35.0
+        broadcasting: bool = True,
     ):
         self.input_size = input_size
         self.inference_input_size = inference_input_size
@@ -606,6 +626,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
             futr_exog_list=futr_exog_list,
             verbose_fit=verbose_fit,
             verbose_predict=verbose_predict,
+            broadcasting=broadcasting,
         )
 
         self._trainer_kwargs = None
@@ -748,8 +769,9 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
                     "optimizer_kwargs": {"lr": 0.001},
                 },
             ]
-
-        return params
+        params_broadcasting = [dict(p, **{"broadcasting": True}) for p in params]
+        params_no_broadcasting = [dict(p, **{"broadcasting": False}) for p in params]
+        return params_broadcasting + params_no_broadcasting
 
 
 __all__ = [
