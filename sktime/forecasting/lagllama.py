@@ -303,63 +303,6 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         forecasts = list(forecast_it)
         return forecasts[0].mean_ts
 
-    def _predict_interval(self, fh, X, coverage):
-        """Compute/return prediction quantiles for a forecast.
-
-        Parameters
-        ----------
-        fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
-        X :  sktime time series object, optional (default=None)
-            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
-            Exogeneous time series for the forecast
-        coverage : list of float (guaranteed not None and floats in [0,1] interval)
-           nominal coverage(s) of predictive interval(s)
-
-        Returns
-        -------
-        pred_int : pd.DataFrame
-            Column has multi-index: first level is variable name from y in fit,
-                second level coverage fractions for which intervals were computed.
-                    in the same order as in input `coverage`.
-                Third level is string "lower" or "upper", for lower/upper interval end.
-            Row index is fh, with additional (upper) levels equal to instance levels,
-                from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
-            Entries are forecasts of lower/upper interval end,
-                for var in col index, at nominal coverage in second col index,
-                lower/upper depending on third col index, for the row index.
-        """
-        import numpy as np
-        import pandas as pd
-        from gluonts.evaluation import make_evaluation_predictions
-
-        # Obtaining our evaluations
-        forecasts, _ = make_evaluation_predictions(
-            dataset=X, predictor=self.predictor_, num_samples=self.num_samples_
-        )
-
-        forecasts = list(forecasts)
-
-        # Stores all intervals
-        intervals = []
-
-        for forecast in forecasts:
-            samples = forecast.samples
-
-            # Creating a DataFrame for this forecast
-            df = pd.DataFrame(index=forecast.index)
-
-            for c in coverage:
-                # Defining lower and upper interval values
-                df[("target", c, "lower")] = np.min(samples)
-                df[("target", c, "upper")] = np.max(samples)
-
-            intervals.append(df)
-
-        pred_int = pd.concat(intervals, axis=0)
-
-        return pred_int
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -397,3 +340,19 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         ]
 
         return params
+
+    def return_time_index(self, df):
+        """Return the time index, given any type of index."""
+        if isinstance(df.index, pd.MultiIndex):
+            return df.index.get_level_values(-1)
+        else:
+            return df.index
+
+    def check_range_index(self, df):
+        """Check if the index is a range index."""
+        timepoints = self.return_time_index(df)
+        if isinstance(timepoints, pd.RangeIndex):
+            return True
+        elif pd.api.types.is_integer_dtype(timepoints):
+            return True
+        return False
