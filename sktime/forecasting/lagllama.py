@@ -160,6 +160,8 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
 
         target_col = str(y.columns[0])
         if isinstance(y.index, pd.MultiIndex):
+            if None in y.index.names:
+                y.index.names = ["item_id", "timepoints"]
             item_id = y.index.names[0]
             timepoint = y.index.names[-1]
 
@@ -255,14 +257,87 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
                 y, cache_data=True, shuffle_buffer_length=self.shuffle_buffer_length_
             )
 
-    def _extend_df(self, df, fh):
-        prediction_length = max(fh.to_relative(self.cutoff))
-        freq = df.index.freq
-        extend_df = pd.period_range(
-            start=df.index[-1], periods=prediction_length + 1, freq=freq
-        )[1:]
+    def infer_freq(self, index):
+        """
+        Infer frequency of the index.
 
-        return pd.concat([df, pd.DataFrame(index=extend_df)], axis=0)
+        Parameters
+        ----------
+        index: pd.Index
+            Index of the time series data.
+
+        Notes
+        -----
+        Uses only first 3 values of the index to infer the frequency.
+        As `freq=None` is returned in case of multiindex timepoints.
+
+        """
+        if isinstance(index, pd.PeriodIndex):
+            return index.freq
+        return pd.infer_freq(index[:3])
+
+    def _extend_df(self, df, fh):
+        """Extend the input dataframe up to the timepoints that need to be predicted.
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            Input data that needs to be extended
+        X : pd.DataFrame, default=None
+            Assumes that X has future timepoints and is
+            concatenated to the input data,
+            if X is present in the input, but None here the values of X are assumed
+            to be 0 in future timepoints that need to be predicted.
+        is_range_index : bool, default=False
+            If True, the index is a range index.
+        is_period_index : bool, default=False
+            If True, the index is a period index.
+
+        Returns
+        -------
+        pd.DataFrame
+            Extended dataframe with future timepoints.
+        """
+        index = self.return_time_index(df)
+        print(index)
+        print(isinstance(index, pd.RangeIndex))
+
+        # Extend the index to the future timepoints
+        # respective to index last seen
+
+        if isinstance(index, (pd.RangeIndex, pd.Index)):
+            pred_index = pd.RangeIndex(
+                self.cutoff[0] + 1, self.cutoff[0] + max(self.fh._values)
+            )
+        elif isinstance(index, pd.PeriodIndex):
+            pred_index = pd.period_range(
+                self.cutoff[0],
+                periods=max(self.fh._values) + 1,
+                freq=index.freq,
+            )[1:]
+        else:
+            pred_index = pd.date_range(
+                self.cutoff[0],
+                periods=max(self.fh._values) + 1,
+                freq=self.infer_freq(index),
+            )[1:]
+
+        if isinstance(df.index, pd.MultiIndex):
+            # Works for any number of levels in the MultiIndex
+            index_levels = [
+                df.index.get_level_values(i).unique()
+                for i in range(df.index.nlevels - 1)
+            ]
+            index_levels.append(pred_index)
+            new_index = pd.MultiIndex.from_product(index_levels, names=df.index.names)
+        else:
+            new_index = pred_index
+
+        df_y = pd.DataFrame(columns=df.columns, index=new_index)
+        df_y.fillna(0, inplace=True)
+        extended_df = pd.concat([df, df_y])
+        extended_df = extended_df.sort_index()
+        return extended_df
 
     def _predict(self, fh, X=None, y=None):
         """Forecast time series at future horizon.
@@ -301,9 +376,10 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
             y = pd.concat([self._y, y], axis=0)
         else:
             y = self._y
+
         y = self._extend_df(y, fh)
 
-        if self.check_range_index(y):
+        if isinstance(self.return_time_index(y), pd.RangeIndex):
             y.index = self.handle_range_index(y.index)
 
         y = self._convert_to_float(y)
