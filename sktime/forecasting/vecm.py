@@ -62,8 +62,8 @@ class VECM(_StatsModelsAdapter):
         2D ndarray/pd.DataFrame of size (any, neqs)
         Forecasted value of exog_coint
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.forecasting.vecm import VECM
     >>> from sktime.split import temporal_train_test_split
     >>> from sktime.forecasting.base import ForecastingHorizon
