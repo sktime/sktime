@@ -4,11 +4,11 @@
 
 __author__ = ["sanskarmodi8"]
 
-import numpy as np
 import pandas as pd
 from scipy.special import inv_boxcox
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.transformations.series.boxcox import BoxCoxTransformer
 
 
@@ -37,7 +37,7 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
     forecaster : BaseForecaster
         The wrapped forecaster to which Box-Cox transformation and
         bias adjustment will be applied.
-    lmbda : float, optional (default=None)
+    lambda_fixed : float, optional (default=None)
         The Box-Cox transformation parameter. If None, it will be estimated.
 
     References
@@ -57,15 +57,19 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
         self.lambda_fixed = lambda_fixed
         self.boxcox_transformer_ = None
         self._y_name = None
-        self.clone_tags(forecaster)
+        _DelegatedForecaster._set_delegated_tags(self, forecaster)
         super().__init__()
+
+    def _get_delegate(self):
+        """Return the delegate forecaster."""
+        return self.forecaster
 
     def _fit(self, y, X=None, fh=None):
         """Fit the forecaster to the training data.
 
         Parameters
         ----------
-        y : pd.DataFrame
+        y : pd.Series or pd.DataFrame
             Target time series to which to fit the forecaster.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables.
@@ -98,7 +102,7 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
 
         Returns
         -------
-        y_pred : pd.DataFrame
+        y_pred : pd.Series or pd.DataFrame
             Bias-adjusted point predictions.
         """
         y_pred_transformed = self.forecaster_.predict(fh, X)
@@ -113,45 +117,34 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
 
         return y_pred
 
+    def _predict_interval(self, fh, X=None, coverage=None):
+        """Compute prediction intervals for the forecasts.
 
-def _predict_interval(self, fh, X=None, coverage=None):
-    """Compute prediction intervals for the forecasts.
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+            The forecasting horizon with the steps ahead to predict.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables.
+        coverage : list of float, optional (default=None)
+            Confidence levels for prediction intervals.
 
-    Parameters
-    ----------
-    fh : ForecastingHorizon
-        The forecasting horizon with the steps ahead to predict.
-    X : pd.DataFrame, optional (default=None)
-        Exogenous variables.
-    coverage : list of float, optional (default=None)
-        Confidence levels for prediction intervals.
+        Returns
+        -------
+        pred_int : pd.DataFrame
+            Prediction intervals.
+        """
+        pred_int_transformed = self.forecaster_.predict_interval(fh, X, coverage)
+        variance = self.forecaster_.predict_var(fh, X).squeeze()
 
-    Returns
-    -------
-    pred_int : pd.DataFrame
-        Prediction intervals.
-    """
-    pred_int_transformed = self.forecaster_.predict_interval(fh, X, coverage)
-    variance = self.forecaster_.predict_var(fh, X)
-
-    if isinstance(pred_int_transformed.index, pd.PeriodIndex):
-        pred_int_transformed.index = pred_int_transformed.index.to_timestamp()
-
-    adjusted_intervals = {}
-
-    for idx, cov, bound in pred_int_transformed.columns:
-        adjusted_value = self._apply_bias_adjustment(
-            pred_int_transformed[(idx, cov, bound)], variance
+        lower_adjusted = self._apply_bias_adjustment(
+            pred_int_transformed.xs("lower", level=2, axis=1), variance
+        )
+        upper_adjusted = self._apply_bias_adjustment(
+            pred_int_transformed.xs("upper", level=2, axis=1), variance
         )
 
-        if isinstance(adjusted_value, np.ndarray):
-            adjusted_value = adjusted_value.flatten()
-
-        adjusted_intervals[(idx, cov, bound)] = adjusted_value
-
-    result = pd.DataFrame(adjusted_intervals, index=pred_int_transformed.index)
-
-    return result
+        return pd.concat([lower_adjusted, upper_adjusted], axis=1)
 
     def _apply_bias_adjustment(self, y, variance):
         """Apply bias adjustment for BoxCox Transformations.
@@ -168,12 +161,18 @@ def _predict_interval(self, fh, X=None, coverage=None):
         y_adjusted : pd.Series
             Bias-adjusted predictions or prediction intervals.
         """
+        original_index = y.index
+        y = y.reset_index(drop=True)
+        variance = variance.reset_index(drop=True)
+
         lmbda = self.boxcox_transformer_.lambda_
 
         denominator = 2 * (lmbda * y + 1) ** 2
         adjustment = 1 + (variance * (1 - lmbda)) / denominator
 
-        return inv_boxcox(y, lmbda) * adjustment
+        adjusted_y = inv_boxcox(y, lmbda) * adjustment
+        adjusted_y = pd.Series(adjusted_y.squeeze(), original_index)
+        return adjusted_y
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -191,9 +190,13 @@ def _predict_interval(self, fh, X=None, coverage=None):
         """
         from sktime.forecasting.naive import NaiveForecaster
 
-        forecaster = NaiveForecaster()
-
-        params1 = {"forecaster": forecaster}
-        params2 = {"forecaster": forecaster, "lambda_fixed": 0.5}
-
-        return [params1, params2]
+        params = [
+            {
+                "forecaster": NaiveForecaster(strategy="mean"),
+            },
+            {
+                "forecaster": NaiveForecaster(strategy="mean"),
+                "lambda_fixed": 0.5,
+            },
+        ]
+        return params
