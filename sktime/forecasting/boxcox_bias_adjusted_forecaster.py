@@ -168,10 +168,10 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
         lmbda = self.boxcox_transformer_.lambda_
 
         denominator = 2 * (lmbda * y + 1) ** 2
-        adjustment = 1 + (variance * (1 - lmbda)) / denominator
+        adjustment = 1 + (variance * (1 - lmbda)).squeeze() / denominator
 
         adjusted_y = inv_boxcox(y, lmbda) * adjustment
-        adjusted_y = pd.Series(adjusted_y.squeeze(), original_index)
+        adjusted_y.index = original_index
         return adjusted_y
 
     @classmethod
