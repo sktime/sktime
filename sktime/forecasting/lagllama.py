@@ -163,6 +163,12 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
             item_id = y.index.names[0]
             timepoint = y.index.names[-1]
 
+            self._df_config = {
+                "target": [target_col],
+                "item_id": item_id,
+                "timepoints": timepoint,
+            }
+
             # Reset the index to make it compatible with GluonTS
             y = y.reset_index()
             y.set_index(timepoint, inplace=True)
@@ -172,6 +178,9 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
             )
 
         else:
+            self._df_config = {
+                "target": [target_col],
+            }
             dataset = PandasDataset(y, future_length=0, target=target_col)
 
         return dataset
@@ -291,7 +300,11 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         if y is not None:
             y = pd.concat([self._y, y], axis=0)
         else:
-            y = self._extend_df(self._y, fh)
+            y = self._y
+        y = self._extend_df(y, fh)
+
+        if self.check_range_index(y):
+            y.index = self.handle_range_index(y.index)
 
         y = self._convert_to_float(y)
         dataset = self._get_gluonts_dataset(y)
@@ -300,8 +313,8 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         forecast_it, _ = make_evaluation_predictions(
             dataset=dataset, predictor=self.model, num_samples=100
         )
-        forecasts = list(forecast_it)
-        return forecasts[0].mean_ts
+        forecast = self._get_prediction_df(forecast_it, self._df_config)
+        return forecast
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -341,6 +354,36 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
 
         return params
 
+    def _get_prediction_df(self, forecast_iter, df_config):
+        def handle_series_prediction(forecast, target):
+            # Renames the predicted column to the target column name
+            pred = forecast.mean_ts
+            if target[0] is not None:
+                return pred.rename(target[0])
+            else:
+                return pred
+
+        def handle_panel_predictions(forecasts_it, df_config):
+            # Convert all panel forecasts to a single panel dataframe
+            panels = []
+            for forecast in forecasts_it:
+                df = forecast.mean_ts.reset_index()
+                df.columns = [df_config["timepoints"], df_config["target"][0]]
+                df[df_config["item_id"]] = forecast.item_id
+                df.set_index(
+                    [df_config["item_id"], df_config["timepoints"]], inplace=True
+                )
+                panels.append(df)
+            return pd.concat(panels)
+
+        forecasts = list(forecast_iter)
+
+        # Assuming all forecasts_it are either series or panel type.
+        if forecasts[0].item_id is None:
+            return handle_series_prediction(forecasts[0], df_config["target"])
+        else:
+            return handle_panel_predictions(forecasts, df_config)
+
     def return_time_index(self, df):
         """Return the time index, given any type of index."""
         if isinstance(df.index, pd.MultiIndex):
@@ -356,3 +399,21 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         elif pd.api.types.is_integer_dtype(timepoints):
             return True
         return False
+
+    def handle_range_index(self, index):
+        """
+        Convert RangeIndex to Dummy DatetimeIndex.
+
+        As gluonts PandasDataset expects a DatetimeIndex.
+        """
+        start_date = "2010-01-01"
+        if isinstance(index, pd.MultiIndex):
+            n_periods = index.levels[-1].size
+            datetime_index = pd.date_range(
+                start=start_date, periods=n_periods, freq="D"
+            )
+            new_index = index.set_levels(datetime_index, level=-1)
+        else:
+            n_periods = index.size
+            new_index = pd.date_range(start=start_date, periods=n_periods, freq="D")
+        return new_index
