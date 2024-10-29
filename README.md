@@ -1,7 +1,7 @@
 # About
-<a href="https://www.sktime.net"><img src="https://github.com/sktime/sktime/blob/main/docs/source/images/sktime-logo.svg" width="250" height="150" align="centre" /></a>
 
 > A unified interface for machine learning with time series
+<a href="https://www.sktime.net"><img src="https://github.com/sktime/sktime/blob/main/docs/source/images/sktime-logo.svg" width="250" height="150" align="centre" /></a>
 
 :rocket: **Version 0.33.1 out now!** [Check out the release notes here](https://www.sktime.net/en/latest/changelog.html).
 
