@@ -65,6 +65,8 @@ Deep learning
     CNTCClassifier
     FCNClassifier
     LSTMFCNClassifier
+    GRUClassifier
+    GRUFCNNClassifier
     InceptionTimeClassifier
     MACNNClassifier
     MLPClassifier

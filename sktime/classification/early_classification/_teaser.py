@@ -606,9 +606,9 @@ class TEASER(BaseEarlyClassifier):
         """
         from sktime.classification.dummy import DummyClassifier
         from sktime.classification.feature_based import Catch22Classifier
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_estimator_deps
 
-        if _check_soft_dependencies("numba", severity="none"):
+        if _check_estimator_deps(Catch22Classifier, severity="none"):
             est = Catch22Classifier(estimator=RandomForestClassifier(n_estimators=2))
         else:
             est = DummyClassifier()
