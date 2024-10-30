@@ -3164,6 +3164,16 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "vagechirkov",
+      "name": "Valerii Chirkov",
+      "avatar_url": "https://avatars.githubusercontent.com/vagechirkov",
+      "profile": "https://github.com/vagechirkov",
+      "contributions": [
+        "code",
+        "doc"
+      ]
     }
   ]
 }
