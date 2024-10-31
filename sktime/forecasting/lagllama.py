@@ -299,15 +299,12 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
             Extended dataframe with future timepoints.
         """
         index = self.return_time_index(df)
-        print(index)
-        print(isinstance(index, pd.RangeIndex))
-
         # Extend the index to the future timepoints
         # respective to index last seen
 
-        if isinstance(index, (pd.RangeIndex, pd.Index)):
+        if self.check_range_index(df):
             pred_index = pd.RangeIndex(
-                self.cutoff[0] + 1, self.cutoff[0] + max(self.fh._values)
+                self.cutoff[0] + 1, self.cutoff[0] + max(self.fh._values) + 1
             )
         elif isinstance(index, pd.PeriodIndex):
             pred_index = pd.period_range(
@@ -372,25 +369,44 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         """
         from gluonts.evaluation import make_evaluation_predictions
 
-        if y is not None:
-            y = pd.concat([self._y, y], axis=0)
-        else:
+        if y is None:
             y = self._y
+            _y = self._y.copy()
+        else:
+            _y = y.copy()
 
-        y = self._extend_df(y, fh)
+        _y = self._extend_df(_y, fh)
 
-        if isinstance(self.return_time_index(y), pd.RangeIndex):
-            y.index = self.handle_range_index(y.index)
+        self._is_range_index = False
+        if self.check_range_index(y):
+            _y.index = self.handle_range_index(_y.index)
+            self._is_range_index = True
 
-        y = self._convert_to_float(y)
-        dataset = self._get_gluonts_dataset(y)
+        _y = self._convert_to_float(_y)
+        dataset = self._get_gluonts_dataset(_y)
 
         # Forming a list of the forecasting iterations
         forecast_it, _ = make_evaluation_predictions(
             dataset=dataset, predictor=self.model, num_samples=100
         )
-        forecast = self._get_prediction_df(forecast_it, self._df_config)
-        return forecast
+        predictions = self._get_prediction_df(forecast_it, self._df_config)
+
+        if self._is_range_index:
+            timepoints = self.return_time_index(predictions)
+            timepoints = timepoints.to_timestamp()
+            timepoints = (timepoints - pd.Timestamp("2010-01-01")).map(
+                lambda x: x.days
+            ) + self.return_time_index(y)[0]
+            if isinstance(predictions.index, pd.MultiIndex):
+                predictions.index = predictions.index.set_levels(
+                    levels=timepoints.unique(), level=-1
+                )
+                # Convert str type to int
+                predictions.index = predictions.index.map(lambda x: (int(x[0]), x[1]))
+            else:
+                predictions.index = timepoints
+
+        return predictions
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -484,12 +500,54 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         """
         start_date = "2010-01-01"
         if isinstance(index, pd.MultiIndex):
-            n_periods = index.levels[-1].size
+            n_periods = index.get_level_values(1).nunique()
+            panels = index.get_level_values(0).unique()
             datetime_index = pd.date_range(
                 start=start_date, periods=n_periods, freq="D"
             )
-            new_index = index.set_levels(datetime_index, level=-1)
+            new_index = pd.MultiIndex.from_product([panels, datetime_index])
         else:
             n_periods = index.size
             new_index = pd.date_range(start=start_date, periods=n_periods, freq="D")
         return new_index
+
+    def _convert_hierarchical_to_panel(self, df):
+        # Flatten the MultiIndex to a panel type DataFrame
+        data = df.copy()
+        flattened_index = [("*".join(map(str, x[:-1])), x[-1]) for x in data.index]
+        # Create a new MultiIndex with the flattened level and the last level unchanged
+        data.index = pd.MultiIndex.from_tuples(
+            flattened_index, names=["Flattened_Level", data.index.names[-1]]
+        )
+        return data
+
+    def _convert_panel_to_hierarchical(self, df, original_index_names=None):
+        # Store the original index names
+        if original_index_names is None:
+            original_index_names = df.index.names
+
+        # Reset the index to get 'Flattened_Level' as a column
+        data = df.reset_index()
+
+        # Split the 'Flattened_Level' column into multiple columns
+        split_levels = data["Flattened_Level"].str.split("*", expand=True)
+        split_levels.columns = original_index_names[:-1]
+        # Get the names of the split levels as a list of column names
+        index_names = split_levels.columns.tolist()
+
+        # Combine the split levels with the rest of the data
+        data_converted = pd.concat(
+            [split_levels, data.drop(columns=["Flattened_Level"])], axis=1
+        )
+
+        # Get the last index name if it exists, otherwise use a default name
+        last_index_name = (
+            original_index_names[-1]
+            if original_index_names[-1] is not None
+            else "timepoints"
+        )
+
+        # Set the new index with the split levels and the last index name
+        data_converted = data_converted.set_index(index_names + [last_index_name])
+
+        return data_converted
