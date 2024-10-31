@@ -56,7 +56,6 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
         self.forecaster = forecaster
         self.lambda_fixed = lambda_fixed
         self.boxcox_transformer_ = None
-        self._y_name = None
         _DelegatedForecaster._set_delegated_tags(self, forecaster)
         super().__init__()
 
@@ -80,13 +79,17 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
         -------
         self : returns an instance of self.
         """
-        self._y_name = y.name if isinstance(y, pd.Series) else None
-
         self.boxcox_transformer_ = BoxCoxTransformer(lambda_fixed=self.lambda_fixed)
         y_transformed = self.boxcox_transformer_.fit_transform(y)
 
         self.forecaster_ = self.forecaster.clone()
         self.forecaster_.fit(y=y_transformed, X=X, fh=fh)
+
+        if not self.forecaster_.get_tag("capability:pred_int"):
+            raise ValueError(
+                "The wrapped forecaster must support prediction intervals "
+                "(capability:pred_int) to enable bias adjustment."
+            )
 
         return self
 
@@ -102,18 +105,13 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
 
         Returns
         -------
-        y_pred : pd.Series or pd.DataFrame
+        y_pred : pd.Series
             Bias-adjusted point predictions.
         """
         y_pred_transformed = self.forecaster_.predict(fh, X)
         variance = self.forecaster_.predict_var(fh, X)
 
         y_pred = self._apply_bias_adjustment(y_pred_transformed, variance)
-        if isinstance(y_pred, pd.DataFrame) and y_pred.shape[1] > 1:
-            y_pred = y_pred.iloc[:, 0]
-
-        if isinstance(y_pred, pd.Series):
-            y_pred.name = self._y_name
 
         return y_pred
 
