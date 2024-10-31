@@ -68,7 +68,7 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
 
         Parameters
         ----------
-        y : pd.Series or pd.DataFrame
+        y : pd.Series
             Target time series to which to fit the forecaster.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables.
@@ -133,16 +133,37 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
             Prediction intervals.
         """
         pred_int_transformed = self.forecaster_.predict_interval(fh, X, coverage)
+        columns = pred_int_transformed.columns
         variance = self.forecaster_.predict_var(fh, X).squeeze()
 
-        lower_adjusted = self._apply_bias_adjustment(
-            pred_int_transformed.xs("lower", level=2, axis=1), variance
-        )
-        upper_adjusted = self._apply_bias_adjustment(
-            pred_int_transformed.xs("upper", level=2, axis=1), variance
-        )
+        result = pd.DataFrame(0, index=pred_int_transformed.index, columns=columns)
 
-        return pd.concat([lower_adjusted, upper_adjusted], axis=1)
+        coverage_idx = 0
+        var_type_idx = 1
+        coverage_levels = columns.levels[coverage_idx].unique()
+
+        for coverage_level in coverage_levels:
+            level_mask = columns.get_level_values(coverage_idx) == coverage_level
+
+            lower_mask = level_mask & (
+                columns.get_level_values(var_type_idx) == "lower"
+            )
+            if any(lower_mask):
+                lower = pred_int_transformed.loc[:, lower_mask]
+                lower_adjusted = self._apply_bias_adjustment(lower, variance)
+                result.loc[:, lower_mask] = lower_adjusted
+
+            upper_mask = level_mask & (
+                columns.get_level_values(var_type_idx) == "upper"
+            )
+            if any(upper_mask):
+                upper = pred_int_transformed.loc[:, upper_mask]
+                upper_adjusted = self._apply_bias_adjustment(upper, variance)
+                result.loc[:, upper_mask] = upper_adjusted
+
+        result = result.sort_index(axis=1)
+
+        return result
 
     def _apply_bias_adjustment(self, y, variance):
         """Apply bias adjustment for BoxCox Transformations.
@@ -159,18 +180,16 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
         y_adjusted : pd.Series
             Bias-adjusted predictions or prediction intervals.
         """
-        original_index = y.index
-        y = y.reset_index(drop=True)
-        variance = variance.reset_index(drop=True)
-
+        y_values = y.values.reshape(-1, 1)
+        variance_values = variance.values.reshape(-1, 1)
         lmbda = self.boxcox_transformer_.lambda_
 
-        denominator = 2 * (lmbda * y + 1) ** 2
-        adjustment = 1 + (variance * (1 - lmbda)).squeeze() / denominator
+        denominator = 2 * (lmbda * y_values + 1) ** 2
+        adjustment = 1 + (variance_values * (1 - lmbda)) / denominator
+        adjusted_values = inv_boxcox(y_values, lmbda) * adjustment
 
-        adjusted_y = inv_boxcox(y, lmbda) * adjustment
-        adjusted_y.index = original_index
-        return adjusted_y
+        result = pd.Series(adjusted_values.ravel(), index=y.index, name=y.name)
+        return result
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
