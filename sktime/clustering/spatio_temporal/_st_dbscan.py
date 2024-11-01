@@ -57,7 +57,7 @@ class STDBSCAN(BaseClusterer):
     _tags = {
         "maintainers": "vagechirkov",
         "authors": ["eren-ck", "vagechirkov"],
-        "python_dependencies": ["scipy", "sklearn"],
+        "python_dependencies": ["scipy", "scikit-learn"],
         "X_inner_mtype": "numpyflat",
         "capability:multivariate": False,
         "capability:unequal_length": False,
