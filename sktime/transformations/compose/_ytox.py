@@ -9,17 +9,17 @@ from sktime.transformations.base import BaseTransformer
 
 
 class YtoX(BaseTransformer):
-    """Create exogenous features by transforming a copy of the endogenous data.
+    """Create exogeneous features from a copy of the endogenous data.
 
-    Replaces exogenous features (``X``) with the endogenous data (``y``), optionally
-    applying a transformer to ``y`` before using it as exogenous data.
+    Replaces exogeneous features (``X``) with the endogenous data (``y``), optionally
+    applying a transformer to ``y`` before using it as exogeneous data.
 
     To *add* instead of *replace*, use ``FeatureUnion``.
 
     Common use cases include:
 
-    * creating exogenous variables from transformed endogenous variables
-    * creating exogenous data from the index if no exogenous data is available
+    * creating exogeneous variables from transformed endogenous variables
+    * creating exogeneous data from the index, if no exogeneous data is available
     * manual construction of reduction strategies, in combination with ``YfromX``
 
     Parameters
@@ -28,15 +28,14 @@ class YtoX(BaseTransformer):
         If True, subsets the output of ``transform`` to ``X.index``,
         i.e., outputs ``y.loc[X.index]``.
 
-    transformer : object, optional, default=None
-        If provided, this transformer will be applied to the endogenous data (``y``)
-        during the transform step. The transformer must implement the ``fit_transform``
-        allowing transformations like Fourier Exponent features to be added to ``y``
-        before using it as exogenous data.
+    transformer : sktime transformer, or callable optional, default=None
+        If provided, will be applied to the endogenous data (``y``)
+        before moving it to the exogeneous data.
+        If general callable, must implement ``fit_transform``.
 
     Examples
     --------
-    Use case: creating exogenous data from index if no exogenous data is available.
+    Use case: creating exogeneous data from index if no exogeneous data is available.
 
     >>> from sktime.datasets import load_airline
     >>> from sktime.transformations.compose import YtoX
@@ -44,26 +43,21 @@ class YtoX(BaseTransformer):
     >>> from sktime.forecasting.arima import ARIMA
     >>> from sktime.forecasting.compose import ForecastingPipeline
     >>>
-    >>> # data with no exogenous features
+    >>> # data with no exogeneous features
     >>> y = load_airline()
     >>>
     >>> # create a pipeline with Fourier features and ARIMA
     >>> pipe = ForecastingPipeline(
-    ...     [
-    ...             YtoX(
-                        transformer=FourierFeatures(sp_list=[24, 24 * 7],
-                        fourier_terms_list=[10, 5])
-                    ),
-    ...             ARIMA(
-                            order=(1, 1, 1)
-                    )  # doctest: +SKIP,
+    ...             YtoX(),
+    ...             FourierFeatures(sp_list=[24, 24 * 7], fourier_terms_list=[10, 5]),
+    ...             ARIMA(order=(1, 1, 1))  # doctest: +SKIP,
     ...     ]
     ... )  # doctest: +SKIP
     >>>
-    >>> # fit and forecast, using transformed y as exogenous data
+    >>> # fit and forecast, using transformed y as exogeneous data
     >>> pred = pipe.fit_predict(y, fh=[1, 2, 3, 4, 5])  # doctest: +SKIP
 
-    Use case: using lagged endogenous variables as exogenous data.
+    Use case: using lagged endogenous variables as exogeneous data.
 
     >>> from sktime.datasets import load_airline
     >>> from sktime.transformations.compose import YtoX
@@ -71,21 +65,21 @@ class YtoX(BaseTransformer):
     >>> from sktime.transformations.series.impute import Imputer
     >>> from sktime.forecasting.sarimax import SARIMAX
     >>>
-    >>> # data with no exogenous features
+    >>> # data with no exogeneous features
     >>> y = load_airline()
     >>>
-    >>> # create the pipeline with lagged transformer
-    >>> lagged_y_trafo = YtoX(transformer=Lag(1, index_out="original")) * Imputer()
+    >>> # create the pipeline with lagging
+    >>> lagged_y_trafo = YtoX() * Lag(1, index_out="original") * Imputer()
     >>>
     >>> # specify index_out="original" so ARIMA gets a 1-step-ahead forecast
     >>> # use lagged_y_trafo to generate X
     >>> forecaster = lagged_y_trafo ** SARIMAX()  # doctest: +SKIP
     >>>
-    >>> # fit and forecast next value, with lagged y as exogenous data
+    >>> # fit and forecast next value, with lagged y as exogeneous data
     >>> forecaster.fit(y, fh=[1])  # doctest: +SKIP
     >>> y_pred = forecaster.predict()  # doctest: +SKIP
 
-    Use case: using summarized endogenous variables as exogenous data.
+    Use case: using summarized endogenous variables as exogeneous data.
 
     >>> from sktime.datasets import load_airline
     >>> from sktime.transformations.series.summarize import WindowSummarizer
@@ -94,7 +88,7 @@ class YtoX(BaseTransformer):
     >>> from sktime.forecasting.compose import ForecastingPipeline
     >>> from sklearn.ensemble import GradientBoostingRegressor  # doctest: +SKIP
     >>>
-    >>> # data with no exogenous features
+    >>> # data with no exogeneous features
     >>> y = load_airline()
     >>>
     >>> # keyword arguments for WindowSummarizer
@@ -118,12 +112,12 @@ class YtoX(BaseTransformer):
     >>> # create the pipeline
     >>> pipe = ForecastingPipeline(
     ...     steps=[
-    ...         ("ytox", YtoX(transformer=WindowSummarizer(**kwargs))),
+    ...         ("summary_features", YtoX(transformer=WindowSummarizer(**kwargs))),
     ...         ("forecaster", forecaster),
     ...     ]
     ... )  # doctest: +SKIP
     >>>
-    >>> # fit and forecast, with summarized y as exogenous data
+    >>> # fit and forecast, with summarized y as exogeneous data
     >>> preds = pipe.fit_predict(y=y, fh=range(1, 20))  # doctest: +SKIP
     """
 
