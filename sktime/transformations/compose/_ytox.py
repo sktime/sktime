@@ -54,7 +54,7 @@ class YtoX(BaseTransformer):
     ...     ]
     ... )  # doctest: +SKIP
     >>>
-    >>> # fit and forecast, using transformed y as exogenous data
+    >>> # fit and forecast, using Fourier features as exogenous data
     >>> pred = pipe.fit_predict(y, fh=[1, 2, 3, 4, 5])  # doctest: +SKIP
 
     Use case: using lagged endogenous variables as exogenous data.
@@ -68,7 +68,7 @@ class YtoX(BaseTransformer):
     >>> # data with no exogenous features
     >>> y = load_airline()
     >>>
-    >>> # create the pipeline with lagging
+    >>> # create the pipeline with lagged endogenous data as exogenous data
     >>> lagged_y_trafo = YtoX() * Lag(1, index_out="original") * Imputer()
     >>>
     >>> # specify index_out="original" so ARIMA gets a 1-step-ahead forecast
@@ -162,7 +162,11 @@ class YtoX(BaseTransformer):
 
         # Apply the transformer if provided
         if self.transformer is not None:
-            y_transformed = self.transformer.fit_transform(y_transformed)
+            if hasattr(self.transformer, "clone"):
+                transformer = self.transformer.clone()
+            else:
+                transformer = self.transformer
+            y_transformed = transformer.fit_transform(y_transformed)
 
         return y_transformed
 
