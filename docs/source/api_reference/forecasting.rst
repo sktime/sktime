@@ -337,6 +337,14 @@ All "ARIMA" and "Auto-ARIMA" models below include SARIMAX capability.
 
     VARMAX
 
+.. currentmodule:: sktime.forecasting.vecm
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    VECM
+
 Auto-ARIMA models
 ~~~~~~~~~~~~~~~~~
 

@@ -726,8 +726,8 @@ def flatten(obj):
     list or tuple, tuple if obj was tuple, list otherwise
         flat iterable, containing non-list/tuple elements in obj in same order as in obj
 
-    Example
-    -------
+    Examples
+    --------
     >>> flatten([1, 2, [3, (4, 5)], 6])
     [1, 2, 3, 4, 5, 6]
     """
@@ -752,8 +752,8 @@ def unflatten(obj, template):
         has element bracketing exactly as `template`
             and elements in sequence exactly as `obj`
 
-    Example
-    -------
+    Examples
+    --------
     >>> unflatten([1, 2, 3, 4, 5, 6], [6, 3, [5, (2, 4)], 1])
     [1, 2, [3, (4, 5)], 6]
     """
