@@ -21,6 +21,7 @@ This folder contains libraries directly distributed with, and maintained by, `sk
 * `vmdpy` - a package implementing Variational Mode Decomposition.
   Official fork, `vmdpy` is maintained in `sktime` since August 2023.
 
+* `timesfm` - a package implementing TimesFM, adapted from [google-research/timesfm](https://github.com/google-research/timesfm). This is an unofficial fork created to address the lack of recent updates of `timesfm` package on [pypi](https://pypi.org/project/timesfm/) and the instability caused by significant interface changes in recent versions without prior deprecation warnings. The fork has minimal dependencies and focuses on the core features required for compatibility with the `sktime` forecaster.
 
 # Snippets from other libraries:
 
