@@ -2,34 +2,11 @@
 
 import numpy as np
 import pytest
-from sklearn.datasets import make_blobs
 
 from sktime.clustering.spatio_temporal import STDBSCAN
-
-
-def spatio_temporal_data(n_times=3, n_samples=15, cluster_std=0.10, random_state=10):
-    """Generate spatio-temporal data."""
-    centers = np.array([[0, 0], [1, 1], [-1, -1]], dtype=float)
-    X, y_true = make_blobs(
-        n_samples=n_samples,
-        centers=centers,
-        cluster_std=cluster_std,
-        random_state=random_state,
-    )
-    for t in range(n_times - 1):
-        centers += 0.1
-        _X, _y_true = make_blobs(
-            n_samples=n_samples,
-            centers=centers,
-            cluster_std=cluster_std,
-            random_state=random_state,
-        )
-        X = np.vstack((X, _X))
-        y_true = np.hstack((y_true, _y_true))
-    # add time column
-    time = np.arange(n_times).repeat(n_samples)
-    X = np.column_stack([time, X])
-    return X, y_true
+from sktime.clustering.utils.toy_data_generation._make_moving_blobs import (
+    make_moving_blobs,
+)
 
 
 @pytest.mark.parametrize(
@@ -38,7 +15,7 @@ def spatio_temporal_data(n_times=3, n_samples=15, cluster_std=0.10, random_state
 )
 def test_st_dbscan(n_times, sparse_matrix_threshold, n_jobs):
     """Test implementation of spatio-temporal DBSCAN."""
-    X, y_true = spatio_temporal_data(n_times=n_times)
+    X, y_true = make_moving_blobs(n_times=n_times)
 
     st_dbscan = STDBSCAN(
         eps1=0.5,
