@@ -136,12 +136,16 @@ class STDBSCAN(BaseClusterer):
 
                 # compute with sparse matrices
                 # Compute sparse matrix for spatial distance
-                nn_spatial = NearestNeighbors(metric=self.metric, radius=self.eps1)
+                nn_spatial = NearestNeighbors(
+                    metric=self.metric, radius=self.eps1, n_jobs=self.n_jobs
+                )
                 nn_spatial.fit(X[:, 1:])
                 euc_sp = nn_spatial.radius_neighbors_graph(X[:, 1:], mode="distance")
 
                 # Compute sparse matrix for temporal distance
-                nn_time = NearestNeighbors(metric=self.metric, radius=self.eps2)
+                nn_time = NearestNeighbors(
+                    metric=self.metric, radius=self.eps2, n_jobs=self.n_jobs
+                )
                 nn_time.fit(X[:, 0].reshape(n, 1))
                 time_sp = nn_time.radius_neighbors_graph(
                     X[:, 0].reshape(n, 1), mode="distance"

@@ -33,9 +33,10 @@ def spatio_temporal_data(n_times=3, n_samples=15, cluster_std=0.10, random_state
 
 
 @pytest.mark.parametrize(
-    "n_times,sparse_matrix_threshold", [(3, 2000), (20, 2000), (3, 10), (20, 10)]
+    "n_times,sparse_matrix_threshold,n_jobs",
+    [(3, 2000, -1), (20, 2000, None), (3, 10, 1), (3, 10, -1), (20, 10, None)],
 )
-def test_st_dbscan(n_times, sparse_matrix_threshold):
+def test_st_dbscan(n_times, sparse_matrix_threshold, n_jobs):
     """Test implementation of spatio-temporal DBSCAN."""
     X, y_true = spatio_temporal_data(n_times=n_times)
 
@@ -44,7 +45,7 @@ def test_st_dbscan(n_times, sparse_matrix_threshold):
         eps2=3,
         min_samples=5,
         metric="euclidean",
-        n_jobs=1,
+        n_jobs=n_jobs,
         sparse_matrix_threshold=sparse_matrix_threshold,
     )
     st_dbscan.fit(X)
