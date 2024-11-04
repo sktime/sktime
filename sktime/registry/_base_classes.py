@@ -261,11 +261,11 @@ class regressor(_BaseScitypeOfObject):
         return BaseRegressor
 
 
-class detection(_BaseScitypeOfObject):
+class detector(_BaseScitypeOfObject):
     """Time series annotator."""
 
     _tags = {
-        "scitype_name": "detection",
+        "scitype_name": "detector",
         "short_descr": "time series annotator",
         "parent_scitype": "estimator",
     }

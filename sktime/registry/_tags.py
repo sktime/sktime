@@ -1830,13 +1830,13 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "task",
-        "detection",
+        "detector",
         "str",
         "subtype of series annotator, e.g., 'anomaly_detection', 'segmentation'",
     ),
     (
         "learning_type",
-        "detection",
+        "detector",
         "str",
         "type of learning, e.g., 'supervised', 'unsupervised'",
     ),

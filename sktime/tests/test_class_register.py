@@ -60,7 +60,7 @@ def get_test_class_registry():
     testclass_dict["global_forecaster"] = TestAllGlobalForecasters
     testclass_dict["param_est"] = TestAllParamFitters
     testclass_dict["regressor"] = TestAllRegressors
-    testclass_dict["detection"] = TestAllAnnotators
+    testclass_dict["detector"] = TestAllAnnotators
     testclass_dict["splitter"] = TestAllSplitters
     testclass_dict["transformer"] = TestAllTransformers
     testclass_dict["transformer-pairwise"] = TestAllPairwiseTransformers
