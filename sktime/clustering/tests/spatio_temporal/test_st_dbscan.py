@@ -1,12 +1,13 @@
 """Tests for spatio-temporal DBSCAN."""
 
 import numpy as np
+import pytest
 from sklearn.datasets import make_blobs
 
 from sktime.clustering.spatio_temporal import STDBSCAN
 
 
-def spatio_temporal_data(n_times=3, n_samples=15, cluster_std=0.20, random_state=10):
+def spatio_temporal_data(n_times=3, n_samples=15, cluster_std=0.10, random_state=10):
     """Generate spatio-temporal data."""
     centers = np.array([[0, 0], [1, 1], [-1, -1]], dtype=float)
     X, y_true = make_blobs(
@@ -31,11 +32,21 @@ def spatio_temporal_data(n_times=3, n_samples=15, cluster_std=0.20, random_state
     return X, y_true
 
 
-def test_st_dbscan():
+@pytest.mark.parametrize(
+    "n_times,sparse_matrix_threshold", [(3, 2000), (20, 2000), (3, 10), (20, 10)]
+)
+def test_st_dbscan(n_times, sparse_matrix_threshold):
     """Test implementation of spatio-temporal DBSCAN."""
-    X, y_true = spatio_temporal_data()
+    X, y_true = spatio_temporal_data(n_times=n_times)
 
-    st_dbscan = STDBSCAN(eps1=0.5, eps2=3, min_samples=5, metric="euclidean", n_jobs=1)
+    st_dbscan = STDBSCAN(
+        eps1=0.5,
+        eps2=3,
+        min_samples=5,
+        metric="euclidean",
+        n_jobs=1,
+        sparse_matrix_threshold=sparse_matrix_threshold,
+    )
     st_dbscan.fit(X)
     y_pred = st_dbscan.labels_
 
