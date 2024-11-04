@@ -52,6 +52,18 @@ class STDBSCAN(BaseClusterer):
     .. [2] Cakmak, E., Plank, M., Calovi, D. S., Jordan, A., & Keim, D. "Spatio-temporal
        clustering benchmark for collective animal behavior." ACM, Nov. 2021, pp. 5-8.
        doi: [10.1145/3486637.3489487](https://doi.org/10.1145/3486637.3489487).
+
+    Examples
+    --------
+    >>> from sktime.clustering.spatio_temporal import STDBSCAN
+    >>> from sktime.clustering.utils.toy_data_generation._make_moving_blobs import (
+    ... make_moving_blobs)
+    >>> X, y_true = make_moving_blobs(n_times=20)
+    >>> st_dbscan = STDBSCAN(
+    ...     eps1=0.5, eps2=3, min_samples=5, metric="euclidean", n_jobs=-1
+    ... )
+    >>> st_dbscan.fit(X)
+    >>> predicted_labels = st_dbscan.labels_
     """
 
     _tags = {
