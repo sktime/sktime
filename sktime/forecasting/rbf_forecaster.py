@@ -20,6 +20,24 @@ class RBFForecaster(BaseForecaster):
     higher-dimensional space, which is then used by neural network layers for
     forecasting.
 
+    The model structure is as follows:
+
+    1. Input layer:
+       - Takes in the input time series data of shape (batch_size, window_length)
+    2. RBF Layer:
+       - Applies Radial Basis Function (RBF) transformation to the input features
+       - Uses centers and gamma parameter to control the spread of the RBFs
+       - Expands the input feature space into a higher-dimensional representation
+       - Output shape: (batch_size, hidden_size)
+    3. Sequential layers:
+       - One or more fully connected linear layers
+       - Each linear layer uses the LazyLinear module, which initializes the weights
+         based on the input size
+       - ReLU activation is applied after each linear layer
+       - Dropout with a rate of 0.1 is applied after each linear layer
+       - The final linear layer produces the output prediction
+       - Output shape: (batch_size, 1)
+
     Parameters
     ----------
     window_length : int
@@ -110,7 +128,6 @@ class RBFForecaster(BaseForecaster):
         self._use_cuda_actual = self.use_cuda and self._cuda_available
         self.device = torch.device("cuda" if self._use_cuda_actual else "cpu")
 
-        self._is_fitted = False
         self.model = None
         self.scaler = StandardScaler()
 
@@ -198,7 +215,6 @@ class RBFForecaster(BaseForecaster):
                 optimizer.step()
                 total_loss += loss.item()
 
-        self._is_fitted = True
         return self
 
     def _predict(self, fh, X=None):
@@ -212,9 +228,6 @@ class RBFForecaster(BaseForecaster):
             Additional exogenous data (not used).
         """
         import torch
-
-        if not self._is_fitted:
-            raise ValueError("Forecaster must be fitted before predicting.")
 
         fh_abs = fh.to_absolute(self._y.index[-1]).to_numpy()
         n_steps = len(fh_abs)
