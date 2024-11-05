@@ -6,14 +6,14 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
-from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base.adapters._pytorch import BaseDeepNetworkPyTorch
 from sktime.transformations.series.basisfunction import RBFTransformer
 from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("torch", severity="warning")
 
 
-class RBFForecaster(BaseForecaster):
+class RBFForecaster(BaseDeepNetworkPyTorch):
     r"""Forecasting model using RBF transformations and 'NN' layers for time series.
 
     This forecaster uses an RBF layer to transform input time series data into a
@@ -64,7 +64,7 @@ class RBFForecaster(BaseForecaster):
         Number of training epochs.
     stride : int, optional (default=1)
         Step size between windows.
-    loss_fn : {"mse", "l1", "poisson", "bce", "crossentropy"}
+    criterion : {"mse", "l1", "poisson", "bce", "crossentropy"}
                optional (default="mse")
         Loss function to use during training.
     use_cuda : bool, optional (default=False)
@@ -100,7 +100,7 @@ class RBFForecaster(BaseForecaster):
         lr=0.01,
         epochs=100,
         stride=1,
-        loss_fn="mse",
+        criterion="mse",
         use_cuda=False,
     ):
         super().__init__()
@@ -118,7 +118,7 @@ class RBFForecaster(BaseForecaster):
         self.lr = lr
         self.epochs = epochs
         self.stride = stride
-        self.loss_fn = loss_fn
+        self.criterion = criterion
 
         self.use_cuda = use_cuda
 
@@ -140,6 +140,24 @@ class RBFForecaster(BaseForecaster):
                 "Instructions can be found at https://pytorch.org/get-started/locally/"
             )
 
+    def build_network(self, input_size):
+        """Build the RBF network architecture."""
+        LazyLinear = self._create_lazy_linear()
+        RBFLayer = self._create_rbf_layer()
+
+        RBFNetwork = self._create_rbf_network(LazyLinear, RBFLayer)
+        output_size = 1
+
+        self.model = RBFNetwork(
+            input_size=input_size,
+            hidden_size=self.hidden_size,
+            output_size=output_size,
+            centers=self.centers,
+            gamma=self.gamma,
+            rbf_type=self.rbf_type,
+            linear_layers=self.linear_layers,
+        ).to(self.device)
+
     def _fit(self, y, X=None, fh=None):
         """Fit the RBF-based model to the provided time series data.
 
@@ -155,58 +173,32 @@ class RBFForecaster(BaseForecaster):
         import torch
         from torch.utils.data import DataLoader, TensorDataset
 
-        LazyLinear = self._create_lazy_linear()
-        RBFLayer = self._create_rbf_layer()
-        RBFNetwork = self._create_rbf_network(LazyLinear, RBFLayer)
-
         self._y = y.copy()
-
         if isinstance(y, pd.Series):
             y_scaled = self.scaler.fit_transform(y.values.reshape(-1, 1))
         else:
             y_scaled = self.scaler.fit_transform(y.values)
 
         X_train, y_train = self._create_windows(y_scaled)
-
-        if len(X_train) == 0:
-            raise ValueError(
-                f"Not enough samples to create training windows. "
-                f"Try reducing window_length (currently {self.window_length}) "
-                f"or stride (currently {self.stride})."
-            )
-
         X_tensor = torch.FloatTensor(X_train).to(self.device)
         y_tensor = torch.FloatTensor(y_train).to(self.device)
 
         dataset = TensorDataset(X_tensor, y_tensor)
-        dataloader = DataLoader(
-            dataset, batch_size=min(self.batch_size, len(X_train)), shuffle=True
-        )
+        dataloader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True)
 
         input_size = self.window_length
-        output_size = 1
+        self.build_network(input_size)
 
-        self.model = RBFNetwork(
-            input_size=input_size,
-            hidden_size=self.hidden_size,
-            output_size=output_size,
-            centers=self.centers,
-            gamma=self.gamma,
-            rbf_type=self.rbf_type,
-            linear_layers=self.linear_layers,
-        ).to(self.device)
-
-        criterion = self._create_loss_fn()
-
-        self.model.train()
+        criterion = self._instantiate_criterion()
         optimizer = None
 
+        self.model.train()
         for epoch in range(self.epochs):
             total_loss = 0
-            for batch_idx, (batch_X, batch_y) in enumerate(dataloader):
+            for batch_X, batch_y in dataloader:
                 if optimizer is None:
                     _ = self.model(batch_X)
-                    optimizer = self._create_optimizer()
+                    optimizer = self._instantiate_optimizer()
 
                 optimizer.zero_grad()
                 outputs = self.model(batch_X)
@@ -234,13 +226,7 @@ class RBFForecaster(BaseForecaster):
         predictions = np.zeros(n_steps)
 
         last_window = self._y[-self.window_length :].copy()
-
-        if isinstance(last_window, pd.Series):
-            last_values = last_window.values.reshape(-1, 1)
-        else:
-            last_values = last_window.values
-
-        current_window = self.scaler.transform(last_values)
+        current_window = self.scaler.transform(last_window.values.reshape(-1, 1))
 
         self.model.eval()
         with torch.no_grad():
@@ -249,15 +235,11 @@ class RBFForecaster(BaseForecaster):
                     self.device
                 )
                 pred_scaled = self.model(X_predict).cpu().numpy()
-
                 pred = self.scaler.inverse_transform(pred_scaled.reshape(1, -1))
                 predictions[i] = pred.ravel()[0]
 
                 current_window = np.roll(current_window, -1, axis=0)
                 current_window[-1] = pred_scaled.ravel()[0]
-
-        if hasattr(fh_abs, "dtype") and str(fh_abs.dtype).startswith("period"):
-            fh_abs = pd.PeriodIndex(fh_abs).to_timestamp()
 
         return pd.Series(predictions, index=fh_abs, name=self._y.name)
 
@@ -534,31 +516,15 @@ class RBFForecaster(BaseForecaster):
 
         return X[:i], y_out[:i]
 
-    def _create_optimizer(self):
-        """Initialize optimizer based on the specified optimizer type.
-
-        Returns
-        -------
-        torch.optim.Optimizer
-            Configured optimizer instance.
-        """
+    def _instantiate_optimizer(self):
         from torch.optim import SGD, Adam, RMSprop
 
         optimizers = {"adam": Adam, "sgd": SGD, "rmsprop": RMSprop}
         if self.optimizer.lower() not in optimizers:
             raise ValueError(f"Unsupported optimizer: {self.optimizer}")
-        return optimizers[self.optimizer.lower()](
-            filter(lambda p: p.requires_grad, self.model.parameters()), lr=self.lr
-        )
+        return optimizers[self.optimizer.lower()](self.model.parameters(), lr=self.lr)
 
-    def _create_loss_fn(self):
-        """Initialize loss function based on the specified type.
-
-        Returns
-        -------
-        nn.Module
-            Loss function instance.
-        """
+    def _instantiate_criterion(self):
         import torch.nn as nn
 
         loss_fns = {
@@ -568,9 +534,9 @@ class RBFForecaster(BaseForecaster):
             "bce": nn.BCELoss,
             "crossentropy": nn.CrossEntropyLoss,
         }
-        if self.loss_fn.lower() not in loss_fns:
-            raise ValueError(f"Unsupported Loss Function: {self.loss_fn}")
-        return loss_fns[self.loss_fn.lower()]()
+        if self.criterion.lower() not in loss_fns:
+            raise ValueError(f"Unsupported Loss Function: {self.criterion}")
+        return loss_fns[self.criterion.lower()]()
 
     @classmethod
     def get_test_params(cls):
@@ -606,7 +572,7 @@ class RBFForecaster(BaseForecaster):
                 "lr": 0.005,
                 "stride": 2,
                 "optimizer": "adam",
-                "loss_fn": "mse",
+                "criterion": "mse",
                 "use_cuda": True,
             },
         ]
