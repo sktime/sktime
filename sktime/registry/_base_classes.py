@@ -261,11 +261,11 @@ class regressor(_BaseScitypeOfObject):
         return BaseRegressor
 
 
-class detector(_BaseScitypeOfObject):
+class detector(_BaseScitypeOfObject):  # todo 0.37.0: remove series-annotator
     """Time series annotator."""
 
     _tags = {
-        "scitype_name": "detector",
+        "scitype_name": "detector",  # todo 0.37.0: remove series-annotator
         "short_descr": "time series annotator",
         "parent_scitype": "estimator",
     }
