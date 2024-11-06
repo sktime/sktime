@@ -26,7 +26,7 @@ class STDBSCAN(BaseClusterer):
     eps1 : float, default=0.5
         Maximum spatial distance for points to be considered related.
     eps2 : float, default=10
-        Maximum temporal distance for points to be considered related.
+        Maximum temporal distance for points to be considered related [1].
     min_samples : int, default=5
         Minimum number of samples to form a core point.
     metric : str, default='euclidean'
@@ -36,6 +36,12 @@ class STDBSCAN(BaseClusterer):
         Sets the limit on the number of samples for which the algorithm can
         efficiently compute distances with a full matrix approach. Datasets
         exceeding this threshold will be handled using sparse matrix methods.
+    frame_size : float or None, default=None
+        If not None the dataset is split into frames [2, 3];
+        The frame_size is the number of time points in a frame.
+    frame_overlap : float or None, default=eps2
+        If frame_size is set - there will be an overlap between the frames
+        to merge the clusters afterward [2, 3]; Only used if frame_size is not None.
     n_jobs : int or None, default=-1
         Number of parallel jobs for distance computation; -1 uses all cores.
 
@@ -49,7 +55,10 @@ class STDBSCAN(BaseClusterer):
     .. [1] Birant, D., & Kut, A. "ST-DBSCAN: An algorithm for clustering
        spatial-temporal data." Data Knowl. Eng., vol. 60, no. 1, pp. 208-221, Jan. 2007,
        doi: [10.1016/j.datak.2006.01.013](https://doi.org/10.1016/j.datak.2006.01.013).
-    .. [2] Cakmak, E., Plank, M., Calovi, D. S., Jordan, A., & Keim, D. "Spatio-temporal
+    .. [2] I. Peca, G. Fuchs, K. Vrotsou, N. Andrienko, and G. Andrienko, “Scalable
+       Cluster Analysis of Spatial Events,” 2012, The Eurographics Association. doi:
+       [10.2312/PE/EUROVAST/EUROVA12/019-023](https://doi.org/10.2312/PE/EUROVAST/EUROVA12/019-023).
+    .. [3] Cakmak, E., Plank, M., Calovi, D. S., Jordan, A., & Keim, D. "Spatio-temporal
        clustering benchmark for collective animal behavior." ACM, Nov. 2021, pp. 5-8.
        doi: [10.1145/3486637.3489487](https://doi.org/10.1145/3486637.3489487).
 
@@ -89,6 +98,8 @@ class STDBSCAN(BaseClusterer):
         min_samples=5,
         metric="euclidean",
         sparse_matrix_threshold=20_000,
+        frame_size=None,
+        frame_overlap=None,
         n_jobs=-1,
     ):
         self.eps1 = eps1
@@ -96,8 +107,11 @@ class STDBSCAN(BaseClusterer):
         self.min_samples = min_samples
         self.metric = metric
         self.sparse_matrix_threshold = sparse_matrix_threshold
+        self.frame_size = frame_size
+        self.frame_overlap = frame_overlap
         self.n_jobs = n_jobs
         self.dbscan_ = None
+
         super().__init__()
 
     def _fit(self, X, y=None):
@@ -121,68 +135,152 @@ class STDBSCAN(BaseClusterer):
             Fitted instance with cluster labels.
         """
         if not self.eps1 > 0.0 or not self.eps2 > 0.0 or not self.min_samples > 0.0:
-            raise ValueError("eps1, eps2, minPts must be positive")
+            raise ValueError("eps1, eps2, min_samples  must be positive")
 
         self._X = X
 
+        if self.frame_size is not None:
+            if self.frame_overlap is None:
+                self.frame_overlap = self.eps2
+            if (
+                not self.frame_size > 0.0
+                or not self.frame_overlap > 0.0
+                or self.frame_size < self.frame_overlap
+            ):
+                raise ValueError("frame_size, frame_overlap not correctly configured.")
+            return self._fit_frame_split(X)
+        else:
+            self._fit_one_frame(X)
+            for key in self.DELEGATED_FITTED_PARAMS:
+                if hasattr(self.dbscan_, key):
+                    setattr(self, key, getattr(self.dbscan_, key))
+
+        return self
+
+    def _fit_one_frame(self, X):
+        if len(X) < self.sparse_matrix_threshold:
+            self._fit_dense(X)
+        else:
+            self._fit_sparse(X)
+
+    def _fit_dense(self, X):
+        """Fit the dense distance matrix version of the ST-DBSCAN algorithm."""
         n, m = X.shape
 
-        if len(X) < self.sparse_matrix_threshold:
-            # compute with quadratic memory consumption
+        # Compute squared form Distance Matrix
+        time_dist = pdist(X[:, 0].reshape(n, 1), metric=self.metric)
+        spatial_dist = pdist(X[:, 1:], metric=self.metric)
 
-            # Compute squared form Distance Matrix
-            time_dist = pdist(X[:, 0].reshape(n, 1), metric=self.metric)
-            spatial_dist = pdist(X[:, 1:], metric=self.metric)
+        # filter the spatial_dist matrix using the time_dist
+        dist = np.where(time_dist <= self.eps2, spatial_dist, 2 * self.eps1)
 
-            # filter the spatial_dist matrix using the time_dist
-            dist = np.where(time_dist <= self.eps2, spatial_dist, 2 * self.eps1)
+        self.dbscan_ = DBSCAN(
+            eps=self.eps1, min_samples=self.min_samples, metric="precomputed"
+        )
+        self.dbscan_.fit(squareform(dist))
+
+    def _fit_sparse(self, X):
+        """Fit the sparse distance matrix version of the ST-DBSCAN algorithm."""
+        n, m = X.shape
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+
+            # compute with sparse matrices
+            # Compute sparse matrix for spatial distance
+            nn_spatial = NearestNeighbors(
+                metric=self.metric, radius=self.eps1, n_jobs=self.n_jobs
+            )
+            nn_spatial.fit(X[:, 1:])
+            euc_sp = nn_spatial.radius_neighbors_graph(X[:, 1:], mode="distance")
+
+            # Compute sparse matrix for temporal distance
+            nn_time = NearestNeighbors(
+                metric=self.metric, radius=self.eps2, n_jobs=self.n_jobs
+            )
+            nn_time.fit(X[:, 0].reshape(n, 1))
+            time_sp = nn_time.radius_neighbors_graph(
+                X[:, 0].reshape(n, 1), mode="distance"
+            )
+
+            # combine both sparse matrices and filter by time distance matrix
+            row = time_sp.nonzero()[0]
+            column = time_sp.nonzero()[1]
+            v = np.array(euc_sp[row, column])[0]
+
+            # create sparse distance matrix
+            dist_sp = coo_matrix((v, (row, column)), shape=(n, n))
+            dist_sp = dist_sp.tocsc()
+            dist_sp.eliminate_zeros()
 
             self.dbscan_ = DBSCAN(
                 eps=self.eps1, min_samples=self.min_samples, metric="precomputed"
             )
-            self.dbscan_.fit(squareform(dist))
+            self.dbscan_.fit(dist_sp)
 
-        else:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
+    def _fit_frame_split(self, X):
+        """Apply the ST-DBSCAN algorithm with splitting it into frames.
 
-                # compute with sparse matrices
-                # Compute sparse matrix for spatial distance
-                nn_spatial = NearestNeighbors(
-                    metric=self.metric, radius=self.eps1, n_jobs=self.n_jobs
+        References
+        ----------
+        .. [1] I. Peca, G. Fuchs, K. Vrotsou, N. Andrienko, and G. Andrienko, “Scalable
+           Cluster Analysis of Spatial Events,” 2012, The Eurographics Association. doi:
+           [10.2312/PE/EUROVAST/EUROVA12/019-023](https://doi.org/10.2312/PE/EUROVAST/EUROVA12/019-023).
+        """
+        # unique time points
+        time = np.unique(X[:, 0])
+        labels = None
+        right_overlap = 0
+        step = int(self.frame_size - self.frame_overlap + 1)
+
+        for i in range(0, len(time), step):
+            for period in [time[i : i + self.frame_size]]:
+                frame = X[np.isin(X[:, 0], period)]
+
+                self._fit_one_frame(frame)
+
+                # Match the labels in the overlapped zone.
+                # Objects in the second frame are relabeled
+                # to match the cluster ID from the first frame.
+                if labels is None:
+                    labels = self.dbscan_.labels_
+                else:
+                    frame_1_overlap_labels = labels[len(labels) - right_overlap :]
+                    frame_2_overlap_labels = self.dbscan_.labels_[0:right_overlap]
+
+                    mapper = {}
+                    for i1, i2 in zip(frame_1_overlap_labels, frame_2_overlap_labels):
+                        mapper[i2] = i1
+                    mapper[-1] = -1  # avoiding outliers being mapped to cluster
+
+                    # clusters without overlapping points are given new cluster
+                    ignore_clusters = set(self.dbscan_.labels_) - set(
+                        frame_2_overlap_labels
+                    )
+                    # recode them to new cluster value
+                    if -1 in labels:
+                        labels_counter = len(set(labels)) - 1
+                    else:
+                        labels_counter = len(set(labels))
+
+                    for j in ignore_clusters:
+                        mapper[j] = labels_counter
+                        labels_counter += 1
+
+                    # Relabel objects in the second frame to match the cluster ID from
+                    # the first frame.
+                    # Assign new clusters to objects in clusters without overlap
+                    new_labels = np.array([mapper[j] for j in self.dbscan_.labels_])
+
+                    # delete the right overlap
+                    labels = labels[0 : len(labels) - right_overlap]
+                    # change the labels of the new clustering and concat
+                    labels = np.concatenate((labels, new_labels))
+
+                right_overlap = len(
+                    X[np.isin(X[:, 0], period[-self.frame_overlap + 1 :])]
                 )
-                nn_spatial.fit(X[:, 1:])
-                euc_sp = nn_spatial.radius_neighbors_graph(X[:, 1:], mode="distance")
-
-                # Compute sparse matrix for temporal distance
-                nn_time = NearestNeighbors(
-                    metric=self.metric, radius=self.eps2, n_jobs=self.n_jobs
-                )
-                nn_time.fit(X[:, 0].reshape(n, 1))
-                time_sp = nn_time.radius_neighbors_graph(
-                    X[:, 0].reshape(n, 1), mode="distance"
-                )
-
-                # combine both sparse matrices and filter by time distance matrix
-                row = time_sp.nonzero()[0]
-                column = time_sp.nonzero()[1]
-                v = np.array(euc_sp[row, column])[0]
-
-                # create sparse distance matrix
-                dist_sp = coo_matrix((v, (row, column)), shape=(n, n))
-                dist_sp = dist_sp.tocsc()
-                dist_sp.eliminate_zeros()
-
-                self.dbscan_ = DBSCAN(
-                    eps=self.eps1, min_samples=self.min_samples, metric="precomputed"
-                )
-                self.dbscan_.fit(dist_sp)
-
-        for key in self.DELEGATED_FITTED_PARAMS:
-            if hasattr(self.dbscan_, key):
-                setattr(self, key, getattr(self.dbscan_, key))
-
-        return self
+        self.labels_ = labels
 
     def _predict(self, X, y=None):
         """Predict the closest cluster each sample in X belongs to.

@@ -22,14 +22,45 @@ def test_st_dbscan(n_times, sparse_matrix_threshold, n_jobs):
         eps2=3,
         min_samples=5,
         metric="euclidean",
-        n_jobs=n_jobs,
+        frame_size=None,
+        frame_overlap=None,
         sparse_matrix_threshold=sparse_matrix_threshold,
+        n_jobs=n_jobs,
     )
     st_dbscan.fit(X)
     y_pred = st_dbscan.labels_
 
     assert len(np.unique(y_pred)) == 3
 
+    # rename y_pred labels to match y_true
+    y_pred_renamed = y_pred.copy()
+    y_pred_renamed[y_pred == 0] = 1
+    y_pred_renamed[y_pred == 1] = 2
+    y_pred_renamed[y_pred == 2] = 0
+    assert np.all(y_pred_renamed == y_true)
+
+
+@pytest.mark.parametrize(
+    "n_times,frame_size,frame_overlap",
+    [(40, 40, 5), (40, 10, 5), (40, 20, 10), (20, 10, None)],
+)
+def test_st_dbsacan_frame_split(n_times, frame_size, frame_overlap):
+    X, y_true = make_moving_blobs(n_times=40)
+
+    st_dbscan = STDBSCAN(
+        eps1=0.5,
+        eps2=3,
+        min_samples=5,
+        frame_size=20,
+        frame_overlap=5,
+        n_jobs=None,
+    )
+
+    st_dbscan.fit(X)
+
+    y_pred = st_dbscan.labels_
+
+    assert len(np.unique(y_pred)) == 3
     # rename y_pred labels to match y_true
     y_pred_renamed = y_pred.copy()
     y_pred_renamed[y_pred == 0] = 1
