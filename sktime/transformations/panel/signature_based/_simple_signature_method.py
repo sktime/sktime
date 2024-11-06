@@ -6,12 +6,29 @@ import pandas as pd
 from sktime.transformations.base import BaseTransformer
 
 
-class SignatureMomentsTransformer(BaseTransformer):
+class SignatureMoments(BaseTransformer):
     """Signature Moments Transformer for multivariate time series.
 
-    Computes discrete approximations of signature features for multivariate 
-    time series, based on moments of combinations of dimensions. This is not 
-    exactly the full path signature but captures important statistical moments.
+    Computes time ordered signature moments for uni- and multivariate time series.
+
+    Pipelining ``Differencer() * SignatureMoments()`` can be used to
+    obtain the discrete path signature.
+
+    For a degree ``d``, the columns of the ``transform`` output are
+    strings corresponding to strings of length ``d`` over the alphabet
+    ``{0, ..., n_channels - 1}``, where ``n_channels`` is the number of
+    variables in the time series, and the character ``i`` represents the
+    ``i``-th variable.
+
+    If ``use_index=True``, the time index is included as an additional
+    dimension, and is represented by the character ``I``.
+
+    For a time series :math:`X` with ``n_channels`` variables, the signature moment
+    for a string :math:`s = i_1 i_2 ... i_d` is the mean of the products
+
+    .. math:: X_{i_1}(t_1) X_{i_2}(t_2) ... X_{i_d}(t_d)
+
+    where :math:`t_1 < t_2 < ... < t_d` are the time indices.
 
     Parameters
     ----------
@@ -25,13 +42,6 @@ class SignatureMomentsTransformer(BaseTransformer):
     ----------
     signature_features_: list of str
         The list of signature feature names, based on combinations of dimensions.
-
-    Notes
-    -----
-    The features computed here are not the full path signature, which would
-    typically involve pipelining with first differences. Instead, we compute
-    moments based on combinations of data dimensions. This is a discrete
-    approximation of signature features.
     """
 
     _tags = {
@@ -51,10 +61,6 @@ class SignatureMomentsTransformer(BaseTransformer):
         self.signature_features_ = []
         super().__init__()
 
-    def _fit(self, X, y=None):
-        """No fitting required for this transformer."""
-        return self
-
     def _transform(self, X, y=None):
         """Compute the signature features for the input time series."""
         n_instances, n_channels, n_timepoints = X.shape
@@ -62,7 +68,7 @@ class SignatureMomentsTransformer(BaseTransformer):
         if self.use_index:
             index = np.arange(n_timepoints).reshape(1, -1)
             X = np.concatenate((X, index[np.newaxis, :, :]), axis=1)
-            n_channels += 1 
+            n_channels += 1
 
         signature_matrix = []
         for instance_idx in range(n_instances):
@@ -118,7 +124,7 @@ class SignatureMomentsTransformer(BaseTransformer):
                 total_len += len(upper_triangular)
                 total_sum += np.sum(upper_triangular)
 
-            data_mean = total_sum/total_len
+            data_mean = total_sum / total_len
 
             return data_mean
         else:
