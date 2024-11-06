@@ -25,19 +25,32 @@ class SignatureMoments(BaseTransformer):
     dimension, and is represented by the character ``[n_channels]``.
 
     For a time series :math:`X` with ``n_channels`` variables, the signature moment
-    for a string :math:`s = i_1 i_2 ... i_d` is the mean of the products
+    for a string :math:`s = i_1 i_2 ... i_d` is the arithmetic mean of the products
 
     .. math:: X_{i_1}(t_1) X_{i_2}(t_2) ... X_{i_d}(t_d)
 
     where :math:`t_1 < t_2 < ... < t_d` are the time indices.
+
+    If ``normalize_prod=True``, the signature moment is computed as the arithmetic
+    mean of the geometric means instead, i.e., of
+
+    .. math:: (X_{i_1}(t_1) X_{i_2}(t_2) ... X_{i_d}(t_d))^{1/d}
+
+    This ensures that all signature moments are of the same unit as the input data.
 
     Parameters
     ----------
     degree: int, default=2
         The maximum length of the string-based signature elements to include.
         Degree can be upto 3.
+
     use_index: bool, default=True
         Whether to include the time index as an additional dimension.
+
+    normalize_prod: bool, default=False
+        If True, uses geometric mean instead of product for the signature moment,
+        see above for formula.
+        If False, uses product.
 
     Attributes
     ----------
@@ -64,9 +77,10 @@ class SignatureMoments(BaseTransformer):
         "fit_is_empty": True,
     }
 
-    def __init__(self, degree=2, use_index=True):
+    def __init__(self, degree=2, use_index=True, normalize_prod=False):
         self.degree = degree
         self.use_index = use_index
+        self.normalize_prod = normalize_prod
         self.signature_features_ = []
         super().__init__()
 
@@ -83,6 +97,9 @@ class SignatureMoments(BaseTransformer):
         instance_data = X.T
         signature_row = self._compute_signature(instance_data)
         signature_matrix.append(signature_row)
+
+        if self.normalize_prod:
+            signature_matrix = np.power(signature_matrix, 1 / self.degree)
 
         return pd.DataFrame(signature_matrix, columns = self.signature_features_)
 
@@ -159,5 +176,5 @@ class SignatureMoments(BaseTransformer):
         """
         params0 = {"degree": 1, "use_index": True}
         params1 = {"degree": 3, "use_index": False}
-        params2 = {"degree": 2, "use_index": True}
+        params2 = {"degree": 2, "use_index": True, "normalize_prod": True}
         return [params0, params1, params2]
