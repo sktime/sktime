@@ -42,6 +42,14 @@ class SignatureMoments(BaseTransformer):
     ----------
     signature_features_: list of str
         The list of signature feature names, based on combinations of dimensions.
+
+    Examples
+    --------
+    >>> from sktime.transformations.series.signature import SignatureMoments
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> transformer = SignatureMoments(degree=2, use_index=True)
+    >>> Xt = transformer.fit_transform(y)
     """
 
     _tags = {
