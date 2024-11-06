@@ -1,6 +1,10 @@
-from sktime.transformations.base import BaseTransformer
+"""Signature moment transformer."""
+
 import numpy as np
-import pandas as pd 
+import pandas as pd
+
+from sktime.transformations.base import BaseTransformer
+
 
 class SignatureMomentsTransformer(BaseTransformer):
     """Signature Moments Transformer for multivariate time series.
@@ -24,9 +28,9 @@ class SignatureMomentsTransformer(BaseTransformer):
 
     Notes
     -----
-    The features computed here are not the full path signature, which would 
-    typically involve pipelining with first differences. Instead, we compute 
-    moments based on combinations of data dimensions. This is a discrete 
+    The features computed here are not the full path signature, which would
+    typically involve pipelining with first differences. Instead, we compute
+    moments based on combinations of data dimensions. This is a discrete
     approximation of signature features.
     """
 
@@ -86,24 +90,26 @@ class SignatureMomentsTransformer(BaseTransformer):
     def _compute_mean_product(self, data, indices):
         """Compute mean product of the specified data dimensions."""
         length = len(indices)
-        n_timepoints = data.shape[1]
+        ix = indices
 
         if length == 1:
-            return np.mean(data[indices[0], :])
+            return np.mean(data[ix[0], :])
         elif length == 2:
-            correlation_data = data[indices[0], :, np.newaxis] * data[indices[1], np.newaxis, :]
+            correlation_data = data[ix[0], :, np.newaxis] * data[ix[1], np.newaxis, :]
             triu_indices = np.triu_indices(correlation_data.shape[1])
             return np.mean(correlation_data[triu_indices])
         elif length == 3:
-            correlation_data = (data[indices[0], :, np.newaxis, np.newaxis] * 
-                           data[indices[1], np.newaxis, :, np.newaxis] *
-                           data[indices[2], np.newaxis, np.newaxis, :])
+            correlation_data = (
+                data[ix[0], :, np.newaxis, np.newaxis] *
+                data[ix[1], np.newaxis, :, np.newaxis] *
+                data[ix[2], np.newaxis, np.newaxis, :]
+            )
             depth = correlation_data.shape[0]
 
-            total_sum , total_len = 0 , 0 
+            total_sum , total_len = 0 , 0
 
             for i in range(depth):
-                filtered_matrix = correlation_data[i][i:]  
+                filtered_matrix = correlation_data[i][i:]
 
                 triu_indices = np.triu_indices(filtered_matrix.shape[0])
 
@@ -114,7 +120,7 @@ class SignatureMomentsTransformer(BaseTransformer):
 
             data_mean = total_sum/total_len
 
-            return data_mean 
+            return data_mean
         else:
             raise NotImplementedError("Degree higher than 3 is not implemented.")
 
@@ -128,7 +134,6 @@ class SignatureMomentsTransformer(BaseTransformer):
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return ``"default"`` set.
 
-
         Returns
         -------
         params : dict or list of dict, default = {}
@@ -138,8 +143,7 @@ class SignatureMomentsTransformer(BaseTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        params = {
-            "degree": 2,
-            "use_index": True,
-        }
-        return params
+        params0 = {"degree": 1, "use_index": True}
+        params1 = {"degree": 3, "use_index": False}
+        params2 = {"degree": 2, "use_index": True}
+        return [params0, params1, params2]
