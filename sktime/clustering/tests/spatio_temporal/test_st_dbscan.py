@@ -50,7 +50,7 @@ def test_st_dbscan(n_times, sparse_matrix_threshold, n_jobs):
     [(40, 40, 5), (40, 10, 5), (40, 20, 10), (20, 10, None)],
 )
 def test_st_dbsacan_frame_split(n_times, frame_size, frame_overlap):
-    X, y_true = make_moving_blobs(n_times=40)
+    X, y_true = make_moving_blobs(n_times=n_times, cluster_std=0.05)
 
     st_dbscan = STDBSCAN(
         eps1=0.5,
@@ -77,3 +77,37 @@ def test_st_dbsacan_frame_split(n_times, frame_size, frame_overlap):
         y_pred_renamed[y_pred == 1] = 0
         y_pred_renamed[y_pred == 2] = 2
     assert np.all(y_pred_renamed == y_true)
+
+
+@pytest.mark.parametrize(
+    "frame_size,sparse_matrix_threshold",
+    [(None, 2000), (None, 10), (20, 2000), (20, 10)],
+)
+def test_st_dbscan_data_with_noise(frame_size, sparse_matrix_threshold):
+    X, y_true = make_moving_blobs(
+        n_times=20, cluster_std=1, centers_origin=[[-10, -10], [0, 0], [10, 10]]
+    )
+
+    st_dbscan = STDBSCAN(
+        eps1=1,
+        eps2=3,
+        min_samples=5,
+        metric="euclidean",
+        frame_size=frame_size,
+        frame_overlap=None,
+        sparse_matrix_threshold=sparse_matrix_threshold,
+        n_jobs=None,
+    )
+
+    st_dbscan.fit(X)
+    y_pred = st_dbscan.labels_
+
+    assert len(np.unique(y_pred)) == 4
+
+    # rename y_pred labels to match y_true
+    y_pred_renamed = y_pred.copy()
+    y_pred_renamed[y_pred == 0] = 0
+    y_pred_renamed[y_pred == 1] = 2
+    y_pred_renamed[y_pred == 2] = 1
+
+    assert np.all(y_pred_renamed[y_pred != -1] == y_true[y_pred != -1])
