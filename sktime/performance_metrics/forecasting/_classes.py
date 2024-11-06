@@ -44,9 +44,12 @@ from sktime.performance_metrics.forecasting._functions import (
     median_squared_scaled_error,
     relative_loss,
 )
+from sktime.performance_metrics.forecasting.sample_weight._types import (
+    check_sample_weight_generator,
+)
 from sktime.utils.warnings import warn
 
-__author__ = ["mloning", "tch", "RNKuhns", "fkiraly"]
+__author__ = ["mloning", "tch", "RNKuhns", "fkiraly", "markussagen"]
 __all__ = [
     "make_forecasting_scorer",
     "MeanAbsoluteScaledError",
@@ -133,7 +136,11 @@ class BaseForecastingErrorMetric(BaseMetric):
         "reserved_params": ["multioutput", "multilevel"],
     }
 
-    def __init__(self, multioutput="uniform_average", multilevel="uniform_average"):
+    def __init__(
+        self,
+        multioutput="uniform_average",
+        multilevel="uniform_average",
+    ):
         self.multioutput = multioutput
         self.multilevel = multilevel
 
@@ -187,7 +194,7 @@ class BaseForecastingErrorMetric(BaseMetric):
             Must be of same format as ``y_true``, same columns if indexed,
             but not necessarily same indices.
 
-        sample_weight : optional, 1D array-like, default=None
+        sample_weight : optional, 1D array-like, or callable, default=None
             Sample weights for each time point.
 
             * If ``None``, the time indices are considered equally weighted.
@@ -198,6 +205,12 @@ class BaseForecastingErrorMetric(BaseMetric):
               individual time
               series must be the same, and equal to the length of ``sample_weight``,
               for all instances of time series passed.
+            * If a callable, it must be a function that takes a ``y_true``
+              (and or ``y_pred``) and returns a 1D array-like of sample weights.
+              The length of the array-like must be the same as the length of the
+              time series. The callable is expected to be a function that takes a
+              ``y_true`` (and or ``y_pred``) and returns a 1D array-like of sample
+              weights or follows the ``SampleWeightGenerator`` interface.
 
         Returns
         -------
@@ -218,6 +231,18 @@ class BaseForecastingErrorMetric(BaseMetric):
               metric is applied per level, row averaging (yes/no) as in ``multioutput``.
         """  # noqa: E501
         return self.evaluate(y_true, y_pred, **kwargs)
+
+    def _apply_sample_weight_to_kwargs(self, y_true, y_pred, **kwargs):
+        """Apply sample weight to kwargs.
+
+        Sample weight is updated to kwargs if it is a callable and follows the
+        SampleWeightGenerator interface.
+        """
+        sample_weight = kwargs.get("sample_weight", None)
+        if callable(sample_weight) and check_sample_weight_generator(sample_weight):
+            kwargs["sample_weight"] = sample_weight(y_true, y_pred, **kwargs)
+
+        return kwargs
 
     def evaluate(self, y_true, y_pred, **kwargs):
         """Evaluate the desired metric on given inputs.
@@ -264,8 +289,8 @@ class BaseForecastingErrorMetric(BaseMetric):
             Must be of same format as ``y_true``, same columns if indexed,
             but not necessarily same indices.
 
-        sample_weight : optional, 1D array-like, default=None
-            Sample weights for each time point.
+        sample_weight : optional, 1D array-like, or callable, default=None
+            Sample weights or callable for each time point.
 
             * If ``None``, the time indices are considered equally weighted.
             * If an array, must be 1D.
@@ -275,6 +300,12 @@ class BaseForecastingErrorMetric(BaseMetric):
               individual time
               series must be the same, and equal to the length of ``sample_weight``,
               for all instances of time series passed.
+            * If a callable, it must be a function that takes a ``y_true``
+              (and or ``y_pred``) and returns a 1D array-like of sample weights.
+              The length of the array-like must be the same as the length of the
+              time series. The callable is expected to be a function that takes a
+              ``y_true`` (and or ``y_pred``) and returns a 1D array-like of sample
+              weights or follows the ``SampleWeightGenerator`` interface.
 
         Returns
         -------
@@ -296,9 +327,14 @@ class BaseForecastingErrorMetric(BaseMetric):
         """  # noqa: E501
         multioutput = self.multioutput
         multilevel = self.multilevel
+
         # Input checks and conversions
         y_true_inner, y_pred_inner, multioutput, multilevel, kwargs = self._check_ys(
             y_true, y_pred, multioutput, multilevel, **kwargs
+        )
+
+        kwargs = self._apply_sample_weight_to_kwargs(
+            y_true=y_true_inner, y_pred=y_pred_inner, **kwargs
         )
 
         requires_vectorization = isinstance(y_true_inner, VectorizedDF)
@@ -467,8 +503,8 @@ class BaseForecastingErrorMetric(BaseMetric):
             Must be of same format as ``y_true``, same columns if indexed,
             but not necessarily same indices.
 
-        sample_weight : optional, 1D array-like, default=None
-            Sample weights for each time point.
+        sample_weight : optional, 1D array-like, or callable, default=None
+            Sample weights or callable for each time point.
 
             * If ``None``, the time indices are considered equally weighted.
             * If an array, must be 1D.
@@ -478,6 +514,12 @@ class BaseForecastingErrorMetric(BaseMetric):
               individual time
               series must be the same, and equal to the length of ``sample_weight``,
               for all instances of time series passed.
+            * If a callable, it must be a function that takes a ``y_true``
+              (and or ``y_pred``) and returns a 1D array-like of sample weights.
+              The length of the array-like must be the same as the length of the
+              time series. The callable is expected to be a function that takes a
+              ``y_true`` (and or ``y_pred``) and returns a 1D array-like of sample
+              weights or follows the ``SampleWeightGenerator`` interface.
 
         Returns
         -------
@@ -494,10 +536,16 @@ class BaseForecastingErrorMetric(BaseMetric):
         """  # noqa: E501
         multioutput = self.multioutput
         multilevel = self.multilevel
+
         # Input checks and conversions
         y_true_inner, y_pred_inner, multioutput, multilevel, kwargs = self._check_ys(
             y_true, y_pred, multioutput, multilevel, **kwargs
         )
+
+        kwargs = self._apply_sample_weight_to_kwargs(
+            y_true=y_true_inner, y_pred=y_pred_inner, **kwargs
+        )
+
         requires_vectorization = isinstance(y_true_inner, VectorizedDF)
         if not requires_vectorization:
             # pass to inner function
@@ -695,7 +743,7 @@ class BaseForecastingErrorMetric(BaseMetric):
 
         return y_true, y_pred, multioutput, multilevel, kwargs
 
-    def _get_sample_weight(self, **kwargs):
+    def _set_sample_weight_on_kwargs(self, **kwargs):
         """Get sample weights from kwargs.
 
         Assumes that either ``sample_weight`` is passed, or not.
@@ -736,7 +784,7 @@ class BaseForecastingErrorMetric(BaseMetric):
         df : pd.DataFrame
             Weighted DataFrame.
         """
-        sample_weight = self._get_sample_weight(**kwargs)
+        sample_weight = self._set_sample_weight_on_kwargs(**kwargs)
         if sample_weight is not None:
             df = df.mul(sample_weight, axis=0)
         return df
@@ -846,7 +894,6 @@ class _DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
         self.func = func
         self.name = name
         self.lower_is_better = lower_is_better
-
         super().__init__(multioutput=multioutput, multilevel=multilevel)
 
         self.set_tags(**{"lower_is_better": lower_is_better})
@@ -1580,13 +1627,6 @@ class MedianAbsoluteError(BaseForecastingErrorMetricFunc):
     """
 
     func = median_absolute_error
-
-    def __init__(
-        self,
-        multioutput="uniform_average",
-        multilevel="uniform_average",
-    ):
-        super().__init__(multioutput=multioutput, multilevel=multilevel)
 
     def _evaluate_by_index(self, y_true, y_pred, **kwargs):
         """Return the metric evaluated at each time point.
