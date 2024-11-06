@@ -16,12 +16,13 @@ class SignatureMoments(BaseTransformer):
 
     For a degree ``d``, the columns of the ``transform`` output are
     strings corresponding to strings of length ``d`` over the alphabet
-    ``{0, ..., n_channels - 1}``, where ``n_channels`` is the number of
+    ``{[0], ..., [str(n_channels - 1)]}``,
+    where ``n_channels`` is the number of
     variables in the time series, and the character ``i`` represents the
     ``i``-th variable.
 
     If ``use_index=True``, the time index is included as an additional
-    dimension, and is represented by the character ``I``.
+    dimension, and is represented by the character ``[n_channels]``.
 
     For a time series :math:`X` with ``n_channels`` variables, the signature moment
     for a string :math:`s = i_1 i_2 ... i_d` is the mean of the products
@@ -58,7 +59,7 @@ class SignatureMoments(BaseTransformer):
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
         "scitype:instancewise": True,
-        "X_inner_mtype": "numpy3D",
+        "X_inner_mtype": "np.ndarray",
         "y_inner_mtype": "None",
         "fit_is_empty": True,
     }
@@ -71,18 +72,17 @@ class SignatureMoments(BaseTransformer):
 
     def _transform(self, X, y=None):
         """Compute the signature features for the input time series."""
-        n_instances, n_channels, n_timepoints = X.shape
+        n_timepoints, n_channels = X.shape
 
         if self.use_index:
-            index = np.arange(n_timepoints).reshape(1, -1)
-            X = np.concatenate((X, index[np.newaxis, :, :]), axis=1)
+            index = np.arange(n_timepoints).reshape(-1, 1)
+            X = np.concatenate((X, index), axis=1)
             n_channels += 1
 
         signature_matrix = []
-        for instance_idx in range(n_instances):
-            instance_data = X[instance_idx]
-            signature_row = self._compute_signature(instance_data)
-            signature_matrix.append(signature_row)
+        instance_data = X.T
+        signature_row = self._compute_signature(instance_data)
+        signature_matrix.append(signature_row)
 
         return pd.DataFrame(signature_matrix, columns = self.signature_features_)
 
@@ -96,7 +96,7 @@ class SignatureMoments(BaseTransformer):
                 element_mean = self._compute_mean_product(data, indices)
                 signature_row.append(element_mean)
 
-                feature_name = "".join(str(i + 1) for i in indices)
+                feature_name = "".join(f"[{i}]" for i in indices)
                 self.signature_features_.append(feature_name)
 
         return signature_row
