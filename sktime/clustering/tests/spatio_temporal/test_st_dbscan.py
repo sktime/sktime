@@ -9,13 +9,35 @@ from sktime.clustering.utils.toy_data_generation._make_moving_blobs import (
 )
 
 
+def _rename_labels(X, centers_origin, y_pred, n_labels):
+    """Rename cluster labels to match the true labels."""
+    # rename y_pred labels to match y_true
+    y_pred_renamed = y_pred.copy()
+
+    # find the closest cluster center at time 0
+    for l in range(n_labels):
+        # data at time 0 and cluster l
+        X_t0 = X[X[:, 0] == 0]
+        y_pred_t0 = y_pred[X[:, 0] == 0]
+        c = np.mean(X_t0[y_pred_t0 == l], axis=0)
+
+        # find the closest cluster center at time 0
+        dist = np.linalg.norm(centers_origin - c[1:], axis=1)
+
+        # rename cluster l to the closest cluster center at time 0
+        y_pred_renamed[y_pred == l] = np.argmin(dist)
+
+    return y_pred_renamed
+
+
 @pytest.mark.parametrize(
     "n_times,sparse_matrix_threshold,n_jobs",
     [(3, 2000, -1), (20, 2000, None), (3, 10, 1), (3, 10, -1), (20, 10, None)],
 )
 def test_st_dbscan(n_times, sparse_matrix_threshold, n_jobs):
     """Test implementation of spatio-temporal DBSCAN."""
-    X, y_true = make_moving_blobs(n_times=n_times)
+    centers_origin = np.array([[-1, -1], [0, 0], [1, 1]])
+    X, y_true = make_moving_blobs(n_times=n_times, centers_origin=centers_origin)
 
     st_dbscan = STDBSCAN(
         eps1=0.5,
@@ -30,18 +52,9 @@ def test_st_dbscan(n_times, sparse_matrix_threshold, n_jobs):
     st_dbscan.fit(X)
     y_pred = st_dbscan.labels_
 
-    assert len(np.unique(y_pred)) == 3
-
-    # rename y_pred labels to match y_true
-    y_pred_renamed = y_pred.copy()
-    if n_times == 3:
-        y_pred_renamed[y_pred == 0] = 2
-        y_pred_renamed[y_pred == 1] = 1
-        y_pred_renamed[y_pred == 2] = 0
-    elif n_times == 20:
-        y_pred_renamed[y_pred == 0] = 0
-        y_pred_renamed[y_pred == 1] = 2
-        y_pred_renamed[y_pred == 2] = 1
+    n_labels = len(np.unique(y_pred[y_pred != -1]))
+    assert n_labels == 3
+    y_pred_renamed = _rename_labels(X, centers_origin, y_pred, n_labels)
     assert np.all(y_pred_renamed == y_true)
 
 
@@ -49,8 +62,11 @@ def test_st_dbscan(n_times, sparse_matrix_threshold, n_jobs):
     "n_times,frame_size,frame_overlap",
     [(40, 40, 5), (40, 10, 5), (40, 20, 10), (20, 10, None)],
 )
-def test_st_dbsacan_frame_split(n_times, frame_size, frame_overlap):
-    X, y_true = make_moving_blobs(n_times=n_times, cluster_std=0.05)
+def test_st_dbscan_frame_split(n_times, frame_size, frame_overlap):
+    centers_origin = np.array([[-1, -1], [0, 0], [1, 1]])
+    X, y_true = make_moving_blobs(
+        n_times=n_times, cluster_std=0.05, centers_origin=centers_origin
+    )
 
     st_dbscan = STDBSCAN(
         eps1=0.5,
@@ -65,17 +81,9 @@ def test_st_dbsacan_frame_split(n_times, frame_size, frame_overlap):
 
     y_pred = st_dbscan.labels_
 
-    assert len(np.unique(y_pred)) == 3
-    # rename y_pred labels to match y_true
-    y_pred_renamed = y_pred.copy()
-    if n_times == 20:
-        y_pred_renamed[y_pred == 0] = 0
-        y_pred_renamed[y_pred == 1] = 2
-        y_pred_renamed[y_pred == 2] = 1
-    elif n_times == 40:
-        y_pred_renamed[y_pred == 0] = 1
-        y_pred_renamed[y_pred == 1] = 0
-        y_pred_renamed[y_pred == 2] = 2
+    n_labels = len(np.unique(y_pred[y_pred != -1]))
+    assert n_labels == 3
+    y_pred_renamed = _rename_labels(X, centers_origin, y_pred, n_labels)
     assert np.all(y_pred_renamed == y_true)
 
 
@@ -84,8 +92,9 @@ def test_st_dbsacan_frame_split(n_times, frame_size, frame_overlap):
     [(None, 2000), (None, 10), (20, 2000), (20, 10)],
 )
 def test_st_dbscan_data_with_noise(frame_size, sparse_matrix_threshold):
+    centers_origin = np.array([[-10, -10], [0, 0], [10, 10]])
     X, y_true = make_moving_blobs(
-        n_times=20, cluster_std=1, centers_origin=[[-10, -10], [0, 0], [10, 10]]
+        n_times=20, cluster_std=1, centers_origin=centers_origin
     )
 
     st_dbscan = STDBSCAN(
@@ -102,12 +111,9 @@ def test_st_dbscan_data_with_noise(frame_size, sparse_matrix_threshold):
     st_dbscan.fit(X)
     y_pred = st_dbscan.labels_
 
-    assert len(np.unique(y_pred)) == 4
+    n_labels = len(np.unique(y_pred[y_pred != -1]))
+    assert n_labels == 3
 
-    # rename y_pred labels to match y_true
-    y_pred_renamed = y_pred.copy()
-    y_pred_renamed[y_pred == 0] = 0
-    y_pred_renamed[y_pred == 1] = 2
-    y_pred_renamed[y_pred == 2] = 1
+    y_pred_renamed = _rename_labels(X, centers_origin, y_pred, n_labels)
 
     assert np.all(y_pred_renamed[y_pred != -1] == y_true[y_pred != -1])
