@@ -137,7 +137,7 @@ class SignatureMoments(BaseTransformer):
             )
             depth = correlation_data.shape[0]
 
-            total_sum, total_len = 0 , 0
+            total_sum, total_len = 0, 0
 
             for i in range(depth):
                 filtered_matrix = correlation_data[i][i:]
