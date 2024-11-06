@@ -205,12 +205,10 @@ class BaseForecastingErrorMetric(BaseMetric):
               individual time
               series must be the same, and equal to the length of ``sample_weight``,
               for all instances of time series passed.
-            * If a callable, it must be a function that takes a ``y_true``
-              (and or ``y_pred``) and returns a 1D array-like of sample weights.
-              The length of the array-like must be the same as the length of the
-              time series. The callable is expected to be a function that takes a
-              ``y_true`` (and or ``y_pred``) and returns a 1D array-like of sample
-              weights or follows the ``SampleWeightGenerator`` interface.
+            * If a callable, it must follow ``SampleWeightGenerator`` interface,
+              or have one of the following signatures:
+              ``y_true: pd.DataFrame -> 1D array-like``,
+              or ``y_true: pd.DataFrame x y_pred: pd.DataFrame -> 1D array-like``.
 
         Returns
         -------
@@ -300,12 +298,10 @@ class BaseForecastingErrorMetric(BaseMetric):
               individual time
               series must be the same, and equal to the length of ``sample_weight``,
               for all instances of time series passed.
-            * If a callable, it must be a function that takes a ``y_true``
-              (and or ``y_pred``) and returns a 1D array-like of sample weights.
-              The length of the array-like must be the same as the length of the
-              time series. The callable is expected to be a function that takes a
-              ``y_true`` (and or ``y_pred``) and returns a 1D array-like of sample
-              weights or follows the ``SampleWeightGenerator`` interface.
+            * If a callable, it must follow ``SampleWeightGenerator`` interface,
+              or have one of the following signatures:
+              ``y_true: pd.DataFrame -> 1D array-like``,
+              or ``y_true: pd.DataFrame x y_pred: pd.DataFrame -> 1D array-like``.
 
         Returns
         -------
@@ -514,12 +510,10 @@ class BaseForecastingErrorMetric(BaseMetric):
               individual time
               series must be the same, and equal to the length of ``sample_weight``,
               for all instances of time series passed.
-            * If a callable, it must be a function that takes a ``y_true``
-              (and or ``y_pred``) and returns a 1D array-like of sample weights.
-              The length of the array-like must be the same as the length of the
-              time series. The callable is expected to be a function that takes a
-              ``y_true`` (and or ``y_pred``) and returns a 1D array-like of sample
-              weights or follows the ``SampleWeightGenerator`` interface.
+            * If a callable, it must follow ``SampleWeightGenerator`` interface,
+              or have one of the following signatures:
+              ``y_true: pd.DataFrame -> 1D array-like``,
+              or ``y_true: pd.DataFrame x y_pred: pd.DataFrame -> 1D array-like``.
 
         Returns
         -------
