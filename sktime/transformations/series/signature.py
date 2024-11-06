@@ -67,7 +67,7 @@ class SignatureMoments(BaseTransformer):
     """
 
     _tags = {
-        "authors": "VectorNd",
+        "authors": ["VectorNd", "fkiraly"],
         "maintainers": "VectorNd",
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
