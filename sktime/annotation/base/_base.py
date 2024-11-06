@@ -62,7 +62,8 @@ class BaseSeriesAnnotator(BaseEstimator):
     """
 
     _tags = {
-        "object_type": ["detector", "series-annotator"],  # type of object  # todo 0.37.0: remove series-annotator
+        "object_type": ["detector", "series-annotator"],  # type of object
+        # todo 0.37.0: remove series-annotator
         "learning_type": "None",  # Tag to determine test in test_all_annotators
         "task": "None",  # Tag to determine test in test_all_annotators
         #
