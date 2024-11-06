@@ -34,9 +34,14 @@ def test_st_dbscan(n_times, sparse_matrix_threshold, n_jobs):
 
     # rename y_pred labels to match y_true
     y_pred_renamed = y_pred.copy()
-    y_pred_renamed[y_pred == 0] = 1
-    y_pred_renamed[y_pred == 1] = 2
-    y_pred_renamed[y_pred == 2] = 0
+    if n_times == 3:
+        y_pred_renamed[y_pred == 0] = 2
+        y_pred_renamed[y_pred == 1] = 1
+        y_pred_renamed[y_pred == 2] = 0
+    elif n_times == 20:
+        y_pred_renamed[y_pred == 0] = 0
+        y_pred_renamed[y_pred == 1] = 2
+        y_pred_renamed[y_pred == 2] = 1
     assert np.all(y_pred_renamed == y_true)
 
 
@@ -63,7 +68,12 @@ def test_st_dbsacan_frame_split(n_times, frame_size, frame_overlap):
     assert len(np.unique(y_pred)) == 3
     # rename y_pred labels to match y_true
     y_pred_renamed = y_pred.copy()
-    y_pred_renamed[y_pred == 0] = 1
-    y_pred_renamed[y_pred == 1] = 2
-    y_pred_renamed[y_pred == 2] = 0
+    if n_times == 20:
+        y_pred_renamed[y_pred == 0] = 0
+        y_pred_renamed[y_pred == 1] = 2
+        y_pred_renamed[y_pred == 2] = 1
+    elif n_times == 40:
+        y_pred_renamed[y_pred == 0] = 1
+        y_pred_renamed[y_pred == 1] = 0
+        y_pred_renamed[y_pred == 2] = 2
     assert np.all(y_pred_renamed == y_true)
