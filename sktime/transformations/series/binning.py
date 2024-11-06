@@ -44,8 +44,8 @@ class TimeBinAggregate(BaseTransformer):
         "bin_mid" = transformed pd.DataFrame will be indexed by bin midpoints
         "bin" = transformed pd.DataFrame will have ``bins`` as ``IntervalIndex``
 
-    Example
-    -------
+    Examples
+    --------
     from sktime.datatypes import get_examples
     from sktime.transformations.series.binning import TimeBinAggregate
 

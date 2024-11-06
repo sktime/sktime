@@ -42,8 +42,6 @@ EXCLUDE_ESTIMATORS = [
     "FCNRegressor",
     "LSTMFCNRegressor",
     "MACNNRegressor",
-    "CNTCClassifier",
-    "CNTCRegressor",
     # splitters excluded with undiagnosed failures, see #6194
     # these are temporarily skipped to allow merging of the base test framework
     "SameLocSplitter",
@@ -321,7 +319,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "MiniRocketMultivariate",
         "MiniRocketMultivariateVariable",
         "MultiRocket",
-        "MultiRocketMultivariate",
         "MultioutputTabularRegressionForecaster",
         "MultioutputTimeSeriesRegressionForecaster",
         "OnlineEnsembleForecaster",
