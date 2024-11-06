@@ -55,9 +55,9 @@ class STDBSCAN(BaseClusterer):
     .. [1] Birant, D., & Kut, A. "ST-DBSCAN: An algorithm for clustering
        spatial-temporal data." Data Knowl. Eng., vol. 60, no. 1, pp. 208-221, Jan. 2007,
        doi: [10.1016/j.datak.2006.01.013](https://doi.org/10.1016/j.datak.2006.01.013).
-    .. [2] I. Peca, G. Fuchs, K. Vrotsou, N. Andrienko, and G. Andrienko, “Scalable
-       Cluster Analysis of Spatial Events,” 2012, The Eurographics Association. doi:
-       [10.2312/PE/EUROVAST/EUROVA12/019-023](https://doi.org/10.2312/PE/EUROVAST/EUROVA12/019-023).
+    .. [2] Peca, I., Fuchs, G., Vrotsou, K., Andrienko, N., and Andrienko, G.,
+       "Scalable Cluster Analysis of Spatial Events" 2012, The Eurographics Association
+       doi: [10.2312/PE/EUROVAST/EUROVA12/019-023](https://doi.org/10.2312/PE/EUROVAST/EUROVA12/019-023).
     .. [3] Cakmak, E., Plank, M., Calovi, D. S., Jordan, A., & Keim, D. "Spatio-temporal
        clustering benchmark for collective animal behavior." ACM, Nov. 2021, pp. 5-8.
        doi: [10.1145/3486637.3489487](https://doi.org/10.1145/3486637.3489487).
