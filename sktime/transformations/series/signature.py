@@ -101,7 +101,7 @@ class SignatureMoments(BaseTransformer):
         if self.normalize_prod:
             signature_matrix = np.power(signature_matrix, 1 / self.degree)
 
-        return pd.DataFrame(signature_matrix, columns = self.signature_features_)
+        return pd.DataFrame(signature_matrix, columns=self.signature_features_)
 
     def _compute_signature(self, data):
         """Compute signature features for a single instance."""
@@ -131,13 +131,13 @@ class SignatureMoments(BaseTransformer):
             return np.mean(correlation_data[triu_indices])
         elif length == 3:
             correlation_data = (
-                data[ix[0], :, np.newaxis, np.newaxis] *
-                data[ix[1], np.newaxis, :, np.newaxis] *
-                data[ix[2], np.newaxis, np.newaxis, :]
+                data[ix[0], :, np.newaxis, np.newaxis]
+                * data[ix[1], np.newaxis, :, np.newaxis]
+                * data[ix[2], np.newaxis, np.newaxis, :]
             )
             depth = correlation_data.shape[0]
 
-            total_sum , total_len = 0 , 0
+            total_sum, total_len = 0 , 0
 
             for i in range(depth):
                 filtered_matrix = correlation_data[i][i:]
