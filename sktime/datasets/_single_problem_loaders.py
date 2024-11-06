@@ -13,7 +13,7 @@ __author__ = [
     "jasonlines",
     "achieveordie",
     "ciaran-g",
-    "jonathanbechtel"
+    "jonathanbechtel",
 ]
 
 __all__ = [
@@ -39,7 +39,7 @@ __all__ = [
     "load_macroeconomic",
     "load_unit_test_tsf",
     "load_covid_3month",
-    "load_tecator"
+    "load_tecator",
 ]
 
 import os
@@ -938,6 +938,7 @@ def load_airline():
     y.index = _coerce_to_monthly_period_index(y.index)
     y.name = "Number of airline passengers"
     return y
+
 
 def load_uschange(y_name="Consumption"):
     """Load MTS dataset for forecasting Growth rates of personal consumption and income.
