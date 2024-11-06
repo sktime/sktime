@@ -52,11 +52,6 @@ class SignatureMoments(BaseTransformer):
         see above for formula.
         If False, uses product.
 
-    Attributes
-    ----------
-    signature_features_: list of str
-        The list of signature feature names, based on combinations of dimensions.
-
     Examples
     --------
     >>> from sktime.transformations.series.signature import SignatureMoments
@@ -81,7 +76,6 @@ class SignatureMoments(BaseTransformer):
         self.degree = degree
         self.use_index = use_index
         self.normalize_prod = normalize_prod
-        self.signature_features_ = []
         super().__init__()
 
     def _transform(self, X, y=None):
@@ -95,18 +89,19 @@ class SignatureMoments(BaseTransformer):
 
         signature_matrix = []
         instance_data = X.T
-        signature_row = self._compute_signature(instance_data)
+        signature_row, feature_names = self._compute_signature(instance_data)
         signature_matrix.append(signature_row)
 
         if self.normalize_prod:
             signature_matrix = np.power(signature_matrix, 1 / self.degree)
 
-        return pd.DataFrame(signature_matrix, columns=self.signature_features_)
+        return pd.DataFrame(signature_matrix, columns=feature_names)
 
     def _compute_signature(self, data):
         """Compute signature features for a single instance."""
-        n_channels, n_timepoints = data.shape
+        n_channels, _ = data.shape
 
+        feature_names = []
         signature_row = []
         for length in range(1, self.degree + 1):
             for indices in np.ndindex((n_channels,) * length):
@@ -114,9 +109,9 @@ class SignatureMoments(BaseTransformer):
                 signature_row.append(element_mean)
 
                 feature_name = "".join(f"[{i}]" for i in indices)
-                self.signature_features_.append(feature_name)
+                feature_names.append(feature_name)
 
-        return signature_row
+        return signature_row, feature_names
 
     def _compute_mean_product(self, data, indices):
         """Compute mean product of the specified data dimensions."""
