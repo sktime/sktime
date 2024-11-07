@@ -1,5 +1,3 @@
-import logging
-
 # from transformers import AutoModelForCausalLM
 
 # from time_moe.datasets.benchmark_dataset import BenchmarkEvalDataset
@@ -49,7 +47,6 @@ Testing - required for sktime test framework and check_estimator usage:
 # todo: uncomment the following line, enter authors' GitHub IDs
 # __author__ = [authorGitHubID, anotherAuthorGitHubID]
 
-from sktime.forecasting.base import BaseForecaster
 
 # todo: add any necessary imports here
 
@@ -59,7 +56,7 @@ from sktime.forecasting.base import BaseForecaster
 
 
 # todo: change class name and write docstring
-class TimeMoE(BaseForecaster):
+class TimeMoE(_BaseGlobalForecaster):
     """Custom forecaster. todo: write docstring.
 
     todo: describe your custom forecaster here
@@ -203,21 +200,6 @@ class TimeMoE(BaseForecaster):
     def __init__(
         self, model_path, context_length, prediction_length, device="cpu", **kwargs
     ):
-        model = AutoModelForCausalLM.from_pretrained(
-            "Maple728/TimeMoE-50M",
-            device_map=device,
-            # attn_implementation='flash_attention_2',
-            torch_dtype="auto",
-            trust_remote_code=True,
-        )
-        logging.info(
-            f">>> Model dtype: {model.dtype}; Attention:{model.config._attn_implementation}"
-        )
-
-        self.model = model
-        self.device = device
-        self.prediction_length = prediction_length
-        self.model.eval()
         # leave this as is
         super().__init__()
 
