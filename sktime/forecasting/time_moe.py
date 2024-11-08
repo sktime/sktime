@@ -1,4 +1,20 @@
 # from transformers import AutoModelForCausalLM
+from skbase.utils.dependencies import _check_soft_dependencies
+
+from sktime.forecasting.base import _BaseGlobalForecaster
+from sktime.split import temporal_train_test_split
+from sktime.utils.warnings import warn
+
+if _check_soft_dependencies("torch", severity="none"):
+    from torch.utils.data import Dataset
+else:
+
+    class Dataset:
+        """Dummy class if torch is unavailable."""
+
+
+if _check_soft_dependencies("transformers", severity="none"):
+    from transformers import Trainer, TrainingArguments
 
 # from time_moe.datasets.benchmark_dataset import BenchmarkEvalDataset
 
@@ -198,32 +214,31 @@ class TimeMoE(_BaseGlobalForecaster):
 
     # todo: add any hyper-parameters and components to constructor
     def __init__(
-        self, model_path, context_length, prediction_length, device="cpu", **kwargs
+        self,
+        model_path="Maple728/TimeMoE-200M",
+        revision="main",
+        validation_split=0.2,
+        config=None,
+        training_args=None,
+        compute_metrics=None,
+        callbacks=None,
+        broadcasting=False,
+        use_source_package=False,
     ):
         # leave this as is
         super().__init__()
+        self.model_path = model_path
+        self.revision = revision
+        self.config = config
+        self._config = config if config is not None else {}
+        self.training_args = training_args
+        self._training_args = training_args if training_args is not None else {}
+        self.validation_split = validation_split
+        self.compute_metrics = compute_metrics
+        self.callbacks = callbacks
+        self.broadcasting = broadcasting
+        self.use_source_package = use_source_package
 
-        # todo: optional, parameter checking logic (if applicable) should happen here
-        # if writes derived values to self, should *not* overwrite self.parama etc
-        # instead, write to self._parama, self._newparam (starting with _)
-
-        # todo: default estimators should have None arg defaults
-        #  and be initialized here
-        #  do this only with default estimators, not with parameters
-        # if est2 is None:
-        #     self.estimator = MyDefaultEstimator()
-
-        # todo: if tags of estimator depend on component tags, set these here
-        #  only needed if estimator is a composite
-        #  tags set in the constructor apply to the object and override the class
-        #
-        # example 1: conditional setting of a tag
-        # if est.foo == 42:
-        #   self.set_tags(handles-missing-data=True)
-        # example 2: cloning tags from component
-        #   self.clone_tags(est2, ["enforce_index_type", "handles-missing-data"])
-
-    # todo: implement this, mandatory
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
@@ -254,6 +269,128 @@ class TimeMoE(_BaseGlobalForecaster):
         -------
         self : reference to self
         """
+        # if self.use_source_package:
+        #     from  import (
+
+        #     )
+        # elif _check_soft_dependencies("torch", severity="error"):
+        #     from sktime.libs.timemoe import (
+        #         ,
+        #     )
+
+        if _check_soft_dependencies("torch", severity="error"):
+            from sktime.libs.timemoe import (
+                TimeMoeConfig,
+                TimeMoeForPrediction,
+            )
+        # Get the Configuration
+        config = TimeMoeConfig.from_pretrained(
+            self.model_path,
+            revision=self.revision,
+        )
+
+        # Update config with user provided config
+        _config = config.to_dict()
+        _config.update(self._config)
+
+        # validate patches in configuration
+        # context_length / num_patches == patch_length == patch_stride
+        # if this condition is not satisfied in the configuration
+        # this error is raised in forward pass of the model
+        # RuntimeError: mat1 and mat2 shapes cannot be multiplied (384x4 and 32x64)
+        context_length = _config.get("context_length")
+        num_patches = _config.get("num_patches")
+        patch_length = _config.get("patch_length")
+        patch_stride = _config.get("patch_stride")
+        patch_size = context_length / num_patches
+        if patch_size != patch_length or patch_stride != patch_stride:
+            # update the config here
+            patch_size = max(1, int(patch_size))
+            _config["patch_length"] = patch_size
+            _config["patch_stride"] = patch_size
+            _config["num_patches"] = _config["context_length"] // patch_size
+
+            msg = (
+                "Invalid configuration detected. "
+                "The provided values do not satisfy the required condition:\n"
+                "context_length / num_patches == patch_length == patch_stride\n"
+                "Provided configuration:\n"
+                f"- context_length: {context_length}\n"
+                f"- num_patches: {num_patches}\n"
+                f"- patch_length: {patch_length}\n"
+                f"- patch_stride: {patch_stride}\n"
+                "Configuration has been automatically updated to:\n"
+                f"- context_length: {context_length}\n"
+                f"- num_patches: {_config['num_patches']}\n"
+                f"- patch_length: {_config['patch_length']}\n"
+                f"- patch_stride: {_config['patch_stride']}"
+            )
+            warn(msg)
+
+        if fh is not None:
+            _config["prediction_length"] = max(
+                *(fh.to_relative(self._cutoff)._values),
+                _config["prediction_length"],
+            )
+
+        config = config.from_dict(_config)
+
+        # Get the Model
+        # self.model, info = PatchTSTForPrediction.from_pretrained(
+        # "ibm-granite/granite-timeseries-patchtst",
+        self.model, info = TimeMoeForPrediction.from_pretrained(
+            self.model_path,
+            revision=self.revision,
+            config=config,
+            output_loading_info=True,
+            ignore_mismatched_sizes=True,
+        )
+
+        if len(info["mismatched_keys"]) == 0:
+            return  # No need to fit
+
+        # Freeze all loaded parameters
+        for param in self.model.parameters():
+            param.requires_grad = False
+
+        # Reininit the weights of all layers that have mismatched sizes
+        for key, _, _ in info["mismatched_keys"]:
+            _model = self.model
+            for attr_name in key.split(".")[:-1]:
+                _model = getattr(_model, attr_name)
+            _model.weight.requires_grad = True
+
+        y_train, y_test = temporal_train_test_split(y, test_size=self.validation_split)
+
+        # train = PyTorchDataset(
+        #     y=y_train,
+        #     context_length=config.context_length,
+        #     prediction_length=config.prediction_length,
+        # )
+        # test = PyTorchDataset(
+        #     y=y_test,
+        #     context_length=config.context_length,
+        #     prediction_length=config.prediction_length,
+        # )
+
+        # Get Training Configuration
+        training_args = TrainingArguments(**self._training_args)
+
+        # Get the Trainer
+        trainer = Trainer(
+            model=self.model,
+            args=training_args,
+            train_dataset=train,
+            eval_dataset=test,
+            compute_metrics=self.compute_metrics,
+            callbacks=self.callbacks,
+        )
+
+        # Train the model
+        trainer.train()
+
+        # Get the model
+        self.model = trainer.model
 
         # master_addr = os.getenv('MASTER_ADDR', '127.0.0.1')
         # master_port = os.getenv('MASTER_PORT', 9899)
