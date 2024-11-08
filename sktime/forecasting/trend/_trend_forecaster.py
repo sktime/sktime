@@ -2,7 +2,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements TrendForecaster."""
 
-__author__ = ["tensorflow-as-tf", "mloning", "aiwalter", "fkiraly"]
+__author__ = ["tensorflow-as-tf", "mloning", "aiwalter", "fkiraly", "ksharma6"]
 __all__ = ["TrendForecaster"]
 
 import pandas as pd
