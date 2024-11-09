@@ -1,4 +1,4 @@
-"""Extension template for series annotation.
+"""Extension template for series detection - outliers, changepoints, segments.
 
 Purpose of this implementation template:
     quick implementation of new estimators following the template

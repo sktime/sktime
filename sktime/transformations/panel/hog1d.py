@@ -42,8 +42,8 @@ class HOG1DTransformer(BaseTransformer):
     scaling_factor : float, default=0.1
         a constant that is multiplied to modify the distribution.
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.transformations.panel.hog1d import HOG1DTransformer
     >>> from sktime.datasets import load_arrow_head
     >>>
