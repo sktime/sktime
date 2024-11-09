@@ -26,7 +26,7 @@ sktime.
         ``Panel`` scitype. Data containers can be checked for compliance with
         a given mtype using the :func:`sktime.datatypes.check_is_mtype` function;
         all mtypes can be listed in ``sktime.datatypes.MTYPE_REGISTER``.
-        For more details on the general concept, and precise specitications, see the
+        For more details on the general concept, and precise specifications, see the
         :ref:`data_format` and
         `the datatypes and datasets user guide :doc:</examples/AA_datatypes_and_datasets>`.
 
