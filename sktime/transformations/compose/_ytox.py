@@ -139,6 +139,30 @@ class YtoX(BaseTransformer):
         self.transformer = transformer
         super().__init__()
 
+    def _fit(self, X, y=None):
+        """Fit transformer to X and y.
+
+        private _fit containing core logic, called from fit
+
+        Parameters
+        ----------
+        X : time series or panel in one of the pd.DataFrame formats
+            Data to be fitted
+        y : time series or panel in one of the pd.DataFrame formats
+            Additional data, e.g., labels for fitting
+
+        Returns
+        -------
+        self : reference to self
+        """
+        if self.transformer is not None:
+            if hasattr(self.transformer, "clone"):
+                self.transformer_ = self.transformer.clone()
+            else:
+                self.transformer_ = self.transformer
+            self.transformer_.fit(y)
+        return self
+
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
@@ -162,11 +186,7 @@ class YtoX(BaseTransformer):
 
         # Apply the transformer if provided
         if self.transformer is not None:
-            if hasattr(self.transformer, "clone"):
-                transformer = self.transformer.clone()
-            else:
-                transformer = self.transformer
-            y_transformed = transformer.fit_transform(y_transformed)
+            y_transformed = self.transformer_.transform(y_transformed)
 
         return y_transformed
 
