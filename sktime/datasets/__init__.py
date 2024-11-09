@@ -85,9 +85,11 @@ from sktime.datasets._single_problem_loaders import (
     load_lynx,
     load_m5,
     load_macroeconomic,
+    load_mitdb,
     load_osuleaf,
     load_PBS_dataset,
     load_plaid,
+    load_seatbelts,
     load_shampoo_sales,
     load_solar,
     load_tecator,
@@ -95,7 +97,5 @@ from sktime.datasets._single_problem_loaders import (
     load_unit_test,
     load_unit_test_tsf,
     load_uschange,
-    load_mitdb,
-    load_seatbelts,
-    load_yahoo
+    load_yahoo,
 )

@@ -14,7 +14,7 @@ __author__ = [
     "achieveordie",
     "ciaran-g",
     "jonathanbechtel",
-    "VectorNd"
+    "VectorNd",
 ]
 
 __all__ = [
@@ -43,7 +43,7 @@ __all__ = [
     "load_tecator",
     "load_mitdb",
     "load_seatbelts",
-    "load_yahoo"
+    "load_yahoo",
 ]
 
 import os
@@ -943,59 +943,91 @@ def load_airline():
     y.name = "Number of airline passengers"
     return y
 
+
 def load_mitdb():
-    """Load the mitdb univariate time series dataset [1].
+    """Load the MIT-BIH Arrhythmia dataset [1].
 
     Returns
     -------
-    y : pd.DataFrame
+    y : pd.Series
+        selected column, default label
+    X : pd.Series
+        remaining column ( data )
 
     Examples
     --------
     >>> from sktime.datasets import load_mitdb
     >>> y = load_mitdb()
 
+    Notes
+    -----
+    The MIT-BIH Arrhythmia data contains 48 half-hour excerpts of two-channel ambulatory
+    ECG recordings,obtained from 47 subjects studied by the BIH Arrhythmia Laboratory
+    between 1975 and 1979.
+
     References
     ----------
     .. [1] George B Moody and Roger G Mark. 1992. MIT-BIH Arrhythmia Database. https://doi.org/10.13026/C2F305.
-    """  
+    """
     name = "mitdb"
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
-    y = pd.read_csv(path)
+    X = pd.read_csv(path)
+    y = X["label"]
+    X = X["data"]
 
-    return y 
+    return y, X
+
 
 def load_yahoo():
-    """Load the yahoo univariate time series dataset [1].
+    """Load the labeled anomaly detection dataset [1].
 
     Returns
     -------
-    y : pd.DataFrame
+    y: pd.Series
+        selected column , default label
+    X: pd.Series
+        remaining column ( data )
 
     Examples
     --------
     >>> from sktime.datasets import load_yahoo
     >>> y = load_yahoo()
 
+    Notes
+    -----
+    This dataset is used to benchmark your anomaly detection algorithm. The dataset
+    consists of real and synthetic time-series with tagged anomaly points. The dataset
+    tests the detection accuracy of various anomaly-types including outliers and
+    change-points. The synthetic dataset consists of time-series with varying trend,
+    noise and seasonality. The real dataset consists of time-series representing the
+    metrics of various Yahoo services.
+
     References
     ----------
     ..[1] N. Laptev, S. Amizadeh, and Y. Billawala. 2015.
-          S5 - A Labeled Anomaly Detection Dataset, version 1.0(16M). https://webscope.sandbox.yahoo.com/catalog.php? datatype=s&did=70.
+          S5 - A Labeled Anomaly Detection Dataset, version 1.0(16M).
+            https://webscope.sandbox.yahoo.com/catalog.php? datatype=s&did=70.
     """
     name = "yahoo"
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
-    y = pd.read_csv(path)
+    X = pd.read_csv(path)
+    y = X["label"]
+    X = X["data"]
 
-    return y 
+    return y, X
+
 
 def load_seatbelts():
     """Load the seabelts univariate time series dataset [1].
 
     Returns
     -------
-    y : pd.DataFrame
+    y: pd.Series
+        selected column , default label
+    X: pd.Series
+        remaining column ( data )
 
     Examples
     --------
@@ -1004,27 +1036,33 @@ def load_seatbelts():
 
     Notes
     -----
-    Monthly time series data spanning from January 1969 to December 1984, with three columns:
+    This dataset concerns the number of drivers killed or seriously injured in the UK
+    around the period where seatbelts are introduced. Seatbelts were compulsory
+    equipment in all new cars in 1972 and were mandatory to be worn from 1983 onwards.
+    Monthly time series data spanning from January 1969 to December 1984.
 
-    Date: The date in the format "YYYY-MM-DD," representing the first day of each month.
-    KSI (Killed or Seriously Injured): The number of people killed or seriously injured in a particular month.
-    Label: A binary value indicating whether a particular month is considered anomalous (1) or normal (0).
-
-    This data records traffic-related incidents over 16 years, providing insights into trends and anomalies in the data,
-    which could be used for time series analysis, anomaly detection, or understanding the impact of policies or events on traffic safety.
+    Dimensionality:     univariate
+    Series length:      192
+    Frequency:          Monthly
 
     References
     ----------
-    .. [1] An Evaluation of Change Point Detection Algorithms, Van den Burg, G. J. J. and Williams, C. K. I.,
-           arXiv preprint arXiv:2003.06222, 2020.
+    .. [1] An Evaluation of Change Point Detection Algorithms, Van den Burg, G. J. J.
+        and Williams, C. K. I.,arXiv preprint arXiv:2003.06222, 2020.
+        https://github.com/alan-turing-institute/TCPD.
     """
-    name = "seatbelts" 
+    name = "seatbelts"
 
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
-    y = pd.read_csv(path)
+    X = pd.read_csv(path, index_col=0).squeeze("columns")
+    X.index = _coerce_to_monthly_period_index(X.index)
 
-    return y
+    y = X["label"]
+    X = X["KSI"]
+
+    return y, X
+
 
 def load_uschange(y_name="Consumption"):
     """Load MTS dataset for forecasting Growth rates of personal consumption and income.

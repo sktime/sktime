@@ -1,6 +1,13 @@
 """Test functions for data input and output."""
 
-__author__ = ["SebasKoel", "Emiliathewolf", "TonyBagnall", "jasonlines", "achieveordie"]
+__author__ = [
+    "SebasKoel",
+    "Emiliathewolf",
+    "TonyBagnall",
+    "jasonlines",
+    "achieveordie",
+    "VectorNd",
+]
 
 __all__ = []
 
@@ -9,7 +16,14 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.datasets import load_basic_motions, load_UCR_UEA_dataset, load_uschange
+from sktime.datasets import (
+    load_basic_motions,
+    load_mitdb,
+    load_seatbelts,
+    load_UCR_UEA_dataset,
+    load_uschange,
+    load_yahoo,
+)
 from sktime.datasets._data_io import _list_available_datasets, _load_provided_dataset
 from sktime.datatypes import check_is_mtype, scitype_to_mtype
 
@@ -107,6 +121,36 @@ _CHECKS = {
         },
         "data_type_y": "float64",
         "data": load_uschange(),
+    },
+    "mitdb": {
+        "columns": ["data"],
+        "len_y": 7500,
+        "len_X": 7500,
+        "data_types_X": {
+            "data": "float64",
+        },
+        "data_type_y": "int64",
+        "data": load_mitdb(),
+    },
+    "yahoo": {
+        "columns": ["data"],
+        "len_y": 1000,
+        "len_X": 1000,
+        "data_types_X": {
+            "data": "float64",
+        },
+        "data_type_y": "int64",
+        "data": load_yahoo(),
+    },
+    "seatbelts": {
+        "columns": ["KSI"],
+        "len_y": 192,
+        "len_X": 192,
+        "data_types_X": {
+            "KSI": "int64",
+        },
+        "data_type_y": "int64",
+        "data": load_seatbelts(),
     },
 }
 
