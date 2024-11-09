@@ -63,6 +63,7 @@ from sktime.datasets._data_io import (
 )
 from sktime.datasets._readers_writers.tsf import load_tsf_to_dataframe
 from sktime.datasets.tsf_dataset_names import tsf_all, tsf_all_datasets
+from sktime.datatypes import convert
 from sktime.utils.dependencies import _check_soft_dependencies
 
 DIRNAME = "data"
@@ -944,8 +945,12 @@ def load_airline():
     return y
 
 
-def load_mitdb():
+def load_mitdb(return_mtype: str = None):
     """Load the MIT-BIH Arrhythmia dataset [1].
+
+    Parameters
+    ----------
+    return_mtype : str - the return type for the output, a valid mtype string
 
     Returns
     -------
@@ -976,11 +981,19 @@ def load_mitdb():
     y = X["label"]
     X = X["data"]
 
+    if return_mtype:
+        y = convert(y, from_type="Series", to_type=return_mtype)
+        X = convert(X, from_type="Series", to_type=return_mtype)
+
     return y, X
 
 
-def load_yahoo():
+def load_yahoo(return_mtype: str = None):
     """Load the labeled anomaly detection dataset [1].
+
+    Parameters
+    ----------
+    return_mtype : str - the return type for the output, a valid mtype string
 
     Returns
     -------
@@ -1016,11 +1029,19 @@ def load_yahoo():
     y = X["label"]
     X = X["data"]
 
+    if return_mtype:
+        y = convert(y, from_type="Series", to_type=return_mtype)
+        X = convert(X, from_type="Series", to_type=return_mtype)
+
     return y, X
 
 
-def load_seatbelts():
+def load_seatbelts(return_mtype: str = None):
     """Load the seabelts univariate time series dataset [1].
+
+    Parameters
+    ----------
+    return_mtype : str - the return type for the output, a valid mtype string
 
     Returns
     -------
@@ -1060,6 +1081,10 @@ def load_seatbelts():
 
     y = X["label"]
     X = X["KSI"]
+
+    if return_mtype:
+        y = convert(y, from_type="Series", to_type=return_mtype)
+        X = convert(X, from_type="Series", to_type=return_mtype)
 
     return y, X
 
