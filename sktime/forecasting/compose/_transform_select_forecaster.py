@@ -93,9 +93,8 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         "authors": ["shlok191"],
         "maintainers": ["shlok191"],
         "python_version": None,
+        "visual_block_kind": "parallel",
     }
-
-    _steps_attr = "_forecasters"
 
     def __init__(
         self,
