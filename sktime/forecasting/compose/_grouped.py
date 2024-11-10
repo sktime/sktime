@@ -230,8 +230,6 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         "visual_block_kind": "parallel",
     }
 
-    _steps_attr = "_forecasters"
-
     def __init__(
         self,
         forecasters,
