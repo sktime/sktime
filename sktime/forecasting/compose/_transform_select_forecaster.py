@@ -400,8 +400,7 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             fallback forecaster with the category: "fallback_forecaster"
         """
         return list(self.forecasters.items()) + [
-            "fallback_forecaster",
-            self.fallback_forecaster,
+            ("fallback_forecaster", self.fallback_forecaster)
         ]
 
     @_forecasters.setter
