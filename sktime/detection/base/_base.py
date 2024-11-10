@@ -194,8 +194,13 @@ class BaseDetector(BaseEstimator):
 
         Returns
         -------
-        Y : pd.Series
-            Labels for sequence X exact format depends on detection type.
+        y : pd.Series with RangeIndex
+            Labels for sequence ``X``, in sparse format.
+            Values are ``iloc`` references to indices of ``X``.
+
+            * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
+              the values are integer indices of the changepoints/anomalies.
+            * If ``task`` is "segmentation", the values are ``pd.Interval`` objects.
         """
         self.check_is_fitted()
 
@@ -203,9 +208,9 @@ class BaseDetector(BaseEstimator):
 
         # fkiraly: insert checks/conversions here, after PR #1012 I suggest
 
-        Y = self._predict(X=X)
+        y = self._predict(X=X)
 
-        return Y
+        return y
 
     def transform(self, X):
         """Create labels on test/deployment data.
@@ -217,11 +222,17 @@ class BaseDetector(BaseEstimator):
 
         Returns
         -------
-        Y : pd.Series
-            Labels for sequence X. The returned labels will be in the dense format.
+        y : pd.DataFrame with same index as X
+            Labels for sequence ``X``.
+
+            * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
+              the values are 0 or 1 labels, indicating whether ``X``, at the same
+              index, is an anomaly or changepoint, 0 for no, 1 for yes.
+            * If ``task`` is "segmentation", the values are integer labels of the
+              segments.
         """
-        Y = self.predict(X)
-        return self.sparse_to_dense(Y, X.index)
+        y = self.predict(X)
+        return self.sparse_to_dense(y, X.index)
 
     def predict_scores(self, X):
         """Return scores for predicted labels on test/deployment data.
@@ -330,13 +341,18 @@ class BaseDetector(BaseEstimator):
         ----------
         X : pd.DataFrame, pd.Series or np.ndarray
             Data to be transformed
-        Y : pd.Series or np.ndarray, optional (default=None)
+        y : pd.Series or np.ndarray, optional (default=None)
             Target values of data to be predicted.
 
         Returns
         -------
-        self : pd.Series
-            Labels for sequence X exact format depends on detection type.
+        y : pd.Series with RangeIndex
+            Labels for sequence ``X``, in sparse format.
+            Values are ``iloc`` references to indices of ``X``.
+
+            * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
+              the values are integer indices of the changepoints/anomalies.
+            * If ``task`` is "segmentation", the values are ``pd.Interval`` objects.
         """
         # Non-optimized default implementation; override when a better
         # method is possible for a given algorithm.
@@ -358,11 +374,17 @@ class BaseDetector(BaseEstimator):
 
         Returns
         -------
-        self : pd.Series
-            Labels for sequence X exact format depends on detection type.
+        y : pd.DataFrame with same index as X
+            Labels for sequence ``X``.
+
+            * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
+              the values are 0 or 1 labels, indicating whether ``X``, at the same
+              index, is an anomaly or changepoint, 0 for no, 1 for yes.
+            * If ``task`` is "segmentation", the values are integer labels of the
+              segments.
         """
-        Y = self.fit_predict(X, y=y, Y=Y)
-        return self.sparse_to_dense(Y, index=X.index)
+        y = self.fit_predict(X, y=y, Y=Y)
+        return self.sparse_to_dense(y, index=X.index)
 
     def _fit(self, X, y=None):
         """Fit to training data.
@@ -457,9 +479,14 @@ class BaseDetector(BaseEstimator):
 
         Returns
         -------
-        Y : pd.Series
+        y : pd.Series with IntervalIndex
             A series with an index of intervals. Each interval is the range of a
             segment and the corresponding value is the label of the segment.
+
+            * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
+              the intervals are intervals between changepoints/anomalies, and
+              the labels are consecutive integers starting from 0.
+            * If ``task`` is "segmentation", the values are segmentation labels.
         """
         self.check_is_fitted()
         X = check_series(X)
@@ -482,8 +509,14 @@ class BaseDetector(BaseEstimator):
 
         Returns
         -------
-        Y : pd.Series
-            A series whose values are the changepoints/anomalies in X.
+        y : pd.Series with RangeIndex
+            Labels for sequence ``X``, in sparse format.
+            Values are ``iloc`` references to indices of ``X``.
+
+            * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
+              the values are integer indices of the changepoints/anomalies.
+            * If ``task`` is "segmentation", the values are consecutive
+              segment boundaries.
         """
         self.check_is_fitted()
         X = check_series(X)
