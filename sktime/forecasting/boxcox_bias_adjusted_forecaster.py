@@ -40,6 +40,10 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
     lambda_fixed : float, optional (default=None)
         The Box-Cox transformation parameter. If None, it will be estimated.
 
+    Notes
+    -----
+    This forecaster applies only to univariate, non-hierarchical inner forecasters.
+
     References
     ----------
     .. [1] Hyndman, R.J., & Athanasopoulos, G. (2018) "Forecasting:
