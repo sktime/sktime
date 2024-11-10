@@ -111,13 +111,13 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
 
         # saving arguments to object storage
         if transformer is not None:
-            transformer_ = transformer
+            self.transformer = transformer
         else:
             from sktime.transformations.series.adi_cv import ADICVTransformer
 
-            transformer_ = ADICVTransformer(features=["class"])
+            self.transformer = ADICVTransformer(features=["class"])
 
-        self.transformer_ = coerce_scitype(transformer_, "transformer")
+        self.transformer_ = coerce_scitype(self.transformer, "transformer").clone()
 
         for forecaster in forecasters.values():
             assert isinstance(forecaster, BaseForecaster)
