@@ -1,7 +1,14 @@
-# from transformers import AutoModelForCausalLM
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implementation of Time-MoE for forecasting."""
+
+__author__ = ["Maple728"]
+
+import numpy as np
+import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import _BaseGlobalForecaster
+from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
+from sktime.sktime.forecasting.chronos import _frame2numpy
 from sktime.split import temporal_train_test_split
 from sktime.utils.warnings import warn
 
@@ -16,62 +23,7 @@ else:
 if _check_soft_dependencies("transformers", severity="none"):
     from transformers import Trainer, TrainingArguments
 
-# from time_moe.datasets.benchmark_dataset import BenchmarkEvalDataset
 
-# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Extension template for forecasters.
-
-Purpose of this implementation template:
-    quick implementation of new estimators following the template
-    NOT a concrete class to import! This is NOT a base class or concrete class!
-    This is to be used as a "fill-in" coding template.
-
-How to use this implementation template to implement a new estimator:
-- make a copy of the template in a suitable location, give it a descriptive name.
-- work through all the "todo" comments below
-- fill in code for mandatory methods, and optionally for optional methods
-- do not write to reserved variables: is_fitted, _is_fitted, _X, _y, cutoff, _fh,
-    _cutoff, _converter_store_y, forecasters_, _tags, _tags_dynamic, _is_vectorized
-- you can add more private methods, but do not override BaseEstimator's private methods
-    an easy way to be safe is to prefix your methods with "_custom"
-- change docstrings for functions and the file
-- ensure interface compatibility by sktime.utils.estimator_checks.check_estimator
-- once complete: use as a local library, or contribute to sktime via PR
-- more details:
-  https://www.sktime.net/en/stable/developer_guide/add_estimators.html
-
-Mandatory implements:
-    fitting         - _fit(self, y, X=None, fh=None)
-    forecasting     - _predict(self, fh=None, X=None)
-
-Optional implements:
-    updating                    - _update(self, y, X=None, update_params=True):
-    predicting quantiles        - _predict_quantiles(self, fh, X=None, alpha=None)
-    OR predicting intervals     - _predict_interval(self, fh, X=None, coverage=None)
-    predicting variance         - _predict_var(self, fh, X=None, cov=False)
-    distribution forecast       - _predict_proba(self, fh, X=None)
-    fitted parameter inspection - _get_fitted_params()
-
-Testing - required for sktime test framework and check_estimator usage:
-    get default parameters for test instance(s) - get_test_params()
-"""
-# todo: write an informative docstring for the file or module, remove the above
-# todo: add an appropriate copyright notice for your estimator
-#       estimators contributed to sktime should have the copyright notice at the top
-#       estimators of your own do not need to have permissive or BSD-3 copyright
-
-# todo: uncomment the following line, enter authors' GitHub IDs
-# __author__ = [authorGitHubID, anotherAuthorGitHubID]
-
-
-# todo: add any necessary imports here
-
-# todo: for imports of sktime soft dependencies:
-# make sure to fill in the "python_dependencies" tag with the package import name
-# import soft dependencies only inside methods of the class, not at the top of the file
-
-
-# todo: change class name and write docstring
 class TimeMoE(_BaseGlobalForecaster):
     """Custom forecaster. todo: write docstring.
 
@@ -225,7 +177,6 @@ class TimeMoE(_BaseGlobalForecaster):
         broadcasting=False,
         use_source_package=False,
     ):
-        # leave this as is
         super().__init__()
         self.model_path = model_path
         self.revision = revision
@@ -239,105 +190,70 @@ class TimeMoE(_BaseGlobalForecaster):
         self.broadcasting = broadcasting
         self.use_source_package = use_source_package
 
-    def _fit(self, y, X, fh):
+        if self.broadcasting:
+            self.set_tags(
+                **{
+                    "y_inner_mtype": "pd.DataFrame",
+                    "X_inner_mtype": "pd.DataFrame",
+                    "capability:global_forecasting": False,
+                }
+            )
+
+    def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
-
-        private _fit containing the core logic, called from fit
-
-        Writes to self:
-            Sets fitted model attributes ending in "_".
 
         Parameters
         ----------
         y : sktime time series object
-            guaranteed to be of an mtype in self.get_tag("y_inner_mtype")
             Time series to which to fit the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
-            Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
-            Otherwise, if not passed in _fit, guaranteed to be passed in _predict
-        X :  sktime time series object, optional (default=None)
-            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
-            Exogeneous time series to fit to.
+        fh : ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to predict.
+        X : sktime time series object, optional (default=None)
+            Exogenous time series to fit to.
 
         Returns
         -------
         self : reference to self
         """
-        # if self.use_source_package:
-        #     from  import (
+        if self.use_source_package:
+            from sktime.libs.timemoe import TimeMoeConfig, TimeMoeForPrediction
+        elif _check_soft_dependencies("torch", severity="error"):
+            from sktime.libs.timemoe import TimeMoeConfig, TimeMoeForPrediction
 
-        #     )
-        # elif _check_soft_dependencies("torch", severity="error"):
-        #     from sktime.libs.timemoe import (
-        #         ,
-        #     )
-
-        if _check_soft_dependencies("torch", severity="error"):
-            from sktime.libs.timemoe import (
-                TimeMoeConfig,
-                TimeMoeForPrediction,
-            )
-        # Get the Configuration
-        config = TimeMoeConfig.from_pretrained(
-            self.model_path,
-            revision=self.revision,
-        )
-
-        # Update config with user provided config
+        # Initialize model config
+        config = TimeMoeConfig.from_pretrained(self.model_path, revision=self.revision)
         _config = config.to_dict()
         _config.update(self._config)
 
-        # validate patches in configuration
-        # context_length / num_patches == patch_length == patch_stride
-        # if this condition is not satisfied in the configuration
-        # this error is raised in forward pass of the model
-        # RuntimeError: mat1 and mat2 shapes cannot be multiplied (384x4 and 32x64)
+        # Ensure configuration for patching aligns with context length
         context_length = _config.get("context_length")
         num_patches = _config.get("num_patches")
         patch_length = _config.get("patch_length")
         patch_stride = _config.get("patch_stride")
+
         patch_size = context_length / num_patches
-        if patch_size != patch_length or patch_stride != patch_stride:
-            # update the config here
+        if not (patch_size == patch_length == patch_stride):
+            # Update the config to match patching requirements
             patch_size = max(1, int(patch_size))
             _config["patch_length"] = patch_size
             _config["patch_stride"] = patch_size
             _config["num_patches"] = _config["context_length"] // patch_size
-
-            msg = (
-                "Invalid configuration detected. "
-                "The provided values do not satisfy the required condition:\n"
-                "context_length / num_patches == patch_length == patch_stride\n"
-                "Provided configuration:\n"
-                f"- context_length: {context_length}\n"
-                f"- num_patches: {num_patches}\n"
-                f"- patch_length: {patch_length}\n"
-                f"- patch_stride: {patch_stride}\n"
-                "Configuration has been automatically updated to:\n"
+            warn(
+                "Invalid patch configuration detected. Configuration updated to ensure:\n"
                 f"- context_length: {context_length}\n"
                 f"- num_patches: {_config['num_patches']}\n"
-                f"- patch_length: {_config['patch_length']}\n"
-                f"- patch_stride: {_config['patch_stride']}"
+                f"- patch_length and patch_stride: {patch_size}"
             )
-            warn(msg)
 
         if fh is not None:
             _config["prediction_length"] = max(
-                *(fh.to_relative(self._cutoff)._values),
-                _config["prediction_length"],
+                fh.to_relative(self._cutoff)._values,
+                _config.get("prediction_length", 1),
             )
 
-        config = config.from_dict(_config)
+        config = TimeMoeConfig.from_dict(_config)
 
-        # Get the Model
-        # self.model, info = PatchTSTForPrediction.from_pretrained(
-        # "ibm-granite/granite-timeseries-patchtst",
+        # Load the model with updated config
         self.model, info = TimeMoeForPrediction.from_pretrained(
             self.model_path,
             revision=self.revision,
@@ -346,37 +262,35 @@ class TimeMoE(_BaseGlobalForecaster):
             ignore_mismatched_sizes=True,
         )
 
-        if len(info["mismatched_keys"]) == 0:
-            return  # No need to fit
+        # Handle mismatched weights by freezing model parameters
+        if info["mismatched_keys"]:
+            for param in self.model.parameters():
+                param.requires_grad = False
+            for key in info["mismatched_keys"]:
+                module = self.model
+                for attr in key.split(".")[:-1]:
+                    module = getattr(module, attr)
+                module.weight.requires_grad = True
 
-        # Freeze all loaded parameters
-        for param in self.model.parameters():
-            param.requires_grad = False
-
-        # Reininit the weights of all layers that have mismatched sizes
-        for key, _, _ in info["mismatched_keys"]:
-            _model = self.model
-            for attr_name in key.split(".")[:-1]:
-                _model = getattr(_model, attr_name)
-            _model.weight.requires_grad = True
-
+        # Splitting the dataset for training and validation
         y_train, y_test = temporal_train_test_split(y, test_size=self.validation_split)
 
-        # train = PyTorchDataset(
-        #     y=y_train,
-        #     context_length=config.context_length,
-        #     prediction_length=config.prediction_length,
-        # )
-        # test = PyTorchDataset(
-        #     y=y_test,
-        #     context_length=config.context_length,
-        #     prediction_length=config.prediction_length,
-        # )
+        # Create PyTorch-compatible datasets
+        train = PyTorchDataset(
+            y=y_train,
+            context_length=config.context_length,
+            prediction_length=config.prediction_length,
+        )
+        test = PyTorchDataset(
+            y=y_test,
+            context_length=config.context_length,
+            prediction_length=config.prediction_length,
+        )
 
-        # Get Training Configuration
+        # Initialize training arguments
         training_args = TrainingArguments(**self._training_args)
 
-        # Get the Trainer
+        # Set up the Trainer
         trainer = Trainer(
             model=self.model,
             args=training_args,
@@ -389,7 +303,7 @@ class TimeMoE(_BaseGlobalForecaster):
         # Train the model
         trainer.train()
 
-        # Get the model
+        # Update model reference
         self.model = trainer.model
 
         # master_addr = os.getenv('MASTER_ADDR', '127.0.0.1')
@@ -453,26 +367,96 @@ class TimeMoE(_BaseGlobalForecaster):
             should be of the same type as seen in _fit, as in "y_inner_mtype" tag
             Point predictions
         """
-        model = self.model
-        device = self.device
-        prediction_length = self.prediction_length
+        # model = self.model
+        # device = self.device
+        # prediction_length = self.prediction_length
 
-        outputs = model.generate(
-            inputs=batch["inputs"].to(device).to(model.dtype),
-            max_new_tokens=prediction_length,
+        # outputs = model.generate(
+        #     inputs=batch["inputs"].to(device).to(model.dtype),
+        #     max_new_tokens=prediction_length,
+        # )
+        # preds = outputs[:, -prediction_length:]
+        # labels = batch["labels"].to(device)
+        # if len(preds.shape) > len(labels.shape):
+        #     labels = labels[..., None]
+        # return preds, labels
+
+        import torch
+
+        if fh is None:
+            fh = self.fh
+        fh = fh.to_relative(self.cutoff)
+
+        _y = y if self._global_forecasting else self._y
+
+        # multi-index conversion goes here
+        if isinstance(_y.index, pd.MultiIndex):
+            hist = _frame2numpy(_y)
+        else:
+            hist = np.expand_dims(_y.values, axis=0)
+
+        # hist.shape: (batch_size, n_timestamps, n_cols)
+
+        # truncate or pad to match sequence length
+        past_values, observed_mask = _pad_truncate(
+            hist, self.model.config.context_length
         )
-        preds = outputs[:, -prediction_length:]
-        labels = batch["labels"].to(device)
-        if len(preds.shape) > len(labels.shape):
-            labels = labels[..., None]
-        return preds, labels
 
-        # implement here
-        # IMPORTANT: avoid side effects to X, fh
+        past_values = (
+            torch.tensor(past_values).to(self.model.dtype).to(self.model.device)
+        )
+        observed_mask = (
+            torch.tensor(observed_mask).to(self.model.dtype).to(self.model.device)
+        )
 
-    # todo: implement this if this is an estimator contributed to sktime
-    #   or to run local automated unit and integration testing of estimator
-    #   method should return default parameters, so that a test instance can be created
+        self.model.eval()
+        outputs = self.model(
+            past_values=past_values,
+            observed_mask=observed_mask,
+        )
+        pred = outputs.prediction_outputs.detach().cpu().numpy()
+
+        # converting pred datatype
+
+        if isinstance(_y.index, pd.MultiIndex):
+            ins = np.array(
+                list(np.unique(_y.index.droplevel(-1)).repeat(pred.shape[1]))
+            )
+            ins = [ins[..., i] for i in range(ins.shape[-1])] if ins.ndim > 1 else [ins]
+
+            idx = (
+                ForecastingHorizon(range(1, pred.shape[1] + 1), freq=self.fh.freq)
+                .to_absolute(self._cutoff)
+                ._values.tolist()
+                * pred.shape[0]
+            )
+            index = pd.MultiIndex.from_arrays(
+                ins + [idx],
+                names=_y.index.names,
+            )
+        else:
+            index = (
+                ForecastingHorizon(range(1, pred.shape[1] + 1))
+                .to_absolute(self._cutoff)
+                ._values
+            )
+
+        pred = pd.DataFrame(
+            # batch_size * num_timestams, n_cols
+            pred.reshape(-1, pred.shape[-1]),
+            index=index,
+            columns=_y.columns,
+        )
+
+        absolute_horizons = fh.to_absolute_index(self.cutoff)
+        dateindex = pred.index.get_level_values(-1).map(
+            lambda x: x in absolute_horizons
+        )
+        pred = pred.loc[dateindex]
+        pred.index.names = _y.index.names
+
+        return pred
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -536,3 +520,12 @@ class TimeMoE(_BaseGlobalForecaster):
         # # "default" params - always returned except for "special_param_set" value
         # params = {"est": value3, "parama": value4}
         # return params
+
+
+def _pad_truncate(data, length):
+    """Pad or truncate the data to the specified length."""
+    if len(data) > length:
+        return data[:length], [1] * length
+    else:
+        padding = length - len(data)
+        return data + [0] * padding, [1] * len(data) + [0] * padding
