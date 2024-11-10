@@ -14,6 +14,10 @@ This folder contains libraries directly distributed with, and maintained by, `sk
   Unofficial fork of abandoned package from June 2024 onwards,
   see [pykalman issue 109](https://github.com/pykalman/pykalman/issues/109).
 
+* `uni2ts` - a package implementing the MOIRAIForecaster. Unofficial fork of
+ the package with minimal dependencies and code specific to the forecaster.
+ Official package available at [pypi](https://pypi.org/project/uni2ts/).
+
 * `vmdpy` - a package implementing Variational Mode Decomposition.
   Official fork, `vmdpy` is maintained in `sktime` since August 2023.
 
