@@ -1,10 +1,10 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Utility class for ploting functionality."""
+"""Utility class for plotting functionality."""
 
 import numpy as np
 
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_X
 
 __all__ = [
@@ -139,10 +139,10 @@ def plot_time_series_with_profiles(
 
     for a in ax:
         for tick in a.xaxis.get_major_ticks():
-            tick.label.set_fontsize(font_size)
+            tick.label1.set_fontsize(font_size)
 
         for tick in a.yaxis.get_major_ticks():
-            tick.label.set_fontsize(font_size)
+            tick.label1.set_fontsize(font_size)
 
     if true_cps is not None:
         for idx, true_cp in enumerate(true_cps):

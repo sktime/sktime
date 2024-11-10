@@ -3,8 +3,6 @@
 See datatypes._registry for API.
 """
 
-import pandas as pd
-
 __all__ = [
     "MTYPE_REGISTER_PANEL",
     "MTYPE_LIST_PANEL",
@@ -38,12 +36,22 @@ MTYPE_REGISTER_PANEL = [
     ),
     ("df-list", "Panel", "list of pd.DataFrame"),
     (
-        "dask_panel",
+        "gluonts_ListDataset_panel",
         "Panel",
-        "dask frame with one instance and one time index, as per dask_to_pd convention",
+        "gluonTS representation of univariate and multivariate time series",
+    ),
+    (
+        "gluonts_PandasDataset_panel",
+        "Panel",
+        "gluonTS representation of a pandas DataFrame",
     ),
 ]
 
-MTYPE_SOFT_DEPS_PANEL = {"xr.DataArray": "xarray", "dask_panel": "dask"}
+MTYPE_SOFT_DEPS_PANEL = {
+    "xr.DataArray": "xarray",
+    "dask_panel": "dask",
+    "gluonts_ListDataset_panel": "gluonts",
+    "gluonts_PandasDataset_panel": "gluonts",
+}
 
-MTYPE_LIST_PANEL = pd.DataFrame(MTYPE_REGISTER_PANEL)[0].values
+MTYPE_LIST_PANEL = [x[0] for x in MTYPE_REGISTER_PANEL]

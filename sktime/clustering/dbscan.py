@@ -2,14 +2,13 @@
 
 __author__ = ["fkiraly"]
 
-from warnings import warn
-
 import numpy as np
 from sklearn.cluster import DBSCAN
 
 from sktime.clustering.base import BaseClusterer
 from sktime.datatypes import update_data
-from sktime.dists_kernels._base import BasePairwiseTransformerPanel
+from sktime.dists_kernels.base import BasePairwiseTransformerPanel
+from sktime.utils.warnings import warn
 
 
 class TimeSeriesDBSCAN(BaseClusterer):
@@ -63,6 +62,11 @@ class TimeSeriesDBSCAN(BaseClusterer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "fkiraly",
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:unequal_length": True,
         "capability:missing_values": True,
@@ -99,6 +103,15 @@ class TimeSeriesDBSCAN(BaseClusterer):
                 "capability:missing_values",
             ]
             self.clone_tags(distance, tags_to_clone)
+
+        # numba distance in sktime (indexed by string)
+        # cannot support unequal length data, and require numpy3D input
+        if isinstance(distance, str):
+            tags_to_set = {
+                "X_inner_mtype": "numpy3D",
+                "capability:unequal_length": False,
+            }
+            self.set_tags(**tags_to_set)
 
         self.dbscan_ = None
 
@@ -155,7 +168,8 @@ class TimeSeriesDBSCAN(BaseClusterer):
                 "sklearn and sktime DBSCAN estimators do not support different X "
                 "in fit and predict, but a new X was passed in predict. "
                 "Therefore, a clone of TimeSeriesDBSCAN will be fit, and results "
-                "returned, without updating the state of the fitted estimator."
+                "returned, without updating the state of the fitted estimator.",
+                obj=self,
             )
             return self.clone().fit(all_X).labels_
 

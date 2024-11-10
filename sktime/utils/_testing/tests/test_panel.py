@@ -58,7 +58,9 @@ def test_make_panel(n_instances, n_columns, n_timepoints, return_mtype):
         return_mtype=return_mtype,
     )
 
-    valid, _, metadata = check_is_mtype(X, mtype=return_mtype, return_metadata=True)
+    valid, _, metadata = check_is_mtype(
+        X, mtype=return_mtype, return_metadata=True, msg_return_dict="list"
+    )
     msg = f"_make_panel_X generated data does not comply with mtype {return_mtype}"
     assert valid, msg
     assert metadata["n_instances"] == n_instances

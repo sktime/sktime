@@ -6,9 +6,8 @@ Ported over from sktime-dl.
 
 def make_attention_lstm():
     """Return AttentionLSTM class used by the LSTM-FCN Network."""
-    from tensorflow.keras import activations
+    from tensorflow.keras import activations, constraints, initializers, regularizers
     from tensorflow.keras import backend as K
-    from tensorflow.keras import constraints, initializers, regularizers
 
     # from keras.legacy import interfaces
     from tensorflow.keras.layers import RNN, InputSpec, Layer
@@ -29,7 +28,7 @@ def make_attention_lstm():
             x: input tensor.
             w: weight matrix.
             b: optional bias vector.
-            dropout: wether to apply dropout (same dropout mask
+            dropout: whether to apply dropout (same dropout mask
                 for every temporal slice of the input).
             input_dim: integer; optional dimensionality of the input.
             output_dim: integer; optional dimensionality of the output.

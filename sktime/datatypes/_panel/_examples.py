@@ -24,7 +24,8 @@ overall, conversions from non-lossy representations to any other ones
 import numpy as np
 import pandas as pd
 
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.datatypes._dtypekind import DtypeKind
+from sktime.utils.dependencies import _check_soft_dependencies
 
 example_dict = dict()
 example_dict_lossy = dict()
@@ -39,10 +40,10 @@ X = np.array(
 )
 
 example_dict[("numpy3D", "Panel", 0)] = X
-example_dict_lossy[("numpy3D", "Panel", 0)] = False
+example_dict_lossy[("numpy3D", "Panel", 0)] = True
 
 example_dict[("numpyflat", "Panel", 0)] = None
-example_dict_lossy[("numpyflat", "Panel", 0)] = None
+example_dict_lossy[("numpyflat", "Panel", 0)] = True
 
 cols = [f"var_{i}" for i in range(2)]
 Xlist = [
@@ -68,7 +69,7 @@ example_dict[("pd-multiindex", "Panel", 0)] = X
 example_dict_lossy[("pd-multiindex", "Panel", 0)] = False
 
 cols = [f"var_{i}" for i in range(2)]
-X = pd.DataFrame(columns=cols, index=[0, 1, 2])
+X = pd.DataFrame(columns=cols, index=pd.RangeIndex(3))
 X["var_0"] = pd.Series(
     [pd.Series([1, 2, 3]), pd.Series([1, 2, 3]), pd.Series([1, 2, 3])]
 )
@@ -90,6 +91,30 @@ if _check_soft_dependencies("dask", severity="none"):
     example_dict[("dask_panel", "Panel", 0)] = df_dask
     example_dict_lossy[("dask_panel", "Panel", 0)] = False
 
+if _check_soft_dependencies("gluonts", severity="none"):
+    from sktime.datatypes._adapter.gluonts import (
+        convert_pandas_multiindex_to_pandasDataset,
+        convert_pandas_to_listDataset,
+    )
+
+    df = example_dict[("pd-multiindex", "Panel", 0)]
+
+    # Updating the DF to have pandas Datetime objects
+    list_dataset = convert_pandas_to_listDataset(df)
+
+    example_dict[("gluonts_ListDataset_panel", "Panel", 0)] = list_dataset
+    example_dict_lossy[("gluonts_ListDataset_panel", "Panel", 0)] = True
+
+    # Beginning example tests for PandasDataset
+    df = example_dict[("pd-multiindex", "Panel", 0)]
+
+    pandas_dataset = convert_pandas_multiindex_to_pandasDataset(
+        df, item_id="instances", timepoints="timepoints", target=["var_0", "var_1"]
+    )
+
+    example_dict[("gluonts_PandasDataset_panel", "Panel", 0)] = pandas_dataset
+    example_dict_lossy[("gluonts_PandasDataset_panel", "Panel", 0)] = False
+
 example_dict_metadata[("Panel", 0)] = {
     "is_univariate": False,
     "is_one_series": False,
@@ -101,6 +126,9 @@ example_dict_metadata[("Panel", 0)] = {
     "is_empty": False,
     "has_nans": False,
     "n_instances": 3,
+    "n_features": 2,
+    "feature_names": ["var_0", "var_1"],
+    "feature_kind": [DtypeKind.FLOAT, DtypeKind.FLOAT],
 }
 
 ###
@@ -112,12 +140,12 @@ X = np.array(
 )
 
 example_dict[("numpy3D", "Panel", 1)] = X
-example_dict_lossy[("numpy3D", "Panel", 1)] = False
+example_dict_lossy[("numpy3D", "Panel", 1)] = True
 
 X = np.array([[4, 5, 6], [4, 55, 6], [42, 5, 6]], dtype=np.int64)
 
 example_dict[("numpyflat", "Panel", 1)] = X
-example_dict_lossy[("numpyflat", "Panel", 1)] = False
+example_dict_lossy[("numpyflat", "Panel", 1)] = True
 
 cols = [f"var_{i}" for i in range(1)]
 Xlist = [
@@ -143,7 +171,7 @@ example_dict[("pd-multiindex", "Panel", 1)] = X
 example_dict_lossy[("pd-multiindex", "Panel", 1)] = False
 
 cols = [f"var_{i}" for i in range(1)]
-X = pd.DataFrame(columns=cols, index=[0, 1, 2])
+X = pd.DataFrame(columns=cols, index=pd.RangeIndex(3))
 X["var_0"] = pd.Series(
     [pd.Series([4, 5, 6]), pd.Series([4, 55, 6]), pd.Series([42, 5, 6])]
 )
@@ -161,6 +189,25 @@ if _check_soft_dependencies("dask", severity="none"):
     example_dict[("dask_panel", "Panel", 1)] = df_dask
     example_dict_lossy[("dask_panel", "Panel", 1)] = False
 
+if _check_soft_dependencies("gluonts", severity="none"):
+    from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
+
+    df = example_dict[("pd-multiindex", "Panel", 1)]
+
+    list_dataset = convert_pandas_to_listDataset(df)
+
+    example_dict[("gluonts_ListDataset_panel", "Panel", 1)] = list_dataset
+    example_dict_lossy[("gluonts_ListDataset_panel", "Panel", 1)] = True
+
+    # Beginning example tests for PandasDataset
+    df = example_dict[("pd-multiindex", "Panel", 1)]
+
+    pandas_dataset = convert_pandas_multiindex_to_pandasDataset(
+        df, item_id="instances", timepoints="timepoints", target=["var_0"]
+    )
+
+    example_dict[("gluonts_PandasDataset_panel", "Panel", 1)] = pandas_dataset
+    example_dict_lossy[("gluonts_PandasDataset_panel", "Panel", 1)] = False
 
 example_dict_metadata[("Panel", 1)] = {
     "is_univariate": True,
@@ -173,6 +220,9 @@ example_dict_metadata[("Panel", 1)] = {
     "is_empty": False,
     "has_nans": False,
     "n_instances": 3,
+    "n_features": 1,
+    "feature_names": ["var_0"],
+    "feature_kind": [DtypeKind.FLOAT],
 }
 
 ###
@@ -184,12 +234,12 @@ X = np.array(
 )
 
 example_dict[("numpy3D", "Panel", 2)] = X
-example_dict_lossy[("numpy3D", "Panel", 2)] = False
+example_dict_lossy[("numpy3D", "Panel", 2)] = True
 
 X = np.array([[4, 5, 6]], dtype=np.int64)
 
 example_dict[("numpyflat", "Panel", 2)] = X
-example_dict_lossy[("numpyflat", "Panel", 2)] = False
+example_dict_lossy[("numpyflat", "Panel", 2)] = True
 
 cols = [f"var_{i}" for i in range(1)]
 Xlist = [
@@ -211,7 +261,7 @@ example_dict[("pd-multiindex", "Panel", 2)] = X
 example_dict_lossy[("pd-multiindex", "Panel", 2)] = False
 
 cols = [f"var_{i}" for i in range(1)]
-X = pd.DataFrame(columns=cols, index=[0])
+X = pd.DataFrame(columns=cols, index=pd.RangeIndex(1))
 X["var_0"] = pd.Series([pd.Series([4, 5, 6])])
 
 example_dict[("nested_univ", "Panel", 2)] = X
@@ -227,6 +277,26 @@ if _check_soft_dependencies("dask", severity="none"):
     example_dict[("dask_panel", "Panel", 2)] = df_dask
     example_dict_lossy[("dask_panel", "Panel", 2)] = False
 
+if _check_soft_dependencies("gluonts", severity="none"):
+    from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
+
+    df = example_dict[("pd-multiindex", "Panel", 2)]
+
+    list_dataset = convert_pandas_to_listDataset(df)
+
+    example_dict[("gluonts_ListDataset_panel", "Panel", 2)] = list_dataset
+    example_dict_lossy[("gluonts_ListDataset_panel", "Panel", 2)] = True
+
+    # Beginning example tests for PandasDataset
+    df = example_dict[("pd-multiindex", "Panel", 2)]
+
+    pandas_dataset = convert_pandas_multiindex_to_pandasDataset(
+        df, item_id="instances", timepoints="timepoints", target=["var_0"]
+    )
+
+    example_dict[("gluonts_PandasDataset_panel", "Panel", 2)] = pandas_dataset
+    example_dict_lossy[("gluonts_PandasDataset_panel", "Panel", 2)] = True
+
 example_dict_metadata[("Panel", 2)] = {
     "is_univariate": True,
     "is_one_series": True,
@@ -238,6 +308,9 @@ example_dict_metadata[("Panel", 2)] = {
     "is_empty": False,
     "has_nans": False,
     "n_instances": 1,
+    "n_features": 1,
+    "feature_names": ["var_0"],
+    "feature_kind": [DtypeKind.FLOAT],
 }
 
 ###
@@ -266,4 +339,7 @@ example_dict_metadata[("Panel", 3)] = {
     "is_empty": False,
     "has_nans": False,
     "n_instances": 3,
+    "n_features": 1,
+    "feature_names": ["var_0"],
+    "feature_kind": [DtypeKind.FLOAT],
 }

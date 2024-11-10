@@ -6,7 +6,7 @@ __author__ = ["fkiraly"]
 import pytest
 
 from sktime.registry._craft import craft, deps, imports
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 simple_spec = "NaiveForecaster()"
 simple_spec_with_dep = "VAR(trend='ct')"
@@ -37,7 +37,7 @@ return ForecastingGridSearchCV(
     },
     ],
     cv=cv,
-    n_jobs=-1)
+    )
 """
 
 dunder_spec = "Detrender(ExponentialSmoothing(sp=12)) * ARIMA()"
@@ -86,10 +86,11 @@ def test_imports():
     pipe_imports = (
         "from sktime.forecasting.compose._pipeline import TransformedTargetForecast"
         "er\nfrom sktime.forecasting.exp_smoothing import ExponentialSmoothing\nfrom"
-        " sktime.forecasting.model_selection._split import ExpandingWindowSplitter\nf"
-        "rom sktime.forecasting.model_selection._tune import ForecastingGridSearch"
+        " sktime.forecasting.model_selection._tune import ForecastingGridSearch"
         "CV\nfrom sktime.forecasting.naive import NaiveForecaster\nfrom sktime.fore"
         "casting.naive import NaiveForecaster\nfrom sktime.forecasting.theta impor"
-        "t ThetaForecaster\nfrom sktime.transformations.series.impute import Imputer"
+        "t ThetaForecaster\nfrom sktime.split.expandingwindow import "
+        "ExpandingWindowSplitter\nfrom sktime.transformations.series.impute import "
+        "Imputer"
     )
     assert imports(pipe_spec) == pipe_imports

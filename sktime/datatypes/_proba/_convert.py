@@ -85,11 +85,6 @@ def convert_pred_interval_to_quantiles(y_pred, inplace=False):
     idx = y_pred.columns
     var_names = idx.get_level_values(0)
 
-    # todo 0.22.0 - predict_interval new interface - remove this
-    # treat univariate default name
-    # here because it's in the current specification
-    var_names = ["Quantiles" if x == "Coverage" else x for x in var_names]
-
     # alpha, we compute by the coverage/alphas formula correspondence
     coverages = idx.get_level_values(1)
     alphas = np.array(coverages.copy())
@@ -113,9 +108,9 @@ def convert_interval_to_quantiles(obj: pd.DataFrame, store=None) -> pd.DataFrame
     return convert_pred_interval_to_quantiles(y_pred=obj)
 
 
-convert_dict[
-    ("pred_interval", "pred_quantiles", "Proba")
-] = convert_interval_to_quantiles
+convert_dict[("pred_interval", "pred_quantiles", "Proba")] = (
+    convert_interval_to_quantiles
+)
 
 
 def convert_pred_quantiles_to_interval(y_pred, inplace=False):
@@ -152,11 +147,6 @@ def convert_pred_quantiles_to_interval(y_pred, inplace=False):
     idx = y_pred.columns
     var_names = idx.get_level_values(0)
 
-    # todo 0.22.0 - predict_interval new interface - remove this
-    # treat univariate default name
-    # here because it's in the current specification
-    var_names = ["Coverage" if x == "Quantiles" else x for x in var_names]
-
     # coverages we compute by the coverage/alphas formula correspondence
     alphas = idx.get_level_values(1)
     alphas = np.array(alphas.copy())
@@ -175,6 +165,6 @@ def convert_quantiles_to_interval(obj: pd.DataFrame, store=None) -> pd.DataFrame
     return convert_pred_quantiles_to_interval(y_pred=obj)
 
 
-convert_dict[
-    ("pred_quantiles", "pred_interval", "Proba")
-] = convert_quantiles_to_interval
+convert_dict[("pred_quantiles", "pred_interval", "Proba")] = (
+    convert_quantiles_to_interval
+)

@@ -3,6 +3,7 @@
 Metrics are suitable for comparing predicted change point sets against true change
 points and quantify the error.
 """
+
 import numpy as np
 import numpy.typing as npt
 from scipy.spatial.distance import directed_hausdorff
@@ -51,7 +52,7 @@ def hausdorff_error(
     pred_change_points: array_like
         Integer indexes (positions) of predicted change points
     symmetric: bool
-        If `True` symmetric Hausdorff distance will be used
+        If ``True`` symmetric Hausdorff distance will be used
     seed: int, default=0
         Local numpy.random.RandomState seed. Default is 0, a random
         shuffling of u and v that guarantees reproducibility.

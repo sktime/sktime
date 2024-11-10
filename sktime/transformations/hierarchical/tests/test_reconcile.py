@@ -10,10 +10,11 @@ from pandas.testing import assert_frame_equal
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.hierarchical.reconcile import Reconciler
 from sktime.utils._testing.hierarchical import _bottom_hier_datagen
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 # get all the methods
 METHOD_LIST = Reconciler.METHOD_LIST
@@ -24,6 +25,10 @@ flatten_list = [True, False]
 # test the reconciled predictions are actually hierarchical
 # test the index/columns on the g and s matrices match
 # test it works for named and unnamed indexes
+@pytest.mark.skipif(
+    not run_test_for_class([Aggregator, Reconciler]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.skipif(
     not _check_soft_dependencies("statsmodels", severity="none"),
     reason="skip test if required soft dependency not available",
@@ -36,7 +41,7 @@ def test_reconciler_fit_transform(method, flatten, no_levels):
 
     Raises
     ------
-    This test asserts that the output of Reconciler is actually hierarhical
+    This test asserts that the output of Reconciler is actually hierarchical
     in that the predictions sum together appropriately. It also tests the index
     and columns of the fitted s and g matrix from each method and finally tests
     if the method works for both named and unnamed indexes

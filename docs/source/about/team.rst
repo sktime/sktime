@@ -44,10 +44,6 @@ Community Council Observers
      - :user:`benheid`
    * - Jana Schmidberger
      - :user:`janasberger`
-   * - Lovkush Agarwal
-     - :user:`lovkush-a`
-   * - Mirae Parker
-     - :user:`miraep8`
 
 Code of Conduct Committee
 -------------------------
@@ -70,6 +66,8 @@ Core Developers
 
    * - Name
      - GitHub ID
+   * - Alex Gregory
+     - :user:`Alex-JG3`
    * - Anirban Ray
      - :user:`yarnabrina`
    * - Benedikt Heidrich
@@ -80,6 +78,8 @@ Core Developers
      - :user:`fkiraly`
    * - Freddy A Boulton
      - :user:`freddyaboulton`
+   * - Hazrul Akmal
+     - :user:`hazrulakmal`
    * - Jonathan Bechtel
      - :user:`jonathanbechtel`
    * - Kiril Ralinovski

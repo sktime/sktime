@@ -62,17 +62,17 @@ from sktime.classification.base import BaseClassifier
 from sktime.classification.early_classification import BaseEarlyClassifier
 from sktime.clustering.base import BaseClusterer
 from sktime.datasets.base import BaseDataset
-from sktime.dists_kernels._base import (
+from sktime.dists_kernels.base import (
     BasePairwiseTransformer,
     BasePairwiseTransformerPanel,
 )
-from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.model_selection._split import BaseSplitter
+from sktime.forecasting.base import BaseForecaster, _BaseGlobalForecaster
 from sktime.networks.base import BaseDeepNetwork
 from sktime.param_est.base import BaseParamFitter
 from sktime.performance_metrics.base import BaseMetric
 from sktime.proba.base import BaseDistribution
 from sktime.regression.base import BaseRegressor
+from sktime.split.base import BaseSplitter
 from sktime.transformations.base import (
     BaseTransformer,
     _PanelToPanelTransformer,
@@ -90,6 +90,7 @@ BASE_CLASS_REGISTER = [
     ("dataset", BaseDataset, "data set"),
     ("early_classifier", BaseEarlyClassifier, "early time series classifier"),
     ("forecaster", BaseForecaster, "forecaster"),
+    ("global_forecaster", _BaseGlobalForecaster, "global_forecaster"),
     ("metric", BaseMetric, "performance metric"),
     ("network", BaseDeepNetwork, "deep learning network"),
     ("param_est", BaseParamFitter, "parameter fitting estimator"),

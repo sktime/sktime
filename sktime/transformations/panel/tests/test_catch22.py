@@ -5,14 +5,14 @@ import pytest
 from numpy import testing
 
 from sktime.datasets import load_basic_motions
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.panel.catch22 import Catch22
 from sktime.transformations.panel.catch22wrapper import Catch22Wrapper
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("numba", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(Catch22),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_catch22_on_basic_motions():
     """Test of Catch22 on basic motions data."""
@@ -36,8 +36,8 @@ def test_catch22_on_basic_motions():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("pycatch22", severity="none"),
-    reason="skip test if required soft dependency pycatch22 not available",
+    not run_test_for_class(Catch22Wrapper),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_catch22_wrapper_on_basic_motions():
     """Test of Catch22Wrapper on basic motions data."""
@@ -1415,3 +1415,38 @@ catch22wrapper_basic_motions_data = np.array(
         ],
     ]
 )
+
+
+def test_feature_names():
+    """Test that the hard-coded feature name variables are as expected.
+
+    Safety measure to avoid accidental changes to the feature names, or their order.
+    """
+    from sktime.transformations.panel.catch22 import FEATURE_NAMES, feature_names
+
+    expected_feature_names = [
+        "DN_HistogramMode_5",
+        "DN_HistogramMode_10",
+        "SB_BinaryStats_diff_longstretch0",
+        "DN_OutlierInclude_p_001_mdrmd",
+        "DN_OutlierInclude_n_001_mdrmd",
+        "CO_f1ecac",
+        "CO_FirstMin_ac",
+        "SP_Summaries_welch_rect_area_5_1",
+        "SP_Summaries_welch_rect_centroid",
+        "FC_LocalSimple_mean3_stderr",
+        "CO_trev_1_num",
+        "CO_HistogramAMI_even_2_5",
+        "IN_AutoMutualInfoStats_40_gaussian_fmmi",
+        "MD_hrv_classic_pnn40",
+        "SB_BinaryStats_mean_longstretch1",
+        "SB_MotifThree_quantile_hh",
+        "FC_LocalSimple_mean1_tauresrat",
+        "CO_Embed2_Dist_tau_d_expfit_meandiff",
+        "SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1",
+        "SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1",
+        "SB_TransitionMatrix_3ac_sumdiagcov",
+        "PD_PeriodicityWang_th0_01",
+    ]
+    assert feature_names == expected_feature_names
+    assert feature_names == FEATURE_NAMES

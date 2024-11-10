@@ -24,6 +24,12 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["magittan", "mloning"],
+        "maintainers": ["magittan"],
+        # estimator type
+        # --------------
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
@@ -79,7 +85,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         self.ensemble_algorithm.update(estimator_predictions.T, y)
 
     def _update(self, y, X=None, update_params=False):
-        """Update fitted paramters and performs a new ensemble fit.
+        """Update fitted parameters and performs a new ensemble fit.
 
         Parameters
         ----------
@@ -115,7 +121,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns

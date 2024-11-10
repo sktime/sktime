@@ -166,7 +166,7 @@ def check_cv(cv, enforce_start_with_window=False):
     ValueError
         if cv does not have the required attributes.
     """
-    from sktime.forecasting.model_selection._split import BaseSplitter
+    from sktime.split.base import BaseSplitter
 
     if not isinstance(cv, BaseSplitter):
         raise TypeError(f"`cv` is not an instance of {BaseSplitter}")
@@ -270,7 +270,7 @@ def check_fh(fh, enforce_relative: bool = False, freq=None):
         If True, checks if fh is relative.
     freq : str, or pd.Index, optional (default=None)
         object carrying frequency information on values
-        ignored unless values is without inferrable freq
+        ignored unless values is without inferable freq
         Frequency string or pd.Index
 
     Returns
@@ -389,14 +389,16 @@ def check_scoring(scoring, allow_y_pred_benchmark=False, obj=None):
     ----------
     scoring : object to validate. For successful validation, must be one of
 
-        * sktime metric object, instance of descendant of `BaseMetric`
+        * sktime metric object, instance of descendant of ``BaseMetric``
         * a callable with signature
-          `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
+          ``(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float``,
           assuming `np.ndarray`-s being of the same length, and lower being better.
+        * a string, resolvable by ``registry.resolve_alias`` to one of the above
         * None
 
     allow_y_pred_benchmark : boolean, optional, default=False
-        whether to allow scorer classes with `requires-y-pred-benchmark` tag = `True`
+        whether to allow scorer classes
+        with ``requires-y-pred-benchmark`` tag = ``True``
 
     obj : object or class, or None, optional, default=None
         if not None, will be used as a reference in the error message
@@ -405,16 +407,17 @@ def check_scoring(scoring, allow_y_pred_benchmark=False, obj=None):
     -------
     scoring : input `scoring` coerced to instance of sktime `BaseMetric` descendant
 
-        * if `scoring` was sktime metric, returns `scoring`
-        * if `scoring` was `None`, returns `MeanAbsolutePercentageError()`
-        * if `scoring` was a callable, returns dynamic scoring metric class,
-          as created by `performance_metrics.forecasting.make_forecasting_scorer`
+        * if ``scoring`` was sktime metric, returns ``scoring``
+        * if ``scoring`` was ``None``, returns ``MeanAbsolutePercentageError()``
+        * if ``scoring`` was a callable, returns dynamic scoring metric class,
+        as created by ``performance_metrics.forecasting.make_forecasting_scorer``
 
     Raises
     ------
-    TypeError, if `scoring` is not a callable
+    TypeError, if ``scoring`` is not a callable
     NotImplementedError
-        if allow_y_pred_benchmark=False and metric requires y_pred_benchmark argument
+        if ``allow_y_pred_benchmark=False`` and metric
+        requires ``y_pred_benchmark`` argument
     """
     # Note symmetric=True is default arg for MeanAbsolutePercentageError
     from sktime.performance_metrics.base import BaseMetric
@@ -432,12 +435,23 @@ def check_scoring(scoring, allow_y_pred_benchmark=False, obj=None):
         obj_str = ""
 
     msg = (
-        f"scoring parameter{obj_str} must be an sktime metric, descendant of"
-        "BaseMetric, or a callable with signature "
+        f"scoring parameter{obj_str} must be one of the following: "
+        "(1) an sktime metric, descendant of BaseMetric; (2) a callable with signature "
         "(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float, "
-        "assuming np.ndarrays being of the same length, and lower being better. "
+        "assuming np.ndarrays being of the same length, and lower being better; "
+        "(3) a string, resolvable by registry.resolve_alias to an object of either "
+        "type (1) or (2)"
     )
 
+    # deal with case (3) first - if string, try to resolve and return
+    if isinstance(scoring, str):
+        # lazy import of sktime.registry to avoid circular imports
+        # and to ensure maximal decoupling from registry
+        from sktime.registry import resolve_alias
+
+        return resolve_alias(scoring)
+
+    # check case (1) and case (2)
     # note: BaseMetric descendants are callable, so this is the same as
     # if not callable(scoring) and not isinstance(scoring, BaseMetric)
     if not callable(scoring):
@@ -499,12 +513,14 @@ def check_interval_df(interval_df, index_to_match):
     """
     from sktime.datatypes import check_is_mtype
 
-    checked = check_is_mtype(interval_df, "pred_interval", return_metadata=True)
+    checked = check_is_mtype(
+        interval_df, "pred_interval", return_metadata=True, msg_return_dict="list"
+    )
     if not checked[0]:
         raise ValueError(checked[1])
     df_idx = interval_df.index
     if len(index_to_match) != len(df_idx) or not (index_to_match == df_idx).all():
         raise ValueError("Prediction interval index must match the final Series index.")
-    levels = interval_df.columns.levels
+    levels = interval_df.columns.remove_unused_levels().levels
     if len(levels[0]) != 1:
         raise ValueError("`interval_df` must only contain one variable with interval")

@@ -6,13 +6,13 @@ Time series transformations
 The :mod:`sktime.transformations` module contains classes for data
 transformations.
 
-.. automodule:: sktime.transformations
-   :no-members:
-   :no-inherited-members:
-
 All (simple) transformers in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
-using ``estimator_types="regressor"``, optionally filtered by tags.
+using ``estimator_types="transformer"``, optionally filtered by tags.
 Valid tags can be listed using ``sktime.registry.all_tags``.
+
+A full table with tag based search is also available on the
+:doc:`Estimator Search Page </estimator_overview>`
+(select "transformere" in the "Estimator type" dropdown).
 
 For pairwise transformers (time series distances, kernels), instead see :ref:`_transformations_pairwise_ref`.
 
@@ -141,6 +141,14 @@ These transformers extract simple summary features.
     RandomIntervalFeatureExtractor
     FittedParamExtractor
 
+.. currentmodule:: sktime.transformations.series.adi_cv
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ADICVTransformer
+
 Shapelets, wavelets, and convolution
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -152,6 +160,7 @@ Shapelets, wavelets, and convolution
 
     ShapeletTransform
     RandomShapeletTransform
+    ShapeletTransformPyts
 
 .. currentmodule:: sktime.transformations.panel.rocket
 
@@ -192,9 +201,7 @@ Dictionary-based features
     :toctree: auto_generated/
     :template: class.rst
 
-    PAA
     SFA
-    SAX
 
 Moment-based features
 ~~~~~~~~~~~~~~~~~~~~~
@@ -229,6 +236,14 @@ These transformers extract larger collections of features.
 
     Catch22
 
+.. currentmodule:: sktime.transformations.panel.catch22wrapper
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Catch22Wrapper
+
 Series-to-series transformers
 -----------------------------
 
@@ -246,6 +261,7 @@ Lagging
     :template: class.rst
 
     Lag
+    ReducerTransform
 
 Element-wise transforms
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -288,8 +304,16 @@ Depending on the transformer, the transformation parameters can be fitted.
     ExponentTransformer
     SqrtTransformer
 
-Detrending
-~~~~~~~~~~
+.. currentmodule:: sktime.transformations.series.scaledasinh
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ScaledAsinhTransformer
+
+Detrending and Decomposition
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.detrend
 
@@ -301,6 +325,15 @@ Detrending
     Deseasonalizer
     ConditionalDeseasonalizer
     STLTransformer
+    MSTL
+
+.. currentmodule:: sktime.transformations.series.vmd
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    VmdTransformer
 
 .. currentmodule:: sktime.transformations.series.clear_sky
 
@@ -363,6 +396,14 @@ Filtering and denoising
 
     ThetaLinesTransformer
 
+.. currentmodule:: sktime.transformations.series.bollinger
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Bollinger
+
 Differencing, slope, kinematics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -390,8 +431,8 @@ Differencing, slope, kinematics
 
     KinematicFeatures
 
-Binning and segmentation
-~~~~~~~~~~~~~~~~~~~~~~~~
+Binning, sampling and segmentation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.binning
 
@@ -418,7 +459,40 @@ Binning and segmentation
     IntervalSegmenter
     RandomIntervalSegmenter
 
-Missing value imputation
+.. currentmodule:: sktime.transformations.series.dilation_mapping
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DilationMappingTransformer
+
+.. currentmodule:: sktime.transformations.series.paa
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    PAA
+
+.. currentmodule:: sktime.transformations.series.sax
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SAX
+
+.. currentmodule:: sktime.transformations.panel.dictionary_based
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    PAAlegacy
+    SAXlegacy
+
+Missing value treatment
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.impute
@@ -428,6 +502,14 @@ Missing value imputation
     :template: class.rst
 
     Imputer
+
+.. currentmodule:: sktime.transformations.series.dropna
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DropNA
 
 Seasonality and Date-Time Features
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -439,6 +521,16 @@ Seasonality and Date-Time Features
     :template: class.rst
 
     DateTimeFeatures
+
+.. currentmodule:: sktime.transformations.series.holiday
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HolidayFeatures
+    CountryHolidaysTransformer
+    FinancialHolidaysTransformer
 
 .. currentmodule:: sktime.transformations.series.time_since
 
@@ -463,6 +555,14 @@ Seasonality and Date-Time Features
     :template: class.rst
 
     FourierTransform
+
+.. currentmodule:: sktime.transformations.series.peak
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    PeakTimeFeature
 
 Auto-correlation series
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -560,6 +660,20 @@ These transformers subset `X` by time points (`pandas` index or index level) or 
     ColumnSelect
     IndexSubset
 
+Adapters to other frameworks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Generic framework adapters that expose other frameworks in the ``sktime`` interface.
+
+.. currentmodule:: sktime.transformations.series.temporian
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TemporianTransformer
+
+
 Panel transformers
 ------------------
 
@@ -617,6 +731,19 @@ Bootstrap transformations
     MovingBlockBootstrapTransformer
     SplitterBootstrapTransformer
     STLBootstrapTransformer
+
+Panel-to-Series transformers
+----------------------------
+
+These transformers create a single series from a panel.
+
+.. currentmodule:: sktime.transformations.merger
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Merger
 
 Outlier detection, changepoint detection
 ----------------------------------------

@@ -1,14 +1,18 @@
 """Time series kernel kmeans."""
-from typing import Dict, Union
+
+from typing import Union
 
 import numpy as np
 from numpy.random import RandomState
 
-from sktime.clustering.base import BaseClusterer, TimeSeriesInstances
+from sktime.base.adapters._tslearn import _TslearnAdapter
+from sktime.clustering.base import BaseClusterer
 
 
-class TimeSeriesKernelKMeans(BaseClusterer):
-    """Kernel algorithm wrapper tslearns implementation.
+class TimeSeriesKernelKMeans(_TslearnAdapter, BaseClusterer):
+    """Kernel k-means clustering, from tslearn.
+
+    Direct interface to ``tslearn.clustering.KernelKMeans``.
 
     Parameters
     ----------
@@ -28,11 +32,11 @@ class TimeSeriesKernelKMeans(BaseClusterer):
     kernel_params : dict or None (default: None)
         Kernel parameters to be passed to the kernel function.
         None means no kernel parameter is set.
-        For Global Alignment Kernel, the only parameter of interest is `sigma`.
+        For Global Alignment Kernel, the only parameter of interest is ``sigma``.
         If set to 'auto', it is computed based on a sampling of the training
         set
         (cf :ref:`tslearn.metrics.sigma_gak <fun-tslearn.metrics.sigma_gak>`).
-        If no specific value is set for `sigma`, its defaults to 1.
+        If no specific value is set for ``sigma``, its defaults to 1.
     max_iter: int, defaults = 300
         Maximum number of iterations of the k-means algorithm for a single
         run.
@@ -64,9 +68,26 @@ class TimeSeriesKernelKMeans(BaseClusterer):
     """
 
     _tags = {
-        "capability:multivariate": True,
+        # packaging info
+        # --------------
+        "authors": ["rtavenar", "fkiraly"],  # rtavenar credit for interfaced code
         "python_dependencies": "tslearn",
+        # estimator type
+        # --------------
+        "capability:multivariate": True,
     }
+
+    # defines the name of the attribute containing the tslearn estimator
+    _estimator_attr = "_tslearn_kernel_k_means"
+
+    def _get_tslearn_class(self):
+        """Get tslearn class.
+
+        should import and return tslearn class
+        """
+        from tslearn.clustering import KernelKMeans as TsLearnKernelKMeans
+
+        return TsLearnKernelKMeans
 
     def __init__(
         self,
@@ -94,74 +115,17 @@ class TimeSeriesKernelKMeans(BaseClusterer):
         self.inertia_ = None
         self.n_iter_ = 0
 
-        self._tslearn_kernel_k_means = None
-
         super().__init__(n_clusters=n_clusters)
 
-    def _fit(self, X: TimeSeriesInstances, y=None) -> np.ndarray:
-        """Fit time series clusterer to training data.
-
-        Parameters
-        ----------
-        X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
-            (n_instances, n_dimensions, series_length))
-            Training time series instances to cluster.
-        y: ignored, exists for API consistency reasons.
-
-        Returns
-        -------
-        self:
-            Fitted estimator.
-        """
-        from tslearn.clustering import KernelKMeans as TsLearnKernelKMeans
-
-        verbose = 0
-        if self.verbose is True:
-            verbose = 1
-
-        if self._tslearn_kernel_k_means is None:
-            self._tslearn_kernel_k_means = TsLearnKernelKMeans(
-                n_clusters=self.n_clusters,
-                kernel=self.kernel,
-                max_iter=self.max_iter,
-                tol=self.tol,
-                n_init=self.n_init,
-                kernel_params=self.kernel_params,
-                n_jobs=self.n_jobs,
-                verbose=verbose,
-                random_state=self.random_state,
-            )
-        self._tslearn_kernel_k_means.fit(X)
-        self.labels_ = self._tslearn_kernel_k_means.labels_
-        self.inertia_ = self._tslearn_kernel_k_means.inertia_
-        self.n_iter_ = self._tslearn_kernel_k_means.n_iter_
-
-    def _predict(self, X: TimeSeriesInstances, y=None) -> np.ndarray:
-        """Predict the closest cluster each sample in X belongs to.
-
-        Parameters
-        ----------
-        X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
-            (n_instances, n_dimensions, series_length))
-            Time series instances to predict their cluster indexes.
-        y: ignored, exists for API consistency reasons.
-
-        Returns
-        -------
-        np.ndarray (1d array of shape (n_instances,))
-            Index of the cluster each time series in X belongs to.
-        """
-        return self._tslearn_kernel_k_means.predict(X)
-
     @classmethod
-    def get_test_params(cls, parameter_set="default") -> Dict:
+    def get_test_params(cls, parameter_set="default") -> dict:
         """Return testing parameter settings for the estimator.
 
         Parameters
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -169,8 +133,9 @@ class TimeSeriesKernelKMeans(BaseClusterer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         return {
             "n_clusters": 2,

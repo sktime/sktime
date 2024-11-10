@@ -1,7 +1,10 @@
 """Tests for TSInterpolator."""
+
 import pandas as pd
+import pytest
 
 from sktime.datasets import load_basic_motions
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.panel.interpolate import TSInterpolator
 
 
@@ -15,6 +18,10 @@ def cut_X_ts(X):
     return pd.DataFrame(arr, index=X.index, columns=X.columns)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(TSInterpolator),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_resizing():
     """Test TSInterpolator resizing.
 
@@ -28,23 +35,23 @@ def test_resizing():
 
     # 1) Check that lengths of all time series (all via the axis=1 - for
     # all dims in first row) are equal.
-    ts_lens_before = [len(X.iloc[0][i]) for i in range(len(X.iloc[0]))]
+    ts_lens_before = [len(X.iloc[0].iloc[i]) for i in range(len(X.iloc[0]))]
     # all lengths are equal to first length in array
     assert all([length == ts_lens_before[0] for length in ts_lens_before])
 
     # 2) cutting each time series in each cell of X to make lengths different
     X = cut_X_ts(X)
     # get lengths to ensure that they are really different
-    ts_lens_after_cut = [len(X.iloc[0][i]) for i in range(len(X.iloc[0]))]
+    ts_lens_after_cut = [len(X.iloc[0].iloc[i]) for i in range(len(X.iloc[0]))]
     assert not all(
         [length == ts_lens_after_cut[0] for length in ts_lens_after_cut]
     )  # are different
 
-    # 3) make tranformer, set target length `target_len` and apply it
+    # 3) make transformer, set target length `target_len` and apply it
     target_len = 50
     Xt = TSInterpolator(target_len).fit_transform(X)
 
     # 4) check that result time series have lengths equal to `target_len
     #       that we set above
-    ts_lens_after_resize = [len(Xt.iloc[0][i]) for i in range(len(Xt.iloc[0]))]
+    ts_lens_after_resize = [len(Xt.iloc[0].iloc[i]) for i in range(len(Xt.iloc[0]))]
     assert all([length == target_len for length in ts_lens_after_resize])

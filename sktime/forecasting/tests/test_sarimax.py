@@ -1,4 +1,5 @@
 """Tests the SARIMAX model."""
+
 __author__ = ["TNTran92", "yarnabrina"]
 
 import pytest
@@ -6,19 +7,19 @@ from numpy.testing import assert_allclose
 from pandas.testing import assert_frame_equal
 
 from sktime.forecasting.sarimax import SARIMAX
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.forecasting import make_forecasting_problem
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-df = make_forecasting_problem()
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(SARIMAX),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_SARIMAX_against_statsmodels():
     """Compares Sktime's and Statsmodel's SARIMAX."""
     from statsmodels.tsa.api import SARIMAX as _SARIMAX
+
+    df = make_forecasting_problem()
 
     sktime_model = SARIMAX(order=(1, 0, 0), trend="t", seasonal_order=(1, 0, 0, 6))
     sktime_model.fit(df)
@@ -31,8 +32,8 @@ def test_SARIMAX_against_statsmodels():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(SARIMAX),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_SARIMAX_single_interval_against_statsmodels():
     """Compares Sktime's and Statsmodel's SARIMAX.
@@ -45,10 +46,12 @@ def test_SARIMAX_single_interval_against_statsmodels():
     """
     from statsmodels.tsa.api import SARIMAX as _SARIMAX
 
+    df = make_forecasting_problem()
+
     sktime_model = SARIMAX(order=(1, 0, 0), trend="t", seasonal_order=(1, 0, 0, 6))
     sktime_model.fit(df)
     sktime_pred_int = sktime_model.predict_interval(df.index, coverage=0.975)
-    sktime_pred_int = sktime_pred_int.xs(("Coverage", 0.975), axis="columns")
+    sktime_pred_int = sktime_pred_int.xs((0, 0.975), axis="columns")
 
     stats = _SARIMAX(endog=df, order=(1, 0, 0), trend="t", seasonal_order=(1, 0, 0, 6))
     stats_fit = stats.fit()
@@ -59,8 +62,8 @@ def test_SARIMAX_single_interval_against_statsmodels():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(SARIMAX),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_SARIMAX_multiple_intervals_against_statsmodels():
     """Compares Sktime's and Statsmodel's SARIMAX.
@@ -72,11 +75,13 @@ def test_SARIMAX_multiple_intervals_against_statsmodels():
     """
     from statsmodels.tsa.api import SARIMAX as _SARIMAX
 
+    df = make_forecasting_problem()
+
     sktime_model = SARIMAX(order=(1, 0, 0), trend="t", seasonal_order=(1, 0, 0, 6))
     sktime_model.fit(df)
     sktime_pred_int = sktime_model.predict_interval(df.index, coverage=[0.70, 0.80])
-    sktime_pred_int_70 = sktime_pred_int.xs(("Coverage", 0.70), axis="columns")
-    sktime_pred_int_80 = sktime_pred_int.xs(("Coverage", 0.80), axis="columns")
+    sktime_pred_int_70 = sktime_pred_int.xs((0, 0.70), axis="columns")
+    sktime_pred_int_80 = sktime_pred_int.xs((0, 0.80), axis="columns")
 
     stats = _SARIMAX(endog=df, order=(1, 0, 0), trend="t", seasonal_order=(1, 0, 0, 6))
     stats_fit = stats.fit()
@@ -87,3 +92,19 @@ def test_SARIMAX_multiple_intervals_against_statsmodels():
 
     assert_frame_equal(sktime_pred_int_70, stats_pred_int_70)
     assert_frame_equal(sktime_pred_int_80, stats_pred_int_80)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(SARIMAX),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_SARIMAX_for_exogeneous_features():
+    """Checking when X is passed to predict but not fit"""
+    from sktime.datasets import load_longley
+    from sktime.split import temporal_train_test_split
+
+    y, X = load_longley()
+    y_train, _, _, X_test = temporal_train_test_split(y, X)
+    forecaster = SARIMAX()
+    forecaster.fit(y_train)
+    forecaster.predict(fh=[1, 2, 3, 4], X=X_test)

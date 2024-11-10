@@ -5,14 +5,13 @@ __author__ = ["VyomkeshVyas"]
 __all__ = ["HierarchyEnsembleForecaster"]
 
 
-from warnings import warn
-
 import pandas as pd
 
 from sktime.base._meta import flatten
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 from sktime.transformations.hierarchical.aggregate import _check_index_no_total
+from sktime.utils.warnings import warn
 
 
 class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
@@ -21,38 +20,39 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
     Can apply different univariate forecaster either on different
     level of aggregation or on different hierarchical nodes.
 
-    `HierarchyEnsembleForecaster` is passed forecaster/level or
+    ``HierarchyEnsembleForecaster`` is passed forecaster/level or
     forecaster/node pairs. Level can only be int >= 0 with 0
     signifying the topmost level of aggregation.
     Node can only be a tuple of strings or list of tuples.
 
-    Behaviour in `fit`, `predict`:
-    For level pairs f_i, l_i passed, applies forecaster f_i to level l_i.
-    For node pairs f_i, n_i passed, applies forecaster f_i on each node of n_i.
-    if "default" argument passed, applies "default" forecaster on the
-    remaining levels/nodes which are not mentioned in argument 'forecasters'.
-    `predict` results are concatenated to one container with same columns as in `fit`.
-
+    Behaviour in ``fit``, ``predict``:
+    For level pairs ``f_i, l_i`` passed, applies forecaster ``f_i`` to level ``l_i``.
+    For node pairs ``f_i, n_i`` passed,
+    applies forecaster ``f_i`` on each node of ``n_i``.
+    If ``default`` argument is passed, applies ``default`` forecaster on the
+    remaining levels/nodes which are not mentioned in argument ``forecasters``.
+    ``predict`` results are concatenated to one container with
+    same columns as in ``fit``.
 
     Parameters
     ----------
     forecasters : sktime forecaster, or list of tuples
-                (str, estimator, int or list of tuple/s)
-        if forecaster, clones of forecaster are applied to all aggregated levels.
+        (str, estimator, int or list of tuple/s)
+        if forecaster, clones of ``forecaster`` are applied to all aggregated levels.
         if list of tuples, with name = str, estimator is forecaster, level/node
         as int/tuples respectively.
-        all levels/nodes must be present in 'forecasters' attribute if 'default'
+        all levels/nodes must be present in ``forecasters`` attribute if ``default``
         attribute is None
 
     by : {'node', 'level', default='level'}
-        if 'level', applies a univariate forecaster on all the hierarchical
+        if ``'level'``, applies a univariate forecaster on all the hierarchical
         nodes within a level of aggregation
-        if 'node', applies separate univariate forecaster for each
+        if ``'node'``, applies separate univariate forecaster for each
         hierarchical node.
 
     default : sktime forecaster {default = None}
-        if passed, applies 'default' forecaster on the nodes/levels
-        not mentioned in the 'forecaster' argument.
+        if passed, applies ``default`` forecaster on the nodes/levels
+        not mentioned in the ``forecaster`` argument.
 
     Examples
     --------
@@ -94,6 +94,8 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
     """
 
     _tags = {
+        "authors": ["VyomkeshVyas"],
+        "maintainers": ["VyomkeshVyas"],
         "scitype:y": "both",
         "ignores-exogeneous-X": False,
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
@@ -145,8 +147,10 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
             self.forecasters = value[0][1]
         else:
             self.forecasters = [
-                (name, forecaster, lvl_nd)
-                for ((name, forecaster), (_, _, lvl_nd)) in zip(value, self.forecasters)
+                (name, forecaster, level_nd)
+                for ((name, forecaster), (_, _, level_nd)) in zip(
+                    value, self.forecasters
+                )
             ]
 
     def _aggregate(self, y):
@@ -284,7 +288,8 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 if counter == 0:
                     nodes = mi
                 else:
-                    nodes.append(mi)
+                    # For nlevels = 2, 'nodes' is pd.Index object (L286)
+                    nodes = nodes.append(mi)
             else:
                 node_l = []
                 for i in range(len(node)):
@@ -494,6 +499,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                     raise ValueError("Nodes cannot be empty.")
                 if z.index.nlevels == 2:
                     nodes_ix = pd.Index(nodes)
+                    nodes_t += nodes
                 else:
                     nodes_l = []
                     for i in range(len(nodes)):
@@ -531,11 +537,13 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                             else:
                                 nodes_l += inds
                                 warn(
-                                    f"Ideally, length of individual node should be "
+                                    f"Ideally, length of individual node "
+                                    f"in HierarchyEnsembleForecaster should be "
                                     f"equal to N-1 (where N is number of levels in "
                                     f"multi-index) and must not exceed N-1. The "
                                     f"forecaster will now be fitted to the "
-                                    f"following nodes : {list(inds)}"
+                                    f"following nodes : {list(inds)}",
+                                    obj=self,
                                 )
                         elif (
                             isinstance(nodes[i], tuple)
@@ -594,7 +602,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -602,8 +610,9 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         # imports
         from sktime.forecasting.naive import NaiveForecaster

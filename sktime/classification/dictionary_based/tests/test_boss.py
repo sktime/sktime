@@ -1,10 +1,11 @@
 """BOSS test code."""
+
 import numpy as np
 import pytest
 
 from sktime.classification.dictionary_based import BOSSEnsemble, IndividualBOSS
 from sktime.datasets import load_unit_test
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.tests.test_switch import run_test_for_class
 
 
 @pytest.fixture
@@ -19,13 +20,13 @@ def dataset():
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(IndividualBOSS, severity="none"),
-    reason="skip test if required soft dependencies not available",
+    not run_test_for_class(IndividualBOSS),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize(
     "new_class,expected_dtype",
     [
-        ({"1": "Class1", "2": "Class2"}, object),
+        ({"1": "Class1", "2": "Class2"}, "same"),
         ({"1": 1, "2": 2}, int),
         ({"1": 1.0, "2": 2.0}, float),
         ({"1": True, "2": False}, bool),
@@ -39,6 +40,9 @@ def test_individual_boss_classes(dataset, new_class, expected_dtype):
     # change class
     y_train = np.array([new_class[y] for y in y_train])
 
+    if expected_dtype == "same":
+        expected_dtype = y_train.dtype
+
     # train iboss and predict X_test
     iboss = IndividualBOSS()
     iboss.fit(X_train, y_train)
@@ -50,8 +54,8 @@ def test_individual_boss_classes(dataset, new_class, expected_dtype):
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(BOSSEnsemble, severity="none"),
-    reason="skip test if required soft dependencies not available",
+    not run_test_for_class(BOSSEnsemble),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize(
     "new_class,expected_dtype",
