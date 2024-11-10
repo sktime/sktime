@@ -227,6 +227,7 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         "authors": ["felipeangelimvieira", "shlok191"],
         "maintainers": ["felipeangelimvieira"],
         "python_version": None,
+        "visual_block_kind": "parallel",
     }
 
     _steps_attr = "_forecasters"
