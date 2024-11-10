@@ -1,7 +1,7 @@
 __author__ = ["chrisholder", "TonyBagnall"]
-
 from abc import abstractmethod
-from typing import Callable, Union
+from collections.abc import Callable
+from typing import Union
 
 import numpy as np
 from numpy.random import RandomState
@@ -154,7 +154,7 @@ def _kmeans_plus_plus(
     return centers
 
 
-class TimeSeriesLloyds(BaseClusterer):
+class BaseTimeSeriesLloyds(BaseClusterer):
     """Abstract class that implements time series Lloyds algorithm.
 
     Parameters

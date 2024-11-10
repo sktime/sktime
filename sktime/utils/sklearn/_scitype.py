@@ -9,8 +9,6 @@ from sklearn.base import ClassifierMixin, ClusterMixin, RegressorMixin, Transfor
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.pipeline import Pipeline
 
-from sktime.base import BaseObject
-
 __author__ = ["fkiraly"]
 
 
@@ -25,6 +23,8 @@ def is_sklearn_estimator(obj):
     -------
     is_sklearn_est : bool, whether obj is an sklearn estimator (class or instance)
     """
+    from sktime.base import BaseObject
+
     if not isclass(obj):
         obj = type(obj)
 

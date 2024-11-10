@@ -33,7 +33,7 @@ class _WdtwDistance(NumbaDistance):
     References
     ----------
     .. [1] Jeong, Y., Jeong, M., Omitaomu, O.: Weighted dynamic time warping for time
-    series classification. Pattern Recognition 44, 2231–2240 (2011)
+    series classification. Pattern Recognition 44, 2231-2240 (2011)
     """
 
     def _distance_alignment_path_factory(

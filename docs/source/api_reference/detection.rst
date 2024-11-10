@@ -1,11 +1,18 @@
-.. _annotation_ref:
+.. _detection_ref:
 
-Time series annotation
-======================
+Time series detection tasks
+===========================
 
 The :mod:`sktime.annotation` module contains algorithms and tools
-for time series annotation tasks, like anomaly/outlier detection,
-and time series segmentation.
+for time series detection tasks, including:
+
+* anomaly or outlier detection
+* change point detection
+* time series segmentation and segment detection
+
+The tasks include unsupervised and semi-supervised variants, and can batch or
+stream/online detection.
+
 
 Time Series Segmentation
 ------------------------
@@ -82,8 +89,30 @@ Time Series Segmentation
 
     STRAY
 
-Adapters
---------
+.. currentmodule:: sktime.annotation.clust
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ClusterSegmenter
+
+Time Series Anomaly Detection
+-----------------------------
+
+Window-based Anomaly Detection
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. currentmodule:: sktime.annotation.lof
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SubLOF
+
+Reduction to Tabular Anomaly Detection
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. currentmodule:: sktime.annotation.adapters
 
@@ -92,6 +121,7 @@ Adapters
     :template: class.rst
 
     PyODAnnotator
+
 
 Data Generation
 ---------------

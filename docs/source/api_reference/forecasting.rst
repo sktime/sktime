@@ -11,7 +11,7 @@ using ``estimator_types="forecaster"``, optionally filtered by tags.
 Valid tags can be listed using ``sktime.registry.all_tags``.
 
 A full table with tag based search is also available on the
-`Estimator Search Page <https://www.sktime.net/en/latest/estimator_overview.html>`_
+:doc:`Estimator Search Page </estimator_overview>`
 (select "forecaster" in the "Estimator type" dropdown).
 
 
@@ -53,6 +53,7 @@ Pipelines can also be constructed using ``*``, ``**``, ``+``, and ``|`` dunders.
     MultiplexForecaster
     ForecastX
     ForecastByLevel
+    GroupbyCategoryForecaster
     Permute
     HierarchyEnsembleForecaster
     TransformSelectForecaster
@@ -133,6 +134,16 @@ Direct and recursive - 3rd party
     :template: class.rst
 
     SkforecastAutoreg
+
+.. currentmodule:: sktime.forecasting.darts
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DartsRegressionModel
+    DartsLinearRegressionModel
+    DartsXGBModel
 
 
 Naive forecasters
@@ -310,6 +321,14 @@ All "ARIMA" and "Auto-ARIMA" models below include SARIMAX capability.
 
     VAR
 
+.. currentmodule:: sktime.forecasting.var_reduce
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    VARReduce
+
 .. currentmodule:: sktime.forecasting.varmax
 
 .. autosummary::
@@ -317,6 +336,14 @@ All "ARIMA" and "Auto-ARIMA" models below include SARIMAX capability.
     :template: class.rst
 
     VARMAX
+
+.. currentmodule:: sktime.forecasting.vecm
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    VECM
 
 Auto-ARIMA models
 ~~~~~~~~~~~~~~~~~
@@ -401,6 +428,7 @@ Structural time series models
     :template: class.rst
 
     Prophetverse
+    HierarchicalProphet
 
 .. currentmodule:: sktime.forecasting.structural
 
@@ -419,7 +447,7 @@ Structural time series models
     DynamicFactor
 
 Deep learning based forecasters
----------------------------------------------
+-------------------------------
 
 .. currentmodule:: sktime.forecasting.ltsf
 
@@ -430,14 +458,7 @@ Deep learning based forecasters
     LTSFLinearForecaster
     LTSFDLinearForecaster
     LTSFNLinearForecaster
-
-.. currentmodule:: sktime.forecasting.hf_transformers_forecaster
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    HFTransformersForecaster
+    LTSFTransformerForecaster
 
 .. currentmodule:: sktime.forecasting.conditional_invertible_neural_network
 
@@ -463,6 +484,8 @@ Deep learning based forecasters
     :template: class.rst
 
     PytorchForecastingTFT
+    PytorchForecastingDeepAR
+    PytorchForecastingNHiTS
     PytorchForecastingNBeats
 
 .. currentmodule:: sktime.forecasting.pykan_forecaster
@@ -473,6 +496,50 @@ Deep learning based forecasters
 
     PyKANForecaster
 
+
+
+Pre-trained and foundation models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.forecasting.hf_transformers_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HFTransformersForecaster
+
+.. currentmodule:: sktime.forecasting.chronos
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ChronosForecaster
+
+.. currentmodule:: sktime.forecasting.moirai_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MOIRAIForecaster
+
+.. currentmodule:: sktime.forecasting.timesfm_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimesFMForecaster
+
+.. currentmodule:: sktime.forecasting.ttm
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TinyTimeMixerForecaster
 
 Intermittent time series forecasters
 ------------------------------------

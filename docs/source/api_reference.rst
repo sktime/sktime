@@ -29,7 +29,7 @@ For a list of object and estimator tags, see :ref:`tags_ref`.
     api_reference/performance_metrics
     api_reference/split
     api_reference/alignment
-    api_reference/annotation
+    api_reference/detection
     api_reference/datasets
     api_reference/data_format
     api_reference/deployment
@@ -37,3 +37,4 @@ For a list of object and estimator tags, see :ref:`tags_ref`.
     api_reference/exceptions
     api_reference/tags
     api_reference/pipeline
+    api_reference/benchmarking
