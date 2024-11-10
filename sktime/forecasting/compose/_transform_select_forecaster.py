@@ -188,6 +188,14 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             self._predict_var = _predict_var
             self._predict_proba = _predict_proba
 
+    @property
+    def _steps(self):
+        return [self._coerce_estimator_tuple(self.transformer)] + self._forecasters
+
+    @property
+    def steps_(self):
+        return [self._coerce_estimator_tuple(self.transformer_)] + self._forecasters
+
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
