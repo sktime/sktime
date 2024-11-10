@@ -17,9 +17,9 @@ For frequent issues with installation, consult the `Troubleshooting`_ section.
 
 There are three different installation types:
 
-* Installing sktime releases
-* Installing the latest sktime version
-* For developers of sktime and 3rd party extensions: Developer setup
+* Installing stable sktime releases
+* Installing the latest unstable sktime development version
+* For developers of sktime and 3rd party extensions: Developer setup for extensions and contributions
 
 Each of these three setups are explained below.
 
