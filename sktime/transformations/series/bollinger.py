@@ -12,7 +12,7 @@ from sktime.transformations.base import BaseTransformer
 
 
 class Bollinger(BaseTransformer):
-    """Apply Bollinger bounds to a timeseries.
+    """Apply Bollinger bands to a time series.
 
     The transformation works for univariate and multivariate timeseries.
 
@@ -26,11 +26,13 @@ class Bollinger(BaseTransformer):
         moving average.
 
     memory : str, optional, default = "all"
-        how much of previously seen X to remember, for exact reconstruction of inverse
-        "all" : estimator remembers all X, inverse is correct for all indices seen
-        "latest" : estimator only remembers latest X necessary for future reconstruction
-            inverses at any time stamps after fit are correct, but not past time stamps
-        "none" : estimator does not remember any X, inverse is direct cumsum
+        how much of previously seen X to remember, for exact reconstruction of inverse.
+
+        * "all" : estimator remembers all X, inverse is correct for all indices seen
+        *  "latest" : estimator only remembers latest X necessary for future
+          reconstruction. Inverses at any time stamps after fit are correct,
+          but not past time stamps.
+        * "none" : estimator does not remember any X, inverse is direct cumsum
 
     Examples
     --------

@@ -3,7 +3,8 @@
 Wraps kotsu benchmarking package.
 """
 
-from typing import Callable, Optional, Union
+from collections.abc import Callable
+from typing import Optional, Union
 
 import pandas as pd
 

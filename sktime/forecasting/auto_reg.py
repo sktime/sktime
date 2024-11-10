@@ -95,7 +95,8 @@ class AutoREG(_StatsModelsAdapter):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["jonathanbechtel", "mgazian000", "CTFallon"],
+        "authors": ["bashtage", "jonathanbechtel", "mgazian000", "CTFallon"],
+        # bashtage for implementation in statsmodels
         "maintainers": ["jonathanbechtel", "mgazian000", "CTFallon"],
         "python_dependencies": "statsmodels>=0.13.0",
         # estimator type

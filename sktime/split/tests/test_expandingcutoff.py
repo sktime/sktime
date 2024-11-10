@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.split import ExpandingCutoffSplitter
+from sktime.split import ExpandingCutoffSplitter, ExpandingWindowSplitter
 from sktime.split.tests.test_split import _check_cv
 from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.hierarchical import _make_hierarchical
@@ -117,7 +117,7 @@ def test_expandingcutoff_splitloc_004():
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_expandingcutoff_hiearchical_splitloc_005():
-    """Test hiearchical splitloc with datetime"""
+    """Test hierarchical splitloc with datetime"""
     y = _make_hierarchical(
         min_timepoints=6,
         max_timepoints=10,
@@ -157,7 +157,7 @@ def test_expandingcutoff_hiearchical_splitloc_005():
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_expandingcutoff_hiearchical_forecastbylevel_006():
-    """Test hiearchical with forecast by level"""
+    """Test hierarchical with forecast by level"""
     from sktime.forecasting.compose import ForecastByLevel
     from sktime.forecasting.model_selection import ForecastingGridSearchCV
     from sktime.forecasting.naive import NaiveForecaster
@@ -256,3 +256,48 @@ def test_expanding_cutoff_docstring_examples():
         == _make_splits_listlike(splits2)
         == _make_splits_listlike(splits3)
     )
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(ExpandingCutoffSplitter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_expandingcutoff_fh():
+    """Test different forecast horizon configurations"""
+    # Datetime cutoff
+    y = _make_series(n_timepoints=10, index_type="period", random_state=42)
+    fh_configs = ([1], [1, 2, 3], [4], [2, 4])
+    for _fh in fh_configs:
+        fh = ForecastingHorizon(_fh)
+        index_num = 3
+        cutoff = y.index[index_num]
+
+        # Behavior of cutoff and window splitter should be identical in this scenario
+        cv1 = ExpandingCutoffSplitter(cutoff=cutoff, fh=fh, step_length=1)
+        cv2 = ExpandingWindowSplitter(initial_window=index_num, fh=fh, step_length=1)
+
+        splits1 = list(cv1.split(y))
+        splits2 = list(cv2.split(y))
+
+        for (split_train_a, split_test_a), (split_train_b, split_test_b) in zip(
+            splits1, splits2
+        ):
+            np.testing.assert_array_equal(split_train_a, split_train_b)
+            np.testing.assert_array_equal(split_test_a, split_test_b)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(ExpandingCutoffSplitter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_expandingcutoff_step_length():
+    """Test step_length as list with _check_cv"""
+
+    y = _make_series(n_timepoints=20, random_state=42, index_type="period")
+    cutoff = y.index[10]
+    fhs = [[1], [2], [1, 2], [3, 5]]
+    step_lengths = [1, 2, 3]
+    for fh in fhs:
+        for step_length in step_lengths:
+            cv = ExpandingCutoffSplitter(cutoff=cutoff, fh=fh, step_length=step_length)
+            list(cv.split_series(y))

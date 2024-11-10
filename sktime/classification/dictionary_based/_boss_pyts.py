@@ -66,8 +66,8 @@ class BOSSVSClassifierPyts(_PytsAdapter, BaseClassifier):
         alphabet are used.
 
     numerosity_reduction : bool (default = True)
-        If True, delete sample-wise all but one occurence of back to back
-        identical occurences of the same words.
+        If True, delete sample-wise all but one occurrence of back to back
+        identical occurrences of the same words.
 
     use_idf : bool (default = True)
         Enable inverse-document-frequency reweighting.

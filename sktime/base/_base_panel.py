@@ -15,14 +15,6 @@ import numpy as np
 import pandas as pd
 
 from sktime.base import BaseEstimator
-from sktime.datatypes import (
-    MTYPE_LIST_PANEL,
-    MTYPE_LIST_TABLE,
-    VectorizedDF,
-    check_is_error_msg,
-    check_is_scitype,
-    convert,
-)
 from sktime.utils.warnings import warn
 
 
@@ -113,6 +105,8 @@ class BasePanelMixin(BaseEstimator):
     ):
         """Boilerplate logic for fit_predict and fit_predict_proba."""
         from sklearn.model_selection import KFold
+
+        from sktime.datatypes import convert
 
         if isinstance(cv, int):
             random_state = getattr(self, "random_state", None)
@@ -328,6 +322,8 @@ class BasePanelMixin(BaseEstimator):
             usually a pd.DataFrame (nested) or 3D np.ndarray
             Checked and possibly converted input data
         """
+        from sktime.datatypes import convert
+
         inner_type = self.get_tag("X_inner_mtype")
         # convert pd.DataFrame
         X = convert(
@@ -356,6 +352,15 @@ class BasePanelMixin(BaseEstimator):
         y_mtype : str, only returned if return_to_mtype=True
             mtype of y_inner, after convert
         """
+        from sktime.datatypes import (
+            MTYPE_LIST_TABLE,
+            VectorizedDF,
+            check_is_error_msg,
+            check_is_scitype,
+            convert,
+        )
+        from sktime.datatypes._dtypekind import DtypeKind
+
         if y is None:
             if return_to_mtype:
                 return None, None, None
@@ -365,8 +370,9 @@ class BasePanelMixin(BaseEstimator):
         capa_multioutput = self.get_tag("capability:multioutput")
         y_inner_mtype = self.get_tag("y_inner_mtype")
 
+        y_metadata_required = ["is_univariate", "feature_names", "feature_kind"]
         y_valid, y_msg, y_metadata = check_is_scitype(
-            y, "Table", return_metadata=["is_univariate", "feature_names"]
+            y, "Table", return_metadata=y_metadata_required
         )
 
         if not y_valid:
@@ -378,6 +384,15 @@ class BasePanelMixin(BaseEstimator):
             )
             check_is_error_msg(
                 y_msg, var_name="y", allowed_msg=allowed_msg, raise_exception=True
+            )
+
+        est_type = self.get_tag("object_type")  # classifier or regressor
+        if (
+            est_type == "regressor"
+            and DtypeKind.CATEGORICAL in y_metadata["feature_kind"]
+        ):
+            raise TypeError(
+                "Regressors do not support categorical features in endogeneous y."
             )
 
         y_uni = y_metadata["is_univariate"]
@@ -426,6 +441,8 @@ class BasePanelMixin(BaseEstimator):
         y_mtype : str
             mtype of y
         """
+        from sktime.datatypes import check_is_scitype
+
         y_mtype = check_is_scitype(y, "Table", return_metadata="mtype")
         return y_mtype
 
@@ -441,6 +458,8 @@ class BasePanelMixin(BaseEstimator):
         -------
         y : np.ndarray or pd.DataFrame
         """
+        from sktime.datatypes import convert
+
         # for consistency with legacy behaviour:
         # output is coerced to numpy1D in case of univariate output
         if not self._y_metadata["is_univariate"]:
@@ -492,10 +511,18 @@ class BasePanelMixin(BaseEstimator):
         ValueError
             If y or X is invalid input data type, or there is not enough data
         """
+        from sktime.datatypes import (
+            MTYPE_LIST_PANEL,
+            check_is_error_msg,
+            check_is_scitype,
+        )
+        from sktime.datatypes._dtypekind import DtypeKind
+
         # Check X is valid input type and recover the data characteristics
         X_valid, msg, X_metadata = check_is_scitype(
             X, scitype="Panel", return_metadata=return_metadata
         )
+
         # raise informative error message if X is in wrong format
         allowed_msg = (
             f"Allowed scitypes for {self.EST_TYPE_PLURAL} are Panel mtypes, "
@@ -506,6 +533,12 @@ class BasePanelMixin(BaseEstimator):
         if not X_valid:
             check_is_error_msg(
                 msg, var_name="X", allowed_msg=allowed_msg, raise_exception=True
+            )
+
+        est_type = self.get_tag("object_type")  # classifier or regressor
+        if DtypeKind.CATEGORICAL in X_metadata["feature_kind"]:
+            raise TypeError(
+                f"{est_type}s do not support categorical features in exogeneous X."
             )
 
         n_cases = X_metadata["n_instances"]

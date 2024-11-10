@@ -63,6 +63,7 @@ def deep_equals(x, y, return_msg=False, plugins=None):
         _dask_dataframe_equals_plugin,
         _fh_equals_plugin,
         _polars_equals_plugin,
+        _gluonts_PandasDataset_equals_plugin,
     ]
 
     if plugins is not None:
@@ -187,6 +188,51 @@ def _dask_dataframe_equals_plugin(x, y, return_msg=False, deep_equals=None):
     y = y.compute()
 
     return deep_equals(x, y, return_msg=return_msg)
+
+
+def _gluonts_PandasDataset_equals_plugin(x, y, return_msg=False, deep_equals=None):
+    """Test 2 gluonTS PandasDataset for equality in value.
+
+    Parameters
+    ----------
+    x : gluonts.dataset.pandas.PandasDataset
+        The first pandasDataset to compare
+
+    y : gluonts.dataset.pandas.PandasDataset
+        The second pandasDataset to compare
+
+    return_msg : bool, optional
+        Whether or not to return a message by default False
+
+    deep_equals : function, optional
+        The deep equals function to run
+
+    Returns
+    -------
+    is_equal: bool - True if x and y are equal in value
+        x and y do not need to be equal in reference
+
+    msg : str, only returned if return_msg = True
+        indication of what is the reason for not being equal
+        if unequal, returns string
+
+    returns None if this function does not apply, i.e., x is not polars
+    """
+    if not hasattr(x, "_data_entries"):
+        return None
+
+    from sktime.utils.dependencies import _check_soft_dependencies
+
+    gluonts_available = _check_soft_dependencies("gluonts", severity="none")
+
+    if not gluonts_available:
+        return None
+
+    return deep_equals(
+        x._data_entries.iterable.iterable,
+        y._data_entries.iterable.iterable,
+        return_msg=return_msg,
+    )
 
 
 def _polars_equals_plugin(x, y, return_msg=False):
