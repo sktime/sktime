@@ -284,7 +284,6 @@ class PanelNp3D(ScitypePanel):
     * cannot represent panels of series with different sets of variables
     * can represent missing values
 
-
     Parameters
     ----------
     is_univariate: bool
