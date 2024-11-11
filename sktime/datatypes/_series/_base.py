@@ -17,8 +17,8 @@ class ScitypeSeries(BaseDatatype):
     Formally, an abstract ``Series`` object has:
 
     * an index :math:`t_1, \dots, t_T`, with :math:`t_i` being an integer or
-      an orderable datetime-like type
-    * values :math:`y_1, \dots, y_T`, with :math:`y_i` taking values in
+      an orderable datetime-like type, representing the time point (or index)
+    * values :math:`y_1, \dots, y_T`, with :math:`y_i`, taking values in
       an abstract typed data frame row domain :math:`\mathcal{Y}`,
       i.e., vectors with entries being numbers
       (float, integer) or categorical, always the same type at the same entry

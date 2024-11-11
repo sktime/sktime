@@ -210,6 +210,42 @@ def _check_dflist_panel(obj, return_metadata=False, var_name="obj"):
 class PanelNp3D(ScitypePanel):
     """Data type: 3D np.ndarray based specification of panel of time series.
 
+    Name: ``"numpy3D"``
+
+    Short description:
+
+    a 3D ``numpy.ndarray``,
+    with axis 0 = instances, axis 1 = variables, axis 2 = time points
+
+    Long description:
+
+    The ``"numpy3D"`` :term:`mtype` is a concrete specification
+    that implements the ``Series`` :term:`scitype`, i.e., the abstract
+    type of a single time series.
+
+    An object ``obj: numpy.ndarray`` follows the specification iff:
+
+    * structure convention: ``obj`` must be 3D, i.e., ``obj.shape`` must have length 3.
+    * instances: instances correspond to axis 0 elements of ``obj``.
+    * instance index: the instance index is implicit and by-convention.
+      The ``i``-th element of axis 0 (for an integer ``i``) is interpreted as indicative
+      of observing instance `i`.
+    * variables: variables correspond to axis 1 elements of ``obj``.
+    * variable names: the ``"numpy3D"`` mtype cannot represent variable names.
+    * time points: time points correspond to axis 2 elements of ``obj``.
+    * time index: the time index is implicit and by-convention.
+      The ``i``-th element of axis 2 (for an integer ``i``) is interpreted
+      as an observation at the time point ``i``.
+
+    Capabilities:
+
+    * can represent panels of multivariate series
+    * cannot represent unequally spaced series
+    * cannot represent panels of unequally supported series
+    * cannot represent panels of series with different sets of variables
+    * can represent missing values
+
+
     Parameters
     ----------
     is_univariate: bool

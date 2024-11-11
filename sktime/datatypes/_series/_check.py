@@ -57,6 +57,15 @@ FREQ_SET_CHECK = False
 class SeriesPdDataFrame(ScitypeSeries):
     """Data type: pandas.DataFrame based specification of single time series.
 
+    Name: ``"pd.DataFrame"``
+
+    Short description:
+
+    a uni- or multivariate ``pandas.DataFrame``,
+    with rows = time points, cols = variables
+
+    Long description:
+
     The ``"pd.DataFrame"`` :term:`mtype` is a concrete specification
     that implements the ``Series`` :term:`scitype`, i.e., the abstract
     type of a single time series.
@@ -72,7 +81,7 @@ class SeriesPdDataFrame(ScitypeSeries):
 
     Capabilities:
 
-    * cant represent multivariate series
+    * cannot represent multivariate series
     * can represent unequally spaced series
     * can represent missing values
 
@@ -204,6 +213,15 @@ def _check_pddataframe_series(obj, return_metadata=False, var_name="obj"):
 
 class SeriesPdSeries(ScitypeSeries):
     """Data type: pandas.Series based specification of single time series.
+
+    Name: ``"pd.Series"``
+
+    Short description:
+
+    a (univariate) ``pandas.Series``,
+    with entries corresponding to different time points
+
+    Long description:
 
     The ``"pd.Series"`` :term:`mtype` is a concrete specification
     that implements the ``Series`` :term:`scitype`, i.e., the abstract
@@ -339,6 +357,14 @@ class SeriesPdSeries(ScitypeSeries):
 
 class SeriesNp2D(ScitypeSeries):
     """Data type: 2D np.ndarray based specification of single time series.
+
+    Name: ``"np.ndarray"``
+
+    Short description:
+
+    a 2D ``numpy.ndarray``, with rows = time points, cols = variables
+
+    Long description:
 
     The ``"np.ndarray"`` :term:`mtype` is a concrete specification
     that implements the ``Series`` :term:`scitype`, i.e., the abstract
