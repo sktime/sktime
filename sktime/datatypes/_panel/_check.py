@@ -84,6 +84,45 @@ def _list_all_equal(obj):
 class PanelDfList(ScitypePanel):
     """Data type: list-of-pandas.DataFrame based specification of panel of time series.
 
+    Name: ``"df-list"``
+
+    Short description:
+
+    a ``list`` of ``pandas.DataFrame``,
+    with list index = instances, data frame rows = time points,
+    data frame cols = variables
+
+    Long description:
+
+    The ``"df-list"`` :term:`mtype` is a concrete specification
+    that implements the ``Panel`` :term:`scitype`, i.e., the abstract
+    type of a collection of time series.
+
+    An object ``obj: list`` follows the specification iff:
+
+    * structure convention: ``obj`` must be a list of ``pandas.DataFrames``.
+      Individual list elements of `obj` must follow the ``"pd.DataFrame"``
+      mtype convention for the ``"Series"`` scitype.
+    * instances: instances correspond to different list elements of ``obj``.
+    * instance index: the instance index of an instance is the list index at which
+      it is located in ``obj``. That is, the data at ``obj[i]``
+      correspond to observations of the instance with index ``i``.
+    * time points: rows of ``obj[i]`` correspond to different, distinct time points,
+      at which instance ``i`` is observed.
+    * time index: ``obj[i].index`` is interpreted as the time index for instance ``i``.
+    * variables: columns of ``obj[i]`` correspond to different variables available
+      for instance ``i``.
+    * variable names: column names ``obj[i].columns`` are the names of variables
+      available for instance ``i``.
+
+    Capabilities:
+
+    * can represent panels of multivariate series
+    * can represent unequally spaced series
+    * can represent panels of unequally supported series
+    * can represent panels of series with different sets of variables
+    * can represent missing values
+
     Parameters
     ----------
     is_univariate: bool
@@ -220,8 +259,8 @@ class PanelNp3D(ScitypePanel):
     Long description:
 
     The ``"numpy3D"`` :term:`mtype` is a concrete specification
-    that implements the ``Series`` :term:`scitype`, i.e., the abstract
-    type of a single time series.
+    that implements the ``Panel`` :term:`scitype`, i.e., the abstract
+    type of a collection of time series.
 
     An object ``obj: numpy.ndarray`` follows the specification iff:
 
@@ -361,6 +400,45 @@ def _check_numpy3d_panel(obj, return_metadata=False, var_name="obj"):
 
 class PanelPdMultiIndex(ScitypePanel):
     """Data type: MultiIndex-ed pd.DataFrame specification of panel of time series.
+
+    Name: ``"pd-multiindex"``
+
+    Short description:
+
+    a ``pandas.DataFrame``, with row multi-index (instances, time), cols = variables
+
+    Long description:
+
+    The ``"pd-multiindex"`` :term:`mtype` is a concrete specification
+    that implements the ``Panel`` :term:`scitype`, i.e., the abstract
+    type of a collection of time series.
+
+    An object ``obj: pd.DataFrame`` follows the specification iff:
+
+    * structure convention: ``obj.index`` must be a pair multi-index of
+      type ``(Index, t)``, where ``t`` is one of ``Int64Index``, ``RangeIndex``,
+      ``DatetimeIndex``, ``PeriodIndex`` and monotonic.
+      ``obj.index`` must have two levels (can be named or not).
+    * instance index: the first element of pairs in ``obj.index`` (0-th level value)
+      is interpreted as an instance index, we call it "instance index" below.
+    * instances: rows with the same "instance index" index value correspond to the same
+      instance; rows with different "instance index" values correspond
+      to different instances.
+    * time index: the second element of pairs in ``obj.index`` (1-st level value)
+      is interpreted as a time index, we call it "time index" below.
+    * time points: rows of ``obj`` with the same "time index" value correspond
+      correspond to the same time point; rows of `obj` with different "time index"
+      index correspond correspond to the different time points.
+    * variables: columns of ``obj`` correspond to different variables
+    * variable names: column names ``obj.columns``
+
+    Capabilities:
+
+    * can represent panels of multivariate series
+    * can represent unequally spaced series
+    * can represent panels of unequally supported series
+    * cannot represent panels of series with different sets of variables
+    * can represent missing values
 
     Parameters
     ----------
