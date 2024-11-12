@@ -8,196 +8,54 @@ import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
-from sktime.sktime.forecasting.chronos import _frame2numpy
 from sktime.split import temporal_train_test_split
 from sktime.utils.warnings import warn
-
-if _check_soft_dependencies("torch", severity="none"):
-    from torch.utils.data import Dataset
-else:
-
-    class Dataset:
-        """Dummy class if torch is unavailable."""
-
-
-if _check_soft_dependencies("transformers", severity="none"):
-    from transformers import Trainer, TrainingArguments
-
+import torch 
+from transformers import AutoModelForCausalLM
 
 class TimeMoE(_BaseGlobalForecaster):
     """Custom forecaster. todo: write docstring.
-
+    
     todo: describe your custom forecaster here
 
     Parameters
     ----------
-    parama : int
-        descriptive explanation of parama
-    paramb : string, optional (default='default')
-        descriptive explanation of paramb
-    paramc : boolean, optional (default= whether paramb is not the default)
-        descriptive explanation of paramc
-    and so on
-    est : sktime.estimator, BaseEstimator descendant
-        descriptive explanation of est
-    est2: another estimator
-        descriptive explanation of est2
-    and so on
+    context_length : int, optional (default=7)
+        Length of context window for generating forecasts.
+    prediction_length : int, optional (default=7)
+        Length of the forecast window.
+    test_size : int, optional (default=168)
+        Size of test dataset.
+    model_size : str, optional (default='50M')
+        Size of the model to use ('50M' or '200M').
+    device : str, optional (default='cpu')
+        Device to run the model on ('cpu' or 'cuda').
     """
-
-    # todo: fill out estimator tags here
-    #  tags are inherited from parent class if they are not set
-    # todo: define the forecaster scitype by setting the tags
-    #  the "forecaster scitype" is determined by the tags
-    #   scitype:y - the expected input scitype of y - univariate or multivariate or both
-    #  when changing scitype:y to multivariate or both:
-    #   y_inner_mtype should be changed to pd.DataFrame
-    # other tags are "safe defaults" which can usually be left as-is
-    _tags = {
-        # to list all valid tags with description, use sktime.registry.all_tags
-        #   all_tags(estimator_types="forecaster", as_dataframe=True)
-        #
-        # behavioural tags: internal type
-        # -------------------------------
-        #
-        # y_inner_mtype, X_inner_mtype control which format X/y appears in
-        # in the inner functions _fit, _predict, etc
-        "y_inner_mtype": "pd.Series",
-        "X_inner_mtype": "pd.DataFrame",
-        # valid values: str and list of str
-        # if str, must be a valid mtype str, in sktime.datatypes.MTYPE_REGISTER
-        #   of scitype Series, Panel (panel data) or Hierarchical (hierarchical series)
-        #   in that case, all inputs are converted to that one type
-        # if list of str, must be a list of valid str specifiers
-        #   in that case, X/y are passed through without conversion if on the list
-        #   if not on the list, converted to the first entry of the same scitype
-        #
-        # scitype:y controls whether internal y can be univariate/multivariate
-        # if multivariate is not valid, applies vectorization over variables
-        "scitype:y": "univariate",
-        # valid values: "univariate", "multivariate", "both"
-        #   "univariate": inner _fit, _predict, etc, receive only univariate series
-        #   "multivariate": inner methods receive only series with 2 or more variables
-        #   "both": inner methods can see series with any number of variables
-        #
-        # capability tags: properties of the estimator
-        # --------------------------------------------
-        #
-        # ignores-exogeneous-X = does estimator ignore the exogeneous X?
-        "ignores-exogeneous-X": False,
-        # valid values: boolean True (ignores X), False (uses X in non-trivial manner)
-        # CAVEAT: if tag is set to True, inner methods always see X=None
-        #
-        # requires-fh-in-fit = is forecasting horizon always required in fit?
-        "requires-fh-in-fit": True,
-        # valid values: boolean True (yes), False (no)
-        # if True, raises exception in fit if fh has not been passed
-        #
-        # X-y-must-have-same-index = can estimator handle different X/y index?
-        "X-y-must-have-same-index": True,
-        # valid values: boolean True (yes), False (no)
-        # if True, raises exception if X.index is not contained in y.index
-        #
-        # enforce_index_type = index type that needs to be enforced in X/y
-        "enforce_index_type": None,
-        # valid values: pd.Index subtype, or list of pd.Index subtype
-        # if not None, raises exception if X.index, y.index level -1 is not of that type
-        #
-        # handles-missing-data = can estimator handle missing data?
-        "handles-missing-data": False,
-        # valid values: boolean True (yes), False (no)
-        # if False, raises exception if y or X passed contain missing data (nans)
-        #
-        # capability:insample = can forecaster make in-sample forecasts?
-        "capability:insample": True,
-        # valid values: boolean True (yes), False (no)
-        # if False, exception raised if any forecast method called with in-sample fh
-        #
-        # capability:pred_int = does forecaster implement probabilistic forecasts?
-        "capability:pred_int": False,
-        # valid values: boolean True (yes), False (no)
-        # if False, exception raised if proba methods are called (predict_interval etc)
-        #
-        # capability:pred_int:insample = can forecaster make in-sample proba forecasts?
-        "capability:pred_int:insample": True,
-        # valid values: boolean True (yes), False (no)
-        # only needs to be set if capability:pred_int is True
-        # if False, exception raised if proba methods are called with in-sample fh
-        #
-        # ----------------------------------------------------------------------------
-        # packaging info - only required for sktime contribution or 3rd party packages
-        # ----------------------------------------------------------------------------
-        #
-        # ownership and contribution tags
-        # -------------------------------
-        #
-        # author = author(s) of th estimator
-        # an author is anyone with significant contribution to the code at some point
-        "authors": ["author1", "author2"],
-        # valid values: str or list of str, should be GitHub handles
-        # this should follow best scientific contribution practices
-        # scope is the code, not the methodology (method is per paper citation)
-        # if interfacing a 3rd party estimator, ensure to give credit to the
-        # authors of the interfaced estimator
-        #
-        # maintainer = current maintainer(s) of the estimator
-        # per algorithm maintainer role, see governance document
-        # this is an "owner" type role, with rights and maintenance duties
-        # for 3rd party interfaces, the scope is the sktime class only
-        "maintainers": ["maintainer1", "maintainer2"],
-        # valid values: str or list of str, should be GitHub handles
-        # remove tag if maintained by sktime core team
-        #
-        # dependency tags: python version and soft dependencies
-        # -----------------------------------------------------
-        #
-        # python version requirement
-        "python_version": None,
-        # valid values: str, PEP 440 valid python version specifiers
-        # raises exception at construction if local python version is incompatible
-        #
-        # soft dependency requirement
-        "python_dependencies": None,
-        # valid values: str or list of str, PEP 440 valid package version specifiers
-        # raises exception at construction if modules at strings cannot be imported
-    }
-    #  in case of inheritance, concrete class should typically set tags
-    #  alternatively, descendants can set tags in __init__ (avoid this if possible)
-
-    # todo: add any hyper-parameters and components to constructor
+   
     def __init__(
         self,
-        model_path="Maple728/TimeMoE-200M",
-        revision="main",
-        validation_split=0.2,
-        config=None,
-        training_args=None,
-        compute_metrics=None,
-        callbacks=None,
-        broadcasting=False,
-        use_source_package=False,
+        context_length=7,
+        prediction_length=7,
+        test_size=168,
+        model_size='50M',
+        device='cpu'
     ):
+        
+        model = AutoModelForCausalLM.from_pretrained(
+            f'Maple728/TimeMoE-{model_size}',
+            device_map=device,
+            trust_remote_code=True
+        )
         super().__init__()
-        self.model_path = model_path
-        self.revision = revision
-        self.config = config
-        self._config = config if config is not None else {}
-        self.training_args = training_args
-        self._training_args = training_args if training_args is not None else {}
-        self.validation_split = validation_split
-        self.compute_metrics = compute_metrics
-        self.callbacks = callbacks
-        self.broadcasting = broadcasting
-        self.use_source_package = use_source_package
-
-        if self.broadcasting:
-            self.set_tags(
-                **{
-                    "y_inner_mtype": "pd.DataFrame",
-                    "X_inner_mtype": "pd.DataFrame",
-                    "capability:global_forecasting": False,
-                }
-            )
+        
+        self.context_length = context_length
+        self.prediction_length = prediction_length
+        self.test_size = test_size
+        self.model_size = model_size
+        self.device = device
+        self.model=model
+        # Initialize the model if necessary here
+        # self.model = AutoModelForCausalLM.from_pretrained("path/to/model", size=model_size)
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -215,129 +73,121 @@ class TimeMoE(_BaseGlobalForecaster):
         -------
         self : reference to self
         """
-        if self.use_source_package:
-            from sktime.libs.timemoe import TimeMoeConfig, TimeMoeForPrediction
-        elif _check_soft_dependencies("torch", severity="error"):
-            from sktime.libs.timemoe import TimeMoeConfig, TimeMoeForPrediction
 
-        # Initialize model config
-        config = TimeMoeConfig.from_pretrained(self.model_path, revision=self.revision)
-        _config = config.to_dict()
-        _config.update(self._config)
+        data = torch.tensor(y.values, dtype=torch.float32)
+        
+        all_predictions = []
+        
+        with torch.no_grad():
+            for i in range(0, self.test_size - self.prediction_length + 1, self.prediction_length):
+                # Get sequence for current window
+                start_idx = len(data) - self.test_size + i - self.context_length
+                sequence = data[start_idx:start_idx + self.context_length]
+                sequence = sequence.unsqueeze(0)  # Add batch dimension
+                
+                # Normalize sequence
+                mean = sequence.mean(dim=-1, keepdim=True)
+                std = sequence.std(dim=-1, keepdim=True)
+                normalized_sequence = (sequence - mean) / std
+                
+                # Generate forecast
+                output = self.model.generate(
+                    normalized_sequence,
+                    max_new_tokens=self.prediction_length,
+                    position_ids=torch.arange(sequence.size(-1), device=self.device).unsqueeze(0)  # Example for custom position IDs
+                )
 
-        # Ensure configuration for patching aligns with context length
-        context_length = _config.get("context_length")
-        num_patches = _config.get("num_patches")
-        patch_length = _config.get("patch_length")
-        patch_stride = _config.get("patch_stride")
+                
+                # Denormalize predictions
+                normed_preds = output[:, -self.prediction_length:]
+                predictions = normed_preds * std + mean
+                all_predictions.append(predictions.squeeze(0))
+        
+        return torch.cat(all_predictions).numpy()
 
-        patch_size = context_length / num_patches
-        if not (patch_size == patch_length == patch_stride):
-            # Update the config to match patching requirements
-            patch_size = max(1, int(patch_size))
-            _config["patch_length"] = patch_size
-            _config["patch_stride"] = patch_size
-            _config["num_patches"] = _config["context_length"] // patch_size
-            warn(
-                "Invalid patch configuration detected. Configuration updated to ensure:\n"
-                f"- context_length: {context_length}\n"
-                f"- num_patches: {_config['num_patches']}\n"
-                f"- patch_length and patch_stride: {patch_size}"
-            )
+    
+        #     #OR 
+        #     # self.model, info = TimeMoeForPrediction.from_pretrained(
+        #     # self.model_path,
+        #     # revision=self.revision,
+        #     # config=config,
+        #     # output_loading_info=True,
+        #     # ignore_mismatched_sizes=True,
+        #     # )
+                
+        # # use it when the flash-attn is available
+        # # model = AutoModelForCausalLM.from_pretrained('Maple728/TimeMoE-50M', device_map="auto", attn_implementation='flash_attention_2', trust_remote_code=True)
 
-        if fh is not None:
-            _config["prediction_length"] = max(
-                fh.to_relative(self._cutoff)._values,
-                _config.get("prediction_length", 1),
-            )
+        # # Temporary dataset
+        # # seqs = torch.randn(
+        # #     2, context_length
+        # # )  # tensor shape is [batch_size, context_length]
+        # # mean, std = seqs.mean(dim=-1, keepdim=True), seqs.std(dim=-1, keepdim=True)
+        # # prediction_length = fh
+        # # normed_seqs = normed_seqs.view(normed_seqs.size(0), -1)
+        # # output = model.generate(
+        # #     normed_seqs, max_new_tokens=prediction_length
+        # # )  # shape is [batch_size, 12 + 6]
+        # # normed_predictions = output[:, -prediction_length:]
+        # # predictions = normed_predictions * std + mean
 
-        config = TimeMoeConfig.from_dict(_config)
+        # # # Handle mismatched weights by freezing model parameters
+        # # if info["mismatched_keys"]:
+        # #     for param in self.model.parameters():
+        # #         param.requires_grad = False
+        # #     for key in info["mismatched_keys"]:
+        # #         module = self.model
+        # #         for attr in key.split(".")[:-1]:
+        # #             module = getattr(module, attr)
+        # #         module.weight.requires_grad = True
 
-        # Load the model with updated config
-        self.model, info = TimeMoeForPrediction.from_pretrained(
-            self.model_path,
-            revision=self.revision,
-            config=config,
-            output_loading_info=True,
-            ignore_mismatched_sizes=True,
-        )
+        # # # Splitting the dataset for training and validation
+        # # y_train, y_test = temporal_train_test_split(y, test_size=self.validation_split)
 
-        # Handle mismatched weights by freezing model parameters
-        if info["mismatched_keys"]:
-            for param in self.model.parameters():
-                param.requires_grad = False
-            for key in info["mismatched_keys"]:
-                module = self.model
-                for attr in key.split(".")[:-1]:
-                    module = getattr(module, attr)
-                module.weight.requires_grad = True
+        # # Create PyTorch-compatible datasets
+        # # train = PyTorchDataset(
+        # #     y=y_train,
+        # #     context_length=config.context_length,
+        # #     prediction_length=config.prediction_length,
+        # # )
+        # # test = PyTorchDataset(
+        # #     y=y_test,
+        # #     context_length=config.context_length,
+        # #     prediction_length=config.prediction_length,
+        # # )
 
-        # Splitting the dataset for training and validation
-        y_train, y_test = temporal_train_test_split(y, test_size=self.validation_split)
+        # # # Initialize training arguments
+        # # training_args = TrainingArguments(**self._training_args)
 
-        # Create PyTorch-compatible datasets
-        train = PyTorchDataset(
-            y=y_train,
-            context_length=config.context_length,
-            prediction_length=config.prediction_length,
-        )
-        test = PyTorchDataset(
-            y=y_test,
-            context_length=config.context_length,
-            prediction_length=config.prediction_length,
-        )
+        # # # Set up the Trainer
+        # # trainer = Trainer(
+        # #     model=self.model,
+        # #     args=training_args,
+        # #     train_dataset=train,
+        # #     eval_dataset=test,
+        # #     compute_metrics=self.compute_metrics,
+        # #     callbacks=self.callbacks,
+        # # )
 
-        # Initialize training arguments
-        training_args = TrainingArguments(**self._training_args)
+        # # # Train the model
+        # # trainer.train()
 
-        # Set up the Trainer
-        trainer = Trainer(
-            model=self.model,
-            args=training_args,
-            train_dataset=train,
-            eval_dataset=test,
-            compute_metrics=self.compute_metrics,
-            callbacks=self.callbacks,
-        )
+        # # Update model reference
+        # # self.model = trainer.model
 
-        # Train the model
-        trainer.train()
-
-        # Update model reference
-        self.model = trainer.model
-
-        # master_addr = os.getenv('MASTER_ADDR', '127.0.0.1')
-        # master_port = os.getenv('MASTER_PORT', 9899)
-        # world_size = int(os.getenv('WORLD_SIZE') or 1)
-        # rank = int(os.getenv('RANK') or 0)
-        # local_rank = int(os.getenv('LOCAL_RANK') or 0)
-        # if torch.cuda.is_available():
-        #     try:
-        #         dist.init_process_group("nccl", init_method='tcp://{}:{}'.format(master_addr, master_port), rank=rank,
-        #                     world_size=world_size)
-        #         device = f"cuda:{local_rank}"
-        #         is_dist = True
-        #     except Exception as e:
-        #         print('Error: ', f'Setup nccl fail, so set device to cpu: {e}')
-        #         device = 'cpu'
-        #         is_dist = False
-        # else:
-        #     device = 'cpu'
-        #     is_dist = False
-
-        # implement here
-        # IMPORTANT: avoid side effects to y, X, fh
-        #
-        # any model parameters should be written to attributes ending in "_"
-        #  attributes set by the constructor must not be overwritten
-        #  if used, estimators should be cloned to attributes ending in "_"
-        #  the clones, not the originals should be used or fitted if needed
-        #
-        # Note: when interfacing a model that has fit, with parameters
-        #   that are not data (y, X) or forecasting-horizon-like,
-        #   but model parameters, *don't* add as arguments to fit, but treat as follows:
-        #   1. pass to constructor,  2. write to self in constructor,
-        #   3. read from self in _fit,  4. pass to interfaced_model.fit in _fit
+        # # implement here
+        # # IMPORTANT: avoid side effects to y, X, fh
+        # #
+        # # any model parameters should be written to attributes ending in "_"
+        # #  attributes set by the constructor must not be overwritten
+        # #  if used, estimators should be cloned to attributes ending in "_"
+        # #  the clones, not the originals should be used or fitted if needed
+        # #
+        # # Note: when interfacing a model that has fit, with parameters
+        # #   that are not data (y, X) or forecasting-horizon-like,
+        # #   but model parameters, *don't* add as arguments to fit, but treat as follows:
+        # #   1. pass to constructor,  2. write to self in constructor,
+        # #   3. read from self in _fit,  4. pass to interfaced_model.fit in _fit
 
     # todo: implement this, mandatory
     def _predict(self, fh, X):
@@ -387,76 +237,30 @@ class TimeMoE(_BaseGlobalForecaster):
             fh = self.fh
         fh = fh.to_relative(self.cutoff)
 
-        _y = y if self._global_forecasting else self._y
+        _y = _y if self._global_forecasting else self._y
 
         # multi-index conversion goes here
-        if isinstance(_y.index, pd.MultiIndex):
-            hist = _frame2numpy(_y)
-        else:
-            hist = np.expand_dims(_y.values, axis=0)
+        # if isinstance(_y.index, pd.MultiIndex):
+        #     hist = _frame2numpy(_y)
+        # else:
+        #     hist = np.expand_dims(_y.values, axis=0)
 
         # hist.shape: (batch_size, n_timestamps, n_cols)
 
-        # truncate or pad to match sequence length
-        past_values, observed_mask = _pad_truncate(
-            hist, self.model.config.context_length
+        
+        h = 7
+
+        timemoe_preds_50M = self._fit(
+            y=data,
+            target_column='y',
+            context_length=6*h,
+            prediction_length=fh,
+            test_size=168,
+            device='cpu'
         )
-
-        past_values = (
-            torch.tensor(past_values).to(self.model.dtype).to(self.model.device)
-        )
-        observed_mask = (
-            torch.tensor(observed_mask).to(self.model.dtype).to(self.model.device)
-        )
-
-        self.model.eval()
-        outputs = self.model(
-            past_values=past_values,
-            observed_mask=observed_mask,
-        )
-        pred = outputs.prediction_outputs.detach().cpu().numpy()
-
-        # converting pred datatype
-
-        if isinstance(_y.index, pd.MultiIndex):
-            ins = np.array(
-                list(np.unique(_y.index.droplevel(-1)).repeat(pred.shape[1]))
-            )
-            ins = [ins[..., i] for i in range(ins.shape[-1])] if ins.ndim > 1 else [ins]
-
-            idx = (
-                ForecastingHorizon(range(1, pred.shape[1] + 1), freq=self.fh.freq)
-                .to_absolute(self._cutoff)
-                ._values.tolist()
-                * pred.shape[0]
-            )
-            index = pd.MultiIndex.from_arrays(
-                ins + [idx],
-                names=_y.index.names,
-            )
-        else:
-            index = (
-                ForecastingHorizon(range(1, pred.shape[1] + 1))
-                .to_absolute(self._cutoff)
-                ._values
-            )
-
-        pred = pd.DataFrame(
-            # batch_size * num_timestams, n_cols
-            pred.reshape(-1, pred.shape[-1]),
-            index=index,
-            columns=_y.columns,
-        )
-
-        absolute_horizons = fh.to_absolute_index(self.cutoff)
-        dateindex = pred.index.get_level_values(-1).map(
-            lambda x: x in absolute_horizons
-        )
-        pred = pred.loc[dateindex]
-        pred.index.names = _y.index.names
-
-        return pred
-
+        return timemoe_preds_50M
+        
+        
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -521,11 +325,3 @@ class TimeMoE(_BaseGlobalForecaster):
         # params = {"est": value3, "parama": value4}
         # return params
 
-
-def _pad_truncate(data, length):
-    """Pad or truncate the data to the specified length."""
-    if len(data) > length:
-        return data[:length], [1] * length
-    else:
-        padding = length - len(data)
-        return data + [0] * padding, [1] * len(data) + [0] * padding
