@@ -9,6 +9,7 @@ from skbase.utils.dependencies import _check_soft_dependencies
 from transformers import (
     PatchTSTConfig,
     PatchTSTForPrediction,
+    PatchTSTModel,
     Trainer,
     TrainingArguments,
 )
@@ -29,69 +30,82 @@ else:
 class HFPatchTSTForecaster(_BaseGlobalForecaster):
     """Interface for the PatchTST forecaster.
 
-    link to ref: https://github.com/yuqinie98/PatchTST
-    link to paper: https://arxiv.org/abs/2211.14730
-    link to hf model card:
-    https://huggingface.co/docs/transformers/main/en/model_doc/patchtst#transformers.PatchTSTConfig
+    Paper: https://arxiv.org/abs/2211.14730
+
+    This model has 3 available modes:
+        1) Loading an untrained PatchTST model and pretrain on some dataset.
+        This can be done by passing in a PatchTST config dictionary or passing
+        in available parameters in this estimator, or by loading the
+        HFPatchTSTForecaster without any passed arguments
+        2) Load a pre-trained model for fine-tuning. The parameter `model_path`
+        can be load to load a pre-trained model for fine-tuning. Using a
+        pretrained model will override any other model config parameters, and
+        you can use the `fit` function to then fine-tune your pretrained model.
+        See the `model_path` docstring for more details.
+        3) Load a pre-trained model for zero-shot forecasting. The parameter
+        `model_path` can be load to load a pre-trained model for fine-tuning.
+        Using a pretrained model will override any other model config
+        parameters, and you can use the `predict` function to do zero-shot
+        forecasting. See the `model_path` docstring for more details.
 
     Parameters
     ----------
-        model_path : str, optional
-            Path to the Huggingface model to use for global forecasting. If
-            model_path is passed, the remaining model config parameters will be
-            ignored except for specific training or dataset parameters.
-            This has 3 options:
-                - model id to an online pretrained PatchTST Model hosted on HuggingFace
-                - A path to a *directory* containing a configuration file saved
-                using the [`~PretrainedConfig.save_pretrained`] method,
-                or the [`~PreTrainedModel.save_pretrained`] method
-                - A path or url to a saved configuration JSON *file*, e.g.,
-                    `./my_model_directory/configuration.json`.
-                forecast_columns,
-        patch_length : int, optional, default = 16
-            Length of each patch that will segment every univariate series.
-        context_length : int, optional, default = 512
-            Number of previous time steps used to forecast.
-        patch_stride : int, optional, default = 16
-            Length of the non-overlapping region between patches. If patch_stride
-            is less than patch_length, then there will be overlapping patches. If
-            patch_stride = patch_length, then there will be no overlapping patches.
-        random_mask_ratio : float, optional, default = 0.4
-            Masking ratio applied to mask the input data during random pretraining.
-        d_model : int, optional, default = 128
-            Dimension of the weight matrices in the transformer layers.
-        num_attention_heads : int, optional, default = 16
-            Number of attention heads for each attention layer in the transformer block
-        ffn_dim : int, optional, default = 256
-            Dimensionality of the feed forward layer in the transformer encoder.
-        head_dropout : float, optional, default = 0.2
-            Dropout probability for a head.
-        batch_size : int, optional, default = 64
-            Size of every batch during training. Reduce if you have reduced gpu power.
-        learning_rate : float, optional, default = 1e-4
-            Leaning rate that is used during training.
-        epochs : int, optional, default = 10
-            Number of epochs to use during training.
-        validation_split : float, optional, default = 0.2
-            Fraction of the data to use for validation.
-        config : dict, optional, default = {}
-            A config dict specifying parameters to initialize an untrained
-            PatchTST model. Missing parameters in the config will be automatically
-            replaced by their default values. See the PatchTSTConfig config on
-            huggingface for more details.
-        training_args : dict, optional, default = None
-            Training arguments to use for the model. If this is passed,
-            the remaining applicable training arguments will be ignored
-        compute_metrics : list or function, default = None
-            List of metrics or function to use to use during training
-        callbacks: list or function, default = None
-            List of callbacks or callback function to use during training
-        broadcasting : bool, default=False
-            if True, multiindex data input will be broadcasted to single series.
-            For each single series, one copy of this forecaster will try to
-            fit and predict on it. The broadcasting is happening inside automatically,
-            from the outerside api perspective, the input and output are the same,
-            only one multiindex output from ``predict``.
+    model_path : str, optional
+        Path to the Huggingface model to use for global forecasting. If
+        model_path is passed, the remaining model config parameters will be
+        ignored except for specific training or dataset parameters.
+        This has 3 options:
+            - model id to an online pretrained PatchTST Model hosted on HuggingFace
+            - A path to a *directory* containing a configuration file saved
+            using the [`~PretrainedConfig.save_pretrained`] method,
+            or the [`~PreTrainedModel.save_pretrained`] method
+            - A path or url to a saved configuration JSON *file*, e.g.,
+                `./my_model_directory/configuration.json`.
+            forecast_columns,
+    patch_length : int, optional, default = 16
+        Length of each patch that will segment every univariate series.
+    context_length : int, optional, default = 512
+        Number of previous time steps used to forecast.
+    patch_stride : int, optional, default = 16
+        Length of the non-overlapping region between patches. If patch_stride
+        is less than patch_length, then there will be overlapping patches. If
+        patch_stride = patch_length, then there will be no overlapping patches.
+    random_mask_ratio : float, optional, default = 0.4
+        Masking ratio applied to mask the input data during random pretraining.
+    d_model : int, optional, default = 128
+        Dimension of the weight matrices in the transformer layers.
+    num_attention_heads : int, optional, default = 16
+        Number of attention heads for each attention layer in the transformer block
+    ffn_dim : int, optional, default = 256
+        Dimensionality of the feed forward layer in the transformer encoder.
+    head_dropout : float, optional, default = 0.2
+        Dropout probability for a head.
+    batch_size : int, optional, default = 64
+        Size of every batch during training. Reduce if you have reduced gpu power.
+    learning_rate : float, optional, default = 1e-4
+        Leaning rate that is used during training.
+    epochs : int, optional, default = 10
+        Number of epochs to use during training.
+    validation_split : float, optional, default = 0.2
+        Fraction of the data to use for validation.
+    config : dict, optional, default = {}
+        A config dict specifying parameters to initialize an untrained
+        PatchTST model. Missing parameters in the config will be automatically
+        replaced by their default values. See the PatchTSTConfig config on
+        huggingface for more details.
+    training_args : dict, optional, default = None
+        Training arguments to use for the model. If this is passed,
+        the remaining applicable training arguments will be ignored
+    compute_metrics : list or function, default = None
+        List of metrics or function to use to use during training
+    callbacks: list or function, default = None
+        List of callbacks or callback function to use during training
+    broadcasting : bool, default=False
+        if True, multiindex data input will be broadcasted to single series.
+        For each single series, one copy of this forecaster will try to
+        fit and predict on it. The broadcasting is happening inside automatically,
+        from the outerside api perspective, the input and output are the same,
+        only one multiindex output from ``predict``.
 
 
     """
@@ -109,7 +123,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         ],
         "scitype:y": "both",
         "ignores-exogeneous-X": True,
-        "requires-fh-in-fit": True,
+        "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
         "handles-missing-data": False,
@@ -208,9 +222,18 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         self.y_columns = y.columns
         self._config["num_input_channels"] = len(self.y_columns)
         self._config["prediction_length"] = self.fh
-        # initialize model
-        config = PatchTSTConfig(self._config)
-        model = PatchTSTForPrediction(config)
+        # if no model_path was given, initialize new untrained model from config
+        if not self.model_path:
+            config = PatchTSTConfig(self._config)
+            self.model = PatchTSTForPrediction(config)
+        else:
+            # model_path was given, initialize with model_path
+            self.model = PatchTSTForPrediction.from_pretrained(self.model_path)
+            if not isinstance(self.model.model, PatchTSTModel):
+                raise ValueError(
+                    "This estimator requires a `PatchTSTModel`, but "
+                    f"found {self.model.model.__class__.__name__}"
+                )
 
         # initialize training_args
         if self.training_args:
@@ -230,7 +253,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
 
         # define trainer
         trainer = Trainer(
-            model=model,
+            model=self.model,
             args=training_args,
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
