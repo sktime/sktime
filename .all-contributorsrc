@@ -3166,13 +3166,22 @@
       ]
     },
     {
-      "login": "PranavBhatP",
-      "name": "Pranav Bhat",
-      "avatar_url": "https://avatars.githubusercontent.com/PranavBhatP",
-      "profile": "https://github.com/PranavBhatP",
+      "login": "manolotis",
+      "name": "Manuel Muñoz Sánchez",
+      "avatar_url": "https://avatars.githubusercontent.com/manolotis",
+      "profile": "https://github.com/manolotis",
       "contributions": [
         "doc"
       ]
-    }
+     },
+     {
+        "login": "PranavBhatP",
+        "name": "PranavBhatP",
+        "avatar_url": "https://avatars.githubusercontent.com/PranavBhatP",
+        "profile" :"https://github.com/PranavBhatP",
+        "contributions": [
+          "doc"
+        ]
+     }
   ]
 }

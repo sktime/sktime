@@ -97,6 +97,14 @@ Time Series Segmentation
 
     ClusterSegmenter
 
+.. currentmodule:: sktime.annotation.bs.BinarySegmentation
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BinarySegmentation
+
 Time Series Anomaly Detection
 -----------------------------
 
