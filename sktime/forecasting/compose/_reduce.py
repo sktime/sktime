@@ -2588,8 +2588,13 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             "window_length": 3,
             "pooling": "global",  # all internal mtypes are tested across scenarios
         }
+        params2 = {
+            "estimator": est,
+            "window_length": 4,
+            "pooling": "local",
+        }
 
-        return params1
+        return [params1, params2]
 
 
 class YfromX(BaseForecaster, _ReducerMixin):
