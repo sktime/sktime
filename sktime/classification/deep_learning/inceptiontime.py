@@ -5,6 +5,8 @@ __all__ = ["InceptionTimeClassifier"]
 
 from copy import deepcopy
 
+import keras
+
 # Pushing this to a PR to check for errors in GHA
 from sklearn.utils import check_random_state
 
@@ -125,8 +127,6 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         -------
         output : a compiled Keras Model
         """
-        from tensorflow import keras
-
         input_layer, output_layer = self._network.build_network(input_shape, **kwargs)
 
         output_layer = keras.layers.Dense(n_classes, activation="softmax")(output_layer)
@@ -184,8 +184,6 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         return self
 
     def _check_callbacks(self, callbacks):
-        from tensorflow import keras
-
         # if user hasn't provided a custom ReduceLROnPlateau via init already,
         # add the default from literature
         if callbacks is None:
