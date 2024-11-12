@@ -5,6 +5,7 @@ __all__ = ["InceptionTimeClassifier"]
 
 from copy import deepcopy
 
+# Pushing this to a PR to check for errors in GHA
 from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
