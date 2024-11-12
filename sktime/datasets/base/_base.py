@@ -17,7 +17,7 @@ __author__ = ["fkiraly"]
 __all__ = ["BaseDataset"]
 
 from sktime.base import BaseObject
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.utils.dependencies import _check_estimator_deps
 
 
 class BaseDataset(BaseObject):
