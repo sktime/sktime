@@ -16,6 +16,26 @@ _coerce_register[("transformer_tabular", "transformer")] = (
 )
 
 
+def _coerce_series_annotator_to_transformer(obj):
+    from sktime.annotation.compose._as_transform import AnnotatorAsTransformer
+
+    return AnnotatorAsTransformer(obj)
+
+
+_coerce_register[("series-annotator", "transformer")] = (
+    _coerce_series_annotator_to_transformer
+)
+
+
+def _coerce_clusterer_to_transformer(obj):
+    from sktime.clustering.compose import ClustererAsTransformer
+
+    return ClustererAsTransformer(obj)
+
+
+_coerce_register[("clusterer", "transformer")] = _coerce_clusterer_to_transformer
+
+
 def coerce_scitype(
     obj,
     to_scitype,
@@ -37,12 +57,21 @@ def coerce_scitype(
     Parameters
     ----------
     obj : class or object inheriting from sktime BaseObject
+        object to check or coerce
+
     to_scitype : str
-        scitype to coerce the object to
-    from_scitype : str, optional, default = None
+        scitype to coerce the object ``obj`` to
+
+    from_scitype : str or list of str, optional, default = None
         scitype of ``obj`` that is assumed for the coercion, before coercion.
+
+        * If None, no scitype for ``obj`` is assumed.
+        * if str, the scitype of ``obj`` is assumed to be this scitype.
+        * if list of str, the scitype of ``obj`` is assumed to be one of these scitypes.
+
         If ``raise_on_mismatch``, non-None value will cause an exception
-        if the detected scitype does not match the expected scitype.
+        if the detected scitype does not match the expected scitype(s).
+
     clone_obj : bool, optional, default = True
         if True, a clone of ``obj`` is used inside coercion composites.
         if False, the original object is passed unmodified.
@@ -52,6 +81,7 @@ def coerce_scitype(
     raise_on_mismatch : bool, optional, default = False
         if True, raises an error if the detected scitype does not match the
         expected scitype, see ``from_scitype``.
+        If False, the object is returned unmodified.
     msg : str, optional, default = "Error in object scitype check."
         Start of error message returned with the exception, if
         an error is raised due to ``raise_on_mismatch``.
@@ -72,20 +102,36 @@ def coerce_scitype(
     from sktime.registry._scitype import scitype
     from sktime.utils.sklearn import is_sklearn_estimator, sklearn_scitype
 
-    if from_scitype is None or raise_on_mismatch:
+    if isinstance(from_scitype, str):
+        from_scitype = [from_scitype]
+    if isinstance(from_scitype, list) and len(from_scitype) == 0:
+        from_scitype = None
+    # from_scitype is now a list or None
+
+    # we need to detect the scitype if it is not provided as an assumption
+    need_detect = from_scitype is None or len(from_scitype) >= 2 or raise_on_mismatch
+    if need_detect:
         if is_sklearn_estimator(obj):
             detected_scitype = f"{sklearn_scitype(obj)}_tabular"
         else:
             detected_scitype = scitype(
                 obj, force_single_scitype=True, raise_on_unknown=raise_on_unknown
             )
-        if raise_on_mismatch and detected_scitype != from_scitype:
+
+    # case 1: detected scitype is not assumed scitype
+    if from_scitype is not None and detected_scitype not in from_scitype:
+        # if raise_on_mismatch, raise an error
+        if raise_on_mismatch:
             raise TypeError(
                 f"{msg} Expected object scitype {from_scitype}, "
                 f"but found {detected_scitype}."
             )
+        # otherwise, return the object unmodified
         else:
-            from_scitype = detected_scitype
+            return obj
+
+    if from_scitype is None or len(from_scitype) >= 2:
+        from_scitype = detected_scitype
 
     if clone_obj:
         if is_sklearn_estimator(obj) or not hasattr(obj, "clone"):
@@ -96,6 +142,9 @@ def coerce_scitype(
             obj = obj.clone()
 
     if (from_scitype, to_scitype) not in _coerce_register:
+        return obj
+
+    if isinstance(from_scitype, list) and detected_scitype not in from_scitype:
         return obj
 
     # now we know that we have a coercion function in the register

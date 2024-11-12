@@ -41,13 +41,22 @@ class ReconcilerForecaster(BaseForecaster):
     method : {"mint_cov", "mint_shrink", "ols", "wls_var", "wls_str", \
             "bu", "td_fcst"}, default="mint_shrink"
         The reconciliation approach applied to the forecasts based on:
-            * "mint_cov" - sample covariance
-            * "mint_shrink" - covariance with shrinkage
-            * "ols" - ordinary least squares
-            * "wls_var" - weighted least squares (variance)
-            * "wls_str" - weighted least squares (structural)
-            * "bu" - bottom-up
-            * "td_fcst" - top down based on forecast proportions
+
+            * ``"mint_cov"`` - sample covariance
+            * ``"mint_shrink"`` - covariance with shrinkage
+            * ``"ols"`` - ordinary least squares
+            * ``"wls_var"`` - weighted least squares (variance)
+            * ``"wls_str"`` - weighted least squares (structural)
+            * ``"bu"`` - bottom-up
+            * ``"td_fcst"`` - top down based on forecast proportions
+
+    return_totals : bool
+        Whether the predictions returned by ``predict`` and predict-like methods
+        should include the total values in the hierarchy, stored at the ``__total``
+        index levels.
+
+        * If True, prediction data frames include total values at ``__total`` levels
+        * If False, prediction data frames are returned without ``__total`` levels
 
     See Also
     --------
@@ -110,10 +119,12 @@ class ReconcilerForecaster(BaseForecaster):
 
     TRFORM_LIST = Reconciler().METHOD_LIST
     METHOD_LIST = ["mint_cov", "mint_shrink", "wls_var"] + TRFORM_LIST
+    RETURN_TOTALS_LIST = [True, False]
 
-    def __init__(self, forecaster, method="mint_shrink"):
+    def __init__(self, forecaster, method="mint_shrink", return_totals=True):
         self.forecaster = forecaster
         self.method = method
+        self.return_totals = return_totals
 
         super().__init__()
 
@@ -224,6 +235,16 @@ class ReconcilerForecaster(BaseForecaster):
 
         # if Forecaster() * Reconciler() then base_fc is already reconciled
         if np.isin(self.method, self.TRFORM_LIST):
+            if not self.return_totals:
+                n = base_fc.index.get_slice_bound(label="__total", side="left")
+                if len(base_fc[:n]) == 0:
+                    base_fc = base_fc[n:]
+                else:
+                    base_fc = base_fc[:n]
+                level_values = base_fc.index.get_level_values(-2)
+                base_fc = base_fc[~(level_values == "__total")]
+                return base_fc
+
             return base_fc
 
         base_fc = base_fc.groupby(level=-1)
@@ -238,6 +259,16 @@ class ReconcilerForecaster(BaseForecaster):
 
         recon_fc = pd.concat(recon_fc, axis=0)
         recon_fc = recon_fc.sort_index()
+
+        if not self.return_totals:
+            n = recon_fc.index.get_slice_bound(label="__total", side="left")
+            if len(recon_fc[:n]) == 0:
+                recon_fc = recon_fc[n:]
+            else:
+                recon_fc = recon_fc[:n]
+            level_values = recon_fc.index.get_level_values(-2)
+            recon_fc = recon_fc[~(level_values == "__total")]
+            return recon_fc
 
         return recon_fc
 
@@ -410,7 +441,9 @@ class ReconcilerForecaster(BaseForecaster):
             {
                 "forecaster": FORECASTER,
                 "method": x,
+                "return_totals": totals,
             }
             for x in cls.METHOD_LIST
+            for totals in cls.RETURN_TOTALS_LIST
         ]
         return params_list

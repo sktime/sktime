@@ -25,8 +25,8 @@ from sktime.dists_kernels.base import (
     BasePairwiseTransformerPanel,
 )
 from sktime.exceptions import NotFittedError
-from sktime.forecasting.base import BaseForecaster, _BaseGlobalForecaster
-from sktime.registry import all_estimators, get_base_class_list, scitype
+from sktime.forecasting.base import BaseForecaster
+from sktime.registry import all_estimators, get_base_class_lookup, scitype
 from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.tests._config import (
     EXCLUDE_ESTIMATORS,
@@ -917,29 +917,22 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
                 f"estimator: {estimator_class} has fit method, but"
                 f"is not a sub-class of BaseEstimator."
             )
-        from sktime.pipeline import Pipeline
 
-        if issubclass(estimator_class, Pipeline):
-            return
+        est_scitypes = scitype(
+            estimator_class, force_single_scitype=False, coerce_to_list=True
+        )
 
-        VALID_BASE_CLS = tuple(get_base_class_list(include_baseobjs=False))
-        VALID_MIXIN = get_base_class_list(mixin=True)
-        VALID_SECOND_CLS = tuple(VALID_MIXIN + [_BaseGlobalForecaster])
+        class_lookup = get_base_class_lookup()
 
-        # Usually estimators inherit only from one BaseEstimator type, but in some cases
-        # they may be predictor and transformer at the same time (e.g. pipelines)
-        n_base_types = sum(issubclass(estimator_class, cls) for cls in VALID_BASE_CLS)
-
-        assert 2 >= n_base_types >= 1
-
-        # If the estimator inherits from more than one base estimator type, we check if
-        # one of them is a transformer base type or _BaseGlobalForecaster type
-        # Global forecasters inherit from _BaseGlobalForecaster,
-        # _BaseGlobalForecaster inherit from BaseForecaster
-        # therefore, global forecasters is subclass of
-        # _BaseGlobalForecaster and BaseForecaster
-        if n_base_types > 1:
-            assert issubclass(estimator_class, VALID_SECOND_CLS)
+        for est_scitype in est_scitypes:
+            if est_scitype in class_lookup:
+                expected_parent = class_lookup[est_scitype]
+                msg = (
+                    f"Estimator: {estimator_class} is tagged as having scitype "
+                    f"{est_scitype} via tag object_type, but is not a sub-class of "
+                    f"the corresponding base class {expected_parent.__name__}."
+                )
+                assert issubclass(estimator_class, expected_parent), msg
 
     def test_has_common_interface(self, estimator_class):
         """Check estimator implements the common interface."""
@@ -1067,6 +1060,10 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         """Check that __repr__ call to instance does not raise exceptions."""
         estimator = estimator_instance
         repr(estimator)
+
+    def test_repr_html(self, estimator_instance):
+        """Check that _repr_html_ call to instance does not raise exceptions."""
+        estimator_instance._repr_html_()
 
     def test_constructor(self, estimator_class):
         """Check that the constructor has sklearn compatible signature and behaviour.

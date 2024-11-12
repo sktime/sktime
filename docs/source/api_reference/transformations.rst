@@ -46,8 +46,8 @@ Transformations are categorized as follows:
 Composition
 -----------
 
-Pipeline building
-~~~~~~~~~~~~~~~~~
+Pipeline building - Structural
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.compose
 
@@ -58,24 +58,24 @@ Pipeline building
     TransformerPipeline
     FeatureUnion
     ColumnEnsembleTransformer
-    ColumnwiseTransformer
     FitInTransform
-    MultiplexTransformer
-    OptionalPassthrough
     InvertTransform
-    Id
     YtoX
     IxToX
-    TransformByLevel
-    TransformIf
 
-.. currentmodule:: sktime.transformations.panel.compose
+Pipeline building - Broadcasting and apply-map
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.compose
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    ColumnTransformer
+    ColumnwiseTransformer
+    TransformByLevel
+
+.. currentmodule:: sktime.transformations.panel.compose
 
 .. currentmodule:: sktime.transformations.series.func_transform
 
@@ -85,6 +85,30 @@ Pipeline building
 
     FunctionTransformer
 
+Pipeline building - AutoML, switches and multiplexing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MultiplexTransformer
+    OptionalPassthrough
+    TransformIf
+    Id
+
+Pipeline building - Logging
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Logger
 
 Sklearn and pandas adapters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -202,6 +226,17 @@ Dictionary-based features
     :template: class.rst
 
     SFA
+
+Auto-correlation-based features
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.hurst
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HurstExponentTransformer
 
 Moment-based features
 ~~~~~~~~~~~~~~~~~~~~~
@@ -555,6 +590,14 @@ Seasonality and Date-Time Features
     :template: class.rst
 
     FourierTransform
+
+.. currentmodule:: sktime.transformations.series.basisfunction
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    RBFTramsformer
 
 .. currentmodule:: sktime.transformations.series.peak
 
