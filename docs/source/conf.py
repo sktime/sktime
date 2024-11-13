@@ -457,6 +457,17 @@ def _make_estimator_overview(app):
             "authors",
             "maintainers",
         ],
+        "detector": [
+            "capability:multivariate",
+            "capability:missing_values",
+            "capability:contractable",
+            "capability:predict",
+            "capability:predict:proba",
+            "capability:out_of_sample",
+            "python_dependencies",
+            "authors",
+            "maintainers",
+        ]
     }
 
     # todo: replace later by code similar to below
@@ -464,7 +475,7 @@ def _make_estimator_overview(app):
     #
     # for obj_type in tags_by_category:
     #     tag_tpl = all_tags(obj_type)
-    #     tags = [tag[0] for tag in tag_tpl]
+    #     tags = [tag[0] for tag_tpl in tag_tpl]
     #     tags_by_category[obj_type] = tags
 
     COLNAMES = [
