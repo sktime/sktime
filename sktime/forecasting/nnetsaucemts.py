@@ -3,7 +3,6 @@
 
 import numpy as np
 import pandas as pd
-from nnetsauce import MTS as MTS0
 
 from sktime.forecasting.base import BaseForecaster
 
@@ -126,6 +125,8 @@ class NnetsauceMTS(BaseForecaster):
         fitting each series
 
     """
+
+    from nnetsauce import MTS as MTS0
 
     _tags = {
         # scitype:y controls whether internal y can be univariate/multivariate
