@@ -149,6 +149,13 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
         }
         self.set_tags(**tags_to_set)
 
+        tags_to_clone = [
+            "capability:out_of_sample",
+            "capability:predict",
+            "capability:predict_proba",
+        ]
+        self.clone_tags(clusterer, tags_to_clone)
+
     @property
     def _transformers(self):
         return self.transformers_._steps

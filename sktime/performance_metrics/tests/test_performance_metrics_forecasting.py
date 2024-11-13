@@ -47,6 +47,9 @@ from sktime.performance_metrics.forecasting import (
     median_squared_scaled_error,
     relative_loss,
 )
+from sktime.performance_metrics.forecasting.sample_weight._base import (
+    BaseSampleWeightGenerator,
+)
 from sktime.performance_metrics.tests._config import RANDOM_SEED
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.series import _make_series
@@ -588,3 +591,99 @@ def test_y_true_y_pred_inconsistent_n_variables_raises_error(metric_func_name):
         ValueError, match="y_true and y_pred have different number of output"
     ):
         metric_func(y_true, y_pred, y_train=y_train, y_pred_benchmark=y_pred_benchmark)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+@pytest.mark.parametrize("random_state", RANDOM_STATES)
+@pytest.mark.parametrize("metric_func_name", LOSS_RESULTS.keys())
+def test_sample_weight_generator_has_no_effect_on_metric_function(
+    metric_func_name, random_state
+):
+    """Tests that loss function with univariate input should return scalar number."""
+    y = _make_series(n_timepoints=75, random_state=random_state)
+    y_train, y_true = y.iloc[:50], y.iloc[50:]
+    y_pred = y.shift(1).iloc[50:]
+    y_pred_benchmark = y.rolling(2).mean().iloc[50:]
+
+    class TestWeightGenerator(BaseSampleWeightGenerator):
+        def __call__(self, y_true, y_pred=None, **kwargs):
+            return np.arange(1, len(y_true) + 1)
+
+    weight_generator = TestWeightGenerator()
+
+    metric_func = LOSS_RESULTS[metric_func_name]["func"]
+
+    function_loss = metric_func(
+        y_true, y_pred, y_train=y_train, y_pred_benchmark=y_pred_benchmark
+    )
+
+    function_loss_with_weights = metric_func(
+        y_true,
+        y_pred,
+        y_train=y_train,
+        y_pred_benchmark=y_pred_benchmark,
+        sample_weight=weight_generator,
+    )
+
+    is_num = is_numeric_dtype(function_loss)
+    is_scalar = np.isscalar(function_loss)
+    assert is_num and is_scalar, " ".join(
+        ["Loss function with univariate input should return scalar number"]
+    )
+
+    is_num = is_numeric_dtype(function_loss_with_weights)
+    is_scalar = np.isscalar(function_loss_with_weights)
+    assert is_num and is_scalar, " ".join(
+        ["Loss function with sample weight generator should return scalar number"]
+    )
+
+    assert np.isclose(function_loss, function_loss_with_weights), " ".join(
+        ["Loss function with sample weight generator should return different value"]
+    )
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+@pytest.mark.parametrize("random_state", RANDOM_STATES)
+@pytest.mark.parametrize(
+    "metric_class",
+    [
+        MeanSquaredError,
+        MeanAbsoluteError,
+        MeanAbsolutePercentageError,
+    ],
+)
+def test_sample_weight_generator_is_passed_to_func(metric_class, random_state):
+    """Tests that loss function with univariate input should return scalar number."""
+    y = _make_series(n_timepoints=75, random_state=random_state)
+    y_train, y_true = y.iloc[:50], y.iloc[50:]
+    y_pred = y.shift(1).iloc[50:]
+    y_pred_benchmark = y.rolling(2).mean().iloc[50:]
+
+    class TestWeightGenerator(BaseSampleWeightGenerator):
+        def __call__(self, y_true, y_pred=None, **kwargs):
+            return np.arange(1, len(y_true) + 1)
+
+    weight_generator = TestWeightGenerator()
+
+    metric = metric_class()
+
+    function_loss = metric(
+        y_true, y_pred, y_train=y_train, y_pred_benchmark=y_pred_benchmark
+    )
+    function_loss_with_weights = metric(
+        y_true,
+        y_pred,
+        y_train=y_train,
+        y_pred_benchmark=y_pred_benchmark,
+        sample_weight=weight_generator,
+    )
+
+    assert not np.isclose(function_loss, function_loss_with_weights), " ".join(
+        ["Loss function with sample weight generator should return different value"]
+    )

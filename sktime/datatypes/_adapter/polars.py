@@ -1,8 +1,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Common utilities for polars based data containers."""
 
-from sktime.datatypes._common import _req
-from sktime.datatypes._common import _ret as ret
+from sktime.datatypes._base._common import _req
+from sktime.datatypes._base._common import _ret as ret
 from sktime.datatypes._dtypekind import _get_feature_kind, _polars_dtype_to_kind
 
 
@@ -29,7 +29,7 @@ def is_monotonically_increasing(obj):
         import polars as pl
 
         index_df = obj.with_columns(index_cols)
-        grouped = index_df.groupby(index_cols[:-1]).agg([pl.col(index_cols[-1])])
+        grouped = index_df.group_by(index_cols[:-1]).agg([pl.col(index_cols[-1])])
         last_index_col = grouped.select([index_cols[-1]])
         for val in last_index_col.iter_rows():
             # iter rows returns a list of tuples
@@ -226,22 +226,31 @@ def check_polars_frame(
 
     # columns in polars are unique, no check required
 
+    if lazy:
+        width = obj.collect_schema().len()
+        columns = obj.collect_schema().names()
+        dtypes = obj.collect_schema().dtypes()
+    else:
+        width = obj.width
+        columns = obj.columns
+        dtypes = obj.dtypes
+
     if _req("is_empty", return_metadata):
-        metadata["is_empty"] = obj.width < 1
+        metadata["is_empty"] = width < 1
     if _req("is_univariate", return_metadata):
-        metadata["is_univariate"] = obj.width - len(index_cols) == 1
+        metadata["is_univariate"] = width - len(index_cols) == 1
     if _req("n_features", return_metadata):
-        metadata["n_features"] = obj.width - len(index_cols)
+        metadata["n_features"] = width - len(index_cols)
     if _req("feature_names", return_metadata):
-        feature_columns = [x for x in obj.columns if x not in index_cols]
+        feature_columns = [x for x in columns if x not in index_cols]
         metadata["feature_names"] = feature_columns
     if _req("dtypekind_dfip", return_metadata):
         index_cols_count = len(index_cols)
-        dtype_list = obj.dtypes[index_cols_count:]
+        dtype_list = dtypes[index_cols_count:]
         metadata["dtypekind_dfip"] = _polars_dtype_to_kind(dtype_list)
     if _req("feature_kind", return_metadata):
         index_cols_count = len(index_cols)
-        dtype_list = obj.dtypes[index_cols_count:]
+        dtype_list = dtypes[index_cols_count:]
         dtype_kind = _polars_dtype_to_kind(dtype_list)
         metadata["feature_kind"] = _get_feature_kind(dtype_kind)
 
@@ -251,14 +260,6 @@ def check_polars_frame(
                 metadata["n_instances"] = obj.height
             else:
                 metadata["n_instances"] = "NA"
-
-    if scitype in ["Panel", "Hierarchical"]:
-        if _req("n_instances", return_metadata):
-            if exp_type_str == "LazyFrame":
-                metadata["n_instances"] = "NA"
-            else:
-                instance_cols = index_cols[:-1]
-                metadata["n_instances"] = len(obj[instance_cols].unique())
 
     # check if there are any nans
     #   compute only if needed

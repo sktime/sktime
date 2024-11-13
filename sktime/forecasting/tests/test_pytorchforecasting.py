@@ -92,7 +92,7 @@ def test_load_model_from_disk(model_class) -> None:
     try:
         model._trainer
         raise AssertionError("Trainer should not be initialized")
-    except AttributeError:
+    except AttributeError:  # noqa: S110
         pass
 
     # remove max_prediction_length from the end of y_test

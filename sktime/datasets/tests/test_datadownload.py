@@ -1,12 +1,10 @@
 """Test data loaders that download from external sources."""
 
-import sys
 from urllib.request import Request, urlopen
 
 import numpy as np
 import pandas as pd
 import pytest
-from packaging.specifiers import SpecifierSet
 
 from sktime.datasets import (
     load_forecastingdata,
@@ -17,6 +15,7 @@ from sktime.datasets import (
 )
 from sktime.datasets.tsf_dataset_names import tsf_all, tsf_all_datasets
 from sktime.datatypes import check_is_mtype, check_raise
+from sktime.utils.dependencies import _check_soft_dependencies
 
 # test tsf download only on a random uniform subsample of datasets
 N_TSF_SUBSAMPLE = 3
@@ -104,12 +103,28 @@ def test_load_forecasting_data_invalid_name(name):
 
 
 @pytest.mark.skipif(
-    sys.version.split(" ")[0] in SpecifierSet("<3.9"),
-    reason="rdata loader does not work on python 3.8",
+    not _check_soft_dependencies("rdata", severity="none"),
+    reason="run test only if the soft dependency rdata is installed",
 )
 @pytest.mark.datadownload
 def test_load_fpp3():
     """Test loading downloaded dataset from ."""
+
+    import requests
+
+    from sktime.datasets._fpp3_loaders import _get_dataset_url
+
+    for dataset_name in ["aus_accommodation", "pedestrian", "ansett"]:
+        ret, url = _get_dataset_url(dataset_name)
+        assert ret is True
+        try:
+            response = requests.head(url)
+            if response.status_code != 200:
+                ret = False
+        except requests.RequestException:
+            ret = False
+        assert ret is True
+
     olympic_running = load_fpp3("olympic_running")
 
     assert isinstance(olympic_running, pd.DataFrame)

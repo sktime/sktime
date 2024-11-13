@@ -47,8 +47,8 @@ class DilationMappingTransformer(BaseTransformer):
        Accurate and Memory Constrained Time Series Classification", 2023,
        arXiv preprint arXiv:2301.10194.
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.transformations.series.dilation_mapping import \
     ...     DilationMappingTransformer
     >>> from sktime.datasets import load_airline
