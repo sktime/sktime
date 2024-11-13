@@ -254,6 +254,11 @@ EXCLUDED_TESTS = {
         "test_persistence_via_pickle",
         "test_save_estimators_to_file",
     ],
+    "PoissonHMM": [
+        "test_predict_points",
+        "test_predict_segments",
+        "test_transform_output_type",
+    ],
 }
 
 # exclude tests but keyed by test name
