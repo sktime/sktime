@@ -88,7 +88,8 @@ class ClusterSegmenter(BaseDetector):
 
         Parameters
         ----------
-        X : pd.DataFrame - data to annotate, time series
+        X : pd.DataFrame
+            Time series subject to detection, which will be assigned labels or scores.
 
         Returns
         -------

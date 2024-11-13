@@ -302,7 +302,7 @@ class AnnotatorPipeline(_HeterogenousMetaEstimator, BaseDetector):
         Parameters
         ----------
         X : pd.DataFrame
-            Data to annotate, time series.
+            Time series subject to detection, which will be assigned labels or scores.
 
         Returns
         -------
@@ -319,7 +319,7 @@ class AnnotatorPipeline(_HeterogenousMetaEstimator, BaseDetector):
         Parameters
         ----------
         X : pd.DataFrame
-            Data to annotate, time series.
+            Time series subject to detection, which will be assigned labels or scores.
 
         Returns
         -------
@@ -336,7 +336,7 @@ class AnnotatorPipeline(_HeterogenousMetaEstimator, BaseDetector):
         Parameters
         ----------
         X : pd.DataFrame
-            Data to annotate, time series.
+            Time series subject to detection, which will be assigned labels or scores.
 
         Returns
         -------

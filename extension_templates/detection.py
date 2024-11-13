@@ -36,7 +36,7 @@ from sktime.detection.base import BaseDetector
 
 
 class MyDetector(BaseDetector):
-    """Custom series annotator.
+    """Custom time series detector for anomalies, change points, or segments.
 
     todo: write docstring, describing your custom forecaster
 
@@ -116,7 +116,7 @@ class MyDetector(BaseDetector):
         X : pd.DataFrame
             Training data to fit model to time series.
         y : pd.Series, optional
-            Ground truth labels for training if detector is supervised.
+            Ground truth labels for training, if detector is supervised.
 
         Returns
         -------
@@ -139,12 +139,18 @@ class MyDetector(BaseDetector):
 
         Parameters
         ----------
-        X : pd.DataFrame - data to annotate, time series
+        X : pd.DataFrame
+            Time series subject to detection, which will be assigned labels or scores.
 
         Returns
         -------
-        Y : pd.Series - annotations for sequence X
-            exact format depends on annotation type
+        y : pd.Series with RangeIndex
+            Labels for sequence ``X``, in sparse format.
+            Values are ``iloc`` references to indices of ``X``.
+
+            * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
+              the values are integer indices of the changepoints/anomalies.
+            * If ``task`` is "segmentation", the values are ``pd.Interval`` objects.
         """
 
         # implement here
@@ -153,7 +159,7 @@ class MyDetector(BaseDetector):
     # todo: consider implementing this, optional
     # if not implementing, delete the _update method
     def _update(self, X, y=None):
-        """Update model with new data and optional ground truth annotations.
+        """Update model with new data and optional ground truth labels.
 
         core logic
 
@@ -162,7 +168,7 @@ class MyDetector(BaseDetector):
         X : pd.DataFrame
             training data to update model with, time series
         y : pd.Series, optional
-            ground truth annotations for training if annotator is supervised
+            ground truth detection labels for training, if detector is supervised
 
         Returns
         -------
