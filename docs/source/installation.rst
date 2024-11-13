@@ -149,14 +149,14 @@ The following steps guide you through the process:
 
 1. Follow the Git workflow: :ref:`Creating a fork and cloning the repository <Creating a fork and cloning the repository - initial one time setup>`
 
-2. Set up a new virtual environment. Our instructions will go through the commands to set up a ``conda`` environment which is recommended for sktime development.
+2. Set up a new virtual environment. Our instructions will go through the commands to set up a ``conda`` environment, which tends to be beginner friendly.
 The process will be similar for ``venv`` or other virtual environment managers.
 
-  .. warning::
-       Using ``conda`` via one of the commercial distributions such as Anaconda
-       is in general not free for commercial use and may incur significant costs or liabilities.
-       Consider using free distributions and channels for package management,
-       and be aware of applicable terms and conditions.
+.. warning::
+    Using ``conda`` via one of the commercial distributions such as Anaconda
+    is in general not free for commercial use and may incur significant costs or liabilities.
+    Consider using free distributions and channels for package management,
+    and be aware of applicable terms and conditions.
 
 In the ``conda`` terminal:
 
