@@ -240,6 +240,25 @@ class BaseDetector(BaseEstimator):
         y = self.predict(X)
         return self.sparse_to_dense(y, X.index)
 
+    def transform_scores(self, X):
+        """Return scores for predicted labels on test/deployment data.
+
+        Parameters
+        ----------
+        X : pd.DataFrame, pd.Series or np.ndarray
+            Data to label (time series).
+
+        Returns
+        -------
+        scores : pd.DataFrame with same index as X
+            Scores for sequence ``X``.
+        """
+        self.check_is_fitted()
+
+        X_inner = self._check_X(X)
+
+        return self._transform_scores(X_inner)
+
     def predict_scores(self, X):
         """Return scores for predicted labels on test/deployment data.
 
@@ -250,8 +269,8 @@ class BaseDetector(BaseEstimator):
 
         Returns
         -------
-        Y : pd.Series
-            Scores for sequence X exact format depends on detection type.
+        scores : pd.DataFrame with same index as return of predict
+            Scores for prediction of sequence ``X``.
         """
         self.check_is_fitted()
 
@@ -381,7 +400,6 @@ class BaseDetector(BaseEstimator):
         -------
         y : pd.DataFrame with same index as X
             Labels for sequence ``X``.
-
 
             * If ``task`` is ``"anomaly_detection"``, the values are integer labels.
               A value of 0 indicatesthat ``X``, at the same time index, has no anomaly.
