@@ -225,11 +225,18 @@ class BaseDetector(BaseEstimator):
         y : pd.DataFrame with same index as X
             Labels for sequence ``X``.
 
-            * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
-              the values are 0 or 1 labels, indicating whether ``X``, at the same
-              index, is an anomaly or changepoint, 0 for no, 1 for yes.
+            * If ``task`` is ``"anomaly_detection"``, the values are integer labels.
+              A value of 0 indicatesthat ``X``, at the same time index, has no anomaly.
+              Other values indicate an anomaly.
+              Most detectors will return 0 or 1, but some may return more values,
+              if they can detect different types of anomalies.
+              indicating whether ``X``, at the same
+              index, is an anomaly, 0 for no, 1 for yes.
+            * If ``task`` is ``"changepoint_detection"``, the values are integer labels,
+              indicating labels for segments between changepoints.
+              Possible labels are integers starting from 0.
             * If ``task`` is "segmentation", the values are integer labels of the
-              segments.
+              segments. Possible labels are integers starting from 0.
         """
         y = self.predict(X)
         return self.sparse_to_dense(y, X.index)
@@ -377,11 +384,19 @@ class BaseDetector(BaseEstimator):
         y : pd.DataFrame with same index as X
             Labels for sequence ``X``.
 
-            * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
-              the values are 0 or 1 labels, indicating whether ``X``, at the same
-              index, is an anomaly or changepoint, 0 for no, 1 for yes.
+
+            * If ``task`` is ``"anomaly_detection"``, the values are integer labels.
+              A value of 0 indicatesthat ``X``, at the same time index, has no anomaly.
+              Other values indicate an anomaly.
+              Most detectors will return 0 or 1, but some may return more values,
+              if they can detect different types of anomalies.
+              indicating whether ``X``, at the same
+              index, is an anomaly, 0 for no, 1 for yes.
+            * If ``task`` is ``"changepoint_detection"``, the values are integer labels,
+              indicating labels for segments between changepoints.
+              Possible labels are integers starting from 0.
             * If ``task`` is "segmentation", the values are integer labels of the
-              segments.
+              segments. Possible labels are integers starting from 0.
         """
         y = self.fit_predict(X, y=y, Y=Y)
         return self.sparse_to_dense(y, index=X.index)
