@@ -182,7 +182,7 @@ class NnetsauceMTS(BaseForecaster):
         verbose=0,
         show_progress=True,
     ):
-        self.obj = regressor
+        self.obj = self.regressor = regressor
         self.n_hidden_features = n_hidden_features
         self.activation_name = activation_name
         self.a = a
@@ -609,7 +609,7 @@ class NnetsauceDeepMTS(NnetsauceMTS):
         verbose=0,
         show_progress=True,
     ):
-        self.obj = regressor
+        self.obj = self.regressor = regressor
         self.n_layers = n_layers
         self.n_hidden_features = n_hidden_features
         self.activation_name = activation_name
