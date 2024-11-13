@@ -3173,6 +3173,16 @@
       "contributions": [
         "code"
       ]
-    }
+    },
+    {
+      "login": "manolotis",
+      "name": "Manuel Muñoz Sánchez",
+      "avatar_url": "https://avatars.githubusercontent.com/manolotis",
+      "profile": "https://github.com/manolotis",
+      "contributions": [
+        "doc"
+      ]
+     }
+
   ]
 }
