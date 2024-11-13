@@ -27,6 +27,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.base import BaseEstimator
+from sktime.datatypes import convert_to
 from sktime.utils.validation.series import check_series
 from sktime.utils.warnings import warn
 
@@ -71,7 +72,8 @@ class BaseDetector(BaseEstimator):
         #
         # todo: distribution_type? we may have to refactor this, seems very soecufuc
         "distribution_type": "None",  # Tag to determine test in test_all_annotators
-    }  # for unit test cases
+        "X_inner_mtype": "pd.DataFrame",  # Tag to determine test in test_all_annotators
+    }
 
     def __init__(self):
         self._is_fitted = False
@@ -139,7 +141,7 @@ class BaseDetector(BaseEstimator):
         Creates fitted model that updates attributes ending in "_". Sets
         _is_fitted flag to True.
         """
-        X = check_series(X)
+        X_inner = self._check_X(X)
 
         if Y is not None:
             warn(
@@ -153,9 +155,6 @@ class BaseDetector(BaseEstimator):
 
         if Y is not None and y is None:
             y = Y
-
-        if y is not None:
-            y = check_series(y)
 
         self._X = X
         self._y = y
@@ -177,7 +176,7 @@ class BaseDetector(BaseEstimator):
                 stacklevel=2,
             )
         else:
-            self._fit(X=X)
+            self._fit(X=X_inner)
 
         # this should happen last
         self._is_fitted = True
@@ -204,11 +203,11 @@ class BaseDetector(BaseEstimator):
         """
         self.check_is_fitted()
 
-        X = check_series(X)
+        X_inner = self._check_X(X)
 
         # fkiraly: insert checks/conversions here, after PR #1012 I suggest
 
-        y = self._predict(X=X)
+        y = self._predict(X=X_inner)
 
         return y
 
@@ -255,8 +254,10 @@ class BaseDetector(BaseEstimator):
             Scores for sequence X exact format depends on detection type.
         """
         self.check_is_fitted()
-        X = check_series(X)
-        return self._predict_scores(X)
+
+        X_inner = self._check_X(X)
+
+        return self._predict_scores(X_inner)
 
     def update(self, X, y=None, Y=None):
         """Update model with new data and optional ground truth labels.
@@ -279,7 +280,7 @@ class BaseDetector(BaseEstimator):
         """
         self.check_is_fitted()
 
-        X = check_series(X)
+        X_inner = self._check_X(X)
 
         if Y is not None:
             warn(
@@ -294,20 +295,17 @@ class BaseDetector(BaseEstimator):
         if y is None and Y is not None:
             y = Y
 
-        if y is not None:
-            y = check_series(y)
-
-        self._X = X.combine_first(self._X)
+        self._X = X_inner.combine_first(self._X)
 
         if y is not None:
             self._y = y.combine_first(self._y)
 
         if _method_has_arg(self._update, "y"):
-            self._update(X=X, y=y)
+            self._update(X=X_inner, y=y)
         elif _method_has_arg(self._update, "Y"):
-            self._update(X=X, Y=y)
+            self._update(X=X_inner, Y=y)
         else:
-            self._update(X=X)
+            self._update(X=X_inner)
 
         return self
 
@@ -330,12 +328,12 @@ class BaseDetector(BaseEstimator):
         -----
         Updates fitted model that updates attributes ending in "_".
         """
-        X = check_series(X)
+        X_inner = self._check_X(X)
 
         self.update(X=X, y=y)
-        Y = self.predict(X=X)
+        y = self.predict(X=X_inner)
 
-        return Y
+        return y
 
     # todo 0.37.0: remove Y argument
     def fit_predict(self, X, y=None, Y=None):
@@ -400,6 +398,23 @@ class BaseDetector(BaseEstimator):
         """
         y = self.fit_predict(X, y=y, Y=Y)
         return self.sparse_to_dense(y, index=X.index)
+
+    def _check_X(self, X):
+        """Check input data.
+
+        Parameters
+        ----------
+        X : pd.DataFrame, pd.Series or np.ndarray
+            Data to be transformed
+
+        Returns
+        -------
+        X : X_inner_mtype
+            Data to be transformed
+        """
+        X_inner_mtype = self.get_tag("X_inner_mtype")
+        X_inner = convert_to(X, X_inner_mtype)
+        return X_inner
 
     def _fit(self, X, y=None):
         """Fit to training data.
