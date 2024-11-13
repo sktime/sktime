@@ -15,16 +15,21 @@ See here for a `full list of precompiled wheels available on PyPI <https://pypi.
 
 For frequent issues with installation, consult the `Troubleshooting`_ section.
 
-There are three different installation types:
+There are three different installation types, depending on your use case:
 
-* Installing stable sktime releases
-* Installing the latest unstable sktime development version
+* Installing stable sktime releases - for most users, for production environments
+* Installing the latest unstable sktime development version - for pre-release tests
 * For developers of sktime and 3rd party extensions: Developer setup for extensions and contributions
 
 Each of these three setups are explained below.
 
-Release versions
-----------------
+Installing release versions
+---------------------------
+
+For:
+
+* Most users
+* Use in production environments
 
 Installing sktime from PyPI
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -83,8 +88,14 @@ Note: not all soft dependencies of ``sktime`` are also available on ``conda-forg
 The other soft dependencies can be installed via ``pip``, after ``conda install pip``.
 
 
-Latest sktime version install
------------------------------
+Installing latest unstable development version
+----------------------------------------------
+
+For:
+
+* pre-release tests, e.g., early testing of new features
+* not for reliable production use
+* not for contributors or extenders
 
 This type of ``sktime`` installation obtains a latest static snapshot of the repository.
 It is intended for developers that wish to build or test code using a version of the library
@@ -122,6 +133,12 @@ Alternatively, the ``.`` may be replaced with a full or relative path to the roo
 
 Full developer setup for contributors and extension developers
 --------------------------------------------------------------
+
+For whom:
+
+* contributors to the ``sktime`` project
+* developers of extensions in closed code bases
+* developers of 3rd party extensions released as open source
 
 To develop ``sktime`` locally, or to contribute to the project, you need to set up:
 
