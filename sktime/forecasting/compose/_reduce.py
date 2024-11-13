@@ -24,6 +24,7 @@ __all__ = [
     "DirRecTabularRegressionForecaster",
     "DirRecTimeSeriesRegressionForecaster",
     "DirectReductionForecaster",
+    "RecursiveReductionForecaster",
     "YfromX",
 ]
 
@@ -2587,8 +2588,13 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             "window_length": 3,
             "pooling": "global",  # all internal mtypes are tested across scenarios
         }
+        params2 = {
+            "estimator": est,
+            "window_length": 4,
+            "pooling": "local",
+        }
 
-        return params1
+        return [params1, params2]
 
 
 class YfromX(BaseForecaster, _ReducerMixin):
@@ -2634,8 +2640,8 @@ class YfromX(BaseForecaster, _ReducerMixin):
         if there are 2 or less levels, "global" and "panel" result in the same
         if there is only 1 level (single time series), all three settings agree
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.datasets import load_longley
     >>> from sktime.split import temporal_train_test_split
     >>> from sktime.forecasting.compose import YfromX

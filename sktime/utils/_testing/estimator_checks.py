@@ -15,7 +15,7 @@ from sklearn.utils.validation import check_random_state
 from sktime.classification.base import BaseClassifier
 from sktime.classification.early_classification import BaseEarlyClassifier
 from sktime.clustering.base import BaseClusterer
-from sktime.datatypes._panel._check import is_nested_dataframe
+from sktime.datatypes._panel._check import _is_nested_dataframe
 from sktime.registry import is_scitype
 
 
@@ -115,7 +115,7 @@ def _compare_nested_frame(func, x, y, **kwargs):
     if x.empty:
         assert_frame_equal(x, y)
 
-    elif is_nested_dataframe(x):
+    elif _is_nested_dataframe(x):
         # Check if both inputs have the same shape
         if not x.shape == y.shape:
             raise ValueError("Found inputs with different shapes")

@@ -108,6 +108,7 @@ class BaseWindowSplitter(BaseSplitter):
         window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
         step_length: NON_FLOAT_WINDOW_LENGTH_TYPES,
         start_with_window: bool,
+        max_expanding_window_length: ACCEPTED_WINDOW_LENGTH_TYPES = float("inf"),
     ) -> None:
         _check_inputs_for_compatibility(
             [fh, initial_window, window_length, step_length]
@@ -115,6 +116,7 @@ class BaseWindowSplitter(BaseSplitter):
         self.step_length = step_length
         self.start_with_window = start_with_window
         self.initial_window = initial_window
+        self.max_expanding_window_length = max_expanding_window_length
         super().__init__(fh=fh, window_length=window_length)
 
     @property
@@ -221,8 +223,12 @@ class BaseWindowSplitter(BaseSplitter):
             split_points if self._initial_window is None else split_points[1:]
         )
         for split_point in split_points:
+            start = start if expanding else split_point
+            if self.max_expanding_window_length < split_point:
+                start = split_point + window_length - self.max_expanding_window_length
+
             train_start = self._get_train_start(
-                start=start if expanding else split_point,
+                start=start,
                 window_length=window_length,
                 y=y,
             )

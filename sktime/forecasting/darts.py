@@ -366,7 +366,7 @@ class DartsXGBModel(_DartsRegressionModelsAdapter):
         kwargs = self.kwargs or {}
         if self.quantiles is not None and self.multi_models:
             warn(
-                message=(
+                (
                     "Setting multi_models=True with quantile regression may"
                     " cause issues. Consider using multi_models=False."
                 ),
@@ -592,7 +592,7 @@ class DartsLinearRegressionModel(_DartsRegressionModelsAdapter):
         kwargs = self.kwargs or {}
         if self.quantiles is not None and self.multi_models:
             warn(
-                message=(
+                (
                     "Setting multi_models=True with quantile regression may"
                     " cause issues. Consider using multi_models=False."
                 ),

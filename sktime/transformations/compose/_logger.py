@@ -7,6 +7,7 @@ __all__ = ["Logger"]
 
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.compose._common import CORE_MTYPES
+from sktime.utils.singleton import _multiton
 
 
 class Logger(BaseTransformer):
@@ -224,18 +225,6 @@ class Logger(BaseTransformer):
         params3 = {"logger": "foo", "level": logging.DEBUG, "log_methods": "all"}
         params4 = {"logger": "foo", "logger_backend": "datalog", "log_methods": "all"}
         return [params0, params1, params2, params3, params4]
-
-
-def _multiton(cls):
-    """Turn a class into a multiton."""
-    instances = {}
-
-    def get_instance(key, *args, **kwargs):
-        if key not in instances:
-            instances[key] = cls(key, *args, **kwargs)
-        return instances[key]
-
-    return get_instance
 
 
 @_multiton
