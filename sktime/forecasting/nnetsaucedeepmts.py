@@ -3,7 +3,6 @@
 
 import numpy as np
 import pandas as pd
-from nnetsauce import DeepMTS as DeepMTS0
 
 from sktime.forecasting.base import BaseForecaster
 
@@ -129,6 +128,8 @@ class NnetsauceDeepMTS(BaseForecaster):
         fitting each series
 
     """
+    
+    from nnetsauce import DeepMTS as DeepMTS0
 
     _tags = {
         # scitype:y controls whether internal y can be univariate/multivariate
