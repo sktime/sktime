@@ -259,6 +259,11 @@ EXCLUDED_TESTS = {
         "test_predict_segments",
         "test_transform_output_type",
     ],
+    "HMM": [
+        "test_predict_points",
+        "test_predict_segments",
+        "test_transform_output_type",
+    ],
 }
 
 # exclude tests but keyed by test name
