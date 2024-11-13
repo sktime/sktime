@@ -48,9 +48,7 @@ class TimeMoE(BaseForecaster):
         self.model_size = model_size
         self.device = device
         self.model = model
-        # Initialize the model if necessary here
-        # self.model = AutoModelForCausalLM.from_pretrained("path/to/model", size=model_size)
-
+      
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
@@ -98,90 +96,7 @@ class TimeMoE(BaseForecaster):
                 all_predictions.append(predictions.squeeze(0))
 
                 self.all_predictions = all_predictions
-        #     #OR
-        #     # self.model, info = TimeMoeForPrediction.from_pretrained(
-        #     # self.model_path,
-        #     # revision=self.revision,
-        #     # config=config,
-        #     # output_loading_info=True,
-        #     # ignore_mismatched_sizes=True,
-        #     # )
 
-        # # use it when the flash-attn is available
-        # # model = AutoModelForCausalLM.from_pretrained('Maple728/TimeMoE-50M', device_map="auto", attn_implementation='flash_attention_2', trust_remote_code=True)
-
-        # # Temporary dataset
-        # # seqs = torch.randn(
-        # #     2, context_length
-        # # )  # tensor shape is [batch_size, context_length]
-        # # mean, std = seqs.mean(dim=-1, keepdim=True), seqs.std(dim=-1, keepdim=True)
-        # # prediction_length = fh
-        # # normed_seqs = normed_seqs.view(normed_seqs.size(0), -1)
-        # # output = model.generate(
-        # #     normed_seqs, max_new_tokens=prediction_length
-        # # )  # shape is [batch_size, 12 + 6]
-        # # normed_predictions = output[:, -prediction_length:]
-        # # predictions = normed_predictions * std + mean
-
-        # # # Handle mismatched weights by freezing model parameters
-        # # if info["mismatched_keys"]:
-        # #     for param in self.model.parameters():
-        # #         param.requires_grad = False
-        # #     for key in info["mismatched_keys"]:
-        # #         module = self.model
-        # #         for attr in key.split(".")[:-1]:
-        # #             module = getattr(module, attr)
-        # #         module.weight.requires_grad = True
-
-        # # # Splitting the dataset for training and validation
-        # # y_train, y_test = temporal_train_test_split(y, test_size=self.validation_split)
-
-        # # Create PyTorch-compatible datasets
-        # # train = PyTorchDataset(
-        # #     y=y_train,
-        # #     context_length=config.context_length,
-        # #     prediction_length=config.prediction_length,
-        # # )
-        # # test = PyTorchDataset(
-        # #     y=y_test,
-        # #     context_length=config.context_length,
-        # #     prediction_length=config.prediction_length,
-        # # )
-
-        # # # Initialize training arguments
-        # # training_args = TrainingArguments(**self._training_args)
-
-        # # # Set up the Trainer
-        # # trainer = Trainer(
-        # #     model=self.model,
-        # #     args=training_args,
-        # #     train_dataset=train,
-        # #     eval_dataset=test,
-        # #     compute_metrics=self.compute_metrics,
-        # #     callbacks=self.callbacks,
-        # # )
-
-        # # # Train the model
-        # # trainer.train()
-
-        # # Update model reference
-        # # self.model = trainer.model
-
-        # # implement here
-        # # IMPORTANT: avoid side effects to y, X, fh
-        # #
-        # # any model parameters should be written to attributes ending in "_"
-        # #  attributes set by the constructor must not be overwritten
-        # #  if used, estimators should be cloned to attributes ending in "_"
-        # #  the clones, not the originals should be used or fitted if needed
-        # #
-        # # Note: when interfacing a model that has fit, with parameters
-        # #   that are not data (y, X) or forecasting-horizon-like,
-        # #   but model parameters, *don't* add as arguments to fit, but treat as follows:
-        # #   1. pass to constructor,  2. write to self in constructor,
-        # #   3. read from self in _fit,  4. pass to interfaced_model.fit in _fit
-
-    # todo: implement this, mandatory
     def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
@@ -270,46 +185,4 @@ class TimeMoE(BaseForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
 
-        # todo: set the testing parameters for the estimators
-        # Testing parameters can be dictionary or list of dictionaries
-        # Testing parameter choice should cover internal cases well.
-        #
-        # this method can, if required, use:
-        #   class properties (e.g., inherited); parent class test case
-        #   imported objects such as estimators from sktime or sklearn
-        # important: all such imports should be *inside get_test_params*, not at the top
-        #            since imports are used only at testing time
-        #
-        # The parameter_set argument is not used for automated, module level tests.
-        #   It can be used in custom, estimator specific tests, for "special" settings.
-        # A parameter dictionary must be returned *for all values* of parameter_set,
-        #   i.e., "parameter_set not available" errors should never be raised.
-        #
-        # A good parameter set should primarily satisfy two criteria,
-        #   1. Chosen set of parameters should have a low testing time,
-        #      ideally in the magnitude of few seconds for the entire test suite.
-        #       This is vital for the cases where default values result in
-        #       "big" models which not only increases test time but also
-        #       run into the risk of test workers crashing.
-        #   2. There should be a minimum two such parameter sets with different
-        #      sets of values to ensure a wide range of code coverage is provided.
-        #
-        # example 1: specify params as dictionary
-        # any number of params can be specified
-        # params = {"est": value0, "parama": value1, "paramb": value2}
-        #
-        # example 2: specify params as list of dictionary
-        # note: Only first dictionary will be used by create_test_instance
-        # params = [{"est": value1, "parama": value2},
-        #           {"est": value3, "parama": value4}]
-        # return params
-        #
-        # example 3: parameter set depending on param_set value
-        #   note: only needed if a separate parameter set is needed in tests
-        # if parameter_set == "special_param_set":
-        #     params = {"est": value1, "parama": value2}
-        #     return params
-        #
-        # # "default" params - always returned except for "special_param_set" value
-        # params = {"est": value3, "parama": value4}
-        # return params
+
