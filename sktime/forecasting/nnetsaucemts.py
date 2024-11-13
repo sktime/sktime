@@ -430,7 +430,7 @@ class NnetsauceMTS(BaseForecaster):
         "show_progress":True}
         return params
 
-class NnetsauceDeepMTS(BaseForecaster, NnetsauceMTS):
+class NnetsauceDeepMTS(NnetsauceMTS):
     """Forecasting with Deep Quasi-Randomized networks (from nnetsauce).
 
     See https://www.researchgate.net/publication/382589729_Probabilistic_Forecasting_with_nnetsauce_using_Density_Estimation_Bayesian_inference_Conformal_prediction_and_Vine_copulas
@@ -658,8 +658,3 @@ class NnetsauceDeepMTS(BaseForecaster, NnetsauceMTS):
             verbose=self.verbose,
             show_progress=self.show_progress,
         )
-        # IMPORTANT: the self.params should never be overwritten or mutated from now on
-        # for handling defaults etc, write to other attributes, e.g., self._parama
-
-        # leave this as is
-        super().__init__()
