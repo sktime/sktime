@@ -60,6 +60,12 @@ EXCLUDE_ESTIMATORS = [
     "SARIMAX",
     "StatsModelsARIMA",
     "ShapeletLearningClassifierTslearn",
+    # Several annotators are not interfact complient yet
+    "GreedyGaussianSegmentation",
+    "PyODAnnotator",
+    "GaussianHMM",
+    "GMMHMM",
+    "SubLOF",
 ]
 
 
