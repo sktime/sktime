@@ -205,6 +205,8 @@ class NnetsauceMTS(BaseForecaster):
         self.verbose = verbose
         self.show_progress = show_progress
 
+        from nnetsauce import MTS as MTS0
+
         self.fitter = MTS0(
             obj=self.obj,
             n_hidden_features=self.n_hidden_features,
@@ -404,28 +406,28 @@ class NnetsauceMTS(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = {"regressor"=RidgeCV(),
-        "n_hidden_features"=5,
-        "activation_name"="relu",
-        "a"=0.01,
-        "nodes_sim"="sobol",
-        "bias"=True,
-        "dropout"=0,
-        "direct_link"=True,
-        "n_clusters"=2,
-        "cluster_encode"=True,
-        "type_clust"="kmeans",
-        "type_scaling"=("std", "std", "std"),
-        "lags"=1,
-        "type_pi"="kde",
-        "block_size"=None,
-        "replications"=None,
-        "kernel"="gaussian",
-        "agg"="mean",
-        "seed"=123,
-        "backend"="cpu",
-        "verbose"=0,
-        "show_progress"=True}
+        params = {"regressor": RidgeCV(),
+        "n_hidden_features":5,
+        "activation_name":"relu",
+        "a":0.01,
+        "nodes_sim":"sobol",
+        "bias":True,
+        "dropout":0,
+        "direct_link":True,
+        "n_clusters":2,
+        "cluster_encode":True,
+        "type_clust":"kmeans",
+        "type_scaling":("std", "std", "std"),
+        "lags":1,
+        "type_pi":"kde",
+        "block_size":None,
+        "replications":None,
+        "kernel":"gaussian",
+        "agg":"mean",
+        "seed":123,
+        "backend":"cpu",
+        "verbose":0,
+        "show_progress":True}
         return params
 
 class NnetsauceDeepMTS(BaseForecaster, NnetsauceMTS):
