@@ -124,7 +124,7 @@ class BaseDetector(BaseEstimator):
 
         Parameters
         ----------
-        X : pd.DataFrame
+        X : pd.DataFrame, pd.Series or np.ndarray
             Training data to fit model to (time series).
         y : pd.Series, optional
             Ground truth labels for training if detector is supervised.
@@ -189,7 +189,7 @@ class BaseDetector(BaseEstimator):
 
         Parameters
         ----------
-        X : pd.DataFrame
+        X : pd.DataFrame, pd.Series or np.ndarray
             Time series subject to detection, which will be assigned labels or scores.
 
         Returns
@@ -217,7 +217,7 @@ class BaseDetector(BaseEstimator):
 
         Parameters
         ----------
-        X : pd.DataFrame
+        X : pd.DataFrame, pd.Series or np.ndarray
             Time series subject to detection, which will be assigned labels or scores.
 
         Returns
@@ -246,7 +246,7 @@ class BaseDetector(BaseEstimator):
 
         Parameters
         ----------
-        X : pd.DataFrame
+        X : pd.DataFrame, pd.Series or np.ndarray
             Data to label (time series).
 
         Returns
@@ -263,7 +263,7 @@ class BaseDetector(BaseEstimator):
 
         Parameters
         ----------
-        X : pd.DataFrame
+        X : pd.DataFrame, pd.Series or np.ndarray
             Training data to update model with (time series).
         y : pd.Series, optional
             Ground truth labels for training if detector is supervised.
@@ -316,7 +316,7 @@ class BaseDetector(BaseEstimator):
 
         Parameters
         ----------
-        X : pd.DataFrame
+        X : pd.DataFrame, pd.Series or np.ndarray
             Training data to update model with, time series.
         y : pd.Series, optional
             Ground truth labels for training if detector is supervised.
