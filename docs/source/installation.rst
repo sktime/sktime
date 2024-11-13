@@ -17,9 +17,9 @@ For frequent issues with installation, consult the `Troubleshooting`_ section.
 
 There are three different installation types, depending on your use case:
 
-* Installing stable sktime releases - for most users, for production environments
-* Installing the latest unstable sktime development version - for pre-release tests
-* For developers of sktime and 3rd party extensions: Developer setup for extensions and contributions
+* Installing stable ``sktime`` releases - for most users, for production environments
+* Installing the latest unstable ``sktime`` development version - for pre-release tests
+* For developers of ``sktime`` and 3rd party extensions: Developer setup for extensions and contributions
 
 Each of these three setups are explained below.
 
