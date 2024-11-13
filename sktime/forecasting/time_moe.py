@@ -3,19 +3,16 @@
 
 __author__ = ["Maple728"]
 
-import numpy as np
-import pandas as pd
-from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
-from sktime.split import temporal_train_test_split
-from sktime.utils.warnings import warn
-import torch 
+import torch
 from transformers import AutoModelForCausalLM
 
-class TimeMoE(_BaseGlobalForecaster):
+from sktime.forecasting.base._base import BaseForecaster
+
+
+class TimeMoE(BaseForecaster):
     """Custom forecaster. todo: write docstring.
-    
+
     todo: describe your custom forecaster here
 
     Parameters
@@ -31,29 +28,26 @@ class TimeMoE(_BaseGlobalForecaster):
     device : str, optional (default='cpu')
         Device to run the model on ('cpu' or 'cuda').
     """
-   
+
     def __init__(
         self,
         context_length=7,
         prediction_length=7,
         test_size=168,
-        model_size='50M',
-        device='cpu'
+        model_size="50M",
+        device="cpu",
     ):
-        
         model = AutoModelForCausalLM.from_pretrained(
-            f'Maple728/TimeMoE-{model_size}',
-            device_map=device,
-            trust_remote_code=True
+            f"Maple728/TimeMoE-{model_size}", device_map=device, trust_remote_code=True
         )
         super().__init__()
-        
+
         self.context_length = context_length
         self.prediction_length = prediction_length
         self.test_size = test_size
         self.model_size = model_size
         self.device = device
-        self.model=model
+        self.model = model
         # Initialize the model if necessary here
         # self.model = AutoModelForCausalLM.from_pretrained("path/to/model", size=model_size)
 
@@ -73,40 +67,38 @@ class TimeMoE(_BaseGlobalForecaster):
         -------
         self : reference to self
         """
-
         data = torch.tensor(y.values, dtype=torch.float32)
-        
+
         all_predictions = []
-        
+
         with torch.no_grad():
-            for i in range(0, self.test_size - self.prediction_length + 1, self.prediction_length):
+            for i in range(
+                0, self.test_size - self.prediction_length + 1, self.prediction_length
+            ):
                 # Get sequence for current window
                 start_idx = len(data) - self.test_size + i - self.context_length
-                sequence = data[start_idx:start_idx + self.context_length]
+                sequence = data[start_idx : start_idx + self.context_length]
                 sequence = sequence.unsqueeze(0)  # Add batch dimension
-                
+
                 # Normalize sequence
                 mean = sequence.mean(dim=-1, keepdim=True)
                 std = sequence.std(dim=-1, keepdim=True)
                 normalized_sequence = (sequence - mean) / std
-                
+
                 # Generate forecast
                 output = self.model.generate(
                     normalized_sequence,
                     max_new_tokens=self.prediction_length,
-                    position_ids=torch.arange(sequence.size(-1), device=self.device).unsqueeze(0)  # Example for custom position IDs
+                    # position_ids=torch.arange(sequence.size(-1), device=self.device).unsqueeze(0)  # Example for custom position IDs
                 )
 
-                
                 # Denormalize predictions
-                normed_preds = output[:, -self.prediction_length:]
+                normed_preds = output[:, -self.prediction_length :]
                 predictions = normed_preds * std + mean
                 all_predictions.append(predictions.squeeze(0))
-        
-        return torch.cat(all_predictions).numpy()
 
-    
-        #     #OR 
+                self.all_predictions = all_predictions
+        #     #OR
         #     # self.model, info = TimeMoeForPrediction.from_pretrained(
         #     # self.model_path,
         #     # revision=self.revision,
@@ -114,7 +106,7 @@ class TimeMoE(_BaseGlobalForecaster):
         #     # output_loading_info=True,
         #     # ignore_mismatched_sizes=True,
         #     # )
-                
+
         # # use it when the flash-attn is available
         # # model = AutoModelForCausalLM.from_pretrained('Maple728/TimeMoE-50M', device_map="auto", attn_implementation='flash_attention_2', trust_remote_code=True)
 
@@ -231,13 +223,11 @@ class TimeMoE(_BaseGlobalForecaster):
         #     labels = labels[..., None]
         # return preds, labels
 
-        import torch
-
         if fh is None:
             fh = self.fh
         fh = fh.to_relative(self.cutoff)
 
-        _y = _y if self._global_forecasting else self._y
+        # _y = _y if self._global_forecasting else self._y
 
         # multi-index conversion goes here
         # if isinstance(_y.index, pd.MultiIndex):
@@ -247,20 +237,19 @@ class TimeMoE(_BaseGlobalForecaster):
 
         # hist.shape: (batch_size, n_timestamps, n_cols)
 
-        
-        h = 7
+        # h = 7
 
-        timemoe_preds_50M = self._fit(
-            y=data,
-            target_column='y',
-            context_length=6*h,
-            prediction_length=fh,
-            test_size=168,
-            device='cpu'
-        )
-        return timemoe_preds_50M
-        
-        
+        # timemoe_preds_50M = self._fit(
+
+        #     # target_column='y',
+        #     context_length=6*h,
+        #     prediction_length=fh,
+        #     test_size=168,
+        #     device='cpu'
+        # )
+        # return timemoe_preds_50M
+        return torch.cat(self.all_predictions).numpy()
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -324,4 +313,3 @@ class TimeMoE(_BaseGlobalForecaster):
         # # "default" params - always returned except for "special_param_set" value
         # params = {"est": value3, "parama": value4}
         # return params
-
