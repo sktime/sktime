@@ -14,7 +14,7 @@ def convert_pandas_to_listDataset(pd_dataframe: pd.DataFrame):
     gluonts.dataset.common.ListDataset
         A gluonTS ListDataset formed from `pd_dataframe`
 
-    Example
+    Examples
     --------
     >>> import pandas as pd
     >>> cols = ["instances", "timepoints"] + [f"var_{i}" for i in range(2)]

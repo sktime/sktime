@@ -319,7 +319,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "MiniRocketMultivariate",
         "MiniRocketMultivariateVariable",
         "MultiRocket",
-        "MultiRocketMultivariate",
         "MultioutputTabularRegressionForecaster",
         "MultioutputTimeSeriesRegressionForecaster",
         "OnlineEnsembleForecaster",

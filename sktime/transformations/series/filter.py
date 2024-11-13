@@ -32,8 +32,8 @@ class Filter(BaseTransformer):
         See ``mne.filter.filter_data``
         documentation for a detailed description of all options.
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.transformations.series.filter import Filter
     >>> from sktime.datasets import load_arrow_head
     >>> X, y = load_arrow_head(return_X_y=True, return_type="pd-multiindex")

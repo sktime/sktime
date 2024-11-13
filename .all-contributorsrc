@@ -3155,6 +3155,25 @@
         "example",
         "tutorial"
       ]
-    }
+    },
+    {
+      "login": "jusssch",
+      "name": "Julius Schmid",
+      "avatar_url": "https://avatars.githubusercontent.com/jusssch",
+      "profile": "https://github.com/jusssch",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "manolotis",
+      "name": "Manuel Muñoz Sánchez",
+      "avatar_url": "https://avatars.githubusercontent.com/manolotis",
+      "profile": "https://github.com/manolotis",
+      "contributions": [
+        "doc"
+      ]
+     }
+
   ]
 }
