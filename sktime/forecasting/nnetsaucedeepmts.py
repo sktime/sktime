@@ -3,7 +3,7 @@
 
 import numpy as np
 import pandas as pd
-
+from sklearn.linear_model import RidgeCV
 from sktime.forecasting.base import BaseForecaster
 
 
@@ -14,9 +14,9 @@ class NnetsauceDeepMTS(BaseForecaster):
 
     Parameters
     ----------
-    obj: object.
+    regressor: object.
         any object containing a method fit (obj.fit()) and a method predict
-        (obj.predict()).
+        (obj.predict()). Default is sklearn's RidgeCV. 
 
     n_layers: int.
         number of hidden layers.
@@ -162,7 +162,7 @@ class NnetsauceDeepMTS(BaseForecaster):
     # todo: add any hyper-parameters and components to constructor
     def __init__(
         self,
-        obj,
+        regressor=RidgeCV(),
         n_layers=1,
         n_hidden_features=5,
         activation_name="relu",
@@ -186,7 +186,7 @@ class NnetsauceDeepMTS(BaseForecaster):
         verbose=0,
         show_progress=True,
     ):
-        self.obj = obj
+        self.obj = regressor
         self.n_layers = n_layers
         self.n_hidden_features = n_hidden_features
         self.activation_name = activation_name
