@@ -430,9 +430,11 @@ class BaseDetector(BaseEstimator):
         X : X_inner_mtype
             Data to be transformed
         """
-        X_inner_mtype = self.get_tag("X_inner_mtype")
-        X_inner = convert_to(X, X_inner_mtype)
-        return X_inner
+        return X
+        # this causes errors, we need to investigate
+        # X_inner_mtype = self.get_tag("X_inner_mtype")
+        # X_inner = convert_to(X, X_inner_mtype)
+        # return X_inner
 
     def _fit(self, X, y=None):
         """Fit to training data.
