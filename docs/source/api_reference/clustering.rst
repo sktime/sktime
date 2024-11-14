@@ -1,4 +1,3 @@
-
 .. _clustering_ref:
 
 Time series clustering
@@ -54,15 +53,23 @@ Spectral and kernel clustering
 
     TimeSeriesKernelKMeans
 
-.. currentmodule:: sktime.clustering.spatio_temporal
 .. currentmodule:: sktime.clustering.dbscan
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    STDBSCAN
     TimeSeriesDBSCAN
+
+Spation-temporal clustering
+---------------------------
+.. currentmodule:: sktime.clustering.spatio_temporal
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    STDBSCAN
 
 Base
 ----
