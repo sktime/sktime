@@ -37,7 +37,8 @@ def time_series_data():
 def test_plot_time_series_with_change_points(time_series_data):
     import matplotlib.pyplot as plt
 
-    from sktime.forecasting.ttm import TimesFMForecaster, TinyTimeMixerForecaster
+    from sktime.forecasting.timesfm_forecaster import TimesFMForecaster
+    from sktime.forecasting.ttm import TinyTimeMixerForecaster
     from sktime.tests.test_switch import run_test_for_class
 
     # Access data from the fixture
