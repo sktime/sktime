@@ -93,6 +93,7 @@ Use the below search table to find estimators by property.
             <option value="regressor">Regressor</option>
             <option value="splitter">Splitter</option>
             <option value="transformer">Transformer</option>
+            <option value="detector">Detector</option>
         </select>
     </div>
 </div>
