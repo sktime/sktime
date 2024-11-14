@@ -1902,6 +1902,7 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "X-y-must-have-same-index": False,
+        "visual_block_kind": "serial",
     }
 
     _delegate_name = "estimator_"
@@ -1916,6 +1917,14 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
         self._set_delegated_tags(estimator)
 
         self._set_permuted_estimator()
+
+    @property
+    def _steps(self):
+        return getattr(self.estimator_, self.steps_arg)
+
+    @property
+    def steps_(self):
+        return getattr(self.estimator_, self.steps_arg)
 
     def _set_permuted_estimator(self):
         """Set self.estimator_ based on permutation arg."""
