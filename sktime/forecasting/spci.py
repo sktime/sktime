@@ -4,6 +4,7 @@
 _all_ = ["SPCIForecaster"]
 __author__ = ["ksharma6"]
 
+from sklearn.model_selection import train_test_split
 from sklearn.utils import check_random_state
 from skpro.regression.base import BaseProbaRegressor
 
@@ -128,20 +129,22 @@ class SPCI(BaseForecaster):
         self.random_state_ = check_random_state(self.random_state)
 
         # split data
-        # X_train, X_test, y_train, y_test
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, shuffle=False, random_state=self.random_state
+        )
 
         # calculate + store point predictions from forecaster_
         f_hats = []
 
         for i in range(len(y) - fh):
-            self.forecaster_.fit(y=y[: i + fh], X=X[: i + fh], fh=fh)
+            self.forecaster_.fit(y=y_train[: i + fh], X=X_train[: i + fh], fh=fh)
             f_hat = self.forecaster_.predict(fh=fh, X=X)
             f_hats.append(f_hat)
 
         # calculate + store residuals from regressor_proba_
         residuals = []
         for i in range(len(f_hats)):
-            residual = f_hats[i] - y[i]
+            residual = f_hats[i] - y_test[i]
             residuals.append(residual)
 
         # fit regressor to point prediction residuals
