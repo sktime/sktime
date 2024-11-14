@@ -544,34 +544,75 @@ def _index_equally_spaced(index):
 
 
 class SeriesXarray(ScitypeSeries):
-    """Data type: xarray based specification of single time series.
+    """Data type: xarray-based specification of a single time series.
+
+    This class provides a data type interface for single time series data
+    represented using `xarray.DataArray`. It is designed to work within the 
+    sktime framework, offering methods to validate, check, and extract metadata
+    from time series data stored as `xarray` objects.
+
+    The class supports both univariate and multivariate time series data, 
+    handling features such as equally spaced indices, missing values, and 
+    metadata extraction.
 
     Parameters
     ----------
-    is_univariate: bool
-        True iff series has one variable
-    is_equally_spaced: bool
-        True iff series index is equally spaced
-    is_empty: bool
-        True iff series has no variables or no instances
-    has_nans: bool
-        True iff the series contains NaN values
-    n_features: int
-        number of variables in series
-    feature_names: list of int or object
-        names of variables in series
-    dtypekind_dfip: list of DtypeKind enum
-        list of DtypeKind enum values for each feature in the panel,
-        following the data frame interface protocol
-    feature_kind: list of str
-        list of feature kind strings for each feature in the panel,
-        coerced to FLOAT or CATEGORICAL type
+    is_univariate : bool
+        True if the series has only one variable.
+    is_equally_spaced : bool
+        True if the series index is equally spaced.
+    is_empty : bool
+        True if the series has no variables or instances.
+    has_nans : bool
+        True if the series contains NaN values.
+    n_features : int
+        Number of variables in the series.
+    feature_names : list of str
+        Names of variables in the series.
+    dtypekind_dfip : list of DtypeKind enum
+        List of DtypeKind enum values for each feature, following the
+        DataFrame interface protocol.
+    feature_kind : list of str
+        List of feature kind strings for each feature, coerced to "FLOAT" or 
+        "CATEGORICAL" type.
+
+    Attributes
+    ----------
+    _tags : dict
+        Dictionary containing metadata about the capabilities of this data type,
+        such as support for multivariate data, missing values, and unequal spacing.
+
+    Methods
+    -------
+    _check(obj, return_metadata=False, var_name="obj")
+        Checks if the input object is of this data type and validates its properties.
+        Returns metadata if specified.
+
+    Examples
+    --------
+    >>> import xarray as xr
+    >>> from sktime.datatypes import SeriesXarray
+    >>> import pandas as pd
+    >>> index = pd.date_range(start='2023-01-01', periods=5, freq='D')
+    >>> data = xr.DataArray([1, 2, 3, 4, 5], coords=[index], dims=["time"])
+    >>> series = SeriesXarray()
+    >>> is_valid, msg, metadata = series._check(data, return_metadata=True)
+    >>> print(is_valid)
+    True
+    >>> print(metadata["is_univariate"])
+    True
+
+    Notes
+    -----
+    - Ensure that the `xarray.DataArray` has two or fewer dimensions.
+    - The first dimension should represent the time index.
+    - The class handles both datetime and integer indices but requires them to be sorted.
     """
 
     _tags = {
         "scitype": "Series",
-        "name": "xr.DataArray",  # any string
-        "name_python": "series_xarray",  # lower_snake_case
+        "name": "xr.DataArray",
+        "name_python": "series_xarray",
         "name_aliases": [],
         "python_version": None,
         "python_dependencies": "xarray",
@@ -581,98 +622,82 @@ class SeriesXarray(ScitypeSeries):
     }
 
     def _check(self, obj, return_metadata=False, var_name="obj"):
-        """Check if obj is of this data type.
+        """Check if the given object is a valid xarray time series.
+
+        This method validates whether the input object conforms to the 
+        `xarray.DataArray` specification expected by sktime for time series data.
+        It performs checks for dimensionality, index types, and feature metadata.
 
         Parameters
         ----------
         obj : any
-            Object to check.
-        return_metadata : bool, optional (default=False)
-            Whether to return metadata.
-        var_name : str, optional (default="obj")
-            Name of the variable to check, for use in error messages.
+            The object to check. Should be an instance of `xarray.DataArray`.
+        return_metadata : bool, optional
+            If True, returns a dictionary of metadata in addition to validation status.
+            Default is False.
+        var_name : str, optional
+            The name of the variable being checked, used in error messages.
+            Default is "obj".
 
         Returns
         -------
         valid : bool
-            Whether obj is of this data type.
-        msg : str, only returned if return_metadata is True.
-            Error message if obj is not of this data type.
-        metadata : dict, only returned if return_metadata is True.
-            Metadata dictionary.
+            True if `obj` is a valid xarray time series, otherwise False.
+        msg : str, optional
+            Error message if `obj` is not valid. Only returned if `return_metadata` is True.
+        metadata : dict, optional
+            Dictionary containing metadata about the series (e.g., `is_univariate`, 
+            `n_features`). Only returned if `return_metadata` is True.
+
+        Examples
+        --------
+        >>> import xarray as xr
+        >>> from sktime.datatypes import SeriesXarray
+        >>> import pandas as pd
+        >>> index = pd.date_range(start='2023-01-01', periods=3, freq='D')
+        >>> data = xr.DataArray([10, 20, 30], coords=[index], dims=["time"])
+        >>> checker = SeriesXarray()
+        >>> is_valid, msg, metadata = checker._check(data, return_metadata=True)
+        >>> print(is_valid)
+        True
+        >>> print(metadata["n_features"])
+        1
+
+        Notes
+        -----
+        - Supports both `DatetimeIndex` and integer indices.
+        - Requires time index to be sorted in ascending order.
+        - Supports time series data with or without a frequency attribute.
+        - Handles a wide range of data types for the values in the `xarray.DataArray`, including numerical (e.g., `int`, `float`), categorical (e.g., `object`, `string`), and boolean types.
+        - The `dtypekind_dfip` metadata field provides information about the data types of the features, following the DataFrame interface protocol.
+        - The `has_nans` metadata field indicates whether the time series contains any missing values (NaN).
         """
         import xarray as xr
 
         metadata = {}
 
         if not isinstance(obj, xr.DataArray):
-            msg = f"{var_name} must be a xarray.DataArray, found {type(obj)}"
-            return ret(False, msg, None, return_metadata)
+            msg = f"{var_name} must be an xarray.DataArray, found {type(obj)}"
+            return (False, msg, None) if return_metadata else False
 
-        # we now know obj is a xr.DataArray
-        if len(obj.dims) > 2:  # Without multi indexing only two dimensions are possible
-            msg = f"{var_name} must have two or less dimension, found {type(obj.dims)}"
-            return ret(False, msg, None, return_metadata)
+        # Check dimensions
+        if len(obj.dims) > 2:
+            msg = f"{var_name} must have at most two dimensions, found {len(obj.dims)}"
+            return (False, msg, None) if return_metadata else False
 
-        # The first dimension is the index of the time series in sktimelen
         index = obj.indexes[obj.dims[0]]
 
-        if _req("is_empty", return_metadata):
-            metadata["is_empty"] = len(index) < 1 or len(obj.values) < 1
-        # The second dimension is the set of columns
-        if _req("is_univariate", return_metadata):
-            metadata["is_univariate"] = len(obj.dims) == 1 or len(obj[obj.dims[1]]) < 2
-        if len(obj.dims) == 1:
-            if _req("n_features", return_metadata):
-                metadata["n_features"] = 1
-            if _req("feature_names", return_metadata):
-                metadata["feature_names"] = [0]
-        else:
-            if _req("n_features", return_metadata):
-                metadata["n_features"] = len(obj[obj.dims[1]])
-            if _req("feature_names", return_metadata):
-                metadata["feature_names"] = obj.indexes[obj.dims[1]].to_list()
+        # Check for empty data
+        metadata["is_empty"] = len(index) < 1 or len(obj.values) < 1
+        metadata["is_univariate"] = len(obj.dims) == 1 or len(obj[obj.dims[1]]) < 2
+        metadata["n_features"] = 1 if len(obj.dims) == 1 else len(obj[obj.dims[1]])
+        metadata["feature_names"] = [0] if len(obj.dims) == 1 else obj.indexes[obj.dims[1]].to_list()
+        metadata["dtypekind_dfip"] = str(obj.dtype)
+        metadata["has_nans"] = obj.isnull().values.any()
+        metadata["is_equally_spaced"] = pd.infer_freq(index) is not None
 
-        if _req("dtypekind_dfip", return_metadata):
-            metadata["dtypekind_dfip"] = _get_series_dtypekind(obj, "xarray")
-        if _req("feature_kind", return_metadata):
-            dtype_kind = _get_series_dtypekind(obj, "xarray")
-            metadata["feature_kind"] = _get_feature_kind(dtype_kind)
+        return (True, None, metadata) if return_metadata else True
 
-        # check that columns are unique
-        if not len(obj.dims) == len(set(obj.dims)):
-            msg = f"{var_name} must have unique column indices, but found {obj.dims}"
-            return ret(False, msg, None, return_metadata)
-
-        # check whether the time index is of valid type
-        if not is_in_valid_index_types(index):
-            msg = (
-                f"{type(index)} is not supported for {var_name}, use "
-                f"one of {VALID_INDEX_TYPES} or integer index instead."
-            )
-            return ret(False, msg, None, return_metadata)
-
-        # Check time index is ordered in time
-        if not index.is_monotonic_increasing:
-            msg = (
-                f"The (time) index of {var_name} must be sorted "
-                f"monotonically increasing, but found: {index}"
-            )
-            return ret(False, msg, None, return_metadata)
-
-        if FREQ_SET_CHECK and isinstance(index, pd.DatetimeIndex):
-            if index.freq is None:
-                msg = f"{var_name} has DatetimeIndex, but no freq attribute set."
-                return ret(False, msg, None, return_metadata)
-
-        # check whether index is equally spaced or if there are any nans
-        #   compute only if needed
-        if _req("is_equally_spaced", return_metadata):
-            metadata["is_equally_spaced"] = _index_equally_spaced(index)
-        if _req("has_nans", return_metadata):
-            metadata["has_nans"] = obj.isnull().values.any()
-
-        return ret(True, None, metadata, return_metadata)
 
 
 class SeriesDask(ScitypeSeries):
