@@ -15,8 +15,8 @@ A full table with tag based search is also available on the
 (select "clustering" in the "Estimator type" dropdown).
 
 
-Clustering models
------------------
+Partitioning based
+------------------
 
 .. currentmodule:: sktime.clustering.k_means
 
@@ -43,6 +43,9 @@ Clustering models
 
     TimeSeriesKShapes
 
+Spectral and kernel clustering
+------------------------------
+
 .. currentmodule:: sktime.clustering.kernel_k_means
 
 .. autosummary::
@@ -52,12 +55,14 @@ Clustering models
     TimeSeriesKernelKMeans
 
 .. currentmodule:: sktime.clustering.spatio_temporal
+.. currentmodule:: sktime.clustering.dbscan
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
     STDBSCAN
+    TimeSeriesDBSCAN
 
 Base
 ----
