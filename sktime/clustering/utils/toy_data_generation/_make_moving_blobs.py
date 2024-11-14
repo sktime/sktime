@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from sklearn.datasets import make_blobs
 
 __author__ = ["vagechirkov"]
@@ -55,5 +56,15 @@ def make_moving_blobs(
     sort_idx = np.argsort(time)
     y_true = y_true[sort_idx]
     X = X[sort_idx]
+
+    X = pd.DataFrame(
+        X,
+        index=pd.MultiIndex.from_arrays(
+            [np.int32(X[:, 0]), np.int32(np.arange(X.shape[0]))],
+            names=["time", "object_id"],
+        ),
+        columns=["time", "x", "y"],
+    )
+    X.drop(columns=["time"], inplace=True)
 
     return X, y_true

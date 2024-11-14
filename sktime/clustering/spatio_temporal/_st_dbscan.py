@@ -79,8 +79,8 @@ class STDBSCAN(BaseClusterer):
         "maintainers": "vagechirkov",
         "authors": ["eren-ck", "vagechirkov"],
         "python_dependencies": ["scipy", "scikit-learn"],
-        "X_inner_mtype": "numpyflat",
-        "capability:multivariate": False,
+        "X_inner_mtype": "pd-multiindex",
+        "capability:multivariate": True,
         "capability:unequal_length": False,
         "capability:missing_values": False,
         "capability:multithreading": True,
@@ -120,13 +120,19 @@ class STDBSCAN(BaseClusterer):
 
         Parameters
         ----------
-        X : np.ndarray of shape (n_samples, n_features)
-            Input data with the first column representing time as a float.
-            The remaining columns represent spatial coordinates. Example format
-            for a 2D dataset:
-                [[time_step1, x, y],
-                 [time_step2, x, y],
-                 ...]
+        X : sktime compatible Panel data container, mtype="pd-multiindex".
+            The first index level is time, the second is object (agent) ID.
+            Each row represents spatial coordinates of an object at a given time.
+            Example of X:
+                index time | index object | coordinates x | coordinates y
+                -----------|--------------|----------------|---------------
+                0          | 0            | 0.1            | 0.2
+                0          | 1            | 0.3            | 0.4
+                1          | 0            | 0.2            | 0.3
+                1          | 1            | 0.4            | 0.5
+                1          | 2            | 0.5            | 0.6
+                2          | 0            | 0.3            | 0.4
+                2          | 3            | 0.6            | 0.7
         y : ignored, exists for API consistency reasons
 
         Returns
@@ -165,11 +171,12 @@ class STDBSCAN(BaseClusterer):
 
     def _fit_dense(self, X):
         """Fit the dense distance matrix version of the ST-DBSCAN algorithm."""
-        n, m = X.shape
+        n, m = X.values.shape
+        time_index = X.index.get_level_values(0).to_numpy()
 
         # Compute squared form Distance Matrix
-        time_dist = pdist(X[:, 0].reshape(n, 1), metric=self.metric)
-        spatial_dist = pdist(X[:, 1:], metric=self.metric)
+        time_dist = pdist(time_index.reshape(n, 1), metric=self.metric)
+        spatial_dist = pdist(X.values, metric=self.metric)
 
         # filter the spatial_dist matrix using the time_dist
         dist = np.where(time_dist <= self.eps2, spatial_dist, 2 * self.eps1)
@@ -181,7 +188,8 @@ class STDBSCAN(BaseClusterer):
 
     def _fit_sparse(self, X):
         """Fit the sparse distance matrix version of the ST-DBSCAN algorithm."""
-        n, m = X.shape
+        n, m = X.values.shape
+        time_index = X.index.get_level_values(0).to_numpy()
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -191,16 +199,16 @@ class STDBSCAN(BaseClusterer):
             nn_spatial = NearestNeighbors(
                 metric=self.metric, radius=self.eps1, n_jobs=self.n_jobs
             )
-            nn_spatial.fit(X[:, 1:])
-            euc_sp = nn_spatial.radius_neighbors_graph(X[:, 1:], mode="distance")
+            nn_spatial.fit(X.values)
+            euc_sp = nn_spatial.radius_neighbors_graph(X.values, mode="distance")
 
             # Compute sparse matrix for temporal distance
             nn_time = NearestNeighbors(
                 metric=self.metric, radius=self.eps2, n_jobs=self.n_jobs
             )
-            nn_time.fit(X[:, 0].reshape(n, 1))
+            nn_time.fit(time_index.reshape(n, 1))
             time_sp = nn_time.radius_neighbors_graph(
-                X[:, 0].reshape(n, 1), mode="distance"
+                time_index.reshape(n, 1), mode="distance"
             )
 
             # combine both sparse matrices and filter by time distance matrix
@@ -228,14 +236,15 @@ class STDBSCAN(BaseClusterer):
            [10.2312/PE/EUROVAST/EUROVA12/019-023](https://doi.org/10.2312/PE/EUROVAST/EUROVA12/019-023).
         """
         # unique time points
-        time = np.unique(X[:, 0])
+        time_index = X.index.get_level_values(0).to_numpy()
+        time = np.unique(time_index)
         labels = None
         right_overlap = 0
         step = int(self.frame_size - self.frame_overlap + 1)
 
         for i in range(0, len(time), step):
             for period in [time[i : i + self.frame_size]]:
-                frame = X[np.isin(X[:, 0], period)]
+                frame = X[np.isin(time_index, period)]
 
                 self._fit_one_frame(frame)
 
@@ -278,7 +287,7 @@ class STDBSCAN(BaseClusterer):
                     labels = np.concatenate((labels, new_labels))
 
                 right_overlap = len(
-                    X[np.isin(X[:, 0], period[-self.frame_overlap + 1 :])]
+                    X.values[np.isin(time_index, period[-self.frame_overlap + 1 :])]
                 )
         self.labels_ = labels
 

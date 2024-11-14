@@ -16,9 +16,10 @@ def _rename_labels(X, centers_origin, y_pred, n_labels):
 
     # find the closest cluster center at time 0
     for l in range(n_labels):
-        # data at time 0 and cluster l
-        X_t0 = X[X[:, 0] == 0]
-        y_pred_t0 = y_pred[X[:, 0] == 0]
+        # data at index 0
+        t0_mask = X.index.get_level_values(0).to_numpy() == 0
+        X_t0 = X[t0_mask].to_numpy()
+        y_pred_t0 = y_pred[t0_mask]
         c = np.mean(X_t0[y_pred_t0 == l], axis=0)
 
         # find the closest cluster center at time 0
