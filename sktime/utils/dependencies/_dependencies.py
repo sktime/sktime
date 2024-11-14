@@ -524,8 +524,8 @@ def _check_estimator_deps(obj, msg=None, severity="error"):
     if pkg_deps is not None:
         pkg_deps_ok = _check_soft_dependencies(*pkg_deps, severity=severity, obj=obj)
         compatible = compatible and pkg_deps_ok
-
-    return compatible, pkg_deps
+    print(pkg_deps)
+    return compatible
 
 
 def _normalize_requirement(req):
