@@ -41,7 +41,7 @@ def test_plot_time_series_with_change_points(time_series_data):
     from sktime.tests.test_switch import run_test_for_class
 
     # Access data from the fixture
-    bool_, reason = run_test_for_class(TinyTimeMixerForecaster)
+    bool_, reason = run_test_for_class(TinyTimeMixerForecaster, return_reason=True)
     raise ValueError(f"bool: {bool_}, reason: {reason}")
     ts_name = time_series_data["ts_name"]
     ts = time_series_data["ts"]
