@@ -3155,6 +3155,34 @@
         "example",
         "tutorial"
       ]
-    }
+    },
+    {
+      "login": "VectorNd",
+      "name": "Rishabh Kamboj",
+      "avatar_url": "https://avatars.githubusercontent.com/u/111004091?v=4",
+      "profile": "https://github.com/VectorNd",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "jusssch",
+      "name": "Julius Schmid",
+      "avatar_url": "https://avatars.githubusercontent.com/jusssch",
+      "profile": "https://github.com/jusssch",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "manolotis",
+      "name": "Manuel Muñoz Sánchez",
+      "avatar_url": "https://avatars.githubusercontent.com/manolotis",
+      "profile": "https://github.com/manolotis",
+      "contributions": [
+        "doc"
+      ]
+     }
+
   ]
 }

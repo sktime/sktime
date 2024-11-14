@@ -23,8 +23,8 @@ class Mixture(_HeterogenousMetaEstimator, BaseDistribution):
     index : pd.Index, optional, default = inferred from component distributions
     columns : pd.Index, optional, default = inferred from component distributions
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.proba.mixture import Mixture
     >>> from sktime.proba.normal import Normal
     >>>
