@@ -475,7 +475,7 @@ def _make_estimator_overview(app):
         "Dependencies",
         "Import Path",
         "Tags",
-    ]
+    ] 
 
     records = []
 
