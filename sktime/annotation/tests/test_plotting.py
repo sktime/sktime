@@ -37,7 +37,12 @@ def time_series_data():
 def test_plot_time_series_with_change_points(time_series_data):
     import matplotlib.pyplot as plt
 
+    from sktime.forecasting.ttm import TinyTimeMixerForecaster
+    from sktime.tests.test_switch import run_test_for_class
+
     # Access data from the fixture
+    bool_, reason = run_test_for_class(TinyTimeMixerForecaster)
+    raise ValueError(f"bool: {bool_}, reason: {reason}")
     ts_name = time_series_data["ts_name"]
     ts = time_series_data["ts"]
     true_cps = time_series_data["true_cps"]
