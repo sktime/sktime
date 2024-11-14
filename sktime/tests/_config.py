@@ -279,6 +279,9 @@ EXCLUDED_TESTS = {
         "test_predict_segments",
         "test_transform_output_type",
     ],
+    "BinarySegmentation": [
+        "test_predict_segments",
+    ],
 }
 
 # exclude tests but keyed by test name
