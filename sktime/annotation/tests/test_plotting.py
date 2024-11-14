@@ -39,12 +39,17 @@ def test_plot_time_series_with_change_points(time_series_data):
 
     from sktime.forecasting.ttm import TinyTimeMixerForecaster
     from sktime.tests.test_switch import run_test_for_class
+    from sktime.utils.dependencies._dependencies import _check_estimator_deps
 
     bool_, reason = run_test_for_class(TinyTimeMixerForecaster, return_reason=True)
     # bool_1, reason_ = run_test_for_class(TimesFMForecaster, return_reason=True)
+    compatible, deps_list = _check_estimator_deps(
+        TinyTimeMixerForecaster, severity="none"
+    )
     raise ValueError(
         f"ttm: bool: {bool_}, reason: {reason}, "
         # f"timesfm: bool: {bool_1}, reason: {reason_}"
+        f"compatible: {compatible}, required deps: {deps_list}"
     )
 
     ts_name = time_series_data["ts_name"]
