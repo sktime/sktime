@@ -516,9 +516,9 @@ def _check_estimator_deps(obj, msg=None, severity="error"):
         return compatible
 
     compatible = compatible and _check_python_version(obj, severity=severity)
-    print(compatible)
+    print("py_version", compatible)
     compatible = compatible and _check_env_marker(obj, severity=severity)
-    print(compatible)
+    print("env_marker", compatible)
 
     pkg_deps = obj.get_class_tag("python_dependencies", None)
     if pkg_deps is not None and not isinstance(pkg_deps, list):
