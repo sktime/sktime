@@ -126,8 +126,6 @@ class NnetsauceMTS(BaseForecaster):
 
     """
 
-    from nnetsauce import MTS as MTS0 # dangerous
-
     _tags = {
         # scitype:y controls whether internal y can be univariate/multivariate
         # if multivariate is not valid, applies vectorization over variables
@@ -205,9 +203,12 @@ class NnetsauceMTS(BaseForecaster):
         self.verbose = verbose
         self.show_progress = show_progress
 
-        from nnetsauce import MTS as MTS0
+        # leave this as is
+        super().__init__()
 
-        self.fitter = MTS0(
+        from nnetsauce import MTS
+
+        self.fitter = MTS(
             obj=self.obj,
             n_hidden_features=self.n_hidden_features,
             activation_name=self.activation_name,
@@ -233,9 +234,6 @@ class NnetsauceMTS(BaseForecaster):
         )
         # IMPORTANT: the self.params should never be overwritten or mutated from now on
         # for handling defaults etc, write to other attributes, e.g., self._parama
-
-        # leave this as is
-        super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc
@@ -263,6 +261,7 @@ class NnetsauceMTS(BaseForecaster):
         -------
         self : reference to self
         """
+
         self.fitter.fit(y)
         self.obj = self.fitter.obj
         return self
@@ -406,29 +405,32 @@ class NnetsauceMTS(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = {"regressor": RidgeCV(),
-        "n_hidden_features":5,
-        "activation_name":"relu",
-        "a":0.01,
-        "nodes_sim":"sobol",
-        "bias":True,
-        "dropout":0,
-        "direct_link":True,
-        "n_clusters":2,
-        "cluster_encode":True,
-        "type_clust":"kmeans",
-        "type_scaling":("std", "std", "std"),
-        "lags":1,
-        "type_pi":"kde",
-        "block_size":None,
-        "replications":None,
-        "kernel":"gaussian",
-        "agg":"mean",
-        "seed":123,
-        "backend":"cpu",
-        "verbose":0,
-        "show_progress":True}
+        params = {
+            "regressor": RidgeCV(),
+            "n_hidden_features": 5,
+            "activation_name": "relu",
+            "a": 0.01,
+            "nodes_sim": "sobol",
+            "bias": True,
+            "dropout": 0,
+            "direct_link": True,
+            "n_clusters": 2,
+            "cluster_encode": True,
+            "type_clust": "kmeans",
+            "type_scaling": ("std", "std", "std"),
+            "lags": 1,
+            "type_pi": "kde",
+            "block_size": None,
+            "replications": None,
+            "kernel": "gaussian",
+            "agg": "mean",
+            "seed": 123,
+            "backend": "cpu",
+            "verbose": 0,
+            "show_progress": True,
+        }
         return params
+
 
 class NnetsauceDeepMTS(NnetsauceMTS):
     """Forecasting with Deep Quasi-Randomized networks (from nnetsauce).
@@ -439,7 +441,7 @@ class NnetsauceDeepMTS(NnetsauceMTS):
     ----------
     regressor: object.
         any object containing a method fit (obj.fit()) and a method predict
-        (obj.predict()). Default is sklearn's RidgeCV. 
+        (obj.predict()). Default is sklearn's RidgeCV.
 
     n_layers: int.
         number of hidden layers.
@@ -551,8 +553,8 @@ class NnetsauceDeepMTS(NnetsauceMTS):
         fitting each series
 
     """
-    
-    from nnetsauce import DeepMTS as DeepMTS0 # dangerous
+
+    from nnetsauce import DeepMTS as DeepMTS0  # dangerous
 
     _tags = {
         # scitype:y controls whether internal y can be univariate/multivariate
@@ -632,6 +634,10 @@ class NnetsauceDeepMTS(NnetsauceMTS):
         self.backend = backend
         self.verbose = verbose
         self.show_progress = show_progress
+
+        super.__init__()
+
+        from nnetsauce import DeepMTS as DeepMTS0
 
         self.fitter = DeepMTS0(
             obj=self.obj,
