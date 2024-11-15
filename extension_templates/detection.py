@@ -18,11 +18,11 @@ How to use this implementation template to implement a new estimator:
   https://www.sktime.net/en/stable/developer_guide/add_estimators.html
 
 Mandatory implements:
-    fitting         - _fit(self, X, Y=None)
+    fitting         - _fit(self, X, y=None)
     annotating     - _predict(self, X)
 
 Optional implements:
-    updating        - _update(self, X, Y=None)
+    updating        - _update(self, X, y=None)
 
 Testing - required for sktime test framework and check_estimator usage:
     get default parameters for test instance(s) - get_test_params()
@@ -30,13 +30,13 @@ Testing - required for sktime test framework and check_estimator usage:
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
-from sktime.annotation.base import BaseSeriesAnnotator
+from sktime.detection.base import BaseDetector
 
 # todo: add any necessary imports here
 
 
-class MySeriesAnnotator(BaseSeriesAnnotator):
-    """Custom series annotator.
+class MyDetector(BaseDetector):
+    """Custom time series detector for anomalies, change points, or segments.
 
     todo: write docstring, describing your custom forecaster
 
@@ -106,7 +106,7 @@ class MySeriesAnnotator(BaseSeriesAnnotator):
         #   self.clone_tags(est2, ["enforce_index_type", "handles-missing-data"])
 
     # todo: implement this, mandatory
-    def _fit(self, X, Y=None):
+    def _fit(self, X, y=None):
         """Fit to training data.
 
         core logic
@@ -114,13 +114,14 @@ class MySeriesAnnotator(BaseSeriesAnnotator):
         Parameters
         ----------
         X : pd.DataFrame
-            training data to fit model to, time series
-        Y : pd.Series, optional
-            ground truth annotations for training if annotator is supervised
+            Training data to fit model to time series.
+        y : pd.Series, optional
+            Ground truth labels for training, if detector is supervised.
 
         Returns
         -------
-        self : returns a reference to self
+        self :
+            Reference to self.
 
         State change
         ------------
@@ -138,12 +139,18 @@ class MySeriesAnnotator(BaseSeriesAnnotator):
 
         Parameters
         ----------
-        X : pd.DataFrame - data to annotate, time series
+        X : pd.DataFrame
+            Time series subject to detection, which will be assigned labels or scores.
 
         Returns
         -------
-        Y : pd.Series - annotations for sequence X
-            exact format depends on annotation type
+        y : pd.Series with RangeIndex
+            Labels for sequence ``X``, in sparse format.
+            Values are ``iloc`` references to indices of ``X``.
+
+            * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
+              the values are integer indices of the changepoints/anomalies.
+            * If ``task`` is "segmentation", the values are ``pd.Interval`` objects.
         """
 
         # implement here
@@ -151,8 +158,8 @@ class MySeriesAnnotator(BaseSeriesAnnotator):
 
     # todo: consider implementing this, optional
     # if not implementing, delete the _update method
-    def _update(self, X, Y=None):
-        """Update model with new data and optional ground truth annotations.
+    def _update(self, X, y=None):
+        """Update model with new data and optional ground truth labels.
 
         core logic
 
@@ -160,8 +167,8 @@ class MySeriesAnnotator(BaseSeriesAnnotator):
         ----------
         X : pd.DataFrame
             training data to update model with, time series
-        Y : pd.Series, optional
-            ground truth annotations for training if annotator is supervised
+        y : pd.Series, optional
+            ground truth detection labels for training, if detector is supervised
 
         Returns
         -------
