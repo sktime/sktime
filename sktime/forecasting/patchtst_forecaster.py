@@ -6,18 +6,12 @@
 import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
-from transformers import (
-    PatchTSTConfig,
-    PatchTSTForPrediction,
-    PatchTSTModel,
-    Trainer,
-    TrainingArguments,
-)
 
-from sktime.forecasting.base import _BaseGlobalForecaster
+from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 from sktime.split import temporal_train_test_split
 
 if _check_soft_dependencies(["torch"], severity="none"):
+    import torch
     from torch.utils.data import Dataset
 else:
 
@@ -25,6 +19,16 @@ else:
         """Dummy class if torch is unavailable."""
 
         pass
+
+
+if _check_soft_dependencies(["transformers"], severity="none"):
+    from transformers import (
+        PatchTSTConfig,
+        PatchTSTForPrediction,
+        PatchTSTModel,
+        Trainer,
+        TrainingArguments,
+    )
 
 
 class HFPatchTSTForecaster(_BaseGlobalForecaster):
@@ -285,29 +289,82 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         return self
 
     def _predict(self, y, X=None, fh=None):
-        # fh : pd.Index, pd.TimedeltaIndex, np.array, list, pd.Timedelta, or int
-        """Predicts the model.
+        """Forecast time series at future horizon.
+
+        private _predict containing the core logic, called from predict
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
 
         Parameters
         ----------
-        X : pandas DataFrame
-            dataframe containing all the time series, univariate,
-            multivariate acceptable
-
-        y : pandas DataFrame, default = None
-            pandas dataframe containing forecasted horizon to predict
-            default None
-
-        fh : Forecasting Horizon object
-            used to determine forecasting horizon for predictions
-            expected to be the same as the one used in _fit
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+            If not passed in _fit, guaranteed to be passed here
+        y : sktime time series object, required
+            single or multivariate data to compute forecasts on.
 
         Returns
         -------
-        y_pred : predictions outputted from the fitted model
+        y_pred : sktime time series object
+            pandas DataFrame
         """
+        if fh is None:
+            fh = self.fh
+        fh = fh.to_relative(self.cutoff)
+        y_columns = y.columns
+        y_index_names = list(y.index.names)
+        # multi-index conversion
+        if isinstance(y.index, pd.MultiIndex):
+            y = _frame2numpy(y)
+        else:
+            y = np.expand_dims(y.values, axis=0)
+
+        y = torch.tensor(y).to(self.model.device)
+
+        self.model.eval()
         y_pred = self.model(y)
-        return y_pred
+        pred = y_pred.detach().cpu().numpy()
+
+        if isinstance(y.index, pd.MultiIndex):
+            ins = np.array(list(np.unique(y.index.droplevel(-1)).repeat(pred.shape[1])))
+            ins = [ins[..., i] for i in range(ins.shape[-1])] if ins.ndim > 1 else [ins]
+
+            idx = (
+                ForecastingHorizon(range(1, pred.shape[1] + 1), freq=self.fh.freq)
+                .to_absolute(self._cutoff)
+                ._values.tolist()
+                * pred.shape[0]
+            )
+            index = pd.MultiIndex.from_arrays(
+                ins + [idx],
+                names=y.index.names,
+            )
+        else:
+            index = (
+                ForecastingHorizon(range(1, pred.shape[1] + 1))
+                .to_absolute(self._cutoff)
+                ._values
+            )
+
+        df_pred = pd.DataFrame(
+            # batch_size * num_timestams, n_cols
+            pred.reshape(-1, pred.shape[-1]),
+            index=index,
+            columns=y_columns,
+        )
+
+        absolute_horizons = fh.to_absolute_index(self.cutoff)
+        dateindex = df_pred.index.get_level_values(-1).map(
+            lambda x: x in absolute_horizons
+        )
+        df_pred = df_pred.loc[dateindex]
+        df_pred.index.names = y_index_names
+        return df_pred
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -332,7 +389,6 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
             "random_mask_ratio": 0.4,
             "d_model": 64,
             "num_attention_heads": 4,
-            "num_hidden_layers": 1,
             "ffn_dim": 32,
             "head_dropout": 0.2,
             "pooling_type": None,
@@ -348,7 +404,6 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         params2 = {
             "d_model": 128,
             "num_attention_heads": 4,
-            "num_hidden_layers": 1,
             "ffn_dim": 32,
             "head_dropout": 0.2,
             "batch_size": 16,
