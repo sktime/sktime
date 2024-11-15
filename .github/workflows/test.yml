@@ -285,7 +285,7 @@ jobs:
 
       - name: Install sktime and dependencies
         shell: bash
-        run: python -m pip install .[all_extras_pandas2,dev,dl,compatibility_tests] --no-cache-dir
+        run: python -m pip install .[dl] --no-cache-dir
 
       - name: Show dependencies
         run: python -m pip list
