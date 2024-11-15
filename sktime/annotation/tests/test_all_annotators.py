@@ -29,7 +29,7 @@ class AnnotatorsFixtureGenerator(BaseFixtureGenerator):
     #   additional fixtures, parameters, etc should be added here
     #   TestAllAnnotators should contain the tests only
 
-    estimator_type_filter = "detector" 
+    estimator_type_filter = "detector"
     # todo 0.37.0: remove series-annotator
 
 

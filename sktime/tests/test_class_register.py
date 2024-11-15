@@ -54,6 +54,7 @@ def get_test_class_registry():
     # so also imply estimator and object tests, or only object tests
     testclass_dict["aligner"] = TestAllAligners
     testclass_dict["classifier"] = TestAllClassifiers
+    testclass_dict["detector"] = TestAllAnnotators
     testclass_dict["distribution"] = TestAllDistributions
     testclass_dict["early_classifier"] = TestAllEarlyClassifiers
     testclass_dict["forecaster"] = TestAllForecasters

@@ -261,12 +261,12 @@ class regressor(_BaseScitypeOfObject):
         return BaseRegressor
 
 
-class detector(_BaseScitypeOfObject):  # todo 0.37.0: remove series-annotator
-    """Time series annotator."""
+class detector(_BaseScitypeOfObject):
+    """Detector of anomalies, outliers, or change points."""
 
     _tags = {
-        "scitype_name": "detector",  # todo 0.37.0: remove series-annotator
-        "short_descr": "time series annotator",
+        "scitype_name": "detector",
+        "short_descr": "detector - anomalies, outliers, change points",
         "parent_scitype": "estimator",
     }
 
@@ -517,6 +517,25 @@ def get_base_class_lookup(mixin=False, include_baseobjs=True):
     register = get_base_class_register(mixin=mixin, include_baseobjs=include_baseobjs)
     base_class_lookup = {x[0]: x[1] for x in register}
     return base_class_lookup
+
+
+# LEGACY types - remove in 1.0.0
+# ------------------------------
+
+class series_annotator(_BaseScitypeOfObject):
+    """Time series annotator."""
+
+    _tags = {
+        "scitype_name": "series-annotator",
+        "short_descr": "detector - anomalies, outliers, change points",
+        "parent_scitype": "estimator",
+    }
+
+    @classmethod
+    def get_base_class(cls):
+        from sktime.detection.base import BaseDetector
+
+        return BaseDetector
 
 
 class transformer_series_to_primitives(_BaseScitypeOfObject):
