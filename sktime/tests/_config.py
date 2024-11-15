@@ -59,12 +59,6 @@ EXCLUDE_ESTIMATORS = [
     "StatsModelsARIMA",
     "ShapeletLearningClassifierTslearn",
     "DartsXGBModel",
-    # Several annotators are not interfact complient yet
-    "GreedyGaussianSegmentation",
-    "PyODAnnotator",
-    "GaussianHMM",
-    "GMMHMM",
-    "SubLOF",
 ]
 
 
@@ -209,8 +203,6 @@ EXCLUDED_TESTS = {
         "test_update_predict_single",  # see 2997, sporadic failure, unknown cause
         "test__y_when_refitting",  # see 3176
     ],
-    # GGS inherits from BaseEstimator which breaks this test
-    "GreedyGaussianSegmentation": ["test_inheritance", "test_create_test_instance"],
     "InformationGainSegmentation": [
         "test_inheritance",
         "test_create_test_instance",
@@ -254,6 +246,7 @@ EXCLUDED_TESTS = {
         "test_persistence_via_pickle",
         "test_save_estimators_to_file",
     ],
+    # The following detectors are not interface compliant. See PR 6958
     "PoissonHMM": [
         "test_predict_points",
         "test_predict_segments",
@@ -281,6 +274,33 @@ EXCLUDED_TESTS = {
     ],
     "BinarySegmentation": [
         "test_predict_segments",
+    ],
+    "GreedyGaussianSegmentation": [
+        "test_predict_points",
+        "test_predict_segments",
+        "test_transform_output_type",
+        "test_inheritance",
+        "test_create_test_instance",
+    ],
+    "PyODAnnotator": [
+        "test_predict_points",
+        "test_predict_segments",
+        "test_transform_output_type",
+    ],
+    "GaussianHMM": [
+        "test_predict_points",
+        "test_predict_segments",
+        "test_transform_output_type",
+    ],
+    "GMMHMM": [
+        "test_predict_points",
+        "test_predict_segments",
+        "test_transform_output_type",
+    ],
+    "SubLOF": [
+        "test_predict_points",
+        "test_predict_segments",
+        "test_transform_output_type",
     ],
 }
 
