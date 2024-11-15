@@ -12,7 +12,7 @@ from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 from sktime.split import temporal_train_test_split
 from sktime.utils.warnings import warn
 
-if _check_soft_dependencies("torch", severity="none"):
+if _check_soft_dependencies("torch", severity="error"):
     from torch.utils.data import Dataset
 else:
 
@@ -20,7 +20,7 @@ else:
         """Dummy class if torch is unavailable."""
 
 
-if _check_soft_dependencies("transformers", severity="none"):
+if _check_soft_dependencies("transformers", severity="error"):
     from transformers import Trainer, TrainingArguments
 
 
