@@ -246,7 +246,6 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
                 head_dropout=self.head_dropout,
             )
 
-            # print(config)
             self.model = PatchTSTForPrediction(config)
         else:
             # model_path was given, initialize with model_path
@@ -485,8 +484,6 @@ class PyTorchDataset(Dataset):
         self.single_length = (
             self.n_timestamps - self.context_length - self.prediction_length + 1
         )
-        # print(self.single_length)
-        # print(self.y.shape)
 
     def __len__(self):
         """Return the length of the dataset."""
