@@ -62,6 +62,16 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
             - A path or url to a saved configuration JSON *file*, e.g.,
                 `./my_model_directory/configuration.json`.
             forecast_columns,
+    mode : str, optional, possible values = ["untrained", "finetune", "zeroshot"]
+           default = "untrained"
+        String to set the mode of the model. If set to 'untrained', it will
+        re-initialize an untrained model with the specified config or
+        estimator aruguments. If set to "finetune" will use the `model_path`
+        argument and the passed in `y` in fit to fine-tune the model. If
+        set to "zeroshot", it will load the model in zero-shot forecasting
+        model with the argument `model_path` and ignore any passed `y`.
+        Note that both "finetune" and "zeroshot" mode requires a mandatory
+        passed in `model_path`.
     patch_length : int, optional, default = 16
         Length of each patch that will segment every univariate series.
     context_length : int, optional, default = 512
