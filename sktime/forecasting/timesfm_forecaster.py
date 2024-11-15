@@ -118,6 +118,8 @@ class TimesFMForecaster(_BaseGlobalForecaster):
     >>> forecaster = TimesFMForecaster(
     ...     context_len=32,
     ...     horizon_len=8,
+    ...     repo_id="google/timesfm-1.0-200m-pytorch",
+    ...     dl_engine='torch', # uses pytorch based timesfm
     ... ) # doctest: +SKIP
     >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
@@ -136,6 +138,8 @@ class TimesFMForecaster(_BaseGlobalForecaster):
     >>> forecaster = TimesFMForecaster(
     ...     context_len=32,
     ...     horizon_len=8,
+    ...     repo_id="google/timesfm-1.0-200m",
+    ...     dl_engine="jax", # uses jax based timesfm
     ... ) # doctest: +SKIP
     >>>
     >>> # train and predict
