@@ -6,7 +6,7 @@ __author__ = ["fkiraly"]
 from sktime.datatypes._base import BaseDatatype
 
 
-class BaseTable(BaseDatatype):
+class ScitypeTable(BaseDatatype):
     """Base class for Table data types.
 
     Parameters
