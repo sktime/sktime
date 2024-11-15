@@ -10,7 +10,7 @@ from skbase.utils.dependencies import _check_soft_dependencies
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 from sktime.split import temporal_train_test_split
 
-if _check_soft_dependencies(["torch"], severity="none"):
+if _check_soft_dependencies("torch", severity="none"):
     import torch
     from torch.utils.data import Dataset
 else:
@@ -21,7 +21,7 @@ else:
         pass
 
 
-if _check_soft_dependencies(["transformers"], severity="none"):
+if _check_soft_dependencies("transformers", severity="none"):
     from transformers import (
         PatchTSTConfig,
         PatchTSTForPrediction,
@@ -432,9 +432,6 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         params_set.append(params2)
 
         return params_set
-
-
-from torch.utils.data import Dataset
 
 
 def _same_index(data):
