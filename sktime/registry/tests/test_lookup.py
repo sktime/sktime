@@ -241,6 +241,13 @@ def test_scitype_inference(estimator_scitype):
     base_class = _check_estimator_types(estimator_scitype)[0]
     inferred_scitype = scitype(base_class)
 
+    # stepout for detector due to rename in scitype
+    # todo 0.37.0 - replace "detector" with "series-annotator"
+    # todo 1.0.0 - remove this stepout entirely
+    if estimator_scitype == "detector":
+        assert "detector" in scitype(base_class, force_single_scitype=False)
+        return None
+
     assert (
         inferred_scitype == estimator_scitype
     ), "one of scitype, _check_estimator_types is incorrect, these should be inverses"
