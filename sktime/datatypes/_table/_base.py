@@ -7,7 +7,7 @@ from sktime.datatypes._base import BaseDatatype
 
 
 class ScitypeTable(BaseDatatype):
-    """Base class for Table data types.
+    """Data Frame or Table data type.
 
     Parameters
     ----------
