@@ -72,11 +72,11 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         model with the argument `model_path` and ignore any passed `y`.
         Note that both "finetune" and "zeroshot" mode requires a mandatory
         passed in `model_path`.
-    patch_length : int, optional, default = 16
+    patch_length : int, optional, default = 4
         Length of each patch that will segment every univariate series.
-    context_length : int, optional, default = 512
+    context_length : int, optional, default = 3
         Number of previous time steps used to forecast.
-    patch_stride : int, optional, default = 16
+    patch_stride : int, optional, default = 4
         Length of the non-overlapping region between patches. If patch_stride
         is less than patch_length, then there will be overlapping patches. If
         patch_stride = patch_length, then there will be no overlapping patches.
@@ -151,9 +151,9 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         # model variables except for forecast_columns
         model_path=None,
         mode="untrained",
-        patch_length=16,
-        context_length=512,
-        patch_stride=16,
+        patch_length=4,
+        context_length=3,
+        patch_stride=4,
         random_mask_ratio=0.4,
         d_model=128,
         num_attention_heads=16,
