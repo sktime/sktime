@@ -8,13 +8,13 @@ import pandas as pd
 from sklearn.base import clone
 from sklearn.cluster import KMeans
 
-from sktime.annotation.base import BaseSeriesAnnotator
+from sktime.detection.base import BaseDetector
 
 __author__ = ["Ankit-1204"]
 __all__ = ["ClusterSegmenter"]
 
 
-class ClusterSegmenter(BaseSeriesAnnotator):
+class ClusterSegmenter(BaseDetector):
     """Cluster-based Time Series Segmentation.
 
     time series segmentation using clustering is simple task. This annotator
@@ -88,7 +88,8 @@ class ClusterSegmenter(BaseSeriesAnnotator):
 
         Parameters
         ----------
-        X : pd.DataFrame - data to annotate, time series
+        X : pd.DataFrame
+            Time series subject to detection, which will be assigned labels or scores.
 
         Returns
         -------

@@ -29,7 +29,7 @@ class AnnotatorsFixtureGenerator(BaseFixtureGenerator):
     #   additional fixtures, parameters, etc should be added here
     #   TestAllAnnotators should contain the tests only
 
-    estimator_type_filter = "series-annotator"
+    estimator_type_filter = "detector"
 
     fixture_sequence = [
         "estimator_class",

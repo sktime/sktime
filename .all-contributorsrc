@@ -3157,10 +3157,28 @@
       ]
     },
     {
+      "login": "VectorNd",
+      "name": "Rishabh Kamboj",
+      "avatar_url": "https://avatars.githubusercontent.com/u/111004091?v=4",
+      "profile": "https://github.com/VectorNd",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
       "login": "jusssch",
       "name": "Julius Schmid",
       "avatar_url": "https://avatars.githubusercontent.com/jusssch",
       "profile": "https://github.com/jusssch",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "jgyfutub",
+      "name": "Vedant Pandey",
+      "avatar_url": "https://avatars.githubusercontent.com/u/97391064?s=400&v=4",
+      "profile": "https://github.com/jgyfutub",
       "contributions": [
         "code"
       ]
@@ -3173,7 +3191,6 @@
       "contributions": [
         "doc"
       ]
-     }
-
+    }
   ]
 }

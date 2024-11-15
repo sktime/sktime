@@ -76,6 +76,10 @@ The ``Series`` mtype represents a single time series.
 
 .. currentmodule:: sktime.datatypes._series._check
 
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
     SeriesPdDataFrame
     SeriesPdSeries
     SeriesNp2D
@@ -93,6 +97,10 @@ The ``Panel`` mtype represents a flat collection of time series.
 
 .. currentmodule:: sktime.datatypes._panel._check
 
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
     PanelPdMultiIndex
     PanelNp3D
     PanelDfList
@@ -109,6 +117,10 @@ The ``Hierarchical`` mtype represents a hierarchical collection of time series.
 
 .. currentmodule:: sktime.datatypes._hierarchical._check
 
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
     HierarchicalPdMultiIndex
     HierarchicalDask
     HierarchicalPolarsEager
@@ -120,6 +132,10 @@ The ``Hierarchical`` mtype represents a hierarchical collection of time series.
 The ``Table`` mtype represents a (non-temporal) data frame table.
 
 .. currentmodule:: sktime.datatypes._table._check
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
 
     TablePdDataFrame
     TablePdSeries
