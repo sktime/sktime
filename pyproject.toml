@@ -288,7 +288,7 @@ dl = [
   'neuralforecast<1.8.0,>=1.6.4; python_version < "3.11"',
   'peft>=0.10.0; python_version < "3.12"',
   'tensorflow<2.17,>=2; python_version < "3.12"',
-  'torch; python_version < "3.12"',
+  'torch',
   'transformers<4.41.0; python_version < "3.12"',
   'tf-keras',
   'pykan>=0.2.1,<0.2.7; python_version > "3.9.7"',
