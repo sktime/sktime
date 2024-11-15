@@ -272,9 +272,9 @@ class detector(_BaseScitypeOfObject):  # todo 0.37.0: remove series-annotator
 
     @classmethod
     def get_base_class(cls):
-        from sktime.annotation.base import BaseSeriesAnnotator
+        from sktime.detection.base import BaseDetector
 
-        return BaseSeriesAnnotator
+        return BaseDetector
 
 
 class splitter(_BaseScitypeOfObject):

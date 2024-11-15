@@ -7,7 +7,35 @@ from sktime.datatypes._base import BaseDatatype
 
 
 class ScitypeSeries(BaseDatatype):
-    """Series data type. Represents a single time series.
+    r"""Series data type. Represents a single time series.
+
+    The ``Series`` data type is an abstract data type (= :term:`scitype`).
+
+    It represents a single monotonously indexed sequence, including the sub-case of
+    "time series" if the index is interpreted as time.
+
+    Formally, an abstract ``Series`` object has:
+
+    * an index :math:`t_1, \dots, t_T`, with :math:`t_i` being an integer or
+      an orderable datetime-like type, representing the time point (or index)
+    * values :math:`y_1, \dots, y_T`, with :math:`y_i`, taking values in
+      an abstract typed data frame row domain :math:`\mathcal{Y}`,
+      i.e., vectors with entries being numbers
+      (float, integer) or categorical, always the same type at the same entry
+
+    The value :math:`y_i` is interpreted to be "observed at time point" :math:`t_i`.
+
+    The indices are assumed distinct and ordered, i.e., `:math:t_{i-1} < t_i`
+    for all :math:`i`.
+
+    Concrete types implementing the ``Series`` data type must specify:
+
+    * variables: how the dimensions of :math:`\mathcal{Y}` are represented
+    * variable names: optional, names of the variable dimensions
+    * time points: how the value "observed at" a given time point is represented
+    * time index: how the time index is represented
+
+    Concrete implementations may implement only sub-cases of the full abstract type.
 
     Parameters
     ----------
