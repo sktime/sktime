@@ -150,6 +150,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         self,
         # model variables except for forecast_columns
         model_path=None,
+        mode="untrained",
         patch_length=16,
         context_length=512,
         patch_stride=16,
@@ -170,6 +171,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         broadcasting=False,
     ):
         self.model_path = model_path
+        self.mode = mode
         # model config parameters
         self.patch_length = patch_length
         self.context_length = context_length
@@ -192,6 +194,8 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         self.callbacks = callbacks
         self.broadcasting = broadcasting
         super().__init__()
+        if self.mode not in ["untrained", "finetune", "zeroshot"]:
+            raise ValueError("unexpected mode passed in argument")
 
         if not self.model_path:
             self.config["patch_length"] = self.patch_length
@@ -218,16 +222,6 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         -------
         self : a reference to the object
         """
-        y_train, y_test = temporal_train_test_split(
-            y, train_size=1 - self.validation_split, test_size=self.validation_split
-        )
-        train_dataset = PyTorchDataset(
-            y_train, context_length=self.context_length, prediction_length=self.fh
-        )
-        eval_dataset = PyTorchDataset(
-            y_test, context_length=self.context_length, prediction_length=self.fh
-        )
-
         self.fh = max(fh.to_relative(self.cutoff))
         self.y_columns = y.columns
         self._config["num_input_channels"] = len(self.y_columns)
@@ -245,34 +239,48 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
                     f"found {self.model.model.__class__.__name__}"
                 )
 
-        # initialize training_args
-        if self.training_args:
-            training_args = TrainingArguments(self.training_args)
-        else:
-            training_args = TrainingArguments(
-                output_dir="/PatchTST/",
-                overwrite_output_dir=True,
-                learning_rate=self.learning_rate,
-                num_train_epochs=self.epochs,
-                evaluation_strategy="epoch",
-                per_device_train_batch_size=self.batch_size,
-                label_names=["future_values"],
+        if self.mode != "zeroshot":
+            # initialize dataset
+            y_train, y_test = temporal_train_test_split(
+                y, train_size=1 - self.validation_split, test_size=self.validation_split
+            )
+            train_dataset = PyTorchDataset(
+                y_train, context_length=self.context_length, prediction_length=self.fh
+            )
+            eval_dataset = PyTorchDataset(
+                y_test, context_length=self.context_length, prediction_length=self.fh
             )
 
-        # Create the early stopping callback
+            # initialize training_args
+            if self.training_args:
+                training_args = TrainingArguments(self.training_args)
+            else:
+                training_args = TrainingArguments(
+                    output_dir="/PatchTST/",
+                    overwrite_output_dir=True,
+                    learning_rate=self.learning_rate,
+                    num_train_epochs=self.epochs,
+                    evaluation_strategy="epoch",
+                    per_device_train_batch_size=self.batch_size,
+                    label_names=["future_values"],
+                )
 
-        # define trainer
-        trainer = Trainer(
-            model=self.model,
-            args=training_args,
-            train_dataset=train_dataset,
-            eval_dataset=eval_dataset,
-            callbacks=self.callbacks,
-            compute_metrics=self.compute_metrics,
-        )
-        # pretrain
-        trainer.train()
-        self._fitted_model = trainer.model
+            # Create the early stopping callback
+
+            # define trainer
+            trainer = Trainer(
+                model=self.model,
+                args=training_args,
+                train_dataset=train_dataset,
+                eval_dataset=eval_dataset,
+                callbacks=self.callbacks,
+                compute_metrics=self.compute_metrics,
+            )
+            # pretrain
+            trainer.train()
+            self._fitted_model = trainer.model
+        else:
+            self._fitted_model = self.model
 
         return self
 
