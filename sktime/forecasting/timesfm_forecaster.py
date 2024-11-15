@@ -13,6 +13,148 @@ from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 from sktime.utils.singleton import _multiton
 
 
+class _TimesFMSourceEngine:
+    def __init__(self, **kwargs):
+        self.repo_id = kwargs.get("repo_id")
+        self.context_len = kwargs.get("context_len")
+        self.horizon_len = kwargs.get("horizon_len")
+        self.input_patch_len = kwargs.get("input_patch_len")
+        self.output_patch_len = kwargs.get("output_patch_len")
+        self.num_layers = kwargs.get("num_layers")
+        self.model_dims = kwargs.get("model_dims")
+        self.per_core_batch_size = kwargs.get("per_core_batch_size")
+        self.backend = kwargs.get("backend")
+        self.verbose = kwargs.get("verbose")
+
+        from timesfm import TimesFm
+
+        self.model = TimesFm(
+            context_len=self.context_len,
+            horizon_len=self.horizon_len,
+            input_patch_len=self.input_patch_len,
+            output_patch_len=self.output_patch_len,
+            num_layers=self.num_layers,
+            model_dims=self.model_dims,
+            per_core_batch_size=self.per_core_batch_size,
+            backend=self.backend,
+            verbose=self.verbose,
+        )
+        self.model.load_from_checkpoint(repo_id=self.repo_id)
+
+    def predict(self, hist):
+        pred, _ = self.model.forecast(hist)
+        return pred
+
+
+class _TimesFMJaxEngine:
+    def __init__(self, **kwargs):
+        self.repo_id = kwargs.get("repo_id")
+        self.context_len = kwargs.get("context_len")
+        self.horizon_len = kwargs.get("horizon_len")
+        self.input_patch_len = kwargs.get("input_patch_len")
+        self.output_patch_len = kwargs.get("output_patch_len")
+        self.num_layers = kwargs.get("num_layers")
+        self.model_dims = kwargs.get("model_dims")
+        self.per_core_batch_size = kwargs.get("per_core_batch_size")
+        self.backend = kwargs.get("backend")
+        self.verbose = kwargs.get("verbose")
+
+        # Set environment variables for JAX backend based on CPU, GPU, or TPU
+        os.environ["JAX_PLATFORM_NAME"] = self.backend
+        os.environ["JAX_PLATFORMS"] = self.backend
+
+        from sktime.libs.timesfm.jax import TimesFm
+
+        self.model = TimesFm(
+            context_len=self.context_len,
+            horizon_len=self.horizon_len,
+            input_patch_len=self.input_patch_len,
+            output_patch_len=self.output_patch_len,
+            num_layers=self.num_layers,
+            model_dims=self.model_dims,
+            per_core_batch_size=self.per_core_batch_size,
+            backend=self.backend,
+            verbose=self.verbose,
+        )
+        self.model.load_from_checkpoint(repo_id=self.repo_id)
+
+    def predict(self, hist):
+        pred, _ = self.model.forecast(hist)
+        return pred
+
+
+class _TimesFMTorchEngine:
+    def __init__(self, **kwargs):
+        self.repo_id = kwargs.get("repo_id")
+        self.model = kwargs.get("model")
+        self.backend = kwargs.get("backend")
+        self.context_len = kwargs.get("context_len")
+        self.horizon_len = kwargs.get("horizon_len")
+        self.freq = kwargs.get("freq")
+
+        import torch
+        from huggingface_hub import snapshot_download
+
+        from sktime.libs.timesfm.torch import (
+            PatchedTimeSeriesDecoder,
+            TimesFMConfig,
+        )
+
+        path = snapshot_download(self.repo_id)
+        weights_path = os.path.join(path, "torch_model.ckpt")
+        weights = torch.load(weights_path, weights_only=True)
+
+        config = TimesFMConfig()
+        self.model = PatchedTimeSeriesDecoder(config)
+        self.model.load_state_dict(weights)
+        self.model = self.model.to(self.backend)
+
+    def predict(self, hist):
+        import torch
+
+        n_samples, n_timestamps = hist.shape
+
+        forecast_input = hist[:, -self.context_len :]
+        forecast_pads = np.zeros((n_samples, self.context_len + self.horizon_len))
+        frequency_input = np.full((n_samples, 1), self.freq)
+
+        # pad zeros at front, if n_timestamps is less than context_len
+        if n_timestamps < self.context_len:
+            padding_len = self.context_len - n_timestamps
+            forecast_input = np.hstack(
+                [np.zeros((n_samples, padding_len)), forecast_input]
+            )
+            forecast_pads[:, :padding_len] = 1
+
+        forecast_input = torch.tensor(
+            forecast_input,
+            dtype=torch.float,
+            device=self.backend,
+        )
+        forecast_pads = torch.tensor(
+            forecast_pads,
+            dtype=torch.float,
+            device=self.backend,
+        )
+        frequency_input = torch.tensor(
+            frequency_input,
+            dtype=torch.long,
+            device=self.backend,
+        )
+
+        self.model.eval()
+        with torch.no_grad():
+            forecasts, quantiles = self.model.decode(
+                forecast_input,
+                forecast_pads,
+                frequency_input,
+                self.horizon_len,
+            )
+        forecasts = forecasts.numpy()
+
+        return forecasts
+
+
 class TimesFMForecaster(_BaseGlobalForecaster):
     """
     Implementation of TimesFM (Time Series Foundation Model) for Zero-Shot Forecasting.
@@ -100,6 +242,9 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         the installation of required packages manually. If False, the class will enforce
         the default dependencies required for the vendor library or the pypi
         package, as described above, via ``use_source_package``.
+    dl_engine: str, default="jax"
+        The deep learning engine used for inference,
+        with options for "jax" or "torch".
 
     References
     ----------
@@ -148,21 +293,21 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         "maintainers": ["geetu040"],
         # when relaxing deps, check whether the extra test in
         # test_timesfm.py are still needed
-        "python_version": ">=3.10,<3.11",
-        "env_marker": "sys_platform=='linux'",
-        "python_dependencies": [
-            "tensorflow",
-            "einshape",
-            "jax",
-            "praxis",
-            "huggingface-hub",
-            "paxml",
-            "utilsforecast",
-        ],
+        # "python_version": ">=3.10,<3.11",
+        # "env_marker": "sys_platform=='linux'",
+        # "python_dependencies": [
+        # "tensorflow",
+        # "einshape",
+        # "jax",
+        # "praxis",
+        # "huggingface-hub",
+        # "paxml",
+        # "utilsforecast",
+        # ],
         # estimator type
         # --------------
         "y_inner_mtype": [
-            "pd.Series",
+            "pd.DataFrame",
             "pd-multiindex",
             "pd_multiindex_hier",
         ],
@@ -194,8 +339,11 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         broadcasting=False,
         use_source_package=False,
         ignore_deps=False,
+        dl_engine="jax",
     ):
         self.context_len = context_len
+        # to be used in future https://github.com/sktime/sktime/issues/7209
+        self._context_len = context_len
         self.horizon_len = horizon_len
         self._horizon_len = None
         self.freq = freq
@@ -210,14 +358,11 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         self.broadcasting = broadcasting
         self.use_source_package = use_source_package
         self.ignore_deps = ignore_deps
+        self.dl_engine = dl_engine
+        self.engine = None
 
-        if not self.ignore_deps:
-            if self.use_source_package:
-                # Use timesfm with a version bound if use_source_package is True
-                # todo 0.35.0: Regularly check whether timesfm version can be updated
-                # if changed, also needs to be changed in docstring
-                self.set_tags(python_dependencies=["timesfm<1.2.0"])
-        else:
+        # Update deps on the basis of ignore_deps, use_source_package, dl_engine
+        if self.ignore_deps:
             # Ignore dependencies, leave the dependency set empty
             clear_deps = {
                 "python_dependencies": None,
@@ -225,6 +370,19 @@ class TimesFMForecaster(_BaseGlobalForecaster):
                 "env_marker": None,
             }
             self.set_tags(**clear_deps)
+        elif self.use_source_package:
+            # Use timesfm with a version bound if use_source_package is True
+            # todo 0.35.0: Regularly check whether timesfm version can be updated
+            # if changed, also needs to be changed in docstring
+            self.set_tags(python_dependencies=["timesfm<1.2.0"])
+        elif self.dl_engine == "torch":
+            # Use torch based dependencies
+            torch_deps = {
+                "python_dependencies": ["torch", "huggingface-hub"],
+                "python_version": None,
+                "env_marker": None,
+            }
+            self.set_tags(**torch_deps)
 
         if self.broadcasting:
             self.set_tags(
@@ -235,10 +393,6 @@ class TimesFMForecaster(_BaseGlobalForecaster):
                 }
             )
 
-        # Set environment variables for JAX backend based on CPU, GPU, or TPU
-        os.environ["JAX_PLATFORM_NAME"] = backend
-        os.environ["JAX_PLATFORMS"] = backend
-
         super().__init__()
 
     def _fit(self, y, X, fh):
@@ -248,18 +402,23 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         else:
             self._horizon_len = self.horizon_len
 
-        self.tfm = _CachedTimesFM(
-            key=self._get_unique_timesfm_key(),
-            timesfm_kwargs=self._get_timesfm_kwargs(),
-            use_source_package=self.use_source_package,
-            repo_id=self.repo_id,
-        ).load_from_checkpoint()
+        self.engine = self._get_engine()
 
-    def _get_timesfm_kwargs(self):
-        """Get the kwargs for TimesFM model."""
+    def _get_engine(self):
+        return _CachedTimesFMEngine(
+            key=self._get_unique_engine_key(),
+            engine_kwargs=self._get_engine_kwargs(),
+            use_source_package=self.use_source_package,
+            dl_engine=self.dl_engine,
+        ).get_engine()
+
+    def _get_engine_kwargs(self):
+        """Get the kwargs for TimesFM engine."""
         return {
-            "context_len": self.context_len,
+            "context_len": self._context_len,
             "horizon_len": self._horizon_len,
+            "freq": self.freq,
+            "repo_id": self.repo_id,
             "input_patch_len": self.input_patch_len,
             "output_patch_len": self.output_patch_len,
             "num_layers": self.num_layers,
@@ -267,29 +426,31 @@ class TimesFMForecaster(_BaseGlobalForecaster):
             "per_core_batch_size": self.per_core_batch_size,
             "backend": self.backend,
             "verbose": self.verbose,
+            "use_source_package": self.use_source_package,
+            "dl_engine": self.dl_engine,
         }
 
-    def _get_unique_timesfm_key(self):
-        """Get unique key for TimesFM model to use in multiton."""
-        repo_id = self.repo_id
+    def _get_unique_engine_key(self):
+        """Get unique key for TimesFM engine to use in multiton."""
         use_source_package = self.use_source_package
-        kwargs = self._get_timesfm_kwargs()
-        kwargs_plus_repo_id = {
-            **kwargs,
-            "repo_id": repo_id,
+        dl_engine = self.dl_engine
+        engine_kwargs = self._get_engine_kwargs()
+        engine_kwargs_plus_repo_id = {
+            **engine_kwargs,
             "use_source_package": use_source_package,
+            "dl_engine": dl_engine,
         }
-        return str(sorted(kwargs_plus_repo_id.items()))
+        return str(sorted(engine_kwargs_plus_repo_id.items()))
 
     def _predict(self, fh, X, y=None):
         if fh is None:
             fh = self.fh
         fh = fh.to_relative(self.cutoff)
 
-        if max(fh._values.values) > self.horizon_len:
+        if max(fh._values.values) > self._horizon_len:
             raise ValueError(
                 f"Error in {self.__class__.__name__}, the forecast horizon exceeds the"
-                f" specified horizon_len of {self.horizon_len}. Change the horizon_len"
+                f" specified horizon_len of {self._horizon_len}. Change the horizon_len"
                 " when initializing the model or try another forecasting horizon."
             )
 
@@ -299,11 +460,13 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         if isinstance(_y.index, pd.MultiIndex):
             hist = _frame2numpy(_y).squeeze(2)
         else:
-            hist = np.expand_dims(_y.values, axis=0)
+            # _y is dataframe for univariate series
+            # converting that to (1, n_timestamps)
+            hist = _y.values.T
 
         # hist.shape: (batch_size, n_timestamps)
 
-        pred, _ = self.tfm.forecast(hist)
+        pred = self.engine.predict(hist)
 
         # converting pred datatype
 
@@ -319,28 +482,21 @@ class TimesFMForecaster(_BaseGlobalForecaster):
                 ._values.tolist()
                 * pred.shape[0]
             )
-            index = pd.MultiIndex.from_arrays(
-                ins + [idx],
-                names=_y.index.names,
-            )
-            pred = pd.DataFrame(
-                # batch_size * num_timestamps
-                pred.ravel(),
-                index=index,
-                columns=_y.columns,
-            )
+            index = pd.MultiIndex.from_arrays(ins + [idx])
         else:
             index = (
                 ForecastingHorizon(range(1, n_timestamps + 1))
                 .to_absolute(self._cutoff)
                 ._values
             )
-            pred = pd.Series(
-                # batch_size * num_timestamps
-                pred.ravel(),
-                index=index,
-                name=_y.name,
-            )
+
+        index.names = _y.index.names
+        pred = pd.DataFrame(
+            # batch_size * num_timestams
+            pred.ravel(),
+            index=index,
+            columns=_y.columns,
+        )
 
         absolute_horizons = fh.to_absolute_index(self.cutoff)
         dateindex = pred.index.get_level_values(-1).map(
@@ -375,6 +531,8 @@ class TimesFMForecaster(_BaseGlobalForecaster):
                 "horizon_len": 32,
                 "freq": 0,
                 "verbose": False,
+                "repo_id": "google/timesfm-1.0-200m-pytorch",
+                "dl_engine": "torch",
             },
         ]
         params_no_broadcasting = [
@@ -403,28 +561,34 @@ def _frame2numpy(data):
 
 
 @_multiton
-class _CachedTimesFM:
-    """Cached TimesFM model, to ensure only one instance exists in memory.
+class _CachedTimesFMEngine:
+    """Cached TimesFM engine, to ensure only one instance exists in memory.
 
     TimesFM is a zero shot model and immutable, hence there will not be
     any side effects of sharing the same instance across multiple uses.
     """
 
-    def __init__(self, key, timesfm_kwargs, use_source_package, repo_id):
+    def __init__(self, key, engine_kwargs, use_source_package, dl_engine):
         self.key = key
-        self.timesfm_kwargs = timesfm_kwargs
-        self.repo_id = repo_id
+        self.engine_kwargs = engine_kwargs
         self.use_source_package = use_source_package
-        self.tfm = None
+        self.dl_engine = dl_engine
+        self.engine = None
 
-    def load_from_checkpoint(self):
-        if self.tfm is None:
+    def get_engine(self):
+        if self.engine is None:
             if self.use_source_package:
-                from timesfm import TimesFm
+                self.engine = _TimesFMSourceEngine(**self.engine_kwargs)
+            elif self.dl_engine == "torch":
+                self.engine = _TimesFMTorchEngine(**self.engine_kwargs)
+            elif self.dl_engine == "jax":
+                self.engine = _TimesFMJaxEngine(**self.engine_kwargs)
             else:
-                from sktime.libs.timesfm import TimesFm
+                raise ValueError(
+                    f"Invalid dl_engine '{self.dl_engine}'."
+                    "Expected one of: 'jax' or 'torch'. "
+                    "Please set the 'dl_engine' argument to specify "
+                    "the backend you want to use."
+                )
 
-            self.tfm = TimesFm(**self.timesfm_kwargs)
-            self.tfm.load_from_checkpoint(repo_id=self.repo_id)
-
-        return self.tfm
+        return self.engine
