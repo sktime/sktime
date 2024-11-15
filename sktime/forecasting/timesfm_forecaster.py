@@ -13,148 +13,6 @@ from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 from sktime.utils.singleton import _multiton
 
 
-class _TimesFMSourceEngine:
-    def __init__(self, **kwargs):
-        self.repo_id = kwargs.get("repo_id")
-        self.context_len = kwargs.get("context_len")
-        self.horizon_len = kwargs.get("horizon_len")
-        self.input_patch_len = kwargs.get("input_patch_len")
-        self.output_patch_len = kwargs.get("output_patch_len")
-        self.num_layers = kwargs.get("num_layers")
-        self.model_dims = kwargs.get("model_dims")
-        self.per_core_batch_size = kwargs.get("per_core_batch_size")
-        self.backend = kwargs.get("backend")
-        self.verbose = kwargs.get("verbose")
-
-        from timesfm import TimesFm
-
-        self.model = TimesFm(
-            context_len=self.context_len,
-            horizon_len=self.horizon_len,
-            input_patch_len=self.input_patch_len,
-            output_patch_len=self.output_patch_len,
-            num_layers=self.num_layers,
-            model_dims=self.model_dims,
-            per_core_batch_size=self.per_core_batch_size,
-            backend=self.backend,
-            verbose=self.verbose,
-        )
-        self.model.load_from_checkpoint(repo_id=self.repo_id)
-
-    def predict(self, hist):
-        pred, _ = self.model.forecast(hist)
-        return pred
-
-
-class _TimesFMJaxEngine:
-    def __init__(self, **kwargs):
-        self.repo_id = kwargs.get("repo_id")
-        self.context_len = kwargs.get("context_len")
-        self.horizon_len = kwargs.get("horizon_len")
-        self.input_patch_len = kwargs.get("input_patch_len")
-        self.output_patch_len = kwargs.get("output_patch_len")
-        self.num_layers = kwargs.get("num_layers")
-        self.model_dims = kwargs.get("model_dims")
-        self.per_core_batch_size = kwargs.get("per_core_batch_size")
-        self.backend = kwargs.get("backend")
-        self.verbose = kwargs.get("verbose")
-
-        # Set environment variables for JAX backend based on CPU, GPU, or TPU
-        os.environ["JAX_PLATFORM_NAME"] = self.backend
-        os.environ["JAX_PLATFORMS"] = self.backend
-
-        from sktime.libs.timesfm.jax import TimesFm
-
-        self.model = TimesFm(
-            context_len=self.context_len,
-            horizon_len=self.horizon_len,
-            input_patch_len=self.input_patch_len,
-            output_patch_len=self.output_patch_len,
-            num_layers=self.num_layers,
-            model_dims=self.model_dims,
-            per_core_batch_size=self.per_core_batch_size,
-            backend=self.backend,
-            verbose=self.verbose,
-        )
-        self.model.load_from_checkpoint(repo_id=self.repo_id)
-
-    def predict(self, hist):
-        pred, _ = self.model.forecast(hist)
-        return pred
-
-
-class _TimesFMTorchEngine:
-    def __init__(self, **kwargs):
-        self.repo_id = kwargs.get("repo_id")
-        self.model = kwargs.get("model")
-        self.backend = kwargs.get("backend")
-        self.context_len = kwargs.get("context_len")
-        self.horizon_len = kwargs.get("horizon_len")
-        self.freq = kwargs.get("freq")
-
-        import torch
-        from huggingface_hub import snapshot_download
-
-        from sktime.libs.timesfm.torch import (
-            PatchedTimeSeriesDecoder,
-            TimesFMConfig,
-        )
-
-        path = snapshot_download(self.repo_id)
-        weights_path = os.path.join(path, "torch_model.ckpt")
-        weights = torch.load(weights_path, weights_only=True)
-
-        config = TimesFMConfig()
-        self.model = PatchedTimeSeriesDecoder(config)
-        self.model.load_state_dict(weights)
-        self.model = self.model.to(self.backend)
-
-    def predict(self, hist):
-        import torch
-
-        n_samples, n_timestamps = hist.shape
-
-        forecast_input = hist[:, -self.context_len :]
-        forecast_pads = np.zeros((n_samples, self.context_len + self.horizon_len))
-        frequency_input = np.full((n_samples, 1), self.freq)
-
-        # pad zeros at front, if n_timestamps is less than context_len
-        if n_timestamps < self.context_len:
-            padding_len = self.context_len - n_timestamps
-            forecast_input = np.hstack(
-                [np.zeros((n_samples, padding_len)), forecast_input]
-            )
-            forecast_pads[:, :padding_len] = 1
-
-        forecast_input = torch.tensor(
-            forecast_input,
-            dtype=torch.float,
-            device=self.backend,
-        )
-        forecast_pads = torch.tensor(
-            forecast_pads,
-            dtype=torch.float,
-            device=self.backend,
-        )
-        frequency_input = torch.tensor(
-            frequency_input,
-            dtype=torch.long,
-            device=self.backend,
-        )
-
-        self.model.eval()
-        with torch.no_grad():
-            forecasts, quantiles = self.model.decode(
-                forecast_input,
-                forecast_pads,
-                frequency_input,
-                self.horizon_len,
-            )
-        forecasts = forecasts.numpy()
-
-        return forecasts
-
-
 class TimesFMForecaster(_BaseGlobalForecaster):
     """
     Implementation of TimesFM (Time Series Foundation Model) for Zero-Shot Forecasting.
@@ -293,17 +151,17 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         "maintainers": ["geetu040"],
         # when relaxing deps, check whether the extra test in
         # test_timesfm.py are still needed
-        # "python_version": ">=3.10,<3.11",
-        # "env_marker": "sys_platform=='linux'",
-        # "python_dependencies": [
-        # "tensorflow",
-        # "einshape",
-        # "jax",
-        # "praxis",
-        # "huggingface-hub",
-        # "paxml",
-        # "utilsforecast",
-        # ],
+        "python_version": ">=3.10,<3.11",
+        "env_marker": "sys_platform=='linux'",
+        "python_dependencies": [
+            "tensorflow",
+            "einshape",
+            "jax",
+            "praxis",
+            "huggingface-hub",
+            "paxml",
+            "utilsforecast",
+        ],
         # estimator type
         # --------------
         "y_inner_mtype": [
@@ -592,3 +450,145 @@ class _CachedTimesFMEngine:
                 )
 
         return self.engine
+
+
+class _TimesFMSourceEngine:
+    def __init__(self, **kwargs):
+        self.repo_id = kwargs.get("repo_id")
+        self.context_len = kwargs.get("context_len")
+        self.horizon_len = kwargs.get("horizon_len")
+        self.input_patch_len = kwargs.get("input_patch_len")
+        self.output_patch_len = kwargs.get("output_patch_len")
+        self.num_layers = kwargs.get("num_layers")
+        self.model_dims = kwargs.get("model_dims")
+        self.per_core_batch_size = kwargs.get("per_core_batch_size")
+        self.backend = kwargs.get("backend")
+        self.verbose = kwargs.get("verbose")
+
+        from timesfm import TimesFm
+
+        self.model = TimesFm(
+            context_len=self.context_len,
+            horizon_len=self.horizon_len,
+            input_patch_len=self.input_patch_len,
+            output_patch_len=self.output_patch_len,
+            num_layers=self.num_layers,
+            model_dims=self.model_dims,
+            per_core_batch_size=self.per_core_batch_size,
+            backend=self.backend,
+            verbose=self.verbose,
+        )
+        self.model.load_from_checkpoint(repo_id=self.repo_id)
+
+    def predict(self, hist):
+        pred, _ = self.model.forecast(hist)
+        return pred
+
+
+class _TimesFMJaxEngine:
+    def __init__(self, **kwargs):
+        self.repo_id = kwargs.get("repo_id")
+        self.context_len = kwargs.get("context_len")
+        self.horizon_len = kwargs.get("horizon_len")
+        self.input_patch_len = kwargs.get("input_patch_len")
+        self.output_patch_len = kwargs.get("output_patch_len")
+        self.num_layers = kwargs.get("num_layers")
+        self.model_dims = kwargs.get("model_dims")
+        self.per_core_batch_size = kwargs.get("per_core_batch_size")
+        self.backend = kwargs.get("backend")
+        self.verbose = kwargs.get("verbose")
+
+        # Set environment variables for JAX backend based on CPU, GPU, or TPU
+        os.environ["JAX_PLATFORM_NAME"] = self.backend
+        os.environ["JAX_PLATFORMS"] = self.backend
+
+        from sktime.libs.timesfm.jax import TimesFm
+
+        self.model = TimesFm(
+            context_len=self.context_len,
+            horizon_len=self.horizon_len,
+            input_patch_len=self.input_patch_len,
+            output_patch_len=self.output_patch_len,
+            num_layers=self.num_layers,
+            model_dims=self.model_dims,
+            per_core_batch_size=self.per_core_batch_size,
+            backend=self.backend,
+            verbose=self.verbose,
+        )
+        self.model.load_from_checkpoint(repo_id=self.repo_id)
+
+    def predict(self, hist):
+        pred, _ = self.model.forecast(hist)
+        return pred
+
+
+class _TimesFMTorchEngine:
+    def __init__(self, **kwargs):
+        self.repo_id = kwargs.get("repo_id")
+        self.model = kwargs.get("model")
+        self.backend = kwargs.get("backend")
+        self.context_len = kwargs.get("context_len")
+        self.horizon_len = kwargs.get("horizon_len")
+        self.freq = kwargs.get("freq")
+
+        import torch
+        from huggingface_hub import snapshot_download
+
+        from sktime.libs.timesfm.torch import (
+            PatchedTimeSeriesDecoder,
+            TimesFMConfig,
+        )
+
+        path = snapshot_download(self.repo_id)
+        weights_path = os.path.join(path, "torch_model.ckpt")
+        weights = torch.load(weights_path, weights_only=True)
+
+        config = TimesFMConfig()
+        self.model = PatchedTimeSeriesDecoder(config)
+        self.model.load_state_dict(weights)
+        self.model = self.model.to(self.backend)
+
+    def predict(self, hist):
+        import torch
+
+        n_samples, n_timestamps = hist.shape
+
+        forecast_input = hist[:, -self.context_len :]
+        forecast_pads = np.zeros((n_samples, self.context_len + self.horizon_len))
+        frequency_input = np.full((n_samples, 1), self.freq)
+
+        # pad zeros at front, if n_timestamps is less than context_len
+        if n_timestamps < self.context_len:
+            padding_len = self.context_len - n_timestamps
+            forecast_input = np.hstack(
+                [np.zeros((n_samples, padding_len)), forecast_input]
+            )
+            forecast_pads[:, :padding_len] = 1
+
+        forecast_input = torch.tensor(
+            forecast_input,
+            dtype=torch.float,
+            device=self.backend,
+        )
+        forecast_pads = torch.tensor(
+            forecast_pads,
+            dtype=torch.float,
+            device=self.backend,
+        )
+        frequency_input = torch.tensor(
+            frequency_input,
+            dtype=torch.long,
+            device=self.backend,
+        )
+
+        self.model.eval()
+        with torch.no_grad():
+            forecasts, quantiles = self.model.decode(
+                forecast_input,
+                forecast_pads,
+                frequency_input,
+                self.horizon_len,
+            )
+        forecasts = forecasts.numpy()
+
+        return forecasts
