@@ -30,7 +30,6 @@ class AnnotatorsFixtureGenerator(BaseFixtureGenerator):
     #   TestAllAnnotators should contain the tests only
 
     estimator_type_filter = "detector"
-    # todo 0.37.0: remove series-annotator
 
 
 class TestAllAnnotators(AnnotatorsFixtureGenerator, QuickTester):
