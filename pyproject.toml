@@ -119,7 +119,7 @@ all_extras = [
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   'u8darts>=0.29.0,<0.32.0; python_version < "3.13"',
   'xarray; python_version < "3.13"',
-  'torch',
+  'torch; python_version < "3.12"',
   'transformers<4.41.0; python_version < "3.12"',
   'tf-keras',
 ]
