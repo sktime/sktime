@@ -76,11 +76,11 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         model with the argument `model_path` and ignore any passed `y`.
         Note that both "finetune" and "zeroshot" mode requires a mandatory
         passed in `model_path`.
-    patch_length : int, optional, default = 4
+    patch_length : int, optional, default = 2
         Length of each patch that will segment every univariate series.
-    context_length : int, optional, default = 3
+    context_length : int, optional, default = 4
         Number of previous time steps used to forecast.
-    patch_stride : int, optional, default = 4
+    patch_stride : int, optional, default = 2
         Length of the non-overlapping region between patches. If patch_stride
         is less than patch_length, then there will be overlapping patches. If
         patch_stride = patch_length, then there will be no overlapping patches.
@@ -137,7 +137,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         ],
         "scitype:y": "both",
         "ignores-exogeneous-X": True,
-        "requires-fh-in-fit": False,
+        "requires-fh-in-fit": True,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
         "handles-missing-data": False,
@@ -155,9 +155,9 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         # model variables except for forecast_columns
         model_path=None,
         mode="untrained",
-        patch_length=4,
-        context_length=3,
-        patch_stride=4,
+        patch_length=2,
+        context_length=4,
+        patch_stride=2,
         random_mask_ratio=0.4,
         d_model=128,
         num_attention_heads=16,
@@ -202,14 +202,14 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
             raise ValueError("unexpected mode passed in argument")
 
         if not self._config:
-            self.config["patch_length"] = self.patch_length
-            self.config["context_length"] = self.context_length
-            self.config["patch_stride"] = self.patch_stride
-            self.config["random_mask_ratio"] = self.random_mask_ratio
-            self.config["d_model"] = self.d_model
-            self.config["num_attention_heads"] = self.num_attention_heads
-            self.config["ffn_dim"] = self.ffn_dim
-            self.config["head_dropout"] = self.head_dropout
+            self._config["patch_length"] = self.patch_length
+            self._config["context_length"] = self.context_length
+            self._config["patch_stride"] = self.patch_stride
+            self._config["random_mask_ratio"] = self.random_mask_ratio
+            self._config["d_model"] = self.d_model
+            self._config["num_attention_heads"] = self.num_attention_heads
+            self._config["ffn_dim"] = self.ffn_dim
+            self._config["head_dropout"] = self.head_dropout
 
     def _fit(self, y, fh, X=None):
         """Fits the model.
@@ -226,13 +226,27 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         -------
         self : a reference to the object
         """
-        self.fh = max(fh.to_relative(self.cutoff))
+        self._y = y
+        self.fh_ = max(fh.to_relative(self.cutoff))
         self.y_columns = y.columns
         self._config["num_input_channels"] = len(self.y_columns)
-        self._config["prediction_length"] = self.fh
+        self._config["prediction_length"] = self.fh_
         # if no model_path was given, initialize new untrained model from config
         if not self.model_path:
-            config = PatchTSTConfig(self._config)
+            config = PatchTSTConfig(
+                num_input_channels=len(self.y_columns),
+                context_length=self.context_length,
+                patch_length=self.patch_length,
+                patch_stride=self.patch_length,
+                prediction_length=int(self.fh_),
+                random_mask_ratio=self.random_mask_ratio,
+                d_model=self.d_model,
+                num_attention_heads=self.num_attention_heads,
+                ffn_dim=self.ffn_dim,
+                head_dropout=self.head_dropout,
+            )
+
+            # print(config)
             self.model = PatchTSTForPrediction(config)
         else:
             # model_path was given, initialize with model_path
@@ -249,11 +263,16 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
                 y, train_size=1 - self.validation_split, test_size=self.validation_split
             )
             train_dataset = PyTorchDataset(
-                y_train, context_length=self.context_length, prediction_length=self.fh
+                y_train, context_length=self.context_length, prediction_length=self.fh_
             )
-            eval_dataset = PyTorchDataset(
-                y_test, context_length=self.context_length, prediction_length=self.fh
-            )
+            if self.validation_split != 0.0:
+                eval_dataset = PyTorchDataset(
+                    y_test,
+                    context_length=self.context_length,
+                    prediction_length=self.fh_,
+                )
+            else:
+                eval_dataset = None
 
             # initialize training_args
             if self.training_args:
@@ -264,7 +283,6 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
                     overwrite_output_dir=True,
                     learning_rate=self.learning_rate,
                     num_train_epochs=self.epochs,
-                    evaluation_strategy="epoch",
                     per_device_train_batch_size=self.batch_size,
                     label_names=["future_values"],
                 )
@@ -304,7 +322,8 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
             The forecasting horizon with the steps ahead to to predict.
-            If not passed in _fit, guaranteed to be passed here
+            If not passed in _fit, guaranteed to be passed here. If using a pre-trained
+            model, ensure that the prediction_length of the model matches the passed fh.
         y : sktime time series object, required
             single or multivariate data to compute forecasts on.
 
@@ -313,21 +332,27 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         y_pred : sktime time series object
             pandas DataFrame
         """
+        if y is None:
+            y = self._y
         if fh is None:
-            fh = self.fh
-        fh = fh.to_relative(self.cutoff)
+            fh = self.fh_
+        else:
+            fh = fh.to_relative(self.cutoff)
         y_columns = y.columns
         y_index_names = list(y.index.names)
         # multi-index conversion
         if isinstance(y.index, pd.MultiIndex):
-            y = _frame2numpy(y)
+            _y = _frame2numpy(y)
         else:
-            y = np.expand_dims(y.values, axis=0)
+            _y = np.expand_dims(y.values, axis=0)
 
-        y = torch.tensor(y).to(self.model.device)
+        _y = torch.tensor(_y).float().to(self.model.device)
+
+        if _y.shape[1] > self.context_length:
+            _y = _y[:, -self.context_length :, :]
 
         self.model.eval()
-        y_pred = self.model(y)
+        y_pred = self.model(_y).prediction_outputs
         pred = y_pred.detach().cpu().numpy()
 
         if isinstance(y.index, pd.MultiIndex):
@@ -391,14 +416,9 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
             "num_attention_heads": 4,
             "ffn_dim": 32,
             "head_dropout": 0.2,
-            "pooling_type": None,
-            "channel_attention": False,
-            "scaling": "std",
-            "loss": "mse",
-            "pre_norm": True,
-            "norm_type": "batchnorm",
             "batch_size": 16,
             "epochs": 1,
+            "validation_split": 0.0,
         }
         params_set.append(params1)
         params2 = {
@@ -408,6 +428,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
             "head_dropout": 0.2,
             "batch_size": 16,
             "epochs": 1,
+            "validation_split": 0.0,
         }
         params_set.append(params2)
 
@@ -464,6 +485,8 @@ class PyTorchDataset(Dataset):
         self.single_length = (
             self.n_timestamps - self.context_length - self.prediction_length + 1
         )
+        # print(self.single_length)
+        # print(self.y.shape)
 
     def __len__(self):
         """Return the length of the dataset."""
