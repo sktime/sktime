@@ -1831,12 +1831,14 @@ ESTIMATOR_TAG_REGISTER = [
     (
         "task",
         "detector",
+         # todo 0.37.0: remove series-annotator
         "str",
         "subtype of series annotator, e.g., 'anomaly_detection', 'segmentation'",
     ),
     (
         "learning_type",
         "detector",
+        # todo 0.37.0: remove series-annotator
         "str",
         "type of learning, e.g., 'supervised', 'unsupervised'",
     ),
