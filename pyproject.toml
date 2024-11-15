@@ -116,9 +116,6 @@ all_extras = [
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   'u8darts>=0.29.0,<0.32.0; python_version < "3.13"',
   'xarray; python_version < "3.13"',
-  'transformers',
-  'tf-keras',
-  'torch',
 ]
 
 # all soft dependencies compatible with pandas 2
@@ -288,19 +285,6 @@ datasets = [
 ]
 dl = [
   'FrEIA; python_version < "3.12"',
-  'neuralforecast<1.8.0,>=1.6.4; python_version < "3.11"',
-  'peft>=0.10.0; python_version < "3.12"',
-  'tensorflow<2.17,>=2; python_version < "3.12"',
-  'torch; python_version < "3.12"',
-  'transformers; python_version < "3.12"',
-  'tf-keras; python_version < "3.12"',
-  'pykan>=0.2.1,<0.2.7; python_version > "3.9.7"',
-  'pytorch-forecasting>=1.0.0,<1.2.0; python_version < "3.13"',
-  'lightning>=2.0; python_version < "3.12"',
-  'gluonts>=0.14.3; python_version < "3.12"',
-  'einops>0.7.0; python_version < "3.12"',
-  'huggingface-hub>=0.23.0; python_version < "3.12"',
-  'hydra-core; python_version < "3.13"',
 ]
 mlflow = [
   "mlflow",
