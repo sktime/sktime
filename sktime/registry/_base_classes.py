@@ -522,6 +522,7 @@ def get_base_class_lookup(mixin=False, include_baseobjs=True):
 # LEGACY types - remove in 1.0.0
 # ------------------------------
 
+
 class series_annotator(_BaseScitypeOfObject):
     """Time series annotator."""
 
