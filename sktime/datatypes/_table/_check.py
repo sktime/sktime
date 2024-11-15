@@ -39,7 +39,7 @@ import pandas as pd
 
 from sktime.datatypes._base._common import _req, _ret
 from sktime.datatypes._dtypekind import _get_feature_kind, _get_table_dtypekind
-from sktime.datatypes._table._base import ScitypeTableTable
+from sktime.datatypes._table._base import ScitypeTable
 
 PRIMITIVE_TYPES = (float, int, str)
 
