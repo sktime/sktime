@@ -118,6 +118,7 @@ all_extras = [
   'xarray; python_version < "3.13"',
   'transformers',
   'tf-keras',
+  'torch',
 ]
 
 # all soft dependencies compatible with pandas 2
