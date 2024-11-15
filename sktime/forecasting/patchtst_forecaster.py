@@ -197,7 +197,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         if self.mode not in ["untrained", "finetune", "zeroshot"]:
             raise ValueError("unexpected mode passed in argument")
 
-        if not self.model_path:
+        if not self._config:
             self.config["patch_length"] = self.patch_length
             self.config["context_length"] = self.context_length
             self.config["patch_stride"] = self.patch_stride
@@ -328,9 +328,32 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params_set = []
-        params1 = {}
+        params1 = {
+            "random_mask_ratio": 0.4,
+            "d_model": 64,
+            "num_attention_heads": 4,
+            "num_hidden_layers": 1,
+            "ffn_dim": 32,
+            "head_dropout": 0.2,
+            "pooling_type": None,
+            "channel_attention": False,
+            "scaling": "std",
+            "loss": "mse",
+            "pre_norm": True,
+            "norm_type": "batchnorm",
+            "batch_size": 16,
+            "epochs": 1,
+        }
         params_set.append(params1)
-        params2 = {}
+        params2 = {
+            "d_model": 128,
+            "num_attention_heads": 4,
+            "num_hidden_layers": 1,
+            "ffn_dim": 32,
+            "head_dropout": 0.2,
+            "batch_size": 16,
+            "epochs": 1,
+        }
         params_set.append(params2)
 
         return params_set
