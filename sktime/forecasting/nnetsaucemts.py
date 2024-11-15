@@ -554,8 +554,6 @@ class NnetsauceDeepMTS(NnetsauceMTS):
 
     """
 
-    from nnetsauce import DeepMTS as DeepMTS0  # dangerous
-
     _tags = {
         # scitype:y controls whether internal y can be univariate/multivariate
         # if multivariate is not valid, applies vectorization over variables
