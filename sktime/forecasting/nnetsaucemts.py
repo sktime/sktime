@@ -261,7 +261,6 @@ class NnetsauceMTS(BaseForecaster):
         -------
         self : reference to self
         """
-
         self.fitter.fit(y)
         self.obj = self.fitter.obj
         return self

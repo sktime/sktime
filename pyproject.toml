@@ -1,3 +1,9 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = [
+  "setuptools>61"
+]
+
 [project]
 name = "sktime"
 version = "0.34.0"
@@ -12,22 +18,22 @@ keywords = [
   "time-series",
   "time-series-analysis",
   "time-series-classification",
-  "time-series-regression",
+  "time-series-regression"
 ]
-license = { file = "LICENSE" }
+license = {file = "LICENSE"}
 # sktime is governed by the Community Council, see docs/source/get_involved/governance
 # use the email or sktime discord (governance channel) to get in touch
 maintainers = [
-  { name = "sktime developers", email = "sktime.toolbox@gmail.com" },
-  { name = "Felix Hirwa Nshuti" },
-  { name = "Franz Király" },
-  { name = "Marc Rovira" },
-  { name = "Ugochukwu Onyeka" },
+  {name = "sktime developers", email = "sktime.toolbox@gmail.com"},
+  {name = "Felix Hirwa Nshuti"},
+  {name = "Franz Király"},
+  {name = "Marc Rovira"},
+  {name = "Ugochukwu Onyeka"}
 ]
 # sktime has a large number of contributors,
 # for full credits see contributors.md
 authors = [
-    { name = "sktime developers", email = "sktime.toolbox@gmail.com" },
+  {name = "sktime developers", email = "sktime.toolbox@gmail.com"}
 ]
 requires-python = ">=3.9,<3.14"
 classifiers = [
@@ -46,30 +52,21 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Topic :: Scientific/Engineering",
-  "Topic :: Software Development",
+  "Topic :: Software Development"
 ]
 # core dependencies of sktime
 # this set should be kept minimal!
 dependencies = [
-  "joblib<1.5,>=1.2.0",  # required for parallel processing
-  "numpy<2.2,>=1.21",  # required for framework layer and base class logic
-  "packaging",  # for estimator specific dependency parsing
-  "pandas<2.3.0,>=1.1",  # pandas is the main in-memory data container
-  "scikit-base>=0.6.1,<0.12.0",  # base module for sklearn compatible base API
-  "scikit-learn>=0.24,<1.6.0",  # required for estimators and framework layer
-  "scipy<2.0.0,>=1.2",  # required for estimators and framework layer
+  "joblib<1.5,>=1.2.0", # required for parallel processing
+  "numpy<2.2,>=1.21", # required for framework layer and base class logic
+  "packaging", # for estimator specific dependency parsing
+  "pandas<2.3.0,>=1.1", # pandas is the main in-memory data container
+  "scikit-base>=0.6.1,<0.12.0", # base module for sklearn compatible base API
+  "scikit-learn>=0.24,<1.6.0", # required for estimators and framework layer
+  "scipy<2.0.0,>=1.2" # required for estimators and framework layer
 ]
 
 [project.optional-dependencies]
-# there are the following dependency sets:
-# - all_extras_pandas2, all_extras - all soft dependencies
-# - single-task soft dependencies, e.g., forecasting, classification, etc.
-# - dev - the developer dependency set, for contributors to sktime
-# - CI related, e.g., binder, docs, tests. Not for users of sktime.
-#
-# soft dependencies are not required for the core functionality of sktime
-# but are required by popular estimators, e.g., prophet, tbats, etc.
-
 # all soft dependencies
 #
 # users can install via "pip install sktime[all_extras]"
@@ -92,7 +89,7 @@ all_extras = [
   'keras-self-attention; python_version < "3.11"',
   'matplotlib!=3.9.1,>=3.3.2; python_version < "3.13"',
   'mne; python_version < "3.13"',
-  'nnetsauce>=0.26.0; python_version < "3.13"', 
+  'nnetsauce>=0.26.0; python_version < "3.13"',
   'numba<0.61,>=0.53; python_version < "3.13"',
   'optuna<4.1; python_version < "3.13"',
   'pmdarima!=1.8.1,<3.0.0,>=1.8; python_version < "3.12"',
@@ -116,9 +113,8 @@ all_extras = [
   'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   'u8darts>=0.29.0,<0.32.0; python_version < "3.13"',
-  'xarray; python_version < "3.13"',
+  'xarray; python_version < "3.13"'
 ]
-
 # all soft dependencies compatible with pandas 2
 all_extras_pandas2 = [
   'arch>=5.6,<7.1.0; python_version < "3.13"',
@@ -160,9 +156,8 @@ all_extras_pandas2 = [
   'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   'u8darts>=0.29.0,<0.32.0; python_version < "3.13"',
-  'xarray; python_version < "3.13"',
+  'xarray; python_version < "3.13"'
 ]
-
 # single-task dependencies, e.g., forecasting, classification, etc.
 # manually curated and intentionally smaller to avoid dependency conflicts
 # names are identical with the names of the modules and estimator type strings
@@ -175,27 +170,27 @@ all_extras_pandas2 = [
 alignment = [
   'dtaidistance<2.4; python_version < "3.13"',
   'dtw-python>=1.3,<1.6; python_version < "3.13"',
-  'numba<0.61,>=0.53; python_version < "3.13"',
+  'numba<0.61,>=0.53; python_version < "3.13"'
 ]
 annotation = [
   'hmmlearn<0.4,>=0.2.7; python_version < "3.13"',
   'numba<0.61,>=0.53; python_version < "3.13"',
-  'pyod<1.2,>=0.8; python_version < "3.12"',
+  'pyod<1.2,>=0.8; python_version < "3.12"'
 ]
 classification = [
   'esig<0.10,>=0.9.7; python_version < "3.11"',
   'numba<0.61,>=0.53; python_version < "3.13"',
   'tensorflow<2.17,>=2; python_version < "3.12"',
-  'tsfresh<0.21,>=0.17; python_version < "3.12"',
+  'tsfresh<0.21,>=0.17; python_version < "3.12"'
 ]
 clustering = [
   'numba<0.61,>=0.53; python_version < "3.13"',
-  'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.12"',
+  'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.12"'
 ]
 detection = [
   'hmmlearn<0.4,>=0.2.7; python_version < "3.13"',
   'numba<0.61,>=0.53; python_version < "3.13"',
-  'pyod<1.2,>=0.8; python_version < "3.12"',
+  'pyod<1.2,>=0.8; python_version < "3.12"'
 ]
 forecasting = [
   'arch>=5.6,<7.1; python_version < "3.13"',
@@ -206,19 +201,19 @@ forecasting = [
   "skpro>=2,<2.8.0",
   'statsforecast<1.8.0,>=1.0.0; python_version < "3.12"',
   'statsmodels<0.15,>=0.12.1; python_version < "3.13"',
-  'tbats<1.2,>=1.1; python_version < "3.12"',
+  'tbats<1.2,>=1.1; python_version < "3.12"'
 ]
 networks = [
   'keras-self-attention<0.52,>=0.51; python_version < "3.13"',
-  'tensorflow<2.17,>=2; python_version < "3.12"',
+  'tensorflow<2.17,>=2; python_version < "3.12"'
 ]
 param_est = [
   'seasonal<0.4,>=0.3.1; python_version < "3.13"',
-  'statsmodels<0.15,>=0.12.1; python_version < "3.13"',
+  'statsmodels<0.15,>=0.12.1; python_version < "3.13"'
 ]
 regression = [
   'numba<0.61,>=0.53; python_version < "3.13"',
-  'tensorflow<2.17,>=2; python_version < "3.12"',
+  'tensorflow<2.17,>=2; python_version < "3.12"'
 ]
 transformations = [
   'esig<0.10,>=0.9.7; python_version < "3.11"',
@@ -230,9 +225,8 @@ transformations = [
   'statsmodels<0.15,>=0.12.1; python_version < "3.13"',
   'stumpy<1.13,>=1.5.1; python_version < "3.12"',
   'temporian<0.9.0,>=0.7.0,!=0.8.0; python_version < "3.12" and sys_platform != "win32"',
-  'tsfresh<0.21,>=0.17; python_version < "3.12"',
+  'tsfresh<0.21,>=0.17; python_version < "3.12"'
 ]
-
 # dev - the developer dependency set, for contributors to sktime
 dev = [
   "backoff",
@@ -242,9 +236,8 @@ dev = [
   "pytest-randomly",
   "pytest-timeout",
   "pytest-xdist",
-  "wheel",
+  "wheel"
 ]
-
 # CI related soft dependency sets - not for users of sktime, only for developers
 # docs and tests are standard dep sets for development use
 # they are stable and subject to deprecation policies
@@ -260,30 +253,29 @@ docs = [
   "sphinx-design<0.7.0",
   "sphinx-gallery<0.19.0",
   "sphinx-issues<6.0.0",
-  "tabulate",
+  "tabulate"
 ]
 tests = [
   "pytest>=7.4,<8.4",
   "pytest-randomly<3.16,>=3.15",
   "pytest-timeout>=2.1,<2.4",
-  "pytest-xdist>=3.3,<3.7",
+  "pytest-xdist>=3.3,<3.7"
 ]
-
 # CI related soft dependency sets - not for users of sktime, only for developers
 # these are for specual uses and may be changed or removed at any time
 binder = [
   "jupyter",
   "pandas<2.0.0",
-  "skchange",
+  "skchange"
 ]
 cython_extras = [
   "mrseql < 0.0.3",
   'mrsqm; python_version < "3.11"',
-  "numba<0.61",
+  "numba<0.61"
 ]
 datasets = [
   "rdata",
-  "requests",
+  "requests"
 ]
 dl = [
   'FrEIA; python_version < "3.12"',
@@ -298,25 +290,25 @@ dl = [
   'gluonts>=0.14.3; python_version < "3.12"',
   'einops>0.7.0; python_version < "3.12"',
   'huggingface-hub>=0.23.0; python_version < "3.12"',
-  'hydra-core; python_version < "3.13"',
+  'hydra-core; python_version < "3.13"'
 ]
 mlflow = [
-  "mlflow",
+  "mlflow"
 ]
 mlflow_tests = [
   "boto3",
   "botocore",
   "mlflow",
-  "moto",
+  "moto"
 ]
 numpy1 = [
-  "numpy<2.0.0",
+  "numpy<2.0.0"
 ]
 pandas1 = [
-  "pandas<2.0.0",
+  "pandas<2.0.0"
 ]
 compatibility_tests = [
-  'catboost; python_version < "3.13"',
+  'catboost; python_version < "3.13"'
 ]
 
 [project.urls]
@@ -326,27 +318,6 @@ Download = "https://pypi.org/project/sktime/#files"
 Homepage = "https://www.sktime.net"
 "Release Notes" = "https://www.sktime.net/en/stable/changelog.html"
 Repository = "https://github.com/sktime/sktime"
-
-[build-system]
-build-backend = "setuptools.build_meta"
-requires = [
-  "setuptools>61",
-]
-
-[tool.setuptools.package-data]
-sktime = [
-  "utils/_estimator_html_repr.css",
-  "*.csv",
-  "*.csv.gz",
-  "*.arff",
-  "*.arff.gz",
-  "*.txt",
-  "*.ts",
-  "*.tsv",
-]
-
-[tool.setuptools.packages.find]
-exclude = ["tests", "tests.*"]
 
 [tool.ruff]
 line-length = 88
@@ -366,23 +337,23 @@ select = [
   "S",
   # https://docs.astral.sh/ruff/rules/#pyupgrade-up
   "UP",
-  "I002",    # Missing required imports
-  "UP008",   # Super calls with redundant arguments passed.
-  "G010",    # Deprecated log warn.
+  "I002", # Missing required imports
+  "UP008", # Super calls with redundant arguments passed.
+  "G010", # Deprecated log warn.
   "PLR1722", # Use sys.exit() instead of exit() and quit().
-  "PT014",   # pytest-duplicate-parametrize-test-cases.
-  "PT006",   # Checks for the type of parameter names passed to pytest.mark.parametrize.
-  "PT007",   # Checks for the type of parameter values passed to pytest.mark.parametrize.
-  "PT018",   # Checks for assertions that combine multiple independent condition
+  "PT014", # pytest-duplicate-parametrize-test-cases.
+  "PT006", # Checks for the type of parameter names passed to pytest.mark.parametrize.
+  "PT007", # Checks for the type of parameter values passed to pytest.mark.parametrize.
+  "PT018", # Checks for assertions that combine multiple independent condition
   "RUF001", # Checks for non unicode string literals
   "RUF002", # Checks for non unicode string literals
-  "RUF003", # Checks for non unicode string literals
+  "RUF003" # Checks for non unicode string literals
 ]
 extend-select = [
   "I", # isort
-  "C4", # https://pypi.org/project/flake8-comprehensions
+  "C4" # https://pypi.org/project/flake8-comprehensions
 ]
-ignore=[
+ignore = [
   "E203", # Whitespace-before-punctuation.
   "E402", # Module-import-not-at-top-of-file.
   "E731", # Do not assign a lambda expression, use a def.
@@ -407,25 +378,24 @@ ignore=[
   "S602", # sub process call with shell=True unsafe
   "C419", # Unnecessary list comprehension, some are flagged yet are not
   "C409", # Unnecessary `list` literal passed to `tuple()` (rewrite as a `tuple` literal)
-  "S113", # Probable use of httpx call withour timeout
+  "S113" # Probable use of httpx call withour timeout
 ]
-allowed-confusables=["σ"]
+allowed-confusables = ["σ"]
 
 [tool.ruff.lint.per-file-ignores]
-
 "setup.py" = ["S101"]
 "**/__init__.py" = [
-  "F401", # unused import
+  "F401" # unused import
 ]
 "**/tests/**" = [
   "D",
-  "S605",  # Starting a process with a shell: seems safe, but may be changed in the future; consider rewriting without `shell`
-  "S607",  # Starting a process with a partial executable path
-  "RET504",  # todo:Unnecessary variable assignment before `return` statement
-  "PT004",  # Fixture `tmpdir_unittest_fixture` does not return anything, add leading underscore
-  "PT011",  # `pytest.raises(ValueError)` is too broad, set the `match` parameter or use a more specific exception
-  "PT012",  # `pytest.raises()` block should contain a single simple statement
-  "PT019",  # Fixture `_` without value is injected as parameter, use `@pytest.mark.usefixtures` instead
+  "S605", # Starting a process with a shell: seems safe, but may be changed in the future; consider rewriting without `shell`
+  "S607", # Starting a process with a partial executable path
+  "RET504", # todo:Unnecessary variable assignment before `return` statement
+  "PT004", # Fixture `tmpdir_unittest_fixture` does not return anything, add leading underscore
+  "PT011", # `pytest.raises(ValueError)` is too broad, set the `match` parameter or use a more specific exception
+  "PT012", # `pytest.raises()` block should contain a single simple statement
+  "PT019", # Fixture `_` without value is injected as parameter, use `@pytest.mark.usefixtures` instead
   "PT006" # Checks for the type of parameter names passed to pytest.mark.parametrize.
 ]
 "sktime/libs/uni2ts/*.py" = [
@@ -436,8 +406,23 @@ allowed-confusables=["σ"]
   "D102", # Missing docstring in public method
   "D103", # Missing docstring in public function
   "D104", # Missing docstring in public package
-  "D106", # Missing docstring in public nested class
+  "D106" # Missing docstring in public nested class
 ]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
+
+[tool.setuptools.package-data]
+sktime = [
+  "utils/_estimator_html_repr.css",
+  "*.csv",
+  "*.csv.gz",
+  "*.arff",
+  "*.arff.gz",
+  "*.txt",
+  "*.ts",
+  "*.tsv"
+]
+
+[tool.setuptools.packages.find]
+exclude = ["tests", "tests.*"]
