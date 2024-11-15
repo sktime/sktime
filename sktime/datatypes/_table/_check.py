@@ -39,12 +39,12 @@ import pandas as pd
 
 from sktime.datatypes._base._common import _req, _ret
 from sktime.datatypes._dtypekind import _get_feature_kind, _get_table_dtypekind
-from sktime.datatypes._table._base import ScitypeTableTable
+from sktime.datatypes._table._base import BaseTable
 
 PRIMITIVE_TYPES = (float, int, str)
 
 
-class TablePdDataFrame(ScitypeTable):
+class TablePdDataFrame(BaseTable):
     """Data type: pandas.DataFrame based specification of data frame table.
 
     Parameters are inferred by check.
@@ -138,7 +138,7 @@ def _check_pddataframe_table(obj, return_metadata=False, var_name="obj"):
     return _ret(True, None, metadata, return_metadata)
 
 
-class TablePdSeries(ScitypeTable):
+class TablePdSeries(BaseTable):
     """Data type: pandas.Series based specification of data frame table.
 
     Parameters are inferred by check.
@@ -237,7 +237,7 @@ def _check_pdseries_table(obj, return_metadata=False, var_name="obj"):
     return _ret(True, None, metadata, return_metadata)
 
 
-class TableNp1D(ScitypeTable):
+class TableNp1D(BaseTable):
     """Data type: 1D np.ndarray based specification of data frame table.
 
     Parameters are inferred by check.
@@ -336,7 +336,7 @@ def _check_numpy1d_table(obj, return_metadata=False, var_name="obj"):
     return _ret(True, None, metadata, return_metadata)
 
 
-class TableNp2D(ScitypeTable):
+class TableNp2D(BaseTable):
     """Data type: 2D np.ndarray based specification of data frame table.
 
     Parameters are inferred by check.
@@ -434,7 +434,7 @@ def _check_numpy2d_table(obj, return_metadata=False, var_name="obj"):
     return _ret(True, None, metadata, return_metadata)
 
 
-class TableListOfDict(ScitypeTable):
+class TableListOfDict(BaseTable):
     """Data type: list of dict based specification of data frame table.
 
     Parameters are inferred by check.
@@ -555,7 +555,7 @@ def _check_list_of_dict_table(obj, return_metadata=False, var_name="obj"):
     return _ret(True, None, metadata, return_metadata)
 
 
-class TablePolarsEager(ScitypeTable):
+class TablePolarsEager(BaseTable):
     """Data type: eager polars DataFrame based specification of data frame table.
 
     Parameters are inferred by check.
@@ -620,7 +620,7 @@ class TablePolarsEager(ScitypeTable):
         return check_polars_frame(obj, return_metadata, var_name, lazy=False)
 
 
-class TablePolarsLazy(ScitypeTable):
+class TablePolarsLazy(BaseTable):
     """Data type: lazy polars DataFrame based specification of data frame table.
 
     Parameters are inferred by check.
