@@ -153,6 +153,19 @@ class NnetsauceMTS(BaseForecaster):
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
+        "python_dependencies": [
+            "nnetsauce",
+            "joblib",
+            "matplotlib",
+            "numpy",
+            "pandas",
+            "requests",
+            "scipy",
+            "scikit-learn",
+            "statsmodels",
+            "threadpoolctl",
+            "tqdm",
+        ],
     }
 
     # todo: add any hyper-parameters and components to constructor
@@ -580,6 +593,19 @@ class NnetsauceDeepMTS(NnetsauceMTS):
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
+        "python_dependencies": [
+            "nnetsauce",
+            "joblib",
+            "matplotlib",
+            "numpy",
+            "pandas",
+            "requests",
+            "scipy",
+            "scikit-learn",
+            "statsmodels",
+            "threadpoolctl",
+            "tqdm",
+        ],
     }
 
     # todo: add any hyper-parameters and components to constructor
