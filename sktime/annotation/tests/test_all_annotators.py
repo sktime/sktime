@@ -5,7 +5,6 @@ __all__ = []
 
 import numpy as np
 import pandas as pd
-import pytest
 
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 from sktime.utils._testing.annotation import make_annotation_problem
@@ -98,11 +97,6 @@ class TestAllAnnotators(AnnotatorsFixtureGenerator, QuickTester):
             n_timepoints=10,
             estimator_type=estimator_instance.get_tag("distribution_type"),
         )
-        task = estimator_instance.get_class_tag("task")
-        if task == "anomaly_detection":
-            with pytest.raises(RuntimeError):
-                estimator_instance.predict_segments(X_test)
-
         y_test = estimator_instance.predict_segments(X_test)
         assert isinstance(y_test, pd.Series)
         assert isinstance(y_test.index.dtype, pd.IntervalDtype)

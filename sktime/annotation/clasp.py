@@ -281,7 +281,7 @@ class ClaSPSegmentation(BaseDetector):
             Series containing the indexes of the changepoints in X.
         """
         self.found_cps, self.profiles, self.scores = self._run_clasp(X)
-        return pd.Series(X.index[self.found_cps].tolist())
+        return pd.Series(self.found_cps)
 
     def _predict_scores(self, X):
         """Return scores in ClaSP's profile for each annotation.
