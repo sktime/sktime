@@ -659,7 +659,30 @@ class NnetsauceDeepMTS(NnetsauceMTS):
         self.verbose = verbose
         self.show_progress = show_progress
 
-        super.__init__()
+        super.__init__(
+            obj=self.obj,
+            n_hidden_features=self.n_hidden_features,
+            activation_name=self.activation_name,
+            a=self.a,
+            nodes_sim=self.nodes_sim,
+            bias=self.bias,
+            dropout=self.dropout,
+            direct_link=self.direct_link,
+            n_clusters=self.n_clusters,
+            cluster_encode=self.cluster_encode,
+            type_clust=self.type_clust,
+            type_scaling=self.type_scaling,
+            lags=self.lags,
+            type_pi=self.type_pi,
+            block_size=self.block_size,
+            replications=self.replications,
+            kernel=self.kernel,
+            agg=self.agg,
+            seed=self.seed,
+            backend=self.backend,
+            verbose=self.verbose,
+            show_progress=self.show_progress,
+        )
 
         from nnetsauce import DeepMTS as DeepMTS0
 
