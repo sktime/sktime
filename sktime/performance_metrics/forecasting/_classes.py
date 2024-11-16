@@ -1888,6 +1888,64 @@ class MeanSquaredError(BaseForecastingErrorMetric):
         return [params1, params2]
 
 
+class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
+    def __init__(
+        self,
+        multioutput="uniform_average",
+        multilevel="uniform_average",
+        square_root=False,
+    ):
+        self.square_root = square_root
+        self.multioutput = multioutput
+        
+        super().__init__(multioutput=multioutput, multilevel=multilevel)
+
+
+    def _evaluate(self, y_true, y_pred, **kwargs):
+        multioutput = self.multioutput
+        raw_values = (y_true - y_pred) ** 2
+        raw_values = self._get_weighted_df(raw_values, **kwargs)
+        msqe = raw_values.mean()
+
+        if self.square_root:
+            msqe = msqe.pow(0.5)
+
+        msqe = abs(msqe / (np.sum(y_true.mean()))) * 100
+        
+        return self._handle_multioutput(msqe, multioutput)
+        
+
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        multioutput = self.multioutput
+        
+        raw_values = (y_true - y_pred) ** 2
+        
+        if self.square_root:
+            n = raw_values.shape[0]
+            mse = raw_values.mean(axis=0)
+            rmse = mse.pow(0.5)
+            sqe_sum = raw_values.sum(axis=0)
+            mse_jackknife = (sqe_sum - raw_values) / (n - 1)
+            rmse_jackknife = mse_jackknife.pow(0.5)
+            pseudo_values = n * rmse - (n - 1) * rmse_jackknife
+        else:
+            pseudo_values = raw_values
+        
+        pseudo_values = abs(pseudo_values) if not self.square_root
+        pseudo_values = (pseudo_values / np.sum(y_true).mean())
+       
+        weightedValue = self._get_weighted_df(pseudo_values, **kwargs)
+       
+        return self._handle_multioutput(weightedValue, multioutput)
+    
+    
+class Bias(BaseForecastingErrorMetric):
+    
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        multioutput = self.multioutput
+        
+        return super()._evaluate_by_index(y_true, y_pred, **kwargs)
+
 class MedianSquaredError(BaseForecastingErrorMetricFunc):
     """Median squared error (MdSE) or root median squared error (RMdSE).
 
