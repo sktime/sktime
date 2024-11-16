@@ -22,10 +22,11 @@ def get_test_class_registry():
     """
     from sktime.alignment.tests.test_all_aligners import TestAllAligners
     from sktime.annotation.tests.test_all_annotators import TestAllAnnotators
-    from sktime.classification.early_classification.tests.test_all_early_classifiers import (  # noqa E501
+    from sktime.classification.early_classification.tests.test_all_early_classifiers import (  # noqa: E501
         TestAllEarlyClassifiers,
     )
     from sktime.classification.tests.test_all_classifiers import TestAllClassifiers
+    from sktime.datasets.tests.test_all_datasets import TestAllDatasets
     from sktime.dists_kernels.tests.test_all_dist_kernels import (
         TestAllPairwiseTransformers,
         TestAllPanelTransformers,
@@ -65,6 +66,7 @@ def get_test_class_registry():
     testclass_dict["transformer"] = TestAllTransformers
     testclass_dict["transformer-pairwise"] = TestAllPairwiseTransformers
     testclass_dict["transformer-pairwise-panel"] = TestAllPanelTransformers
+    testclass_dict["dataset"] = TestAllDatasets
 
     return testclass_dict
 

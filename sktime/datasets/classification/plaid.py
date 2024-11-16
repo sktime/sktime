@@ -39,7 +39,7 @@ class PLAID(_ClassificationDatasetFromLoader):
         "is_equal_index": False,
         "is_empty": False,
         "has_nans": False,
-        "n_instances": 3,
+        "n_instances": 1074,
         "n_instances_train": 537,
         "n_instances_test": 537,
         "n_classes": 11,

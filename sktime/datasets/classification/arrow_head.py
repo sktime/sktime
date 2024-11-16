@@ -49,7 +49,6 @@ class ArrowHead(_ClassificationDatasetFromLoader):
 
     _tags = {
         "is_univariate": True,
-        "is_one_series": False,
         "n_panels": 1,
         "is_one_panel": True,
         "is_equally_spaced": True,

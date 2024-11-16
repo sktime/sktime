@@ -1,0 +1,81 @@
+"""Solar dataset for time series forecasting."""
+
+from sktime.datasets._single_problem_loaders import load_solar
+from sktime.datasets.forecasting._base import _ForecastingDatasetFromLoader
+
+__all__ = ["Solar"]
+
+
+class Solar(_ForecastingDatasetFromLoader):
+    """Load the GB National Solar Estimates dataset for time series forecasting.
+
+    This class wraps the Sheffield Solar PV_Live API to extract national solar data
+    for the GB electricity network. Note that these are estimates of the true solar
+    generation, as the true values are "behind the meter" and unknown.
+
+    Parameters
+    ----------
+    start : string, default="2021-05-01"
+        The start date of the time series in "YYYY-MM-DD" format.
+    end : string, default="2021-09-01"
+        The end date of the time series in "YYYY-MM-DD" format.
+    normalise : boolean, default=True
+        Normalise the returned time series by installed capacity.
+    return_full_df : boolean, default=False
+        Return a pd.DataFrame with power, capacity, and normalised estimates.
+    api_version : string or None, default="v4"
+        API version to call. If None, a stored sample of the data is loaded.
+
+    Returns
+    -------
+    y : pd.Series
+        The solar generation time series as requested by the parameters.
+
+    Examples
+    --------
+    >>> from sktime.datasets.forecasting import Solar
+    >>> y = Solar().load()
+
+    Notes
+    -----
+    The returned time series is half-hourly. For more information, refer to:
+
+    References
+    ----------
+    .. [1] https://www.solar.sheffield.ac.uk/pvlive/
+    .. [2] https://www.solar.sheffield.ac.uk/pvlive/api/
+    """
+
+    _tags = {
+        "is_univariate": True,
+        "is_one_series": True,
+        "is_one_panel": True,
+        "is_equally_spaced": True,
+        "is_empty": False,
+        "has_nans": False,  # May depend on API data quality
+        "has_exogenous": False,  # The series itself is standalone
+        "n_instances": None,  # Dynamic depending on the time range
+        "n_instances_train": 0,  # Can vary dynamically
+        "n_instances_test": 0,
+        "frequency": "H",  # Half-hourly data
+        "n_dimensions": 1,
+        "n_panels": 1,
+        "n_hierarchy_levels": 0,
+    }
+
+    loader_func = load_solar
+
+    def __init__(
+        self,
+        start="2021-05-01",
+        end="2021-09-01",
+        normalise=True,
+        return_full_df=False,
+        api_version="v4",
+    ):
+        self.start = start
+        self.end = end
+        self.normalise = normalise
+        self.return_full_df = return_full_df
+        self.api_version = api_version
+        super().__init__()
