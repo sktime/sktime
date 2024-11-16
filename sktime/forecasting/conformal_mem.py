@@ -300,7 +300,7 @@ class ConformalIntervals(BaseForecaster):
         pred_int = pd.DataFrame(index=fh_absolute_idx, columns=cols)
         for fh_ind, offset in zip(fh_absolute, fh_relative):
             resids = residuals_matrix[offset]
-            #resids = resids[~np.isnan(resids)]
+            # resids = resids[~np.isnan(resids)]
             if len(resids) < 1:
                 resids = np.array([0], dtype=float)
                 warn(
@@ -482,7 +482,6 @@ class ConformalIntervals(BaseForecaster):
             delayed(_get_residuals_matrix_row)(forecaster.clone(), y, X, id)
             for id in y_index
         )
-        
 
         if overlapping_index is not None:
 
@@ -512,7 +511,7 @@ class ConformalIntervals(BaseForecaster):
 
             residuals_matrix.extend(extend_residuals)
             y_index = pd.concat([y_index, overlapping_index])
-    
+
         return pd.DataFrame(residuals_matrix.T, columns=y_index)
 
     @classmethod
