@@ -62,6 +62,26 @@ class BaseClassificationDataset(BaseDataset):
 
         return self._load(*args)
 
+    def _load(self, *args):
+        """Load the dataset.
+
+        Parameters
+        ----------
+        *args: tuple of strings that specify what to load
+            available/valid strings are provided by the concrete classes
+            the expectation is that this docstring is replaced with the details
+
+        Returns
+        -------
+        dataset, if args is empty or length one
+            data container corresponding to string in args (see above)
+        tuple, of same length as args, if args is length 2 or longer
+            data containers corresponding to strings in args, in same order
+        """
+        raise NotImplementedError(
+            "This method should be implemented by the child class."
+        )
+
 
 class _ClassificationDatasetFromLoader(
     _DatasetFromLoaderMixin, BaseClassificationDataset

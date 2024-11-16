@@ -37,6 +37,7 @@ class BaseDataset(BaseObject):
         "is_equal_length": True,
         "is_equal_index": False,
         "has_nans": False,
+        "frequency": "M",
     }
 
     def __init__(self):

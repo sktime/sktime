@@ -1677,6 +1677,373 @@ class y_inner_mtype(_BaseTag):
     }
 
 
+class is_univariate(_BaseTag):
+    """Property: Whether the dataset is univariate.
+
+    - String name: ``"is_univariate"``
+    - Public property tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    If the tag is ``True``, the dataset consists of univariate time series,
+    i.e., each time series has only one variable.
+
+    If the tag is ``False``, the dataset consists of multivariate time series,
+    i.e., each time series has more than one variable.
+    """
+
+    _tags = {
+        "tag_name": "is_univariate",
+        "parent_type": "dataset",
+        "tag_type": "bool",
+        "short_descr": "is the dataset univariate?",
+        "user_facing": True,
+    }
+
+
+class is_one_series(_BaseTag):
+    """Property: Whether the data consists of a single series.
+
+    - String name: ``"is_one_series"``
+    - Public property tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    If the tag is ``True``, the data consists of a single time series.
+
+    If the tag is ``False``, the data consists of multiple time series.
+    """
+
+    _tags = {
+        "tag_name": "is_one_series",
+        "parent_type": "dataset",
+        "tag_type": "bool",
+        "short_descr": "does the data consist of a single series?",
+        "user_facing": True,
+    }
+
+
+class n_panels(_BaseTag):
+    """Property: Number of panels in the dataset.
+
+    - String name: ``"n_panels"``
+    - Public property tag
+    - Values: integer
+    - Example: ``5``
+    - Default: ``1``
+
+    If the tag is set, it specifies the number of panels in the dataset.
+    """
+
+    _tags = {
+        "tag_name": "n_panels",
+        "parent_type": "dataset",
+        "tag_type": "int",
+        "short_descr": "number of panels in the dataset",
+        "user_facing": True,
+    }
+
+
+class is_one_panel(_BaseTag):
+    """Property: Whether the dataset consists of a single panel.
+
+    - String name: ``"is_one_panel"``
+    - Public property tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    If the tag is ``True``, the dataset consists of a single panel.
+
+    If the tag is ``False``, the dataset consists of multiple panels.
+    """
+
+    _tags = {
+        "tag_name": "is_one_panel",
+        "parent_type": "dataset",
+        "tag_type": "bool",
+        "short_descr": "does the dataset consist of a single panel?",
+        "user_facing": True,
+    }
+
+
+class is_equally_spaced(_BaseTag):
+    """Property: Whether the series in the dataset are equally spaced.
+
+    - String name: ``"is_equally_spaced"``
+    - Public property tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    If the tag is ``True``, the series in the dataset are equally spaced.
+
+    If the tag is ``False``, the series in the dataset are not equally spaced.
+    """
+
+    _tags = {
+        "tag_name": "is_equally_spaced",
+        "parent_type": "dataset",
+        "tag_type": "bool",
+        "short_descr": "are the series in the dataset equally spaced?",
+        "user_facing": True,
+    }
+
+
+class is_equal_length(_BaseTag):
+    """Property: Whether the series in the dataset are of equal length.
+
+    - String name: ``"is_equal_length"``
+    - Public property tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    If the tag is ``True``, the series in the dataset are of equal length.
+
+    If the tag is ``False``, the series in the dataset are of unequal length.
+    """
+
+    _tags = {
+        "tag_name": "is_equal_length",
+        "parent_type": "dataset",
+        "tag_type": "bool",
+        "short_descr": "are the series in the dataset of equal length?",
+        "user_facing": True,
+    }
+
+
+class is_equal_index(_BaseTag):
+    """Property: Whether the series in the dataset have equal index set.
+
+    - String name: ``"is_equal_index"``
+    - Public property tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    If the tag is ``True``, the series in the dataset have equal index set.
+
+    If the tag is ``False``, the series in the dataset have unequal index set.
+    """
+
+    _tags = {
+        "tag_name": "is_equal_index",
+        "parent_type": "dataset",
+        "tag_type": "bool",
+        "short_descr": "do the series in the dataset have equal index set?",
+        "user_facing": True,
+    }
+
+
+class is_empty(_BaseTag):
+    """Property: Whether the dataset is empty.
+
+    - String name: ``"is_empty"``
+    - Public property tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    If the tag is ``True``, the dataset is empty.
+
+    If the tag is ``False``, the dataset is not empty.
+    """
+
+    _tags = {
+        "tag_name": "is_empty",
+        "parent_type": "dataset",
+        "tag_type": "bool",
+        "short_descr": "is the dataset empty?",
+        "user_facing": True,
+    }
+
+
+class has_nans(_BaseTag):
+    """Property: Whether the dataset contains NaNs.
+
+    - String name: ``"has_nans"``
+    - Public property tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    If the tag is ``True``, the dataset contains NaNs.
+
+    If the tag is ``False``, the dataset does not contain NaNs.
+    """
+
+    _tags = {
+        "tag_name": "has_nans",
+        "parent_type": "dataset",
+        "tag_type": "bool",
+        "short_descr": "does the dataset contain nans?",
+        "user_facing": True,
+    }
+
+
+class n_instances(_BaseTag):
+    """Property: Number of instances in the dataset.
+
+    - String name: ``"n_instances"``
+    - Public property tag
+    - Values: integer
+    - Example: ``100``
+    - Default: ``0``
+
+    If the tag is set, it specifies the number of instances in the dataset.
+    """
+
+    _tags = {
+        "tag_name": "n_instances",
+        "parent_type": "dataset",
+        "tag_type": "int",
+        "short_descr": "number of instances in the dataset",
+        "user_facing": True,
+    }
+
+
+class n_instances_train(_BaseTag):
+    """Property: Number of training instances in the dataset.
+
+    - String name: ``"n_instances_train"``
+    - Public property tag
+    - Values: integer
+    - Example: ``80``
+    - Default: ``0``
+
+    If the tag is set, it specifies the number of training instances in the dataset.
+    """
+
+    _tags = {
+        "tag_name": "n_instances_train",
+        "parent_type": "dataset",
+        "tag_type": "int",
+        "short_descr": "number of training instances in the dataset",
+        "user_facing": True,
+    }
+
+
+class n_instances_test(_BaseTag):
+    """Property: Number of test instances in the dataset.
+
+    - String name: ``"n_instances_test"``
+    - Public property tag
+    - Values: integer
+    - Example: ``20``
+    - Default: ``0``
+
+    If the tag is set, it specifies the number of test instances in the dataset.
+    """
+
+    _tags = {
+        "tag_name": "n_instances_test",
+        "parent_type": "dataset",
+        "tag_type": "int",
+        "short_descr": "number of test instances in the dataset",
+        "user_facing": True,
+    }
+
+
+class n_classes(_BaseTag):
+    """Property: Number of classes in the dataset.
+
+    - String name: ``"n_classes"``
+    - Public property tag
+    - Values: integer
+    - Example: ``3``
+    - Default: ``0``
+
+    If the tag is set, it specifies the number of classes in the dataset.
+    """
+
+    _tags = {
+        "tag_name": "n_classes",
+        "parent_type": "classification_dataset",
+        "tag_type": "int",
+        "short_descr": "number of classes in the dataset",
+        "user_facing": True,
+    }
+
+
+class frequency(_BaseTag):
+    """Property: Frequency of the time series in the dataset.
+
+    - String name: ``"frequency"``
+    - Public property tag
+    - Values: string
+    - Example: ``"D"``
+    - Default: ``"M"``
+
+    The frequency of the timeseries in the dataset. The frequency is a string,
+    which can be one of the following values:
+
+    * ``"Y"``: yearly
+    * ``"M"``: monthly
+    * ``"W"``: weekly
+    * ``"D"``: daily
+    * ``"H"``: hourly
+
+    Similar to frequencies in `pandas` library.
+    """
+
+    _tags = {
+        "tag_name": "frequency",
+        "parent_type": "dataset",
+        "tag_type": "str",
+        "short_descr": "frequency of the time series in the dataset",
+        "user_facing": True,
+    }
+
+
+class has_exogenous(_BaseTag):
+    """Property: Whether the dataset contains exogenous variables.
+
+    - String name: ``"has_exogenous"``
+    - Public property tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    If the tag is ``True``, the dataset contains exogenous variables.
+
+    If the tag is ``False``, the dataset does not contain exogenous variables.
+    """
+
+    _tags = {
+        "tag_name": "has_exogenous",
+        "parent_type": "forecasting_dataset",
+        "tag_type": "bool",
+        "short_descr": "does the dataset contain exogenous variables?",
+        "user_facing": True,
+    }
+
+
+class n_hierarchy_levels(_BaseTag):
+    """Property: Number of hierarchy levels in the dataset.
+
+    - String name: ``"n_hierarchy_levels"``
+    - Public property tag
+    - Values: integer
+    - Example: ``3``
+    - Default: ``0``
+
+    If the tag is set, it specifies the number of hierarchy levels in the dataset.
+    This number is equivalent to the number of indexes in timeseries forecasting
+    dataframe structure minus 1 (the time index).
+    """
+
+    _tags = {
+        "tag_name": "n_hierarchy_levels",
+        "parent_type": "dataset",
+        "tag_type": "int",
+        "short_descr": "number of hierarchy levels in the dataset",
+        "user_facing": True,
+    }
+
+
 ESTIMATOR_TAG_REGISTER = [
     (
         "sktime_version",
@@ -1845,84 +2212,6 @@ ESTIMATOR_TAG_REGISTER = [
         "estimator",
         ("list", "str"),
         "parameters reserved by the base class and present in all child estimators",
-    ),
-    (
-        "is_univariate",
-        "dataset",
-        "bool",
-        "is the dataset univariate?",
-    ),
-    (
-        "is_one_series",
-        "dataset",
-        "bool",
-        "does the data consist of a single series?",
-    ),
-    (
-        "n_panels",
-        "dataset",
-        "int",
-        "number of panels in the dataset",
-    ),
-    (
-        "is_one_panel",
-        "dataset",
-        "bool",
-        "does the dataset consist of a single panel?",
-    ),
-    (
-        "is_equally_spaced",
-        "dataset",
-        "bool",
-        "are the series in the dataset equally spaced?",
-    ),
-    (
-        "is_equal_length",
-        "dataset",
-        "bool",
-        "are the series in the dataset of equal length?",
-    ),
-    (
-        "is_equal_index",
-        "dataset",
-        "bool",
-        "do the series in the dataset have equal index set?",
-    ),
-    (
-        "is_empty",
-        "dataset",
-        "bool",
-        "is the dataset empty?",
-    ),
-    (
-        "has_nans",
-        "dataset",
-        "bool",
-        "does the dataset contain nans?",
-    ),
-    (
-        "n_instances",
-        "dataset",
-        "int",
-        "number of instances in the dataset",
-    ),
-    (
-        "n_instances_train",
-        "dataset",
-        "int",
-        "number of training instances in the dataset",
-    ),
-    (
-        "n_instances_test",
-        "dataset",
-        "int",
-        "number of test instances in the dataset",
-    ),
-    (
-        "n_classes",
-        "dataset",
-        "int",
-        "number of classes in the dataset",
     ),
     (
         "split_hierarchical",
