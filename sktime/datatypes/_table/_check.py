@@ -34,24 +34,81 @@ metadata: dict - metadata about obj if valid, otherwise None
         "feature_names": list of int or object, names of variables in table
 """
 
-__author__ = ["fkiraly"]
-
-__all__ = ["check_dict"]
-
 import numpy as np
 import pandas as pd
 
-from sktime.datatypes._common import _req, _ret
+from sktime.datatypes._base._common import _req, _ret
 from sktime.datatypes._dtypekind import _get_feature_kind, _get_table_dtypekind
-from sktime.utils.dependencies import _check_soft_dependencies
-
-check_dict = dict()
-
+from sktime.datatypes._table._base import ScitypeTable
 
 PRIMITIVE_TYPES = (float, int, str)
 
 
-def check_pddataframe_table(obj, return_metadata=False, var_name="obj"):
+class TablePdDataFrame(ScitypeTable):
+    """Data type: pandas.DataFrame based specification of data frame table.
+
+    Parameters are inferred by check.
+
+    Parameters
+    ----------
+    is_univariate: bool
+        True iff table has one variable
+    is_empty: bool
+        True iff table has no variables or no instances
+    has_nans: bool
+        True iff the table contains NaN values
+    n_instances: int
+        number of instances/rows in the table
+    n_features: int
+        number of variables in table
+    feature_names: list of int or object
+        names of variables in table
+    dtypekind_dfip: list of DtypeKind enum
+        list of DtypeKind enum values for each feature in the panel,
+        following the data frame interface protocol
+    feature_kind: list of str
+        list of feature kind strings for each feature in the panel,
+        coerced to FLOAT or CATEGORICAL type
+    """
+
+    _tags = {
+        "scitype": "Table",
+        "name": "pd_DataFrame_Table",  # any string
+        "name_python": "table_pd_df",  # lower_snake_case
+        "name_aliases": [],
+        "python_version": None,
+        "python_dependencies": "pandas",
+        "capability:multivariate": True,
+        "capability:missing_values": True,
+        "capability:index": True,
+    }
+
+    def _check(self, obj, return_metadata=False, var_name="obj"):
+        """Check if obj is of this data type.
+
+        Parameters
+        ----------
+        obj : any
+            Object to check.
+        return_metadata : bool, optional (default=False)
+            Whether to return metadata.
+        var_name : str, optional (default="obj")
+            Name of the variable to check, for use in error messages.
+
+        Returns
+        -------
+        valid : bool
+            Whether obj is of this data type.
+        msg : str, only returned if return_metadata is True.
+            Error message if obj is not of this data type.
+        metadata : dict, only returned if return_metadata is True.
+            Metadata dictionary.
+        """
+        return _check_pddataframe_table(obj, return_metadata, var_name)
+
+
+def _check_pddataframe_table(obj, return_metadata=False, var_name="obj"):
+    """Check if obj is a pandas.DataFrame based specification of single time series."""
     metadata = dict()
 
     if not isinstance(obj, pd.DataFrame):
@@ -81,10 +138,70 @@ def check_pddataframe_table(obj, return_metadata=False, var_name="obj"):
     return _ret(True, None, metadata, return_metadata)
 
 
-check_dict[("pd_DataFrame_Table", "Table")] = check_pddataframe_table
+class TablePdSeries(ScitypeTable):
+    """Data type: pandas.Series based specification of data frame table.
+
+    Parameters are inferred by check.
+
+    Parameters
+    ----------
+    is_univariate: bool
+        True iff table has one variable
+    is_empty: bool
+        True iff table has no variables or no instances
+    has_nans: bool
+        True iff the table contains NaN values
+    n_instances: int
+        number of instances/rows in the table
+    n_features: int
+        number of variables in table
+    feature_names: list of int or object
+        names of variables in table
+    dtypekind_dfip: list of DtypeKind enum
+        list of DtypeKind enum values for each feature in the panel,
+        following the data frame interface protocol
+    feature_kind: list of str
+        list of feature kind strings for each feature in the panel,
+        coerced to FLOAT or CATEGORICAL type
+    """
+
+    _tags = {
+        "scitype": "Table",
+        "name": "pd_Series_Table",  # any string
+        "name_python": "table_pd_series",  # lower_snake_case
+        "name_aliases": [],
+        "python_version": None,
+        "python_dependencies": "pandas",
+        "capability:multivariate": False,
+        "capability:missing_values": True,
+        "capability:index": True,
+    }
+
+    def _check(self, obj, return_metadata=False, var_name="obj"):
+        """Check if obj is of this data type.
+
+        Parameters
+        ----------
+        obj : any
+            Object to check.
+        return_metadata : bool, optional (default=False)
+            Whether to return metadata.
+        var_name : str, optional (default="obj")
+            Name of the variable to check, for use in error messages.
+
+        Returns
+        -------
+        valid : bool
+            Whether obj is of this data type.
+        msg : str, only returned if return_metadata is True.
+            Error message if obj is not of this data type.
+        metadata : dict, only returned if return_metadata is True.
+            Metadata dictionary.
+        """
+        return _check_pdseries_table(obj, return_metadata, var_name)
 
 
-def check_pdseries_table(obj, return_metadata=False, var_name="obj"):
+def _check_pdseries_table(obj, return_metadata=False, var_name="obj"):
     metadata = dict()
 
     if not isinstance(obj, pd.Series):
@@ -120,10 +237,70 @@ def check_pdseries_table(obj, return_metadata=False, var_name="obj"):
     return _ret(True, None, metadata, return_metadata)
 
 
-check_dict[("pd_Series_Table", "Table")] = check_pdseries_table
+class TableNp1D(ScitypeTable):
+    """Data type: 1D np.ndarray based specification of data frame table.
+
+    Parameters are inferred by check.
+
+    Parameters
+    ----------
+    is_univariate: bool
+        True iff table has one variable
+    is_empty: bool
+        True iff table has no variables or no instances
+    has_nans: bool
+        True iff the table contains NaN values
+    n_instances: int
+        number of instances/rows in the table
+    n_features: int
+        number of variables in table
+    feature_names: list of int or object
+        names of variables in table
+    dtypekind_dfip: list of DtypeKind enum
+        list of DtypeKind enum values for each feature in the panel,
+        following the data frame interface protocol
+    feature_kind: list of str
+        list of feature kind strings for each feature in the panel,
+        coerced to FLOAT or CATEGORICAL type
+    """
+
+    _tags = {
+        "scitype": "Table",
+        "name": "numpy1D",  # any string
+        "name_python": "table_numpy1d",  # lower_snake_case
+        "name_aliases": [],
+        "python_version": None,
+        "python_dependencies": "numpy",
+        "capability:multivariate": False,
+        "capability:missing_values": True,
+        "capability:index": False,
+    }
+
+    def _check(self, obj, return_metadata=False, var_name="obj"):
+        """Check if obj is of this data type.
+
+        Parameters
+        ----------
+        obj : any
+            Object to check.
+        return_metadata : bool, optional (default=False)
+            Whether to return metadata.
+        var_name : str, optional (default="obj")
+            Name of the variable to check, for use in error messages.
+
+        Returns
+        -------
+        valid : bool
+            Whether obj is of this data type.
+        msg : str, only returned if return_metadata is True.
+            Error message if obj is not of this data type.
+        metadata : dict, only returned if return_metadata is True.
+            Metadata dictionary.
+        """
+        return _check_numpy1d_table(obj, return_metadata, var_name)
 
 
-def check_numpy1d_table(obj, return_metadata=False, var_name="obj"):
+def _check_numpy1d_table(obj, return_metadata=False, var_name="obj"):
     metadata = dict()
 
     if not isinstance(obj, np.ndarray):
@@ -159,10 +336,70 @@ def check_numpy1d_table(obj, return_metadata=False, var_name="obj"):
     return _ret(True, None, metadata, return_metadata)
 
 
-check_dict[("numpy1D", "Table")] = check_numpy1d_table
+class TableNp2D(ScitypeTable):
+    """Data type: 2D np.ndarray based specification of data frame table.
+
+    Parameters are inferred by check.
+
+    Parameters
+    ----------
+    is_univariate: bool
+        True iff table has one variable
+    is_empty: bool
+        True iff table has no variables or no instances
+    has_nans: bool
+        True iff the table contains NaN values
+    n_instances: int
+        number of instances/rows in the table
+    n_features: int
+        number of variables in table
+    feature_names: list of int or object
+        names of variables in table
+    dtypekind_dfip: list of DtypeKind enum
+        list of DtypeKind enum values for each feature in the panel,
+        following the data frame interface protocol
+    feature_kind: list of str
+        list of feature kind strings for each feature in the panel,
+        coerced to FLOAT or CATEGORICAL type
+    """
+
+    _tags = {
+        "scitype": "Table",
+        "name": "numpy2D",  # any string
+        "name_python": "table_numpy2d",  # lower_snake_case
+        "name_aliases": [],
+        "python_version": None,
+        "python_dependencies": "numpy",
+        "capability:multivariate": True,
+        "capability:missing_values": True,
+        "capability:index": False,
+    }
+
+    def _check(self, obj, return_metadata=False, var_name="obj"):
+        """Check if obj is of this data type.
+
+        Parameters
+        ----------
+        obj : any
+            Object to check.
+        return_metadata : bool, optional (default=False)
+            Whether to return metadata.
+        var_name : str, optional (default="obj")
+            Name of the variable to check, for use in error messages.
+
+        Returns
+        -------
+        valid : bool
+            Whether obj is of this data type.
+        msg : str, only returned if return_metadata is True.
+            Error message if obj is not of this data type.
+        metadata : dict, only returned if return_metadata is True.
+            Metadata dictionary.
+        """
+        return _check_numpy2d_table(obj, return_metadata, var_name)
 
 
-def check_numpy2d_table(obj, return_metadata=False, var_name="obj"):
+def _check_numpy2d_table(obj, return_metadata=False, var_name="obj"):
     metadata = dict()
 
     if not isinstance(obj, np.ndarray):
@@ -197,10 +434,70 @@ def check_numpy2d_table(obj, return_metadata=False, var_name="obj"):
     return _ret(True, None, metadata, return_metadata)
 
 
-check_dict[("numpy2D", "Table")] = check_numpy2d_table
+class TableListOfDict(ScitypeTable):
+    """Data type: list of dict based specification of data frame table.
+
+    Parameters are inferred by check.
+
+    Parameters
+    ----------
+    is_univariate: bool
+        True iff table has one variable
+    is_empty: bool
+        True iff table has no variables or no instances
+    has_nans: bool
+        True iff the table contains NaN values
+    n_instances: int
+        number of instances/rows in the table
+    n_features: int
+        number of variables in table
+    feature_names: list of int or object
+        names of variables in table
+    dtypekind_dfip: list of DtypeKind enum
+        list of DtypeKind enum values for each feature in the panel,
+        following the data frame interface protocol
+    feature_kind: list of str
+        list of feature kind strings for each feature in the panel,
+        coerced to FLOAT or CATEGORICAL type
+    """
+
+    _tags = {
+        "scitype": "Table",
+        "name": "list_of_dict",  # any string
+        "name_python": "table_list_of_dict",  # lower_snake_case
+        "name_aliases": [],
+        "python_version": None,
+        "python_dependencies": "numpy",
+        "capability:multivariate": True,
+        "capability:missing_values": True,
+        "capability:index": False,
+    }
+
+    def _check(self, obj, return_metadata=False, var_name="obj"):
+        """Check if obj is of this data type.
+
+        Parameters
+        ----------
+        obj : any
+            Object to check.
+        return_metadata : bool, optional (default=False)
+            Whether to return metadata.
+        var_name : str, optional (default="obj")
+            Name of the variable to check, for use in error messages.
+
+        Returns
+        -------
+        valid : bool
+            Whether obj is of this data type.
+        msg : str, only returned if return_metadata is True.
+            Error message if obj is not of this data type.
+        metadata : dict, only returned if return_metadata is True.
+            Metadata dictionary.
+        """
+        return _check_list_of_dict_table(obj, return_metadata, var_name)
 
 
-def check_list_of_dict_table(obj, return_metadata=False, var_name="obj"):
+def _check_list_of_dict_table(obj, return_metadata=False, var_name="obj"):
     metadata = dict()
 
     if not isinstance(obj, list):
@@ -258,28 +555,131 @@ def check_list_of_dict_table(obj, return_metadata=False, var_name="obj"):
     return _ret(True, None, metadata, return_metadata)
 
 
-check_dict[("list_of_dict", "Table")] = check_list_of_dict_table
+class TablePolarsEager(ScitypeTable):
+    """Data type: eager polars DataFrame based specification of data frame table.
+
+    Parameters are inferred by check.
+
+    Parameters
+    ----------
+    is_univariate: bool
+        True iff table has one variable
+    is_empty: bool
+        True iff table has no variables or no instances
+    has_nans: bool
+        True iff the table contains NaN values
+    n_instances: int
+        number of instances/rows in the table
+    n_features: int
+        number of variables in table
+    feature_names: list of int or object
+        names of variables in table
+    dtypekind_dfip: list of DtypeKind enum
+        list of DtypeKind enum values for each feature in the panel,
+        following the data frame interface protocol
+    feature_kind: list of str
+        list of feature kind strings for each feature in the panel,
+        coerced to FLOAT or CATEGORICAL type
+    """
+
+    _tags = {
+        "scitype": "Table",
+        "name": "polars_eager_table",  # any string
+        "name_python": "table_polars_eager",  # lower_snake_case
+        "name_aliases": [],
+        "python_version": None,
+        "python_dependencies": ["polars", "pyarrow"],
+        "capability:multivariate": True,
+        "capability:missing_values": True,
+        "capability:index": False,
+    }
+
+    def _check(self, obj, return_metadata=False, var_name="obj"):
+        """Check if obj is of this data type.
+
+        Parameters
+        ----------
+        obj : any
+            Object to check.
+        return_metadata : bool, optional (default=False)
+            Whether to return metadata.
+        var_name : str, optional (default="obj")
+            Name of the variable to check, for use in error messages.
+
+        Returns
+        -------
+        valid : bool
+            Whether obj is of this data type.
+        msg : str, only returned if return_metadata is True.
+            Error message if obj is not of this data type.
+        metadata : dict, only returned if return_metadata is True.
+            Metadata dictionary.
+        """
+        from sktime.datatypes._adapter.polars import check_polars_frame
+
+        return check_polars_frame(obj, return_metadata, var_name, lazy=False)
 
 
-if _check_soft_dependencies(["polars", "pyarrow"], severity="none"):
-    from sktime.datatypes._adapter.polars import check_polars_frame
+class TablePolarsLazy(ScitypeTable):
+    """Data type: lazy polars DataFrame based specification of data frame table.
 
-    def check_polars_table(obj, return_metadata=False, var_name="obj"):
-        return check_polars_frame(
-            obj=obj,
-            return_metadata=return_metadata,
-            var_name=var_name,
-            lazy=False,
-        )
+    Parameters are inferred by check.
 
-    check_dict[("polars_eager_table", "Table")] = check_polars_table
+    Parameters
+    ----------
+    is_univariate: bool
+        True iff table has one variable
+    is_empty: bool
+        True iff table has no variables or no instances
+    has_nans: bool
+        True iff the table contains NaN values
+    n_instances: int
+        number of instances/rows in the table
+    n_features: int
+        number of variables in table
+    feature_names: list of int or object
+        names of variables in table
+    dtypekind_dfip: list of DtypeKind enum
+        list of DtypeKind enum values for each feature in the panel,
+        following the data frame interface protocol
+    feature_kind: list of str
+        list of feature kind strings for each feature in the panel,
+        coerced to FLOAT or CATEGORICAL type
+    """
 
-    def check_polars_table_lazy(obj, return_metadata=False, var_name="obj"):
-        return check_polars_frame(
-            obj=obj,
-            return_metadata=return_metadata,
-            var_name=var_name,
-            lazy=True,
-        )
+    _tags = {
+        "scitype": "Table",
+        "name": "polars_lazy_table",  # any string
+        "name_python": "table_polars_lazy",  # lower_snake_case
+        "name_aliases": [],
+        "python_version": None,
+        "python_dependencies": ["polars", "pyarrow"],
+        "capability:multivariate": True,
+        "capability:missing_values": True,
+        "capability:index": False,
+    }
 
-    check_dict[("polars_lazy_table", "Table")] = check_polars_table_lazy
+    def _check(self, obj, return_metadata=False, var_name="obj"):
+        """Check if obj is of this data type.
+
+        Parameters
+        ----------
+        obj : any
+            Object to check.
+        return_metadata : bool, optional (default=False)
+            Whether to return metadata.
+        var_name : str, optional (default="obj")
+            Name of the variable to check, for use in error messages.
+
+        Returns
+        -------
+        valid : bool
+            Whether obj is of this data type.
+        msg : str, only returned if return_metadata is True.
+            Error message if obj is not of this data type.
+        metadata : dict, only returned if return_metadata is True.
+            Metadata dictionary.
+        """
+        from sktime.datatypes._adapter.polars import check_polars_frame
+
+        return check_polars_frame(obj, return_metadata, var_name, lazy=True)

@@ -99,6 +99,17 @@ Pipeline building - AutoML, switches and multiplexing
     TransformIf
     Id
 
+Pipeline building - Logging
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Logger
+
 Sklearn and pandas adapters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -229,6 +240,14 @@ Auto-correlation-based features
 
 Moment-based features
 ~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.signature
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SignatureMoments
 
 .. currentmodule:: sktime.transformations.panel.signature_based
 
@@ -579,6 +598,14 @@ Seasonality and Date-Time Features
     :template: class.rst
 
     FourierTransform
+
+.. currentmodule:: sktime.transformations.series.basisfunction
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    RBFTramsformer
 
 .. currentmodule:: sktime.transformations.series.peak
 

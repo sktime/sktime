@@ -5,7 +5,7 @@
 import numpy as np
 from sklearn.base import clone
 
-from sktime.annotation.base._base import BaseSeriesAnnotator
+from sktime.detection.base import BaseDetector
 from sktime.utils.dependencies import _check_soft_dependencies
 
 __author__ = ["mloning", "satya-pattnaik", "fkiraly"]
@@ -13,7 +13,7 @@ __author__ = ["mloning", "satya-pattnaik", "fkiraly"]
 import pandas as pd
 
 
-class PyODAnnotator(BaseSeriesAnnotator):
+class PyODAnnotator(BaseDetector):
     """Transformer that applies outlier detector from pyOD.
 
     Parameters
@@ -21,6 +21,16 @@ class PyODAnnotator(BaseSeriesAnnotator):
     estimator : PyOD estimator
         See ``https://pyod.readthedocs.io/en/latest/`` documentation for a detailed
         description of all options.
+
+    Examples
+    --------
+    >>> from sktime.annotation.datagen import piecewise_normal_multivariate
+    >>> X = pd.DataFrame(piecewise_normal_multivariate(
+    ...     means=[[1, 3], [4, 5]], lengths=[3, 4], random_state=10))
+    >>> from sktime.annotation.adapters._pyod import PyODAnnotator
+    >>> from pyod.models.ecod import ECOD
+    >>> model = PyODAnnotator(ECOD())  # doctest: +SKIP
+    >>> model.fit_transform(X)  # doctest: +SKIP
     """
 
     _tags = {
@@ -72,7 +82,8 @@ class PyODAnnotator(BaseSeriesAnnotator):
 
         Parameters
         ----------
-        X : pd.DataFrame - data to annotate, time series
+        X : pd.DataFrame
+            Time series subject to detection, which will be assigned labels or scores.
 
         Returns
         -------

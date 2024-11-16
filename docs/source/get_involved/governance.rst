@@ -183,6 +183,7 @@ Algorithm maintainers that have been unresponsive for a 3 month period automatic
 give up their rights and responsibilities as algorithm maintainers.
 
 Unresponsiveness is defined as:
+
 * not engaging with decision making procedures within the reasonably time frames defined there
 * not reacting to issues or bug reports related to the algorithm, within ten working days
 

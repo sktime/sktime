@@ -1679,6 +1679,12 @@ class y_inner_mtype(_BaseTag):
 
 ESTIMATOR_TAG_REGISTER = [
     (
+        "sktime_version",
+        "object",
+        "str",
+        "sktime version from which this estimator class originates",
+    ),
+    (
         "skip-inverse-transform",
         "transformer",
         "bool",
@@ -1824,13 +1830,13 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "task",
-        "series-annotator",
+        "detector",
         "str",
         "subtype of series annotator, e.g., 'anomaly_detection', 'segmentation'",
     ),
     (
         "learning_type",
-        "series-annotator",
+        "detector",
         "str",
         "type of learning, e.g., 'supervised', 'unsupervised'",
     ),

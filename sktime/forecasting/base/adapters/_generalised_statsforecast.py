@@ -586,14 +586,14 @@ class StatsForecastBackAdapter:
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from sktime.forecasting.theta import ThetaForecaster
+        from sktime.forecasting.var import VAR
+        from sktime.utils.dependencies import _check_estimator_deps
 
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
-        if _check_soft_dependencies("statsmodels", severity="none"):
-            from sktime.forecasting.theta import ThetaForecaster
-            from sktime.forecasting.var import VAR
-
+        stm_ests = [ThetaForecaster, VAR]
+        if _check_estimator_deps(stm_ests, severity="none"):
             params = [
                 {
                     "estimator": ThetaForecaster(),

@@ -10,7 +10,7 @@ __all__ = ["scenarios_clustering"]
 from inspect import isclass
 
 from sktime.base import BaseObject
-from sktime.registry import scitype
+from sktime.registry import is_scitype
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_panel_X, make_clustering_problem
 from sktime.utils._testing.scenarios import TestScenario
@@ -69,7 +69,7 @@ class ClustererTestScenario(TestScenario, BaseObject):
         # applicable only if obj inherits from BaseClassifier, BaseEarlyClassifier or
         #   BaseRegressor. currently we test both classifiers and regressors using these
         #   scenarios
-        if scitype(obj) != "clusterer":
+        if is_scitype(obj, "clusterer"):
             return False
 
         # if X is multivariate, applicable only if can handle multivariate
