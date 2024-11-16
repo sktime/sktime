@@ -1889,6 +1889,30 @@ class MeanSquaredError(BaseForecastingErrorMetric):
 
 
 class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
+    """
+    Mean Squared Error Percentage (MSE%) forecasting error metric.
+    
+    Calculates the mean squared error percentage between the true and predicted values.
+    Optionally, the root mean squared error percentage (RMSE%) can be computed by setting
+    `square_root=True`.
+    
+    Parameters
+    ----------
+    square_root : bool, default = False
+        Whether to take the square root of the metric
+    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+            (n_outputs,), default='uniform_average'
+        Defines how to aggregate metric for multivariate (multioutput) data.
+        If array-like, values used as weights to average the errors.
+        If 'raw_values', returns a full set of errors in case of multioutput input.
+        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+    multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
+        Defines how to aggregate metric for hierarchical data (with levels).
+        If 'uniform_average' (default), errors are mean-averaged across levels.
+        If 'uniform_average_time', metric is applied to all data, ignoring level index.
+        If 'raw_values', does not average errors across levels, hierarchy is retained.
+    """
+    
     def __init__(
         self,
         multioutput="uniform_average",
@@ -1897,11 +1921,49 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
     ):
         self.square_root = square_root
         self.multioutput = multioutput
-        
+
         super().__init__(multioutput=multioutput, multilevel=multilevel)
 
-
     def _evaluate(self, y_true, y_pred, **kwargs):
+        """
+        Evaluate the Mean Squared Error Percentage between `y_true` and `y_pred`.
+
+        Parameters
+        ----------
+        y_true : pd.Series or pd.DataFrame
+            Ground truth (actual) target values.
+            Can be a Series or DataFrame for univariate or multivariate forecasts.
+
+        y_pred : pd.Series or pd.DataFrame
+            Forecasted target values.
+            Must have the same shape as `y_true`.
+
+        Returns
+        -------
+        loss : float or pd.Series
+            The calculated Mean Squared Error Percentage.
+            - If `multioutput='raw_values'`, returns a Series with the MSPE for each output.
+            - Otherwise, returns a scalar value representing the aggregated MSPE.
+
+        Notes
+        -----
+        The Mean Squared Error Percentage (MSE%) is calculated as:
+
+        .. math::
+            \\text{MSE%} = \\frac{ \\frac{1}{n} \\sum_{i=1}^{n} (y_i - \\hat{y}_i)^2 }
+                                { \\sum_{i=1}^{n} \\frac{y_i}{n} }
+
+        where:
+        - \\( y_i \\) are the true values,
+        - \\( \\hat{y}_i \\) are the predicted values,
+        - \\( n \\) is the number of observations.
+
+        If `square_root` is set to True, the Root Mean Squared Error Percentage (RMSPE) is computed:
+
+        .. math::
+            \\text{RMSPE} = \\sqrt{ \\text{MSPE} }
+
+        """
         multioutput = self.multioutput
         raw_values = (y_true - y_pred) ** 2
         raw_values = self._get_weighted_df(raw_values, **kwargs)
@@ -1910,41 +1972,9 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
         if self.square_root:
             msqe = msqe.pow(0.5)
 
-        msqe = abs(msqe / (np.sum(y_true.mean()))) * 100
-        
-        return self._handle_multioutput(msqe, multioutput)
-        
+        msqe = abs(msqe / (np.sum(y_true.mean())))
 
-    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
-        multioutput = self.multioutput
-        
-        raw_values = (y_true - y_pred) ** 2
-        
-        if self.square_root:
-            n = raw_values.shape[0]
-            mse = raw_values.mean(axis=0)
-            rmse = mse.pow(0.5)
-            sqe_sum = raw_values.sum(axis=0)
-            mse_jackknife = (sqe_sum - raw_values) / (n - 1)
-            rmse_jackknife = mse_jackknife.pow(0.5)
-            pseudo_values = n * rmse - (n - 1) * rmse_jackknife
-        else:
-            pseudo_values = raw_values
-        
-        pseudo_values = abs(pseudo_values) if not self.square_root
-        pseudo_values = (pseudo_values / np.sum(y_true).mean())
-       
-        weightedValue = self._get_weighted_df(pseudo_values, **kwargs)
-       
-        return self._handle_multioutput(weightedValue, multioutput)
-    
-    
-class Bias(BaseForecastingErrorMetric):
-    
-    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
-        multioutput = self.multioutput
-        
-        return super()._evaluate_by_index(y_true, y_pred, **kwargs)
+        return self._handle_multioutput(msqe, multioutput)
 
 class MedianSquaredError(BaseForecastingErrorMetricFunc):
     """Median squared error (MdSE) or root median squared error (RMdSE).
