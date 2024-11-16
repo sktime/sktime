@@ -55,7 +55,7 @@ class BaseForecastingDataset(BaseDataset):
             data containers corresponding to strings in args, in same order
         """
         # Validate args
-        if any([_x in args for _x in ["X_test" "y_test"]]):
+        if any([_x in args for _x in ["X_test", "y_test"]]):
             if not self.get_tag("n_instances_test", 0):
                 raise ValueError("Test data split not available for this dataset. ")
         if any([_x in args for _x in ["X_train", "y_train"]]):
