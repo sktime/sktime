@@ -659,7 +659,7 @@ class NnetsauceDeepMTS(NnetsauceMTS):
         self.verbose = verbose
         self.show_progress = show_progress
 
-        super.__init__(
+        super().__init__(
             obj=self.obj,
             n_hidden_features=self.n_hidden_features,
             activation_name=self.activation_name,
