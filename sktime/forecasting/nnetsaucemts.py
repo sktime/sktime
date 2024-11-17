@@ -684,9 +684,9 @@ class NnetsauceDeepMTS(NnetsauceMTS):
             show_progress=self.show_progress,
         )
 
-        from nnetsauce import DeepMTS as DeepMTS0
+        from nnetsauce import DeepMTS
 
-        self.fitter = DeepMTS0(
+        self.fitter = DeepMTS(
             obj=self.obj,
             n_layers=self.n_layers,
             n_hidden_features=self.n_hidden_features,
