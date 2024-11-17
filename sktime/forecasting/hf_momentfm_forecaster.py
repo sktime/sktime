@@ -435,9 +435,9 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         if num_channels != self._y_shape[1]:
             raise ValueError(
                 "The number of multivariate time series "
-                f"{num_channels} does not match the "
+                f"{num_channels} passed in predict does not match the "
                 f"number of multivariate time series {self._y_shape[1]} "
-                "used to train the model."
+                "used to train the model in fit."
             )
             pass
         # transpose it to change it into (C, S) size
