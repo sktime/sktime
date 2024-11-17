@@ -1891,11 +1891,11 @@ class MeanSquaredError(BaseForecastingErrorMetric):
 class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
     """
     Mean Squared Error Percentage (MSE%) forecasting error metric.
-    
+
     Calculates the mean squared error percentage between the true and predicted values.
-    Optionally, the root mean squared error percentage (RMSE%) can be computed by setting
-    `square_root=True`.
-    
+    Optionally, the root mean squared error percentage (RMSE%) can be computed by
+    setting `square_root=True`.
+
     Parameters
     ----------
     square_root : bool, default = False
@@ -1925,7 +1925,7 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
         super().__init__(multioutput=multioutput, multilevel=multilevel)
 
     def _evaluate(self, y_true, y_pred, **kwargs):
-        """
+        r"""
         Evaluate the Mean Squared Error Percentage between `y_true` and `y_pred`.
 
         Parameters
@@ -1942,7 +1942,8 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
         -------
         loss : float or pd.Series
             The calculated Mean Squared Error Percentage.
-            - If `multioutput='raw_values'`, returns a Series with the MSPE for each output.
+            - If `multioutput='raw_values'`, returns a Series with the MSPE for
+            each output.
             - Otherwise, returns a scalar value representing the aggregated MSPE.
 
         Notes
@@ -1958,7 +1959,8 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
         - \\( \\hat{y}_i \\) are the predicted values,
         - \\( n \\) is the number of observations.
 
-        If `square_root` is set to True, the Root Mean Squared Error Percentage (RMSPE) is computed:
+        If `square_root` is set to True, the Root Mean Squared Error Percentage (RMSPE)
+        is computed:
 
         .. math::
             \\text{RMSPE} = \\sqrt{ \\text{MSPE} }
