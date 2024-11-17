@@ -23,9 +23,6 @@ else:
         pass
 
 
-# if _check_soft_dependencies(["momentfm"], severity="none"):
-#     from momentfm import MOMENTPipeline
-#     from momentfm.utils.forecasting_metrics import get_forecasting_metrics
 class MomentFMForecaster(_BaseGlobalForecaster):
     """
     Interface for forecasting with the deep learning time series model momentfm.
@@ -124,6 +121,9 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         to be individually set. If a parameter inside a config is a
         duplicate of one already passed in individually, it will be overwritten.
 
+    criterion : criterion, default = torch.nn.MSELoss
+        Criterion to use during training.
+
     return_model_to_cpu : bool, default = False
         After fitting and training, will return the `momentfm` model to the cpu.
     """
@@ -172,6 +172,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         max_norm=5.0,
         train_val_split=0.4,
         transformer_backbone="google/flan-t5-large",
+        criterion=None,
         config=None,
         return_model_to_cpu=False,
     ):
@@ -194,7 +195,8 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         self.transformer_backbone = transformer_backbone
         self.config = config
         self._config = config if config is not None else {}
-        self.criterion = MSELoss()
+        self.criterion = criterion
+        self._criterion = self.criterion if self.criterion else MSELoss()
         self._moment_seq_len = 512
         self.return_model_to_cpu = return_model_to_cpu
 
@@ -249,7 +251,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         self._criterion = (
             self._config["criterion"]
             if "criterion" in self._config.keys()
-            else self.criterion
+            else self._criterion
         )
         # evaluate the sequence length passed by the user
         self._seq_len = (
@@ -305,7 +307,6 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         )
         self.model.init()
         # preparing the datasets
-        raise ValueError("test_error")
         y_train, y_test = temporal_train_test_split(
             y, train_size=1 - self.train_val_split, test_size=self.train_val_split
         )
@@ -432,7 +433,12 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         else:  # this means sequence_length = self._seq_len == 512
             input_mask = _create_mask(self._moment_seq_len)
         if num_channels != self._y_shape[1]:
-            # Todo raise error here
+            raise ValueError(
+                "The number of multivariate time series "
+                f"{num_channels} does not match the "
+                f"number of multivariate time series {self._y_shape[1]} "
+                "used to train the model."
+            )
             pass
         # transpose it to change it into (C, S) size
         y_ = y_.transpose(0, 2, 1)
