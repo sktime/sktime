@@ -467,7 +467,7 @@ def _make_estimator_overview(app):
             "python_dependencies",
             "authors",
             "maintainers",
-        ]
+        ],
     }
 
     # todo: replace later by code similar to below
@@ -486,7 +486,7 @@ def _make_estimator_overview(app):
         "Dependencies",
         "Import Path",
         "Tags",
-    ] 
+    ]
 
     records = []
 
