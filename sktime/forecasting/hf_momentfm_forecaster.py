@@ -94,7 +94,9 @@ class MomentFMForecaster(_BaseGlobalForecaster):
 
     device : str
         torch device to use
-        default = gpu
+        default = "auto"
+        If set to auto, it will automatically use whatever device that
+        `accelerate` detects.
 
     pct_start : float
         percentage of total iterations where the learning rate rises during
@@ -167,7 +169,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         eval_batch_size=32,
         epochs=1,
         max_lr=1e-4,
-        device="gpu",
+        device="auto",
         pct_start=0.3,
         max_norm=5.0,
         train_val_split=0.4,
@@ -206,8 +208,6 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         from torch.optim.lr_scheduler import OneCycleLR
         from torch.utils.data import DataLoader
 
-        # initialize accelerator
-        accelerator = Accelerator()
         # keep a copy of y in case y is None in predict
         self._y = y
         self._y_index = self._y.index
@@ -274,11 +274,17 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             if "forecast_horizon" in self._config.keys()
             else None
         )
+
+        # device initialization
         self._device = (
             self._config["device"] if "device" in self._config.keys() else self.device
         )
         # check availability of user specified device
         self._device = _check_device(self._device)
+        # initialize accelerator
+        accelerator = Accelerator()
+        if self._device == "auto":
+            self._device = accelerator.device
 
         cur_epoch = 0
         max_epoch = self.epochs
@@ -648,6 +654,8 @@ def _run_epoch(
 
 
 def _check_device(device):
+    if device == "auto":
+        return device
     mps = False
     cuda = False
     if device == "mps":
