@@ -660,7 +660,7 @@ class NnetsauceDeepMTS(NnetsauceMTS):
         self.show_progress = show_progress
 
         super().__init__(
-            obj=self.obj,
+            regressor=self.obj,
             n_hidden_features=self.n_hidden_features,
             activation_name=self.activation_name,
             a=self.a,
