@@ -464,7 +464,7 @@ class SCINet_Tree(nn_module):
             )
 
 
-class EncoderTree(nn.Module):
+class EncoderTree(nn_module):
     """
     EncoderTree encodes data through SCINet levels.
 
