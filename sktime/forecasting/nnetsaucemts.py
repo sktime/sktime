@@ -442,7 +442,32 @@ class NnetsauceMTS(BaseForecaster):
             "verbose": 0,
             "show_progress": True,
         }
-        return params
+
+        params2 = {
+            "regressor": RidgeCV(),
+            "n_hidden_features": 5,
+            "activation_name": "relu",
+            "a": 0.01,
+            "nodes_sim": "uniform",
+            "bias": True,
+            "dropout": 0,
+            "direct_link": True,
+            "n_clusters": 2,
+            "cluster_encode": True,
+            "type_clust": "kmeans",
+            "type_scaling": ("std", "std", "std"),
+            "lags": 1,
+            "type_pi": "kde",
+            "block_size": None,
+            "replications": None,
+            "kernel": "gaussian",
+            "agg": "mean",
+            "seed": 123,
+            "backend": "cpu",
+            "verbose": 0,
+            "show_progress": True,
+        }
+        return [params, params2]
 
 
 class NnetsauceDeepMTS(NnetsauceMTS):
