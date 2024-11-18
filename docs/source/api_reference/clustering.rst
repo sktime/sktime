@@ -55,14 +55,21 @@ Spectral and kernel clustering
 
 .. currentmodule:: sktime.clustering.dbscan
 
+Density-based
+-------------
+
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
     TimeSeriesDBSCAN
 
-Spation-temporal clustering
----------------------------
+Spatio-temporal clustering
+--------------------------
+
+Spatio-temporal clusterers assume that the time series are, or include,
+observations of locations in space.
+
 .. currentmodule:: sktime.clustering.spatio_temporal
 
 .. autosummary::

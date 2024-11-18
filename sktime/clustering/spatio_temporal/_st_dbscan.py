@@ -16,10 +16,14 @@ from sktime.utils.warnings import warn
 
 
 class STDBSCAN(BaseClusterer):
-    """
-    Spatiotemporal DBSCAN clustering.
+    """Spatio-temporal DBSCAN clustering.
+
+    Implementation of STDBSCAN by Birant et al [1].
+    Partially based on the implementation of Cakmak et al [3].
 
     Clusters data based on specified spatial and temporal proximity thresholds.
+
+    Assumes that all variables are spatial coordinates.
 
     Parameters
     ----------
