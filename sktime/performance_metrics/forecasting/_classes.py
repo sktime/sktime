@@ -1926,7 +1926,7 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
 
     def _evaluate(self, y_true, y_pred, **kwargs):
         r"""
-        Evaluate the Mean Squared Error Percentage between `y_true` and `y_pred`.
+        Evaluate the Mean Squared Error Percentage (MSE%) between `y_true` and `y_pred`.
 
         Parameters
         ----------
@@ -1959,11 +1959,11 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
         - \\( \\hat{y}_i \\) are the predicted values,
         - \\( n \\) is the number of observations.
 
-        If `square_root` is set to True, the Root Mean Squared Error Percentage (RMSPE)
+        If `square_root` is set to True, the Root Mean Squared Error Percentage (RMSE%)
         is computed:
 
         .. math::
-            \\text{RMSPE} = \\sqrt{ \\text{MSPE} }
+            \\text{RMSE%} = \\sqrt{ \\text{MSE%} }
 
         """
         multioutput = self.multioutput
@@ -2027,12 +2027,11 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
         pseudo_values = n * rmsep - (n - 1) * rmsep_jackknife
         pseudo_values = self._get_weighted_df(pseudo_values, **kwargs)
 
-        if isinstance(multioutput, str):
-            if multioutput == "raw_values":
-                return pseudo_values
+        if multioutput == "raw_values":
+            return pseudo_values
 
-            if multioutput == "uniform_average":
-                return pseudo_values.mean(axis=1)
+        if multioutput == "uniform_average":
+            return pseudo_values.mean(axis=1)
 
         return pseudo_values.dot(multioutput)
 
