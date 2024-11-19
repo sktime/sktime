@@ -128,15 +128,15 @@ class STDBSCAN(BaseClusterer):
             The first index level is time, the second is object (agent) ID.
             Each row represents spatial coordinates of an object at a given time.
             Example of X:
-                index time | index object | coordinates x | coordinates y
-                -----------|--------------|----------------|---------------
-                0          | 0            | 0.1            | 0.2
-                0          | 1            | 0.3            | 0.4
-                1          | 0            | 0.2            | 0.3
-                1          | 1            | 0.4            | 0.5
-                1          | 2            | 0.5            | 0.6
-                2          | 0            | 0.3            | 0.4
-                2          | 3            | 0.6            | 0.7
+                index object | index time | coordinates x | coordinates y
+                -------------|------------|---------------|---------------
+                0            | 0          | 0.1           | 0.2
+                1            | 0          | 0.3           | 0.4
+                0            | 1          | 0.2           | 0.3
+                1            | 1          | 0.4           | 0.5
+                2            | 1          | 0.5           | 0.6
+                0            | 2          | 0.3           | 0.4
+                3            | 2          | 0.6           | 0.7
         y : ignored, exists for API consistency reasons
 
         Returns
@@ -146,6 +146,10 @@ class STDBSCAN(BaseClusterer):
         """
         if not self.eps1 > 0.0 or not self.eps2 > 0.0 or not self.min_samples > 0.0:
             raise ValueError("eps1, eps2, min_samples  must be positive")
+
+        # make sure that X is sorted by time
+        X = X.copy()
+        X.sort_index(inplace=True, ascending=True, level=1)
 
         self._X = X
 
@@ -176,7 +180,7 @@ class STDBSCAN(BaseClusterer):
     def _fit_dense(self, X):
         """Fit the dense distance matrix version of the ST-DBSCAN algorithm."""
         n, m = X.values.shape
-        time_index = X.index.get_level_values(0).to_numpy()
+        time_index = X.index.get_level_values(1).to_numpy()
 
         # Compute squared form Distance Matrix
         time_dist = pdist(time_index.reshape(n, 1), metric=self.metric)
@@ -193,7 +197,7 @@ class STDBSCAN(BaseClusterer):
     def _fit_sparse(self, X):
         """Fit the sparse distance matrix version of the ST-DBSCAN algorithm."""
         n, m = X.values.shape
-        time_index = X.index.get_level_values(0).to_numpy()
+        time_index = X.index.get_level_values(1).to_numpy()
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -240,7 +244,7 @@ class STDBSCAN(BaseClusterer):
            [10.2312/PE/EUROVAST/EUROVA12/019-023](https://doi.org/10.2312/PE/EUROVAST/EUROVA12/019-023).
         """
         # unique time points
-        time_index = X.index.get_level_values(0).to_numpy()
+        time_index = X.index.get_level_values(1).to_numpy()
         time = np.unique(time_index)
         labels = None
         right_overlap = 0

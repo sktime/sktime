@@ -60,8 +60,8 @@ def make_moving_blobs(
     X = pd.DataFrame(
         X,
         index=pd.MultiIndex.from_arrays(
-            [np.int32(X[:, 0]), np.int32(np.arange(X.shape[0]))],
-            names=["time", "object_id"],
+            [np.int32(np.arange(X.shape[0])), np.int32(X[:, 0])],
+            names=["object_id", "time"],
         ),
         columns=["time", "x", "y"],
     )

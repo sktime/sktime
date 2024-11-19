@@ -17,7 +17,7 @@ def _rename_labels(X, centers_origin, y_pred, n_labels):
     # find the closest cluster center at time 0
     for l in range(n_labels):
         # data at index 0
-        t0_mask = X.index.get_level_values(0).to_numpy() == 0
+        t0_mask = X.index.get_level_values(1).to_numpy() == 0
         X_t0 = X[t0_mask].to_numpy()
         y_pred_t0 = y_pred[t0_mask]
         c = np.mean(X_t0[y_pred_t0 == l], axis=0)
@@ -53,6 +53,21 @@ def test_st_dbscan(n_times, sparse_matrix_threshold, n_jobs):
     st_dbscan.fit(X)
     y_pred = st_dbscan.labels_
 
+    n_labels = len(np.unique(y_pred[y_pred != -1]))
+    assert n_labels == 3
+    y_pred_renamed = _rename_labels(X, centers_origin, y_pred, n_labels)
+    assert np.all(y_pred_renamed == y_true)
+
+
+def test_st_dbscan_data_not_sorted_by_time():
+    centers_origin = np.array([[-1, -1], [0, 0], [1, 1]])
+    X, y_true = make_moving_blobs(n_times=10, centers_origin=centers_origin)
+
+    X_wrong_sorting = X.sort_index(inplace=False, ascending=False, level=1)
+
+    st_dbscan = STDBSCAN(eps1=0.5, eps2=3, min_samples=5)
+    st_dbscan.fit(X_wrong_sorting)
+    y_pred = st_dbscan.labels_
     n_labels = len(np.unique(y_pred[y_pred != -1]))
     assert n_labels == 3
     y_pred_renamed = _rename_labels(X, centers_origin, y_pred, n_labels)
