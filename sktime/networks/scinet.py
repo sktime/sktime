@@ -1,4 +1,4 @@
-"""Deep Learning Forecasters using LTSF-Linear Models."""
+"""Deep Learning Forecasters using SCINet Forecaster."""
 
 import math
 

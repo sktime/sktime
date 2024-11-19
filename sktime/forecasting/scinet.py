@@ -1,75 +1,137 @@
-"""Deep Learning Forecasters using LTSF-Linear Models."""
+"""Deep Learning Forecaster using SCINet Forecaster."""
 
 from sktime.forecasting.base.adapters._pytorch import BaseDeepNetworkPyTorch
 
 
-class ScinetForecaster(BaseDeepNetworkPyTorch):
-    """LTSF-Linear Forecaster.
+class SCINetForecaster(BaseDeepNetworkPyTorch):
+    """SCINet-Linear Forecaster.
 
-    Implementation of the Long-Term Short-Term Feature (LTSF) linear forecaster,
-    aka LTSF-Linear, by Zeng et al [1]_.
+    Implementation of the SCINet forecaster.
 
-    Core logic is directly copied from the cure-lab LTSF-Linear implementation [2]_,
-    which is unfortunately not available as a package.
+    Core logic is directly copied from the curelab SCINet implementation
+    at github.
 
     Parameters
     ----------
     seq_len : int
-        length of input sequence
+    Length of the input sequence.
+
     pred_len : int
-        length of prediction (forecast horizon)
+    Length of the prediction (forecast horizon).
+
     num_epochs : int, default=16
-        number of epochs to train
+    Number of epochs to train the model.
+
     batch_size : int, default=8
-        number of training examples per batch
+    Number of training examples in each batch.
+
     in_channels : int, default=1
-        number of input channels passed to network
+    Number of input channels passed to the network.
+
     individual : bool, default=False
-        boolean flag that controls whether the network treats each channel individually"
-        "or applies a single linear layer across all channels. If individual=True, the"
-        "a separate linear layer is created for each input channel. If"
-        "individual=False, a single shared linear layer is used for all channels."
-    criterion : torch.nn Loss Function, default=torch.nn.MSELoss
-        loss function to be used for training
+    Flag that controls whether the network treats each input channel independently.
+
+    If True, a separate linear layer is created for each input channel.
+    If False, a single shared linear layer is used across all channels.
+    criterion : torch.nn Loss Function, default=None
+    Loss function to be used for training. If not provided, a default such as
+    torch.nn.MSELoss is often used.
+
     criterion_kwargs : dict, default=None
-        keyword arguments to pass to criterion
-    optimizer : torch.optim.Optimizer, default=torch.optim.Adam
-        optimizer to be used for training
+    Keyword arguments to pass to the criterion (loss function).
+
+    optimizer : torch.optim.Optimizer, default=None
+    Optimizer to be used for training. If not provided, a default such as
+    torch.optim.Adam is commonly used.
+
     optimizer_kwargs : dict, default=None
-        keyword arguments to pass to optimizer
-    lr : float, default=0.003
-        learning rate to train model with
+    Keyword arguments to pass to the optimizer.
+
+    lr : float, default=0.001
+    Learning rate for the optimizer.
+
+    custom_dataset_train : Dataset, default=None
+    A custom dataset to be used for training. If not provided, the default dataset
+    structure is used.
+
+    custom_dataset_pred : Dataset, default=None
+    A custom dataset to be used for prediction.
+
+    hid_size : int, default=1
+    Size of the hidden layers in the model.
+
+    num_stacks : int, default=1
+    Number of SCINet stacks to use in the model.
+
+    num_levels : int, default=3
+    Number of levels (depth) in each stack.
+
+    num_decoder_layer : int, default=1
+    Number of layers in the decoder portion of the model.
+
+    concat_len : int, default=0
+    Length of input to be concatenated in the skip connection.
+
+    groups : int, default=1
+    Number of groups in convolution layers for grouped convolutions.
+
+    kernel : int, default=5
+    Kernel size for convolution layers.
+
+    dropout : float, default=0.5
+    Dropout rate to apply in the network.
+
+    single_step_output_One : int, default=0
+    Determines whether to output a single step (1) or multiple steps (0).
+
+    input_len_seg : int, default=0
+    Length of each segment in the input sequence.
+
+    positionalE : bool, default=False
+    Enables or disables the use of positional encoding.
+
+    modified : bool, default=True
+    Indicates whether to use the modified version of the SCINet model.
+
+    RIN : bool, default=False
+    Flag to enable or disable the use of RevIN (Reversible Instance Normalization).
 
     References
     ----------
-    .. [1] Zeng A, Chen M, Zhang L, Xu Q. 2023.
-    Are transformers effective for time series forecasting?
-    Proceedings of the AAAI conference on artificial intelligence 2023
-    (Vol. 37, No. 9, pp. 11121-11128).
-    .. [2] https://github.com/cure-lab/LTSF-Linear
+    .. [1] Minhao Liu*, Ailing Zeng, Muxi Chen, Zhijian Xu, Qiuxia Lai,
+    Lingna Ma, Qiang Xu*
+    SCINet: Time Series Modeling and Forecasting with Sample Convolution and Interaction
+
+    .. [2] https://github.com/cure-lab/SCINet
 
     Examples
     --------
-    >>> from sktime.forecasting.ltsf import LTSFLinearForecaster # doctest: +SKIP
-    >>> from sktime.datasets import load_airline
-    >>> model = LTSFLinearForecaster(10, 3) # doctest: +SKIP
-    >>> y = load_airline()
-    >>> model.fit(y, fh=[1,2,3]) # doctest: +SKIP
-    LTSFLinearForecaster(pred_len=3, seq_len=10)
+    >>> from sktime.forecasting.scinet import SCINetForecaster # doctest: +SKIP
+    >>> from sktime.datasets import load_airline # doctest: +SKIP
+    >>> model = SCINetForecaster(seq_len=8, pred_len=3) # doctest: +SKIP
+    >>> y = load_airline() # doctest: +SKIP
+    >>> model.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
+    SCINetForecaster(pred_len=3, seq_len=8)
     >>> y_pred = model.predict() # doctest: +SKIP
     >>> y_pred # doctest: +SKIP
-    1961-01    515.456726
-    1961-02    576.704712
-    1961-03    559.859680
+    1961-01    759.448425
+    1961-02    291.098541
+    1961-03    566.977295
     Freq: M, Name: Number of airline passengers, dtype: float32
     """
 
     _tags = {
         # packaging info
         # --------------
-        "authors": ["mixiancmx", "ailingzengzzz", "luca-miniati"],
-        # mixiancmx, ailingzengzzz for cure-lab code
-        "maintainers": ["luca-miniati"],
+        "authors": [
+            "ailingzengzzz",
+            "AlexMinhao",
+            "VEWOXIC",
+            "mixiancmx",
+            "Sohaib-Ahmed21",
+        ],
+        # mixiancmx, ailingzengzzz, AlexMinhao, VEWOXIC for cure-lab code
+        "maintainers": ["Sohaib-Ahmed21"],
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
     }
@@ -90,7 +152,6 @@ class ScinetForecaster(BaseDeepNetworkPyTorch):
         lr=0.001,
         custom_dataset_train=None,
         custom_dataset_pred=None,
-        # Added parameters
         hid_size=1,
         num_stacks=1,
         num_levels=3,
@@ -118,8 +179,6 @@ class ScinetForecaster(BaseDeepNetworkPyTorch):
         self.custom_dataset_train = custom_dataset_train
         self.custom_dataset_pred = custom_dataset_pred
         self.batch_size = batch_size
-
-        # Added parameters
         self.hid_size = hid_size
         self.num_stacks = num_stacks
         self.num_levels = num_levels
@@ -214,22 +273,13 @@ class ScinetForecaster(BaseDeepNetworkPyTorch):
                 "individual": True,
             },
             {
-                "seq_len": 8,
-                "pred_len": 1,
+                "seq_len": 16,
+                "pred_len": 2,
                 "lr": 0.005,
                 "optimizer": "Adam",
                 "batch_size": 1,
                 "num_epochs": 1,
-                "individual": True,
-            },
-            {
-                "seq_len": 8,
-                "pred_len": 1,
-                "lr": 0.005,
-                "optimizer": "Adam",
-                "batch_size": 1,
-                "num_epochs": 1,
-                "individual": True,
+                "individual": False,
             },
         ]
 
