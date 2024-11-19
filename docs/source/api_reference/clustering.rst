@@ -53,10 +53,10 @@ Spectral and kernel clustering
 
     TimeSeriesKernelKMeans
 
-.. currentmodule:: sktime.clustering.dbscan
-
 Density-based
 -------------
+
+.. currentmodule:: sktime.clustering.dbscan
 
 .. autosummary::
     :toctree: auto_generated/
