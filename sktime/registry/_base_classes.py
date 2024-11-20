@@ -399,6 +399,30 @@ def _construct_base_class_register(mixin=False):
     return register
 
 
+def get_base_class_for_str(scitype_str):
+    """Return base class for a given scitype string.
+
+    Parameters
+    ----------
+    scitype_str : str, or list of str
+        scitype shorthand, as in scitype_name field of scitype classes
+
+    Returns
+    -------
+    base_cls : class or list of class
+        base class corresponding to the scitype string,
+        or list of base classes if input was a list
+    """
+    if isinstance(scitype_str, list):
+        return [get_base_class_for_str(s) for s in scitype_str]
+
+    base_classes = _get_base_classes()
+    base_classes += _get_base_classes(mixin=True)
+    base_class_lookup = {cl.get_class_tags()["scitype_name"]: cl for cl in base_classes}
+    base_cls = base_class_lookup[scitype_str].get_base_class()
+    return base_cls
+
+
 def get_base_class_register(mixin=False, include_baseobjs=True):
     """Return register of object scitypes and base classes in sktime.
 

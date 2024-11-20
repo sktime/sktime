@@ -3201,5 +3201,15 @@
           "doc"
         ]
      }
+    },
+    {
+      "login": "mjste",
+      "name": "Michał Stefanik",
+      "avatar_url": "https://avatars.githubusercontent.com/mjste",
+      "profile": "https://github.com/mjste",
+      "contributions": [
+        "doc"
+      ]
+    }
   ]
 }
