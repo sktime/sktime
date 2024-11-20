@@ -841,7 +841,7 @@ Forecasting
 * [ENH] de-novo implementation of ``LTSFTransformer`` based on ``cure-lab`` research code base (:pr:`6202`) :user:`geetu040`
 * [ENH] Add ``windows_identical`` to ``DirectReductionForecaster`` (:pr:`6650`) :user:`hliebert`
 * [ENH] updates type inference in ``make_reduction`` to use central scitype inference and allow proba tabular regressors (:pr:`6893`) :user:`fkiraly`
-* [ENH] DeepAR and  NHiTS and refinements for ``pytorch-forecasting`` interface (:pr:`6551`) :user:`XinyuWuu`
+* [ENH] DeepAR and NHiTS and refinements for ``pytorch-forecasting`` interface (:pr:`6551`) :user:`XinyuWuu`
 * [ENH] Interface to TinyTimeMixer foundation model (:pr:`6712`) :user:`geetu040`
 * [ENH] remove now superfluous try-excepts in forecasting API test suite (:pr:`6906`) :user:`fkiraly`
 * [ENH] improve ``test_global_forecasting_tag`` (:pr:`6929`) :user:`geetu040`
