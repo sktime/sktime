@@ -3191,6 +3191,16 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "tajir0",
+      "name": "Jinrong Tang",
+      "avatar_url": "https://avatars.githubusercontent.com/u/36022362",
+      "profile": "https://github.com/tajir0",
+      "contributions": [
+        "code",
+        "test"
+      ]
     }
   ]
 }
