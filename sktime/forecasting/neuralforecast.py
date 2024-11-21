@@ -101,7 +101,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
     trainer_kwargs : dict (default=None)
         keyword trainer arguments inherited from PyTorch Lighning's trainer [6]_
     optimizer : pytorch optimizer (default=None) [7]_
-        optimizer to use for training, if passed with None defaults to Adam
+        optimizer to use for training, if passed with None defaults to ``Adam``
     optimizer_kwargs : dict (default=None) [8]_
         dict of parameters to pass to the user defined optimizer
     broadcasting : bool (default=True)
@@ -210,7 +210,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         drop_last_loader=False,
         trainer_kwargs: Optional[dict] = None,
         optimizer=None,
-        optimizer_kwargs: dict = None,
+        optimizer_kwargs: Optional[dict] = None,
         # TODO change the default value to False in v0.35.0
         broadcasting: bool = True,
     ):
@@ -486,7 +486,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
     trainer_kwargs : dict (default=None)
         keyword trainer arguments inherited from PyTorch Lighning's trainer [6]_
     optimizer : pytorch optimizer (default=None) [7]_
-        optimizer to use for training, if passed with None defaults to Adam
+        optimizer to use for training, if passed with None defaults to ``Adam``
     optimizer_kwargs : dict (default=None) [8]_
         dict of parameters to pass to the user defined optimizer
     broadcasting : bool (default=True)
@@ -590,7 +590,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         drop_last_loader=False,
         trainer_kwargs: Optional[dict] = None,
         optimizer=None,
-        optimizer_kwargs: dict = None,
+        optimizer_kwargs: Optional[dict] = None,
         # TODO change the default value to False in v0.35.0
         broadcasting: bool = True,
     ):
