@@ -570,7 +570,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["pranavvp16"],
+        "authors": ["pranavvp16", "yarnabrina"],
         "maintainers": ["pranavvp16"],
         # "python_dependencies": "neuralforecast"
         # inherited from _NeuralForecastAdapter
