@@ -110,6 +110,10 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         one copy of this forecaster will try to fit and predict on it. The broadcasting is
         happening inside automatically, from the outerside api perspective, the input and
         output are the same, only one multiindex output from `predict`.
+    lr_scheduler : pytorch learning rate scheduler (default=None) [9]_
+        user specified lr_scheduler instead of the default choice ``StepLR`` [10]_
+    lr_scheduler_kwargs : dict (default=None)
+        list of parameters used by the user specified ``lr_scheduler``
 
     Notes
     -----
@@ -163,6 +167,8 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
     https://lightning.ai/docs/pytorch/stable/api/pytorch_lightning.trainer.trainer.Trainer.html#lightning.pytorch.trainer.trainer.Trainer
     .. [7] https://pytorch.org/docs/stable/optim.html
     .. [8] https://pytorch.org/docs/stable/optim.html#algorithms
+    .. [9] https://pytorch.org/docs/stable/generated/torch.optim.lr_scheduler.LRScheduler.html
+    .. [10] https://pytorch.org/docs/stable/generated/torch.optim.lr_scheduler.StepLR.html
     """  # noqa: E501
 
     _tags = {
@@ -213,6 +219,8 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         optimizer_kwargs: Optional[dict] = None,
         # TODO change the default value to False in v0.35.0
         broadcasting: bool = True,
+        lr_scheduler=None,
+        lr_scheduler_kwargs: Optional[dict] = None,
     ):
         self.input_size = input_size
         self.inference_input_size = inference_input_size
@@ -239,6 +247,8 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         self.drop_last_loader = drop_last_loader
         self.optimizer = optimizer
         self.optimizer_kwargs = optimizer_kwargs
+        self.lr_scheduler = lr_scheduler
+        self.lr_scheduler_kwargs = lr_scheduler_kwargs
         self.trainer_kwargs = trainer_kwargs
 
         super().__init__(
@@ -321,6 +331,8 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
             "drop_last_loader": self.drop_last_loader,
             "optimizer": self.optimizer,
             "optimizer_kwargs": self.optimizer_kwargs,
+            "lr_scheduler": self.lr_scheduler,
+            "lr_scheduler_kwargs": self.lr_scheduler_kwargs,
             "trainer_kwargs": self._trainer_kwargs,
         }
 
@@ -372,6 +384,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         else:
             from neuralforecast.losses.pytorch import SMAPE, QuantileLoss
             from torch.optim import Adam
+            from torch.optim.lr_scheduler import ConstantLR
 
             params = [
                 {
@@ -381,6 +394,8 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
                     "decoder_hidden_size": 3,
                     "max_steps": 4,
                     "trainer_kwargs": {"logger": False},
+                    "lr_scheduler": ConstantLR,
+                    "lr_scheduler_kwargs": {"factor": 0.5},
                 },
                 {
                     "freq": "auto",
@@ -495,6 +510,10 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         one copy of this forecaster will try to fit and predict on it. The broadcasting is
         happening inside automatically, from the outerside api perspective, the input and
         output are the same, only one multiindex output from `predict`.
+    lr_scheduler : pytorch learning rate scheduler (default=None) [9]_
+        user specified lr_scheduler instead of the default choice ``StepLR`` [10]_
+    lr_scheduler_kwargs : dict (default=None)
+        list of parameters used by the user specified ``lr_scheduler``
 
     Notes
     -----
@@ -544,6 +563,8 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
     .. [6] https://lightning.ai/docs/pytorch/stable/api/pytorch_lightning.trainer.trainer.Trainer.html#lightning.pytorch.trainer.trainer.Trainer
     .. [7] https://pytorch.org/docs/stable/optim.html
     .. [8] https://pytorch.org/docs/stable/optim.html#algorithms
+    .. [9] https://pytorch.org/docs/stable/generated/torch.optim.lr_scheduler.LRScheduler.html
+    .. [10] https://pytorch.org/docs/stable/generated/torch.optim.lr_scheduler.StepLR.html
     """  # noqa: E501
 
     _tags = {
@@ -593,6 +614,8 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         optimizer_kwargs: Optional[dict] = None,
         # TODO change the default value to False in v0.35.0
         broadcasting: bool = True,
+        lr_scheduler=None,
+        lr_scheduler_kwargs: Optional[dict] = None,
     ):
         self.input_size = input_size
         self.inference_input_size = inference_input_size
@@ -618,6 +641,8 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         self.drop_last_loader = drop_last_loader
         self.optimizer = optimizer
         self.optimizer_kwargs = optimizer_kwargs
+        self.lr_scheduler = lr_scheduler
+        self.lr_scheduler_kwargs = lr_scheduler_kwargs
         self.trainer_kwargs = trainer_kwargs
 
         super().__init__(
@@ -698,6 +723,8 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
             "drop_last_loader": self.drop_last_loader,
             "optimizer": self.optimizer,
             "optimizer_kwargs": self.optimizer_kwargs,
+            "lr_scheduler": self.lr_scheduler,
+            "lr_scheduler_kwargs": self.lr_scheduler_kwargs,
             "trainer_kwargs": self._trainer_kwargs,
         }
 
@@ -745,6 +772,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         else:
             from neuralforecast.losses.pytorch import SMAPE, QuantileLoss
             from torch.optim import Adam
+            from torch.optim.lr_scheduler import LinearLR
 
             params = [
                 {
@@ -754,6 +782,8 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
                     "decoder_hidden_size": 3,
                     "max_steps": 4,
                     "trainer_kwargs": {"logger": False},
+                    "lr_scheduler": LinearLR,
+                    "lr_scheduler_kwargs": {"start_factor": 0.25, "end_factor": 0.75},
                 },
                 {
                     "freq": "auto",
