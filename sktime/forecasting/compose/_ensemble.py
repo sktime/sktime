@@ -278,8 +278,11 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
 
     Parameters
     ----------
-    forecasters : list of (str, estimator) tuples
+    forecasters : list of (str, estimator) and (str, estimator, count) tuples
         Estimators to apply to the input series.
+        For the (str, estimator, count) tuples, the estimator will be replicated
+        count times. For the (str, estimator) tuples, the estimator will be used
+        once (i.e. the same as a 3-tuple with count=1).
     n_jobs : int or None, optional, default=None
         The number of jobs to run in parallel for fit. None means 1 unless
         in a joblib.parallel_backend context.
@@ -288,12 +291,6 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         The function to aggregate prediction from individual forecasters.
     weights : list of floats
         Weights to apply in aggregation.
-    num_replicates : int, optional, default=None
-        Convenience parameter to replicate a single forecaster num_replicates times.
-        If None, then each forecaster is used once. (backwards compatibility)
-        If not None, then there must be a single forecaster in forecasters.
-        (This restriction may be relaxed in the future given a "natural" use case
-        for replicating multiple forecasters.)
 
     See Also
     --------
@@ -326,30 +323,23 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         "scitype:y": "both",
     }
 
-    def __init__(
-        self,
-        forecasters,
-        n_jobs=None,
-        aggfunc="mean",
-        weights=None,
-        num_replicates=None,
-    ):
-        if num_replicates is not None:
-            if len(forecasters) != 1:
-                raise ValueError(
-                    "num_replicates is not None, but forecasters has more than one "
-                    "element. Please provide only one forecaster to replicate."
-                )
-            fc = [
-                (f"{forecasters[0][0]}_{i}", forecasters[0][1])
-                for i in range(num_replicates)
-            ]
-            super().__init__(forecasters=fc, n_jobs=n_jobs)
-        else:
-            super().__init__(forecasters=forecasters, n_jobs=n_jobs)
+    def __init__(self, forecasters, n_jobs=None, aggfunc="mean", weights=None):
+        fc = []
+        for forecaster in forecasters:
+            if len(forecaster) == 2:
+                # Handle the (str, est) tuple
+                fc.append(forecaster)
+            elif len(forecaster) == 3:
+                # Handle the (str, est, num_replicates) tuple
+                name, estimator, num_replicates = forecaster
+                fc.extend([(f"{name}_{i}", estimator) for i in range(num_replicates)])
+            else:
+                msg = "Each forecaster tuple must be (str, est) or (str, est, count)"
+                raise ValueError(msg)
+
+        super().__init__(forecasters=fc, n_jobs=n_jobs)
         self.aggfunc = aggfunc
         self.weights = weights
-        self.num_replicates = None  # to workaround the self.reset() in _fit.
 
         # the ensemble requires fh in fit
         # iff any of the component forecasters require fh in fit
