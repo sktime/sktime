@@ -288,6 +288,12 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         The function to aggregate prediction from individual forecasters.
     weights : list of floats
         Weights to apply in aggregation.
+    num_replicates : int, optional, default=None
+        Convenience parameter to replicate a single forecaster num_replicates times.
+        If None, then each forecaster is used once. (backwards compatibility)
+        If not None, then there must be a single forecaster in forecasters.
+        (This restriction may be relaxed in the future given a "natural" use case
+        for replicating multiple forecasters.)
 
     See Also
     --------
@@ -320,10 +326,30 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         "scitype:y": "both",
     }
 
-    def __init__(self, forecasters, n_jobs=None, aggfunc="mean", weights=None):
-        super().__init__(forecasters=forecasters, n_jobs=n_jobs)
+    def __init__(
+        self,
+        forecasters,
+        n_jobs=None,
+        aggfunc="mean",
+        weights=None,
+        num_replicates=None,
+    ):
+        if num_replicates is not None:
+            if len(forecasters) != 1:
+                raise ValueError(
+                    "num_replicates is not None, but forecasters has more than one "
+                    "element. Please provide only one forecaster to replicate."
+                )
+            fc = [
+                (f"{forecasters[0][0]}_{i}", forecasters[0][1])
+                for i in range(num_replicates)
+            ]
+            super().__init__(forecasters=fc, n_jobs=n_jobs)
+        else:
+            super().__init__(forecasters=forecasters, n_jobs=n_jobs)
         self.aggfunc = aggfunc
         self.weights = weights
+        self.num_replicates = None  # to workaround the self.reset() in _fit.
 
         # the ensemble requires fh in fit
         # iff any of the component forecasters require fh in fit
