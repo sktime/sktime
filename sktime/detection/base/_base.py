@@ -65,7 +65,9 @@ class BaseDetector(BaseEstimator):
     """
 
     _tags = {
-        "object_type": "series-annotator",  # type of object
+        # todo 0.37.0 switch order of series-annotator and detector
+        # todo 1.0.0 - remove series-annotator
+        "object_type": ["series-annotator", "detector"],  # type of object
         "learning_type": "None",  # Tag to determine test in test_all_annotators
         "task": "None",  # Tag to determine test in test_all_annotators
         #
