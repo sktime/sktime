@@ -229,8 +229,6 @@ class ClaSPSegmentation(BaseDetector):
 
         super().__init__()
 
-        self._fmt = "sparse"
-
     def _fit(self, X, Y=None):
         """Do nothing, as there is no need to fit a model for ClaSP.
 
@@ -261,14 +259,10 @@ class ClaSPSegmentation(BaseDetector):
             Change points in sequence X.
         """
         change_points = self._predict_points(X)
-        if self._fmt == "dense":
-            return self.change_points_to_segments(
-                change_points, X.index.min(), X.index.max()
-            )
         return change_points
 
     def _predict_points(self, X):
-        """Predict changepoints on test/deployment data.
+        """Predict change points on test/deployment data.
 
         Parameters
         ----------
@@ -278,7 +272,7 @@ class ClaSPSegmentation(BaseDetector):
         Returns
         -------
         Y : pd.Series
-            Series containing the indexes of the changepoints in X.
+            Series containing the indexes of the change points in X.
         """
         self.found_cps, self.profiles, self.scores = self._run_clasp(X)
         return pd.Series(self.found_cps)
@@ -294,19 +288,33 @@ class ClaSPSegmentation(BaseDetector):
         Returns
         -------
         Y : pd.Series
-            Scores for sequence X exact format depends on annotation type.
+            Sparse scores for found change points in sequence X.
         """
         self.found_cps, self.profiles, self.scores = self._run_clasp(X)
 
-        if self._fmt == "sparse":
-            # Scores of the Change Points
-            scores = pd.Series(self.scores)
-            return scores
-        elif self._fmt == "dense":
-            # ClaSP creates multiple profiles. Hard to map. Thus, we return the main
-            # (first) one
-            profile = pd.Series(self.profiles[0])
-            return profile
+        # Scores of the Change Points
+        scores = pd.Series(self.scores)
+        return scores
+    
+    def _transform_scores(self, X):
+        """Return scores in ClaSP's profile for each annotation.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Time series subject to detection, which will be assigned labels or scores.
+
+        Returns
+        -------
+        Y : pd.Series
+            Dense scores for found change points in sequence X.
+        """
+        self.found_cps, self.profiles, self.scores = self._run_clasp(X)
+
+        # ClaSP creates multiple profiles. Hard to map. Thus, we return the main
+        # (first) one
+        profile = pd.Series(self.profiles[0])
+        return profile
 
     def get_fitted_params(self):
         """Get fitted parameters.
