@@ -289,9 +289,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
             self.model = PatchTSTForPrediction(config)
         else:
             # model_path was given, initialize with model_path
-            self.model = PatchTSTForPrediction.from_pretrained(
-                "namctin/patchtst_etth1_forecast"
-            )
+            self.model = PatchTSTForPrediction.from_pretrained(self.model_path)
             if not isinstance(self.model.model, PatchTSTModel):
                 raise ValueError(
                     "This estimator requires a `PatchTSTModel`, but "
