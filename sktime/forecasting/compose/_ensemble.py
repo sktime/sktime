@@ -359,8 +359,8 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
                 )
                 raise ValueError(msg)
 
-        self._forecasters = self._check_estimators(fc, clone=False)
-        self.forecasters_ = self._check_estimators(fc, clone=True)
+        self._forecasters = self._check_estimators(fc, clone_ests=False)
+        self.forecasters_ = self._check_estimators(fc, clone_ests=True)
 
         # the ensemble requires fh in fit
         # iff any of the component forecasters require fh in fit
