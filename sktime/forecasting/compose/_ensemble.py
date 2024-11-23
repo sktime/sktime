@@ -436,13 +436,16 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         # univariate case
         FORECASTER = NaiveForecaster()
-        params = [{"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}]
+        params0 = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
 
         # test multivariate case, i.e., ensembling multiple variables at same time
         FORECASTER = DirectReductionForecaster.create_test_instance()
-        params = params + [{"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}]
+        params1 = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
 
-        return params
+        # test with multiplicities
+        params2 = {"forecasters": [("f", FORECASTER, 2)]}
+
+        return [params0, params1, params2]
 
 
 def _aggregate(y, aggfunc, weights):
