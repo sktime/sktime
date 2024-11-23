@@ -342,8 +342,6 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         self.weights = weights
         super().__init__(forecasters=forecasters, n_jobs=n_jobs)
 
-        print("test")
-
         fc = []
         for forecaster in forecasters:
             if len(forecaster) <= 2:
@@ -361,8 +359,12 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
                 )
                 raise ValueError(msg)
 
-        self._forecasters = self._check_estimators(fc, clone_ests=False)
-        self.forecasters_ = self._check_estimators(fc, clone_ests=True)
+        self._forecasters = self._check_estimators(
+            fc, clone_ests=False, allow_empty=True
+        )
+        self.forecasters_ = self._check_estimators(
+            fc, clone_ests=True, allow_empty=True
+        )
 
         # the ensemble requires fh in fit
         # iff any of the component forecasters require fh in fit
