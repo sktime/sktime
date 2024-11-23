@@ -34,20 +34,20 @@ if _check_soft_dependencies("transformers", severity="none"):
 class HFPatchTSTForecaster(_BaseGlobalForecaster):
     """Interface for the PatchTST forecaster.
 
-    Paper: https://arxiv.org/abs/2211.14730
-
     This model has 3 available modes:
         1) Loading an untrained PatchTST model and pretrain on some dataset.
         This can be done by passing in a PatchTST config dictionary or passing
         in available parameters in this estimator, or by loading the
-        HFPatchTSTForecaster without any passed arguments
+        HFPatchTSTForecaster without any passed arguments.
+
         2) Load a pre-trained model for fine-tuning. The parameter `model_path`
-        can be load to load a pre-trained model for fine-tuning. Using a
+        can be used to load a pre-trained model for fine-tuning. Using a
         pretrained model will override any other model config parameters, and
         you can use the `fit` function to then fine-tune your pretrained model.
         See the `model_path` docstring for more details.
+
         3) Load a pre-trained model for zero-shot forecasting. The parameter
-        `model_path` can be load to load a pre-trained model for fine-tuning.
+        `model_path` can be used to load a pre-trained model for fine-tuning.
         Using a pretrained model will override any other model config
         parameters, and you can use the `predict` function to do zero-shot
         forecasting. See the `model_path` docstring for more details.
@@ -60,19 +60,18 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         ignored except for specific training or dataset parameters.
         This has 3 options:
             - model id to an online pretrained PatchTST Model hosted on HuggingFace
+            - A path or url to a saved configuration JSON file
             - A path to a *directory* containing a configuration file saved
-            using the [`~PretrainedConfig.save_pretrained`] method,
-            or the [`~PreTrainedModel.save_pretrained`] method
-            - A path or url to a saved configuration JSON *file*, e.g.,
-                `./my_model_directory/configuration.json`.
-            forecast_columns,
-    mode : str, optional, possible values = ["untrained", "finetune", "zeroshot"]
-           default = "untrained"
-        String to set the mode of the model. If set to 'untrained', it will
+            using the `~PretrainedConfig.save_pretrained` method
+            or the `~PreTrainedModel.save_pretrained` method
+    mode : str, values = ["untrained","finetune","zeroshot"], default = "untrained"
+        String to set the mode of the model.
+        If set to `untrained`, it will
         re-initialize an untrained model with the specified config or
-        estimator aruguments. If set to "finetune" will use the `model_path`
-        argument and the passed in `y` in fit to fine-tune the model. If
-        set to "zeroshot", it will load the model in zero-shot forecasting
+        estimator aruguments.
+        If set to "finetune" will use the `model_path`
+        argument and the passed in `y` in fit to fine-tune the model.
+        If set to "zeroshot", it will load the model in zero-shot forecasting
         model with the argument `model_path` and ignore any passed `y`.
         Note that both "finetune" and "zeroshot" mode requires a mandatory
         passed in `model_path`.
@@ -121,7 +120,38 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         from the outerside api perspective, the input and output are the same,
         only one multiindex output from ``predict``.
 
+    References
+    ----------
+    Paper: https://arxiv.org/abs/2211.14730
 
+    Examples
+    --------
+    >>> #Example with an untrained model
+    >>> from sktime.forecasting.hf_patchtst_forecaster import HFPatchTSTForecaster
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> forecaster = HFPatchTSTForecaster() #initialize an untrained model
+    >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
+    >>> y_pred = forecaster.predict() # doctest: +SKIP
+
+    >>> #Example with a pre-trained model
+    >>> from sktime.forecasting.hf_patchtst_forecaster import HFPatchTSTForecaster
+    >>> import pandas as pd
+    >>> dataset_path = pd.read_csv(
+    ...     "https://raw.githubusercontent.com/zhouhaoyi/ETDataset/main/ETT-small/ETTh1.csv")
+    ...     .drop(columns = ["date"]
+    ... )
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> scaler = StandardScaler()
+    >>> scaler.set_output(transform="pandas")
+    >>> scaler = scaler.fit(dataset_path.values)
+    >>> df = scaler.transform(dataset_path)
+    >>> df.columns = dataset_path.columns
+    >>> forecaster = HFPatchTSTForecaster(
+    ...     model_path="namctin/patchtst_etth1_forecast", mode = "zeroshot"
+    ... ) # doctest: +SKIP
+    >>> forecaster.fit(y = df, fh = [1,2,3,4,5]) # doctest: +SKIP
+    >>> y_pred = forecaster.predict() # doctest: +SKIP
     """
 
     _tags = {
@@ -203,7 +233,6 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
 
         if not self._config:
             self._config["patch_length"] = self.patch_length
-            self._config["context_length"] = self.context_length
             self._config["patch_stride"] = self.patch_stride
             self._config["random_mask_ratio"] = self.random_mask_ratio
             self._config["d_model"] = self.d_model
@@ -229,27 +258,27 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         self._y = y
         self.fh_ = max(fh.to_relative(self.cutoff))
         self.y_columns = y.columns
-        self._config["num_input_channels"] = len(self.y_columns)
-        self._config["prediction_length"] = self.fh_
         # if no model_path was given, initialize new untrained model from config
         if not self.model_path:
+            self._config["num_input_channels"] = len(self.y_columns)
+            self._config["prediction_length"] = int(self.fh_)
+            if "context_length" not in self._config.keys():
+                context_length = self.context_length
+            else:
+                context_length = self._config["context_length"]
+                del self._config["context_length"]
+            context_length = int(context_length)
             config = PatchTSTConfig(
-                num_input_channels=len(self.y_columns),
-                context_length=self.context_length,
-                patch_length=self.patch_length,
-                patch_stride=self.patch_length,
-                prediction_length=int(self.fh_),
-                random_mask_ratio=self.random_mask_ratio,
-                d_model=self.d_model,
-                num_attention_heads=self.num_attention_heads,
-                ffn_dim=self.ffn_dim,
-                head_dropout=self.head_dropout,
+                context_length=context_length,
+                **self._config,
             )
 
             self.model = PatchTSTForPrediction(config)
         else:
             # model_path was given, initialize with model_path
-            self.model = PatchTSTForPrediction.from_pretrained(self.model_path)
+            self.model = PatchTSTForPrediction.from_pretrained(
+                "namctin/patchtst_etth1_forecast"
+            )
             if not isinstance(self.model.model, PatchTSTModel):
                 raise ValueError(
                     "This estimator requires a `PatchTSTModel`, but "
@@ -347,9 +376,11 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
 
         _y = torch.tensor(_y).float().to(self.model.device)
 
-        if _y.shape[1] > self.context_length:
-            _y = _y[:, -self.context_length :, :]
+        if _y.shape[1] > self.model.config.context_length:
+            _y = _y[:, -self.model.config.context_length :, :]
 
+        # in the case where the context_length of the pre-trained model is larger
+        # than the context_length of the model
         self.model.eval()
         y_pred = self.model(_y).prediction_outputs
         pred = y_pred.detach().cpu().numpy()
@@ -421,13 +452,18 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         }
         params_set.append(params1)
         params2 = {
-            "d_model": 128,
-            "num_attention_heads": 4,
-            "ffn_dim": 32,
-            "head_dropout": 0.2,
-            "batch_size": 16,
-            "epochs": 1,
+            "config": {
+                "patch_length": 2,
+                "context_length": 4,
+                "patch_stride": 2,
+                "d_model": 128,
+                "num_attention_heads": 4,
+                "ffn_dim": 32,
+                "head_dropout": 0.2,
+            },
             "validation_split": 0.0,
+            "batch_size": 32,
+            "epochs": 1,
         }
         params_set.append(params2)
 
