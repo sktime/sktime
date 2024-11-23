@@ -494,6 +494,7 @@ class BaseDetector(BaseEstimator):
         """
         raise NotImplementedError("abstract method")
 
+
     def _transform_scores(self, X):
         """Return scores for predicted labels on test/deployment data.
 
