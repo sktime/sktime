@@ -54,12 +54,14 @@ def get_test_class_registry():
     # so also imply estimator and object tests, or only object tests
     testclass_dict["aligner"] = TestAllAligners
     testclass_dict["classifier"] = TestAllClassifiers
+    testclass_dict["detector"] = TestAllAnnotators
     testclass_dict["distribution"] = TestAllDistributions
     testclass_dict["early_classifier"] = TestAllEarlyClassifiers
     testclass_dict["forecaster"] = TestAllForecasters
     testclass_dict["global_forecaster"] = TestAllGlobalForecasters
     testclass_dict["param_est"] = TestAllParamFitters
     testclass_dict["regressor"] = TestAllRegressors
+    # todo 1.0.0 - remove series-annotator
     testclass_dict["series-annotator"] = TestAllAnnotators
     testclass_dict["splitter"] = TestAllSplitters
     testclass_dict["transformer"] = TestAllTransformers
