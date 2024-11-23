@@ -132,8 +132,8 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
     >>> from sktime.forecasting.hf_patchtst_forecaster import HFPatchTSTForecaster
     >>> import pandas as pd
     >>> dataset_path = pd.read_csv(
-    ...     "https://raw.githubusercontent.com/zhouhaoyi/ETDataset/main/ETT-small/ETTh1.csv")
-    ...     .drop(columns = ["date"]
+    ...     "https://raw.githubusercontent.com/zhouhaoyi/ETDataset/main/ETT-small/ETTh1.csv"
+    ...     ).drop(columns = ["date"]
     ... )
     >>> from sklearn.preprocessing import StandardScaler
     >>> scaler = StandardScaler()
@@ -151,8 +151,8 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
     >>> from sktime.forecasting.hf_patchtst_forecaster import HFPatchTSTForecaster
     >>> import pandas as pd
     >>> dataset_path = pd.read_csv(
-    ...     "https://raw.githubusercontent.com/zhouhaoyi/ETDataset/main/ETT-small/ETTh1.csv")
-    ...     .drop(columns = ["date"]
+    ...     "https://raw.githubusercontent.com/zhouhaoyi/ETDataset/main/ETT-small/ETTh1.csv"
+    ...     ).drop(columns = ["date"]
     ... )
     >>> from sklearn.preprocessing import StandardScaler
     >>> scaler = StandardScaler()
@@ -466,13 +466,13 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         params_set.append(params1)
         params2 = {
             "config": {
-                "patch_length": 2,
-                "context_length": 4,
-                "patch_stride": 2,
-                "d_model": 128,
-                "num_attention_heads": 4,
+                "patch_length": 1,
+                "context_length": 2,
+                "patch_stride": 1,
+                "d_model": 64,
+                "num_attention_heads": 2,
                 "ffn_dim": 32,
-                "head_dropout": 0.2,
+                "head_dropout": 0.3,
             },
             "validation_split": 0.0,
             "batch_size": 32,
