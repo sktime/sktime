@@ -3200,6 +3200,15 @@
       "contributions": [
         "doc"
       ]
-    }
+    },
+	{
+		"login": "alyssadsouza",
+		"name": "Alyssa D'Souza",
+		"avatar_url": "https://avatars.githubusercontent.com/alyssadsouza",
+		"profile": "https://github.com/alyssadsouza",
+		"contributions": [
+		  "code"
+		]
+	}
   ]
 }
