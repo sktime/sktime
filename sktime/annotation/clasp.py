@@ -295,7 +295,7 @@ class ClaSPSegmentation(BaseDetector):
         # Scores of the Change Points
         scores = pd.Series(self.scores)
         return scores
-    
+
     def _transform_scores(self, X):
         """Return scores in ClaSP's profile for each annotation.
 
