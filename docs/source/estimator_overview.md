@@ -86,6 +86,7 @@ Use the below search table to find estimators by property.
             <option value="aligner">Aligner</option>
             <option value="classifier">Classifier</option>
             <option value="clusterer">Clusterer</option>
+            <option value="detector">Detector</option>
             <option value="transformer-pairwise-panel">Distance/Kernel</option>
             <option value="forecaster">Forecaster</option>
             <option value="metric">Metric</option>
