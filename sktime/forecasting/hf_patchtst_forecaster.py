@@ -113,12 +113,6 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         List of metrics or function to use to use during training
     callbacks: list or function, default = None
         List of callbacks or callback function to use during training
-    broadcasting : bool, default=False
-        if True, multiindex data input will be broadcasted to single series.
-        For each single series, one copy of this forecaster will try to
-        fit and predict on it. The broadcasting is happening inside automatically,
-        from the outerside api perspective, the input and output are the same,
-        only one multiindex output from ``predict``.
 
     References
     ----------
@@ -151,6 +145,24 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
     ...     model_path="namctin/patchtst_etth1_forecast", mode = "zeroshot"
     ... ) # doctest: +SKIP
     >>> forecaster.fit(y = df, fh = [1,2,3,4,5]) # doctest: +SKIP
+    >>> y_pred = forecaster.predict() # doctest: +SKIP
+
+    >>> #Example fine-tuning with a pre-trained model
+    >>> from sktime.forecasting.hf_patchtst_forecaster import HFPatchTSTForecaster
+    >>> import pandas as pd
+        >>> dataset_path = pd.read_csv(
+    ...     "https://raw.githubusercontent.com/zhouhaoyi/ETDataset/main/ETT-small/ETTh1.csv")
+    ...     .drop(columns = ["date"]
+    ... )
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> scaler = StandardScaler()
+    >>> scaler.set_output(transform="pandas")
+    >>> scaler = scaler.fit(dataset_path.values)
+    >>> df = scaler.transform(dataset_path)
+    >>> forecaster = HFPatchTSTForecaster(
+    ...     model_path="namctin/patchtst_etth1_forecast", mode = "finetune"
+    ... ) # doctest: +SKIP
+    >>> forecaster.fit(y = df, fh = list(range(1,97))) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
     """
 
@@ -291,12 +303,14 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
                 y, train_size=1 - self.validation_split, test_size=self.validation_split
             )
             train_dataset = PyTorchDataset(
-                y_train, context_length=self.context_length, prediction_length=self.fh_
+                y_train,
+                context_length=self.model.config.context_length,
+                prediction_length=self.fh_,
             )
             if self.validation_split != 0.0:
                 eval_dataset = PyTorchDataset(
                     y_test,
-                    context_length=self.context_length,
+                    context_length=self.model.config.context_length,
                     prediction_length=self.fh_,
                 )
             else:
@@ -304,7 +318,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
 
             # initialize training_args
             if self.training_args:
-                training_args = TrainingArguments(self.training_args)
+                training_args = TrainingArguments(**self.training_args)
             else:
                 training_args = TrainingArguments(
                     output_dir="/PatchTST/",
