@@ -424,4 +424,4 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
             "max_depth": 7,
             "min_samples_split": 3.2,
         }
-        return [param1,param2,param3]
+        return [param1, param2, param3]
