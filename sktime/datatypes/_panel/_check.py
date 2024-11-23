@@ -427,7 +427,7 @@ class PanelPdMultiIndex(ScitypePanel):
       is interpreted as a time index, we call it "time index" below.
     * time points: rows of ``obj`` with the same "time index" value correspond
       correspond to the same time point; rows of `obj` with different "time index"
-      index correspond correspond to the different time points.
+      index correspond to the different time points.
     * variables: columns of ``obj`` correspond to different variables
     * variable names: column names ``obj.columns``
 
