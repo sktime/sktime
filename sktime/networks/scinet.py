@@ -723,7 +723,7 @@ class SCINet(nn_module):
     def forward(self, x):
         """Perform the forward pass through the network.
 
-        Ensures that the sequence length (`self.seq_len`) is divisible by 2 raised
+        Ensure that the sequence length (`self.seq_len`) is divisible by 2 raised
         to the power of the number of levels (`self.num_levels`).
 
         Raises

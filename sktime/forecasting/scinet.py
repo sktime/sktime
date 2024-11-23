@@ -14,79 +14,80 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
     Parameters
     ----------
     seq_len : int
-    Length of the input sequence.
+        Length of the input sequence.
 
     num_epochs : int, default=16
-    Number of epochs to train the model.
+        Number of epochs to train the model.
 
     batch_size : int, default=8
-    Number of training examples in each batch.
-
-    If True, a separate linear layer is created for each input channel.
-    If False, a single shared linear layer is used across all channels.
+        Number of training examples in each batch.
 
     criterion : torch.nn Loss Function, default=None
-    Loss function to be used for training. If not provided, a default such as
-    torch.nn.MSELoss is often used.
+        Loss function to be used for training. If not provided, a default such as
+        torch.nn.MSELoss is often used.
 
     criterion_kwargs : dict, default=None
-    Keyword arguments to pass to the criterion (loss function).
+        Keyword arguments to pass to the criterion (loss function).
 
     optimizer : torch.optim.Optimizer, default=None
-    Optimizer to be used for training. If not provided, a default such as
-    torch.optim.Adam is commonly used.
+        Optimizer to be used for training. If not provided, a default such as
+        torch.optim.Adam is commonly used.
 
     optimizer_kwargs : dict, default=None
-    Keyword arguments to pass to the optimizer.
+        Keyword arguments to pass to the optimizer.
 
     lr : float, default=0.001
-    Learning rate for the optimizer.
+        Learning rate for the optimizer.
 
     custom_dataset_train : Dataset, default=None
-    A custom dataset to be used for training. If not provided, the default dataset
-    structure is used.
+        A custom dataset to be used for training. If not provided, the default dataset
+        structure is used.
 
     custom_dataset_pred : Dataset, default=None
-    A custom dataset to be used for prediction.
+        A custom dataset to be used for prediction.
 
     hid_size : int, default=1
-    Size of the hidden layers in the model.
+        Size of the hidden layers in the model.
 
     num_stacks : int, default=1
-    Number of SCINet stacks to use in the model.
+        Number of SCINet stacks to use in the model.
 
     num_levels : int, default=3
-    Number of levels (depth) in each stack.
+        Number of levels (depth) in each stack.
 
     num_decoder_layer : int, default=1
-    Number of layers in the decoder portion of the model.
+        Number of layers in the decoder portion of the model.
 
     concat_len : int, default=0
-    Length of input to be concatenated in the skip connection.
+        Length of input to be concatenated in the skip connection.
 
     groups : int, default=1
-    Number of groups in convolution layers for grouped convolutions.
+        Number of groups in convolution layers for grouped convolutions.
 
     kernel : int, default=5
-    Kernel size for convolution layers.
+        Kernel size for convolution layers.
 
     dropout : float, default=0.5
-    Dropout rate to apply in the network.
+        Dropout rate to apply in the network.
 
     single_step_output_One : int, default=0
-    Determines whether to output a single step (1) or multiple steps (0).
+        Determines whether to output a single step (1) or multiple steps (0).
 
     input_len_seg : int, default=0
-    Length of each segment in the input sequence.
+        Length of each segment in the input sequence.
 
     positionalE : bool, default=False
-    Enables or disables the use of positional encoding.
+        Enables or disables the use of positional encoding.
 
     modified : bool, default=True
-    Indicates whether to use the modified version of the SCINet model.
+        Indicates whether to use the modified version of the SCINet model.
 
     RIN : bool, default=False
-    Flag to enable or disable the use of RevIN (Reversible Instance Normalization).
+        Flag to enable or disable the use of RevIN (Reversible Instance Normalization).
+
+    Raises
+    ------
+    AssertionError: If `seq_len` is not divisible by 2^num_levels`.
 
     References
     ----------
