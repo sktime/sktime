@@ -127,7 +127,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
     >>> forecaster = HFPatchTSTForecaster() #initialize an untrained model
     >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
-
+    >>>
     >>> #Example with a pre-trained model
     >>> from sktime.forecasting.hf_patchtst_forecaster import HFPatchTSTForecaster
     >>> import pandas as pd
@@ -146,11 +146,11 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
     ... ) # doctest: +SKIP
     >>> forecaster.fit(y = df, fh = [1,2,3,4,5]) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
-
+    >>>
     >>> #Example fine-tuning with a pre-trained model
     >>> from sktime.forecasting.hf_patchtst_forecaster import HFPatchTSTForecaster
     >>> import pandas as pd
-        >>> dataset_path = pd.read_csv(
+    >>> dataset_path = pd.read_csv(
     ...     "https://raw.githubusercontent.com/zhouhaoyi/ETDataset/main/ETT-small/ETTh1.csv")
     ...     .drop(columns = ["date"]
     ... )
