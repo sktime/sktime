@@ -287,8 +287,8 @@ class _HeterogenousMetaEstimator:
         if (
             estimators is None
             or (not allow_empty and len(estimators) == 0)
-            or not isinstance(estimators, list)
-            or (not allow_dict and isinstance(estimators, dict))
+            or not (isinstance(estimators, list)
+            or (allow_dict and isinstance(estimators, dict)))
         ):
             raise TypeError(msg)
 
