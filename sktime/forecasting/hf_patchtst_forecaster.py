@@ -64,8 +64,8 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
             - A path to a *directory* containing a configuration file saved
             using the `~PretrainedConfig.save_pretrained` method
             or the `~PreTrainedModel.save_pretrained` method
-    mode : str, values = ["untrained","finetune","zeroshot"], default = "untrained"
-        String to set the mode of the model.
+    strategy : str, values = ["untrained","finetune","zeroshot"], default = "untrained"
+        String to set the strategy of the model.
         If set to `untrained`, it will
         re-initialize an untrained model with the specified config or
         estimator aruguments.
@@ -73,7 +73,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         argument and the passed in `y` in fit to fine-tune the model.
         If set to "zeroshot", it will load the model in zero-shot forecasting
         model with the argument `model_path` and ignore any passed `y`.
-        Note that both "finetune" and "zeroshot" mode requires a mandatory
+        Note that both "finetune" and "zeroshot" strategy requires a mandatory
         passed in `model_path`.
     patch_length : int, optional, default = 2
         Length of each patch that will segment every univariate series.
@@ -142,7 +142,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
     >>> df = scaler.transform(dataset_path)
     >>> df.columns = dataset_path.columns
     >>> forecaster = HFPatchTSTForecaster(
-    ...     model_path="namctin/patchtst_etth1_forecast", mode = "zeroshot"
+    ...     model_path="namctin/patchtst_etth1_forecast", strategy = "zeroshot"
     ... ) # doctest: +SKIP
     >>> forecaster.fit(y = df, fh = [1,2,3,4,5]) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
@@ -161,7 +161,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
     >>> df = scaler.transform(dataset_path)
     >>> df.columns = dataset_path.columns
     >>> forecaster = HFPatchTSTForecaster(
-    ...     model_path="namctin/patchtst_etth1_forecast", mode = "finetune"
+    ...     model_path="namctin/patchtst_etth1_forecast", strategy = "finetune"
     ... ) # doctest: +SKIP
     >>> forecaster.fit(y = df, fh = list(range(1,97))) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
@@ -197,7 +197,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         self,
         # model variables except for forecast_columns
         model_path=None,
-        mode="untrained",
+        strategy="untrained",
         patch_length=2,
         context_length=4,
         patch_stride=2,
@@ -218,7 +218,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         broadcasting=False,
     ):
         self.model_path = model_path
-        self.mode = mode
+        self.strategy = strategy
         # model config parameters
         self.patch_length = patch_length
         self.context_length = context_length
@@ -241,8 +241,8 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         self.callbacks = callbacks
         self.broadcasting = broadcasting
         super().__init__()
-        if self.mode not in ["untrained", "finetune", "zeroshot"]:
-            raise ValueError("unexpected mode passed in argument")
+        if self.strategy not in ["untrained", "finetune", "zeroshot"]:
+            raise ValueError("unexpected strategy passed in argument")
 
         if not self._config:
             self._config["patch_length"] = self.patch_length
@@ -298,7 +298,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
                     f"found {self.model.model.__class__.__name__}"
                 )
 
-        if self.mode != "zeroshot":
+        if self.strategy != "zeroshot":
             # initialize dataset
             y_train, y_test = temporal_train_test_split(
                 y, train_size=1 - self.validation_split, test_size=self.validation_split
