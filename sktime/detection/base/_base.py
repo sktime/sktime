@@ -493,7 +493,7 @@ class BaseDetector(BaseEstimator):
             Labels for sequence X exact format depends on detection type.
         """
         raise NotImplementedError("abstract method")
-    
+
     def _transform_scores(self, X):
         """Return scores for predicted labels on test/deployment data.
 
@@ -506,7 +506,7 @@ class BaseDetector(BaseEstimator):
 
         Returns
         -------
-        scores : pd.DataFrame with same index as X 
+        scores : pd.DataFrame with same index as X
             Scores for sequence ``X``.
         """
         raise NotImplementedError("abstract method")
