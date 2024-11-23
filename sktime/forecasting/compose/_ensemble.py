@@ -338,7 +338,6 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     _steps_fitted_attr = "forecasters_"
 
     def __init__(self, forecasters, n_jobs=None, aggfunc="mean", weights=None):
-
         self.aggfunc = aggfunc
         self.weights = weights
         super().__init__(forecasters=forecasters, n_jobs=n_jobs)
