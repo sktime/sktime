@@ -15,6 +15,7 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
     ----------
     seq_len : int
         Length of the input sequence.
+        Ensure seq_len is divisible by 2^num_levels.
 
     num_epochs : int, default=16
         Number of epochs to train the model.
@@ -87,7 +88,8 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
 
     Raises
     ------
-    AssertionError: If `seq_len` is not divisible by 2^num_levels`.
+    AssertionError
+        If seq_len is not divisible by 2^num_levels.
 
     References
     ----------

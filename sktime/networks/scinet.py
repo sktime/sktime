@@ -728,7 +728,8 @@ class SCINet(nn_module):
 
         Raises
         ------
-        AssertionError: If `self.seq_len` is not divisible by 2^self.num_levels`.
+        AssertionError
+            If `seq_len` is not divisible by 2^num_levels`.
         """
         assert self.seq_len % (np.power(2, self.num_levels)) == 0
         # evenly divided the input length into two parts.
