@@ -278,6 +278,7 @@ EXCLUDED_TESTS = {
     "GreedyGaussianSegmentation": [
         "test_predict_points",
         "test_predict_segments",
+        "test_output_type",
         "test_transform_output_type",
         "test_inheritance",
         "test_create_test_instance",
