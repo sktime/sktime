@@ -4,20 +4,17 @@ from sktime.forecasting.base.adapters._pytorch import BaseDeepNetworkPyTorch
 
 
 class SCINetForecaster(BaseDeepNetworkPyTorch):
-    """SCINet-Linear Forecaster.
+    """SCINet Forecaster.
 
-    Implementation of the SCINet forecaster.
+    Implementation of the SCINet forecaster,  by Minhao Liu* [1]_.
 
     Core logic is directly copied from the curelab SCINet implementation
-    at github.
+    [2]_, which is unfortunately not available as a package.
 
     Parameters
     ----------
     seq_len : int
     Length of the input sequence.
-
-    pred_len : int
-    Length of the prediction (forecast horizon).
 
     num_epochs : int, default=16
     Number of epochs to train the model.
@@ -25,14 +22,9 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
     batch_size : int, default=8
     Number of training examples in each batch.
 
-    in_channels : int, default=1
-    Number of input channels passed to the network.
-
-    individual : bool, default=False
-    Flag that controls whether the network treats each input channel independently.
-
     If True, a separate linear layer is created for each input channel.
     If False, a single shared linear layer is used across all channels.
+
     criterion : torch.nn Loss Function, default=None
     Loss function to be used for training. If not provided, a default such as
     torch.nn.MSELoss is often used.
@@ -108,10 +100,10 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
     --------
     >>> from sktime.forecasting.scinet import SCINetForecaster # doctest: +SKIP
     >>> from sktime.datasets import load_airline # doctest: +SKIP
-    >>> model = SCINetForecaster(seq_len=8, pred_len=3) # doctest: +SKIP
+    >>> model = SCINetForecaster(seq_len=8) # doctest: +SKIP
     >>> y = load_airline() # doctest: +SKIP
     >>> model.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
-    SCINetForecaster(pred_len=3, seq_len=8)
+    SCINetForecaster(seq_len=8)
     >>> y_pred = model.predict() # doctest: +SKIP
     >>> y_pred # doctest: +SKIP
     1961-01    759.448425
@@ -139,12 +131,9 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
     def __init__(
         self,
         seq_len,
-        pred_len,
         *,
         num_epochs=16,
         batch_size=8,
-        in_channels=1,
-        individual=False,
         criterion=None,
         criterion_kwargs=None,
         optimizer=None,
@@ -167,9 +156,6 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
         RIN=False,
     ):
         self.seq_len = seq_len
-        self.pred_len = pred_len
-        self.individual = individual
-        self.in_channels = in_channels
         self.criterion = criterion
         self.optimizer = optimizer
         self.criterion_kwargs = criterion_kwargs
@@ -196,8 +182,6 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
         super().__init__(
             num_epochs=num_epochs,
             batch_size=batch_size,
-            in_channels=in_channels,
-            individual=individual,
             criterion_kwargs=criterion_kwargs,
             optimizer=optimizer,
             optimizer_kwargs=optimizer_kwargs,
@@ -265,21 +249,17 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
         params = [
             {
                 "seq_len": 8,
-                "pred_len": 1,
                 "lr": 0.005,
                 "optimizer": "Adam",
                 "batch_size": 1,
                 "num_epochs": 1,
-                "individual": True,
             },
             {
                 "seq_len": 16,
-                "pred_len": 2,
-                "lr": 0.005,
+                "lr": 0.001,
                 "optimizer": "Adam",
-                "batch_size": 1,
-                "num_epochs": 1,
-                "individual": False,
+                "batch_size": 4,
+                "num_epochs": 2,
             },
         ]
 

@@ -542,15 +542,29 @@ class SCINet(nn_module):
     hid_size : int, default=1
         Size of the hidden layer in the encoder.
     num_stacks : int, default=1
-        Number of stack-based encoder-decoder layers. Maximum of two stacks supported.
+        Number of stack-based encoder-decoder layers. Maximum of two stacks
+        supported.
     num_levels : int, default=3
         Number of hierarchical levels in the encoder tree.
     num_decoder_layer : int, default=1
         Number of layers in the decoder for producing predictions.
+    concat_len : int, default=0
+        Length of concatenation for intermediate outputs in multi-stack models.
+    groups : int, default=1
+        Number of groups for grouped convolutions in encoder levels.
+    kernel : int, default=5
+        Size of the convolutional kernel.
+    dropout : float, default=0.5
+        Dropout rate to prevent overfitting.
+    single_step_output_One : int, default=0
+        Flag to enable single-step output.
     positionalE : bool, default=False
         Whether to include positional encoding in the input sequence.
+    modified : bool, default=True
+        Flag to enable modifications in the SCINet encoder.
     RIN : bool, default=False
-        Flag to enable Reverse Instance Normalization (RIN) for input normalization.
+        Flag to enable Reverse Instance Normalization (RIN) for input
+        normalization.
     """
 
     def __init__(
@@ -567,7 +581,6 @@ class SCINet(nn_module):
         kernel=5,
         dropout=0.5,
         single_step_output_One=0,
-        input_len_seg=0,
         positionalE=False,
         modified=True,
         RIN=False,
@@ -708,7 +721,15 @@ class SCINet(nn_module):
         return signal
 
     def forward(self, x):
-        """Perform the forward pass through the network."""
+        """Perform the forward pass through the network.
+
+        Ensures that the sequence length (`self.seq_len`) is divisible by 2 raised
+        to the power of the number of levels (`self.num_levels`).
+
+        Raises
+        ------
+        AssertionError: If `self.seq_len` is not divisible by 2^self.num_levels`.
+        """
         assert self.seq_len % (np.power(2, self.num_levels)) == 0
         # evenly divided the input length into two parts.
         # (e.g., 32 -> 16 -> 8 -> 4 for 3 levels)
