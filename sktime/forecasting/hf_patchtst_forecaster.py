@@ -159,6 +159,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
     >>> scaler.set_output(transform="pandas")
     >>> scaler = scaler.fit(dataset_path.values)
     >>> df = scaler.transform(dataset_path)
+    >>> df.columns = dataset_path.columns
     >>> forecaster = HFPatchTSTForecaster(
     ...     model_path="namctin/patchtst_etth1_forecast", mode = "finetune"
     ... ) # doctest: +SKIP
