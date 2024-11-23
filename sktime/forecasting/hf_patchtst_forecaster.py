@@ -215,7 +215,6 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         training_args=None,
         compute_metrics=None,
         callbacks=None,
-        broadcasting=False,
     ):
         self.model_path = model_path
         self.fit_strategy = fit_strategy
@@ -239,7 +238,6 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         self.training_args = training_args
         self.compute_metrics = compute_metrics
         self.callbacks = callbacks
-        self.broadcasting = broadcasting
         super().__init__()
         if self.fit_strategy not in ["full", "minimal", "zero-shot"]:
             raise ValueError("unexpected fit_strategy passed in argument")
