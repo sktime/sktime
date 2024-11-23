@@ -342,6 +342,8 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         self.weights = weights
         super().__init__(forecasters=forecasters, n_jobs=n_jobs)
 
+        print("test")
+
         fc = []
         for forecaster in forecasters:
             if len(forecaster) <= 2:
