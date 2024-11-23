@@ -946,6 +946,27 @@ class TestAllForecasters(
         _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
         _assert_correct_columns(y_pred, y_train)
 
+    def test_fit_predict_without_remember_data(self, estimator_instance, n_columns):
+        """Check that fit then predict works if remember_data=False.
+
+        This is to ensure that fit and predict are decoupled from the
+        default update logic.
+        """
+        y = _make_series(n_columns=n_columns)
+        X = _make_series(n_columns=3)
+
+        fh = ForecastingHorizon([1, 2, 3])
+
+        y_train, _, X_train, X_test = temporal_train_test_split(y, X, fh=fh)
+
+        estimator_instance.clone().set_config(remember_data=False)
+        estimator_instance.fit(y=y_train, X=X_train, fh=fh)
+        y_pred = estimator_instance.predict(X=X_test)
+
+        cutoff = get_cutoff(y_train, return_index=True)
+        _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
+        _assert_correct_columns(y_pred, y_train)
+
 
 class TestAllGlobalForecasters(TestAllObjects, _ProbalisticPredictionCheck):
     """Module level tests for all global forecasters."""
