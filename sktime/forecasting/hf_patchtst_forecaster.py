@@ -35,7 +35,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
     """Interface for the PatchTST forecaster.
 
     This model has 3 available modes:
-        1) Loading an untrained PatchTST model and pretrain on some dataset.
+        1) Loading an full PatchTST model and pretrain on some dataset.
         This can be done by passing in a PatchTST config dictionary or passing
         in available parameters in this estimator, or by loading the
         HFPatchTSTForecaster without any passed arguments.
@@ -64,16 +64,16 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
             - A path to a *directory* containing a configuration file saved
             using the `~PretrainedConfig.save_pretrained` method
             or the `~PreTrainedModel.save_pretrained` method
-    strategy : str, values = ["untrained","finetune","zeroshot"], default = "untrained"
-        String to set the strategy of the model.
-        If set to `untrained`, it will
-        re-initialize an untrained model with the specified config or
+    fit_strategy : str, values = ["full","minimal","zero-shot"], default = "full"
+        String to set the fit_strategy of the model.
+        If set to `full`, it will
+        re-initialize an full model with the specified config or
         estimator aruguments.
-        If set to "finetune" will use the `model_path`
+        If set to "minimal" will use the `model_path`
         argument and the passed in `y` in fit to fine-tune the model.
-        If set to "zeroshot", it will load the model in zero-shot forecasting
+        If set to "zero-shot", it will load the model in zero-shot forecasting
         model with the argument `model_path` and ignore any passed `y`.
-        Note that both "finetune" and "zeroshot" strategy requires a mandatory
+        Note that both "minimal" and "zero-shot" fit_strategy requires a mandatory
         passed in `model_path`.
     patch_length : int, optional, default = 2
         Length of each patch that will segment every univariate series.
@@ -102,7 +102,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
     validation_split : float, optional, default = 0.2
         Fraction of the data to use for validation.
     config : dict, optional, default = {}
-        A config dict specifying parameters to initialize an untrained
+        A config dict specifying parameters to initialize an full
         PatchTST model. Missing parameters in the config will be automatically
         replaced by their default values. See the PatchTSTConfig config on
         huggingface for more details.
@@ -120,11 +120,11 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
 
     Examples
     --------
-    >>> #Example with an untrained model
+    >>> #Example with an full model
     >>> from sktime.forecasting.hf_patchtst_forecaster import HFPatchTSTForecaster
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> forecaster = HFPatchTSTForecaster() #initialize an untrained model
+    >>> forecaster = HFPatchTSTForecaster() #initialize an full model
     >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
     >>>
@@ -142,7 +142,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
     >>> df = scaler.transform(dataset_path)
     >>> df.columns = dataset_path.columns
     >>> forecaster = HFPatchTSTForecaster(
-    ...     model_path="namctin/patchtst_etth1_forecast", strategy = "zeroshot"
+    ...     model_path="namctin/patchtst_etth1_forecast", fit_strategy = "zero-shot"
     ... ) # doctest: +SKIP
     >>> forecaster.fit(y = df, fh = [1,2,3,4,5]) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
@@ -161,7 +161,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
     >>> df = scaler.transform(dataset_path)
     >>> df.columns = dataset_path.columns
     >>> forecaster = HFPatchTSTForecaster(
-    ...     model_path="namctin/patchtst_etth1_forecast", strategy = "finetune"
+    ...     model_path="namctin/patchtst_etth1_forecast", fit_strategy = "minimal"
     ... ) # doctest: +SKIP
     >>> forecaster.fit(y = df, fh = list(range(1,97))) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
@@ -197,7 +197,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         self,
         # model variables except for forecast_columns
         model_path=None,
-        strategy="untrained",
+        fit_strategy="full",
         patch_length=2,
         context_length=4,
         patch_stride=2,
@@ -218,7 +218,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         broadcasting=False,
     ):
         self.model_path = model_path
-        self.strategy = strategy
+        self.fit_strategy = fit_strategy
         # model config parameters
         self.patch_length = patch_length
         self.context_length = context_length
@@ -241,8 +241,8 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         self.callbacks = callbacks
         self.broadcasting = broadcasting
         super().__init__()
-        if self.strategy not in ["untrained", "finetune", "zeroshot"]:
-            raise ValueError("unexpected strategy passed in argument")
+        if self.fit_strategy not in ["full", "minimal", "zero-shot"]:
+            raise ValueError("unexpected fit_strategy passed in argument")
 
         if not self._config:
             self._config["patch_length"] = self.patch_length
@@ -271,7 +271,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         self._y = y
         self.fh_ = max(fh.to_relative(self.cutoff))
         self.y_columns = y.columns
-        # if no model_path was given, initialize new untrained model from config
+        # if no model_path was given, initialize new full model from config
         if not self.model_path:
             self._config["num_input_channels"] = len(self.y_columns)
             self._config["prediction_length"] = int(self.fh_)
@@ -298,7 +298,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
                     f"found {self.model.model.__class__.__name__}"
                 )
 
-        if self.strategy != "zeroshot":
+        if self.fit_strategy != "zero-shot":
             # initialize dataset
             y_train, y_test = temporal_train_test_split(
                 y, train_size=1 - self.validation_split, test_size=self.validation_split
