@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
-from sktime.utils._testing.annotation import make_annotation_problem
+from sktime.utils._testing.annotation import make_detection_problem
 from sktime.utils.validation.annotation import check_learning_type, check_task
 
 
@@ -48,11 +48,11 @@ class TestAllAnnotators(AnnotatorsFixtureGenerator, QuickTester):
         """Test annotator output type."""
         estimator = estimator_instance
 
-        X_train = make_annotation_problem(
+        X_train = make_detection_problem(
             n_timepoints=50, estimator_type=estimator.get_tag("distribution_type")
         )
         estimator.fit(X_train)
-        X_test = make_annotation_problem(
+        X_test = make_detection_problem(
             n_timepoints=10, estimator_type=estimator.get_tag("distribution_type")
         )
         y_test = estimator.predict(X_test)
@@ -60,12 +60,12 @@ class TestAllAnnotators(AnnotatorsFixtureGenerator, QuickTester):
 
     def test_transform_output_type(self, estimator_instance):
         """Test output type for the transform method."""
-        X_train = make_annotation_problem(
+        X_train = make_detection_problem(
             n_timepoints=50,
             estimator_type=estimator_instance.get_tag("distribution_type"),
         )
         estimator_instance.fit(X_train)
-        X_test = make_annotation_problem(
+        X_test = make_detection_problem(
             n_timepoints=10,
             estimator_type=estimator_instance.get_tag("distribution_type"),
         )
@@ -74,12 +74,12 @@ class TestAllAnnotators(AnnotatorsFixtureGenerator, QuickTester):
         assert len(y_test) == len(X_test)
 
     def test_predict_points(self, estimator_instance):
-        X_train = make_annotation_problem(
+        X_train = make_detection_problem(
             n_timepoints=50,
             estimator_type=estimator_instance.get_tag("distribution_type"),
         )
         estimator_instance.fit(X_train)
-        X_test = make_annotation_problem(
+        X_test = make_detection_problem(
             n_timepoints=10,
             estimator_type=estimator_instance.get_tag("distribution_type"),
         )
@@ -87,13 +87,13 @@ class TestAllAnnotators(AnnotatorsFixtureGenerator, QuickTester):
         assert isinstance(y_pred, (pd.Series, np.ndarray))
 
     def test_predict_segments(self, estimator_instance):
-        X_train = make_annotation_problem(
+        X_train = make_detection_problem(
             n_timepoints=50,
             estimator_type=estimator_instance.get_tag("distribution_type"),
         )
         estimator_instance.fit(X_train)
 
-        X_test = make_annotation_problem(
+        X_test = make_detection_problem(
             n_timepoints=10,
             estimator_type=estimator_instance.get_tag("distribution_type"),
         )
