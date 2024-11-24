@@ -68,7 +68,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
         String to set the fit_strategy of the model.
         If set to `full`, it will
         re-initialize an full model with the specified config or
-        estimator aruguments.
+        estimator arguments.
         If set to "minimal" will use the `model_path`
         argument and the passed in `y` in fit to fine-tune the model.
         If set to "zero-shot", it will load the model in zero-shot forecasting
@@ -117,6 +117,7 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
     References
     ----------
     Paper: https://arxiv.org/abs/2211.14730
+    HuggingFace Page: https://huggingface.co/docs/transformers/en/model_doc/patchtst
 
     Examples
     --------
@@ -127,7 +128,8 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
     >>> forecaster = HFPatchTSTForecaster() #initialize an full model
     >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
-    >>>
+
+
     >>> #Example with a pre-trained model
     >>> from sktime.forecasting.hf_patchtst_forecaster import HFPatchTSTForecaster
     >>> import pandas as pd
@@ -146,7 +148,8 @@ class HFPatchTSTForecaster(_BaseGlobalForecaster):
     ... ) # doctest: +SKIP
     >>> forecaster.fit(y = df, fh = [1,2,3,4,5]) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
-    >>>
+
+
     >>> #Example fine-tuning with a pre-trained model
     >>> from sktime.forecasting.hf_patchtst_forecaster import HFPatchTSTForecaster
     >>> import pandas as pd
