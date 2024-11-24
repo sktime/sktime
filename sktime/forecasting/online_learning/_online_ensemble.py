@@ -16,7 +16,14 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
     Parameters
     ----------
     ensemble_algorithm : ensemble algorithm
-    forecasters : list of (str, estimator) tuples
+
+    forecasters : list of estimator, (str, estimator), or (str, estimator, count) tuples
+        Estimators to apply to the input series.
+
+        * (str, estimator) tuples: the string is a name for the estimator.
+        * estimator without string will be assigned unique name based on class name
+        * (str, estimator, count) tuples: the estimator will be replicated count times.
+
     n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for fit. None means 1 unless
         in a joblib.parallel_backend context.
@@ -41,7 +48,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         self.n_jobs = n_jobs
         self.ensemble_algorithm = ensemble_algorithm
 
-        super(EnsembleForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
+        super().__init__(forecasters=forecasters, n_jobs=n_jobs)
 
     def _fit(self, y, X, fh):
         """Fit to training data.
