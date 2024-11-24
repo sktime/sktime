@@ -804,7 +804,406 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         return params_broadcasting + params_no_broadcasting
 
 
+class NeuralForecastGRU(_NeuralForecastAdapter):
+    """NeuralForecast GRU model.
+
+    Interface to ``neuralforecast.models.GRU`` [1]_
+    through ``neuralforecast.NeuralForecast`` [2]_,
+    from ``neuralforecast`` [3]_ by Nixtla.
+
+    Multi Layer Recurrent Network with Gated Units (GRU), and
+    MLP decoder. The network has non-linear activation functions, it is trained
+    using ADAM stochastic gradient descent. The network accepts static, historic
+    and future exogenous data, flattens the inputs.
+
+    Parameters
+    ----------
+    freq : Union[str, int] (default="auto")
+        frequency of the data, see available frequencies [4]_ from ``pandas``
+        use int freq when using RangeIndex in ``y``
+
+        default ("auto") interprets freq from ForecastingHorizon in ``fit``
+    local_scaler_type : str (default=None)
+        scaler to apply per-series to all features before fitting, which is inverted
+        after predicting
+
+        can be one of the following:
+
+        - 'standard'
+        - 'robust'
+        - 'robust-iqr'
+        - 'minmax'
+        - 'boxcox'
+    futr_exog_list : str list, (default=None)
+        future exogenous variables
+    verbose_fit : bool (default=False)
+        print processing steps during fit
+    verbose_predict : bool (default=False)
+        print processing steps during predict
+    input_size : int (default=-1)
+        maximum sequence length for truncated train backpropagation
+
+        default (-1) uses all history
+    inference_input_size : int (default=-1)
+        maximum sequence length for truncated inference
+
+        default (-1) uses all history
+    encoder_n_layers : int (default=2)
+        number of layers for the GRU
+    encoder_hidden_size : int (default=200)
+        units for the GRU's hidden state size
+    encoder_bias : bool (default=True)
+        whether or not to use biases b_ih, b_hh within GRU units
+    encoder_dropout : float (default=0.0)
+        dropout regularization applied to GRU outputs
+    context_size : int (default=10)
+        size of context vector for each timestamp on the forecasting window
+    decoder_hidden_size : int (default=200)
+        size of hidden layer for the MLP decoder
+    decoder_layers : int (default=2)
+        number of layers for the MLP decoder
+    loss : pytorch module (default=None)
+        instantiated train loss class from losses collection [5]_
+    valid_loss : pytorch module (default=None)
+        instantiated validation loss class from losses collection [5]_
+    max_steps : int (default=1000)
+        maximum number of training steps
+    learning_rate : float (default=1e-3)
+        learning rate between (0, 1)
+    num_lr_decays : int (default=-1)
+        number of learning rate decays, evenly distributed across max_steps
+    early_stop_patience_steps : int (default=-1)
+        number of validation iterations before early stopping
+    val_check_steps : int (default=100)
+        number of training steps between every validation loss check
+    batch_size : int (default=32)
+        number of different series in each batch
+    valid_batch_size : Optional[int] (default=None)
+        number of different series in each validation and test batch
+    scaler_type : str (default="robust")
+        type of scaler for temporal inputs normalization
+    random_seed : int (default=1)
+        random_seed for pytorch initializer and numpy generators
+    num_workers_loader : int (default=0)
+        workers to be used by ``TimeSeriesDataLoader``
+    drop_last_loader : bool (default=False)
+        whether ``TimeSeriesDataLoader`` drops last non-full batch
+    optimizer : pytorch optimizer (default=None) [7]_
+        optimizer to use for training, if passed with None defaults to ``Adam``
+    optimizer_kwargs : dict (default=None) [8]_
+        dict of parameters to pass to the user defined optimizer
+    lr_scheduler : pytorch learning rate scheduler (default=None) [9]_
+        user specified lr_scheduler instead of the default choice ``StepLR`` [10]_
+    lr_scheduler_kwargs : dict (default=None)
+        list of parameters used by the user specified ``lr_scheduler``
+    trainer_kwargs : dict (default=None)
+        keyword trainer arguments inherited from PyTorch Lighning's trainer [6]_
+    broadcasting : bool (default=False)
+        multiindex data input will be broadcasted to single series, and for each single series,
+        one copy of this forecaster will try to fit and predict on it. The broadcasting is
+        happening inside automatically, from the outerside api perspective, the input and
+        output are the same, only one multiindex output from `predict`.
+
+    Notes
+    -----
+    * If ``loss`` is unspecified, MAE is used as the loss function for training.
+    * Only ``futr_exog_list`` will be considered as exogenous variables.
+
+    Examples
+    --------
+    >>>
+    >>> # importing necessary libraries
+    >>> from sktime.datasets import load_longley
+    >>> from sktime.forecasting.neuralforecast import NeuralForecastGRU
+    >>> from sktime.split import temporal_train_test_split
+    >>>
+    >>> # loading the Longley dataset and splitting it into train and test subsets
+    >>> y, X = load_longley()
+    >>> y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, test_size=4)
+    >>>
+    >>> # creating model instance configuring the hyperparameters
+    >>> model = NeuralForecastGRU(  # doctest: +SKIP
+    ...     "A-DEC", futr_exog_list=["ARMED", "POP"], max_steps=5
+    ... )
+    >>>
+    >>> # fitting the model
+    >>> model.fit(y_train, X=X_train, fh=[1, 2, 3, 4])  # doctest: +SKIP
+    Seed set to 1
+    Epoch 4: 100%|████████████████████████████| 1/1 [00:00<00:00, 20.71it/s, v_num=0, train_loss_step=0.745, train_loss_epoch=0.745]
+    NeuralForecastGRU(freq='A-DEC', futr_exog_list=['ARMED', 'POP'], max_steps=5)
+    >>>
+    >>> # getting point predictions
+    >>> model.predict(X=X_test)  # doctest: +SKIP
+    Predicting DataLoader 0: 100%|██████████████████████████████████| 1/1 [00:00<00:00,
+    198.64it/s]
+    1959    64516.003906
+    1960    63966.054688
+    1961    64432.593750
+    1962    64210.609375
+    Freq: A-DEC, Name: TOTEMP, dtype: float64
+    >>>
+
+    References
+    ----------
+    .. [1] https://nixtlaverse.nixtla.io/neuralforecast/models.gru.html#gru
+    .. [2] https://nixtlaverse.nixtla.io/neuralforecast/core.html#neuralforecast
+    .. [3] https://github.com/Nixtla/neuralforecast/
+    .. [4]
+    https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
+    .. [5] https://nixtlaverse.nixtla.io/neuralforecast/losses.pytorch.html
+    .. [6]
+    https://lightning.ai/docs/pytorch/stable/api/pytorch_lightning.trainer.trainer.Trainer.html#lightning.pytorch.trainer.trainer.Trainer
+    .. [7] https://pytorch.org/docs/stable/optim.html
+    .. [8] https://pytorch.org/docs/stable/optim.html#algorithms
+    .. [9] https://pytorch.org/docs/stable/generated/torch.optim.lr_scheduler.LRScheduler.html
+    .. [10] https://pytorch.org/docs/stable/generated/torch.optim.lr_scheduler.StepLR.html
+    """  # noqa: E501
+
+    _tags = {
+        # packaging info
+        # --------------
+        # "authors": ["yarnabrina"],
+        # "maintainers": ["yarnabrina"],
+        # "python_dependencies": "neuralforecast"
+        # inherited from _NeuralForecastAdapter
+        # estimator type
+        # --------------
+        "python_dependencies": ["neuralforecast>=1.6.4"],
+        "capability:global_forecasting": True,
+    }
+
+    def __init__(
+        self: "NeuralForecastGRU",
+        freq: Union[str, int] = "auto",
+        local_scaler_type: Optional[_SUPPORTED_LOCAL_SCALAR_TYPES] = None,
+        futr_exog_list: Optional[list[str]] = None,
+        verbose_fit: bool = False,
+        verbose_predict: bool = False,
+        input_size: int = -1,
+        inference_input_size: int = -1,
+        encoder_n_layers: int = 2,
+        encoder_hidden_size: int = 200,
+        encoder_bias: bool = True,
+        encoder_dropout: float = 0.0,
+        context_size: int = 10,
+        decoder_hidden_size: int = 200,
+        decoder_layers: int = 2,
+        loss=None,
+        valid_loss=None,
+        max_steps: int = 1000,
+        learning_rate: float = 1e-3,
+        num_lr_decays: int = -1,
+        early_stop_patience_steps: int = -1,
+        val_check_steps: int = 100,
+        batch_size=32,
+        valid_batch_size: Optional[int] = None,
+        scaler_type: str = "robust",
+        random_seed=1,
+        num_workers_loader=0,
+        drop_last_loader=False,
+        optimizer=None,
+        optimizer_kwargs: Optional[dict] = None,
+        lr_scheduler=None,
+        lr_scheduler_kwargs: Optional[dict] = None,
+        trainer_kwargs: Optional[dict] = None,
+        broadcasting: bool = False,
+    ):
+        self.input_size = input_size
+        self.inference_input_size = inference_input_size
+        self.encoder_n_layers = encoder_n_layers
+        self.encoder_hidden_size = encoder_hidden_size
+        self.encoder_bias = encoder_bias
+        self.encoder_dropout = encoder_dropout
+        self.context_size = context_size
+        self.decoder_hidden_size = decoder_hidden_size
+        self.decoder_layers = decoder_layers
+        self.loss = loss
+        self.valid_loss = valid_loss
+        self.max_steps = max_steps
+        self.learning_rate = learning_rate
+        self.num_lr_decays = num_lr_decays
+        self.early_stop_patience_steps = early_stop_patience_steps
+        self.val_check_steps = val_check_steps
+        self.batch_size = batch_size
+        self.valid_batch_size = valid_batch_size
+        self.scaler_type = scaler_type
+        self.random_seed = random_seed
+        self.num_workers_loader = num_workers_loader
+        self.drop_last_loader = drop_last_loader
+        self.optimizer = optimizer
+        self.optimizer_kwargs = optimizer_kwargs
+        self.lr_scheduler = lr_scheduler
+        self.lr_scheduler_kwargs = lr_scheduler_kwargs
+        self.trainer_kwargs = trainer_kwargs
+
+        super().__init__(
+            freq,
+            local_scaler_type=local_scaler_type,
+            futr_exog_list=futr_exog_list,
+            verbose_fit=verbose_fit,
+            verbose_predict=verbose_predict,
+            broadcasting=broadcasting,
+        )
+
+        # initiate internal variables to avoid AttributeError in future
+        self._trainer_kwargs = None
+        self._loss = None
+        self._valid_loss = None
+
+    @functools.cached_property
+    def algorithm_exogenous_support(self: "NeuralForecastGRU") -> bool:
+        """Set support for exogenous features."""
+        return True
+
+    @functools.cached_property
+    def algorithm_name(self: "NeuralForecastGRU") -> str:
+        """Set custom model name."""
+        return "GRU"
+
+    @functools.cached_property
+    def algorithm_class(self: "NeuralForecastGRU"):
+        """Import underlying NeuralForecast algorithm class."""
+        from neuralforecast.models import GRU
+
+        return GRU
+
+    @functools.cached_property
+    def algorithm_parameters(self: "NeuralForecastGRU") -> dict:
+        """Get keyword parameters for the underlying NeuralForecast algorithm class.
+
+        Returns
+        -------
+        dict
+            keyword arguments for the underlying algorithm class
+        """
+        self._trainer_kwargs = (
+            {} if self.trainer_kwargs is None else self.trainer_kwargs
+        )
+
+        if self.loss:
+            self._loss = self.loss
+        else:
+            from neuralforecast.losses.pytorch import MAE
+
+            self._loss = MAE()
+
+        if self.valid_loss:
+            self._valid_loss = self.valid_loss
+
+        return {
+            "input_size": self.input_size,
+            "inference_input_size": self.inference_input_size,
+            "encoder_n_layers": self.encoder_n_layers,
+            "encoder_hidden_size": self.encoder_hidden_size,
+            "encoder_bias": self.encoder_bias,
+            "encoder_dropout": self.encoder_dropout,
+            "context_size": self.context_size,
+            "decoder_hidden_size": self.decoder_hidden_size,
+            "decoder_layers": self.decoder_layers,
+            "loss": self._loss,
+            "valid_loss": self._valid_loss,
+            "max_steps": self.max_steps,
+            "learning_rate": self.learning_rate,
+            "num_lr_decays": self.num_lr_decays,
+            "early_stop_patience_steps": self.early_stop_patience_steps,
+            "val_check_steps": self.val_check_steps,
+            "batch_size": self.batch_size,
+            "valid_batch_size": self.valid_batch_size,
+            "scaler_type": self.scaler_type,
+            "random_seed": self.random_seed,
+            "num_workers_loader": self.num_workers_loader,
+            "drop_last_loader": self.drop_last_loader,
+            "optimizer": self.optimizer,
+            "optimizer_kwargs": self.optimizer_kwargs,
+            "lr_scheduler": self.lr_scheduler,
+            "lr_scheduler_kwargs": self.lr_scheduler_kwargs,
+            "trainer_kwargs": self._trainer_kwargs,
+        }
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+            There are currently no reserved values for forecasters.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
+
+        try:
+            _check_soft_dependencies("neuralforecast", severity="error")
+            _check_soft_dependencies("torch", severity="error")
+        except ModuleNotFoundError:
+            params = [
+                {
+                    "freq": "auto",
+                    "inference_input_size": 2,
+                    "encoder_hidden_size": 2,
+                    "decoder_hidden_size": 3,
+                    "max_steps": 4,
+                    "trainer_kwargs": {"logger": False},
+                },
+                {
+                    "freq": "auto",
+                    "inference_input_size": 2,
+                    "encoder_hidden_size": 2,
+                    "decoder_hidden_size": 3,
+                    "max_steps": 4,
+                    "val_check_steps": 2,
+                    "trainer_kwargs": {"logger": False},
+                },
+            ]
+        else:
+            from neuralforecast.losses.pytorch import SMAPE, QuantileLoss
+            from torch.optim import Adam
+            from torch.optim.lr_scheduler import ConstantLR
+
+            params = [
+                {
+                    "freq": "auto",
+                    "inference_input_size": 2,
+                    "encoder_hidden_size": 2,
+                    "decoder_hidden_size": 3,
+                    "max_steps": 4,
+                    "trainer_kwargs": {"logger": False},
+                    "lr_scheduler": ConstantLR,
+                    "lr_scheduler_kwargs": {"factor": 0.5},
+                },
+                {
+                    "freq": "auto",
+                    "inference_input_size": 2,
+                    "encoder_hidden_size": 2,
+                    "decoder_hidden_size": 3,
+                    "loss": QuantileLoss(0.5),
+                    "valid_loss": SMAPE(),
+                    "max_steps": 4,
+                    "val_check_steps": 2,
+                    "trainer_kwargs": {"logger": False},
+                    "optimizer": Adam,
+                    "optimizer_kwargs": {"lr": 0.001},
+                },
+            ]
+
+        params_broadcasting = [{**param, "broadcasting": True} for param in params]
+        params_no_broadcasting = [{**param, "broadcasting": False} for param in params]
+
+        return params_broadcasting + params_no_broadcasting
+
+
 __all__ = [
     "NeuralForecastRNN",
     "NeuralForecastLSTM",
+    "NeuralForecastGRU",
 ]
