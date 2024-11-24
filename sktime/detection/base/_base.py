@@ -494,6 +494,40 @@ class BaseDetector(BaseEstimator):
         """
         raise NotImplementedError("abstract method")
 
+    def _transform_scores(self, X):
+        """Return scores for predicted labels on test/deployment data.
+
+        core logic
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Time series subject to detection, which will be assigned labels or scores.
+
+        Returns
+        -------
+        scores : pd.DataFrame with same index as X
+            Scores for sequence ``X``.
+        """
+        raise NotImplementedError("abstract method")
+
+    def _transform_scores(self, X):
+        """Return scores for predicted labels on test/deployment data.
+
+        core logic
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Time series subject to detection, which will be assigned labels or scores.
+
+        Returns
+        -------
+        scores : pd.DataFrame with same index as X
+            Scores for sequence ``X``.
+        """
+        raise NotImplementedError("abstract method")
+
     def _update(self, X, y=None):
         """Update model with new data and optional ground truth labels.
 

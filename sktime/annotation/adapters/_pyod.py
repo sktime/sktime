@@ -45,8 +45,6 @@ class PyODAnnotator(BaseDetector):
 
         super().__init__()
 
-        self._fmt = "sparse"
-
     def _fit(self, X, Y=None):
         """Fit to training data.
 
@@ -89,7 +87,6 @@ class PyODAnnotator(BaseDetector):
         -------
         Y : pd.Series - annotations for sequence X
         """
-        fmt = self._fmt
         labels = self.labels
 
         X_np = X.to_numpy()
@@ -104,11 +101,8 @@ class PyODAnnotator(BaseDetector):
         elif labels == "indicator":
             Y_val_np = Y_np
 
-        if fmt == "dense":
-            Y = pd.Series(Y_val_np, index=X.index)
-        elif fmt == "sparse":
-            Y_loc = np.where(Y_np)
-            Y = pd.Series(Y_val_np[Y_loc], index=X.index[Y_loc])
+        Y_loc = np.where(Y_np)
+        Y = pd.Series(Y_val_np[Y_loc], index=X.index[Y_loc])
 
         return Y
 
