@@ -77,6 +77,7 @@ class BaseDetector(BaseEstimator):
         # todo: distribution_type does not seem to be used - refactor or remove
         "distribution_type": "None",
         "X_inner_mtype": "pd.DataFrame",
+        "fit_is_empty": False,
     }
 
     def __init__(self):
