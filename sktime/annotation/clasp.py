@@ -258,22 +258,6 @@ class ClaSPSegmentation(BaseDetector):
         Y : pd.Series or an IntervalSeries
             Change points in sequence X.
         """
-        change_points = self._predict_points(X)
-        return change_points
-
-    def _predict_points(self, X):
-        """Predict change points on test/deployment data.
-
-        Parameters
-        ----------
-        X : pd.DataFrame
-            Time series subject to detection, which will be assigned labels or scores.
-
-        Returns
-        -------
-        Y : pd.Series
-            Series containing the indexes of the change points in X.
-        """
         self.found_cps, self.profiles, self.scores = self._run_clasp(X)
         return pd.Series(self.found_cps)
 
