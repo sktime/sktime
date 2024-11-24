@@ -202,6 +202,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         self : _PytorchForecastingAdapter
             reference to self
         """
+        raise ValueError("test_error_forecasting")
         self._max_prediction_length = np.max(fh.to_relative(self.cutoff))
         if not fh.is_all_out_of_sample(self.cutoff):
             raise NotImplementedError(

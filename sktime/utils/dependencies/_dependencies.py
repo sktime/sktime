@@ -523,8 +523,10 @@ def _check_estimator_deps(obj, msg=None, severity="error"):
         pkg_deps = [pkg_deps]
     if pkg_deps is not None:
         pkg_deps_ok = _check_soft_dependencies(*pkg_deps, severity=severity, obj=obj)
+        if pkg_deps == ["transformers", "torch"]:
+            pkg_deps_ok = _check_soft_dependencies(*pkg_deps, severity="error", obj=obj)
         compatible = compatible and pkg_deps_ok
-
+    print(pkg_deps)
     return compatible
 
 

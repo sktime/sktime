@@ -37,7 +37,23 @@ def time_series_data():
 def test_plot_time_series_with_change_points(time_series_data):
     import matplotlib.pyplot as plt
 
-    # Access data from the fixture
+    from sktime.forecasting.timesfm_forecaster import TimesFMForecaster
+    from sktime.forecasting.ttm import TinyTimeMixerForecaster
+    from sktime.tests.test_switch import run_test_for_class
+    from sktime.utils.dependencies._dependencies import _check_estimator_deps
+    # from sktime.utils.estimator_checks import check_estimator
+
+    # check_estimator(TinyTimeMixerForecaster, raise_exceptions=True)
+
+    bool_, reason = run_test_for_class(TinyTimeMixerForecaster, return_reason=True)
+    bool_1, reason_ = run_test_for_class(TimesFMForecaster, return_reason=True)
+    compatible = _check_estimator_deps(TinyTimeMixerForecaster, severity="none")
+    raise ValueError(
+        f"ttm: bool: {bool_}, reason: {reason}, "
+        f"timesfm: bool: {bool_1}, reason: {reason_}"
+        f"compatible: {compatible}"
+    )
+
     ts_name = time_series_data["ts_name"]
     ts = time_series_data["ts"]
     true_cps = time_series_data["true_cps"]
