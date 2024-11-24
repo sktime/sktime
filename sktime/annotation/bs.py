@@ -156,10 +156,6 @@ class BinarySegmentation(BaseDetector):
 
         return change_points
 
-    def _fit(self, X, Y=None):
-        """Fit method for compatibitility with sklearn-type interface."""
-        return self
-
     def _predict(self, X, Y=None):
         """Find the change points on 'X'.
 
