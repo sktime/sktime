@@ -1,7 +1,5 @@
 """Dummy anomaly detector which detects no anomalies."""
 
-import pandas as pd
-
 from sktime.detection.base import BaseDetector
 
 

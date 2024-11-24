@@ -1,7 +1,5 @@
 """Dummy segment detector which detects no segments."""
 
-import pandas as pd
-
 from sktime.detection.base import BaseDetector
 
 
