@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import gmean
 from sklearn.pipeline import Pipeline
+from joblib import Parallel, delayed
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
@@ -118,11 +119,13 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         regressor=None,
         test_size=None,
         random_state=None,
-        n_jobs=None,
+        backend=None,  # Removed n_jobs, added backend
+        backend_params=None  # added backend_params
     ):
         super().__init__(
             forecasters=forecasters,
-            n_jobs=n_jobs,
+            backend = backend,
+            backend_params = backend_params
         )
         self.method = method
         self.regressor = regressor
@@ -146,6 +149,17 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self : returns an instance of self.
         """
         _, forecasters = self._check_forecasters()
+
+        if self.backend == 'joblib':
+            # Parallelize the fitting of individuals forecasters
+            n_jobs = self.backend_params.get('n_jobs', -1) # default to -1 (use all processors)
+            Parallel(n_jobs = n_jobs)(
+                delayed(self._fit_forecaster)(forecaster, y, X, fh) for forecaster in forecasters
+            )
+        else:
+            # If backend is not joblib, fallback to sequential fitting
+            for forecaster in forecasters:
+                self._fit_forecaster(forecaster, y, X, fh)
 
         # get training data for meta-model
         if X is not None:
@@ -212,8 +226,25 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         y_pred : pd.Series
             Aggregated predictions.
         """
-        y_pred_df = pd.concat(self._predict_forecasters(fh, X), axis=1)
-        # apply weights
+
+        # Return the predictions of the ensemble models
+        if self.backend == 'joblib':
+            # Parallelize the prediction of individuals forecasters
+            n_jobs = self.backend_params.get('n_jobs', -1) # default to -1 (use all processors)
+            y_pred_df = pd.concat(
+                Parallel(n_jobs = n_jobs)(
+                    delayed(self._predict_forecaster)(forecaster, fh, X) for forecaster in self.forecasters_
+                ),
+                axis=1,
+            )
+        else:
+            # If backend is not joblib, fallback to sequential prediction
+            y_pred_df = pd.concat(
+                [self._predict_forecaster(forecaster, fh, X) for forecaster in self.forecasters_],
+                axis=1,
+            )
+
+        # apply weights to the predictions
         y_pred = y_pred_df.apply(lambda x: np.average(x, weights=self.weights_), axis=1)
         y_pred.name = self._y.name
         return y_pred
