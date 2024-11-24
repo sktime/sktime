@@ -110,7 +110,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
     train_val_split : float
         float value between 0 and 1 to determine portions of training
         and validation splits
-        default = 0.4
+        default = 0.0
 
     transformer_backbone : str
         d_model of a pre-trained transformer model to use. See
@@ -128,6 +128,21 @@ class MomentFMForecaster(_BaseGlobalForecaster):
 
     return_model_to_cpu : bool, default = False
         After fitting and training, will return the `momentfm` model to the cpu.
+
+    References
+    ----------
+    Paper: https://arxiv.org/abs/2402.03885
+    Github: https://github.com/moment-timeseries-foundation-model/moment/tree/main
+
+    Examples
+    --------
+    >>> from sktime.forecasting.hf_momentfm_forecaster import MomentFMForecaster
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> forecaster = MomentFMForecaster(seq_len = 2)
+    >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
+    >>> y_pred = forecaster.predict(y = y) # doctest: +SKIP
+
     """
 
     _tags = {
@@ -172,7 +187,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         device="auto",
         pct_start=0.3,
         max_norm=5.0,
-        train_val_split=0.4,
+        train_val_split=0.0,
         transformer_backbone="google/flan-t5-large",
         criterion=None,
         config=None,
