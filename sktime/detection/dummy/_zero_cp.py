@@ -15,7 +15,7 @@ class ZeroChangePoints(BaseDetector):
     Examples
     --------
     >>> import pandas as pd
-    >>> from sktime.detection.dummy import DummyChangePoints
+    >>> from sktime.detection.dummy import ZeroChangePoints
     >>> y = pd.Series([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
     >>> d = ZeroChangePoints()
     >>> d.fit_transform(y)

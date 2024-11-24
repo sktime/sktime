@@ -24,7 +24,7 @@ class DummyRegularChangePoints(BaseDetector):
     >>> import pandas as pd
     >>> from sktime.detection.dummy import DummyRegularChangePoints
     >>> y = pd.Series([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
-    >>> d = DummyChangePoints(step_size=3)
+    >>> d = DummyRegularChangePoints(step_size=3)
     >>> d.fit_transform(y)
     """
 
