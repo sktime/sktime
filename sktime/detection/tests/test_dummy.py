@@ -5,10 +5,10 @@ import pandas as pd
 
 def test_dummy_changepoints():
     """Test expected output for DummyChangePoints."""
-    from sktime.detection.dummy import DummyChangePoints
+    from sktime.detection.dummy._dummy_regular_cp import DummyRegularChangePoints
 
     y = pd.Series([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
-    d = DummyChangePoints(step_size=3)
+    d = DummyRegularChangePoints(step_size=3)
     y_cp_ds = d.fit_transform(y)
     y_cp_sp = d.fit_predict(y)
 
