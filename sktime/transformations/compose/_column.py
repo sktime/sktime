@@ -10,6 +10,7 @@ import pandas as pd
 
 from sktime.base._meta import _ColumnEstimator, _HeterogenousMetaEstimator
 from sktime.transformations.base import BaseTransformer
+from sktime.utils._estimator_html_repr import _VisualBlock
 from sktime.utils.multiindex import rename_multiindex
 from sktime.utils.validation.series import check_series
 
@@ -370,6 +371,14 @@ class ColumnEnsembleTransformer(
         }
 
         return [params1, params2, params3]
+
+    def _sk_visual_block_(self):
+        transformers = self._transformers + [("remainder", self.remainder)]
+
+        names, transformers = zip(*transformers)
+        return _VisualBlock(
+            self.get_tag(tag_name="visual_block_kind"), transformers, names=names
+        )
 
 
 class ColumnwiseTransformer(BaseTransformer):
