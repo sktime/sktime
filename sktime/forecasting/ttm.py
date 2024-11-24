@@ -44,7 +44,8 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
 
     **Initialization Process**:
 
-    1. **Model Path**: The ``model_path`` parameter contains both *configuration files*
+    1. **Model Path**: The ``model_path`` parameter points to a local folder or
+       huggingface repo that contains both *configuration files*
        and *pretrained weights*.
 
     2. **Default Configuration**: The model loads its default configuration from the
