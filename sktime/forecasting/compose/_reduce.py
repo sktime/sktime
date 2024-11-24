@@ -2478,8 +2478,16 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         def my_get_last_window(cutoff, window_length, y_orig):
             start = _shift(cutoff, by=-window_length + 1)
             cutoff = cutoff[0]
-            y = y_orig.loc[start:cutoff].to_numpy()
+            y = y_orig.loc[start:cutoff]
+            # check for missing values
+            if len(y) < window_length:
+                idx = pd.period_range(
+                    start=y.index.min(), end=y.index.max(), freq=y.index.freq
+                )
+                y = y.reindex(idx)
+                y = y.bfill().ffill()
 
+            y = y.to_numpy()
             X = None
             return y, X
 
