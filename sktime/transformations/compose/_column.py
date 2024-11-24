@@ -210,7 +210,7 @@ class ColumnEnsembleTransformer(
         for the implementation of get_params via _HeterogenousMetaEstimator._get_params
         which expects lists of tuples of len 2.
         """
-        transformers = self._check_transformers(self.transformers)
+        transformers = self.transformers
         if isinstance(transformers, BaseTransformer):
             return [("transformers", transformers)]
         else:
