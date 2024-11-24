@@ -218,7 +218,7 @@ class ColumnEnsembleTransformer(
 
     @_transformers.setter
     def _transformers(self, value):
-        if len(value) == 1 and isinstance(value, BaseTransformer):
+        if isinstance(value, BaseTransformer):
             self.transformers = value
         elif len(value) == 1 and isinstance(value, list):
             self.transformers = value[0][1]
