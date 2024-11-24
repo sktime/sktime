@@ -68,12 +68,16 @@ class BaseDetector(BaseEstimator):
         # todo 0.37.0 switch order of series-annotator and detector
         # todo 1.0.0 - remove series-annotator
         "object_type": ["series-annotator", "detector"],  # type of object
-        "learning_type": "None",  # Tag to determine test in test_all_annotators
-        "task": "None",  # Tag to determine test in test_all_annotators
+        "learning_type": "None",  # supervised, unsupervised
+        "task": "None",  # anomaly_detection, change_point_detection, segmentation
+        "capability:multivariate": False,
+        "capability:missing_values": False,
+        "capability:update": False,
         #
-        # todo: distribution_type? we may have to refactor this, seems very soecufuc
-        "distribution_type": "None",  # Tag to determine test in test_all_annotators
-        "X_inner_mtype": "pd.DataFrame",  # Tag to determine test in test_all_annotators
+        # todo: distribution_type does not seem to be used - refactor or remove
+        "distribution_type": "None",
+        "X_inner_mtype": "pd.DataFrame",
+        "fit_is_empty": False,
     }
 
     def __init__(self):
@@ -143,6 +147,13 @@ class BaseDetector(BaseEstimator):
         _is_fitted flag to True.
         """
         X_inner = self._check_X(X)
+
+        # skip inner _fit if fit is empty
+        # we also do not need to memorize data, since we do same in _update
+        # basic checks (above) are still needed
+        if self.get_tag("fit_is_empty", False):
+            self._is_fitted = True
+            return self
 
         if Y is not None:
             warn(
@@ -301,6 +312,10 @@ class BaseDetector(BaseEstimator):
         self.check_is_fitted()
 
         X_inner = self._check_X(X)
+
+        # no update needed if fit is empty
+        if self.get_tag("fit_is_empty", False):
+            return self
 
         if Y is not None:
             warn(
