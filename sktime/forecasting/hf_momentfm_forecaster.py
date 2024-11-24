@@ -110,7 +110,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
     train_val_split : float
         float value between 0 and 1 to determine portions of training
         and validation splits
-        default = 0.0
+        default = 0.2
 
     transformer_backbone : str
         d_model of a pre-trained transformer model to use. See
@@ -187,7 +187,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         device="auto",
         pct_start=0.3,
         max_norm=5.0,
-        train_val_split=0.0,
+        train_val_split=0.2,
         transformer_backbone="google/flan-t5-large",
         criterion=None,
         config=None,
