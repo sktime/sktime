@@ -875,7 +875,7 @@ class BaseDetector(BaseEstimator):
         dtype: int64
         """
         if len(y_sparse) == 0:
-            return self._empty_segments()
+            return BaseDetector._empty_segments()
 
         breaks = y_sparse.values
 
@@ -933,7 +933,7 @@ class BaseDetector(BaseEstimator):
         dtype: int64
         """
         if len(y_sparse) == 0:
-            return self._empty_sparse()
+            return BaseDetector._empty_sparse()
         change_points = pd.Series(y_sparse.index.left)
         return change_points
 
