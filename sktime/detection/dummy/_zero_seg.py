@@ -1,23 +1,23 @@
-"""Dummy anomaly detector which detects no anomalies."""
+"""Dummy segment detector which detects no segments."""
 
 import pandas as pd
 
 from sktime.detection.base import BaseDetector
 
 
-class ZeroAnomalies(BaseDetector):
-    """Dummy anomaly detector which detects no anomalies ever.
+class ZeroSegments(BaseDetector):
+    """Dummy segments detector which detects no segments.
 
     Naive method that can serve as benchmarking pipeline or API test.
 
-    Detects no anomalies.
+    Detects no asegments.
 
     Examples
     --------
     >>> import pandas as pd
-    >>> from sktime.detection.dummy import ZeroAnomalies
+    >>> from sktime.detection.dummy import ZeroSegments
     >>> y = pd.Series([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
-    >>> d = ZeroAnomalies()
+    >>> d = ZeroSegments()
     >>> d.fit_transform(y)
     """
 
@@ -26,7 +26,7 @@ class ZeroAnomalies(BaseDetector):
         "capability:multivariate": True,
         "capability:missing_values": True,
         "fit_is_empty": True,
-        "task": "anomaly_detection",
+        "task": "segmentation",
         "learning_type": "unsupervised",
     }
 
@@ -53,4 +53,4 @@ class ZeroAnomalies(BaseDetector):
               the values are integer indices of the changepoints/anomalies.
             * If ``task`` is "segmentation", the values are ``pd.Interval`` objects.
         """
-        return BaseDetector._empty_sparse()
+        return BaseDetector._empty_segments()
