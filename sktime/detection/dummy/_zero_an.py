@@ -1,23 +1,23 @@
-"""Dummy change point detector which detects no change points."""
+"""Dummy change point detector which detects no anomaliess."""
 
 import pandas as pd
 
 from sktime.detection.base import BaseDetector
 
 
-class ZeroChangePoints(BaseDetector):
-    """Dummy change point detector which detects no change points ever.
+class ZeroAnomalies(BaseDetector):
+    """Dummy anomaly detector which detects no anomalies ever.
 
     Naive method that can serve as benchmarking pipeline or API test.
 
-    Detects no change points.
+    Detects no anomalies.
 
     Examples
     --------
     >>> import pandas as pd
-    >>> from sktime.detection.dummy import ZeroChangePoints
+    >>> from sktime.detection.dummy import ZeroAnomalies
     >>> y = pd.Series([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
-    >>> d = ZeroChangePoints()
+    >>> d = ZeroAnomalies()
     >>> d.fit_transform(y)
     """
 
@@ -26,7 +26,7 @@ class ZeroChangePoints(BaseDetector):
         "capability:multivariate": True,
         "capability:missing_values": True,
         "fit_is_empty": True,
-        "task": "change_point_detection",
+        "task": "anomaly_detection",
         "learning_type": "unsupervised",
     }
 

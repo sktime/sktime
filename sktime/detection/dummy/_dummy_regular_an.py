@@ -1,11 +1,11 @@
-"""Dummy change point detector which detects change points after steps."""
+"""Dummy anomaly detector which detects anomalies after steps."""
 
 import pandas as pd
 
 from sktime.detection.base import BaseDetector
 
 
-class DummyRegularChangePoints(BaseDetector):
+class DummyRegularAnomalies(BaseDetector):
     """Dummy change point detector which detects a change point every x steps.
 
     Naive method that can serve as benchmarking pipeline or API test.
@@ -22,9 +22,9 @@ class DummyRegularChangePoints(BaseDetector):
     Examples
     --------
     >>> import pandas as pd
-    >>> from sktime.detection.dummy import DummyRegularChangePoints
+    >>> from sktime.detection.dummy import DummyRegularAnomalies
     >>> y = pd.Series([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
-    >>> d = DummyRegularChangePoints(step_size=3)
+    >>> d = DummyRegularAnomalies(step_size=3)
     >>> d.fit_transform(y)
     """
 
@@ -33,7 +33,7 @@ class DummyRegularChangePoints(BaseDetector):
         "capability:multivariate": True,
         "capability:missing_values": True,
         "fit_is_empty": False,
-        "task": "change_point_detection",
+        "task": "anomaly_detection",
         "learning_type": "unsupervised",
     }
 
