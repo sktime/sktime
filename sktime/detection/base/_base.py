@@ -440,7 +440,10 @@ class BaseDetector(BaseEstimator):
     def _fit(self, X, y=None):
         """Fit to training data.
 
-        core logic
+        private _fit containing the core logic, called from fit
+
+        Writes to self:
+            Sets fitted model attributes ending in "_".
 
         Parameters
         ----------
@@ -453,17 +456,13 @@ class BaseDetector(BaseEstimator):
         -------
         self :
             Reference to self.
-
-        Notes
-        -----
-        Updates fitted model that updates attributes ending in "_".
         """
         raise NotImplementedError("abstract method")
 
     def _predict(self, X):
         """Create labels on test/deployment data.
 
-        core logic
+        private _predict containing the core logic, called from predict
 
         Parameters
         ----------
@@ -472,8 +471,13 @@ class BaseDetector(BaseEstimator):
 
         Returns
         -------
-        Y : pd.Series
-            Labels for sequence X exact format depends on detection type.
+        y : pd.Series with RangeIndex
+            Labels for sequence ``X``, in sparse format.
+            Values are ``iloc`` references to indices of ``X``.
+
+            * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
+              the values are integer indices of the changepoints/anomalies.
+            * If ``task`` is "segmentation", the values are ``pd.Interval`` objects.
         """
         raise NotImplementedError("abstract method")
 
