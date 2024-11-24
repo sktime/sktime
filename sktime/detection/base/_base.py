@@ -847,6 +847,9 @@ class BaseDetector(BaseEstimator):
         [5, 7)    3
         dtype: int64
         """
+        if len(y_sparse) == 0:
+            return pd.Series(index=pd.IntervalIndex([]), dtype="int64")
+
         breaks = y_sparse.values
 
         if start > breaks.min():
@@ -885,6 +888,8 @@ class BaseDetector(BaseEstimator):
         -------
         pd.Series
             A series containing the indexes of the start of each segment.
+            Index is RangeIndex, and values are iloc references to the start of each
+            segment.
 
         Examples
         --------
@@ -900,6 +905,8 @@ class BaseDetector(BaseEstimator):
         2    7
         dtype: int64
         """
+        if len(y_sparse) == 0:
+            return pd.Series(index=pd.IntervalIndex([]), dtype="int64")
         change_points = pd.Series(y_sparse.index.left)
         return change_points
 
