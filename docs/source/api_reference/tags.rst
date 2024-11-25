@@ -177,6 +177,7 @@ detectors.
     task
     learning_type
     distribution_type
+    capability__update
 
 .. _dev_common_tags:
 
