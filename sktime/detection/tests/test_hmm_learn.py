@@ -6,7 +6,7 @@ import pytest
 from numpy import array_equal
 
 from sktime.detection.datagen import piecewise_normal, piecewise_poisson
-from sktime.detection.hmm_learn import GaussianHMM, GMMHMM, PoissonHMM
+from sktime.detection.hmm_learn import GMMHMM, GaussianHMM, PoissonHMM
 from sktime.tests.test_switch import run_test_for_class
 
 
