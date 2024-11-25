@@ -70,7 +70,7 @@ class TestAllAnnotators(AnnotatorsFixtureGenerator, QuickTester):
             estimator_type=estimator_instance.get_tag("distribution_type"),
         )
         y_test = estimator_instance.transform(X_test)
-        assert isinstance(y_test, (pd.Series, np.ndarray))
+        assert isinstance(y_test, pd.DataFrame)
         assert len(y_test) == len(X_test)
 
     def test_predict_points(self, estimator_instance):
