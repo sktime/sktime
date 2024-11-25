@@ -3200,6 +3200,16 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "ShivamJ07",
+      "name": "Shivam Singal",
+      "avatar_url": "https://avatars.githubusercontent.com/ShivamJ07",
+      "profile": "https://github.com/ShivamJ07",
+      "contributions": [
+        "bug",
+        "code"
+      ]
     }
   ]
 }
