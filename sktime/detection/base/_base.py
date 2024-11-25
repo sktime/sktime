@@ -250,7 +250,7 @@ class BaseDetector(BaseEstimator):
               segments. Possible labels are integers starting from 0.
         """
         y = self.predict(X)
-        return self.sparse_to_dense(y, X.index)
+        return self.sparse_to_dense(y, pd.RangeIndex(len(X)))
 
     def transform_scores(self, X):
         """Return scores for predicted labels on test/deployment data.
