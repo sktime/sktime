@@ -15,7 +15,7 @@ References
     https://www.sciencedirect.com/science/article/abs/pii/S1574119217300081
 """
 
-from sktime.annotation.igts import IGTS, InformationGainSegmentation
+from sktime.annotation.igts import IGTS, InformationGainSegmentation, entropy
 
-__all__ = ["IGTS", "InformationGainSegmentation"]
+__all__ = ["IGTS", "InformationGainSegmentation", "entropy"]
 __author__ = ["lmmentel"]
