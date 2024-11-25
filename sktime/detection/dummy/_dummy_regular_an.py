@@ -91,6 +91,7 @@ class DummyRegularAnomalies(BaseDetector):
 
         offset = X_index - first_index
 
+        # this handles PeriodIndex, by converting to integer
         if offset.dtype == "object":
             offset = [o.n for o in offset]
             offset = pd.Index(offset)
