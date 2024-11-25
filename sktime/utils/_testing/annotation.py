@@ -7,7 +7,7 @@ from sktime.annotation.datagen import piecewise_poisson
 from sktime.utils._testing.series import _make_series
 
 
-def make_annotation_problem(
+def make_detection_problem(
     n_timepoints=50,
     all_positive=True,
     index_type=None,

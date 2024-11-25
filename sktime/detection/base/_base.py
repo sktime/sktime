@@ -71,14 +71,17 @@ class BaseDetector(BaseEstimator):
         # todo 0.37.0 switch order of series-annotator and detector
         # todo 1.0.0 - remove series-annotator
         "object_type": ["series-annotator", "detector"],  # type of object
-        "learning_type": "None",  # Tag to determine test in test_all_annotators
-        "task": "None",  # Tag to determine test in test_all_annotators
+        "learning_type": "None",  # supervised, unsupervised
+        "task": "None",  # anomaly_detection, change_point_detection, segmentation
+        "capability:multivariate": False,
+        "capability:missing_values": False,
+        "capability:update": False,
         #
         # todo: distribution_type? we may have to refactor this, seems very soecufuc
         "distribution_type": "None",  # Tag to determine test in test_all_annotators
         "X_inner_mtype": "pd.DataFrame",  # Tag to determine test in test_all_annotators
         "handles-missing-data": False # can estimator handle missing data?
-        "fit_is_empty": True, # is fit empty and can be skipped?
+        "fit_is_empty": False, # is fit empty and can be skipped?
         "univariate-only": True, # can the estimator be applied to time series with 2 or more variables?
         # packaging info
         # --------------
@@ -155,6 +158,13 @@ class BaseDetector(BaseEstimator):
         _is_fitted flag to True.
         """
         X_inner = self._check_X(X)
+
+        # skip inner _fit if fit is empty
+        # we also do not need to memorize data, since we do same in _update
+        # basic checks (above) are still needed
+        if self.get_tag("fit_is_empty", False):
+            self._is_fitted = True
+            return self
 
         if Y is not None:
             warn(
@@ -313,6 +323,10 @@ class BaseDetector(BaseEstimator):
         self.check_is_fitted()
 
         X_inner = self._check_X(X)
+
+        # no update needed if fit is empty
+        if self.get_tag("fit_is_empty", False):
+            return self
 
         if Y is not None:
             warn(
@@ -503,6 +517,40 @@ class BaseDetector(BaseEstimator):
         -------
         Y : pd.Series
             Labels for sequence X exact format depends on detection type.
+        """
+        raise NotImplementedError("abstract method")
+
+    def _transform_scores(self, X):
+        """Return scores for predicted labels on test/deployment data.
+
+        core logic
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Time series subject to detection, which will be assigned labels or scores.
+
+        Returns
+        -------
+        scores : pd.DataFrame with same index as X
+            Scores for sequence ``X``.
+        """
+        raise NotImplementedError("abstract method")
+
+    def _transform_scores(self, X):
+        """Return scores for predicted labels on test/deployment data.
+
+        core logic
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Time series subject to detection, which will be assigned labels or scores.
+
+        Returns
+        -------
+        scores : pd.DataFrame with same index as X
+            Scores for sequence ``X``.
         """
         raise NotImplementedError("abstract method")
 
