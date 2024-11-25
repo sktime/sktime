@@ -4,10 +4,16 @@ __author__ = ["KatieBuc"]
 
 import numpy as np
 import pandas as pd
+import pytest
 
-from sktime.annotation.eagglo import EAgglo
+from sktime.detection.eagglo import EAgglo
+from sktime.tests.test_switch import run_test_for_class
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(EAgglo),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_fit_default_params_univariate():
     """Test univariate data and default parameters.
 
@@ -32,6 +38,10 @@ def test_fit_default_params_univariate():
     assert np.allclose(fit_actual, fit_expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(EAgglo),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_fit_other_params_univariate():
     """Test univariate data with alternative starting clusters."""
     X = pd.DataFrame([-7.207066, -5.722571, 5.889715, 5.488990])
@@ -49,6 +59,10 @@ def test_fit_other_params_univariate():
     assert np.allclose(fit_actual, fit_expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(EAgglo),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_fit_default_params_multivariate():
     """Test multivariate data with default parameters.
 

@@ -7,9 +7,14 @@ import pytest
 from numpy import array_equal, asarray
 from scipy.stats import norm
 
-from sktime.annotation.hmm import HMM
+from sktime.detection.hmm import HMM
+from sktime.tests.test_switch import run_test_for_class
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(HMM),
+    reason="skip test if required soft dependency for hmmlearn not available",
+)
 def test_hmm_basic_gauss():
     """Test HMM works for basic Gaussian synthetic data.
 
@@ -41,6 +46,10 @@ def test_hmm_basic_gauss():
     assert len(predicted_labels == labels) >= 0.95 * len(predicted_labels)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(HMM),
+    reason="skip test if required soft dependency for hmmlearn not available",
+)
 def test_reject_bad_inputs():
     """Demonstrate failute when initialized with bad inputs."""
     # test we get a ValueError if we don't use square trans_prob
@@ -68,6 +77,10 @@ def test_reject_bad_inputs():
         )
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(HMM),
+    reason="skip test if required soft dependency for hmmlearn not available",
+)
 def test_hmm_behaves_as_expected_on_simple_input():
     """Test HMM is consistent with expected ground truth in simple ex."""
     # define the emission probs for our HMM model:
