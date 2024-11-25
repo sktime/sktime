@@ -47,11 +47,12 @@ class BaseDetector(BaseEstimator):
         * If ``anomaly_detection``, the detector finds points that differ significantly
         from the normal statistical properties of the timeseries.
 
-    learning_type : str {"supervised", "unsupervised"}
+    learning_type : str {"supervised", "unsupervised", "semi_supervised"}
         Detection learning type:
 
         * If ``supervised``, the detector learns from labelled data.
         * If ``unsupervised``, the detector learns from unlabelled data.
+        * If ``semi_supervised``, the detector learns from a combination of labelled and unlabelled data.
 
     Notes
     -----
@@ -65,6 +66,8 @@ class BaseDetector(BaseEstimator):
     """
 
     _tags = {
+        # estimator tags
+        # --------------
         # todo 0.37.0 switch order of series-annotator and detector
         # todo 1.0.0 - remove series-annotator
         "object_type": ["series-annotator", "detector"],  # type of object
@@ -74,6 +77,15 @@ class BaseDetector(BaseEstimator):
         # todo: distribution_type? we may have to refactor this, seems very soecufuc
         "distribution_type": "None",  # Tag to determine test in test_all_annotators
         "X_inner_mtype": "pd.DataFrame",  # Tag to determine test in test_all_annotators
+        "handles-missing-data": False # can estimator handle missing data?
+        "fit_is_empty": True, # is fit empty and can be skipped?
+        "univariate-only": True, # can the estimator be applied to time series with 2 or more variables?
+        # packaging info
+        # --------------
+        "authors": "sktime developers",  # author(s) of the object
+        "maintainers": "sktime developers",  # current maintainer(s) of the object
+        "python_version": None,  # PEP 440 python version specifier to limit versions
+        "python_dependencies": None,  # str or list of str, package soft dependencies
     }
 
     def __init__(self):
