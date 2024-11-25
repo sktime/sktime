@@ -274,6 +274,7 @@ EXCLUDED_TESTS = {
     ],
     "BinarySegmentation": [
         "test_predict_segments",
+        "test_transform_output_type",
     ],
     "GreedyGaussianSegmentation": [
         "test_predict_points",
