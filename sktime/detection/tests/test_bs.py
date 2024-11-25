@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 
 from sktime.detection.bs import BinarySegmentation
-from sktime.utils._testing import run_test_for_class
+from sktime.tests.test_switch import run_test_for_class
 
 __author__ = ["Alex-JG3"]
 

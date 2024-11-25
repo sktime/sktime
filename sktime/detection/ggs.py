@@ -32,6 +32,6 @@ References
     https://doi.org/10.1007/s11634-018-0335-0
 """
 
-from sktime.annotation.ggs import GreedyGaussianSegmentation
+from sktime.annotation.ggs import GGS, GreedyGaussianSegmentation
 
-__all__ = ["GreedyGaussianSegmentation"]
+__all__ = ["GGS", "GreedyGaussianSegmentation"]
