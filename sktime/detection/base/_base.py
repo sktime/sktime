@@ -571,6 +571,7 @@ class BaseDetector(BaseEstimator):
         y : pd.Series with IntervalIndex
             A series with an index of intervals. Each interval is the range of a
             segment and the corresponding value is the label of the segment.
+            Values are ``iloc`` references to indices of ``X``.
 
             * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
               the intervals are intervals between changepoints/anomalies, and
