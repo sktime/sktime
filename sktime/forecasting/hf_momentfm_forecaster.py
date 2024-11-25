@@ -228,52 +228,72 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         self._y_index = self._y.index
         self._y_cols = self._y.columns
         self._y_shape = self._y.values.shape
-        self._pretrained_model_name_or_path = (
-            self._config["pretrained_model_name_or_path"]
-            if "pretrained_model_name_or_path" in self._config.keys()
-            else self.pretrained_model_name_or_path
+
+        self._pretrained_model_name_or_path = self._config.get(
+            "pretrained_model_name_or_path", self.pretrained_model_name_or_path
         )
-        self._freeze_encoder = (
-            self._config["freeze_encoder"]
-            if "freeze_encoder" in self._config.keys()
-            else self.freeze_encoder
+        self._freeze_encoder = self._config.get("freeze_encoder", self.freeze_encoder)
+        self._pretrained_model_name_or_path = self._config.get(
+            "_pretrained_model_name_or_path", self._pretrained_model_name_or_path
         )
-        self._freeze_embedder = (
-            self._config["freeze_embedder"]
-            if "_freeze_embedder" in self._config.keys()
-            else self.freeze_embedder
+        self._freeze_embedder = self._config.get(
+            "freeze_embedder", self.freeze_embedder
         )
-        self._freeze_head = (
-            self._config["freeze_head"]
-            if "freeze_head" in self._config.keys()
-            else self.freeze_head
+        self._freeze_head = self._config.get("freeze_head", self.freeze_head)
+        self._dropout = self._config.get("dropout", self.dropout)
+        self._head_dropout = self._config.get("head_dropout", self.head_dropout)
+        self._transformer_backbone = self._config.get(
+            "transformer_backbone", self.transformer_backbone
         )
-        self._dropout = (
-            self._config["dropout"]
-            if "dropout" in self._config.keys()
-            else self.dropout
-        )
-        self._head_dropout = (
-            self._config["head_dropout"]
-            if "head_dropout" in self._config.keys()
-            else self.head_dropout
-        )
-        self._transformer_backbone = (
-            self._config["transformer_backbone"]
-            if "transformer_backbone" in self._config.keys()
-            else self.transformer_backbone
-        )
-        self._criterion = (
-            self._config["criterion"]
-            if "criterion" in self._config.keys()
-            else self._criterion
-        )
-        # evaluate the sequence length passed by the user
-        self._seq_len = (
-            self._config["seq_len"]
-            if "seq_len" in self._config.keys()
-            else self.seq_len
-        )
+        self._criterion = self._config.get("criterion", self.criterion)
+        self._seq_len = self._config.get("seq_len", self.seq_len)
+
+        # self._pretrained_model_name_or_path = (
+        #     self._config["pretrained_model_name_or_path"]
+        #     if "pretrained_model_name_or_path" in self._config.keys()
+        #     else self.pretrained_model_name_or_path
+        # )
+        # self._freeze_encoder = (
+        #     self._config["freeze_encoder"]
+        #     if "freeze_encoder" in self._config.keys()
+        #     else self.freeze_encoder
+        # )
+        # self._freeze_embedder = (
+        #     self._config["freeze_embedder"]
+        #     if "_freeze_embedder" in self._config.keys()
+        #     else self.freeze_embedder
+        # )
+        # self._freeze_head = (
+        #     self._config["freeze_head"]
+        #     if "freeze_head" in self._config.keys()
+        #     else self.freeze_head
+        # )
+        # self._dropout = (
+        #     self._config["dropout"]
+        #     if "dropout" in self._config.keys()
+        #     else self.dropout
+        # )
+        # self._head_dropout = (
+        #     self._config["head_dropout"]
+        #     if "head_dropout" in self._config.keys()
+        #     else self.head_dropout
+        # )
+        # self._transformer_backbone = (
+        #     self._config["transformer_backbone"]
+        #     if "transformer_backbone" in self._config.keys()
+        #     else self.transformer_backbone
+        # )
+        # self._criterion = (
+        #     self._config["criterion"]
+        #     if "criterion" in self._config.keys()
+        #     else self._criterion
+        # )
+        # # evaluate the sequence length passed by the user
+        # self._seq_len = (
+        #     self._config["seq_len"]
+        #     if "seq_len" in self._config.keys()
+        #     else self.seq_len
+        # )
         if self._seq_len > self._moment_seq_len:
             warnings.warn(
                 f"length of {self._seq_len} was found which is greater than 512. "
@@ -284,16 +304,20 @@ class MomentFMForecaster(_BaseGlobalForecaster):
             self._seq_len = 512
         # in the case the config contains 'forecast_horizon', we'll set
         # fh as that, otherwise we override it using the fh param
-        self._fh_config = (
-            self._config["forecast_horizon"]
-            if "forecast_horizon" in self._config.keys()
-            else None
-        )
+
+        self._fh_config = self._config.get("forecast_horizon", None)
+        # self._fh_config = (
+        #     self._config["forecast_horizon"]
+        #     if "forecast_horizon" in self._config.keys()
+        #     else None
+        # )
 
         # device initialization
-        self._device = (
-            self._config["device"] if "device" in self._config.keys() else self.device
-        )
+        self._device = self._config.get("device", self.device)
+
+        # self._device = (
+        #     self._config["device"] if "device" in self._config.keys() else self.device
+        # )
         # check availability of user specified device
         self._device = _check_device(self._device)
         # initialize accelerator
