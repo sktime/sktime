@@ -1,1 +1,1 @@
-"""Tests for individual time series detectors."""
+"""Tests for time series detectors."""
