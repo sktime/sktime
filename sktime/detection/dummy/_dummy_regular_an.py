@@ -90,6 +90,11 @@ class DummyRegularAnomalies(BaseDetector):
         first_index = self.first_index_
 
         offset = X_index - first_index
+
+        if offset.dtype == "object":
+            offset = [o.n for o in offset]
+            offset = pd.Index(offset)
+
         change_point_indicator = offset % step_size == step_size - 1
         X_ix_cp = X_index[change_point_indicator]
         change_points = pd.Series(X_ix_cp)

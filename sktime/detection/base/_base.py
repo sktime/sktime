@@ -250,7 +250,7 @@ class BaseDetector(BaseEstimator):
               segments. Possible labels are integers starting from 0.
         """
         y = self.predict(X)
-        y_dense = self.sparse_to_dense(y, X.index)
+        y_dense = self.sparse_to_dense(y, pd.RangeIndex(len(X)))
         return pd.DataFrame(y_dense)
 
     def transform_scores(self, X):
@@ -456,10 +456,7 @@ class BaseDetector(BaseEstimator):
     def _fit(self, X, y=None):
         """Fit to training data.
 
-        private _fit containing the core logic, called from fit
-
-        Writes to self:
-            Sets fitted model attributes ending in "_".
+        core logic
 
         Parameters
         ----------
@@ -472,13 +469,17 @@ class BaseDetector(BaseEstimator):
         -------
         self :
             Reference to self.
+
+        Notes
+        -----
+        Updates fitted model that updates attributes ending in "_".
         """
         raise NotImplementedError("abstract method")
 
     def _predict(self, X):
         """Create labels on test/deployment data.
 
-        private _predict containing the core logic, called from predict
+        core logic
 
         Parameters
         ----------
@@ -487,13 +488,8 @@ class BaseDetector(BaseEstimator):
 
         Returns
         -------
-        y : pd.Series with RangeIndex
-            Labels for sequence ``X``, in sparse format.
-            Values are ``iloc`` references to indices of ``X``.
-
-            * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
-              the values are integer indices of the changepoints/anomalies.
-            * If ``task`` is "segmentation", the values are ``pd.Interval`` objects.
+        Y : pd.Series
+            Labels for sequence X exact format depends on detection type.
         """
         raise NotImplementedError("abstract method")
 
@@ -587,7 +583,6 @@ class BaseDetector(BaseEstimator):
         y : pd.Series with IntervalIndex
             A series with an index of intervals. Each interval is the range of a
             segment and the corresponding value is the label of the segment.
-            Values are ``iloc`` references to indices of ``X``.
 
             * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
               the intervals are intervals between changepoints/anomalies, and
@@ -810,7 +805,6 @@ class BaseDetector(BaseEstimator):
         Returns
         -------
         pd.Series
-
             * If ``y_sparse`` is a series of changepoints/anomalies, a pandas series
               will be returned containing the indexes of the changepoints/anomalies
             * If ``y_sparse`` is a series of segments, a series with an interval
@@ -820,7 +814,7 @@ class BaseDetector(BaseEstimator):
         if 0 in y_dense.values:
             # y_dense is a series of change points
             change_points = np.where(y_dense.values != 0)[0]
-            return pd.Series(change_points, dtype="int64")
+            return pd.Series(change_points)
         else:
             segment_start_indexes = np.where(y_dense.diff() != 0)[0]
             segment_end_indexes = np.roll(segment_start_indexes, -1)
@@ -837,28 +831,6 @@ class BaseDetector(BaseEstimator):
             # -1 represents unclassified regions so we remove them
             y_sparse = y_sparse.loc[y_sparse != -1]
             return y_sparse
-
-    @staticmethod
-    def _empty_sparse():
-        """Return an empty sparse series in indicator format.
-
-        Returns
-        -------
-        pd.Series
-            An empty series with a RangeIndex.
-        """
-        return pd.Series(index=pd.RangeIndex(0), dtype="int64")
-
-    @staticmethod
-    def _empty_segments():
-        """Return an empty sparse series in segmentation format.
-
-        Returns
-        -------
-        pd.Series
-            An empty series with an IntervalIndex.
-        """
-        return pd.Series(index=pd.IntervalIndex([]), dtype="int64")
 
     @staticmethod
     def change_points_to_segments(y_sparse, start=None, end=None):
@@ -891,9 +863,6 @@ class BaseDetector(BaseEstimator):
         [5, 7)    3
         dtype: int64
         """
-        if len(y_sparse) == 0:
-            return BaseDetector._empty_segments()
-
         breaks = y_sparse.values
 
         if start > breaks.min():
@@ -932,8 +901,6 @@ class BaseDetector(BaseEstimator):
         -------
         pd.Series
             A series containing the indexes of the start of each segment.
-            Index is RangeIndex, and values are iloc references to the start of each
-            segment.
 
         Examples
         --------
@@ -949,8 +916,6 @@ class BaseDetector(BaseEstimator):
         2    7
         dtype: int64
         """
-        if len(y_sparse) == 0:
-            return BaseDetector._empty_sparse()
         change_points = pd.Series(y_sparse.index.left)
         return change_points
 
