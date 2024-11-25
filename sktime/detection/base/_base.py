@@ -1,14 +1,14 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Base class template for annotator base type for time series stream.
+"""Base class template for detector base type for time series streams.
 
-    class name: BaseSeriesAnnotator
+    class name: BaseDetector
 
 Scitype defining methods:
-    fitting              - fit(self, X, Y=None)
+    fitting              - fit(self, X, y=None)
     annotating           - predict(self, X)
-    updating (temporal)  - update(self, X, Y=None)
-    update&annotate      - update_predict(self, X)
+    updating (temporal)  - update(self, X, y=None)
+    update&annotate      - update_predict(self, X, y=None)
 
 Inspection methods:
     hyper-parameter inspection  - get_params()
@@ -19,56 +19,66 @@ State:
     fitted state flag       - check_is_fitted()
 """
 
-__author__ = ["satya-pattnaik ", "fkiraly"]
-__all__ = ["BaseSeriesAnnotator"]
+# todo 0.37.0: remove BaseSeriesAnnotator
+__author__ = ["fkiraly", "tveten", "alex-jg3", "satya-pattnaik"]
+__all__ = ["BaseDetector", "BaseSeriesAnnotator"]
 
 import numpy as np
 import pandas as pd
 
 from sktime.base import BaseEstimator
 from sktime.utils.validation.series import check_series
+from sktime.utils.warnings import warn
 
 
-class BaseSeriesAnnotator(BaseEstimator):
-    """Base series annotator.
+class BaseDetector(BaseEstimator):
+    """Base class for time series detectors.
 
     Developers should set the task and learning_type tags in the derived class.
 
     task : str {"segmentation", "change_point_detection", "anomaly_detection"}
-        The main annotation task:
-        * If ``segmentation``, the annotator divides timeseries into discrete chunks
+        The main detection task:
+
+        * If ``segmentation``, the detector divides timeseries into discrete chunks
         based on certain criteria. The same label can be applied at multiple
         disconnected regions of the timeseries.
-        * If ``change_point_detection``, the annotator finds points where the
+        * If ``change_point_detection``, the detector finds points where the
         statistical properties of the timeseries change significantly.
-        * If ``anomaly_detection``, the annotator finds points that differ significantly
+        * If ``anomaly_detection``, the detector finds points that differ significantly
         from the normal statistical properties of the timeseries.
 
     learning_type : str {"supervised", "unsupervised"}
-        Annotation learning type:
-        * If ``supervised``, the annotator learns from labelled data.
-        * If ``unsupervised``, the annotator learns from unlabelled data.
+        Detection learning type:
+
+        * If ``supervised``, the detector learns from labelled data.
+        * If ``unsupervised``, the detector learns from unlabelled data.
 
     Notes
     -----
     Assumes "predict" data is temporal future of "fit"
     Single time series in both, no meta-data.
 
-    The base series annotator specifies the methods and method
-    signatures that all annotators have to implement.
+    The base series detector specifies the methods and method
+    signatures that all detectors have to implement.
 
-    Specific implementations of these methods is deferred to concrete
-    annotators.
+    Specific implementations of these methods is deferred to concrete detectors.
     """
 
     _tags = {
-        "object_type": "series-annotator",  # type of object
-        "learning_type": "None",  # Tag to determine test in test_all_annotators
-        "task": "None",  # Tag to determine test in test_all_annotators
+        # todo 0.37.0 switch order of series-annotator and detector
+        # todo 1.0.0 - remove series-annotator
+        "object_type": ["series-annotator", "detector"],  # type of object
+        "learning_type": "None",  # supervised, unsupervised
+        "task": "None",  # anomaly_detection, change_point_detection, segmentation
+        "capability:multivariate": False,
+        "capability:missing_values": False,
+        "capability:update": False,
         #
-        # todo: distribution_type? we may have to refactor this, seems very soecufuc
-        "distribution_type": "None",  # Tag to determine test in test_all_annotators
-    }  # for unit test cases
+        # todo: distribution_type does not seem to be used - refactor or remove
+        "distribution_type": "None",
+        "X_inner_mtype": "pd.DataFrame",
+        "fit_is_empty": False,
+    }
 
     def __init__(self):
         self._is_fitted = False
@@ -81,12 +91,7 @@ class BaseSeriesAnnotator(BaseEstimator):
 
         super().__init__()
 
-        # hacky workaround to ensure task and learning_type are set
-        # TODO 0.34.0: remove the self.task and self.learning_type attributes
-        # if possible, check downwards compatibility
         self.set_tags(**{"task": task, "learning_type": learning_type})
-        self.task = task
-        self.learning_type = learning_type
 
     def __rmul__(self, other):
         """Magic * method, return (left) concatenated AnnotatorPipeline.
@@ -120,15 +125,16 @@ class BaseSeriesAnnotator(BaseEstimator):
         else:
             return NotImplemented
 
-    def fit(self, X, Y=None):
+    # todo 0.37.0: remove the Y parameter and related handling
+    def fit(self, X, y=None, Y=None):
         """Fit to training data.
 
         Parameters
         ----------
-        X : pd.DataFrame
+        X : pd.DataFrame, pd.Series or np.ndarray
             Training data to fit model to (time series).
-        Y : pd.Series, optional
-            Ground truth annotations for training if annotator is supervised.
+        y : pd.Series, optional
+            Ground truth labels for training if detector is supervised.
 
         Returns
         -------
@@ -140,17 +146,49 @@ class BaseSeriesAnnotator(BaseEstimator):
         Creates fitted model that updates attributes ending in "_". Sets
         _is_fitted flag to True.
         """
-        X = check_series(X)
+        X_inner = self._check_X(X)
+
+        # skip inner _fit if fit is empty
+        # we also do not need to memorize data, since we do same in _update
+        # basic checks (above) are still needed
+        if self.get_tag("fit_is_empty", False):
+            self._is_fitted = True
+            return self
 
         if Y is not None:
-            Y = check_series(Y)
+            warn(
+                "Warning: the Y parameter in detection/annotation algorithms "
+                "is deprecated and will be removed in the 0.37.0 release. "
+                "Users should use the y parameter instead. "
+                "Until the 0.37.0 release, the Y parameter will be used if "
+                "no y parameter is provided, ensuring backwards compatibility.",
+                stacklevel=2,
+            )
+
+        if Y is not None and y is None:
+            y = Y
 
         self._X = X
-        self._Y = Y
+        self._y = y
 
         # fkiraly: insert checks/conversions here, after PR #1012 I suggest
 
-        self._fit(X=X, Y=Y)
+        if _method_has_arg(self._fit, "y"):
+            self._fit(X=X, y=y)
+        elif _method_has_arg(self._fit, "Y"):
+            self._fit(X=X, Y=y)
+            warn(
+                "Warning: the Y parameter in detection/annotation algorithms "
+                "is deprecated and will be removed in the 0.37.0 release. "
+                "Users should use the y parameter instead. "
+                f"The class {self.__class__.__name__} uses the Y parameter "
+                "internally in _fit, this should be replaced with y by a maintainer. "
+                f"Until the 0.37.0 release, this will raise no exceptions, "
+                "ensuring backwards compatibility.",
+                stacklevel=2,
+            )
+        else:
+            self._fit(X=X_inner)
 
         # this should happen last
         self._is_fitted = True
@@ -158,71 +196,109 @@ class BaseSeriesAnnotator(BaseEstimator):
         return self
 
     def predict(self, X):
-        """Create annotations on test/deployment data.
+        """Create labels on test/deployment data.
 
         Parameters
         ----------
-        X : pd.DataFrame
-            Data to annotate (time series).
+        X : pd.DataFrame, pd.Series or np.ndarray
+            Time series subject to detection, which will be assigned labels or scores.
 
         Returns
         -------
-        Y : pd.Series
-            Annotations for sequence X exact format depends on annotation type.
+        y : pd.Series with RangeIndex
+            Labels for sequence ``X``, in sparse format.
+            Values are ``iloc`` references to indices of ``X``.
+
+            * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
+              the values are integer indices of the changepoints/anomalies.
+            * If ``task`` is "segmentation", the values are ``pd.Interval`` objects.
         """
         self.check_is_fitted()
 
-        X = check_series(X)
+        X_inner = self._check_X(X)
 
         # fkiraly: insert checks/conversions here, after PR #1012 I suggest
 
-        Y = self._predict(X=X)
+        y = self._predict(X=X_inner)
 
-        return Y
+        return y
 
     def transform(self, X):
-        """Create annotations on test/deployment data.
+        """Create labels on test/deployment data.
 
         Parameters
         ----------
-        X : pd.DataFrame
-            Data to annotate (time series).
+        X : pd.DataFrame, pd.Series or np.ndarray
+            Time series subject to detection, which will be assigned labels or scores.
 
         Returns
         -------
-        Y : pd.Series
-            Annotations for sequence X. The returned annotations will be in the dense
-            format.
+        y : pd.DataFrame with same index as X
+            Labels for sequence ``X``.
+
+            * If ``task`` is ``"anomaly_detection"``, the values are integer labels.
+              A value of 0 indicatesthat ``X``, at the same time index, has no anomaly.
+              Other values indicate an anomaly.
+              Most detectors will return 0 or 1, but some may return more values,
+              if they can detect different types of anomalies.
+              indicating whether ``X``, at the same
+              index, is an anomaly, 0 for no, 1 for yes.
+            * If ``task`` is ``"changepoint_detection"``, the values are integer labels,
+              indicating labels for segments between changepoints.
+              Possible labels are integers starting from 0.
+            * If ``task`` is "segmentation", the values are integer labels of the
+              segments. Possible labels are integers starting from 0.
         """
-        Y = self.predict(X)
-        return self.sparse_to_dense(Y, X.index)
+        y = self.predict(X)
+        return self.sparse_to_dense(y, X.index)
 
-    def predict_scores(self, X):
-        """Return scores for predicted annotations on test/deployment data.
+    def transform_scores(self, X):
+        """Return scores for predicted labels on test/deployment data.
 
         Parameters
         ----------
-        X : pd.DataFrame
-            Data to annotate (time series).
+        X : pd.DataFrame, pd.Series or np.ndarray
+            Data to label (time series).
 
         Returns
         -------
-        Y : pd.Series
-            Scores for sequence X exact format depends on annotation type.
+        scores : pd.DataFrame with same index as X
+            Scores for sequence ``X``.
         """
         self.check_is_fitted()
-        X = check_series(X)
-        return self._predict_scores(X)
 
-    def update(self, X, Y=None):
-        """Update model with new data and optional ground truth annotations.
+        X_inner = self._check_X(X)
+
+        return self._transform_scores(X_inner)
+
+    def predict_scores(self, X):
+        """Return scores for predicted labels on test/deployment data.
 
         Parameters
         ----------
-        X : pd.DataFrame
+        X : pd.DataFrame, pd.Series or np.ndarray
+            Data to label (time series).
+
+        Returns
+        -------
+        scores : pd.DataFrame with same index as return of predict
+            Scores for prediction of sequence ``X``.
+        """
+        self.check_is_fitted()
+
+        X_inner = self._check_X(X)
+
+        return self._predict_scores(X_inner)
+
+    def update(self, X, y=None, Y=None):
+        """Update model with new data and optional ground truth labels.
+
+        Parameters
+        ----------
+        X : pd.DataFrame, pd.Series or np.ndarray
             Training data to update model with (time series).
-        Y : pd.Series, optional
-            Ground truth annotations for training if annotator is supervised.
+        y : pd.Series, optional
+            Ground truth labels for training if detector is supervised.
 
         Returns
         -------
@@ -235,71 +311,99 @@ class BaseSeriesAnnotator(BaseEstimator):
         """
         self.check_is_fitted()
 
-        X = check_series(X)
+        X_inner = self._check_X(X)
+
+        # no update needed if fit is empty
+        if self.get_tag("fit_is_empty", False):
+            return self
 
         if Y is not None:
-            Y = check_series(Y)
+            warn(
+                "Warning: the Y parameter in detection/annotation algorithms "
+                "is deprecated and will be removed in the 0.37.0 release. "
+                "Users should use the y parameter instead. "
+                "Until the 0.37.0 release, the Y parameter will be used if "
+                "no y parameter is provided, ensuring backwards compatibility.",
+                stacklevel=2,
+            )
 
-        self._X = X.combine_first(self._X)
+        if y is None and Y is not None:
+            y = Y
 
-        if Y is not None:
-            self._Y = Y.combine_first(self._Y)
+        self._X = X_inner.combine_first(self._X)
 
-        self._update(X=X, Y=Y)
+        if y is not None:
+            self._y = y.combine_first(self._y)
+
+        if _method_has_arg(self._update, "y"):
+            self._update(X=X_inner, y=y)
+        elif _method_has_arg(self._update, "Y"):
+            self._update(X=X_inner, Y=y)
+        else:
+            self._update(X=X_inner)
 
         return self
 
-    def update_predict(self, X):
-        """Update model with new data and create annotations for it.
+    def update_predict(self, X, y=None):
+        """Update model with new data and create labels for it.
 
         Parameters
         ----------
-        X : pd.DataFrame
+        X : pd.DataFrame, pd.Series or np.ndarray
             Training data to update model with, time series.
+        y : pd.Series, optional
+            Ground truth labels for training if detector is supervised.
 
         Returns
         -------
         Y : pd.Series
-            Annotations for sequence X exact format depends on annotation type.
+            Labels for sequence X exact format depends on detection type.
 
         Notes
         -----
         Updates fitted model that updates attributes ending in "_".
         """
-        X = check_series(X)
+        X_inner = self._check_X(X)
 
-        self.update(X=X)
-        Y = self.predict(X=X)
+        self.update(X=X, y=y)
+        y = self.predict(X=X_inner)
 
-        return Y
+        return y
 
-    def fit_predict(self, X, Y=None):
+    # todo 0.37.0: remove Y argument
+    def fit_predict(self, X, y=None, Y=None):
         """Fit to data, then predict it.
 
-        Fits model to X and Y with given annotation parameters
-        and returns the annotations made by the model.
+        Fits model to X and Y with given detection parameters
+        and returns the detection labels produced by the model.
 
         Parameters
         ----------
         X : pd.DataFrame, pd.Series or np.ndarray
             Data to be transformed
-        Y : pd.Series or np.ndarray, optional (default=None)
+        y : pd.Series or np.ndarray, optional (default=None)
             Target values of data to be predicted.
 
         Returns
         -------
-        self : pd.Series
-            Annotations for sequence X exact format depends on annotation type.
+        y : pd.Series with RangeIndex
+            Labels for sequence ``X``, in sparse format.
+            Values are ``iloc`` references to indices of ``X``.
+
+            * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
+              the values are integer indices of the changepoints/anomalies.
+            * If ``task`` is "segmentation", the values are ``pd.Interval`` objects.
         """
         # Non-optimized default implementation; override when a better
         # method is possible for a given algorithm.
-        return self.fit(X, Y).predict(X)
+        return self.fit(X, y=y, Y=Y).predict(X)
 
-    def fit_transform(self, X, Y=None):
+    # todo 0.37.0: remove Y argument
+    def fit_transform(self, X, y=None, Y=None):
         """Fit to data, then transform it.
 
-        Fits model to X and Y with given annotation parameters
-        and returns the annotations made by the model.
+        Fits model to X and Y with given detection parameters
+        and returns the detection labels made by the model.
 
         Parameters
         ----------
@@ -310,13 +414,45 @@ class BaseSeriesAnnotator(BaseEstimator):
 
         Returns
         -------
-        self : pd.Series
-            Annotations for sequence X exact format depends on annotation type.
-        """
-        Y = self.fit_predict(X)
-        return self.sparse_to_dense(Y, index=X.index)
+        y : pd.DataFrame with same index as X
+            Labels for sequence ``X``.
 
-    def _fit(self, X, Y=None):
+            * If ``task`` is ``"anomaly_detection"``, the values are integer labels.
+              A value of 0 indicatesthat ``X``, at the same time index, has no anomaly.
+              Other values indicate an anomaly.
+              Most detectors will return 0 or 1, but some may return more values,
+              if they can detect different types of anomalies.
+              indicating whether ``X``, at the same
+              index, is an anomaly, 0 for no, 1 for yes.
+            * If ``task`` is ``"changepoint_detection"``, the values are integer labels,
+              indicating labels for segments between changepoints.
+              Possible labels are integers starting from 0.
+            * If ``task`` is "segmentation", the values are integer labels of the
+              segments. Possible labels are integers starting from 0.
+        """
+        y = self.fit_predict(X, y=y, Y=Y)
+        return self.sparse_to_dense(y, index=X.index)
+
+    def _check_X(self, X):
+        """Check input data.
+
+        Parameters
+        ----------
+        X : pd.DataFrame, pd.Series or np.ndarray
+            Data to be transformed
+
+        Returns
+        -------
+        X : X_inner_mtype
+            Data to be transformed
+        """
+        return X
+        # this causes errors, we need to investigate
+        # X_inner_mtype = self.get_tag("X_inner_mtype")
+        # X_inner = convert_to(X, X_inner_mtype)
+        # return X_inner
+
+    def _fit(self, X, y=None):
         """Fit to training data.
 
         core logic
@@ -325,8 +461,8 @@ class BaseSeriesAnnotator(BaseEstimator):
         ----------
         X : pd.DataFrame
             Training data to fit model to time series.
-        Y : pd.Series, optional
-            Ground truth annotations for training if annotator is supervised.
+        y : pd.Series, optional
+            Ground truth labels for training if detector is supervised.
 
         Returns
         -------
@@ -340,41 +476,75 @@ class BaseSeriesAnnotator(BaseEstimator):
         raise NotImplementedError("abstract method")
 
     def _predict(self, X):
-        """Create annotations on test/deployment data.
+        """Create labels on test/deployment data.
 
         core logic
 
         Parameters
         ----------
         X : pd.DataFrame
-            Data to annotate, time series.
+            Time series subject to detection, which will be assigned labels or scores.
 
         Returns
         -------
         Y : pd.Series
-            Annotations for sequence X exact format depends on annotation type.
+            Labels for sequence X exact format depends on detection type.
         """
         raise NotImplementedError("abstract method")
 
     def _predict_scores(self, X):
-        """Return scores for predicted annotations on test/deployment data.
+        """Return scores for predicted labels on test/deployment data.
 
         core logic
 
         Parameters
         ----------
         X : pd.DataFrame
-            Data to annotate, time series.
+            Time series subject to detection, which will be assigned labels or scores.
 
         Returns
         -------
         Y : pd.Series
-            Annotations for sequence X exact format depends on annotation type.
+            Labels for sequence X exact format depends on detection type.
         """
         raise NotImplementedError("abstract method")
 
-    def _update(self, X, Y=None):
-        """Update model with new data and optional ground truth annotations.
+    def _transform_scores(self, X):
+        """Return scores for predicted labels on test/deployment data.
+
+        core logic
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Time series subject to detection, which will be assigned labels or scores.
+
+        Returns
+        -------
+        scores : pd.DataFrame with same index as X
+            Scores for sequence ``X``.
+        """
+        raise NotImplementedError("abstract method")
+
+    def _transform_scores(self, X):
+        """Return scores for predicted labels on test/deployment data.
+
+        core logic
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Time series subject to detection, which will be assigned labels or scores.
+
+        Returns
+        -------
+        scores : pd.DataFrame with same index as X
+            Scores for sequence ``X``.
+        """
+        raise NotImplementedError("abstract method")
+
+    def _update(self, X, y=None):
+        """Update model with new data and optional ground truth labels.
 
         core logic
 
@@ -382,8 +552,8 @@ class BaseSeriesAnnotator(BaseEstimator):
         ----------
         X : pd.DataFrame
             Training data to update model with time series
-        Y : pd.Series, optional
-            Ground truth annotations for training if annotator is supervised.
+        y : pd.Series, optional
+            Ground truth labels for training if detector is supervised.
 
         Returns
         -------
@@ -395,7 +565,7 @@ class BaseSeriesAnnotator(BaseEstimator):
         Updates fitted model that updates attributes ending in "_".
         """
         # default/fallback: re-fit to all data
-        self._fit(self._X, self._Y)
+        self._fit(self._X, self._y)
 
         return self
 
@@ -405,13 +575,18 @@ class BaseSeriesAnnotator(BaseEstimator):
         Parameters
         ----------
         X : pd.DataFrame
-            Data to annotate, time series.
+            Time series subject to detection, which will be assigned labels or scores.
 
         Returns
         -------
-        Y : pd.Series
+        y : pd.Series with IntervalIndex
             A series with an index of intervals. Each interval is the range of a
             segment and the corresponding value is the label of the segment.
+
+            * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
+              the intervals are intervals between changepoints/anomalies, and
+              the labels are consecutive integers starting from 0.
+            * If ``task`` is "segmentation", the values are segmentation labels.
         """
         self.check_is_fitted()
         X = check_series(X)
@@ -430,12 +605,18 @@ class BaseSeriesAnnotator(BaseEstimator):
         Parameters
         ----------
         X : pd.DataFrame
-            Data to annotate, time series.
+            Time series subject to detection, which will be assigned labels or scores.
 
         Returns
         -------
-        Y : pd.Series
-            A series whose values are the changepoints/anomalies in X.
+        y : pd.Series with RangeIndex
+            Labels for sequence ``X``, in sparse format.
+            Values are ``iloc`` references to indices of ``X``.
+
+            * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
+              the values are integer indices of the changepoints/anomalies.
+            * If ``task`` is "segmentation", the values are consecutive
+              segment boundaries.
         """
         self.check_is_fitted()
         X = check_series(X)
@@ -452,7 +633,7 @@ class BaseSeriesAnnotator(BaseEstimator):
         Parameters
         ----------
         X : pd.DataFrame
-            Data to annotate, time series.
+            Time series subject to detection, which will be assigned labels or scores.
 
         Returns
         -------
@@ -468,7 +649,7 @@ class BaseSeriesAnnotator(BaseEstimator):
         Parameters
         ----------
         X : pd.DataFrame
-            Data to annotate, time series.
+            Time series subject to detection, which will be assigned labels or scores.
 
         Returns
         -------
@@ -479,7 +660,7 @@ class BaseSeriesAnnotator(BaseEstimator):
 
     @staticmethod
     def sparse_to_dense(y_sparse, index):
-        """Convert the sparse output from an annotator to a dense format.
+        """Convert the sparse output from an detector to a dense format.
 
         Parameters
         ----------
@@ -507,10 +688,10 @@ class BaseSeriesAnnotator(BaseEstimator):
         Examples
         --------
         >>> import pandas as pd
-        >>> from sktime.annotation.base._base import BaseSeriesAnnotator
+        >>> from sktime.detection.base import BaseDetector
         >>> y_sparse = pd.Series([2, 5, 7])  # Indices of changepoints/anomalies
         >>> index = range(0, 8)
-        >>> BaseSeriesAnnotator.sparse_to_dense(y_sparse, index=index)
+        >>> BaseDetector.sparse_to_dense(y_sparse, index=index)
         0    0
         1    0
         2    1
@@ -527,7 +708,7 @@ class BaseSeriesAnnotator(BaseEstimator):
         ...     )
         ... )
         >>> index = range(10)
-        >>> BaseSeriesAnnotator.sparse_to_dense(y_sparse, index=index)
+        >>> BaseDetector.sparse_to_dense(y_sparse, index=index)
         0    1
         1    1
         2    1
@@ -542,11 +723,11 @@ class BaseSeriesAnnotator(BaseEstimator):
         """
         if isinstance(y_sparse.index.dtype, pd.IntervalDtype):
             # Segmentation case
-            y_dense = BaseSeriesAnnotator._sparse_segments_to_dense(y_sparse, index)
+            y_dense = BaseDetector._sparse_segments_to_dense(y_sparse, index)
             return y_dense
         else:
             # Anomaly/changepoint detection case
-            y_dense = BaseSeriesAnnotator._sparse_points_to_dense(y_sparse, index)
+            y_dense = BaseDetector._sparse_points_to_dense(y_sparse, index)
             return y_dense
 
     @staticmethod
@@ -610,7 +791,7 @@ class BaseSeriesAnnotator(BaseEstimator):
 
     @staticmethod
     def dense_to_sparse(y_dense):
-        """Convert the dense output from an annotator to a sparse format.
+        """Convert the dense output from an detector to a sparse format.
 
         Parameters
         ----------
@@ -672,9 +853,9 @@ class BaseSeriesAnnotator(BaseEstimator):
         Examples
         --------
         >>> import pandas as pd
-        >>> from sktime.annotation.base._base import BaseSeriesAnnotator
+        >>> from sktime.detection.base import BaseDetector
         >>> change_points = pd.Series([1, 2, 5])
-        >>> BaseSeriesAnnotator.change_points_to_segments(change_points, 0, 7)
+        >>> BaseDetector.change_points_to_segments(change_points, 0, 7)
         [0, 1)   -1
         [1, 2)    1
         [2, 5)    2
@@ -723,12 +904,12 @@ class BaseSeriesAnnotator(BaseEstimator):
         Examples
         --------
         >>> import pandas as pd
-        >>> from sktime.annotation.base._base import BaseSeriesAnnotator
+        >>> from sktime.detection.base import BaseDetector
         >>> segments = pd.Series(
         ...     [3, -1, 2],
         ...     index=pd.IntervalIndex.from_breaks([2, 5, 7, 9], closed="left")
         ... )
-        >>> BaseSeriesAnnotator.segments_to_change_points(segments)
+        >>> BaseDetector.segments_to_change_points(segments)
         0    2
         1    5
         2    7
@@ -736,3 +917,40 @@ class BaseSeriesAnnotator(BaseEstimator):
         """
         change_points = pd.Series(y_sparse.index.left)
         return change_points
+
+
+class BaseSeriesAnnotator(BaseDetector):
+    """Base class for time series detectors - DEPRECATED - use BaseDetector instead."""
+
+    def __init__(self):
+        super().__init__()
+        warn(
+            "Warning: BaseSeriesAnnotator is deprecated. "
+            "Extension developers should use BaseDetector instead, "
+            "from sktime.detection.base, this is a replacement with "
+            "equivalent functionality. "
+            "The BaseSeriesAnnotator will be removed in the 0.37.0 release.",
+            stacklevel=2,
+        )
+
+
+# todo 0.37.0: remove this
+def _method_has_arg(method, arg="y"):
+    """Return if transformer.method has a parameter, and whether it has a default.
+
+    Parameters
+    ----------
+    method : callable
+        method to check
+    arg : str, optional, default="y"
+        parameter name to check
+
+    Returns
+    -------
+    has_param : bool
+        whether the method ``method`` has a parameter with name ``arg``
+    """
+    from inspect import signature
+
+    method_params = list(signature(method).parameters.keys())
+    return arg in method_params

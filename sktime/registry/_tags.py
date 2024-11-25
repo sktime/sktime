@@ -1531,6 +1531,48 @@ class transform_returns_same_time_index(_BaseTag):
     }
 
 
+# Detectors
+# ---------
+
+
+class capability__update(_BaseTag):
+    """Capability: whether the estimator can be run in stream or on-line mode.
+
+    - String name: ``"capability:update"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    The tag specifies whether the estimator can be run in stream or on-line mode,
+    with an ``update`` method. Depending on the estimator type, literature
+    may refer to this as on-line learning, incremental learning, or stream learning.
+
+    If the tag is ``True``, the ``update`` method is implemented and can be used
+    to update the estimator with new data, without re-fitting the entire model.
+
+    If the tag is ``False``, behaviour depends on the estimator type,
+    two common cases are:
+
+    * ``update`` will raise an exception. Compositors may be available
+      to add on-line learning capabilities, these are typically listed in the
+      exception message.
+    * ``update`` will not raise an exception but carry out a reasonable default,
+      such as a full re-fit, or discard the new data.
+
+    For the exact behaviour, users should consult the documentation of the
+    respective ``update`` method.
+    """
+
+    _tags = {
+        "tag_name": "capability:update",
+        "parent_type": ["transformer", "detector"],
+        "tag_type": "bool",
+        "short_descr": "does the estimator provied stream/on-line capabilities via the update method?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
 # Developer tags
 # --------------
 
@@ -1679,6 +1721,12 @@ class y_inner_mtype(_BaseTag):
 
 ESTIMATOR_TAG_REGISTER = [
     (
+        "sktime_version",
+        "object",
+        "str",
+        "sktime version from which this estimator class originates",
+    ),
+    (
         "skip-inverse-transform",
         "transformer",
         "bool",
@@ -1824,13 +1872,13 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "task",
-        "series-annotator",
+        "detector",
         "str",
         "subtype of series annotator, e.g., 'anomaly_detection', 'segmentation'",
     ),
     (
         "learning_type",
-        "series-annotator",
+        "detector",
         "str",
         "type of learning, e.g., 'supervised', 'unsupervised'",
     ),

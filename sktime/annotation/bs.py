@@ -5,12 +5,12 @@ from collections import deque
 import numpy as np
 import pandas as pd
 
-from sktime.annotation.base._base import BaseSeriesAnnotator
+from sktime.detection.base import BaseDetector
 
 __author__ = ["Alex-JG3"]
 
 
-class BinarySegmentation(BaseSeriesAnnotator):
+class BinarySegmentation(BaseDetector):
     """Binary segmentation change point detector.
 
     This method finds change points by fitting piecewise constant functions to a
@@ -155,10 +155,6 @@ class BinarySegmentation(BaseSeriesAnnotator):
                 segment_indexes.append((new_change_point + 1, end))
 
         return change_points
-
-    def _fit(self, X, Y=None):
-        """Fit method for compatibitility with sklearn-type interface."""
-        return self
 
     def _predict(self, X, Y=None):
         """Find the change points on 'X'.

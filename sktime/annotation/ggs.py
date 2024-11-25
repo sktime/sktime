@@ -41,7 +41,7 @@ import numpy.typing as npt
 import pandas as pd
 from sklearn.utils.validation import check_random_state
 
-from sktime.annotation.base._base import BaseSeriesAnnotator
+from sktime.detection.base import BaseDetector
 from sktime.utils.dependencies import _check_estimator_deps
 
 logger = logging.getLogger(__name__)
@@ -367,7 +367,7 @@ class GGS:
         return change_points
 
 
-class GreedyGaussianSegmentation(BaseSeriesAnnotator):
+class GreedyGaussianSegmentation(BaseDetector):
     """Greedy Gaussian Segmentation Estimator.
 
     The method approximates solutions for the problem of breaking a

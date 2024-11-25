@@ -274,3 +274,19 @@ class MultiRocketMultivariate(BaseTransformer):
             num_features_per_dilation,
             biases,
         )
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter sets for the estimator."""
+        return [
+            {
+                "num_kernels": 10,
+                "max_dilations_per_kernel": 32,
+                "random_state": 42,
+            },  # First parameter set
+            {
+                "num_kernels": 20,
+                "max_dilations_per_kernel": 16,
+                "random_state": 0,
+            },  # Second parameter set
+        ]

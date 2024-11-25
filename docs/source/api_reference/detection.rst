@@ -1,11 +1,18 @@
-.. _annotation_ref:
+.. _detection_ref:
 
-Time series annotation
-======================
+Time series detection tasks
+===========================
 
 The :mod:`sktime.annotation` module contains algorithms and tools
-for time series annotation tasks, like anomaly/outlier detection,
-and time series segmentation.
+for time series detection tasks, including:
+
+* anomaly or outlier detection
+* change point detection
+* time series segmentation and segment detection
+
+The tasks include unsupervised and semi-supervised variants, and can batch or
+stream/online detection.
+
 
 Time Series Segmentation
 ------------------------
@@ -89,6 +96,14 @@ Time Series Segmentation
     :template: class.rst
 
     ClusterSegmenter
+
+.. currentmodule:: sktime.annotation.bs.BinarySegmentation
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BinarySegmentation
 
 Time Series Anomaly Detection
 -----------------------------
