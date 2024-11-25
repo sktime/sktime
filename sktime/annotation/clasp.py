@@ -11,7 +11,7 @@ As described in
 }
 """
 
-from sktime.annotation.base import BaseSeriesAnnotator
+from sktime.detection.base import BaseDetector
 
 __author__ = ["ermshaua", "patrickzib"]
 __all__ = ["ClaSPSegmentation", "find_dominant_window_sizes"]
@@ -175,7 +175,7 @@ def _segmentation(X, clasp, n_change_points=None, exclusion_radius=0.05):
     return np.array(change_points), np.array(profiles, dtype=object), np.array(scores)
 
 
-class ClaSPSegmentation(BaseSeriesAnnotator):
+class ClaSPSegmentation(BaseDetector):
     """ClaSP (Classification Score Profile) Segmentation.
 
     Using ClaSP for the CPD problem is straightforward: We first compute the profile
@@ -229,8 +229,6 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
 
         super().__init__()
 
-        self._fmt = "sparse"
-
     def _fit(self, X, Y=None):
         """Do nothing, as there is no need to fit a model for ClaSP.
 
@@ -253,32 +251,12 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
         Parameters
         ----------
         X : pd.DataFrame
-            Data to annotate (time series).
+            Time series subject to detection, which will be assigned labels or scores.
 
         Returns
         -------
         Y : pd.Series or an IntervalSeries
             Change points in sequence X.
-        """
-        change_points = self._predict_points(X)
-        if self._fmt == "dense":
-            return self.change_points_to_segments(
-                change_points, X.index.min(), X.index.max()
-            )
-        return change_points
-
-    def _predict_points(self, X):
-        """Predict changepoints on test/deployment data.
-
-        Parameters
-        ----------
-        X : pd.DataFrame
-            Data to annotate, time series.
-
-        Returns
-        -------
-        Y : pd.Series
-            Series containing the indexes of the changepoints in X.
         """
         self.found_cps, self.profiles, self.scores = self._run_clasp(X)
         return pd.Series(self.found_cps)
@@ -289,24 +267,38 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
         Parameters
         ----------
         X : pd.DataFrame
-            Data to annotate (time series).
+            Time series subject to detection, which will be assigned labels or scores.
 
         Returns
         -------
         Y : pd.Series
-            Scores for sequence X exact format depends on annotation type.
+            Sparse scores for found change points in sequence X.
         """
         self.found_cps, self.profiles, self.scores = self._run_clasp(X)
 
-        if self._fmt == "sparse":
-            # Scores of the Change Points
-            scores = pd.Series(self.scores)
-            return scores
-        elif self._fmt == "dense":
-            # ClaSP creates multiple profiles. Hard to map. Thus, we return the main
-            # (first) one
-            profile = pd.Series(self.profiles[0])
-            return profile
+        # Scores of the Change Points
+        scores = pd.Series(self.scores)
+        return scores
+
+    def _transform_scores(self, X):
+        """Return scores in ClaSP's profile for each annotation.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Time series subject to detection, which will be assigned labels or scores.
+
+        Returns
+        -------
+        Y : pd.Series
+            Dense scores for found change points in sequence X.
+        """
+        self.found_cps, self.profiles, self.scores = self._run_clasp(X)
+
+        # ClaSP creates multiple profiles. Hard to map. Thus, we return the main
+        # (first) one
+        profile = pd.Series(self.profiles[0])
+        return profile
 
     def get_fitted_params(self):
         """Get fitted parameters.

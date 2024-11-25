@@ -1,11 +1,11 @@
 """Pipeline for time series annotators."""
 
-from sktime.annotation.base import BaseSeriesAnnotator
 from sktime.base import _HeterogenousMetaEstimator
+from sktime.detection.base import BaseDetector
 from sktime.registry import scitype
 
 
-class AnnotatorPipeline(_HeterogenousMetaEstimator, BaseSeriesAnnotator):
+class AnnotatorPipeline(_HeterogenousMetaEstimator, BaseDetector):
     """Pipeline for time series anomaly, changepoint detection, segmentation.
 
     Parameters
@@ -302,7 +302,7 @@ class AnnotatorPipeline(_HeterogenousMetaEstimator, BaseSeriesAnnotator):
         Parameters
         ----------
         X : pd.DataFrame
-            Data to annotate, time series.
+            Time series subject to detection, which will be assigned labels or scores.
 
         Returns
         -------
@@ -319,7 +319,7 @@ class AnnotatorPipeline(_HeterogenousMetaEstimator, BaseSeriesAnnotator):
         Parameters
         ----------
         X : pd.DataFrame
-            Data to annotate, time series.
+            Time series subject to detection, which will be assigned labels or scores.
 
         Returns
         -------
@@ -336,7 +336,7 @@ class AnnotatorPipeline(_HeterogenousMetaEstimator, BaseSeriesAnnotator):
         Parameters
         ----------
         X : pd.DataFrame
-            Data to annotate, time series.
+            Time series subject to detection, which will be assigned labels or scores.
 
         Returns
         -------
