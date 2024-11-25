@@ -68,12 +68,16 @@ class BaseDetector(BaseEstimator):
         # todo 0.37.0 switch order of series-annotator and detector
         # todo 1.0.0 - remove series-annotator
         "object_type": ["series-annotator", "detector"],  # type of object
-        "learning_type": "None",  # Tag to determine test in test_all_annotators
-        "task": "None",  # Tag to determine test in test_all_annotators
+        "learning_type": "None",  # supervised, unsupervised
+        "task": "None",  # anomaly_detection, change_point_detection, segmentation
+        "capability:multivariate": False,
+        "capability:missing_values": False,
+        "capability:update": False,
         #
-        # todo: distribution_type? we may have to refactor this, seems very soecufuc
-        "distribution_type": "None",  # Tag to determine test in test_all_annotators
-        "X_inner_mtype": "pd.DataFrame",  # Tag to determine test in test_all_annotators
+        # todo: distribution_type does not seem to be used - refactor or remove
+        "distribution_type": "None",
+        "X_inner_mtype": "pd.DataFrame",
+        "fit_is_empty": False,
     }
 
     def __init__(self):
@@ -143,6 +147,13 @@ class BaseDetector(BaseEstimator):
         _is_fitted flag to True.
         """
         X_inner = self._check_X(X)
+
+        # skip inner _fit if fit is empty
+        # we also do not need to memorize data, since we do same in _update
+        # basic checks (above) are still needed
+        if self.get_tag("fit_is_empty", False):
+            self._is_fitted = True
+            return self
 
         if Y is not None:
             warn(
@@ -239,7 +250,8 @@ class BaseDetector(BaseEstimator):
               segments. Possible labels are integers starting from 0.
         """
         y = self.predict(X)
-        return self.sparse_to_dense(y, X.index)
+        y_dense = self.sparse_to_dense(y, pd.RangeIndex(len(X)))
+        return pd.DataFrame(y_dense)
 
     def transform_scores(self, X):
         """Return scores for predicted labels on test/deployment data.
@@ -301,6 +313,10 @@ class BaseDetector(BaseEstimator):
         self.check_is_fitted()
 
         X_inner = self._check_X(X)
+
+        # no update needed if fit is empty
+        if self.get_tag("fit_is_empty", False):
+            return self
 
         if Y is not None:
             warn(
@@ -440,7 +456,10 @@ class BaseDetector(BaseEstimator):
     def _fit(self, X, y=None):
         """Fit to training data.
 
-        core logic
+        private _fit containing the core logic, called from fit
+
+        Writes to self:
+            Sets fitted model attributes ending in "_".
 
         Parameters
         ----------
@@ -453,17 +472,13 @@ class BaseDetector(BaseEstimator):
         -------
         self :
             Reference to self.
-
-        Notes
-        -----
-        Updates fitted model that updates attributes ending in "_".
         """
         raise NotImplementedError("abstract method")
 
     def _predict(self, X):
         """Create labels on test/deployment data.
 
-        core logic
+        private _predict containing the core logic, called from predict
 
         Parameters
         ----------
@@ -472,8 +487,13 @@ class BaseDetector(BaseEstimator):
 
         Returns
         -------
-        Y : pd.Series
-            Labels for sequence X exact format depends on detection type.
+        y : pd.Series with RangeIndex
+            Labels for sequence ``X``, in sparse format.
+            Values are ``iloc`` references to indices of ``X``.
+
+            * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
+              the values are integer indices of the changepoints/anomalies.
+            * If ``task`` is "segmentation", the values are ``pd.Interval`` objects.
         """
         raise NotImplementedError("abstract method")
 
@@ -491,6 +511,40 @@ class BaseDetector(BaseEstimator):
         -------
         Y : pd.Series
             Labels for sequence X exact format depends on detection type.
+        """
+        raise NotImplementedError("abstract method")
+
+    def _transform_scores(self, X):
+        """Return scores for predicted labels on test/deployment data.
+
+        core logic
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Time series subject to detection, which will be assigned labels or scores.
+
+        Returns
+        -------
+        scores : pd.DataFrame with same index as X
+            Scores for sequence ``X``.
+        """
+        raise NotImplementedError("abstract method")
+
+    def _transform_scores(self, X):
+        """Return scores for predicted labels on test/deployment data.
+
+        core logic
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Time series subject to detection, which will be assigned labels or scores.
+
+        Returns
+        -------
+        scores : pd.DataFrame with same index as X
+            Scores for sequence ``X``.
         """
         raise NotImplementedError("abstract method")
 
@@ -755,6 +809,7 @@ class BaseDetector(BaseEstimator):
         Returns
         -------
         pd.Series
+
             * If ``y_sparse`` is a series of changepoints/anomalies, a pandas series
               will be returned containing the indexes of the changepoints/anomalies
             * If ``y_sparse`` is a series of segments, a series with an interval
@@ -764,7 +819,7 @@ class BaseDetector(BaseEstimator):
         if 0 in y_dense.values:
             # y_dense is a series of change points
             change_points = np.where(y_dense.values != 0)[0]
-            return pd.Series(change_points)
+            return pd.Series(change_points, dtype="int64")
         else:
             segment_start_indexes = np.where(y_dense.diff() != 0)[0]
             segment_end_indexes = np.roll(segment_start_indexes, -1)
@@ -781,6 +836,28 @@ class BaseDetector(BaseEstimator):
             # -1 represents unclassified regions so we remove them
             y_sparse = y_sparse.loc[y_sparse != -1]
             return y_sparse
+
+    @staticmethod
+    def _empty_sparse():
+        """Return an empty sparse series in indicator format.
+
+        Returns
+        -------
+        pd.Series
+            An empty series with a RangeIndex.
+        """
+        return pd.Series(index=pd.RangeIndex(0), dtype="int64")
+
+    @staticmethod
+    def _empty_segments():
+        """Return an empty sparse series in segmentation format.
+
+        Returns
+        -------
+        pd.Series
+            An empty series with an IntervalIndex.
+        """
+        return pd.Series(index=pd.IntervalIndex([]), dtype="int64")
 
     @staticmethod
     def change_points_to_segments(y_sparse, start=None, end=None):
@@ -813,6 +890,9 @@ class BaseDetector(BaseEstimator):
         [5, 7)    3
         dtype: int64
         """
+        if len(y_sparse) == 0:
+            return BaseDetector._empty_segments()
+
         breaks = y_sparse.values
 
         if start > breaks.min():
@@ -851,6 +931,8 @@ class BaseDetector(BaseEstimator):
         -------
         pd.Series
             A series containing the indexes of the start of each segment.
+            Index is RangeIndex, and values are iloc references to the start of each
+            segment.
 
         Examples
         --------
@@ -866,6 +948,8 @@ class BaseDetector(BaseEstimator):
         2    7
         dtype: int64
         """
+        if len(y_sparse) == 0:
+            return BaseDetector._empty_sparse()
         change_points = pd.Series(y_sparse.index.left)
         return change_points
 

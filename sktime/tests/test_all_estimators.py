@@ -1159,12 +1159,14 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
     def test_valid_estimator_class_tags(self, estimator_class):
         """Check that Estimator class tags are in VALID_ESTIMATOR_TAGS."""
         for tag in estimator_class.get_class_tags().keys():
-            assert tag in VALID_ESTIMATOR_TAGS
+            msg = "Found invalid tag: %s" % tag
+            assert tag in VALID_ESTIMATOR_TAGS, msg
 
     def test_valid_estimator_tags(self, estimator_instance):
         """Check that Estimator tags are in VALID_ESTIMATOR_TAGS."""
         for tag in estimator_instance.get_tags().keys():
-            assert tag in VALID_ESTIMATOR_TAGS
+            msg = "Found invalid tag: %s" % tag
+            assert tag in VALID_ESTIMATOR_TAGS, msg
 
 
 class TestAllEstimators(BaseFixtureGenerator, QuickTester):
