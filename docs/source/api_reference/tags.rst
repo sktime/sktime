@@ -159,9 +159,7 @@ transform a single time series object (``"transformer"`` type).
 .. _detector_tags:
 
 Tags for detectors
-------------------------------
-
-task
+------------------
 
 This section lists tags applying to time series detectors (``"detector"`` types).
 These tags are used to describe capabilities, properties, and behavior of
