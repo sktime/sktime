@@ -895,19 +895,18 @@ class BaseDetector(BaseEstimator):
 
         breaks = y_sparse.values
 
-        if start > breaks.min():
+        if start is not None and start > breaks.min():
             raise ValueError("The start index must be before the first change point.")
-        if end < breaks.max():
+        if end is not None and end < breaks.max():
             raise ValueError("The end index must be after the last change point.")
 
-        if start is not None:
-            breaks = np.insert(breaks, 0, start)
-        else:
+        if start is None:
             start = 0
-        if end is not None:
-            breaks = np.append(breaks, end)
-        else:
-            end = breaks.max()
+        if end is None:
+            end = breaks.max() + 1
+
+        breaks = np.insert(breaks, 0, start)
+        breaks = np.append(breaks, end)
 
         index = pd.IntervalIndex.from_breaks(breaks, copy=True, closed="left")
         segments = pd.Series(0, index=index)
