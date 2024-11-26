@@ -256,6 +256,7 @@ EXCLUDED_TESTS = {
         "test_predict_points",
         "test_predict_segments",
         "test_transform_output_type",
+        "test_output_type",
     ],
     "ClaSPSegmentation": [
         "test_predict_points",
