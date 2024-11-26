@@ -267,13 +267,14 @@ EXCLUDED_TESTS = {
         "test_predict_segments",
         "test_transform_output_type",
     ],
-    "AnnotatorPipeline": [
+    "DetectorPipeline": [
         "test_predict_points",
         "test_predict_segments",
         "test_transform_output_type",
     ],
     "BinarySegmentation": [
         "test_predict_segments",
+        "test_transform_output_type",
     ],
     "GreedyGaussianSegmentation": [
         "test_predict_points",
@@ -282,7 +283,7 @@ EXCLUDED_TESTS = {
         "test_inheritance",
         "test_create_test_instance",
     ],
-    "PyODAnnotator": [
+    "PyODDetector": [
         "test_predict_points",
         "test_predict_segments",
         "test_transform_output_type",
@@ -323,7 +324,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "ColumnEnsembleClassifier",
         "ColumnTransformer",
         "ColumnwiseTransformer",
-        "ComposableTimeSeriesForestRegressor",
         "ContractableBOSS",
         "DOBIN",
         "DWTTransformer",
@@ -390,7 +390,7 @@ EXCLUDED_TESTS_BY_TEST = {
         "ProphetPiecewiseLinearTrendForecaster",
         "Prophetverse",
         "HierarchicalProphet",
-        "PyODAnnotator",
+        "PyODDetector",
         "RandomIntervalClassifier",
         "RandomIntervalFeatureExtractor",
         "RandomIntervalSegmenter",

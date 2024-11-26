@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from sktime.annotation.igts import IGTS, InformationGainSegmentation, entropy
+from sktime.detection.igts import IGTS, InformationGainSegmentation, entropy
 
 
 @pytest.fixture
