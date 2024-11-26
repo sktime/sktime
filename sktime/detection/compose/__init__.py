@@ -2,6 +2,16 @@
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-from sktime.annotation.compose import AnnotatorAsTransformer, AnnotatorPipeline
+from sktime.detection.compose import (
+    AnnotatorAsTransformer,
+    AnnotatorPipeline,
+    DetectorAsTransformer,
+    DetectorPipeline,
+)
 
-__all__ = ["AnnotatorAsTransformer", "AnnotatorPipeline"]
+__all__ = [
+    "AnnotatorAsTransformer",
+    "AnnotatorPipeline",
+    "DetectorAsTransformer",
+    "DetectorPipeline",
+]

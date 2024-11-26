@@ -135,5 +135,5 @@ class PyODDetector(BaseDetector):
         return params
 
 
-# todo 1.0.0 - remove alias
+# todo 1.0.0 - remove alias, i.e., remove this line
 PyODAnnotator = PyODDetector

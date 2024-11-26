@@ -5,7 +5,7 @@ from sktime.datatypes import MTYPE_LIST_SERIES
 from sktime.transformations.base import BaseTransformer
 
 __author__ = ["fkiraly"]
-__all__ = ["AnnotatorAsTransformer"]
+__all__ = ["AnnotatorAsTransformer", "DetectorAsTransformer"]
 
 
 MTYPE_LIST_FOR_ANNOTATORS = MTYPE_LIST_SERIES
@@ -13,7 +13,7 @@ MTYPE_LIST_FOR_ANNOTATORS = MTYPE_LIST_SERIES
 MTYPE_LIST_FOR_ANNOTATORS = ["pd.Series"]
 
 
-class AnnotatorAsTransformer(BaseTransformer):
+class DetectorAsTransformer(BaseTransformer):
     """Use an anomaly, changepoint detector, segmentation estimator as a transformer.
 
     This adapter is used in coercions, when passing an annotator to a transformer slot.
@@ -150,3 +150,7 @@ class AnnotatorAsTransformer(BaseTransformer):
         params2 = {"estimator": SubLOF.create_test_instance()}
 
         return [params1, params2]
+
+
+# todo 1.0.0 - remove alias, i.e., remove this line
+AnnotatorAsTransformer = DetectorAsTransformer
