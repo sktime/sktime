@@ -96,7 +96,7 @@ def test_dense_to_sparse(y_dense, y_sparse_expected):
             ),
             None,
             None,
-        )
+        ),
     ],
 )
 def test_change_points_to_segments(change_points, expected_segments, start, end):
