@@ -1602,7 +1602,7 @@ class task(_BaseTag):
         "parent_type": "detector",
         "tag_type": (
             "str",
-            ["change_point_detection", "anomaly_detection", "segmentation"],
+            ["change_point_detection", "anomaly_detection", "segmentation"]
         ),
         "short_descr": "what is the category of the detection task?",
         "user_facing": True,
