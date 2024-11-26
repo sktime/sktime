@@ -1571,18 +1571,19 @@ class capability__update(_BaseTag):
         "short_descr": "does the estimator provied stream/on-line capabilities via the update method?",  # noqa: E501
         "user_facing": True,
     }
-    
+
 
 class task(_BaseTag):
-    """Category of detection task
+    """Subtype tag for detectors: type of detection task.
 
     - String name: ``"task"``
     - Public property tag
-    - Values: string, one of ``"change_point_detection"``, ``"anomaly_detection"``, ``"segmentation"``
+    - Values: string, one of ``"change_point_detection"``,
+      ``"anomaly_detection"``, ``"segmentation"``
     - Example: ``"anomaly_detection"``
     - Default: ``"None"``
 
-    The `task` tag of an object indicates the category of the detection task. 
+    The ``task`` tag of an object indicates the category of the detection task.
     This ensures compatibility with task-specific operations and return types.
 
     The possible values are:
@@ -1599,7 +1600,10 @@ class task(_BaseTag):
     _tags = {
         "tag_name": "task",
         "parent_type": "detector",
-        "tag_type": ("str", ["change_point_detection", "anomaly_detection", "segmentation"]),
+        "tag_type": (
+            "str",
+            ["change_point_detection", "anomaly_detection", "segmentation"]
+        ),
         "short_descr": "what is the category of the detection task?",
         "user_facing": True,
     }
@@ -1614,13 +1618,13 @@ class learning_type(_BaseTag):
     - Example: ``"unsupervised"``
     - Default: ``"unsupervised"``
 
-    The tag specifies the type of learning the estimator employs for the detection task. 
+    The tag specifies the type of learning the estimator employs for the detection task.
 
     The possible values are:
 
     * ``"supervised"``: The detector learns from labelled data.
     * ``"unsupervised"``: The detector learns from unlabelled data.
-    * If ``semi_supervised``, the detector learns from a combination of labelled and 
+    * If ``semi_supervised``, the detector learns from a combination of labelled and
       unlabelled data.
     """
 
@@ -1642,8 +1646,8 @@ class distribution_type(_BaseTag):
     - Example: ``"Poisson"``
     - Default: ``"None"``
 
-    This tag specifies the type of observation probability distribution that the 
-    estimator operates on. 
+    This tag specifies the type of observation probability distribution that the
+    estimator operates on.
 
     Possible values include, but are not limited to:
 
@@ -1659,8 +1663,6 @@ class distribution_type(_BaseTag):
         "short_descr": "what data distribution type is assumed by the detector",
         "user_facing": True,
     }
-
-
 
 
 # Developer tags
