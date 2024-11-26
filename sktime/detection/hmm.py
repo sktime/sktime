@@ -431,4 +431,3 @@ class HMM(BaseDetector):
         }
 
         return [params_1, params_2]
-
