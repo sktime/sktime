@@ -884,7 +884,7 @@ class BaseDetector(BaseEstimator):
         >>> from sktime.detection.base import BaseDetector
         >>> change_points = pd.Series([1, 2, 5])
         >>> BaseDetector.change_points_to_segments(change_points, 0, 7)
-        [0, 1)   -1
+        [0, 1)    0
         [1, 2)    1
         [2, 5)    2
         [5, 7)    3
