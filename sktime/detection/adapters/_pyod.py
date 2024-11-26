@@ -13,7 +13,7 @@ __author__ = ["mloning", "satya-pattnaik", "fkiraly"]
 import pandas as pd
 
 
-class PyODAnnotator(BaseDetector):
+class PyODDetector(BaseDetector):
     """Transformer that applies outlier detector from pyOD.
 
     Parameters
@@ -24,13 +24,13 @@ class PyODAnnotator(BaseDetector):
 
     Examples
     --------
-    >>> from sktime.annotation.datagen import piecewise_normal_multivariate
+    >>> from sktime.detection.datagen import piecewise_normal_multivariate
     >>> X = pd.DataFrame(piecewise_normal_multivariate(
     ...     means=[[1, 3], [4, 5]], lengths=[3, 4], random_state=10))
-    >>> from sktime.annotation.adapters._pyod import PyODAnnotator
+    >>> from sktime.detection.adapters._pyod import PyODDetector
     >>> from pyod.models.ecod import ECOD
-    >>> model = PyODAnnotator(ECOD())  # doctest: +SKIP
-    >>> model.fit_transform(X)  # doctest: +SKIP
+    >>> model = PyODDetector(ECOD())
+    >>> model.fit_transform(X)
     """
 
     _tags = {
@@ -133,3 +133,7 @@ class PyODAnnotator(BaseDetector):
         else:
             params = {"estimator": "foo"}
         return params
+
+
+# todo 1.0.0 - remove alias, i.e., remove this line
+PyODAnnotator = PyODDetector
