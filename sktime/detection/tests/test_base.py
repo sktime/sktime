@@ -73,12 +73,30 @@ def test_dense_to_sparse(y_dense, y_sparse_expected):
         (
             pd.Series([1, 2, 5]),
             pd.Series(
-                [-1, 1, 2, 3],
+                [0, 1, 2, 3],
+                index=pd.IntervalIndex.from_breaks([-42, 1, 2, 5, 7], closed="left"),
+            ),
+            -42,
+            7,
+        ),
+        (
+            pd.Series([1, 2, 5]),
+            pd.Series(
+                [0, 1, 2, 3],
                 index=pd.IntervalIndex.from_breaks([0, 1, 2, 5, 7], closed="left"),
             ),
-            0,
+            None,
             7,
-        )
+        ),
+        (
+            pd.Series([1, 2, 5]),
+            pd.Series(
+                [0, 1, 2, 3],
+                index=pd.IntervalIndex.from_breaks([0, 1, 2, 5, 6], closed="left"),
+            ),
+            None,
+            None,
+        ),
     ],
 )
 def test_change_points_to_segments(change_points, expected_segments, start, end):
