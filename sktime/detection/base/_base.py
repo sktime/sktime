@@ -865,12 +865,12 @@ class BaseDetector(BaseEstimator):
 
         Parameters
         ----------
-        y_sparse : pd.Series
-            A series containing the indexes of change points.
-        start : optional
+        y_sparse : pd.Series of int, sorted ascendingly
+            A series containing the iloc indexes of change points.
+        start : optional, default=0
             Starting point of the first segment.
-        end : optional
-            Ending point of the last segment
+        end : optional, default=y_sparse[-1] + 1
+            End point of the last segment
 
         Returns
         -------
@@ -903,7 +903,7 @@ class BaseDetector(BaseEstimator):
         if start is None:
             start = 0
         if end is None:
-            end = breaks.max() + 1
+            end = breaks[-1] + 1
 
         breaks = np.insert(breaks, 0, start)
         breaks = np.append(breaks, end)
