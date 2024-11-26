@@ -287,7 +287,6 @@ EXCLUDED_TESTS = {
         "test_predict_points",
         "test_predict_segments",
         "test_transform_output_type",
-        "test_get_test_params_coverage",
     ],
     "GaussianHMM": [
         "test_predict_points",
@@ -392,7 +391,7 @@ EXCLUDED_TESTS_BY_TEST = {
         "ProphetPiecewiseLinearTrendForecaster",
         "Prophetverse",
         "HierarchicalProphet",
-        "PyODAnnotator",
+        "PyODDetector",
         "RandomIntervalClassifier",
         "RandomIntervalFeatureExtractor",
         "RandomIntervalSegmenter",
