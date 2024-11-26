@@ -94,7 +94,7 @@ class BaseDetector(BaseEstimator):
         self.set_tags(**{"task": task, "learning_type": learning_type})
 
     def __rmul__(self, other):
-        """Magic * method, return (left) concatenated AnnotatorPipeline.
+        """Magic * method, return (left) concatenated DetectorPipeline.
 
         Implemented for ``other`` being a transformer, otherwise returns
         ``NotImplemented``.
@@ -106,11 +106,11 @@ class BaseDetector(BaseEstimator):
 
         Returns
         -------
-        AnnotatorPipeline object,
+        DetectorPipeline object,
             concatenation of ``other`` (first) with ``self`` (last).
-            not nested, contains only non-AnnotatorPipeline ``sktime`` steps
+            not nested, contains only non-DetectorPipeline ``sktime`` steps
         """
-        from sktime.annotation.compose import AnnotatorPipeline
+        from sktime.detection.compose import DetectorPipeline
         from sktime.transformations.base import BaseTransformer
         from sktime.transformations.series.adapt import TabularToSeriesAdaptor
         from sktime.utils.sklearn import is_sklearn_transformer
@@ -118,7 +118,7 @@ class BaseDetector(BaseEstimator):
         # we wrap self in a pipeline, and concatenate with the other
         #   the TransformedTargetForecaster does the rest, e.g., dispatch on other
         if isinstance(other, BaseTransformer):
-            self_as_pipeline = AnnotatorPipeline(steps=[self])
+            self_as_pipeline = DetectorPipeline(steps=[self])
             return other * self_as_pipeline
         elif is_sklearn_transformer(other):
             return TabularToSeriesAdaptor(other) * self
