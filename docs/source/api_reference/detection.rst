@@ -22,8 +22,8 @@ Composition
     :toctree: auto_generated/
     :template: class.rst
 
-    AnnotatorPipeline
-    AnnotatorAsTransformer
+    DetectorPipeline
+    DetectorAsTransformer
 
 Time Series Segmentation
 ------------------------

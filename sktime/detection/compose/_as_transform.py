@@ -36,13 +36,13 @@ class DetectorAsTransformer(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.annotation.compose import AnnotatorAsTransformer
+    >>> from sktime.annotation.compose import DetectorAsTransformer
     >>> from sktime.annotation.stray import STRAY
     >>> from sktime.utils._testing import _make_hierarchical
     >>> X = _make_hierarchical()
-    >>> t = AnnotatorAsTransformer(STRAY())
+    >>> t = DetectorAsTransformer(STRAY())
     >>> t.fit(X)
-    AnnotatorAsTransformer(...)
+    DetectorAsTransformer(...)
     >>> Xt = t.transform(X)
     """
 
