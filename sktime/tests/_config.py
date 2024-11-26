@@ -283,7 +283,7 @@ EXCLUDED_TESTS = {
         "test_inheritance",
         "test_create_test_instance",
     ],
-    "PyODAnnotator": [
+    "PyODDetector": [
         "test_predict_points",
         "test_predict_segments",
         "test_transform_output_type",
