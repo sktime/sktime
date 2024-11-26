@@ -1,4 +1,3 @@
-
 """Hidden Markov Model with Gaussian emissions.
 
 Please see the original library
