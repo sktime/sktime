@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from sktime.annotation.ggs import GGS, GreedyGaussianSegmentation
+from sktime.detection.ggs import GGS, GreedyGaussianSegmentation
 
 
 @pytest.fixture
