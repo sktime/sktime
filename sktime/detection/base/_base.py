@@ -869,8 +869,10 @@ class BaseDetector(BaseEstimator):
             A series containing the iloc indexes of change points.
         start : optional, default=0
             Starting point of the first segment.
+            Must be before the first change point, i.e., < y_sparse[0].
         end : optional, default=y_sparse[-1] + 1
-            End point of the last segment
+            End point of the last segment.
+            Must be after the last change point, i.e., > y_sparse[-1].
 
         Returns
         -------
