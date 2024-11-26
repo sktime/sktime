@@ -960,7 +960,7 @@ class TestAllForecasters(
         y_train, _, X_train, X_test = temporal_train_test_split(y, X, fh=fh)
 
         estimator_instance = estimator_instance.clone()
-        estimator_instance.set_config(remember_data=False)
+        estimator_instance.set_config(**{"remember_data": False})
         estimator_instance.fit(y=y_train, X=X_train, fh=fh)
         y_pred = estimator_instance.predict(X=X_test)
 
