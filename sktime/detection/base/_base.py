@@ -237,7 +237,7 @@ class BaseDetector(BaseEstimator):
             Labels for sequence ``X``.
 
             * If ``task`` is ``"anomaly_detection"``, the values are integer labels.
-              A value of 0 indicatesthat ``X``, at the same time index, has no anomaly.
+              A value of 0 indicates that ``X``, at the same time index, has no anomaly.
               Other values indicate an anomaly.
               Most detectors will return 0 or 1, but some may return more values,
               if they can detect different types of anomalies.
@@ -587,6 +587,7 @@ class BaseDetector(BaseEstimator):
         y : pd.Series with IntervalIndex
             A series with an index of intervals. Each interval is the range of a
             segment and the corresponding value is the label of the segment.
+            Values are ``iloc`` references to indices of ``X``.
 
             * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
               the intervals are intervals between changepoints/anomalies, and
@@ -599,7 +600,7 @@ class BaseDetector(BaseEstimator):
         task = self.get_tag("task")
         if task in ["anomaly_detection", "change_point_detection"]:
             return self.change_points_to_segments(
-                self.predict_points(X), start=X.index.min(), end=X.index.max()
+                self.predict_points(X), start=0, end=len(X)
             )
         elif task == "segmentation":
             return self._predict_segments(X)
