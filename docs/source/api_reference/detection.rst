@@ -3,7 +3,7 @@
 Time series detection tasks
 ===========================
 
-The :mod:`sktime.annotation` module contains algorithms and tools
+The :mod:`sktime.detection` module contains algorithms and tools
 for time series detection tasks, including:
 
 * anomaly or outlier detection
@@ -13,11 +13,22 @@ for time series detection tasks, including:
 The tasks include unsupervised and semi-supervised variants, and can batch or
 stream/online detection.
 
+Composition
+-----------
+
+.. currentmodule:: sktime.detection.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    AnnotatorPipeline
+    AnnotatorAsTransformer
 
 Time Series Segmentation
 ------------------------
 
-.. currentmodule:: sktime.annotation.clasp
+.. currentmodule:: sktime.detection.clasp
 
 .. autosummary::
     :toctree: auto_generated/
@@ -25,7 +36,7 @@ Time Series Segmentation
 
     ClaSPSegmentation
 
-.. currentmodule:: sktime.annotation.eagglo
+.. currentmodule:: sktime.detection.eagglo
 
 .. autosummary::
     :toctree: auto_generated/
@@ -33,7 +44,7 @@ Time Series Segmentation
 
     EAgglo
 
-.. currentmodule:: sktime.annotation.hmm_learn.gaussian
+.. currentmodule:: sktime.detection.hmm_learn.gaussian
 
 .. autosummary::
     :toctree: auto_generated/
@@ -41,7 +52,7 @@ Time Series Segmentation
 
     GaussianHMM
 
-.. currentmodule:: sktime.annotation.hmm_learn.gmm
+.. currentmodule:: sktime.detection.hmm_learn.gmm
 
 .. autosummary::
     :toctree: auto_generated/
@@ -49,7 +60,7 @@ Time Series Segmentation
 
     GMMHMM
 
-.. currentmodule:: sktime.annotation.ggs
+.. currentmodule:: sktime.detection.ggs
 
 .. autosummary::
     :toctree: auto_generated/
@@ -57,7 +68,7 @@ Time Series Segmentation
 
     GreedyGaussianSegmentation
 
-.. currentmodule:: sktime.annotation.hmm
+.. currentmodule:: sktime.detection.hmm
 
 .. autosummary::
     :toctree: auto_generated/
@@ -65,7 +76,7 @@ Time Series Segmentation
 
     HMM
 
-.. currentmodule:: sktime.annotation.igts
+.. currentmodule:: sktime.detection.igts
 
 .. autosummary::
     :toctree: auto_generated/
@@ -73,7 +84,7 @@ Time Series Segmentation
 
     InformationGainSegmentation
 
-.. currentmodule:: sktime.annotation.hmm_learn.poisson
+.. currentmodule:: sktime.detection.hmm_learn.poisson
 
 .. autosummary::
     :toctree: auto_generated/
@@ -81,7 +92,7 @@ Time Series Segmentation
 
     PoissonHMM
 
-.. currentmodule:: sktime.annotation.stray
+.. currentmodule:: sktime.detection.stray
 
 .. autosummary::
     :toctree: auto_generated/
@@ -89,7 +100,7 @@ Time Series Segmentation
 
     STRAY
 
-.. currentmodule:: sktime.annotation.clust
+.. currentmodule:: sktime.detection.clust
 
 .. autosummary::
     :toctree: auto_generated/
@@ -97,7 +108,7 @@ Time Series Segmentation
 
     ClusterSegmenter
 
-.. currentmodule:: sktime.annotation.bs.BinarySegmentation
+.. currentmodule:: sktime.detection.bs.BinarySegmentation
 
 .. autosummary::
     :toctree: auto_generated/
@@ -111,7 +122,7 @@ Time Series Anomaly Detection
 Window-based Anomaly Detection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. currentmodule:: sktime.annotation.lof
+.. currentmodule:: sktime.detection.lof
 
 .. autosummary::
     :toctree: auto_generated/
@@ -122,18 +133,18 @@ Window-based Anomaly Detection
 Reduction to Tabular Anomaly Detection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. currentmodule:: sktime.annotation.adapters
+.. currentmodule:: sktime.detection.adapters
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    PyODAnnotator
+    PyODDetector
 
 
 Data Generation
 ---------------
 
-.. automodule:: sktime.annotation.datagen
+.. automodule:: sktime.detection.datagen
     :no-members:
     :no-inherited-members:
