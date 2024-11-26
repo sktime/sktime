@@ -1,7 +1,12 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+<<<<<<< HEAD
 """Tests that RecursiveReductionForecaster can handle (1) index with missing values
 - e.g. Jan, Feb, Apr, ... etc. and (2) hierarchical data with unequal lengths."""
+=======
+"""Test that RecursiveReductionForecaster can handle index with missing values
+- e.g. Jan, Feb, Apr, ... etc."""
+>>>>>>> bff872fa9 (added test robust to missing index values)
 
 __author__ = ["ericjb"]
 
@@ -17,7 +22,10 @@ from sktime.utils._testing.forecasting import (
     _assert_correct_columns,
     _assert_correct_pred_time_index,
 )
+<<<<<<< HEAD
 from sktime.utils._testing.hierarchical import _make_hierarchical
+=======
+>>>>>>> bff872fa9 (added test robust to missing index values)
 
 # warnings.filterwarnings("ignore", \
 # message="RecursiveReductionForecaster is experimental")
@@ -50,6 +58,7 @@ def test_missing_index_with_recursive_reduction():
     cutoff = get_cutoff(train, return_index=True)
     _assert_correct_pred_time_index(pred.index, cutoff, fh)
     _assert_correct_columns(pred, train)
+<<<<<<< HEAD
 
 
 def test_unequal_indices_recursive_reduction():
@@ -74,3 +83,5 @@ def test_unequal_indices_recursive_reduction():
 
     expected_idx = fh.get_expected_pred_idx(y=train)
     assert expected_idx.equals(pred.index)
+=======
+>>>>>>> bff872fa9 (added test robust to missing index values)
