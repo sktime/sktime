@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 from sktime.detection.igts import IGTS, InformationGainSegmentation, entropy
+from sktime.tests.test_switch import run_test_for_class
 
 
 @pytest.fixture
@@ -13,11 +14,19 @@ def multivariate_mean_shift():
     return np.vstack((x, x.max() - x)).T
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(entropy),
+    reason="skip test if required soft dependency for hmmlearn not available",
+)
 def test_entropy():
     """Test entropy function."""
     assert entropy(np.ones((10, 1))) == 0.0
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(IGTS),
+    reason="skip test if required soft dependency for hmmlearn not available",
+)
 def test_igts_identity():
     """Test identity segmentation."""
     X = np.random.random(12).reshape(4, 3)
@@ -25,12 +34,20 @@ def test_igts_identity():
     assert id_change_points == [0, 4]
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(IGTS),
+    reason="skip test if required soft dependency for hmmlearn not available",
+)
 def test_igts_get_candidates():
     """Test get_candidates function."""
     candidates = IGTS(step=2).get_candidates(n_samples=10, change_points=[0, 4, 6])
     assert candidates == [2, 8]
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(IGTS),
+    reason="skip test if required soft dependency for hmmlearn not available",
+)
 def test_IGTS_find_change_points(multivariate_mean_shift):
     """Test the IGTS core estimator."""
     igts = IGTS(k_max=3, step=1)
@@ -39,6 +56,10 @@ def test_IGTS_find_change_points(multivariate_mean_shift):
     assert len(pred) == 5
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(InformationGainSegmentation),
+    reason="skip test if required soft dependency for hmmlearn not available",
+)
 def test_InformationGainSegmentation(multivariate_mean_shift):
     """Test the InformationGainSegmentation."""
     igts = InformationGainSegmentation(k_max=3, step=1)

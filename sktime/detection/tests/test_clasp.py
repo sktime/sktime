@@ -6,8 +6,8 @@ __all__ = []
 import pytest
 from pandas.api.types import is_interval_dtype
 
-from sktime.annotation.clasp import ClaSPSegmentation
 from sktime.datasets import load_gun_point_segmentation
+from sktime.detection.clasp import ClaSPSegmentation
 from sktime.tests.test_switch import run_test_for_class
 
 

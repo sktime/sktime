@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 from sktime.detection.ggs import GGS, GreedyGaussianSegmentation
+from sktime.tests.test_switch import run_test_for_class
 
 
 @pytest.fixture
@@ -13,6 +14,10 @@ def univariate_mean_shift():
     return x[:, np.newaxis]
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(GGS),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_GGS_find_change_points(univariate_mean_shift):
     """Test the GGS core estimator."""
     ggs = GGS(k_max=10, lamb=1.0)
@@ -21,6 +26,10 @@ def test_GGS_find_change_points(univariate_mean_shift):
     assert len(pred) == 5
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(GreedyGaussianSegmentation),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_GreedyGaussianSegmentation(univariate_mean_shift):
     """Test the GreedyGaussianSegmentation."""
     ggs = GreedyGaussianSegmentation(k_max=5, lamb=0.5)
