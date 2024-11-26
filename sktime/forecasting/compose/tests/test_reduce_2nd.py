@@ -1,7 +1,7 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Test that RecursiveReductionForecaster can handle index with missing values
-- e.g. Jan, Feb, Apr, ... etc."""
+"""Tests that RecursiveReductionForecaster can handle (1) index with missing values
+- e.g. Jan, Feb, Apr, ... etc. and (2) hierarchical data with unequal lengths."""
 
 __author__ = ["ericjb"]
 
@@ -17,6 +17,7 @@ from sktime.utils._testing.forecasting import (
     _assert_correct_columns,
     _assert_correct_pred_time_index,
 )
+from sktime.utils._testing.hierarchical import _make_hierarchical
 
 # warnings.filterwarnings("ignore", \
 # message="RecursiveReductionForecaster is experimental")
@@ -49,3 +50,27 @@ def test_missing_index_with_recursive_reduction():
     cutoff = get_cutoff(train, return_index=True)
     _assert_correct_pred_time_index(pred.index, cutoff, fh)
     _assert_correct_columns(pred, train)
+
+
+def test_unequal_indices_recursive_reduction():
+    RANDOM_SEED = 42
+    np.random.seed(RANDOM_SEED)
+
+    y = _make_hierarchical(hierarchy_levels=(8,), min_timepoints=11, max_timepoints=13)
+
+    TEST_SIZE = 3
+    train, test = temporal_train_test_split(y, test_size=TEST_SIZE)
+    regressor = MLPRegressor(
+        hidden_layer_sizes=(7,),
+        shuffle=False,
+        activation="relu",
+        max_iter=2000,
+        solver="lbfgs",
+    )
+    mlp_fc = RecursiveReductionForecaster(regressor, window_length=4)
+    mlp_fc.fit(train)
+    fh = ForecastingHorizon([1, 2, 3], is_relative=True)
+    pred = mlp_fc.predict(fh)
+
+    expected_idx = fh.get_expected_pred_idx(y=train)
+    assert expected_idx.equals(pred.index)
