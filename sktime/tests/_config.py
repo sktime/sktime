@@ -323,7 +323,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "ColumnEnsembleClassifier",
         "ColumnTransformer",
         "ColumnwiseTransformer",
-        "ComposableTimeSeriesForestRegressor",
         "ContractableBOSS",
         "DOBIN",
         "DWTTransformer",
