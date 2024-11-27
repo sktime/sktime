@@ -74,9 +74,6 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
     single_step_output_One : int, default=0
         Determines whether to output a single step (1) or multiple steps (0).
 
-    input_len_seg : int, default=0
-        Length of each segment in the input sequence.
-
     positionalE : bool, default=False
         Enables or disables the use of positional encoding.
 
@@ -153,7 +150,6 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
         kernel=5,
         dropout=0.5,
         single_step_output_One=0,
-        input_len_seg=0,
         positionalE=False,
         modified=True,
         RIN=False,
@@ -177,7 +173,6 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
         self.kernel = kernel
         self.dropout = dropout
         self.single_step_output_One = single_step_output_One
-        self.input_len_seg = input_len_seg
         self.positionalE = positionalE
         self.modified = modified
         self.RIN = RIN
@@ -228,11 +223,10 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
             kernel=self.kernel,
             dropout=self.dropout,
             single_step_output_One=self.single_step_output_One,
-            input_len_seg=self.input_len_seg,
             positionalE=self.positionalE,
             modified=self.modified,
             RIN=self.RIN,
-        )
+        )._build()
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
