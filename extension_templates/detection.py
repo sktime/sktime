@@ -73,11 +73,11 @@ class MyDetector(BaseDetector):
         #
         # learning_type = learning type of the detection task
         "learning_type": "unsupervised",
-        # valid values: "unsupervised", "supervised"
+        # valid values: "unsupervised", "supervised", "semi_supervised"
         #
-        # univariate-only controls whether internal X can be univariate/multivariate
+        # capability:multivariate controls whether internal X can be multivariate
         # if True (only univariate), always applies vectorization over variables
-        "univariate-only": True,
+        "capability:multivariate": False,
         # valid values: True = inner _fit, _transform receive only univariate series
         #   False = uni- and multivariate series are passed to inner methods
         #
@@ -86,8 +86,8 @@ class MyDetector(BaseDetector):
         # valid values: True = _fit is considered empty and skipped, False = No
         # CAUTION: default is "True", i.e., _fit will be skipped even if implemented
         #
-        # handles-missing-data = can estimator handle missing data?
-        "handles-missing-data": False,
+        # capability:missing_data = can estimator handle missing data?
+        "capability:missing_data": False,
         # valid values: boolean True (yes), False (no)
         # if False, raises exception if y or X passed contain missing data (nans)
         #

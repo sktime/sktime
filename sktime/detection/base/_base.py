@@ -48,7 +48,6 @@ class BaseDetector(BaseEstimator):
         from the normal statistical properties of the timeseries.
 
     learning_type : str {"supervised", "unsupervised", "semi_supervised"}
-    learning_type : str {"supervised", "unsupervised"}
         Detection learning type:
 
         * If ``supervised``, the detector learns from labelled data.
