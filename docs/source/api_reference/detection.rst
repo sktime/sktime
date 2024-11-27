@@ -116,6 +116,33 @@ Time Series Segmentation
 
     BinarySegmentation
 
+Naive Baselines
+^^^^^^^^^^^^^^^
+
+.. currentmodule:: sktime.detection.dummy
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ZeroSegments
+
+Change Point Detection
+----------------------
+
+Naive Baselines
+^^^^^^^^^^^^^^^
+
+.. currentmodule:: sktime.detection.dummy
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DummyRegularChangepoints
+    ZeroChangepoints
+
+
 Time Series Anomaly Detection
 -----------------------------
 
@@ -140,6 +167,18 @@ Reduction to Tabular Anomaly Detection
     :template: class.rst
 
     PyODDetector
+
+Naive Baselines
+^^^^^^^^^^^^^^^
+
+.. currentmodule:: sktime.detection.dummy
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DummyRegularAnomalies
+    ZeroAnomalies
 
 
 Data Generation
