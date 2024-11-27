@@ -48,17 +48,16 @@ class BaseDetector(BaseEstimator):
         from the normal statistical properties of the timeseries.
 
     learning_type : str {"supervised", "unsupervised", "semi_supervised"}
+    learning_type : str {"supervised", "unsupervised"}
         Detection learning type:
 
         * If ``supervised``, the detector learns from labelled data.
         * If ``unsupervised``, the detector learns from unlabelled data.
-        * If ``semi_supervised``, the detector learns from a combination of labelled and unlabelled data.
+        * If ``semi_supervised``, the detector learns from a combination of labelled
+          and unlabelled data.
 
     Notes
     -----
-    Assumes "predict" data is temporal future of "fit"
-    Single time series in both, no meta-data.
-
     The base series detector specifies the methods and method
     signatures that all detectors have to implement.
 
@@ -66,6 +65,12 @@ class BaseDetector(BaseEstimator):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "sktime developers",  # author(s) of the object
+        "maintainers": "sktime developers",  # current maintainer(s) of the object
+        "python_version": None,  # PEP 440 python version specifier to limit versions
+        "python_dependencies": None,  # str or list of str, package soft dependencies
         # estimator tags
         # --------------
         # todo 0.37.0 switch order of series-annotator and detector
@@ -77,18 +82,10 @@ class BaseDetector(BaseEstimator):
         "capability:missing_values": False,
         "capability:update": False,
         #
-        # todo: distribution_type? we may have to refactor this, seems very soecufuc
-        "distribution_type": "None",  # Tag to determine test in test_all_annotators
-        "X_inner_mtype": "pd.DataFrame",  # Tag to determine test in test_all_annotators
-        "handles-missing-data": False # can estimator handle missing data?
-        "fit_is_empty": False, # is fit empty and can be skipped?
-        "univariate-only": True, # can the estimator be applied to time series with 2 or more variables?
-        # packaging info
-        # --------------
-        "authors": "sktime developers",  # author(s) of the object
-        "maintainers": "sktime developers",  # current maintainer(s) of the object
-        "python_version": None,  # PEP 440 python version specifier to limit versions
-        "python_dependencies": None,  # str or list of str, package soft dependencies
+        # todo: distribution_type does not seem to be used - refactor or remove
+        "distribution_type": "None",
+        "X_inner_mtype": "pd.DataFrame",
+        "fit_is_empty": False,
     }
 
     def __init__(self):
@@ -248,7 +245,7 @@ class BaseDetector(BaseEstimator):
             Labels for sequence ``X``.
 
             * If ``task`` is ``"anomaly_detection"``, the values are integer labels.
-              A value of 0 indicatesthat ``X``, at the same time index, has no anomaly.
+              A value of 0 indicates that ``X``, at the same time index, has no anomaly.
               Other values indicate an anomaly.
               Most detectors will return 0 or 1, but some may return more values,
               if they can detect different types of anomalies.
@@ -598,6 +595,7 @@ class BaseDetector(BaseEstimator):
         y : pd.Series with IntervalIndex
             A series with an index of intervals. Each interval is the range of a
             segment and the corresponding value is the label of the segment.
+            Values are ``iloc`` references to indices of ``X``.
 
             * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
               the intervals are intervals between changepoints/anomalies, and
@@ -610,7 +608,7 @@ class BaseDetector(BaseEstimator):
         task = self.get_tag("task")
         if task in ["anomaly_detection", "change_point_detection"]:
             return self.change_points_to_segments(
-                self.predict_points(X), start=X.index.min(), end=X.index.max()
+                self.predict_points(X), start=0, end=len(X)
             )
         elif task == "segmentation":
             return self._predict_segments(X)
@@ -876,12 +874,14 @@ class BaseDetector(BaseEstimator):
 
         Parameters
         ----------
-        y_sparse : pd.Series
-            A series containing the indexes of change points.
-        start : optional
+        y_sparse : pd.Series of int, sorted ascendingly
+            A series containing the iloc indexes of change points.
+        start : optional, default=0
             Starting point of the first segment.
-        end : optional
-            Ending point of the last segment
+            Must be before the first change point, i.e., < y_sparse[0].
+        end : optional, default=y_sparse[-1] + 1
+            End point of the last segment.
+            Must be after the last change point, i.e., > y_sparse[-1].
 
         Returns
         -------
@@ -895,7 +895,7 @@ class BaseDetector(BaseEstimator):
         >>> from sktime.detection.base import BaseDetector
         >>> change_points = pd.Series([1, 2, 5])
         >>> BaseDetector.change_points_to_segments(change_points, 0, 7)
-        [0, 1)   -1
+        [0, 1)    0
         [1, 2)    1
         [2, 5)    2
         [5, 7)    3
@@ -906,25 +906,26 @@ class BaseDetector(BaseEstimator):
 
         breaks = y_sparse.values
 
-        if start > breaks.min():
-            raise ValueError(
-                "The starting index must be before the first change point."
-            )
-        first_change_point = breaks.min()
+        if start is not None and start > breaks.min():
+            raise ValueError("The start index must be before the first change point.")
+        if end is not None and end < breaks.max():
+            raise ValueError("The end index must be after the last change point.")
 
-        if start is not None:
-            breaks = np.insert(breaks, 0, start)
-        if end is not None:
-            breaks = np.append(breaks, end)
+        if start is None:
+            start = 0
+        if end is None:
+            end = breaks[-1] + 1
+
+        breaks = np.insert(breaks, 0, start)
+        breaks = np.append(breaks, end)
 
         index = pd.IntervalIndex.from_breaks(breaks, copy=True, closed="left")
         segments = pd.Series(0, index=index)
 
-        in_range = index.left >= first_change_point
+        in_range = index.left >= start
 
         number_of_segments = in_range.sum()
-        segments.loc[in_range] = range(1, number_of_segments + 1)
-        segments.loc[~in_range] = -1
+        segments.loc[in_range] = range(0, number_of_segments)
 
         return segments
 
