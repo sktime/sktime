@@ -407,7 +407,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "SAXlegacy",
         "SFA",
         "SFAFast",
-        "STRAY",
         "ShapeletTransform",
         "ShapeletTransformClassifier",
         "SignatureClassifier",
