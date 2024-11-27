@@ -175,6 +175,8 @@ detectors.
     task
     learning_type
     capability__update
+    capability__multivariate
+    capability__missing_values
 
 .. _dev_common_tags:
 
