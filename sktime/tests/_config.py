@@ -321,7 +321,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "ClustererPipeline",
         "ColumnConcatenator",
         "ColumnEnsembleClassifier",
-        "ColumnTransformer",
         "ColumnwiseTransformer",
         "ComposableTimeSeriesForestRegressor",
         "ContractableBOSS",
