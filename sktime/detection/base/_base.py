@@ -47,17 +47,16 @@ class BaseDetector(BaseEstimator):
         * If ``anomaly_detection``, the detector finds points that differ significantly
         from the normal statistical properties of the timeseries.
 
-    learning_type : str {"supervised", "unsupervised"}
+    learning_type : str {"supervised", "unsupervised", "semi_supervised"}
         Detection learning type:
 
         * If ``supervised``, the detector learns from labelled data.
         * If ``unsupervised``, the detector learns from unlabelled data.
+        * If ``semi_supervised``, the detector learns from a combination of labelled
+          and unlabelled data.
 
     Notes
     -----
-    Assumes "predict" data is temporal future of "fit"
-    Single time series in both, no meta-data.
-
     The base series detector specifies the methods and method
     signatures that all detectors have to implement.
 
@@ -65,6 +64,14 @@ class BaseDetector(BaseEstimator):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "sktime developers",  # author(s) of the object
+        "maintainers": "sktime developers",  # current maintainer(s) of the object
+        "python_version": None,  # PEP 440 python version specifier to limit versions
+        "python_dependencies": None,  # str or list of str, package soft dependencies
+        # estimator tags
+        # --------------
         # todo 0.37.0 switch order of series-annotator and detector
         # todo 1.0.0 - remove series-annotator
         "object_type": ["series-annotator", "detector"],  # type of object
