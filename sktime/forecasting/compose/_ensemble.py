@@ -9,11 +9,12 @@ forecasts.
 __author__ = ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"]
 __all__ = ["EnsembleForecaster", "AutoEnsembleForecaster"]
 
+import warnings
+
 import numpy as np
 import pandas as pd
 from scipy.stats import gmean
 from sklearn.pipeline import Pipeline
-import warnings
 from utils.parallel import Parallel, delayed
 
 from sktime.forecasting.base import ForecastingHorizon
@@ -127,7 +128,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     ):
         # Handle the deprecation of n_jobs
         warnings.warn(
-            "The parameter `n_jobs` is deprecated and will be removed in future versions. "
+            "The parameter `n_jobs` is deprecated. "
             "Use `backend` and `backend_params` instead.",
             DeprecationWarning,
         )

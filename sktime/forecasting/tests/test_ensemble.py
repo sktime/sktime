@@ -17,7 +17,7 @@ def test_auto_ensemble_forecaster():
     
     This test evaluates the performance of the AutoEnsembleForecaster by comparing 
     its predictions to those of individual forecasters, such as NaiveForecaster 
-    and PolynomialTrendForecaster, using mean squared error (MSE) as the comparison metric.
+    and PolynomialTrendForecaster, using MSE as the comparison metric.
 
     The goal is to verify that the ensemble forecaster performs similarly to 
     or better than its individual components.
@@ -45,13 +45,13 @@ def test_auto_ensemble_forecaster():
     for fh in forecast_horizons:
         print(f"Testing with forecast horizon: {fh}")
         
-        # Fit the ensemble forecaster to the dataset with the current forecasting horizon
+        # Fit the ensemble forecaster to the dataset with the current horizon
         ensemble_forecaster.fit(y=y, fh=fh)
         
         # Predict future values using the ensemble forecaster
         y_pred_ensemble = ensemble_forecaster.predict()
         
-        # For comparison, we predict with individual forecasters (e.g., Naive and PolynomialTrend)
+        # For comparison, we predict with individual forecasters
         naive_forecaster = NaiveForecaster()
         naive_forecaster.fit(y=y, fh=fh)
         y_pred_naive = naive_forecaster.predict()
@@ -61,7 +61,7 @@ def test_auto_ensemble_forecaster():
         y_pred_trend = trend_forecaster.predict()
 
         # Compare the ensemble prediction with the individual predictions
-        # Using mean squared error (MSE) to evaluate the accuracy of the ensemble against individual forecasters
+        # Using MSE to evaluate the accuracy.
         from sklearn.metrics import mean_squared_error
 
         mse_ensemble_naive = mean_squared_error(y_pred_ensemble, y_pred_naive)
