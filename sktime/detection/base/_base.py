@@ -295,8 +295,9 @@ class BaseDetector(BaseEstimator):
         self.check_is_fitted()
 
         X_inner = self._check_X(X)
+        scores = self._predict_scores(X_inner)
 
-        return self._predict_scores(X_inner)
+        return pd.DataFrame(scores)
 
     def update(self, X, y=None, Y=None):
         """Update model with new data and optional ground truth labels.
