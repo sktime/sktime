@@ -3,7 +3,6 @@
 __author__ = ["miraep8", "fkiraly", "klam-data", "pyyim", "mgorlin"]
 __all__ = []
 
-import numpy as np
 import pandas as pd
 
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
@@ -84,7 +83,7 @@ class TestAllAnnotators(AnnotatorsFixtureGenerator, QuickTester):
             estimator_type=estimator_instance.get_tag("distribution_type"),
         )
         y_pred = estimator_instance.predict_points(X_test)
-        assert isinstance(y_pred, (pd.Series, np.ndarray))
+        assert isinstance(y_pred, pd.Series)
 
     def test_predict_segments(self, estimator_instance):
         X_train = make_detection_problem(
