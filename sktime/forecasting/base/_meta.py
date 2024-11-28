@@ -57,7 +57,7 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
 
     def _fit_forecasters(self, forecasters, y, X, fh):
         """Fit all forecasters in parallel."""
-        from joblib import Parallel, delayed
+        from utils.parallel import Parallel, delayed
 
         def _fit_forecaster(forecaster, y, X, fh):
             """Fit single forecaster."""

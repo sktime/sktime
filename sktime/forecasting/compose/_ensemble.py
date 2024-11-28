@@ -13,7 +13,8 @@ import numpy as np
 import pandas as pd
 from scipy.stats import gmean
 from sklearn.pipeline import Pipeline
-from joblib import Parallel, delayed
+import warnings
+from utils.parallel import Parallel, delayed
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
@@ -34,7 +35,7 @@ VALID_AGG_FUNCS = {
     "gmean": {"unweighted": gmean, "weighted": _weighted_geometric_mean},
 }
 
-
+# this is the base class for ensemble forecasters
 class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     """Automatically find best weights for the ensembled forecasters.
 
@@ -112,6 +113,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         "scitype:y": "univariate",
     }
 
+    # this is how we initialize the class
     def __init__(
         self,
         forecasters,
@@ -119,19 +121,29 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         regressor=None,
         test_size=None,
         random_state=None,
-        backend=None,  # Removed n_jobs, added backend
-        backend_params=None  # added backend_params
+        backend = None,
+        backend_params = None,
+        n_jobs = None,
     ):
+        # Handle the deprecation of n_jobs
+        warnings.warn(
+            "The parameter `n_jobs` is deprecated and will be removed in future versions. "
+            "Use `backend` and `backend_params` instead.",
+            DeprecationWarning,
+        )
+        # this is used to inherit from the parent class
         super().__init__(
             forecasters=forecasters,
             backend = backend,
             backend_params = backend_params
+
         )
         self.method = method
         self.regressor = regressor
         self.test_size = test_size
         self.random_state = random_state
 
+    # function to fit the model
     def _fit(self, y, X, fh):
         """Fit to training data.
 
@@ -148,18 +160,21 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
+        
+        # check the forecasters
         _, forecasters = self._check_forecasters()
 
-        if self.backend == 'joblib':
-            # Parallelize the fitting of individuals forecasters
+        if self.backend == 'utils':
+            # parallelize the fitting of the forecasters
             n_jobs = self.backend_params.get('n_jobs', -1) # default to -1 (use all processors)
-            Parallel(n_jobs = n_jobs)(
+            Parallel(n_jobs=n_jobs)(
                 delayed(self._fit_forecaster)(forecaster, y, X, fh) for forecaster in forecasters
             )
+        
         else:
-            # If backend is not joblib, fallback to sequential fitting
+            # if backend in not utils, fall back to the default implementation
             for forecaster in forecasters:
-                self._fit_forecaster(forecaster, y, X, fh)
+                self._fit_forecasters(forecaster, y, X, fh)
 
         # get training data for meta-model
         if X is not None:
@@ -174,6 +189,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         fh_test = ForecastingHorizon(y_test.index, is_relative=False)
         self._fit_forecasters(forecasters, y_train, X_train, fh_test)
 
+        # if the method is feature-importance , we fit the regressor
         if self.method == "feature-importance":
             self.regressor_ = check_regressor(
                 regressor=self.regressor, random_state=self.random_state
@@ -192,6 +208,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
             else:
                 self.weights_ = _get_weights(self.regressor_)
 
+        # if the method if "inverse-variance", we compute the weights
         elif self.method == "inverse-variance":
             # get in-sample forecasts
             if self.regressor is not None:
@@ -227,29 +244,27 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
             Aggregated predictions.
         """
 
-        # Return the predictions of the ensemble models
-        if self.backend == 'joblib':
-            # Parallelize the prediction of individuals forecasters
+        # return the predictions of the ensemble models
+        if self.backend == 'utils':
             n_jobs = self.backend_params.get('n_jobs', -1) # default to -1 (use all processors)
             y_pred_df = pd.concat(
-                Parallel(n_jobs = n_jobs)(
-                    delayed(self._predict_forecaster)(forecaster, fh, X) for forecaster in self.forecasters_
-                ),
-                axis=1,
+                Parallel(n_jobs=n_jobs)(
+                       delayed(self._predict_forecaster)(forecaster, fh, X) for forecaster in self.forecasters_
+                ), axis = 1
             )
         else:
-            # If backend is not joblib, fallback to sequential prediction
+            # if backend is not equal to utils, fallback to sequential prediction
             y_pred_df = pd.concat(
-                [self._predict_forecaster(forecaster, fh, X) for forecaster in self.forecasters_],
-                axis=1,
+                [self._predict_forecaster(forecaster, fh, X) for forecaster in self.forecasters_], axis=1
             )
 
-        # apply weights to the predictions
         y_pred = y_pred_df.apply(lambda x: np.average(x, weights=self.weights_), axis=1)
         y_pred.name = self._y.name
         return y_pred
 
     @classmethod
+
+    # this is used to test the model
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
 
@@ -281,6 +296,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         return [params1, params2]
 
 
+# this function is used to get the optimal weights of the model based on the method type
 def _get_weights(regressor):
     # tree-based models from sklearn which have feature importance values
     if hasattr(regressor, "feature_importances_"):
@@ -299,6 +315,7 @@ def _get_weights(regressor):
     return list(weights)
 
 
+# this is another class which is used to find the average of all predictions
 class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     """Ensemble of forecasters.
 
