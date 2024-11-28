@@ -64,9 +64,9 @@ jobs:
           - windows-latest
         sktime-component:
           - alignment
-          - annotation
           - classification
           - clustering
+          - detection
           - forecasting
           - networks
           - param_est
@@ -128,6 +128,7 @@ jobs:
           --ignore sktime/annotation
           --ignore sktime/classification
           --ignore sktime/clustering
+          --ignore sktime/detection
           --ignore sktime/forecasting
           --ignore sktime/networks
           --ignore sktime/param_est

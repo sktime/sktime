@@ -3,11 +3,17 @@
 __author__ = ["KatieBuc"]
 
 import numpy as np
+import pytest
 from sklearn.preprocessing import MinMaxScaler, RobustScaler
 
-from sktime.annotation.stray import STRAY
+from sktime.detection.stray import STRAY
+from sktime.tests.test_switch import run_test_for_class
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(STRAY),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_default_1D():
     """Test with default parameters and 1D input array."""
     X = np.array(
@@ -91,6 +97,10 @@ def test_default_1D():
     assert np.allclose(y_actual, y_expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(STRAY),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_default_2D():
     """Test with default parameters and 2D input array."""
     X = np.array(
@@ -138,6 +148,10 @@ def test_default_2D():
     assert np.allclose(y_actual, y_expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(STRAY),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_1D_score_with_na():
     """Test score with 1D input array with missing values."""
     X = np.array(
@@ -180,6 +194,10 @@ def test_1D_score_with_na():
     assert np.allclose(y_scores_actual, y_scores_expected, equal_nan=True)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(STRAY),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_1D_bool_with_na():
     """Test anomaly detection with 1D input array with missing values."""
     X = np.array(
@@ -208,6 +226,10 @@ def test_1D_bool_with_na():
     assert np.allclose(y_actual, y_expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(STRAY),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_2D_score_with_na():
     """Test score with 2D input array with missing values."""
     X = np.array(
@@ -233,6 +255,10 @@ def test_2D_score_with_na():
     assert np.allclose(y_scores_actual, y_scores_expected, equal_nan=True)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(STRAY),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_2D_bool_with_na():
     """Test anomaly detection with 2D input array with missing values."""
     X = np.array(
@@ -256,6 +282,10 @@ def test_2D_bool_with_na():
     assert np.allclose(y_actual, y_expected)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(STRAY),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_2D_score_with_standardize():
     """Test score with 2D input array and median/IQR normalization."""
     X = np.array(

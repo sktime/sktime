@@ -233,7 +233,9 @@ class _HeterogenousMetaEstimator:
         estimators,
         attr_name="steps",
         cls_type=None,
+        allow_dict=False,
         allow_mix=True,
+        allow_empty=False,
         clone_ests=True,
     ):
         """Check that estimators is a list of estimators or list of str/est tuples.
@@ -247,9 +249,13 @@ class _HeterogenousMetaEstimator:
             Name of checked attribute in error messages
         cls_type : class or tuple of class, optional. Default = BaseEstimator.
             class(es) that all estimators are checked to be an instance of
+        allow_dict : bool, default=False
+            Whether `objs` can be a dictionary mapping str names to objects.
         allow_mix : boolean, optional. Default = True.
             whether mix of estimator and (str, estimator) is allowed in `estimators`
-        clone_ests : boolean, optional. Default = True.
+        allow_empty : boolean, optional. Default = False
+            whether empty list of estimators is allowed
+        clone_ests : boolean, optional. Default = True
             whether estimators in return are cloned (True) or references (False).
 
         Returns
@@ -280,8 +286,11 @@ class _HeterogenousMetaEstimator:
 
         if (
             estimators is None
-            or len(estimators) == 0
-            or not isinstance(estimators, list)
+            or (not allow_empty and len(estimators) == 0)
+            or not (
+                isinstance(estimators, list)
+                or (allow_dict and isinstance(estimators, dict))
+            )
         ):
             raise TypeError(msg)
 
@@ -292,7 +301,15 @@ class _HeterogenousMetaEstimator:
 
             return is_est, is_tuple
 
-        if not all(any(is_est_is_tuple(x)) for x in estimators):
+        # We've already guarded against objs being dict when allow_dict is False
+        # So here we can just check dictionary elements
+        if isinstance(estimators, dict) and not all(
+            isinstance(name, str) and isinstance(obj, cls_type)
+            for name, obj in estimators.items()
+        ):
+            raise TypeError(msg)
+
+        elif not all(any(is_est_is_tuple(x)) for x in estimators):
             raise TypeError(msg)
 
         msg_no_mix = (
